@@ -5,6 +5,8 @@ EstateMap is a modern web platform that allows real estate companies to list and
 
 The repository contains a React frontend built with Vite and a Django backend exposed via a REST API. Docker is provided to run the full stack along with a PostgreSQL database.
 
+The backend uses JWT tokens for authentication. Obtain a token by POSTing your credentials to `/api/login/` and include the returned token in the `Authorization` header (`Bearer <token>`) for protected endpoints.
+
 ### Prerequisites
 
 - [Docker](https://www.docker.com/)
