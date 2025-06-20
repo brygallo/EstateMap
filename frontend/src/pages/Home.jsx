@@ -12,9 +12,14 @@ const Home = () => {
           Ir al Mapa
         </Button>
       ) : (
-        <Button component={Link} to="/login" variant="contained" sx={{ mt: 2 }}>
-          Iniciar Sesión
-        </Button>
+        <>
+          <Button component={Link} to="/login" variant="contained" sx={{ mt: 2, mr: 2 }}>
+            Iniciar Sesión
+          </Button>
+          <Button component={Link} to="/register" variant="outlined" sx={{ mt: 2 }}>
+            Registrarse
+          </Button>
+        </>
       )}
     </div>
   );
