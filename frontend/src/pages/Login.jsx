@@ -74,10 +74,9 @@ const Login = () => {
           )}
         </Box>
       </form>
-      <Typography variant="body2" sx={{ mt: 2 }}>
-        ¿No tienes cuenta?{' '}
-        <Link to="/register">Regístrate</Link>
-      </Typography>
+      <Button component={Link} to="/register" fullWidth sx={{ mt: 2 }}>
+        Registrarse
+      </Button>
     </Box>
   );
 };
