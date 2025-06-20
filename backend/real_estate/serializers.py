@@ -10,6 +10,12 @@ class PropertySerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 
+class UserSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ["id", "email", "first_name", "last_name", "is_staff"]
+
+
 class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
     """Return token along with basic user information."""
 
@@ -17,6 +23,7 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
     def get_token(cls, user):
         token = super().get_token(user)
         token["username"] = user.username
+        token["is_staff"] = user.is_staff
         return token
 
     def validate(self, attrs):
@@ -25,6 +32,9 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
             "id": self.user.id,
             "username": self.user.username,
             "email": self.user.email,
+            "first_name": self.user.first_name,
+            "last_name": self.user.last_name,
+            "is_staff": self.user.is_staff,
         }
         return data
 
@@ -34,13 +44,15 @@ class RegisterSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ("username", "email", "password")
+        fields = ("email", "password", "first_name", "last_name")
 
     def create(self, validated_data):
         user = User.objects.create_user(
-            username=validated_data["username"],
+            username=validated_data.get("email", ""),
             email=validated_data.get("email", ""),
             password=validated_data["password"],
+            first_name=validated_data.get("first_name", ""),
+            last_name=validated_data.get("last_name", ""),
         )
         return user
 

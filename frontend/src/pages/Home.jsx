@@ -21,7 +21,7 @@ const Home = () => {
       <div style={{ padding: '2rem' }}>
         <h1>Welcome to EstateMap</h1>
         {token ? (
-          <Button component={Link} to="/map" variant="contained" sx={{ mt: 2 }}>
+          <Button component={Link} to="/" variant="contained" sx={{ mt: 2 }}>
             Ir al Mapa
           </Button>
         ) : (

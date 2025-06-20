@@ -6,7 +6,8 @@ import { useAuth } from '../AuthContext';
 const Register = () => {
   const navigate = useNavigate();
   const { login } = useAuth();
-  const [username, setUsername] = useState('');
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirm, setConfirm] = useState('');
@@ -25,19 +26,19 @@ const Register = () => {
       const res = await fetch(`${import.meta.env.VITE_API_URL}/register/`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, email, password })
+        body: JSON.stringify({ email, password, first_name: firstName, last_name: lastName })
       });
       if (!res.ok) throw new Error('Error al registrar');
       // login automatically
       const loginRes = await fetch(`${import.meta.env.VITE_API_URL}/login/`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, password })
+        body: JSON.stringify({ username: email, password })
       });
       if (!loginRes.ok) throw new Error('Registro completado pero fallo el login');
       const data = await loginRes.json();
-      login(data.access, true);
-      navigate('/map');
+      login(data.access, data.user, true);
+      navigate('/');
     } catch (err) {
       setError(err.message);
     } finally {
@@ -52,9 +53,17 @@ const Register = () => {
       </Typography>
       <form onSubmit={handleSubmit}>
         <TextField
-          label="Usuario"
-          value={username}
-          onChange={(e) => setUsername(e.target.value)}
+          label="Nombre"
+          value={firstName}
+          onChange={(e) => setFirstName(e.target.value)}
+          fullWidth
+          margin="normal"
+          required
+        />
+        <TextField
+          label="Apellido"
+          value={lastName}
+          onChange={(e) => setLastName(e.target.value)}
           fullWidth
           margin="normal"
           required
