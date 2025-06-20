@@ -6,7 +6,7 @@ import { useAuth } from '../AuthContext';
 const Login = () => {
   const navigate = useNavigate();
   const { login } = useAuth();
-  const [username, setUsername] = useState('');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [remember, setRemember] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -20,12 +20,12 @@ const Login = () => {
       const res = await fetch(`${import.meta.env.VITE_API_URL}/login/`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, password })
+        body: JSON.stringify({ username: email, password })
       });
       if (!res.ok) throw new Error('Credenciales incorrectas');
       const data = await res.json();
-      login(data.access, remember);
-      navigate('/map');
+      login(data.access, data.user, remember);
+      navigate('/');
     } catch (err) {
       setError(err.message);
     } finally {
@@ -40,9 +40,9 @@ const Login = () => {
       </Typography>
       <form onSubmit={handleSubmit}>
         <TextField
-          label="Usuario"
-          value={username}
-          onChange={(e) => setUsername(e.target.value)}
+          label="Email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
           fullWidth
           margin="normal"
           required
