@@ -22,14 +22,14 @@ const Register = () => {
     setError(null);
     setLoading(true);
     try {
-      const res = await fetch('/api/register/', {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/register/`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username, email, password })
       });
       if (!res.ok) throw new Error('Error al registrar');
       // login automatically
-      const loginRes = await fetch('/api/login/', {
+      const loginRes = await fetch(`${import.meta.env.VITE_API_URL}/login/`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username, password })
