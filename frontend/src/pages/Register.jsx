@@ -1,30 +1,42 @@
 import { useState } from 'react';
-import { TextField, Button, Checkbox, FormControlLabel, Box, Typography, CircularProgress } from '@mui/material';
+import { TextField, Button, Box, Typography, CircularProgress } from '@mui/material';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../AuthContext';
 
-const Login = () => {
+const Register = () => {
   const navigate = useNavigate();
   const { login } = useAuth();
   const [username, setUsername] = useState('');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [remember, setRemember] = useState(false);
+  const [confirm, setConfirm] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (password !== confirm) {
+      setError('Las contraseñas no coinciden');
+      return;
+    }
     setError(null);
     setLoading(true);
     try {
-      const res = await fetch(`${import.meta.env.VITE_API_URL}/login/`, {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/register/`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, email, password })
+      });
+      if (!res.ok) throw new Error('Error al registrar');
+      // login automatically
+      const loginRes = await fetch(`${import.meta.env.VITE_API_URL}/login/`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username, password })
       });
-      if (!res.ok) throw new Error('Credenciales incorrectas');
-      const data = await res.json();
-      login(data.access, remember);
+      if (!loginRes.ok) throw new Error('Registro completado pero fallo el login');
+      const data = await loginRes.json();
+      login(data.access, true);
       navigate('/map');
     } catch (err) {
       setError(err.message);
@@ -36,7 +48,7 @@ const Login = () => {
   return (
     <Box sx={{ maxWidth: 400, mx: 'auto', mt: 8, p: 2 }}>
       <Typography variant="h4" component="h1" gutterBottom>
-        Iniciar Sesión
+        Registrarse
       </Typography>
       <form onSubmit={handleSubmit}>
         <TextField
@@ -48,6 +60,14 @@ const Login = () => {
           required
         />
         <TextField
+          label="Email"
+          type="email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          fullWidth
+          margin="normal"
+        />
+        <TextField
           label="Contraseña"
           type="password"
           value={password}
@@ -56,9 +76,14 @@ const Login = () => {
           margin="normal"
           required
         />
-        <FormControlLabel
-          control={<Checkbox checked={remember} onChange={(e) => setRemember(e.target.checked)} />}
-          label="Recordar sesión"
+        <TextField
+          label="Confirmar Contraseña"
+          type="password"
+          value={confirm}
+          onChange={(e) => setConfirm(e.target.value)}
+          fullWidth
+          margin="normal"
+          required
         />
         {error && (
           <Typography color="error" sx={{ mt: 1 }}>
@@ -67,18 +92,18 @@ const Login = () => {
         )}
         <Box sx={{ position: 'relative', mt: 2 }}>
           <Button type="submit" variant="contained" fullWidth disabled={loading}>
-            Entrar
+            Registrarse
           </Button>
           {loading && (
             <CircularProgress size={24} sx={{ position: 'absolute', top: '50%', left: '50%', mt: '-12px', ml: '-12px' }} />
           )}
         </Box>
       </form>
-      <Button component={Link} to="/register" fullWidth sx={{ mt: 2 }}>
-        Registrarse
-      </Button>
+      <Typography variant="body2" sx={{ mt: 2 }}>
+        ¿Ya tienes cuenta? <Link to="/login">Iniciar sesión</Link>
+      </Typography>
     </Box>
   );
 };
 
-export default Login;
+export default Register;
