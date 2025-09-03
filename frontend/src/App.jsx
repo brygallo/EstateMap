@@ -6,6 +6,7 @@ import Register from './pages/Register';
 import PrivateRoute from './PrivateRoute';
 import NavBar from './components/NavBar';
 import Footer from './components/Footer';
+import { ToastContainer } from 'react-toastify';
 const App = () => (
   <div className="min-h-screen flex flex-col bg-background text-textPrimary font-sans">
     <NavBar />
@@ -25,6 +26,7 @@ const App = () => (
       </Routes>
     </main>
     <Footer />
+    <ToastContainer position="top-right" autoClose={3000} hideProgressBar />
   </div>
 );
 
