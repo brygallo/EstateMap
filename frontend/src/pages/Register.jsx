@@ -5,6 +5,7 @@ import { useAuth } from '../AuthContext';
 const Register = () => {
   const navigate = useNavigate();
   const { login } = useAuth();
+  const API_URL = import.meta.env.VITE_API_URL || '/api';
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -21,13 +22,13 @@ const Register = () => {
     setError(null);
     setLoading(true);
     try {
-      const res = await fetch(`${import.meta.env.VITE_API_URL}/register/`, {
+      const res = await fetch(`${API_URL}/register/`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username, email, password })
       });
       if (!res.ok) throw new Error('Error al registrar');
-      const loginRes = await fetch(`${import.meta.env.VITE_API_URL}/login/`, {
+      const loginRes = await fetch(`${API_URL}/login/`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username, password })

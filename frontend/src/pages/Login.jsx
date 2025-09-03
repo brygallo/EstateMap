@@ -5,6 +5,7 @@ import { useAuth } from '../AuthContext';
 const Login = () => {
   const navigate = useNavigate();
   const { login } = useAuth();
+  const API_URL = import.meta.env.VITE_API_URL || '/api';
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [remember, setRemember] = useState(false);
@@ -16,7 +17,7 @@ const Login = () => {
     setError(null);
     setLoading(true);
     try {
-      const res = await fetch(`${import.meta.env.VITE_API_URL}/login/`, {
+      const res = await fetch(`${API_URL}/login/`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username, password })
