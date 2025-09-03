@@ -1,41 +1,36 @@
 import { Link } from 'react-router-dom';
-import { AppBar, Toolbar, Typography, Button } from '@mui/material';
 import { useAuth } from '../AuthContext';
 
 const Home = () => {
   const { token } = useAuth();
   return (
-    <>
-      <AppBar position="static">
-        <Toolbar>
-          <Typography variant="h6" sx={{ flexGrow: 1 }}>
-            EstateMap
-          </Typography>
-          {!token && (
-            <Button color="inherit" component={Link} to="/login">
-              Iniciar Sesión
-            </Button>
-          )}
-        </Toolbar>
-      </AppBar>
-      <div style={{ padding: '2rem' }}>
-        <h1>Welcome to EstateMap</h1>
+    <div>
+      <nav className="bg-blue-600 text-white p-4 flex justify-between">
+        <h1 className="text-lg font-semibold">EstateMap</h1>
+        {!token && (
+          <Link to="/login" className="hover:underline">
+            Iniciar Sesión
+          </Link>
+        )}
+      </nav>
+      <div className="p-8">
+        <h1 className="text-2xl font-bold">Welcome to EstateMap</h1>
         {token ? (
-          <Button component={Link} to="/map" variant="contained" sx={{ mt: 2 }}>
+          <Link to="/map" className="mt-4 inline-block px-4 py-2 bg-blue-600 text-white rounded">
             Ir al Mapa
-          </Button>
+          </Link>
         ) : (
-          <>
-            <Button component={Link} to="/login" variant="contained" sx={{ mt: 2, mr: 2 }}>
+          <div className="mt-4 space-x-2">
+            <Link to="/login" className="px-4 py-2 bg-blue-600 text-white rounded">
               Iniciar Sesión
-            </Button>
-            <Button component={Link} to="/register" variant="outlined" sx={{ mt: 2 }}>
+            </Link>
+            <Link to="/register" className="px-4 py-2 border border-blue-600 text-blue-600 rounded">
               Registrarse
-            </Button>
-          </>
+            </Link>
+          </div>
         )}
       </div>
-    </>
+    </div>
   );
 };
 
