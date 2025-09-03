@@ -6,7 +6,7 @@ const Login = () => {
   const navigate = useNavigate();
   const { login } = useAuth();
   const API_URL = import.meta.env.VITE_API_URL || '/api';
-  const [username, setUsername] = useState('');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [remember, setRemember] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -20,7 +20,7 @@ const Login = () => {
       const res = await fetch(`${API_URL}/login/`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, password })
+        body: JSON.stringify({ email, password })
       });
       if (!res.ok) throw new Error('Credenciales incorrectas');
       const data = await res.json();
@@ -34,15 +34,15 @@ const Login = () => {
   };
 
   return (
-    <div className="max-w-sm mx-auto mt-20 p-6 border rounded">
+    <div className="max-w-sm mx-auto mt-20 p-6 bg-white rounded-2xl shadow-lg">
       <h1 className="text-2xl font-semibold mb-4 text-center">Iniciar Sesión</h1>
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
-          <label className="block text-sm font-medium">Usuario</label>
+          <label className="block text-sm font-medium">Correo electrónico</label>
           <input
-            type="text"
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
             className="w-full mt-1 p-2 border rounded"
             required
           />
@@ -67,16 +67,16 @@ const Login = () => {
           />
           <label htmlFor="remember">Recordar sesión</label>
         </div>
-        {error && <p className="text-red-600">{error}</p>}
+        {error && <p className="text-error">{error}</p>}
         <button
           type="submit"
           disabled={loading}
-          className="w-full py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50"
+          className="w-full py-2 bg-primary text-white rounded-2xl hover:bg-secondary disabled:opacity-50 transition-all"
         >
           {loading ? 'Cargando...' : 'Entrar'}
         </button>
       </form>
-      <Link to="/register" className="block text-center mt-4 text-blue-600 hover:underline">
+      <Link to="/register" className="block text-center mt-4 text-primary hover:underline">
         Registrarse
       </Link>
     </div>

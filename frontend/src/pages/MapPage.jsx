@@ -1,23 +1,26 @@
-import { MapContainer, TileLayer } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
-import { useAuth } from '../AuthContext';
+import L from 'leaflet';
+
+const icon = L.divIcon({ className: 'custom-marker' });
 
 const MapPage = () => {
-  const { logout } = useAuth();
   return (
-    <div className="h-screen relative">
-      <button
-        onClick={logout}
-        className="absolute top-4 right-4 z-[1000] px-4 py-2 bg-blue-600 text-white rounded"
-      >
-        Logout
-      </button>
+    <div className="grid grid-cols-1 lg:grid-cols-2 h-screen">
       <MapContainer center={[0, 0]} zoom={13} className="h-full w-full">
         <TileLayer
           attribution='&copy; OpenStreetMap contributors'
           url='https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png'
         />
+        <Marker position={[0, 0]} icon={icon}>
+          <Popup>Propiedad demo</Popup>
+        </Marker>
       </MapContainer>
+      <div className="bg-dark text-white overflow-y-auto p-4 space-y-4">
+        <div className="bg-white text-textPrimary rounded-2xl shadow-lg p-4 transition-all hover:scale-105">
+          Propiedad demo
+        </div>
+      </div>
     </div>
   );
 };

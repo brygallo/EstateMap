@@ -20,6 +20,18 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
         return token
 
     def validate(self, attrs):
+        # Allow login using email instead of username
+        email = attrs.get("email")
+        password = attrs.get("password")
+        try:
+            user = User.objects.get(email=email)
+        except User.DoesNotExist:
+            raise serializers.ValidationError("No active account found with the given credentials")
+
+        # Replace email with the resolved username for the parent validation
+        attrs["username"] = user.username
+        del attrs["email"]
+
         data = super().validate(attrs)
         data["user"] = {
             "id": self.user.id,
