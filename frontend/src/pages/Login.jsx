@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { TextField, Button, Checkbox, FormControlLabel, Box, Typography, CircularProgress } from '@mui/material';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../AuthContext';
 
@@ -34,50 +33,52 @@ const Login = () => {
   };
 
   return (
-    <Box sx={{ maxWidth: 400, mx: 'auto', mt: 8, p: 2 }}>
-      <Typography variant="h4" component="h1" gutterBottom>
-        Iniciar Sesión
-      </Typography>
-      <form onSubmit={handleSubmit}>
-        <TextField
-          label="Usuario"
-          value={username}
-          onChange={(e) => setUsername(e.target.value)}
-          fullWidth
-          margin="normal"
-          required
-        />
-        <TextField
-          label="Contraseña"
-          type="password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          fullWidth
-          margin="normal"
-          required
-        />
-        <FormControlLabel
-          control={<Checkbox checked={remember} onChange={(e) => setRemember(e.target.checked)} />}
-          label="Recordar sesión"
-        />
-        {error && (
-          <Typography color="error" sx={{ mt: 1 }}>
-            {error}
-          </Typography>
-        )}
-        <Box sx={{ position: 'relative', mt: 2 }}>
-          <Button type="submit" variant="contained" fullWidth disabled={loading}>
-            Entrar
-          </Button>
-          {loading && (
-            <CircularProgress size={24} sx={{ position: 'absolute', top: '50%', left: '50%', mt: '-12px', ml: '-12px' }} />
-          )}
-        </Box>
+    <div className="max-w-sm mx-auto mt-20 p-6 border rounded">
+      <h1 className="text-2xl font-semibold mb-4 text-center">Iniciar Sesión</h1>
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <div>
+          <label className="block text-sm font-medium">Usuario</label>
+          <input
+            type="text"
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
+            className="w-full mt-1 p-2 border rounded"
+            required
+          />
+        </div>
+        <div>
+          <label className="block text-sm font-medium">Contraseña</label>
+          <input
+            type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            className="w-full mt-1 p-2 border rounded"
+            required
+          />
+        </div>
+        <div className="flex items-center">
+          <input
+            id="remember"
+            type="checkbox"
+            checked={remember}
+            onChange={(e) => setRemember(e.target.checked)}
+            className="mr-2"
+          />
+          <label htmlFor="remember">Recordar sesión</label>
+        </div>
+        {error && <p className="text-red-600">{error}</p>}
+        <button
+          type="submit"
+          disabled={loading}
+          className="w-full py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50"
+        >
+          {loading ? 'Cargando...' : 'Entrar'}
+        </button>
       </form>
-      <Button component={Link} to="/register" fullWidth sx={{ mt: 2 }}>
+      <Link to="/register" className="block text-center mt-4 text-blue-600 hover:underline">
         Registrarse
-      </Button>
-    </Box>
+      </Link>
+    </div>
   );
 };
 
