@@ -31,7 +31,7 @@ const Register = () => {
       const loginRes = await fetch(`${API_URL}/login/`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, password })
+        body: JSON.stringify({ email, password })
       });
       if (!loginRes.ok) throw new Error('Registro completado pero fallo el login');
       const data = await loginRes.json();
@@ -45,7 +45,7 @@ const Register = () => {
   };
 
   return (
-    <div className="max-w-sm mx-auto mt-20 p-6 border rounded">
+    <div className="max-w-sm mx-auto mt-20 p-6 bg-white rounded-2xl shadow-lg">
       <h1 className="text-2xl font-semibold mb-4 text-center">Registrarse</h1>
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
@@ -87,17 +87,17 @@ const Register = () => {
             required
           />
         </div>
-        {error && <p className="text-red-600">{error}</p>}
+        {error && <p className="text-error">{error}</p>}
         <button
           type="submit"
           disabled={loading}
-          className="w-full py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50"
+          className="w-full py-2 bg-primary text-white rounded-2xl hover:bg-secondary disabled:opacity-50 transition-all"
         >
           {loading ? 'Cargando...' : 'Registrarse'}
         </button>
       </form>
       <p className="text-sm text-center mt-4">
-        ¿Ya tienes cuenta? <Link to="/login" className="text-blue-600 hover:underline">Iniciar sesión</Link>
+        ¿Ya tienes cuenta? <Link to="/login" className="text-primary hover:underline">Iniciar sesión</Link>
       </p>
     </div>
   );
