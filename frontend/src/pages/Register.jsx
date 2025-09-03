@@ -18,7 +18,7 @@ const Register = () => {
       .required('Campo requerido'),
   });
 
-  const handleSubmit = async (values, { setSubmitting }) => {
+  const handleSubmit = async (values, { setSubmitting, setErrors }) => {
     try {
       const res = await fetch(`${API_URL}/register/`, {
         method: 'POST',
@@ -27,7 +27,17 @@ const Register = () => {
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
-        toast.error(data.detail || 'Error al registrar');
+        const formErrors = {};
+        let errorMessage = data.detail;
+        Object.keys(data).forEach((field) => {
+          const messages = Array.isArray(data[field]) ? data[field] : [data[field]];
+          formErrors[field] = messages.join(' ');
+        });
+        if (!errorMessage) {
+          errorMessage = Object.values(formErrors).join(' ');
+        }
+        setErrors(formErrors);
+        toast.error(errorMessage || 'Error al registrar');
         setSubmitting(false);
         return;
       }
@@ -38,7 +48,17 @@ const Register = () => {
       });
       const loginData = await loginRes.json().catch(() => ({}));
       if (!loginRes.ok) {
-        toast.error(loginData.detail || 'Registro completado pero fallo el login');
+        const formErrors = {};
+        let errorMessage = loginData.detail;
+        Object.keys(loginData).forEach((field) => {
+          const messages = Array.isArray(loginData[field]) ? loginData[field] : [loginData[field]];
+          formErrors[field] = messages.join(' ');
+        });
+        if (!errorMessage) {
+          errorMessage = Object.values(formErrors).join(' ');
+        }
+        setErrors(formErrors);
+        toast.error(errorMessage || 'Registro completado pero fallo el login');
         setSubmitting(false);
         return;
       }
