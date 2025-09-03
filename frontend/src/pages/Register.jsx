@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { TextField, Button, Box, Typography, CircularProgress } from '@mui/material';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../AuthContext';
 
@@ -28,7 +27,6 @@ const Register = () => {
         body: JSON.stringify({ username, email, password })
       });
       if (!res.ok) throw new Error('Error al registrar');
-      // login automatically
       const loginRes = await fetch(`${import.meta.env.VITE_API_URL}/login/`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -46,63 +44,61 @@ const Register = () => {
   };
 
   return (
-    <Box sx={{ maxWidth: 400, mx: 'auto', mt: 8, p: 2 }}>
-      <Typography variant="h4" component="h1" gutterBottom>
-        Registrarse
-      </Typography>
-      <form onSubmit={handleSubmit}>
-        <TextField
-          label="Usuario"
-          value={username}
-          onChange={(e) => setUsername(e.target.value)}
-          fullWidth
-          margin="normal"
-          required
-        />
-        <TextField
-          label="Email"
-          type="email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          fullWidth
-          margin="normal"
-        />
-        <TextField
-          label="Contraseña"
-          type="password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          fullWidth
-          margin="normal"
-          required
-        />
-        <TextField
-          label="Confirmar Contraseña"
-          type="password"
-          value={confirm}
-          onChange={(e) => setConfirm(e.target.value)}
-          fullWidth
-          margin="normal"
-          required
-        />
-        {error && (
-          <Typography color="error" sx={{ mt: 1 }}>
-            {error}
-          </Typography>
-        )}
-        <Box sx={{ position: 'relative', mt: 2 }}>
-          <Button type="submit" variant="contained" fullWidth disabled={loading}>
-            Registrarse
-          </Button>
-          {loading && (
-            <CircularProgress size={24} sx={{ position: 'absolute', top: '50%', left: '50%', mt: '-12px', ml: '-12px' }} />
-          )}
-        </Box>
+    <div className="max-w-sm mx-auto mt-20 p-6 border rounded">
+      <h1 className="text-2xl font-semibold mb-4 text-center">Registrarse</h1>
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <div>
+          <label className="block text-sm font-medium">Usuario</label>
+          <input
+            type="text"
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
+            className="w-full mt-1 p-2 border rounded"
+            required
+          />
+        </div>
+        <div>
+          <label className="block text-sm font-medium">Email</label>
+          <input
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            className="w-full mt-1 p-2 border rounded"
+          />
+        </div>
+        <div>
+          <label className="block text-sm font-medium">Contraseña</label>
+          <input
+            type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            className="w-full mt-1 p-2 border rounded"
+            required
+          />
+        </div>
+        <div>
+          <label className="block text-sm font-medium">Confirmar Contraseña</label>
+          <input
+            type="password"
+            value={confirm}
+            onChange={(e) => setConfirm(e.target.value)}
+            className="w-full mt-1 p-2 border rounded"
+            required
+          />
+        </div>
+        {error && <p className="text-red-600">{error}</p>}
+        <button
+          type="submit"
+          disabled={loading}
+          className="w-full py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50"
+        >
+          {loading ? 'Cargando...' : 'Registrarse'}
+        </button>
       </form>
-      <Typography variant="body2" sx={{ mt: 2 }}>
-        ¿Ya tienes cuenta? <Link to="/login">Iniciar sesión</Link>
-      </Typography>
-    </Box>
+      <p className="text-sm text-center mt-4">
+        ¿Ya tienes cuenta? <Link to="/login" className="text-blue-600 hover:underline">Iniciar sesión</Link>
+      </p>
+    </div>
   );
 };
 
