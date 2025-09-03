@@ -13,6 +13,14 @@ class PropertySerializer(serializers.ModelSerializer):
 class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
     """Return token along with basic user information."""
 
+    # Accept an email field instead of the default username
+    email = serializers.EmailField(write_only=True)
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Remove the username field provided by the parent serializer
+        self.fields.pop(self.username_field, None)
+
     @classmethod
     def get_token(cls, user):
         token = super().get_token(user)
