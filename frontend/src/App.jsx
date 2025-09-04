@@ -3,6 +3,7 @@ import Home from './pages/Home';
 import MapPage from './pages/MapPage';
 import Login from './pages/Login';
 import Register from './pages/Register';
+import AddProperty from './pages/AddProperty';
 import PrivateRoute from './PrivateRoute';
 import NavBar from './components/NavBar';
 import Footer from './components/Footer';
@@ -20,6 +21,14 @@ const App = () => (
           element={(
             <PrivateRoute>
               <MapPage />
+            </PrivateRoute>
+          )}
+        />
+        <Route
+          path="/add-property"
+          element={(
+            <PrivateRoute>
+              <AddProperty />
             </PrivateRoute>
           )}
         />

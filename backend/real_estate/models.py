@@ -9,10 +9,11 @@ class User(AbstractUser):
 
 
 class Property(models.Model):
-    title = models.CharField(max_length=100)
-    description = models.TextField(blank=True)
-    latitude = models.FloatField()
-    longitude = models.FloatField()
+    title = models.CharField(max_length=100, blank=True, default="")
+    description = models.TextField(blank=True, default="")
+    polygon = models.JSONField()
+    area = models.FloatField()
+    price = models.FloatField()
 
     def __str__(self):
-        return self.title
+        return self.title or f"Property {self.pk}"
