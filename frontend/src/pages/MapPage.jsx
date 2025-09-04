@@ -25,14 +25,18 @@ const MapPage = () => {
     fetchProperties();
   }, [token]);
 
-  const center = properties.length ? properties[0].polygon[0] : [0, 0];
+  const defaultCenter = [-2.3086, -78.1117]; // Macas, Ecuador
+  const center = properties.length ? properties[0].polygon[0] : defaultCenter;
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 h-screen">
-      <MapContainer center={center} zoom={13} className="h-full w-full">
+      <MapContainer center={center} zoom={18} maxZoom={20} className="h-full w-full">
+        {/* OpenStreetMap */}
         <TileLayer
-          attribution='&copy; OpenStreetMap contributors'
-          url='https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png'
+          url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
+          attribution='&copy; OpenStreetMap &copy; CARTO'
+          subdomains={['a','b','c','d']}
+          maxZoom={20}
         />
         {properties.map((p, idx) => (
           <Polygon key={idx} positions={p.polygon}>
@@ -42,6 +46,8 @@ const MapPage = () => {
           </Polygon>
         ))}
       </MapContainer>
+
+      {/* Lista lateral */}
       <div className="bg-dark text-white overflow-y-auto p-4 space-y-4">
         {properties.map((p, idx) => (
           <div
