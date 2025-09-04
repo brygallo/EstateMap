@@ -11,6 +11,8 @@ const Register = () => {
 
   const validationSchema = Yup.object({
     username: Yup.string().required('Campo requerido'),
+    first_name: Yup.string().required('Campo requerido'),
+    last_name: Yup.string().required('Campo requerido'),
     email: Yup.string().email('Correo inválido').required('Campo requerido'),
     password: Yup.string().required('Campo requerido'),
     confirm: Yup.string()
@@ -23,7 +25,13 @@ const Register = () => {
       const res = await fetch(`${API_URL}/register/`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username: values.username, email: values.email, password: values.password }),
+        body: JSON.stringify({
+          username: values.username,
+          first_name: values.first_name,
+          last_name: values.last_name,
+          email: values.email,
+          password: values.password,
+        }),
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
@@ -76,7 +84,14 @@ const Register = () => {
     <div className="max-w-sm mx-auto mt-20 p-6 bg-white rounded-2xl shadow-lg">
       <h1 className="text-2xl font-semibold mb-4 text-center">Registrarse</h1>
       <Formik
-        initialValues={{ username: '', email: '', password: '', confirm: '' }}
+        initialValues={{
+          username: '',
+          first_name: '',
+          last_name: '',
+          email: '',
+          password: '',
+          confirm: '',
+        }}
         validationSchema={validationSchema}
         onSubmit={handleSubmit}
       >
@@ -91,6 +106,26 @@ const Register = () => {
                 className="w-full mt-1 p-2 border rounded"
               />
               <ErrorMessage name="username" component="p" className="text-error" />
+            </div>
+            <div>
+              <label className="block text-sm font-medium" htmlFor="first_name">Nombre</label>
+              <Field
+                id="first_name"
+                name="first_name"
+                type="text"
+                className="w-full mt-1 p-2 border rounded"
+              />
+              <ErrorMessage name="first_name" component="p" className="text-error" />
+            </div>
+            <div>
+              <label className="block text-sm font-medium" htmlFor="last_name">Apellido</label>
+              <Field
+                id="last_name"
+                name="last_name"
+                type="text"
+                className="w-full mt-1 p-2 border rounded"
+              />
+              <ErrorMessage name="last_name" component="p" className="text-error" />
             </div>
             <div>
               <label className="block text-sm font-medium" htmlFor="email">Email</label>
