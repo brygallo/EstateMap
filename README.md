@@ -20,6 +20,12 @@ The backend uses JWT tokens for authentication. Obtain a token by POSTing your c
    cp .env.example .env
    ```
 
+   Provide your [MapTiler](https://www.maptiler.com/) API key in the `.env` file:
+
+   ```
+   VITE_MAPTILER_KEY=your_maptiler_key
+   ```
+
 2. Build the Docker images:
 
    ```bash
