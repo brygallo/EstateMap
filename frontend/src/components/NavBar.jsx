@@ -7,7 +7,11 @@ const NavBar = () => {
     <nav className="bg-primary text-white p-4 flex justify-between items-center">
       <Link to="/" className="text-xl font-semibold">EstateMap</Link>
       {token ? (
-        <button onClick={logout} className="hover:text-secondary transition-colors">Salir</button>
+        <div className="space-x-4">
+          <Link to="/map" className="hover:text-secondary transition-colors">Mapa</Link>
+          <Link to="/add-property" className="hover:text-secondary transition-colors">Nuevo Bien</Link>
+          <button onClick={logout} className="hover:text-secondary transition-colors">Salir</button>
+        </div>
       ) : (
         <div className="space-x-4">
           <Link to="/login" className="hover:text-secondary transition-colors">Iniciar Sesión</Link>
