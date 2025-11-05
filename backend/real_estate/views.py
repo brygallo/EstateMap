@@ -1,6 +1,6 @@
 from rest_framework import viewsets, generics
 from rest_framework_simplejwt.views import TokenObtainPairView
-from rest_framework.permissions import IsAuthenticated, AllowAny
+from rest_framework.permissions import IsAuthenticated, AllowAny, IsAuthenticatedOrReadOnly
 from .models import Property
 from django.contrib.auth import get_user_model
 from .serializers import (
@@ -10,9 +10,12 @@ from .serializers import (
 )
 
 class PropertyViewSet(viewsets.ModelViewSet):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticatedOrReadOnly]
     queryset = Property.objects.all()
     serializer_class = PropertySerializer
+
+    def perform_create(self, serializer):
+        serializer.save(owner=self.request.user)
 
 
 class CustomTokenObtainPairView(TokenObtainPairView):

@@ -9,8 +9,10 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@turf/turf": "^6.5.0",
     "formik": "^2.4.5",
     "leaflet": "1.9.4",
+    "@geoman-io/leaflet-geoman-free": "^2.15.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-leaflet": "4.2.1",

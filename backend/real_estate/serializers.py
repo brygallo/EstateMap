@@ -8,9 +8,12 @@ from .models import Property
 User = get_user_model()
 
 class PropertySerializer(serializers.ModelSerializer):
+    owner = serializers.PrimaryKeyRelatedField(read_only=True)
+
     class Meta:
         model = Property
         fields = '__all__'
+        read_only_fields = ['created_at', 'updated_at', 'owner']
 
 
 class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
@@ -22,7 +25,7 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         # Remove the username field provided by the parent serializer
-        self.fields.pop(self.username_field, None)
+        self.fields.pop('username', None)
 
     @classmethod
     def get_token(cls, user):
@@ -34,16 +37,27 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
         # Allow login using email instead of username
         email = attrs.get("email")
         password = attrs.get("password")
+
+        if not email:
+            raise serializers.ValidationError({"email": "Este campo es requerido"})
+        if not password:
+            raise serializers.ValidationError({"password": "Este campo es requerido"})
+
         try:
             user = User.objects.get(email=email)
         except User.DoesNotExist:
-            raise serializers.ValidationError("No active account found with the given credentials")
+            raise serializers.ValidationError({"detail": "No se encontró una cuenta con este correo electrónico"})
 
         # Replace email with the resolved username for the parent validation
         attrs["username"] = user.username
         del attrs["email"]
 
-        data = super().validate(attrs)
+        try:
+            data = super().validate(attrs)
+        except serializers.ValidationError as e:
+            # If parent validation fails, it's likely due to incorrect password
+            raise serializers.ValidationError({"detail": "Correo electrónico o contraseña incorrectos"})
+
         data["user"] = {
             "id": self.user.id,
             "username": self.user.username,
