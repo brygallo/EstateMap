@@ -7,7 +7,7 @@ import '@geoman-io/leaflet-geoman-free';
 import '@geoman-io/leaflet-geoman-free/dist/leaflet-geoman.css';
 
 import { useEffect, useRef, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { useAuth } from '../AuthContext';
 import { toast } from 'react-toastify';
 import * as turf from '@turf/turf';
@@ -31,8 +31,21 @@ const metersBetween = (a, b) => {
 const formatM = (m) => `${(Math.round(m * 100) / 100).toFixed(2)} m`;
 const formatAreaM2 = (m2) => (Math.round(m2 * 100) / 100).toFixed(2);
 
+/* ===================== MapRefBinder ===================== */
+function MapRefBinder({ onMapReady }) {
+  const map = useMap();
+
+  useEffect(() => {
+    if (map && onMapReady) {
+      onMapReady(map);
+    }
+  }, [map, onMapReady]);
+
+  return null;
+}
+
 /* ===================== Dibujo & medición ===================== */
-function DrawingTools({ onPolygonChange, onAreaChange }) {
+function DrawingTools({ onPolygonChange, onAreaChange, initialPolygon }) {
   const map = useMap();
 
   const currentPolygonRef = useRef(null);
@@ -41,6 +54,7 @@ function DrawingTools({ onPolygonChange, onAreaChange }) {
     workingLayer: null,
   });
   const liveTooltipRef = useRef(null); // ← tooltip que sigue al cursor
+  const initialLoadRef = useRef(false);
 
   const metersBetween = (a, b) => {
     const km = turf.length(turf.lineString([[a.lng, a.lat], [b.lng, b.lat]]), { units: 'kilometers' });
@@ -56,25 +70,8 @@ function DrawingTools({ onPolygonChange, onAreaChange }) {
     }
   };
   const refreshEdgeLabels = (layer) => {
+    // Mediciones deshabilitadas
     clearEdgeLabels(layer);
-    layer._edgeMarkers = [];
-    const ring = layer.getLatLngs()?.[0] || [];
-    if (ring.length < 2) return;
-    for (let i = 0; i < ring.length; i++) {
-      const a = ring[i];
-      const b = ring[(i + 1) % ring.length];
-      const m = metersBetween(a, b);
-      const pos = [(a.lat + b.lat) / 2, (a.lng + b.lng) / 2];
-      const marker = L.marker(pos, {
-        interactive: false,
-        keyboard: false,
-        icon: L.divIcon({
-          className: 'edge-label',
-          html: `<div class="edge-badge">${formatM(m)}</div>`,
-        }),
-      }).addTo(map);
-      layer._edgeMarkers.push(marker);
-    }
   };
   const updateAreaAndCoords = (layer) => {
     const ring = layer.getLatLngs()?.[0] || [];
@@ -166,32 +163,12 @@ function DrawingTools({ onPolygonChange, onAreaChange }) {
 
       drawingRef.current.active = true;
       drawingRef.current.workingLayer = e.workingLayer || e.layer || null;
-      ensureLiveTooltip();
-
-      // cuando fijas un vértice, mostrará el último tramo fijado
-      const wl = drawingRef.current.workingLayer;
-      wl?.off('pm:vertexadded');
-      wl?.on('pm:vertexadded', () => {
-        const ring = wl.getLatLngs()?.[0] || [];
-        if (ring.length >= 2 && liveTooltipRef.current) {
-          const m = metersBetween(ring[ring.length - 2], ring[ring.length - 1]);
-          liveTooltipRef.current.setContent(`${formatM(m)}`);
-        }
-      });
+      // Tooltip de medición deshabilitado
     };
 
-    /* === MOVE mouse → último vértice confirmado → cursor === */
+    /* === MOVE mouse → deshabilitado === */
     const onMouseMove = (evt) => {
-      if (!drawingRef.current.active || !liveTooltipRef.current) return;
-      const wl = drawingRef.current.workingLayer;
-      if (!wl) return;
-      const ring = wl.getLatLngs()?.[0] || [];
-      const last = ring[ring.length - 1];
-      if (!last) return; // aún no hay al menos 1 segmento
-
-      const segM = metersBetween(last, evt.latlng);
-      liveTooltipRef.current.setLatLng(evt.latlng);
-      liveTooltipRef.current.setContent(`${formatM(segM)}`);
+      // Medición en movimiento deshabilitada
     };
 
     /* === END dibujo === */
@@ -240,15 +217,76 @@ function DrawingTools({ onPolygonChange, onAreaChange }) {
 
     // Unbind
     return () => {
-      map.off('pm:drawstart', onDrawStart);
-      map.off('mousemove', onMouseMove);
-      map.off('pm:drawend', onDrawEnd);
-      map.off('pm:create', onCreate);
-      map.off('pm:edit', onEdit);
-      map.off('pm:remove', onRemove);
-      removeLiveTooltip();
+      try {
+        map.off('pm:drawstart', onDrawStart);
+        map.off('mousemove', onMouseMove);
+        map.off('pm:drawend', onDrawEnd);
+        map.off('pm:create', onCreate);
+        map.off('pm:edit', onEdit);
+        map.off('pm:remove', onRemove);
+        removeLiveTooltip();
+
+        // Clean up current polygon safely
+        if (currentPolygonRef.current) {
+          try {
+            clearEdgeLabels(currentPolygonRef.current);
+            if (map.hasLayer(currentPolygonRef.current)) {
+              currentPolygonRef.current.pm.disable();
+              map.removeLayer(currentPolygonRef.current);
+            }
+          } catch (e) {
+            // Ignore cleanup errors on unmount
+          }
+          currentPolygonRef.current = null;
+        }
+      } catch (e) {
+        // Ignore cleanup errors
+      }
     };
   }, [map, onPolygonChange, onAreaChange]);
+
+  // Load initial polygon if provided (for edit mode)
+  useEffect(() => {
+    // Only load if we have valid polygon data, no polygon is currently on the map, and we haven't loaded it yet
+    if (initialPolygon && initialPolygon.length >= 3 && !currentPolygonRef.current && !initialLoadRef.current) {
+      console.log('Attempting to load initial polygon:', initialPolygon);
+
+      // Use a small timeout to ensure the map is fully initialized
+      const timer = setTimeout(() => {
+        try {
+          console.log('Loading initial polygon now:', initialPolygon);
+
+          // Create polygon from initial data
+          const polygon = L.polygon(initialPolygon, {
+            color: '#2b8a3e',
+            weight: 2.5,
+            fillOpacity: 0.15,
+            lineJoin: 'round',
+            lineCap: 'round',
+          }).addTo(map);
+
+          // Enable editing for this polygon
+          polygon.pm.enable();
+
+          bindFinalPolygon(polygon);
+
+          // Fit map to polygon bounds
+          map.fitBounds(polygon.getBounds());
+
+          // Mark as loaded only after successfully loading
+          initialLoadRef.current = true;
+
+          console.log('Initial polygon loaded successfully');
+        } catch (e) {
+          console.error('Error loading initial polygon:', e);
+        }
+      }, 300);
+
+      return () => clearTimeout(timer);
+    } else {
+      console.log('Skipping polygon load - polygon:', initialPolygon?.length, 'current:', !!currentPolygonRef.current, 'loaded:', initialLoadRef.current);
+    }
+  }, [initialPolygon, map]);
 
   return null;
 }
@@ -266,17 +304,14 @@ function ScaleBottomLeft() {
   return null;
 }
 
-/* ===================== HUD Área ===================== */
-function AreaHud({ area }) {
-  return (
-    <div className="absolute top-3 right-3 z-[1000] bg-white/95 px-3 py-2 rounded-xl shadow text-sm font-semibold">
-      Área total: {formatAreaM2(area)} m²
-    </div>
-  );
-}
+/* ===================== HUD Área (deshabilitado) ===================== */
 
 /* ===================== Página ===================== */
 const AddProperty = () => {
+  const { id } = useParams(); // Get property ID from URL if editing
+  const isEditMode = Boolean(id);
+  const [loading, setLoading] = useState(isEditMode);
+
   const [polygonCoords, setPolygonCoords] = useState([]); // [[lat,lng], ...]
   const [area, setArea] = useState(0);
 
@@ -304,17 +339,72 @@ const AddProperty = () => {
 
   // Financial Information
   const [price, setPrice] = useState('');
-  const [currency, setCurrency] = useState('USD');
   const [isNegotiable, setIsNegotiable] = useState(true);
-  const [maintenanceFee, setMaintenanceFee] = useState('');
 
   // Contact
   const [contactPhone, setContactPhone] = useState('');
-  const [contactEmail, setContactEmail] = useState('');
+
+  // Images
+  const [images, setImages] = useState([]);
+  const [existingImages, setExistingImages] = useState([]);
+  const [imageFiles, setImageFiles] = useState([]);
 
   const { token } = useAuth();
   const navigate = useNavigate();
   const API_URL = import.meta.env.VITE_API_URL || '/api';
+
+  // Load property data if editing
+  useEffect(() => {
+    if (isEditMode) {
+      fetchProperty();
+    }
+  }, [id]);
+
+  const fetchProperty = async () => {
+    try {
+      const res = await fetch(`${API_URL}/properties/${id}/`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (res.ok) {
+        const data = await res.json();
+        console.log('Property data loaded:', data);
+        console.log('Polygon from backend:', data.polygon);
+
+        // Populate form fields
+        setTitle(data.title || '');
+        setDescription(data.description || '');
+        setPropertyType(data.property_type || 'land');
+        setStatus(data.status || 'for_sale');
+        setAddress(data.address || '');
+        setCity(data.city || 'Macas');
+        setProvince(data.province || 'Morona Santiago');
+        setLatitude(data.latitude || '');
+        setLongitude(data.longitude || '');
+        setPolygonCoords(data.polygon || []);
+        setArea(data.area || 0);
+        setBuiltArea(data.built_area || '');
+        setRooms(data.rooms || 0);
+        setBathrooms(data.bathrooms || 0);
+        setParkingSpaces(data.parking_spaces || 0);
+        setFloors(data.floors || '');
+        setFurnished(data.furnished || false);
+        setYearBuilt(data.year_built || '');
+        setPrice(data.price || '');
+        setIsNegotiable(data.is_negotiable !== undefined ? data.is_negotiable : true);
+        setContactPhone(data.contact_phone || '');
+        setExistingImages(data.images || []);
+      } else {
+        toast.error('No se pudo cargar la propiedad');
+        navigate('/my-properties');
+      }
+    } catch (error) {
+      console.error('Error:', error);
+      toast.error('Error de conexión');
+      navigate('/my-properties');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -323,55 +413,62 @@ const AddProperty = () => {
       return;
     }
     try {
-      const propertyData = {
-        // General Information
-        title,
-        description,
-        property_type: propertyType,
-        status,
+      const formData = new FormData();
 
-        // Location
-        address,
-        city,
-        province,
-        latitude: latitude ? parseFloat(latitude) : null,
-        longitude: longitude ? parseFloat(longitude) : null,
-        polygon: polygonCoords.length >= 3 ? polygonCoords : null,
+      // General Information
+      formData.append('title', title);
+      formData.append('description', description);
+      formData.append('property_type', propertyType);
+      formData.append('status', status);
 
-        // Characteristics
-        area: parseFloat(area),
-        built_area: builtArea ? parseFloat(builtArea) : null,
-        rooms: parseInt(rooms),
-        bathrooms: parseInt(bathrooms),
-        parking_spaces: parseInt(parkingSpaces),
-        floors: floors ? parseInt(floors) : null,
-        furnished,
-        year_built: yearBuilt ? parseInt(yearBuilt) : null,
+      // Location
+      formData.append('address', address);
+      formData.append('city', city);
+      formData.append('province', province);
+      if (latitude) formData.append('latitude', parseFloat(latitude));
+      if (longitude) formData.append('longitude', parseFloat(longitude));
+      if (polygonCoords.length >= 3) {
+        formData.append('polygon', JSON.stringify(polygonCoords));
+      }
 
-        // Financial Information
-        price,
-        currency,
-        is_negotiable: isNegotiable,
-        maintenance_fee: maintenanceFee ? maintenanceFee : null,
+      // Characteristics
+      formData.append('area', parseFloat(area));
+      if (builtArea) formData.append('built_area', parseFloat(builtArea));
+      formData.append('rooms', parseInt(rooms));
+      formData.append('bathrooms', parseInt(bathrooms));
+      formData.append('parking_spaces', parseInt(parkingSpaces));
+      if (floors) formData.append('floors', parseInt(floors));
+      formData.append('furnished', furnished);
+      if (yearBuilt) formData.append('year_built', parseInt(yearBuilt));
 
-        // Contact
-        contact_phone: contactPhone,
-        contact_email: contactEmail,
-      };
+      // Financial Information
+      formData.append('price', price);
+      formData.append('is_negotiable', isNegotiable);
 
-      const res = await fetch(`${API_URL}/properties/`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-        body: JSON.stringify(propertyData),
+      // Contact
+      formData.append('contact_phone', contactPhone);
+
+      // Images - append each image file
+      imageFiles.forEach((file) => {
+        formData.append('uploaded_images', file);
+      });
+
+      const url = isEditMode ? `${API_URL}/properties/${id}/` : `${API_URL}/properties/`;
+      const method = isEditMode ? 'PUT' : 'POST';
+
+      const res = await fetch(url, {
+        method: method,
+        headers: { Authorization: `Bearer ${token}` },
+        body: formData,
       });
       if (!res.ok) {
         const errorData = await res.json();
         console.error('Error:', errorData);
-        toast.error('No se pudo guardar la propiedad');
+        toast.error(`No se pudo ${isEditMode ? 'actualizar' : 'guardar'} la propiedad`);
         return;
       }
-      toast.success('Propiedad creada exitosamente');
-      navigate('/');
+      toast.success(`Propiedad ${isEditMode ? 'actualizada' : 'creada'} exitosamente`);
+      navigate('/my-properties');
     } catch (error) {
       console.error('Error:', error);
       toast.error('Error de conexión');
@@ -394,6 +491,66 @@ const AddProperty = () => {
 
   const bindMapRef = (map) => { window._leaflet_map_ref = map; };
 
+  // Handle image selection
+  const handleImageChange = (e) => {
+    const files = Array.from(e.target.files);
+    setImageFiles([...imageFiles, ...files]);
+
+    // Create preview URLs
+    const newImages = files.map((file) => ({
+      file,
+      preview: URL.createObjectURL(file),
+    }));
+    setImages([...images, ...newImages]);
+  };
+
+  // Remove new image
+  const handleRemoveNewImage = (index) => {
+    const newImages = images.filter((_, i) => i !== index);
+    const newFiles = imageFiles.filter((_, i) => i !== index);
+    setImages(newImages);
+    setImageFiles(newFiles);
+  };
+
+  // Remove existing image
+  const handleRemoveExistingImage = async (imageId) => {
+    if (!window.confirm('¿Estás seguro de que deseas eliminar esta imagen?')) {
+      return;
+    }
+
+    try {
+      const res = await fetch(`${API_URL}/properties/${id}/delete_image/`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ image_id: imageId }),
+      });
+
+      if (res.ok) {
+        setExistingImages(existingImages.filter((img) => img.id !== imageId));
+        toast.success('Imagen eliminada exitosamente');
+      } else {
+        toast.error('Error al eliminar la imagen');
+      }
+    } catch (error) {
+      console.error('Error:', error);
+      toast.error('Error de conexión');
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
+          <p className="mt-4 text-gray-600">Cargando propiedad...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
       {/* Header */}
@@ -401,11 +558,15 @@ const AddProperty = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">Nueva Propiedad</h1>
-              <p className="text-sm text-gray-600 mt-1">Completa la información para registrar una nueva propiedad</p>
+              <h1 className="text-2xl font-bold text-gray-900">
+                {isEditMode ? 'Editar Propiedad' : 'Nueva Propiedad'}
+              </h1>
+              <p className="text-sm text-gray-600 mt-1">
+                {isEditMode ? 'Actualiza la información de tu propiedad' : 'Completa la información para registrar una nueva propiedad'}
+              </p>
             </div>
             <button
-              onClick={() => navigate('/')}
+              onClick={() => navigate('/my-properties')}
               className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-xl text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors"
             >
               <svg className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -418,30 +579,32 @@ const AddProperty = () => {
       </div>
 
       {/* Main Content */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 lg:py-8">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6">
           {/* Map Section */}
-          <div className="lg:sticky lg:top-8 lg:self-start">
+          <div className="lg:sticky lg:top-8 lg:self-start order-2 lg:order-1">
             <div className="bg-white rounded-2xl shadow-lg overflow-hidden">
               <div className="px-4 py-3 bg-gradient-to-r from-primary to-secondary">
-                <h2 className="text-lg font-semibold text-white flex items-center">
+                <h2 className="text-base lg:text-lg font-semibold text-white flex items-center">
                   <svg className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
                   </svg>
                   Ubicación en el Mapa
                 </h2>
-                <p className="text-sm text-white/90 mt-1">
-                  {propertyType === 'land' ? 'Dibuja el polígono del terreno' : 'Opcional: Dibuja el área de la propiedad'}
+                <p className="text-xs lg:text-sm text-white/90 mt-1">
+                  {isEditMode
+                    ? 'Edita el polígono de la propiedad'
+                    : (propertyType === 'land' ? 'Dibuja el polígono del terreno' : 'Opcional: Dibuja el área de la propiedad')
+                  }
                 </p>
               </div>
-              <div className="relative h-[400px] lg:h-[500px]">
+              <div className="relative h-[300px] sm:h-[400px] lg:h-[500px]">
                 <MapContainer
                   center={defaultCenter}
                   zoom={15}
                   maxZoom={20}
                   preferCanvas
                   className="h-full w-full"
-                  whenCreated={bindMapRef}
                 >
                   <TileLayer
                     url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
@@ -449,11 +612,12 @@ const AddProperty = () => {
                     subdomains={['a','b','c','d']}
                     maxZoom={20}
                   />
+                  <MapRefBinder onMapReady={bindMapRef} />
                   <ScaleBottomLeft />
-                  <AreaHud area={area} />
                   <DrawingTools
                     onPolygonChange={setPolygonCoords}
                     onAreaChange={setArea}
+                    initialPolygon={polygonCoords}
                   />
                 </MapContainer>
               </div>
@@ -473,8 +637,8 @@ const AddProperty = () => {
           </div>
 
           {/* Form Section */}
-          <div className="space-y-6">
-            <form onSubmit={handleSubmit} className="space-y-6">
+          <div className="space-y-4 lg:space-y-6 order-1 lg:order-2">
+            <form onSubmit={handleSubmit} className="space-y-4 lg:space-y-6">
               {/* General Information */}
               <div className="bg-white rounded-2xl shadow-lg overflow-hidden">
                 <div className="px-4 py-3 bg-gradient-to-r from-primary to-secondary">
@@ -743,9 +907,9 @@ const AddProperty = () => {
                   </h3>
                 </div>
                 <div className="p-6 space-y-4">
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="grid grid-cols-1 gap-4">
                     <div>
-                      <label className="block text-sm font-semibold text-gray-700 mb-2">Precio *</label>
+                      <label className="block text-sm font-semibold text-gray-700 mb-2">Precio (USD) *</label>
                       <input
                         type="number"
                         step="any"
@@ -756,29 +920,7 @@ const AddProperty = () => {
                         required
                       />
                     </div>
-                    <div>
-                      <label className="block text-sm font-semibold text-gray-700 mb-2">Moneda</label>
-                      <select
-                        value={currency}
-                        onChange={(e) => setCurrency(e.target.value)}
-                        className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent transition-all bg-white"
-                      >
-                        <option value="USD">💵 USD</option>
-                        <option value="EUR">💶 EUR</option>
-                      </select>
-                    </div>
-                    <div>
-                      <label className="block text-sm font-semibold text-gray-700 mb-2">Cuota de Mantenimiento</label>
-                      <input
-                        type="number"
-                        step="any"
-                        value={maintenanceFee}
-                        onChange={(e) => setMaintenanceFee(e.target.value)}
-                        placeholder="50"
-                        className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
-                      />
-                    </div>
-                    <div className="flex items-center gap-3 md:col-span-3 mt-2">
+                    <div className="flex items-center gap-3 mt-2">
                       <input
                         type="checkbox"
                         id="negotiable"
@@ -800,33 +942,113 @@ const AddProperty = () => {
                 <div className="px-4 py-3 bg-gradient-to-r from-primary to-secondary">
                   <h3 className="text-lg font-semibold text-white flex items-center">
                     <svg className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
                     </svg>
                     Información de Contacto
                   </h3>
                 </div>
                 <div className="p-6 space-y-4">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">Teléfono</label>
+                    <input
+                      type="tel"
+                      value={contactPhone}
+                      onChange={(e) => setContactPhone(e.target.value)}
+                      placeholder="+593 99 999 9999"
+                      className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Images */}
+              <div className="bg-white rounded-2xl shadow-lg overflow-hidden">
+                <div className="px-4 py-3 bg-gradient-to-r from-primary to-secondary">
+                  <h3 className="text-lg font-semibold text-white flex items-center">
+                    <svg className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    </svg>
+                    Imágenes de la Propiedad
+                  </h3>
+                </div>
+                <div className="p-6 space-y-4">
+                  {/* Existing Images */}
+                  {isEditMode && existingImages.length > 0 && (
                     <div>
-                      <label className="block text-sm font-semibold text-gray-700 mb-2">Teléfono</label>
-                      <input
-                        type="tel"
-                        value={contactPhone}
-                        onChange={(e) => setContactPhone(e.target.value)}
-                        placeholder="+593 99 999 9999"
-                        className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
-                      />
+                      <h4 className="text-sm font-semibold text-gray-700 mb-3">Imágenes Actuales</h4>
+                      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                        {existingImages.map((img) => (
+                          <div key={img.id} className="relative group">
+                            <img
+                              src={img.image}
+                              alt="Property"
+                              className="w-full h-32 object-cover rounded-lg"
+                            />
+                            {img.is_main && (
+                              <span className="absolute top-2 left-2 bg-blue-500 text-white text-xs px-2 py-1 rounded-full">
+                                Principal
+                              </span>
+                            )}
+                            <button
+                              type="button"
+                              onClick={() => handleRemoveExistingImage(img.id)}
+                              className="absolute top-2 right-2 bg-red-500 text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                            >
+                              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                              </svg>
+                            </button>
+                          </div>
+                        ))}
+                      </div>
                     </div>
+                  )}
+
+                  {/* New Images Preview */}
+                  {images.length > 0 && (
                     <div>
-                      <label className="block text-sm font-semibold text-gray-700 mb-2">Email</label>
-                      <input
-                        type="email"
-                        value={contactEmail}
-                        onChange={(e) => setContactEmail(e.target.value)}
-                        placeholder="contacto@ejemplo.com"
-                        className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
-                      />
+                      <h4 className="text-sm font-semibold text-gray-700 mb-3">Nuevas Imágenes</h4>
+                      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                        {images.map((img, index) => (
+                          <div key={index} className="relative group">
+                            <img
+                              src={img.preview}
+                              alt="Preview"
+                              className="w-full h-32 object-cover rounded-lg"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => handleRemoveNewImage(index)}
+                              className="absolute top-2 right-2 bg-red-500 text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                            >
+                              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                              </svg>
+                            </button>
+                          </div>
+                        ))}
+                      </div>
                     </div>
+                  )}
+
+                  {/* Upload Button */}
+                  <div>
+                    <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-gray-300 rounded-xl cursor-pointer hover:bg-gray-50 transition-all">
+                      <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                        <svg className="h-10 w-10 text-gray-400 mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                        </svg>
+                        <p className="text-sm text-gray-600 font-semibold">Haz clic para subir imágenes</p>
+                        <p className="text-xs text-gray-500 mt-1">PNG, JPG hasta 10MB</p>
+                      </div>
+                      <input
+                        type="file"
+                        className="hidden"
+                        accept="image/*"
+                        multiple
+                        onChange={handleImageChange}
+                      />
+                    </label>
                   </div>
                 </div>
               </div>
@@ -842,11 +1064,11 @@ const AddProperty = () => {
                       <svg className="h-6 w-6 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                       </svg>
-                      Guardar Propiedad
+                      {isEditMode ? 'Actualizar Propiedad' : 'Guardar Propiedad'}
                     </button>
                     <button
                       type="button"
-                      onClick={() => navigate('/')}
+                      onClick={() => navigate('/my-properties')}
                       className="w-full sm:w-auto inline-flex justify-center items-center px-6 py-4 border-2 border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 transition-all font-medium"
                     >
                       <svg className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">

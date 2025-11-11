@@ -52,9 +52,7 @@ class Property(models.Model):
 
     # --- Financial Information ---
     price = models.DecimalField(max_digits=12, decimal_places=2)
-    currency = models.CharField(max_length=10, default="USD")
     is_negotiable = models.BooleanField(default=True)
-    maintenance_fee = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
 
     # --- Ownership & Contact ---
     owner = models.ForeignKey(
@@ -65,10 +63,8 @@ class Property(models.Model):
         related_name="properties",
     )
     contact_phone = models.CharField(max_length=20, blank=True, default="")
-    contact_email = models.EmailField(blank=True, default="")
 
     # --- Media ---
-    main_image = models.ImageField(upload_to="properties/main/", null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -85,3 +81,21 @@ class Property(models.Model):
     @property
     def is_for_rent(self):
         return self.status == "for_rent"
+
+
+class PropertyImage(models.Model):
+    """Images for properties stored in MinIO"""
+    property = models.ForeignKey(
+        Property,
+        on_delete=models.CASCADE,
+        related_name="images"
+    )
+    image = models.ImageField(upload_to="properties/")
+    is_main = models.BooleanField(default=False)
+    uploaded_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-is_main", "-uploaded_at"]
+
+    def __str__(self):
+        return f"Image for {self.property.title or f'Property {self.property.pk}'}"

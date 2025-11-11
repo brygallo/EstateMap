@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Generador de Iconos PWA - EstateMap</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        h1 {
+            color: white;
+            margin-bottom: 30px;
+        }
+        .icon-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            justify-content: center;
+            margin-top: 20px;
+        }
+        .icon-wrapper {
+            text-align: center;
+        }
+        .icon {
+            background: white;
+            border-radius: 20%;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        canvas {
+            border-radius: 20%;
+        }
+        .size-label {
+            color: white;
+            margin-top: 10px;
+            font-weight: bold;
+        }
+        button {
+            background: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-top: 5px;
+            font-weight: bold;
+            color: #667eea;
+        }
+        button:hover {
+            background: #f0f0f0;
+        }
+        .instructions {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            max-width: 600px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Generador de Iconos PWA - EstateMap</h1>
+
+    <div class="instructions">
+        <h3>Instrucciones:</h3>
+        <p>1. Haz clic derecho en cada icono y selecciona "Guardar imagen como..."</p>
+        <p>2. Guarda cada imagen con el nombre correspondiente (ej: icon-72x72.png)</p>
+        <p>3. Coloca todos los iconos en la carpeta /frontend/public/</p>
+        <p>O usa los botones "Descargar" para descargar automáticamente cada icono.</p>
+    </div>
+
+    <div class="icon-container" id="iconContainer"></div>
+
+    <script>
+        const sizes = [72, 96, 128, 144, 152, 192, 384, 512];
+
+        function drawIcon(canvas, size) {
+            const ctx = canvas.getContext('2d');
+            const scale = size / 512;
+
+            // Background gradient
+            const gradient = ctx.createLinearGradient(0, 0, size, size);
+            gradient.addColorStop(0, '#1E3A8A');
+            gradient.addColorStop(1, '#3B82F6');
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, size, size);
+
+            // Draw map icon
+            ctx.strokeStyle = 'white';
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.2)';
+            ctx.lineWidth = 3 * scale;
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
+
+            // Map folding icon (simplified version of the SVG in navbar)
+            const centerX = size / 2;
+            const centerY = size / 2;
+            const iconSize = size * 0.5;
+
+            ctx.beginPath();
+
+            // Left section
+            ctx.moveTo(centerX - iconSize * 0.35, centerY - iconSize * 0.4);
+            ctx.lineTo(centerX - iconSize * 0.35, centerY + iconSize * 0.4);
+            ctx.lineTo(centerX - iconSize * 0.1, centerY + iconSize * 0.3);
+            ctx.lineTo(centerX - iconSize * 0.1, centerY - iconSize * 0.3);
+            ctx.closePath();
+            ctx.fill();
+            ctx.stroke();
+
+            // Middle section
+            ctx.beginPath();
+            ctx.moveTo(centerX - iconSize * 0.1, centerY - iconSize * 0.3);
+            ctx.lineTo(centerX - iconSize * 0.1, centerY + iconSize * 0.3);
+            ctx.lineTo(centerX + iconSize * 0.15, centerY + iconSize * 0.4);
+            ctx.lineTo(centerX + iconSize * 0.15, centerY - iconSize * 0.4);
+            ctx.closePath();
+            ctx.fill();
+            ctx.stroke();
+
+            // Right section
+            ctx.beginPath();
+            ctx.moveTo(centerX + iconSize * 0.15, centerY - iconSize * 0.4);
+            ctx.lineTo(centerX + iconSize * 0.15, centerY + iconSize * 0.4);
+            ctx.lineTo(centerX + iconSize * 0.35, centerY + iconSize * 0.3);
+            ctx.lineTo(centerX + iconSize * 0.35, centerY - iconSize * 0.3);
+            ctx.closePath();
+            ctx.fill();
+            ctx.stroke();
+        }
+
+        function downloadCanvas(canvas, filename) {
+            const link = document.createElement('a');
+            link.download = filename;
+            link.href = canvas.toDataURL();
+            link.click();
+        }
+
+        const container = document.getElementById('iconContainer');
+
+        sizes.forEach(size => {
+            const wrapper = document.createElement('div');
+            wrapper.className = 'icon-wrapper';
+
+            const canvas = document.createElement('canvas');
+            canvas.width = size;
+            canvas.height = size;
+            drawIcon(canvas, size);
+
+            const label = document.createElement('div');
+            label.className = 'size-label';
+            label.textContent = `${size}x${size}`;
+
+            const downloadBtn = document.createElement('button');
+            downloadBtn.textContent = 'Descargar';
+            downloadBtn.onclick = () => downloadCanvas(canvas, `icon-${size}x${size}.png`);
+
+            wrapper.appendChild(canvas);
+            wrapper.appendChild(label);
+            wrapper.appendChild(downloadBtn);
+            container.appendChild(wrapper);
+        });
+    </script>
+</body>
+</html>
