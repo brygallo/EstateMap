@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="72" height="72" viewBox="0 0 72 72" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bgGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#1E3A8A;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#3B82F6;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+
+  <!-- Background with rounded corners -->
+  <rect width="72" height="72" fill="url(#bgGradient)" rx="14.4"/>
+
+  <!-- Map Icon -->
+  <g transform="translate(36, 36)">
+    
+    <!-- Left section -->
+    <path d="M -12.96,-14.4
+             L -12.96,14.4
+             L -3.6,10.8
+             L -3.6,-10.8 Z"
+          fill="rgba(255, 255, 255, 0.2)"
+          stroke="white"
+          stroke-width="0.5625"
+          stroke-linejoin="round"
+          stroke-linecap="round"/>
+
+    <!-- Middle section -->
+    <path d="M -3.6,-10.8
+             L -3.6,10.8
+             L 5.760000000000001,14.4
+             L 5.760000000000001,-14.4 Z"
+          fill="rgba(255, 255, 255, 0.2)"
+          stroke="white"
+          stroke-width="0.5625"
+          stroke-linejoin="round"
+          stroke-linecap="round"/>
+
+    <!-- Right section -->
+    <path d="M 5.760000000000001,-14.4
+             L 5.760000000000001,14.4
+             L 12.96,10.8
+             L 12.96,-10.8 Z"
+          fill="rgba(255, 255, 255, 0.2)"
+          stroke="white"
+          stroke-width="0.5625"
+          stroke-linejoin="round"
+          stroke-linecap="round"/>
+  
+  </g>
+</svg>

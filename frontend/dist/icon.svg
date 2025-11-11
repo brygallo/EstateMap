@@ -1,0 +1,42 @@
+<svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bgGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#1E3A8A;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#3B82F6;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+
+  <!-- Background -->
+  <rect width="512" height="512" fill="url(#bgGradient)" rx="100"/>
+
+  <!-- Map Icon -->
+  <g transform="translate(256, 256)">
+    <!-- Left section -->
+    <path d="M -90,-100 L -90,100 L -25,75 L -25,-75 Z"
+          fill="rgba(255, 255, 255, 0.2)"
+          stroke="white"
+          stroke-width="8"
+          stroke-linejoin="round"
+          stroke-linecap="round"/>
+
+    <!-- Middle section -->
+    <path d="M -25,-75 L -25,75 L 40,100 L 40,-100 Z"
+          fill="rgba(255, 255, 255, 0.2)"
+          stroke="white"
+          stroke-width="8"
+          stroke-linejoin="round"
+          stroke-linecap="round"/>
+
+    <!-- Right section -->
+    <path d="M 40,-100 L 40,100 L 90,75 L 90,-75 Z"
+          fill="rgba(255, 255, 255, 0.2)"
+          stroke="white"
+          stroke-width="8"
+          stroke-linejoin="round"
+          stroke-linecap="round"/>
+
+    <!-- Vertical lines -->
+    <line x1="-25" y1="-75" x2="-25" y2="75" stroke="white" stroke-width="8" stroke-linecap="round"/>
+    <line x1="40" y1="-100" x2="40" y2="100" stroke="white" stroke-width="8" stroke-linecap="round"/>
+  </g>
+</svg>
