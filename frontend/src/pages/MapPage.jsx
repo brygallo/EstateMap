@@ -6,7 +6,14 @@ import { useAuth } from '../AuthContext';
 import PropertyModal from '../components/PropertyModal';
 import MapFilters from '../components/MapFilters';
 import ShareModal from '../components/ShareModal';
+import RangeSlider from '../components/RangeSlider';
 import L from 'leaflet';
+
+// Rangos de valores para los sliders
+const PRICE_MIN = 0;
+const PRICE_MAX = 500000;
+const AREA_MIN = 0;
+const AREA_MAX = 10000;
 
 // Fix default marker icon issue with webpack
 delete L.Icon.Default.prototype._getIconUrl;
@@ -226,10 +233,10 @@ const MapPage = () => {
     search: searchParams.get('search') || '',
     propertyType: searchParams.get('type') || 'all',
     status: searchParams.get('status') || 'all',
-    minPrice: searchParams.get('minPrice') || '',
-    maxPrice: searchParams.get('maxPrice') || '',
-    minArea: searchParams.get('minArea') || '',
-    maxArea: searchParams.get('maxArea') || '',
+    minPrice: searchParams.get('minPrice') ? parseInt(searchParams.get('minPrice')) : PRICE_MIN,
+    maxPrice: searchParams.get('maxPrice') ? parseInt(searchParams.get('maxPrice')) : PRICE_MAX,
+    minArea: searchParams.get('minArea') ? parseInt(searchParams.get('minArea')) : AREA_MIN,
+    maxArea: searchParams.get('maxArea') ? parseInt(searchParams.get('maxArea')) : AREA_MAX,
     rooms: searchParams.get('rooms') || 'all',
     bathrooms: searchParams.get('bathrooms') || 'all',
     userId: searchParams.get('user') || 'all',
@@ -523,8 +530,6 @@ const MapPage = () => {
     const labels = {
       for_sale: 'En Venta',
       for_rent: 'En Alquiler',
-      sold: 'Vendido',
-      rented: 'Alquilado',
       inactive: 'Inactivo'
     };
     return labels[status] || status;
@@ -534,9 +539,7 @@ const MapPage = () => {
     const colors = {
       for_sale: 'bg-green-500',
       for_rent: 'bg-blue-500',
-      sold: 'bg-gray-500',
-      rented: 'bg-purple-500',
-      inactive: 'bg-red-500'
+      inactive: 'bg-gray-500'
     };
     return colors[status] || 'bg-gray-500';
   };
@@ -659,6 +662,7 @@ const MapPage = () => {
             <option value="all" className="bg-dark">Todos los estados</option>
             <option value="for_sale" className="bg-dark">💰 En Venta</option>
             <option value="for_rent" className="bg-dark">🔑 En Alquiler</option>
+            <option value="inactive" className="bg-dark">⏸️ Inactivo</option>
           </select>
 
           {/* User Filter with Search */}
@@ -669,53 +673,48 @@ const MapPage = () => {
           />
 
           {/* Price Range */}
-          <div className="grid grid-cols-2 gap-1.5">
-            <input
-              type="number"
-              value={filters.minPrice}
-              onChange={(e) => handleFilterChange({ ...filters, minPrice: e.target.value })}
-              placeholder="$ Min"
-              className="w-full px-2 py-1.5 text-xs bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/50 focus:bg-white/20 focus:outline-none"
-            />
-            <input
-              type="number"
-              value={filters.maxPrice}
-              onChange={(e) => handleFilterChange({ ...filters, maxPrice: e.target.value })}
-              placeholder="$ Max"
-              className="w-full px-2 py-1.5 text-xs bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/50 focus:bg-white/20 focus:outline-none"
+          <div className="space-y-0.5">
+            <label className="block text-[10px] font-semibold text-white/70">Precio (USD)</label>
+            <RangeSlider
+              min={PRICE_MIN}
+              max={PRICE_MAX}
+              step={1000}
+              minValue={filters.minPrice}
+              maxValue={filters.maxPrice}
+              onChange={(min, max) => handleFilterChange({ ...filters, minPrice: min, maxPrice: max })}
+              formatValue={(v) => `$${v.toLocaleString()}`}
+              theme="dark"
             />
           </div>
 
           {/* Area Range */}
-          <div className="grid grid-cols-2 gap-1.5">
-            <input
-              type="number"
-              value={filters.minArea}
-              onChange={(e) => handleFilterChange({ ...filters, minArea: e.target.value })}
-              placeholder="m² Min"
-              className="w-full px-2 py-1.5 text-xs bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/50 focus:bg-white/20 focus:outline-none"
-            />
-            <input
-              type="number"
-              value={filters.maxArea}
-              onChange={(e) => handleFilterChange({ ...filters, maxArea: e.target.value })}
-              placeholder="m² Max"
-              className="w-full px-2 py-1.5 text-xs bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/50 focus:bg-white/20 focus:outline-none"
+          <div className="space-y-0.5">
+            <label className="block text-[10px] font-semibold text-white/70">Área (m²)</label>
+            <RangeSlider
+              min={AREA_MIN}
+              max={AREA_MAX}
+              step={50}
+              minValue={filters.minArea}
+              maxValue={filters.maxArea}
+              onChange={(min, max) => handleFilterChange({ ...filters, minArea: min, maxArea: max })}
+              formatValue={(v) => `${v.toLocaleString()} m²`}
+              theme="dark"
             />
           </div>
 
           {/* Clear Filters Button */}
           {(filters.search || filters.propertyType !== 'all' || filters.status !== 'all' ||
-            filters.minPrice || filters.maxPrice || filters.minArea || filters.maxArea || filters.userId !== 'all') && (
+            filters.minPrice !== PRICE_MIN || filters.maxPrice !== PRICE_MAX ||
+            filters.minArea !== AREA_MIN || filters.maxArea !== AREA_MAX || filters.userId !== 'all') && (
             <button
               onClick={() => handleFilterChange({
                 search: '',
                 propertyType: 'all',
                 status: 'all',
-                minPrice: '',
-                maxPrice: '',
-                minArea: '',
-                maxArea: '',
+                minPrice: PRICE_MIN,
+                maxPrice: PRICE_MAX,
+                minArea: AREA_MIN,
+                maxArea: AREA_MAX,
                 rooms: 'all',
                 bathrooms: 'all',
                 userId: 'all',
