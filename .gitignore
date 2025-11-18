@@ -7,7 +7,6 @@ __pycache__
 
 # Env files
 .env
-.env.production
 .env.ip
 frontend/.env
 backend/.env
