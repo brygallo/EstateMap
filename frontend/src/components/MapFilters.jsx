@@ -1,4 +1,11 @@
 import { useState } from 'react';
+import RangeSlider from './RangeSlider';
+
+// Rangos de valores para los sliders
+const PRICE_MIN = 0;
+const PRICE_MAX = 500000;
+const AREA_MIN = 0;
+const AREA_MAX = 10000;
 
 const MapFilters = ({ onFilterChange, propertyCount }) => {
   const [isOpen, setIsOpen] = useState(false);
@@ -6,10 +13,10 @@ const MapFilters = ({ onFilterChange, propertyCount }) => {
     search: '',
     propertyType: 'all',
     status: 'all',
-    minPrice: '',
-    maxPrice: '',
-    minArea: '',
-    maxArea: '',
+    minPrice: PRICE_MIN,
+    maxPrice: PRICE_MAX,
+    minArea: AREA_MIN,
+    maxArea: AREA_MAX,
     rooms: 'all',
     bathrooms: 'all',
   });
@@ -25,10 +32,10 @@ const MapFilters = ({ onFilterChange, propertyCount }) => {
       search: '',
       propertyType: 'all',
       status: 'all',
-      minPrice: '',
-      maxPrice: '',
-      minArea: '',
-      maxArea: '',
+      minPrice: PRICE_MIN,
+      maxPrice: PRICE_MAX,
+      minArea: AREA_MIN,
+      maxArea: AREA_MAX,
       rooms: 'all',
       bathrooms: 'all',
     };
@@ -41,10 +48,10 @@ const MapFilters = ({ onFilterChange, propertyCount }) => {
       filters.search ||
       filters.propertyType !== 'all' ||
       filters.status !== 'all' ||
-      filters.minPrice ||
-      filters.maxPrice ||
-      filters.minArea ||
-      filters.maxArea ||
+      filters.minPrice !== PRICE_MIN ||
+      filters.maxPrice !== PRICE_MAX ||
+      filters.minArea !== AREA_MIN ||
+      filters.maxArea !== AREA_MAX ||
       filters.rooms !== 'all' ||
       filters.bathrooms !== 'all'
     );
@@ -134,51 +141,44 @@ const MapFilters = ({ onFilterChange, propertyCount }) => {
                 <option value="all">Todos</option>
                 <option value="for_sale">💰 En Venta</option>
                 <option value="for_rent">🔑 En Alquiler</option>
-                <option value="sold">✅ Vendido</option>
-                <option value="rented">🏠 Alquilado</option>
+                <option value="inactive">⏸️ Inactivo</option>
               </select>
             </div>
 
             {/* Price Range */}
-            <div>
-              <label className="block text-xs font-semibold text-gray-700 mb-1">Precio (USD)</label>
-              <div className="grid grid-cols-2 gap-2">
-                <input
-                  type="number"
-                  value={filters.minPrice}
-                  onChange={(e) => handleFilterChange('minPrice', e.target.value)}
-                  placeholder="Mínimo"
-                  className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-                />
-                <input
-                  type="number"
-                  value={filters.maxPrice}
-                  onChange={(e) => handleFilterChange('maxPrice', e.target.value)}
-                  placeholder="Máximo"
-                  className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-                />
-              </div>
+            <div className="space-y-0.5">
+              <label className="block text-xs font-semibold text-gray-700">Precio (USD)</label>
+              <RangeSlider
+                min={PRICE_MIN}
+                max={PRICE_MAX}
+                step={1000}
+                minValue={filters.minPrice}
+                maxValue={filters.maxPrice}
+                onChange={(min, max) => {
+                  const newFilters = { ...filters, minPrice: min, maxPrice: max };
+                  setFilters(newFilters);
+                  onFilterChange(newFilters);
+                }}
+                formatValue={(v) => `$${v.toLocaleString()}`}
+              />
             </div>
 
             {/* Area Range */}
-            <div>
-              <label className="block text-xs font-semibold text-gray-700 mb-1">Área (m²)</label>
-              <div className="grid grid-cols-2 gap-2">
-                <input
-                  type="number"
-                  value={filters.minArea}
-                  onChange={(e) => handleFilterChange('minArea', e.target.value)}
-                  placeholder="Mínimo"
-                  className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-                />
-                <input
-                  type="number"
-                  value={filters.maxArea}
-                  onChange={(e) => handleFilterChange('maxArea', e.target.value)}
-                  placeholder="Máximo"
-                  className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-                />
-              </div>
+            <div className="space-y-0.5">
+              <label className="block text-xs font-semibold text-gray-700">Área (m²)</label>
+              <RangeSlider
+                min={AREA_MIN}
+                max={AREA_MAX}
+                step={50}
+                minValue={filters.minArea}
+                maxValue={filters.maxArea}
+                onChange={(min, max) => {
+                  const newFilters = { ...filters, minArea: min, maxArea: max };
+                  setFilters(newFilters);
+                  onFilterChange(newFilters);
+                }}
+                formatValue={(v) => `${v.toLocaleString()} m²`}
+              />
             </div>
 
             {/* Rooms */}

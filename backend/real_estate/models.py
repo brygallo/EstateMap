@@ -1,6 +1,7 @@
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 from django.conf import settings
+from .validators import validate_image_size, validate_image_dimensions, validate_image_format
 
 
 class User(AbstractUser):
@@ -22,8 +23,6 @@ class Property(models.Model):
     STATUS_CHOICES = [
         ("for_sale", "For Sale"),
         ("for_rent", "For Rent"),
-        ("sold", "Sold"),
-        ("rented", "Rented"),
         ("inactive", "Inactive"),
     ]
 
@@ -84,14 +83,25 @@ class Property(models.Model):
 
 
 class PropertyImage(models.Model):
-    """Images for properties stored in MinIO"""
+    """Images for properties stored in MinIO with optimization"""
     property = models.ForeignKey(
         Property,
         on_delete=models.CASCADE,
         related_name="images"
     )
-    image = models.ImageField(upload_to="properties/")
+    image = models.ImageField(
+        upload_to="properties/",
+        validators=[validate_image_size, validate_image_dimensions, validate_image_format]
+    )
+    thumbnail = models.ImageField(
+        upload_to="properties/thumbnails/",
+        blank=True,
+        null=True,
+        help_text="Thumbnail optimizado para previsualizaciones"
+    )
     is_main = models.BooleanField(default=False)
+    original_filename = models.CharField(max_length=255, blank=True)
+    file_size = models.IntegerField(default=0, help_text="Tamaño del archivo en bytes")
     uploaded_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
@@ -99,3 +109,43 @@ class PropertyImage(models.Model):
 
     def __str__(self):
         return f"Image for {self.property.title or f'Property {self.property.pk}'}"
+
+    def save(self, *args, **kwargs):
+        """Override save to optimize image on upload"""
+        from .image_utils import optimize_image, create_thumbnail
+
+        if self.image and not self.pk:  # Solo optimizar en la primera carga
+            # Guardar nombre original
+            self.original_filename = self.image.name
+
+            # Guardar tamaño original para logging
+            original_size = self.image.size
+
+            # Optimizar imagen principal
+            self.image = optimize_image(
+                self.image,
+                max_width=1920,
+                max_height=1920,
+                quality=85,
+                format='WEBP'
+            )
+
+            # Crear thumbnail
+            self.thumbnail = create_thumbnail(
+                self.image,
+                size=(400, 400),
+                quality=80
+            )
+
+            # Actualizar tamaño del archivo
+            self.file_size = self.image.size
+
+            # Log del ahorro de espacio
+            if original_size > 0:
+                savings = ((original_size - self.image.size) / original_size) * 100
+                print(f"Imagen optimizada: {self.original_filename}")
+                print(f"  Tamaño original: {round(original_size / 1024, 2)} KB")
+                print(f"  Tamaño optimizado: {round(self.image.size / 1024, 2)} KB")
+                print(f"  Ahorro: {round(savings, 2)}%")
+
+        super().save(*args, **kwargs)

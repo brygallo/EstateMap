@@ -491,17 +491,82 @@ const AddProperty = () => {
 
   const bindMapRef = (map) => { window._leaflet_map_ref = map; };
 
-  // Handle image selection
+  // Handle image selection with validation
   const handleImageChange = (e) => {
     const files = Array.from(e.target.files);
-    setImageFiles([...imageFiles, ...files]);
 
-    // Create preview URLs
-    const newImages = files.map((file) => ({
-      file,
-      preview: URL.createObjectURL(file),
-    }));
-    setImages([...images, ...newImages]);
+    // Validaciones
+    const MAX_IMAGES = 10;
+    const MAX_SIZE_MB = 10;
+    const ALLOWED_TYPES = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+
+    // Validar número máximo de imágenes
+    const totalImages = images.length + existingImages.length + files.length;
+    if (totalImages > MAX_IMAGES) {
+      alert(`Solo puedes subir un máximo de ${MAX_IMAGES} imágenes por propiedad. Actualmente tienes ${images.length + existingImages.length} y estás intentando agregar ${files.length}.`);
+      e.target.value = ''; // Reset input
+      return;
+    }
+
+    // Validar cada archivo
+    const validFiles = [];
+    const errors = [];
+
+    files.forEach((file, index) => {
+      // Validar tamaño
+      const sizeMB = file.size / (1024 * 1024);
+      if (sizeMB > MAX_SIZE_MB) {
+        errors.push(`"${file.name}" es demasiado grande (${sizeMB.toFixed(2)}MB). Máximo: ${MAX_SIZE_MB}MB`);
+        return;
+      }
+
+      // Validar tipo
+      if (!ALLOWED_TYPES.includes(file.type.toLowerCase())) {
+        errors.push(`"${file.name}" tiene un formato no permitido. Use: JPG, PNG o WebP`);
+        return;
+      }
+
+      // Validar dimensiones mínimas (opcional)
+      const img = new Image();
+      img.src = URL.createObjectURL(file);
+      img.onload = () => {
+        if (img.width < 200 || img.height < 200) {
+          console.warn(`"${file.name}" tiene dimensiones muy pequeñas (${img.width}x${img.height}px). Se recomienda mínimo 200x200px`);
+        }
+      };
+
+      validFiles.push(file);
+    });
+
+    // Mostrar errores si los hay
+    if (errors.length > 0) {
+      alert('❌ Algunas imágenes no pudieron ser agregadas:\n\n' + errors.join('\n'));
+    }
+
+    // Si hay archivos válidos, agregarlos
+    if (validFiles.length > 0) {
+      setImageFiles([...imageFiles, ...validFiles]);
+
+      // Create preview URLs
+      const newImages = validFiles.map((file) => {
+        const sizeMB = (file.size / (1024 * 1024)).toFixed(2);
+        return {
+          file,
+          preview: URL.createObjectURL(file),
+          size: sizeMB,
+          name: file.name
+        };
+      });
+      setImages([...images, ...newImages]);
+
+      // Mostrar mensaje de éxito
+      if (validFiles.length > 0) {
+        console.log(`✅ ${validFiles.length} imagen(es) agregada(s). Las imágenes serán optimizadas automáticamente al subir.`);
+      }
+    }
+
+    // Reset input
+    e.target.value = '';
   };
 
   // Remove new image
@@ -1007,19 +1072,28 @@ const AddProperty = () => {
                   {/* New Images Preview */}
                   {images.length > 0 && (
                     <div>
-                      <h4 className="text-sm font-semibold text-gray-700 mb-3">Nuevas Imágenes</h4>
+                      <h4 className="text-sm font-semibold text-gray-700 mb-3">
+                        Nuevas Imágenes ({images.length}/10)
+                        <span className="ml-2 text-xs text-blue-600 font-normal">✨ Serán optimizadas automáticamente</span>
+                      </h4>
                       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                         {images.map((img, index) => (
                           <div key={index} className="relative group">
                             <img
                               src={img.preview}
                               alt="Preview"
-                              className="w-full h-32 object-cover rounded-lg"
+                              className="w-full h-32 object-cover rounded-lg border-2 border-gray-200"
                             />
+                            {/* File size badge */}
+                            <div className="absolute bottom-2 left-2 bg-black/70 text-white text-xs px-2 py-1 rounded">
+                              {img.size} MB
+                            </div>
+                            {/* Remove button */}
                             <button
                               type="button"
                               onClick={() => handleRemoveNewImage(index)}
-                              className="absolute top-2 right-2 bg-red-500 text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                              className="absolute top-2 right-2 bg-red-500 text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600"
+                              title="Eliminar imagen"
                             >
                               <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -1033,18 +1107,20 @@ const AddProperty = () => {
 
                   {/* Upload Button */}
                   <div>
-                    <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-gray-300 rounded-xl cursor-pointer hover:bg-gray-50 transition-all">
-                      <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                    <label className="flex flex-col items-center justify-center w-full h-40 border-2 border-dashed border-gray-300 rounded-xl cursor-pointer hover:bg-gray-50 transition-all hover:border-primary">
+                      <div className="flex flex-col items-center justify-center py-4 px-6">
                         <svg className="h-10 w-10 text-gray-400 mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
                         </svg>
-                        <p className="text-sm text-gray-600 font-semibold">Haz clic para subir imágenes</p>
-                        <p className="text-xs text-gray-500 mt-1">PNG, JPG hasta 10MB</p>
+                        <p className="text-sm text-gray-600 font-semibold mb-1">Haz clic para subir imágenes</p>
+                        <p className="text-xs text-gray-500">PNG, JPG, WebP • Máx. 10MB por imagen</p>
+                        <p className="text-xs text-blue-600 mt-2 font-medium">✨ Optimización automática sin pérdida de calidad</p>
+                        <p className="text-xs text-gray-400 mt-1">Máximo 10 imágenes</p>
                       </div>
                       <input
                         type="file"
                         className="hidden"
-                        accept="image/*"
+                        accept="image/jpeg,image/jpg,image/png,image/webp"
                         multiple
                         onChange={handleImageChange}
                       />

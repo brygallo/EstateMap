@@ -124,3 +124,29 @@ STORAGES = {
         "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
     },
 }
+
+# ========================================
+# FILE UPLOAD SETTINGS
+# ========================================
+# Tamaño máximo de upload (10MB por archivo)
+DATA_UPLOAD_MAX_MEMORY_SIZE = 10 * 1024 * 1024  # 10MB
+
+# Tamaño máximo total de request (50MB para múltiples archivos)
+FILE_UPLOAD_MAX_MEMORY_SIZE = 50 * 1024 * 1024  # 50MB
+
+# Formatos de imagen permitidos
+ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp']
+
+# Configuración de optimización de imágenes
+IMAGE_OPTIMIZATION = {
+    'MAX_WIDTH': 1920,
+    'MAX_HEIGHT': 1920,
+    'QUALITY': 85,  # 85% de calidad - excelente balance calidad/tamaño
+    'FORMAT': 'WEBP',  # WebP ofrece mejor compresión que JPEG/PNG
+    'THUMBNAIL_SIZE': (400, 400),
+    'THUMBNAIL_QUALITY': 80,
+}
+
+# Límites por tipo de usuario (futuro: implementar diferentes límites por plan)
+MAX_IMAGES_PER_PROPERTY = 10
+MAX_IMAGE_SIZE_MB = 10

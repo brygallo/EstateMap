@@ -78,7 +78,7 @@ def create_test_properties(users):
     print("\n🏡 Creando 200 propiedades de prueba...")
 
     property_types = ['house', 'apartment', 'land', 'commercial']
-    statuses = ['for_sale', 'for_rent']
+    statuses = ['for_sale', 'for_rent', 'inactive']
 
     titles_casa = [
         "Casa Moderna", "Casa Acogedora", "Casa Familiar", "Casa con Jardín", "Casa Espaciosa",

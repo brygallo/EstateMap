@@ -10,11 +10,13 @@ User = get_user_model()
 
 class PropertyImageSerializer(serializers.ModelSerializer):
     image = serializers.SerializerMethodField()
+    thumbnail = serializers.SerializerMethodField()
+    file_size_kb = serializers.SerializerMethodField()
 
     class Meta:
         model = PropertyImage
-        fields = ['id', 'image', 'is_main', 'uploaded_at']
-        read_only_fields = ['uploaded_at']
+        fields = ['id', 'image', 'thumbnail', 'is_main', 'uploaded_at', 'file_size', 'file_size_kb', 'original_filename']
+        read_only_fields = ['uploaded_at', 'file_size', 'original_filename']
 
     def get_image(self, obj):
         if obj.image:
@@ -28,14 +30,32 @@ class PropertyImageSerializer(serializers.ModelSerializer):
             return f"http://localhost:8000/api/media/{obj.image.name}"
         return None
 
+    def get_thumbnail(self, obj):
+        if obj.thumbnail:
+            request = self.context.get('request')
+            if request:
+                return request.build_absolute_uri(f"/api/media/{obj.thumbnail.name}")
+            return f"http://localhost:8000/api/media/{obj.thumbnail.name}"
+        return None
+
+    def get_file_size_kb(self, obj):
+        """Return file size in KB for better readability"""
+        return round(obj.file_size / 1024, 2) if obj.file_size > 0 else 0
+
 
 class PropertySerializer(serializers.ModelSerializer):
     owner = serializers.PrimaryKeyRelatedField(read_only=True)
     images = PropertyImageSerializer(many=True, read_only=True)
     uploaded_images = serializers.ListField(
-        child=serializers.ImageField(),
+        child=serializers.ImageField(
+            max_length=100,
+            allow_empty_file=False,
+            use_url=False
+        ),
         write_only=True,
-        required=False
+        required=False,
+        max_length=10,  # Máximo 10 imágenes por propiedad
+        help_text="Máximo 10 imágenes, cada una de máximo 10MB"
     )
 
     class Meta:
@@ -59,6 +79,36 @@ class PropertySerializer(serializers.ModelSerializer):
             data['owner_username'] = instance.owner.username
 
         return data
+
+    def validate_uploaded_images(self, value):
+        """Validate uploaded images"""
+        if not value:
+            return value
+
+        # Validar número máximo de imágenes
+        if len(value) > 10:
+            raise serializers.ValidationError("No se pueden subir más de 10 imágenes por propiedad")
+
+        # Validar cada imagen
+        for idx, image in enumerate(value):
+            # Validar tamaño (10MB máximo)
+            max_size_mb = 10
+            if image.size > max_size_mb * 1024 * 1024:
+                size_mb = round(image.size / (1024 * 1024), 2)
+                raise serializers.ValidationError(
+                    f"La imagen {idx + 1} es demasiado grande ({size_mb}MB). "
+                    f"El tamaño máximo permitido es {max_size_mb}MB"
+                )
+
+            # Validar formato
+            allowed_types = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp']
+            if hasattr(image, 'content_type') and image.content_type not in allowed_types:
+                raise serializers.ValidationError(
+                    f"Formato de imagen {idx + 1} no permitido. "
+                    f"Use JPEG, PNG o WebP"
+                )
+
+        return value
 
     def validate_polygon(self, value):
         """Convert polygon from simple array format to GeoJSON"""
