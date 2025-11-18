@@ -64,8 +64,39 @@ git clone https://github.com/TU_USUARIO/EstateMap.git .
 
 ---
 
+## 🤖 Despliegue Automático con GitHub Actions
+
+**¿Quieres que se despliegue automáticamente al hacer push a `main`?**
+
+### Pasos rápidos:
+
+1. **En tu servidor**, después de ejecutar `quick-start-ip.sh`:
+   ```bash
+   ./scripts/show-secrets.sh
+   ```
+
+2. **En GitHub**, ve a tu repo → **Settings** → **Secrets** → **Actions**
+
+3. **Agrega los 6 secrets** que te muestra el script anterior
+
+4. **¡Listo!** Cada push a `main` desplegará automáticamente
+
+📖 **Guía completa:** [GITHUB_ACTIONS_SETUP.md](./GITHUB_ACTIONS_SETUP.md)
+
+---
+
 ## 🔄 Actualizar la Aplicación
 
+### Opción A: Automático (con GitHub Actions configurado)
+```bash
+# Desde tu computadora local
+git push origin main
+
+# GitHub Actions desplegará automáticamente
+# Ve el progreso en: GitHub → Actions
+```
+
+### Opción B: Manual (en el servidor)
 ```bash
 # Opción con IP
 ./scripts/deploy-ip.sh
@@ -104,6 +135,7 @@ docker-compose -f docker-compose.ip.yml exec -T db pg_dump -U postgres estatemap
 
 - **[DEPLOYMENT_IP.md](./DEPLOYMENT_IP.md)** - Guía completa con IP
 - **[DEPLOYMENT.md](./DEPLOYMENT.md)** - Guía completa con dominio
+- **[GITHUB_ACTIONS_SETUP.md](./GITHUB_ACTIONS_SETUP.md)** - Configurar despliegue automático
 - **[SISTEMA_OPTIMIZACION_IMAGENES.md](./SISTEMA_OPTIMIZACION_IMAGENES.md)** - Sistema de imágenes
 
 ---
