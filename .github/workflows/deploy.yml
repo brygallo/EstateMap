@@ -7,46 +7,36 @@ on:
 
 jobs:
   deploy:
-    name: Deploy to Server
+    name: Deploy Backend & Frontend
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Deploy to server via SSH
+      - name: Deploy via SSH
         uses: appleboy/ssh-action@v1.0.0
         with:
           host: ${{ secrets.SERVER_IP }}
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
-            # Navigate to project directory
+            set -e
+
+            echo "📂 Navigating to project directory..."
             cd /var/www/estatemap
 
-            # Pull latest changes
-            git pull origin main
-
-            # Create .env.prod if doesn't exist
-            if [ ! -f .env.prod ]; then
-              cat > .env.prod << EOF
-            DB_PASSWORD=${{ secrets.DB_PASSWORD }}
-            MINIO_ROOT_PASSWORD=${{ secrets.MINIO_ROOT_PASSWORD }}
-            DJANGO_SECRET_KEY=${{ secrets.DJANGO_SECRET_KEY }}
-            ALLOWED_HOSTS=${{ secrets.SERVER_IP }},localhost,127.0.0.1
-            SERVER_IP=${{ secrets.SERVER_IP }}
-            EOF
-            fi
-
-            # Deploy
-            chmod +x scripts/deploy.sh
+            echo "🔄 Running deployment script..."
             ./scripts/deploy.sh
 
-      - name: Notify deployment status
+            echo "✅ Deployment completed!"
+
+      - name: Deployment Status
         if: always()
         run: |
           if [ "${{ job.status }}" == "success" ]; then
             echo "✅ Deployment successful!"
           else
             echo "❌ Deployment failed!"
+            exit 1
           fi
