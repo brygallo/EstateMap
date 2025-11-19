@@ -30,10 +30,11 @@ services:
     build:
       context: ./frontend
       dockerfile: Dockerfile.prod
+      args:
+        VITE_API_URL: ${VITE_API_URL}
+        VITE_MAPTILER_KEY: ${VITE_MAPTILER_KEY}
     container_name: estatemap_frontend
     restart: always
-    env_file:
-      - .env.prod   # ← si deseas variables para frontend (opcional)
     ports:
       - "3000:80"
     depends_on:

@@ -1,6 +1,15 @@
 # Build stage
 FROM node:20-alpine AS builder
 WORKDIR /app
+
+# Build arguments (pasadas desde docker-compose)
+ARG VITE_API_URL
+ARG VITE_MAPTILER_KEY
+
+# Convertir ARG a ENV para que Vite las pueda leer
+ENV VITE_API_URL=$VITE_API_URL
+ENV VITE_MAPTILER_KEY=$VITE_MAPTILER_KEY
+
 COPY package.json package-lock.json* ./
 RUN npm install --legacy-peer-deps
 COPY . .
