@@ -39,6 +39,7 @@ jobs:
             echo "MINIO_ENDPOINT=${{ secrets.MINIO_ENDPOINT }}" >> .env.prod
             echo "MINIO_ACCESS_KEY=${{ secrets.MINIO_ACCESS_KEY }}" >> .env.prod
             echo "MINIO_SECRET_KEY=${{ secrets.MINIO_SECRET_KEY }}" >> .env.prod
+            echo "MINIO_USE_SSL=False" >> .env.prod
             echo "MINIO_BUCKET_NAME=${{ secrets.MINIO_BUCKET_NAME }}" >> .env.prod
             
 

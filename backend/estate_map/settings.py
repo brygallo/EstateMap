@@ -4,9 +4,12 @@ from datetime import timedelta
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-SECRET_KEY = os.getenv('DJANGO_SECRET_KEY', 'change-me')
-DEBUG = os.getenv('DJANGO_DEBUG', 'True') == 'True'
-ALLOWED_HOSTS = ['*']
+SECRET_KEY = os.getenv('SECRET_KEY', os.getenv('DJANGO_SECRET_KEY', 'change-me'))
+DEBUG = os.getenv('DEBUG', 'True') == 'True'
+
+# Parse ALLOWED_HOSTS from comma-separated string
+allowed_hosts_str = os.getenv('ALLOWED_HOSTS', '*')
+ALLOWED_HOSTS = [host.strip() for host in allowed_hosts_str.split(',')] if allowed_hosts_str != '*' else ['*']
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -52,16 +55,28 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'estate_map.wsgi.application'
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': os.getenv('POSTGRES_DB', 'estatedb'),
-        'USER': os.getenv('POSTGRES_USER', 'estateuser'),
-        'PASSWORD': os.getenv('POSTGRES_PASSWORD', 'estatepass'),
-        'HOST': os.getenv('DB_HOST', 'db'),
-        'PORT': os.getenv('DB_PORT', '5432'),
+# Database configuration
+# Support both DATABASE_URL (production) and individual vars (development)
+import dj_database_url
+
+database_url = os.getenv('DATABASE_URL')
+if database_url:
+    # Production: use DATABASE_URL
+    DATABASES = {
+        'default': dj_database_url.parse(database_url)
     }
-}
+else:
+    # Development: use individual variables
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.postgresql',
+            'NAME': os.getenv('POSTGRES_DB', 'estatedb'),
+            'USER': os.getenv('POSTGRES_USER', 'estateuser'),
+            'PASSWORD': os.getenv('POSTGRES_PASSWORD', 'estatepass'),
+            'HOST': os.getenv('DB_HOST', 'db'),
+            'PORT': os.getenv('DB_PORT', '5432'),
+        }
+    }
 
 AUTH_PASSWORD_VALIDATORS = [
     {
