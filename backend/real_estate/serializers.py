@@ -197,7 +197,7 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
         try:
             user = User.objects.get(email=email)
         except User.DoesNotExist:
-            raise serializers.ValidationError({"detail": "No se encontró una cuenta con este correo electrónico"})
+            raise serializers.ValidationError({"detail": "Correo electrónico o contraseña incorrectos"})
 
         # Replace email with the resolved username for the parent validation
         attrs["username"] = user.username
@@ -206,7 +206,10 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
         try:
             data = super().validate(attrs)
         except serializers.ValidationError as e:
-            # If parent validation fails, it's likely due to incorrect password
+            # Translate any error messages to Spanish
+            error_detail = str(e.detail.get('detail', '')) if hasattr(e.detail, 'get') else str(e.detail)
+            if 'No active account' in error_detail or 'credentials' in error_detail:
+                raise serializers.ValidationError({"detail": "Correo electrónico o contraseña incorrectos"})
             raise serializers.ValidationError({"detail": "Correo electrónico o contraseña incorrectos"})
 
         data["user"] = {
