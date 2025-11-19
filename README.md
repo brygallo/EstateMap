@@ -8,8 +8,6 @@ Sistema de gestión de propiedades inmobiliarias con visualización en mapa inte
 
 - [Desarrollo Local](#-desarrollo-local)
 - [Deployment en Producción](#-deployment-en-producción)
-  - [Opción A: Con IP (Sin Dominio)](#opción-a-deployment-con-ip-sin-dominio)
-  - [Opción B: Con Dominio y SSL](#opción-b-deployment-con-dominio-y-ssl)
 - [CI/CD con GitHub Actions](#-cicd-con-github-actions)
 - [Stack Tecnológico](#-stack-tecnológico)
 
@@ -41,69 +39,185 @@ docker-compose up
 
 ## 🚀 Deployment en Producción
 
-### Opción A: Deployment con IP (Sin Dominio)
+### Arquitectura
 
-#### 1️⃣ Setup Inicial del Servidor
+En producción se utilizan:
+- **PostgreSQL** y **MinIO** instalados localmente en el servidor
+- **Nginx** instalado localmente como reverse proxy
+- **Backend** y **Frontend** en contenedores Docker
 
-En tu servidor Contabo (Ubuntu 20.04/22.04):
+### Prerrequisitos en el Servidor
+
+1. **Sistema Operativo:** Ubuntu 20.04/22.04 LTS
+2. **Servicios instalados localmente:**
+   - PostgreSQL 15
+   - MinIO
+   - Nginx
+   - Docker & Docker Compose
+   - Git
+
+---
+
+### 1️⃣ Instalación de Servicios Locales
+
+#### PostgreSQL
 
 ```bash
-# Conectar al servidor
-ssh root@TU_IP_DEL_SERVIDOR
+# Instalar PostgreSQL
+sudo apt update
+sudo apt install postgresql postgresql-contrib -y
 
-# Descargar y ejecutar script de setup
-curl -o setup.sh https://raw.githubusercontent.com/brygallo/EstateMap/main/scripts/setup-server.sh
-chmod +x setup.sh
-sudo ./setup.sh
+# Iniciar servicio
+sudo systemctl start postgresql
+sudo systemctl enable postgresql
 
-# IMPORTANTE: Cerrar sesión y volver a conectar
-exit
-ssh root@TU_IP_DEL_SERVIDOR
+# Crear usuario y base de datos
+sudo -u postgres psql
 ```
 
-El script instala:
-- Docker y Docker Compose
-- Git
-- Configura firewall (UFW)
-- Abre puertos 80, 443, 9001
+En el prompt de PostgreSQL:
 
-#### 2️⃣ Clonar Repositorio
-
-```bash
-# Clonar en /var/www/estatemap
-git clone https://github.com/brygallo/EstateMap.git /var/www/estatemap
-cd /var/www/estatemap
+```sql
+CREATE USER estatemap_user WITH PASSWORD 'your_secure_password';
+CREATE DATABASE estatemap OWNER estatemap_user;
+GRANT ALL PRIVILEGES ON DATABASE estatemap TO estatemap_user;
+\q
 ```
 
-#### 3️⃣ Primer Deploy
+#### MinIO
 
 ```bash
-# Ejecutar script de deploy
-chmod +x scripts/deploy.sh
-./scripts/deploy.sh
+# Descargar MinIO
+wget https://dl.min.io/server/minio/release/linux-amd64/minio
+chmod +x minio
+sudo mv minio /usr/local/bin/
+
+# Crear usuario y directorios
+sudo useradd -r minio-user -s /sbin/nologin
+sudo mkdir -p /mnt/data/minio
+sudo chown minio-user:minio-user /mnt/data/minio
+
+# Crear servicio systemd
+sudo nano /etc/systemd/system/minio.service
 ```
 
-El script automáticamente:
-- Detecta la IP del servidor
-- Genera contraseñas seguras
-- Crea archivo `.env.prod`
-- Construye imágenes Docker
-- Inicia todos los servicios
-- Crea bucket de MinIO
+Contenido de `/etc/systemd/system/minio.service`:
 
-#### 4️⃣ Configurar Nginx (Reverse Proxy)
+```ini
+[Unit]
+Description=MinIO
+Documentation=https://min.io/docs/minio/linux/index.html
+Wants=network-online.target
+After=network-online.target
+AssertFileIsExecutable=/usr/local/bin/minio
+
+[Service]
+WorkingDirectory=/usr/local
+
+User=minio-user
+Group=minio-user
+ProtectProc=invisible
+
+Environment="MINIO_ROOT_USER=your_access_key"
+Environment="MINIO_ROOT_PASSWORD=your_secret_key"
+
+ExecStart=/usr/local/bin/minio server /mnt/data/minio --console-address ":9001"
+
+Restart=always
+LimitNOFILE=65536
+TasksMax=infinity
+
+[Install]
+WantedBy=multi-user.target
+```
 
 ```bash
-# Instalar nginx
+# Iniciar MinIO
+sudo systemctl daemon-reload
+sudo systemctl start minio
+sudo systemctl enable minio
+sudo systemctl status minio
+```
+
+#### Nginx
+
+```bash
+# Instalar Nginx
 sudo apt install nginx -y
 
-# Copiar configuración
-sudo cp /var/www/estatemap/nginx/estatemap-ip.conf /etc/nginx/sites-available/estatemap
+# Iniciar servicio
+sudo systemctl start nginx
+sudo systemctl enable nginx
+```
 
-# Editar y reemplazar YOUR_SERVER_IP con tu IP real
+#### Docker
+
+```bash
+# Instalar Docker
+curl -fsSL https://get.docker.com -o get-docker.sh
+sudo sh get-docker.sh
+
+# Agregar usuario al grupo docker
+sudo usermod -aG docker $USER
+
+# Instalar Docker Compose
+sudo apt install docker-compose -y
+
+# Verificar instalación
+docker --version
+docker-compose --version
+```
+
+---
+
+### 2️⃣ Configuración del Proyecto
+
+```bash
+# Clonar repositorio
+git clone https://github.com/brygallo/EstateMap.git /var/www/estatemap
+cd /var/www/estatemap
+
+# Crear archivo de configuración
+cp .env.prod.example .env.prod
+nano .env.prod
+```
+
+Configurar `.env.prod`:
+
+```bash
+# Django
+DJANGO_SECRET_KEY=generated-secret-key-here
+ALLOWED_HOSTS=yourdomain.com,your_ip,localhost,127.0.0.1
+
+# PostgreSQL
+DB_USER=estatemap_user
+DB_PASSWORD=your_secure_password
+DB_NAME=estatemap
+
+# MinIO
+MINIO_ENDPOINT=localhost:9000
+MINIO_ACCESS_KEY=your_access_key
+MINIO_SECRET_KEY=your_secret_key
+MINIO_USE_SSL=False
+MINIO_BUCKET_NAME=estatemap
+```
+
+Generar secret key:
+
+```bash
+openssl rand -base64 50
+```
+
+---
+
+### 3️⃣ Configurar Nginx
+
+```bash
+# Copiar configuración
+sudo cp /var/www/estatemap/nginx/estatemap.conf /etc/nginx/sites-available/estatemap
+
+# Editar y reemplazar YOUR_DOMAIN_OR_IP
 sudo nano /etc/nginx/sites-available/estatemap
-# Buscar: YOUR_SERVER_IP
-# Reemplazar con: tu_ip_real (ejemplo: 123.45.67.89)
 
 # Activar sitio
 sudo ln -s /etc/nginx/sites-available/estatemap /etc/nginx/sites-enabled/
@@ -115,177 +229,110 @@ sudo nginx -t
 sudo systemctl reload nginx
 ```
 
-#### 5️⃣ Crear Superusuario
+---
+
+### 4️⃣ Primer Deploy
 
 ```bash
 cd /var/www/estatemap
-docker-compose -f docker-compose.prod.yml exec backend python manage.py createsuperuser
+chmod +x scripts/deploy.sh
+./scripts/deploy.sh
 ```
 
-#### ✅ Aplicación Lista
-
-- **Frontend:** `http://TU_IP/`
-- **Admin:** `http://TU_IP/admin/`
-- **API:** `http://TU_IP/api/`
-- **MinIO Console:** `http://TU_IP:9001`
+El script automáticamente:
+- Hace pull de los últimos cambios
+- Construye las imágenes Docker
+- Inicia backend y frontend
+- Ejecuta migraciones
+- Recolecta archivos estáticos
 
 ---
 
-### Opción B: Deployment con Dominio y SSL
-
-Si ya tienes un dominio:
-
-#### 1️⃣ Configurar DNS
-
-En tu proveedor de dominio (GoDaddy, Namecheap, etc.):
-
-```
-Tipo: A
-Nombre: @
-Valor: TU_IP_DEL_SERVIDOR
-
-Tipo: A
-Nombre: www
-Valor: TU_IP_DEL_SERVIDOR
-```
-
-#### 2️⃣ Seguir pasos 1-3 de Opción A
-
-Completar setup del servidor, clonar repo y primer deploy.
-
-#### 3️⃣ Configurar Nginx con SSL
+### 5️⃣ Crear Superusuario
 
 ```bash
-# Copiar configuración de dominio
-sudo cp /var/www/estatemap/nginx/estatemap-domain.conf /etc/nginx/sites-available/estatemap
-
-# Editar y reemplazar YOUR_DOMAIN.COM
-sudo nano /etc/nginx/sites-available/estatemap
-# Buscar: YOUR_DOMAIN.COM
-# Reemplazar con: tudominio.com
-
-# Activar sitio
-sudo ln -s /etc/nginx/sites-available/estatemap /etc/nginx/sites-enabled/
-
-# Verificar
-sudo nginx -t
-sudo systemctl reload nginx
+docker-compose -f docker-compose.prod.yml exec backend python manage.py createsuperuser
 ```
 
-#### 4️⃣ Obtener Certificado SSL (Let's Encrypt)
+---
+
+### 6️⃣ Configurar SSL (Opcional - Con Dominio)
 
 ```bash
 # Instalar Certbot
 sudo apt install certbot python3-certbot-nginx -y
 
-# Obtener certificado SSL (reemplazar con tu dominio)
-sudo certbot --nginx -d tudominio.com -d www.tudominio.com
+# Obtener certificado
+sudo certbot --nginx -d yourdomain.com -d www.yourdomain.com
 
-# Certbot automáticamente:
-# - Obtiene certificado SSL
-# - Configura nginx
-# - Configura renovación automática
+# Certbot configurará automáticamente nginx con HTTPS
 ```
-
-#### 5️⃣ Actualizar Django Settings
-
-```bash
-cd /var/www/estatemap
-
-# Editar .env.prod
-nano .env.prod
-
-# Agregar tu dominio a ALLOWED_HOSTS
-ALLOWED_HOSTS=tudominio.com,www.tudominio.com,TU_IP,localhost,127.0.0.1
-
-# Reiniciar backend
-docker-compose -f docker-compose.prod.yml restart backend
-```
-
-#### 6️⃣ Crear Superusuario
-
-```bash
-docker-compose -f docker-compose.prod.yml exec backend python manage.py createsuperuser
-```
-
-#### ✅ Aplicación con SSL Lista
-
-- **Frontend:** `https://tudominio.com/`
-- **Admin:** `https://tudominio.com/admin/`
-- **API:** `https://tudominio.com/api/`
-- **MinIO Console:** `http://tudominio.com:9001`
 
 ---
 
 ## 🤖 CI/CD con GitHub Actions
 
-### Configuración Automática de Deploy
+### Configuración Automática
 
-Cada `git push` a `main` despliega automáticamente.
+Cada `git push` a `main` despliega automáticamente en producción.
 
-#### 1️⃣ Generar Clave SSH (En tu computadora)
+### Setup (Una Sola Vez)
+
+#### 1. Generar Clave SSH
+
+En tu computadora local:
 
 ```bash
 # Generar clave SSH
 ssh-keygen -t ed25519 -C "github-actions-estatemap"
 # Guardar en: ~/.ssh/estatemap_deploy
-# Passphrase: (dejar vacío)
+# Sin passphrase (presiona Enter)
 
 # Copiar clave pública al servidor
-ssh-copy-id -i ~/.ssh/estatemap_deploy.pub root@TU_IP_DEL_SERVIDOR
+ssh-copy-id -i ~/.ssh/estatemap_deploy.pub root@YOUR_SERVER_IP
 
-# Mostrar clave privada (para GitHub Secrets)
+# Mostrar clave privada (para GitHub)
 cat ~/.ssh/estatemap_deploy
 ```
 
-#### 2️⃣ Configurar GitHub Secrets
+#### 2. Configurar GitHub Secrets
 
-Ve a tu repositorio en GitHub:
+En GitHub: **Settings** → **Secrets and variables** → **Actions** → **New repository secret**
 
-**Settings** → **Secrets and variables** → **Actions** → **New repository secret**
-
-Agrega estos 5 secrets:
+Crear estos secrets:
 
 | Secret Name | Valor | Descripción |
 |-------------|-------|-------------|
-| `SSH_PRIVATE_KEY` | Contenido de `~/.ssh/estatemap_deploy` | Clave SSH completa (incluye BEGIN y END) |
-| `SERVER_IP` | Tu IP del servidor | Ejemplo: `123.45.67.89` |
-| `SERVER_USER` | `root` | Usuario SSH del servidor |
-| `DJANGO_SECRET_KEY` | Ver `.env.prod` en servidor | Django secret key |
-| `DB_PASSWORD` | Ver `.env.prod` en servidor | Contraseña PostgreSQL |
-| `MINIO_ROOT_PASSWORD` | Ver `.env.prod` en servidor | Contraseña MinIO |
+| `SSH_PRIVATE_KEY` | Contenido completo de `~/.ssh/estatemap_deploy` | Clave SSH privada |
+| `SERVER_IP` | Tu IP o dominio | Ejemplo: `123.45.67.89` |
+| `SERVER_USER` | `root` o tu usuario SSH | Usuario del servidor |
 
-Para ver los valores en el servidor:
+#### 3. El archivo `.github/workflows/deploy.yml` ya está configurado
 
-```bash
-ssh root@TU_IP_DEL_SERVIDOR
-cat /var/www/estatemap/.env.prod
-```
+Verifica que existe en tu repositorio.
 
-#### 3️⃣ Verificar Workflow
-
-El archivo `.github/workflows/deploy.yml` ya está configurado.
-
-#### 4️⃣ Probar Auto-Deploy
+#### 4. Probar Auto-Deploy
 
 ```bash
-# En tu computadora local
+# En tu máquina local
 git add .
 git commit -m "test: auto deploy"
 git push origin main
 
-# Ver progreso en GitHub
-# https://github.com/TU_USUARIO/EstateMap/actions
+# Ver el progreso en GitHub Actions
+# https://github.com/YOUR_USER/EstateMap/actions
 ```
 
-#### ✅ Auto-Deploy Activo
+### ✅ Flujo Automático
 
-Cada push a `main`:
-1. GitHub Actions se conecta al servidor
-2. Hace `git pull`
-3. Ejecuta `./scripts/deploy.sh`
-4. Reconstruye y reinicia contenedores
-5. Notifica resultado
+Cada `git push` a `main`:
+
+1. ✅ GitHub Actions detecta el push
+2. ✅ Se conecta al servidor vía SSH
+3. ✅ Ejecuta `git pull origin main`
+4. ✅ Ejecuta `./scripts/deploy.sh`
+5. ✅ Reconstruye y reinicia contenedores
+6. ✅ Notifica si hubo errores
 
 ---
 
@@ -294,8 +341,6 @@ Cada push a `main`:
 ### Ver Logs
 
 ```bash
-cd /var/www/estatemap
-
 # Todos los servicios
 docker-compose -f docker-compose.prod.yml logs -f
 
@@ -309,23 +354,23 @@ docker-compose -f docker-compose.prod.yml logs -f frontend
 ### Reiniciar Servicios
 
 ```bash
-# Reiniciar todo
+# Todo
 docker-compose -f docker-compose.prod.yml restart
 
-# Reiniciar solo backend
+# Solo backend
 docker-compose -f docker-compose.prod.yml restart backend
 ```
 
 ### Detener/Iniciar
 
 ```bash
-# Detener todo
+# Detener
 docker-compose -f docker-compose.prod.yml down
 
-# Iniciar todo
+# Iniciar
 docker-compose -f docker-compose.prod.yml up -d
 
-# Ver estado
+# Estado
 docker-compose -f docker-compose.prod.yml ps
 ```
 
@@ -333,13 +378,13 @@ docker-compose -f docker-compose.prod.yml ps
 
 ```bash
 # Crear backup
-docker-compose -f docker-compose.prod.yml exec -T db pg_dump -U postgres estatemap > backup_$(date +%Y%m%d_%H%M%S).sql
+sudo -u postgres pg_dump estatemap > backup_$(date +%Y%m%d_%H%M%S).sql
 
-# Restaurar backup
-docker-compose -f docker-compose.prod.yml exec -T db psql -U postgres estatemap < backup_20240101_120000.sql
+# Restaurar
+sudo -u postgres psql estatemap < backup_20240101_120000.sql
 ```
 
-### Actualización Manual
+### Actualizar Manualmente
 
 ```bash
 cd /var/www/estatemap
@@ -364,22 +409,21 @@ git pull origin main
 EstateMap/
 ├── .github/
 │   └── workflows/
-│       └── deploy.yml              # GitHub Actions CI/CD
-├── backend/                        # Django REST API
-│   ├── Dockerfile                  # Docker config
-│   └── requirements.txt            # Python dependencies
-├── frontend/                       # React + Vite
-│   ├── Dockerfile                  # Dev Docker config
-│   ├── Dockerfile.prod             # Production Docker config
-│   └── nginx.conf                  # Nginx config for container
+│       └── deploy.yml           # GitHub Actions CI/CD
+├── backend/                     # Django REST API
+│   ├── Dockerfile               # Docker config
+│   └── requirements.txt         # Python dependencies
+├── frontend/                    # React + Vite
+│   ├── Dockerfile               # Dev Docker config
+│   ├── Dockerfile.prod          # Production Docker config
+│   └── nginx.conf               # Nginx config for container
 ├── nginx/
-│   ├── estatemap-ip.conf           # Nginx config para IP
-│   └── estatemap-domain.conf       # Nginx config para dominio
+│   └── estatemap.conf           # Nginx server config
 ├── scripts/
-│   ├── deploy.sh                   # Script de deployment
-│   └── setup-server.sh             # Setup inicial del servidor
-├── docker-compose.yml              # Desarrollo local
-└── docker-compose.prod.yml         # Producción
+│   └── deploy.sh                # Deployment script
+├── .env.prod.example            # Production env template
+├── docker-compose.yml           # Development
+└── docker-compose.prod.yml      # Production
 ```
 
 ---
@@ -388,11 +432,10 @@ EstateMap/
 
 - **Autenticación:** JWT tokens con Django REST Framework Simple JWT
 - **Validación de imágenes:** Compresión y validación automática
-- **Contraseñas:** Generación automática de contraseñas seguras
-- **HTTPS:** Soporte SSL con Let's Encrypt (dominio)
+- **Variables de entorno:** Credenciales almacenadas en `.env.prod` (no versionado)
+- **HTTPS:** Soporte SSL con Let's Encrypt (opcional con dominio)
 - **Headers de seguridad:** Configurados en nginx
-- **Firewall:** UFW configurado automáticamente
-- **Variables de entorno:** Secrets almacenados en `.env.prod`
+- **Contraseñas seguras:** Generadas con OpenSSL
 
 ---
 
