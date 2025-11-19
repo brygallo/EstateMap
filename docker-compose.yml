@@ -1,13 +1,5 @@
 version: '3.9'
 services:
-  db:
-    image: postgres:15
-    environment:
-      POSTGRES_DB: ${POSTGRES_DB}
-      POSTGRES_USER: ${POSTGRES_USER}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-    volumes:
-      - pgdata:/var/lib/postgresql/data
   minio:
     image: minio/minio:latest
     command: server /data --console-address ":9001"
@@ -29,7 +21,6 @@ services:
     ports:
       - "8000:8000"
     depends_on:
-      - db
       - minio
   frontend:
     build: ./frontend
@@ -43,5 +34,4 @@ services:
     depends_on:
       - backend
 volumes:
-  pgdata:
   minio_data:
