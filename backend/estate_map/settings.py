@@ -57,14 +57,29 @@ WSGI_APPLICATION = 'estate_map.wsgi.application'
 
 # Database configuration
 # Support both DATABASE_URL (production) and individual vars (development)
-import dj_database_url
-
 database_url = os.getenv('DATABASE_URL')
 if database_url:
     # Production: use DATABASE_URL
-    DATABASES = {
-        'default': dj_database_url.parse(database_url)
-    }
+    try:
+        import dj_database_url
+        DATABASES = {
+            'default': dj_database_url.parse(database_url)
+        }
+    except ImportError:
+        # Fallback if dj_database_url not installed
+        # Parse manually
+        from urllib.parse import urlparse
+        parsed = urlparse(database_url)
+        DATABASES = {
+            'default': {
+                'ENGINE': 'django.db.backends.postgresql',
+                'NAME': parsed.path[1:],
+                'USER': parsed.username,
+                'PASSWORD': parsed.password,
+                'HOST': parsed.hostname,
+                'PORT': parsed.port or '5432',
+            }
+        }
 else:
     # Development: use individual variables
     DATABASES = {
