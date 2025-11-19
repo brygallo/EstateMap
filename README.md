@@ -186,26 +186,36 @@ Configurar `.env.prod`:
 
 ```bash
 # Django
-DJANGO_SECRET_KEY=generated-secret-key-here
-ALLOWED_HOSTS=yourdomain.com,your_ip,localhost,127.0.0.1
+DJANGO_SECRET_KEY=your-generated-secret-key-here
+ALLOWED_HOSTS=yourdomain.com,123.45.67.89,localhost,127.0.0.1
 
-# PostgreSQL
+# Database (PostgreSQL local)
+DB_HOST=123.45.67.89
 DB_USER=estatemap_user
 DB_PASSWORD=your_secure_password
 DB_NAME=estatemap
+SERVER_IP=123.45.67.89
 
-# MinIO
-MINIO_ENDPOINT=localhost:9000
-MINIO_ACCESS_KEY=your_access_key
-MINIO_SECRET_KEY=your_secret_key
+# MinIO (local service)
+MINIO_ENDPOINT=123.45.67.89:9000
+MINIO_ACCESS_KEY=your_minio_access_key
+MINIO_SECRET_KEY=your_minio_secret_key
 MINIO_USE_SSL=False
 MINIO_BUCKET_NAME=estatemap
+
+# Frontend (React/Vite)
+VITE_API_URL=http://123.45.67.89/api
+VITE_MAPTILER_KEY=your_maptiler_api_key
 ```
 
-Generar secret key:
+**Generar contraseñas seguras:**
 
 ```bash
+# Django Secret Key
 openssl rand -base64 50
+
+# Contraseñas de DB y MinIO
+openssl rand -base64 32
 ```
 
 ---
@@ -303,9 +313,21 @@ Crear estos secrets:
 
 | Secret Name | Valor | Descripción |
 |-------------|-------|-------------|
-| `SSH_PRIVATE_KEY` | Contenido completo de `~/.ssh/estatemap_deploy` | Clave SSH privada |
-| `SERVER_IP` | Tu IP o dominio | Ejemplo: `123.45.67.89` |
-| `SERVER_USER` | `root` o tu usuario SSH | Usuario del servidor |
+| `SSH_PRIVATE_KEY` | Contenido de `~/.ssh/estatemap_deploy` | Clave SSH privada completa |
+| `SERVER_IP` | Tu IP del servidor | Ejemplo: `123.45.67.89` |
+| `SERVER_USER` | `root` o tu usuario SSH | Usuario SSH del servidor |
+| `DJANGO_SECRET_KEY` | Generar con `openssl rand -base64 50` | Django secret key |
+| `ALLOWED_HOSTS` | Lista separada por comas | Ejemplo: `tudominio.com,123.45.67.89,localhost` |
+| `DB_HOST` | Host de PostgreSQL | Ejemplo: `123.45.67.89` o `localhost` |
+| `DB_USER` | Usuario de PostgreSQL | Ejemplo: `estatemap_user` |
+| `DB_PASSWORD` | Contraseña de PostgreSQL | Contraseña segura |
+| `DB_NAME` | Nombre de la base de datos | Ejemplo: `estatemap` |
+| `MINIO_ENDPOINT` | Endpoint de MinIO local | Ejemplo: `123.45.67.89:9000` |
+| `MINIO_ACCESS_KEY` | Access key de MinIO | Tu MinIO access key |
+| `MINIO_SECRET_KEY` | Secret key de MinIO | Tu MinIO secret key |
+| `MINIO_BUCKET_NAME` | Nombre del bucket | Ejemplo: `estatemap` |
+| `VITE_API_URL` | URL del API para frontend | Ejemplo: `http://123.45.67.89/api` |
+| `VITE_MAPTILER_KEY` | API Key de MapTiler | Tu MapTiler API key |
 
 #### 3. El archivo `.github/workflows/deploy.yml` ya está configurado
 
