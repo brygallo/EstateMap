@@ -7,6 +7,7 @@ from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework.settings import api_settings
 from django.http import HttpResponse, Http404
 from django.views import View
+from django.conf import settings
 from .models import Property, PropertyImage
 from django.contrib.auth import get_user_model
 from .serializers import (
@@ -82,8 +83,12 @@ class ImageProxyView(View):
     This avoids CORS issues when accessing MinIO directly from the browser
     """
     def get(self, request, image_path):
-        # Build MinIO URL
-        minio_url = f"http://minio:9000/estatemap/{image_path}"
+        # Get MinIO configuration from Django settings
+        minio_endpoint = settings.AWS_S3_ENDPOINT_URL
+        bucket_name = settings.AWS_STORAGE_BUCKET_NAME
+
+        # Build MinIO URL using configured values
+        minio_url = f"{minio_endpoint}/{bucket_name}/{image_path}"
 
         try:
             # Fetch image from MinIO
@@ -106,5 +111,9 @@ class ImageProxyView(View):
             else:
                 raise Http404("Image not found")
 
-        except requests.RequestException:
+        except requests.RequestException as e:
+            # Log the error for debugging
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.error(f"Error fetching image from MinIO: {minio_url} - {str(e)}")
             raise Http404("Image not found")
