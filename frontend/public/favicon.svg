@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <!-- Background circle -->
+  <circle cx="32" cy="32" r="30" fill="#1E3A8A"/>
+
+  <!-- House icon -->
+  <g fill="#FFFFFF">
+    <!-- Roof -->
+    <path d="M32 18 L48 30 L46 30 L46 48 L18 48 L18 30 L16 30 Z"/>
+
+    <!-- Door -->
+    <rect x="26" y="36" width="12" height="12" fill="#FCD34D"/>
+
+    <!-- Window left -->
+    <rect x="22" y="32" width="6" height="6" fill="#FCD34D"/>
+
+    <!-- Window right -->
+    <rect x="36" y="32" width="6" height="6" fill="#FCD34D"/>
+
+    <!-- Pin marker bottom -->
+    <circle cx="32" cy="54" r="4" fill="#EF4444"/>
+  </g>
+</svg>
