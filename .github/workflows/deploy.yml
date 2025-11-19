@@ -7,6 +7,7 @@ on:
 
 jobs:
   deploy:
+    name: Deploy Backend & Frontend
     runs-on: ubuntu-latest
 
     steps:
@@ -22,11 +23,11 @@ jobs:
           script: |
             set -e
 
-            echo "📂 Moving to project directory..."
+            echo "📂 Navigating to project directory..."
             cd /var/www/estatemap
 
-            echo "📝 Creating .env.prod from GitHub secrets..."
-            cat > .env.prod <<EOF
+            echo "📝 Creating .env.prod file..."
+            cat <<EOF > .env.prod
   DJANGO_SECRET_KEY=${{ secrets.DJANGO_SECRET_KEY }}
   ALLOWED_HOSTS=${{ secrets.ALLOWED_HOSTS }}
   
@@ -34,15 +35,15 @@ jobs:
   DB_PASSWORD=${{ secrets.DB_PASSWORD }}
   DB_NAME=${{ secrets.DB_NAME }}
   
+  SERVER_IP=${{ secrets.SERVER_IP }}
+  
   MINIO_ENDPOINT=${{ secrets.MINIO_ENDPOINT }}
   MINIO_ACCESS_KEY=${{ secrets.MINIO_ACCESS_KEY }}
   MINIO_SECRET_KEY=${{ secrets.MINIO_SECRET_KEY }}
   MINIO_BUCKET_NAME=${{ secrets.MINIO_BUCKET_NAME }}
   EOF
   
-  echo ".env.prod created!"
-  
-  echo "🚀 Running deploy script..."
+  echo "🔄 Running deploy script..."
   ./scripts/deploy.sh
   
-  echo "✅ Deployment finished."
+  echo "✅ Deployment completed!"
