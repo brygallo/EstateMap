@@ -7,25 +7,22 @@ services:
       dockerfile: Dockerfile
     container_name: estatemap_backend
     restart: always
-    command: sh -c "
-      python manage.py migrate &&
-      python manage.py collectstatic --noinput &&
-      gunicorn backend.wsgi:application --bind 0.0.0.0:8000 --workers 3
-    "
+    command: sh -c "python manage.py migrate && python manage.py collectstatic --noinput && gunicorn backend.wsgi:application --bind 0.0.0.0:8000 --workers 3"
+
     environment:
       DEBUG: "False"
-    SECRET_KEY: ${DJANGO_SECRET_KEY}
-    ALLOWED_HOSTS: ${ALLOWED_HOSTS}
+      SECRET_KEY: "${DJANGO_SECRET_KEY}"
+      ALLOWED_HOSTS: "${ALLOWED_HOSTS}"
 
-    # PostgreSQL server
-    DATABASE_URL: postgresql://${DB_USER}:${DB_PASSWORD}@${SERVER_IP}:5432/${DB_NAME}
+      # PostgreSQL server
+      DATABASE_URL: "postgresql://${DB_USER}:${DB_PASSWORD}@${SERVER_IP}:5432/${DB_NAME}"
 
-    # MinIO server
-    MINIO_ENDPOINT: ${MINIO_ENDPOINT}
-    MINIO_ACCESS_KEY: ${MINIO_ACCESS_KEY}
-    MINIO_SECRET_KEY: ${MINIO_SECRET_KEY}
-    MINIO_USE_SSL: "False"
-    MINIO_BUCKET_NAME: ${MINIO_BUCKET_NAME}
+      # MinIO server
+      MINIO_ENDPOINT: "${MINIO_ENDPOINT}"
+      MINIO_ACCESS_KEY: "${MINIO_ACCESS_KEY}"
+      MINIO_SECRET_KEY: "${MINIO_SECRET_KEY}"
+      MINIO_USE_SSL: "False"
+      MINIO_BUCKET_NAME: "${MINIO_BUCKET_NAME}"
 
     volumes:
       - ./backend:/app
