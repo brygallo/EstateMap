@@ -43,7 +43,9 @@ jobs:
             echo "MINIO_USE_SSL=False" >> .env.prod
             echo "MINIO_BUCKET_NAME=${{ secrets.MINIO_BUCKET_NAME }}" >> .env.prod
             
-
+            
+            echo "VITE_API_URL=${{ secrets.VITE_API_URL }}" >> .env.prod
+            
             echo "🔄 Running deploy script..."
             ./scripts/deploy.sh
 
