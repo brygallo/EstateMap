@@ -88,7 +88,7 @@ else:
             'NAME': os.getenv('POSTGRES_DB', 'estatedb'),
             'USER': os.getenv('POSTGRES_USER', 'estateuser'),
             'PASSWORD': os.getenv('POSTGRES_PASSWORD', 'estatepass'),
-            'HOST': os.getenv('DB_HOST', 'db'),
+            'HOST': os.getenv('DB_HOST', 'localhost'),
             'PORT': os.getenv('DB_PORT', '5432'),
         }
     }
