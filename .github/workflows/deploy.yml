@@ -29,7 +29,8 @@ jobs:
 
             echo "DJANGO_SECRET_KEY=${{ secrets.DJANGO_SECRET_KEY }}" > .env.prod
             echo "ALLOWED_HOSTS=${{ secrets.ALLOWED_HOSTS }}" >> .env.prod
-
+            
+            echo "DB_HOST=${{ secrets.DB_HOST }}" >> .env.prod
             echo "DB_USER=${{ secrets.DB_USER }}" >> .env.prod
             echo "DB_PASSWORD=${{ secrets.DB_PASSWORD }}" >> .env.prod
             echo "DB_NAME=${{ secrets.DB_NAME }}" >> .env.prod
