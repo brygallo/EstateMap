@@ -26,23 +26,22 @@ jobs:
             cd /var/www/estatemap
 
             echo "📝 Creating .env.prod file..."
-            cat <<EOF > .env.prod
-  DJANGO_SECRET_KEY=${{ secrets.DJANGO_SECRET_KEY }}
-  ALLOWED_HOSTS=${{ secrets.ALLOWED_HOSTS }}
-  
-  DB_USER=${{ secrets.DB_USER }}
-  DB_PASSWORD=${{ secrets.DB_PASSWORD }}
-  DB_NAME=${{ secrets.DB_NAME }}
-  
-  SERVER_IP=${{ secrets.SERVER_IP }}
-  
-  MINIO_ENDPOINT=${{ secrets.MINIO_ENDPOINT }}
-  MINIO_ACCESS_KEY=${{ secrets.MINIO_ACCESS_KEY }}
-  MINIO_SECRET_KEY=${{ secrets.MINIO_SECRET_KEY }}
-  MINIO_BUCKET_NAME=${{ secrets.MINIO_BUCKET_NAME }}
-  EOF
-  
-  echo "🔄 Running deploy script..."
-  ./scripts/deploy.sh
-  
-  echo "✅ Deployment completed!"
+
+            echo "DJANGO_SECRET_KEY=${{ secrets.DJANGO_SECRET_KEY }}" > .env.prod
+            echo "ALLOWED_HOSTS=${{ secrets.ALLOWED_HOSTS }}" >> .env.prod
+
+            echo "DB_USER=${{ secrets.DB_USER }}" >> .env.prod
+            echo "DB_PASSWORD=${{ secrets.DB_PASSWORD }}" >> .env.prod
+            echo "DB_NAME=${{ secrets.DB_NAME }}" >> .env.prod
+
+            echo "SERVER_IP=${{ secrets.SERVER_IP }}" >> .env.prod
+
+            echo "MINIO_ENDPOINT=${{ secrets.MINIO_ENDPOINT }}" >> .env.prod
+            echo "MINIO_ACCESS_KEY=${{ secrets.MINIO_ACCESS_KEY }}" >> .env.prod
+            echo "MINIO_SECRET_KEY=${{ secrets.MINIO_SECRET_KEY }}" >> .env.prod
+            echo "MINIO_BUCKET_NAME=${{ secrets.MINIO_BUCKET_NAME }}" >> .env.prod
+
+            echo "🔄 Running deploy script..."
+            ./scripts/deploy.sh
+
+            echo "✅ Deployment completed!"
