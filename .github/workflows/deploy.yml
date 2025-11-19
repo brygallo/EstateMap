@@ -22,7 +22,6 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
             set -e
-
             echo "📂 Navigating to project directory..."
             cd /var/www/estatemap
 
