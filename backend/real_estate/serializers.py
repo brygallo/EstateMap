@@ -20,22 +20,15 @@ class PropertyImageSerializer(serializers.ModelSerializer):
 
     def get_image(self, obj):
         if obj.image:
-            # Use Django proxy to serve images (avoids CORS issues)
-            # The proxy will fetch from MinIO internally
-            request = self.context.get('request')
-            if request:
-                # Build full URL with the request's host
-                return request.build_absolute_uri(f"/api/media/{obj.image.name}")
-            # Fallback for cases without request context
-            return f"http://localhost:8000/api/media/{obj.image.name}"
+            # Option 1: Direct MinIO URL (for development)
+            # Return the direct URL from MinIO storage
+            return obj.image.url if hasattr(obj.image, 'url') else None
         return None
 
     def get_thumbnail(self, obj):
         if obj.thumbnail:
-            request = self.context.get('request')
-            if request:
-                return request.build_absolute_uri(f"/api/media/{obj.thumbnail.name}")
-            return f"http://localhost:8000/api/media/{obj.thumbnail.name}"
+            # Return the direct URL from MinIO storage
+            return obj.thumbnail.url if hasattr(obj.thumbnail, 'url') else None
         return None
 
     def get_file_size_kb(self, obj):
