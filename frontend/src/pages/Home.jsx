@@ -5,7 +5,7 @@ const Home = () => {
   const { token } = useAuth();
   return (
     <div className="p-8 text-center">
-      <h1 className="text-3xl font-bold mb-4">Bienvenido a EstateMap</h1>
+      <h1 className="text-3xl font-bold mb-4">Bienvenido a Geo Propiedades Ecuador</h1>
       {token ? (
         <Link to="/map" className="mt-4 inline-block px-6 py-3 bg-primary text-white rounded-2xl shadow-lg hover:bg-secondary transition-all">
           Ir al Mapa

@@ -1,7 +1,7 @@
 {
-  "name": "EstateMap - Gestión de Propiedades",
-  "short_name": "EstateMap",
-  "description": "Aplicación para gestionar y visualizar propiedades en un mapa interactivo",
+  "name": "Geo Propiedades Ecuador - Gestión de Propiedades",
+  "short_name": "Geo Propiedades",
+  "description": "Aplicación para gestionar y visualizar propiedades en Ecuador con mapas interactivos",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#ffffff",
