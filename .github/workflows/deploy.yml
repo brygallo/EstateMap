@@ -47,11 +47,18 @@ jobs:
             echo "VITE_API_URL=${{ secrets.VITE_API_URL }}" >> .env.prod
             echo "VITE_MAPTILER_KEY=${{ secrets.VITE_MAPTILER_KEY }}" >> .env.prod
             
+            
+            echo "EMAIL_BACKEND=${{ secrets.EMAIL_BACKEND }}" >> .env.prod
             echo "EMAIL_HOST=${{ secrets.EMAIL_HOST }}" >> .env.prod
             echo "EMAIL_PORT=${{ secrets.EMAIL_PORT }}" >> .env.prod
             echo "EMAIL_USE_TLS=${{ secrets.EMAIL_USE_TLS }}" >> .env.prod
             echo "EMAIL_HOST_USER=${{ secrets.EMAIL_HOST_USER }}" >> .env.prod
             echo "EMAIL_HOST_PASSWORD=${{ secrets.EMAIL_HOST_PASSWORD }}" >> .env.prod
+            echo "DEFAULT_FROM_EMAIL=${{ secrets.DEFAULT_FROM_EMAIL }}" >> .env.prod
+            
+            
+            echo "FRONTEND_URL=${{ secrets.FRONTEND_URL }}" >> .env.prod
+
     
             echo "🔄 Running deploy script..."
             ./scripts/deploy.sh
