@@ -42,6 +42,7 @@ jobs:
             echo "MINIO_SECRET_KEY=${{ secrets.MINIO_SECRET_KEY }}" >> .env.prod
             echo "MINIO_USE_SSL=False" >> .env.prod
             echo "MINIO_BUCKET_NAME=${{ secrets.MINIO_BUCKET_NAME }}" >> .env.prod
+            echo "MINIO_PUBLIC_ENDPOINT=${{ secrets.MINIO_PUBLIC_ENDPOINT }}" >> .env.prod
 
             echo "VITE_API_URL=${{ secrets.VITE_API_URL }}" >> .env.prod
             echo "VITE_MAPTILER_KEY=${{ secrets.VITE_MAPTILER_KEY }}" >> .env.prod
