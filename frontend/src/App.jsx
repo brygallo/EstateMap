@@ -2,6 +2,9 @@ import { Routes, Route, useLocation } from 'react-router-dom';
 import MapPage from './pages/MapPage';
 import Login from './pages/Login';
 import Register from './pages/Register';
+import VerifyEmail from './pages/VerifyEmail';
+import ForgotPassword from './pages/ForgotPassword';
+import ResetPassword from './pages/ResetPassword';
 import AddProperty from './pages/AddProperty';
 import MyProperties from './pages/MyProperties';
 import PrivateRoute from './PrivateRoute';
@@ -38,6 +41,9 @@ const App = () => {
           <Route path="/" element={<MapPage />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
+          <Route path="/verify-email" element={<VerifyEmail />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
           <Route
             path="/add-property"
             element={(

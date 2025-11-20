@@ -8,6 +8,7 @@ class User(AbstractUser):
     """Custom user model with a unique email field."""
 
     email = models.EmailField(unique=True)
+    is_email_verified = models.BooleanField(default=False)
 
 
 class Property(models.Model):
@@ -149,3 +150,76 @@ class PropertyImage(models.Model):
                 print(f"  Ahorro: {round(savings, 2)}%")
 
         super().save(*args, **kwargs)
+
+
+class EmailVerificationToken(models.Model):
+    """Token for email verification"""
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='email_verification_tokens'
+    )
+    code = models.CharField(max_length=6)
+    created_at = models.DateTimeField(auto_now_add=True)
+    expires_at = models.DateTimeField()
+    is_used = models.BooleanField(default=False)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"Verification code for {self.user.email}"
+
+    def is_valid(self):
+        """Check if token is still valid"""
+        from django.utils import timezone
+        return not self.is_used and timezone.now() < self.expires_at
+
+
+class PasswordResetToken(models.Model):
+    """Token for password reset"""
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='password_reset_tokens'
+    )
+    token = models.CharField(max_length=100, unique=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    expires_at = models.DateTimeField()
+    is_used = models.BooleanField(default=False)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"Password reset token for {self.user.email}"
+
+    def is_valid(self):
+        """Check if token is still valid"""
+        from django.utils import timezone
+        return not self.is_used and timezone.now() < self.expires_at
+
+
+class EmailChangeToken(models.Model):
+    """Token for email change verification"""
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='email_change_tokens'
+    )
+    new_email = models.EmailField()
+    code = models.CharField(max_length=6)
+    created_at = models.DateTimeField(auto_now_add=True)
+    expires_at = models.DateTimeField()
+    is_used = models.BooleanField(default=False)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"Email change token for {self.user.email} -> {self.new_email}"
+
+    def is_valid(self):
+        """Check if token is still valid"""
+        from django.utils import timezone
+        return not self.is_used and timezone.now() < self.expires_at
