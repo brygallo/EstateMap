@@ -1,12 +1,10 @@
 import { Link, useNavigate } from 'react-router-dom';
-import { useAuth } from '../AuthContext';
 import { Formik, Form, Field, ErrorMessage } from 'formik';
 import * as Yup from 'yup';
 import { toast } from 'react-toastify';
 
 const Register = () => {
   const navigate = useNavigate();
-  const { login } = useAuth();
   const API_URL = import.meta.env.VITE_API_URL || '/api';
 
   const validationSchema = Yup.object({
@@ -49,30 +47,10 @@ const Register = () => {
         setSubmitting(false);
         return;
       }
-      const loginRes = await fetch(`${API_URL}/login/`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: values.email, password: values.password }),
-      });
-      const loginData = await loginRes.json().catch(() => ({}));
-      if (!loginRes.ok) {
-        const formErrors = {};
-        let errorMessage = loginData.detail;
-        Object.keys(loginData).forEach((field) => {
-          const messages = Array.isArray(loginData[field]) ? loginData[field] : [loginData[field]];
-          formErrors[field] = messages.join(' ');
-        });
-        if (!errorMessage) {
-          errorMessage = Object.values(formErrors).join(' ');
-        }
-        setErrors(formErrors);
-        toast.error(errorMessage || 'Registro completado pero fallo el login');
-        setSubmitting(false);
-        return;
-      }
-      login(loginData.access, true);
-      toast.success('Registro exitoso');
-      navigate('/');
+
+      // Registro exitoso - redirigir a verificación de email
+      toast.success('Registro exitoso. Por favor verifica tu correo electrónico.');
+      navigate(`/verify-email?email=${encodeURIComponent(values.email)}`);
     } catch (err) {
       toast.error('Error de conexión');
     } finally {

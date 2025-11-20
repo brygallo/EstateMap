@@ -15,6 +15,12 @@ from .serializers import (
     PropertyImageSerializer,
     CustomTokenObtainPairSerializer,
     RegisterSerializer,
+    VerifyEmailSerializer,
+    ResendVerificationSerializer,
+    RequestPasswordResetSerializer,
+    ResetPasswordSerializer,
+    RequestEmailChangeSerializer,
+    VerifyEmailChangeSerializer,
 )
 from .permissions import IsOwnerOrReadOnly
 import requests
@@ -111,3 +117,317 @@ class ImageProxyView(View):
             logger = logging.getLogger(__name__)
             logger.error(f"Error fetching image from MinIO: {minio_url} - {str(e)}")
             raise Http404("Image not found")
+
+
+class VerifyEmailView(generics.GenericAPIView):
+    """Vista para verificar el correo electrónico con código"""
+    serializer_class = VerifyEmailSerializer
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+        from .models import EmailVerificationToken
+
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        email = serializer.validated_data['email']
+        code = serializer.validated_data['code']
+
+        try:
+            user = get_user_model().objects.get(email=email)
+        except get_user_model().DoesNotExist:
+            return Response(
+                {'error': 'Usuario no encontrado'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+        # Verificar si ya está verificado
+        if user.is_email_verified:
+            return Response(
+                {'message': 'El correo ya ha sido verificado anteriormente'},
+                status=status.HTTP_200_OK
+            )
+
+        # Buscar token válido
+        try:
+            token = EmailVerificationToken.objects.filter(
+                user=user,
+                code=code,
+                is_used=False
+            ).latest('created_at')
+
+            if not token.is_valid():
+                return Response(
+                    {'error': 'El código ha expirado. Solicita uno nuevo.'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+            # Marcar token como usado
+            token.is_used = True
+            token.save()
+
+            # Activar usuario y marcar email como verificado
+            user.is_active = True
+            user.is_email_verified = True
+            user.save()
+
+            # Enviar email de bienvenida
+            try:
+                from .email_utils import send_welcome_email
+                send_welcome_email(user)
+            except Exception as e:
+                # Log error pero no fallar la verificación
+                import logging
+                logger = logging.getLogger(__name__)
+                logger.error(f"Error enviando email de bienvenida: {str(e)}")
+
+            return Response(
+                {'message': 'Correo verificado exitosamente. Ya puedes iniciar sesión.'},
+                status=status.HTTP_200_OK
+            )
+
+        except EmailVerificationToken.DoesNotExist:
+            return Response(
+                {'error': 'Código de verificación inválido'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+
+class ResendVerificationView(generics.GenericAPIView):
+    """Vista para reenviar código de verificación"""
+    serializer_class = ResendVerificationSerializer
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+        from .email_utils import create_verification_token, send_verification_email
+
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        email = serializer.validated_data['email']
+
+        try:
+            user = get_user_model().objects.get(email=email)
+        except get_user_model().DoesNotExist:
+            return Response(
+                {'error': 'Usuario no encontrado'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+        # Verificar si ya está verificado
+        if user.is_email_verified:
+            return Response(
+                {'message': 'El correo ya ha sido verificado'},
+                status=status.HTTP_200_OK
+            )
+
+        # Crear nuevo token y enviar correo
+        token = create_verification_token(user)
+        send_verification_email(user, token.code)
+
+        return Response(
+            {'message': 'Se ha enviado un nuevo código de verificación a tu correo'},
+            status=status.HTTP_200_OK
+        )
+
+
+class RequestPasswordResetView(generics.GenericAPIView):
+    """Vista para solicitar reset de contraseña"""
+    serializer_class = RequestPasswordResetSerializer
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+        from .email_utils import create_password_reset_token, send_password_reset_email
+
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        email = serializer.validated_data['email']
+
+        try:
+            user = get_user_model().objects.get(email=email)
+
+            # Crear token y enviar correo
+            token = create_password_reset_token(user)
+            send_password_reset_email(user, token.token)
+
+            return Response(
+                {'message': 'Se ha enviado un enlace de recuperación a tu correo'},
+                status=status.HTTP_200_OK
+            )
+        except get_user_model().DoesNotExist:
+            # Por seguridad, no revelar si el email existe o no
+            return Response(
+                {'message': 'Se ha enviado un enlace de recuperación a tu correo'},
+                status=status.HTTP_200_OK
+            )
+
+
+class ResetPasswordView(generics.GenericAPIView):
+    """Vista para resetear contraseña con token"""
+    serializer_class = ResetPasswordSerializer
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+        from .models import PasswordResetToken
+
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        token_string = serializer.validated_data['token']
+        new_password = serializer.validated_data['new_password']
+
+        try:
+            token = PasswordResetToken.objects.get(
+                token=token_string,
+                is_used=False
+            )
+
+            if not token.is_valid():
+                return Response(
+                    {'error': 'El enlace ha expirado. Solicita uno nuevo.'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+            # Marcar token como usado
+            token.is_used = True
+            token.save()
+
+            # Cambiar contraseña
+            user = token.user
+            user.set_password(new_password)
+            user.save()
+
+            return Response(
+                {'message': 'Contraseña actualizada exitosamente'},
+                status=status.HTTP_200_OK
+            )
+
+        except PasswordResetToken.DoesNotExist:
+            return Response(
+                {'error': 'Token inválido o expirado'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+
+class RequestEmailChangeView(generics.GenericAPIView):
+    """Vista para solicitar cambio de correo electrónico"""
+    serializer_class = RequestEmailChangeSerializer
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        from .models import EmailChangeToken
+        from .email_utils import send_email_change_verification, generate_verification_code
+        from django.utils import timezone
+        from datetime import timedelta
+
+        serializer = self.get_serializer(data=request.data, context={'request': request})
+        serializer.is_valid(raise_exception=True)
+
+        new_email = serializer.validated_data['new_email']
+        user = request.user
+
+        # Invalidar tokens anteriores de cambio de email
+        EmailChangeToken.objects.filter(user=user, is_used=False).update(is_used=True)
+
+        # Crear nuevo token de cambio de email
+        code = generate_verification_code()
+        expires_at = timezone.now() + timedelta(minutes=settings.EMAIL_VERIFICATION_CODE_EXPIRY_MINUTES)
+
+        token = EmailChangeToken.objects.create(
+            user=user,
+            new_email=new_email,
+            code=code,
+            expires_at=expires_at
+        )
+
+        # Enviar correo de verificación al nuevo email
+        try:
+            send_email_change_verification(user, new_email, code)
+        except Exception as e:
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.error(f"Error enviando email de verificación de cambio: {str(e)}")
+            return Response(
+                {'error': 'Error al enviar el correo de verificación'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+        return Response(
+            {
+                'message': f'Se ha enviado un código de verificación a {new_email}',
+                'new_email': new_email
+            },
+            status=status.HTTP_200_OK
+        )
+
+
+class VerifyEmailChangeView(generics.GenericAPIView):
+    """Vista para verificar el cambio de correo electrónico con código"""
+    serializer_class = VerifyEmailChangeSerializer
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        from .models import EmailChangeToken
+        from .email_utils import send_email_changed_notification
+
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        code = serializer.validated_data['code']
+        user = request.user
+
+        # Buscar token válido
+        try:
+            token = EmailChangeToken.objects.filter(
+                user=user,
+                code=code,
+                is_used=False
+            ).latest('created_at')
+
+            if not token.is_valid():
+                return Response(
+                    {'error': 'El código ha expirado. Solicita uno nuevo.'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+            # Verificar que el nuevo email no esté en uso
+            if get_user_model().objects.filter(email=token.new_email).exclude(pk=user.pk).exists():
+                return Response(
+                    {'error': 'Este correo ya está en uso por otra cuenta'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+            # Marcar token como usado
+            token.is_used = True
+            token.save()
+
+            # Guardar el email antiguo antes de cambiarlo
+            old_email = user.email
+
+            # Cambiar el email del usuario
+            user.email = token.new_email
+            user.save()
+
+            # Enviar notificación al email antiguo
+            try:
+                send_email_changed_notification(user, old_email, token.new_email)
+            except Exception as e:
+                import logging
+                logger = logging.getLogger(__name__)
+                logger.error(f"Error enviando notificación de cambio de email: {str(e)}")
+                # No fallar si no se puede enviar la notificación
+
+            return Response(
+                {
+                    'message': 'Correo electrónico actualizado exitosamente',
+                    'new_email': user.email
+                },
+                status=status.HTTP_200_OK
+            )
+
+        except EmailChangeToken.DoesNotExist:
+            return Response(
+                {'error': 'Código de verificación inválido'},
+                status=status.HTTP_400_BAD_REQUEST
+            )

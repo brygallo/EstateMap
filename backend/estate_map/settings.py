@@ -201,3 +201,25 @@ IMAGE_OPTIMIZATION = {
 # Límites por tipo de usuario (futuro: implementar diferentes límites por plan)
 MAX_IMAGES_PER_PROPERTY = 10
 MAX_IMAGE_SIZE_MB = 10
+
+
+# ========================================
+# ========================================
+# EMAIL CONFIGURATION
+# ========================================
+
+
+EMAIL_BACKEND = os.getenv('EMAIL_BACKEND', 'django.core.mail.backends.smtp.EmailBackend')
+EMAIL_HOST = os.getenv('EMAIL_HOST', 'smtp-relay.brevo.com')
+EMAIL_PORT = int(os.getenv('EMAIL_PORT', 587))
+EMAIL_USE_TLS = os.getenv('EMAIL_USE_TLS', 'True') == 'True'
+EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER')
+EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD')
+DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', 'notificaciones@geopropiedadesecuador.com')
+
+# Email verification settings
+EMAIL_VERIFICATION_CODE_EXPIRY_MINUTES = 30
+PASSWORD_RESET_TOKEN_EXPIRY_HOURS = 24
+
+# Frontend URL for email links
+FRONTEND_URL = os.getenv('FRONTEND_URL', 'http://localhost:5173')

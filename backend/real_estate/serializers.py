@@ -249,12 +249,63 @@ class RegisterSerializer(serializers.ModelSerializer):
         )
 
     def create(self, validated_data):
+        from .email_utils import create_verification_token, send_verification_email
+
+        # Crear usuario sin activar
         user = User.objects.create_user(
             username=validated_data["username"],
             email=validated_data["email"],
             first_name=validated_data["first_name"],
             last_name=validated_data["last_name"],
             password=validated_data["password"],
+            is_active=False,  # Usuario no activo hasta verificar email
         )
+
+        # Crear token de verificación y enviar correo
+        token = create_verification_token(user)
+        send_verification_email(user, token.code)
+
         return user
+
+
+class VerifyEmailSerializer(serializers.Serializer):
+    email = serializers.EmailField(required=True)
+    code = serializers.CharField(required=True, max_length=6, min_length=6)
+
+
+class ResendVerificationSerializer(serializers.Serializer):
+    email = serializers.EmailField(required=True)
+
+
+class RequestPasswordResetSerializer(serializers.Serializer):
+    email = serializers.EmailField(required=True)
+
+
+class ResetPasswordSerializer(serializers.Serializer):
+    token = serializers.CharField(required=True)
+    new_password = serializers.CharField(
+        write_only=True,
+        required=True,
+        validators=[validate_password]
+    )
+
+
+class RequestEmailChangeSerializer(serializers.Serializer):
+    new_email = serializers.EmailField(required=True)
+
+    def validate_new_email(self, value):
+        # Verificar que el nuevo email no esté en uso
+        if User.objects.filter(email=value).exists():
+            raise serializers.ValidationError("Este correo ya está en uso por otra cuenta")
+
+        # Verificar que no sea el mismo email actual
+        request = self.context.get('request')
+        if request and request.user.email == value:
+            raise serializers.ValidationError("Este es tu correo actual. Usa uno diferente")
+
+        return value
+
+
+class VerifyEmailChangeSerializer(serializers.Serializer):
+    code = serializers.CharField(required=True, max_length=6, min_length=6)
 
