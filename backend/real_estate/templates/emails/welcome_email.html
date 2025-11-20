@@ -134,14 +134,17 @@
         .cta-button {
             display: inline-block;
             padding: 16px 40px;
+            background-color: #667eea;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
+            color: #ffffff !important;
             text-decoration: none;
             border-radius: 8px;
             font-size: 16px;
             font-weight: 600;
             box-shadow: 0 4px 6px rgba(102, 126, 234, 0.3);
             margin-top: 15px;
+            -webkit-text-size-adjust: none;
+            mso-hide: none;
         }
         .cta-button:hover {
             transform: translateY(-2px);
@@ -327,7 +330,7 @@
                 <p style="color: #666; margin: 0 0 20px 0;">
                     Inicia sesión y comienza a explorar las mejores propiedades de Ecuador
                 </p>
-                <a href="{{ frontend_url }}/login" class="cta-button">
+                <a href="{{ frontend_url }}/login" class="cta-button" style="display: inline-block; padding: 16px 40px; background-color: #667eea; color: #ffffff; text-decoration: none; border-radius: 8px; font-size: 16px; font-weight: 600;">
                     Iniciar Sesión
                 </a>
             </div>
@@ -362,7 +365,7 @@
             <p class="footer-text">
                 <strong>Geo Propiedades Ecuador</strong><br>
                 Encuentra tu propiedad ideal en Ecuador<br>
-                <a href="mailto:contacto@geopropiedadesecuador.com" class="footer-link">contacto@geopropiedadesecuador.com</a>
+                <a href="https://wa.me/593983738151" class="footer-link" target="_blank">Contáctanos por WhatsApp</a>
             </p>
 
             <div class="social-links">

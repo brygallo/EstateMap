@@ -199,6 +199,14 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
         except User.DoesNotExist:
             raise serializers.ValidationError({"detail": "Correo electrónico o contraseña incorrectos"})
 
+        # Verificar si el usuario tiene el email sin verificar
+        if not user.is_active and not user.is_email_verified:
+            raise serializers.ValidationError({
+                "detail": "Tu cuenta no ha sido verificada. Por favor verifica tu correo electrónico.",
+                "code": "email_not_verified",
+                "email": email
+            })
+
         # Replace email with the resolved username for the parent validation
         attrs["username"] = user.username
         del attrs["email"]

@@ -10,3 +10,11 @@ minio>=7.2
 requests>=2.31
 gunicorn>=21.2
 dj-database-url>=2.1
+
+# Testing
+pytest>=7.4
+pytest-django>=4.7
+pytest-cov>=4.1
+pytest-xdist>=3.5  # Para tests paralelos
+factory-boy>=3.3  # Para crear datos de prueba
+faker>=22.0  # Para generar datos falsos
