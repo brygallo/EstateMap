@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tu correo ha sido cambiado - Geo Propiedades Ecuador</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f4f7fa;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background-color: #ffffff;
+        }
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 40px 20px;
+            text-align: center;
+        }
+        .logo {
+            width: 60px;
+            height: 60px;
+            background-color: white;
+            border-radius: 12px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 20px;
+        }
+        .logo svg {
+            width: 40px;
+            height: 40px;
+            fill: #667eea;
+        }
+        .header h1 {
+            color: white;
+            margin: 0;
+            font-size: 28px;
+            font-weight: 600;
+        }
+        .content {
+            padding: 40px 30px;
+        }
+        .greeting {
+            font-size: 18px;
+            color: #333333;
+            margin-bottom: 20px;
+            font-weight: 500;
+        }
+        .message {
+            font-size: 16px;
+            color: #666666;
+            line-height: 1.6;
+            margin-bottom: 25px;
+        }
+        .alert-box {
+            background-color: #e8f5e9;
+            border-left: 4px solid #4caf50;
+            padding: 20px;
+            margin: 25px 0;
+            border-radius: 8px;
+        }
+        .alert-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+        .alert-icon {
+            width: 28px;
+            height: 28px;
+            margin-right: 12px;
+            flex-shrink: 0;
+        }
+        .alert-title {
+            color: #2e7d32;
+            font-size: 18px;
+            font-weight: 600;
+            margin: 0;
+        }
+        .alert-text {
+            color: #1b5e20;
+            font-size: 14px;
+            margin: 0;
+            line-height: 1.6;
+        }
+        .info-card {
+            background-color: #f8f9fa;
+            border-radius: 12px;
+            padding: 25px;
+            margin: 25px 0;
+            border: 1px solid #e9ecef;
+        }
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 0;
+            border-bottom: 1px solid #e9ecef;
+        }
+        .info-row:last-child {
+            border-bottom: none;
+        }
+        .info-label {
+            font-size: 14px;
+            color: #6c757d;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-weight: 600;
+        }
+        .info-value {
+            font-size: 15px;
+            color: #333;
+            font-weight: 600;
+            font-family: 'Courier New', monospace;
+            text-align: right;
+            max-width: 60%;
+            word-break: break-all;
+        }
+        .info-value.old {
+            text-decoration: line-through;
+            color: #dc3545;
+        }
+        .info-value.new {
+            color: #28a745;
+        }
+        .timestamp {
+            background-color: #f8f9fa;
+            border-radius: 6px;
+            padding: 12px;
+            margin: 15px 0;
+            font-size: 13px;
+            color: #6c757d;
+            text-align: center;
+            font-family: 'Courier New', monospace;
+        }
+        .warning-box {
+            background-color: #fff3cd;
+            border-left: 4px solid #ff9800;
+            padding: 20px;
+            margin: 25px 0;
+            border-radius: 8px;
+        }
+        .warning-header {
+            display: flex;
+            align-items: flex-start;
+            margin-bottom: 10px;
+        }
+        .warning-icon {
+            width: 24px;
+            height: 24px;
+            margin-right: 12px;
+            flex-shrink: 0;
+        }
+        .warning-title {
+            color: #e65100;
+            font-size: 16px;
+            font-weight: 600;
+            margin: 0;
+        }
+        .warning-text {
+            color: #856404;
+            font-size: 14px;
+            margin: 0;
+            line-height: 1.6;
+        }
+        .action-box {
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
+            border-radius: 12px;
+            padding: 25px;
+            text-align: center;
+            margin: 30px 0;
+        }
+        .action-button {
+            display: inline-block;
+            padding: 14px 32px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            text-decoration: none;
+            border-radius: 8px;
+            font-size: 15px;
+            font-weight: 600;
+            box-shadow: 0 4px 6px rgba(102, 126, 234, 0.3);
+            margin-top: 10px;
+        }
+        .footer {
+            background-color: #f8f9fa;
+            padding: 30px;
+            text-align: center;
+            border-top: 1px solid #e9ecef;
+        }
+        .footer-text {
+            color: #6c757d;
+            font-size: 14px;
+            line-height: 1.6;
+            margin: 0;
+        }
+        .footer-link {
+            color: #667eea;
+            text-decoration: none;
+        }
+        .social-links {
+            margin-top: 20px;
+        }
+        .social-link {
+            display: inline-block;
+            margin: 0 10px;
+            width: 32px;
+            height: 32px;
+            background-color: #667eea;
+            border-radius: 50%;
+            text-align: center;
+            line-height: 32px;
+            color: white;
+            text-decoration: none;
+        }
+        .divider {
+            height: 1px;
+            background-color: #e9ecef;
+            margin: 30px 0;
+        }
+        @media only screen and (max-width: 600px) {
+            .content {
+                padding: 30px 20px;
+            }
+            .header h1 {
+                font-size: 24px;
+            }
+            .info-row {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            .info-value {
+                max-width: 100%;
+                text-align: left;
+                margin-top: 8px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <div class="logo">
+                <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+            </div>
+            <h1>Geo Propiedades Ecuador</h1>
+        </div>
+
+        <!-- Content -->
+        <div class="content">
+            <p class="greeting">Hola {{ user_name }},</p>
+
+            <!-- Success Alert -->
+            <div class="alert-box">
+                <div class="alert-header">
+                    <svg class="alert-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" stroke="#2e7d32" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                    <h3 class="alert-title">Cambio de correo exitoso</h3>
+                </div>
+                <p class="alert-text">
+                    El correo electrónico asociado a tu cuenta ha sido cambiado exitosamente.
+                </p>
+            </div>
+
+            <p class="message">
+                Te enviamos esta notificación para informarte que el correo electrónico de tu cuenta en
+                <strong>Geo Propiedades Ecuador</strong> ha sido actualizado.
+            </p>
+
+            <!-- Info Card -->
+            <div class="info-card">
+                <div class="info-row">
+                    <div class="info-label">Correo anterior</div>
+                    <div class="info-value old">{{ old_email }}</div>
+                </div>
+                <div class="info-row">
+                    <div class="info-label">Correo nuevo</div>
+                    <div class="info-value new">{{ new_email }}</div>
+                </div>
+                <div class="info-row">
+                    <div class="info-label">Fecha y hora</div>
+                    <div class="info-value">{{ change_date }}</div>
+                </div>
+            </div>
+
+            <p class="message">
+                A partir de ahora, todas las comunicaciones y notificaciones se enviarán a tu nuevo correo.
+                Este es el último mensaje que recibirás en <strong>{{ old_email }}</strong>.
+            </p>
+
+            <!-- Warning Box -->
+            <div class="warning-box">
+                <div class="warning-header">
+                    <svg class="warning-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" stroke="#e65100" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                    <h3 class="warning-title">¿No autorizaste este cambio?</h3>
+                </div>
+                <p class="warning-text">
+                    Si <strong>NO</strong> realizaste este cambio de correo, es posible que tu cuenta haya sido
+                    comprometida. Por favor, toma acción inmediata:
+                </p>
+                <ul style="color: #856404; font-size: 14px; margin: 10px 0 0 20px; padding: 0;">
+                    <li style="margin-bottom: 8px;">Contacta con nuestro equipo de soporte urgentemente</li>
+                    <li style="margin-bottom: 8px;">Intenta recuperar el acceso a tu cuenta</li>
+                    <li style="margin-bottom: 8px;">Cambia las contraseñas de otros servicios si usabas la misma</li>
+                </ul>
+            </div>
+
+            <!-- Action Box -->
+            <div class="action-box">
+                <h3 style="margin: 0 0 10px 0; color: #333; font-size: 18px;">¿Necesitas ayuda?</h3>
+                <p style="color: #666; margin: 0 0 15px 0; font-size: 14px;">
+                    Nuestro equipo de soporte está disponible para asistirte
+                </p>
+                <a href="mailto:soporte@geopropiedadesecuador.com" class="action-button">
+                    Contactar Soporte
+                </a>
+            </div>
+
+            <div class="divider"></div>
+
+            <p class="message" style="font-size: 14px; color: #6c757d;">
+                <strong>Nota importante:</strong> Si realizaste este cambio, puedes ignorar la advertencia anterior.
+                Tu cuenta está segura y el cambio se completó exitosamente.
+            </p>
+        </div>
+
+        <!-- Footer -->
+        <div class="footer">
+            <p class="footer-text">
+                <strong>Geo Propiedades Ecuador</strong><br>
+                Encuentra tu propiedad ideal en Ecuador<br>
+                <a href="mailto:contacto@geopropiedadesecuador.com" class="footer-link">contacto@geopropiedadesecuador.com</a>
+            </p>
+
+            <div class="social-links">
+                <a href="#" class="social-link">f</a>
+                <a href="#" class="social-link">📷</a>
+                <a href="#" class="social-link">in</a>
+            </div>
+
+            <p class="footer-text" style="margin-top: 20px; font-size: 12px;">
+                © 2025 Geo Propiedades Ecuador. Todos los derechos reservados.
+            </p>
+        </div>
+    </div>
+</body>
+</html>
