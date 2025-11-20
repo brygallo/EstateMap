@@ -136,6 +136,10 @@ CORS_ALLOW_ALL_ORIGINS = True
 # MINIO STORAGE CONFIGURATION
 # ============================
 
+# ============================
+# MINIO STORAGE CONFIGURATION
+# ============================
+
 MINIO_ENDPOINT = os.getenv("MINIO_ENDPOINT", "minio.geopropiedadesecuador.com")
 MINIO_PUBLIC_ENDPOINT = os.getenv("MINIO_PUBLIC_ENDPOINT", MINIO_ENDPOINT)
 MINIO_USE_SSL = os.getenv("MINIO_USE_SSL", "True") == "True"
@@ -160,7 +164,7 @@ AWS_QUERYSTRING_AUTH = False
 AWS_DEFAULT_ACL = None
 
 
-AWS_S3_CUSTOM_DOMAIN = MINIO_PUBLIC_ENDPOINT
+AWS_S3_CUSTOM_DOMAIN = f"{MINIO_PUBLIC_ENDPOINT}/{AWS_STORAGE_BUCKET_NAME}"
 
 STORAGES = {
     "default": {
