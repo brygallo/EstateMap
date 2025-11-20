@@ -3,7 +3,7 @@ from rest_framework_simplejwt.views import TokenObtainPairView
 from rest_framework.permissions import IsAuthenticated, AllowAny, IsAuthenticatedOrReadOnly
 from rest_framework.decorators import action
 from rest_framework.response import Response
-from rest_framework.parsers import MultiPartParser, FormParser
+from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
 from rest_framework.settings import api_settings
 from django.http import HttpResponse, Http404
 from django.views import View
@@ -23,13 +23,7 @@ class PropertyViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticatedOrReadOnly, IsOwnerOrReadOnly]
     queryset = Property.objects.all()
     serializer_class = PropertySerializer
-    parser_classes = [MultiPartParser, FormParser]
-
-    def get_parsers(self):
-        # Use default parsers for delete_image action
-        if hasattr(self, 'action') and self.action == 'delete_image':
-            return [parser() for parser in api_settings.DEFAULT_PARSER_CLASSES]
-        return super().get_parsers()
+    parser_classes = [MultiPartParser, FormParser, JSONParser]
 
     def perform_create(self, serializer):
         serializer.save(owner=self.request.user)

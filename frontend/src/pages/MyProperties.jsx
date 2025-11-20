@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 
 const MyProperties = () => {
-  const { token } = useAuth();
+  const { token, logout } = useAuth();
   const navigate = useNavigate();
   const [properties, setProperties] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -22,6 +22,11 @@ const MyProperties = () => {
       if (res.ok) {
         const data = await res.json();
         setProperties(data);
+      } else if (res.status === 401) {
+        // Sesión expirada o token inválido
+        toast.error('Tu sesión ha expirado. Por favor, inicia sesión nuevamente.');
+        logout();
+        navigate('/login');
       } else {
         toast.error('Error al cargar las propiedades');
       }
@@ -47,6 +52,10 @@ const MyProperties = () => {
       if (res.ok) {
         toast.success('Propiedad eliminada exitosamente');
         fetchMyProperties();
+      } else if (res.status === 401) {
+        toast.error('Tu sesión ha expirado. Por favor, inicia sesión nuevamente.');
+        logout();
+        navigate('/login');
       } else {
         toast.error('Error al eliminar la propiedad');
       }

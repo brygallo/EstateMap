@@ -314,7 +314,8 @@ def main():
     print("=" * 70)
     print("\n💡 Credenciales de acceso para todos los usuarios:")
     print("   Usuario: user1_juan, user2_maría, user3_carlos, ... user20_daniela")
-    print("   Contraseña: test123")
+    print("   Contraseña:
+    ")
     print("=" * 70)
 
 
