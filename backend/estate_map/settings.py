@@ -132,24 +132,35 @@ SIMPLE_JWT = {
 
 CORS_ALLOW_ALL_ORIGINS = True
 
-# MinIO Storage Configuration
-AWS_ACCESS_KEY_ID = os.getenv('MINIO_ACCESS_KEY', 'minioadmin')
-AWS_SECRET_ACCESS_KEY = os.getenv('MINIO_SECRET_KEY', 'minioadmin')
-AWS_STORAGE_BUCKET_NAME = os.getenv('MINIO_BUCKET_NAME', 'estatemap')
+# ============================
+# MINIO STORAGE CONFIGURATION
+# ============================
 
-# Endpoint interno (desde el backend)
-AWS_S3_ENDPOINT_URL = os.getenv("AWS_S3_ENDPOINT_URL", "http://minio:9000")
+MINIO_ENDPOINT = os.getenv("MINIO_ENDPOINT", "minio.geopropiedadesecuador.com")
+MINIO_PUBLIC_ENDPOINT = os.getenv("MINIO_PUBLIC_ENDPOINT", MINIO_ENDPOINT)
+MINIO_USE_SSL = os.getenv("MINIO_USE_SSL", "True") == "True"
+
+AWS_ACCESS_KEY_ID = os.getenv("MINIO_ACCESS_KEY")
+AWS_SECRET_ACCESS_KEY = os.getenv("MINIO_SECRET_KEY")
+AWS_STORAGE_BUCKET_NAME = os.getenv("MINIO_BUCKET_NAME", "estatemap")
+
+# Endpoint interno para boto3 (backend)
+AWS_S3_ENDPOINT_URL = (
+    f"https://{MINIO_ENDPOINT}"
+    if MINIO_USE_SSL
+    else f"http://{MINIO_ENDPOINT}"
+)
 
 AWS_S3_REGION_NAME = "us-east-1"
 AWS_S3_SIGNATURE_VERSION = "s3v4"
 AWS_S3_ADDRESSING_STYLE = "path"
 
-AWS_S3_USE_SSL = False
+AWS_S3_USE_SSL = MINIO_USE_SSL
 AWS_QUERYSTRING_AUTH = False
 AWS_DEFAULT_ACL = None
 
-# Dominio público si existe (SIN /bucket)
-AWS_S3_CUSTOM_DOMAIN = os.getenv("MINIO_PUBLIC_ENDPOINT", None)
+
+AWS_S3_CUSTOM_DOMAIN = MINIO_PUBLIC_ENDPOINT
 
 STORAGES = {
     "default": {
