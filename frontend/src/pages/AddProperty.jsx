@@ -349,7 +349,7 @@ const AddProperty = () => {
   const [existingImages, setExistingImages] = useState([]);
   const [imageFiles, setImageFiles] = useState([]);
 
-  const { token } = useAuth();
+  const { token, logout } = useAuth();
   const navigate = useNavigate();
   const API_URL = import.meta.env.VITE_API_URL || '/api';
 
@@ -393,6 +393,10 @@ const AddProperty = () => {
         setIsNegotiable(data.is_negotiable !== undefined ? data.is_negotiable : true);
         setContactPhone(data.contact_phone || '');
         setExistingImages(data.images || []);
+      } else if (res.status === 401) {
+        toast.error('Tu sesión ha expirado. Por favor, inicia sesión nuevamente.');
+        logout();
+        navigate('/login');
       } else {
         toast.error('No se pudo cargar la propiedad');
         navigate('/my-properties');
@@ -408,8 +412,9 @@ const AddProperty = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (polygonCoords.length < 3 && propertyType === 'land') {
-      toast.error('Dibuja un polígono válido antes de guardar.');
+    // Require polygon for all property types
+    if (polygonCoords.length < 3) {
+      toast.error('Debes dibujar un polígono en el mapa para definir la ubicación de la propiedad.');
       return;
     }
     try {
@@ -461,14 +466,18 @@ const AddProperty = () => {
         headers: { Authorization: `Bearer ${token}` },
         body: formData,
       });
-      if (!res.ok) {
+      if (res.ok) {
+        toast.success(`Propiedad ${isEditMode ? 'actualizada' : 'creada'} exitosamente`);
+        navigate('/my-properties');
+      } else if (res.status === 401) {
+        toast.error('Tu sesión ha expirado. Por favor, inicia sesión nuevamente.');
+        logout();
+        navigate('/login');
+      } else {
         const errorData = await res.json();
         console.error('Error:', errorData);
         toast.error(`No se pudo ${isEditMode ? 'actualizar' : 'guardar'} la propiedad`);
-        return;
       }
-      toast.success(`Propiedad ${isEditMode ? 'actualizada' : 'creada'} exitosamente`);
-      navigate('/my-properties');
     } catch (error) {
       console.error('Error:', error);
       toast.error('Error de conexión');
@@ -596,6 +605,10 @@ const AddProperty = () => {
       if (res.ok) {
         setExistingImages(existingImages.filter((img) => img.id !== imageId));
         toast.success('Imagen eliminada exitosamente');
+      } else if (res.status === 401) {
+        toast.error('Tu sesión ha expirado. Por favor, inicia sesión nuevamente.');
+        logout();
+        navigate('/login');
       } else {
         toast.error('Error al eliminar la imagen');
       }

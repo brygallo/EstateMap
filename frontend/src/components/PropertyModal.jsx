@@ -1,8 +1,9 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 
 // Image Gallery Component
 const ImageGallery = ({ images, initialIndex, onClose }) => {
   const [currentIndex, setCurrentIndex] = useState(initialIndex);
+  const containerRef = useRef(null);
 
   const nextImage = () => {
     setCurrentIndex((prev) => (prev + 1) % images.length);
@@ -18,17 +19,27 @@ const ImageGallery = ({ images, initialIndex, onClose }) => {
     if (e.key === 'ArrowLeft') prevImage();
   };
 
+  // Auto-focus on mount so keyboard navigation works immediately
+  useEffect(() => {
+    containerRef.current?.focus();
+  }, []);
+
   return (
     <div
-      className="fixed inset-0 z-[2000] bg-black/95 flex items-center justify-center"
+      ref={containerRef}
+      className="fixed inset-0 z-[2000] bg-black/95 flex items-center justify-center outline-none"
       onClick={onClose}
       onKeyDown={handleKeyDown}
       tabIndex={0}
+      role="dialog"
+      aria-modal="true"
+      aria-label="Galería de imágenes"
     >
       {/* Close Button */}
       <button
-        onClick={onClose}
-        className="absolute top-4 right-4 text-white hover:text-gray-300 bg-black/50 rounded-full p-3 transition-all hover:scale-110"
+        onClick={(e) => { e.stopPropagation(); onClose(); }}
+        className="absolute top-4 right-4 text-white hover:text-gray-300 bg-black/50 rounded-full p-3 transition-all hover:scale-110 z-10"
+        aria-label="Cerrar galería"
       >
         <svg className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -36,7 +47,10 @@ const ImageGallery = ({ images, initialIndex, onClose }) => {
       </button>
 
       {/* Image Counter */}
-      <div className="absolute top-4 left-4 text-white bg-black/50 px-4 py-2 rounded-full text-sm font-medium">
+      <div
+        className="absolute top-4 left-4 text-white bg-black/50 px-4 py-2 rounded-full text-sm font-medium z-10"
+        onClick={(e) => e.stopPropagation()}
+      >
         {currentIndex + 1} / {images.length}
       </div>
 

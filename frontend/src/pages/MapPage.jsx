@@ -63,28 +63,33 @@ function MapBoundsTracker({ properties, onVisiblePropertiesChange }) {
   const updateVisibleProperties = useCallback(() => {
     const bounds = map.getBounds();
     const visible = properties.filter((property) => {
-      if (!property.polygon) return false;
+      // Check if property has polygon
+      if (property.polygon) {
+        let coordinates;
 
-      let coordinates;
-
-      // Handle GeoJSON format
-      if (property.polygon.coordinates?.[0]) {
-        coordinates = property.polygon.coordinates[0];
-        // Check if any point of the polygon is within the map bounds
-        // GeoJSON uses [lng, lat] format, but Leaflet uses [lat, lng]
-        return coordinates.some((point) => {
-          const [lng, lat] = point;
-          return bounds.contains([lat, lng]);
-        });
+        // Handle GeoJSON format
+        if (property.polygon.coordinates?.[0]) {
+          coordinates = property.polygon.coordinates[0];
+          // Check if any point of the polygon is within the map bounds
+          // GeoJSON uses [lng, lat] format, but Leaflet uses [lat, lng]
+          return coordinates.some((point) => {
+            const [lng, lat] = point;
+            return bounds.contains([lat, lng]);
+          });
+        }
+        // Handle simple array format [[lat, lng], ...]
+        else if (Array.isArray(property.polygon) && property.polygon.length >= 3) {
+          coordinates = property.polygon;
+          // Simple format already uses [lat, lng]
+          return coordinates.some((point) => {
+            const [lat, lng] = point;
+            return bounds.contains([lat, lng]);
+          });
+        }
       }
-      // Handle simple array format [[lat, lng], ...]
-      else if (Array.isArray(property.polygon) && property.polygon.length >= 3) {
-        coordinates = property.polygon;
-        // Simple format already uses [lat, lng]
-        return coordinates.some((point) => {
-          const [lat, lng] = point;
-          return bounds.contains([lat, lng]);
-        });
+      // If no polygon, check if property has lat/lng coordinates
+      else if (property.latitude && property.longitude) {
+        return bounds.contains([property.latitude, property.longitude]);
       }
 
       return false;
@@ -304,37 +309,47 @@ const MapPage = () => {
   const handleSidebarPropertyClick = (property) => {
     console.log('Sidebar property clicked:', property);
 
-    // Move map to property location if polygon exists
-    if (mapRef.current && property.polygon) {
+    // Move map to property location
+    if (mapRef.current) {
       try {
-        let coordinates;
+        // If property has polygon, fly to polygon bounds
+        if (property.polygon) {
+          let coordinates;
 
-        // Check if polygon is in GeoJSON format
-        if (property.polygon.coordinates && Array.isArray(property.polygon.coordinates[0])) {
-          coordinates = property.polygon.coordinates[0];
+          // Check if polygon is in GeoJSON format
+          if (property.polygon.coordinates && Array.isArray(property.polygon.coordinates[0])) {
+            coordinates = property.polygon.coordinates[0];
+          }
+          // Check if polygon is already in simple array format [[lat, lng], ...]
+          else if (Array.isArray(property.polygon) && property.polygon.length >= 3) {
+            // Convert from [lat, lng] to [lng, lat] for bounds calculation
+            coordinates = property.polygon.map(coord => [coord[1], coord[0]]);
+          }
+
+          if (coordinates && coordinates.length >= 3) {
+            // Calculate bounds for the polygon
+            const lats = coordinates.map(coord => coord[1]);
+            const lngs = coordinates.map(coord => coord[0]);
+
+            const bounds = [
+              [Math.min(...lats), Math.min(...lngs)],
+              [Math.max(...lats), Math.max(...lngs)]
+            ];
+
+            console.log('Flying to bounds:', bounds);
+
+            // Fly to the polygon with maximum zoom
+            mapRef.current.flyToBounds(bounds, {
+              padding: [50, 50],
+              maxZoom: 20, // Maximum zoom available
+              duration: 1.5
+            });
+          }
         }
-        // Check if polygon is already in simple array format [[lat, lng], ...]
-        else if (Array.isArray(property.polygon) && property.polygon.length >= 3) {
-          // Convert from [lat, lng] to [lng, lat] for bounds calculation
-          coordinates = property.polygon.map(coord => [coord[1], coord[0]]);
-        }
-
-        if (coordinates && coordinates.length >= 3) {
-          // Calculate bounds for the polygon
-          const lats = coordinates.map(coord => coord[1]);
-          const lngs = coordinates.map(coord => coord[0]);
-
-          const bounds = [
-            [Math.min(...lats), Math.min(...lngs)],
-            [Math.max(...lats), Math.max(...lngs)]
-          ];
-
-          console.log('Flying to bounds:', bounds);
-
-          // Fly to the polygon with maximum zoom
-          mapRef.current.flyToBounds(bounds, {
-            padding: [50, 50],
-            maxZoom: 20, // Maximum zoom available
+        // If property doesn't have polygon but has lat/lng, fly to marker position
+        else if (property.latitude && property.longitude) {
+          console.log('Flying to marker:', property.latitude, property.longitude);
+          mapRef.current.flyTo([property.latitude, property.longitude], 17, {
             duration: 1.5
           });
         }
@@ -768,9 +783,22 @@ const MapPage = () => {
                 }`}
               >
                 <div className="flex items-start justify-between mb-1.5">
-                  <h3 className="font-bold text-sm truncate flex-1">
-                    {p.title || `Propiedad #${idx + 1}`}
-                  </h3>
+                  <div className="flex items-center gap-1 flex-1 min-w-0">
+                    <h3 className="font-bold text-sm truncate">
+                      {p.title || `Propiedad #${idx + 1}`}
+                    </h3>
+                    {/* Indicator for polygon vs marker */}
+                    {p.polygon ? (
+                      <svg className="h-3 w-3 text-green-600 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" title="Propiedad con polígono delimitado">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
+                      </svg>
+                    ) : (
+                      <svg className="h-3 w-3 text-orange-500 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" title="Propiedad sin polígono (mostrada como marcador)">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                      </svg>
+                    )}
+                  </div>
                   <span className={`${getStatusColor(p.status)} text-white text-[10px] px-1.5 py-0.5 rounded-full ml-1.5 flex-shrink-0`}>
                     {getStatusLabel(p.status)}
                   </span>
@@ -841,80 +869,126 @@ const MapPage = () => {
           <MapController onMapReady={handleMapReady} />
           <MapBoundsTracker properties={filteredProperties} onVisiblePropertiesChange={setVisibleProperties} />
 
-          {useMemo(() => filteredProperties.map((p, idx) => {
-            // Handle both GeoJSON and simple array formats
-            let leafletCoordinates;
+          {useMemo(() => {
+            const polygons = [];
+            const markers = [];
 
-            if (p.polygon?.coordinates?.[0]) {
-              // GeoJSON format: convert [lng, lat] to [lat, lng]
-              leafletCoordinates = p.polygon.coordinates[0].map(coord => [coord[1], coord[0]]);
-            } else if (Array.isArray(p.polygon) && p.polygon.length >= 3) {
-              // Simple array format: already [lat, lng]
-              leafletCoordinates = p.polygon;
-            } else {
-              return null;
-            }
+            filteredProperties.forEach((p, idx) => {
+              // Handle both GeoJSON and simple array formats for properties with polygons
+              let leafletCoordinates;
 
-            const isSelected = selectedProperty?.id === p.id;
-            const baseColor = p.status === 'for_sale' ? '#2b8a3e' : p.status === 'for_rent' ? '#1971c2' : '#868e96';
+              if (p.polygon?.coordinates?.[0]) {
+                // GeoJSON format: convert [lng, lat] to [lat, lng]
+                leafletCoordinates = p.polygon.coordinates[0].map(coord => [coord[1], coord[0]]);
+              } else if (Array.isArray(p.polygon) && p.polygon.length >= 3) {
+                // Simple array format: already [lat, lng]
+                leafletCoordinates = p.polygon;
+              }
 
-            return (
-              <Polygon
-                key={p.id || idx}
-                positions={leafletCoordinates}
-                pathOptions={{
-                  color: baseColor,
-                  fillOpacity: isSelected ? 0.4 : 0.2,
-                  weight: isSelected ? 3 : 2,
-                  className: 'property-polygon'
-                }}
-                eventHandlers={{
-                  click: () => {
-                    console.log('Polygon clicked!', p.title);
-                    // Cancel any pending hover timeout
-                    if (hoverTimeoutRef.current) {
-                      clearTimeout(hoverTimeoutRef.current);
-                      hoverTimeoutRef.current = null;
-                    }
-                    handlePolygonClick(p);
-                  },
-                  mouseover: (e) => {
-                    const layer = e.target;
-                    layer.setStyle({
-                      fillOpacity: 0.4,
-                      weight: 3
-                    });
+              const isSelected = selectedProperty?.id === p.id;
+              const baseColor = p.status === 'for_sale' ? '#2b8a3e' : p.status === 'for_rent' ? '#1971c2' : '#868e96';
 
-                    // Clear any existing timeout
-                    if (hoverTimeoutRef.current) {
-                      clearTimeout(hoverTimeoutRef.current);
-                    }
+              // If property has polygon, render as polygon
+              if (leafletCoordinates) {
+                polygons.push(
+                  <Polygon
+                    key={`polygon-${p.id || idx}`}
+                    positions={leafletCoordinates}
+                    pathOptions={{
+                      color: baseColor,
+                      fillOpacity: isSelected ? 0.4 : 0.2,
+                      weight: isSelected ? 3 : 2,
+                      className: 'property-polygon'
+                    }}
+                    eventHandlers={{
+                      click: () => {
+                        console.log('Polygon clicked!', p.title);
+                        // Cancel any pending hover timeout
+                        if (hoverTimeoutRef.current) {
+                          clearTimeout(hoverTimeoutRef.current);
+                          hoverTimeoutRef.current = null;
+                        }
+                        handlePolygonClick(p);
+                      },
+                      mouseover: (e) => {
+                        const layer = e.target;
+                        layer.setStyle({
+                          fillOpacity: 0.4,
+                          weight: 3
+                        });
 
-                    // Set timeout to open modal after 0.75 seconds of hovering
-                    hoverTimeoutRef.current = setTimeout(() => {
-                      handlePolygonClick(p);
-                      hoverTimeoutRef.current = null;
-                    }, 750);
-                  },
-                  mouseout: (e) => {
-                    const layer = e.target;
-                    if (!isSelected) {
-                      layer.setStyle({
-                        fillOpacity: 0.2,
-                        weight: 2
-                      });
-                    }
+                        // Clear any existing timeout
+                        if (hoverTimeoutRef.current) {
+                          clearTimeout(hoverTimeoutRef.current);
+                        }
 
-                    // Cancel hover timeout if mouse leaves before time expires
-                    if (hoverTimeoutRef.current) {
-                      clearTimeout(hoverTimeoutRef.current);
-                      hoverTimeoutRef.current = null;
-                    }
-                  }
-                }}
-              />
-            );
-          }), [filteredProperties, selectedProperty])}
+                        // Set timeout to open modal after 0.75 seconds of hovering
+                        hoverTimeoutRef.current = setTimeout(() => {
+                          handlePolygonClick(p);
+                          hoverTimeoutRef.current = null;
+                        }, 750);
+                      },
+                      mouseout: (e) => {
+                        const layer = e.target;
+                        if (!isSelected) {
+                          layer.setStyle({
+                            fillOpacity: 0.2,
+                            weight: 2
+                          });
+                        }
+
+                        // Cancel hover timeout if mouse leaves before time expires
+                        if (hoverTimeoutRef.current) {
+                          clearTimeout(hoverTimeoutRef.current);
+                          hoverTimeoutRef.current = null;
+                        }
+                      }
+                    }}
+                  />
+                );
+              }
+              // If property doesn't have polygon but has lat/lng, render as marker
+              else if (p.latitude && p.longitude) {
+                // Create custom icon based on property type and status
+                const markerIcon = new L.Icon({
+                  iconUrl: 'data:image/svg+xml;base64,' + btoa(`
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="${baseColor}" width="32" height="32">
+                      <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
+                    </svg>
+                  `),
+                  iconSize: [32, 32],
+                  iconAnchor: [16, 32],
+                  popupAnchor: [0, -32]
+                });
+
+                markers.push(
+                  <Marker
+                    key={`marker-${p.id || idx}`}
+                    position={[p.latitude, p.longitude]}
+                    icon={markerIcon}
+                    eventHandlers={{
+                      click: () => {
+                        console.log('Marker clicked!', p.title);
+                        handlePolygonClick(p);
+                      }
+                    }}
+                  >
+                    <Popup>
+                      <div className="text-sm">
+                        <strong>{p.title || `Propiedad #${p.id}`}</strong>
+                        <br />
+                        <small className="text-gray-600">
+                          {getPropertyTypeLabel(p.property_type)} - {getStatusLabel(p.status)}
+                        </small>
+                      </div>
+                    </Popup>
+                  </Marker>
+                );
+              }
+            });
+
+            return [...polygons, ...markers];
+          }, [filteredProperties, selectedProperty])}
 
           {/* User Location Marker */}
           {userLocation && (
