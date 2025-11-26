@@ -4,6 +4,7 @@ import { MapContainer, TileLayer, Polygon, useMapEvents, useMap, Marker, Popup }
 import 'leaflet/dist/leaflet.css';
 import { useEffect, useState, useRef, useCallback, useMemo } from 'react';
 import L from 'leaflet';
+import * as turf from '@turf/turf';
 
 // Fix default marker icon issue with webpack
 if (typeof window !== 'undefined') {
@@ -305,6 +306,71 @@ const LeafletMap = ({
   getStatusLabel,
   center,
 }: LeafletMapProps) => {
+  const polygonLayersRef = useRef<Record<string, any>>({});
+
+  const clearEdgeLabels = useCallback((layer: any) => {
+    if (layer?._edgeLabels) {
+      layer._edgeLabels.forEach((lbl: any) => {
+        if (lbl && lbl.remove) {
+          try { lbl.remove(); } catch {}
+        }
+      });
+      layer._edgeLabels = [];
+    }
+  }, []);
+
+  const addEdgeLabels = useCallback((layer: any) => {
+    const map = layer?._map;
+    if (!map || !layer?.getLatLngs) return;
+
+    clearEdgeLabels(layer);
+
+    const latlngs = layer.getLatLngs()?.[0] || [];
+    if (!latlngs || latlngs.length < 2) return;
+
+    const tooltips: any[] = [];
+    for (let i = 0; i < latlngs.length; i++) {
+      const start = latlngs[i];
+      const end = latlngs[(i + 1) % latlngs.length];
+      if (!start || !end) continue;
+
+      const segment = turf.lineString([
+        [start.lng, start.lat],
+        [end.lng, end.lat],
+      ]);
+      const lengthKm = turf.length(segment, { units: 'kilometers' });
+      const lengthMeters = lengthKm * 1000;
+      const label = `${lengthMeters.toFixed(1)} m`;
+
+      const midLat = (start.lat + end.lat) / 2;
+      const midLng = (start.lng + end.lng) / 2;
+      const tooltip = L.tooltip({
+        permanent: true,
+        direction: 'center',
+        className: 'edge-length-label',
+        opacity: 0.9,
+      })
+        .setContent(label)
+        .setLatLng([midLat, midLng])
+        .addTo(map);
+
+      tooltips.push(tooltip);
+    }
+
+    layer._edgeLabels = tooltips;
+  }, [clearEdgeLabels]);
+
+  useEffect(() => {
+    const selectedId = selectedProperty?.id;
+    if (selectedId && polygonLayersRef.current[selectedId]) {
+      addEdgeLabels(polygonLayersRef.current[selectedId]);
+    }
+
+    return () => {
+      Object.values(polygonLayersRef.current).forEach((layer: any) => clearEdgeLabels(layer));
+    };
+  }, [selectedProperty, addEdgeLabels, clearEdgeLabels]);
+
   return (
     <MapContainer
       center={center}
@@ -348,6 +414,12 @@ const LeafletMap = ({
               <Polygon
                 key={`polygon-${p.id || idx}`}
                 positions={leafletCoordinates}
+                ref={(layer: any) => {
+                  if (layer) {
+                    const idKey = p.id || `idx-${idx}`;
+                    polygonLayersRef.current[idKey] = layer;
+                  }
+                }}
                 pathOptions={{
                   color: baseColor,
                   fillOpacity: isSelected ? 0.4 : 0.2,
@@ -363,6 +435,11 @@ const LeafletMap = ({
                       hoverTimeoutRef.current = null;
                     }
                     onPolygonClick(p);
+                    // Mostrar etiquetas al seleccionar
+                    const layer = polygonLayersRef.current[p.id || `idx-${idx}`];
+                    if (layer) {
+                      addEdgeLabels(layer);
+                    }
                   },
                   mouseover: (e: any) => {
                     const layer = e.target;
