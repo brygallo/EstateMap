@@ -7,13 +7,10 @@ import PropertyModal from '@/components/PropertyModal';
 import ShareModal from '@/components/ShareModal';
 import RangeSlider from '@/components/RangeSlider';
 import LocationPermissionModal from '@/components/LocationPermissionModal';
-import dynamicImport from 'next/dynamic';
-
-// Force dynamic rendering for this page (required for useSearchParams)
-export const dynamic = 'force-dynamic';
+import dynamic from 'next/dynamic';
 
 // Dynamically import the Leaflet map component with no SSR
-const LeafletMap = dynamicImport(() => import('@/components/maps/LeafletMap'), {
+const LeafletMap = dynamic(() => import('@/components/maps/LeafletMap'), {
   ssr: false,
   loading: () => (
     <div className="h-full w-full flex items-center justify-center bg-gray-100">
