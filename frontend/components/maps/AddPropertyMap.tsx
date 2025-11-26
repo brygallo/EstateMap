@@ -1,6 +1,6 @@
 'use client';
 
-import { MapContainer, TileLayer, useMap } from 'react-leaflet';
+import { MapContainer, TileLayer, useMap, Marker } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
 import '@geoman-io/leaflet-geoman-free';
@@ -24,6 +24,18 @@ if (typeof window !== 'undefined') {
     return originalRemoveClass.call(this, el, name);
   };
 }
+
+const userLocationIcon = new L.Icon({
+  iconUrl: 'data:image/svg+xml;base64,' + btoa(`
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#3B82F6" width="32" height="32">
+      <circle cx="12" cy="12" r="10" fill="#3B82F6" stroke="white" stroke-width="2"/>
+      <circle cx="12" cy="12" r="4" fill="white"/>
+    </svg>
+  `),
+  iconSize: [32, 32],
+  iconAnchor: [16, 16],
+  popupAnchor: [0, -16]
+});
 
 const defaultCenter: [number, number] = [-1.5, -78.5]; // Centro de Ecuador
 
@@ -629,6 +641,7 @@ interface AddPropertyMapProps {
   initialPolygon?: any[];
   userCenter?: [number, number];
   userZoom?: number;
+  userLocation?: { lat: number; lng: number } | null;
 }
 
 const AddPropertyMap = ({
@@ -637,7 +650,8 @@ const AddPropertyMap = ({
   onAreaChange,
   initialPolygon,
   userCenter,
-  userZoom
+  userZoom,
+  userLocation
 }: AddPropertyMapProps) => {
   return (
     <MapContainer
@@ -667,6 +681,9 @@ const AddPropertyMap = ({
         initialPolygon={initialPolygon}
       />
       <LocationSearch />
+      {userLocation && (
+        <Marker position={[userLocation.lat, userLocation.lng]} icon={userLocationIcon} />
+      )}
       {userCenter && userZoom && <FlyToLocation center={userCenter} zoom={userZoom} />}
     </MapContainer>
   );
