@@ -69,6 +69,40 @@ function DrawingTools({
 
   const refreshEdgeLabels = (layer: any) => {
     clearEdgeLabels(layer);
+
+    const latlngs = layer?.getLatLngs?.()?.[0] || [];
+    if (!latlngs || latlngs.length < 2) return;
+
+    const markers: any[] = [];
+    for (let i = 0; i < latlngs.length; i++) {
+      const start = latlngs[i];
+      const end = latlngs[(i + 1) % latlngs.length];
+      if (!start || !end) continue;
+
+      const segment = turf.lineString([
+        [start.lng, start.lat],
+        [end.lng, end.lat],
+      ]);
+      const lengthKm = turf.length(segment, { units: 'kilometers' });
+      const lengthMeters = lengthKm * 1000;
+      const label = `${lengthMeters.toFixed(1)} m`;
+
+      const midLat = (start.lat + end.lat) / 2;
+      const midLng = (start.lng + end.lng) / 2;
+      const tooltip = L.tooltip({
+        permanent: true,
+        direction: 'center',
+        className: 'edge-length-label',
+        opacity: 0.9,
+      })
+        .setContent(label)
+        .setLatLng([midLat, midLng])
+        .addTo(map);
+
+      markers.push(tooltip);
+    }
+
+    layer._edgeMarkers = markers;
   };
 
   const updateAreaAndCoords = (layer: any) => {
@@ -123,7 +157,7 @@ function DrawingTools({
       position: 'topleft',
       drawPolygon: true,
       editMode: true,
-      removalMode: true,
+      removalMode: false, // Solo se usa el botón "Limpiar Polígono" custom
       drawMarker: false,
       drawCircle: false,
       drawCircleMarker: false,
@@ -134,6 +168,11 @@ function DrawingTools({
       rotateMode: false,
       drawText: false,
     });
+
+    // Asegurar que el modo de borrado global esté deshabilitado
+    try {
+      map.pm.disableGlobalRemovalMode();
+    } catch {}
 
     map.pm.setGlobalOptions({
       tooltips: true,
