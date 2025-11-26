@@ -58,7 +58,11 @@ function DrawingTools({
   /* ===== Helpers: edge labels / area / estilo ===== */
   const clearEdgeLabels = (layer: any) => {
     if (layer?._edgeMarkers) {
-      layer._edgeMarkers.forEach((m: any) => m.remove());
+      layer._edgeMarkers.forEach((m: any) => {
+        if (m && m.remove && m._map) {
+          try { m.remove(); } catch {}
+        }
+      });
       layer._edgeMarkers = [];
     }
   };
@@ -100,9 +104,16 @@ function DrawingTools({
   };
 
   const removeLiveTooltip = () => {
-    if (liveTooltipRef.current) {
-      map.removeLayer(liveTooltipRef.current);
-      liveTooltipRef.current = null;
+    const tooltip = liveTooltipRef.current;
+    liveTooltipRef.current = null;
+    if (!tooltip) return;
+
+    const hasContainer = (map as any)?._container;
+    const hasPath = (tooltip as any)?._path;
+    if (hasContainer && hasPath && map.hasLayer(tooltip)) {
+      try { map.removeLayer(tooltip); } catch {}
+    } else if (tooltip.remove) {
+      try { tooltip.remove(); } catch {}
     }
   };
 
@@ -178,6 +189,15 @@ function DrawingTools({
         zoom: map.getZoom()
       };
 
+      // Mantener el polígono en modo edición inmediatamente (solo si hay path)
+      if (e.layer?._path) {
+        try {
+          e.layer.pm?.enable();
+        } catch (err) {
+          console.warn('No se pudo habilitar edición del polígono recién creado', err);
+        }
+      }
+
       bindFinalPolygon(e.layer);
       removeLiveTooltip();
 
@@ -244,6 +264,11 @@ function DrawingTools({
     // Unbind
     return () => {
       try {
+        const hasContainer = (map as any)?._container;
+        if (!hasContainer) {
+          return;
+        }
+
         map.off('pm:drawstart', onDrawStart);
         map.off('pm:drawend', onDrawEnd);
         map.off('pm:create', onCreate);
@@ -257,9 +282,17 @@ function DrawingTools({
         if (currentPolygonRef.current) {
           try {
             clearEdgeLabels(currentPolygonRef.current);
-            if (map.hasLayer(currentPolygonRef.current)) {
-              currentPolygonRef.current.pm.disable();
+            const hasContainer = (map as any)?._container;
+            const hasPath = currentPolygonRef.current?._path;
+            const hasClassList = hasPath && (hasPath as any).classList;
+
+            // Solo intentar deshabilitar/quitar si el mapa sigue montado y el path existe
+            if (hasContainer && hasClassList && map.hasLayer(currentPolygonRef.current)) {
+              currentPolygonRef.current.pm?.disable?.();
+              currentPolygonRef.current.remove?.();
               map.removeLayer(currentPolygonRef.current);
+            } else if (currentPolygonRef.current.remove) {
+              currentPolygonRef.current.remove();
             }
           } catch (e) {
             // Ignore cleanup errors on unmount
