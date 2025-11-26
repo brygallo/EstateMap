@@ -3,9 +3,33 @@ from rest_framework.validators import UniqueValidator
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from django.contrib.auth import get_user_model
 from django.contrib.auth.password_validation import validate_password
-from .models import Property, PropertyImage
+from .models import Property, PropertyImage, Province, City
 
 User = get_user_model()
+
+
+class CitySerializer(serializers.ModelSerializer):
+    """Serializer para ciudades"""
+    province_name = serializers.CharField(source='province.name', read_only=True)
+
+    class Meta:
+        model = City
+        fields = ['id', 'name', 'code', 'province', 'province_name']
+        read_only_fields = ['id']
+
+
+class ProvinceSerializer(serializers.ModelSerializer):
+    """Serializer para provincias"""
+    cities = CitySerializer(many=True, read_only=True)
+    cities_count = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Province
+        fields = ['id', 'name', 'code', 'country', 'cities', 'cities_count']
+        read_only_fields = ['id']
+
+    def get_cities_count(self, obj):
+        return obj.cities.count()
 
 
 class PropertyImageSerializer(serializers.ModelSerializer):
