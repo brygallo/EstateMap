@@ -74,6 +74,11 @@ class PropertySerializer(serializers.ModelSerializer):
         max_length=10,  # Máximo 10 imágenes por propiedad
         help_text="Máximo 10 imágenes, cada una de máximo 10MB"
     )
+    images_to_delete = serializers.CharField(
+        write_only=True,
+        required=False,
+        help_text="JSON array con IDs de imágenes a eliminar"
+    )
 
     class Meta:
         model = Property
@@ -170,12 +175,35 @@ class PropertySerializer(serializers.ModelSerializer):
         return property_instance
 
     def update(self, instance, validated_data):
+        import json
+
         uploaded_images = validated_data.pop('uploaded_images', [])
+        images_to_delete_str = validated_data.pop('images_to_delete', None)
 
         # Update property fields
         for attr, value in validated_data.items():
             setattr(instance, attr, value)
         instance.save()
+
+        # Delete images if requested
+        if images_to_delete_str:
+            try:
+                images_to_delete = json.loads(images_to_delete_str)
+                if isinstance(images_to_delete, list):
+                    # Delete images and their files from storage
+                    images = PropertyImage.objects.filter(
+                        id__in=images_to_delete,
+                        property=instance
+                    )
+                    for img in images:
+                        # Delete the actual file from storage
+                        if img.image:
+                            img.image.delete(save=False)
+                        if img.thumbnail:
+                            img.thumbnail.delete(save=False)
+                        img.delete()
+            except (json.JSONDecodeError, ValueError):
+                pass  # Ignore invalid JSON
 
         # Add new images if provided
         if uploaded_images:
