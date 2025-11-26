@@ -4,228 +4,187 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Verifica tu correo - Geo Propiedades Ecuador</title>
-    <style>
-        body {
-            margin: 0;
-            padding: 0;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #f4f7fa;
-            -webkit-font-smoothing: antialiased;
-            -moz-osx-font-smoothing: grayscale;
-        }
-        .container {
-            max-width: 600px;
-            margin: 0 auto;
-            background-color: #ffffff;
-        }
-        .header {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            padding: 40px 20px;
-            text-align: center;
-        }
-        .logo {
-            width: 60px;
-            height: 60px;
-            background-color: white;
-            border-radius: 12px;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            margin-bottom: 20px;
-        }
-        .logo svg {
-            width: 40px;
-            height: 40px;
-            fill: #667eea;
-        }
-        .header h1 {
-            color: white;
-            margin: 0;
-            font-size: 28px;
-            font-weight: 600;
-        }
-        .content {
-            padding: 40px 30px;
-        }
-        .greeting {
-            font-size: 18px;
-            color: #333333;
-            margin-bottom: 20px;
-            font-weight: 500;
-        }
-        .message {
-            font-size: 16px;
-            color: #666666;
-            line-height: 1.6;
-            margin-bottom: 30px;
-        }
-        .code-container {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            border-radius: 12px;
-            padding: 30px;
-            text-align: center;
-            margin: 30px 0;
-            box-shadow: 0 4px 6px rgba(102, 126, 234, 0.2);
-        }
-        .code-label {
-            color: rgba(255, 255, 255, 0.9);
-            font-size: 14px;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            margin-bottom: 10px;
-        }
-        .code {
-            font-size: 42px;
-            font-weight: bold;
-            color: white;
-            letter-spacing: 8px;
-            font-family: 'Courier New', monospace;
-            text-align: center;
-            margin: 10px 0;
-        }
-        .expiry {
-            background-color: #fff3cd;
-            border-left: 4px solid #ffc107;
-            padding: 15px;
-            margin: 25px 0;
-            border-radius: 4px;
-        }
-        .expiry-text {
-            color: #856404;
-            font-size: 14px;
-            margin: 0;
-            display: flex;
-            align-items: center;
-        }
-        .expiry-icon {
-            width: 20px;
-            height: 20px;
-            margin-right: 10px;
-            flex-shrink: 0;
-        }
-        .footer {
-            background-color: #f8f9fa;
-            padding: 30px;
-            text-align: center;
-            border-top: 1px solid #e9ecef;
-        }
-        .footer-text {
-            color: #6c757d;
-            font-size: 14px;
-            line-height: 1.6;
-            margin: 0;
-        }
-        .footer-link {
-            color: #667eea;
-            text-decoration: none;
-        }
-        .social-links {
-            margin-top: 20px;
-        }
-        .social-link {
-            display: inline-block;
-            margin: 0 10px;
-            width: 32px;
-            height: 32px;
-            background-color: #667eea;
-            border-radius: 50%;
-            text-align: center;
-            line-height: 32px;
-            color: white;
-            text-decoration: none;
-        }
-        .divider {
-            height: 1px;
-            background-color: #e9ecef;
-            margin: 25px 0;
-        }
-        @media only screen and (max-width: 600px) {
-            .content {
-                padding: 30px 20px;
-            }
-            .code {
-                font-size: 36px;
-                letter-spacing: 6px;
-            }
-            .header h1 {
-                font-size: 24px;
-            }
-        }
-    </style>
 </head>
-<body>
-    <div class="container">
-        <!-- Header -->
-        <div class="header">
-            <div class="logo">
-                <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
-                </svg>
-            </div>
-            <h1>Geo Propiedades Ecuador</h1>
-        </div>
+<body style="margin:0; padding:0; background-color:#f4f7fa; font-family:Segoe UI, Tahoma, Geneva, Verdana, sans-serif;">
 
-        <!-- Content -->
-        <div class="content">
-            <p class="greeting">¡Hola {{ user_name }}! 👋</p>
+<!-- CONTAINER -->
+<table width="100%" border="0" cellspacing="0" cellpadding="0" bgcolor="#f4f7fa">
+    <tr>
+        <td align="center">
 
-            <p class="message">
-                Gracias por registrarte en <strong>Geo Propiedades Ecuador</strong>.
-                Estamos emocionados de tenerte con nosotros.
-            </p>
+            <table width="600" border="0" cellspacing="0" cellpadding="0" style="background-color:#ffffff;">
 
-            <p class="message">
-                Para completar tu registro y activar tu cuenta, por favor verifica
-                tu correo electrónico usando el siguiente código de verificación:
-            </p>
+                <!-- HEADER -->
+                <tr>
+                    <td align="center" style="padding:40px 20px; background: #667eea;">
 
-            <!-- Código de verificación -->
-            <div class="code-container">
-                <div class="code-label">Tu código de verificación</div>
-                <div class="code">{{ verification_code }}</div>
-            </div>
+                        <!-- Logo -->
+                        <div style="
+                            width:60px;
+                            height:60px;
+                            background-color:#ffffff;
+                            border-radius:12px;
+                            display:flex;
+                            align-items:center;
+                            justify-content:center;
+                            margin-bottom:20px;
+                        ">
+                            <svg width="40" height="40" viewBox="0 0 24 24" fill="#667eea" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" stroke="#667eea" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                        </div>
 
-            <!-- Advertencia de expiración -->
-            <div class="expiry">
-                <p class="expiry-text">
-                    <svg class="expiry-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" stroke="#856404" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                    </svg>
-                    Este código expirará en <strong>{{ expiry_minutes }} minutos</strong>.
-                </p>
-            </div>
+                        <h1 style="color:#ffffff; margin:0; font-size:28px; font-weight:600;">
+                            Geo Propiedades Ecuador
+                        </h1>
+                    </td>
+                </tr>
 
-            <p class="message">
-                Ingresa este código en la página de verificación para activar tu cuenta y comenzar
-                a disfrutar de todos los beneficios de Geo Propiedades Ecuador.
-            </p>
+                <!-- CONTENT -->
+                <tr>
+                    <td style="padding:40px 30px;">
 
-            <div class="divider"></div>
+                        <p style="font-size:18px; color:#333333; margin-bottom:20px; font-weight:500;">
+                            ¡Hola {{ user_name }}! 👋
+                        </p>
 
-            <p class="message" style="font-size: 14px; color: #6c757d;">
-                Si no solicitaste este registro, puedes ignorar este correo de manera segura.
-                Tu dirección de correo no será utilizada sin tu consentimiento.
-            </p>
-        </div>
+                        <p style="font-size:16px; color:#666666; line-height:1.6; margin-bottom:25px;">
+                            Gracias por registrarte en <strong>Geo Propiedades Ecuador</strong>.
+                            Estamos emocionados de tenerte con nosotros.
+                        </p>
 
-        <!-- Footer -->
-        <div class="footer">
-            <p class="footer-text">
-                <strong>Geo Propiedades Ecuador</strong><br>
-                Encuentra tu propiedad ideal en Ecuador<br>
-                <a href="https://wa.me/593983738151" class="footer-link" target="_blank">Contáctanos por WhatsApp</a>
-            </p>
+                        <p style="font-size:16px; color:#666666; line-height:1.6; margin-bottom:25px;">
+                            Para completar tu registro y activar tu cuenta, por favor verifica tu correo electrónico usando el siguiente código de verificación:
+                        </p>
 
-            <div class="social-links">
-                <a href="#" class="social-link">f</a>
-                <a href="#" class="social-link">📷</a>
-                <a href="#" class="social-link">in</a>
-            </div>
+                        <!-- CÓDIGO DE VERIFICACIÓN -->
+                        <table width="100%" border="0" cellspacing="0" cellpadding="0" style="margin: 30px 0;">
+                            <tr>
+                                <td align="center" style="
+                                    background-color:#667eea;
+                                    padding:30px;
+                                    border-radius:12px;
+                                    color:#ffffff;
+                                ">
 
-            <p class="footer-text" style="margin-top: 20px; font-size: 12px;">
-                © 2025 Geo Propiedades Ecuador. Todos los derechos reservados.
-            </p>
-        </div>
-    </div>
+                                    <div style="
+                                        font-size:13px;
+                                        letter-spacing:1px;
+                                        opacity:0.9;
+                                        text-transform:uppercase;
+                                        margin-bottom:10px;
+                                    ">
+                                        Tu código de verificación
+                                    </div>
+
+                                    <div style="
+                                        font-size:42px;
+                                        font-weight:bold;
+                                        letter-spacing:8px;
+                                        font-family:'Courier New', monospace;
+                                        margin:10px 0;
+                                        color:#ffffff;
+                                    ">
+                                        {{ verification_code }}
+                                    </div>
+
+                                </td>
+                            </tr>
+                        </table>
+
+                        <!-- ADVERTENCIA DE EXPIRACIÓN -->
+                        <table width="100%" border="0" cellspacing="0" cellpadding="0" style="
+                            background-color:#fff3cd;
+                            border-left:4px solid #ffc107;
+                            padding:15px;
+                            border-radius:4px;
+                            margin-bottom:30px;
+                        ">
+                            <tr>
+                                <td style="font-size:14px; color:#856404;">
+                                    <strong>Este código expirará en {{ expiry_minutes }} minutos.</strong>
+                                </td>
+                            </tr>
+                        </table>
+
+                        <p style="font-size:16px; color:#666666; line-height:1.6;">
+                            Ingresa este código en la página de verificación para activar tu cuenta y comenzar a disfrutar de todos los beneficios de Geo Propiedades Ecuador.
+                        </p>
+
+                        <hr style="border:0; height:1px; background:#e9ecef; margin:30px 0;">
+
+                        <p style="font-size:14px; color:#6c757d;">
+                            Si no solicitaste este registro, puedes ignorar este correo de manera segura.
+                        </p>
+
+                    </td>
+                </tr>
+
+                <!-- FOOTER -->
+                <tr>
+                    <td align="center" style="background-color:#f8f9fa; padding:30px; border-top:1px solid #e9ecef;">
+
+                        <p style="color:#6c757d; font-size:14px; line-height:1.6; margin:0;">
+                            <strong>Geo Propiedades Ecuador</strong><br>
+                            Encuentra tu propiedad ideal en Ecuador<br>
+                            <a href="https://wa.me/593983738151" target="_blank" style="color:#667eea; text-decoration:none;">
+                                Contáctanos por WhatsApp
+                            </a>
+                        </p>
+
+                        <div style="margin-top:18px;">
+                            <a href="#" style="
+                                display:inline-block;
+                                margin:0 8px;
+                                width:32px;
+                                height:32px;
+                                background-color:#667eea;
+                                border-radius:50%;
+                                color:white;
+                                text-align:center;
+                                line-height:32px;
+                                text-decoration:none;
+                            ">f</a>
+
+                            <a href="#" style="
+                                display:inline-block;
+                                margin:0 8px;
+                                width:32px;
+                                height:32px;
+                                background-color:#667eea;
+                                border-radius:50%;
+                                color:white;
+                                text-align:center;
+                                line-height:32px;
+                                text-decoration:none;
+                            ">📷</a>
+
+                            <a href="#" style="
+                                display:inline-block;
+                                margin:0 8px;
+                                width:32px;
+                                height:32px;
+                                background-color:#667eea;
+                                border-radius:50%;
+                                color:white;
+                                text-align:center;
+                                line-height:32px;
+                                text-decoration:none;
+                            ">in</a>
+                        </div>
+
+                        <p style="color:#6c757d; font-size:12px; margin-top:20px;">
+                            © 2025 Geo Propiedades Ecuador. Todos los derechos reservados.
+                        </p>
+
+                    </td>
+                </tr>
+
+            </table>
+
+        </td>
+    </tr>
+</table>
+
 </body>
 </html>
