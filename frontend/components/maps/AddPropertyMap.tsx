@@ -16,6 +16,13 @@ if (typeof window !== 'undefined') {
     iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
     shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
   });
+
+  // Guardar contra llamados a removeClass con path destruido (previene crash al desmontar)
+  const originalRemoveClass = (L.DomUtil as any).removeClass;
+  (L.DomUtil as any).removeClass = function (el: any, name: string) {
+    if (!el || !el.classList) return this;
+    return originalRemoveClass.call(this, el, name);
+  };
 }
 
 const defaultCenter: [number, number] = [-1.5, -78.5]; // Centro de Ecuador
@@ -137,6 +144,17 @@ function DrawingTools({
     layer.on('pm:markerdrag', () => { refreshEdgeLabels(layer); updateAreaAndCoords(layer); });
   };
 
+  const forceEditMode = (layer: any) => {
+    const opts = { snappable: true, allowSelfIntersection: false };
+    try { layer.pm?.enable?.(opts); } catch {}
+    requestAnimationFrame(() => {
+      try { layer.pm?.enable?.(opts); } catch {}
+    });
+    setTimeout(() => {
+      try { layer.pm?.enable?.(opts); } catch {}
+    }, 80);
+  };
+
   const removeLiveTooltip = () => {
     const tooltip = liveTooltipRef.current;
     liveTooltipRef.current = null;
@@ -228,22 +246,12 @@ function DrawingTools({
         zoom: map.getZoom()
       };
 
-    // Mantener el polígono en modo edición inmediatamente (solo si hay path)
-    if (e.layer?._path) {
-      try {
-        e.layer.pm?.enable({ snappable: true, allowSelfIntersection: false });
-        // Forzar handles visibles en siguiente frame por si Geoman los desactiva al cerrar el dibujo
-        requestAnimationFrame(() => {
-          try {
-            e.layer.pm?.toggleEdit?.({ snappable: true, allowSelfIntersection: false });
-          } catch {}
-        });
-      } catch (err) {
-        console.warn('No se pudo habilitar edición del polígono recién creado', err);
+      // Mantener el polígono en modo edición inmediatamente (solo si hay path)
+      if (e.layer?._path) {
+        forceEditMode(e.layer);
       }
-    }
 
-    bindFinalPolygon(e.layer);
+      bindFinalPolygon(e.layer);
       removeLiveTooltip();
 
       // Restaurar la vista inmediatamente en el siguiente frame
@@ -258,7 +266,17 @@ function DrawingTools({
           preventZoomRef.current = false;
           mapViewRef.current = null;
         }, 300);
+
+        // En caso de que Geoman quite edición al cerrar, re-forzar luego de restaurar vista
+        if (e.layer?._path) {
+          setTimeout(() => forceEditMode(e.layer), 120);
+        }
       });
+
+      // Asegurar que el botón de edición quede activo
+      try {
+        map.pm.enableGlobalEditMode();
+      } catch {}
     };
 
     /* === Edit / Remove === */
@@ -328,16 +346,16 @@ function DrawingTools({
           try {
             clearEdgeLabels(currentPolygonRef.current);
             const hasContainer = (map as any)?._container;
-            const hasPath = currentPolygonRef.current?._path;
-            const hasClassList = hasPath && (hasPath as any).classList;
+            const path = (currentPolygonRef.current as any)?._path;
+            const hasClassList = !!(path && path.classList);
 
-            // Solo intentar deshabilitar/quitar si el mapa sigue montado y el path existe
+            // Solo intentar deshabilitar/quitar si el mapa sigue montado y el path sigue existiendo
             if (hasContainer && hasClassList && map.hasLayer(currentPolygonRef.current)) {
-              currentPolygonRef.current.pm?.disable?.();
-              currentPolygonRef.current.remove?.();
-              map.removeLayer(currentPolygonRef.current);
-            } else if (currentPolygonRef.current.remove) {
-              currentPolygonRef.current.remove();
+              try { currentPolygonRef.current.pm?.disable?.(); } catch {}
+              try { currentPolygonRef.current.remove?.(); } catch {}
+              try { map.removeLayer(currentPolygonRef.current); } catch {}
+            } else if (hasClassList && currentPolygonRef.current.remove) {
+              try { currentPolygonRef.current.remove(); } catch {}
             }
           } catch (e) {
             // Ignore cleanup errors on unmount

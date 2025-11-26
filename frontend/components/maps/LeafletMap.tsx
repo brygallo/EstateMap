@@ -13,6 +13,13 @@ if (typeof window !== 'undefined') {
     iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
     shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
   });
+
+  // Guardar contra removeClass cuando el path ya no existe (previene crash al desmontar)
+  const originalRemoveClass = (L.DomUtil as any).removeClass;
+  (L.DomUtil as any).removeClass = function (el: any, name: string) {
+    if (!el || !el.classList) return this;
+    return originalRemoveClass.call(this, el, name);
+  };
 }
 
 // Custom icon for user location

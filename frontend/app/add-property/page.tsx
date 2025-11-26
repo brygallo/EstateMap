@@ -264,8 +264,27 @@ const AddPropertyPage = () => {
     if (map) {
       map.eachLayer((layer: any) => {
         if (layer.pm && layer instanceof (window as any).L.Polygon) {
-          if (layer._edgeMarkers) layer._edgeMarkers.forEach((m: any) => m.remove());
-          map.removeLayer(layer);
+          const path = (layer as any)._path;
+          const hasClassList = !!(path && path.classList);
+          if (layer._edgeMarkers) {
+            layer._edgeMarkers.forEach((m: any) => {
+              if (m && m.remove && m._map) {
+                try { m.remove(); } catch {}
+              }
+            });
+          }
+          try {
+            if (hasClassList) {
+              layer.pm?.disable?.();
+            }
+          } catch {}
+          try {
+            if (hasClassList && map.hasLayer(layer)) {
+              map.removeLayer(layer);
+            } else if (layer.remove) {
+              layer.remove();
+            }
+          } catch {}
         }
       });
     }
