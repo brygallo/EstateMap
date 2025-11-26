@@ -15,6 +15,10 @@ const nextConfig = {
   images: {
     domains: [],
   },
+  // Disable static page generation for dynamic routes
+  experimental: {
+    missingSuspenseWithCSRBailout: false,
+  },
   webpack: (config, { isServer }) => {
     // Exclude old src directory from build
     config.module.rules.push({

@@ -5,9 +5,6 @@ import { Formik, Form, Field, ErrorMessage } from 'formik';
 import * as Yup from 'yup';
 import { toast } from 'react-toastify';
 
-// Force dynamic rendering for this page (required for useSearchParams)
-export const dynamic = 'force-dynamic';
-
 const ResetPassword = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
