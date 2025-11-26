@@ -27,9 +27,11 @@ jobs:
 
             echo "📝 Creating .env.prod file..."
 
+            # Django/Backend Configuration
             echo "DJANGO_SECRET_KEY=${{ secrets.DJANGO_SECRET_KEY }}" > .env.prod
             echo "ALLOWED_HOSTS=${{ secrets.ALLOWED_HOSTS }}" >> .env.prod
 
+            # Database Configuration (pre-installed on server)
             echo "DB_HOST=${{ secrets.DB_HOST }}" >> .env.prod
             echo "DB_USER=${{ secrets.DB_USER }}" >> .env.prod
             echo "DB_PASSWORD=${{ secrets.DB_PASSWORD }}" >> .env.prod
@@ -37,6 +39,7 @@ jobs:
 
             echo "SERVER_IP=${{ secrets.SERVER_IP }}" >> .env.prod
 
+            # MinIO Configuration (pre-installed on server)
             echo "MINIO_ENDPOINT=${{ secrets.MINIO_ENDPOINT }}" >> .env.prod
             echo "MINIO_ACCESS_KEY=${{ secrets.MINIO_ACCESS_KEY }}" >> .env.prod
             echo "MINIO_SECRET_KEY=${{ secrets.MINIO_SECRET_KEY }}" >> .env.prod
@@ -44,10 +47,12 @@ jobs:
             echo "MINIO_BUCKET_NAME=${{ secrets.MINIO_BUCKET_NAME }}" >> .env.prod
             echo "MINIO_PUBLIC_ENDPOINT=${{ secrets.MINIO_PUBLIC_ENDPOINT }}" >> .env.prod
 
-            echo "VITE_API_URL=${{ secrets.VITE_API_URL }}" >> .env.prod
-            echo "VITE_MAPTILER_KEY=${{ secrets.VITE_MAPTILER_KEY }}" >> .env.prod
-            
-            
+            # Next.js Frontend Configuration
+            # IMPORTANT: Variables must start with NEXT_PUBLIC_ to be available in browser
+            echo "NEXT_PUBLIC_API_URL=${{ secrets.NEXT_PUBLIC_API_URL }}" >> .env.prod
+            echo "NEXT_PUBLIC_FRONTEND_URL=${{ secrets.NEXT_PUBLIC_FRONTEND_URL }}" >> .env.prod
+
+            # Email Configuration
             echo "EMAIL_BACKEND=${{ secrets.EMAIL_BACKEND }}" >> .env.prod
             echo "EMAIL_HOST=${{ secrets.EMAIL_HOST }}" >> .env.prod
             echo "EMAIL_PORT=${{ secrets.EMAIL_PORT }}" >> .env.prod
@@ -55,11 +60,10 @@ jobs:
             echo "EMAIL_HOST_USER=${{ secrets.EMAIL_HOST_USER }}" >> .env.prod
             echo "EMAIL_HOST_PASSWORD=${{ secrets.EMAIL_HOST_PASSWORD }}" >> .env.prod
             echo "DEFAULT_FROM_EMAIL=${{ secrets.DEFAULT_FROM_EMAIL }}" >> .env.prod
-            
-            
+
+            # Frontend URL for backend (email links, etc.)
             echo "FRONTEND_URL=${{ secrets.FRONTEND_URL }}" >> .env.prod
 
-    
             echo "🔄 Running deploy script..."
             ./scripts/deploy.sh
 
