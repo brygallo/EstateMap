@@ -1,4 +1,4 @@
-from rest_framework import viewsets, generics, status
+from rest_framework import viewsets, generics, status, filters
 from rest_framework_simplejwt.views import TokenObtainPairView
 from rest_framework.permissions import IsAuthenticated, AllowAny, IsAuthenticatedOrReadOnly
 from rest_framework.decorators import action
@@ -8,11 +8,13 @@ from rest_framework.settings import api_settings
 from django.http import HttpResponse, Http404
 from django.views import View
 from django.conf import settings
-from .models import Property, PropertyImage
+from .models import Property, PropertyImage, Province, City
 from django.contrib.auth import get_user_model
 from .serializers import (
     PropertySerializer,
     PropertyImageSerializer,
+    ProvinceSerializer,
+    CitySerializer,
     CustomTokenObtainPairSerializer,
     RegisterSerializer,
     VerifyEmailSerializer,
@@ -25,18 +27,83 @@ from .serializers import (
 from .permissions import IsOwnerOrReadOnly
 import requests
 
+
+class ProvinceViewSet(viewsets.ReadOnlyModelViewSet):
+    """
+    ViewSet para consultar provincias (solo lectura para usuarios)
+    El CRUD completo solo está disponible en el admin de Django
+    """
+    queryset = Province.objects.all()
+    serializer_class = ProvinceSerializer
+    permission_classes = [AllowAny]
+    filter_backends = [filters.SearchFilter, filters.OrderingFilter]
+    search_fields = ['name', 'code']
+    ordering_fields = ['name', 'created_at']
+    ordering = ['name']
+
+    @action(detail=True, methods=['get'])
+    def cities(self, request, pk=None):
+        """Obtener todas las ciudades de una provincia"""
+        province = self.get_object()
+        cities = province.cities.all()
+        serializer = CitySerializer(cities, many=True)
+        return Response(serializer.data)
+
+
+class CityViewSet(viewsets.ReadOnlyModelViewSet):
+    """
+    ViewSet para consultar ciudades (solo lectura para usuarios)
+    El CRUD completo solo está disponible en el admin de Django
+    """
+    queryset = City.objects.all()
+    serializer_class = CitySerializer
+    permission_classes = [AllowAny]
+    filter_backends = [filters.SearchFilter, filters.OrderingFilter]
+    search_fields = ['name', 'code', 'province__name']
+    ordering_fields = ['name', 'created_at']
+    ordering = ['name']
+
+    def get_queryset(self):
+        """Filtrar ciudades por provincia si se proporciona el parámetro"""
+        queryset = City.objects.all()
+        province_id = self.request.query_params.get('province', None)
+        if province_id is not None:
+            queryset = queryset.filter(province_id=province_id)
+        return queryset
+
 class PropertyViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticatedOrReadOnly, IsOwnerOrReadOnly]
     queryset = Property.objects.all()
     serializer_class = PropertySerializer
     parser_classes = [MultiPartParser, FormParser, JSONParser]
 
+    def get_queryset(self):
+        """
+        Filtrar propiedades según el usuario:
+        - Usuarios no autenticados: solo propiedades activas (status != 'inactive')
+        - Usuarios autenticados: propiedades activas + sus propias propiedades (incluyendo inactivas)
+        """
+        queryset = Property.objects.all()
+        user = self.request.user
+
+        if user.is_authenticated:
+            # Mostrar propiedades activas + propiedades propias (incluyendo inactivas)
+            from django.db.models import Q
+            queryset = queryset.filter(
+                Q(status__in=['for_sale', 'for_rent']) | Q(owner=user)
+            )
+        else:
+            # Usuarios no autenticados: solo propiedades activas
+            queryset = queryset.exclude(status='inactive')
+
+        return queryset
+
     def perform_create(self, serializer):
         serializer.save(owner=self.request.user)
 
     @action(detail=False, methods=['get'], permission_classes=[IsAuthenticated])
     def my_properties(self, request):
-        """Get only the properties owned by the current user"""
+        """Get only the properties owned by the current user (including inactive)"""
         properties = Property.objects.filter(owner=request.user)
         serializer = self.get_serializer(properties, many=True)
         return Response(serializer.data)
