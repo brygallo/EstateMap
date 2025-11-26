@@ -17,6 +17,20 @@ export default function LoginPage() {
     password: Yup.string().required('Campo requerido'),
   });
 
+  const normalizeErrorMessage = (value: any): string => {
+    if (!value) return '';
+    if (typeof value === 'string') return value;
+    if (Array.isArray(value)) return value.map(normalizeErrorMessage).join(' ');
+    if (typeof value === 'object') {
+      return (
+        normalizeErrorMessage(value.detail) ||
+        normalizeErrorMessage(value.message) ||
+        normalizeErrorMessage(Object.values(value)[0])
+      );
+    }
+    return '';
+  };
+
   const handleSubmit = async (values: any, { setSubmitting }: any) => {
     try {
       const res = await fetch(`${API_URL}/login/`, {
@@ -26,6 +40,25 @@ export default function LoginPage() {
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
+        const errorDetail = normalizeErrorMessage(data.detail || data.error);
+        const errorCode =
+          data.code ||
+          (typeof data.detail === 'object' && data.detail?.code) ||
+          '';
+        const isUnverified =
+          errorCode === 'email_not_verified' ||
+          (typeof errorDetail === 'string' && errorDetail.toLowerCase().includes('no ha sido verificada'));
+
+        if (isUnverified) {
+          const emailToVerify = data.email || values.email;
+          const params = new URLSearchParams();
+          if (emailToVerify) params.set('email', emailToVerify);
+
+          toast.error('Tu cuenta no ha sido verificada. Redirigiendo para verificarla.');
+          router.push(`/verify-email${params.toString() ? `?${params.toString()}` : ''}`);
+          return;
+        }
+
         let errorMessage = 'Credenciales incorrectas';
         if (data.detail) {
           errorMessage = Array.isArray(data.detail) ? data.detail[0] : data.detail;
