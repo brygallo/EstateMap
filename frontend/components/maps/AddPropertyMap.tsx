@@ -121,6 +121,7 @@ function DrawingTools({
       cutPolygon: false,
       dragMode: false,
       rotateMode: false,
+      drawText: false,
     });
 
     map.pm.setGlobalOptions({
