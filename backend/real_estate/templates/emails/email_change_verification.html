@@ -2,290 +2,242 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Verifica tu nuevo correo - Geo Propiedades Ecuador</title>
-    <style>
-        body {
-            margin: 0;
-            padding: 0;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #f4f7fa;
-            -webkit-font-smoothing: antialiased;
-            -moz-osx-font-smoothing: grayscale;
-        }
-        .container {
-            max-width: 600px;
-            margin: 0 auto;
-            background-color: #ffffff;
-        }
-        .header {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            padding: 40px 20px;
-            text-align: center;
-        }
-        .logo {
-            width: 60px;
-            height: 60px;
-            background-color: white;
-            border-radius: 12px;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            margin-bottom: 20px;
-        }
-        .logo svg {
-            width: 40px;
-            height: 40px;
-            fill: #667eea;
-        }
-        .header h1 {
-            color: white;
-            margin: 0;
-            font-size: 28px;
-            font-weight: 600;
-        }
-        .content {
-            padding: 40px 30px;
-        }
-        .greeting {
-            font-size: 18px;
-            color: #333333;
-            margin-bottom: 20px;
-            font-weight: 500;
-        }
-        .message {
-            font-size: 16px;
-            color: #666666;
-            line-height: 1.6;
-            margin-bottom: 25px;
-        }
-        .email-info {
-            background-color: #f8f9fa;
-            border-radius: 8px;
-            padding: 20px;
-            margin: 25px 0;
-            border-left: 4px solid #667eea;
-        }
-        .email-info-label {
-            font-size: 12px;
-            color: #6c757d;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            margin-bottom: 8px;
-        }
-        .email-info-value {
-            font-size: 16px;
-            color: #333;
-            font-weight: 600;
-            font-family: 'Courier New', monospace;
-        }
-        .code-container {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            border-radius: 12px;
-            padding: 30px;
-            text-align: center;
-            margin: 30px 0;
-            box-shadow: 0 4px 6px rgba(102, 126, 234, 0.2);
-        }
-        .code-label {
-            color: rgba(255, 255, 255, 0.9);
-            font-size: 14px;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            margin-bottom: 10px;
-        }
-        .code {
-            font-size: 42px;
-            font-weight: bold;
-            color: white;
-            letter-spacing: 8px;
-            font-family: 'Courier New', monospace;
-            text-align: center;
-            margin: 10px 0;
-        }
-        .expiry {
-            background-color: #fff3cd;
-            border-left: 4px solid #ffc107;
-            padding: 15px;
-            margin: 25px 0;
-            border-radius: 4px;
-        }
-        .expiry-text {
-            color: #856404;
-            font-size: 14px;
-            margin: 0;
-            display: flex;
-            align-items: center;
-        }
-        .expiry-icon {
-            width: 20px;
-            height: 20px;
-            margin-right: 10px;
-            flex-shrink: 0;
-        }
-        .security-notice {
-            background-color: #fff3cd;
-            border-left: 4px solid #ff9800;
-            padding: 20px;
-            margin: 25px 0;
-            border-radius: 4px;
-        }
-        .security-notice h3 {
-            color: #e65100;
-            margin: 0 0 10px 0;
-            font-size: 16px;
-            display: flex;
-            align-items: center;
-        }
-        .security-notice svg {
-            width: 20px;
-            height: 20px;
-            margin-right: 10px;
-        }
-        .security-notice p {
-            color: #856404;
-            font-size: 14px;
-            margin: 0;
-            line-height: 1.6;
-        }
-        .footer {
-            background-color: #f8f9fa;
-            padding: 30px;
-            text-align: center;
-            border-top: 1px solid #e9ecef;
-        }
-        .footer-text {
-            color: #6c757d;
-            font-size: 14px;
-            line-height: 1.6;
-            margin: 0;
-        }
-        .footer-link {
-            color: #667eea;
-            text-decoration: none;
-        }
-        .social-links {
-            margin-top: 20px;
-        }
-        .social-link {
-            display: inline-block;
-            margin: 0 10px;
-            width: 32px;
-            height: 32px;
-            background-color: #667eea;
-            border-radius: 50%;
-            text-align: center;
-            line-height: 32px;
-            color: white;
-            text-decoration: none;
-        }
-        .divider {
-            height: 1px;
-            background-color: #e9ecef;
-            margin: 25px 0;
-        }
-        @media only screen and (max-width: 600px) {
-            .content {
-                padding: 30px 20px;
-            }
-            .code {
-                font-size: 36px;
-                letter-spacing: 6px;
-            }
-            .header h1 {
-                font-size: 24px;
-            }
-        }
-    </style>
 </head>
-<body>
-    <div class="container">
-        <!-- Header -->
-        <div class="header">
-            <div class="logo">
-                <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
-                </svg>
-            </div>
-            <h1>Geo Propiedades Ecuador</h1>
-        </div>
 
-        <!-- Content -->
-        <div class="content">
-            <p class="greeting">Hola {{ user_name }},</p>
+<body style="margin:0; padding:0; background-color:#f4f7fa; font-family:Segoe UI, Tahoma, Geneva, Verdana, sans-serif;">
 
-            <p class="message">
-                Recibimos una solicitud para cambiar el correo electrónico asociado a tu cuenta en
-                <strong>Geo Propiedades Ecuador</strong>.
-            </p>
+<table width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#f4f7fa">
+    <tr>
+        <td align="center">
 
-            <div class="email-info">
-                <div class="email-info-label">Nuevo correo electrónico</div>
-                <div class="email-info-value">{{ new_email }}</div>
-            </div>
+            <table width="600" cellpadding="0" cellspacing="0" border="0" style="background-color:#ffffff;">
 
-            <p class="message">
-                Para confirmar este cambio y completar el proceso, por favor verifica
-                tu nuevo correo electrónico usando el siguiente código:
-            </p>
+                <!-- HEADER -->
+                <tr>
+                    <td align="center" style="padding:40px 20px; background-color:#667eea;">
 
-            <!-- Código de verificación -->
-            <div class="code-container">
-                <div class="code-label">Código de verificación</div>
-                <div class="code">{{ verification_code }}</div>
-            </div>
+                        <!-- Logo -->
+                        <table width="60" height="60" cellpadding="0" cellspacing="0" border="0" style="
+                background-color:#ffffff;
+                border-radius:12px;
+                margin-bottom:20px;
+            ">
+                            <tr>
+                                <td align="center">
+                                    <svg width="40" height="40" viewBox="0 0 24 24" fill="#667eea" xmlns="http://www.w3.org/2000/svg">
+                                        <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" stroke="#667eea" stroke-width="2" fill="none"/>
+                                    </svg>
+                                </td>
+                            </tr>
+                        </table>
 
-            <!-- Advertencia de expiración -->
-            <div class="expiry">
-                <p class="expiry-text">
-                    <svg class="expiry-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" stroke="#856404" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                    </svg>
-                    Este código expirará en <strong>{{ expiry_minutes }} minutos</strong>.
-                </p>
-            </div>
+                        <h1 style="color:#ffffff; margin:0; font-size:28px; font-weight:600;">
+                            Geo Propiedades Ecuador
+                        </h1>
+                    </td>
+                </tr>
 
-            <!-- Aviso de seguridad -->
-            <div class="security-notice">
-                <h3>
-                    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" stroke="#e65100" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                    </svg>
-                    ¿No solicitaste este cambio?
-                </h3>
-                <p>
-                    Si no iniciaste esta solicitud de cambio de correo, es posible que alguien esté
-                    intentando acceder a tu cuenta. Por favor, <strong>cambia tu contraseña inmediatamente</strong>
-                    y contacta con nuestro equipo de soporte.
-                </p>
-            </div>
+                <!-- CONTENT -->
+                <tr>
+                    <td style="padding:40px 30px;">
 
-            <div class="divider"></div>
+                        <p style="font-size:18px; color:#333333; font-weight:500; margin:0 0 20px;">
+                            Hola {{ user_name }},
+                        </p>
 
-            <p class="message" style="font-size: 14px; color: #6c757d;">
-                Una vez verificado, tu correo actual <strong>{{ old_email }}</strong> será reemplazado
-                por <strong>{{ new_email }}</strong> para todas las comunicaciones futuras.
-            </p>
-        </div>
+                        <p style="font-size:16px; color:#666666; line-height:1.6; margin:0 0 25px;">
+                            Recibimos una solicitud para cambiar el correo electrónico asociado a tu cuenta en
+                            <strong>Geo Propiedades Ecuador</strong>.
+                        </p>
 
-        <!-- Footer -->
-        <div class="footer">
-            <p class="footer-text">
-                <strong>Geo Propiedades Ecuador</strong><br>
-                Encuentra tu propiedad ideal en Ecuador<br>
-                <a href="https://wa.me/593983738151" class="footer-link" target="_blank">Contáctanos por WhatsApp</a>
-            </p>
+                        <!-- New Email Info -->
+                        <table width="100%" cellpadding="0" cellspacing="0" border="0" style="
+                background-color:#f8f9fa;
+                border-left:4px solid #667eea;
+                border-radius:8px;
+                padding:20px;
+                margin-bottom:25px;
+            ">
+                            <tr>
+                                <td>
+                                    <div style="font-size:12px; color:#6c757d; text-transform:uppercase; letter-spacing:1px; margin-bottom:8px;">
+                                        Nuevo correo electrónico
+                                    </div>
+                                    <div style="
+                            font-size:16px;
+                            color:#333333;
+                            font-weight:600;
+                            font-family:'Courier New', monospace;
+                        ">
+                                        {{ new_email }}
+                                    </div>
+                                </td>
+                            </tr>
+                        </table>
 
-            <div class="social-links">
-                <a href="#" class="social-link">f</a>
-                <a href="#" class="social-link">📷</a>
-                <a href="#" class="social-link">in</a>
-            </div>
+                        <p style="font-size:16px; color:#666666; line-height:1.6; margin:0 0 25px;">
+                            Para confirmar este cambio, por favor verifica tu nuevo correo electrónico usando el siguiente código:
+                        </p>
 
-            <p class="footer-text" style="margin-top: 20px; font-size: 12px;">
-                © 2025 Geo Propiedades Ecuador. Todos los derechos reservados.
-            </p>
-        </div>
-    </div>
+                        <!-- Verification Code -->
+                        <table width="100%" cellpadding="0" cellspacing="0" border="0" style="
+                background-color:#667eea;
+                border-radius:12px;
+                padding:30px;
+                text-align:center;
+                margin-bottom:30px;
+            ">
+                            <tr>
+                                <td align="center">
+                                    <div style="color:rgba(255,255,255,0.9); font-size:14px; text-transform:uppercase; letter-spacing:1px;">
+                                        Código de verificación
+                                    </div>
+
+                                    <div style="
+                            font-size:42px;
+                            font-weight:bold;
+                            color:#ffffff;
+                            letter-spacing:8px;
+                            font-family:'Courier New', monospace;
+                            margin-top:10px;
+                        ">
+                                        {{ verification_code }}
+                                    </div>
+                                </td>
+                            </tr>
+                        </table>
+
+                        <!-- EXPIRATION WARNING -->
+                        <table width="100%" cellpadding="0" cellspacing="0" border="0" style="
+                background-color:#fff3cd;
+                border-left:4px solid #ffc107;
+                border-radius:4px;
+                padding:15px;
+                margin-bottom:25px;
+            ">
+                            <tr>
+                                <td style="font-size:14px; color:#856404;">
+                                    <table cellpadding="0" cellspacing="0" border="0">
+                                        <tr>
+                                            <td valign="top" style="padding-right:10px;">
+                                                <svg width="20" height="20" stroke="#856404" fill="none">
+                                                    <path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" stroke-width="2"/>
+                                                </svg>
+                                            </td>
+                                            <td>
+                                                Este código expirará en <strong>{{ expiry_minutes }} minutos</strong>.
+                                            </td>
+                                        </tr>
+                                    </table>
+                                </td>
+                            </tr>
+                        </table>
+
+                        <!-- SECURITY NOTICE -->
+                        <table width="100%" cellpadding="0" cellspacing="0" border="0" style="
+                background-color:#fff3cd;
+                border-left:4px solid #ff9800;
+                border-radius:4px;
+                padding:20px;
+                margin-bottom:30px;
+            ">
+                            <tr>
+                                <td>
+                                    <table cellpadding="0" cellspacing="0" border="0">
+                                        <tr>
+                                            <td valign="top" style="padding-right:10px;">
+                                                <svg width="20" height="20" stroke="#e65100" fill="none">
+                                                    <path d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" stroke-width="2"/>
+                                                </svg>
+                                            </td>
+                                            <td>
+                                                <h3 style="margin:0; color:#e65100; font-size:16px; font-weight:600;">
+                                                    ¿No solicitaste este cambio?
+                                                </h3>
+
+                                                <p style="margin:10px 0 0; color:#856404; font-size:14px; line-height:1.6;">
+                                                    Si no iniciaste esta solicitud, alguien podría estar intentando acceder a tu cuenta.
+                                                    Te recomendamos <strong>cambiar tu contraseña inmediatamente</strong> y contactar al equipo de soporte.
+                                                </p>
+                                            </td>
+                                        </tr>
+                                    </table>
+                                </td>
+                            </tr>
+                        </table>
+
+                        <p style="font-size:14px; color:#6c757d; line-height:1.6; margin-top:20px;">
+                            Una vez verificado, tu correo actual <strong>{{ old_email }}</strong> será reemplazado por
+                            <strong>{{ new_email }}</strong> para todas las comunicaciones futuras.
+                        </p>
+
+                    </td>
+                </tr>
+
+                <!-- FOOTER -->
+                <tr>
+                    <td align="center" style="background-color:#f8f9fa; padding:30px; border-top:1px solid #e9ecef;">
+
+                        <p style="color:#6c757d; font-size:14px; line-height:1.6; margin:0;">
+                            <strong>Geo Propiedades Ecuador</strong><br>
+                            Encuentra tu propiedad ideal en Ecuador<br>
+                            <a href="https://wa.me/593983738151" style="color:#667eea; text-decoration:none;">Contáctanos por WhatsApp</a>
+                        </p>
+
+                        <div style="margin-top:20px;">
+                            <a href="#" style="
+                    display:inline-block;
+                    width:32px;
+                    height:32px;
+                    background-color:#667eea;
+                    color:#ffffff;
+                    text-decoration:none;
+                    border-radius:50%;
+                    text-align:center;
+                    line-height:32px;
+                    margin:0 8px;
+                ">f</a>
+
+                            <a href="#" style="
+                    display:inline-block;
+                    width:32px;
+                    height:32px;
+                    background-color:#667eea;
+                    color:#ffffff;
+                    text-decoration:none;
+                    border-radius:50%;
+                    text-align:center;
+                    line-height:32px;
+                    margin:0 8px;
+                ">📷</a>
+
+                            <a href="#" style="
+                    display:inline-block;
+                    width:32px;
+                    height:32px;
+                    background-color:#667eea;
+                    color:#ffffff;
+                    text-decoration:none;
+                    border-radius:50%;
+                    text-align:center;
+                    line-height:32px;
+                    margin:0 8px;
+                ">in</a>
+                        </div>
+
+                        <p style="color:#6c757d; font-size:12px; margin-top:20px;">
+                            © 2025 Geo Propiedades Ecuador. Todos los derechos reservados.
+                        </p>
+
+                    </td>
+                </tr>
+
+            </table>
+
+        </td>
+    </tr>
+</table>
+
 </body>
 </html>

@@ -1,383 +1,256 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="es" style="margin:0; padding:0;">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>¡Bienvenido a Geo Propiedades Ecuador!</title>
-    <style>
-        body {
-            margin: 0;
-            padding: 0;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #f4f7fa;
-            -webkit-font-smoothing: antialiased;
-            -moz-osx-font-smoothing: grayscale;
-        }
-        .container {
-            max-width: 600px;
-            margin: 0 auto;
-            background-color: #ffffff;
-        }
-        .header {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            padding: 50px 20px;
-            text-align: center;
-        }
-        .logo {
-            width: 80px;
-            height: 80px;
-            background-color: white;
-            border-radius: 16px;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            margin-bottom: 20px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-        }
-        .logo svg {
-            width: 50px;
-            height: 50px;
-            fill: #667eea;
-        }
-        .header h1 {
-            color: white;
-            margin: 0;
-            font-size: 32px;
-            font-weight: 600;
-        }
-        .header .subtitle {
-            color: rgba(255, 255, 255, 0.9);
-            font-size: 16px;
-            margin-top: 10px;
-        }
-        .content {
-            padding: 50px 40px;
-        }
-        .greeting {
-            font-size: 24px;
-            color: #333333;
-            margin-bottom: 15px;
-            font-weight: 600;
-            text-align: center;
-        }
-        .emoji-large {
-            font-size: 48px;
-            text-align: center;
-            margin: 20px 0;
-        }
-        .message {
-            font-size: 16px;
-            color: #666666;
-            line-height: 1.8;
-            margin-bottom: 25px;
-            text-align: center;
-        }
-        .success-badge {
-            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
-            color: white;
-            padding: 12px 24px;
-            border-radius: 25px;
-            display: inline-block;
-            font-weight: 600;
-            margin: 20px 0;
-            font-size: 14px;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
-        .features {
-            margin: 40px 0;
-        }
-        .feature-item {
-            display: flex;
-            align-items: flex-start;
-            margin-bottom: 25px;
-            padding: 20px;
-            background-color: #f8f9fa;
-            border-radius: 12px;
-            border-left: 4px solid #667eea;
-        }
-        .feature-icon {
-            width: 48px;
-            height: 48px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            border-radius: 12px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin-right: 20px;
-            flex-shrink: 0;
-        }
-        .feature-icon svg {
-            width: 24px;
-            height: 24px;
-            fill: white;
-        }
-        .feature-content h3 {
-            margin: 0 0 8px 0;
-            color: #333333;
-            font-size: 18px;
-            font-weight: 600;
-        }
-        .feature-content p {
-            margin: 0;
-            color: #666666;
-            font-size: 14px;
-            line-height: 1.6;
-        }
-        .cta-section {
-            text-align: center;
-            margin: 40px 0;
-            padding: 35px;
-            background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
-            border-radius: 12px;
-        }
-        .cta-button {
-            display: inline-block;
-            padding: 16px 40px;
-            background-color: #667eea;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: #ffffff !important;
-            text-decoration: none;
-            border-radius: 8px;
-            font-size: 16px;
-            font-weight: 600;
-            box-shadow: 0 4px 6px rgba(102, 126, 234, 0.3);
-            margin-top: 15px;
-            -webkit-text-size-adjust: none;
-            mso-hide: none;
-        }
-        .cta-button:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 12px rgba(102, 126, 234, 0.4);
-        }
-        .tips-section {
-            background-color: #e7f3ff;
-            border-left: 4px solid #2196F3;
-            padding: 25px;
-            margin: 30px 0;
-            border-radius: 8px;
-        }
-        .tips-section h3 {
-            color: #1565C0;
-            margin: 0 0 15px 0;
-            font-size: 18px;
-            display: flex;
-            align-items: center;
-        }
-        .tips-section svg {
-            width: 24px;
-            height: 24px;
-            margin-right: 10px;
-        }
-        .tips-section ul {
-            margin: 0;
-            padding-left: 25px;
-            color: #0d47a1;
-        }
-        .tips-section li {
-            margin-bottom: 10px;
-            font-size: 15px;
-            line-height: 1.6;
-        }
-        .footer {
-            background-color: #f8f9fa;
-            padding: 35px;
-            text-align: center;
-            border-top: 1px solid #e9ecef;
-        }
-        .footer-text {
-            color: #6c757d;
-            font-size: 14px;
-            line-height: 1.6;
-            margin: 0;
-        }
-        .footer-link {
-            color: #667eea;
-            text-decoration: none;
-            font-weight: 600;
-        }
-        .social-links {
-            margin-top: 25px;
-        }
-        .social-link {
-            display: inline-block;
-            margin: 0 12px;
-            width: 40px;
-            height: 40px;
-            background-color: #667eea;
-            border-radius: 50%;
-            text-align: center;
-            line-height: 40px;
-            color: white;
-            text-decoration: none;
-            font-size: 18px;
-            transition: all 0.3s;
-        }
-        .social-link:hover {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            transform: scale(1.1);
-        }
-        .divider {
-            height: 1px;
-            background-color: #e9ecef;
-            margin: 30px 0;
-        }
-        @media only screen and (max-width: 600px) {
-            .content {
-                padding: 35px 25px;
-            }
-            .header h1 {
-                font-size: 26px;
-            }
-            .greeting {
-                font-size: 20px;
-            }
-            .feature-item {
-                flex-direction: column;
-                text-align: center;
-            }
-            .feature-icon {
-                margin: 0 auto 15px;
-            }
-        }
-    </style>
+    <title>Bienvenido a Geo Propiedades Ecuador</title>
 </head>
-<body>
-    <div class="container">
-        <!-- Header -->
-        <div class="header">
-            <div class="logo">
-                <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
-                </svg>
-            </div>
-            <h1>Geo Propiedades Ecuador</h1>
-            <div class="subtitle">Tu plataforma de propiedades de confianza</div>
-        </div>
+<body style="margin:0; padding:0; background-color:#f4f7fa; font-family:Segoe UI, Tahoma, Geneva, Verdana, sans-serif;">
 
-        <!-- Content -->
-        <div class="content">
-            <div class="emoji-large">🎉</div>
+<!-- MAIN WRAPPER -->
+<table width="100%" border="0" cellspacing="0" cellpadding="0" bgcolor="#f4f7fa">
+    <tr>
+        <td align="center">
 
-            <p class="greeting">¡Bienvenido, {{ user_name }}!</p>
+            <!-- CARD -->
+            <table width="600" border="0" cellspacing="0" cellpadding="0" style="background-color:#ffffff;">
 
-            <div style="text-align: center;">
-                <span class="success-badge">✓ Cuenta Verificada</span>
-            </div>
+                <!-- HEADER -->
+                <tr>
+                    <td align="center" style="padding:50px 20px; background-color:#667eea;">
 
-            <p class="message">
-                Tu cuenta ha sido verificada exitosamente. Estamos emocionados de tenerte en
-                <strong>Geo Propiedades Ecuador</strong>, tu plataforma de confianza para encontrar
-                la propiedad ideal en Ecuador.
-            </p>
+                        <!-- Logo Container -->
+                        <table width="80" height="80" cellspacing="0" cellpadding="0" border="0" style="
+                background-color:#ffffff;
+                border-radius:16px;
+                box-shadow:0 4px 12px rgba(0,0,0,0.1);
+                text-align:center;
+            ">
+                            <tr>
+                                <td align="center">
+                                    <svg width="50" height="50" viewBox="0 0 24 24" fill="#667eea" xmlns="http://www.w3.org/2000/svg">
+                                        <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" stroke="#667eea" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+                                    </svg>
+                                </td>
+                            </tr>
+                        </table>
 
-            <!-- Features -->
-            <div class="features">
-                <div class="feature-item">
-                    <div class="feature-icon">
-                        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
-                            <path d="M9 22V12h6v10" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
-                        </svg>
-                    </div>
-                    <div class="feature-content">
-                        <h3>Explora Propiedades</h3>
-                        <p>Accede a un amplio catálogo de propiedades en toda Ecuador. Casas, departamentos, terrenos y más.</p>
-                    </div>
-                </div>
+                        <h1 style="color:#ffffff; margin:20px 0 0 0; font-size:32px; font-weight:600;">
+                            Geo Propiedades Ecuador
+                        </h1>
 
-                <div class="feature-item">
-                    <div class="feature-icon">
-                        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
-                            <circle cx="12" cy="10" r="3" stroke="currentColor" stroke-width="2" fill="none"/>
-                        </svg>
-                    </div>
-                    <div class="feature-content">
-                        <h3>Búsqueda Geolocalizada</h3>
-                        <p>Encuentra propiedades cerca de ti o en la ubicación que prefieras con nuestro mapa interactivo.</p>
-                    </div>
-                </div>
+                        <p style="color:rgba(255,255,255,0.9); font-size:16px; margin:10px 0 0 0;">
+                            Tu plataforma de propiedades de confianza
+                        </p>
 
-                <div class="feature-item">
-                    <div class="feature-icon">
-                        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M12 2v20M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
-                        </svg>
-                    </div>
-                    <div class="feature-content">
-                        <h3>Publica tus Propiedades</h3>
-                        <p>Si tienes propiedades para vender o alquilar, publícalas de manera fácil y rápida en nuestra plataforma.</p>
-                    </div>
-                </div>
+                    </td>
+                </tr>
 
-                <div class="feature-item">
-                    <div class="feature-icon">
-                        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
-                        </svg>
-                    </div>
-                    <div class="feature-content">
-                        <h3>Seguridad y Confianza</h3>
-                        <p>Todas las propiedades son verificadas. Tu información está protegida con los más altos estándares de seguridad.</p>
-                    </div>
-                </div>
-            </div>
+                <!-- CONTENT -->
+                <tr>
+                    <td style="padding:50px 40px; text-align:center;">
 
-            <!-- CTA Section -->
-            <div class="cta-section">
-                <h3 style="margin: 0 0 10px 0; color: #333;">¿Listo para empezar?</h3>
-                <p style="color: #666; margin: 0 0 20px 0;">
-                    Inicia sesión y comienza a explorar las mejores propiedades de Ecuador
-                </p>
-                <a href="{{ frontend_url }}/login" class="cta-button" style="display: inline-block; padding: 16px 40px; background-color: #667eea; color: #ffffff; text-decoration: none; border-radius: 8px; font-size: 16px; font-weight: 600;">
-                    Iniciar Sesión
-                </a>
-            </div>
+                        <div style="font-size:48px; margin-bottom:20px;">🎉</div>
 
-            <!-- Tips Section -->
-            <div class="tips-section">
-                <h3>
-                    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M12 2a10 10 0 1010 10A10 10 0 0012 2zm0 18a8 8 0 118-8 8 8 0 01-8 8z" fill="#1565C0"/>
-                        <path d="M12 11a1 1 0 00-1 1v4a1 1 0 002 0v-4a1 1 0 00-1-1zM12 7a1 1 0 100 2 1 1 0 000-2z" fill="#1565C0"/>
-                    </svg>
-                    Consejos para aprovechar tu cuenta
-                </h3>
-                <ul>
-                    <li>Completa tu perfil para tener una mejor experiencia</li>
-                    <li>Guarda tus propiedades favoritas para revisarlas después</li>
-                    <li>Activa las notificaciones para recibir alertas de nuevas propiedades</li>
-                    <li>Contacta directamente a los propietarios desde la plataforma</li>
-                    <li>Mantén tu información de contacto actualizada</li>
-                </ul>
-            </div>
+                        <p style="font-size:24px; color:#333333; font-weight:600; margin:0 0 15px 0;">
+                            ¡Bienvenido, {{ user_name }}!
+                        </p>
 
-            <div class="divider"></div>
+                        <!-- Success Badge -->
+                        <table align="center" border="0" cellspacing="0" cellpadding="0">
+                            <tr>
+                                <td style="
+                        background-color:#28a745;
+                        color:#ffffff;
+                        padding:12px 24px;
+                        border-radius:25px;
+                        text-transform:uppercase;
+                        letter-spacing:1px;
+                        font-size:14px;
+                        font-weight:600;
+                        margin:20px 0;
+                    ">
+                                    ✓ Cuenta Verificada
+                                </td>
+                            </tr>
+                        </table>
 
-            <p class="message" style="font-size: 14px; color: #6c757d;">
-                ¿Necesitas ayuda? No dudes en contactarnos. Estamos aquí para asistirte en todo momento.
-            </p>
-        </div>
+                        <p style="font-size:16px; color:#666666; line-height:1.8; margin:25px 0;">
+                            Tu cuenta ha sido verificada exitosamente. Estamos emocionados de tenerte en
+                            <strong>Geo Propiedades Ecuador</strong>, tu plataforma de confianza para encontrar la propiedad ideal.
+                        </p>
 
-        <!-- Footer -->
-        <div class="footer">
-            <p class="footer-text">
-                <strong>Geo Propiedades Ecuador</strong><br>
-                Encuentra tu propiedad ideal en Ecuador<br>
-                <a href="https://wa.me/593983738151" class="footer-link" target="_blank">Contáctanos por WhatsApp</a>
-            </p>
+                        <!-- FEATURES -->
+                        <table width="100%" border="0" cellspacing="0" cellpadding="0" style="margin-top:35px;">
 
-            <div class="social-links">
-                <a href="#" class="social-link">f</a>
-                <a href="#" class="social-link">📷</a>
-                <a href="#" class="social-link">in</a>
-            </div>
+                            <!-- Feature Item -->
+                            <tr>
+                                <td style="
+                        background-color:#f8f9fa;
+                        padding:20px;
+                        border-left:4px solid #667eea;
+                        border-radius:12px;
+                        margin-bottom:25px;
+                    ">
+                                    <table width="100%">
+                                        <tr>
+                                            <td width="60" valign="top">
+                                                <div style="
+                                        width:48px; height:48px;
+                                        background-color:#667eea;
+                                        border-radius:12px;
+                                        display:flex;
+                                        align-items:center;
+                                        justify-content:center;
+                                        margin-right:20px;
+                                    ">
+                                                    <svg width="24" height="24" viewBox="0 0 24 24" fill="#ffffff" xmlns="http://www.w3.org/2000/svg">
+                                                        <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" stroke="white" stroke-width="2" fill="none"/>
+                                                    </svg>
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <h3 style="margin:0; font-size:18px; color:#333333;">Explora Propiedades</h3>
+                                                <p style="margin:5px 0 0 0; font-size:14px; color:#666666;">
+                                                    Encuentra casas, departamentos y terrenos en todo Ecuador.
+                                                </p>
+                                            </td>
+                                        </tr>
+                                    </table>
+                                </td>
+                            </tr>
 
-            <p class="footer-text" style="margin-top: 25px; font-size: 12px;">
-                © 2025 Geo Propiedades Ecuador. Todos los derechos reservados.
-            </p>
-        </div>
-    </div>
+                            <!-- Feature Item -->
+                            <tr>
+                                <td style="
+                        background-color:#f8f9fa;
+                        padding:20px;
+                        border-left:4px solid #667eea;
+                        border-radius:12px;
+                    ">
+                                    <table width="100%">
+                                        <tr>
+                                            <td width="60" valign="top">
+                                                <div style="
+                                        width:48px; height:48px;
+                                        background-color:#667eea;
+                                        border-radius:12px;
+                                        display:flex;
+                                        justify-content:center;
+                                        align-items:center;
+                                    ">
+                                                    <svg width="24" height="24" fill="white" xmlns="http://www.w3.org/2000/svg">
+                                                        <circle cx="12" cy="10" r="3"/>
+                                                        <path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 0118 0z"/>
+                                                    </svg>
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <h3 style="margin:0; font-size:18px; color:#333333;">Búsqueda Geolocalizada</h3>
+                                                <p style="margin:5px 0 0 0; font-size:14px; color:#666666;">
+                                                    Explora propiedades en un mapa interactivo.
+                                                </p>
+                                            </td>
+                                        </tr>
+                                    </table>
+                                </td>
+                            </tr>
+
+                        </table>
+
+                        <!-- CTA -->
+                        <table width="100%" border="0" cellspacing="0" cellpadding="0" style="
+                background-color:#eef0ff;
+                border-radius:12px;
+                padding:35px;
+                margin-top:35px;
+            ">
+                            <tr>
+                                <td align="center">
+                                    <h3 style="margin:0; color:#333333;">¿Listo para empezar?</h3>
+                                    <p style="color:#666; margin:10px 0 20px 0; font-size:15px;">
+                                        Inicia sesión y comienza a explorar propiedades.
+                                    </p>
+
+                                    <a href="{{ frontend_url }}/login" style="
+                            background-color:#667eea;
+                            color:#ffffff;
+                            text-decoration:none;
+                            padding:16px 40px;
+                            border-radius:8px;
+                            font-size:16px;
+                            font-weight:600;
+                            display:inline-block;
+                        ">
+                                        Iniciar Sesión
+                                    </a>
+                                </td>
+                            </tr>
+                        </table>
+
+                        <!-- Tips -->
+                        <table width="100%" border="0" cellspacing="0" cellpadding="0" style="
+                background-color:#e7f3ff;
+                border-left:4px solid #2196F3;
+                padding:25px;
+                border-radius:8px;
+                margin-top:35px;
+            ">
+                            <tr>
+                                <td>
+
+                                    <h3 style="color:#1565C0; margin:0 0 15px; font-size:18px;">
+                                        Consejos para aprovechar tu cuenta
+                                    </h3>
+
+                                    <ul style="margin:0; padding-left:20px; color:#0d47a1; font-size:15px; line-height:1.6;">
+                                        <li>Completa tu perfil</li>
+                                        <li>Guarda tus propiedades favoritas</li>
+                                        <li>Activa notificaciones</li>
+                                        <li>Contacta a propietarios fácilmente</li>
+                                        <li>Mantén tu información actualizada</li>
+                                    </ul>
+
+                                </td>
+                            </tr>
+                        </table>
+
+                        <p style="font-size:14px; color:#6c757d; margin-top:30px;">
+                            ¿Necesitas ayuda? Estamos aquí para ti.
+                        </p>
+
+                    </td>
+                </tr>
+
+                <!-- FOOTER -->
+                <tr>
+                    <td align="center" style="background-color:#f8f9fa; padding:35px; border-top:1px solid #e9ecef;">
+
+                        <p style="color:#6c757d; font-size:14px; line-height:1.6;">
+                            <strong>Geo Propiedades Ecuador</strong><br>
+                            Encuentra tu propiedad ideal en Ecuador<br>
+                            <a href="https://wa.me/593983738151" style="color:#667eea; text-decoration:none;">Contáctanos por WhatsApp</a>
+                        </p>
+
+                        <div style="margin-top:20px;">
+                            <a href="#" style="background-color:#667eea; color:white; text-decoration:none; width:40px; height:40px; display:inline-block; line-height:40px; border-radius:50%; margin:0 10px;">f</a>
+                            <a href="#" style="background-color:#667eea; color:white; text-decoration:none; width:40px; height:40px; display:inline-block; line-height:40px; border-radius:50%; margin:0 10px;">📷</a>
+                            <a href="#" style="background-color:#667eea; color:white; text-decoration:none; width:40px; height:40px; display:inline-block; line-height:40px; border-radius:50%; margin:0 10px;">in</a>
+                        </div>
+
+                        <p style="color:#6c757d; font-size:12px; margin-top:20px;">
+                            © 2025 Geo Propiedades Ecuador. Todos los derechos reservados.
+                        </p>
+
+                    </td>
+                </tr>
+
+            </table>
+            <!-- END CARD -->
+
+        </td>
+    </tr>
+</table>
+<!-- END WRAPPER -->
+
 </body>
 </html>
