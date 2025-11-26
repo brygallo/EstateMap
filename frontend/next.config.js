@@ -1,0 +1,27 @@
+const withPWA = require('next-pwa')({
+  dest: 'public',
+  register: true,
+  skipWaiting: true,
+  disable: process.env.NODE_ENV === 'development'
+});
+
+/** @type {import('next').NextConfig} */
+const nextConfig = {
+  reactStrictMode: true,
+  env: {
+    NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL,
+  },
+  images: {
+    domains: [],
+  },
+  webpack: (config, { isServer }) => {
+    // Exclude old src directory from build
+    config.module.rules.push({
+      test: /\.(js|jsx|ts|tsx)$/,
+      exclude: /src\/(pages|components)/,
+    });
+    return config;
+  },
+};
+
+module.exports = withPWA(nextConfig);
