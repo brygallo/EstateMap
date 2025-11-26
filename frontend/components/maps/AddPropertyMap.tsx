@@ -5,7 +5,7 @@ import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
 import '@geoman-io/leaflet-geoman-free';
 import '@geoman-io/leaflet-geoman-free/dist/leaflet-geoman.css';
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import * as turf from '@turf/turf';
 
 // Fix Leaflet icons
@@ -228,16 +228,22 @@ function DrawingTools({
         zoom: map.getZoom()
       };
 
-      // Mantener el polígono en modo edición inmediatamente (solo si hay path)
-      if (e.layer?._path) {
-        try {
-          e.layer.pm?.enable();
-        } catch (err) {
-          console.warn('No se pudo habilitar edición del polígono recién creado', err);
-        }
+    // Mantener el polígono en modo edición inmediatamente (solo si hay path)
+    if (e.layer?._path) {
+      try {
+        e.layer.pm?.enable({ snappable: true, allowSelfIntersection: false });
+        // Forzar handles visibles en siguiente frame por si Geoman los desactiva al cerrar el dibujo
+        requestAnimationFrame(() => {
+          try {
+            e.layer.pm?.toggleEdit?.({ snappable: true, allowSelfIntersection: false });
+          } catch {}
+        });
+      } catch (err) {
+        console.warn('No se pudo habilitar edición del polígono recién creado', err);
       }
+    }
 
-      bindFinalPolygon(e.layer);
+    bindFinalPolygon(e.layer);
       removeLiveTooltip();
 
       // Restaurar la vista inmediatamente en el siguiente frame
@@ -425,6 +431,179 @@ function FlyToLocation({ center, zoom }: { center?: [number, number]; zoom?: num
   return null;
 }
 
+/* ===================== Buscador ===================== */
+function LocationSearch() {
+  const map = useMap();
+  const [query, setQuery] = useState('');
+  const [results, setResults] = useState<any[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const controllerRef = useRef<AbortController | null>(null);
+  const debounceRef = useRef<NodeJS.Timeout | null>(null);
+
+  const runSearch = async (value: string) => {
+    const q = value.trim();
+    if (!q) {
+      setResults([]);
+      setError('');
+      setLoading(false);
+      return;
+    }
+
+    // Cancelar búsquedas previas para que la más reciente responda rápido
+    if (controllerRef.current) {
+      controllerRef.current.abort();
+    }
+    const controller = new AbortController();
+    controllerRef.current = controller;
+
+    setLoading(true);
+    setError('');
+    try {
+      const params = new URLSearchParams({
+        format: 'json',
+        q,
+        countrycodes: 'ec',
+        addressdetails: '1',
+        limit: '5'
+      });
+      const res = await fetch(`https://nominatim.openstreetmap.org/search?${params.toString()}`, {
+        headers: {
+          'User-Agent': 'EstateMap/1.0 (contact: soporte@estatemap.local)',
+          'Accept-Language': 'es'
+        },
+        signal: controller.signal,
+      });
+      if (!res.ok) {
+        throw new Error('No se pudo buscar ubicación');
+      }
+      const data = await res.json();
+      setResults(data || []);
+      if ((data || []).length === 0) {
+        setError('Sin resultados');
+      }
+    } catch (err: any) {
+      if (err?.name !== 'AbortError') {
+        setError('Error al buscar ubicación');
+        setResults([]);
+      }
+    } finally {
+      setLoading(false);
+      controllerRef.current = null;
+    }
+  };
+
+  const handleSearch = async (e: React.FormEvent) => {
+    e.preventDefault();
+    runSearch(query);
+  };
+
+  const handleChange = (value: string) => {
+    setQuery(value);
+    if (debounceRef.current) {
+      clearTimeout(debounceRef.current);
+    }
+
+    const trimmed = value.trim();
+    if (!trimmed) {
+      if (controllerRef.current) controllerRef.current.abort();
+      setResults([]);
+      setError('');
+      setLoading(false);
+      return;
+    }
+
+    debounceRef.current = setTimeout(() => {
+      runSearch(trimmed);
+    }, 350);
+  };
+
+  const handleSelect = (place: any) => {
+    const lat = parseFloat(place.lat);
+    const lon = parseFloat(place.lon);
+
+    if (place.boundingbox && place.boundingbox.length === 4) {
+      const [south, north, west, east] = place.boundingbox.map((v: string) => parseFloat(v));
+      if ([south, north, west, east].every(Number.isFinite)) {
+        map.fitBounds(
+          [
+            [south, west],
+            [north, east],
+          ],
+          { maxZoom: 16 }
+        );
+      } else if (Number.isFinite(lat) && Number.isFinite(lon)) {
+        map.flyTo([lat, lon], 15, { duration: 1.2 });
+      }
+    } else if (Number.isFinite(lat) && Number.isFinite(lon)) {
+      map.flyTo([lat, lon], 15, { duration: 1.2 });
+    }
+
+    setQuery(place.display_name || '');
+    setResults([]);
+  };
+
+  useEffect(() => {
+    return () => {
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+      if (controllerRef.current) controllerRef.current.abort();
+    };
+  }, []);
+
+  return (
+    <div className="pointer-events-none absolute top-4 left-1/2 -translate-x-1/2 z-[1000] w-[85%] max-w-lg px-3">
+      <div className="pointer-events-auto relative w-full">
+        <form onSubmit={handleSearch} className="w-full">
+          <div className="relative shadow-lg rounded-xl overflow-hidden bg-white">
+            <input
+              type="search"
+              value={query}
+              onChange={(e) => handleChange(e.target.value)}
+              placeholder="Buscar ciudad, referencia..."
+              className="w-full px-4 py-2 pr-10 text-sm text-gray-800 outline-none"
+            />
+            <button
+              type="submit"
+              className="absolute inset-y-0 right-0 px-3 text-primary hover:text-secondary disabled:opacity-50"
+              disabled={loading}
+            >
+              {loading ? (
+                <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24" fill="none">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0a12 12 0 00-8 20z" />
+                </svg>
+              ) : (
+                <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <circle cx="11" cy="11" r="8" />
+                  <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                </svg>
+              )}
+            </button>
+          </div>
+        </form>
+        {(results.length > 0 || error) && (
+          <div className="absolute left-0 right-0 mt-1 bg-white shadow-xl rounded-xl overflow-hidden border border-gray-100 max-h-60 overflow-y-auto">
+            {results.map((r) => (
+              <button
+                key={`${r.place_id}`}
+                type="button"
+                onClick={() => handleSelect(r)}
+                className="w-full text-left px-3 py-2 hover:bg-gray-50 text-sm"
+              >
+                <p className="font-semibold text-gray-800 line-clamp-1">{r.display_name}</p>
+                <p className="text-xs text-gray-500">{r.type}</p>
+              </button>
+            ))}
+            {error && results.length === 0 && (
+              <div className="px-3 py-2 text-sm text-gray-500">{error}</div>
+            )}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 interface AddPropertyMapProps {
   onMapReady: (map: any) => void;
   onPolygonChange: (coords: any[]) => void;
@@ -448,7 +627,7 @@ const AddPropertyMap = ({
       zoom={7}
       maxZoom={20}
       preferCanvas
-      className="h-full w-full"
+      className="h-full w-full relative"
       zoomControl={true}
       scrollWheelZoom={true}
       doubleClickZoom={true}
@@ -469,6 +648,7 @@ const AddPropertyMap = ({
         onAreaChange={onAreaChange}
         initialPolygon={initialPolygon}
       />
+      <LocationSearch />
       {userCenter && userZoom && <FlyToLocation center={userCenter} zoom={userZoom} />}
     </MapContainer>
   );
