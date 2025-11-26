@@ -1,3 +1,5 @@
+version: '3.9'
+
 services:
   backend:
     build:
@@ -31,14 +33,23 @@ services:
       context: ./frontend
       dockerfile: Dockerfile.prod
       args:
-        VITE_API_URL: ${VITE_API_URL}
-        VITE_MAPTILER_KEY: ${VITE_MAPTILER_KEY}
+        # Next.js build-time environment variables
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL}
+        NEXT_PUBLIC_FRONTEND_URL: ${NEXT_PUBLIC_FRONTEND_URL}
     container_name: estatemap_frontend
     restart: always
+
+    environment:
+      # Runtime environment variables (if needed)
+      NODE_ENV: production
+      PORT: 3000
+
     ports:
-      - "3000:80"
+      - "3000:3000"
+
     depends_on:
       - backend
+
     networks:
       - estatemap_network
 
