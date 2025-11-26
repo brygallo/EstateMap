@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { useAuth } from '@/lib/auth-context';
 import { toast } from 'react-toastify';
@@ -26,6 +26,7 @@ const formatAreaM2 = (m2: number) => (Math.round(m2 * 100) / 100).toFixed(2);
 const EditPropertyPage = () => {
   const params = useParams();
   const propertyId = params?.id as string;
+  const mapRef = useRef<any>(null);
   const [loading, setLoading] = useState(true);
   const [polygonCoords, setPolygonCoords] = useState<any[]>([]);
   const [area, setArea] = useState(0);
@@ -67,6 +68,7 @@ const EditPropertyPage = () => {
 
   // Geocoding
   const [loadingLocation, setLoadingLocation] = useState(false);
+  const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
 
   const { token, logout } = useAuth();
   const router = useRouter();
@@ -266,7 +268,58 @@ const EditPropertyPage = () => {
     setArea(0);
   };
 
-  const bindMapRef = (map: any) => { (window as any)._leaflet_map_ref = map; };
+  const handleGetMyLocation = () => {
+    if (!navigator.geolocation) {
+      alert('Tu navegador no soporta geolocalización');
+      return;
+    }
+
+    setLoadingLocation(true);
+
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const { latitude, longitude } = position.coords;
+        setUserLocation({ lat: latitude, lng: longitude });
+
+        if (mapRef.current) {
+          mapRef.current.flyTo([latitude, longitude], 17, {
+            duration: 1.2
+          });
+        }
+
+        setLoadingLocation(false);
+      },
+      (error) => {
+        console.error('Error obteniendo ubicación:', error);
+        let errorMessage = 'No se pudo obtener tu ubicación';
+
+        switch (error.code) {
+          case error.PERMISSION_DENIED:
+            errorMessage = 'Permiso de ubicación denegado. Por favor, habilita la ubicación en tu navegador.';
+            break;
+          case error.POSITION_UNAVAILABLE:
+            errorMessage = 'Información de ubicación no disponible.';
+            break;
+          case error.TIMEOUT:
+            errorMessage = 'Tiempo de espera agotado al obtener la ubicación.';
+            break;
+        }
+
+        alert(errorMessage);
+        setLoadingLocation(false);
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 10000,
+        maximumAge: 0
+      }
+    );
+  };
+
+  const bindMapRef = (map: any) => {
+    (window as any)._leaflet_map_ref = map;
+    mapRef.current = map;
+  };
 
   // Handle new image selection with validation
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -405,21 +458,42 @@ const EditPropertyPage = () => {
                   <h2 className="text-base lg:text-lg font-semibold text-white flex items-center">
                     <svg className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
+                  </svg>
+                  Ubicación en el Mapa
+                </h2>
+                <p className="text-xs lg:text-sm text-white/90 mt-1">
+                  Edita el polígono de la propiedad
+                </p>
+              </div>
+              <div className="relative h-[300px] sm:h-[400px] lg:h-[500px]">
+                <button
+                  type="button"
+                  onClick={handleGetMyLocation}
+                  disabled={loadingLocation}
+                  className="absolute bottom-3 right-3 z-[1000] bg-white text-primary p-3 rounded-full shadow-lg hover:scale-105 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                  aria-label="Mi ubicación"
+                  title="Ir a mi ubicación"
+                >
+                  {loadingLocation ? (
+                    <svg className="h-5 w-5 animate-spin" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                     </svg>
-                    Ubicación en el Mapa
-                  </h2>
-                  <p className="text-xs lg:text-sm text-white/90 mt-1">
-                    Edita el polígono de la propiedad
-                  </p>
-                </div>
-                <div className="relative h-[300px] sm:h-[400px] lg:h-[500px]">
-                  <AddPropertyMap
-                    onMapReady={bindMapRef}
-                    onPolygonChange={setPolygonCoords}
-                    onAreaChange={setArea}
-                    initialPolygon={polygonCoords}
-                  />
-                </div>
+                  ) : (
+                    <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                    </svg>
+                  )}
+                </button>
+                <AddPropertyMap
+                  onMapReady={bindMapRef}
+                  onPolygonChange={setPolygonCoords}
+                  onAreaChange={setArea}
+                  initialPolygon={polygonCoords}
+                  userLocation={userLocation}
+                />
+              </div>
                 <div className="px-4 py-3 bg-gray-50 border-t">
                   <button
                     type="button"
