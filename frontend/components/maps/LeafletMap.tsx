@@ -376,13 +376,21 @@ const LeafletMap = ({
   }, [selectedProperty, addEdgeLabels, clearEdgeLabels]);
 
   return (
-    <MapContainer
-      center={center}
-      zoom={7}
-      maxZoom={20}
-      className="h-full w-full relative"
-      preferCanvas={true}
-    >
+    <>
+      <style>{`
+        .price-label-icon {
+          background: transparent !important;
+          border: none !important;
+          transform: translate(-50%, -50%);
+        }
+      `}</style>
+      <MapContainer
+        center={center}
+        zoom={7}
+        maxZoom={20}
+        className="h-full w-full relative"
+        preferCanvas={true}
+      >
       <TileLayer
         url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
         attribution='&copy; <a href="https://www.openstreetmap.org/">OSM</a> &copy; <a href="https://carto.com/">CARTO</a>'
@@ -419,38 +427,41 @@ const LeafletMap = ({
           // Create price label icon
           const priceIconColor = p.status === 'for_sale' ? 'linear-gradient(135deg, #2b8a3e, #37b24d)' : p.status === 'for_rent' ? 'linear-gradient(135deg, #1971c2, #1c7ed6)' : 'linear-gradient(135deg, #495057, #868e96)';
 
-          // Estimate label width based on price length
-          const estimatedWidth = formattedPrice.length * 7 + 16; // Approximate width
-          const estimatedHeight = 24;
-
           const priceLabelIcon = new L.DivIcon({
             className: 'price-label-icon',
             html: `
               <div style="
-                background: ${priceIconColor};
-                color: white;
-                padding: 4px 8px;
-                border-radius: 12px;
-                font-weight: 700;
-                font-size: 11px;
-                white-space: nowrap;
-                box-shadow: 0 2px 8px rgba(0,0,0,0.25);
-                border: 1.5px solid white;
-                font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-                letter-spacing: 0.2px;
-                pointer-events: auto;
-                cursor: pointer;
-                display: inline-block;
-                transition: transform 0.2s, box-shadow 0.2s;
-              "
-              onmouseover="this.style.transform='scale(1.1)'; this.style.boxShadow='0 4px 12px rgba(0,0,0,0.35)';"
-              onmouseout="this.style.transform='scale(1)'; this.style.boxShadow='0 2px 8px rgba(0,0,0,0.25)';"
-              >
-                ${formattedPrice}
+                position: relative;
+                width: 100%;
+                height: 100%;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+              ">
+                <div style="
+                  background: ${priceIconColor};
+                  color: white;
+                  padding: 4px 8px;
+                  border-radius: 12px;
+                  font-weight: 700;
+                  font-size: 11px;
+                  white-space: nowrap;
+                  box-shadow: 0 2px 8px rgba(0,0,0,0.25);
+                  border: 1.5px solid white;
+                  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+                  letter-spacing: 0.2px;
+                  cursor: pointer;
+                  transition: transform 0.2s, box-shadow 0.2s;
+                "
+                onmouseover="this.style.transform='scale(1.1)'; this.style.boxShadow='0 4px 12px rgba(0,0,0,0.35)';"
+                onmouseout="this.style.transform='scale(1)'; this.style.boxShadow='0 2px 8px rgba(0,0,0,0.25)';"
+                >
+                  ${formattedPrice}
+                </div>
               </div>
             `,
-            iconSize: [estimatedWidth, estimatedHeight],
-            iconAnchor: [estimatedWidth / 2, estimatedHeight / 2]
+            iconSize: [1, 1],
+            iconAnchor: [0, 0]
           });
 
           // Calculate centroid for price label position
@@ -628,6 +639,7 @@ const LeafletMap = ({
         </Marker>
       )}
     </MapContainer>
+    </>
   );
 };
 
