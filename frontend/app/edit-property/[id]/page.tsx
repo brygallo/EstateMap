@@ -21,8 +21,6 @@ const AddPropertyMap = dynamic(() => import('@/components/maps/AddPropertyMap'),
   ),
 });
 
-const formatAreaM2 = (m2: number) => Math.round(m2).toString();
-
 const EditPropertyPage = () => {
   const params = useParams();
   const propertyId = params?.id as string;
@@ -265,7 +263,6 @@ const EditPropertyPage = () => {
       });
     }
     setPolygonCoords([]);
-    setArea(0);
   };
 
   const handleGetMyLocation = () => {
@@ -489,7 +486,6 @@ const EditPropertyPage = () => {
                 <AddPropertyMap
                   onMapReady={bindMapRef}
                   onPolygonChange={setPolygonCoords}
-                  onAreaChange={setArea}
                   initialPolygon={polygonCoords}
                   userLocation={userLocation}
                 />
@@ -629,8 +625,9 @@ const EditPropertyPage = () => {
                         <label className="block text-sm font-semibold text-gray-700 mb-2">Área Total (m²) *</label>
                         <input
                           type="number"
-                          step="any"
-                          value={formatAreaM2(area)}
+                          step="0.01"
+                          min="0"
+                          value={area || ''}
                           onChange={(e) => setArea(Number(e.target.value || 0))}
                           placeholder="500"
                           className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent transition-all"

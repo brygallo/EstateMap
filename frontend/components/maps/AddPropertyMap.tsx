@@ -275,13 +275,7 @@ function DrawingTools({
   const updateAreaAndCoords = (layer: any) => {
     const ring = layer.getLatLngs()?.[0] || [];
     onPolygonChange?.(ring.map((p: any) => [p.lat, p.lng]));
-    if (ring.length >= 3) {
-      const coords = ring.map((p: any) => [p.lng, p.lat]);
-      const a = turf.area(turf.polygon([[...coords, coords[0]]]));
-      onAreaChange?.(Math.round(a));
-    } else {
-      onAreaChange?.(0);
-    }
+    // Área calculada automáticamente removida - el usuario debe ingresarla manualmente
   };
 
   const stylePolygon = (layer: any) => {
@@ -379,7 +373,6 @@ function DrawingTools({
         map.removeLayer(currentPolygonRef.current);
         currentPolygonRef.current = null;
         onPolygonChange?.([]);
-        onAreaChange?.(0);
       }
 
       drawingRef.current.active = true;
@@ -455,7 +448,6 @@ function DrawingTools({
           clearEdgeLabels(layer);
           currentPolygonRef.current = null;
           onPolygonChange?.([]);
-          onAreaChange?.(0);
         }
       });
       removeLiveTooltip();
@@ -785,7 +777,7 @@ function LocationSearch() {
 interface AddPropertyMapProps {
   onMapReady: (map: any) => void;
   onPolygonChange: (coords: any[]) => void;
-  onAreaChange: (area: number) => void;
+  onAreaChange?: (area: number) => void;
   initialPolygon?: any[];
   userCenter?: [number, number];
   userZoom?: number;
