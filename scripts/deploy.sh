@@ -22,13 +22,16 @@ echo "🔨 Building Docker images..."
 docker-compose -f docker-compose.prod.yml build --no-cache
 
 echo "🔍 Checking pending migrations..."
-docker-compose -f docker-compose.prod.yml run --rm --network host backend python manage.py showmigrations --plan | tail -20
+docker-compose -f docker-compose.prod.yml run --rm backend \
+    python manage.py showmigrations --plan | tail -20
 
 echo "🗄️  Running database migrations..."
-docker-compose -f docker-compose.prod.yml run --rm --network host backend python manage.py migrate --verbosity 2
+docker-compose -f docker-compose.prod.yml run --rm backend \
+    python manage.py migrate --verbosity 2
 
 echo "📦 Collecting static files..."
-docker-compose -f docker-compose.prod.yml run --rm --network host backend python manage.py collectstatic --noinput --verbosity 2
+docker-compose -f docker-compose.prod.yml run --rm backend \
+    python manage.py collectstatic --noinput --verbosity 2
 
 echo "🚀 Starting services..."
 docker-compose -f docker-compose.prod.yml up -d
