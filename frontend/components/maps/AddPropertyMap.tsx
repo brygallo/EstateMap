@@ -56,11 +56,13 @@ function MapRefBinder({ onMapReady }: { onMapReady: (map: any) => void }) {
 function DrawingTools({
   onPolygonChange,
   onAreaChange,
-  initialPolygon
+  initialPolygon,
+  showMeasurements = true
 }: {
   onPolygonChange?: (coords: any[]) => void;
   onAreaChange?: (area: number) => void;
   initialPolygon?: any[];
+  showMeasurements?: boolean;
 }) {
   const map = useMap();
 
@@ -88,6 +90,9 @@ function DrawingTools({
 
   const refreshEdgeLabels = (layer: any) => {
     clearEdgeLabels(layer);
+
+    // No mostrar etiquetas si showMeasurements es false
+    if (!showMeasurements) return;
 
     const latlngs = layer?.getLatLngs?.()?.[0] || [];
     if (!latlngs || latlngs.length < 2) return;
@@ -802,6 +807,7 @@ interface AddPropertyMapProps {
   userCenter?: [number, number];
   userZoom?: number;
   userLocation?: { lat: number; lng: number } | null;
+  showMeasurements?: boolean;
 }
 
 const AddPropertyMap = ({
@@ -811,7 +817,8 @@ const AddPropertyMap = ({
   initialPolygon,
   userCenter,
   userZoom,
-  userLocation
+  userLocation,
+  showMeasurements = true
 }: AddPropertyMapProps) => {
   return (
     <>
@@ -862,6 +869,7 @@ const AddPropertyMap = ({
           onPolygonChange={onPolygonChange}
           onAreaChange={onAreaChange}
           initialPolygon={initialPolygon}
+          showMeasurements={showMeasurements}
         />
         <LocationSearch />
         {userLocation && (

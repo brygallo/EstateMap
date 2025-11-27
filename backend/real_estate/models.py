@@ -79,6 +79,7 @@ class Property(models.Model):
     latitude = models.FloatField(null=True, blank=True)
     longitude = models.FloatField(null=True, blank=True)
     polygon = models.JSONField(null=True, blank=True, help_text="GeoJSON polygon for land boundaries")
+    show_measurements = models.BooleanField(default=True, help_text="Show exact measurements on map or just reference figure")
 
     # --- Characteristics ---
     area = models.FloatField(help_text="Total area in square meters")

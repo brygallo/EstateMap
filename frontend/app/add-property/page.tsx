@@ -26,6 +26,7 @@ const AddPropertyPage = () => {
   const mapRef = useRef<any>(null);
   const [polygonCoords, setPolygonCoords] = useState<any[]>([]);
   const [area, setArea] = useState(0);
+  const [showMeasurements, setShowMeasurements] = useState(true);
 
   // General Information
   const [title, setTitle] = useState('');
@@ -208,6 +209,7 @@ const AddPropertyPage = () => {
       if (polygonCoords.length >= 3) {
         formData.append('polygon', JSON.stringify(polygonCoords));
       }
+      formData.append('show_measurements', showMeasurements.toString());
 
       // Characteristics
       formData.append('area', parseFloat(area.toString()).toString());
@@ -491,6 +493,7 @@ const AddPropertyPage = () => {
                     userCenter={userLocation ? [userLocation.lat, userLocation.lng] : undefined}
                     userZoom={userLocation ? 12 : undefined}
                     userLocation={userLocation}
+                    showMeasurements={showMeasurements}
                   />
                 </div>
                 <div className="px-4 py-3 bg-gray-50 border-t">
@@ -638,6 +641,27 @@ const AddPropertyPage = () => {
                         />
                       </div>
 
+                      <div className="md:col-span-2">
+                        <label className="block text-sm font-semibold text-gray-700 mb-2">Medidas del Polígono</label>
+                        <div className="flex items-center space-x-3 px-4 py-3 bg-gray-50 border border-gray-300 rounded-xl">
+                          <input
+                            type="checkbox"
+                            id="showMeasurements"
+                            checked={showMeasurements}
+                            onChange={(e) => setShowMeasurements(e.target.checked)}
+                            className="w-5 h-5 text-primary border-gray-300 rounded focus:ring-2 focus:ring-primary"
+                          />
+                          <label htmlFor="showMeasurements" className="text-sm text-gray-700 cursor-pointer">
+                            Mostrar medidas exactas en el mapa
+                            <p className="text-xs text-gray-500 mt-1">
+                              Desactiva esta opción si solo conoces la forma aproximada pero no las medidas exactas
+                            </p>
+                          </label>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                       {/* Campos para Casa, Apartamento o Comercial */}
                       {(propertyType === 'house' || propertyType === 'apartment' || propertyType === 'commercial') && (
                         <>

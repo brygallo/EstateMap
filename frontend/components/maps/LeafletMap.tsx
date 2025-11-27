@@ -363,7 +363,11 @@ const LeafletMap = ({
   useEffect(() => {
     const selectedId = selectedProperty?.id;
     if (selectedId && polygonLayersRef.current[selectedId]) {
-      addEdgeLabels(polygonLayersRef.current[selectedId]);
+      // Solo mostrar etiquetas si show_measurements es true (o undefined para compatibilidad)
+      const showMeasurements = selectedProperty?.show_measurements !== false;
+      if (showMeasurements) {
+        addEdgeLabels(polygonLayersRef.current[selectedId]);
+      }
     }
 
     return () => {
@@ -435,9 +439,10 @@ const LeafletMap = ({
                       hoverTimeoutRef.current = null;
                     }
                     onPolygonClick(p);
-                    // Mostrar etiquetas al seleccionar
+                    // Mostrar etiquetas al seleccionar (solo si show_measurements es true)
+                    const showMeasurements = p.show_measurements !== false;
                     const layer = polygonLayersRef.current[p.id || `idx-${idx}`];
-                    if (layer) {
+                    if (layer && showMeasurements) {
                       addEdgeLabels(layer);
                     }
                   },
