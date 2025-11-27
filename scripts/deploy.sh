@@ -46,3 +46,4 @@ echo "📋 Recent logs:"
 docker-compose -f docker-compose.prod.yml logs --tail=50
 
 echo "✅ Deployment completed successfully!"
+
