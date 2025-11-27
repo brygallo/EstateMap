@@ -104,21 +104,169 @@ function DrawingTools({
       ]);
       const lengthKm = turf.length(segment, { units: 'kilometers' });
       const lengthMeters = lengthKm * 1000;
-      const label = `${lengthMeters.toFixed(1)} m`;
 
       const midLat = (start.lat + end.lat) / 2;
       const midLng = (start.lng + end.lng) / 2;
-      const tooltip = L.tooltip({
-        permanent: true,
-        direction: 'center',
-        className: 'edge-length-label',
-        opacity: 0.9,
-      })
-        .setContent(label)
-        .setLatLng([midLat, midLng])
-        .addTo(map);
 
-      markers.push(tooltip);
+      // Crear un marcador con input siempre visible - diseño mejorado
+      const iconHtml = `
+        <div class="editable-distance-label" data-edge-index="${i}" style="
+          display: inline-flex;
+          align-items: center;
+          gap: 4px;
+          background: white;
+          padding: 4px 8px;
+          border-radius: 6px;
+          border: 1px solid #28a745;
+          box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+        ">
+          <input type="number" step="0.1" min="0.1"
+                 class="distance-input"
+                 data-edge-index="${i}"
+                 style="width: 60px;
+                        font-size: 12px;
+                        font-weight: 600;
+                        padding: 2px 4px;
+                        border: 1px solid #ddd;
+                        border-radius: 3px;
+                        text-align: center;
+                        outline: none;
+                        background: #f8f9fa;
+                        color: #333;"
+                 value="${lengthMeters.toFixed(1)}" />
+          <span style="font-size: 11px; color: #666; font-weight: 500;">m</span>
+        </div>
+      `;
+
+      const icon = L.divIcon({
+        html: iconHtml,
+        className: 'editable-distance-marker',
+        iconSize: [0, 0],
+        iconAnchor: [0, 0]
+      });
+
+      const marker = L.marker([midLat, midLng], {
+        icon: icon,
+        interactive: true
+      }).addTo(map);
+
+      // Guardar referencia al índice actual para el closure
+      const edgeIndex = i;
+
+      // Configurar eventos después de que el marcador se agregue al DOM
+      setTimeout(() => {
+        const inputElement = marker.getElement()?.querySelector('.distance-input') as HTMLInputElement;
+        if (!inputElement) return;
+
+        // Prevenir propagación de eventos al mapa
+        L.DomEvent.disableClickPropagation(inputElement);
+        L.DomEvent.disableScrollPropagation(inputElement);
+
+        let previousValue = inputElement.value;
+
+        // Guardar el valor cuando empieza a editar
+        inputElement.addEventListener('focus', () => {
+          previousValue = inputElement.value;
+        });
+
+        // Manejar cambio de valor
+        const handleChange = (evt: Event) => {
+          evt.stopPropagation();
+
+          const newDistance = parseFloat(inputElement.value);
+
+          console.log('=== CAMBIO DE DISTANCIA ===');
+          console.log('Nuevo valor:', newDistance, 'metros');
+
+          if (isNaN(newDistance) || newDistance <= 0) {
+            inputElement.value = previousValue;
+            console.log('Valor inválido, restaurado a:', previousValue);
+            return;
+          }
+
+          // Obtener coordenadas actuales DEL LAYER
+          const currentLatlngs = layer.getLatLngs()[0];
+          if (!currentLatlngs || currentLatlngs.length < 3) {
+            console.log('ERROR: No hay suficientes puntos');
+            return;
+          }
+
+          const startPoint = currentLatlngs[edgeIndex];
+          const nextIndex = (edgeIndex + 1) % currentLatlngs.length;
+
+          console.log('Segmento:', edgeIndex, '->', nextIndex);
+          console.log('Start:', [startPoint.lat, startPoint.lng]);
+
+          // Calcular bearing del segmento ACTUAL
+          const bearing = turf.bearing(
+            [startPoint.lng, startPoint.lat],
+            [currentLatlngs[nextIndex].lng, currentLatlngs[nextIndex].lat]
+          );
+
+          console.log('Bearing:', bearing, 'grados');
+
+          // Calcular nueva posición
+          const newEndPoint = turf.destination(
+            [startPoint.lng, startPoint.lat],
+            newDistance / 1000,
+            bearing,
+            { units: 'kilometers' }
+          );
+
+          const newLat = newEndPoint.geometry.coordinates[1];
+          const newLng = newEndPoint.geometry.coordinates[0];
+
+          console.log('Nuevo punto final:', [newLat, newLng]);
+
+          // Actualizar coordenadas
+          const newLatlngs = currentLatlngs.map((pt: any, idx: number) => {
+            if (idx === nextIndex) {
+              return L.latLng(newLat, newLng);
+            }
+            return pt;
+          });
+
+          console.log('Actualizando polígono...');
+
+          // Aplicar cambios
+          layer.setLatLngs([newLatlngs]);
+
+          // Forzar redibujado
+          layer.redraw();
+
+          // Actualizar área
+          updateAreaAndCoords(layer);
+
+          console.log('Polígono actualizado ✓');
+
+          // Actualizar valor previo
+          previousValue = inputElement.value;
+
+          // Refrescar etiquetas
+          setTimeout(() => {
+            refreshEdgeLabels(layer);
+          }, 100);
+        };
+
+        // Eventos
+        inputElement.addEventListener('blur', handleChange);
+        inputElement.addEventListener('change', handleChange);
+
+        inputElement.addEventListener('keydown', (evt: KeyboardEvent) => {
+          if (evt.key === 'Enter') {
+            evt.preventDefault();
+            evt.stopPropagation();
+            inputElement.blur();
+          } else if (evt.key === 'Escape') {
+            evt.preventDefault();
+            evt.stopPropagation();
+            inputElement.value = previousValue;
+            inputElement.blur();
+          }
+        });
+      }, 200);
+
+      markers.push(marker);
     }
 
     layer._edgeMarkers = markers;
@@ -130,7 +278,7 @@ function DrawingTools({
     if (ring.length >= 3) {
       const coords = ring.map((p: any) => [p.lng, p.lat]);
       const a = turf.area(turf.polygon([[...coords, coords[0]]]));
-      onAreaChange?.(a);
+      onAreaChange?.(Math.round(a));
     } else {
       onAreaChange?.(0);
     }
@@ -654,38 +802,62 @@ const AddPropertyMap = ({
   userLocation
 }: AddPropertyMapProps) => {
   return (
-    <MapContainer
-      center={defaultCenter}
-      zoom={7}
-      maxZoom={20}
-      preferCanvas
-      className="h-full w-full relative"
-      zoomControl={true}
-      scrollWheelZoom={true}
-      doubleClickZoom={true}
-      touchZoom={true}
-      boxZoom={true}
-      keyboard={true}
-    >
-      <TileLayer
-        url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
-        attribution='&copy; <a href="https://www.openstreetmap.org/">OSM</a> &copy; <a href="https://carto.com/">CARTO</a>'
-        subdomains={['a','b','c','d']}
+    <>
+      <style>{`
+        .editable-distance-marker {
+          background: transparent !important;
+          border: none !important;
+        }
+        .distance-input {
+          transition: all 0.2s ease;
+        }
+        .distance-input:hover {
+          border-color: #28a745 !important;
+          background: white !important;
+        }
+        .distance-input:focus {
+          border-color: #28a745 !important;
+          background: white !important;
+          box-shadow: 0 0 0 2px rgba(40, 167, 69, 0.2) !important;
+        }
+        .distance-input::-webkit-inner-spin-button,
+        .distance-input::-webkit-outer-spin-button {
+          opacity: 1;
+        }
+      `}</style>
+      <MapContainer
+        center={defaultCenter}
+        zoom={7}
         maxZoom={20}
-      />
-      <MapRefBinder onMapReady={onMapReady} />
-      <ScaleBottomLeft />
-      <DrawingTools
-        onPolygonChange={onPolygonChange}
-        onAreaChange={onAreaChange}
-        initialPolygon={initialPolygon}
-      />
-      <LocationSearch />
-      {userLocation && (
-        <Marker position={[userLocation.lat, userLocation.lng]} icon={userLocationIcon} />
-      )}
-      {userCenter && userZoom && <FlyToLocation center={userCenter} zoom={userZoom} />}
-    </MapContainer>
+        preferCanvas
+        className="h-full w-full relative"
+        zoomControl={true}
+        scrollWheelZoom={true}
+        doubleClickZoom={true}
+        touchZoom={true}
+        boxZoom={true}
+        keyboard={true}
+      >
+        <TileLayer
+          url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
+          attribution='&copy; <a href="https://www.openstreetmap.org/">OSM</a> &copy; <a href="https://carto.com/">CARTO</a>'
+          subdomains={['a','b','c','d']}
+          maxZoom={20}
+        />
+        <MapRefBinder onMapReady={onMapReady} />
+        <ScaleBottomLeft />
+        <DrawingTools
+          onPolygonChange={onPolygonChange}
+          onAreaChange={onAreaChange}
+          initialPolygon={initialPolygon}
+        />
+        <LocationSearch />
+        {userLocation && (
+          <Marker position={[userLocation.lat, userLocation.lng]} icon={userLocationIcon} />
+        )}
+        {userCenter && userZoom && <FlyToLocation center={userCenter} zoom={userZoom} />}
+      </MapContainer>
+    </>
   );
 };
 

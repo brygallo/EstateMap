@@ -22,7 +22,7 @@ const AddPropertyMap = dynamic(() => import('@/components/maps/AddPropertyMap'),
   ),
 });
 
-const formatAreaM2 = (m2: number) => (Math.round(m2 * 100) / 100).toFixed(2);
+const formatAreaM2 = (m2: number) => Math.round(m2).toString();
 
 const AddPropertyPage = () => {
   const mapRef = useRef<any>(null);
