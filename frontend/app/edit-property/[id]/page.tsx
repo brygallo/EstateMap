@@ -579,40 +579,6 @@ const EditPropertyPage = () => {
                   </div>
                 </div>
 
-                {/* Location */}
-                <div className="bg-white rounded-2xl shadow-lg overflow-hidden">
-                  <div className="px-4 py-3 bg-gradient-to-r from-primary to-secondary">
-                    <h3 className="text-lg font-semibold text-white flex items-center">
-                      <svg className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                      </svg>
-                      Ubicación
-                    </h3>
-                  </div>
-                  <div className="p-6 space-y-4">
-                    {/* Location Select Component */}
-                    <LocationSelect
-                      provinceValue={province}
-                      cityValue={city}
-                      onProvinceChange={setProvince}
-                      onCityChange={setCity}
-                    />
-
-                    {/* Address Field */}
-                    <div className="mt-4">
-                      <label className="block text-sm font-semibold text-gray-700 mb-2">Dirección</label>
-                      <input
-                        type="text"
-                        value={address}
-                        onChange={(e) => setAddress(e.target.value)}
-                        placeholder="Ej: Av. Principal #123"
-                        className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
-                      />
-                    </div>
-                  </div>
-                </div>
-
                 {/* Characteristics */}
                 <div className="bg-white rounded-2xl shadow-lg overflow-hidden">
                   <div className="px-4 py-3 bg-gradient-to-r from-primary to-secondary">
@@ -773,6 +739,40 @@ const EditPropertyPage = () => {
                           </div>
                         </>
                       )}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Location */}
+                <div className="bg-white rounded-2xl shadow-lg overflow-hidden">
+                  <div className="px-4 py-3 bg-gradient-to-r from-primary to-secondary">
+                    <h3 className="text-lg font-semibold text-white flex items-center">
+                      <svg className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                      </svg>
+                      Ubicación
+                    </h3>
+                  </div>
+                  <div className="p-6 space-y-4">
+                    {/* Location Select Component */}
+                    <LocationSelect
+                      provinceValue={province}
+                      cityValue={city}
+                      onProvinceChange={setProvince}
+                      onCityChange={setCity}
+                    />
+
+                    {/* Address Field */}
+                    <div className="mt-4">
+                      <label className="block text-sm font-semibold text-gray-700 mb-2">Dirección</label>
+                      <input
+                        type="text"
+                        value={address}
+                        onChange={(e) => setAddress(e.target.value)}
+                        placeholder="Ej: Av. Principal #123"
+                        className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+                      />
                     </div>
                   </div>
                 </div>

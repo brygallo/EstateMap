@@ -5,7 +5,7 @@ import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
 import '@geoman-io/leaflet-geoman-free';
 import '@geoman-io/leaflet-geoman-free/dist/leaflet-geoman.css';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useCallback } from 'react';
 import * as turf from '@turf/turf';
 
 // Fix Leaflet icons
@@ -77,7 +77,7 @@ function DrawingTools({
   const preventZoomRef = useRef(false);
 
   /* ===== Helpers: edge labels / area / estilo ===== */
-  const clearEdgeLabels = (layer: any) => {
+  const clearEdgeLabels = useCallback((layer: any) => {
     if (layer?._edgeMarkers) {
       layer._edgeMarkers.forEach((m: any) => {
         if (m && m.remove && m._map) {
@@ -86,9 +86,9 @@ function DrawingTools({
       });
       layer._edgeMarkers = [];
     }
-  };
+  }, []);
 
-  const refreshEdgeLabels = (layer: any) => {
+  const refreshEdgeLabels = useCallback((layer: any) => {
     clearEdgeLabels(layer);
 
     // No mostrar etiquetas si showMeasurements es false
@@ -275,7 +275,7 @@ function DrawingTools({
     }
 
     layer._edgeMarkers = markers;
-  };
+  }, [clearEdgeLabels, showMeasurements, map]);
 
   const updateAreaAndCoords = (layer: any) => {
     const ring = layer.getLatLngs()?.[0] || [];
@@ -544,6 +544,13 @@ function DrawingTools({
       }
     };
   }, [map, onPolygonChange, onAreaChange]);
+
+  // Actualizar etiquetas cuando cambia showMeasurements
+  useEffect(() => {
+    if (currentPolygonRef.current) {
+      refreshEdgeLabels(currentPolygonRef.current);
+    }
+  }, [showMeasurements, refreshEdgeLabels]);
 
   // Load initial polygon if provided (for edit mode)
   useEffect(() => {
