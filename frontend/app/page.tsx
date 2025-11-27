@@ -26,7 +26,7 @@ const LeafletMap = dynamic(() => import('@/components/maps/LeafletMap'), {
 const PRICE_MIN = 0;
 const PRICE_MAX = 500000;
 const AREA_MIN = 0;
-const AREA_MAX = 10000;
+const AREA_MAX = 100000; // keep high so large terrenos are visible by default
 
 // Searchable User Select Component
 function SearchableUserSelect({ users, selectedUserId, onSelect }: any) {
