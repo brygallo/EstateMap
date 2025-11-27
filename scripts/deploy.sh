@@ -15,13 +15,19 @@ docker-compose -f docker-compose.prod.yml down
 echo "🔨 Building Docker images..."
 docker-compose -f docker-compose.prod.yml build --no-cache
 
+echo "🗄️  Running database migrations..."
+docker-compose -f docker-compose.prod.yml run --rm backend python manage.py migrate
+
+echo "📦 Collecting static files..."
+docker-compose -f docker-compose.prod.yml run --rm backend python manage.py collectstatic --noinput
+
 echo "🚀 Starting services..."
 docker-compose -f docker-compose.prod.yml up -d
 
 echo "📊 Services status:"
 docker-compose -f docker-compose.prod.yml ps
 
-echo "📋 Logs:"
-docker-compose -f docker-compose.prod.yml logs --tail=20
+echo "📋 Recent logs:"
+docker-compose -f docker-compose.prod.yml logs --tail=30
 
-echo "✅ Deployment completed!"
+echo "✅ Deployment completed successfully!"
