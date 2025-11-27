@@ -13,6 +13,9 @@ services:
 
     command: gunicorn estate_map.wsgi:application --bind 0.0.0.0:8000 --workers 3
 
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
     volumes:
       - static_volume:/app/staticfiles
       - media_volume:/app/media
