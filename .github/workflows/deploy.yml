@@ -51,6 +51,7 @@ jobs:
             # IMPORTANT: Variables must start with NEXT_PUBLIC_ to be available in browser
             echo "NEXT_PUBLIC_API_URL=${{ secrets.NEXT_PUBLIC_API_URL }}" >> .env.prod
             echo "NEXT_PUBLIC_FRONTEND_URL=${{ secrets.NEXT_PUBLIC_FRONTEND_URL }}" >> .env.prod
+            echo "NEXT_PUBLIC_GTM_ID=${{ secrets.NEXT_PUBLIC_GTM_ID }}" >> .env.prod
 
             # Email Configuration
             echo "EMAIL_BACKEND=${{ secrets.EMAIL_BACKEND }}" >> .env.prod

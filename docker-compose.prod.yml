@@ -34,6 +34,7 @@ services:
         # Next.js build-time environment variables
         NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL}
         NEXT_PUBLIC_FRONTEND_URL: ${NEXT_PUBLIC_FRONTEND_URL}
+        NEXT_PUBLIC_GTM_ID : ${NEXT_PUBLIC_GTM_ID}
     container_name: estatemap_frontend
     restart: always
 
