@@ -296,6 +296,8 @@ function DrawingTools({
     layer.on('pm:edit', () => { refreshEdgeLabels(layer); updateAreaAndCoords(layer); });
     layer.on('pm:vertexadded', () => { refreshEdgeLabels(layer); updateAreaAndCoords(layer); });
     layer.on('pm:markerdrag', () => { refreshEdgeLabels(layer); updateAreaAndCoords(layer); });
+    layer.on('pm:drag', () => { refreshEdgeLabels(layer); updateAreaAndCoords(layer); });
+    layer.on('pm:rotate', () => { refreshEdgeLabels(layer); updateAreaAndCoords(layer); });
   };
 
   const forceEditMode = (layer: any) => {
@@ -336,8 +338,8 @@ function DrawingTools({
       drawPolyline: false,
       drawRectangle: false,
       cutPolygon: false,
-      dragMode: false,
-      rotateMode: false,
+      dragMode: true,  // Permite mover el polígono completo
+      rotateMode: false, // Permite rotar el polígono
       drawText: false,
     });
 
@@ -432,7 +434,7 @@ function DrawingTools({
       } catch {}
     };
 
-    /* === Edit / Remove === */
+    /* === Edit / Remove / Drag / Rotate === */
     const onEdit = (e: any) => {
       e.layers.eachLayer((layer: any) => {
         if (layer === currentPolygonRef.current) {
@@ -440,6 +442,20 @@ function DrawingTools({
           updateAreaAndCoords(layer);
         }
       });
+    };
+
+    const onDrag = (e: any) => {
+      if (e.layer === currentPolygonRef.current) {
+        refreshEdgeLabels(e.layer);
+        updateAreaAndCoords(e.layer);
+      }
+    };
+
+    const onRotate = (e: any) => {
+      if (e.layer === currentPolygonRef.current) {
+        refreshEdgeLabels(e.layer);
+        updateAreaAndCoords(e.layer);
+      }
     };
 
     const onRemove = (e: any) => {
@@ -468,6 +484,8 @@ function DrawingTools({
     map.on('pm:drawend', onDrawEnd);
     map.on('pm:create', onCreate);
     map.on('pm:edit', onEdit);
+    map.on('pm:drag', onDrag);
+    map.on('pm:rotate', onRotate);
     map.on('pm:remove', onRemove);
 
     // Bloquear zoom automático
@@ -488,6 +506,8 @@ function DrawingTools({
         map.off('pm:drawend', onDrawEnd);
         map.off('pm:create', onCreate);
         map.off('pm:edit', onEdit);
+        map.off('pm:drag', onDrag);
+        map.off('pm:rotate', onRotate);
         map.off('pm:remove', onRemove);
         map.off('zoomstart', blockZoomStart);
         map.off('movestart', blockZoomStart);
