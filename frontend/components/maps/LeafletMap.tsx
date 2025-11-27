@@ -396,6 +396,7 @@ const LeafletMap = ({
       {useMemo(() => {
         const polygons: JSX.Element[] = [];
         const markers: JSX.Element[] = [];
+        const priceLabels: JSX.Element[] = [];
 
         filteredProperties.forEach((p, idx) => {
           // Handle both GeoJSON and simple array formats for properties with polygons
@@ -411,6 +412,66 @@ const LeafletMap = ({
 
           const isSelected = selectedProperty?.id === p.id;
           const baseColor = p.status === 'for_sale' ? '#2b8a3e' : p.status === 'for_rent' ? '#1971c2' : '#868e96';
+
+          // Format price
+          const formattedPrice = p.price ? `$${parseFloat(p.price).toLocaleString('en-US', { maximumFractionDigits: 0 })}` : 'N/A';
+
+          // Create price label icon
+          const priceIconColor = p.status === 'for_sale' ? 'linear-gradient(135deg, #2b8a3e, #37b24d)' : p.status === 'for_rent' ? 'linear-gradient(135deg, #1971c2, #1c7ed6)' : 'linear-gradient(135deg, #495057, #868e96)';
+
+          // Estimate label width based on price length
+          const estimatedWidth = formattedPrice.length * 7 + 16; // Approximate width
+          const estimatedHeight = 24;
+
+          const priceLabelIcon = new L.DivIcon({
+            className: 'price-label-icon',
+            html: `
+              <div style="
+                background: ${priceIconColor};
+                color: white;
+                padding: 4px 8px;
+                border-radius: 12px;
+                font-weight: 700;
+                font-size: 11px;
+                white-space: nowrap;
+                box-shadow: 0 2px 8px rgba(0,0,0,0.25);
+                border: 1.5px solid white;
+                font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+                letter-spacing: 0.2px;
+                pointer-events: auto;
+                cursor: pointer;
+                display: inline-block;
+                transition: transform 0.2s, box-shadow 0.2s;
+              "
+              onmouseover="this.style.transform='scale(1.1)'; this.style.boxShadow='0 4px 12px rgba(0,0,0,0.35)';"
+              onmouseout="this.style.transform='scale(1)'; this.style.boxShadow='0 2px 8px rgba(0,0,0,0.25)';"
+              >
+                ${formattedPrice}
+              </div>
+            `,
+            iconSize: [estimatedWidth, estimatedHeight],
+            iconAnchor: [estimatedWidth / 2, estimatedHeight / 2]
+          });
+
+          // Calculate centroid for price label position
+          let labelPosition: [number, number] | null = null;
+
+          if (leafletCoordinates) {
+            // Calculate centroid using turf
+            try {
+              const polygonCoords = leafletCoordinates.map((coord: any) => [coord[1], coord[0]]); // Convert to [lng, lat] for turf
+              polygonCoords.push(polygonCoords[0]); // Close the polygon
+              const turfPolygon = turf.polygon([polygonCoords]);
+              const centroid = turf.centroid(turfPolygon);
+              labelPosition = [centroid.geometry.coordinates[1], centroid.geometry.coordinates[0]];
+            } catch (error) {
+              console.error('Error calculating centroid:', error);
+              // Fallback to first coordinate
+              labelPosition = leafletCoordinates[0];
+            }
+          } else if (p.latitude && p.longitude) {
+            labelPosition = [p.latitude, p.longitude];
+          }
 
           // If property has polygon, render as polygon
           if (leafletCoordinates) {
@@ -521,10 +582,33 @@ const LeafletMap = ({
               </Marker>
             );
           }
+
+          // Add price label marker for all properties
+          if (labelPosition && p.price) {
+            priceLabels.push(
+              <Marker
+                key={`price-label-${p.id || idx}`}
+                position={labelPosition}
+                icon={priceLabelIcon}
+                zIndexOffset={1000}
+                eventHandlers={{
+                  click: () => {
+                    console.log('Price label clicked!', p.title);
+                    // Cancel any pending hover timeout
+                    if (hoverTimeoutRef.current) {
+                      clearTimeout(hoverTimeoutRef.current);
+                      hoverTimeoutRef.current = null;
+                    }
+                    onPolygonClick(p);
+                  }
+                }}
+              />
+            );
+          }
         });
 
-        return [...polygons, ...markers];
-      }, [filteredProperties, selectedProperty, onPolygonClick, hoverTimeoutRef, getPropertyTypeLabel, getStatusLabel])}
+        return [...polygons, ...markers, ...priceLabels];
+      }, [filteredProperties, selectedProperty, onPolygonClick, hoverTimeoutRef, getPropertyTypeLabel, getStatusLabel, addEdgeLabels])}
 
       {/* User Location Marker */}
       {userLocation && (
