@@ -656,9 +656,9 @@ const MapPage = () => {
   // Centro de Ecuador para mostrar el país completo al iniciar
   const defaultCenter: [number, number] = [-1.5, -78.5]; // Centro de Ecuador
 
-  // Format area with 2 decimals
+  // Format area as integer
   const formatArea = (area: any) => {
-    return area ? parseFloat(area).toFixed(2) : '0.00';
+    return area ? Math.round(parseFloat(area)).toString() : '0';
   };
 
   // Siempre usar el centro de Ecuador para mostrar el país completo

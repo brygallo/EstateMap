@@ -115,9 +115,9 @@ const PropertyModal = ({ property, isOpen, onClose }: PropertyModalProps) => {
 
   if (!isOpen || !property) return null;
 
-  // Format area with 2 decimals
+  // Format area as integer
   const formatArea = (area: any) => {
-    return area ? parseFloat(area).toFixed(2) : '0.00';
+    return area ? Math.round(parseFloat(area)).toString() : '0';
   };
 
   const getPropertyTypeLabel = (type: string) => {
