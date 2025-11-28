@@ -479,69 +479,8 @@ const EditPropertyPage = () => {
 
         {/* Main Content */}
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 lg:py-8">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6">
-            {/* Map Section */}
-            <div className="lg:sticky lg:top-8 lg:self-start order-2 lg:order-1">
-              <div className="bg-white rounded-2xl shadow-lg overflow-hidden">
-                <div className="px-4 py-3 bg-gradient-to-r from-primary to-secondary">
-                  <h2 className="text-base lg:text-lg font-semibold text-white flex items-center">
-                    <svg className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
-                  </svg>
-                  Ubicación en el Mapa
-                </h2>
-                <p className="text-xs lg:text-sm text-white/90 mt-1">
-                  Edita el polígono de la propiedad
-                </p>
-              </div>
-              <div className="relative h-[300px] sm:h-[400px] lg:h-[500px]">
-                <button
-                  type="button"
-                  onClick={handleGetMyLocation}
-                  disabled={loadingLocation}
-                  className="absolute bottom-3 right-3 z-[1000] bg-white text-primary p-3 rounded-full shadow-lg hover:scale-105 transition disabled:opacity-50 disabled:cursor-not-allowed"
-                  aria-label="Mi ubicación"
-                  title="Ir a mi ubicación"
-                >
-                  {loadingLocation ? (
-                    <svg className="h-5 w-5 animate-spin" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                    </svg>
-                  ) : (
-                    <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                    </svg>
-                  )}
-                </button>
-                <AddPropertyMap
-                  onMapReady={bindMapRef}
-                  onPolygonChange={setPolygonCoords}
-                  initialPolygon={polygonCoords}
-                  userLocation={userLocation}
-                  showMeasurements={showMeasurements}
-                  referenceProperties={referenceProperties}
-                />
-              </div>
-                <div className="px-4 py-3 bg-gray-50 border-t">
-                  <button
-                    type="button"
-                    onClick={handleClear}
-                    className="w-full inline-flex justify-center items-center px-4 py-2 border border-gray-300 rounded-xl text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors"
-                  >
-                    <svg className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                    </svg>
-                    Limpiar Polígono
-                  </button>
-                </div>
-              </div>
-            </div>
-
-            {/* Form Section */}
-            <div className="space-y-4 lg:space-y-6 order-1 lg:order-2">
-              <form onSubmit={handleSubmit} className="space-y-4 lg:space-y-6">
+          <div className="space-y-4 lg:space-y-6">
+            <form onSubmit={handleSubmit} className="space-y-4 lg:space-y-6">
                 {/* General Information */}
                 <div className="bg-white rounded-2xl shadow-lg overflow-hidden">
                   <div className="px-4 py-3 bg-gradient-to-r from-primary to-secondary">
@@ -609,6 +548,63 @@ const EditPropertyPage = () => {
                   </div>
                 </div>
 
+                {/* Map Section */}
+                <div className="bg-white rounded-2xl shadow-lg overflow-hidden">
+                  <div className="px-4 py-3 bg-gradient-to-r from-primary to-secondary">
+                    <h2 className="text-base lg:text-lg font-semibold text-white flex items-center">
+                      <svg className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
+                      </svg>
+                      Ubicación en el Mapa
+                    </h2>
+                    <p className="text-xs lg:text-sm text-white/90 mt-1">
+                      Edita el polígono de la propiedad
+                    </p>
+                  </div>
+                  <div className="relative h-[400px] sm:h-[500px] lg:h-[600px]">
+                    <button
+                      type="button"
+                      onClick={handleGetMyLocation}
+                      disabled={loadingLocation}
+                      className="absolute bottom-3 right-3 z-[500] bg-white text-primary p-2.5 sm:p-3 rounded-full shadow-lg hover:scale-105 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                      aria-label="Mi ubicación"
+                      title="Ir a mi ubicación"
+                    >
+                      {loadingLocation ? (
+                        <svg className="h-4 w-4 sm:h-5 sm:w-5 animate-spin" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                      ) : (
+                        <svg className="h-4 w-4 sm:h-5 sm:w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                        </svg>
+                      )}
+                    </button>
+                    <AddPropertyMap
+                      onMapReady={bindMapRef}
+                      onPolygonChange={setPolygonCoords}
+                      initialPolygon={polygonCoords}
+                      userLocation={userLocation}
+                      showMeasurements={showMeasurements}
+                      referenceProperties={referenceProperties}
+                    />
+                  </div>
+                  <div className="px-4 py-3 bg-gray-50 border-t">
+                    <button
+                      type="button"
+                      onClick={handleClear}
+                      className="w-full inline-flex justify-center items-center px-4 py-2 border border-gray-300 rounded-xl text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors"
+                    >
+                      <svg className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1 1h-4a1 1 0 00-1 1v3M4 7h16" />
+                      </svg>
+                      Limpiar Polígono
+                    </button>
+                  </div>
+                </div>
+
                 {/* Characteristics */}
                 <div className="bg-white rounded-2xl shadow-lg overflow-hidden">
                   <div className="px-4 py-3 bg-gradient-to-r from-primary to-secondary">
@@ -616,7 +612,7 @@ const EditPropertyPage = () => {
                       <svg className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
                       </svg>
-                      Características
+                      Características del Predio
                     </h3>
                   </div>
                   <div className="p-6 space-y-4">
@@ -1016,8 +1012,7 @@ const EditPropertyPage = () => {
                     </div>
                   </div>
                 </div>
-              </form>
-            </div>
+            </form>
           </div>
         </div>
       </div>
