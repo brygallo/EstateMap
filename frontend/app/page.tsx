@@ -24,7 +24,7 @@ const LeafletMap = dynamic(() => import('@/components/maps/LeafletMap'), {
 
 // Rangos de valores para los sliders
 const PRICE_MIN = 0;
-const PRICE_MAX = 1000000; // allow up to 1M USD by default
+const PRICE_MAX = 10000000; // allow up to 10M USD by default
 const AREA_MIN = 0;
 const AREA_MAX = 100000; // keep high so large terrenos are visible by default
 

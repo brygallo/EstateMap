@@ -25,7 +25,18 @@ const RangeSlider = ({
 }: RangeSliderProps) => {
   const [isDraggingMin, setIsDraggingMin] = useState(false);
   const [isDraggingMax, setIsDraggingMax] = useState(false);
+  const [minInput, setMinInput] = useState(minValue.toString());
+  const [maxInput, setMaxInput] = useState(maxValue.toString());
   const sliderRef = useRef<HTMLDivElement>(null);
+
+  // Keep manual inputs synced when slider changes externally
+  useEffect(() => {
+    setMinInput(minValue.toString());
+  }, [minValue]);
+
+  useEffect(() => {
+    setMaxInput(maxValue.toString());
+  }, [maxValue]);
 
   const getPercentage = (value: number) => {
     return ((value - min) / (max - min)) * 100;
@@ -110,14 +121,75 @@ const RangeSlider = ({
   const valueBoxClass = isDark ? 'bg-white/10 text-white' : 'bg-gray-100 text-gray-700';
   const separatorClass = isDark ? 'text-white/40' : 'text-gray-400';
   const trackBgClass = isDark ? 'bg-white/20' : 'bg-gray-200';
+  const formattedMinLabel = formatValue(minValue);
+  const formattedMaxLabel = formatValue(maxValue);
+
+  const commitInput = (isMin: boolean) => {
+    const rawString = isMin ? minInput : maxInput;
+    if (!rawString.trim()) {
+      setMinInput(minValue.toString());
+      setMaxInput(maxValue.toString());
+      return;
+    }
+
+    const parsed = Number(rawString);
+    if (Number.isNaN(parsed)) return;
+
+    const rounded = Math.round(parsed / step) * step;
+    const clamped = Math.min(Math.max(rounded, min), max);
+
+    if (isMin) {
+      const newMin = clamped;
+      const newMax = Math.max(maxValue, newMin);
+      onChange(newMin, newMax);
+    } else {
+      const newMax = clamped;
+      const newMin = Math.min(minValue, newMax);
+      onChange(newMin, newMax);
+    }
+  };
+
+  const handleKeyDown = (isMin: boolean) => (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      commitInput(isMin);
+      (e.target as HTMLInputElement).blur();
+    } else if (e.key === 'Escape') {
+      setMinInput(minValue.toString());
+      setMaxInput(maxValue.toString());
+      (e.target as HTMLInputElement).blur();
+    }
+  };
 
   return (
     <div className="w-full">
       {/* Values Display */}
-      <div className="flex items-center justify-between mb-1.5 text-[10px] font-semibold">
-        <span className={`${valueBoxClass} px-1.5 py-0.5 rounded text-[10px]`}>{formatValue(minValue)}</span>
+      <div className="flex items-center justify-between mb-1.5 text-[10px] font-semibold gap-1">
+        <input
+          type="number"
+          min={min}
+          max={max}
+          step={step}
+          value={minInput}
+          title={formattedMinLabel}
+          onChange={(e) => setMinInput(e.target.value)}
+          onBlur={() => commitInput(true)}
+          onKeyDown={handleKeyDown(true)}
+          className={`${valueBoxClass} px-1.5 py-0.5 rounded text-[10px] w-[80px] text-right focus:outline-none focus:ring-1 focus:ring-primary/60`}
+        />
         <span className={separatorClass}>-</span>
-        <span className={`${valueBoxClass} px-1.5 py-0.5 rounded text-[10px]`}>{formatValue(maxValue)}</span>
+        <input
+          type="number"
+          min={min}
+          max={max}
+          step={step}
+          value={maxInput}
+          title={formattedMaxLabel}
+          onChange={(e) => setMaxInput(e.target.value)}
+          onBlur={() => commitInput(false)}
+          onKeyDown={handleKeyDown(false)}
+          className={`${valueBoxClass} px-1.5 py-0.5 rounded text-[10px] w-[80px] text-right focus:outline-none focus:ring-1 focus:ring-primary/60`}
+        />
       </div>
 
       {/* Slider */}
