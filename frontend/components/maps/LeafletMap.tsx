@@ -512,6 +512,7 @@ const LeafletMap = ({
       <div className="absolute top-16 sm:top-10 right-2 sm:right-3 z-[900]">
         <div className="bg-white rounded-lg shadow-lg overflow-hidden" style={{ minWidth: '140px' }}>
           <button
+            type="button"
             onClick={() => setActiveLayer('streets')}
             className={`block w-full px-3 sm:px-4 py-2 text-left text-xs sm:text-sm border-b border-gray-100 hover:bg-gray-50 transition-colors ${
               activeLayer === 'streets' ? 'bg-gray-100 font-semibold' : ''
@@ -522,6 +523,7 @@ const LeafletMap = ({
             <span className="sm:hidden">Calles</span>
           </button>
           <button
+            type="button"
             onClick={() => setActiveLayer('satellite')}
             className={`block w-full px-3 sm:px-4 py-2 text-left text-xs sm:text-sm border-b border-gray-100 hover:bg-gray-50 transition-colors ${
               activeLayer === 'satellite' ? 'bg-gray-100 font-semibold' : ''
@@ -532,6 +534,7 @@ const LeafletMap = ({
             <span className="sm:hidden">Satélite</span>
           </button>
           <button
+            type="button"
             onClick={() => setActiveLayer('osm')}
             className={`block w-full px-3 sm:px-4 py-2 text-left text-xs sm:text-sm hover:bg-gray-50 transition-colors ${
               activeLayer === 'osm' ? 'bg-gray-100 font-semibold' : ''
