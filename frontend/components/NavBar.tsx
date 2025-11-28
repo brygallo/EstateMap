@@ -4,24 +4,38 @@ import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
 import { useAuth } from '@/lib/auth-context';
 import { toast } from 'react-toastify';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 const NavBar = () => {
-  const { token, logout } = useAuth();
+  const { token, user, logout } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const userMenuRef = useRef<HTMLDivElement>(null);
 
   const handleLogout = () => {
     logout();
     toast.success('Sesión cerrada exitosamente');
     setMobileMenuOpen(false);
+    setUserMenuOpen(false);
     router.push('/');
   };
 
   const closeMobileMenu = () => {
     setMobileMenuOpen(false);
   };
+
+  // Close user menu on outside click
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (userMenuRef.current && !userMenuRef.current.contains(e.target as Node)) {
+        setUserMenuOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   return (
     <nav className="bg-gradient-to-r from-primary to-secondary text-white shadow-lg sticky top-0" style={{ zIndex: 1000 }}>
@@ -51,6 +65,17 @@ const NavBar = () => {
                   <span className="hidden lg:inline">Mis Propiedades</span>
                 </Link>
                 <Link
+                  href="/help"
+                  className="inline-flex items-center px-2 lg:px-3 py-1.5 bg-white/20 backdrop-blur-sm rounded-lg hover:bg-white/30 transition-all font-medium text-xs lg:text-sm"
+                >
+                  <svg className="h-4 w-4 lg:mr-1.5" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                    <circle cx="12" cy="12" r="9" strokeWidth="2" />
+                    <path d="M9.5 9a2.5 2.5 0 115 0c0 1.5-1.5 2-2.5 2" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                    <circle cx="12" cy="16" r="1" fill="currentColor" />
+                  </svg>
+                  <span className="hidden lg:inline">Ayuda</span>
+                </Link>
+                <Link
                   href="/add-property"
                   className="inline-flex items-center px-2 lg:px-3 py-1.5 bg-white/20 backdrop-blur-sm rounded-lg hover:bg-white/30 transition-all font-medium text-xs lg:text-sm"
                 >
@@ -59,18 +84,59 @@ const NavBar = () => {
                   </svg>
                   <span className="hidden lg:inline">Nueva</span>
                 </Link>
-                <button
-                  onClick={handleLogout}
-                  className="inline-flex items-center px-2 lg:px-3 py-1.5 border-2 border-white/30 rounded-lg hover:bg-white/20 transition-all font-medium text-xs lg:text-sm"
-                >
-                  <svg className="h-4 w-4 lg:mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-                  </svg>
-                  <span className="hidden lg:inline">Salir</span>
-                </button>
+                <div className="relative" ref={userMenuRef}>
+                  <button
+                    onClick={() => setUserMenuOpen((prev) => !prev)}
+                    className="inline-flex items-center px-2 lg:px-3 py-1.5 border-2 border-white/30 rounded-full hover:bg-white/20 transition-all"
+                    aria-haspopup="menu"
+                    aria-expanded={userMenuOpen}
+                  >
+                    <svg className="h-5 w-5 lg:mr-1.5" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                      <circle cx="12" cy="8" r="4" strokeWidth="2" />
+                      <path d="M5 20c0-3.314 3.134-6 7-6s7 2.686 7 6" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                    <span className="hidden lg:inline text-xs font-semibold truncate max-w-[120px]">
+                      {user?.username || 'Cuenta'}
+                    </span>
+                  </button>
+                  {userMenuOpen && (
+                    <div className="absolute right-0 mt-2 w-44 bg-white text-gray-800 rounded-lg shadow-xl border border-gray-100 overflow-hidden">
+                      <Link
+                        href="/account"
+                        onClick={() => setUserMenuOpen(false)}
+                        className="flex items-center px-3 py-2 text-sm hover:bg-gray-50 transition-colors"
+                      >
+                        <svg className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5.121 17.804A9 9 0 1118 8.999M15 21v-2a3 3 0 00-3-3H6a3 3 0 00-3 3v2" />
+                        </svg>
+                        Mi cuenta
+                      </Link>
+                      <button
+                        onClick={handleLogout}
+                        className="w-full flex items-center px-3 py-2 text-left text-sm hover:bg-gray-50 transition-colors"
+                      >
+                        <svg className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                        </svg>
+                        Salir
+                      </button>
+                    </div>
+                  )}
+                </div>
               </>
             ) : (
               <>
+                <Link
+                  href="/help"
+                  className="inline-flex items-center px-2 lg:px-3 py-1.5 rounded-lg hover:bg-white/20 transition-all font-medium text-xs lg:text-sm"
+                >
+                  <svg className="h-4 w-4 lg:mr-1.5" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                    <circle cx="12" cy="12" r="9" strokeWidth="2" />
+                    <path d="M9.5 9a2.5 2.5 0 115 0c0 1.5-1.5 2-2.5 2" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                    <circle cx="12" cy="16" r="1" fill="currentColor" />
+                  </svg>
+                  <span className="hidden lg:inline">Ayuda</span>
+                </Link>
                 <Link
                   href="/login"
                   className="inline-flex items-center px-2 lg:px-3 py-1.5 rounded-lg hover:bg-white/20 transition-all font-medium text-xs lg:text-sm"
@@ -129,6 +195,18 @@ const NavBar = () => {
                   Mis Propiedades
                 </Link>
                 <Link
+                  href="/help"
+                  onClick={closeMobileMenu}
+                  className="flex items-center px-4 py-3 bg-white/20 backdrop-blur-sm rounded-xl hover:bg-white/30 transition-all font-medium"
+                >
+                  <svg className="h-5 w-5 mr-3" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                    <circle cx="12" cy="12" r="9" strokeWidth="2" />
+                    <path d="M9.5 9a2.5 2.5 0 115 0c0 1.5-1.5 2-2.5 2" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                    <circle cx="12" cy="16" r="1" fill="currentColor" />
+                  </svg>
+                  Ayuda
+                </Link>
+                <Link
                   href="/add-property"
                   onClick={closeMobileMenu}
                   className="flex items-center px-4 py-3 bg-white/20 backdrop-blur-sm rounded-xl hover:bg-white/30 transition-all font-medium"
@@ -137,6 +215,16 @@ const NavBar = () => {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
                   </svg>
                   Nueva Propiedad
+                </Link>
+                <Link
+                  href="/account"
+                  onClick={closeMobileMenu}
+                  className="flex items-center px-4 py-3 bg-white/20 backdrop-blur-sm rounded-xl hover:bg-white/30 transition-all font-medium"
+                >
+                  <svg className="h-5 w-5 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5.121 17.804A9 9 0 1118 8.999M15 21v-2a3 3 0 00-3-3H6a3 3 0 00-3 3v2" />
+                  </svg>
+                  Mi cuenta
                 </Link>
                 <button
                   onClick={handleLogout}
@@ -159,6 +247,18 @@ const NavBar = () => {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
                   </svg>
                   Iniciar Sesión
+                </Link>
+                <Link
+                  href="/help"
+                  onClick={closeMobileMenu}
+                  className="flex items-center px-4 py-3 rounded-xl hover:bg-white/20 transition-all font-medium"
+                >
+                  <svg className="h-5 w-5 mr-3" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                    <circle cx="12" cy="12" r="9" strokeWidth="2" />
+                    <path d="M9.5 9a2.5 2.5 0 115 0c0 1.5-1.5 2-2.5 2" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                    <circle cx="12" cy="16" r="1" fill="currentColor" />
+                  </svg>
+                  Ayuda
                 </Link>
                 <Link
                   href="/register"

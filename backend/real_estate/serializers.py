@@ -369,3 +369,45 @@ class RequestEmailChangeSerializer(serializers.Serializer):
 class VerifyEmailChangeSerializer(serializers.Serializer):
     code = serializers.CharField(required=True, max_length=6, min_length=6)
 
+
+class UserProfileSerializer(serializers.ModelSerializer):
+    """Serializer para ver/actualizar datos básicos del usuario."""
+
+    email = serializers.EmailField(read_only=True)
+    is_email_verified = serializers.BooleanField(read_only=True)
+
+    class Meta:
+        model = User
+        fields = [
+            "id",
+            "username",
+            "email",
+            "first_name",
+            "last_name",
+            "is_email_verified",
+        ]
+        read_only_fields = ["id", "email", "is_email_verified"]
+
+
+class ChangePasswordSerializer(serializers.Serializer):
+    """Serializer para cambio de contraseña autenticado."""
+
+    old_password = serializers.CharField(write_only=True, required=True)
+    new_password = serializers.CharField(
+        write_only=True,
+        required=True,
+        validators=[validate_password]
+    )
+
+    def validate_old_password(self, value):
+        user = self.context["request"].user
+        if not user.check_password(value):
+            raise serializers.ValidationError("La contraseña actual no es correcta")
+        return value
+
+    def save(self, **kwargs):
+        user = self.context["request"].user
+        new_password = self.validated_data["new_password"]
+        user.set_password(new_password)
+        user.save()
+        return user

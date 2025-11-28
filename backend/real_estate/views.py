@@ -23,6 +23,8 @@ from .serializers import (
     ResetPasswordSerializer,
     RequestEmailChangeSerializer,
     VerifyEmailChangeSerializer,
+    UserProfileSerializer,
+    ChangePasswordSerializer,
 )
 from .permissions import IsOwnerOrReadOnly
 import requests
@@ -498,3 +500,26 @@ class VerifyEmailChangeView(generics.GenericAPIView):
                 {'error': 'Código de verificación inválido'},
                 status=status.HTTP_400_BAD_REQUEST
             )
+
+
+class MeView(generics.RetrieveUpdateAPIView):
+    """Obtener/actualizar datos básicos del usuario autenticado."""
+
+    serializer_class = UserProfileSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_object(self):
+        return self.request.user
+
+
+class ChangePasswordView(generics.GenericAPIView):
+    """Permite al usuario cambiar su contraseña actual."""
+
+    serializer_class = ChangePasswordSerializer
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data, context={'request': request})
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response({'message': 'Contraseña actualizada correctamente'}, status=status.HTTP_200_OK)

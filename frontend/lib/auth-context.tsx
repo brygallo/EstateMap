@@ -2,8 +2,15 @@
 
 import { createContext, useContext, useState, useEffect, ReactNode, useCallback, useRef } from 'react';
 
+interface AuthUserInfo {
+  id?: string;
+  username?: string;
+  email?: string;
+}
+
 interface AuthContextType {
   token: string | null;
+  user: AuthUserInfo | null;
   login: (accessToken: string, refreshToken: string, remember: boolean) => void;
   logout: () => void;
   loading: boolean;
@@ -16,8 +23,39 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api';
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [token, setToken] = useState<string | null>(null);
+  const [user, setUser] = useState<AuthUserInfo | null>(null);
   const [loading, setLoading] = useState(true);
   const refreshTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+  const decodeJWT = (t: string): any | null => {
+    try {
+      const base64Url = t.split('.')[1];
+      const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+      const jsonPayload = decodeURIComponent(
+        atob(base64)
+          .split('')
+          .map((c) => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
+          .join('')
+      );
+      return JSON.parse(jsonPayload);
+    } catch {
+      return null;
+    }
+  };
+
+  const setSessionToken = (newToken: string | null) => {
+    setToken(newToken);
+    if (newToken) {
+      const payload = decodeJWT(newToken);
+      setUser({
+        id: payload?.user_id || payload?.userId || payload?.id,
+        username: payload?.username,
+        email: payload?.email,
+      });
+    } else {
+      setUser(null);
+    }
+  };
 
   // Función para renovar el token
   const refreshToken = useCallback(async (): Promise<boolean> => {
@@ -56,7 +94,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           }
         }
 
-        setToken(newAccessToken);
+        setSessionToken(newAccessToken);
         scheduleTokenRefresh();
         return true;
       } else {
@@ -94,7 +132,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       sessionStorage.setItem('token', accessToken);
       sessionStorage.setItem('refreshToken', refreshToken);
     }
-    setToken(accessToken);
+    setSessionToken(accessToken);
     scheduleTokenRefresh();
   };
 
@@ -103,7 +141,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     localStorage.removeItem('refreshToken');
     sessionStorage.removeItem('token');
     sessionStorage.removeItem('refreshToken');
-    setToken(null);
+    setSessionToken(null);
 
     // Limpiar timer de renovación
     if (refreshTimerRef.current) {
@@ -114,7 +152,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     const stored = localStorage.getItem('token') || sessionStorage.getItem('token');
     if (stored) {
-      setToken(stored);
+      setSessionToken(stored);
       scheduleTokenRefresh();
     }
     setLoading(false);
@@ -128,7 +166,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, [scheduleTokenRefresh]);
 
   return (
-    <AuthContext.Provider value={{ token, login, logout, loading, refreshToken }}>
+    <AuthContext.Provider value={{ token, user, login, logout, loading, refreshToken }}>
       {children}
     </AuthContext.Provider>
   );
