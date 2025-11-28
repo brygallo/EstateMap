@@ -82,21 +82,13 @@ class PropertyViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         """
         Filtrar propiedades según el usuario:
-        - Usuarios no autenticados: solo propiedades activas (status != 'inactive')
-        - Usuarios autenticados: propiedades activas + sus propias propiedades (incluyendo inactivas)
+        - Todos los usuarios: solo propiedades activas (status != 'inactive')
+        - Las propiedades inactivas solo se ven en el endpoint /my_properties/
         """
         queryset = Property.objects.all()
-        user = self.request.user
 
-        if user.is_authenticated:
-            # Mostrar propiedades activas + propiedades propias (incluyendo inactivas)
-            from django.db.models import Q
-            queryset = queryset.filter(
-                Q(status__in=['for_sale', 'for_rent']) | Q(owner=user)
-            )
-        else:
-            # Usuarios no autenticados: solo propiedades activas
-            queryset = queryset.exclude(status='inactive')
+        # Excluir propiedades inactivas del mapa para todos los usuarios
+        queryset = queryset.exclude(status='inactive')
 
         return queryset
 
