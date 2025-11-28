@@ -53,7 +53,15 @@ function MapRefBinder({ onMapReady }: { onMapReady: (map: any) => void }) {
 }
 
 /* ===================== AutoLayerSwitch ===================== */
-function AutoLayerSwitch({ activeLayer, setActiveLayer }: { activeLayer: string; setActiveLayer: (layer: string) => void }) {
+function AutoLayerSwitch({
+  activeLayer,
+  preferredLayer,
+  setActiveLayer
+}: {
+  activeLayer: string;
+  preferredLayer: string;
+  setActiveLayer: (layer: string) => void;
+}) {
   const map = useMap();
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
@@ -69,42 +77,51 @@ function AutoLayerSwitch({ activeLayer, setActiveLayer }: { activeLayer: string;
         'osm': 19
       };
 
-      const currentLimit = layerLimits[activeLayer];
+      const preferredLimit = layerLimits[preferredLayer] ?? 20;
 
-      // If current zoom exceeds current layer's max zoom, switch to a layer that supports it
-      if (currentZoom > currentLimit) {
-        // Find a layer that supports this zoom level
+      // If zoom is again within the preferred layer limit, return to it
+      if (currentZoom <= preferredLimit && activeLayer !== preferredLayer) {
+        setActiveLayer(preferredLayer);
+        return;
+      }
+
+      // If current zoom exceeds preferred layer's max zoom, switch temporarily
+      if (currentZoom > preferredLimit) {
         const availableLayers = Object.entries(layerLimits)
           .filter(([_, maxZoom]) => maxZoom >= currentZoom)
           .sort((a, b) => b[1] - a[1]); // Sort by max zoom descending
 
         if (availableLayers.length > 0) {
           const [newLayer] = availableLayers[0];
-          setActiveLayer(newLayer);
+          if (newLayer !== activeLayer) {
+            setActiveLayer(newLayer);
 
-          // Show toast notification
-          const layerNames: { [key: string]: string } = {
-            'satellite': 'Vista Satelital',
-            'streets': 'Mapa de Calles',
-            'osm': 'OpenStreetMap'
-          };
+            // Show toast notification
+            const layerNames: { [key: string]: string } = {
+              'satellite': 'Vista Satelital',
+              'streets': 'Mapa de Calles',
+              'osm': 'OpenStreetMap'
+            };
 
-          setToastMessage(`Cambiado a ${layerNames[newLayer]} (soporta zoom ${layerLimits[newLayer]})`);
-          setShowToast(true);
+            setToastMessage(`Cambiado a ${layerNames[newLayer]} (soporta zoom ${layerLimits[newLayer]})`);
+            setShowToast(true);
 
-          setTimeout(() => {
-            setShowToast(false);
-          }, 3000);
+            setTimeout(() => {
+              setShowToast(false);
+            }, 3000);
+          }
         }
       }
     };
 
+    // Run once on mount/dependency change to honor preferred layer immediately
+    handleZoomEnd();
     map.on('zoomend', handleZoomEnd);
 
     return () => {
       map.off('zoomend', handleZoomEnd);
     };
-  }, [map, activeLayer, setActiveLayer]);
+  }, [map, activeLayer, preferredLayer, setActiveLayer]);
 
   return (
     <>
@@ -910,6 +927,12 @@ const AddPropertyMap = ({
   referenceProperties = []
 }: AddPropertyMapProps) => {
   const [activeLayer, setActiveLayer] = useState('streets'); // Default to streets layer
+  const [preferredLayer, setPreferredLayer] = useState('streets'); // Remember user's selection
+
+  const handleLayerSelect = (layer: string) => {
+    setPreferredLayer(layer);
+    setActiveLayer(layer);
+  };
 
   return (
     <>
@@ -987,7 +1010,7 @@ const AddPropertyMap = ({
           <div className="bg-white rounded-lg shadow-lg overflow-hidden" style={{ minWidth: '140px' }}>
             <button
               type="button"
-              onClick={() => setActiveLayer('streets')}
+              onClick={() => handleLayerSelect('streets')}
               className={`block w-full px-3 sm:px-4 py-2 text-left text-xs sm:text-sm border-b border-gray-100 hover:bg-gray-50 transition-colors ${
                 activeLayer === 'streets' ? 'bg-gray-100 font-semibold' : ''
               }`}
@@ -998,7 +1021,7 @@ const AddPropertyMap = ({
             </button>
             <button
               type="button"
-              onClick={() => setActiveLayer('satellite')}
+              onClick={() => handleLayerSelect('satellite')}
               className={`block w-full px-3 sm:px-4 py-2 text-left text-xs sm:text-sm border-b border-gray-100 hover:bg-gray-50 transition-colors ${
                 activeLayer === 'satellite' ? 'bg-gray-100 font-semibold' : ''
               }`}
@@ -1009,7 +1032,7 @@ const AddPropertyMap = ({
             </button>
             <button
               type="button"
-              onClick={() => setActiveLayer('osm')}
+              onClick={() => handleLayerSelect('osm')}
               className={`block w-full px-3 sm:px-4 py-2 text-left text-xs sm:text-sm hover:bg-gray-50 transition-colors ${
                 activeLayer === 'osm' ? 'bg-gray-100 font-semibold' : ''
               }`}
@@ -1021,7 +1044,11 @@ const AddPropertyMap = ({
           </div>
         </div>
 
-        <AutoLayerSwitch activeLayer={activeLayer} setActiveLayer={setActiveLayer} />
+        <AutoLayerSwitch
+          activeLayer={activeLayer}
+          preferredLayer={preferredLayer}
+          setActiveLayer={setActiveLayer}
+        />
         <MapRefBinder onMapReady={onMapReady} />
         <ScaleBottomLeft />
         <DrawingTools
