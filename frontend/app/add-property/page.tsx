@@ -27,6 +27,7 @@ const AddPropertyPage = () => {
   const [polygonCoords, setPolygonCoords] = useState<any[]>([]);
   const [area, setArea] = useState(0);
   const [showMeasurements, setShowMeasurements] = useState(true);
+  const [referenceProperties, setReferenceProperties] = useState<any[]>([]);
 
   // General Information
   const [title, setTitle] = useState('');
@@ -113,6 +114,30 @@ const AddPropertyPage = () => {
       }
     }
   }, []);
+
+  // Load all properties to show as reference
+  useEffect(() => {
+    const fetchProperties = async () => {
+      try {
+        const { apiFetch } = await import('@/lib/api');
+        const res = await apiFetch('/properties/', {
+          skipAuth: !token,
+        });
+
+        if (res.ok) {
+          const data = await res.json();
+          console.log('Reference properties loaded:', data.length);
+          setReferenceProperties(data);
+        } else {
+          console.error('Error loading reference properties');
+        }
+      } catch (error) {
+        console.error('Error fetching reference properties:', error);
+      }
+    };
+
+    fetchProperties();
+  }, [token]);
 
   const handleAcceptLocation = async () => {
     setShowLocationModal(false);
@@ -494,6 +519,7 @@ const AddPropertyPage = () => {
                     userZoom={userLocation ? 12 : undefined}
                     userLocation={userLocation}
                     showMeasurements={showMeasurements}
+                    referenceProperties={referenceProperties}
                   />
                 </div>
                 <div className="px-4 py-3 bg-gray-50 border-t">

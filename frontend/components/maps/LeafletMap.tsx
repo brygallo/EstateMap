@@ -288,6 +288,7 @@ interface LeafletMapProps {
   onMapReady: (map: any) => void;
   onVisiblePropertiesChange: (properties: any[]) => void;
   onPolygonClick: (property: any) => void;
+  onPriceLabelClick: (property: any) => void;
   hoverTimeoutRef: React.MutableRefObject<any>;
   getPropertyTypeLabel: (type: string) => string;
   getStatusLabel: (status: string) => string;
@@ -301,6 +302,7 @@ const LeafletMap = ({
   onMapReady,
   onVisiblePropertiesChange,
   onPolygonClick,
+  onPriceLabelClick,
   hoverTimeoutRef,
   getPropertyTypeLabel,
   getStatusLabel,
@@ -430,7 +432,7 @@ const LeafletMap = ({
           const priceLabelIcon = new L.DivIcon({
             className: 'price-label-icon',
             html: `
-              <div style="
+              <div class="price-label-container" style="
                 position: relative;
                 width: 100%;
                 height: 100%;
@@ -438,7 +440,7 @@ const LeafletMap = ({
                 align-items: center;
                 justify-content: center;
               ">
-                <div style="
+                <div class="price-label-badge" style="
                   background: ${priceIconColor};
                   color: white;
                   padding: 4px 8px;
@@ -601,16 +603,27 @@ const LeafletMap = ({
                 key={`price-label-${p.id || idx}`}
                 position={labelPosition}
                 icon={priceLabelIcon}
-                zIndexOffset={1000}
+                zIndexOffset={500}
+                interactive={true}
+                bubblingMouseEvents={false}
                 eventHandlers={{
-                  click: () => {
+                  click: (e) => {
                     console.log('Price label clicked!', p.title);
+                    // Stop event propagation to prevent polygon click
+                    L.DomEvent.stopPropagation(e.originalEvent);
                     // Cancel any pending hover timeout
                     if (hoverTimeoutRef.current) {
                       clearTimeout(hoverTimeoutRef.current);
                       hoverTimeoutRef.current = null;
                     }
                     onPolygonClick(p);
+                  },
+                  mouseover: () => {
+                    // Cancel any pending hover timeout from polygon
+                    if (hoverTimeoutRef.current) {
+                      clearTimeout(hoverTimeoutRef.current);
+                      hoverTimeoutRef.current = null;
+                    }
                   }
                 }}
               />

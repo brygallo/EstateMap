@@ -1,11 +1,11 @@
 'use client';
 
-import { MapContainer, TileLayer, useMap, Marker } from 'react-leaflet';
+import { MapContainer, TileLayer, useMap, Marker, Polygon } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
 import '@geoman-io/leaflet-geoman-free';
 import '@geoman-io/leaflet-geoman-free/dist/leaflet-geoman.css';
-import { useEffect, useRef, useState, useCallback } from 'react';
+import { useEffect, useRef, useState, useCallback, useMemo } from 'react';
 import * as turf from '@turf/turf';
 
 // Fix Leaflet icons
@@ -815,6 +815,7 @@ interface AddPropertyMapProps {
   userZoom?: number;
   userLocation?: { lat: number; lng: number } | null;
   showMeasurements?: boolean;
+  referenceProperties?: any[];
 }
 
 const AddPropertyMap = ({
@@ -825,7 +826,8 @@ const AddPropertyMap = ({
   userCenter,
   userZoom,
   userLocation,
-  showMeasurements = true
+  showMeasurements = true,
+  referenceProperties = []
 }: AddPropertyMapProps) => {
   return (
     <>
@@ -879,6 +881,45 @@ const AddPropertyMap = ({
           showMeasurements={showMeasurements}
         />
         <LocationSearch />
+
+        {/* Reference properties - shown in gray as visual reference */}
+        {useMemo(() => {
+          if (!referenceProperties || referenceProperties.length === 0) return null;
+
+          return referenceProperties.map((property, idx) => {
+            // Handle both GeoJSON and simple array formats for properties with polygons
+            let leafletCoordinates;
+
+            if (property.polygon?.coordinates?.[0]) {
+              // GeoJSON format: convert [lng, lat] to [lat, lng]
+              leafletCoordinates = property.polygon.coordinates[0].map((coord: any) => [coord[1], coord[0]]);
+            } else if (Array.isArray(property.polygon) && property.polygon.length >= 3) {
+              // Simple array format: already [lat, lng]
+              leafletCoordinates = property.polygon;
+            }
+
+            // Only render properties with polygons
+            if (!leafletCoordinates || leafletCoordinates.length < 3) {
+              return null;
+            }
+
+            return (
+              <Polygon
+                key={`reference-polygon-${property.id || idx}`}
+                positions={leafletCoordinates}
+                pathOptions={{
+                  color: '#6c757d',  // Gray color
+                  fillColor: '#adb5bd',  // Light gray fill
+                  fillOpacity: 0.15,  // Very transparent
+                  weight: 1.5,  // Thin border
+                  interactive: false,  // Not clickable
+                  className: 'reference-property-polygon'
+                }}
+              />
+            );
+          });
+        }, [referenceProperties])}
+
         {userLocation && (
           <Marker position={[userLocation.lat, userLocation.lng]} icon={userLocationIcon} />
         )}

@@ -29,6 +29,7 @@ const EditPropertyPage = () => {
   const [polygonCoords, setPolygonCoords] = useState<any[]>([]);
   const [area, setArea] = useState(0);
   const [showMeasurements, setShowMeasurements] = useState(true);
+  const [referenceProperties, setReferenceProperties] = useState<any[]>([]);
 
   // General Information
   const [title, setTitle] = useState('');
@@ -154,6 +155,34 @@ const EditPropertyPage = () => {
 
     loadProperty();
   }, [propertyId, logout, router]);
+
+  // Load all properties to show as reference (excluding the one being edited)
+  useEffect(() => {
+    const fetchProperties = async () => {
+      try {
+        const { apiFetch } = await import('@/lib/api');
+        const res = await apiFetch('/properties/', {
+          skipAuth: !token,
+        });
+
+        if (res.ok) {
+          const data = await res.json();
+          // Exclude the property being edited from the reference properties
+          const filtered = data.filter((p: any) => p.id.toString() !== propertyId);
+          console.log('Reference properties loaded:', filtered.length);
+          setReferenceProperties(filtered);
+        } else {
+          console.error('Error loading reference properties');
+        }
+      } catch (error) {
+        console.error('Error fetching reference properties:', error);
+      }
+    };
+
+    if (propertyId) {
+      fetchProperties();
+    }
+  }, [token, propertyId]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -492,6 +521,7 @@ const EditPropertyPage = () => {
                   initialPolygon={polygonCoords}
                   userLocation={userLocation}
                   showMeasurements={showMeasurements}
+                  referenceProperties={referenceProperties}
                 />
               </div>
                 <div className="px-4 py-3 bg-gray-50 border-t">
