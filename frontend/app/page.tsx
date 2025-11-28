@@ -24,7 +24,7 @@ const LeafletMap = dynamic(() => import('@/components/maps/LeafletMap'), {
 
 // Rangos de valores para los sliders
 const PRICE_MIN = 0;
-const PRICE_MAX = 500000;
+const PRICE_MAX = 1000000; // allow up to 1M USD by default
 const AREA_MIN = 0;
 const AREA_MAX = 100000; // keep high so large terrenos are visible by default
 
@@ -464,6 +464,55 @@ const MapPage = () => {
   // Function for polygon clicks - opens modal
   const handlePolygonClick = (property: any) => {
     console.log('Polygon clicked:', property);
+
+    // Move map to property location first
+    if (mapRef.current) {
+      try {
+        // If property has polygon, fly to polygon bounds
+        if (property.polygon) {
+          let coordinates;
+
+          // Check if polygon is in GeoJSON format
+          if (property.polygon.coordinates && Array.isArray(property.polygon.coordinates[0])) {
+            coordinates = property.polygon.coordinates[0];
+          }
+          // Check if polygon is already in simple array format [[lat, lng], ...]
+          else if (Array.isArray(property.polygon) && property.polygon.length >= 3) {
+            // Convert from [lat, lng] to [lng, lat] for bounds calculation
+            coordinates = property.polygon.map((coord: any) => [coord[1], coord[0]]);
+          }
+
+          if (coordinates && coordinates.length >= 3) {
+            // Calculate bounds for the polygon
+            const lats = coordinates.map((coord: any) => coord[1]);
+            const lngs = coordinates.map((coord: any) => coord[0]);
+
+            const bounds: any = [
+              [Math.min(...lats), Math.min(...lngs)],
+              [Math.max(...lats), Math.max(...lngs)]
+            ];
+
+            console.log('Flying to bounds:', bounds);
+
+            // Fly to the polygon with maximum zoom
+            mapRef.current.flyToBounds(bounds, {
+              padding: [50, 50],
+              maxZoom: 20, // Maximum zoom available
+              duration: 1.5
+            });
+          }
+        }
+        // If property doesn't have polygon but has lat/lng, fly to marker position
+        else if (property.latitude && property.longitude) {
+          console.log('Flying to marker:', property.latitude, property.longitude);
+          mapRef.current.flyTo([property.latitude, property.longitude], 17, {
+            duration: 1.5
+          });
+        }
+      } catch (error) {
+        console.error('Error moving map:', error);
+      }
+    }
 
     // Open modal
     setSelectedProperty(property);
@@ -996,6 +1045,7 @@ const MapPage = () => {
           onMapReady={handleMapReady}
           onVisiblePropertiesChange={setVisibleProperties}
           onPolygonClick={handlePolygonClick}
+          onPriceLabelClick={handleSidebarPropertyClick}
           hoverTimeoutRef={hoverTimeoutRef}
           getPropertyTypeLabel={getPropertyTypeLabel}
           getStatusLabel={getStatusLabel}
