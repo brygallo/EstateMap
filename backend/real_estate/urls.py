@@ -14,6 +14,8 @@ from .views import (
     ResetPasswordView,
     RequestEmailChangeView,
     VerifyEmailChangeView,
+    MeView,
+    ChangePasswordView,
 )
 
 router = DefaultRouter()
@@ -38,6 +40,10 @@ urlpatterns = [
     # Email change (requires authentication)
     path('request-email-change/', RequestEmailChangeView.as_view(), name='request_email_change'),
     path('verify-email-change/', VerifyEmailChangeView.as_view(), name='verify_email_change'),
+
+    # User profile
+    path('me/', MeView.as_view(), name='me'),
+    path('change-password/', ChangePasswordView.as_view(), name='change_password'),
 
     # Image proxy to serve images from MinIO without CORS issues
     re_path(r'^media/(?P<image_path>.+)$', ImageProxyView.as_view(), name='image_proxy'),
