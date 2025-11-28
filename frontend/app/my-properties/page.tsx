@@ -5,12 +5,16 @@ import { useAuth } from '@/lib/auth-context';
 import { useRouter } from 'next/navigation';
 import { toast } from 'react-toastify';
 import PrivateRoute from '@/components/PrivateRoute';
+import ShareModal from '@/components/ShareModal';
 
 const MyPropertiesPage = () => {
-  const { token, logout } = useAuth();
+  const { token, logout, user } = useAuth();
   const router = useRouter();
   const [properties, setProperties] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [shareModalOpen, setShareModalOpen] = useState(false);
+  const [shareAllModalOpen, setShareAllModalOpen] = useState(false);
+  const [selectedPropertyId, setSelectedPropertyId] = useState<number | null>(null);
   const API_URL = process.env.NEXT_PUBLIC_API_URL || '/api';
 
   useEffect(() => {
@@ -100,6 +104,29 @@ const MyPropertiesPage = () => {
     return colors[status] || 'bg-gray-500';
   };
 
+  const handleShare = (propertyId: number) => {
+    setSelectedPropertyId(propertyId);
+    setShareModalOpen(true);
+  };
+
+  const handleShareAll = () => {
+    setShareAllModalOpen(true);
+  };
+
+  const getShareUrl = () => {
+    if (typeof window === 'undefined' || !selectedPropertyId) return '';
+    const url = new URL(window.location.origin);
+    url.searchParams.set('property', selectedPropertyId.toString());
+    return url.toString();
+  };
+
+  const getShareAllUrl = () => {
+    if (typeof window === 'undefined' || !user?.id) return '';
+    const url = new URL(window.location.origin);
+    url.searchParams.set('user', user.id.toString());
+    return url.toString();
+  };
+
   if (loading) {
     return (
       <PrivateRoute>
@@ -119,20 +146,39 @@ const MyPropertiesPage = () => {
         {/* Header */}
         <div className="bg-white shadow-sm border-b">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
               <div>
                 <h1 className="text-3xl font-bold text-gray-900">Mis Propiedades</h1>
                 <p className="text-sm text-gray-600 mt-1">Administra tus propiedades registradas</p>
               </div>
-              <button
-                onClick={() => router.push('/add-property')}
-                className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-primary to-secondary text-white rounded-xl hover:from-primary/90 hover:to-secondary/90 transition-all font-semibold shadow-lg"
-              >
-                <svg className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                </svg>
-                Nueva Propiedad
-              </button>
+              <div className="flex flex-wrap gap-3">
+                <button
+                  onClick={handleShareAll}
+                  className="inline-flex items-center px-5 py-3 bg-gradient-to-r from-emerald-500 to-emerald-600 text-white rounded-xl hover:from-emerald-600 hover:to-emerald-700 transition-all font-semibold shadow-lg relative"
+                  title="Compartir link con solo mis propiedades"
+                  disabled={properties.length === 0}
+                >
+                  <svg className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
+                  </svg>
+                  <span className="hidden md:inline">Compartir Mis Propiedades</span>
+                  <span className="md:hidden">Mi Portafolio</span>
+                  {properties.length > 0 && (
+                    <span className="ml-2 px-2 py-0.5 bg-white/20 rounded-full text-xs font-bold">
+                      {properties.length}
+                    </span>
+                  )}
+                </button>
+                <button
+                  onClick={() => router.push('/add-property')}
+                  className="inline-flex items-center px-5 py-3 bg-gradient-to-r from-primary to-secondary text-white rounded-xl hover:from-primary/90 hover:to-secondary/90 transition-all font-semibold shadow-lg"
+                >
+                  <svg className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                  </svg>
+                  Nueva Propiedad
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -219,6 +265,16 @@ const MyPropertiesPage = () => {
                   {/* Actions */}
                   <div className="px-4 pb-4 flex gap-2">
                     <button
+                      onClick={() => handleShare(property.id)}
+                      className="flex-1 inline-flex justify-center items-center px-4 py-2 bg-emerald-500 text-white rounded-xl hover:bg-emerald-600 transition-colors font-medium text-sm"
+                      title="Compartir propiedad"
+                    >
+                      <svg className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
+                      </svg>
+                      Compartir
+                    </button>
+                    <button
                       onClick={() => router.push(`/edit-property/${property.id}`)}
                       className="flex-1 inline-flex justify-center items-center px-4 py-2 bg-blue-500 text-white rounded-xl hover:bg-blue-600 transition-colors font-medium text-sm"
                     >
@@ -272,6 +328,22 @@ const MyPropertiesPage = () => {
           </a>
         </div>
       </div>
+
+      {/* Share Modal - Individual Property */}
+      <ShareModal
+        isOpen={shareModalOpen}
+        onClose={() => setShareModalOpen(false)}
+        shareUrl={getShareUrl()}
+        title="Compartir Propiedad"
+      />
+
+      {/* Share Modal - All Properties */}
+      <ShareModal
+        isOpen={shareAllModalOpen}
+        onClose={() => setShareAllModalOpen(false)}
+        shareUrl={getShareAllUrl()}
+        title="Compartir Solo Mis Propiedades"
+      />
     </PrivateRoute>
   );
 };

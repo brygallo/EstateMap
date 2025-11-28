@@ -96,9 +96,11 @@ class PropertySerializer(serializers.ModelSerializer):
                 coords = data['polygon']['coordinates'][0]
                 data['polygon'] = [[coord[1], coord[0]] for coord in coords]
 
-        # Add owner username
+        # Add owner information
         if instance.owner:
-            data['owner_username'] = instance.owner.username
+            # Usar el nombre completo si está disponible, sino usar username
+            full_name = f"{instance.owner.first_name} {instance.owner.last_name}".strip()
+            data['owner_username'] = full_name if full_name else instance.owner.username
 
         return data
 

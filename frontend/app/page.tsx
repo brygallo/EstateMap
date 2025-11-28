@@ -861,7 +861,6 @@ const MapPage = () => {
             <option value="all" className="bg-dark">Todos los estados</option>
             <option value="for_sale" className="bg-dark">💰 En Venta</option>
             <option value="for_rent" className="bg-dark">🔑 En Alquiler</option>
-            <option value="inactive" className="bg-dark">⏸️ Inactivo</option>
           </select>
 
           {/* User Filter with Search */}
