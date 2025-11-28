@@ -368,6 +368,7 @@ interface LeafletMapProps {
   onMapReady: (map: any) => void;
   onVisiblePropertiesChange: (properties: any[]) => void;
   onPolygonClick: (property: any) => void;
+  onPriceLabelClick?: (property: any) => void;
   hoverTimeoutRef: React.MutableRefObject<any>;
   getPropertyTypeLabel: (type: string) => string;
   getStatusLabel: (status: string) => string;
@@ -381,6 +382,7 @@ const LeafletMap = ({
   onMapReady,
   onVisiblePropertiesChange,
   onPolygonClick,
+  onPriceLabelClick,
   hoverTimeoutRef,
   getPropertyTypeLabel,
   getStatusLabel,
@@ -760,7 +762,7 @@ const LeafletMap = ({
                       clearTimeout(hoverTimeoutRef.current);
                       hoverTimeoutRef.current = null;
                     }
-                    onPolygonClick(p);
+                    (onPriceLabelClick || onPolygonClick)(p);
                   },
                   mouseover: () => {
                     // Cancel any pending hover timeout from polygon
@@ -776,7 +778,7 @@ const LeafletMap = ({
         });
 
         return [...polygons, ...markers, ...priceLabels];
-      }, [filteredProperties, selectedProperty, onPolygonClick, hoverTimeoutRef, getPropertyTypeLabel, getStatusLabel, addEdgeLabels])}
+      }, [filteredProperties, selectedProperty, onPolygonClick, onPriceLabelClick, hoverTimeoutRef, getPropertyTypeLabel, getStatusLabel, addEdgeLabels])}
 
       {/* User Location Marker */}
       {userLocation && (
