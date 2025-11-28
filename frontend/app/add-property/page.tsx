@@ -557,11 +557,15 @@ const AddPropertyPage = () => {
                       </svg>
                       Ubicación en el Mapa
                     </h2>
-                    <p className="text-xs lg:text-sm text-white/90 mt-1">
-                      {propertyType === 'land' ? 'Dibuja el polígono del terreno' : 'Opcional: Dibuja el área de la propiedad'}
-                    </p>
-                  </div>
-                  <div className="relative h-[400px] sm:h-[500px] lg:h-[600px]">
+                <p className="text-xs lg:text-sm text-white/90 mt-1">
+                  {propertyType === 'land' ? 'Dibuja el polígono del terreno' : 'Opcional: Dibuja el área de la propiedad'}
+                </p>
+                <p className="text-[11px] lg:text-xs text-white/90 mt-1">
+                  Tip: El polígono se dibuja mejor con mouse o trackpad; en móvil suele fallar. Si necesitas ayuda, escríbenos por WhatsApp.
+                </p>
+
+              </div>
+              <div className="relative h-[400px] sm:h-[500px] lg:h-[600px]">
                     <button
                       type="button"
                       onClick={handleGetMyLocation}
@@ -962,10 +966,40 @@ const AddPropertyPage = () => {
                         </svg>
                         Cancelar
                       </button>
-                    </div>
+                </div>
+              </div>
+            </div>
+            </form>
+
+            {/* Contact Support */}
+            <div className="rounded-2xl bg-gradient-to-r from-primary/10 via-white to-secondary/10 border border-primary/15 shadow-lg p-6 sm:p-8">
+              <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                <div className="flex items-start gap-3">
+                  <div className="mt-1">
+                    <svg className="h-6 w-6 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                  </div>
+                  <div>
+                    <p className="text-base sm:text-lg font-semibold text-gray-900">¿Problemas técnicos o dudas?</p>
+                    <p className="text-sm text-gray-600 mt-1">
+                      Escríbenos y te ayudamos a publicar tu propiedad en minutos.
+                    </p>
                   </div>
                 </div>
-            </form>
+                <a
+                  href="https://wa.me/593983738151?text=Hola%20necesito%20ayuda%20para%20publicar%20mi%20propiedad"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-primary to-secondary text-white px-5 py-3 font-semibold shadow hover:shadow-lg transition"
+                >
+                  Chatear por WhatsApp
+                  <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                  </svg>
+                </a>
+              </div>
+            </div>
           </div>
         </div>
 
