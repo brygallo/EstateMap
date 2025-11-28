@@ -52,6 +52,86 @@ function MapRefBinder({ onMapReady }: { onMapReady: (map: any) => void }) {
   return null;
 }
 
+/* ===================== AutoLayerSwitch ===================== */
+function AutoLayerSwitch({ activeLayer, setActiveLayer }: { activeLayer: string; setActiveLayer: (layer: string) => void }) {
+  const map = useMap();
+  const [showToast, setShowToast] = useState(false);
+  const [toastMessage, setToastMessage] = useState('');
+
+  useEffect(() => {
+    const handleZoomEnd = () => {
+      const currentZoom = map.getZoom();
+
+      // Layer max zoom levels
+      const layerLimits: { [key: string]: number } = {
+        'satellite': 18,
+        'streets': 20,
+        'osm': 19
+      };
+
+      const currentLimit = layerLimits[activeLayer];
+
+      // If current zoom exceeds current layer's max zoom, switch to a layer that supports it
+      if (currentZoom > currentLimit) {
+        // Find a layer that supports this zoom level
+        const availableLayers = Object.entries(layerLimits)
+          .filter(([_, maxZoom]) => maxZoom >= currentZoom)
+          .sort((a, b) => b[1] - a[1]); // Sort by max zoom descending
+
+        if (availableLayers.length > 0) {
+          const [newLayer] = availableLayers[0];
+          setActiveLayer(newLayer);
+
+          // Show toast notification
+          const layerNames: { [key: string]: string } = {
+            'satellite': 'Vista Satelital',
+            'streets': 'Mapa de Calles',
+            'osm': 'OpenStreetMap'
+          };
+
+          setToastMessage(`Cambiado a ${layerNames[newLayer]} (soporta zoom ${layerLimits[newLayer]})`);
+          setShowToast(true);
+
+          setTimeout(() => {
+            setShowToast(false);
+          }, 3000);
+        }
+      }
+    };
+
+    map.on('zoomend', handleZoomEnd);
+
+    return () => {
+      map.off('zoomend', handleZoomEnd);
+    };
+  }, [map, activeLayer, setActiveLayer]);
+
+  return (
+    <>
+      {showToast && (
+        <div style={{
+          position: 'absolute',
+          top: '80px',
+          left: '50%',
+          transform: 'translateX(-50%)',
+          zIndex: 1000,
+          background: 'rgba(0, 0, 0, 0.8)',
+          color: 'white',
+          padding: '10px 20px',
+          borderRadius: '8px',
+          fontSize: '14px',
+          fontWeight: '500',
+          boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
+          pointerEvents: 'none',
+          animation: 'fadeIn 0.3s ease-in-out'
+        }}>
+          {toastMessage}
+        </div>
+      )}
+    </>
+  );
+}
+
 /* ===================== Dibujo & medición ===================== */
 function DrawingTools({
   onPolygonChange,
@@ -753,7 +833,7 @@ function LocationSearch() {
   }, []);
 
   return (
-    <div className="pointer-events-none absolute top-4 left-1/2 -translate-x-1/2 z-[1000] w-[85%] max-w-lg px-3">
+    <div className="pointer-events-none absolute top-4 sm:top-4 left-1/2 -translate-x-1/2 z-[1000] w-[85%] sm:w-[70%] max-w-lg px-3">
       <div className="pointer-events-auto relative w-full">
         <form onSubmit={handleSearch} className="w-full">
           <div className="relative shadow-lg rounded-xl overflow-hidden bg-white">
@@ -762,7 +842,7 @@ function LocationSearch() {
               value={query}
               onChange={(e) => handleChange(e.target.value)}
               placeholder="Buscar ciudad, referencia..."
-              className="w-full px-4 py-2 pr-10 text-sm text-gray-800 outline-none"
+              className="w-full px-3 sm:px-4 py-2 pr-10 text-xs sm:text-sm text-gray-800 outline-none"
             />
             <button
               type="submit"
@@ -829,6 +909,8 @@ const AddPropertyMap = ({
   showMeasurements = true,
   referenceProperties = []
 }: AddPropertyMapProps) => {
+  const [activeLayer, setActiveLayer] = useState('streets'); // Default to streets layer
+
   return (
     <>
       <style>{`
@@ -852,6 +934,16 @@ const AddPropertyMap = ({
         .distance-input::-webkit-outer-spin-button {
           opacity: 1;
         }
+        @keyframes fadeIn {
+          from {
+            opacity: 0;
+            transform: translate(-50%, -10px);
+          }
+          to {
+            opacity: 1;
+            transform: translate(-50%, 0);
+          }
+        }
       `}</style>
       <MapContainer
         center={defaultCenter}
@@ -866,12 +958,67 @@ const AddPropertyMap = ({
         boxZoom={true}
         keyboard={true}
       >
-        <TileLayer
-          url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
-          attribution='&copy; <a href="https://www.openstreetmap.org/">OSM</a> &copy; <a href="https://carto.com/">CARTO</a>'
-          subdomains={['a','b','c','d']}
-          maxZoom={20}
-        />
+        {/* Render active layer */}
+        {activeLayer === 'streets' && (
+          <TileLayer
+            url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
+            attribution='&copy; <a href="https://www.openstreetmap.org/">OSM</a> &copy; <a href="https://carto.com/">CARTO</a>'
+            subdomains={['a','b','c','d']}
+            maxZoom={20}
+          />
+        )}
+        {activeLayer === 'satellite' && (
+          <TileLayer
+            url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
+            attribution='&copy; <a href="https://www.esri.com/">Esri</a>'
+            maxZoom={18}
+          />
+        )}
+        {activeLayer === 'osm' && (
+          <TileLayer
+            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+            maxZoom={19}
+          />
+        )}
+
+        {/* Custom Layer Control - Compact for mobile */}
+        <div className="absolute top-16 sm:top-10 right-2 sm:right-3 z-[900]">
+          <div className="bg-white rounded-lg shadow-lg overflow-hidden" style={{ minWidth: '140px' }}>
+            <button
+              onClick={() => setActiveLayer('streets')}
+              className={`block w-full px-3 sm:px-4 py-2 text-left text-xs sm:text-sm border-b border-gray-100 hover:bg-gray-50 transition-colors ${
+                activeLayer === 'streets' ? 'bg-gray-100 font-semibold' : ''
+              }`}
+            >
+              <span className="inline-block w-5">🗺️</span>
+              <span className="hidden sm:inline">Calles (20)</span>
+              <span className="sm:hidden">Calles</span>
+            </button>
+            <button
+              onClick={() => setActiveLayer('satellite')}
+              className={`block w-full px-3 sm:px-4 py-2 text-left text-xs sm:text-sm border-b border-gray-100 hover:bg-gray-50 transition-colors ${
+                activeLayer === 'satellite' ? 'bg-gray-100 font-semibold' : ''
+              }`}
+            >
+              <span className="inline-block w-5">🛰️</span>
+              <span className="hidden sm:inline">Satélite (18)</span>
+              <span className="sm:hidden">Satélite</span>
+            </button>
+            <button
+              onClick={() => setActiveLayer('osm')}
+              className={`block w-full px-3 sm:px-4 py-2 text-left text-xs sm:text-sm hover:bg-gray-50 transition-colors ${
+                activeLayer === 'osm' ? 'bg-gray-100 font-semibold' : ''
+              }`}
+            >
+              <span className="inline-block w-5">🌐</span>
+              <span className="hidden sm:inline">OSM (19)</span>
+              <span className="sm:hidden">OSM</span>
+            </button>
+          </div>
+        </div>
+
+        <AutoLayerSwitch activeLayer={activeLayer} setActiveLayer={setActiveLayer} />
         <MapRefBinder onMapReady={onMapReady} />
         <ScaleBottomLeft />
         <DrawingTools
