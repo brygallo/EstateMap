@@ -7,7 +7,7 @@ export const metadata: Metadata = {
   },
 };
 
-export default function AuthLayout({
+export default function AddPropertyLayout({
   children,
 }: {
   children: React.ReactNode;

@@ -50,6 +50,22 @@ function getStatusLabel(status: string): string {
   return labels[status] || status;
 }
 
+function formatPrice(price: string): string {
+  const value = Number.parseFloat(price);
+  if (!Number.isFinite(value)) {
+    return 'Precio a consultar';
+  }
+  return `$${value.toLocaleString('es-EC')}`;
+}
+
+function formatArea(area: string | null): string {
+  const value = Number.parseFloat(area || '');
+  if (!Number.isFinite(value)) {
+    return '';
+  }
+  return `${Math.round(value)} m²`;
+}
+
 // Generate dynamic metadata with Open Graph tags for social sharing
 export async function generateMetadata({ params }: PropertyPageProps): Promise<Metadata> {
   const resolvedParams = await params;
@@ -65,38 +81,32 @@ export async function generateMetadata({ params }: PropertyPageProps): Promise<M
   // Build professional title
   const propertyTypeLabel = getPropertyTypeLabel(property.property_type);
   const statusLabel = getStatusLabel(property.status);
-  const title = `${propertyTypeLabel} ${statusLabel} - ${property.title}`;
+  const location = [property.city, property.province].filter(Boolean).join(', ');
+  const titleSuffix = location ? ` | ${location}` : '';
+  const title = `${propertyTypeLabel} ${statusLabel} - ${property.title}${titleSuffix}`;
 
   // Build detailed description
-  const priceFormatted = `$${parseFloat(property.price).toLocaleString('es-EC')}`;
-  const areaFormatted = property.area ? `${Math.round(parseFloat(property.area))} m²` : '';
-  const location = [property.city, property.province].filter(Boolean).join(', ');
+  const priceFormatted = formatPrice(property.price);
+  const areaFormatted = formatArea(property.area);
+  const summaryParts = [
+    `${propertyTypeLabel} ${statusLabel.toLowerCase()}`,
+    priceFormatted,
+    areaFormatted ? `Área ${areaFormatted}` : null,
+    property.rooms > 0 ? `${property.rooms} habitaciones` : null,
+    property.bathrooms > 0 ? `${property.bathrooms} baños` : null,
+    location ? `En ${location}` : null,
+  ].filter(Boolean);
 
-  let description = `${propertyTypeLabel} ${statusLabel.toLowerCase()} por ${priceFormatted}`;
-
-  if (areaFormatted) {
-    description += ` • ${areaFormatted}`;
-  }
-
-  if (property.rooms > 0) {
-    description += ` • ${property.rooms} habitaciones`;
-  }
-
-  if (property.bathrooms > 0) {
-    description += ` • ${property.bathrooms} baños`;
-  }
-
-  if (location) {
-    description += ` • Ubicada en ${location}`;
-  }
+  let description = summaryParts.join(' | ');
 
   if (property.description) {
-    description += ` • ${property.description.substring(0, 100)}${property.description.length > 100 ? '...' : ''}`;
+    const cleanExcerpt = property.description.replace(/\s+/g, ' ').trim();
+    description += ` | ${cleanExcerpt.substring(0, 140)}${cleanExcerpt.length > 140 ? '...' : ''}`;
   }
 
   // Get main image
   const mainImage = property.images?.find((img: any) => img.is_main) || property.images?.[0];
-  const imageUrl = mainImage?.image || '/icon-512x512.png';
+  const imageUrl = mainImage?.image || '/og-image.png';
 
   // Base URL for images and page
   const baseUrl = process.env.NEXT_PUBLIC_FRONTEND_URL || 'https://estatemap.com';
@@ -127,7 +137,7 @@ export async function generateMetadata({ params }: PropertyPageProps): Promise<M
       url: propertyUrl,
       siteName: 'Geo Propiedades Ecuador',
       locale: 'es_EC',
-      type: 'website',
+      type: 'article',
       images: [
         {
           url: imageAbsoluteUrl,
@@ -149,6 +159,9 @@ export async function generateMetadata({ params }: PropertyPageProps): Promise<M
       title,
       description,
       images: [imageAbsoluteUrl],
+    },
+    alternates: {
+      canonical: propertyUrl,
     },
     // Additional meta tags for Facebook and social platforms
     other: {
@@ -176,16 +189,91 @@ export default async function PropertyPage({ params }: PropertyPageProps) {
   const redirectUrl = `/?property=${resolvedParams.id}`;
   const propertyTypeLabel = getPropertyTypeLabel(property.property_type);
   const statusLabel = getStatusLabel(property.status);
-  const priceFormatted = `$${parseFloat(property.price).toLocaleString('es-EC')}`;
+  const priceFormatted = formatPrice(property.price);
   const mainImage = property.images?.find((img: any) => img.is_main) || property.images?.[0];
+  const areaFormatted = formatArea(property.area);
+  const location = [property.city, property.province].filter(Boolean).join(', ');
+  const summaryParts = [
+    `${propertyTypeLabel} ${statusLabel.toLowerCase()}`,
+    priceFormatted,
+    areaFormatted ? `Área ${areaFormatted}` : null,
+    property.rooms > 0 ? `${property.rooms} habitaciones` : null,
+    property.bathrooms > 0 ? `${property.bathrooms} baños` : null,
+    location ? `En ${location}` : null,
+  ].filter(Boolean);
 
   // Get absolute URL for images
   const baseUrl = process.env.NEXT_PUBLIC_FRONTEND_URL || 'https://estatemap.com';
-  const imageUrl = mainImage?.image || '/icon-512x512.png';
+  const imageUrl = mainImage?.image || '/og-image.png';
   const imageAbsoluteUrl = imageUrl.startsWith('http') ? imageUrl : `${baseUrl}${imageUrl}`;
+  const propertyUrl = `${baseUrl}/property/${property.id}`;
+  const propertySchemaType: Record<string, string> = {
+    house: 'SingleFamilyResidence',
+    apartment: 'Apartment',
+    land: 'LandParcel',
+    commercial: 'CommercialProperty',
+    other: 'Residence',
+  };
+  const listingStructuredData = {
+    '@context': 'https://schema.org',
+    '@type': 'RealEstateListing',
+    name: property.title || `${propertyTypeLabel} ${statusLabel}`,
+    description: property.description || `${propertyTypeLabel} ${statusLabel.toLowerCase()} en Ecuador`,
+    url: propertyUrl,
+    image:
+      property.images?.length > 0
+        ? property.images
+            .slice(0, 5)
+            .map((img: any) => (img.image.startsWith('http') ? img.image : `${baseUrl}${img.image}`))
+        : [imageAbsoluteUrl],
+    datePosted: property.created_at,
+    offers: {
+      '@type': 'Offer',
+      price: property.price?.toString(),
+      priceCurrency: 'USD',
+      availability:
+        property.status === 'inactive'
+          ? 'https://schema.org/SoldOut'
+          : 'https://schema.org/InStock',
+      url: propertyUrl,
+    },
+    itemOffered: {
+      '@type': propertySchemaType[property.property_type] || 'Residence',
+      name: property.title || `${propertyTypeLabel} ${statusLabel}`,
+      description: property.description || undefined,
+      address: {
+        '@type': 'PostalAddress',
+        streetAddress: property.address || undefined,
+        addressLocality: property.city || undefined,
+        addressRegion: property.province || undefined,
+        addressCountry: 'EC',
+      },
+      geo:
+        property.latitude && property.longitude
+          ? {
+              '@type': 'GeoCoordinates',
+              latitude: property.latitude,
+              longitude: property.longitude,
+            }
+          : undefined,
+      floorSize: property.area
+        ? {
+            '@type': 'QuantitativeValue',
+            value: property.area,
+            unitText: 'MTR',
+          }
+        : undefined,
+      numberOfRooms: property.rooms || undefined,
+      numberOfBathroomsTotal: property.bathrooms || undefined,
+    },
+  };
 
   return (
     <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(listingStructuredData) }}
+      />
       {/* Meta refresh for non-JS browsers and as fallback */}
       <meta httpEquiv="refresh" content={`0;url=${redirectUrl}`} />
 
@@ -229,6 +317,9 @@ export default async function PropertyPage({ params }: PropertyPageProps) {
               <h1 className="text-4xl font-bold text-gray-900 mb-2">
                 {property.title}
               </h1>
+              <p className="text-gray-700 text-base mb-4">
+                {summaryParts.join(' • ')}
+              </p>
               <p className="text-3xl font-bold text-green-600">
                 {priceFormatted}
                 {property.is_negotiable && (

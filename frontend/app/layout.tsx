@@ -15,33 +15,41 @@ const poppins = Poppins({
   variable: '--font-poppins',
 });
 
+const siteUrl = process.env.NEXT_PUBLIC_FRONTEND_URL || 'https://estatemap.com';
+
 export const metadata: Metadata = {
   title: {
     default: 'Geo Propiedades Ecuador - Encuentra tu Propiedad Ideal',
     template: '%s | Geo Propiedades Ecuador',
   },
   description:
-    'Plataforma de búsqueda y gestión de propiedades en Ecuador. Encuentra casas, departamentos, terrenos y más con nuestra herramienta de mapas interactivos.',
+    'Plataforma inmobiliaria en Ecuador para comprar, vender y alquilar propiedades. Encuentra casas, departamentos, terrenos y locales en Quito, Guayaquil, Cuenca y más con mapas interactivos.',
   keywords: [
-    'propiedades',
-    'inmobiliaria',
-    'Ecuador',
-    'casas',
-    'departamentos',
-    'terrenos',
-    'bienes raíces',
+    'propiedades en Ecuador',
+    'inmobiliaria Ecuador',
+    'casas en venta Ecuador',
+    'departamentos en alquiler Ecuador',
+    'terrenos en venta Ecuador',
+    'bienes raíces Ecuador',
+    'mapa inmobiliario',
+    'portal inmobiliario',
+    'propiedades Quito',
+    'propiedades Guayaquil',
+    'propiedades Cuenca',
     'venta',
     'alquiler',
   ],
+  applicationName: 'Geo Propiedades Ecuador',
   authors: [{ name: 'Geo Propiedades Ecuador' }],
   creator: 'Geo Propiedades Ecuador',
   publisher: 'Geo Propiedades Ecuador',
+  category: 'Real Estate',
   formatDetection: {
     email: false,
     address: false,
     telephone: false,
   },
-  metadataBase: new URL(process.env.NEXT_PUBLIC_FRONTEND_URL || 'https://estatemap.com'),
+  metadataBase: new URL(siteUrl),
   alternates: {
     canonical: '/',
   },
@@ -49,13 +57,13 @@ export const metadata: Metadata = {
     title: 'Geo Propiedades Ecuador - Encuentra tu Propiedad Ideal',
     description:
       'Plataforma de búsqueda y gestión de propiedades en Ecuador. Encuentra casas, departamentos, terrenos y más.',
-    url: '/',
+    url: siteUrl,
     siteName: 'Geo Propiedades Ecuador',
     locale: 'es_EC',
     type: 'website',
     images: [
       {
-        url: '/og-image.png',
+        url: `${siteUrl}/og-image.png`,
         width: 1200,
         height: 630,
         alt: 'Geo Propiedades Ecuador - Encuentra tu Propiedad Ideal',
@@ -67,7 +75,13 @@ export const metadata: Metadata = {
     title: 'Geo Propiedades Ecuador - Encuentra tu Propiedad Ideal',
     description:
       'Plataforma de búsqueda y gestión de propiedades en Ecuador. Encuentra casas, departamentos, terrenos y más.',
-    images: ['/og-image.png'],
+    images: [`${siteUrl}/og-image.png`],
+  },
+  other: {
+    'geo.region': 'EC',
+    'geo.placename': 'Ecuador',
+    'geo.position': '-1.8312;-78.1834',
+    ICBM: '-1.8312, -78.1834',
   },
   robots: {
     index: true,
@@ -98,10 +112,39 @@ export default function RootLayout({
 }>) {
   const gtmId = process.env.NEXT_PUBLIC_GTM_ID || 'GTM-5SV6BS59';
   const gaMeasurementId = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID || 'G-EFL9GZT063';
+  const structuredData = {
+    '@context': 'https://schema.org',
+    '@graph': [
+      {
+        '@type': 'Organization',
+        name: 'Geo Propiedades Ecuador',
+        url: siteUrl,
+        description:
+          'Plataforma inmobiliaria en Ecuador para comprar, vender y alquilar propiedades con mapas interactivos.',
+        areaServed: 'EC',
+        logo: `${siteUrl}/icon-192x192.svg`,
+      },
+      {
+        '@type': 'WebSite',
+        name: 'Geo Propiedades Ecuador',
+        url: siteUrl,
+        inLanguage: 'es-EC',
+        potentialAction: {
+          '@type': 'SearchAction',
+          target: `${siteUrl}/?search={search_term_string}`,
+          'query-input': 'required name=search_term_string',
+        },
+      },
+    ],
+  };
 
   return (
     <html lang="es" className={poppins.variable}>
       <body className="font-sans">
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
+        />
         {gaMeasurementId && (
           <>
             <Script
