@@ -9,9 +9,19 @@ interface ShareModalProps {
   shareUrl: string;
   title?: string;
   description?: string;
+  shareTitle?: string;
+  shareDescription?: string;
 }
 
-const ShareModal = ({ isOpen, onClose, shareUrl, title = 'Compartir Filtros', description = 'Comparte esta búsqueda con otros usuarios' }: ShareModalProps) => {
+const ShareModal = ({
+  isOpen,
+  onClose,
+  shareUrl,
+  title = 'Compartir Filtros',
+  description = 'Comparte esta búsqueda con otros usuarios',
+  shareTitle,
+  shareDescription
+}: ShareModalProps) => {
   const [copied, setCopied] = useState(false);
 
   if (!isOpen) return null;
@@ -51,6 +61,21 @@ const ShareModal = ({ isOpen, onClose, shareUrl, title = 'Compartir Filtros', de
     img.src = 'data:image/svg+xml;base64,' + btoa(svgData);
   };
 
+  // Prepare sharing texts
+  const textToShare = shareTitle || title;
+  const descriptionToShare = shareDescription || description;
+  const fullText = `${textToShare} - ${descriptionToShare}`;
+
+  // Build URLs for social media platforms
+  const encodedUrl = encodeURIComponent(shareUrl);
+  const encodedText = encodeURIComponent(fullText);
+  const encodedTitle = encodeURIComponent(textToShare);
+  const encodedDescription = encodeURIComponent(descriptionToShare);
+
+  const socialLinks = {
+    facebook: `https://www.facebook.com/sharer/sharer.php?u=${encodedUrl}`,
+  };
+
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto" onClick={onClose}>
       {/* Backdrop */}
@@ -87,35 +112,28 @@ const ShareModal = ({ isOpen, onClose, shareUrl, title = 'Compartir Filtros', de
 
           {/* Content */}
           <div className="px-4 py-4 space-y-4">
-            {/* QR Code */}
-            <div className="flex flex-col items-center">
-              <div className="bg-white p-2 rounded-lg shadow-md border border-gray-200">
-                <QRCodeSVG
-                  id="share-qr-code"
-                  value={shareUrl}
-                  size={140}
-                  level="H"
-                  includeMargin={true}
-                />
-              </div>
-              <p className="text-[10px] text-gray-500 mt-2 text-center">
-                Escanea el código QR
-              </p>
-              <button
-                onClick={handleDownloadQR}
-                className="mt-2 text-xs text-primary hover:text-primary/80 font-semibold flex items-center gap-1 transition-colors"
+            {/* Facebook Share Button */}
+            <div>
+              <label className="block text-xs font-semibold text-gray-700 mb-2.5">
+                Compartir en Facebook
+              </label>
+              <a
+                href={socialLinks.facebook}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center justify-center gap-3 p-4 bg-gradient-to-br from-[#1877F2] to-[#0C63D4] hover:from-[#0C63D4] hover:to-[#1877F2] text-white rounded-lg shadow-md hover:shadow-lg transition-all hover:scale-105 group w-full"
               >
-                <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                <svg className="h-8 w-8 group-hover:scale-110 transition-transform" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
                 </svg>
-                Descargar QR
-              </button>
+                <span className="text-base font-bold">Compartir en Facebook</span>
+              </a>
             </div>
 
             {/* Share Link */}
             <div>
               <label className="block text-xs font-semibold text-gray-700 mb-1.5">
-                Enlace para compartir
+                O copia el enlace
               </label>
               <div className="flex gap-1.5">
                 <input
@@ -149,6 +167,31 @@ const ShareModal = ({ isOpen, onClose, shareUrl, title = 'Compartir Filtros', de
                   )}
                 </button>
               </div>
+            </div>
+
+            {/* QR Code */}
+            <div className="flex flex-col items-center pt-2 border-t border-gray-200">
+              <div className="bg-white p-2 rounded-lg shadow-md border border-gray-200">
+                <QRCodeSVG
+                  id="share-qr-code"
+                  value={shareUrl}
+                  size={120}
+                  level="H"
+                  includeMargin={true}
+                />
+              </div>
+              <p className="text-[10px] text-gray-500 mt-2 text-center">
+                Escanea para compartir
+              </p>
+              <button
+                onClick={handleDownloadQR}
+                className="mt-2 text-xs text-primary hover:text-primary/80 font-semibold flex items-center gap-1 transition-colors"
+              >
+                <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                </svg>
+                Descargar QR
+              </button>
             </div>
           </div>
 

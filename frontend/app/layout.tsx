@@ -53,12 +53,21 @@ export const metadata: Metadata = {
     siteName: 'Geo Propiedades Ecuador',
     locale: 'es_EC',
     type: 'website',
+    images: [
+      {
+        url: '/og-image.png',
+        width: 1200,
+        height: 630,
+        alt: 'Geo Propiedades Ecuador - Encuentra tu Propiedad Ideal',
+      },
+    ],
   },
   twitter: {
     card: 'summary_large_image',
     title: 'Geo Propiedades Ecuador - Encuentra tu Propiedad Ideal',
     description:
       'Plataforma de búsqueda y gestión de propiedades en Ecuador. Encuentra casas, departamentos, terrenos y más.',
+    images: ['/og-image.png'],
   },
   robots: {
     index: true,
