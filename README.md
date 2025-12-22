@@ -1,466 +1,164 @@
-# 🗺️ EstateMap
+# EstateMap
 
-Sistema de gestión de propiedades inmobiliarias con visualización en mapa interactivo.
+Sistema de gestion de propiedades inmobiliarias con visualizacion en mapa, autenticacion completa y frontend en Next.js.
 
----
+## Contenido
 
-## 📋 Tabla de Contenidos
+- Descripcion general
+- Caracteristicas
+- Stack
+- Requisitos
+- Configuracion rapida (Docker)
+- Desarrollo sin Docker
+- Variables de entorno
+- API y flujos clave
+- Produccion
+- Scripts utiles
 
-- [Desarrollo Local](#-desarrollo-local)
-- [Deployment en Producción](#-deployment-en-producción)
-- [CI/CD con GitHub Actions](#-cicd-con-github-actions)
-- [Stack Tecnológico](#-stack-tecnológico)
+## Descripcion general
 
----
+EstateMap ofrece CRUD de propiedades con mapas interactivos, geolocalizacion, imagenes optimizadas y un flujo de autenticacion con verificacion por email.
 
-## 💻 Desarrollo Local
+## Caracteristicas
 
-### Prerrequisitos
+- Mapa con capas (OSM, Carto, Esri) y dibujo de poligonos
+- Geolocalizacion del usuario y geocodificacion inversa (Nominatim)
+- Publicacion de propiedades con imagenes optimizadas y miniaturas
+- Estado de propiedades con exclusion de inactivas del mapa
+- Autenticacion JWT, verificacion de email y reset de password
+- Cambio de email con verificacion por codigo
+- Provincias y ciudades (Ecuador) con comandos de carga
+- PWA con Next.js y previews sociales por propiedad
 
-- Docker y Docker Compose
+## Stack
 
-### Ejecutar
+- Backend: Django + Django REST Framework + SimpleJWT
+- Frontend: Next.js 14 + React + Tailwind CSS + Leaflet
+- DB: PostgreSQL
+- Storage: MinIO (S3 compatible)
+
+## Requisitos
+
+- Docker y Docker Compose (recomendado para desarrollo)
+- Node.js 18+ y Python 3.11+ si trabajas sin Docker
+
+## Configuracion rapida (Docker)
+
+1) Variables de entorno
 
 ```bash
-# Copiar variables de entorno
 cp .env.example .env
-
-# Agregar tu API key de MapTiler en .env
-VITE_MAPTILER_KEY=tu_api_key
-
-# Iniciar servicios
-docker-compose up
-
-# Frontend: http://localhost:5173
-# Backend: http://localhost:8000/api/
 ```
 
----
+Si estas en desarrollo, puedes usar email por consola:
 
-## 🚀 Deployment en Producción
+```env
+EMAIL_BACKEND=django.core.mail.backends.console.EmailBackend
+```
 
-### Arquitectura
-
-En producción se utilizan:
-- **PostgreSQL** y **MinIO** instalados localmente en el servidor
-- **Nginx** instalado localmente como reverse proxy
-- **Backend** y **Frontend** en contenedores Docker
-
-### Prerrequisitos en el Servidor
-
-1. **Sistema Operativo:** Ubuntu 20.04/22.04 LTS
-2. **Servicios instalados localmente:**
-   - PostgreSQL 15
-   - MinIO
-   - Nginx
-   - Docker & Docker Compose
-   - Git
-
----
-
-### 1️⃣ Instalación de Servicios Locales
-
-#### PostgreSQL
+2) Levantar servicios
 
 ```bash
-# Instalar PostgreSQL
-sudo apt update
-sudo apt install postgresql postgresql-contrib -y
-
-# Iniciar servicio
-sudo systemctl start postgresql
-sudo systemctl enable postgresql
-
-# Crear usuario y base de datos
-sudo -u postgres psql
+docker-compose up --build
 ```
 
-En el prompt de PostgreSQL:
+3) Accesos
 
-```sql
-CREATE USER estatemap_user WITH PASSWORD 'your_secure_password';
-CREATE DATABASE estatemap OWNER estatemap_user;
-GRANT ALL PRIVILEGES ON DATABASE estatemap TO estatemap_user;
-\q
-```
+- Frontend: http://localhost:3000
+- Backend API: http://localhost:8000/api/
+- Admin: http://localhost:8000/admin/
+- MinIO Console: http://localhost:9001
 
-#### MinIO
+4) Crear superusuario (opcional)
 
 ```bash
-# Descargar MinIO
-wget https://dl.min.io/server/minio/release/linux-amd64/minio
-chmod +x minio
-sudo mv minio /usr/local/bin/
-
-# Crear usuario y directorios
-sudo useradd -r minio-user -s /sbin/nologin
-sudo mkdir -p /mnt/data/minio
-sudo chown minio-user:minio-user /mnt/data/minio
-
-# Crear servicio systemd
-sudo nano /etc/systemd/system/minio.service
+docker-compose exec backend python manage.py createsuperuser
 ```
 
-Contenido de `/etc/systemd/system/minio.service`:
-
-```ini
-[Unit]
-Description=MinIO
-Documentation=https://min.io/docs/minio/linux/index.html
-Wants=network-online.target
-After=network-online.target
-AssertFileIsExecutable=/usr/local/bin/minio
-
-[Service]
-WorkingDirectory=/usr/local
-
-User=minio-user
-Group=minio-user
-ProtectProc=invisible
-
-Environment="MINIO_ROOT_USER=your_access_key"
-Environment="MINIO_ROOT_PASSWORD=your_secret_key"
-
-ExecStart=/usr/local/bin/minio server /mnt/data/minio --console-address ":9001"
-
-Restart=always
-LimitNOFILE=65536
-TasksMax=infinity
-
-[Install]
-WantedBy=multi-user.target
-```
+5) Cargar provincias y ciudades (opcional)
 
 ```bash
-# Iniciar MinIO
-sudo systemctl daemon-reload
-sudo systemctl start minio
-sudo systemctl enable minio
-sudo systemctl status minio
+docker-compose run --rm backend python manage.py load_ecuador_locations
 ```
 
-#### Nginx
+## Desarrollo sin Docker
+
+Backend:
 
 ```bash
-# Instalar Nginx
-sudo apt install nginx -y
-
-# Iniciar servicio
-sudo systemctl start nginx
-sudo systemctl enable nginx
+cd backend
+python -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+python manage.py migrate
+python manage.py runserver
 ```
 
-#### Docker
+Frontend:
 
 ```bash
-# Instalar Docker
-curl -fsSL https://get.docker.com -o get-docker.sh
-sudo sh get-docker.sh
-
-# Agregar usuario al grupo docker
-sudo usermod -aG docker $USER
-
-# Instalar Docker Compose
-sudo apt install docker-compose -y
-
-# Verificar instalación
-docker --version
-docker-compose --version
+cd frontend
+npm install
+npm run dev
 ```
 
----
+Necesitas un PostgreSQL y MinIO accesibles segun las variables de entorno.
 
-### 2️⃣ Configuración del Proyecto
+## Variables de entorno
 
-```bash
-# Clonar repositorio
-git clone https://github.com/brygallo/EstateMap.git /var/www/estatemap
-cd /var/www/estatemap
+Variables mas usadas (ver `.env.example` y `.env.prod.example`):
 
-# Crear archivo de configuración
-cp .env.prod.example .env.prod
-nano .env.prod
-```
+Backend
+- `DJANGO_SECRET_KEY` o `SECRET_KEY`: clave secreta
+- `DEBUG`: `True` o `False`
+- `ALLOWED_HOSTS`: lista separada por comas
+- `DB_NAME`, `DB_USER`, `DB_PASSWORD`, `DB_HOST`, `DB_PORT`
+- `DATABASE_URL`: opcional, reemplaza los valores anteriores
+- `MINIO_ENDPOINT`, `MINIO_PUBLIC_ENDPOINT`, `MINIO_ACCESS_KEY`, `MINIO_SECRET_KEY`, `MINIO_USE_SSL`, `MINIO_BUCKET_NAME`
+- `EMAIL_BACKEND`, `EMAIL_HOST`, `EMAIL_PORT`, `EMAIL_USE_TLS`, `EMAIL_HOST_USER`, `EMAIL_HOST_PASSWORD`, `DEFAULT_FROM_EMAIL`
+- `FRONTEND_URL`: usado en links de emails
 
-Configurar `.env.prod`:
+Frontend (Next.js)
+- `NEXT_PUBLIC_API_URL`: URL del backend accesible desde el navegador
+- `NEXT_PUBLIC_FRONTEND_URL`: URL publica del frontend
+- `NEXT_PUBLIC_GTM_ID`: opcional
 
-```bash
-# Django
-DJANGO_SECRET_KEY=your-generated-secret-key-here
-ALLOWED_HOSTS=yourdomain.com,123.45.67.89,localhost,127.0.0.1
+## API y flujos clave
 
-# Database (PostgreSQL local)
-DB_HOST=123.45.67.89
-DB_USER=estatemap_user
-DB_PASSWORD=your_secure_password
-DB_NAME=estatemap
-SERVER_IP=123.45.67.89
+Autenticacion (base: `/api`)
+- `POST /login/`: obtiene access y refresh
+- `POST /token/refresh/`: renueva access
+- `POST /register/`: registro con envio de codigo
+- `POST /verify-email/`: valida codigo de email
+- `POST /resend-verification/`
+- `POST /request-password-reset/` y `POST /reset-password/`
+- `POST /request-email-change/` y `POST /verify-email-change/`
 
-# MinIO (local service)
-MINIO_ENDPOINT=123.45.67.89:9000
-MINIO_ACCESS_KEY=your_minio_access_key
-MINIO_SECRET_KEY=your_minio_secret_key
-MINIO_USE_SSL=False
-MINIO_BUCKET_NAME=estatemap
+Propiedades
+- `GET /properties/`: solo activas
+- `GET /properties/my_properties/`: incluye inactivas del usuario
+- `DELETE /properties/{id}/delete_image/`: elimina imagen
 
-# Frontend (React/Vite)
-VITE_API_URL=http://123.45.67.89/api
-VITE_MAPTILER_KEY=your_maptiler_api_key
-```
+Ubicaciones
+- `GET /provinces/` y `GET /cities/?province=<id>`
 
-**Generar contraseñas seguras:**
+Imagenes
+- `GET /media/<path>`: proxy para servir imagenes de MinIO sin problemas CORS
 
-```bash
-# Django Secret Key
-openssl rand -base64 50
+## Produccion
 
-# Contraseñas de DB y MinIO
-openssl rand -base64 32
-```
-
----
-
-### 3️⃣ Configurar Nginx
+1) Crear `.env.prod` desde `.env.prod.example`
+2) Configurar Nginx con `nginx/estatemap.conf`
+3) Deploy con:
 
 ```bash
-# Copiar configuración
-sudo cp /var/www/estatemap/nginx/estatemap.conf /etc/nginx/sites-available/estatemap
-
-# Editar y reemplazar YOUR_DOMAIN_OR_IP
-sudo nano /etc/nginx/sites-available/estatemap
-
-# Activar sitio
-sudo ln -s /etc/nginx/sites-available/estatemap /etc/nginx/sites-enabled/
-
-# Verificar configuración
-sudo nginx -t
-
-# Recargar nginx
-sudo systemctl reload nginx
-```
-
----
-
-### 4️⃣ Primer Deploy
-
-```bash
-cd /var/www/estatemap
-chmod +x scripts/deploy.sh
 ./scripts/deploy.sh
 ```
 
-El script automáticamente:
-- Hace pull de los últimos cambios
-- Construye las imágenes Docker
-- Inicia backend y frontend
-- Ejecuta migraciones
-- Recolecta archivos estáticos
+El flujo de GitHub Actions usa `.github/workflows/deploy.yml` y requiere los secretos definidos en el workflow.
 
----
+## Scripts utiles
 
-### 5️⃣ Crear Superusuario
-
-```bash
-docker-compose -f docker-compose.prod.yml exec backend python manage.py createsuperuser
-```
-
----
-
-### 6️⃣ Configurar SSL (Opcional - Con Dominio)
-
-```bash
-# Instalar Certbot
-sudo apt install certbot python3-certbot-nginx -y
-
-# Obtener certificado
-sudo certbot --nginx -d yourdomain.com -d www.yourdomain.com
-
-# Certbot configurará automáticamente nginx con HTTPS
-```
-
----
-
-## 🤖 CI/CD con GitHub Actions
-
-### Configuración Automática
-
-Cada `git push` a `main` despliega automáticamente en producción.
-
-### Setup (Una Sola Vez)
-
-#### 1. Generar Clave SSH
-
-En tu computadora local:
-
-```bash
-# Generar clave SSH
-ssh-keygen -t ed25519 -C "github-actions-estatemap"
-# Guardar en: ~/.ssh/estatemap_deploy
-# Sin passphrase (presiona Enter)
-
-# Copiar clave pública al servidor
-ssh-copy-id -i ~/.ssh/estatemap_deploy.pub root@YOUR_SERVER_IP
-
-# Mostrar clave privada (para GitHub)
-cat ~/.ssh/estatemap_deploy
-```
-
-#### 2. Configurar GitHub Secrets
-
-En GitHub: **Settings** → **Secrets and variables** → **Actions** → **New repository secret**
-
-Crear estos secrets:
-
-| Secret Name | Valor | Descripción |
-|-------------|-------|-------------|
-| `SSH_PRIVATE_KEY` | Contenido de `~/.ssh/estatemap_deploy` | Clave SSH privada completa |
-| `SERVER_IP` | Tu IP del servidor | Ejemplo: `123.45.67.89` |
-| `SERVER_USER` | `root` o tu usuario SSH | Usuario SSH del servidor |
-| `DJANGO_SECRET_KEY` | Generar con `openssl rand -base64 50` | Django secret key |
-| `ALLOWED_HOSTS` | Lista separada por comas | Ejemplo: `tudominio.com,123.45.67.89,localhost` |
-| `DB_HOST` | Host de PostgreSQL | Ejemplo: `123.45.67.89` o `localhost` |
-| `DB_USER` | Usuario de PostgreSQL | Ejemplo: `estatemap_user` |
-| `DB_PASSWORD` | Contraseña de PostgreSQL | Contraseña segura |
-| `DB_NAME` | Nombre de la base de datos | Ejemplo: `estatemap` |
-| `MINIO_ENDPOINT` | Endpoint de MinIO local | Ejemplo: `123.45.67.89:9000` |
-| `MINIO_ACCESS_KEY` | Access key de MinIO | Tu MinIO access key |
-| `MINIO_SECRET_KEY` | Secret key de MinIO | Tu MinIO secret key |
-| `MINIO_BUCKET_NAME` | Nombre del bucket | Ejemplo: `estatemap` |
-| `VITE_API_URL` | URL del API para frontend | Ejemplo: `http://123.45.67.89/api` |
-| `VITE_MAPTILER_KEY` | API Key de MapTiler | Tu MapTiler API key |
-
-#### 3. El archivo `.github/workflows/deploy.yml` ya está configurado
-
-Verifica que existe en tu repositorio.
-
-#### 4. Probar Auto-Deploy
-
-```bash
-# En tu máquina local
-git add .
-git commit -m "test: auto deploy"
-git push origin main
-
-# Ver el progreso en GitHub Actions
-# https://github.com/YOUR_USER/EstateMap/actions
-```
-
-### ✅ Flujo Automático
-
-Cada `git push` a `main`:
-
-1. ✅ GitHub Actions detecta el push
-2. ✅ Se conecta al servidor vía SSH
-3. ✅ Ejecuta `git pull origin main`
-4. ✅ Ejecuta `./scripts/deploy.sh`
-5. ✅ Reconstruye y reinicia contenedores
-6. ✅ Notifica si hubo errores
-
----
-
-## 🛠️ Comandos Útiles
-
-### Ver Logs
-
-```bash
-# Todos los servicios
-docker-compose -f docker-compose.prod.yml logs -f
-
-# Solo backend
-docker-compose -f docker-compose.prod.yml logs -f backend
-
-# Solo frontend
-docker-compose -f docker-compose.prod.yml logs -f frontend
-```
-
-### Reiniciar Servicios
-
-```bash
-# Todo
-docker-compose -f docker-compose.prod.yml restart
-
-# Solo backend
-docker-compose -f docker-compose.prod.yml restart backend
-```
-
-### Detener/Iniciar
-
-```bash
-# Detener
-docker-compose -f docker-compose.prod.yml down
-
-# Iniciar
-docker-compose -f docker-compose.prod.yml up -d
-
-# Estado
-docker-compose -f docker-compose.prod.yml ps
-```
-
-### Backup de Base de Datos
-
-```bash
-# Crear backup
-sudo -u postgres pg_dump estatemap > backup_$(date +%Y%m%d_%H%M%S).sql
-
-# Restaurar
-sudo -u postgres psql estatemap < backup_20240101_120000.sql
-```
-
-### Actualizar Manualmente
-
-```bash
-cd /var/www/estatemap
-git pull origin main
-./scripts/deploy.sh
-```
-
----
-
-## 📦 Stack Tecnológico
-
-- **Backend:** Django 5.0 + Django REST Framework
-- **Frontend:** React 18 + Vite + Tailwind CSS + Leaflet
-- **Base de Datos:** PostgreSQL 15
-- **Almacenamiento:** MinIO (S3-compatible)
-
----
-
-## 📂 Estructura del Proyecto
-
-```
-EstateMap/
-├── .github/
-│   └── workflows/
-│       └── deploy.yml           # GitHub Actions CI/CD
-├── backend/                     # Django REST API
-│   ├── Dockerfile               # Docker config
-│   └── requirements.txt         # Python dependencies
-├── frontend/                    # React + Vite
-│   ├── Dockerfile               # Dev Docker config
-│   ├── Dockerfile.prod          # Production Docker config
-│   └── nginx.conf               # Nginx config for container
-├── nginx/
-│   └── estatemap.conf           # Nginx server config
-├── scripts/
-│   └── deploy.sh                # Deployment script
-├── .env.prod.example            # Production env template
-├── docker-compose.yml           # Development
-└── docker-compose.prod.yml      # Production
-```
-
----
-
-## 🔒 Seguridad
-
-- **Autenticación:** JWT tokens con Django REST Framework Simple JWT
-- **Validación de imágenes:** Compresión y validación automática
-- **Variables de entorno:** Credenciales almacenadas en `.env.prod` (no versionado)
-- **HTTPS:** Soporte SSL con Let's Encrypt (opcional con dominio)
-- **Headers de seguridad:** Configurados en nginx
-- **Contraseñas seguras:** Generadas con OpenSSL
-
----
-
-## 📄 Licencia
-
-MIT
+- `./scripts/deploy.sh`: deploy a produccion con Docker
+- `./run_tests.sh`: ejecutar tests del backend
+- `./rebuild-frontend.sh`: rebuild del frontend en Docker

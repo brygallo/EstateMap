@@ -160,11 +160,45 @@ const PropertyModal = ({ property, isOpen, onClose }: PropertyModalProps) => {
     setCurrentImageIndex((prev) => (prev - 1 + images.length) % images.length);
   };
 
+  // Generate share URL using new dynamic route with Open Graph meta tags
   const getShareUrl = () => {
     if (typeof window === 'undefined') return '';
-    const url = new URL(window.location.href);
-    url.searchParams.set('property', property.id.toString());
-    return url.toString();
+    const baseUrl = window.location.origin;
+    return `${baseUrl}/property/${property.id}`;
+  };
+
+  // Build professional title for social sharing
+  const getShareTitle = () => {
+    const propertyTypeLabel = getPropertyTypeLabel(property.property_type);
+    const statusLabel = getStatusLabel(property.status);
+    return `${propertyTypeLabel} ${statusLabel} - ${property.title}`;
+  };
+
+  // Build detailed description for social sharing
+  const getShareDescription = () => {
+    const priceFormatted = `$${parseFloat(property.price).toLocaleString()}`;
+    const areaFormatted = property.area ? `${Math.round(parseFloat(property.area))} m²` : '';
+    const location = [property.city, property.province].filter(Boolean).join(', ');
+
+    let description = `${priceFormatted}`;
+
+    if (areaFormatted) {
+      description += ` • ${areaFormatted}`;
+    }
+
+    if (property.rooms > 0) {
+      description += ` • ${property.rooms} hab.`;
+    }
+
+    if (property.bathrooms > 0) {
+      description += ` • ${property.bathrooms} baños`;
+    }
+
+    if (location) {
+      description += ` • ${location}`;
+    }
+
+    return description;
   };
 
   return (
@@ -477,7 +511,9 @@ const PropertyModal = ({ property, isOpen, onClose }: PropertyModalProps) => {
         onClose={() => setShareModalOpen(false)}
         shareUrl={getShareUrl()}
         title="Compartir Propiedad"
-        description="Comparte esta propiedad con otros usuarios"
+        description="Comparte esta propiedad en redes sociales"
+        shareTitle={getShareTitle()}
+        shareDescription={getShareDescription()}
       />
 
       {/* Custom Animation */}
