@@ -7,8 +7,9 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = os.getenv('SECRET_KEY', os.getenv('DJANGO_SECRET_KEY', 'change-me'))
 DEBUG = os.getenv('DEBUG', 'True') == 'True'
 
-# Parse ALLOWED_HOSTS from comma-separated string
-allowed_hosts_str = os.getenv('ALLOWED_HOSTS', '*')
+# Parse ALLOWED_HOSTS from comma-separated string.
+# Treat unset/empty as wildcard to avoid DisallowedHost in default deployments.
+allowed_hosts_str = os.getenv('ALLOWED_HOSTS') or '*'
 ALLOWED_HOSTS = [host.strip() for host in allowed_hosts_str.split(',')] if allowed_hosts_str != '*' else ['*']
 
 INSTALLED_APPS = [
