@@ -141,6 +141,60 @@ export default function RootLayout({
   return (
     <html lang="es" className={poppins.variable}>
       <body className="font-sans">
+        <Script
+          id="sw-cleanup-script"
+          strategy="afterInteractive"
+          dangerouslySetInnerHTML={{
+            __html: `
+              (function () {
+                if (!('serviceWorker' in navigator)) return;
+
+                var cleanupKey = 'sw-cleanup-v1';
+                var hasRun = false;
+                try {
+                  hasRun = window.localStorage && localStorage.getItem(cleanupKey) === 'done';
+                } catch (e) {}
+                if (hasRun) return;
+
+                var run = function () {
+                  navigator.serviceWorker.getRegistrations()
+                    .then(function (registrations) {
+                      return Promise.all(
+                        registrations.map(function (registration) {
+                          return registration.unregister();
+                        })
+                      );
+                    })
+                    .catch(function () {});
+
+                  if ('caches' in window) {
+                    caches.keys()
+                      .then(function (keys) {
+                        return Promise.all(
+                          keys.map(function (key) {
+                            return caches.delete(key);
+                          })
+                        );
+                      })
+                      .catch(function () {});
+                  }
+
+                  try {
+                    if (window.localStorage) {
+                      localStorage.setItem(cleanupKey, 'done');
+                    }
+                  } catch (e) {}
+                };
+
+                if (document.readyState === 'complete') {
+                  run();
+                } else {
+                  window.addEventListener('load', run, { once: true });
+                }
+              })();
+            `,
+          }}
+        />
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
