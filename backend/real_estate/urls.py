@@ -7,6 +7,7 @@ from .views import (
     CityViewSet,
     CustomTokenObtainPairView,
     RegisterView,
+    GoogleLoginView,
     ImageProxyView,
     VerifyEmailView,
     ResendVerificationView,
@@ -28,6 +29,7 @@ urlpatterns = [
     path('login/', CustomTokenObtainPairView.as_view(), name='token_obtain_pair'),
     path('token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
     path('register/', RegisterView.as_view(), name='register'),
+    path('auth/google/', GoogleLoginView.as_view(), name='google_login'),
 
     # Email verification
     path('verify-email/', VerifyEmailView.as_view(), name='verify_email'),

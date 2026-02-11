@@ -1,5 +1,6 @@
 from rest_framework import viewsets, generics, status, filters
 from rest_framework_simplejwt.views import TokenObtainPairView
+from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework.permissions import IsAuthenticated, AllowAny, IsAuthenticatedOrReadOnly
 from rest_framework.decorators import action
 from rest_framework.response import Response
@@ -28,6 +29,8 @@ from .serializers import (
 )
 from .permissions import IsOwnerOrReadOnly
 import requests
+from google.oauth2 import id_token
+from google.auth.transport import requests as google_requests
 
 
 class ProvinceViewSet(viewsets.ReadOnlyModelViewSet):
@@ -136,6 +139,110 @@ class RegisterView(generics.CreateAPIView):
     queryset = get_user_model().objects.all()
     serializer_class = RegisterSerializer
     permission_classes = [AllowAny]
+
+
+class GoogleLoginView(generics.GenericAPIView):
+    """
+    Vista para manejar el login/registro con Google OAuth.
+    Recibe el token de Google, lo valida y retorna JWT tokens.
+    """
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+        token = request.data.get('token')
+
+        if not token:
+            return Response(
+                {'error': 'Token de Google requerido'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        try:
+            # Verificar el token de Google
+            google_client_id = settings.SOCIALACCOUNT_PROVIDERS['google']['APP']['client_id']
+            idinfo = id_token.verify_oauth2_token(
+                token,
+                google_requests.Request(),
+                google_client_id
+            )
+
+            # Obtener datos del usuario desde Google
+            email = idinfo.get('email')
+            google_id = idinfo.get('sub')
+            first_name = idinfo.get('given_name', '')
+            last_name = idinfo.get('family_name', '')
+            picture = idinfo.get('picture', '')
+
+            if not email:
+                return Response(
+                    {'error': 'Email no proporcionado por Google'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+            User = get_user_model()
+
+            # Buscar usuario por oauth_id o email
+            user = None
+            try:
+                user = User.objects.get(oauth_id=google_id)
+            except User.DoesNotExist:
+                try:
+                    user = User.objects.get(email=email)
+                    # Conectar cuenta OAuth a usuario existente
+                    user.oauth_provider = 'google'
+                    user.oauth_id = google_id
+                    user.avatar_url = picture
+                    user.is_email_verified = True
+                    user.save()
+                except User.DoesNotExist:
+                    # Crear nuevo usuario
+                    username = email.split('@')[0]
+                    counter = 1
+                    original_username = username
+                    while User.objects.filter(username=username).exists():
+                        username = f"{original_username}{counter}"
+                        counter += 1
+
+                    user = User.objects.create(
+                        username=username,
+                        email=email,
+                        first_name=first_name,
+                        last_name=last_name,
+                        oauth_provider='google',
+                        oauth_id=google_id,
+                        avatar_url=picture,
+                        is_email_verified=True,
+                    )
+                    # No se requiere contraseña para usuarios OAuth
+                    user.set_unusable_password()
+                    user.save()
+
+            # Generar JWT tokens
+            refresh = RefreshToken.for_user(user)
+
+            return Response({
+                'access': str(refresh.access_token),
+                'refresh': str(refresh),
+                'user': {
+                    'id': user.id,
+                    'username': user.username,
+                    'email': user.email,
+                    'first_name': user.first_name,
+                    'last_name': user.last_name,
+                    'avatar_url': user.avatar_url,
+                }
+            })
+
+        except ValueError as e:
+            return Response(
+                {'error': f'Token de Google inválido: {str(e)}'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        except Exception as e:
+            return Response(
+                {'error': f'Error al procesar login con Google: {str(e)}'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
 
 
 class ImageProxyView(View):

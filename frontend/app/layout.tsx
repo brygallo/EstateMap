@@ -240,6 +240,10 @@ export default function RootLayout({
             />
           </noscript>
         )}
+        <Script
+          src="https://accounts.google.com/gsi/client"
+          strategy="afterInteractive"
+        />
         <AuthProvider>
           <div className="min-h-screen flex flex-col bg-background text-textPrimary">
             <NavBar />

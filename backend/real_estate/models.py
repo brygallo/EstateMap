@@ -10,6 +10,11 @@ class User(AbstractUser):
     email = models.EmailField(unique=True)
     is_email_verified = models.BooleanField(default=False)
 
+    # OAuth fields
+    oauth_provider = models.CharField(max_length=50, blank=True, null=True)
+    oauth_id = models.CharField(max_length=255, blank=True, null=True, unique=True)
+    avatar_url = models.URLField(blank=True, null=True)
+
 
 class Province(models.Model):
     """Modelo para provincias/estados"""

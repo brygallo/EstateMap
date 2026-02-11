@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { Formik, Form, Field, ErrorMessage } from 'formik';
 import * as Yup from 'yup';
 import { toast } from 'react-toastify';
+import GoogleSignInButton from '@/components/GoogleSignInButton';
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -247,6 +248,23 @@ export default function RegisterPage() {
               </Form>
             )}
           </Formik>
+
+          {/* Divider */}
+          <div className="mt-6 mb-6">
+            <div className="relative">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-gray-300"></div>
+              </div>
+              <div className="relative flex justify-center text-sm">
+                <span className="px-4 bg-white text-gray-500">O regístrate con</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Google Sign In Button */}
+          <div className="mb-6">
+            <GoogleSignInButton text="signup_with" />
+          </div>
 
           {/* Login Link */}
           <div className="mt-6 text-center">

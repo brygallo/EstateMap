@@ -280,6 +280,7 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
             "email": self.user.email,
             "first_name": self.user.first_name,
             "last_name": self.user.last_name,
+            "avatar_url": self.user.avatar_url,
         }
         return data
 
@@ -377,6 +378,7 @@ class UserProfileSerializer(serializers.ModelSerializer):
 
     email = serializers.EmailField(read_only=True)
     is_email_verified = serializers.BooleanField(read_only=True)
+    avatar_url = serializers.URLField(read_only=True)
 
     class Meta:
         model = User
@@ -387,8 +389,9 @@ class UserProfileSerializer(serializers.ModelSerializer):
             "first_name",
             "last_name",
             "is_email_verified",
+            "avatar_url",
         ]
-        read_only_fields = ["id", "email", "is_email_verified"]
+        read_only_fields = ["id", "email", "is_email_verified", "avatar_url"]
 
 
 class ChangePasswordSerializer(serializers.Serializer):
