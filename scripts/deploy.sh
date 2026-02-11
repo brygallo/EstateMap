@@ -6,7 +6,23 @@ echo "🚀 Starting deployment..."
 # Verify .env.prod exists
 if [ ! -f .env.prod ]; then
     echo "❌ Error: .env.prod file not found!"
+    echo "📝 Tip: Copy .env.prod.example to .env.prod and configure it"
     exit 1
+fi
+
+# Check if Google OAuth variables are configured
+if ! grep -q "GOOGLE_CLIENT_ID=your-google-client-id" .env.prod 2>/dev/null; then
+    echo "✅ Google OAuth variables appear to be configured"
+else
+    echo "⚠️  WARNING: Google OAuth variables still have default values!"
+    echo "   Update GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET in .env.prod"
+    echo "   See GOOGLE_OAUTH_SETUP.md for instructions"
+    echo ""
+    read -p "   Continue anyway? (y/N) " -n 1 -r
+    echo
+    if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+        exit 1
+    fi
 fi
 
 # Load environment variables

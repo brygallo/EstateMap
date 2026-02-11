@@ -34,7 +34,10 @@ services:
         # Next.js build-time environment variables
         NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL}
         NEXT_PUBLIC_FRONTEND_URL: ${NEXT_PUBLIC_FRONTEND_URL}
-        NEXT_PUBLIC_GTM_ID : ${NEXT_PUBLIC_GTM_ID}
+        NEXT_PUBLIC_GTM_ID: ${NEXT_PUBLIC_GTM_ID}
+        NEXT_PUBLIC_GA_MEASUREMENT_ID: ${NEXT_PUBLIC_GA_MEASUREMENT_ID}
+        # Google OAuth (Frontend)
+        NEXT_PUBLIC_GOOGLE_CLIENT_ID: ${NEXT_PUBLIC_GOOGLE_CLIENT_ID}
 
     container_name: estatemap_frontend
     restart: always
@@ -43,6 +46,8 @@ services:
       # Runtime environment variables (if needed)
       NODE_ENV: production
       PORT: 3000
+      # Google OAuth debe estar disponible en runtime también
+      NEXT_PUBLIC_GOOGLE_CLIENT_ID: ${NEXT_PUBLIC_GOOGLE_CLIENT_ID}
 
     ports:
       - "3000:3000"

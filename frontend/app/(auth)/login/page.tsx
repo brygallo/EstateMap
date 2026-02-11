@@ -6,6 +6,7 @@ import { useAuth } from '@/lib/auth-context';
 import { Formik, Form, Field, ErrorMessage } from 'formik';
 import * as Yup from 'yup';
 import { toast } from 'react-toastify';
+import GoogleSignInButton from '@/components/GoogleSignInButton';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -197,6 +198,23 @@ export default function LoginPage() {
               </Form>
             )}
           </Formik>
+
+          {/* Divider */}
+          <div className="mt-6 mb-6">
+            <div className="relative">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-gray-300"></div>
+              </div>
+              <div className="relative flex justify-center text-sm">
+                <span className="px-4 bg-white text-gray-500">O continúa con</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Google Sign In Button */}
+          <div className="mb-6">
+            <GoogleSignInButton text="signin_with" />
+          </div>
 
           {/* Registro */}
           <div className="mt-6 text-center">
