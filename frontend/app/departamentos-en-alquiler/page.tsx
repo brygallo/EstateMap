@@ -1,0 +1,34 @@
+import type { Metadata } from 'next';
+import SeoLanding, { TYPE_LINKS, priceRangeText } from '@/components/SeoLanding';
+import { getProperties } from '@/lib/properties';
+
+export const revalidate = 3600;
+
+const PATH = '/departamentos-en-alquiler';
+
+export const metadata: Metadata = {
+  title: 'Departamentos en alquiler en Ecuador',
+  description:
+    'Departamentos en alquiler en Ecuador con mapa interactivo, precios, área, habitaciones y ubicación exacta para elegir mejor tu próximo hogar.',
+  alternates: { canonical: PATH },
+};
+
+export default async function DepartamentosEnAlquilerPage() {
+  const all = await getProperties();
+  const properties = all.filter(
+    (p) => p.property_type === 'apartment' && p.status === 'for_rent'
+  );
+
+  return (
+    <SeoLanding
+      title="Departamentos en alquiler en Ecuador"
+      intro={`Encuentra departamentos en alquiler y compara ubicación, precio mensual, área y características principales en el mapa.${priceRangeText(
+        properties
+      )}`}
+      properties={properties}
+      mapHref="/?type=apartment&status=for_rent"
+      relatedLinks={TYPE_LINKS.filter((l) => l.href !== PATH)}
+      emptyMessage="Aún no hay departamentos en alquiler publicados. Explora otras propiedades en el mapa."
+    />
+  );
+}

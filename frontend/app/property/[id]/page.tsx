@@ -1,5 +1,7 @@
 import { Metadata } from 'next';
-import { redirect } from 'next/navigation';
+import Link from 'next/link';
+import { notFound } from 'next/navigation';
+import { jsonLd, slugify, SITE_URL } from '@/lib/properties';
 
 interface PropertyPageProps {
   params: Promise<{ id: string }>;
@@ -177,16 +179,19 @@ export async function generateMetadata({ params }: PropertyPageProps): Promise<M
   };
 }
 
-// Page component that shows property info for bots and redirects users to main map
+// Fully indexable property page. Users can open the interactive map via the
+// call-to-action, but the page no longer auto-redirects: that made it a
+// redirect in Google's eyes and served different content to bots vs. users
+// (cloaking), which hurts indexing.
 export default async function PropertyPage({ params }: PropertyPageProps) {
   const resolvedParams = await params;
   const property = await getProperty(resolvedParams.id);
 
   if (!property) {
-    redirect('/');
+    notFound();
   }
 
-  const redirectUrl = `/?property=${resolvedParams.id}`;
+  const mapUrl = `/?property=${resolvedParams.id}`;
   const propertyTypeLabel = getPropertyTypeLabel(property.property_type);
   const statusLabel = getStatusLabel(property.status);
   const priceFormatted = formatPrice(property.price);
@@ -268,28 +273,43 @@ export default async function PropertyPage({ params }: PropertyPageProps) {
     },
   };
 
+  const citySlug = property.city ? slugify(property.city) : '';
+  const breadcrumbData = {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Inicio', item: SITE_URL },
+      ...(citySlug
+        ? [
+            {
+              '@type': 'ListItem',
+              position: 2,
+              name: `Propiedades en ${property.city}`,
+              item: `${SITE_URL}/propiedades/${citySlug}`,
+            },
+          ]
+        : []),
+      {
+        '@type': 'ListItem',
+        position: citySlug ? 3 : 2,
+        name: property.title || `${propertyTypeLabel} ${statusLabel}`,
+        item: propertyUrl,
+      },
+    ],
+  };
+
   return (
     <>
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(listingStructuredData) }}
+        dangerouslySetInnerHTML={{ __html: jsonLd(listingStructuredData) }}
       />
-      {/* Meta refresh for non-JS browsers and as fallback */}
-      <meta httpEquiv="refresh" content={`0;url=${redirectUrl}`} />
-
-      {/* Client-side redirect for users (bots won't execute this) */}
       <script
-        dangerouslySetInnerHTML={{
-          __html: `
-            // Redirect users to main page with modal open
-            if (typeof window !== 'undefined') {
-              window.location.replace('${redirectUrl}');
-            }
-          `,
-        }}
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: jsonLd(breadcrumbData) }}
       />
 
-      {/* Content visible to bots (Facebook, Twitter, etc.) */}
+      {/* Full property content — indexable and shareable */}
       <div className="min-h-screen bg-gradient-to-br from-blue-50 to-blue-100 py-12 px-4">
         <div className="max-w-4xl mx-auto bg-white rounded-2xl shadow-2xl overflow-hidden">
           {/* Property Image */}
@@ -398,19 +418,20 @@ export default async function PropertyPage({ params }: PropertyPageProps) {
               </div>
             )}
 
-            {/* Contact Button */}
-            <div className="mt-8">
-              <a
-                href={redirectUrl}
-                className="inline-block w-full bg-gradient-to-r from-blue-600 to-blue-700 text-white text-center px-8 py-4 rounded-lg font-bold text-lg hover:from-blue-700 hover:to-blue-800 transition-all shadow-lg"
+            {/* Call to action */}
+            <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+              <Link
+                href={mapUrl}
+                className="inline-block flex-1 bg-gradient-to-r from-blue-600 to-blue-700 text-white text-center px-8 py-4 rounded-lg font-bold text-lg hover:from-blue-700 hover:to-blue-800 transition-all shadow-lg"
               >
-                Ver en el Mapa Interactivo
-              </a>
-            </div>
-
-            {/* Redirect message */}
-            <div className="mt-4 text-center text-gray-500 text-sm">
-              Redirigiendo automáticamente...
+                Ver en el mapa interactivo
+              </Link>
+              <Link
+                href="/"
+                className="inline-block flex-1 border border-blue-200 text-blue-700 text-center px-8 py-4 rounded-lg font-bold text-lg hover:bg-blue-50 transition-all"
+              >
+                Ver más propiedades
+              </Link>
             </div>
           </div>
         </div>
