@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
-import { toast } from 'react-toastify';
+import { toast } from 'sonner';
 
 type LatLng = { lat: number; lng: number };
 type MapRef = React.MutableRefObject<any>;

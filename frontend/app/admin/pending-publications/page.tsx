@@ -3,8 +3,37 @@
 import AdminRoute from '@/components/AdminRoute';
 import AdminSidebar from '@/components/AdminSidebar';
 import { useAuth } from '@/lib/auth-context';
-import { useCallback, useEffect, useState } from 'react';
-import { toast } from 'react-toastify';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { toast } from 'sonner';
+import {
+  useReactTable,
+  getCoreRowModel,
+  getSortedRowModel,
+  flexRender,
+  type ColumnDef,
+  type SortingState,
+} from '@tanstack/react-table';
+import { ArrowUpDown, Eye } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Card } from '@/components/ui/card';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from '@/components/ui/dialog';
+import { cn } from '@/lib/utils';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api';
 
@@ -35,7 +64,7 @@ const STATUS_STYLES: Record<string, string> = {
   new: 'bg-fuchsia-100 text-fuchsia-700',
   contacted: 'bg-blue-100 text-blue-700',
   converted: 'bg-green-100 text-green-700',
-  discarded: 'bg-gray-100 text-gray-600',
+  discarded: 'bg-slate-100 text-slate-600',
 };
 
 const SOURCE_LABELS: Record<string, string> = {
@@ -50,6 +79,7 @@ export default function PendingPublicationsPage() {
   const [items, setItems] = useState<PendingPublication[]>([]);
   const [loading, setLoading] = useState(true);
   const [selected, setSelected] = useState<PendingPublication | null>(null);
+  const [sorting, setSorting] = useState<SortingState>([]);
 
   const fetchItems = useCallback(async () => {
     setLoading(true);
@@ -75,10 +105,7 @@ export default function PendingPublicationsPage() {
     try {
       const res = await fetch(`${API_URL}/pending-publications/${item.id}/`, {
         method: 'PATCH',
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
+        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
         body: JSON.stringify({ status }),
       });
       if (!res.ok) throw new Error('No se pudo actualizar');
@@ -101,127 +128,222 @@ export default function PendingPublicationsPage() {
     return `https://wa.me/${item.contact_phone.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(message)}`;
   };
 
-  return (
-    <AdminRoute>
-      <div className="flex min-h-[calc(100vh-3rem)]">
-        <AdminSidebar />
-        <main className="flex-1 p-4 sm:p-6 lg:p-8 bg-gray-50 overflow-auto">
-          <div className="max-w-7xl mx-auto">
-            <h1 className="text-2xl font-bold text-gray-900 mb-6">Publicaciones Pendientes</h1>
-
-            <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
-              {loading ? (
-                <div className="flex justify-center py-12">
-                  <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-primary"></div>
-                </div>
-              ) : items.length === 0 ? (
-                <div className="text-center py-12 text-gray-500">No hay solicitudes pendientes</div>
-              ) : (
-                <div className="overflow-x-auto">
-                  <table className="w-full text-sm">
-                    <thead className="bg-gray-50">
-                      <tr>
-                        <th className="text-left px-4 py-3 font-medium text-gray-600">Propiedad</th>
-                        <th className="text-left px-4 py-3 font-medium text-gray-600">Contacto</th>
-                        <th className="text-left px-4 py-3 font-medium text-gray-600 hidden md:table-cell">Ciudad</th>
-                        <th className="text-left px-4 py-3 font-medium text-gray-600 hidden lg:table-cell">Origen</th>
-                        <th className="text-left px-4 py-3 font-medium text-gray-600">Estado</th>
-                        <th className="text-right px-4 py-3 font-medium text-gray-600">Acciones</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-gray-100">
-                      {items.map((item) => (
-                        <tr key={item.id} className="hover:bg-gray-50">
-                          <td className="px-4 py-3">
-                            <p className="font-medium text-gray-900">{item.title || `Pendiente #${item.id}`}</p>
-                            <p className="text-xs text-gray-500">${item.price || 'Sin precio'}</p>
-                          </td>
-                          <td className="px-4 py-3 text-gray-600">
-                            <p>{item.contact_phone || 'Sin teléfono'}</p>
-                            {item.contact_email && <p className="text-xs">{item.contact_email}</p>}
-                          </td>
-                          <td className="px-4 py-3 text-gray-600 hidden md:table-cell">{item.city || '—'}</td>
-                          <td className="px-4 py-3 text-gray-600 hidden lg:table-cell">{SOURCE_LABELS[item.source] || item.source}</td>
-                          <td className="px-4 py-3">
-                            <span className={`inline-flex px-2 py-0.5 text-xs font-medium rounded-full ${STATUS_STYLES[item.status] || 'bg-gray-100 text-gray-600'}`}>
-                              {STATUS_LABELS[item.status] || item.status}
-                            </span>
-                          </td>
-                          <td className="px-4 py-3">
-                            <div className="flex justify-end gap-2">
-                              <button onClick={() => setSelected(item)} className="px-3 py-1.5 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50">Ver</button>
-                              {item.contact_phone && (
-                                <a href={whatsappUrl(item)} target="_blank" rel="noreferrer" className="px-3 py-1.5 rounded-lg bg-primary text-white hover:bg-primary/90">
-                                  WhatsApp
-                                </a>
-                              )}
-                            </div>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
+  const columns = useMemo<ColumnDef<PendingPublication>[]>(
+    () => [
+      {
+        accessorKey: 'title',
+        header: ({ column }) => <SortHeader column={column} label="Propiedad" />,
+        cell: ({ row }) => {
+          const item = row.original;
+          return (
+            <div>
+              <p className="font-medium text-textPrimary">{item.title || `Pendiente #${item.id}`}</p>
+              <p className="font-geo text-xs text-textSecondary">${item.price || 'Sin precio'}</p>
+            </div>
+          );
+        },
+      },
+      {
+        id: 'contact',
+        accessorFn: (i) => i.contact_phone,
+        header: 'Contacto',
+        cell: ({ row }) => {
+          const item = row.original;
+          return (
+            <div className="text-textSecondary">
+              <p>{item.contact_phone || 'Sin teléfono'}</p>
+              {item.contact_email && <p className="text-xs">{item.contact_email}</p>}
+            </div>
+          );
+        },
+      },
+      {
+        accessorKey: 'city',
+        header: 'Ciudad',
+        cell: ({ getValue }) => <span className="text-textSecondary">{getValue<string>() || '—'}</span>,
+        meta: { className: 'hidden md:table-cell' },
+      },
+      {
+        accessorKey: 'source',
+        header: 'Origen',
+        cell: ({ getValue }) => (
+          <span className="text-textSecondary">{SOURCE_LABELS[getValue<string>()] || getValue<string>()}</span>
+        ),
+        meta: { className: 'hidden lg:table-cell' },
+      },
+      {
+        accessorKey: 'status',
+        header: 'Estado',
+        cell: ({ getValue }) => {
+          const s = getValue<string>();
+          return (
+            <Badge variant="outline" className={cn('border-transparent', STATUS_STYLES[s] || 'bg-slate-100 text-slate-600')}>
+              {STATUS_LABELS[s] || s}
+            </Badge>
+          );
+        },
+      },
+      {
+        id: 'actions',
+        header: () => <div className="text-right">Acciones</div>,
+        cell: ({ row }) => {
+          const item = row.original;
+          return (
+            <div className="flex justify-end gap-2">
+              <Button variant="outline" size="sm" className="rounded-button" onClick={() => setSelected(item)}>
+                <Eye className="h-4 w-4" /> Ver
+              </Button>
+              {item.contact_phone && (
+                <Button asChild size="sm" className="rounded-button">
+                  <a href={whatsappUrl(item)} target="_blank" rel="noreferrer">WhatsApp</a>
+                </Button>
               )}
             </div>
+          );
+        },
+      },
+    ],
+    []
+  );
+
+  const table = useReactTable({
+    data: items,
+    columns,
+    state: { sorting },
+    onSortingChange: setSorting,
+    getCoreRowModel: getCoreRowModel(),
+    getSortedRowModel: getSortedRowModel(),
+  });
+
+  return (
+    <AdminRoute>
+      <div className="flex min-h-[calc(100vh-3rem)] bg-background">
+        <AdminSidebar />
+        <main className="min-w-0 flex-1 overflow-auto">
+          <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+            <div className="mb-6">
+              <h1 className="text-2xl font-bold text-textPrimary">Publicaciones Pendientes</h1>
+              <p className="mt-1 text-sm text-textSecondary">Contacta a quienes no terminaron de publicar.</p>
+            </div>
+
+            <Card className="overflow-hidden rounded-card shadow-card">
+              {loading ? (
+                <TableSkeleton cols={6} />
+              ) : items.length === 0 ? (
+                <div className="py-12 text-center text-textSecondary">No hay solicitudes pendientes</div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      {table.getHeaderGroups().map((hg) => (
+                        <TableRow key={hg.id} className="bg-muted/40">
+                          {hg.headers.map((header) => (
+                            <TableHead key={header.id} className={(header.column.columnDef.meta as any)?.className}>
+                              {header.isPlaceholder
+                                ? null
+                                : flexRender(header.column.columnDef.header, header.getContext())}
+                            </TableHead>
+                          ))}
+                        </TableRow>
+                      ))}
+                    </TableHeader>
+                    <TableBody>
+                      {table.getRowModel().rows.map((row) => (
+                        <TableRow key={row.id}>
+                          {row.getVisibleCells().map((cell) => (
+                            <TableCell key={cell.id} className={cn('py-3', (cell.column.columnDef.meta as any)?.className)}>
+                              {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                            </TableCell>
+                          ))}
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              )}
+            </Card>
           </div>
         </main>
       </div>
 
-      {selected && (
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 px-4">
-          <div className="w-full max-w-2xl rounded-2xl bg-white p-6 shadow-2xl max-h-[85vh] overflow-auto">
-            <div className="flex items-start justify-between gap-4">
-              <div>
-                <h2 className="text-xl font-bold text-gray-900">{selected.title || `Pendiente #${selected.id}`}</h2>
-                <p className="mt-1 text-sm text-gray-500">{new Date(selected.created_at).toLocaleString('es-EC')}</p>
+      {/* Detail dialog */}
+      <Dialog open={!!selected} onOpenChange={(o) => { if (!o) setSelected(null); }}>
+        <DialogContent className="max-h-[85vh] max-w-2xl overflow-auto rounded-modal">
+          {selected && (
+            <>
+              <DialogHeader>
+                <DialogTitle>{selected.title || `Pendiente #${selected.id}`}</DialogTitle>
+                <DialogDescription>{new Date(selected.created_at).toLocaleString('es-EC')}</DialogDescription>
+              </DialogHeader>
+
+              <div className="grid gap-3 text-sm sm:grid-cols-2">
+                <Info label="Teléfono" value={selected.contact_phone || '—'} />
+                <Info label="Email" value={selected.contact_email || '—'} />
+                <Info label="Ciudad" value={`${selected.city || '—'}${selected.province ? `, ${selected.province}` : ''}`} />
+                <Info label="Precio" value={selected.price || '—'} />
+                <Info label="Origen" value={SOURCE_LABELS[selected.source] || selected.source} />
+                <Info label="Estado" value={STATUS_LABELS[selected.status] || selected.status} />
               </div>
-              <button onClick={() => setSelected(null)} className="rounded-lg p-2 text-gray-500 hover:bg-gray-100">Cerrar</button>
-            </div>
 
-            <div className="mt-5 grid gap-3 sm:grid-cols-2 text-sm">
-              <Info label="Teléfono" value={selected.contact_phone || '—'} />
-              <Info label="Email" value={selected.contact_email || '—'} />
-              <Info label="Ciudad" value={`${selected.city || '—'}${selected.province ? `, ${selected.province}` : ''}`} />
-              <Info label="Precio" value={selected.price || '—'} />
-              <Info label="Origen" value={SOURCE_LABELS[selected.source] || selected.source} />
-              <Info label="Estado" value={STATUS_LABELS[selected.status] || selected.status} />
-            </div>
+              <div>
+                <p className="mb-2 text-sm font-semibold text-textPrimary">Borrador</p>
+                <pre className="max-h-56 overflow-auto rounded-card border border-line bg-muted/40 p-4 text-xs">
+                  {JSON.stringify(selected.draft || {}, null, 2)}
+                </pre>
+              </div>
 
-            <div className="mt-5">
-              <p className="text-sm font-semibold text-gray-700 mb-2">Borrador</p>
-              <pre className="text-xs bg-gray-50 border border-gray-200 rounded-xl p-4 overflow-auto">
-                {JSON.stringify(selected.draft || {}, null, 2)}
-              </pre>
-            </div>
-
-            <div className="mt-5 flex flex-col sm:flex-row gap-2">
-              {['new', 'contacted', 'converted', 'discarded'].map((status) => (
-                <button
-                  key={status}
-                  onClick={() => updateStatus(selected, status)}
-                  className={`px-4 py-2 rounded-xl border text-sm font-semibold ${
-                    selected.status === status
-                      ? 'bg-primary text-white border-primary'
-                      : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
-                  }`}
-                >
-                  {STATUS_LABELS[status]}
-                </button>
-              ))}
-            </div>
-          </div>
-        </div>
-      )}
+              <div className="flex flex-col gap-2 sm:flex-row">
+                {['new', 'contacted', 'converted', 'discarded'].map((status) => (
+                  <Button
+                    key={status}
+                    variant={selected.status === status ? 'default' : 'outline'}
+                    size="sm"
+                    className="rounded-button"
+                    onClick={() => updateStatus(selected, status)}
+                  >
+                    {STATUS_LABELS[status]}
+                  </Button>
+                ))}
+              </div>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
     </AdminRoute>
+  );
+}
+
+function SortHeader({ column, label }: { column: any; label: string }) {
+  return (
+    <button
+      className="-ml-1 inline-flex items-center gap-1 rounded px-1 py-0.5 font-medium text-textSecondary transition-colors hover:text-textPrimary"
+      onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
+    >
+      {label}
+      <ArrowUpDown className="h-3.5 w-3.5" />
+    </button>
+  );
+}
+
+function TableSkeleton({ cols }: { cols: number }) {
+  return (
+    <div className="divide-y divide-line">
+      {Array.from({ length: 6 }).map((_, r) => (
+        <div key={r} className="flex items-center gap-4 px-4 py-3.5">
+          {Array.from({ length: cols }).map((_, c) => (
+            <Skeleton key={c} className={cn('h-5', c === 0 ? 'w-40' : 'w-24', c === cols - 1 && 'ml-auto')} />
+          ))}
+        </div>
+      ))}
+    </div>
   );
 }
 
 function Info({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-xl border border-gray-200 p-3">
-      <p className="text-xs font-semibold uppercase text-gray-500">{label}</p>
-      <p className="mt-1 text-gray-900">{value}</p>
+    <div className="rounded-card border border-line p-3">
+      <p className="text-xs font-semibold uppercase text-textSecondary">{label}</p>
+      <p className="mt-1 text-textPrimary">{value}</p>
     </div>
   );
 }

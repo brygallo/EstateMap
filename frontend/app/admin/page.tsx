@@ -5,6 +5,34 @@ import AdminSidebar from '@/components/AdminSidebar';
 import { useAuth } from '@/lib/auth-context';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
+import {
+  Users,
+  Building2,
+  Tag,
+  KeyRound,
+  Ban,
+  CheckCircle2,
+  Eye,
+  Mail,
+  Clock,
+  UserPlus,
+  ImageOff,
+  AlertTriangle,
+  ArrowRight,
+} from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Skeleton } from '@/components/ui/skeleton';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
+import { cn } from '@/lib/utils';
+import AnimatedNumber from '@/components/ui/AnimatedNumber';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api';
 
@@ -54,223 +82,188 @@ const AdminDashboard = () => {
 
   return (
     <AdminRoute>
-      <div className="flex min-h-[calc(100vh-3rem)]">
+      <div className="flex min-h-[calc(100vh-3rem)] bg-background">
         <AdminSidebar />
-        <main className="flex-1 p-4 sm:p-6 lg:p-8 bg-gray-50 overflow-auto">
-          <div className="max-w-7xl mx-auto">
-            <h1 className="text-2xl font-bold text-gray-900 mb-6">Dashboard</h1>
+        <main className="min-w-0 flex-1 overflow-auto">
+          <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+            <div className="mb-8">
+              <h1 className="text-2xl font-bold text-textPrimary">Dashboard</h1>
+              <p className="mt-1 text-sm text-textSecondary">
+                Resumen general de tu portal inmobiliario.
+              </p>
+            </div>
 
-            {loading && (
-              <div className="flex justify-center py-12">
-                <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-primary"></div>
+            {error && (
+              <div className="mb-6 rounded-card border border-error/20 bg-error/5 p-4 text-sm text-error">
+                {error}
               </div>
             )}
 
-            {error && (
-              <div className="bg-red-50 text-red-700 p-4 rounded-lg mb-6">{error}</div>
-            )}
-
-            {data && (
+            {loading ? (
+              <DashboardSkeleton />
+            ) : data ? (
               <>
-                {/* Stats Cards */}
-                <div className="grid grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
-                  <StatCard label="Usuarios" value={data.total_users} color="bg-blue-500" icon={
-                    <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z" /></svg>
-                  } />
-                  <StatCard label="Propiedades" value={data.total_properties} color="bg-indigo-500" icon={
-                    <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" /></svg>
-                  } />
-                  <StatCard label="En venta" value={data.properties_for_sale} color="bg-green-500" icon={
-                    <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                  } />
-                  <StatCard label="En alquiler" value={data.properties_for_rent} color="bg-yellow-500" icon={
-                    <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z" /></svg>
-                  } />
-                  <StatCard label="Inactivas" value={data.properties_inactive} color="bg-gray-500" icon={
-                    <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" /></svg>
-                  } />
+                {/* KPI cards */}
+                <div className="mb-8 grid grid-cols-2 gap-4 lg:grid-cols-5">
+                  <KpiCard label="Usuarios" value={data.total_users} icon={Users} tone="blue" />
+                  <KpiCard label="Propiedades" value={data.total_properties} icon={Building2} tone="indigo" />
+                  <KpiCard label="En venta" value={data.properties_for_sale} icon={Tag} tone="green" />
+                  <KpiCard label="En alquiler" value={data.properties_for_rent} icon={KeyRound} tone="amber" />
+                  <KpiCard label="Inactivas" value={data.properties_inactive} icon={Ban} tone="slate" />
                 </div>
 
                 {/* Panel comercial */}
-                <h2 className="text-lg font-bold text-gray-900 mb-3">Panel comercial</h2>
-                <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-                  <StatCard label="Activas" value={data.properties_active} color="bg-emerald-500" icon={
-                    <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                  } />
-                  <StatCard label="Vistas totales" value={data.total_views} color="bg-sky-500" icon={
-                    <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
-                  } />
-                  <StatCard label="Contactos" value={data.total_leads} color="bg-violet-500" icon={
-                    <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
-                  } />
-                  <StatCard label="Contactos nuevos" value={data.leads_new} color="bg-rose-500" icon={
-                    <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" /></svg>
-                  } />
-                  <StatCard label="Pendientes" value={data.pending_publications_new} color="bg-fuchsia-500" icon={
-                    <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                  } />
-                  <StatCard label="Nuevos usuarios (30d)" value={data.new_users_30d} color="bg-blue-500" icon={
-                    <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" /></svg>
-                  } />
-                  <StatCard label="Sin imágenes" value={data.properties_without_images} color="bg-amber-500" icon={
-                    <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
-                  } />
-                  <StatCard label="Incompletas" value={data.properties_incomplete} color="bg-orange-500" icon={
-                    <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                  } />
+                <h2 className="mb-3 text-lg font-bold text-textPrimary">Panel comercial</h2>
+                <div className="mb-8 grid grid-cols-2 gap-4 lg:grid-cols-4">
+                  <KpiCard label="Activas" value={data.properties_active} icon={CheckCircle2} tone="green" />
+                  <KpiCard label="Vistas totales" value={data.total_views} icon={Eye} tone="sky" />
+                  <KpiCard label="Contactos" value={data.total_leads} icon={Mail} tone="violet" />
+                  <KpiCard label="Contactos nuevos" value={data.leads_new} icon={Mail} tone="rose" />
+                  <KpiCard label="Pendientes" value={data.pending_publications_new} icon={Clock} tone="fuchsia" />
+                  <KpiCard label="Nuevos usuarios (30d)" value={data.new_users_30d} icon={UserPlus} tone="blue" />
+                  <KpiCard label="Sin imágenes" value={data.properties_without_images} icon={ImageOff} tone="amber" />
+                  <KpiCard label="Incompletas" value={data.properties_incomplete} icon={AlertTriangle} tone="orange" />
                 </div>
 
-                {/* Quick Links */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
-                  <Link href="/admin/users" className="flex items-center p-4 bg-white rounded-lg border border-gray-200 hover:shadow-md transition-shadow">
-                    <div className="p-2 bg-blue-100 rounded-lg mr-4">
-                      <svg className="h-6 w-6 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z" /></svg>
-                    </div>
-                    <div>
-                      <h3 className="font-semibold text-gray-900">Gestionar Usuarios</h3>
-                      <p className="text-sm text-gray-500">Ver, activar/desactivar y administrar usuarios</p>
-                    </div>
-                  </Link>
-                  <Link href="/admin/properties" className="flex items-center p-4 bg-white rounded-lg border border-gray-200 hover:shadow-md transition-shadow">
-                    <div className="p-2 bg-indigo-100 rounded-lg mr-4">
-                      <svg className="h-6 w-6 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" /></svg>
-                    </div>
-                    <div>
-                      <h3 className="font-semibold text-gray-900">Gestionar Propiedades</h3>
-                      <p className="text-sm text-gray-500">Ver todas las propiedades y moderar contenido</p>
-                    </div>
-                  </Link>
-                  <Link href="/admin/pending-publications" className="flex items-center p-4 bg-white rounded-lg border border-gray-200 hover:shadow-md transition-shadow">
-                    <div className="p-2 bg-fuchsia-100 rounded-lg mr-4">
-                      <svg className="h-6 w-6 text-fuchsia-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                    </div>
-                    <div>
-                      <h3 className="font-semibold text-gray-900">Publicaciones Pendientes</h3>
-                      <p className="text-sm text-gray-500">Contactar interesados que no terminaron el registro</p>
-                    </div>
-                  </Link>
+                {/* Charts / breakdowns */}
+                <div className="mb-8 grid grid-cols-1 gap-4 lg:grid-cols-2">
+                  <Card className="rounded-card shadow-card">
+                    <CardHeader>
+                      <CardTitle className="text-base">Distribución de propiedades</CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <BreakdownBar label="En venta" value={data.properties_for_sale} total={data.total_properties} barClass="bg-green-500" />
+                      <BreakdownBar label="En alquiler" value={data.properties_for_rent} total={data.total_properties} barClass="bg-amber-500" />
+                      <BreakdownBar label="Inactivas" value={data.properties_inactive} total={data.total_properties} barClass="bg-slate-400" />
+                    </CardContent>
+                  </Card>
+
+                  <Card className="rounded-card shadow-card">
+                    <CardHeader>
+                      <CardTitle className="text-base">Calidad del inventario</CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <BreakdownBar label="Activas" value={data.properties_active} total={data.total_properties} barClass="bg-primary" />
+                      <BreakdownBar label="Sin imágenes" value={data.properties_without_images} total={data.total_properties} barClass="bg-orange-400" />
+                      <BreakdownBar label="Incompletas" value={data.properties_incomplete} total={data.total_properties} barClass="bg-rose-400" />
+                    </CardContent>
+                  </Card>
                 </div>
 
-                {/* Recent Users */}
-                <div className="bg-white rounded-lg border border-gray-200 mb-6">
-                  <div className="flex items-center justify-between p-4 border-b border-gray-200">
-                    <h2 className="font-semibold text-gray-900">Usuarios Recientes</h2>
-                    <Link href="/admin/users" className="text-sm text-primary hover:underline">Ver todos</Link>
-                  </div>
-                  <div className="overflow-x-auto">
-                    <table className="w-full text-sm">
-                      <thead className="bg-gray-50">
-                        <tr>
-                          <th className="text-left px-4 py-2 font-medium text-gray-600">Usuario</th>
-                          <th className="text-left px-4 py-2 font-medium text-gray-600">Email</th>
-                          <th className="text-left px-4 py-2 font-medium text-gray-600">Registro</th>
-                          <th className="text-left px-4 py-2 font-medium text-gray-600">Estado</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-gray-100">
-                        {data.recent_users.map((u: any) => (
-                          <tr key={u.id} className="hover:bg-gray-50">
-                            <td className="px-4 py-2.5">
-                              <div className="flex items-center space-x-2">
-                                <div className="h-8 w-8 bg-primary/10 text-primary rounded-full flex items-center justify-center text-xs font-bold">
-                                  {(u.first_name?.[0] || u.username?.[0] || '?').toUpperCase()}
-                                </div>
-                                <span className="font-medium text-gray-900">
-                                  {u.first_name && u.last_name ? `${u.first_name} ${u.last_name}` : u.username}
-                                </span>
-                              </div>
-                            </td>
-                            <td className="px-4 py-2.5 text-gray-600">{u.email}</td>
-                            <td className="px-4 py-2.5 text-gray-600">{new Date(u.date_joined).toLocaleDateString('es-EC')}</td>
-                            <td className="px-4 py-2.5">
-                              <span className={`inline-flex px-2 py-0.5 text-xs font-medium rounded-full ${u.is_active ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
-                                {u.is_active ? 'Activo' : 'Inactivo'}
+                {/* Quick links */}
+                <div className="mb-8 grid grid-cols-1 gap-4 md:grid-cols-3">
+                  <QuickLink href="/admin/users" title="Gestionar Usuarios" desc="Activar, moderar y administrar" icon={Users} tone="blue" />
+                  <QuickLink href="/admin/properties" title="Gestionar Propiedades" desc="Ver y moderar contenido" icon={Building2} tone="indigo" />
+                  <QuickLink href="/admin/pending-publications" title="Publicaciones Pendientes" desc="Contactar interesados" icon={Clock} tone="fuchsia" />
+                </div>
+
+                {/* Recent users */}
+                <TableCard
+                  title="Usuarios Recientes"
+                  action={<Link href="/admin/users" className="text-sm font-medium text-primary hover:underline">Ver todos</Link>}
+                >
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Usuario</TableHead>
+                        <TableHead>Email</TableHead>
+                        <TableHead>Registro</TableHead>
+                        <TableHead>Estado</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {data.recent_users.map((u: any) => (
+                        <TableRow key={u.id}>
+                          <TableCell>
+                            <div className="flex items-center gap-2">
+                              <Avatar name={u.first_name || u.username} />
+                              <span className="font-medium text-textPrimary">
+                                {u.first_name && u.last_name ? `${u.first_name} ${u.last_name}` : u.username}
                               </span>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
+                            </div>
+                          </TableCell>
+                          <TableCell className="text-textSecondary">{u.email}</TableCell>
+                          <TableCell className="text-textSecondary">{new Date(u.date_joined).toLocaleDateString('es-EC')}</TableCell>
+                          <TableCell>
+                            <Badge variant="outline" className={u.is_active ? 'border-transparent bg-green-100 text-green-700' : 'border-transparent bg-red-100 text-red-700'}>
+                              {u.is_active ? 'Activo' : 'Inactivo'}
+                            </Badge>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </TableCard>
 
-                {/* Recent Properties */}
-                <div className="bg-white rounded-lg border border-gray-200">
-                  <div className="flex items-center justify-between p-4 border-b border-gray-200">
-                    <h2 className="font-semibold text-gray-900">Propiedades Recientes</h2>
-                    <Link href="/admin/properties" className="text-sm text-primary hover:underline">Ver todas</Link>
-                  </div>
-                  <div className="overflow-x-auto">
-                    <table className="w-full text-sm">
-                      <thead className="bg-gray-50">
-                        <tr>
-                          <th className="text-left px-4 py-2 font-medium text-gray-600">Título</th>
-                          <th className="text-left px-4 py-2 font-medium text-gray-600">Tipo</th>
-                          <th className="text-left px-4 py-2 font-medium text-gray-600">Estado</th>
-                          <th className="text-left px-4 py-2 font-medium text-gray-600">Precio</th>
-                          <th className="text-left px-4 py-2 font-medium text-gray-600">Propietario</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-gray-100">
-                        {data.recent_properties.map((p: any) => (
-                          <tr key={p.id} className="hover:bg-gray-50">
-                            <td className="px-4 py-2.5 font-medium text-gray-900">{p.title || `Propiedad #${p.id}`}</td>
-                            <td className="px-4 py-2.5 text-gray-600 capitalize">{typeLabel(p.property_type)}</td>
-                            <td className="px-4 py-2.5">
-                              <StatusBadge status={p.status} />
-                            </td>
-                            <td className="px-4 py-2.5 text-gray-600">${Number(p.price).toLocaleString('es-EC')}</td>
-                            <td className="px-4 py-2.5 text-gray-600">{p.owner_username || '—'}</td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
+                {/* Recent properties */}
+                <TableCard
+                  className="mt-6"
+                  title="Propiedades Recientes"
+                  action={<Link href="/admin/properties" className="text-sm font-medium text-primary hover:underline">Ver todas</Link>}
+                >
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Título</TableHead>
+                        <TableHead>Tipo</TableHead>
+                        <TableHead>Estado</TableHead>
+                        <TableHead>Precio</TableHead>
+                        <TableHead>Propietario</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {data.recent_properties.map((p: any) => (
+                        <TableRow key={p.id}>
+                          <TableCell className="font-medium text-textPrimary">{p.title || `Propiedad #${p.id}`}</TableCell>
+                          <TableCell className="text-textSecondary">{typeLabel(p.property_type)}</TableCell>
+                          <TableCell><StatusBadge status={p.status} /></TableCell>
+                          <TableCell className="font-geo text-textSecondary">${Number(p.price).toLocaleString('es-EC')}</TableCell>
+                          <TableCell className="text-textSecondary">{p.owner_username || '—'}</TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </TableCard>
 
-                {/* Contactos recientes (leads) */}
-                <div className="bg-white rounded-lg border border-gray-200 mt-6">
-                  <div className="flex items-center justify-between p-4 border-b border-gray-200">
-                    <h2 className="font-semibold text-gray-900">Contactos Recientes</h2>
-                    <span className="text-sm text-gray-500">{data.total_leads} en total</span>
-                  </div>
-                  <div className="overflow-x-auto">
-                    <table className="w-full text-sm">
-                      <thead className="bg-gray-50">
-                        <tr>
-                          <th className="text-left px-4 py-2 font-medium text-gray-600">Nombre</th>
-                          <th className="text-left px-4 py-2 font-medium text-gray-600">Teléfono</th>
-                          <th className="text-left px-4 py-2 font-medium text-gray-600">Propiedad</th>
-                          <th className="text-left px-4 py-2 font-medium text-gray-600">Origen</th>
-                          <th className="text-left px-4 py-2 font-medium text-gray-600">Estado</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-gray-100">
-                        {data.recent_leads.length === 0 ? (
-                          <tr>
-                            <td colSpan={5} className="px-4 py-6 text-center text-gray-400">
-                              Aún no hay contactos registrados
-                            </td>
-                          </tr>
-                        ) : (
-                          data.recent_leads.map((l: any) => (
-                            <tr key={l.id} className="hover:bg-gray-50">
-                              <td className="px-4 py-2.5 font-medium text-gray-900">{l.name}</td>
-                              <td className="px-4 py-2.5 text-gray-600">{l.phone}</td>
-                              <td className="px-4 py-2.5 text-gray-600">{l.property_title || `#${l.property}`}</td>
-                              <td className="px-4 py-2.5 text-gray-600">{leadSourceLabel(l.source)}</td>
-                              <td className="px-4 py-2.5">
-                                <LeadStatusBadge status={l.status} />
-                              </td>
-                            </tr>
-                          ))
-                        )}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
+                {/* Recent leads */}
+                <TableCard
+                  className="mt-6"
+                  title="Contactos Recientes"
+                  action={<span className="text-sm text-textSecondary">{data.total_leads} en total</span>}
+                >
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Nombre</TableHead>
+                        <TableHead>Teléfono</TableHead>
+                        <TableHead>Propiedad</TableHead>
+                        <TableHead>Origen</TableHead>
+                        <TableHead>Estado</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {data.recent_leads.length === 0 ? (
+                        <TableRow>
+                          <TableCell colSpan={5} className="py-8 text-center text-textSecondary">
+                            Aún no hay contactos registrados
+                          </TableCell>
+                        </TableRow>
+                      ) : (
+                        data.recent_leads.map((l: any) => (
+                          <TableRow key={l.id}>
+                            <TableCell className="font-medium text-textPrimary">{l.name}</TableCell>
+                            <TableCell className="text-textSecondary">{l.phone}</TableCell>
+                            <TableCell className="text-textSecondary">{l.property_title || `#${l.property}`}</TableCell>
+                            <TableCell className="text-textSecondary">{leadSourceLabel(l.source)}</TableCell>
+                            <TableCell><LeadStatusBadge status={l.status} /></TableCell>
+                          </TableRow>
+                        ))
+                      )}
+                    </TableBody>
+                  </Table>
+                </TableCard>
               </>
-            )}
+            ) : null}
           </div>
         </main>
       </div>
@@ -278,14 +271,150 @@ const AdminDashboard = () => {
   );
 };
 
-function StatCard({ label, value, color, icon }: { label: string; value: number; color: string; icon: React.ReactNode }) {
+const TONES: Record<string, string> = {
+  blue: 'bg-blue-100 text-blue-600',
+  indigo: 'bg-indigo-100 text-indigo-600',
+  green: 'bg-green-100 text-green-600',
+  amber: 'bg-amber-100 text-amber-600',
+  slate: 'bg-slate-100 text-slate-600',
+  sky: 'bg-sky-100 text-sky-600',
+  violet: 'bg-violet-100 text-violet-600',
+  rose: 'bg-rose-100 text-rose-600',
+  fuchsia: 'bg-fuchsia-100 text-fuchsia-600',
+  orange: 'bg-orange-100 text-orange-600',
+};
+
+function KpiCard({
+  label,
+  value,
+  icon: Icon,
+  tone,
+}: {
+  label: string;
+  value: number;
+  icon: React.ComponentType<{ className?: string }>;
+  tone: string;
+}) {
   return (
-    <div className="bg-white rounded-lg border border-gray-200 p-4">
-      <div className="flex items-center justify-between mb-2">
-        <div className={`p-2 rounded-lg text-white ${color}`}>{icon}</div>
+    <Card className="rounded-card shadow-card transition-shadow hover:shadow-cardHover">
+      <CardContent className="p-5">
+        <div className={cn('mb-3 flex h-10 w-10 items-center justify-center rounded-button', TONES[tone])}>
+          <Icon className="h-5 w-5" />
+        </div>
+        <AnimatedNumber value={value} className="font-geo text-2xl font-bold text-textPrimary" />
+        <p className="mt-0.5 text-sm text-textSecondary">{label}</p>
+      </CardContent>
+    </Card>
+  );
+}
+
+function BreakdownBar({ label, value, total, barClass }: { label: string; value: number; total: number; barClass: string }) {
+  const pct = total > 0 ? Math.round((value / total) * 100) : 0;
+  return (
+    <div>
+      <div className="mb-1.5 flex items-center justify-between text-sm">
+        <span className="text-textSecondary">{label}</span>
+        <span className="font-geo font-medium text-textPrimary">{value} <span className="text-textSecondary">· {pct}%</span></span>
       </div>
-      <p className="text-2xl font-bold text-gray-900">{value}</p>
-      <p className="text-sm text-gray-500">{label}</p>
+      <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
+        <div className={cn('h-full rounded-full transition-all duration-500', barClass)} style={{ width: `${pct}%` }} />
+      </div>
+    </div>
+  );
+}
+
+function QuickLink({
+  href,
+  title,
+  desc,
+  icon: Icon,
+  tone,
+}: {
+  href: string;
+  title: string;
+  desc: string;
+  icon: React.ComponentType<{ className?: string }>;
+  tone: string;
+}) {
+  return (
+    <Link
+      href={href}
+      className="group flex items-center gap-4 rounded-card border border-line bg-surface p-4 shadow-card transition-shadow hover:shadow-cardHover"
+    >
+      <div className={cn('flex h-11 w-11 shrink-0 items-center justify-center rounded-button', TONES[tone])}>
+        <Icon className="h-5 w-5" />
+      </div>
+      <div className="min-w-0 flex-1">
+        <h3 className="font-semibold text-textPrimary">{title}</h3>
+        <p className="truncate text-sm text-textSecondary">{desc}</p>
+      </div>
+      <ArrowRight className="h-4 w-4 text-textSecondary transition-transform group-hover:translate-x-0.5" />
+    </Link>
+  );
+}
+
+function TableCard({
+  title,
+  action,
+  children,
+  className,
+}: {
+  title: string;
+  action?: React.ReactNode;
+  children: React.ReactNode;
+  className?: string;
+}) {
+  return (
+    <Card className={cn('overflow-hidden rounded-card shadow-card', className)}>
+      <div className="flex items-center justify-between border-b border-line px-5 py-4">
+        <h2 className="font-semibold text-textPrimary">{title}</h2>
+        {action}
+      </div>
+      <div className="overflow-x-auto">{children}</div>
+    </Card>
+  );
+}
+
+function Avatar({ name }: { name?: string }) {
+  return (
+    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 text-xs font-bold text-primary">
+      {(name?.[0] || '?').toUpperCase()}
+    </div>
+  );
+}
+
+function DashboardSkeleton() {
+  return (
+    <div>
+      <div className="mb-8 grid grid-cols-2 gap-4 lg:grid-cols-5">
+        {Array.from({ length: 5 }).map((_, i) => (
+          <Card key={i} className="rounded-card shadow-card">
+            <CardContent className="p-5">
+              <Skeleton className="mb-3 h-10 w-10 rounded-button" />
+              <Skeleton className="h-7 w-16" />
+              <Skeleton className="mt-2 h-4 w-24" />
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+      <div className="mb-8 grid grid-cols-2 gap-4 lg:grid-cols-4">
+        {Array.from({ length: 8 }).map((_, i) => (
+          <Card key={i} className="rounded-card shadow-card">
+            <CardContent className="p-5">
+              <Skeleton className="mb-3 h-10 w-10 rounded-button" />
+              <Skeleton className="h-7 w-16" />
+              <Skeleton className="mt-2 h-4 w-24" />
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+      <Card className="rounded-card shadow-card">
+        <CardContent className="space-y-3 p-5">
+          {Array.from({ length: 5 }).map((_, i) => (
+            <Skeleton key={i} className="h-10 w-full" />
+          ))}
+        </CardContent>
+      </Card>
     </div>
   );
 }
@@ -293,8 +422,8 @@ function StatCard({ label, value, color, icon }: { label: string; value: number;
 function StatusBadge({ status }: { status: string }) {
   const styles: Record<string, string> = {
     for_sale: 'bg-green-100 text-green-700',
-    for_rent: 'bg-yellow-100 text-yellow-700',
-    inactive: 'bg-gray-100 text-gray-600',
+    for_rent: 'bg-amber-100 text-amber-700',
+    inactive: 'bg-slate-100 text-slate-600',
   };
   const labels: Record<string, string> = {
     for_sale: 'En venta',
@@ -302,9 +431,9 @@ function StatusBadge({ status }: { status: string }) {
     inactive: 'Inactiva',
   };
   return (
-    <span className={`inline-flex px-2 py-0.5 text-xs font-medium rounded-full ${styles[status] || 'bg-gray-100 text-gray-600'}`}>
+    <Badge variant="outline" className={cn('border-transparent', styles[status] || 'bg-slate-100 text-slate-600')}>
       {labels[status] || status}
-    </span>
+    </Badge>
   );
 }
 
@@ -312,7 +441,7 @@ function LeadStatusBadge({ status }: { status: string }) {
   const styles: Record<string, string> = {
     new: 'bg-rose-100 text-rose-700',
     contacted: 'bg-blue-100 text-blue-700',
-    closed: 'bg-gray-100 text-gray-600',
+    closed: 'bg-slate-100 text-slate-600',
   };
   const labels: Record<string, string> = {
     new: 'Nuevo',
@@ -320,9 +449,9 @@ function LeadStatusBadge({ status }: { status: string }) {
     closed: 'Cerrado',
   };
   return (
-    <span className={`inline-flex px-2 py-0.5 text-xs font-medium rounded-full ${styles[status] || 'bg-gray-100 text-gray-600'}`}>
+    <Badge variant="outline" className={cn('border-transparent', styles[status] || 'bg-slate-100 text-slate-600')}>
       {labels[status] || status}
-    </span>
+    </Badge>
   );
 }
 

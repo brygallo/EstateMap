@@ -1,6 +1,18 @@
 import type { Metadata } from 'next';
 import { Suspense } from 'react';
 import Link from 'next/link';
+import {
+  Home as HomeIcon,
+  KeyRound,
+  Trees,
+  ArrowRight,
+  Rocket,
+  MessageCircle,
+  MapPin,
+  Building2,
+} from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
 import MapPageClient from '@/components/MapPageClient';
 import {
   getProperties,
@@ -121,50 +133,70 @@ export default async function HomePage() {
       />
       <Suspense
         fallback={
-          <div className="h-[calc(100vh-4.5rem)] w-full bg-slate-100" />
+          <div className="h-[calc(100vh-4.5rem)] w-full animate-pulse bg-muted" />
         }
       >
         <MapPageClient />
       </Suspense>
-      <section className="bg-primary text-white">
-        <div className="mx-auto flex max-w-6xl flex-col gap-5 px-4 py-6 sm:px-6 lg:flex-row lg:items-center lg:justify-between lg:px-8">
-          <div>
-            <p className="text-sm font-semibold uppercase tracking-wide text-white/80">
-              Para propietarios, agentes e inmobiliarias
-            </p>
-            <h2 className="mt-1 text-2xl font-bold">
-              Publica tu propiedad gratis y recibe contactos directos
-            </h2>
-            <p className="mt-2 max-w-3xl text-sm leading-6 text-white/85">
-              Tu anuncio aparece en el mapa con fotos, precio, medidas y botón de
-              WhatsApp. No cobramos por publicar ni comisión por la venta o alquiler.
-            </p>
-          </div>
-          <div className="flex flex-col gap-2 sm:flex-row">
-            <Link
-              href="/add-property"
-              className="inline-flex items-center justify-center rounded-lg bg-white px-5 py-3 text-sm font-bold text-primary shadow-sm transition hover:bg-white/90"
-            >
-              Publicar gratis
-            </Link>
-            <a
-              href="https://wa.me/593983738151?text=Hola%20quiero%20publicar%20una%20propiedad%20en%20Geo%20Propiedades"
-              target="_blank"
-              rel="noreferrer"
-              className="inline-flex items-center justify-center rounded-lg border border-white/60 px-5 py-3 text-sm font-semibold text-white transition hover:bg-white/10"
-            >
-              Ayuda por WhatsApp
-            </a>
+      <section className="bg-background">
+        <div className="mx-auto max-w-6xl px-4 py-10 sm:px-6 lg:px-8">
+          <div className="relative overflow-hidden rounded-hero bg-gradient-to-br from-primary to-primaryHover px-6 py-10 text-white shadow-card sm:px-10">
+            <div
+              aria-hidden
+              className="pointer-events-none absolute -right-16 -top-16 h-56 w-56 rounded-full bg-white/10 blur-2xl"
+            />
+            <div className="relative flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
+              <div className="max-w-3xl">
+                <span className="inline-flex items-center gap-2 rounded-full bg-white/15 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-white/90">
+                  <Building2 className="h-3.5 w-3.5" aria-hidden />
+                  Para propietarios, agentes e inmobiliarias
+                </span>
+                <h2 className="mt-3 text-2xl font-bold sm:text-3xl">
+                  Publica tu propiedad gratis y recibe contactos directos
+                </h2>
+                <p className="mt-3 text-sm leading-6 text-white/85 sm:text-base">
+                  Tu anuncio aparece en el mapa con fotos, precio, medidas y botón de
+                  WhatsApp. No cobramos por publicar ni comisión por la venta o alquiler.
+                </p>
+              </div>
+              <div className="flex flex-col gap-3 sm:flex-row lg:flex-col xl:flex-row">
+                <Button
+                  asChild
+                  size="lg"
+                  className="rounded-button bg-white font-bold text-primary shadow-card hover:bg-white/90"
+                >
+                  <Link href="/add-property">
+                    <Rocket className="h-4 w-4" aria-hidden />
+                    Publicar gratis
+                  </Link>
+                </Button>
+                <Button
+                  asChild
+                  size="lg"
+                  variant="outline"
+                  className="rounded-button border-white/60 bg-transparent text-white hover:bg-white/10 hover:text-white"
+                >
+                  <a
+                    href="https://wa.me/593983738151?text=Hola%20quiero%20publicar%20una%20propiedad%20en%20Geo%20Propiedades"
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    <MessageCircle className="h-4 w-4" aria-hidden />
+                    Ayuda por WhatsApp
+                  </a>
+                </Button>
+              </div>
+            </div>
           </div>
         </div>
       </section>
-      <section className="bg-white border-t border-line">
-        <div className="mx-auto max-w-6xl px-4 py-10 sm:px-6 lg:px-8">
+      <section className="border-t border-line bg-surface">
+        <div className="mx-auto max-w-6xl px-4 py-16 sm:px-6 lg:px-8 lg:py-24">
           <div className="max-w-3xl">
             <p className="text-sm font-semibold uppercase tracking-wide text-primary">
               Portal inmobiliario en Ecuador
             </p>
-            <h1 className="mt-2 text-3xl font-bold text-textPrimary sm:text-4xl">
+            <h1 className="mt-3 text-3xl font-bold tracking-tight text-textPrimary sm:text-4xl">
               Encuentra propiedades en venta y alquiler con mapa interactivo
             </h1>
             <p className="mt-4 text-base leading-7 text-textSecondary">
@@ -175,66 +207,83 @@ export default async function HomePage() {
             </p>
           </div>
 
-          <div className="mt-8 grid gap-4 md:grid-cols-3">
-            <article className="rounded-lg border border-line p-5">
-              <h2 className="text-lg font-semibold text-textPrimary">Compra y venta</h2>
+          <div className="mt-10 grid gap-6 md:grid-cols-3">
+            <Card className="rounded-card border-line p-6 shadow-card transition-shadow hover:shadow-cardHover">
+              <span className="flex h-11 w-11 items-center justify-center rounded-button bg-primaryLight text-primary">
+                <HomeIcon className="h-5 w-5" strokeWidth={2} aria-hidden />
+              </span>
+              <h2 className="mt-4 text-lg font-semibold text-textPrimary">Compra y venta</h2>
               <p className="mt-2 text-sm leading-6 text-textSecondary">
-                Filtra <Link href="/casas-en-venta" className="text-primary hover:underline">casas en venta</Link> en
-                Ecuador, compara precios y revisa ubicación exacta o área delimitada
+                Filtra{' '}
+                <Link href="/casas-en-venta" className="font-medium text-primary hover:underline">
+                  casas en venta
+                </Link>{' '}
+                en Ecuador, compara precios y revisa ubicación exacta o área delimitada
                 cuando el anunciante la publica.
               </p>
-            </article>
-            <article className="rounded-lg border border-line p-5">
-              <h2 className="text-lg font-semibold text-textPrimary">Alquileres</h2>
+            </Card>
+            <Card className="rounded-card border-line p-6 shadow-card transition-shadow hover:shadow-cardHover">
+              <span className="flex h-11 w-11 items-center justify-center rounded-button bg-emerald-50 text-success">
+                <KeyRound className="h-5 w-5" strokeWidth={2} aria-hidden />
+              </span>
+              <h2 className="mt-4 text-lg font-semibold text-textPrimary">Alquileres</h2>
               <p className="mt-2 text-sm leading-6 text-textSecondary">
                 Encuentra{' '}
-                <Link href="/departamentos-en-alquiler" className="text-primary hover:underline">
+                <Link href="/departamentos-en-alquiler" className="font-medium text-primary hover:underline">
                   departamentos en alquiler
                 </Link>
                 , casas y espacios comerciales usando filtros de precio, ciudad, área y
                 características.
               </p>
-            </article>
-            <article className="rounded-lg border border-line p-5">
-              <h2 className="text-lg font-semibold text-textPrimary">Terrenos y lotes</h2>
+            </Card>
+            <Card className="rounded-card border-line p-6 shadow-card transition-shadow hover:shadow-cardHover">
+              <span className="flex h-11 w-11 items-center justify-center rounded-button bg-amber-50 text-warning">
+                <Trees className="h-5 w-5" strokeWidth={2} aria-hidden />
+              </span>
+              <h2 className="mt-4 text-lg font-semibold text-textPrimary">Terrenos y lotes</h2>
               <p className="mt-2 text-sm leading-6 text-textSecondary">
                 Ubica{' '}
-                <Link href="/terrenos-en-venta" className="text-primary hover:underline">
+                <Link href="/terrenos-en-venta" className="font-medium text-primary hover:underline">
                   terrenos en venta
                 </Link>{' '}
                 y revisa su posición en el mapa para evaluar accesos, sectores cercanos y
                 oportunidades de inversión.
               </p>
-            </article>
+            </Card>
           </div>
 
-          <div className="mt-10">
+          <div className="mt-14">
             <h2 className="text-xl font-bold text-textPrimary">Búsquedas populares</h2>
-            <div className="mt-4 flex flex-wrap gap-2">
+            <div className="mt-4 flex flex-wrap gap-2.5">
               {popularSearches.map((item) => (
                 <Link
                   key={item.href}
                   href={item.href}
-                  className="rounded-full border border-line px-4 py-2 text-sm font-medium text-textPrimary hover:border-primary hover:text-primary"
+                  className="group inline-flex items-center gap-1.5 rounded-full border border-line bg-white px-4 py-2 text-sm font-medium text-textPrimary transition-colors hover:border-primary hover:bg-primaryLight hover:text-primary"
                 >
                   {item.label}
+                  <ArrowRight
+                    className="h-3.5 w-3.5 -translate-x-0.5 opacity-0 transition-all group-hover:translate-x-0 group-hover:opacity-100"
+                    aria-hidden
+                  />
                 </Link>
               ))}
             </div>
           </div>
 
           {cities.length > 0 && (
-            <div className="mt-10">
+            <div className="mt-14">
               <h2 className="text-xl font-bold text-textPrimary">
                 Propiedades por ciudad
               </h2>
-              <div className="mt-4 flex flex-wrap gap-2">
+              <div className="mt-4 flex flex-wrap gap-2.5">
                 {cities.map((city) => (
                   <Link
                     key={city.slug}
                     href={`/propiedades/${city.slug}`}
-                    className="rounded-full border border-line px-4 py-2 text-sm font-medium text-textPrimary hover:border-primary hover:text-primary"
+                    className="inline-flex items-center gap-1.5 rounded-full border border-line bg-white px-4 py-2 text-sm font-medium text-textPrimary transition-colors hover:border-primary hover:bg-primaryLight hover:text-primary"
                   >
+                    <MapPin className="h-3.5 w-3.5 text-primary" aria-hidden />
                     Propiedades en {city.name}
                   </Link>
                 ))}

@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth-context';
-import { toast } from 'react-toastify';
+import { toast } from 'sonner';
 
 interface GoogleSignInButtonProps {
   text?: 'signin_with' | 'signup_with' | 'continue_with' | 'signin';
@@ -136,7 +136,7 @@ export default function GoogleSignInButton({
         <div ref={buttonRef} className="w-full" />
         {status === 'loading' && (
           <div
-            className="absolute inset-0 animate-pulse rounded-lg border border-line bg-background"
+            className="absolute inset-0 animate-pulse rounded-input border border-line bg-background"
             aria-hidden="true"
           />
         )}

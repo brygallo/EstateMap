@@ -3,6 +3,8 @@
 import { useEffect, useState, useRef } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import dynamic from 'next/dynamic';
+import { Loader2, LocateFixed, SlidersHorizontal } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import { useAuth } from '@/lib/auth-context';
 import { getPropertyTypeLabel, getStatusLabel } from '@/lib/property-labels';
 import { useGeolocation } from '@/hooks/useGeolocation';
@@ -18,10 +20,10 @@ import type { MapBounds, Property } from '@/lib/types';
 const LeafletMap = dynamic(() => import('@/components/maps/LeafletMap'), {
   ssr: false,
   loading: () => (
-    <div className="h-full w-full flex items-center justify-center bg-gray-100">
+    <div className="flex h-full w-full items-center justify-center bg-background">
       <div className="text-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
-        <p className="mt-4 text-gray-600">Cargando mapa...</p>
+        <Loader2 className="mx-auto h-10 w-10 animate-spin text-primary" strokeWidth={2} />
+        <p className="mt-4 text-sm text-textSecondary">Cargando mapa...</p>
       </div>
     </div>
   ),
@@ -124,41 +126,36 @@ const MapPage = () => {
   return (
     <div className="relative h-[calc(100vh-4.5rem)] overflow-hidden">
       {/* Botón para abrir el panel en móvil */}
-      <button
+      <Button
         onClick={() => setSidebarOpen(!sidebarOpen)}
-        className="lg:hidden fixed bottom-20 left-4 z-nav bg-primary text-white p-4 rounded-full shadow-lg hover:bg-primaryHover transition-colors"
-        aria-label="Toggle sidebar"
+        size="icon"
+        className="fixed bottom-20 left-4 z-nav h-14 w-14 rounded-full shadow-cardHover lg:hidden [&_svg]:size-6"
+        aria-label="Abrir filtros y propiedades"
       >
-        <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-        </svg>
+        <SlidersHorizontal strokeWidth={2} />
         {visibleProperties.length > 0 && (
-          <span className="absolute -top-1 -right-1 bg-secondary text-white text-xs w-6 h-6 rounded-full flex items-center justify-center font-bold">
+          <span className="absolute -right-1 -top-1 flex h-6 w-6 items-center justify-center rounded-full bg-secondary text-xs font-bold text-secondary-foreground">
             {visibleProperties.length}
           </span>
         )}
-      </button>
+      </Button>
 
       {/* Botón "mi ubicación" */}
-      <button
+      <Button
         onClick={geo.handleGetMyLocation}
         disabled={geo.loadingLocation}
-        className="fixed bottom-20 right-4 z-nav bg-white text-primary border border-line p-4 rounded-full shadow-lg hover:bg-slate-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+        variant="outline"
+        size="icon"
+        className="fixed bottom-20 right-4 z-nav h-14 w-14 rounded-full border-line bg-white text-primary shadow-cardHover hover:bg-slate-50 hover:text-primary [&_svg]:size-6"
         aria-label="Mi ubicación"
         title="Ir a mi ubicación"
       >
         {geo.loadingLocation ? (
-          <svg className="h-6 w-6 animate-spin" fill="none" viewBox="0 0 24 24">
-            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-          </svg>
+          <Loader2 className="animate-spin" strokeWidth={2} />
         ) : (
-          <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-          </svg>
+          <LocateFixed strokeWidth={2} />
         )}
-      </button>
+      </Button>
 
       {/* Fondo oscuro en móvil */}
       {sidebarOpen && (
@@ -231,15 +228,12 @@ const MapPage = () => {
 
       {/* Toast de carga de ubicación */}
       {geo.showLocationToast && (
-        <div className="fixed top-20 left-1/2 transform -translate-x-1/2 z-top animate-fade-in">
-          <div className="bg-white shadow-2xl rounded-xl px-6 py-4 flex items-center gap-3 border border-gray-200">
-            <svg className="animate-spin h-5 w-5 text-primary" fill="none" viewBox="0 0 24 24">
-              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-            </svg>
+        <div className="animate-fade-in fixed left-1/2 top-20 z-top -translate-x-1/2">
+          <div className="flex items-center gap-3 rounded-card border border-line bg-white px-6 py-4 shadow-cardHover">
+            <Loader2 className="h-5 w-5 animate-spin text-primary" strokeWidth={2} />
             <div className="flex flex-col">
-              <span className="text-sm font-semibold text-gray-800">Obteniendo tu ubicación</span>
-              <span className="text-xs text-gray-500">Centrando mapa en tu ciudad...</span>
+              <span className="text-sm font-semibold text-textPrimary">Obteniendo tu ubicación</span>
+              <span className="text-xs text-textSecondary">Centrando mapa en tu ciudad...</span>
             </div>
           </div>
         </div>

@@ -1,303 +1,272 @@
 'use client';
 
 import Link from 'next/link';
-import { useRouter, usePathname } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth-context';
-import { toast } from 'react-toastify';
-import { useEffect, useRef, useState } from 'react';
+import { toast } from 'sonner';
+import { useState } from 'react';
+import {
+  Building2,
+  CircleHelp,
+  FolderKanban,
+  LayoutDashboard,
+  LogOut,
+  Menu,
+  Plus,
+  ShieldCheck,
+  User as UserIcon,
+} from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from '@/components/ui/sheet';
+import { Separator } from '@/components/ui/separator';
 
 const NavBar = () => {
   const { token, user, logout } = useAuth();
   const router = useRouter();
-  const pathname = usePathname();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [userMenuOpen, setUserMenuOpen] = useState(false);
-  const userMenuRef = useRef<HTMLDivElement>(null);
 
   const handleLogout = () => {
     logout();
     toast.success('Sesión cerrada exitosamente');
     setMobileMenuOpen(false);
-    setUserMenuOpen(false);
     router.push('/');
   };
 
-  const closeMobileMenu = () => {
-    setMobileMenuOpen(false);
-  };
+  const closeMobileMenu = () => setMobileMenuOpen(false);
 
-  // Close user menu on outside click
-  useEffect(() => {
-    const handleClickOutside = (e: MouseEvent) => {
-      if (userMenuRef.current && !userMenuRef.current.contains(e.target as Node)) {
-        setUserMenuOpen(false);
-      }
-    };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
+  const initials = (user?.username || 'U').slice(0, 2).toUpperCase();
 
   return (
-    <nav className="bg-gradient-to-r from-primary to-secondary text-white shadow-lg sticky top-0 z-nav">
-      <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-6">
-        <div className="flex justify-between items-center h-12">
-          {/* Logo */}
-          <Link href="/" className="flex items-center space-x-1.5 hover:opacity-90 transition-opacity" onClick={closeMobileMenu}>
-            <div className="h-8 w-8 bg-white/20 rounded-lg flex items-center justify-center backdrop-blur-sm">
-              <svg className="h-5 w-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
-              </svg>
-            </div>
-            <span className="text-base font-bold">Geo Propiedades Ecuador</span>
-          </Link>
+    <nav className="sticky top-0 z-nav border-b border-line bg-surface/90 backdrop-blur-md">
+      <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
+        {/* Logo */}
+        <Link href="/" className="flex items-center gap-2" onClick={closeMobileMenu}>
+          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary text-white">
+            <Building2 className="h-5 w-5" strokeWidth={2} aria-hidden />
+          </div>
+          <span className="text-base font-bold text-textPrimary sm:text-lg">
+            Geo Propiedades Ecuador
+          </span>
+        </Link>
 
-          {/* Desktop Navigation Links */}
-          <div className="hidden md:flex items-center space-x-1.5 lg:space-x-2">
-            {token ? (
-              <>
-                <Link
-                  href="/my-properties"
-                  className="inline-flex items-center px-2 lg:px-3 py-1.5 bg-white/20 backdrop-blur-sm rounded-lg hover:bg-white/30 transition-all font-medium text-xs lg:text-sm"
-                >
-                  <svg className="h-4 w-4 lg:mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-                  </svg>
-                  <span className="hidden lg:inline">Mis Propiedades</span>
+        {/* Desktop Navigation */}
+        <div className="hidden items-center gap-1 md:flex">
+          {token ? (
+            <>
+              <Button asChild variant="ghost" size="sm" className="text-textSecondary">
+                <Link href="/my-properties">
+                  <FolderKanban className="h-4 w-4" />
+                  Mis Propiedades
                 </Link>
-                <Link
-                  href="/help"
-                  className="inline-flex items-center px-2 lg:px-3 py-1.5 bg-white/20 backdrop-blur-sm rounded-lg hover:bg-white/30 transition-all font-medium text-xs lg:text-sm"
-                >
-                  <svg className="h-4 w-4 lg:mr-1.5" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                    <circle cx="12" cy="12" r="9" strokeWidth="2" />
-                    <path d="M9.5 9a2.5 2.5 0 115 0c0 1.5-1.5 2-2.5 2" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                    <circle cx="12" cy="16" r="1" fill="currentColor" />
-                  </svg>
-                  <span className="hidden lg:inline">Ayuda</span>
+              </Button>
+              <Button asChild variant="ghost" size="sm" className="text-textSecondary">
+                <Link href="/help">
+                  <CircleHelp className="h-4 w-4" />
+                  Ayuda
                 </Link>
-                <Link
-                  href="/add-property"
-                  className="inline-flex items-center px-2 lg:px-3 py-1.5 bg-white/20 backdrop-blur-sm rounded-lg hover:bg-white/30 transition-all font-medium text-xs lg:text-sm"
-                >
-                  <svg className="h-4 w-4 lg:mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                  </svg>
-                  <span className="hidden lg:inline">Nueva</span>
-                </Link>
-                {user?.is_staff && (
-                  <Link
-                    href="/admin"
-                    className="inline-flex items-center px-2 lg:px-3 py-1.5 bg-yellow-500/30 backdrop-blur-sm rounded-lg hover:bg-yellow-500/50 transition-all font-medium text-xs lg:text-sm border border-yellow-400/30"
-                  >
-                    <svg className="h-4 w-4 lg:mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-                    </svg>
-                    <span className="hidden lg:inline">Admin</span>
+              </Button>
+              {user?.is_staff && (
+                <Button asChild variant="ghost" size="sm" className="text-warning">
+                  <Link href="/admin">
+                    <ShieldCheck className="h-4 w-4" />
+                    Admin
                   </Link>
-                )}
-                <div className="relative" ref={userMenuRef}>
+                </Button>
+              )}
+              <Button
+                asChild
+                size="sm"
+                className="ml-1 bg-primary text-primary-foreground transition-transform hover:scale-105 hover:bg-primaryHover"
+              >
+                <Link href="/add-property">
+                  <Plus className="h-4 w-4" />
+                  Publicar gratis
+                </Link>
+              </Button>
+
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
                   <button
-                    onClick={() => setUserMenuOpen((prev) => !prev)}
-                    className="inline-flex items-center px-2 lg:px-3 py-1.5 border-2 border-white/30 rounded-full hover:bg-white/20 transition-all"
-                    aria-haspopup="menu"
-                    aria-expanded={userMenuOpen}
+                    className="ml-2 flex items-center gap-2 rounded-full border border-line py-1 pl-1 pr-3 transition-colors hover:bg-background"
+                    aria-label="Menú de usuario"
                   >
-                    <svg className="h-5 w-5 lg:mr-1.5" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                      <circle cx="12" cy="8" r="4" strokeWidth="2" />
-                      <path d="M5 20c0-3.314 3.134-6 7-6s7 2.686 7 6" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                    </svg>
-                    <span className="hidden lg:inline text-xs font-semibold truncate max-w-[120px]">
+                    <Avatar className="h-7 w-7">
+                      <AvatarFallback className="bg-primaryLight text-xs font-semibold text-primary">
+                        {initials}
+                      </AvatarFallback>
+                    </Avatar>
+                    <span className="max-w-[120px] truncate text-sm font-medium text-textPrimary">
                       {user?.username || 'Cuenta'}
                     </span>
                   </button>
-                  {userMenuOpen && (
-                    <div className="absolute right-0 mt-2 w-44 bg-white text-gray-800 rounded-lg shadow-xl border border-gray-100 overflow-hidden">
-                      <Link
-                        href="/account"
-                        onClick={() => setUserMenuOpen(false)}
-                        className="flex items-center px-3 py-2 text-sm hover:bg-gray-50 transition-colors"
-                      >
-                        <svg className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5.121 17.804A9 9 0 1118 8.999M15 21v-2a3 3 0 00-3-3H6a3 3 0 00-3 3v2" />
-                        </svg>
-                        Mi cuenta
-                      </Link>
-                      <button
-                        onClick={handleLogout}
-                        className="w-full flex items-center px-3 py-2 text-left text-sm hover:bg-gray-50 transition-colors"
-                      >
-                        <svg className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-                        </svg>
-                        Salir
-                      </button>
-                    </div>
-                  )}
-                </div>
-              </>
-            ) : (
-              <>
-                <Link
-                  href="/help"
-                  className="inline-flex items-center px-2 lg:px-3 py-1.5 rounded-lg hover:bg-white/20 transition-all font-medium text-xs lg:text-sm"
-                >
-                  <svg className="h-4 w-4 lg:mr-1.5" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                    <circle cx="12" cy="12" r="9" strokeWidth="2" />
-                    <path d="M9.5 9a2.5 2.5 0 115 0c0 1.5-1.5 2-2.5 2" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                    <circle cx="12" cy="16" r="1" fill="currentColor" />
-                  </svg>
-                  <span className="hidden lg:inline">Ayuda</span>
-                </Link>
-                <Link
-                  href="/login"
-                  className="inline-flex items-center px-2 lg:px-3 py-1.5 rounded-lg hover:bg-white/20 transition-all font-medium text-xs lg:text-sm"
-                >
-                  <svg className="h-4 w-4 lg:mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
-                  </svg>
-                  <span className="hidden lg:inline">Iniciar Sesión</span>
-                </Link>
-                <Link
-                  href="/add-property"
-                  className="inline-flex items-center px-2 lg:px-3 py-1.5 bg-white text-primary rounded-lg hover:bg-white/90 transition-all font-semibold text-xs lg:text-sm"
-                >
-                  <svg className="h-4 w-4 lg:mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
-                  </svg>
-                  <span className="hidden lg:inline">Publicar gratis</span>
-                </Link>
-              </>
-            )}
-          </div>
-
-          {/* Mobile Menu Button */}
-          <button
-            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="md:hidden p-2 rounded-xl hover:bg-white/20 transition-all"
-            aria-label="Toggle menu"
-          >
-            {mobileMenuOpen ? (
-              <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            ) : (
-              <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-              </svg>
-            )}
-          </button>
-        </div>
-      </div>
-
-      {/* Mobile Menu */}
-      {mobileMenuOpen && (
-        <div className="md:hidden border-t border-white/20 bg-gradient-to-r from-primary to-secondary">
-          <div className="px-4 py-3 space-y-2">
-            {token ? (
-              <>
-                <Link
-                  href="/my-properties"
-                  onClick={closeMobileMenu}
-                  className="flex items-center px-4 py-3 bg-white/20 backdrop-blur-sm rounded-xl hover:bg-white/30 transition-all font-medium"
-                >
-                  <svg className="h-5 w-5 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-                  </svg>
-                  Mis Propiedades
-                </Link>
-                <Link
-                  href="/help"
-                  onClick={closeMobileMenu}
-                  className="flex items-center px-4 py-3 bg-white/20 backdrop-blur-sm rounded-xl hover:bg-white/30 transition-all font-medium"
-                >
-                  <svg className="h-5 w-5 mr-3" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                    <circle cx="12" cy="12" r="9" strokeWidth="2" />
-                    <path d="M9.5 9a2.5 2.5 0 115 0c0 1.5-1.5 2-2.5 2" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                    <circle cx="12" cy="16" r="1" fill="currentColor" />
-                  </svg>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-48">
+                  <DropdownMenuItem asChild>
+                    <Link href="/account" className="cursor-pointer">
+                      <UserIcon className="h-4 w-4" />
+                      Mi cuenta
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={handleLogout} className="cursor-pointer text-error focus:text-error">
+                    <LogOut className="h-4 w-4" />
+                    Cerrar sesión
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </>
+          ) : (
+            <>
+              <Button asChild variant="ghost" size="sm" className="text-textSecondary">
+                <Link href="/help">
+                  <CircleHelp className="h-4 w-4" />
                   Ayuda
                 </Link>
-                <Link
-                  href="/add-property"
-                  onClick={closeMobileMenu}
-                  className="flex items-center px-4 py-3 bg-white/20 backdrop-blur-sm rounded-xl hover:bg-white/30 transition-all font-medium"
-                >
-                  <svg className="h-5 w-5 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                  </svg>
-                  Nueva Propiedad
-                </Link>
-                <Link
-                  href="/account"
-                  onClick={closeMobileMenu}
-                  className="flex items-center px-4 py-3 bg-white/20 backdrop-blur-sm rounded-xl hover:bg-white/30 transition-all font-medium"
-                >
-                  <svg className="h-5 w-5 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5.121 17.804A9 9 0 1118 8.999M15 21v-2a3 3 0 00-3-3H6a3 3 0 00-3 3v2" />
-                  </svg>
-                  Mi cuenta
-                </Link>
-                {user?.is_staff && (
-                  <Link
-                    href="/admin"
-                    onClick={closeMobileMenu}
-                    className="flex items-center px-4 py-3 bg-yellow-500/30 backdrop-blur-sm rounded-xl hover:bg-yellow-500/50 transition-all font-medium border border-yellow-400/30"
-                  >
-                    <svg className="h-5 w-5 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-                    </svg>
-                    Panel Admin
-                  </Link>
-                )}
-                <button
-                  onClick={handleLogout}
-                  className="w-full flex items-center px-4 py-3 border-2 border-white/30 rounded-xl hover:bg-white/20 transition-all font-medium"
-                >
-                  <svg className="h-5 w-5 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-                  </svg>
-                  Cerrar Sesión
-                </button>
-              </>
-            ) : (
-              <>
-                <Link
-                  href="/login"
-                  onClick={closeMobileMenu}
-                  className="flex items-center px-4 py-3 rounded-xl hover:bg-white/20 transition-all font-medium"
-                >
-                  <svg className="h-5 w-5 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
-                  </svg>
-                  Iniciar Sesión
-                </Link>
-                <Link
-                  href="/help"
-                  onClick={closeMobileMenu}
-                  className="flex items-center px-4 py-3 rounded-xl hover:bg-white/20 transition-all font-medium"
-                >
-                  <svg className="h-5 w-5 mr-3" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                    <circle cx="12" cy="12" r="9" strokeWidth="2" />
-                    <path d="M9.5 9a2.5 2.5 0 115 0c0 1.5-1.5 2-2.5 2" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                    <circle cx="12" cy="16" r="1" fill="currentColor" />
-                  </svg>
-                  Ayuda
-                </Link>
-                <Link
-                  href="/add-property"
-                  onClick={closeMobileMenu}
-                  className="flex items-center px-4 py-3 bg-white text-primary rounded-xl hover:bg-white/90 transition-all font-semibold"
-                >
-                  <svg className="h-5 w-5 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
-                  </svg>
+              </Button>
+              <Button asChild variant="ghost" size="sm" className="text-textSecondary">
+                <Link href="/login">Iniciar sesión</Link>
+              </Button>
+              <Button
+                asChild
+                size="sm"
+                className="ml-1 bg-primary text-primary-foreground transition-transform hover:scale-105 hover:bg-primaryHover"
+              >
+                <Link href="/add-property">
+                  <Plus className="h-4 w-4" />
                   Publicar gratis
                 </Link>
-              </>
-            )}
-          </div>
+              </Button>
+            </>
+          )}
         </div>
-      )}
+
+        {/* Mobile Menu */}
+        <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
+          <SheetTrigger asChild>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="md:hidden text-textPrimary"
+              aria-label="Abrir menú"
+            >
+              <Menu className="h-6 w-6" />
+            </Button>
+          </SheetTrigger>
+          <SheetContent side="right" className="w-72 sm:w-80">
+            <SheetHeader>
+              <SheetTitle className="flex items-center gap-2 text-left">
+                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-white">
+                  <Building2 className="h-4 w-4" strokeWidth={2} aria-hidden />
+                </div>
+                Geo Propiedades
+              </SheetTitle>
+            </SheetHeader>
+
+            <div className="mt-6 flex flex-col gap-1">
+              {token ? (
+                <>
+                  <div className="mb-2 flex items-center gap-3 rounded-lg bg-background px-3 py-2.5">
+                    <Avatar className="h-9 w-9">
+                      <AvatarFallback className="bg-primaryLight text-sm font-semibold text-primary">
+                        {initials}
+                      </AvatarFallback>
+                    </Avatar>
+                    <span className="truncate text-sm font-semibold text-textPrimary">
+                      {user?.username || 'Cuenta'}
+                    </span>
+                  </div>
+
+                  <Button asChild variant="ghost" className="justify-start" onClick={closeMobileMenu}>
+                    <Link href="/my-properties">
+                      <FolderKanban className="h-4 w-4" />
+                      Mis Propiedades
+                    </Link>
+                  </Button>
+                  <Button asChild variant="ghost" className="justify-start" onClick={closeMobileMenu}>
+                    <Link href="/add-property">
+                      <Plus className="h-4 w-4" />
+                      Nueva Propiedad
+                    </Link>
+                  </Button>
+                  <Button asChild variant="ghost" className="justify-start" onClick={closeMobileMenu}>
+                    <Link href="/account">
+                      <UserIcon className="h-4 w-4" />
+                      Mi cuenta
+                    </Link>
+                  </Button>
+                  <Button asChild variant="ghost" className="justify-start" onClick={closeMobileMenu}>
+                    <Link href="/help">
+                      <CircleHelp className="h-4 w-4" />
+                      Ayuda
+                    </Link>
+                  </Button>
+                  {user?.is_staff && (
+                    <Button asChild variant="ghost" className="justify-start text-warning" onClick={closeMobileMenu}>
+                      <Link href="/admin">
+                        <LayoutDashboard className="h-4 w-4" />
+                        Panel Admin
+                      </Link>
+                    </Button>
+                  )}
+
+                  <Separator className="my-2" />
+
+                  <Button
+                    variant="outline"
+                    className="justify-start text-error hover:text-error"
+                    onClick={handleLogout}
+                  >
+                    <LogOut className="h-4 w-4" />
+                    Cerrar sesión
+                  </Button>
+                </>
+              ) : (
+                <>
+                  <Button asChild variant="ghost" className="justify-start" onClick={closeMobileMenu}>
+                    <Link href="/login">
+                      <UserIcon className="h-4 w-4" />
+                      Iniciar sesión
+                    </Link>
+                  </Button>
+                  <Button asChild variant="ghost" className="justify-start" onClick={closeMobileMenu}>
+                    <Link href="/help">
+                      <CircleHelp className="h-4 w-4" />
+                      Ayuda
+                    </Link>
+                  </Button>
+
+                  <Separator className="my-2" />
+
+                  <Button
+                    asChild
+                    className="justify-start bg-primary text-primary-foreground hover:bg-primaryHover"
+                    onClick={closeMobileMenu}
+                  >
+                    <Link href="/add-property">
+                      <Plus className="h-4 w-4" />
+                      Publicar gratis
+                    </Link>
+                  </Button>
+                </>
+              )}
+            </div>
+          </SheetContent>
+        </Sheet>
+      </div>
     </nav>
   );
 };

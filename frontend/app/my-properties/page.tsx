@@ -3,22 +3,27 @@
 import { useEffect, useState } from 'react';
 import { useAuth } from '@/lib/auth-context';
 import { useRouter } from 'next/navigation';
-import { toast } from 'react-toastify';
+import { toast } from 'sonner';
+import { Share2, Pencil, Trash2, Plus, Home, LifeBuoy, MessageCircle } from 'lucide-react';
 import PrivateRoute from '@/components/PrivateRoute';
 import ShareModal from '@/components/ShareModal';
+import PropertyCard from '@/components/PropertyCard';
+import { Button } from '@/components/ui/button';
+import { Skeleton } from '@/components/ui/skeleton';
+import type { Property } from '@/lib/types';
 
 const MyPropertiesPage = () => {
   const { token, logout, user } = useAuth();
   const router = useRouter();
-  const [properties, setProperties] = useState<any[]>([]);
+  const [properties, setProperties] = useState<Property[]>([]);
   const [loading, setLoading] = useState(true);
   const [shareModalOpen, setShareModalOpen] = useState(false);
   const [shareAllModalOpen, setShareAllModalOpen] = useState(false);
   const [selectedPropertyId, setSelectedPropertyId] = useState<number | null>(null);
-  const API_URL = process.env.NEXT_PUBLIC_API_URL || '/api';
 
   useEffect(() => {
     fetchMyProperties();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token]);
 
   const fetchMyProperties = async () => {
@@ -71,39 +76,6 @@ const MyPropertiesPage = () => {
     }
   };
 
-  const getPropertyTypeLabel = (type: string) => {
-    const labels: any = {
-      house: 'Casa',
-      land: 'Terreno',
-      apartment: 'Apartamento',
-      commercial: 'Comercial',
-      other: 'Otro'
-    };
-    return labels[type] || type;
-  };
-
-  const getStatusLabel = (status: string) => {
-    const labels: any = {
-      for_sale: 'En Venta',
-      for_rent: 'En Alquiler',
-      sold: 'Vendido',
-      rented: 'Alquilado',
-      inactive: 'Inactivo'
-    };
-    return labels[status] || status;
-  };
-
-  const getStatusColor = (status: string) => {
-    const colors: any = {
-      for_sale: 'bg-green-500',
-      for_rent: 'bg-blue-500',
-      sold: 'bg-gray-500',
-      rented: 'bg-purple-500',
-      inactive: 'bg-red-500'
-    };
-    return colors[status] || 'bg-gray-500';
-  };
-
   const handleShare = (propertyId: number) => {
     setSelectedPropertyId(propertyId);
     setShareModalOpen(true);
@@ -127,223 +99,152 @@ const MyPropertiesPage = () => {
     return url.toString();
   };
 
-  if (loading) {
-    return (
-      <PrivateRoute>
-        <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
-            <p className="mt-4 text-gray-600">Cargando propiedades...</p>
-          </div>
-        </div>
-      </PrivateRoute>
-    );
-  }
-
   return (
     <PrivateRoute>
-      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
+      <div className="min-h-screen bg-background">
         {/* Header */}
-        <div className="bg-white shadow-sm border-b">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <div className="border-b border-line bg-surface">
+          <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
+            <div className="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
               <div>
-                <h1 className="text-3xl font-bold text-gray-900">Mis Propiedades</h1>
-                <p className="text-sm text-gray-600 mt-1">Administra tus propiedades registradas</p>
+                <p className="text-sm font-semibold text-primary">Cuenta</p>
+                <h1 className="mt-1 text-3xl font-bold tracking-tight text-textPrimary md:text-4xl">
+                  Mis propiedades
+                </h1>
+                <p className="mt-2 text-textSecondary">Administra tus propiedades registradas.</p>
               </div>
               <div className="flex flex-wrap gap-3">
-                <button
+                <Button
+                  variant="outline"
                   onClick={handleShareAll}
-                  className="inline-flex items-center px-5 py-3 bg-gradient-to-r from-emerald-500 to-emerald-600 text-white rounded-xl hover:from-emerald-600 hover:to-emerald-700 transition-all font-semibold shadow-lg relative"
-                  title="Compartir link con solo mis propiedades"
-                  disabled={properties.length === 0}
+                  disabled={loading || properties.length === 0}
+                  className="border-secondary/30 text-secondary hover:bg-secondary/10 hover:text-secondary"
                 >
-                  <svg className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
-                  </svg>
-                  <span className="hidden md:inline">Compartir Mis Propiedades</span>
-                  <span className="md:hidden">Mi Portafolio</span>
+                  <Share2 className="h-4 w-4" strokeWidth={1.75} />
+                  <span className="hidden md:inline">Compartir mis propiedades</span>
+                  <span className="md:hidden">Compartir</span>
                   {properties.length > 0 && (
-                    <span className="ml-2 px-2 py-0.5 bg-white/20 rounded-full text-xs font-bold">
+                    <span className="ml-1 rounded-full bg-secondary/15 px-2 py-0.5 text-xs font-bold text-secondary">
                       {properties.length}
                     </span>
                   )}
-                </button>
-                <button
-                  onClick={() => router.push('/add-property')}
-                  className="inline-flex items-center px-5 py-3 bg-gradient-to-r from-primary to-secondary text-white rounded-xl hover:from-primary/90 hover:to-secondary/90 transition-all font-semibold shadow-lg"
-                >
-                  <svg className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                  </svg>
-                  Nueva Propiedad
-                </button>
+                </Button>
+                <Button onClick={() => router.push('/add-property')}>
+                  <Plus className="h-4 w-4" strokeWidth={2} />
+                  Nueva propiedad
+                </Button>
               </div>
             </div>
           </div>
         </div>
 
         {/* Content */}
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          {properties.length === 0 ? (
-            <div className="bg-white rounded-2xl shadow-lg p-12 text-center">
-              <svg className="h-24 w-24 mx-auto text-gray-400 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-              </svg>
-              <h3 className="text-xl font-semibold text-gray-900 mb-2">No tienes propiedades registradas</h3>
-              <p className="text-gray-600 mb-6">Comienza agregando tu primera propiedad</p>
-              <button
-                onClick={() => router.push('/add-property')}
-                className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-primary to-secondary text-white rounded-xl hover:from-primary/90 hover:to-secondary/90 transition-all font-semibold"
-              >
-                <svg className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                </svg>
-                Agregar Propiedad
-              </button>
+        <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
+          {loading ? (
+            <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+              {Array.from({ length: 6 }).map((_, i) => (
+                <div key={i} className="space-y-3">
+                  <Skeleton className="aspect-[4/3] w-full rounded-card" />
+                  <Skeleton className="h-4 w-2/3" />
+                  <Skeleton className="h-4 w-1/3" />
+                </div>
+              ))}
+            </div>
+          ) : properties.length === 0 ? (
+            <div className="rounded-card border border-line bg-surface p-12 text-center shadow-card">
+              <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-primary/10 text-primary">
+                <Home className="h-8 w-8" strokeWidth={1.75} />
+              </div>
+              <h3 className="text-xl font-semibold text-textPrimary">No tienes propiedades registradas</h3>
+              <p className="mt-2 text-textSecondary">Comienza agregando tu primera propiedad.</p>
+              <Button className="mt-6" onClick={() => router.push('/add-property')}>
+                <Plus className="h-4 w-4" strokeWidth={2} />
+                Agregar propiedad
+              </Button>
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
               {properties.map((property) => (
-                <div key={property.id} className="bg-white rounded-2xl shadow-lg overflow-hidden transition-all hover:shadow-xl hover:scale-[1.02]">
-                  {/* Header */}
-                  <div className="p-4 bg-gradient-to-r from-primary to-secondary">
-                    <div className="flex items-start justify-between">
-                      <h3 className="text-lg font-bold text-white truncate flex-1">
-                        {property.title}
-                      </h3>
-                      <span className={`${getStatusColor(property.status)} text-white text-xs px-2 py-1 rounded-full ml-2 whitespace-nowrap`}>
-                        {getStatusLabel(property.status)}
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* Content */}
-                  <div className="p-4 space-y-3">
-                    <div className="flex items-center gap-2 text-sm">
-                      <svg className="h-4 w-4 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-                      </svg>
-                      <span className="font-semibold text-gray-700">Tipo:</span>
-                      <span className="text-gray-600">{getPropertyTypeLabel(property.property_type)}</span>
-                    </div>
-
-                    <div className="flex items-center gap-2 text-sm">
-                      <svg className="h-4 w-4 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
-                      </svg>
-                      <span className="font-semibold text-gray-700">Área:</span>
-                      <span className="text-gray-600">{property.area} m²</span>
-                    </div>
-
-                    <div className="flex items-center gap-2 text-sm">
-                      <svg className="h-4 w-4 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                      </svg>
-                      <span className="font-semibold text-gray-700">Precio:</span>
-                      <span className="text-green-600 font-bold">USD {parseFloat(property.price).toLocaleString()}</span>
-                    </div>
-
-                    {property.city && (
-                      <div className="flex items-center gap-2 text-sm">
-                        <svg className="h-4 w-4 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                        </svg>
-                        <span className="font-semibold text-gray-700">Ubicación:</span>
-                        <span className="text-gray-600 truncate">{property.city}</span>
-                      </div>
-                    )}
-
-                    {property.description && (
-                      <p className="text-sm text-gray-600 line-clamp-2 mt-2">
-                        {property.description}
-                      </p>
-                    )}
-                  </div>
-
-                  {/* Actions */}
-                  <div className="px-4 pb-4 flex gap-2">
-                    <button
+                <div key={property.id} className="flex flex-col gap-3">
+                  <PropertyCard property={property} />
+                  <div className="flex gap-2 rounded-lg border border-line bg-surface p-2 shadow-card">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="flex-1 text-secondary hover:bg-secondary/10 hover:text-secondary"
                       onClick={() => handleShare(property.id)}
-                      className="flex-1 inline-flex justify-center items-center px-4 py-2 bg-emerald-500 text-white rounded-xl hover:bg-emerald-600 transition-colors font-medium text-sm"
-                      title="Compartir propiedad"
                     >
-                      <svg className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
-                      </svg>
+                      <Share2 className="h-4 w-4" strokeWidth={1.75} />
                       Compartir
-                    </button>
-                    <button
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="flex-1 text-primary hover:bg-primary/10 hover:text-primary"
                       onClick={() => router.push(`/edit-property/${property.id}`)}
-                      className="flex-1 inline-flex justify-center items-center px-4 py-2 bg-blue-500 text-white rounded-xl hover:bg-blue-600 transition-colors font-medium text-sm"
                     >
-                      <svg className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                      </svg>
+                      <Pencil className="h-4 w-4" strokeWidth={1.75} />
                       Editar
-                    </button>
-                    <button
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="flex-1 text-error hover:bg-error/10 hover:text-error"
                       onClick={() => handleDelete(property.id)}
-                      className="flex-1 inline-flex justify-center items-center px-4 py-2 bg-red-500 text-white rounded-xl hover:bg-red-600 transition-colors font-medium text-sm"
                     >
-                      <svg className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                      </svg>
+                      <Trash2 className="h-4 w-4" strokeWidth={1.75} />
                       Eliminar
-                    </button>
+                    </Button>
                   </div>
                 </div>
               ))}
             </div>
           )}
         </div>
-      </div>
-      {/* Contact Support */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-10">
-        <div className="mt-8 rounded-2xl bg-gradient-to-r from-primary/10 via-white to-secondary/10 border border-primary/15 shadow-lg p-6 sm:p-8 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-          <div className="flex items-start gap-3">
-            <div className="mt-1">
-              <svg className="h-6 w-6 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
+
+        {/* Contact Support */}
+        <div className="mx-auto max-w-7xl px-4 pb-16 sm:px-6 lg:px-8">
+          <div className="flex flex-col gap-4 rounded-card border border-primary/15 bg-primary/5 p-6 shadow-card md:flex-row md:items-center md:justify-between md:p-8">
+            <div className="flex items-start gap-3">
+              <div className="mt-0.5 flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                <LifeBuoy className="h-5 w-5" strokeWidth={1.75} />
+              </div>
+              <div>
+                <p className="text-base font-semibold text-textPrimary sm:text-lg">¿Problemas técnicos o dudas?</p>
+                <p className="mt-1 text-sm text-textSecondary">
+                  Escríbenos y te ayudamos a publicar o gestionar tus propiedades rápidamente.
+                </p>
+              </div>
             </div>
-            <div>
-              <p className="text-base sm:text-lg font-semibold text-gray-900">¿Problemas técnicos o dudas?</p>
-              <p className="text-sm text-gray-600 mt-1">
-                Escríbenos y te ayudamos a publicar o gestionar tus propiedades rápidamente.
-              </p>
-            </div>
+            <Button asChild className="w-full md:w-auto">
+              <a
+                href="https://wa.me/593983738151?text=Hola%20necesito%20ayuda%20con%20mis%20propiedades"
+                target="_blank"
+                rel="noreferrer"
+              >
+                Chatear por WhatsApp
+                <MessageCircle className="h-4 w-4" strokeWidth={1.75} />
+              </a>
+            </Button>
           </div>
-          <a
-            href="https://wa.me/593983738151?text=Hola%20necesito%20ayuda%20con%20mis%20propiedades"
-            target="_blank"
-            rel="noreferrer"
-            className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-primary to-secondary text-white px-5 py-3 font-semibold shadow hover:shadow-lg transition"
-          >
-            Chatear por WhatsApp
-            <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
-            </svg>
-          </a>
         </div>
+
+        {/* Share Modal - Individual Property */}
+        <ShareModal
+          isOpen={shareModalOpen}
+          onClose={() => setShareModalOpen(false)}
+          shareUrl={getShareUrl()}
+          title="Compartir Propiedad"
+        />
+
+        {/* Share Modal - All Properties */}
+        <ShareModal
+          isOpen={shareAllModalOpen}
+          onClose={() => setShareAllModalOpen(false)}
+          shareUrl={getShareAllUrl()}
+          title="Compartir Solo Mis Propiedades"
+        />
       </div>
-
-      {/* Share Modal - Individual Property */}
-      <ShareModal
-        isOpen={shareModalOpen}
-        onClose={() => setShareModalOpen(false)}
-        shareUrl={getShareUrl()}
-        title="Compartir Propiedad"
-      />
-
-      {/* Share Modal - All Properties */}
-      <ShareModal
-        isOpen={shareAllModalOpen}
-        onClose={() => setShareAllModalOpen(false)}
-        shareUrl={getShareAllUrl()}
-        title="Compartir Solo Mis Propiedades"
-      />
     </PrivateRoute>
   );
 };

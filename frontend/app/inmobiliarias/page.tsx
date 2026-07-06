@@ -1,5 +1,9 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
+import { Check } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Card } from '@/components/ui/card';
 
 export const metadata: Metadata = {
   title: 'Para inmobiliarias y corredores | Geo Propiedades Ecuador',
@@ -115,20 +119,14 @@ export default function InmobiliariasPage() {
               exacta, contacto directo por WhatsApp y un panel para no perder ningún lead.
             </p>
             <div className="mt-8 flex flex-wrap gap-3">
-              <Link
-                href="/register"
-                className="rounded-lg bg-secondary px-6 py-3 text-sm font-semibold text-white hover:bg-secondaryHover"
-              >
-                Publicar mis propiedades
-              </Link>
-              <a
-                href={WHATSAPP_URL}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="rounded-lg border border-white/30 px-6 py-3 text-sm font-semibold text-white hover:bg-white/10"
-              >
-                Hablar por WhatsApp
-              </a>
+              <Button asChild size="lg" className="bg-secondary text-white hover:bg-secondaryHover">
+                <Link href="/register">Publicar mis propiedades</Link>
+              </Button>
+              <Button asChild size="lg" variant="outline" className="border-white/30 bg-transparent text-white hover:bg-white/10">
+                <a href={WHATSAPP_URL} target="_blank" rel="noopener noreferrer">
+                  Hablar por WhatsApp
+                </a>
+              </Button>
             </div>
           </div>
         </div>
@@ -141,13 +139,13 @@ export default function InmobiliariasPage() {
         </h2>
         <div className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {BENEFITS.map((b) => (
-            <div key={b.title} className="rounded-card border border-line bg-white p-6 shadow-card">
+            <Card key={b.title} className="rounded-card border-line p-6 shadow-card">
               <div className="flex h-11 w-11 items-center justify-center rounded-lg bg-primary/10 text-primary">
                 <Icon d={b.icon} />
               </div>
               <h3 className="mt-4 text-base font-bold text-textPrimary">{b.title}</h3>
               <p className="mt-2 text-sm leading-6 text-textSecondary">{b.desc}</p>
-            </div>
+            </Card>
           ))}
         </div>
       </section>
@@ -170,12 +168,9 @@ export default function InmobiliariasPage() {
             ))}
           </div>
           <div className="mt-10 text-center">
-            <Link
-              href="/publicar-asistido"
-              className="rounded-lg bg-primary px-6 py-3 text-sm font-semibold text-white hover:bg-primaryHover"
-            >
-              Publicación asistida
-            </Link>
+            <Button asChild size="lg">
+              <Link href="/publicar-asistido">Publicación asistida</Link>
+            </Button>
           </div>
         </div>
       </section>
@@ -208,10 +203,10 @@ export default function InmobiliariasPage() {
               ))}
             </ul>
           </div>
-          <div className="rounded-card border border-line bg-white p-6 shadow-card">
+          <Card className="rounded-card border-line p-6 shadow-card">
             <div className="mb-4 flex items-center justify-between">
               <span className="text-sm font-semibold text-textPrimary">Contactos recientes</span>
-              <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">12 nuevos</span>
+              <Badge className="bg-primary/10 text-primary hover:bg-primary/10">12 nuevos</Badge>
             </div>
             <div className="space-y-2">
               {[
@@ -224,13 +219,11 @@ export default function InmobiliariasPage() {
                     <p className="text-sm font-semibold text-textPrimary">{l.name}</p>
                     <p className="text-xs text-textSecondary">{l.prop}</p>
                   </div>
-                  <span className="rounded-full bg-secondary/15 px-2 py-0.5 text-xs font-medium text-secondaryHover">
-                    {l.tag}
-                  </span>
+                  <Badge className="bg-secondary/15 text-secondaryHover hover:bg-secondary/15">{l.tag}</Badge>
                 </div>
               ))}
             </div>
-          </div>
+          </Card>
         </div>
       </section>
 
@@ -243,42 +236,37 @@ export default function InmobiliariasPage() {
           </p>
           <div className="mt-10 grid gap-6 lg:grid-cols-3">
             {PLANS.map((plan) => (
-              <div
+              <Card
                 key={plan.name}
-                className={`rounded-card border bg-white p-6 shadow-card ${
+                className={`rounded-card p-6 shadow-card ${
                   plan.highlight ? 'border-primary ring-2 ring-primary' : 'border-line'
                 }`}
               >
-                {plan.highlight && (
-                  <span className="inline-block rounded-full bg-primary px-3 py-1 text-xs font-semibold text-white">
-                    Más popular
-                  </span>
-                )}
+                {plan.highlight && <Badge className="bg-primary text-white hover:bg-primary">Más popular</Badge>}
                 <h3 className="mt-3 text-lg font-bold text-textPrimary">{plan.name}</h3>
                 <p className="mt-1 text-2xl font-bold text-primary">{plan.price}</p>
                 <ul className="mt-5 space-y-2">
                   {plan.features.map((f) => (
                     <li key={f} className="flex items-start gap-2 text-sm text-textSecondary">
-                      <svg className="mt-0.5 h-4 w-4 flex-shrink-0 text-success" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                      </svg>
+                      <Check className="mt-0.5 h-4 w-4 flex-shrink-0 text-success" strokeWidth={2} />
                       {f}
                     </li>
                   ))}
                 </ul>
-                <a
-                  href={plan.href}
-                  target={plan.href.startsWith('http') ? '_blank' : undefined}
-                  rel={plan.href.startsWith('http') ? 'noopener noreferrer' : undefined}
-                  className={`mt-6 block rounded-lg px-5 py-2.5 text-center text-sm font-semibold ${
-                    plan.highlight
-                      ? 'bg-primary text-white hover:bg-primaryHover'
-                      : 'border border-line text-textPrimary hover:bg-background'
-                  }`}
+                <Button
+                  asChild
+                  variant={plan.highlight ? 'default' : 'outline'}
+                  className="mt-6 w-full"
                 >
-                  {plan.cta}
-                </a>
-              </div>
+                  <a
+                    href={plan.href}
+                    target={plan.href.startsWith('http') ? '_blank' : undefined}
+                    rel={plan.href.startsWith('http') ? 'noopener noreferrer' : undefined}
+                  >
+                    {plan.cta}
+                  </a>
+                </Button>
+              </Card>
             ))}
           </div>
         </div>
@@ -292,20 +280,14 @@ export default function InmobiliariasPage() {
             Publica tus propiedades hoy y empieza a recibir contactos directos.
           </p>
           <div className="mt-8 flex flex-wrap justify-center gap-3">
-            <Link
-              href="/register"
-              className="rounded-lg bg-secondary px-6 py-3 text-sm font-semibold text-white hover:bg-secondaryHover"
-            >
-              Crear cuenta gratis
-            </Link>
-            <a
-              href={WHATSAPP_URL}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="rounded-lg border border-white/30 px-6 py-3 text-sm font-semibold text-white hover:bg-white/10"
-            >
-              Escríbenos por WhatsApp
-            </a>
+            <Button asChild size="lg" className="bg-secondary text-white hover:bg-secondaryHover">
+              <Link href="/register">Crear cuenta gratis</Link>
+            </Button>
+            <Button asChild size="lg" variant="outline" className="border-white/30 bg-transparent text-white hover:bg-white/10">
+              <a href={WHATSAPP_URL} target="_blank" rel="noopener noreferrer">
+                Escríbenos por WhatsApp
+              </a>
+            </Button>
           </div>
         </div>
       </section>

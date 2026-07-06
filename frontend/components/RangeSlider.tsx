@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
+import { cn } from '@/lib/utils';
 
 interface RangeSliderProps {
   min: number;
@@ -175,7 +176,7 @@ const RangeSlider = ({
           onChange={(e) => setMinInput(e.target.value)}
           onBlur={() => commitInput(true)}
           onKeyDown={handleKeyDown(true)}
-          className={`${valueBoxClass} px-1.5 py-0.5 rounded text-[10px] w-[80px] text-right focus:outline-none focus:ring-1 focus:ring-primary/60`}
+          className={`${valueBoxClass} font-geo px-1.5 py-0.5 rounded-input text-[10px] w-[80px] text-right focus:outline-none focus:ring-1 focus:ring-primary/60`}
         />
         <span className={separatorClass}>-</span>
         <input
@@ -188,7 +189,7 @@ const RangeSlider = ({
           onChange={(e) => setMaxInput(e.target.value)}
           onBlur={() => commitInput(false)}
           onKeyDown={handleKeyDown(false)}
-          className={`${valueBoxClass} px-1.5 py-0.5 rounded text-[10px] w-[80px] text-right focus:outline-none focus:ring-1 focus:ring-primary/60`}
+          className={`${valueBoxClass} font-geo px-1.5 py-0.5 rounded-input text-[10px] w-[80px] text-right focus:outline-none focus:ring-1 focus:ring-primary/60`}
         />
       </div>
 
@@ -226,9 +227,10 @@ const RangeSlider = ({
             onMouseDown={handleMouseDown(true)}
             onTouchStart={handleTouchStart(true)}
           >
-            <div className={`w-4 h-4 bg-white border-2 border-primary rounded-full shadow-md transition-transform ${
+            <div className={cn(
+              'w-4 h-4 bg-white border-2 border-primary rounded-full shadow-card transition-transform',
               isDraggingMin ? 'scale-125' : 'hover:scale-110'
-            }`} />
+            )} />
           </div>
 
           {/* Max Handle */}
@@ -238,9 +240,10 @@ const RangeSlider = ({
             onMouseDown={handleMouseDown(false)}
             onTouchStart={handleTouchStart(false)}
           >
-            <div className={`w-4 h-4 bg-white border-2 border-secondary rounded-full shadow-md transition-transform ${
+            <div className={cn(
+              'w-4 h-4 bg-white border-2 border-secondary rounded-full shadow-card transition-transform',
               isDraggingMax ? 'scale-125' : 'hover:scale-110'
-            }`} />
+            )} />
           </div>
         </div>
       </div>

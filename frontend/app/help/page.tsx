@@ -2,6 +2,12 @@
 
 import Link from 'next/link';
 import { useState } from 'react';
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from '@/components/ui/accordion';
 
 function Icon({ path, className = 'h-5 w-5' }: { path: string; className?: string }) {
   return (
@@ -45,7 +51,7 @@ export default function HelpPage() {
           <h1 className="text-3xl md:text-4xl font-bold tracking-tight text-textPrimary">
             Publica propiedades en un mapa interactivo
           </h1>
-          <p className="mt-4 text-lg text-muted leading-relaxed">
+          <p className="mt-4 text-lg text-muted-foreground leading-relaxed">
             Geo Propiedades Ecuador permite registrar terrenos, casas, departamentos y locales
             con ubicación, fotos, precio y medidas —aproximadas o delimitadas en el mapa—.
             Es útil para propietarios, agentes e inmobiliarias que necesitan compartir su
@@ -78,7 +84,7 @@ export default function HelpPage() {
                   <Icon path={f.icon} />
                 </div>
                 <h3 className="font-semibold mb-1">{f.title}</h3>
-                <p className="text-sm text-muted leading-relaxed">{f.desc}</p>
+                <p className="text-sm text-muted-foreground leading-relaxed">{f.desc}</p>
               </div>
             ))}
           </div>
@@ -100,7 +106,7 @@ export default function HelpPage() {
                 </div>
                 <div>
                   <h3 className="font-semibold">{a.title}</h3>
-                  <p className="text-sm text-muted leading-relaxed">{a.desc}</p>
+                  <p className="text-sm text-muted-foreground leading-relaxed">{a.desc}</p>
                 </div>
               </div>
             ))}
@@ -122,7 +128,7 @@ export default function HelpPage() {
                 </span>
                 <div>
                   <h3 className="font-semibold">{s.title}</h3>
-                  <p className="text-sm text-muted leading-relaxed mt-0.5">{s.desc}</p>
+                  <p className="text-sm text-muted-foreground leading-relaxed mt-0.5">{s.desc}</p>
                 </div>
               </li>
             ))}
@@ -142,7 +148,7 @@ export default function HelpPage() {
             </div>
             <div className="flex-1">
               <h2 className="text-xl font-semibold">Compartir un mapa filtrado</h2>
-              <p className="mt-2 text-sm text-muted leading-relaxed max-w-2xl">
+              <p className="mt-2 text-sm text-muted-foreground leading-relaxed max-w-2xl">
                 En el mapa, aplica los filtros que quieras (zona, tipo, precio, área). La dirección
                 de la página incluye esos filtros, así que al compartir el enlace la otra persona
                 verá el mismo resultado. También puedes usar el botón
@@ -168,7 +174,7 @@ export default function HelpPage() {
         {/* Preguntas frecuentes */}
         <section>
           <h2 className="text-xl font-semibold mb-6">Preguntas frecuentes</h2>
-          <div className="space-y-2 max-w-3xl">
+          <Accordion type="single" collapsible className="max-w-3xl card divide-y divide-line px-5">
             {[
               { q: '¿Tiene algún costo publicar?', a: 'No cobramos por publicar propiedades ni comisiones por las ventas. El contacto entre anunciante e interesado es directo.' },
               { q: '¿Cuántas propiedades puedo publicar?', a: 'No hay un límite de publicaciones por cuenta.' },
@@ -179,23 +185,18 @@ export default function HelpPage() {
               { q: '¿Funciona en todo Ecuador?', a: 'Sí. Puedes registrar propiedades en cualquier provincia y ciudad del país.' },
               { q: '¿Puedo compartir solo algunas propiedades?', a: 'Sí. Aplica filtros en el mapa y comparte el enlace: mostrará únicamente las propiedades que cumplan esos filtros.' },
             ].map((faq, i) => (
-              <details key={i} className="card px-5 py-4 group">
-                <summary className="flex items-center justify-between gap-3 cursor-pointer list-none font-medium">
-                  <span>{faq.q}</span>
-                  <svg className="h-5 w-5 text-muted flex-shrink-0 transition-transform group-open:rotate-180" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-                  </svg>
-                </summary>
-                <p className="mt-3 text-sm text-muted leading-relaxed">{faq.a}</p>
-              </details>
+              <AccordionItem key={i} value={`faq-${i}`} className="border-line last:border-b-0">
+                <AccordionTrigger className="font-medium hover:no-underline">{faq.q}</AccordionTrigger>
+                <AccordionContent className="text-muted-foreground leading-relaxed">{faq.a}</AccordionContent>
+              </AccordionItem>
             ))}
-          </div>
+          </Accordion>
         </section>
 
         {/* Contacto */}
         <section className="card p-6 md:p-8">
           <h2 className="text-xl font-semibold">¿Necesitas ayuda?</h2>
-          <p className="mt-2 text-sm text-muted leading-relaxed max-w-2xl">
+          <p className="mt-2 text-sm text-muted-foreground leading-relaxed max-w-2xl">
             Si tienes dudas sobre cómo publicar o quieres reportar un problema, escríbenos y te ayudamos.
           </p>
           <div className="mt-5 flex flex-col sm:flex-row gap-3">
@@ -211,7 +212,7 @@ export default function HelpPage() {
           </div>
         </section>
 
-        <footer className="border-t border-line pt-6 text-sm text-muted">
+        <footer className="border-t border-line pt-6 text-sm text-muted-foreground">
           <p>
             <span className="font-medium text-textPrimary">Geo Propiedades Ecuador</span> — plataforma
             para publicar y explorar propiedades en un mapa.
