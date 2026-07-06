@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
-import { Poppins } from 'next/font/google';
+import { GeistSans } from 'geist/font/sans';
+import { GeistMono } from 'geist/font/mono';
 import Script from 'next/script';
 import './globals.css';
 import 'react-toastify/dist/ReactToastify.css';
@@ -9,13 +10,7 @@ import NavBar from '@/components/NavBar';
 import Footer from '@/components/Footer';
 import { ToastContainer } from 'react-toastify';
 
-const poppins = Poppins({
-  subsets: ['latin'],
-  weight: ['300', '400', '500', '600', '700'],
-  variable: '--font-poppins',
-});
-
-const siteUrl = process.env.NEXT_PUBLIC_FRONTEND_URL || 'https://estatemap.com';
+const siteUrl = process.env.NEXT_PUBLIC_FRONTEND_URL || 'https://geopropiedadesecuador.com';
 
 export const metadata: Metadata = {
   title: {
@@ -139,7 +134,7 @@ export default function RootLayout({
   };
 
   return (
-    <html lang="es" className={poppins.variable}>
+    <html lang="es" className={`${GeistSans.variable} ${GeistMono.variable}`}>
       <body className="font-sans">
         <Script
           id="sw-cleanup-script"
