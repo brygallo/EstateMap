@@ -681,7 +681,6 @@ const LeafletMap = ({
                 }}
                 eventHandlers={{
                   click: () => {
-                    console.log('Polygon clicked!', p.title);
                     // Cancel any pending hover timeout
                     if (hoverTimeoutRef.current) {
                       clearTimeout(hoverTimeoutRef.current);
@@ -753,7 +752,6 @@ const LeafletMap = ({
                 icon={markerIcon}
                 eventHandlers={{
                   click: () => {
-                    console.log('Marker clicked!', p.title);
                     onPolygonClick(p);
                   }
                 }}
@@ -783,7 +781,6 @@ const LeafletMap = ({
                 bubblingMouseEvents={false}
                 eventHandlers={{
                   click: (e) => {
-                    console.log('Price label clicked!', p.title);
                     // Stop event propagation to prevent polygon click
                     L.DomEvent.stopPropagation(e.originalEvent);
                     // Cancel any pending hover timeout
