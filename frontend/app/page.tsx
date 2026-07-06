@@ -2,7 +2,14 @@
 
 import { useEffect, useState, useRef, useCallback, useMemo } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
+import { toast } from 'react-toastify';
 import { useAuth } from '@/lib/auth-context';
+import {
+  getPropertyTypeLabel,
+  getStatusLabel,
+  getStatusBadgeClass,
+  formatArea,
+} from '@/lib/property-labels';
 import PropertyModal from '@/components/PropertyModal';
 import ShareModal from '@/components/ShareModal';
 import RangeSlider from '@/components/RangeSlider';
@@ -45,7 +52,7 @@ function SearchableUserSelect({ users, selectedUserId, onSelect }: any) {
 
   // Get selected user display name
   const selectedUser = users.find((u: any) => u.id === parseInt(selectedUserId));
-  const displayText = selectedUserId === 'all' ? 'Todos los usuarios' : `👤 ${selectedUser?.username || 'Usuario'}`;
+  const displayText = selectedUserId === 'all' ? 'Todos los usuarios' : (selectedUser?.username || 'Usuario');
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -76,27 +83,27 @@ function SearchableUserSelect({ users, selectedUserId, onSelect }: any) {
       <button
         type="button"
         onClick={() => setIsOpen(!isOpen)}
-        className="w-full px-2 py-1.5 text-xs bg-white/10 border border-white/20 rounded-lg text-white focus:bg-white/20 focus:outline-none text-left flex items-center justify-between"
+        className="w-full px-3 py-2 text-sm bg-white border border-line rounded-lg text-textPrimary focus:border-primary focus:outline-none text-left flex items-center justify-between"
       >
         <span className="truncate">{displayText}</span>
-        <svg className={`h-4 w-4 transition-transform ${isOpen ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <svg className={`h-4 w-4 text-slate-400 transition-transform ${isOpen ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
         </svg>
       </button>
 
       {isOpen && (
-        <div className="absolute z-50 w-full mt-1 bg-dark border border-white/20 rounded-lg shadow-xl max-h-64 overflow-hidden">
-          <div className="p-2 border-b border-white/20">
+        <div className="absolute z-50 w-full mt-1 bg-white border border-line rounded-lg shadow-lg max-h-64 overflow-hidden">
+          <div className="p-2 border-b border-line">
             <div className="relative">
               <input
                 type="text"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Buscar usuario..."
-                className="w-full pl-7 pr-2 py-1.5 text-xs bg-white/10 border border-white/20 rounded text-white placeholder-white/50 focus:bg-white/20 focus:outline-none"
+                className="w-full pl-7 pr-2 py-1.5 text-sm bg-white border border-line rounded text-textPrimary placeholder-slate-400 focus:border-primary focus:outline-none"
                 autoFocus
               />
-              <svg className="absolute left-2 top-2 h-3.5 w-3.5 text-white/50" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <svg className="absolute left-2 top-2 h-3.5 w-3.5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
               </svg>
             </div>
@@ -106,8 +113,8 @@ function SearchableUserSelect({ users, selectedUserId, onSelect }: any) {
             <button
               type="button"
               onClick={() => handleSelect('all')}
-              className={`w-full px-3 py-2 text-xs text-left hover:bg-white/10 transition-colors ${
-                selectedUserId === 'all' ? 'bg-white/20 text-white' : 'text-white/80'
+              className={`w-full px-3 py-2 text-sm text-left hover:bg-slate-50 transition-colors ${
+                selectedUserId === 'all' ? 'bg-primary/10 text-primary font-medium' : 'text-textPrimary'
               }`}
             >
               Todos los usuarios
@@ -118,15 +125,15 @@ function SearchableUserSelect({ users, selectedUserId, onSelect }: any) {
                   key={user.id}
                   type="button"
                   onClick={() => handleSelect(user.id.toString())}
-                  className={`w-full px-3 py-2 text-xs text-left hover:bg-white/10 transition-colors ${
-                    selectedUserId === user.id.toString() ? 'bg-white/20 text-white' : 'text-white/80'
+                  className={`w-full px-3 py-2 text-sm text-left hover:bg-slate-50 transition-colors ${
+                    selectedUserId === user.id.toString() ? 'bg-primary/10 text-primary font-medium' : 'text-textPrimary'
                   }`}
                 >
-                  👤 {user.username}
+                  {user.username}
                 </button>
               ))
             ) : (
-              <div className="px-3 py-2 text-xs text-white/50 text-center">
+              <div className="px-3 py-2 text-sm text-slate-400 text-center">
                 No se encontraron usuarios
               </div>
             )}
@@ -242,7 +249,7 @@ const MapPage = () => {
     }
 
     if (!navigator.geolocation) {
-      alert('Tu navegador no soporta geolocalización');
+      toast.error('Tu navegador no soporta geolocalización');
       return;
     }
 
@@ -252,14 +259,11 @@ const MapPage = () => {
         const permissionStatus = await navigator.permissions.query({ name: 'geolocation' as PermissionName });
 
         if (permissionStatus.state === 'denied') {
-          alert('El permiso de ubicación está bloqueado. Para habilitarlo:\n\n' +
-                'En iPhone/Safari: Ve a Configuración > Safari > Ubicación > Permitir\n' +
-                'En Android/Chrome: Ve a Configuración del sitio > Permisos > Ubicación > Permitir');
+          toast.error('El permiso de ubicación está bloqueado. Habilítalo desde la configuración de tu navegador.');
           return;
         }
       } catch (error) {
         // Permissions API not supported (iOS Safari), continue anyway
-        console.log('Permissions API not available, continuing...');
       }
     }
 
@@ -290,39 +294,17 @@ const MapPage = () => {
 
         switch (error.code) {
           case error.PERMISSION_DENIED:
-            // Detect iOS vs Android for better instructions
-            const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
-            const isAndroid = /Android/.test(navigator.userAgent);
-
-            if (isIOS) {
-              errorMessage = 'Permiso de ubicación denegado.\n\n' +
-                           'Para habilitarlo en iPhone:\n' +
-                           '1. Ve a Configuración de iOS\n' +
-                           '2. Busca Safari o tu navegador\n' +
-                           '3. Toca Ubicación\n' +
-                           '4. Selecciona "Permitir"';
-            } else if (isAndroid) {
-              errorMessage = 'Permiso de ubicación denegado.\n\n' +
-                           'Para habilitarlo en Android:\n' +
-                           '1. Ve a Configuración del sitio\n' +
-                           '2. Toca Permisos > Ubicación\n' +
-                           '3. Selecciona "Permitir"';
-            } else {
-              errorMessage = 'Permiso de ubicación denegado.\n\n' +
-                           'Por favor, habilita la ubicación desde la configuración de tu navegador.';
-            }
+            errorMessage = 'Permiso de ubicación denegado. Habilítalo desde la configuración de tu navegador.';
             break;
           case error.POSITION_UNAVAILABLE:
-            errorMessage = 'Información de ubicación no disponible.\n\n' +
-                         'Asegúrate de tener activados los servicios de ubicación en tu dispositivo.';
+            errorMessage = 'Ubicación no disponible. Activa los servicios de ubicación en tu dispositivo.';
             break;
           case error.TIMEOUT:
-            errorMessage = 'Tiempo de espera agotado al obtener la ubicación.\n\n' +
-                         'Por favor, intenta de nuevo. Asegúrate de tener buena señal GPS o Wi-Fi.';
+            errorMessage = 'Se agotó el tiempo de espera. Verifica tu señal GPS o Wi-Fi e intenta de nuevo.';
             break;
         }
 
-        alert(errorMessage);
+        toast.error(errorMessage);
         setLoadingLocation(false);
       },
       {
@@ -352,7 +334,7 @@ const MapPage = () => {
 
   const handleGetMyLocation = () => {
     if (!navigator.geolocation) {
-      alert('Tu navegador no soporta geolocalización');
+      toast.error('Tu navegador no soporta geolocalización');
       return;
     }
 
@@ -388,7 +370,7 @@ const MapPage = () => {
             break;
         }
 
-        alert(errorMessage);
+        toast.error(errorMessage);
         setLoadingLocation(false);
       },
       {
@@ -401,8 +383,6 @@ const MapPage = () => {
 
   // Function for sidebar clicks - only moves map
   const handleSidebarPropertyClick = (property: any) => {
-    console.log('Sidebar property clicked:', property);
-
     // Move map to property location
     if (mapRef.current) {
       try {
@@ -430,8 +410,6 @@ const MapPage = () => {
               [Math.max(...lats), Math.max(...lngs)]
             ];
 
-            console.log('Flying to bounds:', bounds);
-
             // Fly to the polygon with maximum zoom
             mapRef.current.flyToBounds(bounds, {
               padding: [50, 50],
@@ -442,7 +420,6 @@ const MapPage = () => {
         }
         // If property doesn't have polygon but has lat/lng, fly to marker position
         else if (property.latitude && property.longitude) {
-          console.log('Flying to marker:', property.latitude, property.longitude);
           mapRef.current.flyTo([property.latitude, property.longitude], 17, {
             duration: 1.5
           });
@@ -463,8 +440,6 @@ const MapPage = () => {
 
   // Function for polygon clicks - opens modal
   const handlePolygonClick = (property: any) => {
-    console.log('Polygon clicked:', property);
-
     // Move map to property location first
     if (mapRef.current) {
       try {
@@ -492,8 +467,6 @@ const MapPage = () => {
               [Math.max(...lats), Math.max(...lngs)]
             ];
 
-            console.log('Flying to bounds:', bounds);
-
             // Fly to the polygon with maximum zoom
             mapRef.current.flyToBounds(bounds, {
               padding: [50, 50],
@@ -504,7 +477,6 @@ const MapPage = () => {
         }
         // If property doesn't have polygon but has lat/lng, fly to marker position
         else if (property.latitude && property.longitude) {
-          console.log('Flying to marker:', property.latitude, property.longitude);
           mapRef.current.flyTo([property.latitude, property.longitude], 17, {
             duration: 1.5
           });
@@ -629,8 +601,6 @@ const MapPage = () => {
 
         if (res.ok) {
           const data = await res.json();
-          console.log('Properties loaded:', data.length, 'properties');
-          console.log('First property:', data[0]);
           setProperties(data);
           setFilteredProperties(data);
 
@@ -705,57 +675,22 @@ const MapPage = () => {
   // Centro de Ecuador para mostrar el país completo al iniciar
   const defaultCenter: [number, number] = [-1.5, -78.5]; // Centro de Ecuador
 
-  // Format area as integer
-  const formatArea = (area: any) => {
-    return area ? Math.round(parseFloat(area)).toString() : '0';
-  };
-
   // Siempre usar el centro de Ecuador para mostrar el país completo
   const center = defaultCenter;
-
-  // Helper functions
-  const getPropertyTypeLabel = (type: string) => {
-    const labels: any = {
-      house: 'Casa',
-      land: 'Terreno',
-      apartment: 'Apartamento',
-      commercial: 'Comercial',
-      other: 'Otro'
-    };
-    return labels[type] || type;
-  };
-
-  const getStatusLabel = (status: string) => {
-    const labels: any = {
-      for_sale: 'En Venta',
-      for_rent: 'En Alquiler',
-      inactive: 'Inactivo'
-    };
-    return labels[status] || status;
-  };
-
-  const getStatusColor = (status: string) => {
-    const colors: any = {
-      for_sale: 'bg-green-500',
-      for_rent: 'bg-blue-500',
-      inactive: 'bg-gray-500'
-    };
-    return colors[status] || 'bg-gray-500';
-  };
 
   return (
     <div className="relative h-[calc(100vh-4.5rem)] overflow-hidden">
       {/* Mobile Toggle Button - Bottom Left for better visibility */}
       <button
         onClick={() => setSidebarOpen(!sidebarOpen)}
-        className="lg:hidden fixed bottom-20 left-4 z-[1000] bg-gradient-to-r from-primary to-secondary text-white p-4 rounded-full shadow-2xl hover:scale-110 transition-transform"
+        className="lg:hidden fixed bottom-20 left-4 z-[1000] bg-primary text-white p-4 rounded-full shadow-lg hover:bg-primaryHover transition-colors"
         aria-label="Toggle sidebar"
       >
         <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
         </svg>
         {visibleProperties.length > 0 && (
-          <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs w-6 h-6 rounded-full flex items-center justify-center font-bold">
+          <span className="absolute -top-1 -right-1 bg-secondary text-white text-xs w-6 h-6 rounded-full flex items-center justify-center font-bold">
             {visibleProperties.length}
           </span>
         )}
@@ -765,7 +700,7 @@ const MapPage = () => {
       <button
         onClick={handleGetMyLocation}
         disabled={loadingLocation}
-        className="fixed bottom-20 right-4 z-[1000] bg-white text-primary p-4 rounded-full shadow-2xl hover:scale-110 transition-transform disabled:opacity-50 disabled:cursor-not-allowed"
+        className="fixed bottom-20 right-4 z-[1000] bg-white text-primary border border-line p-4 rounded-full shadow-lg hover:bg-slate-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         aria-label="Mi ubicación"
         title="Ir a mi ubicación"
       >
@@ -795,7 +730,7 @@ const MapPage = () => {
         fixed lg:relative
         ${sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
         transition-transform duration-300 ease-in-out
-        bg-dark text-white
+        bg-white text-textPrimary border-r border-line
         h-[calc(100vh-4.5rem)] lg:h-full
         w-72 lg:w-1/5
         z-40 lg:z-0
@@ -803,11 +738,11 @@ const MapPage = () => {
         shadow-2xl lg:shadow-none
       `}>
         {/* Close button for mobile */}
-        <div className="flex items-center justify-between lg:hidden p-3 bg-dark sticky top-0 z-10">
-          <h2 className="text-base font-bold">Filtros y Propiedades</h2>
+        <div className="flex items-center justify-between lg:hidden p-3 bg-white border-b border-line sticky top-0 z-10">
+          <h2 className="text-base font-bold">Filtros y propiedades</h2>
           <button
             onClick={() => setSidebarOpen(false)}
-            className="p-1.5 hover:bg-white/20 rounded-lg transition-colors"
+            className="p-1.5 hover:bg-slate-100 rounded-lg transition-colors"
             aria-label="Close sidebar"
           >
             <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -817,8 +752,8 @@ const MapPage = () => {
         </div>
 
         {/* Filters Section */}
-        <div className="p-3 bg-dark sticky top-0 lg:top-0 z-10 space-y-2">
-          <h3 className="text-sm font-bold flex items-center gap-1 mb-2">
+        <div className="p-3 bg-white border-b border-line sticky top-0 lg:top-0 z-10 space-y-2">
+          <h3 className="text-xs font-semibold uppercase tracking-wide text-textSecondary flex items-center gap-1.5 mb-1">
             <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
             </svg>
@@ -832,9 +767,9 @@ const MapPage = () => {
               value={filters.search}
               onChange={(e) => handleFilterChange({ ...filters, search: e.target.value })}
               placeholder="Buscar..."
-              className="w-full pl-8 pr-3 py-1.5 text-xs bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/50 focus:bg-white/20 focus:outline-none"
+              className="w-full pl-8 pr-3 py-2 text-sm bg-white border border-line rounded-lg text-textPrimary placeholder-slate-400 focus:border-primary focus:outline-none"
             />
-            <svg className="absolute left-2.5 top-2 h-3.5 w-3.5 text-white/50" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <svg className="absolute left-2.5 top-2.5 h-3.5 w-3.5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
             </svg>
           </div>
@@ -843,24 +778,24 @@ const MapPage = () => {
           <select
             value={filters.propertyType}
             onChange={(e) => handleFilterChange({ ...filters, propertyType: e.target.value })}
-            className="w-full px-2 py-1.5 text-xs bg-white/10 border border-white/20 rounded-lg text-white focus:bg-white/20 focus:outline-none"
+            className="w-full px-3 py-2 text-sm bg-white border border-line rounded-lg text-textPrimary focus:border-primary focus:outline-none"
           >
-            <option value="all" className="bg-dark">Todos los tipos</option>
-            <option value="house" className="bg-dark">🏠 Casa</option>
-            <option value="apartment" className="bg-dark">🏢 Apartamento</option>
-            <option value="land" className="bg-dark">🏞️ Terreno</option>
-            <option value="commercial" className="bg-dark">🏪 Comercial</option>
+            <option value="all">Todos los tipos</option>
+            <option value="house">Casa</option>
+            <option value="apartment">Apartamento</option>
+            <option value="land">Terreno</option>
+            <option value="commercial">Comercial</option>
           </select>
 
           {/* Status */}
           <select
             value={filters.status}
             onChange={(e) => handleFilterChange({ ...filters, status: e.target.value })}
-            className="w-full px-2 py-1.5 text-xs bg-white/10 border border-white/20 rounded-lg text-white focus:bg-white/20 focus:outline-none"
+            className="w-full px-3 py-2 text-sm bg-white border border-line rounded-lg text-textPrimary focus:border-primary focus:outline-none"
           >
-            <option value="all" className="bg-dark">Todos los estados</option>
-            <option value="for_sale" className="bg-dark">💰 En Venta</option>
-            <option value="for_rent" className="bg-dark">🔑 En Alquiler</option>
+            <option value="all">Todos los estados</option>
+            <option value="for_sale">En venta</option>
+            <option value="for_rent">En alquiler</option>
           </select>
 
           {/* User Filter with Search */}
@@ -872,7 +807,7 @@ const MapPage = () => {
 
           {/* Price Range */}
           <div className="space-y-0.5">
-            <label className="block text-[10px] font-semibold text-white/70">Precio (USD)</label>
+            <label className="block text-xs font-medium text-textSecondary">Precio (USD)</label>
             <RangeSlider
               min={PRICE_MIN}
               max={PRICE_MAX}
@@ -881,13 +816,13 @@ const MapPage = () => {
               maxValue={filters.maxPrice}
               onChange={(min, max) => handleFilterChange({ ...filters, minPrice: min, maxPrice: max })}
               formatValue={(v) => `$${v.toLocaleString()}`}
-              theme="dark"
+              theme="light"
             />
           </div>
 
           {/* Area Range */}
           <div className="space-y-0.5">
-            <label className="block text-[10px] font-semibold text-white/70">Área (m²)</label>
+            <label className="block text-xs font-medium text-textSecondary">Área (m²)</label>
             <RangeSlider
               min={AREA_MIN}
               max={AREA_MAX}
@@ -896,7 +831,7 @@ const MapPage = () => {
               maxValue={filters.maxArea}
               onChange={(min, max) => handleFilterChange({ ...filters, minArea: min, maxArea: max })}
               formatValue={(v) => `${v.toLocaleString()} m²`}
-              theme="dark"
+              theme="light"
             />
           </div>
 
@@ -917,16 +852,16 @@ const MapPage = () => {
                 bathrooms: 'all',
                 userId: 'all',
               })}
-              className="w-full px-2 py-1.5 text-xs bg-red-500/80 hover:bg-red-500 rounded-lg font-semibold transition-colors"
+              className="btn btn-sm btn-ghost border border-line w-full text-error hover:bg-red-50"
             >
-              Limpiar Filtros
+              Limpiar filtros
             </button>
           )}
 
           {/* Share Button */}
           <button
             onClick={() => setShareModalOpen(true)}
-            className="w-full px-2 py-1.5 text-xs bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white rounded-lg font-semibold transition-all flex items-center justify-center gap-1.5 shadow-lg"
+            className="btn btn-sm btn-primary w-full"
           >
             <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
@@ -936,16 +871,16 @@ const MapPage = () => {
         </div>
 
         {/* Properties Header */}
-        <div className="px-3 py-2 bg-dark border-t border-white/10">
-          <h2 className="text-sm font-bold">
+        <div className="px-3 py-2 bg-white border-t border-line">
+          <h2 className="text-sm font-semibold text-textPrimary">
             Propiedades ({visibleProperties.length})
           </h2>
         </div>
 
         {/* Properties List */}
-        <div className="p-3 space-y-2 pb-20">
+        <div className="p-3 space-y-2 pb-20 bg-background">
           {visibleProperties.length === 0 ? (
-            <div className="text-center text-gray-400 mt-4">
+            <div className="text-center text-textSecondary mt-4">
               <p className="text-sm">No hay propiedades en esta área</p>
               <p className="text-xs mt-1">Mueve el mapa para ver más propiedades</p>
             </div>
@@ -956,12 +891,9 @@ const MapPage = () => {
               return (
               <div
                 key={idx}
-                onClick={() => {
-                  console.log('Card clicked!', p.title);
-                  handleSidebarPropertyClick(p);
-                }}
-                className={`bg-white text-textPrimary rounded-xl shadow-lg p-2.5 transition-all hover:scale-105 cursor-pointer ${
-                  isSelected ? 'ring-2 ring-primary scale-105' : ''
+                onClick={() => handleSidebarPropertyClick(p)}
+                className={`card card-hover p-2.5 cursor-pointer ${
+                  isSelected ? 'ring-2 ring-primary border-primary' : ''
                 }`}
               >
                 <div className="flex items-start justify-between mb-1.5">
@@ -971,19 +903,19 @@ const MapPage = () => {
                     </h3>
                     {/* Indicator for polygon vs marker */}
                     {p.polygon ? (
-                      <svg className="h-3 w-3 text-green-600 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <svg className="h-3 w-3 text-success flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <title>Propiedad con polígono delimitado</title>
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
                       </svg>
                     ) : (
-                      <svg className="h-3 w-3 text-orange-500 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <svg className="h-3 w-3 text-secondary flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <title>Propiedad sin polígono (mostrada como marcador)</title>
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                       </svg>
                     )}
                   </div>
-                  <span className={`${getStatusColor(p.status)} text-white text-[10px] px-1.5 py-0.5 rounded-full ml-1.5 flex-shrink-0`}>
+                  <span className={`badge ${getStatusBadgeClass(p.status)} ml-1.5 flex-shrink-0 !text-[10px]`}>
                     {getStatusLabel(p.status)}
                   </span>
                 </div>
@@ -1018,13 +950,13 @@ const MapPage = () => {
 
                   <div className="flex items-center gap-1">
                     <span className="font-semibold">Precio:</span>
-                    <span className="text-green-600 font-bold">${parseFloat(p.price).toLocaleString()}</span>
+                    <span className="text-emerald-600 font-bold">${parseFloat(p.price).toLocaleString()}</span>
                   </div>
 
-                  <div className="flex items-center gap-2 flex-wrap">
-                    {p.rooms > 0 && <span>🛏️ {p.rooms}</span>}
-                    {p.bathrooms > 0 && <span>🚿 {p.bathrooms}</span>}
-                    {p.floors && <span>🏢 {p.floors}</span>}
+                  <div className="flex items-center gap-3 flex-wrap text-textSecondary pt-0.5">
+                    {p.rooms > 0 && <span>{p.rooms} hab.</span>}
+                    {p.bathrooms > 0 && <span>{p.bathrooms} baños</span>}
+                    {p.floors && <span>{p.floors} {p.floors === 1 ? 'piso' : 'pisos'}</span>}
                   </div>
                 </div>
               </div>

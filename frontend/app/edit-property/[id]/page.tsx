@@ -169,7 +169,6 @@ const EditPropertyPage = () => {
           const data = await res.json();
           // Exclude the property being edited from the reference properties
           const filtered = data.filter((p: any) => p.id.toString() !== propertyId);
-          console.log('Reference properties loaded:', filtered.length);
           setReferenceProperties(filtered);
         } else {
           console.error('Error loading reference properties');
@@ -299,7 +298,7 @@ const EditPropertyPage = () => {
 
   const handleGetMyLocation = () => {
     if (!navigator.geolocation) {
-      alert('Tu navegador no soporta geolocalización');
+      toast.error('Tu navegador no soporta geolocalización');
       return;
     }
 
@@ -334,7 +333,7 @@ const EditPropertyPage = () => {
             break;
         }
 
-        alert(errorMessage);
+        toast.error(errorMessage);
         setLoadingLocation(false);
       },
       {
@@ -362,7 +361,7 @@ const EditPropertyPage = () => {
     // Validar número máximo de imágenes (existentes + nuevas - a eliminar)
     const totalImages = existingImages.length - imagesToDelete.length + newImages.length + files.length;
     if (totalImages > MAX_IMAGES) {
-      alert(`Solo puedes tener un máximo de ${MAX_IMAGES} imágenes por propiedad. Actualmente tienes ${existingImages.length - imagesToDelete.length + newImages.length} y estás intentando agregar ${files.length}.`);
+      toast.error(`Máximo ${MAX_IMAGES} imágenes por propiedad. Ya tienes ${existingImages.length - imagesToDelete.length + newImages.length}.`);
       e.target.value = '';
       return;
     }
@@ -390,7 +389,7 @@ const EditPropertyPage = () => {
 
     // Mostrar errores si los hay
     if (errors.length > 0) {
-      alert('❌ Algunas imágenes no pudieron ser agregadas:\n\n' + errors.join('\n'));
+      toast.error('Algunas imágenes no se pudieron agregar: ' + errors.join(' · '));
     }
 
     // Si hay archivos válidos, agregarlos
@@ -408,11 +407,6 @@ const EditPropertyPage = () => {
         };
       });
       setNewImages([...newImages, ...newImagesPreview]);
-
-      // Mostrar mensaje de éxito
-      if (validFiles.length > 0) {
-        console.log(`✅ ${validFiles.length} imagen(es) agregada(s). Las imágenes serán optimizadas automáticamente al subir.`);
-      }
     }
 
     // Reset input
@@ -512,11 +506,11 @@ const EditPropertyPage = () => {
                           className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent transition-all bg-white"
                           required
                         >
-                          <option value="land">🏞️ Terreno</option>
-                          <option value="house">🏠 Casa</option>
-                          <option value="apartment">🏢 Apartamento</option>
-                          <option value="commercial">🏪 Comercial</option>
-                          <option value="other">📦 Otro</option>
+                          <option value="land">Terreno</option>
+                          <option value="house">Casa</option>
+                          <option value="apartment">Apartamento</option>
+                          <option value="commercial">Comercial</option>
+                          <option value="other">Otro</option>
                         </select>
                       </div>
                       <div>
@@ -527,11 +521,11 @@ const EditPropertyPage = () => {
                           className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent transition-all bg-white"
                           required
                         >
-                          <option value="for_sale">💰 En Venta</option>
-                          <option value="for_rent">🔑 En Alquiler</option>
-                          <option value="sold">✅ Vendido</option>
-                          <option value="rented">🏠 Alquilado</option>
-                          <option value="inactive">⏸️ Inactivo</option>
+                          <option value="for_sale">En venta</option>
+                          <option value="for_rent">En alquiler</option>
+                          <option value="sold">Vendido</option>
+                          <option value="rented">Alquilado</option>
+                          <option value="inactive">Inactivo</option>
                         </select>
                       </div>
                       <div className="md:col-span-2">
@@ -931,7 +925,7 @@ const EditPropertyPage = () => {
                       <div>
                         <h4 className="text-sm font-semibold text-gray-700 mb-3">
                           Nuevas Imágenes ({newImages.length})
-                          <span className="ml-2 text-xs text-blue-600 font-normal">✨ Serán optimizadas automáticamente</span>
+                          <span className="ml-2 text-xs text-muted font-normal">Se optimizan automáticamente</span>
                         </h4>
                         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                           {newImages.map((img, index) => (
@@ -971,7 +965,7 @@ const EditPropertyPage = () => {
                           </svg>
                           <p className="text-sm text-gray-600 font-semibold mb-1">Haz clic para subir imágenes</p>
                           <p className="text-xs text-gray-500">PNG, JPG, WebP • Máx. 10MB por imagen</p>
-                          <p className="text-xs text-blue-600 mt-2 font-medium">✨ Optimización automática sin pérdida de calidad</p>
+                          <p className="text-xs text-muted mt-2">Optimización automática sin pérdida de calidad</p>
                           <p className="text-xs text-gray-400 mt-1">
                             Máximo 10 imágenes ({existingImages.length - imagesToDelete.length + newImages.length}/10)
                           </p>

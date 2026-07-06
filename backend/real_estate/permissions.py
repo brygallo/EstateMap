@@ -13,3 +13,12 @@ class IsOwnerOrReadOnly(permissions.BasePermission):
 
         # Write permissions are only allowed to the owner of the property
         return obj.owner == request.user
+
+
+class IsAdminUser(permissions.BasePermission):
+    """
+    Permite acceso solo a usuarios con is_staff=True.
+    """
+
+    def has_permission(self, request, view):
+        return request.user and request.user.is_authenticated and request.user.is_staff

@@ -129,7 +129,6 @@ const AddPropertyPage = () => {
 
         if (res.ok) {
           const data = await res.json();
-          console.log('Reference properties loaded:', data.length);
           setReferenceProperties(data);
         } else {
           console.error('Error loading reference properties');
@@ -163,7 +162,7 @@ const AddPropertyPage = () => {
           return;
         }
       } catch (error) {
-        console.log('Permissions API not available, continuing...');
+        // Permissions API no disponible (iOS Safari): continuar de todos modos
       }
     }
 
@@ -321,7 +320,7 @@ const AddPropertyPage = () => {
 
   const handleGetMyLocation = () => {
     if (!navigator.geolocation) {
-      alert('Tu navegador no soporta geolocalización');
+      toast.error('Tu navegador no soporta geolocalización');
       return;
     }
 
@@ -356,7 +355,7 @@ const AddPropertyPage = () => {
             break;
         }
 
-        alert(errorMessage);
+        toast.error(errorMessage);
         setLoadingLocation(false);
       },
       {
@@ -384,7 +383,7 @@ const AddPropertyPage = () => {
     // Validar número máximo de imágenes
     const totalImages = images.length + files.length;
     if (totalImages > MAX_IMAGES) {
-      alert(`Solo puedes subir un máximo de ${MAX_IMAGES} imágenes por propiedad. Actualmente tienes ${images.length} y estás intentando agregar ${files.length}.`);
+      toast.error(`Máximo ${MAX_IMAGES} imágenes por propiedad. Ya tienes ${images.length}.`);
       e.target.value = ''; // Reset input
       return;
     }
@@ -412,7 +411,7 @@ const AddPropertyPage = () => {
 
     // Mostrar errores si los hay
     if (errors.length > 0) {
-      alert('❌ Algunas imágenes no pudieron ser agregadas:\n\n' + errors.join('\n'));
+      toast.error('Algunas imágenes no se pudieron agregar: ' + errors.join(' · '));
     }
 
     // Si hay archivos válidos, agregarlos
@@ -430,11 +429,6 @@ const AddPropertyPage = () => {
         };
       });
       setImages([...images, ...newImages]);
-
-      // Mostrar mensaje de éxito
-      if (validFiles.length > 0) {
-        console.log(`✅ ${validFiles.length} imagen(es) agregada(s). Las imágenes serán optimizadas automáticamente al subir.`);
-      }
     }
 
     // Reset input
@@ -512,11 +506,11 @@ const AddPropertyPage = () => {
                           className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent transition-all bg-white"
                           required
                         >
-                          <option value="land">🏞️ Terreno</option>
-                          <option value="house">🏠 Casa</option>
-                          <option value="apartment">🏢 Apartamento</option>
-                          <option value="commercial">🏪 Comercial</option>
-                          <option value="other">📦 Otro</option>
+                          <option value="land">Terreno</option>
+                          <option value="house">Casa</option>
+                          <option value="apartment">Apartamento</option>
+                          <option value="commercial">Comercial</option>
+                          <option value="other">Otro</option>
                         </select>
                       </div>
                       <div>
@@ -527,11 +521,11 @@ const AddPropertyPage = () => {
                           className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent transition-all bg-white"
                           required
                         >
-                          <option value="for_sale">💰 En Venta</option>
-                          <option value="for_rent">🔑 En Alquiler</option>
-                          <option value="sold">✅ Vendido</option>
-                          <option value="rented">🏠 Alquilado</option>
-                          <option value="inactive">⏸️ Inactivo</option>
+                          <option value="for_sale">En venta</option>
+                          <option value="for_rent">En alquiler</option>
+                          <option value="sold">Vendido</option>
+                          <option value="rented">Alquilado</option>
+                          <option value="inactive">Inactivo</option>
                         </select>
                       </div>
                       <div className="md:col-span-2">
@@ -888,7 +882,7 @@ const AddPropertyPage = () => {
                       <div>
                         <h4 className="text-sm font-semibold text-gray-700 mb-3">
                           Nuevas Imágenes ({images.length}/10)
-                          <span className="ml-2 text-xs text-blue-600 font-normal">✨ Serán optimizadas automáticamente</span>
+                          <span className="ml-2 text-xs text-muted font-normal">Se optimizan automáticamente</span>
                         </h4>
                         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                           {images.map((img, index) => (
@@ -928,7 +922,7 @@ const AddPropertyPage = () => {
                           </svg>
                           <p className="text-sm text-gray-600 font-semibold mb-1">Haz clic para subir imágenes</p>
                           <p className="text-xs text-gray-500">PNG, JPG, WebP • Máx. 10MB por imagen</p>
-                          <p className="text-xs text-blue-600 mt-2 font-medium">✨ Optimización automática sin pérdida de calidad</p>
+                          <p className="text-xs text-muted mt-2">Optimización automática sin pérdida de calidad</p>
                           <p className="text-xs text-gray-400 mt-1">Máximo 10 imágenes</p>
                         </div>
                         <input

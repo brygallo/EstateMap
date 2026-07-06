@@ -277,27 +277,21 @@ function DrawingTools({
 
           const newDistance = parseFloat(inputElement.value);
 
-          console.log('=== CAMBIO DE DISTANCIA ===');
-          console.log('Nuevo valor:', newDistance, 'metros');
 
           if (isNaN(newDistance) || newDistance <= 0) {
             inputElement.value = previousValue;
-            console.log('Valor inválido, restaurado a:', previousValue);
             return;
           }
 
           // Obtener coordenadas actuales DEL LAYER
           const currentLatlngs = layer.getLatLngs()[0];
           if (!currentLatlngs || currentLatlngs.length < 3) {
-            console.log('ERROR: No hay suficientes puntos');
             return;
           }
 
           const startPoint = currentLatlngs[edgeIndex];
           const nextIndex = (edgeIndex + 1) % currentLatlngs.length;
 
-          console.log('Segmento:', edgeIndex, '->', nextIndex);
-          console.log('Start:', [startPoint.lat, startPoint.lng]);
 
           // Calcular bearing del segmento ACTUAL
           const bearing = turf.bearing(
@@ -305,7 +299,6 @@ function DrawingTools({
             [currentLatlngs[nextIndex].lng, currentLatlngs[nextIndex].lat]
           );
 
-          console.log('Bearing:', bearing, 'grados');
 
           // Calcular nueva posición
           const newEndPoint = turf.destination(
@@ -318,7 +311,6 @@ function DrawingTools({
           const newLat = newEndPoint.geometry.coordinates[1];
           const newLng = newEndPoint.geometry.coordinates[0];
 
-          console.log('Nuevo punto final:', [newLat, newLng]);
 
           // Actualizar coordenadas
           const newLatlngs = currentLatlngs.map((pt: any, idx: number) => {
@@ -328,7 +320,6 @@ function DrawingTools({
             return pt;
           });
 
-          console.log('Actualizando polígono...');
 
           // Aplicar cambios
           layer.setLatLngs([newLatlngs]);
@@ -339,7 +330,6 @@ function DrawingTools({
           // Actualizar área
           updateAreaAndCoords(layer);
 
-          console.log('Polígono actualizado ✓');
 
           // Actualizar valor previo
           previousValue = inputElement.value;
@@ -653,12 +643,10 @@ function DrawingTools({
   useEffect(() => {
     // Only load if we have valid polygon data, no polygon is currently on the map, and we haven't loaded it yet
     if (initialPolygon && initialPolygon.length >= 3 && !currentPolygonRef.current && !initialLoadRef.current) {
-      console.log('Attempting to load initial polygon:', initialPolygon);
 
       // Use a small timeout to ensure the map is fully initialized
       const timer = setTimeout(() => {
         try {
-          console.log('Loading initial polygon now:', initialPolygon);
 
           // Create polygon from initial data
           const polygon = L.polygon(initialPolygon, {
@@ -680,7 +668,6 @@ function DrawingTools({
           // Mark as loaded only after successfully loading
           initialLoadRef.current = true;
 
-          console.log('Initial polygon loaded successfully');
         } catch (e) {
           console.error('Error loading initial polygon:', e);
         }
@@ -688,7 +675,6 @@ function DrawingTools({
 
       return () => clearTimeout(timer);
     } else {
-      console.log('Skipping polygon load - polygon:', initialPolygon?.length, 'current:', !!currentPolygonRef.current, 'loaded:', initialLoadRef.current);
     }
   }, [initialPolygon, map]);
 

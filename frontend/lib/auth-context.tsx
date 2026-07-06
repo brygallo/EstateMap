@@ -6,6 +6,7 @@ interface AuthUserInfo {
   id?: string;
   username?: string;
   email?: string;
+  is_staff?: boolean;
 }
 
 interface AuthContextType {
@@ -51,6 +52,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         id: payload?.user_id || payload?.userId || payload?.id,
         username: payload?.username,
         email: payload?.email,
+        is_staff: payload?.is_staff || false,
       });
     } else {
       setUser(null);

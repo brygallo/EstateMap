@@ -236,6 +236,7 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
     def get_token(cls, user):
         token = super().get_token(user)
         token["username"] = user.username
+        token["is_staff"] = user.is_staff
         return token
 
     def validate(self, attrs):
@@ -281,6 +282,7 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
             "first_name": self.user.first_name,
             "last_name": self.user.last_name,
             "avatar_url": self.user.avatar_url,
+            "is_staff": self.user.is_staff,
         }
         return data
 
@@ -379,6 +381,7 @@ class UserProfileSerializer(serializers.ModelSerializer):
     email = serializers.EmailField(read_only=True)
     is_email_verified = serializers.BooleanField(read_only=True)
     avatar_url = serializers.URLField(read_only=True)
+    is_staff = serializers.BooleanField(read_only=True)
 
     class Meta:
         model = User
@@ -390,8 +393,9 @@ class UserProfileSerializer(serializers.ModelSerializer):
             "last_name",
             "is_email_verified",
             "avatar_url",
+            "is_staff",
         ]
-        read_only_fields = ["id", "email", "is_email_verified", "avatar_url"]
+        read_only_fields = ["id", "email", "is_email_verified", "avatar_url", "is_staff"]
 
 
 class ChangePasswordSerializer(serializers.Serializer):
@@ -416,3 +420,80 @@ class ChangePasswordSerializer(serializers.Serializer):
         user.set_password(new_password)
         user.save()
         return user
+
+
+# ===== Admin Serializers =====
+
+class AdminUserSerializer(serializers.ModelSerializer):
+    """Serializer para listar usuarios en el panel admin."""
+    properties_count = serializers.SerializerMethodField()
+
+    class Meta:
+        model = User
+        fields = [
+            'id', 'username', 'email', 'first_name', 'last_name',
+            'is_active', 'is_staff', 'is_email_verified', 'date_joined',
+            'avatar_url', 'properties_count',
+        ]
+        read_only_fields = ['id', 'date_joined', 'email', 'username']
+
+    def get_properties_count(self, obj):
+        return obj.properties.count()
+
+
+class AdminUserDetailSerializer(serializers.ModelSerializer):
+    """Serializer para detalle de usuario en el panel admin."""
+    properties = PropertySerializer(many=True, read_only=True)
+    properties_count = serializers.SerializerMethodField()
+
+    class Meta:
+        model = User
+        fields = [
+            'id', 'username', 'email', 'first_name', 'last_name',
+            'is_active', 'is_staff', 'is_email_verified', 'date_joined',
+            'avatar_url', 'oauth_provider', 'properties_count', 'properties',
+        ]
+        read_only_fields = ['id', 'date_joined', 'email', 'username']
+
+    def get_properties_count(self, obj):
+        return obj.properties.count()
+
+
+class AdminPropertySerializer(serializers.ModelSerializer):
+    """Serializer para propiedades en el panel admin con info del owner."""
+    images = PropertyImageSerializer(many=True, read_only=True)
+    owner_username = serializers.SerializerMethodField()
+    owner_email = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Property
+        fields = '__all__'
+        read_only_fields = ['created_at', 'updated_at']
+
+    def get_owner_username(self, obj):
+        if obj.owner:
+            full_name = f"{obj.owner.first_name} {obj.owner.last_name}".strip()
+            return full_name if full_name else obj.owner.username
+        return None
+
+    def get_owner_email(self, obj):
+        return obj.owner.email if obj.owner else None
+
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        if data.get('polygon') and isinstance(data['polygon'], dict):
+            if data['polygon'].get('coordinates'):
+                coords = data['polygon']['coordinates'][0]
+                data['polygon'] = [[coord[1], coord[0]] for coord in coords]
+        return data
+
+
+class AdminDashboardSerializer(serializers.Serializer):
+    """Serializer para estadísticas del dashboard admin."""
+    total_users = serializers.IntegerField()
+    total_properties = serializers.IntegerField()
+    properties_for_sale = serializers.IntegerField()
+    properties_for_rent = serializers.IntegerField()
+    properties_inactive = serializers.IntegerField()
+    recent_users = AdminUserSerializer(many=True)
+    recent_properties = AdminPropertySerializer(many=True)

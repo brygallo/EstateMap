@@ -26,8 +26,12 @@ from .serializers import (
     VerifyEmailChangeSerializer,
     UserProfileSerializer,
     ChangePasswordSerializer,
+    AdminUserSerializer,
+    AdminUserDetailSerializer,
+    AdminPropertySerializer,
+    AdminDashboardSerializer,
 )
-from .permissions import IsOwnerOrReadOnly
+from .permissions import IsOwnerOrReadOnly, IsAdminUser
 import requests
 from google.oauth2 import id_token
 from google.auth.transport import requests as google_requests
@@ -230,6 +234,7 @@ class GoogleLoginView(generics.GenericAPIView):
                     'first_name': user.first_name,
                     'last_name': user.last_name,
                     'avatar_url': user.avatar_url,
+                    'is_staff': user.is_staff,
                 }
             })
 
@@ -622,3 +627,102 @@ class ChangePasswordView(generics.GenericAPIView):
         serializer.is_valid(raise_exception=True)
         serializer.save()
         return Response({'message': 'Contraseña actualizada correctamente'}, status=status.HTTP_200_OK)
+
+
+# ===== Admin Views =====
+
+User = get_user_model()
+
+
+class AdminDashboardView(generics.GenericAPIView):
+    """Dashboard con estadísticas del sistema."""
+    permission_classes = [IsAuthenticated, IsAdminUser]
+    serializer_class = AdminDashboardSerializer
+
+    def get(self, request):
+        data = {
+            'total_users': User.objects.count(),
+            'total_properties': Property.objects.count(),
+            'properties_for_sale': Property.objects.filter(status='for_sale').count(),
+            'properties_for_rent': Property.objects.filter(status='for_rent').count(),
+            'properties_inactive': Property.objects.filter(status='inactive').count(),
+            'recent_users': AdminUserSerializer(
+                User.objects.order_by('-date_joined')[:5], many=True
+            ).data,
+            'recent_properties': AdminPropertySerializer(
+                Property.objects.order_by('-created_at')[:5], many=True
+            ).data,
+        }
+        return Response(data)
+
+
+class AdminUserViewSet(viewsets.ModelViewSet):
+    """CRUD de usuarios para admins."""
+    permission_classes = [IsAuthenticated, IsAdminUser]
+    queryset = User.objects.all().order_by('-date_joined')
+    filter_backends = [filters.SearchFilter, filters.OrderingFilter]
+    search_fields = ['username', 'email', 'first_name', 'last_name']
+    ordering_fields = ['date_joined', 'username', 'email']
+    ordering = ['-date_joined']
+
+    def get_serializer_class(self):
+        if self.action == 'retrieve':
+            return AdminUserDetailSerializer
+        return AdminUserSerializer
+
+    def partial_update(self, request, *args, **kwargs):
+        user = self.get_object()
+        allowed_fields = {'is_active', 'is_staff'}
+        data = {k: v for k, v in request.data.items() if k in allowed_fields}
+
+        if not data:
+            return Response(
+                {'error': 'Solo se permite modificar is_active e is_staff'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # Prevenir que un admin se desactive a sí mismo
+        if user == request.user and data.get('is_staff') is False:
+            return Response(
+                {'error': 'No puedes removerte el rol de administrador a ti mismo'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        if user == request.user and data.get('is_active') is False:
+            return Response(
+                {'error': 'No puedes desactivar tu propia cuenta'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        for field, value in data.items():
+            setattr(user, field, value)
+        user.save()
+
+        serializer = self.get_serializer(user)
+        return Response(serializer.data)
+
+    def destroy(self, request, *args, **kwargs):
+        user = self.get_object()
+        if user == request.user:
+            return Response(
+                {'error': 'No puedes eliminar tu propia cuenta'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        user.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class AdminPropertyViewSet(viewsets.ModelViewSet):
+    """Gestión de propiedades para admins (incluye inactivas)."""
+    permission_classes = [IsAuthenticated, IsAdminUser]
+    serializer_class = AdminPropertySerializer
+    queryset = Property.objects.all().order_by('-created_at')
+    filter_backends = [filters.SearchFilter, filters.OrderingFilter]
+    search_fields = ['title', 'owner__username', 'owner__first_name', 'owner__last_name', 'city']
+    ordering_fields = ['created_at', 'price', 'title']
+    ordering = ['-created_at']
+    http_method_names = ['get', 'delete', 'head', 'options']
+
+    def destroy(self, request, *args, **kwargs):
+        prop = self.get_object()
+        prop.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
