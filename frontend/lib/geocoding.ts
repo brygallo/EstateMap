@@ -79,7 +79,6 @@ export async function reverseGeocode(lat: number, lng: number): Promise<Geocodin
       longitude: parseFloat(data.lon),
     };
 
-    console.log('Geocodificación exitosa:', result);
     return result;
   } catch (error) {
     console.error('Error en geocodificación inversa:', error);
