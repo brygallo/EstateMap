@@ -3,7 +3,7 @@ from rest_framework.validators import UniqueValidator
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from django.contrib.auth import get_user_model
 from django.contrib.auth.password_validation import validate_password
-from .models import Property, PropertyImage, Province, City
+from .models import Property, PropertyImage, Province, City, Lead, PendingPublication
 
 User = get_user_model()
 
@@ -135,8 +135,14 @@ class PropertySerializer(serializers.ModelSerializer):
         return value
 
     def validate_polygon(self, value):
-        """Convert polygon from simple array format to GeoJSON"""
+        """
+        Validate and normalize the polygon to a canonical, closed GeoJSON
+        ``Polygon``. Accepts a GeoJSON object or a simple ``[[lat, lng], ...]``
+        ring (optionally JSON-encoded when sent via FormData). Enforces Ecuador
+        bounds, ring closure and a sane area (see ``real_estate.geo``).
+        """
         import json
+        from .geo import validate_and_normalize_polygon, PolygonValidationError
 
         if not value:
             return value
@@ -146,22 +152,12 @@ class PropertySerializer(serializers.ModelSerializer):
             try:
                 value = json.loads(value)
             except json.JSONDecodeError:
-                raise serializers.ValidationError("Invalid polygon format")
+                raise serializers.ValidationError("Formato de polígono inválido")
 
-        # If it's already a GeoJSON object, return as is
-        if isinstance(value, dict) and value.get('type') == 'Polygon':
-            return value
-
-        # If it's a simple array [[lat, lng], ...], convert to GeoJSON
-        if isinstance(value, list) and len(value) >= 3:
-            # Convert [lat, lng] to [lng, lat] for GeoJSON format
-            geojson_coords = [[coord[1], coord[0]] for coord in value]
-            return {
-                'type': 'Polygon',
-                'coordinates': [geojson_coords]
-            }
-
-        return value
+        try:
+            return validate_and_normalize_polygon(value)
+        except PolygonValidationError as exc:
+            raise serializers.ValidationError(str(exc))
 
     def create(self, validated_data):
         uploaded_images = validated_data.pop('uploaded_images', [])
@@ -219,6 +215,65 @@ class PropertySerializer(serializers.ModelSerializer):
                 )
 
         return instance
+
+
+class LeadSerializer(serializers.ModelSerializer):
+    """
+    Serializer de leads. La creación es pública (formulario de contacto); el
+    ``status`` solo lo controla el dueño/admin al gestionar la bandeja.
+    """
+    property_title = serializers.CharField(source='property.title', read_only=True)
+    property_owner = serializers.IntegerField(source='property.owner_id', read_only=True)
+
+    class Meta:
+        model = Lead
+        fields = [
+            'id', 'property', 'property_title', 'property_owner',
+            'name', 'phone', 'email', 'message', 'source',
+            'status', 'created_at',
+        ]
+        read_only_fields = ['id', 'property_title', 'property_owner', 'status', 'created_at']
+
+    def validate_name(self, value):
+        if not value.strip():
+            raise serializers.ValidationError("El nombre es obligatorio.")
+        return value.strip()
+
+    def validate_phone(self, value):
+        if not value.strip():
+            raise serializers.ValidationError("El teléfono es obligatorio.")
+        return value.strip()
+
+
+class LeadStatusSerializer(serializers.ModelSerializer):
+    """Serializer restringido para que el dueño actualice solo el estado."""
+
+    class Meta:
+        model = Lead
+        fields = ['id', 'status']
+        read_only_fields = ['id']
+
+
+class PendingPublicationSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = PendingPublication
+        fields = [
+            'id', 'title', 'contact_phone', 'contact_email', 'city', 'province',
+            'property_type', 'operation', 'price', 'draft', 'source', 'status',
+            'created_at',
+        ]
+        read_only_fields = ['id', 'status', 'created_at']
+
+    def validate_source(self, value):
+        valid_sources = {choice[0] for choice in PendingPublication.SOURCE_CHOICES}
+        return value if value in valid_sources else "other"
+
+
+class PendingPublicationStatusSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = PendingPublication
+        fields = ['id', 'status']
+        read_only_fields = ['id']
 
 
 class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
@@ -495,5 +550,16 @@ class AdminDashboardSerializer(serializers.Serializer):
     properties_for_sale = serializers.IntegerField()
     properties_for_rent = serializers.IntegerField()
     properties_inactive = serializers.IntegerField()
+    # --- Métricas comerciales ---
+    properties_active = serializers.IntegerField()
+    total_views = serializers.IntegerField()
+    total_leads = serializers.IntegerField()
+    leads_new = serializers.IntegerField()
+    pending_publications = serializers.IntegerField()
+    pending_publications_new = serializers.IntegerField()
+    new_users_30d = serializers.IntegerField()
+    properties_without_images = serializers.IntegerField()
+    properties_incomplete = serializers.IntegerField()
     recent_users = AdminUserSerializer(many=True)
     recent_properties = AdminPropertySerializer(many=True)
+    recent_leads = LeadSerializer(many=True)

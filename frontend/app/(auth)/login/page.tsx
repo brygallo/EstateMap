@@ -73,7 +73,9 @@ export default function LoginPage() {
       }
       login(data.access, data.refresh, values.remember);
       toast.success('Inicio de sesión exitoso');
-      router.push('/');
+      const hasPropertyDraft =
+        typeof window !== 'undefined' && localStorage.getItem('propertyPublicationDraft');
+      router.push(hasPropertyDraft ? '/add-property' : '/');
     } catch (err) {
       toast.error('Error de conexión');
     } finally {
@@ -92,7 +94,9 @@ export default function LoginPage() {
             </svg>
           </div>
           <h2 className="text-3xl font-bold text-gray-900">Geo Propiedades Ecuador</h2>
-          <p className="mt-2 text-sm text-gray-600">Inicia sesión en tu cuenta</p>
+          <p className="mt-2 text-sm text-gray-600">
+            Entra para publicar o gestionar tus propiedades.
+          </p>
         </div>
 
         {/* Formulario */}
@@ -219,9 +223,9 @@ export default function LoginPage() {
           {/* Registro */}
           <div className="mt-6 text-center">
             <p className="text-sm text-gray-600">
-              ¿No tienes una cuenta?{' '}
+              ¿Quieres publicar una propiedad gratis?{' '}
               <Link href="/register" className="font-semibold text-primary hover:text-secondary transition-colors">
-                Regístrate aquí
+                Crea tu cuenta
               </Link>
             </p>
           </div>

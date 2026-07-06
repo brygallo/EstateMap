@@ -5,6 +5,8 @@ from .views import (
     PropertyViewSet,
     ProvinceViewSet,
     CityViewSet,
+    LeadViewSet,
+    PendingPublicationViewSet,
     CustomTokenObtainPairView,
     RegisterView,
     GoogleLoginView,
@@ -26,6 +28,8 @@ router = DefaultRouter()
 router.register('properties', PropertyViewSet)
 router.register('provinces', ProvinceViewSet)
 router.register('cities', CityViewSet)
+router.register('leads', LeadViewSet, basename='lead')
+router.register('pending-publications', PendingPublicationViewSet, basename='pending-publication')
 
 urlpatterns = [
     # Authentication

@@ -1,10 +1,11 @@
 'use client';
 
-import { MapContainer, TileLayer, Polygon, useMapEvents, useMap, Marker, Popup } from 'react-leaflet';
+import { MapContainer, TileLayer, Polygon, useMapEvents, useMap, Marker, Popup, ScaleControl } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import { useEffect, useState, useRef, useCallback, useMemo } from 'react';
 import L from 'leaflet';
 import * as turf from '@turf/turf';
+import { Map as MapIcon, Satellite, Globe } from 'lucide-react';
 
 // Fix default marker icon issue with webpack
 if (typeof window !== 'undefined') {
@@ -26,8 +27,8 @@ if (typeof window !== 'undefined') {
 // Custom icon for user location
 const userLocationIcon = new L.Icon({
   iconUrl: 'data:image/svg+xml;base64,' + btoa(`
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#3B82F6" width="32" height="32">
-      <circle cx="12" cy="12" r="10" fill="#3B82F6" stroke="white" stroke-width="2"/>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#F59E0B" width="32" height="32">
+      <circle cx="12" cy="12" r="10" fill="#F59E0B" stroke="white" stroke-width="2"/>
       <circle cx="12" cy="12" r="4" fill="white"/>
     </svg>
   `),
@@ -49,118 +50,42 @@ function MapController({ onMapReady }: { onMapReady: (map: any) => void }) {
   return null;
 }
 
-// Component to automatically switch map layers based on zoom level
-function AutoLayerSwitch({
-  activeLayer,
-  preferredLayer,
-  setActiveLayer
-}: {
-  activeLayer: string;
-  preferredLayer: string;
-  setActiveLayer: (layer: string) => void;
-}) {
-  const map = useMap();
-  const [showToast, setShowToast] = useState(false);
-  const [toastMessage, setToastMessage] = useState('');
-
-  useEffect(() => {
-    const handleZoomEnd = () => {
-      const currentZoom = map.getZoom();
-
-      // Layer max zoom levels
-      const layerLimits: { [key: string]: number } = {
-        'satellite': 18,
-        'streets': 20,
-        'osm': 19
-      };
-
-      const preferredLimit = layerLimits[preferredLayer] ?? 20;
-
-      // If zoom is again within the preferred layer limit, return to it
-      if (currentZoom <= preferredLimit && activeLayer !== preferredLayer) {
-        setActiveLayer(preferredLayer);
-        return;
-      }
-
-      // If current zoom exceeds preferred layer's max zoom, switch temporarily
-      if (currentZoom > preferredLimit) {
-        const availableLayers = Object.entries(layerLimits)
-          .filter(([_, maxZoom]) => maxZoom >= currentZoom)
-          .sort((a, b) => b[1] - a[1]); // Sort by max zoom descending
-
-        if (availableLayers.length > 0) {
-          const [newLayer] = availableLayers[0];
-          if (newLayer !== activeLayer) {
-            setActiveLayer(newLayer);
-
-            const layerNames: { [key: string]: string } = {
-              'satellite': 'Vista Satelital',
-              'streets': 'Mapa de Calles',
-              'osm': 'OpenStreetMap'
-            };
-
-            setToastMessage(`Cambiado a ${layerNames[newLayer]} (soporta zoom ${layerLimits[newLayer]})`);
-            setShowToast(true);
-
-            setTimeout(() => {
-              setShowToast(false);
-            }, 3000);
-          }
-        }
-      }
-    };
-
-    // Run once on mount/dependency change to honor preferred layer immediately
-    handleZoomEnd();
-    map.on('zoomend', handleZoomEnd);
-
-    return () => {
-      map.off('zoomend', handleZoomEnd);
-    };
-  }, [map, activeLayer, preferredLayer, setActiveLayer]);
-
-  return (
-    <>
-      {showToast && (
-        <div style={{
-          position: 'absolute',
-          top: '80px',
-          left: '50%',
-          transform: 'translateX(-50%)',
-          zIndex: 1000,
-          background: 'rgba(0, 0, 0, 0.8)',
-          color: 'white',
-          padding: '10px 20px',
-          borderRadius: '8px',
-          fontSize: '14px',
-          fontWeight: '500',
-          boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
-          pointerEvents: 'none',
-          animation: 'fadeIn 0.3s ease-in-out'
-        }}>
-          {toastMessage}
-        </div>
-      )}
-    </>
-  );
-}
-
 // Component to track map bounds and filter visible properties
 function MapBoundsTracker({
   properties,
-  onVisiblePropertiesChange
+  onVisiblePropertiesChange,
+  onBoundsChange
 }: {
   properties: any[];
   onVisiblePropertiesChange: (properties: any[]) => void;
+  onBoundsChange?: (bounds: { west: number; south: number; east: number; north: number }) => void;
 }) {
   const map = useMapEvents({
     moveend: () => {
       updateVisibleProperties();
+      reportBounds();
     },
     zoomend: () => {
       updateVisibleProperties();
+      reportBounds();
     },
   });
+
+  const reportBounds = useCallback(() => {
+    if (!onBoundsChange) return;
+    const b = map.getBounds();
+    onBoundsChange({
+      west: b.getWest(),
+      south: b.getSouth(),
+      east: b.getEast(),
+      north: b.getNorth(),
+    });
+  }, [map, onBoundsChange]);
+
+  // Report the initial viewport bounds once the map is mounted.
+  useEffect(() => {
+    reportBounds();
+  }, [reportBounds]);
 
   const updateVisibleProperties = useCallback(() => {
     const bounds = map.getBounds();
@@ -324,7 +249,7 @@ function LocationSearch() {
   }, []);
 
   return (
-    <div className="pointer-events-none absolute top-4 sm:top-4 left-1/2 -translate-x-1/2 z-[1000] w-[85%] sm:w-[70%] max-w-lg px-3">
+    <div className="pointer-events-none absolute top-4 sm:top-4 left-1/2 -translate-x-1/2 z-nav w-[85%] sm:w-[70%] max-w-lg px-3">
       <div className="pointer-events-auto relative w-full">
         <form onSubmit={handleSearch} className="w-full">
           <div className="relative shadow-lg rounded-xl overflow-hidden bg-white">
@@ -333,7 +258,7 @@ function LocationSearch() {
               value={query}
               onChange={(e) => handleChange(e.target.value)}
               placeholder="Buscar ciudad, referencia..."
-              className="w-full px-3 sm:px-4 py-2 pr-10 text-xs sm:text-sm text-gray-800 outline-none"
+              className="w-full px-3 sm:px-4 py-2 pr-10 text-xs sm:text-sm text-textPrimary outline-none"
             />
             <button
               type="submit"
@@ -355,20 +280,20 @@ function LocationSearch() {
           </div>
         </form>
         {(results.length > 0 || error) && (
-          <div className="absolute left-0 right-0 mt-1 bg-white shadow-xl rounded-xl overflow-hidden border border-gray-100 max-h-60 overflow-y-auto">
+          <div className="absolute left-0 right-0 mt-1 bg-white shadow-xl rounded-xl overflow-hidden border border-line max-h-60 overflow-y-auto">
             {results.map((r) => (
               <button
                 key={`${r.place_id}`}
                 type="button"
                 onClick={() => handleSelect(r)}
-                className="w-full text-left px-3 py-2 hover:bg-gray-50 text-sm"
+                className="w-full text-left px-3 py-2 hover:bg-background text-sm"
               >
-                <p className="font-semibold text-gray-800 line-clamp-1">{r.display_name}</p>
-                <p className="text-xs text-gray-500">{r.type}</p>
+                <p className="font-semibold text-textPrimary line-clamp-1">{r.display_name}</p>
+                <p className="text-xs text-textSecondary">{r.type}</p>
               </button>
             ))}
             {error && results.length === 0 && (
-              <div className="px-3 py-2 text-sm text-gray-500">{error}</div>
+              <div className="px-3 py-2 text-sm text-textSecondary">{error}</div>
             )}
           </div>
         )}
@@ -383,6 +308,7 @@ interface LeafletMapProps {
   userLocation: { lat: number; lng: number } | null;
   onMapReady: (map: any) => void;
   onVisiblePropertiesChange: (properties: any[]) => void;
+  onBoundsChange?: (bounds: { west: number; south: number; east: number; north: number }) => void;
   onPolygonClick: (property: any) => void;
   onPriceLabelClick: (property: any) => void;
   hoverTimeoutRef: React.MutableRefObject<any>;
@@ -397,6 +323,7 @@ const LeafletMap = ({
   userLocation,
   onMapReady,
   onVisiblePropertiesChange,
+  onBoundsChange,
   onPolygonClick,
   onPriceLabelClick,
   hoverTimeoutRef,
@@ -406,10 +333,8 @@ const LeafletMap = ({
 }: LeafletMapProps) => {
   const polygonLayersRef = useRef<Record<string, any>>({});
   const [activeLayer, setActiveLayer] = useState('streets'); // Default to streets layer
-  const [preferredLayer, setPreferredLayer] = useState('streets'); // Remember user's choice
 
   const handleLayerSelect = (layer: string) => {
-    setPreferredLayer(layer);
     setActiveLayer(layer);
   };
 
@@ -502,81 +427,82 @@ const LeafletMap = ({
       <MapContainer
         center={center}
         zoom={7}
-        maxZoom={20}
+        maxZoom={21}
         className="h-full w-full relative"
         preferCanvas={true}
       >
-      {/* Render active layer */}
+      {/* Render active layer.
+          maxNativeZoom = último nivel con imágenes reales; por encima Leaflet
+          reescala ("zoom artificial") en lugar de pedir tiles inexistentes. */}
       {activeLayer === 'streets' && (
         <TileLayer
           url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
           attribution='&copy; <a href="https://www.openstreetmap.org/">OSM</a> &copy; <a href="https://carto.com/">CARTO</a>'
           subdomains={['a','b','c','d']}
-          maxZoom={20}
+          maxZoom={21}
+          maxNativeZoom={20}
         />
       )}
       {activeLayer === 'satellite' && (
         <TileLayer
           url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
           attribution='&copy; <a href="https://www.esri.com/">Esri</a>'
-          maxZoom={18}
+          maxZoom={21}
+          maxNativeZoom={18}
         />
       )}
       {activeLayer === 'osm' && (
         <TileLayer
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-          maxZoom={19}
+          maxZoom={21}
+          maxNativeZoom={19}
         />
       )}
 
       {/* Custom Layer Control - Compact for mobile */}
-      <div className="absolute top-16 sm:top-10 right-2 sm:right-3 z-[900]">
-        <div className="bg-white rounded-lg shadow-lg overflow-hidden" style={{ minWidth: '140px' }}>
+      <div className="absolute top-16 sm:top-10 right-2 sm:right-3 z-mapcontrol">
+        <div className="bg-surface rounded-lg shadow-card border border-line overflow-hidden" style={{ minWidth: '140px' }}>
           <button
             type="button"
             onClick={() => handleLayerSelect('streets')}
-            className={`block w-full px-3 sm:px-4 py-2 text-left text-xs sm:text-sm border-b border-gray-100 hover:bg-gray-50 transition-colors ${
-              activeLayer === 'streets' ? 'bg-gray-100 font-semibold' : ''
+            className={`flex w-full items-center gap-2 px-3 sm:px-4 py-2 text-left text-xs sm:text-sm border-b border-line hover:bg-background transition-colors ${
+              activeLayer === 'streets' ? 'bg-primary/10 text-primary font-semibold' : 'text-textPrimary'
             }`}
           >
-            <span className="inline-block w-5">🗺️</span>
-            <span className="hidden sm:inline">Calles (20)</span>
+            <MapIcon className="h-4 w-4 flex-shrink-0" strokeWidth={1.75} aria-hidden />
+            <span className="hidden sm:inline">Calles (21)</span>
             <span className="sm:hidden">Calles</span>
           </button>
           <button
             type="button"
             onClick={() => handleLayerSelect('satellite')}
-            className={`block w-full px-3 sm:px-4 py-2 text-left text-xs sm:text-sm border-b border-gray-100 hover:bg-gray-50 transition-colors ${
-              activeLayer === 'satellite' ? 'bg-gray-100 font-semibold' : ''
+            className={`flex w-full items-center gap-2 px-3 sm:px-4 py-2 text-left text-xs sm:text-sm border-b border-line hover:bg-background transition-colors ${
+              activeLayer === 'satellite' ? 'bg-primary/10 text-primary font-semibold' : 'text-textPrimary'
             }`}
           >
-            <span className="inline-block w-5">🛰️</span>
-            <span className="hidden sm:inline">Satélite (18)</span>
+            <Satellite className="h-4 w-4 flex-shrink-0" strokeWidth={1.75} aria-hidden />
+            <span className="hidden sm:inline">Satélite (21)</span>
             <span className="sm:hidden">Satélite</span>
           </button>
           <button
             type="button"
             onClick={() => handleLayerSelect('osm')}
-            className={`block w-full px-3 sm:px-4 py-2 text-left text-xs sm:text-sm hover:bg-gray-50 transition-colors ${
-              activeLayer === 'osm' ? 'bg-gray-100 font-semibold' : ''
+            className={`flex w-full items-center gap-2 px-3 sm:px-4 py-2 text-left text-xs sm:text-sm hover:bg-background transition-colors ${
+              activeLayer === 'osm' ? 'bg-primary/10 text-primary font-semibold' : 'text-textPrimary'
             }`}
           >
-            <span className="inline-block w-5">🌐</span>
-            <span className="hidden sm:inline">OSM (19)</span>
+            <Globe className="h-4 w-4 flex-shrink-0" strokeWidth={1.75} aria-hidden />
+            <span className="hidden sm:inline">OSM (21)</span>
             <span className="sm:hidden">OSM</span>
           </button>
         </div>
       </div>
 
-      <AutoLayerSwitch
-        activeLayer={activeLayer}
-        preferredLayer={preferredLayer}
-        setActiveLayer={setActiveLayer}
-      />
+      <ScaleControl position="bottomleft" metric={true} imperial={false} maxWidth={120} />
       <LocationSearch />
       <MapController onMapReady={onMapReady} />
-      <MapBoundsTracker properties={filteredProperties} onVisiblePropertiesChange={onVisiblePropertiesChange} />
+      <MapBoundsTracker properties={filteredProperties} onVisiblePropertiesChange={onVisiblePropertiesChange} onBoundsChange={onBoundsChange} />
 
       {useMemo(() => {
         const polygons: JSX.Element[] = [];
@@ -596,13 +522,15 @@ const LeafletMap = ({
           }
 
           const isSelected = selectedProperty?.id === p.id;
-          const baseColor = p.status === 'for_sale' ? '#2b8a3e' : p.status === 'for_rent' ? '#1971c2' : '#868e96';
+          // Colores de estado alineados a los tokens de marca: verde `success`
+          // (en venta), azul `primary` (en alquiler), slate `muted` (inactivo).
+          const baseColor = p.status === 'for_sale' ? '#10B981' : p.status === 'for_rent' ? '#2563EB' : '#64748B';
 
           // Format price
           const formattedPrice = p.price ? `$${parseFloat(p.price).toLocaleString('en-US', { maximumFractionDigits: 0 })}` : 'N/A';
 
           // Create price label icon
-          const priceIconColor = p.status === 'for_sale' ? 'linear-gradient(135deg, #2b8a3e, #37b24d)' : p.status === 'for_rent' ? 'linear-gradient(135deg, #1971c2, #1c7ed6)' : 'linear-gradient(135deg, #495057, #868e96)';
+          const priceIconColor = p.status === 'for_sale' ? 'linear-gradient(135deg, #059669, #10B981)' : p.status === 'for_rent' ? 'linear-gradient(135deg, #2563EB, #1D4ED8)' : 'linear-gradient(135deg, #475569, #64748B)';
 
           const priceLabelIcon = new L.DivIcon({
             className: 'price-label-icon',
@@ -620,13 +548,14 @@ const LeafletMap = ({
                   color: white;
                   padding: 4px 8px;
                   border-radius: 12px;
-                  font-weight: 700;
+                  font-weight: 600;
                   font-size: 11px;
                   white-space: nowrap;
                   box-shadow: 0 2px 8px rgba(0,0,0,0.25);
                   border: 1.5px solid white;
-                  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-                  letter-spacing: 0.2px;
+                  font-family: var(--font-geist-mono), ui-monospace, 'SFMono-Regular', monospace;
+                  font-variant-numeric: tabular-nums;
+                  letter-spacing: 0;
                   cursor: pointer;
                   transition: transform 0.2s, box-shadow 0.2s;
                 "
@@ -760,7 +689,7 @@ const LeafletMap = ({
                   <div className="text-sm">
                     <strong>{p.title || `Propiedad #${p.id}`}</strong>
                     <br />
-                    <small className="text-gray-600">
+                    <small className="text-textSecondary">
                       {getPropertyTypeLabel(p.property_type)} - {getStatusLabel(p.status)}
                     </small>
                   </div>

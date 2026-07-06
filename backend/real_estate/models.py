@@ -110,6 +110,9 @@ class Property(models.Model):
     )
     contact_phone = models.CharField(max_length=20, blank=True, default="")
 
+    # --- Metrics ---
+    views_count = models.PositiveIntegerField(default=0, help_text="Número de veces que se ha visto el detalle")
+
     # --- Media ---
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -269,3 +272,83 @@ class EmailChangeToken(models.Model):
         """Check if token is still valid"""
         from django.utils import timezone
         return not self.is_used and timezone.now() < self.expires_at
+
+
+class Lead(models.Model):
+    """
+    Contacto/interesado sobre una propiedad. Permite medir qué propiedades
+    generan interés y da a la inmobiliaria una bandeja de leads que gestionar.
+    """
+    SOURCE_CHOICES = [
+        ("property_modal", "Modal del mapa"),
+        ("property_page", "Página de propiedad"),
+        ("whatsapp", "WhatsApp"),
+        ("phone", "Teléfono"),
+        ("other", "Otro"),
+    ]
+
+    STATUS_CHOICES = [
+        ("new", "Nuevo"),
+        ("contacted", "Contactado"),
+        ("closed", "Cerrado"),
+    ]
+
+    property = models.ForeignKey(
+        Property,
+        on_delete=models.CASCADE,
+        related_name="leads",
+    )
+    name = models.CharField(max_length=150)
+    phone = models.CharField(max_length=30)
+    email = models.EmailField(blank=True, default="")
+    message = models.TextField(blank=True, default="")
+    source = models.CharField(max_length=30, choices=SOURCE_CHOICES, default="property_modal")
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="new")
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        return f"Lead de {self.name} sobre {self.property_id}"
+
+
+class PendingPublication(models.Model):
+    """
+    Solicitud de publicación capturada antes de que el usuario cree o verifique
+    su cuenta. No se muestra en el mapa; sirve para seguimiento comercial.
+    """
+    STATUS_CHOICES = [
+        ("new", "Nuevo"),
+        ("contacted", "Contactado"),
+        ("converted", "Convertido"),
+        ("discarded", "Descartado"),
+    ]
+
+    SOURCE_CHOICES = [
+        ("account_required", "Intento de publicar sin cuenta"),
+        ("whatsapp_help", "Ayuda por WhatsApp"),
+        ("exit_prompt", "Abandono del formulario"),
+        ("other", "Otro"),
+    ]
+
+    title = models.CharField(max_length=150, blank=True, default="")
+    contact_phone = models.CharField(max_length=30, blank=True, default="")
+    contact_email = models.EmailField(blank=True, default="")
+    city = models.CharField(max_length=100, blank=True, default="")
+    province = models.CharField(max_length=100, blank=True, default="")
+    property_type = models.CharField(max_length=30, blank=True, default="")
+    operation = models.CharField(max_length=30, blank=True, default="")
+    price = models.CharField(max_length=50, blank=True, default="")
+    draft = models.JSONField(default=dict, blank=True)
+    source = models.CharField(max_length=30, choices=SOURCE_CHOICES, default="account_required")
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="new")
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        return self.title or f"Solicitud pendiente {self.pk}"

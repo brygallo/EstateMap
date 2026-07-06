@@ -14,8 +14,18 @@ interface DashboardData {
   properties_for_sale: number;
   properties_for_rent: number;
   properties_inactive: number;
+  properties_active: number;
+  total_views: number;
+  total_leads: number;
+  leads_new: number;
+  pending_publications: number;
+  pending_publications_new: number;
+  new_users_30d: number;
+  properties_without_images: number;
+  properties_incomplete: number;
   recent_users: any[];
   recent_properties: any[];
+  recent_leads: any[];
 }
 
 const AdminDashboard = () => {
@@ -81,6 +91,35 @@ const AdminDashboard = () => {
                   } />
                 </div>
 
+                {/* Panel comercial */}
+                <h2 className="text-lg font-bold text-gray-900 mb-3">Panel comercial</h2>
+                <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+                  <StatCard label="Activas" value={data.properties_active} color="bg-emerald-500" icon={
+                    <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                  } />
+                  <StatCard label="Vistas totales" value={data.total_views} color="bg-sky-500" icon={
+                    <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
+                  } />
+                  <StatCard label="Contactos" value={data.total_leads} color="bg-violet-500" icon={
+                    <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
+                  } />
+                  <StatCard label="Contactos nuevos" value={data.leads_new} color="bg-rose-500" icon={
+                    <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" /></svg>
+                  } />
+                  <StatCard label="Pendientes" value={data.pending_publications_new} color="bg-fuchsia-500" icon={
+                    <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                  } />
+                  <StatCard label="Nuevos usuarios (30d)" value={data.new_users_30d} color="bg-blue-500" icon={
+                    <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" /></svg>
+                  } />
+                  <StatCard label="Sin imágenes" value={data.properties_without_images} color="bg-amber-500" icon={
+                    <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+                  } />
+                  <StatCard label="Incompletas" value={data.properties_incomplete} color="bg-orange-500" icon={
+                    <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                  } />
+                </div>
+
                 {/* Quick Links */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
                   <Link href="/admin/users" className="flex items-center p-4 bg-white rounded-lg border border-gray-200 hover:shadow-md transition-shadow">
@@ -99,6 +138,15 @@ const AdminDashboard = () => {
                     <div>
                       <h3 className="font-semibold text-gray-900">Gestionar Propiedades</h3>
                       <p className="text-sm text-gray-500">Ver todas las propiedades y moderar contenido</p>
+                    </div>
+                  </Link>
+                  <Link href="/admin/pending-publications" className="flex items-center p-4 bg-white rounded-lg border border-gray-200 hover:shadow-md transition-shadow">
+                    <div className="p-2 bg-fuchsia-100 rounded-lg mr-4">
+                      <svg className="h-6 w-6 text-fuchsia-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                    </div>
+                    <div>
+                      <h3 className="font-semibold text-gray-900">Publicaciones Pendientes</h3>
+                      <p className="text-sm text-gray-500">Contactar interesados que no terminaron el registro</p>
                     </div>
                   </Link>
                 </div>
@@ -179,6 +227,48 @@ const AdminDashboard = () => {
                     </table>
                   </div>
                 </div>
+
+                {/* Contactos recientes (leads) */}
+                <div className="bg-white rounded-lg border border-gray-200 mt-6">
+                  <div className="flex items-center justify-between p-4 border-b border-gray-200">
+                    <h2 className="font-semibold text-gray-900">Contactos Recientes</h2>
+                    <span className="text-sm text-gray-500">{data.total_leads} en total</span>
+                  </div>
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm">
+                      <thead className="bg-gray-50">
+                        <tr>
+                          <th className="text-left px-4 py-2 font-medium text-gray-600">Nombre</th>
+                          <th className="text-left px-4 py-2 font-medium text-gray-600">Teléfono</th>
+                          <th className="text-left px-4 py-2 font-medium text-gray-600">Propiedad</th>
+                          <th className="text-left px-4 py-2 font-medium text-gray-600">Origen</th>
+                          <th className="text-left px-4 py-2 font-medium text-gray-600">Estado</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-gray-100">
+                        {data.recent_leads.length === 0 ? (
+                          <tr>
+                            <td colSpan={5} className="px-4 py-6 text-center text-gray-400">
+                              Aún no hay contactos registrados
+                            </td>
+                          </tr>
+                        ) : (
+                          data.recent_leads.map((l: any) => (
+                            <tr key={l.id} className="hover:bg-gray-50">
+                              <td className="px-4 py-2.5 font-medium text-gray-900">{l.name}</td>
+                              <td className="px-4 py-2.5 text-gray-600">{l.phone}</td>
+                              <td className="px-4 py-2.5 text-gray-600">{l.property_title || `#${l.property}`}</td>
+                              <td className="px-4 py-2.5 text-gray-600">{leadSourceLabel(l.source)}</td>
+                              <td className="px-4 py-2.5">
+                                <LeadStatusBadge status={l.status} />
+                              </td>
+                            </tr>
+                          ))
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
               </>
             )}
           </div>
@@ -216,6 +306,35 @@ function StatusBadge({ status }: { status: string }) {
       {labels[status] || status}
     </span>
   );
+}
+
+function LeadStatusBadge({ status }: { status: string }) {
+  const styles: Record<string, string> = {
+    new: 'bg-rose-100 text-rose-700',
+    contacted: 'bg-blue-100 text-blue-700',
+    closed: 'bg-gray-100 text-gray-600',
+  };
+  const labels: Record<string, string> = {
+    new: 'Nuevo',
+    contacted: 'Contactado',
+    closed: 'Cerrado',
+  };
+  return (
+    <span className={`inline-flex px-2 py-0.5 text-xs font-medium rounded-full ${styles[status] || 'bg-gray-100 text-gray-600'}`}>
+      {labels[status] || status}
+    </span>
+  );
+}
+
+function leadSourceLabel(s: string) {
+  const map: Record<string, string> = {
+    property_modal: 'Modal del mapa',
+    property_page: 'Página',
+    whatsapp: 'WhatsApp',
+    phone: 'Teléfono',
+    other: 'Otro',
+  };
+  return map[s] || s;
 }
 
 function typeLabel(t: string) {

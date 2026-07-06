@@ -1,4 +1,6 @@
 from rest_framework import viewsets, generics, status, filters
+from rest_framework.pagination import PageNumberPagination
+from django.db.models import Q, F, Count, Sum
 from rest_framework_simplejwt.views import TokenObtainPairView
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework.permissions import IsAuthenticated, AllowAny, IsAuthenticatedOrReadOnly
@@ -9,13 +11,17 @@ from rest_framework.settings import api_settings
 from django.http import HttpResponse, Http404
 from django.views import View
 from django.conf import settings
-from .models import Property, PropertyImage, Province, City
+from .models import Property, PropertyImage, Province, City, Lead, PendingPublication
 from django.contrib.auth import get_user_model
 from .serializers import (
     PropertySerializer,
     PropertyImageSerializer,
     ProvinceSerializer,
     CitySerializer,
+    LeadSerializer,
+    LeadStatusSerializer,
+    PendingPublicationSerializer,
+    PendingPublicationStatusSerializer,
     CustomTokenObtainPairSerializer,
     RegisterSerializer,
     VerifyEmailSerializer,
@@ -80,27 +86,153 @@ class CityViewSet(viewsets.ReadOnlyModelViewSet):
             queryset = queryset.filter(province_id=province_id)
         return queryset
 
+class PropertyPagination(PageNumberPagination):
+    """
+    Paginación para el listado de propiedades del mapa. El cliente puede pedir
+    ``?page_size=N`` (por ejemplo el sitemap/SEO pide un tamaño grande para
+    recuperar todo de una vez).
+    """
+    page_size = 300
+    page_size_query_param = 'page_size'
+    max_page_size = 2000
+
+
+def _parse_float(value):
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        return None
+
+
 class PropertyViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticatedOrReadOnly, IsOwnerOrReadOnly]
     queryset = Property.objects.all()
     serializer_class = PropertySerializer
     parser_classes = [MultiPartParser, FormParser, JSONParser]
+    pagination_class = PropertyPagination
 
     def get_queryset(self):
         """
-        Filtrar propiedades según el usuario:
-        - Todos los usuarios: solo propiedades activas (status != 'inactive')
-        - Las propiedades inactivas solo se ven en el endpoint /my_properties/
-        """
-        queryset = Property.objects.all()
+        Propiedades activas (status != 'inactive'), con filtrado server-side por
+        parámetros de query para no descargar todo el catálogo en cada carga:
 
-        # Excluir propiedades inactivas del mapa para todos los usuarios
-        queryset = queryset.exclude(status='inactive')
+        - ``search``: texto libre en título/dirección/ciudad/descripción
+        - ``type`` / ``property_type``: tipo de propiedad
+        - ``status``: estado (for_sale / for_rent)
+        - ``city`` / ``province``: ubicación (coincidencia exacta, sin mayúsculas)
+        - ``min_price`` / ``max_price``: rango de precio
+        - ``min_area`` / ``max_area``: rango de área
+        - ``rooms`` / ``bathrooms``: mínimo de habitaciones / baños
+        - ``owner`` / ``user``: ID del propietario
+        - ``bbox``: "oeste,sur,este,norte" (lng,lat,lng,lat) del mapa visible
+
+        Las propiedades inactivas solo se ven en /my_properties/.
+        """
+        queryset = Property.objects.exclude(status='inactive')
+        params = self.request.query_params
+
+        search = params.get('search', '').strip()
+        if search:
+            queryset = queryset.filter(
+                Q(title__icontains=search)
+                | Q(address__icontains=search)
+                | Q(city__icontains=search)
+                | Q(description__icontains=search)
+            )
+
+        property_type = params.get('type') or params.get('property_type')
+        if property_type and property_type != 'all':
+            queryset = queryset.filter(property_type=property_type)
+
+        status_param = params.get('status')
+        if status_param and status_param != 'all':
+            queryset = queryset.filter(status=status_param)
+
+        city = params.get('city')
+        if city and city != 'all':
+            queryset = queryset.filter(city__iexact=city)
+
+        province = params.get('province')
+        if province and province != 'all':
+            queryset = queryset.filter(province__iexact=province)
+
+        min_price = _parse_float(params.get('min_price') or params.get('minPrice'))
+        if min_price is not None:
+            queryset = queryset.filter(price__gte=min_price)
+        max_price = _parse_float(params.get('max_price') or params.get('maxPrice'))
+        if max_price is not None:
+            queryset = queryset.filter(price__lte=max_price)
+
+        min_area = _parse_float(params.get('min_area') or params.get('minArea'))
+        if min_area is not None:
+            queryset = queryset.filter(area__gte=min_area)
+        max_area = _parse_float(params.get('max_area') or params.get('maxArea'))
+        if max_area is not None:
+            queryset = queryset.filter(area__lte=max_area)
+
+        rooms = params.get('rooms')
+        if rooms and rooms != 'all' and rooms.isdigit():
+            queryset = queryset.filter(rooms__gte=int(rooms))
+
+        bathrooms = params.get('bathrooms')
+        if bathrooms and bathrooms != 'all' and bathrooms.isdigit():
+            queryset = queryset.filter(bathrooms__gte=int(bathrooms))
+
+        owner = params.get('owner') or params.get('user')
+        if owner and owner != 'all' and str(owner).isdigit():
+            queryset = queryset.filter(owner_id=int(owner))
+
+        bbox = params.get('bbox')
+        if bbox:
+            parts = [_parse_float(p) for p in bbox.split(',')]
+            if len(parts) == 4 and all(p is not None for p in parts):
+                west, south, east, north = parts
+                # Propiedades con punto dentro del bbox, o sin punto (solo
+                # polígono) que se mantienen siempre visibles en el mapa.
+                inside = Q(
+                    latitude__gte=south, latitude__lte=north,
+                    longitude__gte=west, longitude__lte=east,
+                )
+                no_point = Q(latitude__isnull=True) | Q(longitude__isnull=True)
+                queryset = queryset.filter(inside | no_point)
 
         return queryset
 
     def perform_create(self, serializer):
         serializer.save(owner=self.request.user)
+
+    def retrieve(self, request, *args, **kwargs):
+        """Devuelve el detalle e incrementa el contador de vistas de forma atómica."""
+        instance = self.get_object()
+        Property.objects.filter(pk=instance.pk).update(views_count=F('views_count') + 1)
+        instance.views_count = (instance.views_count or 0) + 1
+        serializer = self.get_serializer(instance)
+        return Response(serializer.data)
+
+    @action(detail=False, methods=['get'], permission_classes=[AllowAny])
+    def owners(self, request):
+        """
+        Lista de propietarios con al menos una propiedad activa. Alimenta el
+        filtro por usuario del mapa sin depender de qué propiedades estén
+        cargadas en el bbox actual.
+        """
+        owners = (
+            Property.objects.exclude(status='inactive')
+            .exclude(owner__isnull=True)
+            .values('owner_id', 'owner__username', 'owner__first_name', 'owner__last_name')
+            .distinct()
+        )
+        seen = {}
+        for row in owners:
+            oid = row['owner_id']
+            if oid in seen:
+                continue
+            full_name = f"{row['owner__first_name']} {row['owner__last_name']}".strip()
+            seen[oid] = {
+                'id': oid,
+                'username': full_name if full_name else row['owner__username'],
+            }
+        return Response(sorted(seen.values(), key=lambda u: u['username'].lower()))
 
     @action(detail=False, methods=['get'], permission_classes=[IsAuthenticated])
     def my_properties(self, request):
@@ -133,6 +265,73 @@ class PropertyViewSet(viewsets.ModelViewSet):
                 {'error': 'Image not found'},
                 status=status.HTTP_404_NOT_FOUND
             )
+
+
+class LeadViewSet(viewsets.ModelViewSet):
+    """
+    Leads/contactos por propiedad.
+
+    - ``create``: público (formulario de contacto en el modal / página).
+    - ``list`` / ``retrieve`` / ``update`` / ``destroy``: autenticado; cada
+      usuario ve y gestiona solo los leads de sus propias propiedades (los
+      admins ven todos).
+    """
+    queryset = Lead.objects.all()
+    serializer_class = LeadSerializer
+    http_method_names = ['get', 'post', 'patch', 'delete', 'head', 'options']
+
+    def get_permissions(self):
+        if self.action == 'create':
+            return [AllowAny()]
+        return [IsAuthenticated()]
+
+    def get_serializer_class(self):
+        if self.action == 'partial_update':
+            return LeadStatusSerializer
+        return LeadSerializer
+
+    def get_queryset(self):
+        user = self.request.user
+        if not user or not user.is_authenticated:
+            return Lead.objects.none()
+        qs = Lead.objects.select_related('property', 'property__owner')
+        if user.is_staff:
+            return qs
+        return qs.filter(property__owner=user)
+
+
+class PendingPublicationViewSet(viewsets.ModelViewSet):
+    """
+    Solicitudes de publicación capturadas antes de completar cuenta/verificación.
+    La creación es pública; la bandeja completa queda para administradores.
+    """
+    queryset = PendingPublication.objects.all()
+    serializer_class = PendingPublicationSerializer
+    http_method_names = ['get', 'post', 'patch', 'head', 'options']
+
+    def get_permissions(self):
+        if self.action == 'create':
+            return [AllowAny()]
+        return [IsAuthenticated(), IsAdminUser()]
+
+    def get_queryset(self):
+        user = self.request.user
+        if user and user.is_authenticated and user.is_staff:
+            return PendingPublication.objects.all()
+        return PendingPublication.objects.none()
+
+    def get_serializer_class(self):
+        if self.action == 'partial_update':
+            return PendingPublicationStatusSerializer
+        return PendingPublicationSerializer
+
+    def perform_create(self, serializer):
+        pending = serializer.save()
+        try:
+            from .email_utils import send_pending_publication_notification
+            send_pending_publication_notification(pending)
+        except Exception as exc:
+            print(f"Error notifying pending publication: {exc}")
 
 
 class CustomTokenObtainPairView(TokenObtainPairView):
@@ -640,17 +839,46 @@ class AdminDashboardView(generics.GenericAPIView):
     serializer_class = AdminDashboardSerializer
 
     def get(self, request):
+        from django.utils import timezone
+        from datetime import timedelta
+
+        properties = Property.objects.all()
+        # Inmuebles sin imágenes e incompletos (sin descripción, sin título,
+        # sin imágenes o sin área válida): candidatos a mejorar para captar más
+        # interés comercial.
+        with_image_counts = properties.annotate(num_images=Count('images'))
+        without_images = with_image_counts.filter(num_images=0).count()
+        incomplete = with_image_counts.filter(
+            Q(num_images=0) | Q(description='') | Q(title='')
+            | Q(area__isnull=True) | Q(area__lte=0)
+        ).count()
+
+        thirty_days_ago = timezone.now() - timedelta(days=30)
+
         data = {
             'total_users': User.objects.count(),
-            'total_properties': Property.objects.count(),
-            'properties_for_sale': Property.objects.filter(status='for_sale').count(),
-            'properties_for_rent': Property.objects.filter(status='for_rent').count(),
-            'properties_inactive': Property.objects.filter(status='inactive').count(),
+            'total_properties': properties.count(),
+            'properties_for_sale': properties.filter(status='for_sale').count(),
+            'properties_for_rent': properties.filter(status='for_rent').count(),
+            'properties_inactive': properties.filter(status='inactive').count(),
+            # --- Métricas comerciales ---
+            'properties_active': properties.exclude(status='inactive').count(),
+            'total_views': properties.aggregate(total=Sum('views_count'))['total'] or 0,
+            'total_leads': Lead.objects.count(),
+            'leads_new': Lead.objects.filter(status='new').count(),
+            'pending_publications': PendingPublication.objects.count(),
+            'pending_publications_new': PendingPublication.objects.filter(status='new').count(),
+            'new_users_30d': User.objects.filter(date_joined__gte=thirty_days_ago).count(),
+            'properties_without_images': without_images,
+            'properties_incomplete': incomplete,
             'recent_users': AdminUserSerializer(
                 User.objects.order_by('-date_joined')[:5], many=True
             ).data,
             'recent_properties': AdminPropertySerializer(
                 Property.objects.order_by('-created_at')[:5], many=True
+            ).data,
+            'recent_leads': LeadSerializer(
+                Lead.objects.select_related('property')[:5], many=True
             ).data,
         }
         return Response(data)

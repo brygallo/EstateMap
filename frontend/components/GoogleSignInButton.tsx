@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth-context';
 import { toast } from 'react-toastify';
@@ -17,6 +17,8 @@ declare global {
   }
 }
 
+const PROPERTY_DRAFT_STORAGE_KEY = 'propertyPublicationDraft';
+
 export default function GoogleSignInButton({
   text = 'continue_with',
   onSuccess,
@@ -27,6 +29,9 @@ export default function GoogleSignInButton({
   const { login } = useAuth();
   const API_URL = process.env.NEXT_PUBLIC_API_URL || '/api';
   const GOOGLE_CLIENT_ID = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
+  // 'loading' mientras carga el script de Google; 'ready' cuando el botón se
+  // renderiza; 'error' si no llega tras el timeout (red lenta / bloqueado).
+  const [status, setStatus] = useState<'loading' | 'ready' | 'error'>('loading');
 
   useEffect(() => {
     if (!GOOGLE_CLIENT_ID) {
@@ -34,40 +39,52 @@ export default function GoogleSignInButton({
       return;
     }
 
-    const initializeGoogleSignIn = () => {
-      if (window.google && buttonRef.current) {
-        window.google.accounts.id.initialize({
-          client_id: GOOGLE_CLIENT_ID,
-          callback: handleCredentialResponse,
-          auto_select: false,
-          cancel_on_tap_outside: true,
-        });
+    let cancelled = false;
 
-        window.google.accounts.id.renderButton(buttonRef.current, {
-          type: 'standard',
-          theme: 'outline',
-          size: 'large',
-          text: text,
-          shape: 'rectangular',
-          logo_alignment: 'left',
-          width: buttonRef.current.offsetWidth,
-        });
-      }
+    const initializeGoogleSignIn = () => {
+      if (cancelled || !window.google || !buttonRef.current) return;
+      window.google.accounts.id.initialize({
+        client_id: GOOGLE_CLIENT_ID,
+        callback: handleCredentialResponse,
+        auto_select: false,
+        cancel_on_tap_outside: true,
+      });
+
+      window.google.accounts.id.renderButton(buttonRef.current, {
+        type: 'standard',
+        theme: 'outline',
+        size: 'large',
+        text: text,
+        shape: 'rectangular',
+        logo_alignment: 'left',
+        width: buttonRef.current.offsetWidth,
+      });
+      setStatus('ready');
     };
 
-    // Esperar a que el script de Google se cargue
     if (window.google) {
       initializeGoogleSignIn();
-    } else {
-      const checkGoogleLoaded = setInterval(() => {
-        if (window.google) {
-          clearInterval(checkGoogleLoaded);
-          initializeGoogleSignIn();
-        }
-      }, 100);
-
-      return () => clearInterval(checkGoogleLoaded);
+      return;
     }
+
+    // Poll acotado: reintenta hasta ~6s y luego muestra el fallback en vez de
+    // sondear para siempre en silencio (el problema anterior).
+    let attempts = 0;
+    const maxAttempts = 60; // 60 × 100ms = 6s
+    const checkGoogleLoaded = setInterval(() => {
+      if (window.google) {
+        clearInterval(checkGoogleLoaded);
+        initializeGoogleSignIn();
+      } else if (++attempts >= maxAttempts) {
+        clearInterval(checkGoogleLoaded);
+        if (!cancelled) setStatus('error');
+      }
+    }, 100);
+
+    return () => {
+      cancelled = true;
+      clearInterval(checkGoogleLoaded);
+    };
   }, [GOOGLE_CLIENT_ID, text]);
 
   const handleCredentialResponse = async (response: any) => {
@@ -96,7 +113,9 @@ export default function GoogleSignInButton({
       if (onSuccess) {
         onSuccess();
       } else {
-        router.push('/');
+        const hasPropertyDraft =
+          typeof window !== 'undefined' && localStorage.getItem(PROPERTY_DRAFT_STORAGE_KEY);
+        router.push(hasPropertyDraft ? '/add-property' : '/');
       }
     } catch (err) {
       const errorMessage = 'Error de conexión con el servidor';
@@ -109,5 +128,24 @@ export default function GoogleSignInButton({
     return null;
   }
 
-  return <div ref={buttonRef} className="w-full" />;
+  return (
+    <div className="w-full">
+      {/* Reservamos la altura del botón (min-h) para evitar salto de layout (CLS);
+          el skeleton se superpone mientras carga y desaparece al renderizar. */}
+      <div className="relative min-h-[44px] w-full">
+        <div ref={buttonRef} className="w-full" />
+        {status === 'loading' && (
+          <div
+            className="absolute inset-0 animate-pulse rounded-lg border border-line bg-background"
+            aria-hidden="true"
+          />
+        )}
+      </div>
+      {status === 'error' && (
+        <p className="mt-1 text-center text-xs text-textSecondary" role="status">
+          No se pudo cargar el acceso con Google. Usa tu correo y contraseña más abajo.
+        </p>
+      )}
+    </div>
+  );
 }

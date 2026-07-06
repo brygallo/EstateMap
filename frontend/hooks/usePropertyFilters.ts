@@ -1,0 +1,209 @@
+'use client';
+
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import type { MapBounds, Owner, Property, PropertyFilters } from '@/lib/types';
+
+// Rangos por defecto de los sliders.
+export const PRICE_MIN = 0;
+export const PRICE_MAX = 10000000; // hasta 10M USD por defecto
+export const AREA_MIN = 0;
+export const AREA_MAX = 100000; // alto para que los terrenos grandes se vean por defecto
+
+export function defaultFilters(): PropertyFilters {
+  return {
+    search: '',
+    propertyType: 'all',
+    status: 'all',
+    minPrice: PRICE_MIN,
+    maxPrice: PRICE_MAX,
+    minArea: AREA_MIN,
+    maxArea: AREA_MAX,
+    rooms: 'all',
+    bathrooms: 'all',
+    userId: 'all',
+  };
+}
+
+function filtersFromParams(params: URLSearchParams | null): PropertyFilters {
+  const base = defaultFilters();
+  if (!params) return base;
+  const num = (key: string, fallback: number) => {
+    const v = params.get(key);
+    return v ? parseInt(v, 10) : fallback;
+  };
+  return {
+    search: params.get('search') || '',
+    propertyType: params.get('type') || 'all',
+    status: params.get('status') || 'all',
+    minPrice: num('minPrice', PRICE_MIN),
+    maxPrice: num('maxPrice', PRICE_MAX),
+    minArea: num('minArea', AREA_MIN),
+    maxArea: num('maxArea', AREA_MAX),
+    rooms: params.get('rooms') || 'all',
+    bathrooms: params.get('bathrooms') || 'all',
+    userId: params.get('user') || 'all',
+  };
+}
+
+/** Serializa los filtros activos a URLSearchParams (para la URL compartible). */
+function filtersToUrlParams(f: PropertyFilters): URLSearchParams {
+  const params = new URLSearchParams();
+  if (f.search) params.set('search', f.search);
+  if (f.propertyType !== 'all') params.set('type', f.propertyType);
+  if (f.status !== 'all') params.set('status', f.status);
+  if (f.minPrice !== PRICE_MIN) params.set('minPrice', String(f.minPrice));
+  if (f.maxPrice !== PRICE_MAX) params.set('maxPrice', String(f.maxPrice));
+  if (f.minArea !== AREA_MIN) params.set('minArea', String(f.minArea));
+  if (f.maxArea !== AREA_MAX) params.set('maxArea', String(f.maxArea));
+  if (f.rooms !== 'all') params.set('rooms', f.rooms);
+  if (f.bathrooms !== 'all') params.set('bathrooms', f.bathrooms);
+  if (f.userId !== 'all') params.set('user', f.userId);
+  return params;
+}
+
+/** Traduce los filtros de la UI a los query params que entiende el backend. */
+function filtersToApiParams(f: PropertyFilters, bounds: MapBounds | null): URLSearchParams {
+  const params = new URLSearchParams();
+  if (f.search) params.set('search', f.search);
+  if (f.propertyType !== 'all') params.set('type', f.propertyType);
+  if (f.status !== 'all') params.set('status', f.status);
+  if (f.minPrice !== PRICE_MIN) params.set('min_price', String(f.minPrice));
+  if (f.maxPrice !== PRICE_MAX) params.set('max_price', String(f.maxPrice));
+  if (f.minArea !== AREA_MIN) params.set('min_area', String(f.minArea));
+  if (f.maxArea !== AREA_MAX) params.set('max_area', String(f.maxArea));
+  if (f.rooms !== 'all') params.set('rooms', f.rooms);
+  if (f.bathrooms !== 'all') params.set('bathrooms', f.bathrooms);
+  if (f.userId !== 'all') params.set('user', f.userId);
+  if (bounds) {
+    params.set('bbox', `${bounds.west},${bounds.south},${bounds.east},${bounds.north}`);
+  }
+  params.set('page_size', '2000');
+  return params;
+}
+
+interface UsePropertyFiltersArgs {
+  token: string | null;
+  bounds: MapBounds | null;
+}
+
+/**
+ * Fuente de verdad de los filtros del mapa: mantiene el estado, lo sincroniza
+ * con la URL y trae del backend (con debounce) solo las propiedades que caen en
+ * el bbox visible y cumplen los filtros. Así no se descarga todo el catálogo.
+ */
+export function usePropertyFilters({ token, bounds }: UsePropertyFiltersArgs) {
+  const searchParams = useSearchParams();
+  const router = useRouter();
+
+  const [filters, setFilters] = useState<PropertyFilters>(() =>
+    filtersFromParams(searchParams)
+  );
+  const [properties, setProperties] = useState<Property[]>([]);
+  const [owners, setOwners] = useState<Owner[]>([]);
+  const [loading, setLoading] = useState(false);
+
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const abortRef = useRef<AbortController | null>(null);
+
+  // Lista de propietarios para el filtro por usuario (independiente del bbox).
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const { apiFetch } = await import('@/lib/api');
+        const res = await apiFetch('/properties/owners/', { skipAuth: !token });
+        if (res.ok && !cancelled) {
+          setOwners(await res.json());
+        }
+      } catch {
+        // El filtro por usuario simplemente queda vacío si falla.
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [token]);
+
+  // Traer propiedades cuando cambian filtros o bounds (con debounce).
+  useEffect(() => {
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+
+    debounceRef.current = setTimeout(async () => {
+      if (abortRef.current) abortRef.current.abort();
+      const controller = new AbortController();
+      abortRef.current = controller;
+
+      setLoading(true);
+      try {
+        const { apiFetch } = await import('@/lib/api');
+        const qs = filtersToApiParams(filters, bounds).toString();
+        const res = await apiFetch(`/properties/?${qs}`, {
+          skipAuth: !token,
+          signal: controller.signal,
+        });
+        if (res.ok) {
+          const data = await res.json();
+          const list: Property[] = Array.isArray(data) ? data : data.results ?? [];
+          setProperties(list);
+        }
+      } catch (err: any) {
+        if (err?.name !== 'AbortError') {
+          console.error('Error fetching properties:', err);
+        }
+      } finally {
+        setLoading(false);
+      }
+    }, 300);
+
+    return () => {
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+    };
+  }, [filters, bounds, token]);
+
+  useEffect(() => {
+    return () => {
+      if (abortRef.current) abortRef.current.abort();
+    };
+  }, []);
+
+  const handleFilterChange = useCallback(
+    (next: PropertyFilters) => {
+      setFilters(next);
+      const params = filtersToUrlParams(next);
+      const query = params.toString();
+      router.push(query ? `/?${query}` : '/', { scroll: false });
+    },
+    [router]
+  );
+
+  const clearFilters = useCallback(() => {
+    handleFilterChange(defaultFilters());
+  }, [handleFilterChange]);
+
+  const hasActiveFilters = useMemo(() => {
+    const f = filters;
+    return (
+      !!f.search ||
+      f.propertyType !== 'all' ||
+      f.status !== 'all' ||
+      f.minPrice !== PRICE_MIN ||
+      f.maxPrice !== PRICE_MAX ||
+      f.minArea !== AREA_MIN ||
+      f.maxArea !== AREA_MAX ||
+      f.rooms !== 'all' ||
+      f.bathrooms !== 'all' ||
+      f.userId !== 'all'
+    );
+  }, [filters]);
+
+  return {
+    filters,
+    properties,
+    owners,
+    loading,
+    handleFilterChange,
+    clearFilters,
+    hasActiveFilters,
+  };
+}
