@@ -1,7 +1,22 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import Select from 'react-select';
+import { Check, ChevronsUpDown, Loader2, MapPin } from 'lucide-react';
+import { cn } from '@/lib/utils';
+import { Button } from '@/components/ui/button';
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from '@/components/ui/command';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
 
 interface Province {
   id: number;
@@ -26,6 +41,98 @@ interface LocationSelectProps {
   required?: boolean;
 }
 
+interface ComboboxOption {
+  value: number;
+  label: string;
+}
+
+interface ComboboxProps {
+  options: ComboboxOption[];
+  value: string;
+  onSelect: (option: ComboboxOption) => void;
+  placeholder: string;
+  searchPlaceholder: string;
+  emptyMessage: string;
+  disabled?: boolean;
+  loading?: boolean;
+}
+
+/**
+ * Buscador tipo combobox (Popover + Command) que reemplaza a react-select.
+ * Mantiene búsqueda en vivo y estilo del sistema de diseño.
+ */
+const Combobox = ({
+  options,
+  value,
+  onSelect,
+  placeholder,
+  searchPlaceholder,
+  emptyMessage,
+  disabled = false,
+  loading = false,
+}: ComboboxProps) => {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <Button
+          type="button"
+          variant="outline"
+          role="combobox"
+          aria-expanded={open}
+          disabled={disabled || loading}
+          className={cn(
+            'h-12 w-full justify-between rounded-input border-line px-4 font-normal',
+            !value && 'text-muted-foreground'
+          )}
+        >
+          <span className="flex min-w-0 items-center gap-2 truncate">
+            <MapPin className="h-4 w-4 shrink-0 text-primary/70" />
+            <span className="truncate">{value || placeholder}</span>
+          </span>
+          {loading ? (
+            <Loader2 className="h-4 w-4 shrink-0 animate-spin opacity-60" />
+          ) : (
+            <ChevronsUpDown className="h-4 w-4 shrink-0 opacity-50" />
+          )}
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent
+        className="w-[--radix-popover-trigger-width] rounded-input p-0"
+        align="start"
+      >
+        <Command>
+          <CommandInput placeholder={searchPlaceholder} className="h-11" />
+          <CommandList>
+            <CommandEmpty>{emptyMessage}</CommandEmpty>
+            <CommandGroup>
+              {options.map((option) => (
+                <CommandItem
+                  key={option.value}
+                  value={option.label}
+                  onSelect={() => {
+                    onSelect(option);
+                    setOpen(false);
+                  }}
+                >
+                  <Check
+                    className={cn(
+                      'mr-2 h-4 w-4',
+                      value === option.label ? 'opacity-100 text-primary' : 'opacity-0'
+                    )}
+                  />
+                  {option.label}
+                </CommandItem>
+              ))}
+            </CommandGroup>
+          </CommandList>
+        </Command>
+      </PopoverContent>
+    </Popover>
+  );
+};
+
 const LocationSelect = ({
   provinceValue,
   cityValue,
@@ -41,15 +148,13 @@ const LocationSelect = ({
 
   const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api';
 
-  // Cargar provincias al montar el componente
   useEffect(() => {
     loadProvinces();
   }, []);
 
-  // Cuando cambia provinceValue (de props), buscar el ID de la provincia
   useEffect(() => {
     if (provinceValue && provinces.length > 0) {
-      const province = provinces.find(p => p.name === provinceValue);
+      const province = provinces.find((p) => p.name === provinceValue);
       if (province) {
         setSelectedProvinceId(province.id);
         loadCities(province.id);
@@ -86,120 +191,65 @@ const LocationSelect = ({
     }
   };
 
-  const handleProvinceChange = (option: any) => {
-    if (option) {
-      setSelectedProvinceId(option.value);
-      onProvinceChange(option.label);
-      onCityChange(''); // Limpiar ciudad al cambiar provincia
-      loadCities(option.value);
-    } else {
-      setSelectedProvinceId(null);
-      onProvinceChange('');
-      onCityChange('');
-      setCities([]);
-    }
+  const handleProvinceChange = (option: ComboboxOption) => {
+    setSelectedProvinceId(option.value);
+    onProvinceChange(option.label);
+    onCityChange('');
+    loadCities(option.value);
   };
 
-  const handleCityChange = (option: any) => {
-    if (option) {
-      onCityChange(option.label);
-    } else {
-      onCityChange('');
-    }
+  const handleCityChange = (option: ComboboxOption) => {
+    onCityChange(option.label);
   };
 
-  // Opciones para react-select
-  const provinceOptions = provinces.map(p => ({
+  const provinceOptions: ComboboxOption[] = provinces.map((p) => ({
     value: p.id,
     label: p.name,
   }));
 
-  const cityOptions = cities.map(c => ({
+  const cityOptions: ComboboxOption[] = cities.map((c) => ({
     value: c.id,
     label: c.name,
   }));
 
-  // Valores seleccionados actuales
-  const selectedProvince = provinceOptions.find(o => o.label === provinceValue) || null;
-  const selectedCity = cityOptions.find(o => o.label === cityValue) || null;
-
-  // Estilos personalizados para react-select
-  const customStyles = {
-    control: (base: any, state: any) => ({
-      ...base,
-      borderRadius: '0.75rem',
-      borderColor: state.isFocused ? '#3b82f6' : '#d1d5db',
-      boxShadow: state.isFocused ? '0 0 0 2px rgba(59, 130, 246, 0.3)' : 'none',
-      '&:hover': {
-        borderColor: '#3b82f6',
-      },
-      minHeight: '48px',
-      padding: '0 0.5rem',
-    }),
-    option: (base: any, state: any) => ({
-      ...base,
-      backgroundColor: state.isSelected
-        ? '#3b82f6'
-        : state.isFocused
-        ? '#eff6ff'
-        : 'white',
-      color: state.isSelected ? 'white' : '#1f2937',
-      '&:active': {
-        backgroundColor: '#3b82f6',
-      },
-    }),
-    menu: (base: any) => ({
-      ...base,
-      borderRadius: '0.75rem',
-      overflow: 'hidden',
-      boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
-    }),
-  };
-
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-      {/* Provincia */}
-      <div>
-        <label className="block text-sm font-semibold text-gray-700 mb-2">
-          Provincia {required && <span className="text-red-500">*</span>}
+    <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+      <div className="space-y-2">
+        <label className="block text-sm font-semibold text-textPrimary">
+          Provincia {required && <span className="text-error">*</span>}
         </label>
-        <Select
+        <Combobox
           options={provinceOptions}
-          value={selectedProvince}
-          onChange={handleProvinceChange}
-          isLoading={loadingProvinces}
-          isClearable
+          value={provinceValue}
+          onSelect={handleProvinceChange}
           placeholder="Selecciona una provincia..."
-          noOptionsMessage={() => 'No hay provincias disponibles'}
-          styles={customStyles}
-          required={required}
+          searchPlaceholder="Buscar provincia..."
+          emptyMessage="No hay provincias disponibles"
+          loading={loadingProvinces}
         />
       </div>
 
-      {/* Ciudad */}
-      <div>
-        <label className="block text-sm font-semibold text-gray-700 mb-2">
-          Ciudad {required && <span className="text-red-500">*</span>}
+      <div className="space-y-2">
+        <label className="block text-sm font-semibold text-textPrimary">
+          Ciudad {required && <span className="text-error">*</span>}
         </label>
-        <Select
+        <Combobox
           options={cityOptions}
-          value={selectedCity}
-          onChange={handleCityChange}
-          isLoading={loadingCities}
-          isClearable
-          isDisabled={!selectedProvinceId}
+          value={cityValue}
+          onSelect={handleCityChange}
           placeholder={
             !selectedProvinceId
               ? 'Primero selecciona una provincia'
               : 'Selecciona una ciudad...'
           }
-          noOptionsMessage={() =>
+          searchPlaceholder="Buscar ciudad..."
+          emptyMessage={
             !selectedProvinceId
               ? 'Primero selecciona una provincia'
               : 'No hay ciudades disponibles'
           }
-          styles={customStyles}
-          required={required}
+          disabled={!selectedProvinceId}
+          loading={loadingCities}
         />
       </div>
     </div>

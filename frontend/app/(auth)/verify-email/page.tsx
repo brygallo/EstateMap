@@ -4,7 +4,12 @@ import { useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Formik, Form, Field, ErrorMessage } from 'formik';
 import * as Yup from 'yup';
-import { toast } from 'react-toastify';
+import { toast } from 'sonner';
+import { MailCheck, Mail, KeyRound, ShieldCheck, Loader2 } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Card, CardContent } from '@/components/ui/card';
 
 const VerifyEmail = () => {
   const router = useRouter();
@@ -75,23 +80,21 @@ const VerifyEmail = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-white to-green-50 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full space-y-8">
-        {/* Logo y título */}
-        <div className="text-center">
-          <div className="mx-auto h-16 w-16 bg-gradient-to-br from-primary to-secondary rounded-2xl flex items-center justify-center shadow-lg mb-4">
-            <svg className="h-10 w-10 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-            </svg>
-          </div>
-          <h2 className="text-3xl font-bold text-gray-900">Verifica tu correo</h2>
-          <p className="mt-2 text-sm text-gray-600">
-            Ingresa el código de 6 dígitos que te enviamos por correo
-          </p>
+    <div className="space-y-8">
+      {/* Logo y título */}
+      <div className="text-center">
+        <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-card bg-primary shadow-card">
+          <MailCheck className="h-8 w-8 text-primary-foreground" strokeWidth={1.75} />
         </div>
+        <h1 className="text-3xl font-bold text-textPrimary">Verifica tu correo</h1>
+        <p className="mt-2 text-sm text-textSecondary">
+          Ingresa el código de 6 dígitos que te enviamos por correo
+        </p>
+      </div>
 
-        {/* Formulario */}
-        <div className="bg-white rounded-3xl shadow-2xl p-8">
+      {/* Formulario */}
+      <Card className="rounded-card border-line bg-surface shadow-card">
+        <CardContent className="p-8">
           <Formik
             initialValues={{
               email: emailFromUrl,
@@ -103,52 +106,42 @@ const VerifyEmail = () => {
             {({ isSubmitting, errors, touched, values }: any) => (
               <Form className="space-y-6">
                 {/* Email */}
-                <div>
-                  <label htmlFor="email" className="block text-sm font-semibold text-gray-700 mb-2">
-                    Correo electrónico
-                  </label>
+                <div className="space-y-2">
+                  <Label htmlFor="email">Correo electrónico</Label>
                   <div className="relative">
-                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                      <svg className="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 12a4 4 0 10-8 0 4 4 0 008 0zm0 0v1.5a2.5 2.5 0 005 0V12a9 9 0 10-9 9m4.5-1.206a8.959 8.959 0 01-4.5 1.207" />
-                      </svg>
-                    </div>
+                    <Mail className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                     <Field
+                      as={Input}
                       id="email"
                       name="email"
                       type="email"
                       placeholder="tu@email.com"
-                      className={`w-full pl-10 pr-4 py-3 border ${
-                        errors.email && touched.email ? 'border-red-500' : 'border-gray-300'
-                      } rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent transition-all`}
+                      className={`h-11 rounded-input pl-10 ${
+                        errors.email && touched.email ? 'border-error focus-visible:ring-error' : ''
+                      }`}
                     />
                   </div>
-                  <ErrorMessage name="email" component="p" className="mt-1 text-sm text-red-600" />
+                  <ErrorMessage name="email" component="p" className="text-sm text-error" />
                 </div>
 
                 {/* Código de verificación */}
-                <div>
-                  <label htmlFor="code" className="block text-sm font-semibold text-gray-700 mb-2">
-                    Código de verificación
-                  </label>
+                <div className="space-y-2">
+                  <Label htmlFor="code">Código de verificación</Label>
                   <div className="relative">
-                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                      <svg className="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
-                      </svg>
-                    </div>
+                    <KeyRound className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                     <Field
+                      as={Input}
                       id="code"
                       name="code"
                       type="text"
                       placeholder="123456"
-                      maxLength="6"
-                      className={`w-full pl-10 pr-4 py-3 border ${
-                        errors.code && touched.code ? 'border-red-500' : 'border-gray-300'
-                      } rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent transition-all text-center text-2xl tracking-widest font-mono`}
+                      maxLength={6}
+                      className={`h-12 rounded-input pl-10 text-center font-geo text-2xl tracking-widest ${
+                        errors.code && touched.code ? 'border-error focus-visible:ring-error' : ''
+                      }`}
                     />
                   </div>
-                  <ErrorMessage name="code" component="p" className="mt-1 text-sm text-red-600" />
+                  <ErrorMessage name="code" component="p" className="text-sm text-error" />
                 </div>
 
                 {/* Botón reenviar código */}
@@ -157,45 +150,40 @@ const VerifyEmail = () => {
                     type="button"
                     onClick={() => handleResend(values.email)}
                     disabled={resending || !values.email}
-                    className="text-sm text-primary hover:text-secondary transition-colors disabled:opacity-50 disabled:cursor-not-allowed font-medium"
+                    className="text-sm font-medium text-primary transition-colors hover:text-secondary disabled:cursor-not-allowed disabled:opacity-50"
                   >
                     {resending ? 'Reenviando...' : '¿No recibiste el código? Reenviar'}
                   </button>
                 </div>
 
                 {/* Submit Button */}
-                <button
+                <Button
                   type="submit"
                   disabled={isSubmitting}
-                  className="w-full flex justify-center items-center py-3 px-4 border border-transparent rounded-xl shadow-sm text-base font-semibold text-white bg-gradient-to-r from-primary to-secondary hover:from-primary/90 hover:to-secondary/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 transform hover:scale-[1.02]"
+                  className="h-11 w-full rounded-button bg-primary text-base font-semibold text-primary-foreground shadow-card transition-transform hover:bg-primaryHover active:scale-[0.98]"
                 >
                   {isSubmitting ? (
                     <>
-                      <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                      </svg>
+                      <Loader2 className="h-4 w-4 animate-spin" />
                       Verificando...
                     </>
                   ) : (
                     <>
                       Verificar correo
-                      <svg className="ml-2 -mr-1 h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                      </svg>
+                      <ShieldCheck className="h-4 w-4" />
                     </>
                   )}
-                </button>
+                </Button>
               </Form>
             )}
           </Formik>
-        </div>
+        </CardContent>
+      </Card>
 
-        {/* Footer */}
-        <div className="text-center text-sm text-gray-500">
-          <p>© 2025 Geo Propiedades Ecuador. Todos los derechos reservados.</p>
-        </div>
-      </div>
+      {/* Footer */}
+      <p className="text-center text-sm text-textSecondary">
+        © {new Date().getFullYear()} Geo Propiedades Ecuador. Todos los derechos reservados.
+      </p>
     </div>
   );
 };

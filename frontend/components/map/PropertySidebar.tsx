@@ -1,7 +1,12 @@
 'use client';
 
+import { useState } from 'react';
+import { AnimatePresence, motion } from 'motion/react';
+import { MapPinned, X } from 'lucide-react';
 import MapFilters from '@/components/map/MapFilters';
 import PropertyCard from '@/components/PropertyCard';
+import { Badge } from '@/components/ui/badge';
+import { cn } from '@/lib/utils';
 import type { Owner, Property, PropertyFilters } from '@/lib/types';
 
 interface PropertySidebarProps {
@@ -16,6 +21,10 @@ interface PropertySidebarProps {
   selectedProperty: Property | null;
   onPropertyClick: (property: Property) => void;
   onCloseMobile: () => void;
+
+  /** Sync mapa<->card (opcional): id resaltado desde el mapa y notificación de hover. */
+  hoveredPropertyId?: number | null;
+  onPropertyHover?: (property: Property | null) => void;
 }
 
 /** Panel lateral: filtros + listado de propiedades visibles en el mapa. */
@@ -30,20 +39,33 @@ export default function PropertySidebar({
   selectedProperty,
   onPropertyClick,
   onCloseMobile,
+  hoveredPropertyId = null,
+  onPropertyHover,
 }: PropertySidebarProps) {
+  // Resalte local del listado (funciona aunque el mapa aún no sincronice hover).
+  const [localHoverId, setLocalHoverId] = useState<number | null>(null);
+  const activeHoverId = hoveredPropertyId ?? localHoverId;
+
+  const handleEnter = (p: Property) => {
+    setLocalHoverId(p.id);
+    onPropertyHover?.(p);
+  };
+  const handleLeave = () => {
+    setLocalHoverId(null);
+    onPropertyHover?.(null);
+  };
+
   return (
     <>
       {/* Encabezado móvil */}
-      <div className="flex items-center justify-between lg:hidden p-3 bg-white border-b border-line sticky top-0 z-10">
-        <h2 className="text-base font-bold">Filtros y propiedades</h2>
+      <div className="sticky top-0 z-10 flex items-center justify-between border-b border-line bg-white p-4 lg:hidden">
+        <h2 className="text-base font-bold text-textPrimary">Filtros y propiedades</h2>
         <button
           onClick={onCloseMobile}
-          className="p-1.5 hover:bg-slate-100 rounded-lg transition-colors"
-          aria-label="Close sidebar"
+          className="rounded-button p-1.5 text-textSecondary transition-colors hover:bg-slate-100"
+          aria-label="Cerrar panel"
         >
-          <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-          </svg>
+          <X className="h-5 w-5" aria-hidden />
         </button>
       </div>
 
@@ -57,29 +79,53 @@ export default function PropertySidebar({
       />
 
       {/* Encabezado del listado */}
-      <div className="px-3 py-2 bg-white border-t border-line">
-        <h2 className="text-sm font-semibold text-textPrimary">
-          Propiedades ({visibleProperties.length})
-        </h2>
+      <div className="flex items-center justify-between border-t border-line bg-white px-4 py-3">
+        <h2 className="text-sm font-semibold text-textPrimary">Propiedades</h2>
+        <Badge variant="secondary" className="rounded-full font-geo tabular-nums">
+          {visibleProperties.length}
+        </Badge>
       </div>
 
       {/* Listado */}
-      <div className="p-3 space-y-2 pb-20 bg-background">
+      <div className="space-y-2.5 bg-background p-3 pb-24">
         {visibleProperties.length === 0 ? (
-          <div className="text-center text-textSecondary mt-4">
-            <p className="text-sm">No hay propiedades en esta área</p>
-            <p className="text-xs mt-1">Mueve el mapa para ver más propiedades</p>
+          <div className="mt-6 flex flex-col items-center px-4 text-center text-textSecondary">
+            <span className="flex h-12 w-12 items-center justify-center rounded-full bg-slate-100">
+              <MapPinned className="h-6 w-6 text-slate-400" strokeWidth={1.75} aria-hidden />
+            </span>
+            <p className="mt-3 text-sm font-medium text-textPrimary">
+              No hay propiedades en esta área
+            </p>
+            <p className="mt-1 text-xs">Mueve o aleja el mapa para ver más propiedades</p>
           </div>
         ) : (
-          visibleProperties.map((p, idx) => (
-            <PropertyCard
-              key={p.id ?? idx}
-              property={p}
-              variant="compact"
-              selected={selectedProperty?.id === p.id}
-              onClick={() => onPropertyClick(p)}
-            />
-          ))
+          <AnimatePresence initial={false}>
+            {visibleProperties.map((p, idx) => (
+              <motion.div
+                key={p.id ?? idx}
+                layout
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -8 }}
+                transition={{ duration: 0.2, ease: 'easeOut' as const }}
+                onMouseEnter={() => handleEnter(p)}
+                onMouseLeave={handleLeave}
+                className={cn(
+                  'rounded-card transition-shadow',
+                  activeHoverId === p.id && selectedProperty?.id !== p.id
+                    ? 'shadow-cardHover ring-1 ring-primary/30'
+                    : ''
+                )}
+              >
+                <PropertyCard
+                  property={p}
+                  variant="compact"
+                  selected={selectedProperty?.id === p.id}
+                  onClick={() => onPropertyClick(p)}
+                />
+              </motion.div>
+            ))}
+          </AnimatePresence>
         )}
       </div>
     </>

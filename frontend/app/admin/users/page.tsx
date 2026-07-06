@@ -3,8 +3,55 @@
 import AdminRoute from '@/components/AdminRoute';
 import AdminSidebar from '@/components/AdminSidebar';
 import { useAuth } from '@/lib/auth-context';
-import { useEffect, useState, useCallback } from 'react';
-import { toast } from 'react-toastify';
+import { useEffect, useState, useCallback, useMemo } from 'react';
+import { toast } from 'sonner';
+import {
+  useReactTable,
+  getCoreRowModel,
+  getSortedRowModel,
+  flexRender,
+  type ColumnDef,
+  type SortingState,
+} from '@tanstack/react-table';
+import {
+  Search,
+  ArrowUpDown,
+  Power,
+  PowerOff,
+  ShieldCheck,
+  Trash2,
+} from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Skeleton } from '@/components/ui/skeleton';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationNext,
+  PaginationPrevious,
+} from '@/components/ui/pagination';
+import { Card } from '@/components/ui/card';
+import { cn } from '@/lib/utils';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api';
 
@@ -29,6 +76,9 @@ const FILTERS = [
   { key: 'staff', label: 'Staff' },
 ];
 
+const displayName = (u: UserItem) =>
+  u.first_name && u.last_name ? `${u.first_name} ${u.last_name}` : u.username;
+
 const AdminUsersPage = () => {
   const { token, user: currentUser } = useAuth();
   const [users, setUsers] = useState<UserItem[]>([]);
@@ -38,6 +88,7 @@ const AdminUsersPage = () => {
   const [confirmAction, setConfirmAction] = useState<{ type: string; user: UserItem } | null>(null);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+  const [sorting, setSorting] = useState<SortingState>([]);
 
   const fetchUsers = useCallback(async () => {
     setLoading(true);
@@ -52,7 +103,6 @@ const AdminUsersPage = () => {
       if (!res.ok) throw new Error('Error al cargar usuarios');
       const json = await res.json();
 
-      // Handle paginated or non-paginated response
       if (json.results) {
         setUsers(json.results);
         setTotalPages(Math.ceil(json.count / (json.results.length || 10)) || 1);
@@ -71,21 +121,27 @@ const AdminUsersPage = () => {
     if (token) fetchUsers();
   }, [token, fetchUsers]);
 
-  const filteredUsers = users.filter((u) => {
-    if (filter === 'active') return u.is_active;
-    if (filter === 'inactive') return !u.is_active;
-    if (filter === 'staff') return u.is_staff;
-    return true;
-  });
+  const filteredUsers = useMemo(
+    () =>
+      users.filter((u) => {
+        if (filter === 'active') return u.is_active;
+        if (filter === 'inactive') return !u.is_active;
+        if (filter === 'staff') return u.is_staff;
+        return true;
+      }),
+    [users, filter]
+  );
+
+  const isSelf = useCallback(
+    (u: UserItem) => String(u.id) === String(currentUser?.id),
+    [currentUser]
+  );
 
   const handleToggleActive = async (user: UserItem) => {
     try {
       const res = await fetch(`${API_URL}/admin/users/${user.id}/`, {
         method: 'PATCH',
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
+        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
         body: JSON.stringify({ is_active: !user.is_active }),
       });
       if (!res.ok) {
@@ -104,10 +160,7 @@ const AdminUsersPage = () => {
     try {
       const res = await fetch(`${API_URL}/admin/users/${user.id}/`, {
         method: 'PATCH',
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
+        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
         body: JSON.stringify({ is_staff: !user.is_staff }),
       });
       if (!res.ok) {
@@ -140,175 +193,250 @@ const AdminUsersPage = () => {
     setConfirmAction(null);
   };
 
-  const isSelf = (u: UserItem) => String(u.id) === String(currentUser?.id);
+  const columns = useMemo<ColumnDef<UserItem>[]>(
+    () => [
+      {
+        id: 'name',
+        accessorFn: (u) => displayName(u),
+        header: ({ column }) => <SortHeader column={column} label="Usuario" />,
+        cell: ({ row }) => {
+          const u = row.original;
+          return (
+            <div className="flex items-center gap-2">
+              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-bold text-primary">
+                {(u.first_name?.[0] || u.username?.[0] || '?').toUpperCase()}
+              </div>
+              <div className="min-w-0">
+                <p className="truncate font-medium text-textPrimary">{displayName(u)}</p>
+                <p className="truncate text-xs text-textSecondary sm:hidden">{u.email}</p>
+              </div>
+            </div>
+          );
+        },
+      },
+      {
+        accessorKey: 'email',
+        header: ({ column }) => <SortHeader column={column} label="Email" />,
+        cell: ({ getValue }) => <span className="text-textSecondary">{getValue<string>()}</span>,
+        meta: { className: 'hidden sm:table-cell' },
+      },
+      {
+        accessorKey: 'date_joined',
+        header: ({ column }) => <SortHeader column={column} label="Registro" />,
+        cell: ({ getValue }) => (
+          <span className="text-textSecondary">
+            {new Date(getValue<string>()).toLocaleDateString('es-EC')}
+          </span>
+        ),
+        meta: { className: 'hidden md:table-cell' },
+      },
+      {
+        accessorKey: 'is_active',
+        header: 'Estado',
+        cell: ({ getValue }) => {
+          const active = getValue<boolean>();
+          return (
+            <Badge variant="outline" className={cn('border-transparent', active ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700')}>
+              {active ? 'Activo' : 'Inactivo'}
+            </Badge>
+          );
+        },
+      },
+      {
+        accessorKey: 'is_staff',
+        header: 'Rol',
+        cell: ({ getValue }) =>
+          getValue<boolean>() ? (
+            <Badge variant="outline" className="border-transparent bg-purple-100 text-purple-700">Admin</Badge>
+          ) : (
+            <span className="text-xs text-textSecondary">Usuario</span>
+          ),
+        meta: { className: 'hidden lg:table-cell' },
+      },
+      {
+        accessorKey: 'properties_count',
+        header: ({ column }) => <SortHeader column={column} label="Props." />,
+        cell: ({ getValue }) => <span className="font-geo text-textSecondary">{getValue<number>()}</span>,
+        meta: { className: 'hidden lg:table-cell' },
+      },
+      {
+        id: 'actions',
+        header: () => <div className="text-right">Acciones</div>,
+        cell: ({ row }) => {
+          const u = row.original;
+          const self = isSelf(u);
+          return (
+            <div className="flex items-center justify-end gap-1">
+              <ActionButton
+                title={u.is_active ? 'Desactivar' : 'Activar'}
+                disabled={self}
+                onClick={() => setConfirmAction({ type: 'toggle_active', user: u })}
+                className={u.is_active ? 'text-amber-600 hover:bg-amber-50' : 'text-green-600 hover:bg-green-50'}
+              >
+                {u.is_active ? <PowerOff className="h-4 w-4" /> : <Power className="h-4 w-4" />}
+              </ActionButton>
+              <ActionButton
+                title={u.is_staff ? 'Revocar admin' : 'Otorgar admin'}
+                disabled={self}
+                onClick={() => setConfirmAction({ type: 'toggle_staff', user: u })}
+                className={u.is_staff ? 'text-purple-600 hover:bg-purple-50' : 'text-textSecondary hover:bg-muted'}
+              >
+                <ShieldCheck className="h-4 w-4" />
+              </ActionButton>
+              <ActionButton
+                title="Eliminar"
+                disabled={self}
+                onClick={() => setConfirmAction({ type: 'delete', user: u })}
+                className="text-red-500 hover:bg-red-50"
+              >
+                <Trash2 className="h-4 w-4" />
+              </ActionButton>
+            </div>
+          );
+        },
+      },
+    ],
+    [isSelf]
+  );
+
+  const table = useReactTable({
+    data: filteredUsers,
+    columns,
+    state: { sorting },
+    onSortingChange: setSorting,
+    getCoreRowModel: getCoreRowModel(),
+    getSortedRowModel: getSortedRowModel(),
+  });
+
+  const confirmMeta = confirmAction && {
+    title:
+      confirmAction.type === 'delete'
+        ? 'Eliminar usuario'
+        : confirmAction.type === 'toggle_active'
+        ? confirmAction.user.is_active
+          ? 'Desactivar usuario'
+          : 'Activar usuario'
+        : confirmAction.user.is_staff
+        ? 'Revocar rol admin'
+        : 'Otorgar rol admin',
+    destructive: confirmAction.type === 'delete',
+  };
 
   return (
     <AdminRoute>
-      <div className="flex min-h-[calc(100vh-3rem)]">
+      <div className="flex min-h-[calc(100vh-3rem)] bg-background">
         <AdminSidebar />
-        <main className="flex-1 p-4 sm:p-6 lg:p-8 bg-gray-50 overflow-auto">
-          <div className="max-w-7xl mx-auto">
-            <h1 className="text-2xl font-bold text-gray-900 mb-6">Gestión de Usuarios</h1>
+        <main className="min-w-0 flex-1 overflow-auto">
+          <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+            <div className="mb-6">
+              <h1 className="text-2xl font-bold text-textPrimary">Gestión de Usuarios</h1>
+              <p className="mt-1 text-sm text-textSecondary">Administra las cuentas del portal.</p>
+            </div>
 
             {/* Search & Filters */}
-            <div className="flex flex-col sm:flex-row gap-3 mb-6">
+            <div className="mb-6 flex flex-col gap-3 sm:flex-row">
               <div className="relative flex-1">
-                <svg className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                </svg>
-                <input
+                <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-textSecondary" />
+                <Input
                   type="text"
                   placeholder="Buscar por nombre o email..."
                   value={search}
                   onChange={(e) => { setSearch(e.target.value); setPage(1); }}
-                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none"
+                  className="rounded-input pl-9"
                 />
               </div>
-              <div className="flex gap-1.5 flex-wrap">
+              <div className="flex flex-wrap gap-1.5">
                 {FILTERS.map((f) => (
-                  <button
+                  <Button
                     key={f.key}
+                    variant={filter === f.key ? 'default' : 'outline'}
+                    size="sm"
+                    className="rounded-button"
                     onClick={() => setFilter(f.key)}
-                    className={`px-3 py-2 text-xs font-medium rounded-lg transition-colors ${
-                      filter === f.key
-                        ? 'bg-primary text-white'
-                        : 'bg-white text-gray-600 border border-gray-300 hover:bg-gray-50'
-                    }`}
                   >
                     {f.label}
-                  </button>
+                  </Button>
                 ))}
               </div>
             </div>
 
             {/* Table */}
-            <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+            <Card className="overflow-hidden rounded-card shadow-card">
               {loading ? (
-                <div className="flex justify-center py-12">
-                  <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-primary"></div>
-                </div>
+                <TableSkeleton cols={7} />
               ) : filteredUsers.length === 0 ? (
-                <div className="text-center py-12 text-gray-500">No se encontraron usuarios</div>
+                <div className="py-12 text-center text-textSecondary">No se encontraron usuarios</div>
               ) : (
                 <div className="overflow-x-auto">
-                  <table className="w-full text-sm">
-                    <thead className="bg-gray-50">
-                      <tr>
-                        <th className="text-left px-4 py-3 font-medium text-gray-600">Usuario</th>
-                        <th className="text-left px-4 py-3 font-medium text-gray-600 hidden sm:table-cell">Email</th>
-                        <th className="text-left px-4 py-3 font-medium text-gray-600 hidden md:table-cell">Registro</th>
-                        <th className="text-left px-4 py-3 font-medium text-gray-600">Estado</th>
-                        <th className="text-left px-4 py-3 font-medium text-gray-600 hidden lg:table-cell">Rol</th>
-                        <th className="text-left px-4 py-3 font-medium text-gray-600 hidden lg:table-cell">Props.</th>
-                        <th className="text-right px-4 py-3 font-medium text-gray-600">Acciones</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-gray-100">
-                      {filteredUsers.map((u) => (
-                        <tr key={u.id} className="hover:bg-gray-50">
-                          <td className="px-4 py-3">
-                            <div className="flex items-center space-x-2">
-                              <div className="h-8 w-8 bg-primary/10 text-primary rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0">
-                                {(u.first_name?.[0] || u.username?.[0] || '?').toUpperCase()}
-                              </div>
-                              <div className="min-w-0">
-                                <p className="font-medium text-gray-900 truncate">
-                                  {u.first_name && u.last_name ? `${u.first_name} ${u.last_name}` : u.username}
-                                </p>
-                                <p className="text-xs text-gray-500 sm:hidden truncate">{u.email}</p>
-                              </div>
-                            </div>
-                          </td>
-                          <td className="px-4 py-3 text-gray-600 hidden sm:table-cell">{u.email}</td>
-                          <td className="px-4 py-3 text-gray-600 hidden md:table-cell">{new Date(u.date_joined).toLocaleDateString('es-EC')}</td>
-                          <td className="px-4 py-3">
-                            <span className={`inline-flex px-2 py-0.5 text-xs font-medium rounded-full ${u.is_active ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
-                              {u.is_active ? 'Activo' : 'Inactivo'}
-                            </span>
-                          </td>
-                          <td className="px-4 py-3 hidden lg:table-cell">
-                            {u.is_staff ? (
-                              <span className="inline-flex px-2 py-0.5 text-xs font-medium rounded-full bg-purple-100 text-purple-700">Admin</span>
-                            ) : (
-                              <span className="text-gray-500 text-xs">Usuario</span>
-                            )}
-                          </td>
-                          <td className="px-4 py-3 text-gray-600 hidden lg:table-cell">{u.properties_count}</td>
-                          <td className="px-4 py-3">
-                            <div className="flex items-center justify-end space-x-1">
-                              {/* Toggle Active */}
-                              <button
-                                onClick={() => setConfirmAction({ type: 'toggle_active', user: u })}
-                                disabled={isSelf(u)}
-                                title={u.is_active ? 'Desactivar' : 'Activar'}
-                                className={`p-1.5 rounded-lg transition-colors ${isSelf(u) ? 'text-gray-300 cursor-not-allowed' : u.is_active ? 'text-yellow-600 hover:bg-yellow-50' : 'text-green-600 hover:bg-green-50'}`}
-                              >
-                                {u.is_active ? (
-                                  <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" /></svg>
-                                ) : (
-                                  <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                                )}
-                              </button>
-                              {/* Toggle Staff */}
-                              <button
-                                onClick={() => setConfirmAction({ type: 'toggle_staff', user: u })}
-                                disabled={isSelf(u)}
-                                title={u.is_staff ? 'Revocar admin' : 'Otorgar admin'}
-                                className={`p-1.5 rounded-lg transition-colors ${isSelf(u) ? 'text-gray-300 cursor-not-allowed' : u.is_staff ? 'text-purple-600 hover:bg-purple-50' : 'text-gray-400 hover:bg-gray-100'}`}
-                              >
-                                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" /></svg>
-                              </button>
-                              {/* Delete */}
-                              <button
-                                onClick={() => setConfirmAction({ type: 'delete', user: u })}
-                                disabled={isSelf(u)}
-                                title="Eliminar"
-                                className={`p-1.5 rounded-lg transition-colors ${isSelf(u) ? 'text-gray-300 cursor-not-allowed' : 'text-red-500 hover:bg-red-50'}`}
-                              >
-                                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
-                              </button>
-                            </div>
-                          </td>
-                        </tr>
+                  <Table>
+                    <TableHeader>
+                      {table.getHeaderGroups().map((hg) => (
+                        <TableRow key={hg.id} className="bg-muted/40">
+                          {hg.headers.map((header) => (
+                            <TableHead key={header.id} className={(header.column.columnDef.meta as any)?.className}>
+                              {header.isPlaceholder
+                                ? null
+                                : flexRender(header.column.columnDef.header, header.getContext())}
+                            </TableHead>
+                          ))}
+                        </TableRow>
                       ))}
-                    </tbody>
-                  </table>
+                    </TableHeader>
+                    <TableBody>
+                      {table.getRowModel().rows.map((row) => (
+                        <TableRow key={row.id}>
+                          {row.getVisibleCells().map((cell) => (
+                            <TableCell key={cell.id} className={cn('py-3', (cell.column.columnDef.meta as any)?.className)}>
+                              {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                            </TableCell>
+                          ))}
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
                 </div>
               )}
 
-              {/* Pagination */}
               {totalPages > 1 && (
-                <div className="flex items-center justify-center gap-2 p-4 border-t border-gray-200">
-                  <button
-                    onClick={() => setPage((p) => Math.max(1, p - 1))}
-                    disabled={page === 1}
-                    className="px-3 py-1.5 text-sm border rounded-lg disabled:opacity-50 hover:bg-gray-50"
-                  >
-                    Anterior
-                  </button>
-                  <span className="text-sm text-gray-600">Página {page} de {totalPages}</span>
-                  <button
-                    onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-                    disabled={page === totalPages}
-                    className="px-3 py-1.5 text-sm border rounded-lg disabled:opacity-50 hover:bg-gray-50"
-                  >
-                    Siguiente
-                  </button>
+                <div className="border-t border-line p-4">
+                  <Pagination>
+                    <PaginationContent>
+                      <PaginationItem>
+                        <PaginationPrevious
+                          href="#"
+                          aria-disabled={page === 1}
+                          className={cn('rounded-button', page === 1 && 'pointer-events-none opacity-50')}
+                          onClick={(e) => { e.preventDefault(); setPage((p) => Math.max(1, p - 1)); }}
+                        />
+                      </PaginationItem>
+                      <PaginationItem>
+                        <span className="px-3 text-sm text-textSecondary">Página {page} de {totalPages}</span>
+                      </PaginationItem>
+                      <PaginationItem>
+                        <PaginationNext
+                          href="#"
+                          aria-disabled={page === totalPages}
+                          className={cn('rounded-button', page === totalPages && 'pointer-events-none opacity-50')}
+                          onClick={(e) => { e.preventDefault(); setPage((p) => Math.min(totalPages, p + 1)); }}
+                        />
+                      </PaginationItem>
+                    </PaginationContent>
+                  </Pagination>
                 </div>
               )}
-            </div>
+            </Card>
           </div>
+        </main>
+      </div>
 
-          {/* Confirmation Modal */}
-          {confirmAction && (
-            <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-              <div className="bg-white rounded-xl shadow-xl max-w-md w-full p-6">
-                <h3 className="text-lg font-bold text-gray-900 mb-2">
-                  {confirmAction.type === 'delete' && 'Eliminar usuario'}
-                  {confirmAction.type === 'toggle_active' && (confirmAction.user.is_active ? 'Desactivar usuario' : 'Activar usuario')}
-                  {confirmAction.type === 'toggle_staff' && (confirmAction.user.is_staff ? 'Revocar rol admin' : 'Otorgar rol admin')}
-                </h3>
-                <p className="text-gray-600 mb-6">
+      {/* Confirmation */}
+      <AlertDialog open={!!confirmAction} onOpenChange={(o) => { if (!o) setConfirmAction(null); }}>
+        <AlertDialogContent className="rounded-modal">
+          {confirmAction && confirmMeta && (
+            <>
+              <AlertDialogHeader>
+                <AlertDialogTitle>{confirmMeta.title}</AlertDialogTitle>
+                <AlertDialogDescription>
                   {confirmAction.type === 'delete' && (
                     <>¿Estás seguro de eliminar a <strong>{confirmAction.user.first_name || confirmAction.user.username}</strong>? Esta acción no se puede deshacer y eliminará todas sus propiedades.</>
                   )}
@@ -318,34 +446,81 @@ const AdminUsersPage = () => {
                   {confirmAction.type === 'toggle_staff' && (
                     <>¿{confirmAction.user.is_staff ? 'Revocar' : 'Otorgar'} permisos de administrador a <strong>{confirmAction.user.first_name || confirmAction.user.username}</strong>?</>
                   )}
-                </p>
-                <div className="flex justify-end space-x-3">
-                  <button
-                    onClick={() => setConfirmAction(null)}
-                    className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
-                  >
-                    Cancelar
-                  </button>
-                  <button
-                    onClick={() => {
-                      if (confirmAction.type === 'delete') handleDeleteUser(confirmAction.user);
-                      else if (confirmAction.type === 'toggle_active') handleToggleActive(confirmAction.user);
-                      else if (confirmAction.type === 'toggle_staff') handleToggleStaff(confirmAction.user);
-                    }}
-                    className={`px-4 py-2 text-sm font-medium text-white rounded-lg transition-colors ${
-                      confirmAction.type === 'delete' ? 'bg-red-600 hover:bg-red-700' : 'bg-primary hover:bg-primary/90'
-                    }`}
-                  >
-                    Confirmar
-                  </button>
-                </div>
-              </div>
-            </div>
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel className="rounded-button">Cancelar</AlertDialogCancel>
+                <AlertDialogAction
+                  className={cn('rounded-button', confirmMeta.destructive && 'bg-error text-white hover:bg-error/90')}
+                  onClick={() => {
+                    if (confirmAction.type === 'delete') handleDeleteUser(confirmAction.user);
+                    else if (confirmAction.type === 'toggle_active') handleToggleActive(confirmAction.user);
+                    else if (confirmAction.type === 'toggle_staff') handleToggleStaff(confirmAction.user);
+                  }}
+                >
+                  Confirmar
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </>
           )}
-        </main>
-      </div>
+        </AlertDialogContent>
+      </AlertDialog>
     </AdminRoute>
   );
 };
+
+function SortHeader({ column, label }: { column: any; label: string }) {
+  return (
+    <button
+      className="-ml-1 inline-flex items-center gap-1 rounded px-1 py-0.5 font-medium text-textSecondary transition-colors hover:text-textPrimary"
+      onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
+    >
+      {label}
+      <ArrowUpDown className="h-3.5 w-3.5" />
+    </button>
+  );
+}
+
+function ActionButton({
+  title,
+  disabled,
+  onClick,
+  className,
+  children,
+}: {
+  title: string;
+  disabled?: boolean;
+  onClick: () => void;
+  className?: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <button
+      title={title}
+      disabled={disabled}
+      onClick={onClick}
+      className={cn(
+        'rounded-button p-1.5 transition-colors',
+        disabled ? 'cursor-not-allowed text-slate-300' : className
+      )}
+    >
+      {children}
+    </button>
+  );
+}
+
+function TableSkeleton({ cols }: { cols: number }) {
+  return (
+    <div className="divide-y divide-line">
+      {Array.from({ length: 6 }).map((_, r) => (
+        <div key={r} className="flex items-center gap-4 px-4 py-3.5">
+          {Array.from({ length: cols }).map((_, c) => (
+            <Skeleton key={c} className={cn('h-5', c === 0 ? 'w-40' : 'w-20', c === cols - 1 && 'ml-auto')} />
+          ))}
+        </div>
+      ))}
+    </div>
+  );
+}
 
 export default AdminUsersPage;

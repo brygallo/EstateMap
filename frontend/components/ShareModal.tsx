@@ -2,6 +2,15 @@
 
 import { QRCodeSVG } from 'qrcode.react';
 import { useState } from 'react';
+import { Share2, Copy, Check, Download } from 'lucide-react';
+import { cn } from '@/lib/utils';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from '@/components/ui/dialog';
 
 interface ShareModalProps {
   isOpen: boolean;
@@ -23,8 +32,6 @@ const ShareModal = ({
   shareDescription
 }: ShareModalProps) => {
   const [copied, setCopied] = useState(false);
-
-  if (!isOpen) return null;
 
   const handleCopyLink = () => {
     navigator.clipboard.writeText(shareUrl);
@@ -68,145 +75,135 @@ const ShareModal = ({
 
   // Build URLs for social media platforms
   const encodedUrl = encodeURIComponent(shareUrl);
-  const encodedText = encodeURIComponent(fullText);
-  const encodedTitle = encodeURIComponent(textToShare);
-  const encodedDescription = encodeURIComponent(descriptionToShare);
 
   const socialLinks = {
     facebook: `https://www.facebook.com/sharer/sharer.php?u=${encodedUrl}`,
   };
 
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto" onClick={onClose}>
-      {/* Backdrop */}
-      <div className="fixed inset-0 bg-black/60 backdrop-blur-sm transition-opacity" />
+    <Dialog open={isOpen} onOpenChange={(open) => { if (!open) onClose(); }}>
+      <DialogContent className="max-w-sm gap-0 rounded-modal border-line p-0">
+        {/* Header */}
+        <DialogHeader className="space-y-1 border-b border-line px-5 pb-4 pt-5 text-left">
+          <DialogTitle className="flex items-center gap-2 pr-6 text-lg font-bold text-textPrimary">
+            <Share2 className="h-5 w-5 flex-shrink-0 text-primary" strokeWidth={1.75} aria-hidden />
+            <span className="truncate">{title}</span>
+          </DialogTitle>
+          <DialogDescription className="text-xs text-textSecondary">
+            {description}
+          </DialogDescription>
+        </DialogHeader>
 
-      {/* Modal Container */}
-      <div className="flex min-h-full items-center justify-center p-4">
-        <div
-          className="relative bg-white rounded-xl shadow-2xl w-full max-w-sm transform transition-all"
-          onClick={(e) => e.stopPropagation()}
-        >
-          {/* Close Button */}
-          <button
-            onClick={onClose}
-            className="absolute top-3 right-3 text-gray-400 hover:text-gray-600 transition-colors z-10"
-          >
-            <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </button>
-
-          {/* Header */}
-          <div className="px-4 pt-4 pb-3 border-b border-gray-200">
-            <h2 className="text-lg font-bold text-gray-900 flex items-center gap-2 pr-6">
-              <svg className="h-5 w-5 text-primary flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
+        {/* Content */}
+        <div className="space-y-4 px-5 py-4">
+          {/* Facebook Share Button */}
+          <div>
+            <span className="mb-2 block text-xs font-semibold text-textPrimary">
+              Compartir en Facebook
+            </span>
+            <a
+              href={socialLinks.facebook}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="share-btn group flex w-full items-center justify-center gap-3 rounded-button bg-[#1877F2] p-3.5 text-white shadow-card transition-all hover:bg-[#0C63D4] hover:shadow-cardHover"
+            >
+              <svg className="h-7 w-7 transition-transform group-hover:scale-110" fill="currentColor" viewBox="0 0 24 24" aria-hidden>
+                <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
               </svg>
-              <span className="truncate">{title}</span>
-            </h2>
-            <p className="text-xs text-gray-600 mt-1">
-              {description}
-            </p>
+              <span className="text-base font-bold">Compartir en Facebook</span>
+            </a>
           </div>
 
-          {/* Content */}
-          <div className="px-4 py-4 space-y-4">
-            {/* Facebook Share Button */}
-            <div>
-              <label className="block text-xs font-semibold text-gray-700 mb-2.5">
-                Compartir en Facebook
-              </label>
-              <a
-                href={socialLinks.facebook}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center justify-center gap-3 p-4 bg-gradient-to-br from-[#1877F2] to-[#0C63D4] hover:from-[#0C63D4] hover:to-[#1877F2] text-white rounded-lg shadow-md hover:shadow-lg transition-all hover:scale-105 group w-full"
-              >
-                <svg className="h-8 w-8 group-hover:scale-110 transition-transform" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
-                </svg>
-                <span className="text-base font-bold">Compartir en Facebook</span>
-              </a>
-            </div>
-
-            {/* Share Link */}
-            <div>
-              <label className="block text-xs font-semibold text-gray-700 mb-1.5">
-                O copia el enlace
-              </label>
-              <div className="flex gap-1.5">
-                <input
-                  type="text"
-                  value={shareUrl}
-                  readOnly
-                  className="flex-1 px-2.5 py-1.5 text-xs border border-gray-300 rounded-lg bg-gray-50 text-gray-700 focus:outline-none"
-                />
-                <button
-                  onClick={handleCopyLink}
-                  className={`px-3 py-1.5 rounded-lg font-semibold text-xs transition-all flex-shrink-0 ${
-                    copied
-                      ? 'bg-green-500 text-white'
-                      : 'bg-primary text-white hover:bg-primary/90'
-                  }`}
-                >
-                  {copied ? (
-                    <div className="flex items-center gap-1">
-                      <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                      </svg>
-                      <span className="hidden sm:inline">Copiado</span>
-                    </div>
-                  ) : (
-                    <div className="flex items-center gap-1">
-                      <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                      </svg>
-                      <span className="hidden sm:inline">Copiar</span>
-                    </div>
-                  )}
-                </button>
-              </div>
-            </div>
-
-            {/* QR Code */}
-            <div className="flex flex-col items-center pt-2 border-t border-gray-200">
-              <div className="bg-white p-2 rounded-lg shadow-md border border-gray-200">
-                <QRCodeSVG
-                  id="share-qr-code"
-                  value={shareUrl}
-                  size={120}
-                  level="H"
-                  includeMargin={true}
-                />
-              </div>
-              <p className="text-[10px] text-gray-500 mt-2 text-center">
-                Escanea para compartir
-              </p>
+          {/* Share Link */}
+          <div>
+            <span className="mb-1.5 block text-xs font-semibold text-textPrimary">
+              O copia el enlace
+            </span>
+            <div className="flex gap-1.5">
+              <input
+                type="text"
+                value={shareUrl}
+                readOnly
+                aria-label="Enlace para compartir"
+                className="flex-1 rounded-input border border-line bg-background px-2.5 py-2 text-xs text-textSecondary focus:outline-none"
+              />
               <button
-                onClick={handleDownloadQR}
-                className="mt-2 text-xs text-primary hover:text-primary/80 font-semibold flex items-center gap-1 transition-colors"
+                onClick={handleCopyLink}
+                className={cn(
+                  'share-btn flex flex-shrink-0 items-center gap-1 rounded-button px-3 py-2 text-xs font-semibold text-white transition-all',
+                  copied ? 'bg-success' : 'bg-primary hover:bg-primaryHover'
+                )}
+                aria-label={copied ? 'Enlace copiado' : 'Copiar enlace'}
               >
-                <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                </svg>
-                Descargar QR
+                {copied ? (
+                  <>
+                    <Check className="check-pop h-3.5 w-3.5" strokeWidth={2.5} aria-hidden />
+                    <span className="hidden sm:inline">Copiado</span>
+                  </>
+                ) : (
+                  <>
+                    <Copy className="h-3.5 w-3.5" strokeWidth={2} aria-hidden />
+                    <span className="hidden sm:inline">Copiar</span>
+                  </>
+                )}
               </button>
             </div>
           </div>
 
-          {/* Footer */}
-          <div className="px-4 py-3 bg-gray-50 border-t border-gray-200 rounded-b-xl">
+          {/* QR Code */}
+          <div className="flex flex-col items-center border-t border-line pt-4">
+            <div className="rounded-card border border-line bg-white p-2 shadow-card">
+              <QRCodeSVG
+                id="share-qr-code"
+                value={shareUrl}
+                size={120}
+                level="H"
+                includeMargin={true}
+              />
+            </div>
+            <p className="mt-2 text-center text-[10px] text-textSecondary">
+              Escanea para compartir
+            </p>
             <button
-              onClick={onClose}
-              className="w-full px-3 py-1.5 bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold rounded-lg transition-colors text-sm"
+              onClick={handleDownloadQR}
+              className="mt-2 flex items-center gap-1 text-xs font-semibold text-primary transition-colors hover:text-primaryHover"
             >
-              Cerrar
+              <Download className="h-3.5 w-3.5" strokeWidth={2} aria-hidden />
+              Descargar QR
             </button>
           </div>
         </div>
-      </div>
-    </div>
+
+        {/* Footer */}
+        <div className="rounded-b-modal border-t border-line bg-background px-5 py-3">
+          <button
+            onClick={onClose}
+            className="w-full rounded-button bg-white px-3 py-2 text-sm font-semibold text-textPrimary transition-colors hover:bg-slate-50 border border-line"
+          >
+            Cerrar
+          </button>
+        </div>
+      </DialogContent>
+
+      {/* Microinteracciones: rebote suave en botones y "pop" del check al copiar. */}
+      <style>{`
+        @keyframes shareBounce {
+          0%, 100% { transform: translateY(0); }
+          40% { transform: translateY(-3px); }
+          70% { transform: translateY(-1px); }
+        }
+        .share-btn:hover { animation: shareBounce 0.45s ease; }
+        @keyframes checkPop {
+          0% { transform: scale(0.4); opacity: 0; }
+          60% { transform: scale(1.25); opacity: 1; }
+          100% { transform: scale(1); opacity: 1; }
+        }
+        .check-pop { animation: checkPop 0.3s ease-out; }
+        @media (prefers-reduced-motion: reduce) {
+          .share-btn:hover, .check-pop { animation: none; }
+        }
+      `}</style>
+    </Dialog>
   );
 };
 

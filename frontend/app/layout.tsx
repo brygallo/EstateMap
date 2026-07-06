@@ -3,12 +3,12 @@ import { GeistSans } from 'geist/font/sans';
 import { GeistMono } from 'geist/font/mono';
 import Script from 'next/script';
 import './globals.css';
-import 'react-toastify/dist/ReactToastify.css';
 import 'leaflet/dist/leaflet.css';
 import { AuthProvider } from '@/lib/auth-context';
+import QueryProvider from '@/components/providers/QueryProvider';
 import NavBar from '@/components/NavBar';
 import Footer from '@/components/Footer';
-import { ToastContainer } from 'react-toastify';
+import { Toaster } from 'sonner';
 
 const siteUrl = process.env.NEXT_PUBLIC_FRONTEND_URL || 'https://geopropiedadesecuador.com';
 
@@ -240,23 +240,14 @@ export default function RootLayout({
           strategy="afterInteractive"
         />
         <AuthProvider>
-          <div className="min-h-screen flex flex-col bg-background text-textPrimary">
-            <NavBar />
-            <main className="flex-grow">{children}</main>
-            <Footer />
-          </div>
-          <ToastContainer
-            position="top-right"
-            autoClose={3000}
-            hideProgressBar={false}
-            newestOnTop={false}
-            closeOnClick
-            rtl={false}
-            pauseOnFocusLoss
-            draggable
-            pauseOnHover
-            theme="light"
-          />
+          <QueryProvider>
+            <div className="min-h-screen flex flex-col bg-background text-textPrimary">
+              <NavBar />
+              <main className="flex-grow">{children}</main>
+              <Footer />
+            </div>
+            <Toaster richColors position="top-right" />
+          </QueryProvider>
         </AuthProvider>
       </body>
     </html>

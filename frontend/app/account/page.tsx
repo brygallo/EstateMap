@@ -2,9 +2,23 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { toast } from 'react-toastify';
+import { toast } from 'sonner';
+import { KeyRound, Mail, UserRound } from 'lucide-react';
 import { useAuth } from '@/lib/auth-context';
 import { apiGet, apiPatch, apiPost } from '@/lib/api';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Badge } from '@/components/ui/badge';
+import { Skeleton } from '@/components/ui/skeleton';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
 
 interface Profile {
   id: number;
@@ -169,189 +183,193 @@ const AccountPage = () => {
   if (!token) return null;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-green-50 py-10 px-4">
-      <div className="max-w-5xl mx-auto space-y-6">
-        <header className="flex items-center justify-between">
-          <div>
-            <p className="text-sm text-gray-500">Cuenta</p>
-            <h1 className="text-3xl font-bold text-gray-900">Tu perfil</h1>
-            <p className="text-gray-600 text-sm mt-1">Administra tus datos, correo y contraseña.</p>
-          </div>
+    <div className="min-h-screen bg-background">
+      <div className="mx-auto max-w-4xl space-y-10 px-4 py-12 md:py-16">
+        <header>
+          <p className="text-sm font-semibold text-primary">Cuenta</p>
+          <h1 className="mt-1 text-3xl font-bold tracking-tight text-textPrimary md:text-4xl">Tu perfil</h1>
+          <p className="mt-2 text-textSecondary">Administra tus datos, correo y contraseña.</p>
         </header>
 
         {/* Profile data */}
-        <section className="bg-white rounded-2xl shadow-lg p-6 border border-gray-100">
-          <div className="flex items-center justify-between mb-4">
-            <div>
-              <h2 className="text-lg font-semibold text-gray-900">Datos de la cuenta</h2>
-              <p className="text-sm text-gray-500">Nombre, usuario y visibilidad del correo.</p>
+        <Card className="rounded-card border-line shadow-card">
+          <CardHeader className="flex flex-row items-start justify-between gap-4 space-y-0">
+            <div className="flex items-start gap-3">
+              <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                <UserRound className="h-5 w-5" strokeWidth={1.75} />
+              </div>
+              <div>
+                <CardTitle className="text-lg">Datos de la cuenta</CardTitle>
+                <CardDescription>Nombre, usuario y visibilidad del correo.</CardDescription>
+              </div>
             </div>
-            <button
-              onClick={handleProfileSave}
-              disabled={savingProfile || loadingProfile || !profile}
-              className="px-4 py-2 rounded-lg bg-primary text-white font-semibold hover:bg-primary/90 disabled:opacity-60 disabled:cursor-not-allowed"
-            >
+            <Button onClick={handleProfileSave} disabled={savingProfile || loadingProfile || !profile}>
               {savingProfile ? 'Guardando...' : 'Guardar cambios'}
-            </button>
-          </div>
-
-          {loadingProfile ? (
-            <p className="text-sm text-gray-500">Cargando perfil...</p>
-          ) : profile ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="space-y-1">
-                <label className="text-xs font-semibold text-gray-600">Nombre</label>
-                <input
-                  type="text"
-                  value={profile.first_name}
-                  onChange={(e) => setProfile({ ...profile, first_name: e.target.value })}
-                  className="w-full px-3 py-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-primary/50 focus:outline-none"
-                  placeholder="Nombre"
-                />
+            </Button>
+          </CardHeader>
+          <CardContent>
+            {loadingProfile ? (
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                {Array.from({ length: 4 }).map((_, i) => (
+                  <div key={i} className="space-y-2">
+                    <Skeleton className="h-3 w-20" />
+                    <Skeleton className="h-10 w-full" />
+                  </div>
+                ))}
               </div>
-              <div className="space-y-1">
-                <label className="text-xs font-semibold text-gray-600">Apellido</label>
-                <input
-                  type="text"
-                  value={profile.last_name}
-                  onChange={(e) => setProfile({ ...profile, last_name: e.target.value })}
-                  className="w-full px-3 py-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-primary/50 focus:outline-none"
-                  placeholder="Apellido"
-                />
+            ) : profile ? (
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <div className="space-y-1.5">
+                  <Label htmlFor="first_name">Nombre</Label>
+                  <Input
+                    id="first_name"
+                    value={profile.first_name}
+                    onChange={(e) => setProfile({ ...profile, first_name: e.target.value })}
+                    placeholder="Nombre"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="last_name">Apellido</Label>
+                  <Input
+                    id="last_name"
+                    value={profile.last_name}
+                    onChange={(e) => setProfile({ ...profile, last_name: e.target.value })}
+                    placeholder="Apellido"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="username">Usuario</Label>
+                  <Input
+                    id="username"
+                    value={profile.username}
+                    onChange={(e) => setProfile({ ...profile, username: e.target.value })}
+                    placeholder="Nombre de usuario"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="email">Correo</Label>
+                    <Badge
+                      variant={profile.is_email_verified ? 'default' : 'secondary'}
+                      className={
+                        profile.is_email_verified
+                          ? 'bg-successBg text-success hover:bg-successBg'
+                          : 'bg-warning/10 text-warning hover:bg-warning/10'
+                      }
+                    >
+                      {profile.is_email_verified ? 'Verificado' : 'Sin verificar'}
+                    </Badge>
+                  </div>
+                  <Input id="email" type="email" value={profile.email} readOnly className="bg-muted text-muted-foreground" />
+                </div>
               </div>
-              <div className="space-y-1">
-                <label className="text-xs font-semibold text-gray-600">Usuario</label>
-                <input
-                  type="text"
-                  value={profile.username}
-                  onChange={(e) => setProfile({ ...profile, username: e.target.value })}
-                  className="w-full px-3 py-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-primary/50 focus:outline-none"
-                  placeholder="Nombre de usuario"
-                />
-              </div>
-              <div className="space-y-1">
-                <label className="text-xs font-semibold text-gray-600 flex items-center justify-between">
-                  <span>Correo</span>
-                  <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-full ${profile.is_email_verified ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}`}>
-                    {profile.is_email_verified ? 'Verificado' : 'Sin verificar'}
-                  </span>
-                </label>
-                <input
-                  type="email"
-                  value={profile.email}
-                  readOnly
-                  className="w-full px-3 py-2 rounded-lg border border-gray-200 bg-gray-50 text-gray-600 cursor-not-allowed"
-                />
-              </div>
-            </div>
-          ) : (
-            <p className="text-sm text-red-600">No se pudo cargar tu perfil.</p>
-          )}
-        </section>
+            ) : (
+              <p className="text-sm text-error">No se pudo cargar tu perfil.</p>
+            )}
+          </CardContent>
+        </Card>
 
         {/* Email change */}
-        <section className="bg-white rounded-2xl shadow-lg p-6 border border-gray-100">
-          <div className="flex items-center justify-between mb-4">
+        <Card className="rounded-card border-line shadow-card">
+          <CardHeader className="flex flex-row items-start gap-3 space-y-0">
+            <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg bg-secondary/10 text-secondary">
+              <Mail className="h-5 w-5" strokeWidth={1.75} />
+            </div>
             <div>
-              <h2 className="text-lg font-semibold text-gray-900">Cambiar correo</h2>
-              <p className="text-sm text-gray-500">Enviaremos un código al nuevo correo para confirmarlo.</p>
+              <CardTitle className="text-lg">Cambiar correo</CardTitle>
+              <CardDescription>Enviaremos un código al nuevo correo para confirmarlo.</CardDescription>
             </div>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <div className="sm:col-span-2 space-y-1">
-              <label className="text-xs font-semibold text-gray-600">Nuevo correo</label>
-              <input
-                type="email"
-                value={emailForm.newEmail}
-                onChange={(e) => setEmailForm({ ...emailForm, newEmail: e.target.value })}
-                className="w-full px-3 py-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-primary/50 focus:outline-none"
-                placeholder="nuevo@email.com"
-              />
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+              <div className="space-y-1.5 sm:col-span-2">
+                <Label htmlFor="newEmail">Nuevo correo</Label>
+                <Input
+                  id="newEmail"
+                  type="email"
+                  value={emailForm.newEmail}
+                  onChange={(e) => setEmailForm({ ...emailForm, newEmail: e.target.value })}
+                  placeholder="nuevo@email.com"
+                />
+              </div>
+              <div className="flex items-end">
+                <Button variant="secondary" onClick={handleRequestEmailChange} className="w-full">
+                  Enviar código
+                </Button>
+              </div>
             </div>
-            <div className="flex items-end">
-              <button
-                onClick={handleRequestEmailChange}
-                className="w-full px-4 py-2 rounded-lg bg-secondary text-white font-semibold hover:bg-secondary/90"
-              >
-                Enviar código
-              </button>
-            </div>
-          </div>
 
-          <div className="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <div className="sm:col-span-2 space-y-1">
-              <label className="text-xs font-semibold text-gray-600">Código de verificación</label>
-              <input
-                type="text"
-                value={emailForm.code}
-                onChange={(e) => setEmailForm({ ...emailForm, code: e.target.value })}
-                className="w-full px-3 py-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-primary/50 focus:outline-none"
-                placeholder="123456"
-              />
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+              <div className="space-y-1.5 sm:col-span-2">
+                <Label htmlFor="emailCode">Código de verificación</Label>
+                <Input
+                  id="emailCode"
+                  value={emailForm.code}
+                  onChange={(e) => setEmailForm({ ...emailForm, code: e.target.value })}
+                  placeholder="123456"
+                />
+              </div>
+              <div className="flex items-end">
+                <Button onClick={handleVerifyEmailChange} disabled={!emailCodeSent} className="w-full">
+                  Verificar y actualizar
+                </Button>
+              </div>
             </div>
-            <div className="flex items-end">
-              <button
-                onClick={handleVerifyEmailChange}
-                disabled={!emailCodeSent}
-                className="w-full px-4 py-2 rounded-lg bg-primary text-white font-semibold hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                Verificar y actualizar
-              </button>
-            </div>
-          </div>
-          {!emailCodeSent && <p className="text-xs text-gray-500 mt-2">Primero envía el código al nuevo correo.</p>}
-        </section>
+            {!emailCodeSent && <p className="text-xs text-textSecondary">Primero envía el código al nuevo correo.</p>}
+          </CardContent>
+        </Card>
 
         {/* Password change */}
-        <section className="bg-white rounded-2xl shadow-lg p-6 border border-gray-100">
-          <div className="flex items-center justify-between mb-4">
+        <Card className="rounded-card border-line shadow-card">
+          <CardHeader className="flex flex-row items-start gap-3 space-y-0">
+            <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+              <KeyRound className="h-5 w-5" strokeWidth={1.75} />
+            </div>
             <div>
-              <h2 className="text-lg font-semibold text-gray-900">Cambiar contraseña</h2>
-              <p className="text-sm text-gray-500">Usa tu contraseña actual y define una nueva.</p>
+              <CardTitle className="text-lg">Cambiar contraseña</CardTitle>
+              <CardDescription>Usa tu contraseña actual y define una nueva.</CardDescription>
             </div>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <div className="space-y-1">
-              <label className="text-xs font-semibold text-gray-600">Contraseña actual</label>
-              <input
-                type="password"
-                value={passwordForm.old}
-                onChange={(e) => setPasswordForm({ ...passwordForm, old: e.target.value })}
-                className="w-full px-3 py-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-primary/50 focus:outline-none"
-                placeholder="••••••••"
-              />
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+              <div className="space-y-1.5">
+                <Label htmlFor="oldPassword">Contraseña actual</Label>
+                <Input
+                  id="oldPassword"
+                  type="password"
+                  value={passwordForm.old}
+                  onChange={(e) => setPasswordForm({ ...passwordForm, old: e.target.value })}
+                  placeholder="••••••••"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="newPassword">Nueva contraseña</Label>
+                <Input
+                  id="newPassword"
+                  type="password"
+                  value={passwordForm.fresh}
+                  onChange={(e) => setPasswordForm({ ...passwordForm, fresh: e.target.value })}
+                  placeholder="••••••••"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="confirmPassword">Repetir nueva</Label>
+                <Input
+                  id="confirmPassword"
+                  type="password"
+                  value={passwordForm.confirm}
+                  onChange={(e) => setPasswordForm({ ...passwordForm, confirm: e.target.value })}
+                  placeholder="••••••••"
+                />
+              </div>
             </div>
-            <div className="space-y-1">
-              <label className="text-xs font-semibold text-gray-600">Nueva contraseña</label>
-              <input
-                type="password"
-                value={passwordForm.fresh}
-                onChange={(e) => setPasswordForm({ ...passwordForm, fresh: e.target.value })}
-                className="w-full px-3 py-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-primary/50 focus:outline-none"
-                placeholder="••••••••"
-              />
-            </div>
-            <div className="space-y-1">
-              <label className="text-xs font-semibold text-gray-600">Repetir nueva</label>
-              <input
-                type="password"
-                value={passwordForm.confirm}
-                onChange={(e) => setPasswordForm({ ...passwordForm, confirm: e.target.value })}
-                className="w-full px-3 py-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-primary/50 focus:outline-none"
-                placeholder="••••••••"
-              />
-            </div>
-          </div>
-          <div className="mt-4 flex justify-end">
-            <button
-              onClick={handlePasswordChange}
-              disabled={changingPassword}
-              className="px-4 py-2 rounded-lg bg-primary text-white font-semibold hover:bg-primary/90 disabled:opacity-60 disabled:cursor-not-allowed"
-            >
+          </CardContent>
+          <CardFooter className="justify-end">
+            <Button onClick={handlePasswordChange} disabled={changingPassword}>
               {changingPassword ? 'Actualizando...' : 'Actualizar contraseña'}
-            </button>
-          </div>
-        </section>
+            </Button>
+          </CardFooter>
+        </Card>
       </div>
     </div>
   );

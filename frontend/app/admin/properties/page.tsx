@@ -4,8 +4,48 @@ import AdminRoute from '@/components/AdminRoute';
 import AdminSidebar from '@/components/AdminSidebar';
 import { useAuth } from '@/lib/auth-context';
 import Link from 'next/link';
-import { useEffect, useState, useCallback } from 'react';
-import { toast } from 'react-toastify';
+import { useEffect, useState, useCallback, useMemo } from 'react';
+import { toast } from 'sonner';
+import {
+  useReactTable,
+  getCoreRowModel,
+  getSortedRowModel,
+  flexRender,
+  type ColumnDef,
+  type SortingState,
+} from '@tanstack/react-table';
+import { Search, ArrowUpDown, Eye, Trash2 } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Skeleton } from '@/components/ui/skeleton';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationNext,
+  PaginationPrevious,
+} from '@/components/ui/pagination';
+import { Card } from '@/components/ui/card';
+import { cn } from '@/lib/utils';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api';
 
@@ -40,8 +80,8 @@ const TYPE_LABELS: Record<string, string> = {
 
 const STATUS_STYLES: Record<string, string> = {
   for_sale: 'bg-green-100 text-green-700',
-  for_rent: 'bg-yellow-100 text-yellow-700',
-  inactive: 'bg-gray-100 text-gray-600',
+  for_rent: 'bg-amber-100 text-amber-700',
+  inactive: 'bg-slate-100 text-slate-600',
 };
 
 const STATUS_LABELS: Record<string, string> = {
@@ -59,6 +99,7 @@ const AdminPropertiesPage = () => {
   const [confirmDelete, setConfirmDelete] = useState<PropertyItem | null>(null);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+  const [sorting, setSorting] = useState<SortingState>([]);
 
   const fetchProperties = useCallback(async () => {
     setLoading(true);
@@ -91,10 +132,10 @@ const AdminPropertiesPage = () => {
     if (token) fetchProperties();
   }, [token, fetchProperties]);
 
-  const filteredProperties = properties.filter((p) => {
-    if (filter === 'all') return true;
-    return p.status === filter;
-  });
+  const filteredProperties = useMemo(
+    () => properties.filter((p) => (filter === 'all' ? true : p.status === filter)),
+    [properties, filter]
+  );
 
   const handleDelete = async (prop: PropertyItem) => {
     try {
@@ -111,163 +152,264 @@ const AdminPropertiesPage = () => {
     setConfirmDelete(null);
   };
 
+  const columns = useMemo<ColumnDef<PropertyItem>[]>(
+    () => [
+      {
+        accessorKey: 'title',
+        header: ({ column }) => <SortHeader column={column} label="Título" />,
+        cell: ({ row }) => {
+          const p = row.original;
+          return (
+            <div className="min-w-0">
+              <p className="max-w-[220px] truncate font-medium text-textPrimary">{p.title || `Propiedad #${p.id}`}</p>
+              <p className="text-xs text-textSecondary sm:hidden">{TYPE_LABELS[p.property_type] || p.property_type}</p>
+            </div>
+          );
+        },
+      },
+      {
+        accessorKey: 'property_type',
+        header: 'Tipo',
+        cell: ({ getValue }) => (
+          <span className="text-textSecondary">{TYPE_LABELS[getValue<string>()] || getValue<string>()}</span>
+        ),
+        meta: { className: 'hidden sm:table-cell' },
+      },
+      {
+        accessorKey: 'status',
+        header: 'Estado',
+        cell: ({ getValue }) => {
+          const s = getValue<string>();
+          return (
+            <Badge variant="outline" className={cn('border-transparent', STATUS_STYLES[s] || 'bg-slate-100 text-slate-600')}>
+              {STATUS_LABELS[s] || s}
+            </Badge>
+          );
+        },
+      },
+      {
+        accessorKey: 'price',
+        header: ({ column }) => <SortHeader column={column} label="Precio" />,
+        cell: ({ getValue }) => (
+          <span className="font-geo text-textSecondary">${Number(getValue<string>()).toLocaleString('es-EC')}</span>
+        ),
+        sortingFn: (a, b) => Number(a.original.price) - Number(b.original.price),
+        meta: { className: 'hidden md:table-cell' },
+      },
+      {
+        accessorKey: 'owner_username',
+        header: 'Propietario',
+        cell: ({ getValue }) => <span className="text-textSecondary">{getValue<string>() || '—'}</span>,
+        meta: { className: 'hidden lg:table-cell' },
+      },
+      {
+        accessorKey: 'city',
+        header: 'Ciudad',
+        cell: ({ getValue }) => <span className="text-textSecondary">{getValue<string>() || '—'}</span>,
+        meta: { className: 'hidden lg:table-cell' },
+      },
+      {
+        accessorKey: 'created_at',
+        header: ({ column }) => <SortHeader column={column} label="Fecha" />,
+        cell: ({ getValue }) => (
+          <span className="text-textSecondary">{new Date(getValue<string>()).toLocaleDateString('es-EC')}</span>
+        ),
+        meta: { className: 'hidden xl:table-cell' },
+      },
+      {
+        id: 'actions',
+        header: () => <div className="text-right">Acciones</div>,
+        cell: ({ row }) => {
+          const p = row.original;
+          return (
+            <div className="flex items-center justify-end gap-1">
+              <Link
+                href={`/property/${p.id}`}
+                target="_blank"
+                title="Ver propiedad"
+                className="rounded-button p-1.5 text-primary transition-colors hover:bg-primaryLight"
+              >
+                <Eye className="h-4 w-4" />
+              </Link>
+              <button
+                onClick={() => setConfirmDelete(p)}
+                title="Eliminar"
+                className="rounded-button p-1.5 text-red-500 transition-colors hover:bg-red-50"
+              >
+                <Trash2 className="h-4 w-4" />
+              </button>
+            </div>
+          );
+        },
+      },
+    ],
+    []
+  );
+
+  const table = useReactTable({
+    data: filteredProperties,
+    columns,
+    state: { sorting },
+    onSortingChange: setSorting,
+    getCoreRowModel: getCoreRowModel(),
+    getSortedRowModel: getSortedRowModel(),
+  });
+
   return (
     <AdminRoute>
-      <div className="flex min-h-[calc(100vh-3rem)]">
+      <div className="flex min-h-[calc(100vh-3rem)] bg-background">
         <AdminSidebar />
-        <main className="flex-1 p-4 sm:p-6 lg:p-8 bg-gray-50 overflow-auto">
-          <div className="max-w-7xl mx-auto">
-            <h1 className="text-2xl font-bold text-gray-900 mb-6">Gestión de Propiedades</h1>
+        <main className="min-w-0 flex-1 overflow-auto">
+          <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+            <div className="mb-6">
+              <h1 className="text-2xl font-bold text-textPrimary">Gestión de Propiedades</h1>
+              <p className="mt-1 text-sm text-textSecondary">Modera y administra los listados publicados.</p>
+            </div>
 
             {/* Search & Filters */}
-            <div className="flex flex-col sm:flex-row gap-3 mb-6">
+            <div className="mb-6 flex flex-col gap-3 sm:flex-row">
               <div className="relative flex-1">
-                <svg className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                </svg>
-                <input
+                <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-textSecondary" />
+                <Input
                   type="text"
                   placeholder="Buscar por título o propietario..."
                   value={search}
                   onChange={(e) => { setSearch(e.target.value); setPage(1); }}
-                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none"
+                  className="rounded-input pl-9"
                 />
               </div>
-              <div className="flex gap-1.5 flex-wrap">
+              <div className="flex flex-wrap gap-1.5">
                 {FILTERS.map((f) => (
-                  <button
+                  <Button
                     key={f.key}
+                    variant={filter === f.key ? 'default' : 'outline'}
+                    size="sm"
+                    className="rounded-button"
                     onClick={() => setFilter(f.key)}
-                    className={`px-3 py-2 text-xs font-medium rounded-lg transition-colors ${
-                      filter === f.key
-                        ? 'bg-primary text-white'
-                        : 'bg-white text-gray-600 border border-gray-300 hover:bg-gray-50'
-                    }`}
                   >
                     {f.label}
-                  </button>
+                  </Button>
                 ))}
               </div>
             </div>
 
             {/* Table */}
-            <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+            <Card className="overflow-hidden rounded-card shadow-card">
               {loading ? (
-                <div className="flex justify-center py-12">
-                  <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-primary"></div>
-                </div>
+                <TableSkeleton cols={8} />
               ) : filteredProperties.length === 0 ? (
-                <div className="text-center py-12 text-gray-500">No se encontraron propiedades</div>
+                <div className="py-12 text-center text-textSecondary">No se encontraron propiedades</div>
               ) : (
                 <div className="overflow-x-auto">
-                  <table className="w-full text-sm">
-                    <thead className="bg-gray-50">
-                      <tr>
-                        <th className="text-left px-4 py-3 font-medium text-gray-600">Título</th>
-                        <th className="text-left px-4 py-3 font-medium text-gray-600 hidden sm:table-cell">Tipo</th>
-                        <th className="text-left px-4 py-3 font-medium text-gray-600">Estado</th>
-                        <th className="text-left px-4 py-3 font-medium text-gray-600 hidden md:table-cell">Precio</th>
-                        <th className="text-left px-4 py-3 font-medium text-gray-600 hidden lg:table-cell">Propietario</th>
-                        <th className="text-left px-4 py-3 font-medium text-gray-600 hidden lg:table-cell">Ciudad</th>
-                        <th className="text-left px-4 py-3 font-medium text-gray-600 hidden xl:table-cell">Fecha</th>
-                        <th className="text-right px-4 py-3 font-medium text-gray-600">Acciones</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-gray-100">
-                      {filteredProperties.map((p) => (
-                        <tr key={p.id} className="hover:bg-gray-50">
-                          <td className="px-4 py-3">
-                            <p className="font-medium text-gray-900 truncate max-w-[200px]">{p.title || `Propiedad #${p.id}`}</p>
-                            <p className="text-xs text-gray-500 sm:hidden">{TYPE_LABELS[p.property_type] || p.property_type}</p>
-                          </td>
-                          <td className="px-4 py-3 text-gray-600 hidden sm:table-cell capitalize">{TYPE_LABELS[p.property_type] || p.property_type}</td>
-                          <td className="px-4 py-3">
-                            <span className={`inline-flex px-2 py-0.5 text-xs font-medium rounded-full ${STATUS_STYLES[p.status] || 'bg-gray-100 text-gray-600'}`}>
-                              {STATUS_LABELS[p.status] || p.status}
-                            </span>
-                          </td>
-                          <td className="px-4 py-3 text-gray-600 hidden md:table-cell">${Number(p.price).toLocaleString('es-EC')}</td>
-                          <td className="px-4 py-3 text-gray-600 hidden lg:table-cell">{p.owner_username || '—'}</td>
-                          <td className="px-4 py-3 text-gray-600 hidden lg:table-cell">{p.city || '—'}</td>
-                          <td className="px-4 py-3 text-gray-600 hidden xl:table-cell">{new Date(p.created_at).toLocaleDateString('es-EC')}</td>
-                          <td className="px-4 py-3">
-                            <div className="flex items-center justify-end space-x-1">
-                              <Link
-                                href={`/property/${p.id}`}
-                                target="_blank"
-                                title="Ver propiedad"
-                                className="p-1.5 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                              >
-                                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
-                              </Link>
-                              <button
-                                onClick={() => setConfirmDelete(p)}
-                                title="Eliminar"
-                                className="p-1.5 text-red-500 hover:bg-red-50 rounded-lg transition-colors"
-                              >
-                                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
-                              </button>
-                            </div>
-                          </td>
-                        </tr>
+                  <Table>
+                    <TableHeader>
+                      {table.getHeaderGroups().map((hg) => (
+                        <TableRow key={hg.id} className="bg-muted/40">
+                          {hg.headers.map((header) => (
+                            <TableHead key={header.id} className={(header.column.columnDef.meta as any)?.className}>
+                              {header.isPlaceholder
+                                ? null
+                                : flexRender(header.column.columnDef.header, header.getContext())}
+                            </TableHead>
+                          ))}
+                        </TableRow>
                       ))}
-                    </tbody>
-                  </table>
+                    </TableHeader>
+                    <TableBody>
+                      {table.getRowModel().rows.map((row) => (
+                        <TableRow key={row.id}>
+                          {row.getVisibleCells().map((cell) => (
+                            <TableCell key={cell.id} className={cn('py-3', (cell.column.columnDef.meta as any)?.className)}>
+                              {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                            </TableCell>
+                          ))}
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
                 </div>
               )}
 
-              {/* Pagination */}
               {totalPages > 1 && (
-                <div className="flex items-center justify-center gap-2 p-4 border-t border-gray-200">
-                  <button
-                    onClick={() => setPage((p) => Math.max(1, p - 1))}
-                    disabled={page === 1}
-                    className="px-3 py-1.5 text-sm border rounded-lg disabled:opacity-50 hover:bg-gray-50"
-                  >
-                    Anterior
-                  </button>
-                  <span className="text-sm text-gray-600">Página {page} de {totalPages}</span>
-                  <button
-                    onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-                    disabled={page === totalPages}
-                    className="px-3 py-1.5 text-sm border rounded-lg disabled:opacity-50 hover:bg-gray-50"
-                  >
-                    Siguiente
-                  </button>
+                <div className="border-t border-line p-4">
+                  <Pagination>
+                    <PaginationContent>
+                      <PaginationItem>
+                        <PaginationPrevious
+                          href="#"
+                          aria-disabled={page === 1}
+                          className={cn('rounded-button', page === 1 && 'pointer-events-none opacity-50')}
+                          onClick={(e) => { e.preventDefault(); setPage((p) => Math.max(1, p - 1)); }}
+                        />
+                      </PaginationItem>
+                      <PaginationItem>
+                        <span className="px-3 text-sm text-textSecondary">Página {page} de {totalPages}</span>
+                      </PaginationItem>
+                      <PaginationItem>
+                        <PaginationNext
+                          href="#"
+                          aria-disabled={page === totalPages}
+                          className={cn('rounded-button', page === totalPages && 'pointer-events-none opacity-50')}
+                          onClick={(e) => { e.preventDefault(); setPage((p) => Math.min(totalPages, p + 1)); }}
+                        />
+                      </PaginationItem>
+                    </PaginationContent>
+                  </Pagination>
                 </div>
               )}
-            </div>
+            </Card>
           </div>
-
-          {/* Delete Confirmation Modal */}
-          {confirmDelete && (
-            <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-              <div className="bg-white rounded-xl shadow-xl max-w-md w-full p-6">
-                <h3 className="text-lg font-bold text-gray-900 mb-2">Eliminar propiedad</h3>
-                <p className="text-gray-600 mb-6">
-                  ¿Estás seguro de eliminar <strong>{confirmDelete.title || `Propiedad #${confirmDelete.id}`}</strong>? Esta acción no se puede deshacer.
-                </p>
-                <div className="flex justify-end space-x-3">
-                  <button
-                    onClick={() => setConfirmDelete(null)}
-                    className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
-                  >
-                    Cancelar
-                  </button>
-                  <button
-                    onClick={() => handleDelete(confirmDelete)}
-                    className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 transition-colors"
-                  >
-                    Eliminar
-                  </button>
-                </div>
-              </div>
-            </div>
-          )}
         </main>
       </div>
+
+      {/* Delete confirmation */}
+      <AlertDialog open={!!confirmDelete} onOpenChange={(o) => { if (!o) setConfirmDelete(null); }}>
+        <AlertDialogContent className="rounded-modal">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Eliminar propiedad</AlertDialogTitle>
+            <AlertDialogDescription>
+              ¿Estás seguro de eliminar <strong>{confirmDelete?.title || `Propiedad #${confirmDelete?.id}`}</strong>? Esta acción no se puede deshacer.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="rounded-button">Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              className="rounded-button bg-error text-white hover:bg-error/90"
+              onClick={() => confirmDelete && handleDelete(confirmDelete)}
+            >
+              Eliminar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </AdminRoute>
   );
 };
+
+function SortHeader({ column, label }: { column: any; label: string }) {
+  return (
+    <button
+      className="-ml-1 inline-flex items-center gap-1 rounded px-1 py-0.5 font-medium text-textSecondary transition-colors hover:text-textPrimary"
+      onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
+    >
+      {label}
+      <ArrowUpDown className="h-3.5 w-3.5" />
+    </button>
+  );
+}
+
+function TableSkeleton({ cols }: { cols: number }) {
+  return (
+    <div className="divide-y divide-line">
+      {Array.from({ length: 6 }).map((_, r) => (
+        <div key={r} className="flex items-center gap-4 px-4 py-3.5">
+          {Array.from({ length: cols }).map((_, c) => (
+            <Skeleton key={c} className={cn('h-5', c === 0 ? 'w-48' : 'w-20', c === cols - 1 && 'ml-auto')} />
+          ))}
+        </div>
+      ))}
+    </div>
+  );
+}
 
 export default AdminPropertiesPage;

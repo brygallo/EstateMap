@@ -1,7 +1,20 @@
 'use client';
 
+import { motion, type Variants } from 'motion/react';
+import { Search, SlidersHorizontal, Share2, X } from 'lucide-react';
 import RangeSlider from '@/components/RangeSlider';
 import UserFilter from '@/components/map/UserFilter';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Button } from '@/components/ui/button';
+import { Separator } from '@/components/ui/separator';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import {
   PRICE_MIN,
   PRICE_MAX,
@@ -19,6 +32,16 @@ interface MapFiltersProps {
   onShare: () => void;
 }
 
+// Entrada escalonada de cada campo del panel (respeta reduce-motion via Motion).
+const container: Variants = {
+  hidden: {},
+  show: { transition: { staggerChildren: 0.04 } },
+};
+const item: Variants = {
+  hidden: { opacity: 0, y: 6 },
+  show: { opacity: 1, y: 0, transition: { duration: 0.22, ease: 'easeOut' } },
+};
+
 /** Panel de filtros del mapa: búsqueda, tipo, estado, usuario, precio y área. */
 export default function MapFilters({
   filters,
@@ -31,62 +54,81 @@ export default function MapFilters({
   const update = (patch: Partial<PropertyFilters>) => onChange({ ...filters, ...patch });
 
   return (
-    <div className="p-3 bg-white border-b border-line sticky top-0 lg:top-0 z-10 space-y-2">
-      <h3 className="text-xs font-semibold uppercase tracking-wide text-textSecondary flex items-center gap-1.5 mb-1">
-        <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
-        </svg>
-        Filtros
-      </h3>
+    <motion.div
+      variants={container}
+      initial="hidden"
+      animate="show"
+      className="sticky top-0 z-10 space-y-3 border-b border-line bg-white/95 p-4 backdrop-blur"
+    >
+      <motion.div variants={item} className="flex items-center gap-2">
+        <span className="flex h-7 w-7 items-center justify-center rounded-button bg-primaryLight text-primary">
+          <SlidersHorizontal className="h-4 w-4" strokeWidth={2} aria-hidden />
+        </span>
+        <h3 className="text-sm font-semibold text-textPrimary">Filtros</h3>
+      </motion.div>
 
       {/* Búsqueda */}
-      <div className="relative">
-        <input
+      <motion.div variants={item} className="relative">
+        <Search
+          className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400"
+          aria-hidden
+        />
+        <Input
           type="text"
           value={filters.search}
           onChange={(e) => update({ search: e.target.value })}
-          placeholder="Buscar..."
-          className="w-full pl-8 pr-3 py-2 text-sm bg-white border border-line rounded-lg text-textPrimary placeholder-slate-400 focus:border-primary focus:outline-none"
+          placeholder="Buscar propiedad..."
+          className="rounded-button border-line pl-9"
         />
-        <svg className="absolute left-2.5 top-2.5 h-3.5 w-3.5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-        </svg>
-      </div>
+      </motion.div>
 
       {/* Tipo */}
-      <select
-        value={filters.propertyType}
-        onChange={(e) => update({ propertyType: e.target.value })}
-        className="w-full px-3 py-2 text-sm bg-white border border-line rounded-lg text-textPrimary focus:border-primary focus:outline-none"
-      >
-        <option value="all">Todos los tipos</option>
-        <option value="house">Casa</option>
-        <option value="apartment">Apartamento</option>
-        <option value="land">Terreno</option>
-        <option value="commercial">Comercial</option>
-      </select>
+      <motion.div variants={item}>
+        <Select
+          value={filters.propertyType}
+          onValueChange={(value) => update({ propertyType: value })}
+        >
+          <SelectTrigger className="rounded-button border-line">
+            <SelectValue placeholder="Tipo de propiedad" />
+          </SelectTrigger>
+          <SelectContent className="rounded-card">
+            <SelectItem value="all">Todos los tipos</SelectItem>
+            <SelectItem value="house">Casa</SelectItem>
+            <SelectItem value="apartment">Apartamento</SelectItem>
+            <SelectItem value="land">Terreno</SelectItem>
+            <SelectItem value="commercial">Comercial</SelectItem>
+          </SelectContent>
+        </Select>
+      </motion.div>
 
       {/* Estado */}
-      <select
-        value={filters.status}
-        onChange={(e) => update({ status: e.target.value })}
-        className="w-full px-3 py-2 text-sm bg-white border border-line rounded-lg text-textPrimary focus:border-primary focus:outline-none"
-      >
-        <option value="all">Todos los estados</option>
-        <option value="for_sale">En venta</option>
-        <option value="for_rent">En alquiler</option>
-      </select>
+      <motion.div variants={item}>
+        <Select value={filters.status} onValueChange={(value) => update({ status: value })}>
+          <SelectTrigger className="rounded-button border-line">
+            <SelectValue placeholder="Operación" />
+          </SelectTrigger>
+          <SelectContent className="rounded-card">
+            <SelectItem value="all">Todos los estados</SelectItem>
+            <SelectItem value="for_sale">En venta</SelectItem>
+            <SelectItem value="for_rent">En alquiler</SelectItem>
+          </SelectContent>
+        </Select>
+      </motion.div>
 
       {/* Usuario */}
-      <UserFilter
-        users={owners}
-        selectedUserId={filters.userId}
-        onSelect={(userId) => update({ userId })}
-      />
+      <motion.div variants={item}>
+        <UserFilter
+          users={owners}
+          selectedUserId={filters.userId}
+          onSelect={(userId) => update({ userId })}
+        />
+      </motion.div>
+
+      <Separator className="bg-line" />
 
       {/* Precio */}
-      <div className="space-y-0.5">
-        <label className="block text-xs font-medium text-textSecondary">Precio (USD)</label>
+      <motion.div variants={item} className="space-y-1">
+        <Label className="text-xs font-medium text-textSecondary">Precio (USD)</Label>
         <RangeSlider
           min={PRICE_MIN}
           max={PRICE_MAX}
@@ -97,11 +139,11 @@ export default function MapFilters({
           formatValue={(v) => `$${v.toLocaleString()}`}
           theme="light"
         />
-      </div>
+      </motion.div>
 
       {/* Área */}
-      <div className="space-y-0.5">
-        <label className="block text-xs font-medium text-textSecondary">Área (m²)</label>
+      <motion.div variants={item} className="space-y-1">
+        <Label className="text-xs font-medium text-textSecondary">Área (m²)</Label>
         <RangeSlider
           min={AREA_MIN}
           max={AREA_MAX}
@@ -112,25 +154,26 @@ export default function MapFilters({
           formatValue={(v) => `${v.toLocaleString()} m²`}
           theme="light"
         />
-      </div>
+      </motion.div>
 
-      {/* Limpiar filtros */}
-      {hasActiveFilters && (
-        <button
-          onClick={onClear}
-          className="btn btn-sm btn-ghost border border-line w-full text-error hover:bg-red-50"
-        >
-          Limpiar filtros
-        </button>
-      )}
-
-      {/* Compartir */}
-      <button onClick={onShare} className="btn btn-sm btn-primary w-full">
-        <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
-        </svg>
-        Compartir Búsqueda
-      </button>
-    </div>
+      {/* Acciones */}
+      <motion.div variants={item} className="space-y-2 pt-1">
+        {hasActiveFilters && (
+          <Button
+            type="button"
+            variant="outline"
+            onClick={onClear}
+            className="w-full rounded-button border-line text-error hover:bg-red-50 hover:text-error"
+          >
+            <X className="h-4 w-4" aria-hidden />
+            Limpiar filtros
+          </Button>
+        )}
+        <Button type="button" onClick={onShare} className="w-full rounded-button">
+          <Share2 className="h-4 w-4" aria-hidden />
+          Compartir búsqueda
+        </Button>
+      </motion.div>
+    </motion.div>
   );
 }
