@@ -1,55 +1,44 @@
 import { MetadataRoute } from 'next';
+import { getProperties, getCities, SITE_URL } from '@/lib/properties';
 
-const siteUrl = process.env.NEXT_PUBLIC_FRONTEND_URL || 'https://estatemap.com';
-const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api';
+export const revalidate = 3600;
 
-type PropertySitemapItem = {
-  id: number | string;
-  updated_at?: string;
-  created_at?: string;
-};
-
-async function fetchProperties(): Promise<PropertySitemapItem[]> {
-  try {
-    const response = await fetch(`${apiUrl}/properties/`, {
-      next: { revalidate: 3600 },
-    });
-
-    if (!response.ok) {
-      return [];
-    }
-
-    return await response.json();
-  } catch (error) {
-    console.error('Error fetching properties for sitemap:', error);
-    return [];
-  }
-}
+const TYPE_ROUTES = [
+  '/casas-en-venta',
+  '/departamentos-en-alquiler',
+  '/terrenos-en-venta',
+  '/locales-comerciales',
+];
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const now = new Date();
+
   const staticRoutes: MetadataRoute.Sitemap = [
-    {
-      url: `${siteUrl}/`,
+    { url: `${SITE_URL}/`, lastModified: now, changeFrequency: 'daily', priority: 1 },
+    { url: `${SITE_URL}/help`, lastModified: now, changeFrequency: 'monthly', priority: 0.5 },
+    ...TYPE_ROUTES.map((path) => ({
+      url: `${SITE_URL}${path}`,
       lastModified: now,
-      changeFrequency: 'daily',
-      priority: 1,
-    },
-    {
-      url: `${siteUrl}/help`,
-      lastModified: now,
-      changeFrequency: 'weekly',
-      priority: 0.7,
-    },
+      changeFrequency: 'daily' as const,
+      priority: 0.8,
+    })),
   ];
 
-  const properties = await fetchProperties();
+  const properties = await getProperties();
+
   const propertyRoutes: MetadataRoute.Sitemap = properties.map((property) => ({
-    url: `${siteUrl}/property/${property.id}`,
+    url: `${SITE_URL}/property/${property.id}`,
     lastModified: property.updated_at || property.created_at || now,
     changeFrequency: 'weekly',
-    priority: 0.8,
+    priority: 0.7,
   }));
 
-  return [...staticRoutes, ...propertyRoutes];
+  const cityRoutes: MetadataRoute.Sitemap = getCities(properties).map((city) => ({
+    url: `${SITE_URL}/propiedades/${city.slug}`,
+    lastModified: now,
+    changeFrequency: 'daily',
+    priority: 0.7,
+  }));
+
+  return [...staticRoutes, ...propertyRoutes, ...cityRoutes];
 }

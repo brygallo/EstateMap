@@ -1,0 +1,174 @@
+/**
+ * Server-side helpers to fetch and normalize properties for SEO pages.
+ *
+ * These run on the server (sitemap, landing pages, property detail) and must be
+ * resilient: the API may return a plain array or a paginated `{ results: [] }`
+ * object, and it may be unreachable at build time.
+ */
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api';
+export const SITE_URL =
+  process.env.NEXT_PUBLIC_FRONTEND_URL || 'https://estatemap.com';
+export const SITE_NAME = 'Geo Propiedades Ecuador';
+
+export type PropertyImage = {
+  image: string;
+  thumbnail?: string | null;
+  is_main?: boolean;
+};
+
+export type Property = {
+  id: number | string;
+  title?: string;
+  description?: string;
+  property_type: string;
+  status: string;
+  address?: string;
+  city?: string;
+  province?: string;
+  latitude?: number | null;
+  longitude?: number | null;
+  area?: number | string | null;
+  built_area?: number | string | null;
+  rooms?: number;
+  bathrooms?: number;
+  parking_spaces?: number;
+  price: number | string;
+  is_negotiable?: boolean;
+  images?: PropertyImage[];
+  owner_username?: string;
+  created_at?: string;
+  updated_at?: string;
+};
+
+function normalizeList(data: unknown): Property[] {
+  if (Array.isArray(data)) {
+    return data as Property[];
+  }
+  if (data && typeof data === 'object' && Array.isArray((data as any).results)) {
+    return (data as any).results as Property[];
+  }
+  return [];
+}
+
+/**
+ * Fetch every publicly listed property. Returns `[]` on any failure so pages
+ * degrade gracefully instead of crashing the build/request.
+ */
+export async function getProperties(): Promise<Property[]> {
+  try {
+    const res = await fetch(`${API_URL}/properties/`, {
+      next: { revalidate: 3600 },
+    });
+    if (!res.ok) return [];
+    return normalizeList(await res.json());
+  } catch (error) {
+    console.error('Error fetching properties:', error);
+    return [];
+  }
+}
+
+export async function getProperty(id: string): Promise<Property | null> {
+  try {
+    const res = await fetch(`${API_URL}/properties/${id}/`, {
+      next: { revalidate: 300 },
+      headers: { 'Content-Type': 'application/json' },
+    });
+    if (!res.ok) return null;
+    return (await res.json()) as Property;
+  } catch (error) {
+    console.error('Error fetching property:', error);
+    return null;
+  }
+}
+
+/**
+ * Serialize an object for a JSON-LD <script> tag, escaping `<` so that
+ * user-controlled fields (titles, descriptions) can't break out of the script
+ * element (e.g. via a literal `</script>`).
+ */
+export function jsonLd(data: unknown): string {
+  return JSON.stringify(data).replace(/</g, '\\u003c');
+}
+
+// --- Labels ---------------------------------------------------------------
+
+export function getPropertyTypeLabel(type?: string): string {
+  const labels: Record<string, string> = {
+    house: 'Casa',
+    land: 'Terreno',
+    apartment: 'Departamento',
+    commercial: 'Local comercial',
+    other: 'Propiedad',
+  };
+  return labels[type || ''] || 'Propiedad';
+}
+
+export function getStatusLabel(status?: string): string {
+  const labels: Record<string, string> = {
+    for_sale: 'En venta',
+    for_rent: 'En alquiler',
+    inactive: 'Inactivo',
+  };
+  return labels[status || ''] || status || '';
+}
+
+export const PROPERTY_SCHEMA_TYPE: Record<string, string> = {
+  house: 'SingleFamilyResidence',
+  apartment: 'Apartment',
+  land: 'LandParcel',
+  commercial: 'CommercialProperty',
+  other: 'Residence',
+};
+
+// --- Formatting -----------------------------------------------------------
+
+export function formatPrice(price?: number | string | null): string {
+  const value = Number.parseFloat(String(price ?? ''));
+  if (!Number.isFinite(value)) return 'Precio a consultar';
+  return `$${value.toLocaleString('es-EC')}`;
+}
+
+export function formatArea(area?: number | string | null): string {
+  const value = Number.parseFloat(String(area ?? ''));
+  if (!Number.isFinite(value)) return '';
+  return `${Math.round(value)} m²`;
+}
+
+export function getMainImageUrl(property: Property, baseUrl = SITE_URL): string {
+  const main =
+    property.images?.find((img) => img.is_main) || property.images?.[0];
+  const url = main?.image || '/og-image.png';
+  return url.startsWith('http') ? url : `${baseUrl}${url}`;
+}
+
+// --- Slugs ----------------------------------------------------------------
+
+export function slugify(value: string): string {
+  return value
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '');
+}
+
+/** Unique cities present in the data, sorted, with a URL-safe slug. */
+export function getCities(
+  properties: Property[]
+): { name: string; slug: string; count: number }[] {
+  const map = new Map<string, { name: string; slug: string; count: number }>();
+  for (const p of properties) {
+    const name = (p.city || '').trim();
+    if (!name) continue;
+    const slug = slugify(name);
+    if (!slug) continue;
+    const existing = map.get(slug);
+    if (existing) {
+      existing.count += 1;
+    } else {
+      map.set(slug, { name, slug, count: 1 });
+    }
+  }
+  return Array.from(map.values()).sort((a, b) => a.name.localeCompare(b.name));
+}
