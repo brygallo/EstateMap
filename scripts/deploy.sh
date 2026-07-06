@@ -29,7 +29,16 @@ fi
 export $(cat .env.prod | grep -v '^#' | xargs)
 
 echo "📥 Pulling latest changes..."
-git pull origin main
+# Use fetch + reset instead of pull: idempotent, avoids merge conflicts from
+# local changes and self-heals stale/corrupted remote-tracking refs on the server.
+git remote prune origin || true
+if ! git fetch origin main; then
+    echo "⚠️  Fetch failed, attempting to repair git refs..."
+    git gc --prune=now || true
+    rm -f .git/refs/remotes/origin/main
+    git fetch origin main
+fi
+git reset --hard origin/main
 
 echo "🛑 Stopping existing containers..."
 docker-compose -f docker-compose.prod.yml down
