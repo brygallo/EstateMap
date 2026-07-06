@@ -1,7 +1,8 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import ShareModal from './ShareModal';
+import LeadForm from './LeadForm';
 import {
   getPropertyTypeLabel,
   getStatusLabel,
@@ -30,7 +31,7 @@ const ImageGallery = ({ images, initialIndex, onClose }: any) => {
 
   return (
     <div
-      className="fixed inset-0 z-[2000] bg-black/95 flex items-center justify-center outline-none"
+      className="fixed inset-0 z-modal bg-black/95 flex items-center justify-center outline-none"
       onClick={onClose}
       onKeyDown={handleKeyDown}
       tabIndex={0}
@@ -119,12 +120,12 @@ const FEATURE_ICONS = {
 };
 
 const FeatureTile = ({ icon, value, label }: { icon: string; value: any; label: string }) => (
-  <div className="bg-slate-50 border border-line p-1.5 rounded text-center">
-    <svg className="h-4 w-4 mx-auto mb-0.5 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+  <div className="stat-tile !px-1.5 !py-2 gap-0.5">
+    <svg className="h-4 w-4 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d={icon} />
     </svg>
-    <div className="text-xs font-bold text-gray-900">{value}</div>
-    <div className="text-[9px] text-gray-500 font-medium">{label}</div>
+    <div className="stat-value">{value}</div>
+    <div className="stat-label">{label}</div>
   </div>
 );
 
@@ -138,6 +139,25 @@ const PropertyModal = ({ property, isOpen, onClose }: PropertyModalProps) => {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [galleryOpen, setGalleryOpen] = useState(false);
   const [shareModalOpen, setShareModalOpen] = useState(false);
+  const panelRef = useRef<HTMLDivElement>(null);
+
+  // Cierre con Escape: primero la galería/compartir si están abiertos, luego el panel.
+  useEffect(() => {
+    if (!isOpen) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== 'Escape') return;
+      if (galleryOpen) { setGalleryOpen(false); return; }
+      if (shareModalOpen) { setShareModalOpen(false); return; }
+      onClose();
+    };
+    document.addEventListener('keydown', onKey);
+    return () => document.removeEventListener('keydown', onKey);
+  }, [isOpen, galleryOpen, shareModalOpen, onClose]);
+
+  // Lleva el foco al panel al abrir (lectores de pantalla / teclado).
+  useEffect(() => {
+    if (isOpen) panelRef.current?.focus();
+  }, [isOpen, property?.id]);
 
   if (!isOpen || !property) return null;
 
@@ -194,12 +214,23 @@ const PropertyModal = ({ property, isOpen, onClose }: PropertyModalProps) => {
   };
 
   return (
-    <div
-      className="fixed top-1/2 -translate-y-1/2 right-2 sm:right-4 w-[calc(100%-1rem)] sm:w-full max-w-sm max-h-[calc(100vh-4rem)] animate-slideIn"
-      style={{ zIndex: 1500 }}
-    >
+    <>
+      {/* Scrim solo en móvil: cierra al tocar fuera sin tapar el mapa en desktop. */}
+      <div
+        className="fixed inset-0 z-backdrop bg-black/40 lg:hidden"
+        onClick={onClose}
+        aria-hidden="true"
+      />
+      <div
+        ref={panelRef}
+        tabIndex={-1}
+        role="dialog"
+        aria-modal="true"
+        aria-label={`Detalle de ${property.title || 'propiedad'}`}
+        className="fixed top-1/2 -translate-y-1/2 right-2 sm:right-4 w-[calc(100%-1rem)] sm:w-full max-w-sm max-h-[calc(100vh-4rem)] animate-slideIn outline-none z-panel"
+      >
       {/* Panel Container */}
-      <div className="relative bg-white rounded-lg shadow-2xl overflow-hidden border border-gray-200">
+      <div className="relative bg-white rounded-lg shadow-2xl overflow-hidden border border-line">
         <div>
           {/* Share Button */}
           <button
@@ -317,13 +348,13 @@ const PropertyModal = ({ property, isOpen, onClose }: PropertyModalProps) => {
                 </div>
 
                 {/* Owner info */}
-                <div className="flex items-center gap-1.5 mb-1.5 bg-gray-50 p-1.5 rounded">
-                  <svg className="h-3.5 w-3.5 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <div className="flex items-center gap-1.5 mb-1.5 bg-background p-1.5 rounded">
+                  <svg className="h-3.5 w-3.5 text-textSecondary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                   </svg>
                   <div>
-                    <div className="text-[9px] text-gray-500 font-medium">Publicado por</div>
-                    <div className="text-xs text-gray-900 font-bold">
+                    <div className="text-xs text-textSecondary font-medium">Publicado por</div>
+                    <div className="text-sm text-textPrimary font-semibold">
                       {property.owner_username || `Usuario ${property.owner}`}
                     </div>
                   </div>
@@ -331,11 +362,11 @@ const PropertyModal = ({ property, isOpen, onClose }: PropertyModalProps) => {
 
                 {/* Price */}
                 <div className="flex items-baseline gap-2 mb-1">
-                  <span className="text-xl font-bold text-emerald-600">
+                  <span className="price text-2xl">
                     {formatPrice(property.price)}
                   </span>
                   {property.is_negotiable && (
-                    <span className="text-[10px] text-blue-600 font-medium bg-blue-50 px-2 py-0.5 rounded-full">
+                    <span className="text-xs text-primary font-medium bg-primary/10 px-2 py-0.5 rounded-full">
                       Negociable
                     </span>
                   )}
@@ -343,12 +374,12 @@ const PropertyModal = ({ property, isOpen, onClose }: PropertyModalProps) => {
 
                 {/* Location */}
                 {(property.address || property.city) && (
-                  <div className="flex items-center gap-1.5 text-gray-600">
+                  <div className="flex items-center gap-1.5 text-textSecondary">
                     <svg className="h-4 w-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                     </svg>
-                    <span className="text-xs">
+                    <span className="text-sm">
                       {property.address && <span>{property.address}</span>}
                       {property.address && property.city && <span>, </span>}
                       {property.city && <span>{property.city}</span>}
@@ -386,34 +417,34 @@ const PropertyModal = ({ property, isOpen, onClose }: PropertyModalProps) => {
               {/* Description */}
               {property.description && (
                 <div className="mb-2.5">
-                  <h3 className="text-xs font-bold text-gray-900 mb-1 flex items-center gap-1">
+                  <h3 className="text-sm font-semibold text-textPrimary mb-1 flex items-center gap-1">
                     <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h7" />
                     </svg>
                     Descripción
                   </h3>
-                  <p className="text-xs text-gray-700 leading-relaxed">{property.description}</p>
+                  <p className="text-sm text-textSecondary leading-relaxed">{property.description}</p>
                 </div>
               )}
 
               {/* Additional Details */}
               <div className="grid grid-cols-2 gap-1.5 mb-2.5">
-                <div className="bg-gray-50 p-1.5 rounded">
-                  <div className="text-[9px] font-semibold text-gray-500 mb-0.5">Tipo</div>
-                  <div className="text-xs font-bold text-gray-900">{getPropertyTypeLabel(property.property_type)}</div>
+                <div className="bg-background p-1.5 rounded">
+                  <div className="text-xs font-semibold text-textSecondary mb-0.5">Tipo</div>
+                  <div className="text-sm font-semibold text-textPrimary">{getPropertyTypeLabel(property.property_type)}</div>
                 </div>
 
                 {property.year_built && (
-                  <div className="bg-gray-50 p-1.5 rounded">
-                    <div className="text-[9px] font-semibold text-gray-500 mb-0.5">Año</div>
-                    <div className="text-xs font-bold text-gray-900">{property.year_built}</div>
+                  <div className="bg-background p-1.5 rounded">
+                    <div className="text-xs font-semibold text-textSecondary mb-0.5">Año</div>
+                    <div className="text-sm font-semibold text-textPrimary">{property.year_built}</div>
                   </div>
                 )}
 
                 {property.furnished && (
-                  <div className="bg-gray-50 p-1.5 rounded">
-                    <div className="text-[9px] font-semibold text-gray-500 mb-0.5">Amoblado</div>
-                    <div className="text-xs font-bold text-green-600">Sí</div>
+                  <div className="bg-background p-1.5 rounded">
+                    <div className="text-xs font-semibold text-textSecondary mb-0.5">Amoblado</div>
+                    <div className="text-sm font-semibold text-success">Sí</div>
                   </div>
                 )}
               </div>
@@ -439,7 +470,7 @@ const PropertyModal = ({ property, isOpen, onClose }: PropertyModalProps) => {
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
                         </svg>
                       </div>
-                      <div className="text-[10px] font-medium">Llamar</div>
+                      <div className="text-xs font-medium">Llamar</div>
                     </a>
 
                     {/* WhatsApp Button */}
@@ -454,11 +485,16 @@ const PropertyModal = ({ property, isOpen, onClose }: PropertyModalProps) => {
                           <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
                         </svg>
                       </div>
-                      <div className="text-[10px] font-medium">WhatsApp</div>
+                      <div className="text-xs font-medium">WhatsApp</div>
                     </a>
                   </div>
                 </div>
               )}
+
+              {/* Formulario de contacto (lead) */}
+              <div className="mt-2.5">
+                <LeadForm propertyId={property.id} source="property_modal" />
+              </div>
             </div>
           </div>
         </div>
@@ -499,8 +535,12 @@ const PropertyModal = ({ property, isOpen, onClose }: PropertyModalProps) => {
         .animate-slideIn {
           animation: slideIn 0.3s ease-out;
         }
+        @media (prefers-reduced-motion: reduce) {
+          .animate-slideIn { animation: none; }
+        }
       `}</style>
-    </div>
+      </div>
+    </>
   );
 };
 

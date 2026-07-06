@@ -8,38 +8,14 @@
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api';
 export const SITE_URL =
-  process.env.NEXT_PUBLIC_FRONTEND_URL || 'https://estatemap.com';
+  process.env.NEXT_PUBLIC_FRONTEND_URL || 'https://geopropiedadesecuador.com';
 export const SITE_NAME = 'Geo Propiedades Ecuador';
 
-export type PropertyImage = {
-  image: string;
-  thumbnail?: string | null;
-  is_main?: boolean;
-};
-
-export type Property = {
-  id: number | string;
-  title?: string;
-  description?: string;
-  property_type: string;
-  status: string;
-  address?: string;
-  city?: string;
-  province?: string;
-  latitude?: number | null;
-  longitude?: number | null;
-  area?: number | string | null;
-  built_area?: number | string | null;
-  rooms?: number;
-  bathrooms?: number;
-  parking_spaces?: number;
-  price: number | string;
-  is_negotiable?: boolean;
-  images?: PropertyImage[];
-  owner_username?: string;
-  created_at?: string;
-  updated_at?: string;
-};
+// Tipo de dominio único: reexportamos el canónico de `./types` para no mantener
+// dos formas de `Property` que se desincronizan (antes esta copia tenía
+// `id: number | string` y le faltaban campos como `polygon`/`floors`).
+export type { Property, PropertyImage } from './types';
+import type { Property } from './types';
 
 function normalizeList(data: unknown): Property[] {
   if (Array.isArray(data)) {
@@ -57,7 +33,9 @@ function normalizeList(data: unknown): Property[] {
  */
 export async function getProperties(): Promise<Property[]> {
   try {
-    const res = await fetch(`${API_URL}/properties/`, {
+    // The list endpoint is paginated; request a large page so SEO/sitemap
+    // pages get the full catalog in a single request.
+    const res = await fetch(`${API_URL}/properties/?page_size=2000`, {
       next: { revalidate: 3600 },
     });
     if (!res.ok) return [];

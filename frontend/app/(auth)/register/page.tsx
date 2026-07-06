@@ -71,12 +71,25 @@ export default function RegisterPage() {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
             </svg>
           </div>
-          <h2 className="text-3xl font-bold text-gray-900">Geo Propiedades Ecuador</h2>
-          <p className="mt-2 text-sm text-gray-600">Crea tu cuenta para comenzar</p>
+          <h2 className="text-3xl font-bold text-gray-900">Publica tu propiedad gratis</h2>
+          <p className="mt-2 text-sm text-gray-600">
+            Crea tu cuenta y empieza a recibir contactos directos por teléfono o WhatsApp.
+          </p>
         </div>
 
         {/* Formulario */}
         <div className="bg-white rounded-3xl shadow-2xl p-8">
+          <div className="mb-6 grid grid-cols-1 gap-2 text-sm text-gray-700">
+            <div className="rounded-xl bg-green-50 px-4 py-3 font-medium text-green-800">
+              Publicación sin costo y sin comisiones.
+            </div>
+            <div className="rounded-xl bg-blue-50 px-4 py-3 font-medium text-blue-800">
+              Tu anuncio se muestra en el mapa con fotos, precio y ubicación.
+            </div>
+            <div className="rounded-xl bg-amber-50 px-4 py-3 font-medium text-amber-800">
+              Si tienes dudas, te ayudamos a publicarlo por WhatsApp.
+            </div>
+          </div>
           <Formik
             initialValues={{
               username: '',
@@ -238,7 +251,7 @@ export default function RegisterPage() {
                     </>
                   ) : (
                     <>
-                      Crear cuenta
+                      Crear cuenta y publicar
                       <svg className="ml-2 -mr-1 h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
                       </svg>

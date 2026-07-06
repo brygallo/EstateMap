@@ -6,7 +6,7 @@ export function generatePageMetadata(
   path: string = '/'
 ): Metadata {
   const siteName = 'Geo Propiedades Ecuador';
-  const baseUrl = process.env.NEXT_PUBLIC_FRONTEND_URL || 'https://estatemap.com';
+  const baseUrl = process.env.NEXT_PUBLIC_FRONTEND_URL || 'https://geopropiedadesecuador.com';
   const fullUrl = `${baseUrl}${path}`;
 
   return {

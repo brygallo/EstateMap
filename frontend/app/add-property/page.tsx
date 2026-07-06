@@ -5,9 +5,9 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth-context';
 import { toast } from 'react-toastify';
 import dynamic from 'next/dynamic';
-import PrivateRoute from '@/components/PrivateRoute';
 import LocationSelect from '@/components/LocationSelect';
 import LocationPermissionModal from '@/components/LocationPermissionModal';
+import { trackEvent } from '@/lib/analytics';
 
 // Dynamically import the map component with no SSR
 const AddPropertyMap = dynamic(() => import('@/components/maps/AddPropertyMap'), {
@@ -21,6 +21,8 @@ const AddPropertyMap = dynamic(() => import('@/components/maps/AddPropertyMap'),
     </div>
   ),
 });
+
+const PROPERTY_DRAFT_STORAGE_KEY = 'propertyPublicationDraft';
 
 const AddPropertyPage = () => {
   const mapRef = useRef<any>(null);
@@ -72,10 +74,98 @@ const AddPropertyPage = () => {
   const [showLocationModal, setShowLocationModal] = useState(false);
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [showLocationToast, setShowLocationToast] = useState(false);
+  const [draftLoaded, setDraftLoaded] = useState(false);
+  const [draftSavedAt, setDraftSavedAt] = useState<Date | null>(null);
+  const [showExitModal, setShowExitModal] = useState(false);
+  const [showAccountModal, setShowAccountModal] = useState(false);
+  const [accountFirstName, setAccountFirstName] = useState('');
+  const [accountLastName, setAccountLastName] = useState('');
+  const [accountEmail, setAccountEmail] = useState('');
+  const [accountPassword, setAccountPassword] = useState('');
+  const [creatingAccount, setCreatingAccount] = useState(false);
+  const formStartedRef = useRef(false);
+  const polygonTrackedRef = useRef(false);
 
   const { token, logout } = useAuth();
   const router = useRouter();
   const API_URL = process.env.NEXT_PUBLIC_API_URL || '/api';
+
+  const trackFormStarted = () => {
+    if (formStartedRef.current) return;
+    formStartedRef.current = true;
+    trackEvent('publication_form_started', {
+      has_session: Boolean(token),
+      draft_loaded: draftLoaded,
+    });
+  };
+
+  const hasDraftContent = () => {
+    return Boolean(
+      title.trim() ||
+      description.trim() ||
+      address.trim() ||
+      city.trim() ||
+      province.trim() ||
+      price.trim() ||
+      contactPhone.trim() ||
+      polygonCoords.length >= 3 ||
+      images.length > 0
+    );
+  };
+
+  const handlePolygonChange = (coords: any[]) => {
+    setPolygonCoords(coords);
+
+    if (coords.length >= 3 && !polygonTrackedRef.current) {
+      polygonTrackedRef.current = true;
+      trackEvent('publication_polygon_drawn', {
+        has_session: Boolean(token),
+        points: coords.length,
+      });
+    }
+  };
+
+  useEffect(() => {
+    trackEvent('publication_form_viewed', {
+      has_session: Boolean(token),
+    });
+  }, [token]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    const storedDraft = localStorage.getItem(PROPERTY_DRAFT_STORAGE_KEY);
+    if (!storedDraft) return;
+
+    try {
+      const draft = JSON.parse(storedDraft);
+      if (draft.title) setTitle(draft.title);
+      if (draft.description) setDescription(draft.description);
+      if (draft.property_type) setPropertyType(draft.property_type);
+      if (draft.status) setStatus(draft.status);
+      if (draft.address) setAddress(draft.address);
+      if (draft.city) setCity(draft.city);
+      if (draft.province) setProvince(draft.province);
+      if (draft.latitude) setLatitude(draft.latitude);
+      if (draft.longitude) setLongitude(draft.longitude);
+      if (draft.polygon) setPolygonCoords(draft.polygon);
+      if (draft.area) setArea(Number(draft.area));
+      if (draft.show_measurements !== undefined) setShowMeasurements(Boolean(draft.show_measurements));
+      if (draft.built_area) setBuiltArea(draft.built_area);
+      if (draft.rooms !== undefined) setRooms(Number(draft.rooms));
+      if (draft.bathrooms !== undefined) setBathrooms(Number(draft.bathrooms));
+      if (draft.parking_spaces !== undefined) setParkingSpaces(Number(draft.parking_spaces));
+      if (draft.floors) setFloors(draft.floors);
+      if (draft.furnished !== undefined) setFurnished(Boolean(draft.furnished));
+      if (draft.year_built) setYearBuilt(draft.year_built);
+      if (draft.price) setPrice(draft.price);
+      if (draft.is_negotiable !== undefined) setIsNegotiable(Boolean(draft.is_negotiable));
+      if (draft.contact_phone) setContactPhone(draft.contact_phone);
+      setDraftLoaded(true);
+    } catch (error) {
+      console.error('Error loading property draft:', error);
+    }
+  }, []);
 
   // Check location permission on load
   useEffect(() => {
@@ -211,13 +301,302 @@ const AddPropertyPage = () => {
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    // Require polygon for all property types
-    if (polygonCoords.length < 3) {
-      toast.error('Debes dibujar un polígono en el mapa para definir la ubicación de la propiedad.');
+  const savePublicationDraft = () => {
+    if (typeof window === 'undefined') return;
+    if (!hasDraftContent()) return;
+
+    const draft = {
+      draft_status: token ? 'authenticated_draft' : 'pending_account',
+      title,
+      description,
+      property_type: propertyType,
+      status,
+      address,
+      city,
+      province,
+      latitude,
+      longitude,
+      polygon: polygonCoords,
+      show_measurements: showMeasurements,
+      area,
+      built_area: builtArea,
+      rooms,
+      bathrooms,
+      parking_spaces: parkingSpaces,
+      floors,
+      furnished,
+      year_built: yearBuilt,
+      price,
+      is_negotiable: isNegotiable,
+      contact_phone: contactPhone,
+      created_at: new Date().toISOString(),
+    };
+
+    localStorage.setItem(PROPERTY_DRAFT_STORAGE_KEY, JSON.stringify(draft));
+    setDraftSavedAt(new Date());
+  };
+
+  const buildWhatsAppDraftUrl = () => {
+    const operationLabel = status === 'for_rent' ? 'Alquiler' : 'Venta';
+    const typeLabel =
+      propertyType === 'house' ? 'Casa' :
+      propertyType === 'apartment' ? 'Departamento' :
+      propertyType === 'commercial' ? 'Local comercial' :
+      propertyType === 'land' ? 'Terreno' : 'Otro';
+
+    const message = [
+      'Hola, necesito ayuda para publicar esta propiedad en Geo Propiedades Ecuador.',
+      '',
+      `Titulo: ${title || 'Por completar'}`,
+      `Tipo: ${typeLabel}`,
+      `Operacion: ${operationLabel}`,
+      `Ciudad/provincia: ${city || 'Por completar'}${province ? `, ${province}` : ''}`,
+      `Area: ${area ? `${area} m2` : 'Por completar'}`,
+      `Precio: ${price || 'Por completar'}`,
+      `Telefono: ${contactPhone || 'Por completar'}`,
+      `Tiene poligono dibujado: ${polygonCoords.length >= 3 ? 'Si' : 'No'}`,
+      `Fotos cargadas en el formulario: ${images.length}`,
+      `Detalles: ${description || 'Por completar'}`,
+    ].join('\n');
+
+    return `https://wa.me/593983738151?text=${encodeURIComponent(message)}`;
+  };
+
+  const buildUsername = (email: string) => {
+    const base = email.split('@')[0].replace(/[^a-zA-Z0-9_]/g, '').slice(0, 18) || 'usuario';
+    return `${base}_${Date.now().toString().slice(-5)}`.toLowerCase();
+  };
+
+  const savePendingPublication = async (source: 'account_required' | 'whatsapp_help' | 'exit_prompt') => {
+    if (!hasDraftContent()) return;
+
+    try {
+      const { apiFetch } = await import('@/lib/api');
+      const res = await apiFetch('/pending-publications/', {
+        method: 'POST',
+        skipAuth: true,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title,
+          contact_phone: contactPhone,
+          contact_email: accountEmail,
+          city,
+          province,
+          property_type: propertyType,
+          operation: status,
+          price,
+          source,
+          draft: {
+            title,
+            description,
+            property_type: propertyType,
+            status,
+            address,
+            city,
+            province,
+            latitude,
+            longitude,
+            polygon: polygonCoords,
+            show_measurements: showMeasurements,
+            area,
+            built_area: builtArea,
+            rooms,
+            bathrooms,
+            parking_spaces: parkingSpaces,
+            floors,
+            furnished,
+            year_built: yearBuilt,
+            price,
+            is_negotiable: isNegotiable,
+            contact_phone: contactPhone,
+            images_count: images.length,
+          },
+        }),
+      });
+
+      trackEvent(res.ok ? 'publication_pending_saved' : 'publication_pending_save_failed', {
+        source,
+        status_code: res.status,
+      });
+    } catch (error) {
+      console.error('Error saving pending publication:', error);
+      trackEvent('publication_pending_save_failed', {
+        source,
+        status_code: 'network',
+      });
+    }
+  };
+
+  const handleWhatsAppHelp = async () => {
+    savePublicationDraft();
+    await savePendingPublication('whatsapp_help');
+    trackEvent('publication_whatsapp_help_clicked', {
+      has_session: Boolean(token),
+      has_polygon: polygonCoords.length >= 3,
+      has_images: images.length > 0,
+      property_type: propertyType,
+    });
+    window.open(buildWhatsAppDraftUrl(), '_blank', 'noopener,noreferrer');
+  };
+
+  const handleCreateAccount = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setCreatingAccount(true);
+    savePublicationDraft();
+
+    try {
+      const res = await fetch(`${API_URL}/register/`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          username: buildUsername(accountEmail),
+          first_name: accountFirstName,
+          last_name: accountLastName,
+          email: accountEmail,
+          password: accountPassword,
+        }),
+      });
+      const data = await res.json().catch(() => ({}));
+
+      if (!res.ok) {
+        const message =
+          data.detail ||
+          data.email?.[0] ||
+          data.password?.[0] ||
+          data.username?.[0] ||
+          'No se pudo crear la cuenta';
+        toast.error(message);
+        trackEvent('publication_account_create_failed', {
+          status_code: res.status,
+        });
+        return;
+      }
+
+      trackEvent('publication_account_created_from_modal');
+      toast.success('Cuenta creada. Verifica tu correo para publicar el anuncio.');
+      router.push(`/verify-email?email=${encodeURIComponent(accountEmail)}`);
+    } catch (error) {
+      toast.error('Error de conexión al crear cuenta');
+      trackEvent('publication_account_create_failed', {
+        status_code: 'network',
+      });
+    } finally {
+      setCreatingAccount(false);
+    }
+  };
+
+  const handleCancel = () => {
+    if (hasDraftContent()) {
+      savePublicationDraft();
+      void savePendingPublication('exit_prompt');
+      setShowExitModal(true);
+      trackEvent('publication_exit_prompt_shown', {
+        has_session: Boolean(token),
+        has_polygon: polygonCoords.length >= 3,
+        has_images: images.length > 0,
+      });
       return;
     }
+
+    router.push(token ? '/my-properties' : '/');
+  };
+
+  useEffect(() => {
+    if (!formStartedRef.current || !hasDraftContent()) return;
+
+    const timeout = setTimeout(() => {
+      savePublicationDraft();
+    }, 800);
+
+    return () => clearTimeout(timeout);
+  }, [
+    title,
+    description,
+    propertyType,
+    status,
+    address,
+    city,
+    province,
+    latitude,
+    longitude,
+    polygonCoords,
+    showMeasurements,
+    area,
+    builtArea,
+    rooms,
+    bathrooms,
+    parkingSpaces,
+    floors,
+    furnished,
+    yearBuilt,
+    price,
+    isNegotiable,
+    contactPhone,
+    images.length,
+  ]);
+
+  useEffect(() => {
+    const handleBeforeUnload = (event: BeforeUnloadEvent) => {
+      if (!hasDraftContent()) return;
+
+      savePublicationDraft();
+      event.preventDefault();
+      event.returnValue = '';
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [
+    title,
+    description,
+    propertyType,
+    status,
+    address,
+    city,
+    province,
+    latitude,
+    longitude,
+    polygonCoords,
+    showMeasurements,
+    area,
+    builtArea,
+    rooms,
+    bathrooms,
+    parkingSpaces,
+    floors,
+    furnished,
+    yearBuilt,
+    price,
+    isNegotiable,
+    contactPhone,
+    images.length,
+  ]);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    trackEvent('publication_submit_attempted', {
+      has_session: Boolean(token),
+      has_polygon: polygonCoords.length >= 3,
+      has_images: imageFiles.length > 0,
+      property_type: propertyType,
+      status,
+    });
+
+    if (!token) {
+      savePublicationDraft();
+      await savePendingPublication('account_required');
+      trackEvent('publication_account_required', {
+        has_polygon: polygonCoords.length >= 3,
+        has_images: imageFiles.length > 0,
+        property_type: propertyType,
+        status,
+      });
+      toast.info('Tu anuncio está listo. Crea una cuenta para publicarlo.');
+      setShowAccountModal(true);
+      return;
+    }
+
     try {
       const formData = new FormData();
 
@@ -269,6 +648,15 @@ const AddPropertyPage = () => {
       });
 
       if (res.ok) {
+        if (typeof window !== 'undefined') {
+          localStorage.removeItem(PROPERTY_DRAFT_STORAGE_KEY);
+        }
+        trackEvent('publication_created', {
+          has_polygon: polygonCoords.length >= 3,
+          images_count: imageFiles.length,
+          property_type: propertyType,
+          status,
+        });
         toast.success('Propiedad creada exitosamente');
         router.push('/my-properties');
       } else if (res.status === 401) {
@@ -278,10 +666,20 @@ const AddPropertyPage = () => {
       } else {
         const errorData = await res.json();
         console.error('Error:', errorData);
+        trackEvent('publication_create_failed', {
+          status_code: res.status,
+          property_type: propertyType,
+          has_polygon: polygonCoords.length >= 3,
+        });
         toast.error('No se pudo guardar la propiedad');
       }
     } catch (error) {
       console.error('Error:', error);
+      trackEvent('publication_create_failed', {
+        status_code: 'network',
+        property_type: propertyType,
+        has_polygon: polygonCoords.length >= 3,
+      });
       toast.error('Error de conexión');
     }
   };
@@ -319,6 +717,10 @@ const AddPropertyPage = () => {
   };
 
   const handleGetMyLocation = () => {
+    trackEvent('publication_location_requested', {
+      has_session: Boolean(token),
+    });
+
     if (!navigator.geolocation) {
       toast.error('Tu navegador no soporta geolocalización');
       return;
@@ -416,6 +818,11 @@ const AddPropertyPage = () => {
 
     // Si hay archivos válidos, agregarlos
     if (validFiles.length > 0) {
+      trackEvent('publication_images_added', {
+        files_count: validFiles.length,
+        total_images: images.length + validFiles.length,
+      });
+
       setImageFiles([...imageFiles, ...validFiles]);
 
       // Create preview URLs
@@ -444,7 +851,6 @@ const AddPropertyPage = () => {
   };
 
   return (
-    <PrivateRoute>
       <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
         {/* Header */}
         <div className="bg-white shadow-sm border-b">
@@ -452,14 +858,14 @@ const AddPropertyPage = () => {
             <div className="flex items-center justify-between">
               <div>
                 <h1 className="text-2xl font-bold text-gray-900">
-                  Nueva Propiedad
+                  Publicar propiedad gratis
                 </h1>
                 <p className="text-sm text-gray-600 mt-1">
-                  Completa la información para registrar una nueva propiedad
+                  Completa los datos principales. Si algo se complica, te ayudamos por WhatsApp.
                 </p>
               </div>
               <button
-                onClick={() => router.push('/my-properties')}
+                onClick={handleCancel}
                 className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-xl text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors"
               >
                 <svg className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -474,7 +880,65 @@ const AddPropertyPage = () => {
         {/* Main Content */}
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 lg:py-8">
           <div className="space-y-4 lg:space-y-6">
-            <form onSubmit={handleSubmit} className="space-y-4 lg:space-y-6">
+            <form onSubmit={handleSubmit} onChange={trackFormStarted} className="space-y-4 lg:space-y-6">
+                <div className="sticky top-12 z-[600] rounded-2xl border border-line bg-white/95 p-4 shadow-lg backdrop-blur">
+                  <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+                    <div className="grid grid-cols-4 gap-2 text-center text-[11px] font-bold text-gray-600 sm:text-xs">
+                      {[
+                        { label: 'Datos', done: Boolean(title.trim()) },
+                        { label: 'Ubicacion', done: polygonCoords.length >= 3 || Boolean(city.trim()) },
+                        { label: 'Precio', done: Boolean(price.trim()) },
+                        { label: 'Contacto', done: Boolean(contactPhone.trim()) },
+                      ].map((step) => (
+                        <div
+                          key={step.label}
+                          className={`rounded-lg px-2 py-2 ${
+                            step.done ? 'bg-primary text-white' : 'bg-gray-100 text-gray-500'
+                          }`}
+                        >
+                          {step.label}
+                        </div>
+                      ))}
+                    </div>
+                    <p className="text-xs font-medium text-gray-600">
+                      {draftSavedAt
+                        ? `Borrador guardado ${draftSavedAt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`
+                        : 'Tu borrador se guarda automáticamente'}
+                    </p>
+                  </div>
+                </div>
+                {draftLoaded && (
+                  <div className="rounded-2xl border border-green-200 bg-green-50 p-5 text-green-900 shadow-sm">
+                    <p className="font-bold">Cargamos tu borrador.</p>
+                    <p className="mt-1 text-sm">
+                      Revisa los datos, completa el mapa, agrega fotos si tienes y guarda la propiedad.
+                    </p>
+                  </div>
+                )}
+                <div className="rounded-2xl border border-primary/15 bg-white p-5 shadow-lg">
+                  <div className="grid gap-3 md:grid-cols-3">
+                    <div>
+                      <p className="text-sm font-bold text-gray-900">Sin costo</p>
+                      <p className="mt-1 text-sm text-gray-600">No cobramos por publicar ni comisión por cerrar negocio.</p>
+                    </div>
+                    <div>
+                      <p className="text-sm font-bold text-gray-900">Contacto directo</p>
+                      <p className="mt-1 text-sm text-gray-600">Los interesados pueden llamarte o escribirte por WhatsApp.</p>
+                    </div>
+                    <div>
+                      <p className="text-sm font-bold text-gray-900">Mejor ubicación</p>
+                      <p className="mt-1 text-sm text-gray-600">El mapa ayuda a mostrar la zona y las medidas del predio.</p>
+                    </div>
+                  </div>
+                </div>
+                <div className="rounded-2xl border border-green-200 bg-green-50 p-5 text-green-950 shadow-sm">
+                  <p className="font-bold">Publicar es gratis y sin comisión</p>
+                  <div className="mt-3 grid gap-2 text-sm md:grid-cols-3">
+                    <p>Puedes editar o eliminar tu anuncio cuando quieras.</p>
+                    <p>Los interesados te contactan directo por teléfono o WhatsApp.</p>
+                    <p>Si algo se complica, te ayudamos a terminar la publicación.</p>
+                  </div>
+                </div>
                 {/* General Information */}
                 <div className="bg-white rounded-2xl shadow-lg overflow-hidden">
                   <div className="px-4 py-3 bg-gradient-to-r from-primary to-secondary">
@@ -552,10 +1016,10 @@ const AddPropertyPage = () => {
                       Ubicación en el Mapa
                     </h2>
                 <p className="text-xs lg:text-sm text-white/90 mt-1">
-                  {propertyType === 'land' ? 'Dibuja el polígono del terreno' : 'Opcional: Dibuja el área de la propiedad'}
+                  Opcional: dibuja el área para mostrar medidas exactas. También puedes publicar con ubicación aproximada.
                 </p>
                 <p className="text-[11px] lg:text-xs text-white/90 mt-1">
-                  Tip: El polígono se dibuja mejor con mouse o trackpad; en móvil suele fallar. Si necesitas ayuda, escríbenos por WhatsApp.
+                  Tip: si estás en móvil y se complica, completa el área manualmente y publica. Luego podemos ayudarte a mejorar el mapa.
                 </p>
 
               </div>
@@ -580,9 +1044,11 @@ const AddPropertyPage = () => {
                         </svg>
                       )}
                     </button>
-                    <AddPropertyMap
-                      onMapReady={bindMapRef}
-                      onPolygonChange={setPolygonCoords}
+                      <AddPropertyMap
+                        onMapReady={bindMapRef}
+                        onPolygonChange={handlePolygonChange}
+                        onAreaChange={setArea}
+                      initialPolygon={polygonCoords}
                       userCenter={userLocation ? [userLocation.lat, userLocation.lng] : undefined}
                       userZoom={userLocation ? 12 : undefined}
                       userLocation={userLocation}
@@ -599,7 +1065,7 @@ const AddPropertyPage = () => {
                       <svg className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1 1h-4a1 1 0 00-1 1v3M4 7h16" />
                       </svg>
-                      Limpiar Polígono
+                      Limpiar polígono opcional
                     </button>
                   </div>
                 </div>
@@ -640,10 +1106,10 @@ const AddPropertyPage = () => {
                             onChange={(e) => setShowMeasurements(e.target.checked)}
                             className="w-5 h-5 text-primary border-gray-300 rounded focus:ring-2 focus:ring-primary"
                           />
-                          <label htmlFor="showMeasurements" className="text-sm text-gray-700 cursor-pointer">
-                            Mostrar medidas exactas en el mapa
+                        <label htmlFor="showMeasurements" className="text-sm text-gray-700 cursor-pointer">
+                            Mostrar medidas del polígono si lo dibujas
                             <p className="text-xs text-gray-500 mt-1">
-                              Desactiva esta opción si solo conoces la forma aproximada pero no las medidas exactas
+                              Puedes publicar sin polígono. Si lo agregas, el área se calcula automáticamente.
                             </p>
                           </label>
                         </div>
@@ -922,8 +1388,8 @@ const AddPropertyPage = () => {
                           </svg>
                           <p className="text-sm text-gray-600 font-semibold mb-1">Haz clic para subir imágenes</p>
                           <p className="text-xs text-gray-500">PNG, JPG, WebP • Máx. 10MB por imagen</p>
-                          <p className="text-xs text-muted mt-2">Optimización automática sin pérdida de calidad</p>
-                          <p className="text-xs text-gray-400 mt-1">Máximo 10 imágenes</p>
+                          <p className="text-xs text-muted mt-2">Opcional, pero los anuncios con fotos suelen recibir más contactos</p>
+                          <p className="text-xs text-gray-400 mt-1">Máximo 10 imágenes. Se optimizan automáticamente</p>
                         </div>
                         <input
                           type="file"
@@ -948,11 +1414,18 @@ const AddPropertyPage = () => {
                         <svg className="h-6 w-6 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                         </svg>
-                        Guardar Propiedad
+                        {token ? 'Guardar Propiedad' : 'Crear cuenta para publicar'}
                       </button>
                       <button
                         type="button"
-                        onClick={() => router.push('/my-properties')}
+                        onClick={handleWhatsAppHelp}
+                        className="w-full sm:w-auto inline-flex justify-center items-center px-6 py-4 border-2 border-primary text-primary rounded-xl hover:bg-primary/5 transition-all font-semibold"
+                      >
+                        Publicar con ayuda
+                      </button>
+                      <button
+                        type="button"
+                        onClick={handleCancel}
                         className="w-full sm:w-auto inline-flex justify-center items-center px-6 py-4 border-2 border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 transition-all font-medium"
                       >
                         <svg className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -1021,6 +1494,113 @@ const AddPropertyPage = () => {
           </div>
         )}
 
+        {showExitModal && (
+          <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 px-4">
+            <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl">
+              <h2 className="text-xl font-bold text-gray-900">Tu anuncio no se ha publicado</h2>
+              <p className="mt-2 text-sm leading-6 text-gray-600">
+                Guardamos el borrador en este navegador. Puedes volver luego, crear tu cuenta para publicarlo o pedir ayuda por WhatsApp.
+              </p>
+              <div className="mt-5 space-y-3">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowExitModal(false);
+                    trackEvent('publication_exit_continue_clicked');
+                  }}
+                  className="w-full rounded-xl bg-gradient-to-r from-primary to-secondary px-5 py-3 font-bold text-white"
+                >
+                  Seguir editando
+                </button>
+                <button
+                  type="button"
+                  onClick={handleWhatsAppHelp}
+                  className="w-full rounded-xl border border-primary px-5 py-3 font-bold text-primary hover:bg-primary/5"
+                >
+                  Recibir ayuda por WhatsApp
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    trackEvent('publication_exit_confirmed');
+                    router.push(token ? '/my-properties' : '/');
+                  }}
+                  className="w-full rounded-xl border border-gray-300 px-5 py-3 font-semibold text-gray-700 hover:bg-gray-50"
+                >
+                  Salir y mantener borrador
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {showAccountModal && (
+          <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 px-4">
+            <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl">
+              <h2 className="text-xl font-bold text-gray-900">Tu anuncio está listo</h2>
+              <p className="mt-2 text-sm leading-6 text-gray-600">
+                Crea tu cuenta para guardar y publicar este anuncio. El borrador ya está guardado.
+              </p>
+              <form onSubmit={handleCreateAccount} className="mt-5 space-y-4">
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-1">Nombre</label>
+                    <input
+                      value={accountFirstName}
+                      onChange={(e) => setAccountFirstName(e.target.value)}
+                      className="w-full rounded-xl border border-gray-300 px-4 py-3 focus:ring-2 focus:ring-primary"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-1">Apellido</label>
+                    <input
+                      value={accountLastName}
+                      onChange={(e) => setAccountLastName(e.target.value)}
+                      className="w-full rounded-xl border border-gray-300 px-4 py-3 focus:ring-2 focus:ring-primary"
+                      required
+                    />
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-1">Correo</label>
+                  <input
+                    type="email"
+                    value={accountEmail}
+                    onChange={(e) => setAccountEmail(e.target.value)}
+                    className="w-full rounded-xl border border-gray-300 px-4 py-3 focus:ring-2 focus:ring-primary"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-1">Contraseña</label>
+                  <input
+                    type="password"
+                    value={accountPassword}
+                    onChange={(e) => setAccountPassword(e.target.value)}
+                    className="w-full rounded-xl border border-gray-300 px-4 py-3 focus:ring-2 focus:ring-primary"
+                    required
+                  />
+                </div>
+                <button
+                  type="submit"
+                  disabled={creatingAccount}
+                  className="w-full rounded-xl bg-gradient-to-r from-primary to-secondary px-5 py-3 font-bold text-white disabled:opacity-50"
+                >
+                  {creatingAccount ? 'Creando cuenta...' : 'Crear cuenta y publicar'}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowAccountModal(false)}
+                  className="w-full rounded-xl border border-gray-300 px-5 py-3 font-semibold text-gray-700 hover:bg-gray-50"
+                >
+                  Seguir editando
+                </button>
+              </form>
+            </div>
+          </div>
+        )}
+
         {/* Custom Styles */}
         <style>{`
           @keyframes fade-in {
@@ -1038,7 +1618,6 @@ const AddPropertyPage = () => {
           }
         `}</style>
       </div>
-    </PrivateRoute>
   );
 };
 

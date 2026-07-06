@@ -38,7 +38,7 @@ const NavBar = () => {
   }, []);
 
   return (
-    <nav className="bg-gradient-to-r from-primary to-secondary text-white shadow-lg sticky top-0" style={{ zIndex: 1000 }}>
+    <nav className="bg-gradient-to-r from-primary to-secondary text-white shadow-lg sticky top-0 z-nav">
       <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-6">
         <div className="flex justify-between items-center h-12">
           {/* Logo */}
@@ -158,13 +158,13 @@ const NavBar = () => {
                   <span className="hidden lg:inline">Iniciar Sesión</span>
                 </Link>
                 <Link
-                  href="/register"
+                  href="/add-property"
                   className="inline-flex items-center px-2 lg:px-3 py-1.5 bg-white text-primary rounded-lg hover:bg-white/90 transition-all font-semibold text-xs lg:text-sm"
                 >
                   <svg className="h-4 w-4 lg:mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
                   </svg>
-                  <span className="hidden lg:inline">Registrarse</span>
+                  <span className="hidden lg:inline">Publicar gratis</span>
                 </Link>
               </>
             )}
@@ -284,14 +284,14 @@ const NavBar = () => {
                   Ayuda
                 </Link>
                 <Link
-                  href="/register"
+                  href="/add-property"
                   onClick={closeMobileMenu}
                   className="flex items-center px-4 py-3 bg-white text-primary rounded-xl hover:bg-white/90 transition-all font-semibold"
                 >
                   <svg className="h-5 w-5 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
                   </svg>
-                  Registrarse
+                  Publicar gratis
                 </Link>
               </>
             )}

@@ -191,6 +191,41 @@ El equipo de Geo Propiedades Ecuador
     email.send(fail_silently=False)
 
 
+def send_pending_publication_notification(pending):
+    """Notifica internamente cuando alguien deja una publicación pendiente."""
+    recipients = [email for _, email in getattr(settings, 'ADMINS', []) if email]
+    fallback_email = getattr(settings, 'PENDING_PUBLICATION_NOTIFY_EMAIL', '')
+    if fallback_email:
+        recipients.append(fallback_email)
+
+    recipients = list(dict.fromkeys(recipients))
+    if not recipients:
+        return
+
+    subject = 'Nueva publicación pendiente - Geo Propiedades Ecuador'
+    admin_url = f"{getattr(settings, 'FRONTEND_URL', 'http://localhost:3000')}/admin/pending-publications"
+    body = f"""
+Nueva publicación pendiente:
+
+Título: {pending.title or 'Sin título'}
+Teléfono: {pending.contact_phone or 'Sin teléfono'}
+Ciudad: {pending.city or 'Sin ciudad'}
+Provincia: {pending.province or 'Sin provincia'}
+Precio: {pending.price or 'Sin precio'}
+Origen: {pending.source}
+
+Revisar en: {admin_url}
+    """
+
+    send_mail(
+        subject,
+        body,
+        settings.DEFAULT_FROM_EMAIL,
+        recipients,
+        fail_silently=True,
+    )
+
+
 def send_email_change_verification(user, new_email, code):
     """Envía correo de verificación al nuevo email cuando se solicita cambio"""
     subject = 'Verifica tu nuevo correo - Geo Propiedades Ecuador'

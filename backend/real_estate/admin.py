@@ -1,6 +1,6 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
-from .models import Property, PropertyImage, User, Province, City
+from .models import Property, PropertyImage, User, Province, City, Lead, PendingPublication
 
 
 class CityInline(admin.TabularInline):
@@ -48,6 +48,24 @@ class PropertyAdmin(admin.ModelAdmin):
 class PropertyImageAdmin(admin.ModelAdmin):
     list_display = ['property', 'is_main', 'uploaded_at']
     list_filter = ['is_main', 'uploaded_at']
+
+
+@admin.register(Lead)
+class LeadAdmin(admin.ModelAdmin):
+    list_display = ['name', 'phone', 'property', 'source', 'status', 'created_at']
+    list_filter = ['status', 'source', 'created_at']
+    search_fields = ['name', 'phone', 'email', 'property__title']
+    list_editable = ['status']
+    readonly_fields = ['created_at', 'updated_at']
+
+
+@admin.register(PendingPublication)
+class PendingPublicationAdmin(admin.ModelAdmin):
+    list_display = ['title', 'contact_phone', 'city', 'source', 'status', 'created_at']
+    list_filter = ['status', 'source', 'created_at']
+    search_fields = ['title', 'contact_phone', 'contact_email', 'city', 'province']
+    list_editable = ['status']
+    readonly_fields = ['created_at', 'updated_at']
 
 
 admin.site.register(User, UserAdmin)

@@ -1,6 +1,6 @@
 import { Metadata } from 'next';
 
-const siteUrl = process.env.NEXT_PUBLIC_FRONTEND_URL || 'https://estatemap.com';
+const siteUrl = process.env.NEXT_PUBLIC_FRONTEND_URL || 'https://geopropiedadesecuador.com';
 
 export const metadata: Metadata = {
   title: 'Publica tu Propiedad Gratis',

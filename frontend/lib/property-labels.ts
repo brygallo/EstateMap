@@ -22,10 +22,10 @@ const STATUS_DOT_CLASS: Record<string, string> = {
   inactive: 'bg-slate-400',
 };
 
-// Badge completo (fondo + texto) sobrio para etiquetas de estado.
+// Badge completo (fondo + texto) sobrio para etiquetas de estado, en tokens de marca.
 const STATUS_BADGE_CLASS: Record<string, string> = {
-  for_sale: 'bg-emerald-50 text-emerald-700',
-  for_rent: 'bg-blue-50 text-blue-700',
+  for_sale: 'bg-successBg text-success',
+  for_rent: 'bg-primary/10 text-primary',
   inactive: 'bg-slate-100 text-slate-600',
 };
 

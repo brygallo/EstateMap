@@ -126,6 +126,38 @@ export default async function HomePage() {
       >
         <MapPageClient />
       </Suspense>
+      <section className="bg-primary text-white">
+        <div className="mx-auto flex max-w-6xl flex-col gap-5 px-4 py-6 sm:px-6 lg:flex-row lg:items-center lg:justify-between lg:px-8">
+          <div>
+            <p className="text-sm font-semibold uppercase tracking-wide text-white/80">
+              Para propietarios, agentes e inmobiliarias
+            </p>
+            <h2 className="mt-1 text-2xl font-bold">
+              Publica tu propiedad gratis y recibe contactos directos
+            </h2>
+            <p className="mt-2 max-w-3xl text-sm leading-6 text-white/85">
+              Tu anuncio aparece en el mapa con fotos, precio, medidas y botón de
+              WhatsApp. No cobramos por publicar ni comisión por la venta o alquiler.
+            </p>
+          </div>
+          <div className="flex flex-col gap-2 sm:flex-row">
+            <Link
+              href="/add-property"
+              className="inline-flex items-center justify-center rounded-lg bg-white px-5 py-3 text-sm font-bold text-primary shadow-sm transition hover:bg-white/90"
+            >
+              Publicar gratis
+            </Link>
+            <a
+              href="https://wa.me/593983738151?text=Hola%20quiero%20publicar%20una%20propiedad%20en%20Geo%20Propiedades"
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex items-center justify-center rounded-lg border border-white/60 px-5 py-3 text-sm font-semibold text-white transition hover:bg-white/10"
+            >
+              Ayuda por WhatsApp
+            </a>
+          </div>
+        </div>
+      </section>
       <section className="bg-white border-t border-line">
         <div className="mx-auto max-w-6xl px-4 py-10 sm:px-6 lg:px-8">
           <div className="max-w-3xl">

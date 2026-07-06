@@ -1,7 +1,27 @@
 import { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
+import { Ruler, BedDouble, Bath, Car, MapPin, ArrowRight } from 'lucide-react';
 import { jsonLd, slugify, SITE_URL } from '@/lib/properties';
+
+/** Ficha de dato de la propiedad: icono lucide + valor en mono + etiqueta. */
+function StatTile({
+  icon: Icon,
+  value,
+  label,
+}: {
+  icon: typeof Ruler;
+  value: number | string;
+  label: string;
+}) {
+  return (
+    <div className="stat-tile !py-4 gap-1.5">
+      <Icon className="h-6 w-6 text-primary" strokeWidth={1.75} aria-hidden />
+      <div className="stat-value !text-2xl">{value}</div>
+      <div className="stat-label">{label}</div>
+    </div>
+  );
+}
 
 interface PropertyPageProps {
   params: Promise<{ id: string }>;
@@ -111,7 +131,7 @@ export async function generateMetadata({ params }: PropertyPageProps): Promise<M
   const imageUrl = mainImage?.image || '/og-image.png';
 
   // Base URL for images and page
-  const baseUrl = process.env.NEXT_PUBLIC_FRONTEND_URL || 'https://estatemap.com';
+  const baseUrl = process.env.NEXT_PUBLIC_FRONTEND_URL || 'https://geopropiedadesecuador.com';
   const propertyUrl = `${baseUrl}/property/${property.id}`;
   const imageAbsoluteUrl = imageUrl.startsWith('http') ? imageUrl : `${baseUrl}${imageUrl}`;
 
@@ -208,7 +228,7 @@ export default async function PropertyPage({ params }: PropertyPageProps) {
   ].filter(Boolean);
 
   // Get absolute URL for images
-  const baseUrl = process.env.NEXT_PUBLIC_FRONTEND_URL || 'https://estatemap.com';
+  const baseUrl = process.env.NEXT_PUBLIC_FRONTEND_URL || 'https://geopropiedadesecuador.com';
   const imageUrl = mainImage?.image || '/og-image.png';
   const imageAbsoluteUrl = imageUrl.startsWith('http') ? imageUrl : `${baseUrl}${imageUrl}`;
   const propertyUrl = `${baseUrl}/property/${property.id}`;
@@ -310,18 +330,18 @@ export default async function PropertyPage({ params }: PropertyPageProps) {
       />
 
       {/* Full property content — indexable and shareable */}
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-blue-100 py-12 px-4">
-        <div className="max-w-4xl mx-auto bg-white rounded-2xl shadow-2xl overflow-hidden">
+      <div className="min-h-screen bg-background py-12 px-4">
+        <div className="max-w-4xl mx-auto bg-surface rounded-2xl shadow-cardHover border border-line overflow-hidden">
           {/* Property Image */}
           {mainImage && (
-            <div className="relative h-96 bg-gray-200">
+            <div className="relative h-96 bg-background">
               <img
                 src={imageAbsoluteUrl}
                 alt={property.title}
                 className="w-full h-full object-cover"
               />
               <div className="absolute top-4 right-4">
-                <span className="bg-green-600 text-white px-4 py-2 rounded-full font-bold text-sm shadow-lg">
+                <span className="bg-primary text-white px-4 py-2 rounded-full font-semibold text-sm shadow-cardHover">
                   {statusLabel}
                 </span>
               </div>
@@ -331,19 +351,19 @@ export default async function PropertyPage({ params }: PropertyPageProps) {
           {/* Property Info */}
           <div className="p-8">
             <div className="mb-4">
-              <span className="inline-block bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-semibold mb-2">
+              <span className="inline-block bg-primary/10 text-primary px-3 py-1 rounded-full text-sm font-semibold mb-2">
                 {propertyTypeLabel}
               </span>
-              <h1 className="text-4xl font-bold text-gray-900 mb-2">
+              <h1 className="text-4xl font-bold text-textPrimary mb-2">
                 {property.title}
               </h1>
-              <p className="text-gray-700 text-base mb-4">
+              <p className="text-textSecondary text-base mb-4">
                 {summaryParts.join(' • ')}
               </p>
-              <p className="text-3xl font-bold text-green-600">
+              <p className="price text-3xl">
                 {priceFormatted}
                 {property.is_negotiable && (
-                  <span className="text-base text-blue-600 ml-2">
+                  <span className="font-sans text-base font-medium text-secondary ml-2">
                     (Negociable)
                   </span>
                 )}
@@ -352,11 +372,8 @@ export default async function PropertyPage({ params }: PropertyPageProps) {
 
             {/* Location */}
             {(property.city || property.address) && (
-              <div className="flex items-center gap-2 text-gray-600 mb-6">
-                <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                </svg>
+              <div className="flex items-center gap-2 text-textSecondary mb-6">
+                <MapPin className="h-5 w-5 flex-shrink-0 text-primary" strokeWidth={1.75} aria-hidden />
                 <span className="text-lg">
                   {property.address && <>{property.address}</>}
                   {property.address && property.city && <>, </>}
@@ -369,50 +386,26 @@ export default async function PropertyPage({ params }: PropertyPageProps) {
             {/* Features Grid */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
               {property.area && (
-                <div className="bg-blue-50 p-4 rounded-lg text-center">
-                  <div className="text-2xl mb-1">📐</div>
-                  <div className="text-2xl font-bold text-gray-900">
-                    {Math.round(parseFloat(property.area))}
-                  </div>
-                  <div className="text-sm text-gray-600">m² Total</div>
-                </div>
+                <StatTile icon={Ruler} value={Math.round(parseFloat(property.area))} label="m² Total" />
               )}
               {property.rooms > 0 && (
-                <div className="bg-purple-50 p-4 rounded-lg text-center">
-                  <div className="text-2xl mb-1">🛏️</div>
-                  <div className="text-2xl font-bold text-gray-900">
-                    {property.rooms}
-                  </div>
-                  <div className="text-sm text-gray-600">Habitaciones</div>
-                </div>
+                <StatTile icon={BedDouble} value={property.rooms} label="Habitaciones" />
               )}
               {property.bathrooms > 0 && (
-                <div className="bg-yellow-50 p-4 rounded-lg text-center">
-                  <div className="text-2xl mb-1">🚿</div>
-                  <div className="text-2xl font-bold text-gray-900">
-                    {property.bathrooms}
-                  </div>
-                  <div className="text-sm text-gray-600">Baños</div>
-                </div>
+                <StatTile icon={Bath} value={property.bathrooms} label="Baños" />
               )}
               {property.parking_spaces > 0 && (
-                <div className="bg-red-50 p-4 rounded-lg text-center">
-                  <div className="text-2xl mb-1">🚗</div>
-                  <div className="text-2xl font-bold text-gray-900">
-                    {property.parking_spaces}
-                  </div>
-                  <div className="text-sm text-gray-600">Parqueaderos</div>
-                </div>
+                <StatTile icon={Car} value={property.parking_spaces} label="Parqueaderos" />
               )}
             </div>
 
             {/* Description */}
             {property.description && (
               <div className="mb-6">
-                <h2 className="text-2xl font-bold text-gray-900 mb-3">
+                <h2 className="text-2xl font-bold text-textPrimary mb-3">
                   Descripción
                 </h2>
-                <p className="text-gray-700 leading-relaxed">
+                <p className="text-textSecondary leading-relaxed">
                   {property.description}
                 </p>
               </div>
@@ -422,13 +415,14 @@ export default async function PropertyPage({ params }: PropertyPageProps) {
             <div className="mt-8 flex flex-col gap-3 sm:flex-row">
               <Link
                 href={mapUrl}
-                className="inline-block flex-1 bg-gradient-to-r from-blue-600 to-blue-700 text-white text-center px-8 py-4 rounded-lg font-bold text-lg hover:from-blue-700 hover:to-blue-800 transition-all shadow-lg"
+                className="btn btn-lg btn-primary flex-1"
               >
                 Ver en el mapa interactivo
+                <ArrowRight className="h-5 w-5" strokeWidth={2} aria-hidden />
               </Link>
               <Link
                 href="/"
-                className="inline-block flex-1 border border-blue-200 text-blue-700 text-center px-8 py-4 rounded-lg font-bold text-lg hover:bg-blue-50 transition-all"
+                className="btn btn-lg btn-secondary flex-1"
               >
                 Ver más propiedades
               </Link>

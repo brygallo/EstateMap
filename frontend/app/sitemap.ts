@@ -1,5 +1,6 @@
 import { MetadataRoute } from 'next';
 import { getProperties, getCities, SITE_URL } from '@/lib/properties';
+import { generateCombos } from '@/lib/seo-combos';
 
 export const revalidate = 3600;
 
@@ -16,6 +17,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const staticRoutes: MetadataRoute.Sitemap = [
     { url: `${SITE_URL}/`, lastModified: now, changeFrequency: 'daily', priority: 1 },
     { url: `${SITE_URL}/help`, lastModified: now, changeFrequency: 'monthly', priority: 0.5 },
+    { url: `${SITE_URL}/publicar-asistido`, lastModified: now, changeFrequency: 'monthly', priority: 0.8 },
+    { url: `${SITE_URL}/inmobiliarias`, lastModified: now, changeFrequency: 'monthly', priority: 0.8 },
     ...TYPE_ROUTES.map((path) => ({
       url: `${SITE_URL}${path}`,
       lastModified: now,
@@ -40,5 +43,13 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.7,
   }));
 
-  return [...staticRoutes, ...propertyRoutes, ...cityRoutes];
+  // Landings por combinación tipo + operación + ubicación (SEO local).
+  const comboRoutes: MetadataRoute.Sitemap = generateCombos(properties).map(({ combo }) => ({
+    url: `${SITE_URL}/${combo}`,
+    lastModified: now,
+    changeFrequency: 'daily',
+    priority: 0.7,
+  }));
+
+  return [...staticRoutes, ...propertyRoutes, ...cityRoutes, ...comboRoutes];
 }
