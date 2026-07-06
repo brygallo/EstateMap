@@ -2,6 +2,13 @@
 
 import { useState } from 'react';
 import ShareModal from './ShareModal';
+import {
+  getPropertyTypeLabel,
+  getStatusLabel,
+  getStatusBadgeClass,
+  formatArea,
+  formatPrice,
+} from '@/lib/property-labels';
 
 // Image Gallery Component
 const ImageGallery = ({ images, initialIndex, onClose }: any) => {
@@ -102,6 +109,25 @@ const ImageGallery = ({ images, initialIndex, onClose }: any) => {
   );
 };
 
+const FEATURE_ICONS = {
+  area: 'M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4',
+  built: 'M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0H5m4-14h2m-2 4h2m-2 4h2m4-8h2m-2 4h2m-2 4h2',
+  rooms: 'M4 11V7a2 2 0 012-2h12a2 2 0 012 2v4m-16 0h16m-16 0v6m16-6v6M4 15h16',
+  baths: 'M12 3s5 5.5 5 9a5 5 0 01-10 0c0-3.5 5-9 5-9z',
+  parking: 'M9 17V7h4a3 3 0 010 6H9m-4 8V5a2 2 0 012-2h10a2 2 0 012 2v14',
+  floors: 'M12 4l8 4-8 4-8-4 8-4zM4 12l8 4 8-4M4 16l8 4 8-4',
+};
+
+const FeatureTile = ({ icon, value, label }: { icon: string; value: any; label: string }) => (
+  <div className="bg-slate-50 border border-line p-1.5 rounded text-center">
+    <svg className="h-4 w-4 mx-auto mb-0.5 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d={icon} />
+    </svg>
+    <div className="text-xs font-bold text-gray-900">{value}</div>
+    <div className="text-[9px] text-gray-500 font-medium">{label}</div>
+  </div>
+);
+
 interface PropertyModalProps {
   property: any;
   isOpen: boolean;
@@ -114,40 +140,6 @@ const PropertyModal = ({ property, isOpen, onClose }: PropertyModalProps) => {
   const [shareModalOpen, setShareModalOpen] = useState(false);
 
   if (!isOpen || !property) return null;
-
-  // Format area as integer
-  const formatArea = (area: any) => {
-    return area ? Math.round(parseFloat(area)).toString() : '0';
-  };
-
-  const getPropertyTypeLabel = (type: string) => {
-    const labels: any = {
-      house: 'Casa',
-      land: 'Terreno',
-      apartment: 'Apartamento',
-      commercial: 'Comercial',
-      other: 'Otro'
-    };
-    return labels[type] || type;
-  };
-
-  const getStatusLabel = (status: string) => {
-    const labels: any = {
-      for_sale: 'En Venta',
-      for_rent: 'En Alquiler',
-      inactive: 'Inactivo'
-    };
-    return labels[status] || status;
-  };
-
-  const getStatusColor = (status: string) => {
-    const colors: any = {
-      for_sale: 'bg-green-500',
-      for_rent: 'bg-blue-500',
-      inactive: 'bg-gray-500'
-    };
-    return colors[status] || 'bg-gray-500';
-  };
 
   const images = property.images || [];
   const hasImages = images.length > 0;
@@ -212,7 +204,7 @@ const PropertyModal = ({ property, isOpen, onClose }: PropertyModalProps) => {
           {/* Share Button */}
           <button
             onClick={() => setShareModalOpen(true)}
-            className="absolute top-3 right-12 z-10 bg-blue-500/90 hover:bg-blue-600 text-white rounded-full p-1.5 shadow-lg transition-all hover:scale-110"
+            className="absolute top-3 right-12 z-10 bg-primary/90 hover:bg-primary text-white rounded-full p-1.5 shadow-lg transition-colors"
             title="Compartir propiedad"
           >
             <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -301,9 +293,9 @@ const PropertyModal = ({ property, isOpen, onClose }: PropertyModalProps) => {
                 )}
               </div>
             ) : (
-              <div className="h-40 bg-gradient-to-br from-gray-200 to-gray-300 flex items-center justify-center">
-                <div className="text-center text-gray-500">
-                  <svg className="h-12 w-12 mx-auto mb-1 opacity-50" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <div className="h-40 bg-slate-100 flex items-center justify-center border-b border-line">
+                <div className="text-center text-slate-400">
+                  <svg className="h-12 w-12 mx-auto mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                   </svg>
                   <p className="text-xs font-medium">Sin imágenes</p>
@@ -319,7 +311,7 @@ const PropertyModal = ({ property, isOpen, onClose }: PropertyModalProps) => {
                   <h2 className="text-base font-bold text-gray-900 flex-1">
                     {property.title || 'Propiedad'}
                   </h2>
-                  <span className={`${getStatusColor(property.status)} text-white text-[10px] px-2 py-0.5 rounded-full font-semibold ml-2 flex-shrink-0`}>
+                  <span className={`badge ${getStatusBadgeClass(property.status)} ml-2 flex-shrink-0`}>
                     {getStatusLabel(property.status)}
                   </span>
                 </div>
@@ -339,8 +331,8 @@ const PropertyModal = ({ property, isOpen, onClose }: PropertyModalProps) => {
 
                 {/* Price */}
                 <div className="flex items-baseline gap-2 mb-1">
-                  <span className="text-xl font-bold text-green-600">
-                    ${parseFloat(property.price).toLocaleString()}
+                  <span className="text-xl font-bold text-emerald-600">
+                    {formatPrice(property.price)}
                   </span>
                   {property.is_negotiable && (
                     <span className="text-[10px] text-blue-600 font-medium bg-blue-50 px-2 py-0.5 rounded-full">
@@ -368,50 +360,26 @@ const PropertyModal = ({ property, isOpen, onClose }: PropertyModalProps) => {
 
               {/* Key Features Grid */}
               <div className="grid grid-cols-3 gap-1.5 mb-2.5">
-                <div className="bg-gradient-to-br from-blue-50 to-blue-100 p-1.5 rounded text-center">
-                  <div className="text-base mb-0.5">📐</div>
-                  <div className="text-xs font-bold text-gray-900">{formatArea(property.area)}</div>
-                  <div className="text-[9px] text-gray-600 font-medium">m² Total</div>
-                </div>
+                <FeatureTile icon={FEATURE_ICONS.area} value={formatArea(property.area)} label="m² total" />
 
                 {property.built_area && (
-                  <div className="bg-gradient-to-br from-green-50 to-green-100 p-1.5 rounded text-center">
-                    <div className="text-base mb-0.5">🏗️</div>
-                    <div className="text-xs font-bold text-gray-900">{formatArea(property.built_area)}</div>
-                    <div className="text-[9px] text-gray-600 font-medium">m² Constr.</div>
-                  </div>
+                  <FeatureTile icon={FEATURE_ICONS.built} value={formatArea(property.built_area)} label="m² constr." />
                 )}
 
                 {property.rooms > 0 && (
-                  <div className="bg-gradient-to-br from-purple-50 to-purple-100 p-1.5 rounded text-center">
-                    <div className="text-base mb-0.5">🛏️</div>
-                    <div className="text-xs font-bold text-gray-900">{property.rooms}</div>
-                    <div className="text-[9px] text-gray-600 font-medium">Habitac.</div>
-                  </div>
+                  <FeatureTile icon={FEATURE_ICONS.rooms} value={property.rooms} label="Habitac." />
                 )}
 
                 {property.bathrooms > 0 && (
-                  <div className="bg-gradient-to-br from-yellow-50 to-yellow-100 p-1.5 rounded text-center">
-                    <div className="text-base mb-0.5">🚿</div>
-                    <div className="text-xs font-bold text-gray-900">{property.bathrooms}</div>
-                    <div className="text-[9px] text-gray-600 font-medium">Baños</div>
-                  </div>
+                  <FeatureTile icon={FEATURE_ICONS.baths} value={property.bathrooms} label="Baños" />
                 )}
 
                 {property.parking_spaces > 0 && (
-                  <div className="bg-gradient-to-br from-red-50 to-red-100 p-1.5 rounded text-center">
-                    <div className="text-base mb-0.5">🚗</div>
-                    <div className="text-xs font-bold text-gray-900">{property.parking_spaces}</div>
-                    <div className="text-[9px] text-gray-600 font-medium">Parking</div>
-                  </div>
+                  <FeatureTile icon={FEATURE_ICONS.parking} value={property.parking_spaces} label="Parqueo" />
                 )}
 
                 {property.floors && (
-                  <div className="bg-gradient-to-br from-indigo-50 to-indigo-100 p-1.5 rounded text-center">
-                    <div className="text-base mb-0.5">🏢</div>
-                    <div className="text-xs font-bold text-gray-900">{property.floors}</div>
-                    <div className="text-[9px] text-gray-600 font-medium">{property.floors === 1 ? 'Piso' : 'Pisos'}</div>
-                  </div>
+                  <FeatureTile icon={FEATURE_ICONS.floors} value={property.floors} label={property.floors === 1 ? 'Piso' : 'Pisos'} />
                 )}
               </div>
 
@@ -452,7 +420,7 @@ const PropertyModal = ({ property, isOpen, onClose }: PropertyModalProps) => {
 
               {/* Contact Information */}
               {property.contact_phone && (
-                <div className="bg-gradient-to-r from-primary to-secondary p-2.5 rounded text-white">
+                <div className="bg-primary p-2.5 rounded text-white">
                   <h3 className="text-xs font-bold mb-1.5 flex items-center gap-1">
                     <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />

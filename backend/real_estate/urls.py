@@ -17,6 +17,9 @@ from .views import (
     VerifyEmailChangeView,
     MeView,
     ChangePasswordView,
+    AdminDashboardView,
+    AdminUserViewSet,
+    AdminPropertyViewSet,
 )
 
 router = DefaultRouter()
@@ -49,6 +52,13 @@ urlpatterns = [
 
     # Image proxy to serve images from MinIO without CORS issues
     re_path(r'^media/(?P<image_path>.+)$', ImageProxyView.as_view(), name='image_proxy'),
+
+    # Admin panel
+    path('admin/dashboard/', AdminDashboardView.as_view(), name='admin_dashboard'),
+    path('admin/users/', AdminUserViewSet.as_view({'get': 'list'}), name='admin_users_list'),
+    path('admin/users/<int:pk>/', AdminUserViewSet.as_view({'get': 'retrieve', 'patch': 'partial_update', 'delete': 'destroy'}), name='admin_users_detail'),
+    path('admin/properties/', AdminPropertyViewSet.as_view({'get': 'list'}), name='admin_properties_list'),
+    path('admin/properties/<int:pk>/', AdminPropertyViewSet.as_view({'get': 'retrieve', 'delete': 'destroy'}), name='admin_properties_detail'),
 ]
 
 urlpatterns += router.urls
