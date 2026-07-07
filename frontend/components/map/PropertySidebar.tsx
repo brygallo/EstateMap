@@ -20,6 +20,7 @@ interface PropertySidebarProps {
   visibleProperties: Property[];
   selectedProperty: Property | null;
   onPropertyClick: (property: Property) => void;
+  onPropertyOpen: (property: Property) => void;
   onCloseMobile: () => void;
 
   /** Cargando propiedades del área tras mover/hacer zoom o cambiar filtros. */
@@ -43,6 +44,7 @@ export default function PropertySidebar({
   visibleProperties,
   selectedProperty,
   onPropertyClick,
+  onPropertyOpen,
   onCloseMobile,
   loading = false,
   totalCount = null,
@@ -56,6 +58,8 @@ export default function PropertySidebar({
   // Scroll automático del listado hacia la card de la propiedad seleccionada
   // (p. ej. al hacer clic en su polígono/etiqueta en el mapa).
   const cardRefs = useRef<Record<number, HTMLDivElement | null>>({});
+  const renderedProperties = visibleProperties.slice(0, 60);
+  const hiddenPropertiesCount = Math.max(visibleProperties.length - renderedProperties.length, 0);
   useEffect(() => {
     const id = selectedProperty?.id;
     if (id == null) return;
@@ -159,36 +163,44 @@ export default function PropertySidebar({
             </div>
           )
         ) : (
-          <AnimatePresence initial={false}>
-            {visibleProperties.map((p, idx) => (
-              <motion.div
-                key={p.id ?? idx}
-                ref={(el) => {
-                  if (p.id != null) cardRefs.current[p.id] = el;
-                }}
-                layout
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -8 }}
-                transition={{ duration: 0.2, ease: 'easeOut' as const }}
-                onMouseEnter={() => handleEnter(p)}
-                onMouseLeave={handleLeave}
-                className={cn(
-                  'rounded-card transition-shadow',
-                  activeHoverId === p.id && selectedProperty?.id !== p.id
-                    ? 'shadow-cardHover ring-1 ring-primary/30'
-                    : ''
-                )}
-              >
-                <PropertyCard
-                  property={p}
-                  variant="compact"
-                  selected={selectedProperty?.id === p.id}
-                  onClick={() => onPropertyClick(p)}
-                />
-              </motion.div>
-            ))}
-          </AnimatePresence>
+          <>
+            <AnimatePresence initial={false}>
+              {renderedProperties.map((p, idx) => (
+                <motion.div
+                  key={p.id ?? idx}
+                  ref={(el) => {
+                    if (p.id != null) cardRefs.current[p.id] = el;
+                  }}
+                  layout
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -8 }}
+                  transition={{ duration: 0.2, ease: 'easeOut' as const }}
+                  onMouseEnter={() => handleEnter(p)}
+                  onMouseLeave={handleLeave}
+                  className={cn(
+                    'rounded-card transition-shadow',
+                    activeHoverId === p.id && selectedProperty?.id !== p.id
+                      ? 'shadow-cardHover ring-1 ring-primary/30'
+                      : ''
+                  )}
+                >
+                  <PropertyCard
+                    property={p}
+                    variant="compact"
+                    selected={selectedProperty?.id === p.id}
+                    onClick={() => onPropertyClick(p)}
+                    onOpenDetails={() => onPropertyOpen(p)}
+                  />
+                </motion.div>
+              ))}
+            </AnimatePresence>
+            {hiddenPropertiesCount > 0 && (
+              <div className="rounded-card border border-line bg-white p-3 text-center text-xs text-textSecondary shadow-card">
+                Mostrando 60 de {visibleProperties.length}. Acerca el mapa o usa filtros para ver resultados más precisos.
+              </div>
+            )}
+          </>
         )}
       </div>
     </>

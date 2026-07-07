@@ -1144,7 +1144,7 @@ const AddPropertyPage = () => {
             <div>
               <h1 className="text-2xl font-bold text-textPrimary">Publicar propiedad gratis</h1>
               <p className="mt-1 text-sm text-textSecondary">
-                Completa los datos principales. Si algo se complica, te ayudamos por WhatsApp.
+                Toma entre 5 y 8 minutos. Tu borrador se guarda solo y puedes pedir ayuda por WhatsApp.
               </p>
             </div>
             <Button variant="outline" onClick={handleCancel} className="rounded-button border-line">
@@ -1157,6 +1157,20 @@ const AddPropertyPage = () => {
 
       {/* Main Content */}
       <div className="mx-auto max-w-7xl px-4 py-4 sm:px-6 lg:px-8 lg:py-8">
+        <div className="mb-4 grid gap-3 rounded-card border border-primary/15 bg-surface p-4 shadow-card md:grid-cols-3">
+          {[
+            'Ten a mano precio y ciudad',
+            'Marca punto o dibuja el predio',
+            'Sube hasta 10 fotos cuando puedas',
+          ].map((item) => (
+            <div key={item} className="flex items-center gap-2 text-sm text-textPrimary">
+              <span className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-primaryLight text-primary">
+                <Check className="h-3.5 w-3.5" strokeWidth={3} aria-hidden />
+              </span>
+              <span>{item}</span>
+            </div>
+          ))}
+        </div>
         <div className="lg:grid lg:grid-cols-[minmax(0,1fr)_20rem] lg:items-start lg:gap-6">
         <div className="space-y-4 lg:space-y-6">
           <Form {...form}>
@@ -1168,7 +1182,7 @@ const AddPropertyPage = () => {
               {/* Progress + autosave */}
               <div className="sticky top-12 z-[600] rounded-modal border border-line bg-surface/95 p-4 shadow-cardHover backdrop-blur">
                 <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-                  <div className="grid grid-cols-4 gap-2 text-center text-[11px] font-bold text-textSecondary sm:text-xs">
+                  <div className="grid grid-cols-2 gap-2 text-center text-[11px] font-bold text-textSecondary sm:grid-cols-5 sm:text-xs">
                     {wizardSteps.map((step, index) => (
                       <button
                         type="button"
@@ -1179,7 +1193,7 @@ const AddPropertyPage = () => {
                           }
                         }}
                         className={cn(
-                          'rounded-card px-2 py-2 text-left transition-colors',
+                          'rounded-card px-2 py-2 text-left transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/30',
                           index === currentStep
                             ? 'bg-primary text-white'
                             : step.done

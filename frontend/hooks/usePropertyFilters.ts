@@ -109,7 +109,9 @@ function filtersToApiParams(f: PropertyFilters, bounds: MapBounds | null): URLSe
   if (bounds) {
     params.set('bbox', `${bounds.west},${bounds.south},${bounds.east},${bounds.north}`);
   }
-  params.set('page_size', '2000');
+  // El mapa no debe intentar hidratar miles de tarjetas/marcadores por paneo.
+  // El backend sigue exponiendo `count`; el detalle completo se carga por ID.
+  params.set('page_size', '600');
   return params;
 }
 

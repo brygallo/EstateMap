@@ -96,6 +96,13 @@ const MapPage = () => {
     if (window.innerWidth < 1024) setSidebarOpen(false);
   };
 
+  const handleSidebarPropertyOpen = (property: Property) => {
+    flyToProperty(mapRef.current, property);
+    setSelectedProperty(property);
+    setIsModalOpen(true);
+    if (window.innerWidth < 1024) setSidebarOpen(false);
+  };
+
   // Clic en el polígono/marcador: mueve el mapa y abre el modal.
   const handlePolygonClick = (property: Property) => {
     flyToProperty(mapRef.current, property);
@@ -162,7 +169,7 @@ const MapPage = () => {
         transition-transform duration-300 ease-in-out
         inset-x-0 bottom-0 max-h-[85vh] rounded-t-2xl shadow-cardHover
         ${sidebarOpen ? 'translate-y-0' : 'translate-y-full'}
-        lg:inset-auto lg:left-0 lg:h-full lg:max-h-none lg:w-80
+        lg:inset-auto lg:left-0 lg:h-full lg:max-h-none lg:w-96
         lg:translate-y-0 lg:rounded-none lg:border-r lg:border-line lg:shadow-none
       `}
       >
@@ -181,6 +188,7 @@ const MapPage = () => {
           visibleProperties={visibleProperties}
           selectedProperty={selectedProperty}
           onPropertyClick={handleSidebarPropertyClick}
+          onPropertyOpen={handleSidebarPropertyOpen}
           onCloseMobile={() => setSidebarOpen(false)}
           loading={loading}
           totalCount={totalCount}
@@ -188,7 +196,7 @@ const MapPage = () => {
       </div>
 
       {/* Mapa */}
-      <div className="absolute inset-0 h-full w-full lg:left-80 lg:w-[calc(100%-20rem)] z-0">
+      <div className="absolute inset-0 h-full w-full lg:left-96 lg:w-[calc(100%-24rem)] z-0">
         <LeafletMap
           filteredProperties={properties}
           selectedProperty={selectedProperty}

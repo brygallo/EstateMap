@@ -217,6 +217,55 @@ class PropertySerializer(serializers.ModelSerializer):
         return instance
 
 
+class MapPropertySerializer(serializers.ModelSerializer):
+    """
+    Payload liviano para el mapa/listado lateral. Evita enviar descripcion,
+    imagenes completas y campos de detalle por cada item del viewport.
+    """
+    images = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Property
+        fields = [
+            'id',
+            'title',
+            'property_type',
+            'status',
+            'city',
+            'province',
+            'latitude',
+            'longitude',
+            'polygon',
+            'show_measurements',
+            'area',
+            'rooms',
+            'bathrooms',
+            'parking_spaces',
+            'price',
+            'is_imported',
+            'source',
+            'source_agency',
+            'source_url',
+            'external_id',
+            'images',
+        ]
+
+    def get_images(self, obj):
+        images = list(obj.images.all())
+        image = next((img for img in images if img.is_main), images[0] if images else None)
+        if image is None:
+            return []
+        return [PropertyImageSerializer(image).data]
+
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        if data.get('polygon') and isinstance(data['polygon'], dict):
+            if data['polygon'].get('coordinates'):
+                coords = data['polygon']['coordinates'][0]
+                data['polygon'] = [[coord[1], coord[0]] for coord in coords]
+        return data
+
+
 class LeadSerializer(serializers.ModelSerializer):
     """
     Serializer de leads. La creación es pública (formulario de contacto); el

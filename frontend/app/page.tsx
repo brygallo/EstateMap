@@ -162,6 +162,12 @@ export default async function HomePage() {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: jsonLd(homeStructuredData) }}
       />
+      <a
+        href="#contenido-informativo"
+        className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-top focus:rounded-button focus:bg-primary focus:px-4 focus:py-2 focus:text-sm focus:font-semibold focus:text-white"
+      >
+        Saltar al contenido informativo
+      </a>
       <Suspense
         fallback={
           <div className="h-[calc(100vh-4.5rem)] w-full animate-pulse bg-muted" />
@@ -169,7 +175,11 @@ export default async function HomePage() {
       >
         <MapPageClient />
       </Suspense>
-      <section className="border-t border-line bg-background">
+      <section
+        id="contenido-informativo"
+        aria-labelledby="contenido-informativo-titulo"
+        className="border-t border-line bg-background"
+      >
         <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8 lg:py-16">
           <div className="grid gap-10 lg:grid-cols-[1.05fr_0.95fr] lg:items-end">
             <div>
@@ -177,7 +187,7 @@ export default async function HomePage() {
                 <Search className="h-3.5 w-3.5" aria-hidden />
                 Propiedades en un solo mapa
               </span>
-              <h1 className="mt-5 max-w-3xl text-3xl font-semibold tracking-tight text-textPrimary sm:text-4xl lg:text-5xl">
+              <h1 id="contenido-informativo-titulo" className="mt-5 max-w-3xl text-3xl font-semibold tracking-tight text-textPrimary sm:text-4xl lg:text-5xl">
                 Compra, alquila o vende sin perderte entre portales.
               </h1>
               <p className="mt-5 max-w-2xl text-base leading-7 text-textSecondary">
