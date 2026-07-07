@@ -366,11 +366,18 @@ export default async function PropertyPage({ params }: PropertyPageProps) {
         : [];
   const priceValue = Number.parseFloat(property.price);
   const priceIsFinite = Number.isFinite(priceValue);
+  // Anuncio venta + alquiler a la vez: `price` es la venta y `rent_price` el alquiler.
+  const rentPriceValue = Number.parseFloat(property.rent_price);
+  const hasRentPrice = property.rent_price != null && Number.isFinite(rentPriceValue) && rentPriceValue > 0;
+  const rentPriceFormatted = hasRentPrice ? formatPrice(String(property.rent_price)) : '';
   const isImported = Boolean(property.is_imported || property.source_url || property.external_id || property.source);
   const contactPhone = typeof property.contact_phone === 'string' ? property.contact_phone.trim() : '';
   const waPhone = contactPhone ? contactPhone.replace(/[^0-9]/g, '') : '';
   const sourceUrl = typeof property.source_url === 'string' ? property.source_url.trim() : '';
   const sourceAgency = typeof property.source_agency === 'string' ? property.source_agency.trim() : '';
+  // Mensaje de WhatsApp con referencia al anuncio y la URL de su ficha en nuestro sitio.
+  const waMessage = `Hola, vi este anuncio en Geo Propiedades: ${property.title || 'esta propiedad'}\n${propertyUrl}`;
+  const waLink = `https://wa.me/${waPhone}?text=${encodeURIComponent(waMessage)}`;
   const publishedDate = property.created_at
     ? new Date(property.created_at).toLocaleDateString('es-EC', {
         day: 'numeric',
@@ -515,8 +522,23 @@ export default async function PropertyPage({ params }: PropertyPageProps) {
                     <span className="price text-2xl">{priceFormatted}</span>
                   )}
                 </div>
+                {hasRentPrice && (
+                  <div className="mt-1 text-sm font-semibold text-textSecondary">
+                    Alquiler {rentPriceFormatted}/mes
+                  </div>
+                )}
                 <div className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-1">
-                  {isImported && sourceUrl ? (
+                  {contactPhone ? (
+                    <a
+                      href={waLink}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="wa-cta inline-flex items-center justify-center gap-2 rounded-button bg-secondary px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-secondaryHover"
+                    >
+                      <MessageCircle className="h-4 w-4" strokeWidth={2} aria-hidden />
+                      WhatsApp
+                    </a>
+                  ) : isImported && sourceUrl ? (
                     <a
                       href={sourceUrl}
                       target="_blank"
@@ -525,16 +547,6 @@ export default async function PropertyPage({ params }: PropertyPageProps) {
                     >
                       <ExternalLink className="h-4 w-4" strokeWidth={2} aria-hidden />
                       Contactar anunciante
-                    </a>
-                  ) : contactPhone ? (
-                    <a
-                      href={`https://wa.me/${waPhone}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="wa-cta inline-flex items-center justify-center gap-2 rounded-button bg-secondary px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-secondaryHover"
-                    >
-                      <MessageCircle className="h-4 w-4" strokeWidth={2} aria-hidden />
-                      WhatsApp
                     </a>
                   ) : null}
                   <Link
@@ -648,6 +660,11 @@ export default async function PropertyPage({ params }: PropertyPageProps) {
                     <span className="price text-2xl">{priceFormatted}</span>
                   )}
                 </div>
+                {hasRentPrice && (
+                  <div className="mt-1 text-sm font-semibold text-textSecondary">
+                    Alquiler {rentPriceFormatted}/mes
+                  </div>
+                )}
                 {property.is_negotiable && (
                   <span className="mt-1 inline-block text-sm font-medium text-secondary">
                     Negociable
@@ -683,7 +700,7 @@ export default async function PropertyPage({ params }: PropertyPageProps) {
                   {isImported ? (
                     contactPhone ? (
                       <a
-                        href={`https://wa.me/${waPhone}`}
+                        href={waLink}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="wa-cta inline-flex w-full items-center justify-center gap-2 rounded-button bg-secondary px-5 py-3 text-base font-semibold text-white shadow-card transition-colors duration-200 hover:bg-secondaryHover focus:outline-none focus-visible:ring-4 focus-visible:ring-secondary/25"
@@ -710,7 +727,7 @@ export default async function PropertyPage({ params }: PropertyPageProps) {
                     contactPhone && (
                       <>
                         <a
-                          href={`https://wa.me/${waPhone}`}
+                          href={waLink}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="wa-cta inline-flex w-full items-center justify-center gap-2 rounded-button bg-secondary px-5 py-3 text-base font-semibold text-white shadow-card transition-colors duration-200 hover:bg-secondaryHover focus:outline-none focus-visible:ring-4 focus-visible:ring-secondary/25"

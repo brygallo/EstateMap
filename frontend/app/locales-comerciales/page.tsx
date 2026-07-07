@@ -24,6 +24,7 @@ export default async function LocalesComercialesPage() {
         properties
       )}`}
       properties={properties}
+      pageHref={PATH}
       mapHref="/?type=commercial"
       relatedLinks={TYPE_LINKS.filter((l) => l.href !== PATH)}
       emptyMessage="Aún no hay locales comerciales publicados. Explora otras propiedades en el mapa."

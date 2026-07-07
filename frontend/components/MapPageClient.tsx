@@ -206,7 +206,6 @@ const MapPage = () => {
           onVisiblePropertiesChange={setVisibleProperties}
           onBoundsChange={setBounds}
           onPolygonClick={handlePolygonClick}
-          onPriceLabelClick={handleSidebarPropertyClick}
           onLocate={geo.handleGetMyLocation}
           locating={geo.loadingLocation}
           locationBlocked={geo.locationBlocked}

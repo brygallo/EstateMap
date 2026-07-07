@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { ArrowRight, CheckCircle2, MapPin, PlusCircle, Search } from 'lucide-react';
 import SeoPropertyGrid from '@/components/SeoPropertyGrid';
 import { Property, SITE_URL, formatPrice, jsonLd } from '@/lib/properties';
 
@@ -13,6 +14,7 @@ export default function SeoLanding({
   title,
   intro,
   properties,
+  pageHref,
   mapHref,
   mapLabel = 'Ver en el mapa interactivo',
   relatedLinks = [],
@@ -21,14 +23,57 @@ export default function SeoLanding({
   title: string;
   intro: string;
   properties: Property[];
+  pageHref?: string;
   mapHref: string;
   mapLabel?: string;
   relatedLinks?: RelatedLink[];
   emptyMessage?: string;
 }) {
+  const hasProperties = properties.length > 0;
+  const featuredProperties = properties.slice(0, 8);
+  const canonicalHref = pageHref || mapHref;
+  const quickPoints = [
+    'Ubicación visible en el mapa',
+    'Filtros por precio, tipo y operación',
+    'Contacto directo con anunciantes',
+  ];
+
   const itemListData = {
     '@context': 'https://schema.org',
     '@graph': [
+      {
+        '@type': 'WebPage',
+        name: title,
+        description: intro,
+        url: `${SITE_URL}${canonicalHref.startsWith('/') ? canonicalHref : `/${canonicalHref}`}`,
+        isPartOf: {
+          '@type': 'WebSite',
+          name: 'Geo Propiedades Ecuador',
+          url: SITE_URL,
+          potentialAction: {
+            '@type': 'SearchAction',
+            target: `${SITE_URL}/?search={search_term_string}`,
+            'query-input': 'required name=search_term_string',
+          },
+        },
+        about: title,
+      },
+      {
+        '@type': 'BreadcrumbList',
+        itemListElement: [
+          {
+            '@type': 'ListItem',
+            position: 1,
+            name: 'Inicio',
+            item: SITE_URL,
+          },
+          {
+            '@type': 'ListItem',
+            position: 2,
+            name: title,
+          },
+        ],
+      },
       {
         '@type': 'ItemList',
         name: title,
@@ -65,18 +110,53 @@ export default function SeoLanding({
   };
 
   return (
-    <main className="mx-auto max-w-6xl px-4 py-10 sm:px-6 lg:px-8">
+    <main className="mx-auto max-w-6xl px-4 py-8 sm:px-6 sm:py-12 lg:px-8">
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: jsonLd(itemListData) }}
       />
 
-      <header className="max-w-3xl">
-        <h1 className="text-3xl font-bold text-textPrimary sm:text-4xl">
-          {title}
-        </h1>
-        <p className="mt-4 text-base leading-7 text-textSecondary">{intro}</p>
-        <div className="mt-5 rounded-card border border-line bg-white p-4 shadow-card">
+      <header className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_360px] lg:items-start">
+        <div>
+          <p className="mb-3 text-sm font-semibold uppercase tracking-wide text-primary">
+            Propiedades en Ecuador
+          </p>
+          <h1 className="text-3xl font-bold leading-tight text-textPrimary sm:text-4xl">
+            {title}
+          </h1>
+          <p className="mt-4 max-w-3xl text-base leading-7 text-textSecondary">
+            {intro}
+          </p>
+          <div className="mt-6 flex flex-wrap items-center gap-3">
+            <Link
+              href={mapHref}
+              className="inline-flex items-center gap-2 rounded-lg bg-primary px-5 py-3 text-sm font-semibold text-white hover:bg-primaryHover"
+            >
+              <MapPin className="h-4 w-4" aria-hidden />
+              {mapLabel}
+            </Link>
+            <Link
+              href="/publicar-propiedad"
+              className="inline-flex items-center gap-2 rounded-lg border border-line bg-white px-5 py-3 text-sm font-semibold text-textPrimary hover:border-primary hover:text-primary"
+            >
+              <PlusCircle className="h-4 w-4" aria-hidden />
+              Publicar propiedad
+            </Link>
+          </div>
+          <div className="mt-5 flex flex-wrap gap-2 text-sm text-textSecondary">
+            {quickPoints.map((point) => (
+              <span
+                key={point}
+                className="inline-flex items-center gap-2 rounded-full bg-surface px-3 py-1.5"
+              >
+                <CheckCircle2 className="h-4 w-4 text-primary" aria-hidden />
+                {point}
+              </span>
+            ))}
+          </div>
+        </div>
+
+        <aside className="rounded-card border border-line bg-white p-5 shadow-card">
           <h2 className="text-sm font-semibold text-textPrimary">
             Respuesta rápida
           </h2>
@@ -85,25 +165,55 @@ export default function SeoLanding({
             ubicación en mapa, filtros por precio y características, y contacto
             directo con anunciantes.
           </p>
-        </div>
-        <div className="mt-5 flex flex-wrap items-center gap-3">
-          <Link
-            href={mapHref}
-            className="rounded-lg bg-primary px-5 py-2.5 text-sm font-semibold text-white hover:bg-primaryHover"
-          >
-            {mapLabel}
-          </Link>
-          <span className="text-sm text-textSecondary">
-            {properties.length}{' '}
-            {properties.length === 1
-              ? 'propiedad disponible'
-              : 'propiedades disponibles'}
-          </span>
-        </div>
+          <div className="mt-5 grid grid-cols-2 gap-3">
+            <div className="rounded-lg bg-surface p-3">
+              <p className="text-2xl font-bold text-textPrimary">
+                {properties.length}
+              </p>
+              <p className="mt-1 text-xs text-textSecondary">
+                {properties.length === 1
+                  ? 'propiedad disponible'
+                  : 'propiedades disponibles'}
+              </p>
+            </div>
+            <div className="rounded-lg bg-surface p-3">
+              <p className="text-2xl font-bold text-textPrimary">Mapa</p>
+              <p className="mt-1 text-xs text-textSecondary">
+                Búsqueda por ubicación
+              </p>
+            </div>
+          </div>
+        </aside>
       </header>
 
       <section className="mt-8">
-        <SeoPropertyGrid properties={properties} emptyMessage={emptyMessage} />
+        <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
+          <div>
+            <h2 className="text-xl font-bold text-textPrimary">
+              {hasProperties ? 'Propiedades destacadas' : 'Disponibilidad actual'}
+            </h2>
+            <p className="mt-1 text-sm text-textSecondary">
+              {hasProperties
+                ? 'Revisa las fichas y abre el mapa para comparar zonas cercanas.'
+                : 'Todavía no hay publicaciones exactas para esta búsqueda, pero puedes explorar opciones cercanas.'}
+            </p>
+          </div>
+          {hasProperties && properties.length > featuredProperties.length && (
+            <Link
+              href={mapHref}
+              className="inline-flex items-center gap-1 text-sm font-semibold text-primary hover:text-primaryHover"
+            >
+              Ver todas en el mapa
+              <ArrowRight className="h-4 w-4" aria-hidden />
+            </Link>
+          )}
+        </div>
+        <SeoPropertyGrid
+          properties={featuredProperties}
+          emptyMessage={emptyMessage}
+          mapHref={mapHref}
+          relatedLinks={relatedLinks}
+        />
       </section>
 
       {relatedLinks.length > 0 && (
@@ -124,6 +234,39 @@ export default function SeoLanding({
           </div>
         </nav>
       )}
+
+      <section className="mt-12 grid gap-4 md:grid-cols-3">
+        <article className="rounded-card border border-line bg-white p-5">
+          <Search className="h-5 w-5 text-primary" aria-hidden />
+          <h2 className="mt-3 text-base font-semibold text-textPrimary">
+            Busca por zona
+          </h2>
+          <p className="mt-2 text-sm leading-6 text-textSecondary">
+            Abre el mapa y escribe una ciudad, sector o referencia para encontrar
+            propiedades cerca del lugar que te interesa.
+          </p>
+        </article>
+        <article className="rounded-card border border-line bg-white p-5">
+          <MapPin className="h-5 w-5 text-primary" aria-hidden />
+          <h2 className="mt-3 text-base font-semibold text-textPrimary">
+            Compara ubicación
+          </h2>
+          <p className="mt-2 text-sm leading-6 text-textSecondary">
+            Evalúa precio, área y características junto con la ubicación real o
+            aproximada de cada anuncio.
+          </p>
+        </article>
+        <article className="rounded-card border border-line bg-white p-5">
+          <PlusCircle className="h-5 w-5 text-primary" aria-hidden />
+          <h2 className="mt-3 text-base font-semibold text-textPrimary">
+            ¿Tienes una propiedad?
+          </h2>
+          <p className="mt-2 text-sm leading-6 text-textSecondary">
+            Publica gratis con fotos, precio, datos de contacto y ubicación para
+            que compradores o arrendatarios te encuentren.
+          </p>
+        </article>
+      </section>
     </main>
   );
 }

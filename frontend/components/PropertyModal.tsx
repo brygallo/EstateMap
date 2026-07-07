@@ -227,6 +227,14 @@ const PropertyModal = ({ property, isOpen, onClose, onViewOnMap }: PropertyModal
   const whatsappPhone = contactPhone.replace(/[^0-9]/g, '');
   const sourceUrl = typeof property.source_url === 'string' ? property.source_url.trim() : '';
   const sourceAgency = typeof property.source_agency === 'string' ? property.source_agency.trim() : '';
+  // Mensaje prellenado: el vendedor sabe que el contacto viene de la plataforma, con la URL del anuncio.
+  const whatsappPropertyUrl =
+    typeof window !== 'undefined' ? `${window.location.origin}/propiedad/${property.id}` : sourceUrl;
+  const whatsappMessage = `Hola, vi este anuncio en Geo Propiedades: ${property.title || 'esta propiedad'}\n${whatsappPropertyUrl}`;
+  const whatsappUrl = `https://wa.me/${whatsappPhone}?text=${encodeURIComponent(whatsappMessage)}`;
+  // Anuncio venta + alquiler a la vez: `price` es la venta y `rent_price` el alquiler.
+  const rentPriceNum = Number.parseFloat(String(property.rent_price ?? ''));
+  const hasRentPrice = property.rent_price != null && Number.isFinite(rentPriceNum) && rentPriceNum > 0;
 
   const nextImage = () => {
     if (images.length === 0) return;
@@ -422,10 +430,15 @@ const PropertyModal = ({ property, isOpen, onClose, onViewOnMap }: PropertyModal
                 </div>
 
                 {/* Price */}
-                <div className="mb-1.5 flex items-baseline gap-2">
+                <div className="mb-1.5 flex flex-wrap items-baseline gap-2">
                   <span className="price text-xl">
                     {formatPrice(property.price)}
                   </span>
+                  {hasRentPrice && (
+                    <span className="text-sm font-semibold text-textSecondary">
+                      · Alquiler {formatPrice(property.rent_price)}/mes
+                    </span>
+                  )}
                   {property.is_negotiable && (
                     <span className="rounded-md bg-secondary/10 px-2 py-0.5 text-xs font-medium text-secondary">
                       Negociable
@@ -458,6 +471,15 @@ const PropertyModal = ({ property, isOpen, onClose, onViewOnMap }: PropertyModal
                   Ver en el mapa
                 </button>
               )}
+
+              {/* Enlace a la ficha completa e indexable de la propiedad */}
+              <a
+                href={`/propiedad/${property.id}`}
+                className="mb-3 flex w-full items-center justify-center gap-2 rounded-button border border-line bg-white py-2 text-sm font-semibold text-textPrimary transition-colors hover:border-primary hover:text-primary"
+              >
+                <ExternalLink className="h-4 w-4" strokeWidth={2} aria-hidden />
+                Ver página completa
+              </a>
 
               {/* Key Features Grid */}
               <div className="mb-3 grid grid-cols-3 gap-1.5">
@@ -522,7 +544,7 @@ const PropertyModal = ({ property, isOpen, onClose, onViewOnMap }: PropertyModal
                 {isImported ? (
                   contactPhone ? (
                     <a
-                      href={`https://wa.me/${whatsappPhone}`}
+                      href={whatsappUrl}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="wa-bounce flex w-full items-center justify-center gap-2 rounded-button bg-secondary px-4 py-3 text-sm font-semibold text-white shadow-card transition-colors hover:bg-secondaryHover"
@@ -566,7 +588,7 @@ const PropertyModal = ({ property, isOpen, onClose, onViewOnMap }: PropertyModal
                           </a>
 
                           <a
-                            href={`https://wa.me/${whatsappPhone}`}
+                            href={whatsappUrl}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="wa-bounce flex flex-col items-center gap-1 rounded-button bg-secondary p-2 transition-all hover:bg-secondaryHover"

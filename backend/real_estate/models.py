@@ -97,8 +97,15 @@ class Property(models.Model):
     year_built = models.PositiveIntegerField(null=True, blank=True)
 
     # --- Financial Information ---
+    # ``price`` es el precio PRINCIPAL (el de venta cuando el anuncio es de
+    # venta). ``rent_price`` se usa cuando un mismo anuncio es venta Y alquiler
+    # a la vez: guarda el precio de alquiler; ``price`` queda con el de venta
+    # (operación prioritaria). Si es solo alquiler, el precio va en ``price`` y
+    # ``rent_price`` queda ``None``.
     price = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True,
                                 help_text="Opcional: los anuncios importados pueden no traer precio ('a consultar')")
+    rent_price = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True,
+                                     help_text="Precio de alquiler cuando el anuncio es venta Y alquiler a la vez")
     is_negotiable = models.BooleanField(default=True)
 
     # --- Ownership & Contact ---

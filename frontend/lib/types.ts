@@ -52,6 +52,8 @@ export interface Property {
   furnished?: boolean;
   year_built?: number | null;
   price: number | string;
+  /** Precio de alquiler cuando el anuncio es venta y alquiler a la vez. `null`/ausente = solo venta (o solo alquiler, según `status`). */
+  rent_price?: number | string | null;
   is_negotiable?: boolean;
   images?: PropertyImage[];
   owner?: number | null;

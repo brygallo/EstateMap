@@ -25,19 +25,21 @@ module.exports = {
 			]
 		},
 		colors: {
+			// Marca en paleta azul/navy. Deriva de la escala `navy` de abajo;
+			// cambiar esos hex reestiliza toda la app (botones, logo, enlaces...).
 			primary: {
-				DEFAULT: '#1F6F5B',
+				DEFAULT: '#496D9C',
 				foreground: '#FFFFFF'
 			},
-			primaryHover: '#14523F',
-			primaryLight: '#E5F2EE',
+			primaryHover: '#2D3C67',
+			primaryLight: '#E7E2F3',
 			secondary: {
-				DEFAULT: '#C8A96A',
-				foreground: '#111827'
+				DEFAULT: '#688CCA',
+				foreground: '#FFFFFF'
 			},
-			secondaryHover: '#A8863F',
-			// Paleta azul/navy reutilizable (footer y secciones oscuras).
-			// De 100 (más claro) a 500 (más oscuro); cambiar aquí actualiza todo.
+			secondaryHover: '#496D9C',
+			// Paleta azul/navy reutilizable. De 100 (más claro) a 500 (más
+			// oscuro); es la fuente de verdad de la marca.
 			navy: {
 				100: '#E7E2F3',
 				200: '#A7B2E6',
@@ -46,7 +48,7 @@ module.exports = {
 				500: '#2D3C67'
 			},
 			surface: '#FFFFFF',
-			line: '#E5E2DA',
+			line: '#DFE3EC',
 			dark: '#111827',
 			textPrimary: '#111827',
 			textSecondary: '#6B7280',

@@ -26,6 +26,7 @@ export default async function CasasEnVentaPage() {
         properties
       )}`}
       properties={properties}
+      pageHref={PATH}
       mapHref="/?type=house&status=for_sale"
       relatedLinks={TYPE_LINKS.filter((l) => l.href !== PATH)}
       emptyMessage="Aún no hay casas en venta publicadas. Explora otras propiedades en el mapa."

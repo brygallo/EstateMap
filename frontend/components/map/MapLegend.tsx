@@ -3,10 +3,11 @@
 import { useState } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
 import { Info, X } from 'lucide-react';
+import { statusColor } from '@/lib/mapMarkers';
 
 const ITEMS = [
-  { label: 'En venta', color: '#1F6F5B' },
-  { label: 'En alquiler', color: '#C8A96A' },
+  { label: 'En venta', color: statusColor('for_sale') },
+  { label: 'En alquiler', color: statusColor('for_rent') },
   { label: 'Inactivo', color: '#64748B' },
 ];
 

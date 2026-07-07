@@ -1,8 +1,9 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import Link from 'next/link';
 import { AnimatePresence, motion } from 'motion/react';
-import { Loader2, MapPinned, SearchX, X } from 'lucide-react';
+import { ExternalLink, Loader2, MapPinned, SearchX, X } from 'lucide-react';
 import MapFilters from '@/components/map/MapFilters';
 import PropertyCard from '@/components/PropertyCard';
 import { Badge } from '@/components/ui/badge';
@@ -192,6 +193,15 @@ export default function PropertySidebar({
                     onClick={() => onPropertyClick(p)}
                     onOpenDetails={() => onPropertyOpen(p)}
                   />
+                  {selectedProperty?.id === p.id && (
+                    <Link
+                      href={`/propiedad/${p.id}`}
+                      className="mt-1.5 flex items-center justify-center gap-1.5 rounded-button border border-line bg-white px-3 py-2 text-[13px] font-semibold text-primary transition-colors hover:border-primary hover:bg-muted focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
+                    >
+                      <ExternalLink className="h-4 w-4" strokeWidth={2} aria-hidden />
+                      Ver página completa
+                    </Link>
+                  )}
                 </motion.div>
               ))}
             </AnimatePresence>

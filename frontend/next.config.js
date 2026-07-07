@@ -10,6 +10,9 @@ const withPWA = require('next-pwa')({
 const nextConfig = {
   reactStrictMode: true,
   output: 'standalone', // Enable standalone output for Docker
+  // Permite aislar la carpeta de build (evita que un `next dev` en el host y el
+  // server en Docker compartan `.next` y se corrompan). Por defecto es `.next`.
+  distDir: process.env.NEXT_DIST_DIR || '.next',
   env: {
     NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL,
   },
