@@ -10,8 +10,10 @@ import {
   Car,
   Heart,
   Home,
+  Building,
+  Building2,
+  Trees,
   MapPin,
-  User,
   Layers,
   Ruler,
 } from 'lucide-react';
@@ -125,6 +127,41 @@ function StatTile({
   );
 }
 
+/** Icono representativo según el tipo de propiedad (para placeholder e info). */
+function typeIcon(type: string): typeof Home {
+  if (type === 'land') return Trees;
+  if (type === 'commercial') return Building2;
+  if (type === 'apartment') return Building;
+  return Home; // house / other
+}
+
+/**
+ * Placeholder cuando la propiedad no tiene imagen: en vez de un logo genérico,
+ * muestra un icono acorde al tipo sobre un degradado sobrio de la marca.
+ */
+function ImagePlaceholder({
+  type,
+  className,
+  iconClassName,
+}: {
+  type: string;
+  className?: string;
+  iconClassName?: string;
+}) {
+  const Icon = typeIcon(type);
+  return (
+    <div
+      className={cn(
+        'flex items-center justify-center bg-gradient-to-br from-muted to-background',
+        className
+      )}
+      aria-hidden
+    >
+      <Icon className={cn('text-textSecondary/40', iconClassName)} strokeWidth={1.5} />
+    </div>
+  );
+}
+
 /** Skeleton de card, mismo layout de la variante `grid`, para estados de carga del listado. */
 export function PropertyCardSkeleton() {
   return (
@@ -163,8 +200,23 @@ export default function PropertyCard({
   const heading = property.title || `${typeLabel} ${statusLabel.toLowerCase()}`;
   const area = formatArea(property.area);
   const operationBadgeClass = getStatusBadgeClass(String(property.status));
+  const isRent = property.status === 'for_rent';
+
+  // Imagen principal compartida por ambas variantes. La miniatura del backend
+  // (más liviana) se usa en compact; el placeholder por tipo cubre el caso sin foto.
+  const mainImage = property.images?.find((img) => img.is_main) || property.images?.[0];
+  const hasImage = Boolean(mainImage?.image || mainImage?.thumbnail);
 
   if (variant === 'compact') {
+    const thumbUrl = mainImage?.thumbnail || mainImage?.image || null;
+    const TypeIcon = typeIcon(String(property.property_type));
+    const meta: { icon: typeof Ruler; label: string }[] = [
+      { icon: TypeIcon, label: typeLabel },
+      ...(area && area !== '0' ? [{ icon: Ruler, label: `${area} m²` }] : []),
+      ...((property.rooms ?? 0) > 0 ? [{ icon: BedDouble, label: String(property.rooms) }] : []),
+      ...((property.bathrooms ?? 0) > 0 ? [{ icon: Bath, label: String(property.bathrooms) }] : []),
+    ];
+
     return (
       <div
         onClick={onClick}
@@ -177,66 +229,59 @@ export default function PropertyCard({
         role="button"
         tabIndex={0}
         aria-pressed={selected}
-        className={`card card-hover cursor-pointer p-2.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 ${
+        className={`card card-hover flex cursor-pointer gap-2.5 p-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 ${
           selected ? 'ring-2 ring-primary border-primary' : ''
         }`}
       >
-        <div className="mb-1.5 flex items-start justify-between">
-          <div className="flex min-w-0 flex-1 items-center gap-1">
-            <h3 className="truncate text-[13px] font-semibold text-textPrimary">{heading}</h3>
-            {property.polygon ? (
-              <Layers
-                className="h-3 w-3 flex-shrink-0 text-success"
-                strokeWidth={2}
-                aria-label="Propiedad con polígono delimitado"
-              />
-            ) : (
-              <MapPin
-                className="h-3 w-3 flex-shrink-0 text-secondary"
-                strokeWidth={2}
-                aria-label="Propiedad mostrada como marcador"
-              />
-            )}
-          </div>
-          <span className={`badge ${operationBadgeClass} ml-1.5 flex-shrink-0`}>
-            {statusLabel}
-          </span>
+        {/* Miniatura */}
+        <div className="relative h-[76px] w-[76px] flex-shrink-0 overflow-hidden rounded-lg">
+          {thumbUrl ? (
+            <PropertyImage
+              src={thumbUrl}
+              alt={heading}
+              fill
+              sizes="76px"
+              className="object-cover"
+              wrapperClassName="absolute inset-0"
+            />
+          ) : (
+            <ImagePlaceholder
+              type={String(property.property_type)}
+              className="h-full w-full"
+              iconClassName="h-7 w-7"
+            />
+          )}
+          {property.polygon && (
+            <span
+              className="absolute bottom-1 left-1 flex h-4 w-4 items-center justify-center rounded-md bg-white/90 shadow-card"
+              title="Polígono delimitado"
+            >
+              <Layers className="h-2.5 w-2.5 text-success" strokeWidth={2.5} aria-hidden />
+            </span>
+          )}
         </div>
 
-        <div className="mb-1.5 flex items-center gap-1 text-textSecondary">
-          <User className="h-3 w-3" strokeWidth={1.75} aria-hidden />
-          <span className="text-xs font-medium">
-            {property.owner_username || `Usuario ${property.owner}`}
-          </span>
-        </div>
+        {/* Contenido */}
+        <div className="flex min-w-0 flex-1 flex-col justify-center">
+          <div className="flex items-start justify-between gap-1.5">
+            <h3 className="line-clamp-2 text-[13px] font-semibold leading-tight text-textPrimary">
+              {heading}
+            </h3>
+            <span className={`badge ${operationBadgeClass} flex-shrink-0`}>{statusLabel}</span>
+          </div>
 
-        <div className="space-y-0.5 text-[11px] leading-4">
-          <div className="flex items-center gap-1">
-            <span className="font-semibold">Tipo:</span>
-            <span>{typeLabel}</span>
+          <div className="mt-1 flex items-baseline gap-1">
+            <span className="price text-[15px] font-bold">{formatPrice(property.price)}</span>
+            {isRent && <span className="text-[11px] font-medium text-textSecondary">/mes</span>}
           </div>
-          <div className="flex items-center gap-1">
-            <span className="font-semibold">Área:</span>
-            <span>{area} m²</span>
-          </div>
-          {property.built_area ? (
-            <div className="flex items-center gap-1">
-              <span className="font-semibold">Construida:</span>
-              <span>{formatArea(property.built_area)} m²</span>
-            </div>
-          ) : null}
-          <div className="flex items-center gap-1">
-            <span className="font-semibold">Precio:</span>
-            <span className="price">{formatPrice(property.price)}</span>
-          </div>
-          <div className="flex flex-wrap items-center gap-3 pt-0.5 text-textSecondary">
-            {(property.rooms ?? 0) > 0 && <span>{property.rooms} hab.</span>}
-            {(property.bathrooms ?? 0) > 0 && <span>{property.bathrooms} baños</span>}
-            {property.floors ? (
-              <span>
-                {property.floors} {property.floors === 1 ? 'piso' : 'pisos'}
+
+          <div className="mt-1 flex flex-wrap items-center gap-x-2.5 gap-y-0.5 text-[11px] text-textSecondary">
+            {meta.map(({ icon: Icon, label }, i) => (
+              <span key={i} className="inline-flex items-center gap-1">
+                <Icon className="h-3.5 w-3.5 text-primary" strokeWidth={1.75} aria-hidden />
+                {label}
               </span>
-            ) : null}
+            ))}
           </div>
         </div>
       </div>
@@ -260,14 +305,22 @@ export default function PropertyCard({
   const body = (
     <>
       <div className="relative aspect-[4/3] overflow-hidden">
-        <PropertyImage
-          src={getMainImageUrl(property)}
-          alt={`${typeLabel} ${statusLabel.toLowerCase()}${location ? ` en ${location}` : ''}`}
-          fill
-          sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-          className="object-cover"
-          wrapperClassName="absolute inset-0"
-        />
+        {hasImage ? (
+          <PropertyImage
+            src={getMainImageUrl(property)}
+            alt={`${typeLabel} ${statusLabel.toLowerCase()}${location ? ` en ${location}` : ''}`}
+            fill
+            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+            className="object-cover"
+            wrapperClassName="absolute inset-0"
+          />
+        ) : (
+          <ImagePlaceholder
+            type={String(property.property_type)}
+            className="absolute inset-0"
+            iconClassName="h-14 w-14"
+          />
+        )}
         <div className="absolute left-2.5 top-2.5 z-10">
           <Badge className={cn('border-transparent shadow-card', operationBadgeClass)}>
             {statusLabel}

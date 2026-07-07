@@ -1113,8 +1113,8 @@ const AddPropertyMap = ({
                 key={`reference-polygon-${property.id || idx}`}
                 positions={leafletCoordinates}
                 pathOptions={{
-                  color: '#2563EB',
-                  fillColor: '#DBEAFE',
+                  color: '#1F6F5B',
+                  fillColor: '#E5F2EE',
                   fillOpacity: 0.18,
                   weight: 1.5,
                   interactive: false,

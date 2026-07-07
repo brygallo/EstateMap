@@ -26,25 +26,25 @@ module.exports = {
 		},
 		colors: {
 			primary: {
-				DEFAULT: '#2563EB',
+				DEFAULT: '#1F6F5B',
 				foreground: '#FFFFFF'
 			},
-			primaryHover: '#1D4ED8',
-			primaryLight: '#DBEAFE',
+			primaryHover: '#14523F',
+			primaryLight: '#E5F2EE',
 			secondary: {
-				DEFAULT: '#06B6D4',
-				foreground: '#FFFFFF'
+				DEFAULT: '#C8A96A',
+				foreground: '#111827'
 			},
-			secondaryHover: '#0891B2',
+			secondaryHover: '#A8863F',
 			surface: '#FFFFFF',
-			line: '#E5E7EB',
+			line: '#E5E2DA',
 			dark: '#111827',
 			textPrimary: '#111827',
 			textSecondary: '#6B7280',
-			success: '#10B981',
-			successBg: '#ECFDF5',
-			warning: '#F59E0B',
-			warningBg: '#FFFBEB',
+			success: '#1F6F5B',
+			successBg: '#E5F2EE',
+			warning: '#B7791F',
+			warningBg: '#FBF4E3',
 			error: '#DC2626',
 			background: 'hsl(var(--background))',
 			foreground: 'hsl(var(--foreground))',
@@ -106,9 +106,9 @@ module.exports = {
 			'accordion-up': 'accordion-up 0.2s ease-out'
 		},
 		boxShadow: {
-			card: '0 1px 2px rgba(16, 24, 40, 0.05)',
-			cardHover: '0 6px 18px rgba(16, 24, 40, 0.08), 0 1px 4px rgba(16, 24, 40, 0.06)',
-			soft: '0 1px 3px rgba(16, 24, 40, 0.05)'
+			card: '0 1px 2px rgba(32, 45, 40, 0.06)',
+			cardHover: '0 10px 28px rgba(32, 45, 40, 0.12), 0 2px 8px rgba(32, 45, 40, 0.08)',
+			soft: '0 1px 3px rgba(32, 45, 40, 0.06)'
 		},
 		zIndex: {
 			mapoverlay: '500',

@@ -127,8 +127,11 @@ class PropertyViewSet(viewsets.ModelViewSet):
         - ``bbox``: "oeste,sur,este,norte" (lng,lat,lng,lat) del mapa visible
 
         Las propiedades inactivas solo se ven en /my_properties/.
+        Los duplicados de otras fuentes (is_duplicate=True) se ocultan del mapa:
+        solo se muestra la versión canónica (la que ganó la preferencia, p. ej.
+        la que tiene WhatsApp).
         """
-        queryset = Property.objects.exclude(status='inactive')
+        queryset = Property.objects.exclude(status='inactive').exclude(is_duplicate=True)
         params = self.request.query_params
 
         search = params.get('search', '').strip()
@@ -233,6 +236,34 @@ class PropertyViewSet(viewsets.ModelViewSet):
                 'username': full_name if full_name else row['owner__username'],
             }
         return Response(sorted(seen.values(), key=lambda u: u['username'].lower()))
+
+    @action(detail=False, methods=['get'], permission_classes=[AllowAny])
+    def locations(self, request):
+        """
+        Provincias y ciudades distintas presentes en las propiedades activas.
+        Alimenta el filtro por ubicación del mapa: los valores coinciden
+        exactamente con los guardados en cada propiedad (para el filtro iexact),
+        independientemente de qué esté cargado en el bbox actual.
+        """
+        rows = (
+            Property.objects.exclude(status='inactive')
+            .values('province', 'city')
+            .distinct()
+        )
+        provinces = {}
+        for row in rows:
+            prov = (row['province'] or '').strip()
+            city = (row['city'] or '').strip()
+            if not prov:
+                continue
+            bucket = provinces.setdefault(prov, set())
+            if city:
+                bucket.add(city)
+        result = [
+            {'province': prov, 'cities': sorted(cities)}
+            for prov, cities in sorted(provinces.items(), key=lambda kv: kv[0].lower())
+        ]
+        return Response(result)
 
     @action(detail=False, methods=['get'], permission_classes=[IsAuthenticated])
     def my_properties(self, request):

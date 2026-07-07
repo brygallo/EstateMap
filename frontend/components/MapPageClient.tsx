@@ -51,6 +51,9 @@ const MapPage = () => {
     filters,
     properties,
     owners,
+    locations,
+    loading,
+    totalCount,
     handleFilterChange,
     clearFilters,
     hasActiveFilters,
@@ -100,6 +103,15 @@ const MapPage = () => {
     setIsModalOpen(true);
   };
 
+  // "Ver en el mapa" desde el modal: recentra el mapa en la propiedad y, en
+  // móvil (donde el panel tapa el mapa), oculta el panel para verlo.
+  const handleViewOnMap = () => {
+    if (selectedProperty) flyToProperty(mapRef.current, selectedProperty);
+    if (typeof window !== 'undefined' && window.innerWidth < 1024) {
+      setIsModalOpen(false);
+    }
+  };
+
   const handleCloseModal = () => {
     setIsModalOpen(false);
     setSelectedProperty(null);
@@ -122,19 +134,18 @@ const MapPage = () => {
 
   return (
     <div className="relative h-[calc(100vh-3.5rem)] overflow-hidden">
-      {/* Botón para abrir filtros y propiedades en móvil */}
+      {/* Botón para abrir filtros y propiedades en móvil (con conteo explícito) */}
       <Button
         onClick={() => setSidebarOpen(!sidebarOpen)}
-        size="icon"
-        className="fixed bottom-20 left-4 z-nav h-12 w-12 rounded-card shadow-cardHover lg:hidden [&_svg]:size-5"
+        className="fixed bottom-20 left-1/2 z-nav h-12 -translate-x-1/2 gap-2 rounded-full px-5 shadow-cardHover lg:hidden [&_svg]:size-5"
         aria-label="Abrir filtros y propiedades"
       >
         <SlidersHorizontal strokeWidth={2} />
-        {visibleProperties.length > 0 && (
-          <span className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-md bg-secondary text-[11px] font-semibold text-secondary-foreground">
-            {visibleProperties.length}
-          </span>
-        )}
+        <span className="font-semibold tabular-nums">
+          {loading
+            ? 'Cargando…'
+            : `${visibleProperties.length} ${visibleProperties.length === 1 ? 'propiedad' : 'propiedades'}`}
+        </span>
       </Button>
 
       {/* Fondo oscuro en móvil */}
@@ -142,23 +153,28 @@ const MapPage = () => {
         <div className="lg:hidden fixed inset-0 bg-black/50 z-30" onClick={() => setSidebarOpen(false)} />
       )}
 
-      {/* Panel lateral */}
+      {/* Panel lateral en desktop; drawer inferior en móvil (más natural sobre el mapa) */}
       <div
         className={`
-        fixed lg:relative
-        ${sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
-        transition-transform duration-300 ease-in-out
-        bg-white text-textPrimary border-r border-line
-        h-[calc(100vh-3.5rem)] lg:h-full
-        w-72 lg:w-1/5
-        z-40 lg:z-0
+        fixed lg:relative z-40 lg:z-0
+        bg-white text-textPrimary
         overflow-y-auto
-        shadow-cardHover lg:shadow-none
+        transition-transform duration-300 ease-in-out
+        inset-x-0 bottom-0 max-h-[85vh] rounded-t-2xl shadow-cardHover
+        ${sidebarOpen ? 'translate-y-0' : 'translate-y-full'}
+        lg:inset-auto lg:left-0 lg:h-full lg:max-h-none lg:w-80
+        lg:translate-y-0 lg:rounded-none lg:border-r lg:border-line lg:shadow-none
       `}
       >
+        {/* Asa de arrastre (solo móvil) */}
+        <div className="flex justify-center bg-white pt-2 lg:hidden">
+          <span className="h-1.5 w-10 rounded-full bg-line" aria-hidden />
+        </div>
+
         <PropertySidebar
           filters={filters}
           owners={owners}
+          locations={locations}
           hasActiveFilters={hasActiveFilters}
           onFilterChange={handleFilterChange}
           onClearFilters={clearFilters}
@@ -166,11 +182,13 @@ const MapPage = () => {
           selectedProperty={selectedProperty}
           onPropertyClick={handleSidebarPropertyClick}
           onCloseMobile={() => setSidebarOpen(false)}
+          loading={loading}
+          totalCount={totalCount}
         />
       </div>
 
       {/* Mapa */}
-      <div className="absolute inset-0 lg:left-[20%] h-full w-full lg:w-4/5 z-0">
+      <div className="absolute inset-0 h-full w-full lg:left-80 lg:w-[calc(100%-20rem)] z-0">
         <LeafletMap
           filteredProperties={properties}
           selectedProperty={selectedProperty}
@@ -192,10 +210,25 @@ const MapPage = () => {
 
         {/* Píldora de estado de ubicación */}
         <LocationStatus status={geo.locationStatus} />
+
+        {/* Estado de carga de propiedades del área (desktop; en móvil lo indica el botón) */}
+        {loading && (
+          <div className="animate-fade-in pointer-events-none absolute left-1/2 top-20 z-nav hidden -translate-x-1/2 lg:block">
+            <div className="flex items-center gap-2 rounded-full border border-line bg-white/95 px-3.5 py-1.5 shadow-cardHover backdrop-blur">
+              <Loader2 className="h-4 w-4 animate-spin text-primary" strokeWidth={2} />
+              <span className="text-xs font-medium text-textPrimary">Cargando propiedades del área…</span>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Modal de detalle */}
-      <PropertyModal property={selectedProperty} isOpen={isModalOpen} onClose={handleCloseModal} />
+      <PropertyModal
+        property={selectedProperty}
+        isOpen={isModalOpen}
+        onClose={handleCloseModal}
+        onViewOnMap={handleViewOnMap}
+      />
 
       {/* Modal de permiso de ubicación */}
       <LocationPermissionModal

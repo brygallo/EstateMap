@@ -1,17 +1,18 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
-import { MapPinned, X } from 'lucide-react';
+import { Loader2, MapPinned, SearchX, X } from 'lucide-react';
 import MapFilters from '@/components/map/MapFilters';
 import PropertyCard from '@/components/PropertyCard';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
-import type { Owner, Property, PropertyFilters } from '@/lib/types';
+import type { Owner, Property, PropertyFilters, PropertyLocationGroup } from '@/lib/types';
 
 interface PropertySidebarProps {
   filters: PropertyFilters;
   owners: Owner[];
+  locations: PropertyLocationGroup[];
   hasActiveFilters: boolean;
   onFilterChange: (filters: PropertyFilters) => void;
   onClearFilters: () => void;
@@ -20,6 +21,11 @@ interface PropertySidebarProps {
   selectedProperty: Property | null;
   onPropertyClick: (property: Property) => void;
   onCloseMobile: () => void;
+
+  /** Cargando propiedades del área tras mover/hacer zoom o cambiar filtros. */
+  loading?: boolean;
+  /** Total que cumple los filtros en todo el catálogo (no solo el viewport). */
+  totalCount?: number | null;
 
   /** Sync mapa<->card (opcional): id resaltado desde el mapa y notificación de hover. */
   hoveredPropertyId?: number | null;
@@ -30,6 +36,7 @@ interface PropertySidebarProps {
 export default function PropertySidebar({
   filters,
   owners,
+  locations,
   hasActiveFilters,
   onFilterChange,
   onClearFilters,
@@ -37,12 +44,24 @@ export default function PropertySidebar({
   selectedProperty,
   onPropertyClick,
   onCloseMobile,
+  loading = false,
+  totalCount = null,
   hoveredPropertyId = null,
   onPropertyHover,
 }: PropertySidebarProps) {
   // Resalte local del listado (funciona aunque el mapa aún no sincronice hover).
   const [localHoverId, setLocalHoverId] = useState<number | null>(null);
   const activeHoverId = hoveredPropertyId ?? localHoverId;
+
+  // Scroll automático del listado hacia la card de la propiedad seleccionada
+  // (p. ej. al hacer clic en su polígono/etiqueta en el mapa).
+  const cardRefs = useRef<Record<number, HTMLDivElement | null>>({});
+  useEffect(() => {
+    const id = selectedProperty?.id;
+    if (id == null) return;
+    const el = cardRefs.current[id];
+    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }, [selectedProperty?.id]);
 
   const handleEnter = (p: Property) => {
     setLocalHoverId(p.id);
@@ -70,14 +89,32 @@ export default function PropertySidebar({
       <MapFilters
         filters={filters}
         owners={owners}
+        locations={locations}
         hasActiveFilters={hasActiveFilters}
         onChange={onFilterChange}
         onClear={onClearFilters}
       />
 
-      {/* Encabezado del listado */}
+      {/* Encabezado del listado: distingue "visibles en el mapa" de "total encontradas" */}
       <div className="flex items-center justify-between border-t border-line bg-white px-3.5 py-2.5">
-        <h2 className="text-xs font-semibold uppercase tracking-wide text-textSecondary">Propiedades</h2>
+        <div className="flex items-center gap-2">
+          <div className="flex flex-col">
+            <span className="text-xs font-semibold uppercase tracking-wide text-textSecondary">
+              Visibles en el mapa
+            </span>
+            {totalCount != null && totalCount > visibleProperties.length && (
+              <span className="text-[11px] text-textSecondary">
+                de <span className="font-geo font-semibold tabular-nums text-textPrimary">{totalCount}</span> encontradas
+              </span>
+            )}
+          </div>
+          {loading && (
+            <span className="flex items-center gap-1 text-[11px] font-medium text-primary">
+              <Loader2 className="h-3 w-3 animate-spin" strokeWidth={2.25} aria-hidden />
+              Cargando…
+            </span>
+          )}
+        </div>
         <Badge variant="secondary" className="rounded-md font-geo tabular-nums">
           {visibleProperties.length}
         </Badge>
@@ -85,21 +122,50 @@ export default function PropertySidebar({
 
       {/* Listado */}
       <div className="space-y-2 bg-background p-2.5 pb-24">
-        {visibleProperties.length === 0 ? (
+        {loading && visibleProperties.length === 0 ? (
           <div className="mt-6 flex flex-col items-center px-4 text-center text-textSecondary">
-            <span className="flex h-11 w-11 items-center justify-center rounded-card bg-muted">
-              <MapPinned className="h-6 w-6 text-textSecondary" strokeWidth={1.75} aria-hidden />
-            </span>
+            <Loader2 className="h-7 w-7 animate-spin text-primary" strokeWidth={2} aria-hidden />
             <p className="mt-3 text-sm font-medium text-textPrimary">
-              No hay propiedades en esta área
+              Cargando propiedades del área…
             </p>
-            <p className="mt-1 text-xs">Mueve o aleja el mapa para ver más propiedades</p>
           </div>
+        ) : visibleProperties.length === 0 ? (
+          hasActiveFilters ? (
+            <div className="mt-6 flex flex-col items-center px-4 text-center text-textSecondary">
+              <span className="flex h-11 w-11 items-center justify-center rounded-card bg-muted">
+                <SearchX className="h-6 w-6 text-textSecondary" strokeWidth={1.75} aria-hidden />
+              </span>
+              <p className="mt-3 text-sm font-medium text-textPrimary">
+                No hay propiedades con estos filtros
+              </p>
+              <p className="mt-1 text-xs">Prueba a ampliar o limpiar los filtros aplicados</p>
+              <button
+                type="button"
+                onClick={onClearFilters}
+                className="mt-3 rounded-button border border-line bg-white px-3 py-1.5 text-xs font-medium text-primary transition-colors hover:bg-muted"
+              >
+                Limpiar filtros
+              </button>
+            </div>
+          ) : (
+            <div className="mt-6 flex flex-col items-center px-4 text-center text-textSecondary">
+              <span className="flex h-11 w-11 items-center justify-center rounded-card bg-muted">
+                <MapPinned className="h-6 w-6 text-textSecondary" strokeWidth={1.75} aria-hidden />
+              </span>
+              <p className="mt-3 text-sm font-medium text-textPrimary">
+                No hay propiedades en esta área
+              </p>
+              <p className="mt-1 text-xs">Mueve o aleja el mapa para ver más propiedades</p>
+            </div>
+          )
         ) : (
           <AnimatePresence initial={false}>
             {visibleProperties.map((p, idx) => (
               <motion.div
                 key={p.id ?? idx}
+                ref={(el) => {
+                  if (p.id != null) cardRefs.current[p.id] = el;
+                }}
                 layout
                 initial={{ opacity: 0, y: 8 }}
                 animate={{ opacity: 1, y: 0 }}

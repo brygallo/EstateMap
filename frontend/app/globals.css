@@ -4,27 +4,27 @@
 
 @layer base {
   :root {
-    /* Fondo de marca (#F8FAFC): nunca blanco puro */
-    --background: 210 40% 98%;
+    /* Fondo calido de marca (#F7F5F0): nunca blanco puro */
+    --background: 45 30% 96%;
     --foreground: 221 39% 11%; /* #111827 textPrimary */
     --card: 0 0% 100%; /* surface #FFFFFF */
     --card-foreground: 221 39% 11%;
     --popover: 0 0% 100%;
     --popover-foreground: 221 39% 11%;
-    /* Primario de marca (#2563EB) */
-    --primary: 221.2 83.2% 53.3%;
+    /* Primario de marca (#1F6F5B) */
+    --primary: 164 56% 28%;
     --primary-foreground: 0 0% 100%;
-    --secondary: 210 40% 96.1%;
+    --secondary: 39 47% 60%;
     --secondary-foreground: 222.2 47.4% 11.2%;
-    --muted: 210 40% 96.1%;
+    --muted: 42 25% 93%;
     --muted-foreground: 215.4 16.3% 46.9%; /* ≈ #64748B */
-    --accent: 210 40% 96.1%;
+    --accent: 42 25% 93%;
     --accent-foreground: 222.2 47.4% 11.2%;
     --destructive: 0 72% 51%; /* #DC2626 error */
     --destructive-foreground: 0 0% 100%;
-    --border: 220 13% 91%; /* ≈ #E5E7EB line */
-    --input: 220 13% 91%;
-    --ring: 221.2 83.2% 53.3%; /* azul de marca */
+    --border: 38 18% 88%; /* #E5E2DA line */
+    --input: 38 18% 88%;
+    --ring: 164 56% 28%; /* verde de marca */
     --radius: 0.5rem; /* 8px */
   }
 
@@ -76,7 +76,7 @@ body {
   /* Primario/CTA: leve presión (scale 1.02) al hover, 200ms */
   .btn-primary { @apply bg-primary text-white hover:bg-primaryHover hover:scale-[1.02]; }
   .btn-secondary { @apply bg-white text-textPrimary border border-line hover:bg-slate-50; }
-  .btn-ghost { @apply bg-transparent text-textSecondary hover:bg-slate-100; }
+  .btn-ghost { @apply bg-transparent text-textSecondary hover:bg-stone-100; }
   .btn-danger { @apply bg-error text-white hover:bg-red-700 hover:scale-[1.02]; }
   .btn-accent { @apply bg-secondary text-white hover:bg-secondaryHover hover:scale-[1.02]; }
 
@@ -120,7 +120,7 @@ body {
 }
 
 .custom-marker {
-  background-color: #2563EB;
+  background-color: #1F6F5B;
   width: 1.5rem;
   height: 1.5rem;
   border-radius: 9999px;
@@ -130,7 +130,7 @@ body {
 }
 
 .custom-marker:hover {
-  background-color: #1D4ED8;
+  background-color: #14523F;
   transform: scale(1.15);
 }
 

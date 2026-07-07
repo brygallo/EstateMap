@@ -1,6 +1,7 @@
 from rest_framework.routers import DefaultRouter
 from django.urls import path, re_path
 from rest_framework_simplejwt.views import TokenRefreshView
+from ingesta import api as ingesta_api
 from .views import (
     PropertyViewSet,
     ProvinceViewSet,
@@ -63,6 +64,11 @@ urlpatterns = [
     path('admin/users/<int:pk>/', AdminUserViewSet.as_view({'get': 'retrieve', 'patch': 'partial_update', 'delete': 'destroy'}), name='admin_users_detail'),
     path('admin/properties/', AdminPropertyViewSet.as_view({'get': 'list'}), name='admin_properties_list'),
     path('admin/properties/<int:pk>/', AdminPropertyViewSet.as_view({'get': 'retrieve', 'delete': 'destroy'}), name='admin_properties_detail'),
+
+    # Ingesta (agregador) - panel del frontend
+    path('admin/ingesta/sources/', ingesta_api.sources, name='admin_ingesta_sources'),
+    path('admin/ingesta/runs/', ingesta_api.runs, name='admin_ingesta_runs'),
+    path('admin/ingesta/launch/', ingesta_api.launch, name='admin_ingesta_launch'),
 ]
 
 urlpatterns += router.urls

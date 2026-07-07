@@ -12,6 +12,7 @@ import {
   ArrowLeft,
   Menu,
   X,
+  DownloadCloud,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -20,6 +21,7 @@ const navItems = [
   { href: '/admin/users', label: 'Usuarios', icon: Users },
   { href: '/admin/properties', label: 'Propiedades', icon: Building2 },
   { href: '/admin/pending-publications', label: 'Pendientes', icon: Clock },
+  { href: '/admin/ingesta', label: 'Importar', icon: DownloadCloud },
 ];
 
 const AdminSidebar = () => {

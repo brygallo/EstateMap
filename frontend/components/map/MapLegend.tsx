@@ -5,8 +5,8 @@ import { AnimatePresence, motion } from 'motion/react';
 import { Info, X } from 'lucide-react';
 
 const ITEMS = [
-  { label: 'En venta', color: '#10B981' },
-  { label: 'En alquiler', color: '#2563EB' },
+  { label: 'En venta', color: '#1F6F5B' },
+  { label: 'En alquiler', color: '#C8A96A' },
   { label: 'Inactivo', color: '#64748B' },
 ];
 

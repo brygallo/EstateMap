@@ -87,7 +87,7 @@ class Property(models.Model):
     show_measurements = models.BooleanField(default=True, help_text="Show exact measurements on map or just reference figure")
 
     # --- Characteristics ---
-    area = models.FloatField(help_text="Total area in square meters")
+    area = models.FloatField(null=True, blank=True, help_text="Total area in square meters (opcional en anuncios importados)")
     built_area = models.FloatField(null=True, blank=True, help_text="Built area in square meters (for houses)")
     rooms = models.PositiveIntegerField(default=0)
     bathrooms = models.PositiveIntegerField(default=0)
@@ -97,7 +97,8 @@ class Property(models.Model):
     year_built = models.PositiveIntegerField(null=True, blank=True)
 
     # --- Financial Information ---
-    price = models.DecimalField(max_digits=12, decimal_places=2)
+    price = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True,
+                                help_text="Opcional: los anuncios importados pueden no traer precio ('a consultar')")
     is_negotiable = models.BooleanField(default=True)
 
     # --- Ownership & Contact ---
@@ -109,6 +110,44 @@ class Property(models.Model):
         related_name="properties",
     )
     contact_phone = models.CharField(max_length=20, blank=True, default="")
+    contact_email = models.EmailField(blank=True, default="")
+
+    # --- Origen / agregador (ingesta) ---
+    # Propiedades recopiladas de otros portales. owner queda NULL; el contacto
+    # cae en cascada: teléfono -> email -> enlace al anuncio original (source_url).
+    source = models.ForeignKey(
+        "ingesta.Fuente",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="properties",
+        help_text="Portal de origen si la propiedad fue importada",
+    )
+    source_agency = models.CharField(max_length=150, blank=True, default="",
+                                      help_text="Inmobiliaria/publicador del anuncio en el portal de origen")
+    source_url = models.URLField(max_length=500, blank=True, default="",
+                                 help_text="Enlace al anuncio original (contacto fallback)")
+    external_id = models.CharField(max_length=120, blank=True, default="", db_index=True,
+                                   help_text="ID del anuncio en el portal de origen")
+    is_imported = models.BooleanField(default=False, db_index=True,
+                                      help_text="True si fue recopilada por el agregador")
+    dedup_key = models.CharField(max_length=64, blank=True, default="", db_index=True,
+                                 help_text="Huella de rejilla geográfica para deduplicar")
+    image_hash = models.CharField(max_length=32, blank=True, default="", db_index=True,
+                                  help_text="Huella perceptual (dHash) de la imagen principal, para detectar la misma propiedad entre portales")
+    is_duplicate = models.BooleanField(default=False, db_index=True,
+                                       help_text="Oculto del mapa: es duplicado de otra fuente (perdió la preferencia)")
+    duplicate_of = models.ForeignKey(
+        "self",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="duplicates",
+        help_text="Propiedad canónica (la que sí se muestra) de la que este anuncio es duplicado",
+    )
+    imported_at = models.DateTimeField(null=True, blank=True)
+    last_seen_at = models.DateTimeField(null=True, blank=True,
+                                        help_text="Última vez visto en la fuente (para caducar)")
 
     # --- Metrics ---
     views_count = models.PositiveIntegerField(default=0, help_text="Número de veces que se ha visto el detalle")
@@ -119,6 +158,13 @@ class Property(models.Model):
 
     class Meta:
         ordering = ["-created_at"]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["source", "external_id"],
+                condition=models.Q(is_imported=True),
+                name="uniq_source_external_when_imported",
+            ),
+        ]
 
     def __str__(self):
         return f"{self.title} - {self.get_status_display()}" if self.title else f"Property {self.pk}"

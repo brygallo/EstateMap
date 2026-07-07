@@ -2,6 +2,10 @@ import { MetadataRoute } from 'next';
 import { getProperties, getCities, SITE_URL } from '@/lib/properties';
 import { generateCombos } from '@/lib/seo-combos';
 
+// Nota: las imágenes por propiedad se publican en un sitemap de imágenes aparte
+// (app/image-sitemap.xml/route.ts), porque el campo `images` de
+// MetadataRoute.Sitemap solo existe desde Next 15 y aquí usamos Next 14.
+
 export const revalidate = 3600;
 
 const TYPE_ROUTES = [
@@ -17,6 +21,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const staticRoutes: MetadataRoute.Sitemap = [
     { url: `${SITE_URL}/`, lastModified: now, changeFrequency: 'daily', priority: 1 },
     { url: `${SITE_URL}/ayuda`, lastModified: now, changeFrequency: 'monthly', priority: 0.5 },
+    { url: `${SITE_URL}/publicar-propiedad`, lastModified: now, changeFrequency: 'monthly', priority: 0.8 },
     { url: `${SITE_URL}/publicar-asistido`, lastModified: now, changeFrequency: 'monthly', priority: 0.8 },
     { url: `${SITE_URL}/inmobiliarias`, lastModified: now, changeFrequency: 'monthly', priority: 0.8 },
     ...TYPE_ROUTES.map((path) => ({
@@ -32,7 +37,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const propertyRoutes: MetadataRoute.Sitemap = properties.map((property) => ({
     url: `${SITE_URL}/propiedad/${property.id}`,
     lastModified: property.updated_at || property.created_at || now,
-    changeFrequency: 'weekly',
+    changeFrequency: 'weekly' as const,
     priority: 0.7,
   }));
 

@@ -14,11 +14,11 @@ const siteUrl = process.env.NEXT_PUBLIC_FRONTEND_URL || 'https://geopropiedadese
 
 export const metadata: Metadata = {
   title: {
-    default: 'Geo Propiedades Ecuador - Encuentra tu Propiedad Ideal',
+    default: 'Geo Propiedades Ecuador - Propiedades en un solo mapa',
     template: '%s | Geo Propiedades Ecuador',
   },
   description:
-    'Plataforma inmobiliaria en Ecuador para comprar, vender y alquilar propiedades. Encuentra casas, departamentos, terrenos y locales en Quito, Guayaquil, Cuenca y más con mapas interactivos.',
+    'Plataforma inmobiliaria en Ecuador para comprar, vender y alquilar propiedades en un solo mapa. Encuentra casas, departamentos, terrenos y locales cerca de ti sin saltar entre portales.',
   keywords: [
     'propiedades en Ecuador',
     'inmobiliaria Ecuador',
@@ -27,6 +27,8 @@ export const metadata: Metadata = {
     'terrenos en venta Ecuador',
     'bienes raíces Ecuador',
     'mapa inmobiliario',
+    'propiedades cerca de mí',
+    'propiedades en un mapa',
     'portal inmobiliario',
     'propiedades Quito',
     'propiedades Guayaquil',
@@ -49,9 +51,9 @@ export const metadata: Metadata = {
     canonical: '/',
   },
   openGraph: {
-    title: 'Geo Propiedades Ecuador - Encuentra tu Propiedad Ideal',
+    title: 'Geo Propiedades Ecuador - Propiedades en un solo mapa',
     description:
-      'Plataforma de búsqueda y gestión de propiedades en Ecuador. Encuentra casas, departamentos, terrenos y más.',
+      'Busca casas, departamentos, terrenos y locales en Ecuador desde un mapa interactivo con ubicación clara, filtros y contacto directo.',
     url: siteUrl,
     siteName: 'Geo Propiedades Ecuador',
     locale: 'es_EC',
@@ -61,15 +63,15 @@ export const metadata: Metadata = {
         url: `${siteUrl}/og-image.png`,
         width: 1200,
         height: 630,
-        alt: 'Geo Propiedades Ecuador - Encuentra tu Propiedad Ideal',
+        alt: 'Geo Propiedades Ecuador - propiedades en un solo mapa',
       },
     ],
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Geo Propiedades Ecuador - Encuentra tu Propiedad Ideal',
+    title: 'Geo Propiedades Ecuador - Propiedades en un solo mapa',
     description:
-      'Plataforma de búsqueda y gestión de propiedades en Ecuador. Encuentra casas, departamentos, terrenos y más.',
+      'Encuentra propiedades cerca de ti, compra, alquila o vende con mapa, filtros y contacto directo.',
     images: [`${siteUrl}/og-image.png`],
   },
   other: {
@@ -112,23 +114,61 @@ export default function RootLayout({
     '@graph': [
       {
         '@type': 'Organization',
+        '@id': `${siteUrl}/#organization`,
         name: 'Geo Propiedades Ecuador',
         url: siteUrl,
         description:
-          'Plataforma inmobiliaria en Ecuador para comprar, vender y alquilar propiedades con mapas interactivos.',
-        areaServed: 'EC',
+          'Portal inmobiliario en Ecuador para buscar, comprar, alquilar, vender y publicar casas, terrenos, departamentos y locales comerciales en un solo mapa interactivo.',
+        areaServed: {
+          '@type': 'Country',
+          name: 'Ecuador',
+        },
         logo: `${siteUrl}/icon-192x192.svg`,
+        knowsAbout: [
+          'propiedades en Ecuador',
+          'casas en venta',
+          'terrenos en venta',
+          'departamentos en alquiler',
+          'locales comerciales',
+          'mapa inmobiliario',
+          'propiedades cerca de mí',
+          'propiedades en un mapa',
+          'publicación de propiedades',
+        ],
+        contactPoint: {
+          '@type': 'ContactPoint',
+          contactType: 'customer support',
+          areaServed: 'EC',
+          availableLanguage: ['es'],
+        },
       },
       {
         '@type': 'WebSite',
+        '@id': `${siteUrl}/#website`,
         name: 'Geo Propiedades Ecuador',
         url: siteUrl,
         inLanguage: 'es-EC',
+        publisher: { '@id': `${siteUrl}/#organization` },
+        description:
+          'Sitio para encontrar propiedades en Ecuador en un solo mapa, por ubicación cercana, ciudad, provincia, precio, área, tipo de inmueble y tipo de operación.',
         potentialAction: {
           '@type': 'SearchAction',
           target: `${siteUrl}/?search={search_term_string}`,
           'query-input': 'required name=search_term_string',
         },
+      },
+      {
+        '@type': 'Service',
+        '@id': `${siteUrl}/#real-estate-search-service`,
+        name: 'Búsqueda de propiedades en mapa',
+        provider: { '@id': `${siteUrl}/#organization` },
+        areaServed: {
+          '@type': 'Country',
+          name: 'Ecuador',
+        },
+        serviceType: 'Real estate listing search',
+        description:
+          'Búsqueda de casas, terrenos, departamentos y locales comerciales en Ecuador en un mapa interactivo, con filtros, ubicación visible y contacto directo con anunciantes.',
       },
     ],
   };
