@@ -19,3 +19,6 @@ media/
 
 # Documentos de marketing (Claude) - no versionar
 marketing-inmobiliarias/
+
+# Paquetes de ingesta (datos scrapeados + imágenes) - no versionar
+backend/paquetes/

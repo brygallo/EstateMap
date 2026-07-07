@@ -14,7 +14,42 @@ const nextConfig = {
     NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL,
   },
   images: {
-    domains: [],
+    // En desarrollo, MinIO está en localhost:9000 y el servidor de Next (dentro
+    // del contenedor) no puede alcanzarlo para optimizar -> la miniatura falla.
+    // Desactivamos la optimización solo en dev; el navegador baja la imagen
+    // directo. En producción (MinIO en dominio público) la optimización queda ON.
+    unoptimized: process.env.NODE_ENV !== 'production',
+    remotePatterns: [
+      {
+        protocol: 'http',
+        hostname: 'localhost',
+        port: '9000',
+        pathname: '/estatemap/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'localhost',
+        port: '9000',
+        pathname: '/estatemap/**',
+      },
+      {
+        protocol: 'http',
+        hostname: '127.0.0.1',
+        port: '9000',
+        pathname: '/estatemap/**',
+      },
+      {
+        protocol: 'https',
+        hostname: '127.0.0.1',
+        port: '9000',
+        pathname: '/estatemap/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'minio.geopropiedadesecuador.com',
+        pathname: '/estatemap/**',
+      },
+    ],
   },
   async headers() {
     return [

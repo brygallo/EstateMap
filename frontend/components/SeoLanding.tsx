@@ -28,15 +28,40 @@ export default function SeoLanding({
 }) {
   const itemListData = {
     '@context': 'https://schema.org',
-    '@type': 'ItemList',
-    name: title,
-    numberOfItems: properties.length,
-    itemListElement: properties.slice(0, 30).map((p, index) => ({
-      '@type': 'ListItem',
-      position: index + 1,
-      url: `${SITE_URL}/propiedad/${p.id}`,
-      name: p.title || title,
-    })),
+    '@graph': [
+      {
+        '@type': 'ItemList',
+        name: title,
+        numberOfItems: properties.length,
+        itemListElement: properties.slice(0, 30).map((p, index) => ({
+          '@type': 'ListItem',
+          position: index + 1,
+          url: `${SITE_URL}/propiedad/${p.id}`,
+          name: p.title || title,
+        })),
+      },
+      {
+        '@type': 'FAQPage',
+        mainEntity: [
+          {
+            '@type': 'Question',
+            name: `¿Dónde encontrar ${title.toLowerCase()}?`,
+            acceptedAnswer: {
+              '@type': 'Answer',
+              text: `En Geo Propiedades Ecuador puedes encontrar ${title.toLowerCase()} con mapa interactivo, filtros, precio, área, ubicación y contacto directo con el anunciante.`,
+            },
+          },
+          {
+            '@type': 'Question',
+            name: '¿Qué información muestra cada propiedad?',
+            acceptedAnswer: {
+              '@type': 'Answer',
+              text: 'Cada ficha puede mostrar fotos, precio, ciudad, provincia, área, habitaciones, baños, parqueos, tipo de operación, polígono o marcador en mapa y datos de contacto.',
+            },
+          },
+        ],
+      },
+    ],
   };
 
   return (
@@ -51,6 +76,16 @@ export default function SeoLanding({
           {title}
         </h1>
         <p className="mt-4 text-base leading-7 text-textSecondary">{intro}</p>
+        <div className="mt-5 rounded-card border border-line bg-white p-4 shadow-card">
+          <h2 className="text-sm font-semibold text-textPrimary">
+            Respuesta rápida
+          </h2>
+          <p className="mt-2 text-sm leading-6 text-textSecondary">
+            En Geo Propiedades Ecuador puedes encontrar {title.toLowerCase()} con
+            ubicación en mapa, filtros por precio y características, y contacto
+            directo con anunciantes.
+          </p>
+        </div>
         <div className="mt-5 flex flex-wrap items-center gap-3">
           <Link
             href={mapHref}

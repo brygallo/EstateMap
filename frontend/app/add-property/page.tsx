@@ -22,6 +22,9 @@ import {
   Trash2,
   MessageCircle,
   ArrowRight,
+  ChevronLeft,
+  ChevronRight,
+  Star,
 } from 'lucide-react';
 
 import { useAuth } from '@/lib/auth-context';
@@ -786,7 +789,7 @@ const AddPropertyPage = () => {
             particleCount: 90,
             spread: 70,
             origin: { y: 0.7 },
-            colors: ['#2563EB', '#06B6D4', '#10B981'],
+            colors: ['#1F6F5B', '#C8A96A', '#E5F2EE'],
           });
         } catch {}
         toast.success('Propiedad creada exitosamente');
@@ -997,6 +1000,19 @@ const AddPropertyPage = () => {
     setImageFiles(newFiles);
   };
 
+  // Reordena imagen (y su File paralelo). La primera imagen es la principal.
+  function reorderArray<T>(arr: T[], from: number, to: number): T[] {
+    const next = [...arr];
+    const [item] = next.splice(from, 1);
+    next.splice(to, 0, item);
+    return next;
+  }
+  const moveImage = (from: number, to: number) => {
+    if (to < 0 || to >= images.length || from === to) return;
+    setImages((prev) => reorderArray(prev, from, to));
+    setImageFiles((prev) => reorderArray(prev, from, to));
+  };
+
   const wizardSteps = [
     {
       label: 'Datos',
@@ -1098,6 +1114,27 @@ const AddPropertyPage = () => {
 
   const showBuiltGroup = ['house', 'apartment', 'commercial'].includes(propertyType);
 
+  // Etiquetas legibles para el resumen y el preview del wizard.
+  const FORM_STATUS_LABELS: Record<string, string> = {
+    for_sale: 'En venta',
+    for_rent: 'En alquiler',
+    sold: 'Vendido',
+    rented: 'Alquilado',
+    inactive: 'Inactivo',
+  };
+  const FORM_TYPE_LABELS: Record<string, string> = {
+    house: 'Casa',
+    apartment: 'Apartamento',
+    land: 'Terreno',
+    commercial: 'Comercial',
+    other: 'Otro',
+  };
+  const summaryStatusLabel = FORM_STATUS_LABELS[values.status] || 'En venta';
+  const summaryTypeLabel = FORM_TYPE_LABELS[propertyType] || 'Propiedad';
+  const summaryLocation = [city, province].filter(Boolean).join(', ');
+  const summaryPrice = values.price ? `$${Number(values.price).toLocaleString()}` : null;
+  const summaryCover = images[0]?.preview || null;
+
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
@@ -1120,6 +1157,7 @@ const AddPropertyPage = () => {
 
       {/* Main Content */}
       <div className="mx-auto max-w-7xl px-4 py-4 sm:px-6 lg:px-8 lg:py-8">
+        <div className="lg:grid lg:grid-cols-[minmax(0,1fr)_20rem] lg:items-start lg:gap-6">
         <div className="space-y-4 lg:space-y-6">
           <Form {...form}>
             <form
@@ -1174,7 +1212,7 @@ const AddPropertyPage = () => {
                 </div>
               )}
 
-              <div className="rounded-card border border-primary/15 bg-surface p-5 shadow-card">
+              <div className="hidden rounded-card border border-primary/15 bg-surface p-5 shadow-card md:block">
                 <div className="grid gap-3 md:grid-cols-3">
                   <div>
                     <p className="text-sm font-bold text-textPrimary">Sin costo</p>
@@ -1331,7 +1369,7 @@ const AddPropertyPage = () => {
                       : 'Usa la herramienta de polígono del mapa para dibujar el contorno. En móvil puede ser más difícil.'}
                   </p>
                 </div>
-                <div className="relative h-[400px] sm:h-[500px] lg:h-[600px]">
+                <div className="relative h-[420px] sm:h-[520px] lg:h-[calc(100vh-13rem)] lg:min-h-[600px]">
                   <button
                     type="button"
                     onClick={handleGetMyLocation}
@@ -1656,17 +1694,68 @@ const AddPropertyPage = () => {
               <SectionCard icon={<ImagePlus className="h-5 w-5" />} title="Imágenes de la Propiedad">
                 {images.length > 0 && (
                   <div>
-                    <h4 className="mb-3 text-sm font-semibold text-textPrimary">
+                    <h4 className="mb-1 text-sm font-semibold text-textPrimary">
                       Nuevas Imágenes ({images.length}/10)
                       <span className="ml-2 text-xs font-normal text-muted-foreground">Se optimizan automáticamente</span>
                     </h4>
+                    <p className="mb-3 text-xs text-textSecondary">
+                      La primera imagen es la portada. Reordena con las flechas o marca otra como principal.
+                    </p>
                     <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
                       {images.map((img, index) => (
-                        <div key={index} className="group relative">
+                        <div
+                          key={index}
+                          className={cn(
+                            'group relative overflow-hidden rounded-input',
+                            index === 0 && 'ring-2 ring-primary'
+                          )}
+                        >
                           <PreviewImage src={img.preview} />
+
+                          {/* Portada / badge de principal */}
+                          {index === 0 ? (
+                            <span className="absolute left-2 top-2 flex items-center gap-1 rounded-md bg-primary px-2 py-0.5 text-[11px] font-semibold text-white shadow-card">
+                              <Star className="h-3 w-3 fill-current" strokeWidth={2} aria-hidden />
+                              Principal
+                            </span>
+                          ) : (
+                            <button
+                              type="button"
+                              onClick={() => moveImage(index, 0)}
+                              className="absolute left-2 top-2 flex items-center gap-1 rounded-md bg-black/70 px-2 py-0.5 text-[11px] font-semibold text-white opacity-0 transition-opacity hover:bg-black/90 group-hover:opacity-100"
+                              title="Hacer principal"
+                            >
+                              <Star className="h-3 w-3" strokeWidth={2} aria-hidden />
+                              Principal
+                            </button>
+                          )}
+
                           <div className="absolute bottom-2 left-2 rounded bg-black/70 px-2 py-1 text-xs text-white font-geo">
                             {img.size} MB
                           </div>
+
+                          {/* Controles de orden */}
+                          <div className="absolute bottom-2 right-2 flex gap-1 opacity-0 transition-opacity group-hover:opacity-100">
+                            <button
+                              type="button"
+                              onClick={() => moveImage(index, index - 1)}
+                              disabled={index === 0}
+                              className="rounded-md bg-white/90 p-1 text-textPrimary shadow-card transition-colors hover:bg-white disabled:cursor-not-allowed disabled:opacity-40"
+                              title="Mover a la izquierda"
+                            >
+                              <ChevronLeft className="h-4 w-4" strokeWidth={2} aria-hidden />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => moveImage(index, index + 1)}
+                              disabled={index === images.length - 1}
+                              className="rounded-md bg-white/90 p-1 text-textPrimary shadow-card transition-colors hover:bg-white disabled:cursor-not-allowed disabled:opacity-40"
+                              title="Mover a la derecha"
+                            >
+                              <ChevronRight className="h-4 w-4" strokeWidth={2} aria-hidden />
+                            </button>
+                          </div>
+
                           <button
                             type="button"
                             onClick={() => handleRemoveNewImage(index)}
@@ -1700,14 +1789,51 @@ const AddPropertyPage = () => {
               </SectionCard>
 
               <div className="rounded-card border border-line bg-surface p-5 shadow-card">
-                <h3 className="text-base font-semibold text-textPrimary">Revisión rápida</h3>
-                <div className="mt-3 grid gap-3 text-sm md:grid-cols-2">
-                  <p><span className="font-semibold">Título:</span> {values.title || 'Por completar'}</p>
-                  <p><span className="font-semibold">Ubicación:</span> {city}, {province}</p>
-                  <p><span className="font-semibold">Modo:</span> {locationMode === 'polygon' ? 'Polígono' : 'Punto de ubicación'}</p>
-                  <p><span className="font-semibold">Área:</span> {area ? `${area} m²` : 'Por completar'}</p>
-                  <p><span className="font-semibold">Precio:</span> {values.price ? `$${values.price}` : 'Por completar'}</p>
-                  <p><span className="font-semibold">Fotos:</span> {images.length}</p>
+                <h3 className="text-base font-semibold text-textPrimary">Así se verá tu publicación</h3>
+                <p className="mt-1 text-xs text-textSecondary">Vista previa de la tarjeta que verán los interesados.</p>
+
+                {/* Preview tipo tarjeta pública */}
+                <div className="mt-3 max-w-sm overflow-hidden rounded-card border border-line bg-surface shadow-card">
+                  <div className="relative aspect-[4/3] overflow-hidden bg-muted">
+                    {summaryCover ? (
+                      <img src={summaryCover} alt="Portada" className="h-full w-full object-cover" />
+                    ) : (
+                      <div className="flex h-full w-full items-center justify-center text-textSecondary">
+                        <ImagePlus className="h-10 w-10" strokeWidth={1.5} aria-hidden />
+                      </div>
+                    )}
+                    <span className="absolute left-2.5 top-2.5 rounded-md bg-primaryLight px-2 py-0.5 text-[11px] font-medium text-primary shadow-card">
+                      {summaryStatusLabel}
+                    </span>
+                  </div>
+                  <div className="p-4">
+                    <h4 className="line-clamp-1 text-base font-semibold text-textPrimary">
+                      {values.title?.trim() || `${summaryTypeLabel} por publicar`}
+                    </h4>
+                    {summaryLocation && (
+                      <p className="mt-1.5 flex items-center gap-1 text-sm text-textSecondary">
+                        <MapPin className="h-3.5 w-3.5 flex-shrink-0 text-primary" strokeWidth={1.75} aria-hidden />
+                        <span className="line-clamp-1">{summaryLocation}</span>
+                      </p>
+                    )}
+                    <div className="mt-2.5 flex items-baseline gap-1.5">
+                      <span className="price font-geo text-xl font-semibold">{summaryPrice || 'Precio por definir'}</span>
+                      {values.status === 'for_rent' && summaryPrice && (
+                        <span className="text-sm font-medium text-textSecondary">/mes</span>
+                      )}
+                    </div>
+                    <div className="mt-3 flex flex-wrap items-center gap-1.5 border-t border-line pt-3 text-[11px] text-textSecondary">
+                      <span className="rounded-md bg-background px-2 py-0.5 font-medium">{summaryTypeLabel}</span>
+                      {area ? <span className="rounded-md bg-background px-2 py-0.5 font-medium">{area} m²</span> : null}
+                      {values.rooms ? <span className="rounded-md bg-background px-2 py-0.5 font-medium">{values.rooms} hab.</span> : null}
+                      {values.bathrooms ? <span className="rounded-md bg-background px-2 py-0.5 font-medium">{values.bathrooms} baños</span> : null}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="mt-4 grid gap-2 text-xs text-textSecondary sm:grid-cols-2">
+                  <p><span className="font-semibold text-textPrimary">Ubicación en mapa:</span> {locationMode === 'polygon' ? 'Polígono' : 'Punto'}</p>
+                  <p><span className="font-semibold text-textPrimary">Fotos:</span> {images.length}</p>
                 </div>
               </div>
               </>
@@ -1800,6 +1926,67 @@ const AddPropertyPage = () => {
               </Button>
             </div>
           </div>
+        </div>
+
+        {/* Resumen lateral (solo desktop): datos clave siempre visibles */}
+        <aside className="hidden lg:block">
+          <div className="sticky top-28 space-y-3 rounded-card border border-line bg-surface p-4 shadow-card">
+            <p className="text-xs font-semibold uppercase tracking-wide text-textSecondary">Resumen</p>
+
+            <div className="overflow-hidden rounded-input bg-muted">
+              <div className="relative aspect-[4/3]">
+                {summaryCover ? (
+                  <img src={summaryCover} alt="Portada" className="h-full w-full object-cover" />
+                ) : (
+                  <div className="flex h-full w-full items-center justify-center text-textSecondary">
+                    <ImagePlus className="h-8 w-8" strokeWidth={1.5} aria-hidden />
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div>
+              <p className="line-clamp-2 text-sm font-semibold text-textPrimary">
+                {values.title?.trim() || 'Título por completar'}
+              </p>
+              <p className="mt-0.5 flex items-center gap-1 text-xs text-textSecondary">
+                <MapPin className="h-3.5 w-3.5 flex-shrink-0 text-primary" strokeWidth={1.75} aria-hidden />
+                {summaryLocation || 'Ubicación por completar'}
+              </p>
+            </div>
+
+            <div className="flex items-center justify-between">
+              <div className="flex items-baseline gap-1">
+                <span className="price font-geo text-xl font-semibold">{summaryPrice || '—'}</span>
+                {values.status === 'for_rent' && summaryPrice && (
+                  <span className="text-xs text-textSecondary">/mes</span>
+                )}
+              </div>
+              <span className="rounded-md bg-primaryLight px-2 py-0.5 text-[11px] font-medium text-primary">
+                {summaryStatusLabel}
+              </span>
+            </div>
+
+            <dl className="grid grid-cols-2 gap-x-3 gap-y-2 border-t border-line pt-3 text-xs">
+              <div>
+                <dt className="text-textSecondary">Tipo</dt>
+                <dd className="font-medium text-textPrimary">{summaryTypeLabel}</dd>
+              </div>
+              <div>
+                <dt className="text-textSecondary">Área</dt>
+                <dd className="font-geo font-medium tabular-nums text-textPrimary">{area ? `${area} m²` : '—'}</dd>
+              </div>
+              <div>
+                <dt className="text-textSecondary">Fotos</dt>
+                <dd className="font-geo font-medium tabular-nums text-textPrimary">{images.length}</dd>
+              </div>
+              <div>
+                <dt className="text-textSecondary">Ubicación</dt>
+                <dd className="font-medium text-textPrimary">{locationMode === 'polygon' ? 'Polígono' : 'Punto'}</dd>
+              </div>
+            </dl>
+          </div>
+        </aside>
         </div>
       </div>
 

@@ -1,13 +1,15 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import {
   X,
   Share2,
   ChevronLeft,
   ChevronRight,
+  ExternalLink,
   Maximize2,
   MapPin,
+  MapPinned,
   User,
   Phone,
   ImageIcon,
@@ -18,6 +20,7 @@ import {
   Car,
   Layers,
   AlignLeft,
+  MessageCircle,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import ShareModal from './ShareModal';
@@ -30,16 +33,39 @@ import {
   formatPrice,
 } from '@/lib/property-labels';
 
+const getValidImages = (images: any[] | undefined) => {
+  if (!Array.isArray(images)) return [];
+  return images.filter((img) => typeof img?.image === 'string' && img.image.trim().length > 0);
+};
+
+const clampImageIndex = (index: number, length: number) => {
+  if (length <= 0) return 0;
+  return Math.min(Math.max(index, 0), length - 1);
+};
+
 // Image Gallery Component (lightbox a pantalla completa)
 const ImageGallery = ({ images, initialIndex, onClose }: any) => {
-  const [currentIndex, setCurrentIndex] = useState(initialIndex);
+  const validImages = useMemo(() => getValidImages(images), [images]);
+  const [currentIndex, setCurrentIndex] = useState(() => clampImageIndex(initialIndex, validImages.length));
+
+  useEffect(() => {
+    if (validImages.length === 0) {
+      onClose();
+      return;
+    }
+    setCurrentIndex((prev: number) => clampImageIndex(prev, validImages.length));
+  }, [validImages.length, onClose]);
+
+  if (validImages.length === 0) return null;
+
+  const activeImage = validImages[clampImageIndex(currentIndex, validImages.length)];
 
   const nextImage = () => {
-    setCurrentIndex((prev: number) => (prev + 1) % images.length);
+    setCurrentIndex((prev: number) => (prev + 1) % validImages.length);
   };
 
   const prevImage = () => {
-    setCurrentIndex((prev: number) => (prev - 1 + images.length) % images.length);
+    setCurrentIndex((prev: number) => (prev - 1 + validImages.length) % validImages.length);
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -72,20 +98,20 @@ const ImageGallery = ({ images, initialIndex, onClose }: any) => {
         className="absolute left-4 top-4 z-10 rounded-card bg-white/10 px-3 py-1.5 text-xs font-medium text-white"
         onClick={(e) => e.stopPropagation()}
       >
-        {currentIndex + 1} / {images.length}
+        {clampImageIndex(currentIndex, validImages.length) + 1} / {validImages.length}
       </div>
 
       {/* Main Image */}
       <div className="relative flex h-full w-full items-center justify-center p-4" onClick={(e) => e.stopPropagation()}>
         <img
-          src={images[currentIndex].image}
+          src={activeImage.image}
           alt={`Imagen ${currentIndex + 1}`}
           className="max-h-full max-w-full rounded-xl object-contain"
           onClick={(e) => e.stopPropagation()}
         />
 
         {/* Navigation Arrows */}
-        {images.length > 1 && (
+        {validImages.length > 1 && (
           <>
             <button
               onClick={(e) => { e.stopPropagation(); prevImage(); }}
@@ -106,9 +132,9 @@ const ImageGallery = ({ images, initialIndex, onClose }: any) => {
       </div>
 
       {/* Thumbnail Strip */}
-      {images.length > 1 && (
+      {validImages.length > 1 && (
         <div className="absolute bottom-4 left-1/2 flex max-w-[90vw] -translate-x-1/2 gap-2 overflow-x-auto rounded-xl bg-white/10 p-3 backdrop-blur-sm">
-          {images.map((img: any, idx: number) => (
+          {validImages.map((img: any, idx: number) => (
             <button
               key={idx}
               onClick={(e) => { e.stopPropagation(); setCurrentIndex(idx); }}
@@ -146,13 +172,16 @@ interface PropertyModalProps {
   property: any;
   isOpen: boolean;
   onClose: () => void;
+  /** Centra el mapa en la propiedad (y cierra el panel en móvil). */
+  onViewOnMap?: () => void;
 }
 
-const PropertyModal = ({ property, isOpen, onClose }: PropertyModalProps) => {
+const PropertyModal = ({ property, isOpen, onClose, onViewOnMap }: PropertyModalProps) => {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [galleryOpen, setGalleryOpen] = useState(false);
   const [shareModalOpen, setShareModalOpen] = useState(false);
   const panelRef = useRef<HTMLDivElement>(null);
+  const images = useMemo(() => getValidImages(property?.images), [property?.images]);
 
   // Cierre con Escape: primero la galería/compartir si están abiertos, luego el panel.
   useEffect(() => {
@@ -172,16 +201,40 @@ const PropertyModal = ({ property, isOpen, onClose }: PropertyModalProps) => {
     if (isOpen) panelRef.current?.focus();
   }, [isOpen, property?.id]);
 
+  useEffect(() => {
+    if (!isOpen) return;
+    setCurrentImageIndex(0);
+    setGalleryOpen(false);
+  }, [isOpen, property?.id]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    if (images.length === 0) {
+      setCurrentImageIndex(0);
+      setGalleryOpen(false);
+      return;
+    }
+    setCurrentImageIndex((prev) => clampImageIndex(prev, images.length));
+  }, [isOpen, images.length]);
+
   if (!isOpen || !property) return null;
 
-  const images = property.images || [];
   const hasImages = images.length > 0;
+  const safeImageIndex = clampImageIndex(currentImageIndex, images.length);
+  const activeImage = hasImages ? images[safeImageIndex] : null;
+  const isImported = Boolean(property.is_imported || property.source_url || property.external_id || property.source);
+  const contactPhone = typeof property.contact_phone === 'string' ? property.contact_phone.trim() : '';
+  const whatsappPhone = contactPhone.replace(/[^0-9]/g, '');
+  const sourceUrl = typeof property.source_url === 'string' ? property.source_url.trim() : '';
+  const sourceAgency = typeof property.source_agency === 'string' ? property.source_agency.trim() : '';
 
   const nextImage = () => {
+    if (images.length === 0) return;
     setCurrentImageIndex((prev) => (prev + 1) % images.length);
   };
 
   const prevImage = () => {
+    if (images.length === 0) return;
     setCurrentImageIndex((prev) => (prev - 1 + images.length) % images.length);
   };
 
@@ -267,17 +320,17 @@ const PropertyModal = ({ property, isOpen, onClose }: PropertyModalProps) => {
           {/* Scrollable Content */}
           <div className="max-h-[calc(100vh-6rem)] overflow-y-auto">
             {/* Image Gallery Section */}
-            {hasImages ? (
+            {activeImage ? (
               <div className="group relative h-44 cursor-pointer bg-slate-900" onClick={() => setGalleryOpen(true)}>
                 <img
-                  src={images[currentImageIndex].image}
+                  src={activeImage.image}
                   alt={property.title}
                   className="h-full w-full object-cover"
                 />
 
                 {/* Image Counter */}
                 <div className="absolute left-3 top-3 rounded-md bg-black/60 px-2 py-0.5 text-[11px] font-medium text-white backdrop-blur">
-                  {currentImageIndex + 1} / {images.length}
+                  {safeImageIndex + 1} / {images.length}
                 </div>
 
                 {/* Expand Icon */}
@@ -314,7 +367,7 @@ const PropertyModal = ({ property, isOpen, onClose }: PropertyModalProps) => {
                         onClick={(e) => { e.stopPropagation(); setCurrentImageIndex(idx); }}
                         className={cn(
                           'h-10 w-10 overflow-hidden rounded-md border transition-all',
-                          idx === currentImageIndex ? 'border-white scale-110' : 'border-transparent opacity-60 hover:opacity-100'
+                          idx === safeImageIndex ? 'border-white scale-110' : 'border-transparent opacity-60 hover:opacity-100'
                         )}
                       >
                         <img src={img.image} alt="" className="h-full w-full object-cover" />
@@ -361,7 +414,9 @@ const PropertyModal = ({ property, isOpen, onClose }: PropertyModalProps) => {
                   <div className="min-w-0">
                     <div className="text-xs font-medium text-textSecondary">Publicado por</div>
                     <div className="truncate text-sm font-semibold text-textPrimary">
-                      {property.owner_username || `Usuario ${property.owner}`}
+                      {isImported
+                        ? sourceAgency || 'Fuente externa'
+                        : property.owner_username || `Usuario ${property.owner}`}
                     </div>
                   </div>
                 </div>
@@ -391,6 +446,18 @@ const PropertyModal = ({ property, isOpen, onClose }: PropertyModalProps) => {
                   </div>
                 )}
               </div>
+
+              {/* Ver en el mapa: centra el mapa real en la propiedad */}
+              {onViewOnMap && (property.polygon || (property.latitude && property.longitude)) && (
+                <button
+                  type="button"
+                  onClick={onViewOnMap}
+                  className="mb-3 flex w-full items-center justify-center gap-2 rounded-button border border-primary/30 bg-primaryLight py-2 text-sm font-semibold text-primary transition-colors hover:bg-primary hover:text-primary-foreground"
+                >
+                  <MapPinned className="h-4 w-4" strokeWidth={2} aria-hidden />
+                  Ver en el mapa
+                </button>
+              )}
 
               {/* Key Features Grid */}
               <div className="mb-3 grid grid-cols-3 gap-1.5">
@@ -450,47 +517,80 @@ const PropertyModal = ({ property, isOpen, onClose }: PropertyModalProps) => {
                 )}
               </div>
 
-              {/* Contact Information */}
-              {property.contact_phone && (
-                <div className="rounded-card bg-primary p-3 text-white">
-                  <h3 className="mb-1.5 flex items-center gap-1.5 text-xs font-bold">
-                    <Phone className="h-4 w-4" strokeWidth={2} aria-hidden />
-                    Contacto
-                  </h3>
-                  <div className="mb-2 text-sm font-bold">{property.contact_phone}</div>
-                  <div className="grid grid-cols-2 gap-2">
-                    {/* Phone Call Button */}
+              {/* Zona de contacto: las propiedades importadas redirigen al contacto real de origen. */}
+              <div className="mt-1 space-y-3 border-t border-line pt-3">
+                {isImported ? (
+                  contactPhone ? (
                     <a
-                      href={`tel:${property.contact_phone}`}
-                      className="flex flex-col items-center gap-1 rounded-button bg-white/20 p-2 transition-all hover:bg-white/30"
-                    >
-                      <span className="rounded-md bg-white/20 p-1.5">
-                        <Phone className="h-4 w-4" strokeWidth={2} aria-hidden />
-                      </span>
-                      <div className="text-xs font-medium">Llamar</div>
-                    </a>
-
-                    {/* WhatsApp Button */}
-                    <a
-                      href={`https://wa.me/${property.contact_phone.replace(/[^0-9]/g, '')}`}
+                      href={`https://wa.me/${whatsappPhone}`}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="wa-bounce flex flex-col items-center gap-1 rounded-button bg-secondary p-2 transition-all hover:bg-secondaryHover"
+                      className="wa-bounce flex w-full items-center justify-center gap-2 rounded-button bg-secondary px-4 py-3 text-sm font-semibold text-white shadow-card transition-colors hover:bg-secondaryHover"
                     >
-                      <span className="rounded-md bg-white/20 p-1.5">
-                        <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 24 24" aria-hidden>
-                          <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
-                        </svg>
-                      </span>
-                      <div className="text-xs font-medium">WhatsApp</div>
+                      <MessageCircle className="h-4 w-4" strokeWidth={2} aria-hidden />
+                      Contactar por WhatsApp
                     </a>
-                  </div>
-                </div>
-              )}
+                  ) : sourceUrl ? (
+                    <a
+                      href={sourceUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex w-full items-center justify-center gap-2 rounded-button bg-primary px-4 py-3 text-sm font-semibold text-white shadow-card transition-colors hover:bg-primaryHover"
+                    >
+                      <ExternalLink className="h-4 w-4" strokeWidth={2} aria-hidden />
+                      Contactar en {sourceAgency || 'la página original'}
+                    </a>
+                  ) : (
+                    <div className="rounded-card border border-line bg-background p-3 text-sm text-textSecondary">
+                      Esta propiedad viene de una fuente externa y no tiene contacto disponible.
+                    </div>
+                  )
+                ) : (
+                  <>
+                    {contactPhone && (
+                      <div className="rounded-card bg-primary p-3 text-white">
+                        <h3 className="mb-1.5 flex items-center gap-1.5 text-xs font-bold">
+                          <Phone className="h-4 w-4" strokeWidth={2} aria-hidden />
+                          Contacto directo
+                        </h3>
+                        <div className="mb-2 text-sm font-bold">{contactPhone}</div>
+                        <div className="grid grid-cols-2 gap-2">
+                          <a
+                            href={`tel:${contactPhone}`}
+                            className="flex flex-col items-center gap-1 rounded-button bg-white/20 p-2 transition-all hover:bg-white/30"
+                          >
+                            <span className="rounded-md bg-white/20 p-1.5">
+                              <Phone className="h-4 w-4" strokeWidth={2} aria-hidden />
+                            </span>
+                            <div className="text-xs font-medium">Llamar</div>
+                          </a>
 
-              {/* Formulario de contacto (lead) */}
-              <div className="mt-3">
-                <LeadForm propertyId={property.id} source="property_modal" />
+                          <a
+                            href={`https://wa.me/${whatsappPhone}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="wa-bounce flex flex-col items-center gap-1 rounded-button bg-secondary p-2 transition-all hover:bg-secondaryHover"
+                          >
+                            <span className="rounded-md bg-white/20 p-1.5">
+                              <MessageCircle className="h-4 w-4" strokeWidth={2} aria-hidden />
+                            </span>
+                            <div className="text-xs font-medium">WhatsApp</div>
+                          </a>
+                        </div>
+                      </div>
+                    )}
+
+                    {contactPhone && (
+                      <div className="flex items-center gap-3" aria-hidden>
+                        <span className="h-px flex-1 bg-line" />
+                        <span className="text-xs font-medium text-textSecondary">o déjanos tus datos</span>
+                        <span className="h-px flex-1 bg-line" />
+                      </div>
+                    )}
+
+                    <LeadForm propertyId={property.id} source="property_modal" />
+                  </>
+                )}
               </div>
             </div>
           </div>

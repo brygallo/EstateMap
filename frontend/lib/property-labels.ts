@@ -18,14 +18,14 @@ const STATUS_LABELS: Record<string, string> = {
 // Fondo solido para marcadores/badges donde solo se necesita el color base.
 const STATUS_DOT_CLASS: Record<string, string> = {
   for_sale: 'bg-primary',
-  for_rent: 'bg-success',
+  for_rent: 'bg-secondary',
   inactive: 'bg-muted',
 };
 
 // Badge completo (fondo + texto) sobrio para etiquetas de estado, en tokens de marca.
 const STATUS_BADGE_CLASS: Record<string, string> = {
   for_sale: 'bg-primaryLight text-primary',
-  for_rent: 'bg-successBg text-success',
+  for_rent: 'bg-secondary/15 text-[#7A5B20]',
   inactive: 'bg-muted text-textSecondary',
 };
 

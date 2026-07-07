@@ -22,11 +22,12 @@ import {
   AREA_MIN,
   AREA_MAX,
 } from '@/hooks/usePropertyFilters';
-import type { Owner, PropertyFilters } from '@/lib/types';
+import type { Owner, PropertyFilters, PropertyLocationGroup } from '@/lib/types';
 
 interface MapFiltersProps {
   filters: PropertyFilters;
   owners: Owner[];
+  locations: PropertyLocationGroup[];
   hasActiveFilters: boolean;
   onChange: (filters: PropertyFilters) => void;
   onClear: () => void;
@@ -61,12 +62,19 @@ const item: Variants = {
 export default function MapFilters({
   filters,
   owners,
+  locations,
   hasActiveFilters,
   onChange,
   onClear,
 }: MapFiltersProps) {
   const [open, setOpen] = useState(false);
   const update = (patch: Partial<PropertyFilters>) => onChange({ ...filters, ...patch });
+
+  // Ciudades disponibles según la provincia elegida (o todas si es "all").
+  const selectedProvince = locations.find((g) => g.province === filters.province);
+  const cityOptions = filters.province !== 'all'
+    ? selectedProvince?.cities ?? []
+    : Array.from(new Set(locations.flatMap((g) => g.cities))).sort((a, b) => a.localeCompare(b));
 
   const priceChanged = filters.minPrice !== PRICE_MIN || filters.maxPrice !== PRICE_MAX;
   const areaChanged = filters.minArea !== AREA_MIN || filters.maxArea !== AREA_MAX;
@@ -86,6 +94,21 @@ export default function MapFilters({
       key: 'status',
       label: STATUS_LABELS[filters.status] || filters.status,
       clear: () => update({ status: 'all' }),
+    });
+  }
+  if (filters.province !== 'all') {
+    chips.push({
+      key: 'province',
+      label: filters.province,
+      // Al quitar la provincia también se limpia la ciudad (depende de ella).
+      clear: () => update({ province: 'all', city: 'all' }),
+    });
+  }
+  if (filters.city !== 'all') {
+    chips.push({
+      key: 'city',
+      label: filters.city,
+      clear: () => update({ city: 'all' }),
     });
   }
   if (filters.userId !== 'all') {
@@ -124,7 +147,7 @@ export default function MapFilters({
   }
 
   return (
-    <div className="sticky top-0 z-10 space-y-3 border-b border-line bg-white/95 p-4 backdrop-blur">
+    <div className="sticky top-0 z-10 space-y-2.5 border-b border-line bg-white/95 px-3 py-2.5 backdrop-blur">
       {/* Buscador de propiedades + botón de filtros */}
       <div className="flex items-center gap-2">
         <div className="relative flex-1">
@@ -137,7 +160,7 @@ export default function MapFilters({
             value={filters.search}
             onChange={(e) => update({ search: e.target.value })}
             placeholder="Buscar propiedad..."
-            className="rounded-button border-line pl-9"
+            className="h-9 rounded-button border-line pl-9"
           />
         </div>
         <button
@@ -146,7 +169,7 @@ export default function MapFilters({
           aria-expanded={open}
           aria-label="Mostrar filtros"
           title="Filtros"
-          className={`relative flex h-10 w-10 shrink-0 items-center justify-center rounded-button border transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary ${
+          className={`relative flex h-9 w-9 shrink-0 items-center justify-center rounded-button border transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary ${
             open || chips.length > 0
               ? 'border-primary bg-primaryLight text-primary'
               : 'border-line bg-white text-textPrimary hover:bg-muted'
@@ -234,6 +257,47 @@ export default function MapFilters({
                   </SelectContent>
                 </Select>
               </motion.div>
+
+              {/* Provincia */}
+              {locations.length > 0 && (
+                <motion.div variants={item}>
+                  <Select
+                    value={filters.province}
+                    onValueChange={(value) => update({ province: value, city: 'all' })}
+                  >
+                    <SelectTrigger className="rounded-button border-line">
+                      <SelectValue placeholder="Provincia" />
+                    </SelectTrigger>
+                    <SelectContent className="rounded-card">
+                      <SelectItem value="all">Todas las provincias</SelectItem>
+                      {locations.map((g) => (
+                        <SelectItem key={g.province} value={g.province}>
+                          {g.province}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </motion.div>
+              )}
+
+              {/* Ciudad */}
+              {cityOptions.length > 0 && (
+                <motion.div variants={item}>
+                  <Select value={filters.city} onValueChange={(value) => update({ city: value })}>
+                    <SelectTrigger className="rounded-button border-line">
+                      <SelectValue placeholder="Ciudad" />
+                    </SelectTrigger>
+                    <SelectContent className="rounded-card">
+                      <SelectItem value="all">Todas las ciudades</SelectItem>
+                      {cityOptions.map((c) => (
+                        <SelectItem key={c} value={c}>
+                          {c}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </motion.div>
+              )}
 
               {/* Usuario */}
               <motion.div variants={item}>

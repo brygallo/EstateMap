@@ -57,6 +57,12 @@ export interface Property {
   owner?: number | null;
   owner_username?: string;
   contact_phone?: string;
+  contact_email?: string;
+  is_imported?: boolean;
+  source?: number | null;
+  source_agency?: string;
+  source_url?: string;
+  external_id?: string;
   created_at?: string;
   updated_at?: string;
 }
@@ -83,6 +89,8 @@ export interface PropertyFilters {
   search: string;
   propertyType: string;
   status: string;
+  province: string;
+  city: string;
   minPrice: number;
   maxPrice: number;
   minArea: number;
@@ -90,6 +98,12 @@ export interface PropertyFilters {
   rooms: string;
   bathrooms: string;
   userId: string;
+}
+
+/** Provincia con sus ciudades presentes en las propiedades (endpoint locations). */
+export interface PropertyLocationGroup {
+  province: string;
+  cities: string[];
 }
 
 /** Bounding box del mapa visible, en grados. */

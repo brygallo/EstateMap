@@ -31,6 +31,7 @@ INSTALLED_APPS = [
     'dj_rest_auth',
     'dj_rest_auth.registration',
     'real_estate',
+    'ingesta',
 ]
 
 SITE_ID = 1
@@ -231,9 +232,16 @@ AWS_S3_ADDRESSING_STYLE = "path"
 AWS_S3_USE_SSL = MINIO_USE_SSL
 AWS_QUERYSTRING_AUTH = False
 AWS_DEFAULT_ACL = None
+# No sobrescribir archivos con el mismo nombre: si dos imágenes se llaman igual
+# (p. ej. '0.webp'), django-storages genera un nombre único en vez de pisar la
+# anterior. Sin esto, todas las imágenes importadas colisionaban en 5 archivos.
+AWS_S3_FILE_OVERWRITE = False
 
 
 AWS_S3_CUSTOM_DOMAIN = f"{MINIO_PUBLIC_ENDPOINT}/{AWS_STORAGE_BUCKET_NAME}"
+# Esquema de las URLs públicas de las imágenes. Sin esto, django-storages usa
+# 'https:' por defecto aunque MinIO esté en HTTP -> las imágenes no cargan.
+AWS_S3_URL_PROTOCOL = "https:" if MINIO_USE_SSL else "http:"
 
 STORAGES = {
     "default": {

@@ -477,15 +477,23 @@ const LeafletMap = ({
           }
 
           const isSelected = selectedProperty?.id === p.id;
-          // Colores de estado alineados a los tokens de marca: verde `success`
-          // (en venta), azul `primary` (en alquiler), slate `muted` (inactivo).
-          const baseColor = p.status === 'for_sale' ? '#10B981' : p.status === 'for_rent' ? '#2563EB' : '#64748B';
+          // Colores alineados a la direccion visual: verde profundo para venta,
+          // dorado sobrio para alquiler y gris neutral para inactivo.
+          const baseColor = p.status === 'for_sale' ? '#1F6F5B' : p.status === 'for_rent' ? '#C8A96A' : '#64748B';
 
           // Format price
           const formattedPrice = p.price ? `$${parseFloat(p.price).toLocaleString('en-US', { maximumFractionDigits: 0 })}` : 'N/A';
 
           // Create price label icon
-          const priceIconColor = p.status === 'for_sale' ? 'linear-gradient(135deg, #059669, #10B981)' : p.status === 'for_rent' ? 'linear-gradient(135deg, #2563EB, #1D4ED8)' : 'linear-gradient(135deg, #475569, #64748B)';
+          const priceIconColor = p.status === 'for_sale' ? 'linear-gradient(135deg, #14523F, #1F6F5B)' : p.status === 'for_rent' ? 'linear-gradient(135deg, #B8944A, #C8A96A)' : 'linear-gradient(135deg, #475569, #64748B)';
+
+          // Énfasis visual cuando la propiedad está seleccionada: etiqueta más
+          // grande, con anillo de color de marca y sombra más marcada.
+          const baseShadow = isSelected ? '0 8px 20px rgba(32,45,40,0.34)' : '0 4px 12px rgba(32,45,40,0.24)';
+          const hoverShadow = isSelected ? '0 10px 24px rgba(32,45,40,0.42)' : '0 6px 16px rgba(32,45,40,0.34)';
+          const baseScale = isSelected ? 'scale(1.16)' : 'scale(1)';
+          const hoverScale = isSelected ? 'scale(1.22)' : 'scale(1.1)';
+          const ringStyle = isSelected ? 'outline: 2px solid rgba(31,111,91,0.6); outline-offset: 1.5px;' : '';
 
           const priceLabelIcon = new L.DivIcon({
             className: 'price-label-icon',
@@ -501,21 +509,25 @@ const LeafletMap = ({
                 <div class="price-label-badge" style="
                   background: ${priceIconColor};
                   color: white;
-                  padding: 4px 8px;
-                  border-radius: 12px;
-                  font-weight: 600;
-                  font-size: 11px;
+                  padding: 4px 9px;
+                  border-radius: 999px;
+                  font-weight: 700;
+                  font-size: 12px;
+                  line-height: 1.1;
                   white-space: nowrap;
-                  box-shadow: 0 2px 8px rgba(0,0,0,0.25);
-                  border: 1.5px solid white;
+                  box-shadow: ${baseShadow};
+                  border: 2px solid #ffffff;
+                  ${ringStyle}
+                  text-shadow: 0 1px 2px rgba(0,0,0,0.28);
                   font-family: var(--font-geist-mono), ui-monospace, 'SFMono-Regular', monospace;
                   font-variant-numeric: tabular-nums;
                   letter-spacing: 0;
                   cursor: pointer;
-                  transition: transform 0.2s, box-shadow 0.2s;
+                  transform: ${baseScale};
+                  transition: transform 0.15s, box-shadow 0.15s;
                 "
-                onmouseover="this.style.transform='scale(1.1)'; this.style.boxShadow='0 4px 12px rgba(0,0,0,0.35)';"
-                onmouseout="this.style.transform='scale(1)'; this.style.boxShadow='0 2px 8px rgba(0,0,0,0.25)';"
+                onmouseover="this.style.transform='${hoverScale}'; this.style.boxShadow='${hoverShadow}';"
+                onmouseout="this.style.transform='${baseScale}'; this.style.boxShadow='${baseShadow}';"
                 >
                   ${formattedPrice}
                 </div>

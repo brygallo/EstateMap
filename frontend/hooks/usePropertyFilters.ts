@@ -2,7 +2,13 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import type { MapBounds, Owner, Property, PropertyFilters } from '@/lib/types';
+import type {
+  MapBounds,
+  Owner,
+  Property,
+  PropertyFilters,
+  PropertyLocationGroup,
+} from '@/lib/types';
 
 // Rangos por defecto de los sliders.
 export const PRICE_MIN = 0;
@@ -15,6 +21,8 @@ export function defaultFilters(): PropertyFilters {
     search: '',
     propertyType: 'all',
     status: 'all',
+    province: 'all',
+    city: 'all',
     minPrice: PRICE_MIN,
     maxPrice: PRICE_MAX,
     minArea: AREA_MIN,
@@ -36,6 +44,8 @@ function filtersFromParams(params: URLSearchParams | null): PropertyFilters {
     search: params.get('search') || '',
     propertyType: params.get('type') || 'all',
     status: params.get('status') || 'all',
+    province: params.get('province') || 'all',
+    city: params.get('city') || 'all',
     minPrice: num('minPrice', PRICE_MIN),
     maxPrice: num('maxPrice', PRICE_MAX),
     minArea: num('minArea', AREA_MIN),
@@ -51,6 +61,8 @@ function filtersEqual(a: PropertyFilters, b: PropertyFilters): boolean {
     a.search === b.search &&
     a.propertyType === b.propertyType &&
     a.status === b.status &&
+    a.province === b.province &&
+    a.city === b.city &&
     a.minPrice === b.minPrice &&
     a.maxPrice === b.maxPrice &&
     a.minArea === b.minArea &&
@@ -67,6 +79,8 @@ function filtersToUrlParams(f: PropertyFilters): URLSearchParams {
   if (f.search) params.set('search', f.search);
   if (f.propertyType !== 'all') params.set('type', f.propertyType);
   if (f.status !== 'all') params.set('status', f.status);
+  if (f.province !== 'all') params.set('province', f.province);
+  if (f.city !== 'all') params.set('city', f.city);
   if (f.minPrice !== PRICE_MIN) params.set('minPrice', String(f.minPrice));
   if (f.maxPrice !== PRICE_MAX) params.set('maxPrice', String(f.maxPrice));
   if (f.minArea !== AREA_MIN) params.set('minArea', String(f.minArea));
@@ -83,6 +97,8 @@ function filtersToApiParams(f: PropertyFilters, bounds: MapBounds | null): URLSe
   if (f.search) params.set('search', f.search);
   if (f.propertyType !== 'all') params.set('type', f.propertyType);
   if (f.status !== 'all') params.set('status', f.status);
+  if (f.province !== 'all') params.set('province', f.province);
+  if (f.city !== 'all') params.set('city', f.city);
   if (f.minPrice !== PRICE_MIN) params.set('min_price', String(f.minPrice));
   if (f.maxPrice !== PRICE_MAX) params.set('max_price', String(f.maxPrice));
   if (f.minArea !== AREA_MIN) params.set('min_area', String(f.minArea));
@@ -116,7 +132,11 @@ export function usePropertyFilters({ token, bounds }: UsePropertyFiltersArgs) {
   );
   const [properties, setProperties] = useState<Property[]>([]);
   const [owners, setOwners] = useState<Owner[]>([]);
+  const [locations, setLocations] = useState<PropertyLocationGroup[]>([]);
   const [loading, setLoading] = useState(false);
+  // Total de propiedades que cumplen los filtros en TODO el catálogo (sin bbox),
+  // para diferenciar "visibles en el mapa" de "total encontradas".
+  const [totalCount, setTotalCount] = useState<number | null>(null);
 
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const abortRef = useRef<AbortController | null>(null);
@@ -144,6 +164,62 @@ export function usePropertyFilters({ token, bounds }: UsePropertyFiltersArgs) {
       cancelled = true;
     };
   }, [token]);
+
+  // Provincias/ciudades disponibles para el filtro por ubicación (todo el catálogo).
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const { apiFetch } = await import('@/lib/api');
+        const res = await apiFetch('/properties/locations/', { skipAuth: !token });
+        if (res.ok && !cancelled) {
+          setLocations(await res.json());
+        }
+      } catch {
+        // El filtro por ubicación queda vacío si falla.
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [token]);
+
+  // Total de resultados que cumplen los filtros SIN restringir al bbox visible.
+  // Se pide `page_size=1` porque solo interesa el `count` de la paginación DRF.
+  useEffect(() => {
+    let cancelled = false;
+    const controller = new AbortController();
+    const timer = setTimeout(async () => {
+      try {
+        const { apiFetch } = await import('@/lib/api');
+        const params = filtersToApiParams(filters, null);
+        params.set('page_size', '1');
+        const res = await apiFetch(`/properties/?${params.toString()}`, {
+          skipAuth: !token,
+          signal: controller.signal,
+        });
+        if (res.ok && !cancelled) {
+          const data = await res.json();
+          setTotalCount(
+            typeof data?.count === 'number'
+              ? data.count
+              : Array.isArray(data)
+                ? data.length
+                : null
+          );
+        }
+      } catch (err: any) {
+        if (err?.name !== 'AbortError') {
+          console.error('Error fetching total count:', err);
+        }
+      }
+    }, 300);
+    return () => {
+      cancelled = true;
+      controller.abort();
+      clearTimeout(timer);
+    };
+  }, [filters, token]);
 
   // Traer propiedades cuando cambian filtros o bounds (con debounce).
   useEffect(() => {
@@ -207,6 +283,8 @@ export function usePropertyFilters({ token, bounds }: UsePropertyFiltersArgs) {
       !!f.search ||
       f.propertyType !== 'all' ||
       f.status !== 'all' ||
+      f.province !== 'all' ||
+      f.city !== 'all' ||
       f.minPrice !== PRICE_MIN ||
       f.maxPrice !== PRICE_MAX ||
       f.minArea !== AREA_MIN ||
@@ -221,7 +299,9 @@ export function usePropertyFilters({ token, bounds }: UsePropertyFiltersArgs) {
     filters,
     properties,
     owners,
+    locations,
     loading,
+    totalCount,
     handleFilterChange,
     clearFilters,
     hasActiveFilters,

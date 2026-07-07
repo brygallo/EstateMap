@@ -355,7 +355,7 @@ const EditPropertyPage = () => {
             particleCount: 90,
             spread: 70,
             origin: { y: 0.7 },
-            colors: ['#2563EB', '#06B6D4', '#10B981'],
+            colors: ['#1F6F5B', '#C8A96A', '#E5F2EE'],
           });
         } catch {}
         toast.success('Propiedad actualizada exitosamente');
