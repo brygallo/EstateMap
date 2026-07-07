@@ -119,9 +119,9 @@ const RangeSlider = ({
 
   // Theme-based styles
   const isDark = theme === 'dark';
-  const valueBoxClass = isDark ? 'bg-white/10 text-white' : 'bg-gray-100 text-gray-700';
-  const separatorClass = isDark ? 'text-white/40' : 'text-gray-400';
-  const trackBgClass = isDark ? 'bg-white/20' : 'bg-gray-200';
+  const valueBoxClass = isDark ? 'bg-white/10 text-white' : 'bg-muted text-textPrimary';
+  const separatorClass = isDark ? 'text-white/40' : 'text-textSecondary';
+  const trackBgClass = isDark ? 'bg-white/20' : 'bg-muted';
   const formattedMinLabel = formatValue(minValue);
   const formattedMaxLabel = formatValue(maxValue);
 
@@ -213,7 +213,7 @@ const RangeSlider = ({
         >
           {/* Active Range */}
           <div
-            className="absolute h-full bg-gradient-to-r from-primary to-secondary rounded-full"
+            className="absolute h-full rounded-full bg-primary"
             style={{
               left: `${minPercentage}%`,
               right: `${100 - maxPercentage}%`,

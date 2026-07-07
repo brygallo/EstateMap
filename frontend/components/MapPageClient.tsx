@@ -12,7 +12,6 @@ import { usePropertyFilters } from '@/hooks/usePropertyFilters';
 import { flyToProperty } from '@/lib/map-navigation';
 import PropertySidebar from '@/components/map/PropertySidebar';
 import PropertyModal from '@/components/PropertyModal';
-import ShareModal from '@/components/ShareModal';
 import LocationPermissionModal from '@/components/LocationPermissionModal';
 import type { MapBounds, Property } from '@/lib/types';
 
@@ -45,7 +44,6 @@ const MapPage = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [selectedProperty, setSelectedProperty] = useState<Property | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [shareModalOpen, setShareModalOpen] = useState(false);
 
   const geo = useGeolocation(mapRef);
   const {
@@ -114,8 +112,6 @@ const MapPage = () => {
     }
   };
 
-  const getShareUrl = () => (typeof window === 'undefined' ? '' : window.location.href);
-
   // Limpiar el timeout de hover al desmontar.
   useEffect(() => {
     return () => {
@@ -146,7 +142,7 @@ const MapPage = () => {
         disabled={geo.loadingLocation}
         variant="outline"
         size="icon"
-        className="fixed bottom-20 right-4 z-nav h-14 w-14 rounded-full border-line bg-white text-primary shadow-cardHover hover:bg-slate-50 hover:text-primary [&_svg]:size-6"
+        className="fixed bottom-20 right-4 z-nav h-14 w-14 rounded-full border-line bg-surface text-primary shadow-cardHover hover:bg-muted hover:text-primary [&_svg]:size-6"
         aria-label="Mi ubicación"
         title="Ir a mi ubicación"
       >
@@ -173,7 +169,7 @@ const MapPage = () => {
         w-72 lg:w-1/5
         z-40 lg:z-0
         overflow-y-auto
-        shadow-2xl lg:shadow-none
+        shadow-cardHover lg:shadow-none
       `}
       >
         <PropertySidebar
@@ -182,7 +178,6 @@ const MapPage = () => {
           hasActiveFilters={hasActiveFilters}
           onFilterChange={handleFilterChange}
           onClearFilters={clearFilters}
-          onShare={() => setShareModalOpen(true)}
           visibleProperties={visibleProperties}
           selectedProperty={selectedProperty}
           onPropertyClick={handleSidebarPropertyClick}
@@ -210,13 +205,6 @@ const MapPage = () => {
 
       {/* Modal de detalle */}
       <PropertyModal property={selectedProperty} isOpen={isModalOpen} onClose={handleCloseModal} />
-
-      {/* Modal de compartir */}
-      <ShareModal
-        isOpen={shareModalOpen}
-        onClose={() => setShareModalOpen(false)}
-        shareUrl={getShareUrl()}
-      />
 
       {/* Modal de permiso de ubicación */}
       <LocationPermissionModal

@@ -46,6 +46,21 @@ function filtersFromParams(params: URLSearchParams | null): PropertyFilters {
   };
 }
 
+function filtersEqual(a: PropertyFilters, b: PropertyFilters): boolean {
+  return (
+    a.search === b.search &&
+    a.propertyType === b.propertyType &&
+    a.status === b.status &&
+    a.minPrice === b.minPrice &&
+    a.maxPrice === b.maxPrice &&
+    a.minArea === b.minArea &&
+    a.maxArea === b.maxArea &&
+    a.rooms === b.rooms &&
+    a.bathrooms === b.bathrooms &&
+    a.userId === b.userId
+  );
+}
+
 /** Serializa los filtros activos a URLSearchParams (para la URL compartible). */
 function filtersToUrlParams(f: PropertyFilters): URLSearchParams {
   const params = new URLSearchParams();
@@ -105,6 +120,11 @@ export function usePropertyFilters({ token, bounds }: UsePropertyFiltersArgs) {
 
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const abortRef = useRef<AbortController | null>(null);
+
+  useEffect(() => {
+    const next = filtersFromParams(searchParams);
+    setFilters((current) => (filtersEqual(current, next) ? current : next));
+  }, [searchParams]);
 
   // Lista de propietarios para el filtro por usuario (independiente del bbox).
   useEffect(() => {

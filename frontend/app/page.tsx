@@ -223,7 +223,7 @@ export default async function HomePage() {
               </p>
             </Card>
             <Card className="rounded-card border-line p-6 shadow-card transition-shadow hover:shadow-cardHover">
-              <span className="flex h-11 w-11 items-center justify-center rounded-button bg-emerald-50 text-success">
+              <span className="flex h-11 w-11 items-center justify-center rounded-button bg-successBg text-success">
                 <KeyRound className="h-5 w-5" strokeWidth={2} aria-hidden />
               </span>
               <h2 className="mt-4 text-lg font-semibold text-textPrimary">Alquileres</h2>
@@ -237,7 +237,7 @@ export default async function HomePage() {
               </p>
             </Card>
             <Card className="rounded-card border-line p-6 shadow-card transition-shadow hover:shadow-cardHover">
-              <span className="flex h-11 w-11 items-center justify-center rounded-button bg-amber-50 text-warning">
+              <span className="flex h-11 w-11 items-center justify-center rounded-button bg-warningBg text-warning">
                 <Trees className="h-5 w-5" strokeWidth={2} aria-hidden />
               </span>
               <h2 className="mt-4 text-lg font-semibold text-textPrimary">Terrenos y lotes</h2>

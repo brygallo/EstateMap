@@ -49,13 +49,13 @@ export default function UserFilter({ users, selectedUserId, onSelect }: UserFilt
           variant="outline"
           role="combobox"
           aria-expanded={isOpen}
-          className="w-full justify-between rounded-button border-line bg-white px-3 font-normal text-textPrimary hover:bg-slate-50"
+          className="w-full justify-between rounded-button border-line bg-surface px-3 font-normal text-textPrimary hover:bg-muted"
         >
           <span className="flex min-w-0 items-center gap-2">
             <Users className="h-4 w-4 shrink-0 text-textSecondary" strokeWidth={1.75} aria-hidden />
             <span className="truncate">{displayText}</span>
           </span>
-          <ChevronsUpDown className="h-4 w-4 shrink-0 text-slate-400" aria-hidden />
+          <ChevronsUpDown className="h-4 w-4 shrink-0 text-textSecondary" aria-hidden />
         </Button>
       </PopoverTrigger>
       <PopoverContent

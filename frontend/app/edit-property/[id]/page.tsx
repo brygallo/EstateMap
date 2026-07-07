@@ -128,7 +128,7 @@ function SectionCard({
 }) {
   return (
     <div className="overflow-hidden rounded-card bg-surface shadow-card">
-      <div className="bg-gradient-to-r from-primary to-secondary px-5 py-4">
+      <div className="bg-primary px-5 py-4">
         <h3 className="flex items-center gap-2 text-base font-semibold text-white lg:text-lg">
           {icon}
           {title}
@@ -279,7 +279,8 @@ const EditPropertyPage = () => {
 
         if (res.ok) {
           const data = await res.json();
-          const filtered = data.filter((p: any) => p.id.toString() !== propertyId);
+          const properties = Array.isArray(data) ? data : data.results || [];
+          const filtered = properties.filter((p: any) => p.id.toString() !== propertyId);
           setReferenceProperties(filtered);
         } else {
           console.error('Error loading reference properties');
@@ -656,7 +657,7 @@ const EditPropertyPage = () => {
 
                 {/* Map Section */}
                 <div className="overflow-hidden rounded-card bg-surface shadow-card">
-                  <div className="bg-gradient-to-r from-primary to-secondary px-5 py-4">
+                  <div className="bg-primary px-5 py-4">
                     <h2 className="flex items-center gap-2 text-base font-semibold text-white lg:text-lg">
                       <MapPin className="h-5 w-5" />
                       Ubicación en el Mapa
@@ -1023,7 +1024,7 @@ const EditPropertyPage = () => {
                     <Button
                       type="submit"
                       size="lg"
-                      className="w-full rounded-button bg-gradient-to-r from-primary to-secondary py-6 text-lg font-semibold shadow-cardHover sm:flex-1"
+                      className="w-full rounded-button bg-primary py-6 text-lg font-semibold shadow-cardHover sm:flex-1"
                     >
                       <Check className="mr-2 h-5 w-5" />
                       Actualizar Propiedad
@@ -1044,7 +1045,7 @@ const EditPropertyPage = () => {
             </Form>
 
             {/* Contact Support */}
-            <div className="mt-2 rounded-card border border-primary/15 bg-gradient-to-r from-primary/10 via-surface to-secondary/10 p-6 shadow-card sm:p-8">
+            <div className="mt-2 rounded-card border border-primary/15 bg-primaryLight/40 p-6 shadow-card sm:p-8">
               <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
                 <div className="flex items-start gap-3">
                   <Info className="mt-1 h-6 w-6 text-primary" />
@@ -1055,7 +1056,7 @@ const EditPropertyPage = () => {
                     </p>
                   </div>
                 </div>
-                <Button asChild className="rounded-button bg-gradient-to-r from-primary to-secondary font-semibold shadow-card">
+                <Button asChild className="rounded-button bg-primary font-semibold shadow-card">
                   <a
                     href="https://wa.me/593983738151?text=Hola%20necesito%20ayuda%20para%20editar%20mi%20propiedad"
                     target="_blank"
