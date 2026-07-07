@@ -223,15 +223,16 @@ export default function MapFilters({
               variants={container}
               initial="hidden"
               animate="show"
-              className="space-y-3 pt-1"
+              className="grid gap-3 pt-1 sm:grid-cols-2"
             >
               {/* Tipo */}
-              <motion.div variants={item}>
+              <motion.div variants={item} className="space-y-1.5">
+                <Label className="text-xs font-medium text-textSecondary">Tipo</Label>
                 <Select
                   value={filters.propertyType}
                   onValueChange={(value) => update({ propertyType: value })}
                 >
-                  <SelectTrigger className="rounded-button border-line">
+                  <SelectTrigger aria-label="Tipo de propiedad" className="rounded-button border-line">
                     <SelectValue placeholder="Tipo de propiedad" />
                   </SelectTrigger>
                   <SelectContent className="rounded-card">
@@ -245,9 +246,10 @@ export default function MapFilters({
               </motion.div>
 
               {/* Estado */}
-              <motion.div variants={item}>
+              <motion.div variants={item} className="space-y-1.5">
+                <Label className="text-xs font-medium text-textSecondary">Operación</Label>
                 <Select value={filters.status} onValueChange={(value) => update({ status: value })}>
-                  <SelectTrigger className="rounded-button border-line">
+                  <SelectTrigger aria-label="Operación" className="rounded-button border-line">
                     <SelectValue placeholder="Operación" />
                   </SelectTrigger>
                   <SelectContent className="rounded-card">
@@ -260,12 +262,13 @@ export default function MapFilters({
 
               {/* Provincia */}
               {locations.length > 0 && (
-                <motion.div variants={item}>
+                <motion.div variants={item} className="space-y-1.5">
+                  <Label className="text-xs font-medium text-textSecondary">Provincia</Label>
                   <Select
                     value={filters.province}
                     onValueChange={(value) => update({ province: value, city: 'all' })}
                   >
-                    <SelectTrigger className="rounded-button border-line">
+                    <SelectTrigger aria-label="Provincia" className="rounded-button border-line">
                       <SelectValue placeholder="Provincia" />
                     </SelectTrigger>
                     <SelectContent className="rounded-card">
@@ -282,9 +285,10 @@ export default function MapFilters({
 
               {/* Ciudad */}
               {cityOptions.length > 0 && (
-                <motion.div variants={item}>
+                <motion.div variants={item} className="space-y-1.5">
+                  <Label className="text-xs font-medium text-textSecondary">Ciudad</Label>
                   <Select value={filters.city} onValueChange={(value) => update({ city: value })}>
-                    <SelectTrigger className="rounded-button border-line">
+                    <SelectTrigger aria-label="Ciudad" className="rounded-button border-line">
                       <SelectValue placeholder="Ciudad" />
                     </SelectTrigger>
                     <SelectContent className="rounded-card">
@@ -300,7 +304,8 @@ export default function MapFilters({
               )}
 
               {/* Usuario */}
-              <motion.div variants={item}>
+              <motion.div variants={item} className="space-y-1.5 sm:col-span-2">
+                <Label className="text-xs font-medium text-textSecondary">Anunciante</Label>
                 <UserFilter
                   users={owners}
                   selectedUserId={filters.userId}
@@ -308,10 +313,10 @@ export default function MapFilters({
                 />
               </motion.div>
 
-              <Separator className="bg-line" />
+              <Separator className="bg-line sm:col-span-2" />
 
               {/* Precio */}
-              <motion.div variants={item} className="space-y-1">
+              <motion.div variants={item} className="space-y-1 sm:col-span-2">
                 <Label className="text-xs font-medium text-textSecondary">Precio (USD)</Label>
                 <RangeSlider
                   min={PRICE_MIN}
@@ -326,7 +331,7 @@ export default function MapFilters({
               </motion.div>
 
               {/* Área */}
-              <motion.div variants={item} className="space-y-1">
+              <motion.div variants={item} className="space-y-1 sm:col-span-2">
                 <Label className="text-xs font-medium text-textSecondary">Área (m²)</Label>
                 <RangeSlider
                   min={AREA_MIN}

@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Check, Loader2, MapPin } from 'lucide-react';
+import { Loader2, MapPin, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 interface LocationPermissionModalProps {
@@ -26,69 +26,61 @@ const LocationPermissionModal = ({ isOpen, onAccept, onDecline, isLoading = fals
   if (!isOpen) return null;
 
   return (
-    <div className={`fixed inset-0 z-top flex items-center justify-center p-4 transition-opacity duration-300 ${isVisible ? 'opacity-100' : 'opacity-0'}`}>
-      <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={onDecline}></div>
+    <div className={`pointer-events-none fixed inset-x-0 bottom-4 z-top flex justify-center px-4 transition-all duration-300 sm:justify-end ${isVisible ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'}`}>
+      <div className="pointer-events-auto w-full max-w-xl rounded-modal border border-line bg-surface p-4 shadow-cardHover">
+        <div className="flex gap-3">
+          <div className="hidden h-11 w-11 flex-shrink-0 items-center justify-center rounded-card bg-primaryLight text-primary sm:flex">
+            <MapPin className="h-6 w-6" strokeWidth={1.75} aria-hidden />
+          </div>
+          <div className="min-w-0 flex-1">
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <h2 className="text-base font-semibold text-textPrimary">
+                  Ver propiedades cerca de ti
+                </h2>
+                <p className="mt-1 text-sm leading-5 text-textSecondary">
+                  Podemos centrar el mapa en tu zona. Tu ubicación no se comparte con terceros.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={onDecline}
+                disabled={isLoading}
+                className="rounded-button p-1.5 text-textSecondary transition-colors hover:bg-muted hover:text-textPrimary disabled:opacity-50"
+                aria-label="Cerrar aviso de ubicación"
+              >
+                <X className="h-4 w-4" aria-hidden />
+              </button>
+            </div>
 
-      <div className={`relative mx-4 w-full max-w-md transform rounded-modal border border-line bg-surface p-5 shadow-cardHover transition-all duration-300 ${isVisible ? 'scale-100 translate-y-0' : 'scale-95 translate-y-4'}`}>
-        <div className="mb-4 flex justify-center">
-          <div className="rounded-card bg-primaryLight p-3 text-primary">
-            <MapPin className="h-10 w-10" strokeWidth={1.75} aria-hidden />
+            <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:justify-end">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={onDecline}
+                disabled={isLoading}
+                className="h-9 border-line"
+              >
+                Ahora no
+              </Button>
+              <Button
+                type="button"
+                onClick={onAccept}
+                disabled={isLoading}
+                className="h-9"
+              >
+                {isLoading ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
+                    <span>Buscando...</span>
+                  </>
+                ) : (
+                  'Usar mi ubicación'
+                )}
+              </Button>
+            </div>
           </div>
         </div>
-
-        <h2 className="mb-2 text-center text-xl font-semibold text-textPrimary">
-          ¿Permitir ubicación?
-        </h2>
-
-        <p className="mb-6 text-center leading-relaxed text-textSecondary">
-          Permítenos acceder a tu ubicación para mostrarte propiedades cerca de ti y mejorar tu experiencia de búsqueda.
-        </p>
-
-        <div className="mb-6 space-y-3">
-          {[
-            'Ver el mapa centrado en tu ciudad',
-            'Encontrar propiedades cercanas más fácilmente',
-            'Experiencia personalizada según tu zona',
-          ].map((benefit) => (
-            <div key={benefit} className="flex items-start gap-3">
-              <div className="mt-0.5 flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-md bg-successBg text-success">
-                <Check className="h-3 w-3" strokeWidth={3} aria-hidden />
-              </div>
-              <p className="text-sm text-textPrimary">{benefit}</p>
-            </div>
-          ))}
-        </div>
-
-        <div className="flex gap-3">
-          <Button
-            type="button"
-            variant="outline"
-            onClick={onDecline}
-            disabled={isLoading}
-            className="flex-1"
-          >
-            No, gracias
-          </Button>
-          <Button
-            type="button"
-            onClick={onAccept}
-            disabled={isLoading}
-            className="flex-1"
-          >
-            {isLoading ? (
-              <>
-                <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
-                <span>Obteniendo...</span>
-              </>
-            ) : (
-              'Permitir'
-            )}
-          </Button>
-        </div>
-
-        <p className="mt-4 text-center text-xs text-textSecondary">
-          Tu ubicación no será compartida con terceros
-        </p>
       </div>
     </div>
   );

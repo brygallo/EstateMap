@@ -41,6 +41,7 @@ interface PropertyCardProps {
   href?: string;
   /** Si se pasa, la tarjeta es clicable sin navegar (variante `compact`). */
   onClick?: () => void;
+  onOpenDetails?: () => void;
   selected?: boolean;
 }
 
@@ -192,6 +193,7 @@ export default function PropertyCard({
   variant = 'grid',
   href,
   onClick,
+  onOpenDetails,
   selected = false,
 }: PropertyCardProps) {
   const typeLabel = getPropertyTypeLabel(String(property.property_type));
@@ -219,17 +221,8 @@ export default function PropertyCard({
 
     return (
       <div
-        onClick={onClick}
-        onKeyDown={(e) => {
-          if (e.key === 'Enter' || e.key === ' ') {
-            e.preventDefault();
-            onClick?.();
-          }
-        }}
-        role="button"
-        tabIndex={0}
         aria-pressed={selected}
-        className={`card card-hover flex cursor-pointer gap-2.5 p-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 ${
+        className={`card card-hover flex gap-2.5 p-2 ${
           selected ? 'ring-2 ring-primary border-primary' : ''
         }`}
       >
@@ -282,6 +275,23 @@ export default function PropertyCard({
                 {label}
               </span>
             ))}
+          </div>
+
+          <div className="mt-2 grid grid-cols-2 gap-1.5">
+            <button
+              type="button"
+              onClick={onClick}
+              className="rounded-md border border-line bg-white px-2 py-1 text-[11px] font-semibold text-textPrimary transition-colors hover:border-primary hover:text-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
+            >
+              Ver mapa
+            </button>
+            <button
+              type="button"
+              onClick={onOpenDetails}
+              className="rounded-md bg-primary px-2 py-1 text-[11px] font-semibold text-white transition-colors hover:bg-primaryHover focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
+            >
+              Detalle
+            </button>
           </div>
         </div>
       </div>

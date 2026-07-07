@@ -36,6 +36,15 @@ module.exports = {
 				foreground: '#111827'
 			},
 			secondaryHover: '#A8863F',
+			// Paleta azul/navy reutilizable (footer y secciones oscuras).
+			// De 100 (más claro) a 500 (más oscuro); cambiar aquí actualiza todo.
+			navy: {
+				100: '#E7E2F3',
+				200: '#A7B2E6',
+				300: '#688CCA',
+				400: '#496D9C',
+				500: '#2D3C67'
+			},
 			surface: '#FFFFFF',
 			line: '#E5E2DA',
 			dark: '#111827',

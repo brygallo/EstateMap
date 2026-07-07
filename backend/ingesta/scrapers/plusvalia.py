@@ -40,13 +40,22 @@ listados como en fichas. No hace falta Playwright, ni resolver Turnstile, ni
 ``cf_clearance``. ``curl_cffi`` está en ``requirements``; si faltara, el
 scraper cae a httpx (que recibirá 403 y degradará con gracia).
 
-LIMITACIÓN QUE QUEDA — SIN COORDENADAS. Plusvalía **no expone lat/lng en el
-HTML**: el mapa de la ficha es una IMAGEN PNG pre-renderizada en su CDN
-(``img*.naventcdn.com/ficha/map/Plusvalia/<ID>E.png``) con las coordenadas
-"quemadas" en el servidor. Sólo hay ubicación por texto (parroquia / cantón /
-provincia). Como el pipeline exige lat/lng, los anuncios se geocodifican por
-dirección (Nominatim) en ``_parse_detail``; si la geocodificación falla, el
-anuncio sale sin coordenadas y el pipeline lo descartará.
+COORDENADAS (reales y EXACTAS, NO se adivinan). Plusvalía publica la
+geolocalización exacta de cada anuncio en el objeto
+``"postingGeolocation":{"geolocation":{"latitude":X,"longitude":Y}}``, con la
+marca ``address.visibility = "EXACT"``. Dónde aparece:
+  - En el **LISTADO**: para TODOS los anuncios (clasificados Y proyectos). Este
+    scraper lee ahí las coordenadas (``_coords_from_listing``) y las inyecta al
+    parsear cada ficha -> los clasificados también entran al mapa con su punto
+    exacto.
+  - En la **FICHA**: sólo los proyectos repiten ``postingGeolocation`` (los
+    clasificados no la repiten en su ficha; por eso se toma del listado).
+Un anuncio sin coordenadas se descarta (no se inventa la ubicación), igual que
+hace Properati.
+
+Gancho opcional: ``PLUSVALIA_GEOCODE=1`` geocodifica por dirección (Nominatim,
+aproximado) como último recurso si algún anuncio no trajera coordenadas.
+Desactivado por defecto.
 """
 import html as html_lib
 import os
@@ -67,10 +76,33 @@ DEFAULT_SEARCHES = [
     ("/alquiler/terrenos", "terreno", "alquiler"),
 ]
 
-# Ficha individual: /propiedades/clasificado/<slug>-<ID>.html (captura el ID).
-# Se excluyen /propiedades/proyecto/ y /emprendimiento/ (son desarrollos).
-_DETAIL_RE = re.compile(r'/propiedades/clasificado/[^"\'?\s]+?-(\d+)\.html')
+# Ficha: /propiedades/{clasificado,proyecto}/<slug>-<ID>.html (captura el ID).
+# Se incluyen ambos tipos: los "proyecto" (desarrollos) son los que traen
+# coordenadas exactas; los "clasificado" se descartan luego por falta de lat/lng.
+_DETAIL_RE = re.compile(r'/propiedades/(?:clasificado|proyecto)/[^"\'?\s]+?-(\d+)\.html')
 _ID_RE = re.compile(r'-(\d+)\.html')
+
+# Coordenadas REALES del anuncio (objeto SSR postingGeolocation).
+_GEO_RE = re.compile(
+    r'"postingGeolocation"\s*:\s*\{\s*"geolocation"\s*:\s*\{\s*'
+    r'"latitude"\s*:\s*([-0-9.]+)\s*,\s*"longitude"\s*:\s*([-0-9.]+)'
+)
+# En el LISTADO cada anuncio (clasificado o proyecto) trae su postingId y, en el
+# mismo objeto, su postingGeolocation exacta y su ubicación (dirección + jerarquía
+# zona/ciudad/provincia). Se extrae todo por segmentos (entre postingIds).
+_LISTING_ID_RE = re.compile(r'"postingId"\s*:\s*"?(\d{6,})"?')
+_LISTING_ADDR_RE = re.compile(r'"address"\s*:\s*\{\s*"name"\s*:\s*"([^"]*)"')
+
+
+def _label_re(label):
+    return re.compile(r'"name"\s*:\s*"([^"]*)"\s*,\s*"label"\s*:\s*"' + label + '"')
+
+
+_PROV_RE = _label_re("PROVINCIA")
+_CITY_RE = _label_re("CIUDAD")
+_ZONA_RE = _label_re("ZONA")
+# Superficie: caption "<Tipo> · 2500m²" del propio anuncio (campo JSON "title").
+_AREA_CAP_RE = re.compile(r'"title"\s*:\s*"[^"]*·\s*([0-9][0-9.,]*)\s*m(?:²|2|&sup2;)', re.I)
 
 # Datos del blob JS embebido de la ficha.
 _OP_RE = re.compile(r'"operationType"\s*:\s*\{\s*"name"\s*:\s*"([^"]+)"')
@@ -84,10 +116,12 @@ _PHONE_RE = re.compile(r"'whatsApp'\s*:\s*'([^']+)'")
 _AGENCY_RE = re.compile(
     r"""["']publisherId["']\s*:\s*["']?\d+["']?\s*,\s*["']name["']\s*:\s*["']([^"']+)["']"""
 )
-# Características (id -> label/value) para deducir dormitorios/baños/superficie.
-_FEATURE_RE = re.compile(
-    r'"featureId"\s*:\s*"(\d+)"\s*,\s*"label"\s*:\s*"([^"]*)"\s*,\s*"measure"\s*:\s*[^,]*,\s*"value"\s*:\s*"([^"]*)"'
-)
+# Características PRINCIPALES (bloque ``mainFeatures``, ids CFT estables):
+#   CFT100 = superficie total (m²)   CFT101 = superficie cubierta (m²)
+#   CFT2   = dormitorios             CFT3   = baños   CFT4 = medio baño
+# Son la fuente fiable; la otra lista ("Baño de servicio", "Niveles
+# construidos", etc.) son atributos secundarios y NO se usan para estos campos.
+_MAIN_FEAT_RE = re.compile(r'"(CFT\d+)"\s*:\s*\{[^{}]*?"value"\s*:\s*"?([^",}]+)')
 # Descripción completa del cuerpo.
 _DESC_RE = re.compile(r'id="reactDescription">(.*?)</section>', re.S)
 # Total de anuncios que muestra el portal en la cabecera / <title> del listado.
@@ -129,10 +163,10 @@ def _geocode(query, log=None):
     consulta y respeta el límite de ~1 req/s de Nominatim. Devuelve
     ``(lat, lng)`` como cadenas o ``(None, None)``.
 
-    Se puede desactivar con la variable de entorno ``PLUSVALIA_NO_GEOCODE=1``
-    (entonces los anuncios saldrán sin coordenadas y el pipeline los descartará).
+    Sólo se usa como fallback OPCIONAL para clasificados cuando el llamador lo
+    pide (``PLUSVALIA_GEOCODE=1``); por defecto no se invoca.
     """
-    if not query or os.environ.get("PLUSVALIA_NO_GEOCODE") == "1":
+    if not query:
         return None, None
     if query in _GEOCODE_CACHE:
         return _GEOCODE_CACHE[query]
@@ -198,9 +232,25 @@ class PlusvaliaScraper(BaseScraper):
         saltados = 0
 
         with self._client() as client:
+            # SIEMPRE INTERCALADO: se recorren todas las búsquedas en round-robin
+            # (una URL de cada una por vuelta) para que cada tanda traiga una
+            # mezcla de tipos (terrenos, casas, departamentos, oficinas, ...) en
+            # lugar de agotar terrenos primero.
+            active = []
             for path, categoria, operacion in searches:
                 start = _abs(path, self.base_url)
-                for detail_url, ext in self._iter_detail_urls(client, start, log):
+                active.append([self._iter_detail_urls(client, start, log),
+                               categoria, operacion])
+
+            while active:
+                still = []
+                for entry in active:
+                    it, categoria, operacion = entry
+                    try:
+                        detail_url, ext, rec = next(it)
+                    except StopIteration:
+                        continue  # esta búsqueda se agotó; no vuelve a 'still'
+                    still.append(entry)
                     if detail_url in seen:
                         continue
                     seen.add(detail_url)
@@ -210,7 +260,8 @@ class PlusvaliaScraper(BaseScraper):
                             log(f"[plusvalia] saltados {saltados} ya importados...")
                         continue
                     self._sleep()
-                    data = self._scrape_detail(client, detail_url, categoria, operacion, log)
+                    data = self._scrape_detail(client, detail_url, categoria,
+                                               operacion, log, rec)
                     if data is None:
                         continue
                     yield data
@@ -218,11 +269,15 @@ class PlusvaliaScraper(BaseScraper):
                     if limit and produced >= limit:
                         log(f"[plusvalia] límite alcanzado: {limit}")
                         return
+                active = still
 
     def _iter_detail_urls(self, client, start_url, log):
         """
-        Genera ``(url_ficha, external_id)`` recorriendo las páginas del listado
-        con ``?page=N`` hasta que una página no aporte URLs nuevas.
+        Genera ``(url_ficha, external_id, coords)`` recorriendo las páginas del
+        listado con ``?page=N`` hasta que una página no aporte URLs nuevas.
+        ``coords`` es ``(lat, lng)`` (cadenas) leído del propio listado, donde
+        Plusvalía SÍ publica la geolocalización exacta de cada anuncio
+        (clasificados incluidos), o ``None`` si ese anuncio no la trae.
         """
         page = 0
         max_pages = 400  # tope de seguridad
@@ -235,18 +290,59 @@ class PlusvaliaScraper(BaseScraper):
             if html_text is None:
                 return
 
-            found = list(dict.fromkeys(_DETAIL_RE.findall(html_text)))  # ids
-            # Reconstruir URLs completas (con id) conservando el orden.
-            pairs = []
+            records = self._records_from_listing(html_text)
+            # URLs completas + registro del listado (coords/ubicación) por id.
+            seen_here = []
+            out = []
             for m in re.finditer(_DETAIL_RE, html_text):
-                pairs.append((_abs(m.group(0), self.base_url), m.group(1)))
-            pairs = list(dict.fromkeys(pairs))
-            if not pairs or pairs == prev:
+                ext = m.group(1)
+                url_full = _abs(m.group(0), self.base_url)
+                if (url_full, ext) in seen_here:
+                    continue
+                seen_here.append((url_full, ext))
+                out.append((url_full, ext, records.get(ext)))
+            ids_now = [e for _u, e in seen_here]
+            if not out or ids_now == prev:
                 return
-            prev = pairs
-            for pair in pairs:
-                yield pair
+            prev = ids_now
+            for triple in out:
+                yield triple
             self._sleep()
+
+    @staticmethod
+    def _records_from_listing(html_text):
+        """
+        ``{external_id: {"coords": (lat, lng), "address", "city", "province"}}``
+        a partir del JSON incrustado del listado. Plusvalía publica ahí, para
+        CADA anuncio (clasificados y proyectos), su geolocalización EXACTA y su
+        ubicación (dirección + jerarquía zona/ciudad/provincia). Se extrae por
+        segmentos: cada objeto va desde su ``postingId`` hasta el siguiente.
+        """
+        ids = [(m.start(), m.group(1)) for m in _LISTING_ID_RE.finditer(html_text)]
+        records = {}
+        for k, (pos, pid) in enumerate(ids):
+            if pid in records:
+                continue
+            end = ids[k + 1][0] if k + 1 < len(ids) else pos + 8000
+            seg = html_text[pos:end]
+            g = _GEO_RE.search(seg)
+            a = _LISTING_ADDR_RE.search(seg)
+            pr = _PROV_RE.search(seg)
+            ci = _CITY_RE.search(seg)
+            zo = _ZONA_RE.search(seg)
+            # address = calle + zona/barrio (lo que haya), sin duplicar.
+            parts = []
+            for val in (a.group(1) if a else "", zo.group(1) if zo else ""):
+                val = val.strip()
+                if val and val not in parts:
+                    parts.append(val)
+            records[pid] = {
+                "coords": (g.group(1), g.group(2)) if g else None,
+                "address": ", ".join(parts),
+                "city": ci.group(1) if ci else "",
+                "province": pr.group(1) if pr else "",
+            }
+        return records
 
     def _fetch(self, client, url, log):
         """
@@ -283,8 +379,11 @@ class PlusvaliaScraper(BaseScraper):
                 return "GONE"
             if resp.status_code != 200:
                 return None
-            if "/propiedades/clasificado/" not in str(resp.url):
+            if "/propiedades/" not in str(resp.url):
                 return "GONE"
+            # Nota: al re-scrapear un clasificado suelto no hay contexto de
+            # listado, así que sus coordenadas (que sólo publica el listado) no
+            # están disponibles aquí; sí para proyectos (postingGeolocation).
             return self._parse_detail(resp.text, url, categoria, operacion)
 
     def count_available(self):
@@ -299,13 +398,13 @@ class PlusvaliaScraper(BaseScraper):
                 self._sleep()
         return total
 
-    def _scrape_detail(self, client, detail_url, categoria, operacion, log):
+    def _scrape_detail(self, client, detail_url, categoria, operacion, log, listing=None):
         html_text = self._fetch(client, detail_url, log)
         if html_text is None:
             return None
-        return self._parse_detail(html_text, detail_url, categoria, operacion)
+        return self._parse_detail(html_text, detail_url, categoria, operacion, listing)
 
-    def _parse_detail(self, h, detail_url, categoria, operacion):
+    def _parse_detail(self, h, detail_url, categoria, operacion, listing=None):
         ext = _ID_RE.search(detail_url)
         external_id = ext.group(1) if ext else detail_url
 
@@ -328,23 +427,21 @@ class PlusvaliaScraper(BaseScraper):
             fmt = _PRICE_FMT_RE.search(h)
             price = normalize.parse_price(fmt.group(1) if fmt else None)
 
-        # Características: mapear por palabra clave del label.
-        rooms = bathrooms = 0
-        area = built_area = None
-        total_area = None
-        for _fid, label, value in _FEATURE_RE.findall(h):
-            lbl = normalize._strip_accents(label).lower()
-            if "dormitor" in lbl or "habitac" in lbl:
-                rooms = rooms or normalize.parse_int(value)
-            elif "bano" in lbl:  # 'baño' sin acento
-                bathrooms = bathrooms or normalize.parse_int(value)
-            elif "superficie total" in lbl or "sup. total" in lbl or lbl == "total":
-                total_area = total_area or normalize.parse_area(value)
-            elif "superficie cubierta" in lbl or "cubierta" in lbl or "construid" in lbl:
-                built_area = built_area or normalize.parse_area(value)
-        # Superficie del título si no vino en features (p. ej. "... · 2500m²").
+        # Características principales del bloque mainFeatures (ids CFT estables).
+        # first-wins: el anuncio principal aparece antes que los recomendados.
+        cft = {}
+        for fid, val in _MAIN_FEAT_RE.findall(h):
+            cft.setdefault(fid, val)
+        rooms = normalize.parse_int(cft.get("CFT2", ""))
+        bathrooms = (normalize.parse_int(cft.get("CFT3", ""))
+                     + normalize.parse_int(cft.get("CFT4", "")))  # baños + medios
+        total_area = normalize.parse_area(cft.get("CFT100", ""))
+        built_area = normalize.parse_area(cft.get("CFT101", ""))
+        # Superficie si no vino en mainFeatures: caption "<Tipo> · Nm²" del propio
+        # anuncio, luego un "Nm²" en el título de meta.
         if total_area is None:
-            mt = re.search(r'([0-9][0-9.,]*)\s*m(?:²|2|<sup>2)', title, re.I)
+            cap = _AREA_CAP_RE.search(h)
+            mt = cap or re.search(r'([0-9][0-9.,]*)\s*m(?:²|2|<sup>2)', title, re.I)
             if mt:
                 total_area = normalize.parse_area(mt.group(1))
         area = total_area or built_area
@@ -357,29 +454,46 @@ class PlusvaliaScraper(BaseScraper):
             else normalize.clean_text(_meta(h, "og:description"))
         )
 
-        # Ubicación (aproximada; SIN coordenadas — ver nota A del módulo).
-        province = ""
-        pm = re.search(r"Provincia de ([^,\-|]+)", title)
-        if pm:
-            province = pm.group(1).strip()
-        # Subtítulo bajo el <h1> (p. ej. "Pintag,  Sangolqui, Quito").
-        addr = ""
-        loc_m = re.search(
-            r'section-location-property[^>]*>.*?<[^>]*>([^<]{3,120})<', h, re.S
-        )
-        if loc_m:
-            addr = normalize.clean_text(loc_m.group(1))
-        # Cantón: penúltimo/último token del subtítulo.
-        city = ""
-        if addr:
+        # Ubicación. Fuente principal: el registro del LISTADO (``listing``),
+        # que trae dirección + cantón + provincia limpios para cada anuncio.
+        # Fallback a lo que se pueda leer de la ficha.
+        listing = listing or {}
+        province = listing.get("province") or ""
+        city = listing.get("city") or ""
+        addr = listing.get("address") or ""
+        if not province:
+            pm = re.search(r"Provincia de ([^,\-|]+)", title)
+            if pm:
+                province = pm.group(1).strip()
+        if not addr:
+            loc_m = re.search(
+                r'section-location-property[^>]*>.*?<[^>]*>([^<]{3,120})<', h, re.S
+            )
+            if loc_m:
+                addr = normalize.clean_text(loc_m.group(1))
+        if not city and addr:
             parts = [p.strip() for p in addr.split(",") if p.strip()]
             if parts:
                 city = parts[-1]
 
-        # SIN coordenadas en el HTML de Plusvalía: geocodificar la dirección
-        # aproximada (nivel barrio/parroquia). Ver _geocode() y docstring.
-        geo_query = ", ".join([p for p in [addr, province, "Ecuador"] if p])
-        latitude, longitude = _geocode(geo_query)
+        # Coordenadas REALES y EXACTAS del anuncio. Prioridad:
+        #  1) las del LISTADO (``listing['coords']``): clasificados y proyectos.
+        #  2) las de la ficha (``postingGeolocation``): presentes en proyectos.
+        #  3) fallback opcional de geocodificación (PLUSVALIA_GEOCODE=1).
+        # Sin coordenadas -> se descarta (no se adivina).
+        latitude = longitude = None
+        coords = listing.get("coords")
+        if coords and coords[0] and coords[1]:
+            latitude, longitude = coords[0], coords[1]
+        else:
+            geo_m = _GEO_RE.search(h)
+            if geo_m:
+                latitude, longitude = geo_m.group(1), geo_m.group(2)
+            elif os.environ.get("PLUSVALIA_GEOCODE") == "1":
+                geo_query = ", ".join([p for p in [addr, province, "Ecuador"] if p])
+                latitude, longitude = _geocode(geo_query)
+        if latitude is None or longitude is None:
+            return None  # sin ubicación exacta -> no entra al mapa
 
         # Teléfono / WhatsApp del anunciante (PRIORITARIO). Normalizar a dígitos.
         phone_m = _PHONE_RE.search(h)
@@ -390,7 +504,9 @@ class PlusvaliaScraper(BaseScraper):
         agency_m = _AGENCY_RE.search(h)
         source_agency = normalize.clean_text(agency_m.group(1) if agency_m else "", 150)
 
-        # Imágenes únicas (por nombre de archivo final), orden de aparición.
+        # Imágenes únicas (por nombre de archivo final), orden de aparición. Se
+        # limita a 40: la ficha incluye también fotos de anuncios recomendados
+        # al final, que no son de esta propiedad.
         images = []
         seen_img = set()
         for u in _IMG_RE.findall(h):
@@ -399,6 +515,8 @@ class PlusvaliaScraper(BaseScraper):
                 continue
             seen_img.add(fname)
             images.append(u)
+            if len(images) >= 40:
+                break
 
         return {
             "external_id": external_id,
@@ -412,8 +530,7 @@ class PlusvaliaScraper(BaseScraper):
             "built_area": built,
             "rooms": rooms,
             "bathrooms": bathrooms,
-            # Coordenadas APROXIMADAS por geocodificación de la dirección
-            # (Plusvalía no da lat/lng); None si la geocodificación falló.
+            # Coordenadas REALES del anuncio (postingGeolocation SSR).
             "latitude": latitude,
             "longitude": longitude,
             "address": normalize.clean_text(addr, 255),

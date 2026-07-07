@@ -28,6 +28,7 @@ import {
   CarouselNext,
   CarouselPrevious,
 } from '@/components/ui/carousel';
+import PropertyDetailMap from '@/components/maps/PropertyDetailMap';
 
 /** Ficha de dato de la propiedad: icono lucide + valor en mono + etiqueta. */
 function StatTile({
@@ -430,7 +431,7 @@ export default async function PropertyPage({ params }: PropertyPageProps) {
               <CarouselContent className="ml-0">
                 {galleryImages.map((img, idx) => (
                   <CarouselItem key={idx} className="pl-0">
-                    <div className="relative aspect-[16/10] w-full sm:aspect-[16/9] md:aspect-[21/9]">
+                    <div className="relative aspect-[16/10] w-full sm:aspect-[16/8] md:aspect-[16/7]">
                       <img
                         src={img.image}
                         alt={`${property.title} — imagen ${idx + 1}`}
@@ -465,13 +466,88 @@ export default async function PropertyPage({ params }: PropertyPageProps) {
               )}
             </Carousel>
           ) : (
-            <div className="flex aspect-[21/9] w-full items-center justify-center rounded-hero border border-line bg-muted text-textSecondary">
+            <div className="flex aspect-[16/7] w-full items-center justify-center rounded-hero border border-line bg-muted text-textSecondary">
               <div className="flex flex-col items-center gap-2">
                 <Home className="h-10 w-10" strokeWidth={1.5} aria-hidden />
                 <span className="text-sm font-medium">Sin imágenes disponibles</span>
               </div>
             </div>
           )}
+
+          <section className="mt-4 rounded-card border border-line bg-surface p-4 shadow-card sm:p-5">
+            <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-center">
+              <div>
+                <div className="flex flex-wrap items-center gap-2">
+                  <Badge className="rounded-full bg-primaryLight text-primary hover:bg-primaryLight">
+                    {propertyTypeLabel}
+                  </Badge>
+                  <Badge className={`rounded-full border-transparent ${statusOverlayClass(property.status)}`}>
+                    {statusLabel}
+                  </Badge>
+                  {property.is_negotiable && (
+                    <Badge className="rounded-full border-transparent bg-secondary/10 text-secondary hover:bg-secondary/10">
+                      Precio negociable
+                    </Badge>
+                  )}
+                </div>
+                <h1 className="mt-3 text-2xl font-bold leading-tight text-textPrimary sm:text-3xl">
+                  {property.title}
+                </h1>
+                {(property.city || property.address) && (
+                  <div className="mt-2 flex items-start gap-2 text-sm text-textSecondary">
+                    <MapPin className="mt-0.5 h-4 w-4 flex-shrink-0 text-primary" strokeWidth={1.75} aria-hidden />
+                    <span>
+                      {property.address && <>{property.address}</>}
+                      {property.address && property.city && <>, </>}
+                      {property.city && <>{property.city}</>}
+                      {property.province && <>, {property.province}</>}
+                    </span>
+                  </div>
+                )}
+              </div>
+
+              <div className="rounded-card border border-line bg-background p-4 lg:min-w-80">
+                <div className="text-xs font-medium uppercase tracking-wide text-textSecondary">Precio</div>
+                <div className="mt-1">
+                  {priceIsFinite ? (
+                    <AnimatedNumber value={priceValue} prefix="$" className="price text-3xl" />
+                  ) : (
+                    <span className="price text-2xl">{priceFormatted}</span>
+                  )}
+                </div>
+                <div className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-1">
+                  {isImported && sourceUrl ? (
+                    <a
+                      href={sourceUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center justify-center gap-2 rounded-button bg-primary px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-primaryHover"
+                    >
+                      <ExternalLink className="h-4 w-4" strokeWidth={2} aria-hidden />
+                      Contactar anunciante
+                    </a>
+                  ) : contactPhone ? (
+                    <a
+                      href={`https://wa.me/${waPhone}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="wa-cta inline-flex items-center justify-center gap-2 rounded-button bg-secondary px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-secondaryHover"
+                    >
+                      <MessageCircle className="h-4 w-4" strokeWidth={2} aria-hidden />
+                      WhatsApp
+                    </a>
+                  ) : null}
+                  <Link
+                    href={mapUrl}
+                    className="inline-flex items-center justify-center gap-2 rounded-button border border-line bg-white px-4 py-2.5 text-sm font-semibold text-textPrimary transition-colors hover:border-primary hover:text-primary"
+                  >
+                    Ver en mapa
+                    <ArrowRight className="h-4 w-4" strokeWidth={2} aria-hidden />
+                  </Link>
+                </div>
+              </div>
+            </div>
+          </section>
 
           {/* Cuerpo: contenido + tarjeta de contacto */}
           <div className="mt-8 grid grid-cols-1 gap-8 lg:grid-cols-3">
@@ -487,22 +563,6 @@ export default async function PropertyPage({ params }: PropertyPageProps) {
                   </Badge>
                 )}
               </div>
-
-              <h1 className="text-3xl font-bold leading-tight text-textPrimary sm:text-4xl">
-                {property.title}
-              </h1>
-
-              {(property.city || property.address) && (
-                <div className="mt-3 flex items-start gap-2 text-textSecondary">
-                  <MapPin className="mt-0.5 h-5 w-5 flex-shrink-0 text-primary" strokeWidth={1.75} aria-hidden />
-                  <span className="text-base">
-                    {property.address && <>{property.address}</>}
-                    {property.address && property.city && <>, </>}
-                    {property.city && <>{property.city}</>}
-                    {property.province && <>, {property.province}</>}
-                  </span>
-                </div>
-              )}
 
               <p className="mt-3 text-sm text-textSecondary">{summaryParts.join(' • ')}</p>
 
@@ -543,11 +603,13 @@ export default async function PropertyPage({ params }: PropertyPageProps) {
                   <h2 className="mb-3 text-lg font-semibold text-textPrimary">Ubicación</h2>
                   <div className="overflow-hidden rounded-card border border-line bg-surface">
                     {property.latitude && property.longitude ? (
-                      <iframe
-                        title="Mapa de ubicación"
-                        loading="lazy"
-                        className="h-64 w-full border-0"
-                        src={`https://www.openstreetmap.org/export/embed.html?bbox=${property.longitude - 0.01}%2C${property.latitude - 0.008}%2C${property.longitude + 0.01}%2C${property.latitude + 0.008}&layer=mapnik&marker=${property.latitude}%2C${property.longitude}`}
+                      <PropertyDetailMap
+                        latitude={property.latitude}
+                        longitude={property.longitude}
+                        polygon={property.polygon}
+                        status={property.status}
+                        price={property.price}
+                        title={property.title}
                       />
                     ) : (
                       <div className="flex h-40 items-center justify-center bg-muted text-textSecondary">
@@ -600,7 +662,7 @@ export default async function PropertyPage({ params }: PropertyPageProps) {
                     {(property.owner_username || 'U').charAt(0).toUpperCase()}
                   </span>
                   <div className="min-w-0">
-                    <div className="text-xs text-textSecondary">Publicado por</div>
+                    <div className="text-xs text-textSecondary">{isImported ? 'Fuente' : 'Publicado por'}</div>
                     <div className="truncate font-semibold text-textPrimary">
                       {isImported
                         ? sourceAgency || 'Fuente externa'
@@ -612,7 +674,7 @@ export default async function PropertyPage({ params }: PropertyPageProps) {
                 {publishedDate && (
                   <div className="mb-4 flex items-center gap-2 text-sm text-textSecondary">
                     <CalendarDays className="h-4 w-4 flex-shrink-0" strokeWidth={1.75} aria-hidden />
-                    Publicado el {publishedDate}
+                    {isImported ? 'Agregado al mapa el ' : 'Publicado el '}{publishedDate}
                   </div>
                 )}
 

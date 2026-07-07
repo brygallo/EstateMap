@@ -1,9 +1,9 @@
-# Dependencias SOLO para el scraping en LOCAL (proyecto de ingesta).
-# NO se instalan en producción: producción solo corre `ingesta_import`, que
-# no scrapea ni descarga de los portales.
+# Dependencias del scraping (proyecto de ingesta).
+# NOTA: producción TAMBIÉN scrapea (el flujo de importación corre desde el
+# admin, scrape -> MinIO en un paso), así que httpx y curl_cffi ya viven en
+# requirements.txt y se instalan en la imagen Docker. Este archivo queda solo
+# para el extra opcional del parser alterno.
 #
 #   pip install -r requirements-scraping.txt
 #
-httpx>=0.27
 beautifulsoup4>=4.12   # opcional (parser alterno); el scraper actual usa regex
-curl_cffi>=0.7         # plusvalia: pasa Cloudflare imitando el fingerprint TLS de Chrome

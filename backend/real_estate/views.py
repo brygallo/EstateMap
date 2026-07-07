@@ -14,6 +14,7 @@ from django.conf import settings
 from .models import Property, PropertyImage, Province, City, Lead, PendingPublication
 from django.contrib.auth import get_user_model
 from .serializers import (
+    MapPropertySerializer,
     PropertySerializer,
     PropertyImageSerializer,
     ProvinceSerializer,
@@ -111,6 +112,11 @@ class PropertyViewSet(viewsets.ModelViewSet):
     parser_classes = [MultiPartParser, FormParser, JSONParser]
     pagination_class = PropertyPagination
 
+    def get_serializer_class(self):
+        if self.action == 'list':
+            return MapPropertySerializer
+        return super().get_serializer_class()
+
     def get_queryset(self):
         """
         Propiedades activas (status != 'inactive'), con filtrado server-side por
@@ -132,6 +138,8 @@ class PropertyViewSet(viewsets.ModelViewSet):
         la que tiene WhatsApp).
         """
         queryset = Property.objects.exclude(status='inactive').exclude(is_duplicate=True)
+        if getattr(self, 'action', None) == 'list':
+            queryset = queryset.prefetch_related('images')
         params = self.request.query_params
 
         search = params.get('search', '').strip()
@@ -190,14 +198,13 @@ class PropertyViewSet(viewsets.ModelViewSet):
             parts = [_parse_float(p) for p in bbox.split(',')]
             if len(parts) == 4 and all(p is not None for p in parts):
                 west, south, east, north = parts
-                # Propiedades con punto dentro del bbox, o sin punto (solo
-                # polígono) que se mantienen siempre visibles en el mapa.
-                inside = Q(
+                # Para escalar a miles de publicaciones, el bbox debe acotar
+                # estrictamente por punto. Mantener siempre las propiedades sin
+                # lat/lng obliga a devolver filas de todo el pais en cada paneo.
+                queryset = queryset.filter(
                     latitude__gte=south, latitude__lte=north,
                     longitude__gte=west, longitude__lte=east,
                 )
-                no_point = Q(latitude__isnull=True) | Q(longitude__isnull=True)
-                queryset = queryset.filter(inside | no_point)
 
         return queryset
 

@@ -9,6 +9,7 @@ boto3>=1.34
 minio>=7.2
 requests>=2.31
 httpx>=0.27  # ingesta: scraping desde el admin (producción también lo usa)
+curl_cffi>=0.7  # ingesta/plusvalia: pasa Cloudflare imitando el TLS de Chrome (el admin scrapea en producción)
 gunicorn>=21.2
 dj-database-url>=2.1
 django-allauth>=0.57
