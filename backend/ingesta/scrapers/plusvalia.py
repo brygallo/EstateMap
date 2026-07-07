@@ -130,6 +130,10 @@ _AGENCY_RE = re.compile(
 _MAIN_FEAT_RE = re.compile(r'"(CFT\d+)"\s*:\s*\{[^{}]*?"value"\s*:\s*"?([^",}]+)')
 # Descripción completa del cuerpo.
 _DESC_RE = re.compile(r'id="reactDescription">(.*?)</section>', re.S)
+_DESC_CTA_RE = re.compile(
+    r'(?:[\s\xa0]*(?:Leer\s+descripci[oó]n\s+completa|Leer\s+m[aá]s|Ver\s+m[aá]s)\s*)+$',
+    re.I,
+)
 # Total de anuncios que muestra el portal en la cabecera / <title> del listado.
 _TOTAL_RE = re.compile(
     r'([0-9][0-9.,]*)\s+(?:Inmuebles|Terrenos|Casas|Departamentos|Oficinas|Locales)',
@@ -140,6 +144,12 @@ _IMG_RE = re.compile(
     r'https://img\d*\.naventcdn\.com/avisos/(?:resize/)?[0-9/]+?/\d+x\d+/\d+\.(?:jpe?g|png|webp)',
     re.I,
 )
+
+
+def _clean_detail_description(value):
+    """Limpia el cuerpo de descripción y quita CTAs visibles del colapsador."""
+    text = normalize.clean_description(value).replace("\\t", " ")
+    return _DESC_CTA_RE.sub("", text).strip()
 
 
 def _meta(html_text, prop):
@@ -471,13 +481,9 @@ class PlusvaliaScraper(BaseScraper):
         # quita para que no quede pegado al final del texto.
         desc_m = _DESC_RE.search(h)
         description = (
-            normalize.clean_description(desc_m.group(1)) if desc_m
+            _clean_detail_description(desc_m.group(1)) if desc_m
             else normalize.clean_text(_meta(h, "og:description"))
         )
-        description = re.sub(
-            r'\s*(?:Leer\s+descripci[oó]n\s+completa|Leer\s+m[aá]s|Ver\s+m[aá]s)\s*$',
-            '', description, flags=re.I,
-        ).strip()
 
         # Ubicación. Fuente principal: el registro del LISTADO (``listing``),
         # que trae dirección + cantón + provincia limpios para cada anuncio.
