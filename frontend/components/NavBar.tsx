@@ -52,13 +52,13 @@ const NavBar = () => {
 
   return (
     <nav className="sticky top-0 z-nav border-b border-line bg-surface/90 backdrop-blur-md">
-      <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
+      <div className="mx-auto flex h-14 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
         {/* Logo */}
         <Link href="/" className="flex items-center gap-2" onClick={closeMobileMenu}>
-          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary text-white">
-            <Building2 className="h-5 w-5" strokeWidth={2} aria-hidden />
+          <div className="flex h-8 w-8 items-center justify-center rounded-card bg-primary text-white">
+            <Building2 className="h-[18px] w-[18px]" strokeWidth={2} aria-hidden />
           </div>
-          <span className="text-base font-bold text-textPrimary sm:text-lg">
+          <span className="text-base font-semibold text-textPrimary">
             Geo Propiedades Ecuador
           </span>
         </Link>
@@ -68,13 +68,13 @@ const NavBar = () => {
           {token ? (
             <>
               <Button asChild variant="ghost" size="sm" className="text-textSecondary">
-                <Link href="/my-properties">
+                <Link href="/mis-propiedades">
                   <FolderKanban className="h-4 w-4" />
                   Mis Propiedades
                 </Link>
               </Button>
               <Button asChild variant="ghost" size="sm" className="text-textSecondary">
-                <Link href="/help">
+                <Link href="/ayuda">
                   <CircleHelp className="h-4 w-4" />
                   Ayuda
                 </Link>
@@ -90,9 +90,9 @@ const NavBar = () => {
               <Button
                 asChild
                 size="sm"
-                className="ml-1 bg-primary text-primary-foreground transition-transform hover:scale-105 hover:bg-primaryHover"
+                className="ml-1 bg-primary text-primary-foreground hover:bg-primaryHover"
               >
-                <Link href="/add-property">
+                <Link href="/publicar-propiedad">
                   <Plus className="h-4 w-4" />
                   Publicar gratis
                 </Link>
@@ -101,7 +101,7 @@ const NavBar = () => {
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <button
-                    className="ml-2 flex items-center gap-2 rounded-full border border-line py-1 pl-1 pr-3 transition-colors hover:bg-background"
+                    className="ml-2 flex items-center gap-2 rounded-card border border-line py-1 pl-1 pr-3 transition-colors hover:bg-background"
                     aria-label="Menú de usuario"
                   >
                     <Avatar className="h-7 w-7">
@@ -116,7 +116,7 @@ const NavBar = () => {
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-48">
                   <DropdownMenuItem asChild>
-                    <Link href="/account" className="cursor-pointer">
+                    <Link href="/cuenta" className="cursor-pointer">
                       <UserIcon className="h-4 w-4" />
                       Mi cuenta
                     </Link>
@@ -132,20 +132,20 @@ const NavBar = () => {
           ) : (
             <>
               <Button asChild variant="ghost" size="sm" className="text-textSecondary">
-                <Link href="/help">
+                <Link href="/ayuda">
                   <CircleHelp className="h-4 w-4" />
                   Ayuda
                 </Link>
               </Button>
               <Button asChild variant="ghost" size="sm" className="text-textSecondary">
-                <Link href="/login">Iniciar sesión</Link>
+                <Link href="/iniciar-sesion">Iniciar sesión</Link>
               </Button>
               <Button
                 asChild
                 size="sm"
-                className="ml-1 bg-primary text-primary-foreground transition-transform hover:scale-105 hover:bg-primaryHover"
+                className="ml-1 bg-primary text-primary-foreground hover:bg-primaryHover"
               >
-                <Link href="/add-property">
+                <Link href="/publicar-propiedad">
                   <Plus className="h-4 w-4" />
                   Publicar gratis
                 </Link>
@@ -191,25 +191,25 @@ const NavBar = () => {
                   </div>
 
                   <Button asChild variant="ghost" className="justify-start" onClick={closeMobileMenu}>
-                    <Link href="/my-properties">
+                    <Link href="/mis-propiedades">
                       <FolderKanban className="h-4 w-4" />
                       Mis Propiedades
                     </Link>
                   </Button>
                   <Button asChild variant="ghost" className="justify-start" onClick={closeMobileMenu}>
-                    <Link href="/add-property">
+                    <Link href="/publicar-propiedad">
                       <Plus className="h-4 w-4" />
                       Nueva Propiedad
                     </Link>
                   </Button>
                   <Button asChild variant="ghost" className="justify-start" onClick={closeMobileMenu}>
-                    <Link href="/account">
+                    <Link href="/cuenta">
                       <UserIcon className="h-4 w-4" />
                       Mi cuenta
                     </Link>
                   </Button>
                   <Button asChild variant="ghost" className="justify-start" onClick={closeMobileMenu}>
-                    <Link href="/help">
+                    <Link href="/ayuda">
                       <CircleHelp className="h-4 w-4" />
                       Ayuda
                     </Link>
@@ -237,13 +237,13 @@ const NavBar = () => {
               ) : (
                 <>
                   <Button asChild variant="ghost" className="justify-start" onClick={closeMobileMenu}>
-                    <Link href="/login">
+                    <Link href="/iniciar-sesion">
                       <UserIcon className="h-4 w-4" />
                       Iniciar sesión
                     </Link>
                   </Button>
                   <Button asChild variant="ghost" className="justify-start" onClick={closeMobileMenu}>
-                    <Link href="/help">
+                    <Link href="/ayuda">
                       <CircleHelp className="h-4 w-4" />
                       Ayuda
                     </Link>
@@ -256,7 +256,7 @@ const NavBar = () => {
                     className="justify-start bg-primary text-primary-foreground hover:bg-primaryHover"
                     onClick={closeMobileMenu}
                   >
-                    <Link href="/add-property">
+                    <Link href="/publicar-propiedad">
                       <Plus className="h-4 w-4" />
                       Publicar gratis
                     </Link>

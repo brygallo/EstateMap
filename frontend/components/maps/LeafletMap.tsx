@@ -1,11 +1,13 @@
 'use client';
 
-import { MapContainer, TileLayer, Polygon, useMapEvents, useMap, Marker, Popup, ScaleControl } from 'react-leaflet';
+import { MapContainer, TileLayer, Polygon, useMapEvents, useMap, Marker, Popup, ScaleControl, Circle, CircleMarker } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import { useEffect, useState, useRef, useCallback, useMemo } from 'react';
 import L from 'leaflet';
 import * as turf from '@turf/turf';
-import { Map as MapIcon, Satellite, Globe } from 'lucide-react';
+import LayerSwitch, { type MapLayer } from '@/components/map/LayerSwitch';
+import MapControls from '@/components/map/MapControls';
+import MapLegend from '@/components/map/MapLegend';
 
 // Fix default marker icon issue with webpack
 if (typeof window !== 'undefined') {
@@ -23,19 +25,6 @@ if (typeof window !== 'undefined') {
     return originalRemoveClass.call(this, el, name);
   };
 }
-
-// Custom icon for user location
-const userLocationIcon = new L.Icon({
-  iconUrl: 'data:image/svg+xml;base64,' + btoa(`
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#F59E0B" width="32" height="32">
-      <circle cx="12" cy="12" r="10" fill="#F59E0B" stroke="white" stroke-width="2"/>
-      <circle cx="12" cy="12" r="4" fill="white"/>
-    </svg>
-  `),
-  iconSize: [32, 32],
-  iconAnchor: [16, 16],
-  popupAnchor: [0, -16]
-});
 
 // Component to expose map instance
 function MapController({ onMapReady }: { onMapReady: (map: any) => void }) {
@@ -134,7 +123,7 @@ function MapBoundsTracker({
   return null;
 }
 
-// Search box over the map (Nominatim)
+// Search box over the map: solo busca ubicaciones (Nominatim).
 function LocationSearch() {
   const map = useMap();
   const [query, setQuery] = useState('');
@@ -306,11 +295,15 @@ interface LeafletMapProps {
   filteredProperties: any[];
   selectedProperty: any;
   userLocation: { lat: number; lng: number } | null;
+  userAccuracy?: number | null;
   onMapReady: (map: any) => void;
   onVisiblePropertiesChange: (properties: any[]) => void;
   onBoundsChange?: (bounds: { west: number; south: number; east: number; north: number }) => void;
   onPolygonClick: (property: any) => void;
   onPriceLabelClick: (property: any) => void;
+  onLocate: () => void;
+  locating: boolean;
+  locationBlocked: boolean;
   hoverTimeoutRef: React.MutableRefObject<any>;
   getPropertyTypeLabel: (type: string) => string;
   getStatusLabel: (status: string) => string;
@@ -321,22 +314,25 @@ const LeafletMap = ({
   filteredProperties,
   selectedProperty,
   userLocation,
+  userAccuracy,
   onMapReady,
   onVisiblePropertiesChange,
   onBoundsChange,
   onPolygonClick,
   onPriceLabelClick,
+  onLocate,
+  locating,
+  locationBlocked,
   hoverTimeoutRef,
   getPropertyTypeLabel,
   getStatusLabel,
   center,
 }: LeafletMapProps) => {
   const polygonLayersRef = useRef<Record<string, any>>({});
-  const [activeLayer, setActiveLayer] = useState('streets'); // Default to streets layer
+  const [activeLayer, setActiveLayer] = useState<MapLayer>('streets'); // Mapa por defecto
 
-  const handleLayerSelect = (layer: string) => {
-    setActiveLayer(layer);
-  };
+  const toggleLayer = () =>
+    setActiveLayer((prev) => (prev === 'satellite' ? 'streets' : 'satellite'));
 
   const clearEdgeLabels = useCallback((layer: any) => {
     if (layer?._edgeLabels) {
@@ -428,15 +424,16 @@ const LeafletMap = ({
         center={center}
         zoom={7}
         maxZoom={21}
+        zoomControl={false}
         className="h-full w-full relative"
         preferCanvas={true}
       >
-      {/* Render active layer.
+      {/* Solo dos capas, estilo Google Maps: Mapa (CARTO Voyager) y Satélite (Esri).
           maxNativeZoom = último nivel con imágenes reales; por encima Leaflet
           reescala ("zoom artificial") en lugar de pedir tiles inexistentes. */}
       {activeLayer === 'streets' && (
         <TileLayer
-          url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
+          url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
           attribution='&copy; <a href="https://www.openstreetmap.org/">OSM</a> &copy; <a href="https://carto.com/">CARTO</a>'
           subdomains={['a','b','c','d']}
           maxZoom={21}
@@ -446,58 +443,16 @@ const LeafletMap = ({
       {activeLayer === 'satellite' && (
         <TileLayer
           url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
-          attribution='&copy; <a href="https://www.esri.com/">Esri</a>'
+          attribution='Tiles &copy; Esri &mdash; Source: Esri, Maxar, Earthstar Geographics'
           maxZoom={21}
           maxNativeZoom={18}
         />
       )}
-      {activeLayer === 'osm' && (
-        <TileLayer
-          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-          maxZoom={21}
-          maxNativeZoom={19}
-        />
-      )}
 
-      {/* Custom Layer Control - Compact for mobile */}
-      <div className="absolute top-16 sm:top-10 right-2 sm:right-3 z-mapcontrol">
-        <div className="bg-surface rounded-lg shadow-card border border-line overflow-hidden" style={{ minWidth: '140px' }}>
-          <button
-            type="button"
-            onClick={() => handleLayerSelect('streets')}
-            className={`flex w-full items-center gap-2 px-3 sm:px-4 py-2 text-left text-xs sm:text-sm border-b border-line hover:bg-background transition-colors ${
-              activeLayer === 'streets' ? 'bg-primary/10 text-primary font-semibold' : 'text-textPrimary'
-            }`}
-          >
-            <MapIcon className="h-4 w-4 flex-shrink-0" strokeWidth={1.75} aria-hidden />
-            <span className="hidden sm:inline">Calles (21)</span>
-            <span className="sm:hidden">Calles</span>
-          </button>
-          <button
-            type="button"
-            onClick={() => handleLayerSelect('satellite')}
-            className={`flex w-full items-center gap-2 px-3 sm:px-4 py-2 text-left text-xs sm:text-sm border-b border-line hover:bg-background transition-colors ${
-              activeLayer === 'satellite' ? 'bg-primary/10 text-primary font-semibold' : 'text-textPrimary'
-            }`}
-          >
-            <Satellite className="h-4 w-4 flex-shrink-0" strokeWidth={1.75} aria-hidden />
-            <span className="hidden sm:inline">Satélite (21)</span>
-            <span className="sm:hidden">Satélite</span>
-          </button>
-          <button
-            type="button"
-            onClick={() => handleLayerSelect('osm')}
-            className={`flex w-full items-center gap-2 px-3 sm:px-4 py-2 text-left text-xs sm:text-sm hover:bg-background transition-colors ${
-              activeLayer === 'osm' ? 'bg-primary/10 text-primary font-semibold' : 'text-textPrimary'
-            }`}
-          >
-            <Globe className="h-4 w-4 flex-shrink-0" strokeWidth={1.75} aria-hidden />
-            <span className="hidden sm:inline">OSM (21)</span>
-            <span className="sm:hidden">OSM</span>
-          </button>
-        </div>
-      </div>
+      {/* Controles flotantes estilo Google Maps */}
+      <LayerSwitch active={activeLayer} onToggle={toggleLayer} />
+      <MapLegend />
+      <MapControls onLocate={onLocate} locating={locating} blocked={locationBlocked} />
 
       <ScaleControl position="bottomleft" metric={true} imperial={false} maxWidth={120} />
       <LocationSearch />
@@ -735,22 +690,32 @@ const LeafletMap = ({
         return [...polygons, ...markers, ...priceLabels];
       }, [filteredProperties, selectedProperty, onPolygonClick, onPriceLabelClick, hoverTimeoutRef, getPropertyTypeLabel, getStatusLabel, addEdgeLabels])}
 
-      {/* User Location Marker */}
+      {/* Ubicación del usuario: punto azul + círculo de precisión (estilo Google Maps) */}
       {userLocation && (
-        <Marker
-          position={[userLocation.lat, userLocation.lng]}
-          icon={userLocationIcon}
-        >
-          <Popup>
-            <div className="text-center">
-              <strong>Tu ubicación</strong>
-              <br />
-              <small>
-                {userLocation.lat.toFixed(6)}, {userLocation.lng.toFixed(6)}
-              </small>
-            </div>
-          </Popup>
-        </Marker>
+        <>
+          {userAccuracy ? (
+            <Circle
+              center={[userLocation.lat, userLocation.lng]}
+              radius={userAccuracy}
+              pathOptions={{ stroke: false, fillColor: '#3e97ff', fillOpacity: 0.12 }}
+            />
+          ) : null}
+          <CircleMarker
+            center={[userLocation.lat, userLocation.lng]}
+            radius={9}
+            pathOptions={{ color: '#ffffff', weight: 3, fillColor: '#3e97ff', fillOpacity: 1 }}
+          >
+            <Popup>
+              <div className="text-center">
+                <strong>Tu ubicación</strong>
+                <br />
+                <small>
+                  {userLocation.lat.toFixed(6)}, {userLocation.lng.toFixed(6)}
+                </small>
+              </div>
+            </Popup>
+          </CircleMarker>
+        </>
       )}
     </MapContainer>
     </>

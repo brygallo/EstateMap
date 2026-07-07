@@ -10,7 +10,7 @@ const PrivateRoute = ({ children }: { children: React.ReactNode }) => {
 
   useEffect(() => {
     if (!loading && !token) {
-      router.push('/login');
+      router.push('/iniciar-sesion');
     }
   }, [token, loading, router]);
 

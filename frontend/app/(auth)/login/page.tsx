@@ -61,7 +61,7 @@ export default function LoginPage() {
           if (emailToVerify) params.set('email', emailToVerify);
 
           toast.error('Tu cuenta no ha sido verificada. Redirigiendo para verificarla.');
-          router.push(`/verify-email${params.toString() ? `?${params.toString()}` : ''}`);
+          router.push(`/verificar-correo${params.toString() ? `?${params.toString()}` : ''}`);
           return;
         }
 
@@ -80,7 +80,7 @@ export default function LoginPage() {
       toast.success('Inicio de sesión exitoso');
       const hasPropertyDraft =
         typeof window !== 'undefined' && localStorage.getItem('propertyPublicationDraft');
-      router.push(hasPropertyDraft ? '/add-property' : '/');
+      router.push(hasPropertyDraft ? '/publicar-propiedad' : '/');
     } catch (err) {
       toast.error('Error de conexión');
     } finally {
@@ -163,7 +163,7 @@ export default function LoginPage() {
                     </Label>
                   </div>
                   <Link
-                    href="/forgot-password"
+                    href="/recuperar-contrasena"
                     className="text-sm font-medium text-primary transition-colors hover:text-secondary"
                   >
                     ¿Olvidaste tu contraseña?
@@ -210,7 +210,7 @@ export default function LoginPage() {
           {/* Registro */}
           <p className="text-center text-sm text-textSecondary">
             ¿Quieres publicar una propiedad gratis?{' '}
-            <Link href="/register" className="font-semibold text-primary transition-colors hover:text-secondary">
+            <Link href="/registro" className="font-semibold text-primary transition-colors hover:text-secondary">
               Crea tu cuenta
             </Link>
           </p>

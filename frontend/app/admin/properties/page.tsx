@@ -224,7 +224,7 @@ const AdminPropertiesPage = () => {
           return (
             <div className="flex items-center justify-end gap-1">
               <Link
-                href={`/property/${p.id}`}
+                href={`/propiedad/${p.id}`}
                 target="_blank"
                 title="Ver propiedad"
                 className="rounded-button p-1.5 text-primary transition-colors hover:bg-primaryLight"

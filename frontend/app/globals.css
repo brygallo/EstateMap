@@ -25,7 +25,7 @@
     --border: 220 13% 91%; /* ≈ #E5E7EB line */
     --input: 220 13% 91%;
     --ring: 221.2 83.2% 53.3%; /* azul de marca */
-    --radius: 0.75rem; /* 12px */
+    --radius: 0.5rem; /* 8px */
   }
 
   .dark {
@@ -90,7 +90,7 @@ body {
 
   /* Etiquetas de estado */
   .badge {
-    @apply inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium;
+    @apply inline-flex items-center rounded-md px-2 py-0.5 text-[11px] font-medium;
   }
 
   /* Precio: un solo lenguaje visual en todo el producto.
@@ -98,19 +98,19 @@ body {
   .price {
     @apply font-geo font-semibold text-primary tabular-nums tracking-tight;
   }
-  .price-lg { @apply font-geo font-semibold text-primary tabular-nums tracking-tight text-2xl; }
+  .price-lg { @apply font-geo font-semibold text-primary tabular-nums tracking-tight text-xl; }
 
   /* Ficha de dato geográfico/característica (m2, habitaciones, etc.) */
   .stat-tile {
     @apply flex flex-col items-center justify-center gap-1 rounded-card border border-line
-           bg-surface px-3 py-2.5 text-center;
+           bg-surface px-2.5 py-2 text-center;
   }
   .stat-value { @apply font-geo text-sm font-semibold text-textPrimary tabular-nums; }
   .stat-label { @apply text-xs text-textSecondary; }
 
   /* Campos de formulario: muy limpios, focus azul con glow suave */
   .field {
-    @apply w-full rounded-input border border-line bg-white px-3.5 py-2.5 text-sm text-textPrimary
+    @apply w-full rounded-input border border-line bg-white px-3 py-2 text-sm text-textPrimary
            transition-all duration-200 placeholder:text-slate-400
            focus:border-primary focus:outline-none focus:ring-4 focus:ring-primary/15;
   }

@@ -65,7 +65,7 @@ const PLANS = [
     highlight: false,
     features: ['Hasta 5 propiedades', 'Contacto por WhatsApp', 'Ubicación en el mapa', 'Leads básicos'],
     cta: 'Empezar gratis',
-    href: '/register',
+    href: '/registro',
   },
   {
     name: 'Inmobiliaria',
@@ -120,7 +120,7 @@ export default function InmobiliariasPage() {
             </p>
             <div className="mt-8 flex flex-wrap gap-3">
               <Button asChild size="lg" className="bg-secondary text-white hover:bg-secondaryHover">
-                <Link href="/register">Publicar mis propiedades</Link>
+                <Link href="/registro">Publicar mis propiedades</Link>
               </Button>
               <Button asChild size="lg" variant="outline" className="border-white/30 bg-transparent text-white hover:bg-white/10">
                 <a href={WHATSAPP_URL} target="_blank" rel="noopener noreferrer">
@@ -281,7 +281,7 @@ export default function InmobiliariasPage() {
           </p>
           <div className="mt-8 flex flex-wrap justify-center gap-3">
             <Button asChild size="lg" className="bg-secondary text-white hover:bg-secondaryHover">
-              <Link href="/register">Crear cuenta gratis</Link>
+              <Link href="/registro">Crear cuenta gratis</Link>
             </Button>
             <Button asChild size="lg" variant="outline" className="border-white/30 bg-transparent text-white hover:bg-white/10">
               <a href={WHATSAPP_URL} target="_blank" rel="noopener noreferrer">

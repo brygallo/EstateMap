@@ -14,8 +14,8 @@ const EXPLORE_LINKS = [
 
 const PLATFORM_LINKS = [
   { href: '/', label: 'Mapa interactivo' },
-  { href: '/add-property', label: 'Publicar propiedad' },
-  { href: '/help', label: 'Centro de ayuda' },
+  { href: '/publicar-propiedad', label: 'Publicar propiedad' },
+  { href: '/ayuda', label: 'Centro de ayuda' },
 ];
 
 const Footer = () => (

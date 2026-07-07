@@ -29,14 +29,14 @@ const LocationPermissionModal = ({ isOpen, onAccept, onDecline, isLoading = fals
     <div className={`fixed inset-0 z-top flex items-center justify-center p-4 transition-opacity duration-300 ${isVisible ? 'opacity-100' : 'opacity-0'}`}>
       <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={onDecline}></div>
 
-      <div className={`relative mx-4 w-full max-w-md transform rounded-modal border border-line bg-surface p-6 shadow-cardHover transition-all duration-300 ${isVisible ? 'scale-100 translate-y-0' : 'scale-95 translate-y-4'}`}>
+      <div className={`relative mx-4 w-full max-w-md transform rounded-modal border border-line bg-surface p-5 shadow-cardHover transition-all duration-300 ${isVisible ? 'scale-100 translate-y-0' : 'scale-95 translate-y-4'}`}>
         <div className="mb-4 flex justify-center">
-          <div className="rounded-full bg-primaryLight p-4 text-primary">
+          <div className="rounded-card bg-primaryLight p-3 text-primary">
             <MapPin className="h-10 w-10" strokeWidth={1.75} aria-hidden />
           </div>
         </div>
 
-        <h2 className="mb-3 text-center text-2xl font-bold text-textPrimary">
+        <h2 className="mb-2 text-center text-xl font-semibold text-textPrimary">
           ¿Permitir ubicación?
         </h2>
 
@@ -51,7 +51,7 @@ const LocationPermissionModal = ({ isOpen, onAccept, onDecline, isLoading = fals
             'Experiencia personalizada según tu zona',
           ].map((benefit) => (
             <div key={benefit} className="flex items-start gap-3">
-              <div className="mt-0.5 flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full bg-successBg text-success">
+              <div className="mt-0.5 flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-md bg-successBg text-success">
                 <Check className="h-3 w-3" strokeWidth={3} aria-hidden />
               </div>
               <p className="text-sm text-textPrimary">{benefit}</p>

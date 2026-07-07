@@ -43,7 +43,7 @@ const VerifyEmail = () => {
       }
 
       toast.success(data.message || 'Correo verificado exitosamente');
-      setTimeout(() => router.push('/login'), 1500);
+      setTimeout(() => router.push('/iniciar-sesion'), 1500);
     } catch (err) {
       toast.error('Error de conexión');
     } finally {

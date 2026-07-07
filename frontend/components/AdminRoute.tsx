@@ -11,7 +11,7 @@ const AdminRoute = ({ children }: { children: React.ReactNode }) => {
   useEffect(() => {
     if (!loading) {
       if (!token) {
-        router.push('/login');
+        router.push('/iniciar-sesion');
       } else if (!user?.is_staff) {
         router.push('/');
       }

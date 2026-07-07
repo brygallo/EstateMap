@@ -1,6 +1,6 @@
 'use client';
 
-import { MapContainer, TileLayer, useMap, Marker, Polygon } from 'react-leaflet';
+import { MapContainer, TileLayer, useMap, useMapEvents, Marker, Polygon } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
 import '@geoman-io/leaflet-geoman-free';
@@ -594,6 +594,10 @@ function DrawingTools({
           return;
         }
 
+        try { map.pm.removeControls(); } catch {}
+        try { map.pm.disableDraw(); } catch {}
+        try { map.pm.disableGlobalEditMode(); } catch {}
+
         map.off('pm:drawstart', onDrawStart);
         map.off('pm:drawend', onDrawEnd);
         map.off('pm:create', onCreate);
@@ -681,6 +685,23 @@ function DrawingTools({
   return null;
 }
 
+function PointLocationPicker({
+  selectedLocation,
+  onLocationChange,
+}: {
+  selectedLocation?: { lat: number; lng: number } | null;
+  onLocationChange?: (coords: { lat: number; lng: number }) => void;
+}) {
+  useMapEvents({
+    click(e) {
+      onLocationChange?.({ lat: e.latlng.lat, lng: e.latlng.lng });
+    },
+  });
+
+  if (!selectedLocation) return null;
+  return <Marker position={[selectedLocation.lat, selectedLocation.lng]} />;
+}
+
 /* ===================== Escala ===================== */
 function ScaleBottomLeft() {
   const map = useMap();
@@ -717,7 +738,11 @@ function FlyToLocation({ center, zoom }: { center?: [number, number]; zoom?: num
 }
 
 /* ===================== Buscador ===================== */
-function LocationSearch() {
+function LocationSearch({
+  onLocationChange,
+}: {
+  onLocationChange?: (coords: { lat: number; lng: number }) => void;
+}) {
   const map = useMap();
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<any[]>([]);
@@ -806,6 +831,9 @@ function LocationSearch() {
   const handleSelect = (place: any) => {
     const lat = parseFloat(place.lat);
     const lon = parseFloat(place.lon);
+    if (Number.isFinite(lat) && Number.isFinite(lon)) {
+      onLocationChange?.({ lat, lng: lon });
+    }
 
     if (place.boundingbox && place.boundingbox.length === 4) {
       const [south, north, west, east] = place.boundingbox.map((v: string) => parseFloat(v));
@@ -892,8 +920,11 @@ function LocationSearch() {
 interface AddPropertyMapProps {
   onMapReady: (map: any) => void;
   onPolygonChange: (coords: any[]) => void;
+  onLocationChange?: (coords: { lat: number; lng: number }) => void;
   onAreaChange?: (area: number) => void;
   initialPolygon?: any[];
+  selectedLocation?: { lat: number; lng: number } | null;
+  locationMode?: 'point' | 'polygon';
   userCenter?: [number, number];
   userZoom?: number;
   userLocation?: { lat: number; lng: number } | null;
@@ -904,8 +935,11 @@ interface AddPropertyMapProps {
 const AddPropertyMap = ({
   onMapReady,
   onPolygonChange,
+  onLocationChange,
   onAreaChange,
   initialPolygon,
+  selectedLocation,
+  locationMode = 'polygon',
   userCenter,
   userZoom,
   userLocation,
@@ -1037,13 +1071,20 @@ const AddPropertyMap = ({
         />
         <MapRefBinder onMapReady={onMapReady} />
         <ScaleBottomLeft />
-        <DrawingTools
-          onPolygonChange={onPolygonChange}
-          onAreaChange={onAreaChange}
-          initialPolygon={initialPolygon}
-          showMeasurements={showMeasurements}
-        />
-        <LocationSearch />
+        {locationMode === 'polygon' ? (
+          <DrawingTools
+            onPolygonChange={onPolygonChange}
+            onAreaChange={onAreaChange}
+            initialPolygon={initialPolygon}
+            showMeasurements={showMeasurements}
+          />
+        ) : (
+          <PointLocationPicker
+            selectedLocation={selectedLocation}
+            onLocationChange={onLocationChange}
+          />
+        )}
+        <LocationSearch onLocationChange={onLocationChange} />
 
         {/* Reference properties - shown in gray as visual reference */}
         {useMemo(() => {

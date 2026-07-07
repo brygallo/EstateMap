@@ -26,7 +26,7 @@ interface PropertySidebarProps {
   onPropertyHover?: (property: Property | null) => void;
 }
 
-/** Panel lateral: filtros + listado de propiedades visibles en el mapa. */
+/** Panel lateral: buscador de propiedades + filtros + listado de propiedades. */
 export default function PropertySidebar({
   filters,
   owners,
@@ -56,7 +56,7 @@ export default function PropertySidebar({
   return (
     <>
       {/* Encabezado móvil */}
-      <div className="sticky top-0 z-10 flex items-center justify-between border-b border-line bg-white p-4 lg:hidden">
+      <div className="sticky top-0 z-10 flex items-center justify-between border-b border-line bg-white p-3.5 lg:hidden">
         <h2 className="text-base font-bold text-textPrimary">Filtros y propiedades</h2>
         <button
           onClick={onCloseMobile}
@@ -76,18 +76,18 @@ export default function PropertySidebar({
       />
 
       {/* Encabezado del listado */}
-      <div className="flex items-center justify-between border-t border-line bg-white px-4 py-3">
-        <h2 className="text-sm font-semibold text-textPrimary">Propiedades</h2>
-        <Badge variant="secondary" className="rounded-full font-geo tabular-nums">
+      <div className="flex items-center justify-between border-t border-line bg-white px-3.5 py-2.5">
+        <h2 className="text-xs font-semibold uppercase tracking-wide text-textSecondary">Propiedades</h2>
+        <Badge variant="secondary" className="rounded-md font-geo tabular-nums">
           {visibleProperties.length}
         </Badge>
       </div>
 
       {/* Listado */}
-      <div className="space-y-2.5 bg-background p-3 pb-24">
+      <div className="space-y-2 bg-background p-2.5 pb-24">
         {visibleProperties.length === 0 ? (
           <div className="mt-6 flex flex-col items-center px-4 text-center text-textSecondary">
-            <span className="flex h-12 w-12 items-center justify-center rounded-full bg-muted">
+            <span className="flex h-11 w-11 items-center justify-center rounded-card bg-muted">
               <MapPinned className="h-6 w-6 text-textSecondary" strokeWidth={1.75} aria-hidden />
             </span>
             <p className="mt-3 text-sm font-medium text-textPrimary">

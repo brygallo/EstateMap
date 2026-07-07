@@ -58,7 +58,7 @@ export default function RegisterPage() {
       }
 
       toast.success('Registro exitoso. Por favor verifica tu correo electrónico.');
-      router.push(`/verify-email?email=${encodeURIComponent(values.email)}`);
+      router.push(`/verificar-correo?email=${encodeURIComponent(values.email)}`);
     } catch (err) {
       toast.error('Error de conexión');
     } finally {
@@ -257,7 +257,7 @@ export default function RegisterPage() {
           {/* Login Link */}
           <p className="text-center text-sm text-textSecondary">
             ¿Ya tienes una cuenta?{' '}
-            <Link href="/login" className="font-semibold text-primary transition-colors hover:text-secondary">
+            <Link href="/iniciar-sesion" className="font-semibold text-primary transition-colors hover:text-secondary">
               Inicia sesión aquí
             </Link>
           </p>

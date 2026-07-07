@@ -124,7 +124,7 @@ export default function AssistedPublishPage() {
 
           <div className="mt-8 flex flex-col gap-3 sm:flex-row">
             <Button asChild size="lg" className="rounded-button bg-secondary hover:bg-secondaryHover">
-              <Link href="/register">Prefiero crear cuenta</Link>
+              <Link href="/registro">Prefiero crear cuenta</Link>
             </Button>
             <Button asChild size="lg" variant="outline" className="rounded-button border-line bg-surface">
               <Link href="/">Ver propiedades</Link>
