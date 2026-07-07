@@ -8,6 +8,7 @@ import * as turf from '@turf/turf';
 import LayerSwitch, { type MapLayer } from '@/components/map/LayerSwitch';
 import MapControls from '@/components/map/MapControls';
 import MapLegend from '@/components/map/MapLegend';
+import { statusMarker, statusColor, typeIconSvg, priceMarkerHtml } from '@/lib/mapMarkers';
 
 // Fix default marker icon issue with webpack
 if (typeof window !== 'undefined') {
@@ -452,9 +453,9 @@ const LeafletMap = ({
           border: 0 !important;
         }
         .map-price-pin {
-          --marker-bg: #1F6F5B;
-          --marker-ring: rgba(31, 111, 91, 0.22);
-          --marker-shadow: rgba(20, 82, 63, 0.28);
+          --marker-bg: #496D9C;
+          --marker-ring: rgba(73, 109, 156, 0.28);
+          --marker-shadow: rgba(45, 60, 103, 0.30);
           align-items: center;
           display: flex;
           flex-direction: column;
@@ -504,8 +505,8 @@ const LeafletMap = ({
           box-shadow: 0 10px 24px var(--marker-shadow), 0 0 0 5px var(--marker-ring);
         }
         .map-pin {
-          --pin-color: #1F6F5B;
-          --pin-shadow: rgba(20, 82, 63, 0.26);
+          --pin-color: #496D9C;
+          --pin-shadow: rgba(45, 60, 103, 0.28);
           align-items: center;
           background: var(--pin-color);
           border: 2px solid #ffffff;
@@ -527,16 +528,16 @@ const LeafletMap = ({
         }
         .map-pin:hover,
         .map-pin-selected {
-          box-shadow: 0 10px 24px var(--pin-shadow), 0 0 0 6px rgba(31, 111, 91, 0.14);
+          box-shadow: 0 10px 24px var(--pin-shadow), 0 0 0 6px rgba(73, 109, 156, 0.16);
           transform: rotate(-45deg) scale(1.14);
         }
         .map-cluster {
           --cluster-size: 38px;
           align-items: center;
-          background: radial-gradient(circle at 35% 28%, #37a184 0%, #1f6f5b 48%, #14523f 100%);
+          background: radial-gradient(circle at 35% 28%, #688CCA 0%, #496D9C 48%, #2D3C67 100%);
           border: 2px solid #ffffff;
           border-radius: 999px;
-          box-shadow: 0 12px 28px rgba(15, 23, 42, 0.24), 0 0 0 7px rgba(31, 111, 91, 0.13);
+          box-shadow: 0 12px 28px rgba(15, 23, 42, 0.24), 0 0 0 7px rgba(73, 109, 156, 0.15);
           color: #ffffff;
           cursor: pointer;
           display: flex;
@@ -628,10 +629,10 @@ const LeafletMap = ({
           priority: number;
         }> = [];
         const clusterBuckets = new Map<string, { count: number; total: number; lat: number; lng: number }>();
-        const shouldClusterPrices = mapZoom < 11 && filteredProperties.length > 60;
-        const maxRichMarkers = mapZoom >= 16 ? 220 : mapZoom >= 14 ? 150 : mapZoom >= 12 ? 88 : mapZoom >= 11 ? 48 : 0;
+        const shouldClusterPrices = mapZoom < 12 && filteredProperties.length > 35;
+        const maxRichMarkers = mapZoom >= 16 ? 140 : mapZoom >= 14 ? 90 : mapZoom >= 12 ? 42 : 0;
         const maxPolygons = mapZoom >= 16 ? 140 : mapZoom >= 14 ? 70 : mapZoom >= 13 ? 30 : 0;
-        const minLabelDistance = mapZoom >= 16 ? 0.0006 : mapZoom >= 14 ? 0.0015 : mapZoom >= 12 ? 0.004 : 0.008;
+        const minLabelDistance = mapZoom >= 16 ? 0.001 : mapZoom >= 14 ? 0.0024 : mapZoom >= 12 ? 0.007 : 0.014;
         const clusterPrecision = mapZoom <= 6 ? 0 : mapZoom <= 8 ? 1 : 2;
         const minClusterDistance = mapZoom <= 6 ? 1.05 : mapZoom <= 8 ? 0.48 : 0.2;
 
@@ -648,14 +649,15 @@ const LeafletMap = ({
           }
 
           const isSelected = selectedProperty?.id === p.id;
-          // Colores alineados a la direccion visual: verde profundo para venta,
-          // dorado sobrio para alquiler y gris neutral para inactivo.
-          const baseColor = p.status === 'for_sale' ? '#1F6F5B' : p.status === 'for_rent' ? '#C8A96A' : '#64748B';
-          const shadowColor = p.status === 'for_sale' ? 'rgba(20, 82, 63, 0.28)' : p.status === 'for_rent' ? 'rgba(184, 148, 74, 0.3)' : 'rgba(71, 85, 105, 0.28)';
-          const ringColor = p.status === 'for_sale' ? 'rgba(31, 111, 91, 0.22)' : p.status === 'for_rent' ? 'rgba(200, 169, 106, 0.28)' : 'rgba(100, 116, 139, 0.22)';
+          // Colores alineados a la paleta navy: azul profundo para venta,
+          // azul claro para alquiler y gris pizarra neutral para inactivo.
+          const marker = statusMarker(p.status);
+          const baseColor = statusColor(p.status);
+          const shadowColor = marker.shadow;
+          const ringColor = marker.ring;
 
           const formattedPrice = getMapPriceLabel(p.price);
-          const priceIconColor = p.status === 'for_sale' ? '#1F6F5B' : p.status === 'for_rent' ? '#B8944A' : '#64748B';
+          const priceIconColor = marker.solid;
 
           // Calculate centroid for price label position
           let labelPosition: [number, number] | null = null;
@@ -792,18 +794,14 @@ const LeafletMap = ({
 
             const markerIcon = new L.DivIcon({
               className: 'map-rich-marker-icon',
-              html: `
-                <div
-                  class="map-price-pin ${candidate.isSelected ? 'map-price-pin-selected' : ''}"
-                  aria-hidden="true"
-                  style="--marker-bg: ${candidate.priceIconColor}; --marker-ring: ${candidate.priceRingColor}; --marker-shadow: ${candidate.shadowColor};"
-                >
-                  <div class="map-price-bubble">${candidate.formattedPrice}</div>
-                  <div class="map-price-pin-head"></div>
-                </div>
-              `,
-              iconSize: [1, 1],
-              iconAnchor: [0, 0]
+              html: priceMarkerHtml({
+                status: candidate.property.status,
+                type: candidate.property.property_type,
+                price: candidate.formattedPrice,
+                selected: candidate.isSelected,
+              }),
+              iconSize: [100, 42],
+              iconAnchor: [50, 42]
             });
 
             markers.push(

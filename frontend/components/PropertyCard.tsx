@@ -203,6 +203,9 @@ export default function PropertyCard({
   const area = formatArea(property.area);
   const operationBadgeClass = getStatusBadgeClass(String(property.status));
   const isRent = property.status === 'for_rent';
+  // Anuncio venta + alquiler a la vez: `price` es la venta y `rent_price` el alquiler.
+  const rentPriceNum = Number.parseFloat(String(property.rent_price ?? ''));
+  const hasRentPrice = property.rent_price != null && Number.isFinite(rentPriceNum) && rentPriceNum > 0;
 
   // Imagen principal compartida por ambas variantes. La miniatura del backend
   // (más liviana) se usa en compact; el placeholder por tipo cubre el caso sin foto.
@@ -263,9 +266,14 @@ export default function PropertyCard({
             <span className={`badge ${operationBadgeClass} flex-shrink-0`}>{statusLabel}</span>
           </div>
 
-          <div className="mt-1 flex items-baseline gap-1">
+          <div className="mt-1 flex flex-wrap items-baseline gap-x-1.5 gap-y-0.5">
             <span className="price text-[15px] font-bold">{formatPrice(property.price)}</span>
-            {isRent && <span className="text-[11px] font-medium text-textSecondary">/mes</span>}
+            {isRent && !hasRentPrice && <span className="text-[11px] font-medium text-textSecondary">/mes</span>}
+            {hasRentPrice && (
+              <span className="text-[11px] font-medium text-textSecondary">
+                · Alquiler {formatPrice(property.rent_price)}/mes
+              </span>
+            )}
           </div>
 
           <div className="mt-1 flex flex-wrap items-center gap-x-2.5 gap-y-0.5 text-[11px] text-textSecondary">
@@ -346,7 +354,7 @@ export default function PropertyCard({
             <span className="line-clamp-1">{location}</span>
           </p>
         )}
-        <div className="mt-2.5 flex items-baseline gap-1.5">
+        <div className="mt-2.5 flex flex-wrap items-baseline gap-1.5">
           {hasPrice ? (
             <AnimatedNumber
               value={priceNum}
@@ -357,8 +365,13 @@ export default function PropertyCard({
           ) : (
             <span className="price font-geo text-xl font-semibold">{formatPrice(property.price)}</span>
           )}
-          {property.status === 'for_rent' && (
+          {isRent && !hasRentPrice && (
             <span className="text-sm font-medium text-textSecondary">/mes</span>
+          )}
+          {hasRentPrice && (
+            <span className="text-sm font-medium text-textSecondary">
+              · Alquiler {formatPrice(property.rent_price)}/mes
+            </span>
           )}
         </div>
         <div className="mt-3 flex flex-wrap items-center gap-1.5 border-t border-line pt-3">

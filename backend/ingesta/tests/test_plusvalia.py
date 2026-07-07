@@ -153,3 +153,42 @@ class TestPlusvaliaParseDetail:
         assert got["111111"]["province"] == "Pichincha"
         assert got["111111"]["address"] == "Calle A, Cumbaya"
         assert got["222222"]["coords"] == ("-0.22", "-78.22")
+
+    _DUAL_HTML = (
+        '<html><head>'
+        '<meta property="og:title" content="Terreno Comercial 825 m2 - Urdesa, Guayaquil"/>'
+        '<meta property="og:url" content="https://www.plusvalia.com/propiedades/clasificado/x-149790800.html"/>'
+        '</head><body><script>'
+        "'pricesData': ["
+        '{"operationType":{"name":"venta","operationTypeId":"1"},'
+        '"prices":[{"amount":600000,"formattedAmount":"600.000"}]},'
+        '{"operationType":{"name":"alquiler","operationTypeId":"2"},'
+        '"prices":[{"amount":5000,"formattedAmount":"5.000"}]}],'
+        "'whatsApp': '593 993833168'"
+        '</script></body></html>'
+    )
+    _DUAL_URL = "https://www.plusvalia.com/propiedades/clasificado/x-149790800.html"
+    _DUAL_REC = {"coords": ("-2.1", "-79.9"), "city": "Guayaquil",
+                 "province": "Guayas", "address": "Urdesa"}
+
+    def test_venta_y_alquiler_guarda_ambos_precios(self):
+        """Anuncio venta+alquiler: prioriza venta y guarda el alquiler aparte,
+        de forma determinista (mismo resultado venga de la búsqueda que venga)."""
+        for op in ("venta", "alquiler"):
+            d = self.scraper._parse_detail(self._DUAL_HTML, self._DUAL_URL,
+                                           "terreno", op, self._DUAL_REC)
+            assert d["status"] == "for_sale"      # venta como principal
+            assert d["price"] == 600000.0
+            assert d["rent_price"] == 5000.0      # alquiler como secundario
+            assert d["contact_phone"] == "593993833168"
+
+    def test_solo_alquiler_sin_rent_price_secundario(self):
+        """Anuncio SOLO alquiler: precio de alquiler en price, rent_price None."""
+        html = self._DUAL_HTML.replace(
+            '{"operationType":{"name":"venta","operationTypeId":"1"},'
+            '"prices":[{"amount":600000,"formattedAmount":"600.000"}]},', '')
+        d = self.scraper._parse_detail(html, self._DUAL_URL, "terreno",
+                                       "alquiler", self._DUAL_REC)
+        assert d["status"] == "for_rent"
+        assert d["price"] == 5000.0
+        assert d["rent_price"] is None

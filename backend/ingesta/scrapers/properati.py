@@ -263,7 +263,9 @@ class ProperatiScraper(BaseScraper):
             "address": normalize.clean_text(_loc_field(h, "address"), 255),
             "city": normalize.clean_text(_loc_field(h, "district"), 100),
             "province": normalize.clean_text(_loc_field(h, "province"), 100),
-            "contact_phone": "",   # Properati oculta el teléfono; contacto = source_url
+            # Properati enruta el WhatsApp por su propio número (concierge de la
+            # empresa), no expone el celular individual del dueño -> sin teléfono.
+            "contact_phone": "",
             "contact_email": "",
             "source_agency": normalize.clean_text(_dt_value(h, "agency-name"), 150),
             "image_urls": images,

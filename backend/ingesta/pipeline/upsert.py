@@ -10,6 +10,7 @@ Reglas:
 """
 from decimal import Decimal, InvalidOperation
 
+from django.db import IntegrityError, transaction
 from django.utils import timezone
 
 from .dedup import find_duplicate
@@ -34,6 +35,7 @@ def _apply_fields(prop, data, fuente, lat, lng):
     prop.rooms = data.get("rooms") or 0
     prop.bathrooms = data.get("bathrooms") or 0
     prop.price = _to_decimal(data.get("price"))
+    prop.rent_price = _to_decimal(data.get("rent_price"))
     prop.contact_phone = (data.get("contact_phone") or "")[:20]
     prop.contact_email = (data.get("contact_email") or "")[:254]
     prop.source = fuente
@@ -105,7 +107,27 @@ def upsert_property(data, fuente, reader=None, image_urls=None):
     _apply_fields(prop, data, fuente, lat, lng)
     if created:
         prop.imported_at = timezone.now()
-    prop.save()
+
+    try:
+        # Savepoint: si el INSERT choca con la constraint (source, external_id)
+        # por una carrera (otra ejecución creó la misma fila entremedio), el
+        # error no envenena la transacción exterior.
+        with transaction.atomic():
+            prop.save()
+    except IntegrityError:
+        # Ya existe esa (source, external_id): recuperamos la fila y la
+        # actualizamos en vez de duplicar. La creación se convierte en update
+        # y anulamos el demote (el próximo ciclo lo resolverá si aplica).
+        if not external_id:
+            raise
+        existing = Property.objects.filter(source=fuente, external_id=external_id).first()
+        if existing is None:
+            raise
+        prop = existing
+        created = False
+        demote = None
+        _apply_fields(prop, data, fuente, lat, lng)
+        prop.save()
 
     if demote is not None:
         demote.is_duplicate = True

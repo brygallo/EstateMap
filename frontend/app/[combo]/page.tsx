@@ -87,6 +87,7 @@ export default async function ComboPage({ params }: { params: Params }) {
         matched
       )}`}
       properties={matched}
+      pageHref={`/${params.combo}`}
       mapHref={mapHref}
       relatedLinks={related.slice(0, 8)}
       emptyMessage="No hay propiedades en esta combinación por ahora. Explora el mapa interactivo."

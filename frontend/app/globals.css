@@ -4,27 +4,27 @@
 
 @layer base {
   :root {
-    /* Fondo calido de marca (#F7F5F0): nunca blanco puro */
-    --background: 45 30% 96%;
+    /* Fondo casi blanco con un matiz frío muy sutil (gris bajito) */
+    --background: 225 33% 98%;
     --foreground: 221 39% 11%; /* #111827 textPrimary */
     --card: 0 0% 100%; /* surface #FFFFFF */
     --card-foreground: 221 39% 11%;
     --popover: 0 0% 100%;
     --popover-foreground: 221 39% 11%;
-    /* Primario de marca (#1F6F5B) */
-    --primary: 164 56% 28%;
+    /* Primario de marca (#496D9C, azul acero) */
+    --primary: 214 36% 45%;
     --primary-foreground: 0 0% 100%;
-    --secondary: 39 47% 60%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
-    --muted: 42 25% 93%;
+    --secondary: 218 48% 60%; /* #688CCA */
+    --secondary-foreground: 0 0% 100%;
+    --muted: 220 24% 94%;
     --muted-foreground: 215.4 16.3% 46.9%; /* ≈ #64748B */
-    --accent: 42 25% 93%;
+    --accent: 220 24% 94%;
     --accent-foreground: 222.2 47.4% 11.2%;
     --destructive: 0 72% 51%; /* #DC2626 error */
     --destructive-foreground: 0 0% 100%;
-    --border: 38 18% 88%; /* #E5E2DA line */
-    --input: 38 18% 88%;
-    --ring: 164 56% 28%; /* verde de marca */
+    --border: 220 22% 90%; /* #DFE3EC line */
+    --input: 220 22% 90%;
+    --ring: 214 36% 45%; /* azul de marca */
     --radius: 0.5rem; /* 8px */
   }
 
@@ -120,7 +120,7 @@ body {
 }
 
 .custom-marker {
-  background-color: #1F6F5B;
+  background-color: #496D9C;
   width: 1.5rem;
   height: 1.5rem;
   border-radius: 9999px;
@@ -130,7 +130,7 @@ body {
 }
 
 .custom-marker:hover {
-  background-color: #14523F;
+  background-color: #2D3C67;
   transform: scale(1.15);
 }
 

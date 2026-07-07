@@ -6,6 +6,7 @@ import { useEffect, useMemo, useState } from 'react';
 import L from 'leaflet';
 import * as turf from '@turf/turf';
 import LayerSwitch, { type MapLayer } from '@/components/map/LayerSwitch';
+import { statusColor, statusMarker } from '@/lib/mapMarkers';
 
 // Fix default marker icon issue with webpack
 if (typeof window !== 'undefined') {
@@ -77,14 +78,8 @@ const PropertyDetailMapInner = ({
 
   // Colores alineados con la home: verde profundo (venta), dorado (alquiler),
   // gris neutro (inactivo).
-  const baseColor =
-    status === 'for_sale' ? '#1F6F5B' : status === 'for_rent' ? '#C8A96A' : '#64748B';
-  const priceGradient =
-    status === 'for_sale'
-      ? 'linear-gradient(135deg, #14523F, #1F6F5B)'
-      : status === 'for_rent'
-      ? 'linear-gradient(135deg, #B8944A, #C8A96A)'
-      : 'linear-gradient(135deg, #475569, #64748B)';
+  const baseColor = statusColor(status);
+  const priceGradient = statusMarker(status).gradient;
 
   const formattedPrice = price
     ? `$${parseFloat(String(price)).toLocaleString('en-US', { maximumFractionDigits: 0 })}`

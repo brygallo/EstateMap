@@ -106,7 +106,13 @@ _AREA_CAP_RE = re.compile(r'"title"\s*:\s*"[^"]*·\s*([0-9][0-9.,]*)\s*m(?:²|2|
 
 # Datos del blob JS embebido de la ficha.
 _OP_RE = re.compile(r'"operationType"\s*:\s*\{\s*"name"\s*:\s*"([^"]+)"')
-# Primer "amount" dentro del array "prices".
+# Precio por operación: los anuncios venta+alquiler traen AMBOS en pricesData,
+# cada uno con su operationType y su amount. Se empareja (operación -> monto).
+_PRICES_BY_OP_RE = re.compile(
+    r'"operationType"\s*:\s*\{\s*"name"\s*:\s*"([^"]+)"[^}]*\}\s*,\s*'
+    r'"prices"\s*:\s*\[\s*\{[^\]]*?"amount"\s*:\s*([0-9]+)'
+)
+# Primer "amount" dentro del array "prices" (fallback).
 _PRICE_RE = re.compile(r'"prices"\s*:\s*\[\s*\{[^}]*?"amount"\s*:\s*([0-9]+)')
 _PRICE_FMT_RE = re.compile(r'"formattedAmount"\s*:\s*"([^"]+)"')
 # Teléfono/WhatsApp del anunciante (clave con comillas simples en el dataLayer).
@@ -412,20 +418,32 @@ class PlusvaliaScraper(BaseScraper):
         # Limpiar el sufijo ", Provincia de X"/" - Plusvalía" del título de meta.
         title_clean = re.split(r",\s*Provincia\s+de\b|\s+-\s+Plusval", title)[0].strip()
 
-        op_value = _OP_RE.search(h)
-        status = normalize.map_status(
-            op_value.group(1) if op_value else operacion, operacion
-        )
-
         property_type = normalize.map_property_type(title_clean, categoria, detail_url)
 
-        # Precio: primer "amount" del array "prices"; fallback a formattedAmount.
-        price_m = _PRICE_RE.search(h)
-        if price_m:
-            price = normalize.parse_price(price_m.group(1))
-        else:
+        # Precios por operación. Un anuncio puede ser venta Y alquiler a la vez
+        # (pricesData trae ambos). Se guardan los dos, priorizando la VENTA:
+        #   - venta+alquiler -> status=for_sale, price=venta, rent_price=alquiler
+        #   - solo alquiler  -> status=for_rent, price=alquiler, rent_price=None
+        #   - solo venta     -> status=for_sale, price=venta,   rent_price=None
+        # Así el resultado es determinista (no depende de la búsqueda que lo
+        # encontró) y no aparece "$600.000 en alquiler".
+        prices_by_op = {}
+        for opn, amount in _PRICES_BY_OP_RE.findall(h):
+            prices_by_op.setdefault(opn.lower(), amount)
+        sale = normalize.parse_price(prices_by_op.get("venta"))
+        rent = normalize.parse_price(prices_by_op.get("alquiler"))
+        rent_price = None
+        if sale is not None:
+            status, price = "for_sale", sale
+            rent_price = rent  # si también es alquiler, queda como secundario
+        elif rent is not None:
+            status, price = "for_rent", rent
+        else:  # sin pricesData por operación: fallback al primer amount
+            op_norm = "alquiler" if str(operacion).lower().startswith("alq") else "venta"
+            status = normalize.map_status(op_norm, operacion)
+            pm = _PRICE_RE.search(h)
             fmt = _PRICE_FMT_RE.search(h)
-            price = normalize.parse_price(fmt.group(1) if fmt else None)
+            price = normalize.parse_price(pm.group(1) if pm else (fmt.group(1) if fmt else None))
 
         # Características principales del bloque mainFeatures (ids CFT estables).
         # first-wins: el anuncio principal aparece antes que los recomendados.
@@ -447,12 +465,19 @@ class PlusvaliaScraper(BaseScraper):
         area = total_area or built_area
         built = built_area if property_type != "land" else None
 
-        # Descripción completa (cuerpo) o, si no, la meta recortada.
+        # Descripción completa (cuerpo) o, si no, la meta recortada. El texto
+        # completo ya viene en el HTML (colapsado por CSS); "Leer descripción
+        # completa"/"Ver más" es SÓLO el botón que expande la vista, así que se
+        # quita para que no quede pegado al final del texto.
         desc_m = _DESC_RE.search(h)
         description = (
             normalize.clean_description(desc_m.group(1)) if desc_m
             else normalize.clean_text(_meta(h, "og:description"))
         )
+        description = re.sub(
+            r'\s*(?:Leer\s+descripci[oó]n\s+completa|Leer\s+m[aá]s|Ver\s+m[aá]s)\s*$',
+            '', description, flags=re.I,
+        ).strip()
 
         # Ubicación. Fuente principal: el registro del LISTADO (``listing``),
         # que trae dirección + cantón + provincia limpios para cada anuncio.
@@ -526,6 +551,7 @@ class PlusvaliaScraper(BaseScraper):
             "property_type": property_type,
             "status": status,
             "price": price,
+            "rent_price": rent_price,  # precio de alquiler si es venta Y alquiler
             "area": area,
             "built_area": built,
             "rooms": rooms,

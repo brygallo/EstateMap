@@ -164,7 +164,7 @@ export default async function HomePage() {
       />
       <a
         href="#contenido-informativo"
-        className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-top focus:rounded-button focus:bg-primary focus:px-4 focus:py-2 focus:text-sm focus:font-semibold focus:text-white"
+        className="sr-only transition focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-top focus:inline-flex focus:items-center focus:rounded-full focus:bg-primary focus:px-5 focus:py-2.5 focus:text-sm focus:font-semibold focus:text-white focus:no-underline focus:shadow-cardHover focus:outline-none focus:ring-2 focus:ring-primary/40 focus:ring-offset-2 hover:focus:bg-primaryHover"
       >
         Saltar al contenido informativo
       </a>

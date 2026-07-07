@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { MessageCircle, MapPin, Mail, ArrowUpRight } from 'lucide-react';
+import { MessageCircle, MapPin, Map, Mail, ArrowUpRight } from 'lucide-react';
 
 const whatsappHref =
   'https://wa.me/593983738151?text=Hola%20necesito%20ayuda%20con%20Geo%20Propiedades';
@@ -92,8 +92,8 @@ const Footer = () => (
         {/* Marca */}
         <div className="lg:col-span-5">
           <div className="flex items-center gap-2.5">
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-white text-navy-500 shadow-lg shadow-black/25">
-              <MapPin className="h-5 w-5" strokeWidth={2.25} aria-hidden />
+            <div className="flex h-10 w-10 items-center justify-center rounded-[10px] bg-white text-navy-500 shadow-lg shadow-black/25">
+              <Map className="h-5 w-5" strokeWidth={2} aria-hidden />
             </div>
             <span className="text-lg font-bold tracking-tight text-white">
               Geo Propiedades <span className="text-navy-200">Ecuador</span>

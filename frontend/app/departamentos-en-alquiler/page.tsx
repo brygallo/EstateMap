@@ -26,6 +26,7 @@ export default async function DepartamentosEnAlquilerPage() {
         properties
       )}`}
       properties={properties}
+      pageHref={PATH}
       mapHref="/?type=apartment&status=for_rent"
       relatedLinks={TYPE_LINKS.filter((l) => l.href !== PATH)}
       emptyMessage="Aún no hay departamentos en alquiler publicados. Explora otras propiedades en el mapa."

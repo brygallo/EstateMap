@@ -26,6 +26,7 @@ export default async function TerrenosEnVentaPage() {
         properties
       )}`}
       properties={properties}
+      pageHref={PATH}
       mapHref="/?type=land&status=for_sale"
       relatedLinks={TYPE_LINKS.filter((l) => l.href !== PATH)}
       emptyMessage="Aún no hay terrenos en venta publicados. Explora otras propiedades en el mapa."

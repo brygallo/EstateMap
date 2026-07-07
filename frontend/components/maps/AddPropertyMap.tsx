@@ -219,7 +219,7 @@ function DrawingTools({
           background: white;
           padding: 4px 8px;
           border-radius: 6px;
-          border: 1px solid #28a745;
+          border: 1px solid #496D9C;
           box-shadow: 0 2px 6px rgba(0,0,0,0.15);
         ">
           <input type="number" step="0.1" min="0.1"
@@ -372,7 +372,7 @@ function DrawingTools({
 
   const stylePolygon = (layer: any) => {
     layer.setStyle?.({
-      color: '#2b8a3e',
+      color: '#496D9C',
       weight: 2.5,
       fillOpacity: 0.15,
       lineJoin: 'round',
@@ -654,7 +654,7 @@ function DrawingTools({
 
           // Create polygon from initial data
           const polygon = L.polygon(initialPolygon, {
-            color: '#2b8a3e',
+            color: '#496D9C',
             weight: 2.5,
             fillOpacity: 0.15,
             lineJoin: 'round',
@@ -965,13 +965,13 @@ const AddPropertyMap = ({
           transition: all 0.2s ease;
         }
         .distance-input:hover {
-          border-color: #28a745 !important;
+          border-color: #496D9C !important;
           background: white !important;
         }
         .distance-input:focus {
-          border-color: #28a745 !important;
+          border-color: #496D9C !important;
           background: white !important;
-          box-shadow: 0 0 0 2px rgba(40, 167, 69, 0.2) !important;
+          box-shadow: 0 0 0 2px rgba(73, 109, 156, 0.2) !important;
         }
         .distance-input::-webkit-inner-spin-button,
         .distance-input::-webkit-outer-spin-button {
@@ -1113,8 +1113,8 @@ const AddPropertyMap = ({
                 key={`reference-polygon-${property.id || idx}`}
                 positions={leafletCoordinates}
                 pathOptions={{
-                  color: '#1F6F5B',
-                  fillColor: '#E5F2EE',
+                  color: '#496D9C',
+                  fillColor: '#E3EAF4',
                   fillOpacity: 0.18,
                   weight: 1.5,
                   interactive: false,

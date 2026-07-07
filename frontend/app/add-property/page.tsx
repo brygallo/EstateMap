@@ -789,7 +789,7 @@ const AddPropertyPage = () => {
             particleCount: 90,
             spread: 70,
             origin: { y: 0.7 },
-            colors: ['#1F6F5B', '#C8A96A', '#E5F2EE'],
+            colors: ['#496D9C', '#688CCA', '#E3EAF4'],
           });
         } catch {}
         toast.success('Propiedad creada exitosamente');

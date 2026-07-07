@@ -25,7 +25,7 @@ const STATUS_DOT_CLASS: Record<string, string> = {
 // Badge completo (fondo + texto) sobrio para etiquetas de estado, en tokens de marca.
 const STATUS_BADGE_CLASS: Record<string, string> = {
   for_sale: 'bg-primaryLight text-primary',
-  for_rent: 'bg-secondary/15 text-[#7A5B20]',
+  for_rent: 'bg-secondary/15 text-secondaryHover',
   inactive: 'bg-muted text-textSecondary',
 };
 
