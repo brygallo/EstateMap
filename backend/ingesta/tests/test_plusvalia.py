@@ -94,6 +94,22 @@ class TestPlusvaliaParseDetail:
         assert all("naventcdn.com" in u for u in d["image_urls"])
         assert "Tumbaco" in d["description"]
 
+    def test_descripcion_quita_cta_leer_descripcion_completa(self):
+        html = CLASIFICADO_HTML.replace(
+            '<div id="reactDescription"><div><p>Proyecto de casas en Tumbaco.<br>Areas verdes.</p></div></div></section>',
+            '<div id="reactDescription"><div><p>Vive con tranquilidad y con estupendo clima cálido.<br>'
+            'Contáctame, estaré gustosa de atenderte.<br><br>\\t\\t\\tLeer descripción completa</p></div></div></section>',
+        )
+        d = self.scraper._parse_detail(
+            html,
+            "https://www.plusvalia.com/propiedades/clasificado/h-puembo-150000001.html",
+            "terreno", "venta",
+            listing={"coords": ("-0.17", "-78.35"), "address": "Puembo",
+                     "city": "Quito", "province": "Pichincha"},
+        )
+        assert d["description"].endswith("Contáctame, estaré gustosa de atenderte.")
+        assert "Leer descripción completa" not in d["description"]
+
     def test_dormitorios_y_banos(self):
         d = self._parse_proyecto()
         assert d["rooms"] == 3
