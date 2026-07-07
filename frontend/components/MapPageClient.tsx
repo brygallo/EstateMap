@@ -3,7 +3,7 @@
 import { useEffect, useState, useRef } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import dynamic from 'next/dynamic';
-import { Loader2, LocateFixed, SlidersHorizontal } from 'lucide-react';
+import { Loader2, SlidersHorizontal } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/lib/auth-context';
 import { getPropertyTypeLabel, getStatusLabel } from '@/lib/property-labels';
@@ -11,6 +11,7 @@ import { useGeolocation } from '@/hooks/useGeolocation';
 import { usePropertyFilters } from '@/hooks/usePropertyFilters';
 import { flyToProperty } from '@/lib/map-navigation';
 import PropertySidebar from '@/components/map/PropertySidebar';
+import LocationStatus from '@/components/map/LocationStatus';
 import PropertyModal from '@/components/PropertyModal';
 import LocationPermissionModal from '@/components/LocationPermissionModal';
 import type { MapBounds, Property } from '@/lib/types';
@@ -120,36 +121,19 @@ const MapPage = () => {
   }, []);
 
   return (
-    <div className="relative h-[calc(100vh-4.5rem)] overflow-hidden">
-      {/* Botón para abrir el panel en móvil */}
+    <div className="relative h-[calc(100vh-3.5rem)] overflow-hidden">
+      {/* Botón para abrir filtros y propiedades en móvil */}
       <Button
         onClick={() => setSidebarOpen(!sidebarOpen)}
         size="icon"
-        className="fixed bottom-20 left-4 z-nav h-14 w-14 rounded-full shadow-cardHover lg:hidden [&_svg]:size-6"
+        className="fixed bottom-20 left-4 z-nav h-12 w-12 rounded-card shadow-cardHover lg:hidden [&_svg]:size-5"
         aria-label="Abrir filtros y propiedades"
       >
         <SlidersHorizontal strokeWidth={2} />
         {visibleProperties.length > 0 && (
-          <span className="absolute -right-1 -top-1 flex h-6 w-6 items-center justify-center rounded-full bg-secondary text-xs font-bold text-secondary-foreground">
+          <span className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-md bg-secondary text-[11px] font-semibold text-secondary-foreground">
             {visibleProperties.length}
           </span>
-        )}
-      </Button>
-
-      {/* Botón "mi ubicación" */}
-      <Button
-        onClick={geo.handleGetMyLocation}
-        disabled={geo.loadingLocation}
-        variant="outline"
-        size="icon"
-        className="fixed bottom-20 right-4 z-nav h-14 w-14 rounded-full border-line bg-surface text-primary shadow-cardHover hover:bg-muted hover:text-primary [&_svg]:size-6"
-        aria-label="Mi ubicación"
-        title="Ir a mi ubicación"
-      >
-        {geo.loadingLocation ? (
-          <Loader2 className="animate-spin" strokeWidth={2} />
-        ) : (
-          <LocateFixed strokeWidth={2} />
         )}
       </Button>
 
@@ -165,7 +149,7 @@ const MapPage = () => {
         ${sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
         transition-transform duration-300 ease-in-out
         bg-white text-textPrimary border-r border-line
-        h-[calc(100vh-4.5rem)] lg:h-full
+        h-[calc(100vh-3.5rem)] lg:h-full
         w-72 lg:w-1/5
         z-40 lg:z-0
         overflow-y-auto
@@ -191,16 +175,23 @@ const MapPage = () => {
           filteredProperties={properties}
           selectedProperty={selectedProperty}
           userLocation={geo.userLocation}
+          userAccuracy={geo.accuracy}
           onMapReady={handleMapReady}
           onVisiblePropertiesChange={setVisibleProperties}
           onBoundsChange={setBounds}
           onPolygonClick={handlePolygonClick}
           onPriceLabelClick={handleSidebarPropertyClick}
+          onLocate={geo.handleGetMyLocation}
+          locating={geo.loadingLocation}
+          locationBlocked={geo.locationBlocked}
           hoverTimeoutRef={hoverTimeoutRef}
           getPropertyTypeLabel={getPropertyTypeLabel}
           getStatusLabel={getStatusLabel}
           center={DEFAULT_CENTER}
         />
+
+        {/* Píldora de estado de ubicación */}
+        <LocationStatus status={geo.locationStatus} />
       </div>
 
       {/* Modal de detalle */}
@@ -217,7 +208,7 @@ const MapPage = () => {
       {/* Toast de carga de ubicación */}
       {geo.showLocationToast && (
         <div className="animate-fade-in fixed left-1/2 top-20 z-top -translate-x-1/2">
-          <div className="flex items-center gap-3 rounded-card border border-line bg-white px-6 py-4 shadow-cardHover">
+          <div className="flex items-center gap-3 rounded-card border border-line bg-white px-4 py-3 shadow-cardHover">
             <Loader2 className="h-5 w-5 animate-spin text-primary" strokeWidth={2} />
             <div className="flex flex-col">
               <span className="text-sm font-semibold text-textPrimary">Obteniendo tu ubicación</span>

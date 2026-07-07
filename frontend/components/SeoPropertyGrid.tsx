@@ -4,7 +4,7 @@ import { Home } from 'lucide-react';
 
 /**
  * Crawlable grid of property cards. Each card links to the individual property
- * page (`/property/[id]`) so search engines discover the full inventory through
+ * page (`/propiedad/[id]`) so search engines discover the full inventory through
  * internal links, and the map deep-link stays available for humans.
  */
 export default function SeoPropertyGrid({
@@ -47,7 +47,7 @@ export default function SeoPropertyGrid({
           key={property.id}
           property={property}
           variant="grid"
-          href={`/property/${property.id}`}
+          href={`/propiedad/${property.id}`}
         />
       ))}
     </div>

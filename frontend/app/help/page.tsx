@@ -1,7 +1,6 @@
 'use client';
 
 import Link from 'next/link';
-import { useState } from 'react';
 import {
   Accordion,
   AccordionContent,
@@ -31,16 +30,6 @@ const ICONS = {
 };
 
 export default function HelpPage() {
-  const [copied, setCopied] = useState(false);
-
-  const shareUrl = typeof window !== 'undefined' ? window.location.origin + '/' : 'https://geopropiedades.ec/';
-
-  const handleCopyLink = () => {
-    navigator.clipboard.writeText(shareUrl);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  };
-
   return (
     <div className="min-h-screen bg-background text-textPrimary">
       <div className="max-w-5xl mx-auto px-4 py-12 md:py-16 space-y-16">
@@ -58,7 +47,7 @@ export default function HelpPage() {
             inventario de forma ordenada.
           </p>
           <div className="mt-6 flex flex-col sm:flex-row gap-3">
-            <Link href="/add-property" className="btn btn-md btn-primary">
+            <Link href="/publicar-propiedad" className="btn btn-md btn-primary">
               Publicar una propiedad
             </Link>
             <Link href="/" className="btn btn-md btn-secondary">
@@ -134,7 +123,7 @@ export default function HelpPage() {
             ))}
           </ol>
           <div className="mt-6">
-            <Link href="/add-property" className="btn btn-md btn-primary">
+            <Link href="/publicar-propiedad" className="btn btn-md btn-primary">
               Empezar a publicar
             </Link>
           </div>
@@ -150,22 +139,11 @@ export default function HelpPage() {
               <h2 className="text-xl font-semibold">Compartir un mapa filtrado</h2>
               <p className="mt-2 text-sm text-muted-foreground leading-relaxed max-w-2xl">
                 En el mapa, aplica los filtros que quieras (zona, tipo, precio, área). La dirección
-                de la página incluye esos filtros, así que al compartir el enlace la otra persona
-                verá el mismo resultado. También puedes usar el botón
-                <span className="font-medium text-textPrimary"> Compartir búsqueda</span> del panel de filtros.
+                de la página incluye esos filtros, así que solo debes copiar la URL del navegador
+                para que otra persona vea el mismo resultado.
               </p>
               <div className="mt-4 flex flex-col sm:flex-row gap-3">
                 <Link href="/" className="btn btn-sm btn-secondary">Ir al mapa</Link>
-                <button onClick={handleCopyLink} className="btn btn-sm btn-ghost border border-line">
-                  {copied ? (
-                    <>
-                      <Icon path={ICONS.check} className="h-4 w-4" />
-                      Enlace copiado
-                    </>
-                  ) : (
-                    'Copiar enlace de la plataforma'
-                  )}
-                </button>
               </div>
             </div>
           </div>
@@ -206,7 +184,7 @@ export default function HelpPage() {
               </svg>
               Escríbenos por WhatsApp
             </Link>
-            <Link href="/account" className="btn btn-md btn-secondary">
+            <Link href="/cuenta" className="btn btn-md btn-secondary">
               Ir a mi cuenta
             </Link>
           </div>

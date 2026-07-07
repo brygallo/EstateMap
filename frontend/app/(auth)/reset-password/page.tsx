@@ -49,7 +49,7 @@ const ResetPassword = () => {
       }
 
       toast.success(data.message || 'Contraseña actualizada exitosamente');
-      setTimeout(() => router.push('/login'), 1500);
+      setTimeout(() => router.push('/iniciar-sesion'), 1500);
     } catch (err) {
       toast.error('Error de conexión');
     } finally {
@@ -68,7 +68,7 @@ const ResetPassword = () => {
           El enlace de recuperación no es válido o ha expirado. Por favor, solicita uno nuevo.
         </p>
         <Button
-          onClick={() => router.push('/forgot-password')}
+          onClick={() => router.push('/recuperar-contrasena')}
           className="h-11 rounded-button bg-primary px-6 font-semibold text-primary-foreground shadow-card hover:bg-primaryHover"
         >
           Solicitar nuevo enlace

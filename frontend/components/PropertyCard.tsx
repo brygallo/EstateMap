@@ -89,7 +89,7 @@ function FavoriteButton({ propertyId }: { propertyId: number }) {
       whileTap={{ scale: 0.85 }}
       aria-pressed={isFavorite}
       aria-label={isFavorite ? 'Quitar de favoritos' : 'Guardar en favoritos'}
-      className="absolute right-3 top-3 z-10 flex h-9 w-9 items-center justify-center rounded-full bg-white/90 shadow-card backdrop-blur-sm transition-colors hover:bg-white"
+      className="absolute right-2.5 top-2.5 z-10 flex h-8 w-8 items-center justify-center rounded-card bg-white/90 shadow-card backdrop-blur-sm transition-colors hover:bg-white"
     >
       <motion.span
         key={isFavorite ? 'liked' : 'unliked'}
@@ -100,7 +100,7 @@ function FavoriteButton({ propertyId }: { propertyId: number }) {
       >
         <Heart
           className={cn(
-            'h-5 w-5 transition-colors',
+            'h-[18px] w-[18px] transition-colors',
             isFavorite ? 'fill-error text-error' : 'fill-none text-textSecondary'
           )}
           strokeWidth={2}
@@ -118,7 +118,7 @@ function StatTile({
   label: string;
 }) {
   return (
-    <span className="inline-flex items-center gap-1.5 rounded-md bg-background px-2.5 py-1 text-xs font-medium text-textSecondary">
+    <span className="inline-flex items-center gap-1.5 rounded-md bg-background px-2 py-0.5 text-[11px] font-medium text-textSecondary">
       <Icon className="h-3.5 w-3.5 text-primary" strokeWidth={1.75} aria-hidden />
       {label}
     </span>
@@ -130,7 +130,7 @@ export function PropertyCardSkeleton() {
   return (
     <div className="overflow-hidden rounded-card border border-line bg-surface shadow-card">
       <Skeleton className="aspect-[4/3] w-full rounded-none" />
-      <div className="space-y-3 p-6">
+      <div className="space-y-2.5 p-4">
         <Skeleton className="h-5 w-3/4" />
         <Skeleton className="h-4 w-1/2" />
         <Skeleton className="h-7 w-2/5" />
@@ -177,13 +177,13 @@ export default function PropertyCard({
         role="button"
         tabIndex={0}
         aria-pressed={selected}
-        className={`card card-hover p-2.5 cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 ${
+        className={`card card-hover cursor-pointer p-2.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 ${
           selected ? 'ring-2 ring-primary border-primary' : ''
         }`}
       >
         <div className="mb-1.5 flex items-start justify-between">
           <div className="flex min-w-0 flex-1 items-center gap-1">
-            <h3 className="truncate text-sm font-semibold text-textPrimary">{heading}</h3>
+            <h3 className="truncate text-[13px] font-semibold text-textPrimary">{heading}</h3>
             {property.polygon ? (
               <Layers
                 className="h-3 w-3 flex-shrink-0 text-success"
@@ -198,9 +198,7 @@ export default function PropertyCard({
               />
             )}
           </div>
-          <span
-            className={`badge ${operationBadgeClass} ml-1.5 flex-shrink-0 !text-[11px]`}
-          >
+          <span className={`badge ${operationBadgeClass} ml-1.5 flex-shrink-0`}>
             {statusLabel}
           </span>
         </div>
@@ -212,7 +210,7 @@ export default function PropertyCard({
           </span>
         </div>
 
-        <div className="space-y-0.5 text-xs">
+        <div className="space-y-0.5 text-[11px] leading-4">
           <div className="flex items-center gap-1">
             <span className="font-semibold">Tipo:</span>
             <span>{typeLabel}</span>
@@ -270,14 +268,14 @@ export default function PropertyCard({
           className="object-cover"
           wrapperClassName="absolute inset-0"
         />
-        <div className="absolute left-3 top-3 z-10">
+        <div className="absolute left-2.5 top-2.5 z-10">
           <Badge className={cn('border-transparent shadow-card', operationBadgeClass)}>
             {statusLabel}
           </Badge>
         </div>
         <FavoriteButton propertyId={property.id} />
       </div>
-      <div className="p-6">
+      <div className="p-4">
         <h3 className="line-clamp-1 text-base font-semibold text-textPrimary">{heading}</h3>
         {location && (
           <p className="mt-1.5 flex items-center gap-1 text-sm text-textSecondary">
@@ -285,22 +283,22 @@ export default function PropertyCard({
             <span className="line-clamp-1">{location}</span>
           </p>
         )}
-        <div className="mt-3 flex items-baseline gap-1.5">
+        <div className="mt-2.5 flex items-baseline gap-1.5">
           {hasPrice ? (
             <AnimatedNumber
               value={priceNum}
               format={{ maximumFractionDigits: 0 }}
               prefix="$"
-              className="price font-geo text-2xl font-bold"
+              className="price font-geo text-xl font-semibold"
             />
           ) : (
-            <span className="price font-geo text-2xl font-bold">{formatPrice(property.price)}</span>
+            <span className="price font-geo text-xl font-semibold">{formatPrice(property.price)}</span>
           )}
           {property.status === 'for_rent' && (
             <span className="text-sm font-medium text-textSecondary">/mes</span>
           )}
         </div>
-        <div className="mt-4 flex flex-wrap items-center gap-2 border-t border-line pt-4">
+        <div className="mt-3 flex flex-wrap items-center gap-1.5 border-t border-line pt-3">
           {statTiles.map((tile, i) => (
             <StatTile key={i} icon={tile.icon} label={tile.label} />
           ))}
@@ -310,7 +308,7 @@ export default function PropertyCard({
   );
 
   return (
-    <article className="overflow-hidden rounded-card border border-line bg-surface shadow-card transition-all duration-300 hover:-translate-y-1 hover:shadow-cardHover">
+    <article className="overflow-hidden rounded-card border border-line bg-surface shadow-card transition-all duration-200 hover:-translate-y-0.5 hover:shadow-cardHover">
       {href ? (
         <Link href={href} className="block">
           {body}

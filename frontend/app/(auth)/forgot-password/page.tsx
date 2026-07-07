@@ -56,7 +56,7 @@ const ForgotPassword = () => {
           </p>
         </div>
         <Button asChild className="h-11 rounded-button bg-primary px-6 font-semibold text-primary-foreground shadow-card hover:bg-primaryHover">
-          <Link href="/login">Volver al inicio de sesión</Link>
+          <Link href="/iniciar-sesion">Volver al inicio de sesión</Link>
         </Button>
 
         <p className="text-sm text-textSecondary">
@@ -132,7 +132,7 @@ const ForgotPassword = () => {
 
           {/* Login Link */}
           <div className="mt-6 text-center">
-            <Link href="/login" className="text-sm font-medium text-primary transition-colors hover:text-secondary">
+            <Link href="/iniciar-sesion" className="text-sm font-medium text-primary transition-colors hover:text-secondary">
               ← Volver al inicio de sesión
             </Link>
           </div>

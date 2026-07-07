@@ -38,7 +38,7 @@ const MyPropertiesPage = () => {
       } else if (res.status === 401) {
         toast.error('Tu sesión ha expirado. Por favor, inicia sesión nuevamente.');
         logout();
-        router.push('/login');
+        router.push('/iniciar-sesion');
       } else {
         toast.error('Error al cargar las propiedades');
       }
@@ -66,7 +66,7 @@ const MyPropertiesPage = () => {
       } else if (res.status === 401) {
         toast.error('Tu sesión ha expirado. Por favor, inicia sesión nuevamente.');
         logout();
-        router.push('/login');
+        router.push('/iniciar-sesion');
       } else {
         toast.error('Error al eliminar la propiedad');
       }
@@ -129,7 +129,7 @@ const MyPropertiesPage = () => {
                     </span>
                   )}
                 </Button>
-                <Button onClick={() => router.push('/add-property')}>
+                <Button onClick={() => router.push('/publicar-propiedad')}>
                   <Plus className="h-4 w-4" strokeWidth={2} />
                   Nueva propiedad
                 </Button>
@@ -157,7 +157,7 @@ const MyPropertiesPage = () => {
               </div>
               <h3 className="text-xl font-semibold text-textPrimary">No tienes propiedades registradas</h3>
               <p className="mt-2 text-textSecondary">Comienza agregando tu primera propiedad.</p>
-              <Button className="mt-6" onClick={() => router.push('/add-property')}>
+              <Button className="mt-6" onClick={() => router.push('/publicar-propiedad')}>
                 <Plus className="h-4 w-4" strokeWidth={2} />
                 Agregar propiedad
               </Button>
@@ -181,7 +181,7 @@ const MyPropertiesPage = () => {
                       variant="ghost"
                       size="sm"
                       className="flex-1 text-primary hover:bg-primary/10 hover:text-primary"
-                      onClick={() => router.push(`/edit-property/${property.id}`)}
+                      onClick={() => router.push(`/editar-propiedad/${property.id}`)}
                     >
                       <Pencil className="h-4 w-4" strokeWidth={1.75} />
                       Editar

@@ -115,7 +115,7 @@ export default function GoogleSignInButton({
       } else {
         const hasPropertyDraft =
           typeof window !== 'undefined' && localStorage.getItem(PROPERTY_DRAFT_STORAGE_KEY);
-        router.push(hasPropertyDraft ? '/add-property' : '/');
+        router.push(hasPropertyDraft ? '/publicar-propiedad' : '/');
       }
     } catch (err) {
       const errorMessage = 'Error de conexión con el servidor';

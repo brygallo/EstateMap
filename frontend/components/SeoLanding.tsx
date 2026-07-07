@@ -34,7 +34,7 @@ export default function SeoLanding({
     itemListElement: properties.slice(0, 30).map((p, index) => ({
       '@type': 'ListItem',
       position: index + 1,
-      url: `${SITE_URL}/property/${p.id}`,
+      url: `${SITE_URL}/propiedad/${p.id}`,
       name: p.title || title,
     })),
   };

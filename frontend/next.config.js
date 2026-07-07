@@ -29,6 +29,21 @@ const nextConfig = {
       },
     ];
   },
+  async redirects() {
+    return [
+      { source: '/add-property', destination: '/publicar-propiedad', permanent: true },
+      { source: '/my-properties', destination: '/mis-propiedades', permanent: true },
+      { source: '/edit-property/:path*', destination: '/editar-propiedad/:path*', permanent: true },
+      { source: '/property/:path*', destination: '/propiedad/:path*', permanent: true },
+      { source: '/help', destination: '/ayuda', permanent: true },
+      { source: '/account', destination: '/cuenta', permanent: true },
+      { source: '/login', destination: '/iniciar-sesion', permanent: true },
+      { source: '/register', destination: '/registro', permanent: true },
+      { source: '/forgot-password', destination: '/recuperar-contrasena', permanent: true },
+      { source: '/reset-password', destination: '/restablecer-contrasena', permanent: true },
+      { source: '/verify-email', destination: '/verificar-correo', permanent: true },
+    ];
+  },
   // Disable static page generation for dynamic routes
   experimental: {
     missingSuspenseWithCSRBailout: false,

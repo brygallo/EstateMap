@@ -165,7 +165,7 @@ export default async function HomePage() {
                   size="lg"
                   className="rounded-button bg-white font-bold text-primary shadow-card hover:bg-white/90"
                 >
-                  <Link href="/add-property">
+                  <Link href="/publicar-propiedad">
                     <Rocket className="h-4 w-4" aria-hidden />
                     Publicar gratis
                   </Link>

@@ -16,13 +16,13 @@ export const metadata: Metadata = {
     'terrenos en venta Ecuador',
   ],
   alternates: {
-    canonical: '/help',
+    canonical: '/ayuda',
   },
   openGraph: {
     title: 'Publica tu Propiedad Gratis | Geo Propiedades Ecuador',
     description:
       'Publica tu propiedad gratis en Ecuador con mapas interactivos. Atrae compradores con ubicación exacta, fotos y medidas reales.',
-    url: `${siteUrl}/help`,
+    url: `${siteUrl}/ayuda`,
     siteName: 'Geo Propiedades Ecuador',
     locale: 'es_EC',
     type: 'website',

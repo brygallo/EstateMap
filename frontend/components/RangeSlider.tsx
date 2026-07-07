@@ -193,8 +193,8 @@ const RangeSlider = ({
         />
       </div>
 
-      {/* Slider */}
-      <div className="relative pt-1 pb-3">
+      {/* Slider (padding lateral para que los thumbs de los extremos no se recorten) */}
+      <div className="relative px-2.5 pt-1 pb-3">
         {/* Track Background */}
         <div
           ref={sliderRef}

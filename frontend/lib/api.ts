@@ -90,7 +90,7 @@ async function refreshAccessToken(): Promise<string | null> {
 
       // Redirigir al login si estamos en el navegador
       if (typeof window !== 'undefined') {
-        window.location.href = '/login';
+        window.location.href = '/iniciar-sesion';
       }
 
       return null;

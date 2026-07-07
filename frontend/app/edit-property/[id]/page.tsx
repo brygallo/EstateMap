@@ -249,18 +249,18 @@ const EditPropertyPage = () => {
         } else if (res.status === 401) {
           toast.error('Tu sesión ha expirado. Por favor, inicia sesión nuevamente.');
           logout();
-          router.push('/login');
+          router.push('/iniciar-sesion');
         } else if (res.status === 404) {
           toast.error('Propiedad no encontrada');
-          router.push('/my-properties');
+          router.push('/mis-propiedades');
         } else {
           toast.error('Error al cargar la propiedad');
-          router.push('/my-properties');
+          router.push('/mis-propiedades');
         }
       } catch (error) {
         console.error('Error loading property:', error);
         toast.error('Error de conexión');
-        router.push('/my-properties');
+        router.push('/mis-propiedades');
       }
     };
 
@@ -359,11 +359,11 @@ const EditPropertyPage = () => {
           });
         } catch {}
         toast.success('Propiedad actualizada exitosamente');
-        setTimeout(() => router.push('/my-properties'), 650);
+        setTimeout(() => router.push('/mis-propiedades'), 650);
       } else if (res.status === 401) {
         toast.error('Tu sesión ha expirado. Por favor, inicia sesión nuevamente.');
         logout();
-        router.push('/login');
+        router.push('/iniciar-sesion');
       } else {
         const errorData = await res.json();
         console.error('Error:', errorData);
@@ -557,7 +557,7 @@ const EditPropertyPage = () => {
                 <h1 className="text-2xl font-bold text-textPrimary">Editar Propiedad</h1>
                 <p className="mt-1 text-sm text-textSecondary">Actualiza la información de tu propiedad</p>
               </div>
-              <Button variant="outline" onClick={() => router.push('/my-properties')} className="rounded-button border-line">
+              <Button variant="outline" onClick={() => router.push('/mis-propiedades')} className="rounded-button border-line">
                 <ArrowLeft className="mr-2 h-4 w-4" />
                 Volver
               </Button>
@@ -1033,7 +1033,7 @@ const EditPropertyPage = () => {
                       type="button"
                       variant="outline"
                       size="lg"
-                      onClick={() => router.push('/my-properties')}
+                      onClick={() => router.push('/mis-propiedades')}
                       className="w-full rounded-button border-2 border-line py-6 font-medium text-textSecondary sm:w-auto"
                     >
                       <X className="mr-2 h-4 w-4" />

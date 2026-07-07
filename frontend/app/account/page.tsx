@@ -44,7 +44,7 @@ const AccountPage = () => {
   // Redirect unauthenticated users
   useEffect(() => {
     if (token === null) {
-      router.push('/login');
+      router.push('/iniciar-sesion');
     }
   }, [token, router]);
 
@@ -59,7 +59,7 @@ const AccountPage = () => {
           setProfile(data);
         } else if (res.status === 401) {
           logout();
-          router.push('/login');
+          router.push('/iniciar-sesion');
         } else {
           toast.error('No se pudo cargar tu perfil');
         }

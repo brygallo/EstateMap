@@ -167,7 +167,7 @@ export async function generateMetadata({ params }: PropertyPageProps): Promise<M
 
   // Base URL for images and page
   const baseUrl = process.env.NEXT_PUBLIC_FRONTEND_URL || 'https://geopropiedadesecuador.com';
-  const propertyUrl = `${baseUrl}/property/${property.id}`;
+  const propertyUrl = `${baseUrl}/propiedad/${property.id}`;
   const imageAbsoluteUrl = imageUrl.startsWith('http') ? imageUrl : `${baseUrl}${imageUrl}`;
 
   return {
@@ -266,7 +266,7 @@ export default async function PropertyPage({ params }: PropertyPageProps) {
   const baseUrl = process.env.NEXT_PUBLIC_FRONTEND_URL || 'https://geopropiedadesecuador.com';
   const imageUrl = mainImage?.image || '/og-image.png';
   const imageAbsoluteUrl = imageUrl.startsWith('http') ? imageUrl : `${baseUrl}${imageUrl}`;
-  const propertyUrl = `${baseUrl}/property/${property.id}`;
+  const propertyUrl = `${baseUrl}/propiedad/${property.id}`;
   const propertySchemaType: Record<string, string> = {
     house: 'SingleFamilyResidence',
     apartment: 'Apartment',

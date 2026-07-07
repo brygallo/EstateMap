@@ -1,10 +1,11 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { toast } from 'sonner';
 
 type LatLng = { lat: number; lng: number };
 type MapRef = React.MutableRefObject<any>;
+type LocationStatus = { message: string; tone: 'info' | 'success' | 'danger' } | null;
 
 /**
  * Encapsula toda la lógica de geolocalización del mapa: el modal de permiso en
@@ -13,9 +14,32 @@ type MapRef = React.MutableRefObject<any>;
  */
 export function useGeolocation(mapRef: MapRef) {
   const [userLocation, setUserLocation] = useState<LatLng | null>(null);
+  const [accuracy, setAccuracy] = useState<number | null>(null);
   const [loadingLocation, setLoadingLocation] = useState(false);
   const [showLocationModal, setShowLocationModal] = useState(false);
   const [showLocationToast, setShowLocationToast] = useState(false);
+  const [locationStatus, setLocationStatus] = useState<LocationStatus>(null);
+  const [locationBlocked, setLocationBlocked] = useState(false);
+  const statusTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Píldora de estado (estilo Google Maps): info mientras busca, success al
+  // encontrar, danger en error. `autoHideMs` la oculta sola tras un momento.
+  const showStatus = useCallback(
+    (message: string, tone: 'info' | 'success' | 'danger', autoHideMs?: number) => {
+      setLocationStatus({ message, tone });
+      if (statusTimerRef.current) clearTimeout(statusTimerRef.current);
+      if (autoHideMs) {
+        statusTimerRef.current = setTimeout(() => setLocationStatus(null), autoHideMs);
+      }
+    },
+    []
+  );
+
+  useEffect(() => {
+    return () => {
+      if (statusTimerRef.current) clearTimeout(statusTimerRef.current);
+    };
+  }, []);
 
   const flyTo = useCallback(
     (lat: number, lng: number, zoom: number, delay = 0) => {
@@ -60,8 +84,9 @@ export function useGeolocation(mapRef: MapRef) {
       setShowLocationToast(true);
       navigator.geolocation.getCurrentPosition(
         (position) => {
-          const { latitude, longitude } = position.coords;
+          const { latitude, longitude, accuracy: acc } = position.coords;
           setUserLocation({ lat: latitude, lng: longitude });
+          setAccuracy(typeof acc === 'number' ? acc : null);
           flyTo(latitude, longitude, 12, 1000);
           setLoadingLocation(false);
           setTimeout(() => setShowLocationToast(false), 2000);
@@ -104,13 +129,15 @@ export function useGeolocation(mapRef: MapRef) {
     setLoadingLocation(true);
     navigator.geolocation.getCurrentPosition(
       (position) => {
-        const { latitude, longitude } = position.coords;
+        const { latitude, longitude, accuracy: acc } = position.coords;
         setUserLocation({ lat: latitude, lng: longitude });
+        setAccuracy(typeof acc === 'number' ? acc : null);
         flyTo(latitude, longitude, 12);
         if (typeof window !== 'undefined') {
           localStorage.setItem('hasInitialLocation', 'true');
         }
         setLoadingLocation(false);
+        setLocationBlocked(false);
       },
       (error) => {
         toast.error(geoErrorMessage(error));
@@ -130,30 +157,38 @@ export function useGeolocation(mapRef: MapRef) {
 
   const handleGetMyLocation = useCallback(() => {
     if (!navigator.geolocation) {
-      toast.error('Tu navegador no soporta geolocalización');
+      showStatus('Tu navegador no soporta geolocalización.', 'danger', 6000);
       return;
     }
     setLoadingLocation(true);
+    showStatus('Buscando tu ubicación…', 'info');
     navigator.geolocation.getCurrentPosition(
       (position) => {
-        const { latitude, longitude } = position.coords;
+        const { latitude, longitude, accuracy: acc } = position.coords;
         setUserLocation({ lat: latitude, lng: longitude });
+        setAccuracy(typeof acc === 'number' ? acc : null);
         flyTo(latitude, longitude, 17);
         setLoadingLocation(false);
+        setLocationBlocked(false);
+        showStatus('Ubicación encontrada.', 'success', 3000);
       },
       (error) => {
-        toast.error(geoErrorMessage(error));
         setLoadingLocation(false);
+        if (error.code === error.PERMISSION_DENIED) setLocationBlocked(true);
+        showStatus(geoErrorMessage(error), 'danger', 7000);
       },
       { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
     );
-  }, [flyTo]);
+  }, [flyTo, showStatus]);
 
   return {
     userLocation,
+    accuracy,
     loadingLocation,
     showLocationModal,
     showLocationToast,
+    locationStatus,
+    locationBlocked,
     handleAcceptLocation,
     handleDeclineLocation,
     handleGetMyLocation,

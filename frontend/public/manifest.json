@@ -78,7 +78,7 @@
       "name": "Mis Propiedades",
       "short_name": "Propiedades",
       "description": "Administrar mis propiedades",
-      "url": "/my-properties",
+      "url": "/mis-propiedades",
       "icons": [
         {
           "src": "/icon-192x192.svg",
@@ -91,7 +91,7 @@
       "name": "Nueva Propiedad",
       "short_name": "Nueva",
       "description": "Agregar una nueva propiedad",
-      "url": "/add-property",
+      "url": "/publicar-propiedad",
       "icons": [
         {
           "src": "/icon-192x192.svg",
