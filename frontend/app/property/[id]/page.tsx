@@ -14,6 +14,7 @@ import {
   BadgeCheck,
   CalendarDays,
 } from 'lucide-react';
+import { getServerApiUrl } from '@/lib/api-url';
 import { jsonLd, slugify, SITE_URL } from '@/lib/properties';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
@@ -65,7 +66,7 @@ interface PropertyPageProps {
 // Fetch property data from API
 async function getProperty(id: string) {
   try {
-    const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api';
+    const API_URL = getServerApiUrl();
     const res = await fetch(`${API_URL}/properties/${id}/`, {
       cache: 'no-store',
       headers: {

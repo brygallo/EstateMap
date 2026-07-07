@@ -141,7 +141,7 @@ function SectionCard({
 }) {
   return (
     <div className="overflow-hidden rounded-card bg-surface shadow-card">
-      <div className="bg-gradient-to-r from-primary to-secondary px-5 py-4">
+      <div className="bg-primary px-5 py-4">
         <h3 className="flex items-center gap-2 text-base font-semibold text-white lg:text-lg">
           {icon}
           {title}
@@ -351,7 +351,7 @@ const AddPropertyPage = () => {
 
         if (res.ok) {
           const data = await res.json();
-          setReferenceProperties(data);
+          setReferenceProperties(Array.isArray(data) ? data : data.results || []);
         } else {
           console.error('Error loading reference properties');
         }
@@ -1127,7 +1127,7 @@ const AddPropertyPage = () => {
 
               {/* Map Section */}
               <div className="overflow-hidden rounded-card bg-surface shadow-card">
-                <div className="bg-gradient-to-r from-primary to-secondary px-5 py-4">
+                <div className="bg-primary px-5 py-4">
                   <h2 className="flex items-center gap-2 text-base font-semibold text-white lg:text-lg">
                     <MapPin className="h-5 w-5" />
                     Ubicación en el Mapa
@@ -1461,7 +1461,7 @@ const AddPropertyPage = () => {
                   <Button
                     type="submit"
                     size="lg"
-                    className="w-full rounded-button bg-gradient-to-r from-primary to-secondary py-6 text-lg font-semibold shadow-cardHover sm:flex-1"
+                    className="w-full rounded-button bg-primary py-6 text-lg font-semibold shadow-cardHover sm:flex-1"
                   >
                     <Check className="mr-2 h-5 w-5" />
                     {token ? 'Guardar Propiedad' : 'Crear cuenta para publicar'}
@@ -1491,7 +1491,7 @@ const AddPropertyPage = () => {
           </Form>
 
           {/* Contact Support */}
-          <div className="rounded-card border border-primary/15 bg-gradient-to-r from-primary/10 via-surface to-secondary/10 p-6 shadow-card sm:p-8">
+          <div className="rounded-card border border-primary/15 bg-primaryLight/40 p-6 shadow-card sm:p-8">
             <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
               <div className="flex items-start gap-3">
                 <Info className="mt-1 h-6 w-6 text-primary" />
@@ -1504,7 +1504,7 @@ const AddPropertyPage = () => {
               </div>
               <Button
                 asChild
-                className="rounded-button bg-gradient-to-r from-primary to-secondary font-semibold shadow-card"
+                className="rounded-button bg-primary font-semibold shadow-card"
               >
                 <a
                   href="https://wa.me/593983738151?text=Hola%20necesito%20ayuda%20para%20publicar%20mi%20propiedad"
@@ -1553,7 +1553,7 @@ const AddPropertyPage = () => {
           </DialogHeader>
           <div className="space-y-3">
             <Button
-              className="w-full rounded-button bg-gradient-to-r from-primary to-secondary font-bold"
+              className="w-full rounded-button bg-primary font-bold"
               onClick={() => {
                 setShowExitModal(false);
                 trackEvent('publication_exit_continue_clicked');
@@ -1610,7 +1610,7 @@ const AddPropertyPage = () => {
               <label className="text-sm font-semibold text-textPrimary">Contraseña</label>
               <Input type="password" value={accountPassword} onChange={(e) => setAccountPassword(e.target.value)} className="h-12 rounded-input" required />
             </div>
-            <Button type="submit" disabled={creatingAccount} className="w-full rounded-button bg-gradient-to-r from-primary to-secondary font-bold">
+            <Button type="submit" disabled={creatingAccount} className="w-full rounded-button bg-primary font-bold">
               {creatingAccount ? 'Creando cuenta...' : 'Crear cuenta y publicar'}
             </Button>
             <Button type="button" variant="outline" className="w-full rounded-button border-line font-semibold text-textSecondary" onClick={() => setShowAccountModal(false)}>

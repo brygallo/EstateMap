@@ -292,7 +292,7 @@ export default function AssistedPublishPage() {
             <Button
               type="submit"
               size="lg"
-              className="mt-6 w-full rounded-button bg-gradient-to-r from-primary to-secondary py-6 text-base font-bold shadow-cardHover"
+              className="mt-6 w-full rounded-button bg-primary py-6 text-base font-bold shadow-cardHover"
             >
               <Send className="mr-2 h-5 w-5" />
               Enviar por WhatsApp

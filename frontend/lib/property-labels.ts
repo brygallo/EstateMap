@@ -17,16 +17,16 @@ const STATUS_LABELS: Record<string, string> = {
 
 // Fondo solido para marcadores/badges donde solo se necesita el color base.
 const STATUS_DOT_CLASS: Record<string, string> = {
-  for_sale: 'bg-success',
-  for_rent: 'bg-primary',
-  inactive: 'bg-slate-400',
+  for_sale: 'bg-primary',
+  for_rent: 'bg-success',
+  inactive: 'bg-muted',
 };
 
 // Badge completo (fondo + texto) sobrio para etiquetas de estado, en tokens de marca.
 const STATUS_BADGE_CLASS: Record<string, string> = {
-  for_sale: 'bg-successBg text-success',
-  for_rent: 'bg-primary/10 text-primary',
-  inactive: 'bg-slate-100 text-slate-600',
+  for_sale: 'bg-primaryLight text-primary',
+  for_rent: 'bg-successBg text-success',
+  inactive: 'bg-muted text-textSecondary',
 };
 
 export function getPropertyTypeLabel(type: string): string {
@@ -38,11 +38,11 @@ export function getStatusLabel(status: string): string {
 }
 
 export function getStatusColor(status: string): string {
-  return STATUS_DOT_CLASS[status] || 'bg-slate-400';
+  return STATUS_DOT_CLASS[status] || 'bg-muted';
 }
 
 export function getStatusBadgeClass(status: string): string {
-  return STATUS_BADGE_CLASS[status] || 'bg-slate-100 text-slate-600';
+  return STATUS_BADGE_CLASS[status] || 'bg-muted text-textSecondary';
 }
 
 // Area redondeada a entero como string.

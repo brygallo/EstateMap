@@ -1,5 +1,20 @@
 version: '3.9'
 services:
+  db:
+    image: postgres:15
+    environment:
+      POSTGRES_DB: ${DB_NAME:-estatedb}
+      POSTGRES_USER: ${DB_USER:-postgres}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-postgres} -d ${DB_NAME:-estatedb}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
   minio:
     image: minio/minio:latest
     command: server /data --console-address ":9001"
@@ -16,12 +31,22 @@ services:
     build: ./backend
     env_file:
       - .env
+    environment:
+      DB_HOST: db
+      DB_PORT: 5432
+    command: >
+      sh -c "python manage.py migrate &&
+             python init_minio.py &&
+             python manage.py runserver 0.0.0.0:8000"
     volumes:
       - ./backend:/app
     ports:
       - "8000:8000"
     depends_on:
-      - minio
+      db:
+        condition: service_healthy
+      minio:
+        condition: service_started
   frontend:
     build:
       context: ./frontend
@@ -29,6 +54,8 @@ services:
     working_dir: /app
     env_file:
       - .env
+    environment:
+      NEXT_INTERNAL_API_URL: http://backend:8000/api
     ports:
       - "3000:3000"
     volumes:
@@ -38,4 +65,5 @@ services:
     depends_on:
       - backend
 volumes:
+  postgres_data:
   minio_data:

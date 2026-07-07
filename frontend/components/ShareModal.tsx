@@ -178,7 +178,7 @@ const ShareModal = ({
         <div className="rounded-b-modal border-t border-line bg-background px-5 py-3">
           <button
             onClick={onClose}
-            className="w-full rounded-button bg-white px-3 py-2 text-sm font-semibold text-textPrimary transition-colors hover:bg-slate-50 border border-line"
+            className="w-full rounded-button border border-line bg-surface px-3 py-2 text-sm font-semibold text-textPrimary transition-colors hover:bg-muted"
           >
             Cerrar
           </button>

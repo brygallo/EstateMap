@@ -1047,9 +1047,10 @@ const AddPropertyMap = ({
 
         {/* Reference properties - shown in gray as visual reference */}
         {useMemo(() => {
-          if (!referenceProperties || referenceProperties.length === 0) return null;
+          const references = Array.isArray(referenceProperties) ? referenceProperties : [];
+          if (references.length === 0) return null;
 
-          return referenceProperties.map((property, idx) => {
+          return references.map((property, idx) => {
             // Handle both GeoJSON and simple array formats for properties with polygons
             let leafletCoordinates;
 
@@ -1071,11 +1072,11 @@ const AddPropertyMap = ({
                 key={`reference-polygon-${property.id || idx}`}
                 positions={leafletCoordinates}
                 pathOptions={{
-                  color: '#6c757d',  // Gray color
-                  fillColor: '#adb5bd',  // Light gray fill
-                  fillOpacity: 0.15,  // Very transparent
-                  weight: 1.5,  // Thin border
-                  interactive: false,  // Not clickable
+                  color: '#2563EB',
+                  fillColor: '#DBEAFE',
+                  fillOpacity: 0.18,
+                  weight: 1.5,
+                  interactive: false,
                   className: 'reference-property-polygon'
                 }}
               />

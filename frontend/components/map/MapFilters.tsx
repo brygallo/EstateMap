@@ -1,7 +1,7 @@
 'use client';
 
 import { motion, type Variants } from 'motion/react';
-import { Search, SlidersHorizontal, Share2, X } from 'lucide-react';
+import { Search, SlidersHorizontal, X } from 'lucide-react';
 import RangeSlider from '@/components/RangeSlider';
 import UserFilter from '@/components/map/UserFilter';
 import { Input } from '@/components/ui/input';
@@ -29,7 +29,6 @@ interface MapFiltersProps {
   hasActiveFilters: boolean;
   onChange: (filters: PropertyFilters) => void;
   onClear: () => void;
-  onShare: () => void;
 }
 
 // Entrada escalonada de cada campo del panel (respeta reduce-motion via Motion).
@@ -49,7 +48,6 @@ export default function MapFilters({
   hasActiveFilters,
   onChange,
   onClear,
-  onShare,
 }: MapFiltersProps) {
   const update = (patch: Partial<PropertyFilters>) => onChange({ ...filters, ...patch });
 
@@ -70,7 +68,7 @@ export default function MapFilters({
       {/* Búsqueda */}
       <motion.div variants={item} className="relative">
         <Search
-          className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400"
+          className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-textSecondary"
           aria-hidden
         />
         <Input
@@ -157,8 +155,8 @@ export default function MapFilters({
       </motion.div>
 
       {/* Acciones */}
-      <motion.div variants={item} className="space-y-2 pt-1">
-        {hasActiveFilters && (
+      {hasActiveFilters && (
+        <motion.div variants={item} className="pt-1">
           <Button
             type="button"
             variant="outline"
@@ -168,12 +166,8 @@ export default function MapFilters({
             <X className="h-4 w-4" aria-hidden />
             Limpiar filtros
           </Button>
-        )}
-        <Button type="button" onClick={onShare} className="w-full rounded-button">
-          <Share2 className="h-4 w-4" aria-hidden />
-          Compartir búsqueda
-        </Button>
-      </motion.div>
+        </motion.div>
+      )}
     </motion.div>
   );
 }

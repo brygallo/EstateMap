@@ -78,10 +78,10 @@ module.exports = {
   			sm: 'calc(var(--radius) - 4px)',
   			input: '12px',
   			button: '12px',
-  			card: '18px',
-  			modal: '20px',
-  			sidebar: '20px',
-  			hero: '24px'
+  			card: '12px',
+  			modal: '16px',
+  			sidebar: '16px',
+  			hero: '16px'
   		},
   		keyframes: {
   			'accordion-down': {

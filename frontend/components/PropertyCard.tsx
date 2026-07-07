@@ -23,6 +23,7 @@ import AnimatedNumber from '@/components/ui/AnimatedNumber';
 import {
   getPropertyTypeLabel,
   getStatusLabel,
+  getStatusBadgeClass,
   formatArea,
   formatPrice,
 } from '@/lib/property-labels';
@@ -39,20 +40,6 @@ interface PropertyCardProps {
   /** Si se pasa, la tarjeta es clicable sin navegar (variante `compact`). */
   onClick?: () => void;
   selected?: boolean;
-}
-
-// Badge por operación con el color que le corresponde en el sistema de diseño
-// (Venta = azul, Arriendo = verde). Vive local a la card en vez de reusar
-// `getStatusBadgeClass` de `lib/property-labels`, cuyo mapeo de colores está
-// invertido respecto al lenguaje visual acordado.
-const OPERATION_BADGE_CLASS: Record<string, string> = {
-  for_sale: 'bg-primaryLight text-primary',
-  for_rent: 'bg-successBg text-success',
-  inactive: 'bg-slate-100 text-slate-600',
-};
-
-function getOperationBadgeClass(status: string): string {
-  return OPERATION_BADGE_CLASS[status] || 'bg-slate-100 text-slate-600';
 }
 
 const FAVORITES_KEY = 'geo:favorite-properties';
@@ -175,7 +162,7 @@ export default function PropertyCard({
   const location = [property.city, property.province].filter(Boolean).join(', ');
   const heading = property.title || `${typeLabel} ${statusLabel.toLowerCase()}`;
   const area = formatArea(property.area);
-  const operationBadgeClass = getOperationBadgeClass(String(property.status));
+  const operationBadgeClass = getStatusBadgeClass(String(property.status));
 
   if (variant === 'compact') {
     return (

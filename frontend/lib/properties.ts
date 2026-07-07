@@ -6,7 +6,9 @@
  * object, and it may be unreachable at build time.
  */
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api';
+import { getServerApiUrl } from './api-url';
+
+const API_URL = getServerApiUrl();
 export const SITE_URL =
   process.env.NEXT_PUBLIC_FRONTEND_URL || 'https://geopropiedadesecuador.com';
 export const SITE_NAME = 'Geo Propiedades Ecuador';
