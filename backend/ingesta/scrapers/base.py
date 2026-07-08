@@ -24,9 +24,19 @@ Forma del dict canónico que debe devolver ``scrape()``::
       "image_urls": [str, ...],
     }
 """
+import random
 import time
 
 _REGISTRY = {}
+
+
+class ScraperBlocked(Exception):
+    """
+    El portal está bloqueando el acceso de forma sostenida (p. ej. Cloudflare
+    respondiendo 403 / challenge a cada petición). Se lanza para que el run
+    termine en estado ``error`` con un mensaje claro, en vez de reportar
+    "0 resultados" como si fuera un éxito.
+    """
 
 
 def register(cls):
@@ -83,8 +93,12 @@ class BaseScraper:
 
     # --- utilidades para subclases ---
     def _sleep(self):
+        """Espera ``request_delay`` con un jitter aleatorio (±30%) para que el
+        patrón de peticiones no sea perfectamente regular y fácil de marcar
+        como bot."""
         if self.request_delay:
-            time.sleep(self.request_delay)
+            jitter = self.request_delay * random.uniform(-0.3, 0.3)
+            time.sleep(max(0.0, self.request_delay + jitter))
 
     @staticmethod
     def _http_client():

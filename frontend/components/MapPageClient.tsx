@@ -1,9 +1,9 @@
 'use client';
 
-import { useEffect, useState, useRef } from 'react';
+import { useCallback, useEffect, useState, useRef } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import dynamic from 'next/dynamic';
-import { Loader2, SlidersHorizontal } from 'lucide-react';
+import { Loader2, SlidersHorizontal, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/lib/auth-context';
 import { getPropertyTypeLabel, getStatusLabel } from '@/lib/property-labels';
@@ -11,9 +11,9 @@ import { useGeolocation } from '@/hooks/useGeolocation';
 import { usePropertyFilters } from '@/hooks/usePropertyFilters';
 import { flyToProperty } from '@/lib/map-navigation';
 import PropertySidebar from '@/components/map/PropertySidebar';
-import LocationStatus from '@/components/map/LocationStatus';
 import PropertyModal from '@/components/PropertyModal';
 import LocationPermissionModal from '@/components/LocationPermissionModal';
+import PropertyCard from '@/components/PropertyCard';
 import type { MapBounds, Property } from '@/lib/types';
 
 // Cargar el mapa Leaflet solo en cliente (sin SSR).
@@ -46,7 +46,6 @@ const MapPage = () => {
   const [selectedProperty, setSelectedProperty] = useState<Property | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  const geo = useGeolocation(mapRef);
   const {
     filters,
     properties,
@@ -58,10 +57,21 @@ const MapPage = () => {
     clearFilters,
     hasActiveFilters,
   } = usePropertyFilters({ token, bounds });
+  const geo = useGeolocation(mapRef, properties, loading);
 
   const handleMapReady = (map: any) => {
     mapRef.current = map;
   };
+
+  const handleZoomOut = useCallback(() => {
+    const map = mapRef.current;
+    if (!map) return;
+    map.setZoom(Math.max(map.getZoom() - 2, 7));
+  }, []);
+
+  const handleResetMapView = useCallback(() => {
+    mapRef.current?.flyTo(DEFAULT_CENTER, 7, { duration: 0.9 });
+  }, []);
 
   // Abrir una propiedad indicada por ?property=<id> (enlaces compartidos).
   useEffect(() => {
@@ -93,6 +103,7 @@ const MapPage = () => {
   const handleSidebarPropertyClick = (property: Property) => {
     flyToProperty(mapRef.current, property);
     setSelectedProperty(property);
+    setIsModalOpen(false);
     if (window.innerWidth < 1024) setSidebarOpen(false);
   };
 
@@ -107,7 +118,7 @@ const MapPage = () => {
   const handlePolygonClick = (property: Property) => {
     flyToProperty(mapRef.current, property);
     setSelectedProperty(property);
-    setIsModalOpen(true);
+    setIsModalOpen(typeof window === 'undefined' || window.innerWidth >= 1024);
   };
 
   // "Ver en el mapa" desde el modal: recentra el mapa en la propiedad y, en
@@ -139,12 +150,24 @@ const MapPage = () => {
     };
   }, []);
 
+  useEffect(() => {
+    if (!mapRef.current) return;
+    const first = window.setTimeout(() => mapRef.current?.invalidateSize?.(), 80);
+    const second = window.setTimeout(() => mapRef.current?.invalidateSize?.(), 340);
+    return () => {
+      window.clearTimeout(first);
+      window.clearTimeout(second);
+    };
+  }, [isModalOpen]);
+
   return (
-    <div className="relative h-[calc(100vh-3.5rem)] overflow-hidden">
+    <div className="relative h-[calc(100vh-3.5rem)] overflow-hidden lg:flex">
       {/* Botón para abrir filtros y propiedades en móvil (con conteo explícito) */}
       <Button
         onClick={() => setSidebarOpen(!sidebarOpen)}
-        className="fixed bottom-20 left-1/2 z-nav h-12 -translate-x-1/2 gap-2 rounded-full px-5 shadow-cardHover lg:hidden [&_svg]:size-5"
+        className={`fixed bottom-20 left-1/2 z-nav h-12 -translate-x-1/2 gap-2 rounded-full px-5 shadow-cardHover lg:hidden [&_svg]:size-5 ${
+          selectedProperty && !isModalOpen ? 'hidden' : ''
+        }`}
         aria-label="Abrir filtros y propiedades"
       >
         <SlidersHorizontal strokeWidth={2} />
@@ -169,7 +192,7 @@ const MapPage = () => {
         transition-transform duration-300 ease-in-out
         inset-x-0 bottom-0 max-h-[85vh] rounded-t-2xl shadow-cardHover
         ${sidebarOpen ? 'translate-y-0' : 'translate-y-full'}
-        lg:inset-auto lg:left-0 lg:h-full lg:max-h-none lg:w-96
+        lg:inset-auto lg:left-0 lg:h-full lg:max-h-none lg:w-96 lg:flex-shrink-0
         lg:translate-y-0 lg:rounded-none lg:border-r lg:border-line lg:shadow-none
       `}
       >
@@ -192,11 +215,19 @@ const MapPage = () => {
           onCloseMobile={() => setSidebarOpen(false)}
           loading={loading}
           totalCount={totalCount}
+          userLocation={geo.userLocation}
+          onZoomOut={handleZoomOut}
+          onResetMapView={handleResetMapView}
         />
       </div>
 
-      {/* Mapa */}
-      <div className="absolute inset-0 h-full w-full lg:left-96 lg:w-[calc(100%-24rem)] z-0">
+      {/* Mapa: en desktop ocupa el espacio restante entre listado y ficha. */}
+      <div
+        className={`
+          absolute inset-0 z-0 h-full w-full transition-[width] duration-300 ease-in-out
+          lg:relative lg:inset-auto lg:left-auto lg:flex-1
+        `}
+      >
         <LeafletMap
           filteredProperties={properties}
           selectedProperty={selectedProperty}
@@ -209,14 +240,14 @@ const MapPage = () => {
           onLocate={geo.handleGetMyLocation}
           locating={geo.loadingLocation}
           locationBlocked={geo.locationBlocked}
+          hasActiveFilters={hasActiveFilters}
+          onClearFilters={clearFilters}
+          onResetView={handleResetMapView}
           hoverTimeoutRef={hoverTimeoutRef}
           getPropertyTypeLabel={getPropertyTypeLabel}
           getStatusLabel={getStatusLabel}
           center={DEFAULT_CENTER}
         />
-
-        {/* Píldora de estado de ubicación */}
-        <LocationStatus status={geo.locationStatus} />
 
         {/* Estado de carga de propiedades del área (desktop; en móvil lo indica el botón) */}
         {loading && (
@@ -229,7 +260,29 @@ const MapPage = () => {
         )}
       </div>
 
-      {/* Modal de detalle */}
+      {selectedProperty && !isModalOpen && !sidebarOpen && (
+        <div className="fixed inset-x-3 bottom-3 z-panel lg:hidden">
+          <div className="relative rounded-card border border-line bg-white p-2 shadow-cardHover">
+            <button
+              type="button"
+              onClick={() => setSelectedProperty(null)}
+              className="absolute right-4 top-4 z-10 rounded-full bg-white/95 p-1.5 text-textSecondary shadow-card transition-colors hover:text-textPrimary"
+              aria-label="Cerrar vista previa"
+            >
+              <X className="h-4 w-4" strokeWidth={2} aria-hidden />
+            </button>
+            <PropertyCard
+              property={selectedProperty}
+              variant="compact"
+              selected
+              onClick={() => flyToProperty(mapRef.current, selectedProperty)}
+              onOpenDetails={() => setIsModalOpen(true)}
+            />
+          </div>
+        </div>
+      )}
+
+      {/* Ficha lateral de detalle */}
       <PropertyModal
         property={selectedProperty}
         isOpen={isModalOpen}
@@ -244,19 +297,6 @@ const MapPage = () => {
         onDecline={geo.handleDeclineLocation}
         isLoading={geo.loadingLocation}
       />
-
-      {/* Toast de carga de ubicación */}
-      {geo.showLocationToast && (
-        <div className="animate-fade-in fixed left-1/2 top-20 z-top -translate-x-1/2">
-          <div className="flex items-center gap-3 rounded-card border border-line bg-white px-4 py-3 shadow-cardHover">
-            <Loader2 className="h-5 w-5 animate-spin text-primary" strokeWidth={2} />
-            <div className="flex flex-col">
-              <span className="text-sm font-semibold text-textPrimary">Obteniendo tu ubicación</span>
-              <span className="text-xs text-textSecondary">Centrando mapa en tu ciudad...</span>
-            </div>
-          </div>
-        </div>
-      )}
 
       <style>{`
         .leaflet-interactive { cursor: pointer !important; }

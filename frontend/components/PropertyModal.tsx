@@ -21,9 +21,9 @@ import {
   Layers,
   AlignLeft,
   MessageCircle,
-  CalendarDays,
   BadgeCheck,
   Mail,
+  Loader2,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import ShareModal from './ShareModal';
@@ -101,10 +101,12 @@ const ImageGallery = ({ images, initialIndex, onClose }: any) => {
       {/* Close Button */}
       <button
         onClick={(e) => { e.stopPropagation(); onClose(); }}
-        className="absolute right-4 top-4 z-10 rounded-card bg-white/10 p-2.5 text-white transition-all hover:bg-white/20"
+        className="fixed right-4 top-4 inline-flex items-center gap-2 rounded-full border-2 border-black bg-white px-4 py-2 text-sm font-bold text-black shadow-cardHover transition-all hover:bg-slate-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/70"
+        style={{ zIndex: 2147483647 }}
         aria-label="Cerrar galería"
       >
-        <X className="h-7 w-7" strokeWidth={2} aria-hidden />
+        <X className="h-6 w-6" strokeWidth={3} aria-hidden />
+        <span>Cerrar</span>
       </button>
 
       {/* Image Counter */}
@@ -116,7 +118,7 @@ const ImageGallery = ({ images, initialIndex, onClose }: any) => {
       </div>
 
       {/* Main Image */}
-      <div className="relative flex h-full w-full items-center justify-center p-4" onClick={(e) => e.stopPropagation()}>
+      <div className="relative flex h-full w-full items-center justify-center p-4">
         <img
           src={activeImage.image}
           alt={`Imagen ${currentIndex + 1}`}
@@ -175,14 +177,24 @@ const FeatureTile = ({
   value: any;
   label: string;
 }) => (
-  <div className="flex min-h-[78px] flex-col items-center justify-center gap-1.5 rounded-card border border-line bg-surface px-2 py-3 text-center">
-    <span className="flex h-8 w-8 items-center justify-center rounded-full bg-primaryLight">
-      <Icon className="h-4 w-4 text-primary" strokeWidth={1.75} aria-hidden />
+  <div className="flex min-h-[58px] flex-col items-center justify-center gap-1 rounded-card border border-line bg-surface px-1.5 py-2 text-center">
+    <span className="flex h-6 w-6 items-center justify-center rounded-full bg-primaryLight">
+      <Icon className="h-3.5 w-3.5 text-primary" strokeWidth={1.75} aria-hidden />
     </span>
-    <div className="font-geo text-[15px] font-semibold tabular-nums text-textPrimary">{value}</div>
-    <div className="text-[11px] font-medium leading-tight text-textSecondary">{label}</div>
+    <div className="font-geo text-sm font-semibold tabular-nums text-textPrimary">{value}</div>
+    <div className="text-[10px] font-medium leading-tight text-textSecondary">{label}</div>
   </div>
 );
+
+const DetailRow = ({ label, value }: { label: string; value: any }) => {
+  if (value === undefined || value === null || value === '') return null;
+  return (
+    <div className="flex items-start justify-between gap-3 border-b border-line/70 py-1.5 last:border-b-0">
+      <span className="text-xs font-medium text-textSecondary">{label}</span>
+      <span className="max-w-[62%] text-right text-sm font-semibold leading-5 text-textPrimary">{value}</span>
+    </div>
+  );
+};
 
 interface PropertyModalProps {
   property: any;
@@ -192,11 +204,14 @@ interface PropertyModalProps {
   onViewOnMap?: () => void;
 }
 
-const PropertyModal = ({ property, isOpen, onClose, onViewOnMap }: PropertyModalProps) => {
+const PropertyModal = ({ property: initialProperty, isOpen, onClose, onViewOnMap }: PropertyModalProps) => {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [galleryOpen, setGalleryOpen] = useState(false);
   const [shareModalOpen, setShareModalOpen] = useState(false);
+  const [fullProperty, setFullProperty] = useState<any | null>(null);
+  const [loadingFullProperty, setLoadingFullProperty] = useState(false);
   const panelRef = useRef<HTMLDivElement>(null);
+  const property = fullProperty || initialProperty;
   const images = useMemo(() => getValidImages(property?.images), [property?.images]);
 
   // Cierre con Escape: primero la galería/compartir si están abiertos, luego el panel.
@@ -215,13 +230,39 @@ const PropertyModal = ({ property, isOpen, onClose, onViewOnMap }: PropertyModal
   // Lleva el foco al panel al abrir (lectores de pantalla / teclado).
   useEffect(() => {
     if (isOpen) panelRef.current?.focus();
-  }, [isOpen, property?.id]);
+  }, [isOpen, initialProperty?.id]);
 
   useEffect(() => {
     if (!isOpen) return;
+    setFullProperty(null);
     setCurrentImageIndex(0);
     setGalleryOpen(false);
-  }, [isOpen, property?.id]);
+  }, [isOpen, initialProperty?.id]);
+
+  useEffect(() => {
+    if (!isOpen || !initialProperty?.id) return;
+
+    let cancelled = false;
+    setLoadingFullProperty(true);
+
+    (async () => {
+      try {
+        const { apiFetch } = await import('@/lib/api');
+        const res = await apiFetch(`/properties/${initialProperty.id}/`, { skipAuth: true });
+        if (!res.ok || cancelled) return;
+        const detail = await res.json();
+        if (!cancelled) setFullProperty(detail);
+      } catch (error) {
+        console.error('No se pudo cargar el detalle completo de la propiedad:', error);
+      } finally {
+        if (!cancelled) setLoadingFullProperty(false);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [isOpen, initialProperty?.id]);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -253,7 +294,6 @@ const PropertyModal = ({ property, isOpen, onClose, onViewOnMap }: PropertyModal
   // Anuncio venta + alquiler a la vez: `price` es la venta y `rent_price` el alquiler.
   const rentPriceNum = Number.parseFloat(String(property.rent_price ?? ''));
   const hasRentPrice = property.rent_price != null && Number.isFinite(rentPriceNum) && rentPriceNum > 0;
-
   const nextImage = () => {
     if (images.length === 0) return;
     setCurrentImageIndex((prev) => (prev + 1) % images.length);
@@ -316,14 +356,13 @@ const PropertyModal = ({ property, isOpen, onClose, onViewOnMap }: PropertyModal
       <div
         ref={panelRef}
         tabIndex={-1}
-        role="dialog"
-        aria-modal="true"
+        role="complementary"
         aria-label={`Detalle de ${property.title || 'propiedad'}`}
-        className="fixed inset-x-0 bottom-0 z-panel outline-none animate-panelIn sm:inset-x-auto sm:bottom-0 sm:left-0 sm:top-0 sm:w-[480px] sm:max-w-[calc(100vw-2rem)]"
+        className="fixed inset-x-0 bottom-0 z-panel outline-none animate-panelIn lg:relative lg:inset-auto lg:z-0 lg:h-full lg:w-[26rem] lg:flex-shrink-0"
       >
       {/* Panel Container */}
-      <div className="relative overflow-hidden rounded-t-modal border border-line bg-white shadow-cardHover sm:h-full sm:rounded-none sm:rounded-r-modal sm:border-y-0 sm:border-l-0">
-        <div>
+      <div className="relative overflow-hidden rounded-t-modal border border-line bg-background shadow-cardHover lg:h-full lg:rounded-none lg:border-0 lg:border-l lg:border-line lg:shadow-none">
+        <div className="flex h-full flex-col">
           {/* Share Button */}
           <button
             onClick={() => setShareModalOpen(true)}
@@ -344,10 +383,10 @@ const PropertyModal = ({ property, isOpen, onClose, onViewOnMap }: PropertyModal
           </button>
 
           {/* Scrollable Content */}
-          <div className="max-h-[86vh] overflow-y-auto sm:h-full sm:max-h-full">
+          <div className="max-h-[86vh] min-h-0 flex-1 overflow-y-auto overscroll-contain lg:max-h-none">
             {/* Image Gallery Section */}
             {activeImage ? (
-              <div className="group relative h-56 cursor-pointer bg-slate-900 sm:h-60" onClick={() => setGalleryOpen(true)}>
+              <div className="group relative h-48 cursor-pointer bg-slate-900 sm:h-52" onClick={() => setGalleryOpen(true)}>
                 <img
                   src={activeImage.image}
                   alt={property.title}
@@ -421,9 +460,9 @@ const PropertyModal = ({ property, isOpen, onClose, onViewOnMap }: PropertyModal
             )}
 
             {/* Content Section */}
-            <div className="p-4">
+            <div className="space-y-2.5 p-3">
               {/* Header */}
-              <div className="mb-4">
+              <div className="rounded-card border border-line bg-white p-3 shadow-card">
                 <div className="mb-2 flex items-start justify-between gap-2">
                   <h2 className="flex-1 text-lg font-bold leading-snug text-textPrimary">
                     {property.title || 'Propiedad'}
@@ -439,7 +478,7 @@ const PropertyModal = ({ property, isOpen, onClose, onViewOnMap }: PropertyModal
                     {formatPrice(property.price)}
                   </span>
                   {hasRentPrice && (
-                    <span className="text-sm font-semibold text-textSecondary">
+                    <span className="text-xs font-semibold text-textSecondary">
                       · Alquiler {formatPrice(property.rent_price)}/mes
                     </span>
                   )}
@@ -454,7 +493,7 @@ const PropertyModal = ({ property, isOpen, onClose, onViewOnMap }: PropertyModal
                 {(property.address || property.city) && (
                   <div className="flex items-start gap-1.5 text-textSecondary">
                     <MapPin className="h-4 w-4 flex-shrink-0 text-primary" strokeWidth={1.75} aria-hidden />
-                    <span className="text-sm leading-5">
+                    <span className="text-xs leading-5">
                       {property.address && <span>{property.address}</span>}
                       {property.address && property.city && <span>, </span>}
                       {property.city && <span>{property.city}</span>}
@@ -465,12 +504,12 @@ const PropertyModal = ({ property, isOpen, onClose, onViewOnMap }: PropertyModal
               </div>
 
               {/* Ver en el mapa: centra el mapa real en la propiedad */}
-              <div className="mb-4 grid grid-cols-2 gap-2">
+              <div className="grid grid-cols-2 gap-2">
                 {onViewOnMap && (property.polygon || (property.latitude && property.longitude)) && (
                   <button
                     type="button"
                     onClick={onViewOnMap}
-                    className="flex items-center justify-center gap-2 rounded-button border border-primary/30 bg-primaryLight px-3 py-2.5 text-sm font-semibold text-primary transition-colors hover:bg-primary hover:text-primary-foreground"
+                    className="flex items-center justify-center gap-2 rounded-button border border-primary/30 bg-primaryLight px-3 py-2 text-xs font-semibold text-primary transition-colors hover:bg-primary hover:text-primary-foreground"
                   >
                     <MapPinned className="h-4 w-4" strokeWidth={2} aria-hidden />
                     Ver mapa
@@ -480,15 +519,24 @@ const PropertyModal = ({ property, isOpen, onClose, onViewOnMap }: PropertyModal
                 {/* Enlace secundario a la ficha indexable. El panel ya contiene la informacion completa para decidir. */}
                 <a
                   href={`/propiedad/${property.id}`}
-                  className="flex items-center justify-center gap-2 rounded-button border border-line bg-white px-3 py-2.5 text-sm font-semibold text-textPrimary transition-colors hover:border-primary hover:text-primary"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center justify-center gap-2 rounded-button border border-line bg-white px-3 py-2 text-xs font-semibold text-textPrimary transition-colors hover:border-primary hover:text-primary"
                 >
                   <ExternalLink className="h-4 w-4" strokeWidth={2} aria-hidden />
                   Ficha completa
                 </a>
               </div>
 
+              {loadingFullProperty && (
+                <div className="flex items-center justify-center gap-2 rounded-card border border-line bg-white px-3 py-1.5 text-xs font-medium text-textSecondary">
+                  <Loader2 className="h-3.5 w-3.5 animate-spin text-primary" strokeWidth={2} aria-hidden />
+                  Cargando ficha completa...
+                </div>
+              )}
+
               {/* Key Features Grid */}
-              <div className="mb-4 grid grid-cols-3 gap-2">
+              <div className="grid grid-cols-3 gap-2">
                 <FeatureTile icon={Ruler} value={formatArea(property.area)} label="m² total" />
 
                 {property.built_area && (
@@ -514,45 +562,31 @@ const PropertyModal = ({ property, isOpen, onClose, onViewOnMap }: PropertyModal
 
               {/* Description */}
               {property.description && (
-                <div className="mb-4 rounded-card border border-line bg-white p-3">
-                  <h3 className="mb-1 flex items-center gap-1.5 text-sm font-semibold text-textPrimary">
+                <div className="rounded-card border border-line bg-white p-3 shadow-card">
+                  <h3 className="mb-2 flex items-center gap-1.5 text-sm font-semibold text-textPrimary">
                     <AlignLeft className="h-3.5 w-3.5 text-primary" strokeWidth={1.75} aria-hidden />
                     Descripción
                   </h3>
-                  <p className="whitespace-pre-line text-sm leading-6 text-textSecondary">{property.description}</p>
+                  <p className="whitespace-pre-line text-sm leading-5 text-textSecondary">{property.description}</p>
                 </div>
               )}
 
-              {/* Additional Details */}
-              <div className="mb-4 grid grid-cols-2 gap-2">
-                <div className="rounded-card bg-background p-2">
-                  <div className="mb-0.5 text-xs font-semibold text-textSecondary">Tipo</div>
-                  <div className="text-sm font-semibold text-textPrimary">{getPropertyTypeLabel(property.property_type)}</div>
+              {/* Ficha completa en el panel */}
+              {(property.year_built || property.furnished || property.show_measurements === false) && (
+              <div className="rounded-card border border-line bg-white p-3 shadow-card">
+                <h3 className="mb-2 text-sm font-semibold text-textPrimary">Detalles</h3>
+                <div className="divide-y-0">
+                  {property.year_built && <DetailRow label="Año de construcción" value={property.year_built} />}
+                  {property.furnished && <DetailRow label="Amoblado" value="Sí" />}
+                  {property.show_measurements === false && <DetailRow label="Medidas" value="Referencia aproximada" />}
                 </div>
-
-                <div className="rounded-card bg-background p-2">
-                  <div className="mb-0.5 text-xs font-semibold text-textSecondary">Operación</div>
-                  <div className="text-sm font-semibold text-textPrimary">{getStatusLabel(property.status)}</div>
-                </div>
-
-                {property.year_built && (
-                  <div className="rounded-card bg-background p-2">
-                    <div className="mb-0.5 text-xs font-semibold text-textSecondary">Año</div>
-                    <div className="text-sm font-semibold text-textPrimary">{property.year_built}</div>
-                  </div>
-                )}
-
-                {property.furnished && (
-                  <div className="rounded-card bg-background p-2">
-                    <div className="mb-0.5 text-xs font-semibold text-textSecondary">Amoblado</div>
-                    <div className="text-sm font-semibold text-success">Sí</div>
-                  </div>
-                )}
               </div>
+              )}
 
               {/* Datos de publicacion y fuente */}
-              <div className="mb-4 rounded-card border border-line bg-background p-3">
-                <div className="mb-3 flex items-center gap-2">
+              <div className="rounded-card border border-line bg-white p-3 shadow-card">
+                <h3 className="mb-2 text-sm font-semibold text-textPrimary">Publicación y contacto</h3>
+                <div className="mb-2 flex items-center gap-2">
                   <span className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-primaryLight text-primary">
                     <User className="h-4 w-4" strokeWidth={1.75} aria-hidden />
                   </span>
@@ -566,13 +600,7 @@ const PropertyModal = ({ property, isOpen, onClose, onViewOnMap }: PropertyModal
                   </div>
                 </div>
 
-                <div className="space-y-2 text-sm text-textSecondary">
-                  {publishedDate && (
-                    <div className="flex items-center gap-2">
-                      <CalendarDays className="h-4 w-4 flex-shrink-0 text-primary" strokeWidth={1.75} aria-hidden />
-                      <span>{isImported ? 'Agregado al mapa el ' : 'Publicado el '}{publishedDate}</span>
-                    </div>
-                  )}
+                <div className="space-y-1.5 text-xs text-textSecondary">
                   {isImported && (
                     <div className="flex items-center gap-2">
                       <BadgeCheck className="h-4 w-4 flex-shrink-0 text-success" strokeWidth={1.75} aria-hidden />
@@ -595,14 +623,14 @@ const PropertyModal = ({ property, isOpen, onClose, onViewOnMap }: PropertyModal
               </div>
 
               {/* Zona de contacto: las propiedades importadas redirigen al contacto real de origen. */}
-              <div className="sticky bottom-0 -mx-4 space-y-3 border-t border-line bg-white/95 px-4 pb-4 pt-3 backdrop-blur">
+              <div className="sticky bottom-0 -mx-3 space-y-2 border-t border-line bg-white/95 px-3 pb-3 pt-2 shadow-[0_-12px_30px_rgba(32,45,40,0.08)] backdrop-blur">
                 {isImported ? (
                   contactPhone ? (
                     <a
                       href={whatsappUrl}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="wa-bounce flex w-full items-center justify-center gap-2 rounded-button bg-secondary px-4 py-3 text-sm font-semibold text-white shadow-card transition-colors hover:bg-secondaryHover"
+                      className="wa-bounce flex w-full items-center justify-center gap-2 rounded-button bg-secondary px-4 py-2.5 text-sm font-semibold text-white shadow-card transition-colors hover:bg-secondaryHover"
                     >
                       <MessageCircle className="h-4 w-4" strokeWidth={2} aria-hidden />
                       Contactar por WhatsApp
@@ -612,7 +640,7 @@ const PropertyModal = ({ property, isOpen, onClose, onViewOnMap }: PropertyModal
                       href={sourceUrl}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="flex w-full items-center justify-center gap-2 rounded-button bg-primary px-4 py-3 text-sm font-semibold text-white shadow-card transition-colors hover:bg-primaryHover"
+                      className="flex w-full items-center justify-center gap-2 rounded-button bg-primary px-4 py-2.5 text-sm font-semibold text-white shadow-card transition-colors hover:bg-primaryHover"
                     >
                       <ExternalLink className="h-4 w-4" strokeWidth={2} aria-hidden />
                       Contactar en {sourceAgency || 'la página original'}
@@ -701,9 +729,9 @@ const PropertyModal = ({ property, isOpen, onClose, onViewOnMap }: PropertyModal
           to { transform: translateY(0); opacity: 1; }
         }
         .animate-panelIn { animation: panelIn 0.25s ease-out; }
-        @media (min-width: 640px) {
+        @media (min-width: 1024px) {
           @keyframes panelIn {
-            from { transform: translateX(-24px); opacity: 0; }
+            from { transform: translateX(24px); opacity: 0; }
             to { transform: translateX(0); opacity: 1; }
           }
         }

@@ -5,6 +5,7 @@ import { getProperties } from '@/lib/properties';
 import {
   TYPE_DEFS,
   OP_DEFS,
+  MIN_COMBO_PROPERTIES,
   parseComboSlug,
   buildComboSlug,
   generateCombos,
@@ -34,7 +35,10 @@ export async function generateMetadata({ params }: { params: Params }): Promise<
   if (!parsed) return {};
 
   const properties = await getProperties();
-  const { locationName } = filterByCombo(properties, parsed);
+  const { matched, locationName } = filterByCombo(properties, parsed);
+  if (matched.length < MIN_COMBO_PROPERTIES) {
+    return { title: 'Búsqueda no disponible', robots: { index: false, follow: true } };
+  }
   const title = titleFor(parsed, locationName);
 
   return {
@@ -50,7 +54,7 @@ export default async function ComboPage({ params }: { params: Params }) {
 
   const properties = await getProperties();
   const { matched, locationName } = filterByCombo(properties, parsed);
-  if (matched.length === 0) notFound();
+  if (matched.length < MIN_COMBO_PROPERTIES) notFound();
 
   const { typeDef, opDef, locationSlug } = parsed;
   const title = titleFor(parsed, locationName);
@@ -64,19 +68,26 @@ export default async function ComboPage({ params }: { params: Params }) {
   // ubicación (solo los que existen en el catálogo).
   const validSlugs = new Set(generateCombos(properties).map((c) => c.combo));
   const related: RelatedLink[] = [];
+  const relatedLabels = new Set<string>();
+
+  const addRelated = (label: string, href: string) => {
+    if (href === `/${params.combo}` || relatedLabels.has(href)) return;
+    relatedLabels.add(href);
+    related.push({ label, href });
+  };
 
   for (const op of OP_DEFS) {
     if (opDef && op.status === opDef.status) continue;
     const slug = buildComboSlug(typeDef.slug, op.slug, locationSlug);
     if (validSlugs.has(slug) && slug !== params.combo) {
-      related.push({ label: `${typeDef.plural} ${op.label} en ${locationName}`, href: `/${slug}` });
+      addRelated(`${typeDef.plural} ${op.label} en ${locationName}`, `/${slug}`);
     }
   }
   for (const td of TYPE_DEFS) {
     if (td.type === typeDef.type) continue;
     const slug = buildComboSlug(td.slug, null, locationSlug);
     if (validSlugs.has(slug)) {
-      related.push({ label: `${td.plural} en ${locationName}`, href: `/${slug}` });
+      addRelated(`${td.plural} en ${locationName}`, `/${slug}`);
     }
   }
 

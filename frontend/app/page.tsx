@@ -162,12 +162,6 @@ export default async function HomePage() {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: jsonLd(homeStructuredData) }}
       />
-      <a
-        href="#contenido-informativo"
-        className="sr-only transition focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-top focus:inline-flex focus:items-center focus:rounded-full focus:bg-primary focus:px-5 focus:py-2.5 focus:text-sm focus:font-semibold focus:text-white focus:no-underline focus:shadow-cardHover focus:outline-none focus:ring-2 focus:ring-primary/40 focus:ring-offset-2 hover:focus:bg-primaryHover"
-      >
-        Saltar al contenido informativo
-      </a>
       <Suspense
         fallback={
           <div className="h-[calc(100vh-4.5rem)] w-full animate-pulse bg-muted" />

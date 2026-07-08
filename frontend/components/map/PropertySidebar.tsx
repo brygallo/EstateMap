@@ -1,14 +1,17 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import { AnimatePresence, motion } from 'motion/react';
 import { ExternalLink, Loader2, MapPinned, SearchX, X } from 'lucide-react';
 import MapFilters from '@/components/map/MapFilters';
 import PropertyCard from '@/components/PropertyCard';
 import { Badge } from '@/components/ui/badge';
+import { formatDistance, getPropertyDistanceKm, type LatLngPoint } from '@/lib/geo';
 import { cn } from '@/lib/utils';
 import type { Owner, Property, PropertyFilters, PropertyLocationGroup } from '@/lib/types';
+
+type SortMode = 'distance' | 'price_asc' | 'price_desc' | 'area_desc' | 'recent';
 
 interface PropertySidebarProps {
   filters: PropertyFilters;
@@ -28,6 +31,9 @@ interface PropertySidebarProps {
   loading?: boolean;
   /** Total que cumple los filtros en todo el catálogo (no solo el viewport). */
   totalCount?: number | null;
+  userLocation?: LatLngPoint | null;
+  onZoomOut?: () => void;
+  onResetMapView?: () => void;
 
   /** Sync mapa<->card (opcional): id resaltado desde el mapa y notificación de hover. */
   hoveredPropertyId?: number | null;
@@ -49,18 +55,61 @@ export default function PropertySidebar({
   onCloseMobile,
   loading = false,
   totalCount = null,
+  userLocation = null,
+  onZoomOut,
+  onResetMapView,
   hoveredPropertyId = null,
   onPropertyHover,
 }: PropertySidebarProps) {
   // Resalte local del listado (funciona aunque el mapa aún no sincronice hover).
   const [localHoverId, setLocalHoverId] = useState<number | null>(null);
+  const [sortMode, setSortMode] = useState<SortMode>('distance');
   const activeHoverId = hoveredPropertyId ?? localHoverId;
 
   // Scroll automático del listado hacia la card de la propiedad seleccionada
   // (p. ej. al hacer clic en su polígono/etiqueta en el mapa).
   const cardRefs = useRef<Record<number, HTMLDivElement | null>>({});
-  const renderedProperties = visibleProperties.slice(0, 60);
-  const hiddenPropertiesCount = Math.max(visibleProperties.length - renderedProperties.length, 0);
+  const propertiesWithDistance = useMemo(
+    () =>
+      visibleProperties.map((property) => ({
+        property,
+        distanceKm: getPropertyDistanceKm(userLocation, property),
+      })),
+    [userLocation, visibleProperties]
+  );
+  const sortedProperties = useMemo(() => {
+    const getNumber = (value: unknown) => {
+      const parsed = Number.parseFloat(String(value ?? ''));
+      return Number.isFinite(parsed) ? parsed : 0;
+    };
+    const getDateValue = (property: Property) => {
+      const raw = property.updated_at || property.created_at || '';
+      const value = Date.parse(raw);
+      return Number.isFinite(value) ? value : 0;
+    };
+
+    if (sortMode === 'price_asc') {
+      return [...propertiesWithDistance].sort((a, b) => getNumber(a.property.price) - getNumber(b.property.price));
+    }
+    if (sortMode === 'price_desc') {
+      return [...propertiesWithDistance].sort((a, b) => getNumber(b.property.price) - getNumber(a.property.price));
+    }
+    if (sortMode === 'area_desc') {
+      return [...propertiesWithDistance].sort((a, b) => getNumber(b.property.area) - getNumber(a.property.area));
+    }
+    if (sortMode === 'recent') {
+      return [...propertiesWithDistance].sort((a, b) => getDateValue(b.property) - getDateValue(a.property));
+    }
+    if (!userLocation) return propertiesWithDistance;
+    return [...propertiesWithDistance].sort((a, b) => {
+      if (a.distanceKm == null && b.distanceKm == null) return 0;
+      if (a.distanceKm == null) return 1;
+      if (b.distanceKm == null) return -1;
+      return a.distanceKm - b.distanceKm;
+    });
+  }, [propertiesWithDistance, sortMode, userLocation]);
+  const renderedProperties = sortedProperties.slice(0, 60);
+  const hiddenPropertiesCount = Math.max(sortedProperties.length - renderedProperties.length, 0);
   useEffect(() => {
     const id = selectedProperty?.id;
     if (id == null) return;
@@ -105,7 +154,7 @@ export default function PropertySidebar({
         <div className="flex items-center gap-2">
           <div className="flex flex-col">
             <span className="text-xs font-semibold uppercase tracking-wide text-textSecondary">
-              Visibles en el mapa
+              {userLocation ? 'Cerca de tu ubicación' : 'Visibles en el mapa'}
             </span>
             {totalCount != null && totalCount > visibleProperties.length && (
               <span className="text-[11px] text-textSecondary">
@@ -124,6 +173,25 @@ export default function PropertySidebar({
           {visibleProperties.length}
         </Badge>
       </div>
+
+      {visibleProperties.length > 1 && (
+        <div className="border-t border-line bg-white px-3.5 py-2">
+          <label className="flex items-center justify-between gap-2 text-xs font-medium text-textSecondary">
+            Ordenar
+            <select
+              value={sortMode}
+              onChange={(event) => setSortMode(event.target.value as SortMode)}
+              className="h-8 rounded-md border border-line bg-white px-2 text-xs font-semibold text-textPrimary outline-none transition-colors hover:border-primary focus:border-primary"
+            >
+              <option value="distance">Más cercanas</option>
+              <option value="price_asc">Menor precio</option>
+              <option value="price_desc">Mayor precio</option>
+              <option value="area_desc">Mayor área</option>
+              <option value="recent">Recientes</option>
+            </select>
+          </label>
+        </div>
+      )}
 
       {/* Listado */}
       <div className="space-y-2 bg-background p-2.5 pb-24">
@@ -144,13 +212,24 @@ export default function PropertySidebar({
                 No hay propiedades con estos filtros
               </p>
               <p className="mt-1 text-xs">Prueba a ampliar o limpiar los filtros aplicados</p>
-              <button
-                type="button"
-                onClick={onClearFilters}
-                className="mt-3 rounded-button border border-line bg-white px-3 py-1.5 text-xs font-medium text-primary transition-colors hover:bg-muted"
-              >
-                Limpiar filtros
-              </button>
+              <div className="mt-3 flex flex-wrap justify-center gap-2">
+                <button
+                  type="button"
+                  onClick={onClearFilters}
+                  className="rounded-button border border-line bg-white px-3 py-1.5 text-xs font-medium text-primary transition-colors hover:bg-muted"
+                >
+                  Limpiar filtros
+                </button>
+                {onZoomOut && (
+                  <button
+                    type="button"
+                    onClick={onZoomOut}
+                    className="rounded-button bg-primary px-3 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-primaryHover"
+                  >
+                    Alejar mapa
+                  </button>
+                )}
+              </div>
             </div>
           ) : (
             <div className="mt-6 flex flex-col items-center px-4 text-center text-textSecondary">
@@ -161,12 +240,32 @@ export default function PropertySidebar({
                 No hay propiedades en esta área
               </p>
               <p className="mt-1 text-xs">Mueve o aleja el mapa para ver más propiedades</p>
+              <div className="mt-3 flex flex-wrap justify-center gap-2">
+                {onZoomOut && (
+                  <button
+                    type="button"
+                    onClick={onZoomOut}
+                    className="rounded-button bg-primary px-3 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-primaryHover"
+                  >
+                    Alejar mapa
+                  </button>
+                )}
+                {onResetMapView && (
+                  <button
+                    type="button"
+                    onClick={onResetMapView}
+                    className="rounded-button border border-line bg-white px-3 py-1.5 text-xs font-medium text-primary transition-colors hover:bg-muted"
+                  >
+                    Ver Ecuador
+                  </button>
+                )}
+              </div>
             </div>
           )
         ) : (
           <>
             <AnimatePresence initial={false}>
-              {renderedProperties.map((p, idx) => (
+              {renderedProperties.map(({ property: p, distanceKm }, idx) => (
                 <motion.div
                   key={p.id ?? idx}
                   ref={(el) => {
@@ -190,6 +289,7 @@ export default function PropertySidebar({
                     property={p}
                     variant="compact"
                     selected={selectedProperty?.id === p.id}
+                    distanceLabel={formatDistance(distanceKm)}
                     onClick={() => onPropertyClick(p)}
                     onOpenDetails={() => onPropertyOpen(p)}
                   />
@@ -207,7 +307,7 @@ export default function PropertySidebar({
             </AnimatePresence>
             {hiddenPropertiesCount > 0 && (
               <div className="rounded-card border border-line bg-white p-3 text-center text-xs text-textSecondary shadow-card">
-                Mostrando 60 de {visibleProperties.length}. Acerca el mapa o usa filtros para ver resultados más precisos.
+                Mostrando 60 de {sortedProperties.length}. Acerca el mapa o usa filtros para ver resultados más precisos.
               </div>
             )}
           </>

@@ -3,10 +3,6 @@ Panel de administración de la ingesta. Todo el admin de Django ya exige
 ``is_staff``; además las acciones que lanzan cargas verifican ``is_staff``
 explícitamente.
 """
-import subprocess
-import sys
-
-from django.conf import settings
 from django.contrib import admin, messages
 from django.core.exceptions import PermissionDenied
 from django.urls import path, reverse
@@ -14,17 +10,7 @@ from django.utils import timezone
 from django.utils.html import format_html
 
 from .models import Fuente, IngestaRun, ListingCruda
-
-
-def _lanzar_subproceso(run):
-    """Lanza ``ingesta_load --run-id`` como proceso independiente (no bloquea)."""
-    subprocess.Popen(
-        [sys.executable, "manage.py", "ingesta_load", "--run-id", str(run.id)],
-        cwd=str(settings.BASE_DIR),
-        start_new_session=True,
-        stdout=subprocess.DEVNULL,
-        stderr=subprocess.DEVNULL,
-    )
+from .runner import launch_subprocess as _lanzar_subproceso
 
 
 @admin.register(Fuente)
@@ -103,20 +89,31 @@ class FuenteAdmin(admin.ModelAdmin):
 
 @admin.register(IngestaRun)
 class IngestaRunAdmin(admin.ModelAdmin):
-    list_display = ("id", "fuente", "estado_coloreado", "progreso", "duplicadas",
-                    "sin_ubicacion", "duracion", "lanzado_por", "created_at")
+    list_display = ("id", "fuente", "estado_coloreado", "progreso", "errores",
+                    "duplicadas", "sin_ubicacion", "duracion", "lanzado_por", "created_at")
     list_filter = ("estado", "fuente")
     readonly_fields = [f.name for f in IngestaRun._meta.fields] + ["progreso", "duracion"]
     ordering = ("-created_at",)
+    actions = ["cancelar_runs"]
 
     def has_add_permission(self, request):
         return False  # se crean al lanzar desde el botón de la fuente
 
     def estado_coloreado(self, obj):
-        colores = {"running": "#e69500", "done": "#2e7d32", "error": "#c62828", "pending": "#666"}
+        colores = {"running": "#e69500", "done": "#2e7d32", "error": "#c62828",
+                   "pending": "#666", "cancelled": "#8a6d3b"}
         return format_html('<b style="color:{}">{}</b>',
                            colores.get(obj.estado, "#000"), obj.get_estado_display())
     estado_coloreado.short_description = "Estado"
+
+    @admin.action(description="Cancelar ejecuciones seleccionadas (en curso)")
+    def cancelar_runs(self, request, queryset):
+        n = queryset.filter(estado__in=["pending", "running"]).update(cancel_requested=True)
+        self.message_user(
+            request,
+            f"Se solicitó cancelar {n} ejecución(es). Se detendrán en su próximo checkpoint.",
+            level=messages.SUCCESS if n else messages.WARNING,
+        )
 
     def progreso(self, obj):
         return format_html(

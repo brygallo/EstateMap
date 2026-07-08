@@ -55,6 +55,7 @@ class IngestaRun(models.Model):
         ("running", "En ejecución"),
         ("done", "Terminado"),
         ("error", "Error"),
+        ("cancelled", "Cancelado"),
     ]
 
     MODOS = [
@@ -79,10 +80,17 @@ class IngestaRun(models.Model):
     duplicadas = models.PositiveIntegerField(default=0)
     caducadas = models.PositiveIntegerField(default=0, help_text="Ya no vigentes en el portal")
     sin_ubicacion = models.PositiveIntegerField(default=0)
+    errores = models.PositiveIntegerField(
+        default=0, help_text="Anuncios que fallaron individualmente (no abortan el run)")
 
     mensaje = models.TextField(blank=True, default="")
+    log = models.TextField(blank=True, default="", help_text="Últimas líneas de log de la ejecución")
+    cancel_requested = models.BooleanField(
+        default=False, help_text="Marca puesta desde el panel para detener el run de forma ordenada")
     lanzado_por = models.CharField(max_length=150, blank=True, default="")
     started_at = models.DateTimeField(null=True, blank=True)
+    heartbeat_at = models.DateTimeField(
+        null=True, blank=True, help_text="Última señal de vida; sirve para detectar runs caídos")
     finished_at = models.DateTimeField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 

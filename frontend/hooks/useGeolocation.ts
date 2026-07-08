@@ -1,44 +1,88 @@
 'use client';
 
 import { useEffect, useState, useCallback, useRef } from 'react';
-import { toast } from 'sonner';
+import { toast, type ExternalToast } from 'sonner';
+import type { Property } from '@/lib/types';
+import { distanceKm, getPropertyPoint, type LatLngPoint } from '@/lib/geo';
 
-type LatLng = { lat: number; lng: number };
 type MapRef = React.MutableRefObject<any>;
-type LocationStatus = { message: string; tone: 'info' | 'success' | 'danger' } | null;
+type PendingAdaptiveLocation = { location: LatLngPoint; readyAt: number };
+
+const LOCATION_DISCOVERY_ZOOM = 10;
+const ADAPTIVE_ZOOM_DELAY_MS = 1200;
+
+const getAdaptiveLocationZoom = (location: LatLngPoint, properties: Property[]) => {
+  const distances = properties
+    .map((property) => {
+      const point = getPropertyPoint(property);
+      return point ? distanceKm(location, point) : null;
+    })
+    .filter((value): value is number => typeof value === 'number' && Number.isFinite(value))
+    .sort((a, b) => a - b);
+
+  if (distances.length === 0) return LOCATION_DISCOVERY_ZOOM;
+
+  const within2Km = distances.filter((distance) => distance <= 2).length;
+  const within5Km = distances.filter((distance) => distance <= 5).length;
+  const nearest = distances[0];
+
+  if (within2Km >= 5) return 15;
+  if (within5Km >= 8 || nearest <= 1.5) return 14;
+  if (nearest <= 5) return 13;
+  if (nearest <= 12) return 12;
+  if (nearest <= 30) return 11;
+  return LOCATION_DISCOVERY_ZOOM;
+};
 
 /**
  * Encapsula toda la lógica de geolocalización del mapa: el modal de permiso en
  * la primera visita, la recuperación automática en visitas posteriores, el
  * botón "mi ubicación" y el toast de carga. Mueve el mapa a través de `mapRef`.
  */
-export function useGeolocation(mapRef: MapRef) {
-  const [userLocation, setUserLocation] = useState<LatLng | null>(null);
+export function useGeolocation(
+  mapRef: MapRef,
+  properties: Property[] = [],
+  propertiesLoading = false
+) {
+  const [userLocation, setUserLocation] = useState<LatLngPoint | null>(null);
   const [accuracy, setAccuracy] = useState<number | null>(null);
   const [loadingLocation, setLoadingLocation] = useState(false);
   const [showLocationModal, setShowLocationModal] = useState(false);
-  const [showLocationToast, setShowLocationToast] = useState(false);
-  const [locationStatus, setLocationStatus] = useState<LocationStatus>(null);
   const [locationBlocked, setLocationBlocked] = useState(false);
-  const statusTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [adaptiveZoomTick, setAdaptiveZoomTick] = useState(0);
+  const locationToastIdRef = useRef<string | number | null>(null);
+  const pendingAdaptiveLocationRef = useRef<PendingAdaptiveLocation | null>(null);
 
-  // Píldora de estado (estilo Google Maps): info mientras busca, success al
-  // encontrar, danger en error. `autoHideMs` la oculta sola tras un momento.
-  const showStatus = useCallback(
-    (message: string, tone: 'info' | 'success' | 'danger', autoHideMs?: number) => {
-      setLocationStatus({ message, tone });
-      if (statusTimerRef.current) clearTimeout(statusTimerRef.current);
-      if (autoHideMs) {
-        statusTimerRef.current = setTimeout(() => setLocationStatus(null), autoHideMs);
-      }
-    },
-    []
-  );
+  const toastOptions: ExternalToast = {
+    duration: 2800,
+    position: 'top-center',
+  };
 
-  useEffect(() => {
-    return () => {
-      if (statusTimerRef.current) clearTimeout(statusTimerRef.current);
-    };
+  const notifyLocationLoading = useCallback((message = 'Buscando tu ubicación…') => {
+    if (locationToastIdRef.current) toast.dismiss(locationToastIdRef.current);
+    locationToastIdRef.current = toast.loading(message, {
+      position: 'top-center',
+    });
+  }, []);
+
+  const notifyLocationSuccess = useCallback((message: string) => {
+    const id = locationToastIdRef.current;
+    if (id) {
+      toast.success(message, { ...toastOptions, id });
+    } else {
+      toast.success(message, toastOptions);
+    }
+    locationToastIdRef.current = null;
+  }, []);
+
+  const notifyLocationError = useCallback((message: string) => {
+    const id = locationToastIdRef.current;
+    if (id) {
+      toast.error(message, { ...toastOptions, duration: 6000, id });
+    } else {
+      toast.error(message, { ...toastOptions, duration: 6000 });
+    }
+    locationToastIdRef.current = null;
   }, []);
 
   const flyTo = useCallback(
@@ -53,6 +97,39 @@ export function useGeolocation(mapRef: MapRef) {
     },
     [mapRef]
   );
+
+  const centerOnLocation = useCallback(
+    (lat: number, lng: number, delay = 0) => {
+      const location = { lat, lng };
+      pendingAdaptiveLocationRef.current = {
+        location,
+        readyAt: Date.now() + delay + ADAPTIVE_ZOOM_DELAY_MS,
+      };
+      setAdaptiveZoomTick((current) => current + 1);
+      flyTo(lat, lng, LOCATION_DISCOVERY_ZOOM, delay);
+    },
+    [flyTo]
+  );
+
+  useEffect(() => {
+    const pending = pendingAdaptiveLocationRef.current;
+    if (!pending || !mapRef.current) return;
+
+    const waitMs = pending.readyAt - Date.now();
+    if (waitMs > 0) {
+      const timer = setTimeout(() => setAdaptiveZoomTick((current) => current + 1), waitMs);
+      return () => clearTimeout(timer);
+    }
+
+    if (propertiesLoading) return;
+
+    const { location } = pending;
+    const zoom = getAdaptiveLocationZoom(location, properties);
+    pendingAdaptiveLocationRef.current = null;
+    if (zoom !== mapRef.current.getZoom?.()) {
+      flyTo(location.lat, location.lng, zoom);
+    }
+  }, [adaptiveZoomTick, flyTo, mapRef, properties, propertiesLoading]);
 
   const geoErrorMessage = (error: GeolocationPositionError): string => {
     switch (error.code) {
@@ -72,33 +149,11 @@ export function useGeolocation(mapRef: MapRef) {
     if (typeof window === 'undefined') return;
 
     const permissionAsked = localStorage.getItem('locationPermissionAsked');
-    const hasInitialLocation = localStorage.getItem('hasInitialLocation');
 
-    if (!permissionAsked && !hasInitialLocation) {
+    if (!permissionAsked) {
       const t = setTimeout(() => setShowLocationModal(true), 500);
       return () => clearTimeout(t);
     }
-
-    if (hasInitialLocation === 'true' && navigator.geolocation) {
-      setLoadingLocation(true);
-      setShowLocationToast(true);
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          const { latitude, longitude, accuracy: acc } = position.coords;
-          setUserLocation({ lat: latitude, lng: longitude });
-          setAccuracy(typeof acc === 'number' ? acc : null);
-          flyTo(latitude, longitude, 12, 1000);
-          setLoadingLocation(false);
-          setTimeout(() => setShowLocationToast(false), 2000);
-        },
-        () => {
-          setLoadingLocation(false);
-          setShowLocationToast(false);
-        },
-        { enableHighAccuracy: true, timeout: 20000, maximumAge: 0 }
-      );
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleAcceptLocation = useCallback(async () => {
@@ -108,7 +163,7 @@ export function useGeolocation(mapRef: MapRef) {
     }
 
     if (!navigator.geolocation) {
-      toast.error('Tu navegador no soporta geolocalización');
+      notifyLocationError('Tu navegador no soporta geolocalización');
       return;
     }
 
@@ -118,7 +173,7 @@ export function useGeolocation(mapRef: MapRef) {
           name: 'geolocation' as PermissionName,
         });
         if (status.state === 'denied') {
-          toast.error('El permiso de ubicación está bloqueado. Habilítalo desde la configuración de tu navegador.');
+          notifyLocationError('El permiso de ubicación está bloqueado. Habilítalo desde la configuración de tu navegador.');
           return;
         }
       } catch {
@@ -127,25 +182,27 @@ export function useGeolocation(mapRef: MapRef) {
     }
 
     setLoadingLocation(true);
+    notifyLocationLoading();
     navigator.geolocation.getCurrentPosition(
       (position) => {
         const { latitude, longitude, accuracy: acc } = position.coords;
         setUserLocation({ lat: latitude, lng: longitude });
         setAccuracy(typeof acc === 'number' ? acc : null);
-        flyTo(latitude, longitude, 12);
+        centerOnLocation(latitude, longitude);
         if (typeof window !== 'undefined') {
           localStorage.setItem('hasInitialLocation', 'true');
         }
         setLoadingLocation(false);
         setLocationBlocked(false);
+        notifyLocationSuccess('Ubicación encontrada');
       },
       (error) => {
-        toast.error(geoErrorMessage(error));
         setLoadingLocation(false);
+        notifyLocationError(geoErrorMessage(error));
       },
       { enableHighAccuracy: true, timeout: 20000, maximumAge: 0 }
     );
-  }, [flyTo]);
+  }, [centerOnLocation, notifyLocationError, notifyLocationLoading, notifyLocationSuccess]);
 
   const handleDeclineLocation = useCallback(() => {
     setShowLocationModal(false);
@@ -157,37 +214,35 @@ export function useGeolocation(mapRef: MapRef) {
 
   const handleGetMyLocation = useCallback(() => {
     if (!navigator.geolocation) {
-      showStatus('Tu navegador no soporta geolocalización.', 'danger', 6000);
+      notifyLocationError('Tu navegador no soporta geolocalización.');
       return;
     }
     setLoadingLocation(true);
-    showStatus('Buscando tu ubicación…', 'info');
+    notifyLocationLoading();
     navigator.geolocation.getCurrentPosition(
       (position) => {
         const { latitude, longitude, accuracy: acc } = position.coords;
         setUserLocation({ lat: latitude, lng: longitude });
         setAccuracy(typeof acc === 'number' ? acc : null);
-        flyTo(latitude, longitude, 17);
+        centerOnLocation(latitude, longitude);
         setLoadingLocation(false);
         setLocationBlocked(false);
-        showStatus('Ubicación encontrada.', 'success', 3000);
+        notifyLocationSuccess('Ubicación encontrada');
       },
       (error) => {
         setLoadingLocation(false);
         if (error.code === error.PERMISSION_DENIED) setLocationBlocked(true);
-        showStatus(geoErrorMessage(error), 'danger', 7000);
+        notifyLocationError(geoErrorMessage(error));
       },
       { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
     );
-  }, [flyTo, showStatus]);
+  }, [centerOnLocation, notifyLocationError, notifyLocationLoading, notifyLocationSuccess]);
 
   return {
     userLocation,
     accuracy,
     loadingLocation,
     showLocationModal,
-    showLocationToast,
-    locationStatus,
     locationBlocked,
     handleAcceptLocation,
     handleDeclineLocation,

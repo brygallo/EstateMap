@@ -15,7 +15,7 @@ from rest_framework import status
 from real_estate.permissions import IsAdminUser
 
 from .models import Fuente, IngestaRun
-from .runner import launch_subprocess
+from .runner import launch_subprocess, reap_zombie_runs
 from .scrapers import available_scrapers, get_scraper
 
 
@@ -53,10 +53,14 @@ def _run_dict(r):
         "duplicadas": r.duplicadas,
         "caducadas": r.caducadas,
         "sin_ubicacion": r.sin_ubicacion,
+        "errores": r.errores,
         "cargadas": r.cargadas,
         "mensaje": r.mensaje,
+        "log": r.log,
+        "cancel_requested": r.cancel_requested,
         "lanzado_por": r.lanzado_por,
         "started_at": r.started_at,
+        "heartbeat_at": r.heartbeat_at,
         "finished_at": r.finished_at,
         "created_at": r.created_at,
     }
@@ -73,14 +77,132 @@ def _ensure_sources():
 @permission_classes([IsAuthenticated, IsAdminUser])
 def sources(request):
     _ensure_sources()
+    reap_zombie_runs()
     return Response([_source_dict(f) for f in Fuente.objects.all()])
 
 
 @api_view(["GET"])
 @permission_classes([IsAuthenticated, IsAdminUser])
 def runs(request):
+    reap_zombie_runs()
     qs = IngestaRun.objects.select_related("fuente").all()[:20]
     return Response([_run_dict(r) for r in qs])
+
+
+@api_view(["POST"])
+@permission_classes([IsAuthenticated, IsAdminUser])
+def cancel(request):
+    """
+    Solicita cancelar un run en curso. Acepta ``{run_id}`` o ``{source}`` (en
+    cuyo caso cancela el run activo de esa fuente). Solo pone la marca
+    ``cancel_requested``; el proceso la detecta en su próximo checkpoint y
+    termina de forma ordenada dejando el estado en ``cancelled``.
+    """
+    run_id = request.data.get("run_id")
+    source = request.data.get("source")
+    run = None
+    if run_id:
+        run = IngestaRun.objects.filter(pk=run_id).first()
+    elif source:
+        run = (IngestaRun.objects.filter(fuente__slug=source,
+                                         estado__in=["pending", "running"])
+               .order_by("-created_at").first())
+    if run is None:
+        return Response({"error": "No se encontró una ejecución para cancelar."},
+                        status=status.HTTP_404_NOT_FOUND)
+    if run.estado not in ("pending", "running"):
+        return Response({"error": f"El run #{run.id} ya está {run.get_estado_display()}."},
+                        status=status.HTTP_409_CONFLICT)
+    run.cancel_requested = True
+    run.save(update_fields=["cancel_requested"])
+    return Response(_run_dict(run))
+
+
+def _prop_thumb(prop):
+    """Miniatura de la imagen principal (o la primera) sin disparar más queries
+    de las ya prefetchadas."""
+    imgs = list(prop.images.all())
+    main = next((i for i in imgs if i.is_main), imgs[0] if imgs else None)
+    if main and main.thumbnail:
+        try:
+            return main.thumbnail.url
+        except Exception:
+            return None
+    return None
+
+
+@api_view(["GET"])
+@permission_classes([IsAuthenticated, IsAdminUser])
+def properties(request):
+    """
+    Lista las propiedades importadas de una fuente, para revisarlas desde el
+    panel. Parámetros: ``source`` (slug, obligatorio), ``estado``
+    (activas/inactivas/duplicadas/todas), ``q`` (búsqueda) y ``page``.
+    """
+    from django.db.models import Q
+
+    from real_estate.models import Property
+
+    slug = request.GET.get("source")
+    fuente = Fuente.objects.filter(slug=slug).first()
+    if fuente is None:
+        return Response({"error": "Fuente no encontrada."}, status=status.HTTP_404_NOT_FOUND)
+
+    qs = Property.objects.filter(source=fuente, is_imported=True)
+    estado = request.GET.get("estado", "activas")
+    if estado == "activas":
+        qs = qs.exclude(status="inactive").filter(is_duplicate=False)
+    elif estado == "inactivas":
+        qs = qs.filter(status="inactive")
+    elif estado == "duplicadas":
+        qs = qs.filter(is_duplicate=True)
+    # "todas" -> sin filtro adicional
+
+    search = (request.GET.get("q") or "").strip()
+    if search:
+        qs = qs.filter(
+            Q(title__icontains=search)
+            | Q(city__icontains=search)
+            | Q(external_id__icontains=search)
+            | Q(source_agency__icontains=search)
+        )
+
+    qs = qs.prefetch_related("images").order_by("-imported_at", "-id")
+    total = qs.count()
+
+    try:
+        page = max(1, int(request.GET.get("page", 1)))
+    except (TypeError, ValueError):
+        page = 1
+    page_size = 20
+    start = (page - 1) * page_size
+    items = list(qs[start:start + page_size])
+
+    results = [{
+        "id": p.id,
+        "title": p.title,
+        "price": float(p.price) if p.price is not None else None,
+        "rent_price": float(p.rent_price) if p.rent_price is not None else None,
+        "status": p.status,
+        "property_type": p.property_type,
+        "city": p.city,
+        "province": p.province,
+        "is_duplicate": p.is_duplicate,
+        "source_agency": p.source_agency,
+        "source_url": p.source_url,
+        "external_id": p.external_id,
+        "imported_at": p.imported_at,
+        "last_seen_at": p.last_seen_at,
+        "thumbnail": _prop_thumb(p),
+    } for p in items]
+
+    return Response({
+        "total": total,
+        "page": page,
+        "page_size": page_size,
+        "num_pages": (total + page_size - 1) // page_size if total else 1,
+        "results": results,
+    })
 
 
 @api_view(["POST"])
@@ -96,6 +218,10 @@ def launch(request):
     fuente, _ = Fuente.objects.update_or_create(
         slug=scraper.key, defaults=scraper.fuente_defaults()
     )
+
+    # Recupera runs colgados de esta fuente antes de decidir si hay uno activo,
+    # para que un proceso muerto no bloquee futuras ejecuciones para siempre.
+    reap_zombie_runs(fuente=fuente)
 
     # No permitir dos corridas simultáneas de la misma fuente.
     activa = fuente.runs.filter(estado__in=["pending", "running"]).first()

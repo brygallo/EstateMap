@@ -7,22 +7,28 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import {
   AlertTriangle,
+  Building2,
   CheckCircle2,
+  ChevronLeft,
+  ChevronRight,
   Clock3,
   Database,
   DownloadCloud,
   ExternalLink,
   Globe2,
   History,
+  ImageOff,
   Loader2,
   PlayCircle,
   Plus,
   RefreshCw,
+  Search,
   XCircle,
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
   Table,
@@ -50,7 +56,7 @@ interface Source {
 interface Run {
   id: number;
   fuente: string;
-  estado: 'pending' | 'running' | 'done' | 'error';
+  estado: 'pending' | 'running' | 'done' | 'error' | 'cancelled';
   estado_label: string;
   modo: 'load' | 'refresh';
   modo_label: string;
@@ -62,13 +68,60 @@ interface Run {
   duplicadas: number;
   caducadas: number;
   sin_ubicacion: number;
+  errores: number;
   cargadas: number;
   mensaje: string;
+  log: string;
+  cancel_requested: boolean;
   lanzado_por: string;
   started_at: string | null;
+  heartbeat_at: string | null;
   finished_at: string | null;
   created_at: string;
 }
+
+interface ImportedProp {
+  id: number;
+  title: string;
+  price: number | null;
+  rent_price: number | null;
+  status: string;
+  property_type: string;
+  city: string;
+  province: string;
+  is_duplicate: boolean;
+  source_agency: string;
+  source_url: string;
+  external_id: string;
+  imported_at: string | null;
+  last_seen_at: string | null;
+  thumbnail: string | null;
+}
+
+interface ImportedResponse {
+  total: number;
+  page: number;
+  page_size: number;
+  num_pages: number;
+  results: ImportedProp[];
+}
+
+type ImpEstado = 'activas' | 'inactivas' | 'duplicadas' | 'todas';
+
+const IMP_ESTADOS: { value: ImpEstado; label: string }[] = [
+  { value: 'activas', label: 'Activas' },
+  { value: 'inactivas', label: 'Inactivas' },
+  { value: 'duplicadas', label: 'Duplicadas' },
+  { value: 'todas', label: 'Todas' },
+];
+
+const PROP_TYPE_LABEL: Record<string, string> = {
+  land: 'Terreno',
+  house: 'Casa',
+  apartment: 'Departamento',
+  commercial: 'Comercial',
+  other: 'Otro',
+};
 
 // Portales previstos que aún no tienen scraper (se muestran como "próximamente").
 const PORTALES_PROXIMOS = ['Plusvalía', 'Icasas', 'OLX Ecuador', 'Vive1', 'Remax Ecuador'];
@@ -78,6 +131,7 @@ const ESTADO_STYLE: Record<Run['estado'], string> = {
   done: 'bg-green-100 text-green-800 border-green-200',
   error: 'bg-red-100 text-red-800 border-red-200',
   pending: 'bg-gray-100 text-gray-700 border-gray-200',
+  cancelled: 'bg-orange-100 text-orange-800 border-orange-200',
 };
 
 const IngestaPage = () => {
@@ -87,7 +141,18 @@ const IngestaPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [launching, setLaunching] = useState<string>('');
+  const [cancelling, setCancelling] = useState(false);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  // Pestaña "Propiedades importadas".
+  const [activeTab, setActiveTab] = useState<'gestion' | 'importadas'>('gestion');
+  const [impSource, setImpSource] = useState('');
+  const [impEstado, setImpEstado] = useState<ImpEstado>('activas');
+  const [impSearch, setImpSearch] = useState('');
+  const [impQuery, setImpQuery] = useState('');
+  const [impPage, setImpPage] = useState(1);
+  const [impData, setImpData] = useState<ImportedResponse | null>(null);
+  const [impLoading, setImpLoading] = useState(false);
 
   const authHeaders = useCallback(
     () => ({ Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }),
@@ -160,6 +225,61 @@ const IngestaPage = () => {
       setLaunching('');
     }
   };
+
+  const cancelRun = async (runId: number) => {
+    if (!confirm('¿Detener esta ingesta? Se conservará lo ya importado.')) return;
+    setCancelling(true);
+    try {
+      const res = await fetch(`${API_URL}/admin/ingesta/cancel/`, {
+        method: 'POST',
+        headers: authHeaders(),
+        body: JSON.stringify({ run_id: runId }),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        toast.error(data.error || 'No se pudo cancelar la ingesta.');
+      } else {
+        toast.success('Cancelación solicitada. Se detendrá en unos segundos.');
+      }
+      await fetchAll();
+    } catch {
+      toast.error('Error de conexión al cancelar la ingesta.');
+    } finally {
+      setCancelling(false);
+    }
+  };
+
+  const fetchImported = useCallback(async () => {
+    if (!token || !impSource) return;
+    setImpLoading(true);
+    try {
+      const params = new URLSearchParams({
+        source: impSource,
+        estado: impEstado,
+        page: String(impPage),
+      });
+      if (impQuery.trim()) params.set('q', impQuery.trim());
+      const res = await fetch(`${API_URL}/admin/ingesta/properties/?${params.toString()}`, {
+        headers: authHeaders(),
+      });
+      if (!res.ok) throw new Error();
+      setImpData(await res.json());
+    } catch {
+      toast.error('No se pudieron cargar las propiedades importadas.');
+    } finally {
+      setImpLoading(false);
+    }
+  }, [token, impSource, impEstado, impPage, impQuery, authHeaders]);
+
+  // Fija la fuente por defecto cuando llegan las fuentes.
+  useEffect(() => {
+    if (!impSource && sources.length) setImpSource(sources[0].slug);
+  }, [sources, impSource]);
+
+  // Carga la lista al entrar a la pestaña o cambiar filtros/página.
+  useEffect(() => {
+    if (activeTab === 'importadas') fetchImported();
+  }, [activeTab, fetchImported]);
 
   const runActive = runs.some((r) => r.estado === 'running' || r.estado === 'pending');
   const activeRun = runs.find((r) => r.estado === 'running' || r.estado === 'pending');
@@ -271,31 +391,77 @@ const IngestaPage = () => {
                       </p>
                       <p className="mt-1 text-xs text-amber-800">
                         {activeRun.cargadas} cargadas · {activeRun.creadas} nuevas · {activeRun.actualizadas} actualizadas · vistos {activeRun.vistos}
+                        {activeRun.errores > 0 && ` · ${activeRun.errores} con error`}
                       </p>
                     </div>
-                    {progressPct(activeRun) !== null && (
-                      <div className="min-w-[180px]">
-                        <div className="mb-1 text-right text-xs font-semibold text-amber-900">
-                          {progressPct(activeRun)}%
+                    <div className="flex items-center gap-3">
+                      {progressPct(activeRun) !== null && (
+                        <div className="min-w-[180px]">
+                          <div className="mb-1 text-right text-xs font-semibold text-amber-900">
+                            {progressPct(activeRun)}%
+                          </div>
+                          <div className="h-2 overflow-hidden rounded-full bg-amber-200">
+                            <div
+                              className="h-full rounded-full bg-amber-600 transition-all"
+                              style={{ width: `${progressPct(activeRun)}%` }}
+                            />
+                          </div>
                         </div>
-                        <div className="h-2 overflow-hidden rounded-full bg-amber-200">
-                          <div
-                            className="h-full rounded-full bg-amber-600 transition-all"
-                            style={{ width: `${progressPct(activeRun)}%` }}
-                          />
-                        </div>
-                      </div>
-                    )}
+                      )}
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => cancelRun(activeRun.id)}
+                        disabled={cancelling || activeRun.cancel_requested}
+                        className="border-red-300 text-red-700 hover:bg-red-50"
+                      >
+                        {cancelling || activeRun.cancel_requested ? (
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        ) : (
+                          <XCircle className="mr-2 h-4 w-4" />
+                        )}
+                        {activeRun.cancel_requested ? 'Deteniendo…' : 'Cancelar'}
+                      </Button>
+                    </div>
                   </div>
                   {activeRun.mensaje && (
                     <p className="mt-3 rounded-md bg-white/70 px-3 py-2 text-xs text-amber-900">
                       {activeRun.mensaje}
                     </p>
                   )}
+                  {activeRun.log && (
+                    <pre className="mt-2 max-h-40 overflow-auto rounded-md bg-amber-950/90 px-3 py-2 text-[11px] leading-5 text-amber-50">
+                      {activeRun.log.split('\n').slice(-12).join('\n')}
+                    </pre>
+                  )}
                 </CardContent>
               </Card>
             )}
 
+            {/* Pestañas */}
+            <div className="mb-6 flex gap-1 border-b border-line">
+              {([
+                { key: 'gestion', label: 'Gestión de portales', icon: DownloadCloud },
+                { key: 'importadas', label: 'Propiedades importadas', icon: Building2 },
+              ] as const).map((t) => (
+                <button
+                  key={t.key}
+                  type="button"
+                  onClick={() => setActiveTab(t.key)}
+                  className={`flex items-center gap-2 border-b-2 px-4 py-2.5 text-sm font-semibold transition-colors ${
+                    activeTab === t.key
+                      ? 'border-primary text-primary'
+                      : 'border-transparent text-textSecondary hover:text-textPrimary'
+                  }`}
+                >
+                  <t.icon className="h-4 w-4" strokeWidth={2} />
+                  {t.label}
+                </button>
+              ))}
+            </div>
+
+            {activeTab === 'gestion' && (
+            <>
             {/* Portales */}
             <div className="space-y-5">
               <div>
@@ -632,6 +798,203 @@ const IngestaPage = () => {
                 </CardContent>
               </Card>
             </div>
+            </>
+            )}
+
+            {activeTab === 'importadas' && (
+              <div className="space-y-4">
+                <div>
+                  <h2 className="text-lg font-semibold text-textPrimary">Propiedades importadas</h2>
+                  <p className="mt-1 text-sm text-textSecondary">
+                    Lo que se trajo de cada portal. Filtra por estado, busca y abre el
+                    anuncio original o la propiedad en el mapa.
+                  </p>
+                </div>
+
+                {/* Selector de portal */}
+                <div className="flex flex-wrap gap-2">
+                  {sources.map((s) => (
+                    <button
+                      key={s.slug}
+                      type="button"
+                      onClick={() => {
+                        setImpSource(s.slug);
+                        setImpPage(1);
+                      }}
+                      className={`rounded-button border px-3 py-1.5 text-sm font-medium transition-colors ${
+                        impSource === s.slug
+                          ? 'border-primary bg-primaryLight text-primary'
+                          : 'border-line text-textSecondary hover:text-textPrimary'
+                      }`}
+                    >
+                      {s.nombre}
+                      <span className="ml-1.5 text-xs text-textSecondary">{s.total}</span>
+                    </button>
+                  ))}
+                </div>
+
+                {/* Filtros de estado + búsqueda */}
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                  <div className="flex flex-wrap gap-1">
+                    {IMP_ESTADOS.map((e) => (
+                      <button
+                        key={e.value}
+                        type="button"
+                        onClick={() => {
+                          setImpEstado(e.value);
+                          setImpPage(1);
+                        }}
+                        className={`rounded-button px-3 py-1.5 text-xs font-semibold transition-colors ${
+                          impEstado === e.value
+                            ? 'bg-primary text-white'
+                            : 'bg-muted text-textSecondary hover:text-textPrimary'
+                        }`}
+                      >
+                        {e.label}
+                      </button>
+                    ))}
+                  </div>
+                  <form
+                    className="flex items-center gap-2"
+                    onSubmit={(ev) => {
+                      ev.preventDefault();
+                      setImpPage(1);
+                      setImpQuery(impSearch);
+                    }}
+                  >
+                    <div className="relative">
+                      <Search className="absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-textSecondary" />
+                      <Input
+                        value={impSearch}
+                        onChange={(ev) => setImpSearch(ev.target.value)}
+                        placeholder="Título, ciudad, id…"
+                        className="h-9 w-56 pl-8"
+                      />
+                    </div>
+                    <Button type="submit" variant="outline" size="sm">
+                      Buscar
+                    </Button>
+                  </form>
+                </div>
+
+                {/* Grid de propiedades */}
+                {impLoading && !impData ? (
+                  <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                    {[0, 1, 2, 3, 4, 5].map((i) => (
+                      <Skeleton key={i} className="h-28 w-full" />
+                    ))}
+                  </div>
+                ) : impData && impData.results.length === 0 ? (
+                  <Card>
+                    <CardContent className="py-10 text-center text-sm text-textSecondary">
+                      No hay propiedades para este filtro.
+                    </CardContent>
+                  </Card>
+                ) : (
+                  <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                    {impData?.results.map((p) => (
+                      <Card key={p.id} className={impLoading ? 'opacity-60' : ''}>
+                        <CardContent className="flex gap-3 p-3">
+                          <div className="h-20 w-20 flex-shrink-0 overflow-hidden rounded-button bg-muted">
+                            {p.thumbnail ? (
+                              // eslint-disable-next-line @next/next/no-img-element
+                              <img
+                                src={p.thumbnail}
+                                alt={p.title}
+                                className="h-full w-full object-cover"
+                              />
+                            ) : (
+                              <div className="flex h-full w-full items-center justify-center text-textSecondary">
+                                <ImageOff className="h-6 w-6" strokeWidth={1.5} />
+                              </div>
+                            )}
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <div className="flex items-start justify-between gap-2">
+                              <p className="truncate text-sm font-semibold text-textPrimary" title={p.title}>
+                                {p.title || `#${p.external_id}`}
+                              </p>
+                              {p.is_duplicate ? (
+                                <Badge variant="outline" className="border-orange-200 bg-orange-100 text-orange-800">
+                                  Duplicada
+                                </Badge>
+                              ) : p.status === 'inactive' ? (
+                                <Badge variant="outline" className="border-red-200 bg-red-100 text-red-800">
+                                  Inactiva
+                                </Badge>
+                              ) : (
+                                <Badge variant="outline" className="border-green-200 bg-green-100 text-green-800">
+                                  Activa
+                                </Badge>
+                              )}
+                            </div>
+                            <p className="mt-0.5 text-sm font-bold text-primary">
+                              {p.price != null
+                                ? `$${p.price.toLocaleString('es-EC')}`
+                                : p.rent_price != null
+                                  ? `$${p.rent_price.toLocaleString('es-EC')}/mes`
+                                  : 'A consultar'}
+                            </p>
+                            <p className="mt-0.5 truncate text-xs text-textSecondary">
+                              {PROP_TYPE_LABEL[p.property_type] || p.property_type}
+                              {p.city ? ` · ${p.city}` : ''}
+                              {p.source_agency ? ` · ${p.source_agency}` : ''}
+                            </p>
+                            <div className="mt-1.5 flex items-center gap-3 text-xs">
+                              <a
+                                href={`/property/${p.id}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="font-semibold text-primary hover:underline"
+                              >
+                                Ver en el mapa
+                              </a>
+                              {p.source_url && (
+                                <a
+                                  href={p.source_url}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="flex items-center gap-1 text-textSecondary hover:text-textPrimary"
+                                >
+                                  <ExternalLink className="h-3 w-3" /> Original
+                                </a>
+                              )}
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                )}
+
+                {/* Paginación */}
+                {impData && impData.num_pages > 1 && (
+                  <div className="flex items-center justify-between pt-1">
+                    <p className="text-xs text-textSecondary">
+                      {impData.total} propiedades · página {impData.page} de {impData.num_pages}
+                    </p>
+                    <div className="flex items-center gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        disabled={impPage <= 1 || impLoading}
+                        onClick={() => setImpPage((n) => Math.max(1, n - 1))}
+                      >
+                        <ChevronLeft className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        disabled={impPage >= impData.num_pages || impLoading}
+                        onClick={() => setImpPage((n) => n + 1)}
+                      >
+                        <ChevronRight className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         </main>
       </div>

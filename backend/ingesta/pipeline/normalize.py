@@ -88,6 +88,40 @@ def parse_price(raw):
     return value if value > 0 else None
 
 
+# Cotas de sanidad para precios (USD, mercado ecuatoriano). Un valor fuera de
+# rango casi siempre es un error de scraping (se leyó un área, un id, un teléfono
+# o un número mal formateado como si fuera el precio). En ese caso preferimos
+# dejar el precio en None ("a consultar") antes que publicar un dato absurdo.
+_SALE_PRICE_MIN = 1_000          # una venta por menos de $1.000 es sospechosa
+_RENT_PRICE_MIN = 20             # un alquiler por menos de $20/mes es sospechoso
+_PRICE_MAX = 50_000_000          # nada realista supera los $50M en el país
+
+
+def sanitize_price(price, status="for_sale"):
+    """
+    Devuelve ``(precio_limpio, motivo)``. ``precio_limpio`` es el valor si pasa
+    las cotas de sanidad, o ``None`` si es absurdo; ``motivo`` es '' cuando es
+    válido o una etiqueta corta cuando se descarta (para poder loguearlo).
+
+    No lanza: los anuncios sin precio son válidos, así que un precio descartado
+    simplemente se trata como "a consultar".
+    """
+    if price is None:
+        return None, ""
+    try:
+        value = float(price)
+    except (TypeError, ValueError):
+        return None, "precio_no_numerico"
+    if value <= 0:
+        return None, "precio_no_positivo"
+    minimo = _RENT_PRICE_MIN if status == "for_rent" else _SALE_PRICE_MIN
+    if value < minimo:
+        return None, f"precio_bajo_sospechoso({value:g})"
+    if value > _PRICE_MAX:
+        return None, f"precio_alto_sospechoso({value:g})"
+    return value, ""
+
+
 def parse_area(raw):
     """'357 m²' -> 357.0 ; '1.200 m2' -> 1200.0 ; '' -> None."""
     if raw is None:
