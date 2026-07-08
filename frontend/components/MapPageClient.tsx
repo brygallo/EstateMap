@@ -58,6 +58,10 @@ const MapPage = () => {
     hasActiveFilters,
   } = usePropertyFilters({ token, bounds });
   const geo = useGeolocation(mapRef, properties, loading);
+  const sidebarProperties =
+    !loading && properties.length > 0 && visibleProperties.length === 0
+      ? properties
+      : visibleProperties;
 
   const handleMapReady = (map: any) => {
     mapRef.current = map;
@@ -174,7 +178,7 @@ const MapPage = () => {
         <span className="font-semibold tabular-nums">
           {loading
             ? 'Cargando…'
-            : `${visibleProperties.length} ${visibleProperties.length === 1 ? 'propiedad' : 'propiedades'}`}
+            : `${sidebarProperties.length} ${sidebarProperties.length === 1 ? 'propiedad' : 'propiedades'}`}
         </span>
       </Button>
 
@@ -208,7 +212,7 @@ const MapPage = () => {
           hasActiveFilters={hasActiveFilters}
           onFilterChange={handleFilterChange}
           onClearFilters={clearFilters}
-          visibleProperties={visibleProperties}
+          visibleProperties={sidebarProperties}
           selectedProperty={selectedProperty}
           onPropertyClick={handleSidebarPropertyClick}
           onPropertyOpen={handleSidebarPropertyOpen}

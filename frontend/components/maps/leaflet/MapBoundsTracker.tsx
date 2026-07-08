@@ -44,6 +44,9 @@ export function MapBoundsTracker({
   const updateVisibleProperties = useCallback(() => {
     const bounds = map.getBounds();
     const visible = properties.filter((property) => {
+      const lat = Number(property.latitude);
+      const lng = Number(property.longitude);
+
       // Check if property has polygon
       if (property.polygon) {
         let coordinates;
@@ -53,24 +56,29 @@ export function MapBoundsTracker({
           coordinates = property.polygon.coordinates[0];
           // Check if any point of the polygon is within the map bounds
           // GeoJSON uses [lng, lat] format, but Leaflet uses [lat, lng]
-          return coordinates.some((point: any) => {
-            const [lng, lat] = point;
-            return bounds.contains([lat, lng]);
+          const hasVertexInBounds = coordinates.some((point: any) => {
+            const [pointLng, pointLat] = point;
+            return bounds.contains([Number(pointLat), Number(pointLng)]);
           });
+          if (hasVertexInBounds) return true;
         }
         // Handle simple array format [[lat, lng], ...]
         else if (Array.isArray(property.polygon) && property.polygon.length >= 3) {
           coordinates = property.polygon;
           // Simple format already uses [lat, lng]
-          return coordinates.some((point: any) => {
-            const [lat, lng] = point;
-            return bounds.contains([lat, lng]);
+          const hasVertexInBounds = coordinates.some((point: any) => {
+            const [pointLat, pointLng] = point;
+            return bounds.contains([Number(pointLat), Number(pointLng)]);
           });
+          if (hasVertexInBounds) return true;
         }
       }
-      // If no polygon, check if property has lat/lng coordinates
-      else if (property.latitude && property.longitude) {
-        return bounds.contains([property.latitude, property.longitude]);
+
+      // Always fall back to the property marker/centroid. Some polygons can
+      // cover or touch the viewport while all vertices sit outside it, and
+      // production data commonly stores both polygon and latitude/longitude.
+      if (Number.isFinite(lat) && Number.isFinite(lng)) {
+        return bounds.contains([lat, lng]);
       }
 
       return false;
@@ -80,9 +88,7 @@ export function MapBoundsTracker({
 
   // Initial update
   useEffect(() => {
-    if (properties.length > 0) {
-      updateVisibleProperties();
-    }
+    updateVisibleProperties();
   }, [properties, updateVisibleProperties]);
 
   return null;
