@@ -122,7 +122,7 @@ const AddPropertyMap = ({
         )}
 
         {/* Custom Layer Control - Compact for mobile */}
-        <div className="absolute top-16 sm:top-10 right-2 sm:right-3 z-[900]">
+        <div className="absolute right-2 top-16 z-mapcontrol sm:right-3 sm:top-10">
           <div className="bg-white rounded-lg shadow-lg overflow-hidden" style={{ minWidth: '140px' }}>
             <button
               type="button"

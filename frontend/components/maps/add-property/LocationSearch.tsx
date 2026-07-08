@@ -130,7 +130,7 @@ export function LocationSearch({
   }, []);
 
   return (
-    <div className="pointer-events-none absolute top-4 sm:top-4 left-1/2 -translate-x-1/2 z-[1000] w-[85%] sm:w-[70%] max-w-lg px-3">
+    <div className="pointer-events-none absolute left-1/2 top-4 z-mapcontrol w-[85%] max-w-lg -translate-x-1/2 px-3 sm:top-4 sm:w-[70%]">
       <div className="pointer-events-auto relative w-full">
         <form onSubmit={handleSearch} className="w-full">
           <div className="relative shadow-lg rounded-xl overflow-hidden bg-white">

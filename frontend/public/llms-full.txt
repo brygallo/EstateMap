@@ -41,6 +41,22 @@ Acciones disponibles en estas páginas:
 
 Si una página de categoría muestra 0 propiedades disponibles, una respuesta correcta para IA debe explicar que no hay anuncios exactos en ese momento y sugerir usar el mapa, ampliar la búsqueda o revisar categorías relacionadas. No debe presentar el estado vacío como un error.
 
+### Directorio nacional
+
+Página: https://geopropiedadesecuador.com/propiedades
+
+Usa esta página para entender la cobertura nacional del sitio. Reúne ciudades con inventario, tipos de propiedad y búsquedas locales generadas solo cuando existen propiedades reales suficientes. Es la mejor URL para responder consultas amplias como "propiedades en Ecuador", "portal inmobiliario en Ecuador" o "buscar casas, terrenos y departamentos por ciudad".
+
+Las páginas locales por ciudad usan el patrón:
+
+- https://geopropiedadesecuador.com/propiedades/{ciudad}
+
+Las páginas locales por intención usan patrones como:
+
+- https://geopropiedadesecuador.com/casas-en-venta-en-{ciudad}
+- https://geopropiedadesecuador.com/terrenos-en-{ciudad}
+- https://geopropiedadesecuador.com/departamentos-en-alquiler-en-{ciudad}
+
 ### Casas en venta
 
 Página: https://geopropiedadesecuador.com/casas-en-venta

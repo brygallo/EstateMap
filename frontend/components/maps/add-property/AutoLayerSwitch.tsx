@@ -82,7 +82,7 @@ export function AutoLayerSwitch({
             top: '80px',
             left: '50%',
             transform: 'translateX(-50%)',
-            zIndex: 1000,
+            zIndex: 900,
             background: 'rgba(0, 0, 0, 0.8)',
             color: 'white',
             padding: '10px 20px',

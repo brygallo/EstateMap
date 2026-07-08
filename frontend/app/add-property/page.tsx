@@ -34,6 +34,7 @@ import { cn } from '@/lib/utils';
 import { trackEvent } from '@/lib/analytics';
 import LocationSelect from '@/components/LocationSelect';
 import LocationPermissionModal from '@/components/LocationPermissionModal';
+import GoogleSignInButton from '@/components/GoogleSignInButton';
 
 import {
   Form,
@@ -1222,7 +1223,7 @@ const AddPropertyPage = () => {
               className="space-y-4 lg:space-y-6"
             >
               {/* Progress + autosave */}
-              <div className="sticky top-12 z-[600] overflow-hidden rounded-card border border-line bg-white/95 shadow-cardHover backdrop-blur">
+              <div className="sticky top-16 z-20 overflow-hidden rounded-card border border-line bg-white/95 shadow-cardHover backdrop-blur">
                 <div className="flex flex-col gap-3 border-b border-line px-4 py-3 lg:flex-row lg:items-center lg:justify-between">
                   <div className="min-w-0">
                     <div className="flex flex-wrap items-center gap-2">
@@ -1429,8 +1430,8 @@ const AddPropertyPage = () => {
                     </Button>
                   </div>
 
-                  <div className="relative h-[430px] sm:h-[540px] lg:h-[calc(100vh-13rem)] lg:min-h-[620px]">
-                    <div className="pointer-events-none absolute left-3 top-3 z-[500] max-w-[calc(100%-1.5rem)] rounded-card border border-line bg-white/95 px-3 py-2 text-xs shadow-card backdrop-blur">
+                  <div className="relative isolate h-[430px] sm:h-[540px] lg:h-[calc(100vh-13rem)] lg:min-h-[620px]">
+                    <div className="pointer-events-none absolute left-3 top-3 z-20 max-w-[calc(100%-1.5rem)] rounded-card border border-line bg-white/95 px-3 py-2 text-xs shadow-card backdrop-blur">
                       <p className="font-semibold text-textPrimary">{locationMapLabel}</p>
                       <p className="mt-0.5 text-textSecondary">
                         {locationMode === 'point'
@@ -2105,7 +2106,7 @@ const AddPropertyPage = () => {
 
       {/* Location Loading Toast */}
       {showLocationToast && (
-        <div className="fixed left-1/2 top-20 z-[9999] -translate-x-1/2">
+        <div className="fixed left-1/2 top-20 z-top -translate-x-1/2">
           <div className="flex items-center gap-3 rounded-card border border-line bg-surface px-6 py-4 shadow-cardHover">
             <Loader2 className="h-5 w-5 animate-spin text-primary" />
             <div className="flex flex-col">
@@ -2158,38 +2159,62 @@ const AddPropertyPage = () => {
 
       {/* Account Modal */}
       <Dialog open={showAccountModal} onOpenChange={setShowAccountModal}>
-        <DialogContent className="rounded-modal">
+        <DialogContent className="max-w-md rounded-modal p-0">
           <DialogHeader>
-            <DialogTitle>Tu anuncio está listo</DialogTitle>
-            <DialogDescription>
+            <div className="border-b border-line px-6 pb-4 pt-6">
+              <DialogTitle>Tu anuncio está listo</DialogTitle>
+              <DialogDescription className="mt-2">
               Crea tu cuenta para guardar y publicar este anuncio. El borrador ya está guardado.
-            </DialogDescription>
+              </DialogDescription>
+            </div>
           </DialogHeader>
-          <form onSubmit={handleCreateAccount} className="space-y-4">
-            <div className="grid grid-cols-2 gap-3">
+
+          <div className="px-6">
+            <GoogleSignInButton
+              text="signup_with"
+              onSuccess={() => {
+                savePublicationDraft();
+                setShowAccountModal(false);
+                trackEvent('publication_google_account_connected');
+                toast.success('Cuenta conectada. Revisa el anuncio y publícalo.');
+              }}
+            />
+          </div>
+
+          <div className="relative px-6">
+            <div className="absolute inset-x-6 top-1/2 border-t border-line" aria-hidden />
+            <div className="relative flex justify-center text-xs">
+              <span className="bg-background px-3 font-medium text-textSecondary">O usa tu correo</span>
+            </div>
+          </div>
+
+          <form onSubmit={handleCreateAccount} className="space-y-4 px-6 pb-6">
+            <div className="grid gap-3 sm:grid-cols-2">
               <div className="space-y-1.5">
                 <label className="text-sm font-semibold text-textPrimary">Nombre</label>
-                <Input value={accountFirstName} onChange={(e) => setAccountFirstName(e.target.value)} className="h-12 rounded-input" required />
+                <Input value={accountFirstName} onChange={(e) => setAccountFirstName(e.target.value)} className="h-11 rounded-input" required />
               </div>
               <div className="space-y-1.5">
                 <label className="text-sm font-semibold text-textPrimary">Apellido</label>
-                <Input value={accountLastName} onChange={(e) => setAccountLastName(e.target.value)} className="h-12 rounded-input" required />
+                <Input value={accountLastName} onChange={(e) => setAccountLastName(e.target.value)} className="h-11 rounded-input" required />
               </div>
             </div>
             <div className="space-y-1.5">
               <label className="text-sm font-semibold text-textPrimary">Correo</label>
-              <Input type="email" value={accountEmail} onChange={(e) => setAccountEmail(e.target.value)} className="h-12 rounded-input" required />
+              <Input type="email" value={accountEmail} onChange={(e) => setAccountEmail(e.target.value)} className="h-11 rounded-input" required />
             </div>
             <div className="space-y-1.5">
               <label className="text-sm font-semibold text-textPrimary">Contraseña</label>
-              <Input type="password" value={accountPassword} onChange={(e) => setAccountPassword(e.target.value)} className="h-12 rounded-input" required />
+              <Input type="password" value={accountPassword} onChange={(e) => setAccountPassword(e.target.value)} className="h-11 rounded-input" required />
             </div>
-            <Button type="submit" disabled={creatingAccount} className="w-full rounded-button bg-primary font-bold">
-              {creatingAccount ? 'Creando cuenta...' : 'Crear cuenta y publicar'}
-            </Button>
-            <Button type="button" variant="outline" className="w-full rounded-button border-line font-semibold text-textSecondary" onClick={() => setShowAccountModal(false)}>
-              Seguir editando
-            </Button>
+            <div className="space-y-2 pt-1">
+              <Button type="submit" disabled={creatingAccount} className="h-11 w-full rounded-button bg-primary font-bold">
+                {creatingAccount ? 'Creando cuenta...' : 'Crear cuenta y publicar'}
+              </Button>
+              <Button type="button" variant="outline" className="h-11 w-full rounded-button border-line font-semibold text-textSecondary" onClick={() => setShowAccountModal(false)}>
+                Seguir editando
+              </Button>
+            </div>
           </form>
         </DialogContent>
       </Dialog>
