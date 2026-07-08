@@ -1,8 +1,8 @@
 import Link from 'next/link';
 import { MessageCircle, MapPin, Map, Mail, ArrowUpRight } from 'lucide-react';
+import { buildWhatsAppUrl } from '@/lib/constants';
 
-const whatsappHref =
-  'https://wa.me/593983738151?text=Hola%20necesito%20ayuda%20con%20Geo%20Propiedades';
+const whatsappHref = buildWhatsAppUrl('Hola necesito ayuda con Geo Propiedades');
 
 type IconProps = { className?: string };
 

@@ -282,8 +282,14 @@ export default function RootLayout({
         <AuthProvider>
           <QueryProvider>
             <div className="min-h-screen flex flex-col bg-background text-textPrimary">
+              <a
+                href="#main"
+                className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[100] focus:rounded-button focus:bg-primary focus:px-4 focus:py-2 focus:text-sm focus:font-medium focus:text-white focus:shadow-card"
+              >
+                Saltar al contenido
+              </a>
               <NavBar />
-              <main className="flex-grow">{children}</main>
+              <main id="main" tabIndex={-1} className="flex-grow focus:outline-none">{children}</main>
               <Footer />
             </div>
             <Toaster richColors position="top-right" />

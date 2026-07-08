@@ -226,6 +226,48 @@ Revisar en: {admin_url}
     )
 
 
+def send_lead_notification(lead):
+    """Notifica al anunciante cuando alguien deja sus datos en una propiedad."""
+    prop = lead.property
+    owner_email = getattr(getattr(prop, 'owner', None), 'email', '') or ''
+    recipients = [email for email in [owner_email, prop.contact_email] if email]
+    recipients = list(dict.fromkeys(recipients))
+    if not recipients:
+        return
+
+    frontend_url = getattr(settings, 'FRONTEND_URL', 'http://localhost:3000')
+    property_url = f"{frontend_url}/property/{prop.id}"
+    panel_url = f"{frontend_url}/mis-propiedades"
+    property_title = prop.title or f"Propiedad #{prop.id}"
+    subject = f"Nuevo interesado en {property_title} - Geo Propiedades Ecuador"
+
+    body = f"""
+Hola,
+
+Alguien dejó sus datos para una de tus propiedades.
+
+Propiedad: {property_title}
+Interesado: {lead.name}
+Teléfono: {lead.phone}
+Correo: {lead.email or 'No indicado'}
+Mensaje: {lead.message or 'Sin mensaje'}
+
+Ver propiedad: {property_url}
+Ver tus contactos: {panel_url}
+
+Saludos,
+Geo Propiedades Ecuador
+    """
+
+    send_mail(
+        subject,
+        body,
+        settings.DEFAULT_FROM_EMAIL,
+        recipients,
+        fail_silently=True,
+    )
+
+
 def send_email_change_verification(user, new_email, code):
     """Envía correo de verificación al nuevo email cuando se solicita cambio"""
     subject = 'Verifica tu nuevo correo - Geo Propiedades Ecuador'

@@ -304,6 +304,10 @@ const AccountPage = () => {
                 <Label htmlFor="emailCode">Código de verificación</Label>
                 <Input
                   id="emailCode"
+                  inputMode="numeric"
+                  pattern="[0-9]*"
+                  autoComplete="one-time-code"
+                  maxLength={6}
                   value={emailForm.code}
                   onChange={(e) => setEmailForm({ ...emailForm, code: e.target.value })}
                   placeholder="123456"

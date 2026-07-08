@@ -3,15 +3,17 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import { AnimatePresence, motion } from 'motion/react';
-import { ExternalLink, Loader2, MapPinned, SearchX, X } from 'lucide-react';
+import { ExternalLink, Loader2, MapPinned, RotateCw, SearchX, WifiOff, X } from 'lucide-react';
 import MapFilters from '@/components/map/MapFilters';
-import PropertyCard from '@/components/PropertyCard';
+import PropertyCard, { PropertyCardSkeleton } from '@/components/PropertyCard';
 import { Badge } from '@/components/ui/badge';
 import { formatDistance, getPropertyDistanceKm, type LatLngPoint } from '@/lib/geo';
 import { cn } from '@/lib/utils';
 import type { Owner, Property, PropertyFilters, PropertyLocationGroup } from '@/lib/types';
 
 type SortMode = 'distance' | 'price_asc' | 'price_desc' | 'area_desc' | 'recent';
+const INITIAL_CARD_COUNT = 20;
+const CARD_BATCH_SIZE = 20;
 
 interface PropertySidebarProps {
   filters: PropertyFilters;
@@ -29,6 +31,10 @@ interface PropertySidebarProps {
 
   /** Cargando propiedades del área tras mover/hacer zoom o cambiar filtros. */
   loading?: boolean;
+  /** La última carga de propiedades falló (red / respuesta no OK). */
+  error?: boolean;
+  /** Reintenta la carga de propiedades del área. */
+  onRetry?: () => void;
   /** Total que cumple los filtros en todo el catálogo (no solo el viewport). */
   totalCount?: number | null;
   userLocation?: LatLngPoint | null;
@@ -54,6 +60,8 @@ export default function PropertySidebar({
   onPropertyOpen,
   onCloseMobile,
   loading = false,
+  error = false,
+  onRetry,
   totalCount = null,
   userLocation = null,
   onZoomOut,
@@ -64,11 +72,13 @@ export default function PropertySidebar({
   // Resalte local del listado (funciona aunque el mapa aún no sincronice hover).
   const [localHoverId, setLocalHoverId] = useState<number | null>(null);
   const [sortMode, setSortMode] = useState<SortMode>('distance');
+  const [visibleCardCount, setVisibleCardCount] = useState(INITIAL_CARD_COUNT);
   const activeHoverId = hoveredPropertyId ?? localHoverId;
 
   // Scroll automático del listado hacia la card de la propiedad seleccionada
   // (p. ej. al hacer clic en su polígono/etiqueta en el mapa).
   const cardRefs = useRef<Record<number, HTMLDivElement | null>>({});
+  const loadMoreRef = useRef<HTMLDivElement | null>(null);
   const propertiesWithDistance = useMemo(
     () =>
       visibleProperties.map((property) => ({
@@ -108,8 +118,38 @@ export default function PropertySidebar({
       return a.distanceKm - b.distanceKm;
     });
   }, [propertiesWithDistance, sortMode, userLocation]);
-  const renderedProperties = sortedProperties.slice(0, 60);
+  const renderedProperties = sortedProperties.slice(0, visibleCardCount);
   const hiddenPropertiesCount = Math.max(sortedProperties.length - renderedProperties.length, 0);
+
+  useEffect(() => {
+    setVisibleCardCount(INITIAL_CARD_COUNT);
+  }, [filters, sortMode, visibleProperties]);
+
+  useEffect(() => {
+    const id = selectedProperty?.id;
+    if (id == null) return;
+    const index = sortedProperties.findIndex(({ property }) => property.id === id);
+    if (index >= visibleCardCount) {
+      setVisibleCardCount(Math.ceil((index + 1) / CARD_BATCH_SIZE) * CARD_BATCH_SIZE);
+    }
+  }, [selectedProperty?.id, sortedProperties, visibleCardCount]);
+
+  useEffect(() => {
+    const target = loadMoreRef.current;
+    if (!target || hiddenPropertiesCount <= 0) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (!entries[0]?.isIntersecting) return;
+        setVisibleCardCount((current) => Math.min(current + CARD_BATCH_SIZE, sortedProperties.length));
+      },
+      { root: null, rootMargin: '240px 0px', threshold: 0 }
+    );
+
+    observer.observe(target);
+    return () => observer.disconnect();
+  }, [hiddenPropertiesCount, sortedProperties.length]);
+
   useEffect(() => {
     const id = selectedProperty?.id;
     if (id == null) return;
@@ -196,11 +236,30 @@ export default function PropertySidebar({
       {/* Listado */}
       <div className="space-y-2 bg-background p-2.5 pb-24">
         {loading && visibleProperties.length === 0 ? (
-          <div className="mt-6 flex flex-col items-center px-4 text-center text-textSecondary">
-            <Loader2 className="h-7 w-7 animate-spin text-primary" strokeWidth={2} aria-hidden />
+          <div className="space-y-2" aria-label="Cargando propiedades del área">
+            {Array.from({ length: 5 }).map((_, i) => (
+              <PropertyCardSkeleton key={i} />
+            ))}
+          </div>
+        ) : error && visibleProperties.length === 0 ? (
+          <div className="mt-6 flex flex-col items-center px-4 text-center text-textSecondary" role="alert">
+            <span className="flex h-11 w-11 items-center justify-center rounded-card bg-errorBg">
+              <WifiOff className="h-6 w-6 text-error" strokeWidth={1.75} aria-hidden />
+            </span>
             <p className="mt-3 text-sm font-medium text-textPrimary">
-              Cargando propiedades del área…
+              No se pudieron cargar las propiedades
             </p>
+            <p className="mt-1 text-xs">Revisa tu conexión e inténtalo de nuevo</p>
+            {onRetry && (
+              <button
+                type="button"
+                onClick={onRetry}
+                className="mt-3 flex items-center gap-1.5 rounded-button bg-primary px-3 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-primaryHover"
+              >
+                <RotateCw className="h-3.5 w-3.5" strokeWidth={2.25} aria-hidden />
+                Reintentar
+              </button>
+            )}
           </div>
         ) : visibleProperties.length === 0 ? (
           hasActiveFilters ? (
@@ -306,8 +365,11 @@ export default function PropertySidebar({
               ))}
             </AnimatePresence>
             {hiddenPropertiesCount > 0 && (
-              <div className="rounded-card border border-line bg-white p-3 text-center text-xs text-textSecondary shadow-card">
-                Mostrando 60 de {sortedProperties.length}. Acerca el mapa o usa filtros para ver resultados más precisos.
+              <div
+                ref={loadMoreRef}
+                className="rounded-card border border-line bg-white p-3 text-center text-xs text-textSecondary shadow-card"
+              >
+                Mostrando {renderedProperties.length} de {sortedProperties.length}. Desplázate para cargar más.
               </div>
             )}
           </>

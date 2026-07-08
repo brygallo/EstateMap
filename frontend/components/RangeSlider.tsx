@@ -69,6 +69,49 @@ const RangeSlider = ({
     }
   };
 
+  const clamp = (v: number) => Math.min(max, Math.max(min, v));
+
+  // Ajuste por teclado: los thumbs son focusables (role="slider") y responden a
+  // flechas (±step), PageUp/Down (±10·step) y Home/End. Sin esto el rango solo
+  // era editable con el ratón o los inputs numéricos.
+  const handleThumbKeyDown = (isMin: boolean) => (e: React.KeyboardEvent) => {
+    const bigStep = step * 10;
+    const current = isMin ? minValue : maxValue;
+    let next = current;
+
+    switch (e.key) {
+      case 'ArrowRight':
+      case 'ArrowUp':
+        next = current + step;
+        break;
+      case 'ArrowLeft':
+      case 'ArrowDown':
+        next = current - step;
+        break;
+      case 'PageUp':
+        next = current + bigStep;
+        break;
+      case 'PageDown':
+        next = current - bigStep;
+        break;
+      case 'Home':
+        next = isMin ? min : minValue + step;
+        break;
+      case 'End':
+        next = isMin ? maxValue - step : max;
+        break;
+      default:
+        return;
+    }
+
+    e.preventDefault();
+    if (isMin) {
+      onChange(clamp(Math.min(next, maxValue - step)), maxValue);
+    } else {
+      onChange(minValue, clamp(Math.max(next, minValue + step)));
+    }
+  };
+
   useEffect(() => {
     const handleMove = (clientX: number) => {
       const newValue = getValueFromPosition(clientX);
@@ -90,6 +133,9 @@ const RangeSlider = ({
 
     const handleTouchMove = (e: TouchEvent) => {
       if (isDraggingMin || isDraggingMax) {
+        // Evita que arrastrar el thumb haga scroll de la página en móvil.
+        // Requiere el listener no-pasivo de más abajo ({ passive: false }).
+        e.preventDefault();
         handleMove(e.touches[0].clientX);
       }
     };
@@ -102,7 +148,7 @@ const RangeSlider = ({
     if (isDraggingMin || isDraggingMax) {
       document.addEventListener('mousemove', handleMouseMove);
       document.addEventListener('mouseup', handleEnd);
-      document.addEventListener('touchmove', handleTouchMove);
+      document.addEventListener('touchmove', handleTouchMove, { passive: false });
       document.addEventListener('touchend', handleEnd);
 
       return () => {
@@ -222,10 +268,18 @@ const RangeSlider = ({
 
           {/* Min Handle */}
           <div
-            className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 cursor-grab active:cursor-grabbing"
+            role="slider"
+            tabIndex={0}
+            aria-label="Valor mínimo"
+            aria-valuemin={min}
+            aria-valuemax={maxValue}
+            aria-valuenow={minValue}
+            aria-valuetext={formattedMinLabel}
+            className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 cursor-grab rounded-full outline-none focus-visible:ring-2 focus-visible:ring-primary/60 focus-visible:ring-offset-2 active:cursor-grabbing"
             style={{ left: `${minPercentage}%` }}
             onMouseDown={handleMouseDown(true)}
             onTouchStart={handleTouchStart(true)}
+            onKeyDown={handleThumbKeyDown(true)}
           >
             <div className={cn(
               'w-4 h-4 bg-white border-2 border-primary rounded-full shadow-card transition-transform',
@@ -235,10 +289,18 @@ const RangeSlider = ({
 
           {/* Max Handle */}
           <div
-            className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 cursor-grab active:cursor-grabbing"
+            role="slider"
+            tabIndex={0}
+            aria-label="Valor máximo"
+            aria-valuemin={minValue}
+            aria-valuemax={max}
+            aria-valuenow={maxValue}
+            aria-valuetext={formattedMaxLabel}
+            className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 cursor-grab rounded-full outline-none focus-visible:ring-2 focus-visible:ring-primary/60 focus-visible:ring-offset-2 active:cursor-grabbing"
             style={{ left: `${maxPercentage}%` }}
             onMouseDown={handleMouseDown(false)}
             onTouchStart={handleTouchStart(false)}
+            onKeyDown={handleThumbKeyDown(false)}
           >
             <div className={cn(
               'w-4 h-4 bg-white border-2 border-secondary rounded-full shadow-card transition-transform',

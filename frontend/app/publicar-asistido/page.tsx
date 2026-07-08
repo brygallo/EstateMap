@@ -24,8 +24,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-
-const WHATSAPP_NUMBER = '593983738151';
+import { WHATSAPP_NUMBER } from '@/lib/constants';
 
 const propertyTypes = [
   { value: 'Terreno', label: 'Terreno' },

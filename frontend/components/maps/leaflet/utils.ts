@@ -2,7 +2,7 @@ import L from 'leaflet';
 
 // Expande un bounds un porcentaje en cada lado (con un mínimo), para reportar un
 // área un poco mayor que la vista visible al pedir propiedades.
-export const padBounds = (bounds: L.LatLngBounds, ratio = 0.35) => {
+export const padBounds = (bounds: L.LatLngBounds, ratio = 0.75) => {
   const south = bounds.getSouth();
   const north = bounds.getNorth();
   const west = bounds.getWest();

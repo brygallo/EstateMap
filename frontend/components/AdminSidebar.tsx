@@ -103,7 +103,7 @@ const AdminSidebar = () => {
       {/* Sidebar panel */}
       <aside
         className={cn(
-          'fixed left-0 top-12 z-40 h-[calc(100vh-3rem)] w-64 border-r border-line bg-surface shadow-card transition-transform duration-200 ease-in-out',
+          'fixed left-0 top-16 z-40 h-[calc(100vh-4rem)] w-64 border-r border-line bg-surface shadow-card transition-transform duration-200 ease-in-out',
           'lg:sticky lg:z-0 lg:translate-x-0 lg:shadow-none',
           mobileOpen ? 'translate-x-0' : '-translate-x-full'
         )}

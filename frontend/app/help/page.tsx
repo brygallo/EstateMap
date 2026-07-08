@@ -7,6 +7,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from '@/components/ui/accordion';
+import { WHATSAPP_NUMBER } from '@/lib/constants';
 
 function Icon({ path, className = 'h-5 w-5' }: { path: string; className?: string }) {
   return (
@@ -342,7 +343,7 @@ export default function HelpPage() {
                 Publicar gratis
               </Link>
               <Link
-                href="https://wa.me/593983738151"
+                href={`https://wa.me/${WHATSAPP_NUMBER}`}
                 target="_blank"
                 className="inline-flex items-center justify-center gap-2 rounded-button border border-white/40 px-5 py-3 font-semibold text-white transition hover:bg-white/10"
               >

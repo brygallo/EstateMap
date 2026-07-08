@@ -57,6 +57,7 @@ module.exports = {
 			warning: '#B7791F',
 			warningBg: '#FBF4E3',
 			error: '#DC2626',
+			errorBg: '#FDEAEA',
 			background: 'hsl(var(--background))',
 			foreground: 'hsl(var(--foreground))',
 			muted: {

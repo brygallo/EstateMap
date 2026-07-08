@@ -4,6 +4,7 @@ import { Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
+import { buildWhatsAppUrl } from '@/lib/constants';
 
 export const metadata: Metadata = {
   title: 'Para inmobiliarias y corredores | Geo Propiedades Ecuador',
@@ -12,12 +13,9 @@ export const metadata: Metadata = {
   alternates: { canonical: '/inmobiliarias' },
 };
 
-// Número de contacto comercial (configurable por entorno).
-const WHATSAPP_NUMBER = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || '593999999999';
-const WHATSAPP_TEXT = encodeURIComponent(
+const WHATSAPP_URL = buildWhatsAppUrl(
   'Hola, soy corredor/inmobiliaria y quiero publicar mis propiedades en Geo Propiedades.'
 );
-const WHATSAPP_URL = `https://wa.me/${WHATSAPP_NUMBER}?text=${WHATSAPP_TEXT}`;
 
 const BENEFITS = [
   {

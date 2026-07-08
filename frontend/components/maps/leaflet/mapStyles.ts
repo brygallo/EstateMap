@@ -10,9 +10,23 @@ export const MAP_STYLES = `
           background: transparent !important;
           border: 0 !important;
         }
+        .map-marker-icon .gp-marker {
+          transition: filter 160ms ease, opacity 160ms ease;
+        }
         .map-rich-marker-icon {
           background: transparent !important;
           border: 0 !important;
+        }
+        .map-rich-marker-icon .gp-marker {
+          transition: filter 160ms ease, opacity 160ms ease;
+        }
+        .property-polygon {
+          animation: mapPolygonFadeIn 320ms cubic-bezier(0.2, 0, 0, 1) both;
+          transition:
+            fill-opacity 240ms cubic-bezier(0.2, 0, 0, 1),
+            stroke-opacity 240ms cubic-bezier(0.2, 0, 0, 1),
+            stroke-width 180ms cubic-bezier(0.2, 0, 0, 1);
+          will-change: opacity, fill-opacity, stroke-opacity;
         }
         .map-price-pin {
           --marker-bg: #496D9C;
@@ -112,6 +126,7 @@ export const MAP_STYLES = `
           text-shadow: 0 1px 2px rgba(0, 0, 0, 0.28);
           transform: translate(-50%, -50%);
           white-space: nowrap;
+          transition: box-shadow 160ms ease, transform 160ms ease;
         }
         .map-cluster strong {
           font-size: 16px;
@@ -125,6 +140,43 @@ export const MAP_STYLES = `
         }
         .map-empty-state {
           pointer-events: auto;
+        }
+        .map-refresh-bar {
+          background: linear-gradient(90deg, transparent, rgba(73, 109, 156, 0.95), transparent);
+          animation: mapRefreshSlide 1.2s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+          transform-origin: left center;
+        }
+        @keyframes mapPolygonFadeIn {
+          from {
+            opacity: 0;
+            stroke-opacity: 0;
+            fill-opacity: 0;
+          }
+          to {
+            opacity: 1;
+          }
+        }
+        @keyframes mapRefreshSlide {
+          0% {
+            transform: translateX(-110%) scaleX(0.45);
+          }
+          50% {
+            transform: translateX(55%) scaleX(0.8);
+          }
+          100% {
+            transform: translateX(220%) scaleX(0.45);
+          }
+        }
+        @media (prefers-reduced-motion: reduce) {
+          .price-label-icon,
+          .map-marker-icon,
+          .map-rich-marker-icon,
+          .property-polygon,
+          .map-refresh-bar {
+            animation-duration: 1ms !important;
+            animation-delay: 0ms !important;
+            transition-duration: 1ms !important;
+          }
         }
         @keyframes fadeIn {
           from {
