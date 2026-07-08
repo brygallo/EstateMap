@@ -198,12 +198,15 @@ class PropertyViewSet(viewsets.ModelViewSet):
             parts = [_parse_float(p) for p in bbox.split(',')]
             if len(parts) == 4 and all(p is not None for p in parts):
                 west, south, east, north = parts
-                # Para escalar a miles de publicaciones, el bbox debe acotar
-                # estrictamente por punto. Mantener siempre las propiedades sin
-                # lat/lng obliga a devolver filas de todo el pais en cada paneo.
                 queryset = queryset.filter(
-                    latitude__gte=south, latitude__lte=north,
-                    longitude__gte=west, longitude__lte=east,
+                    Q(
+                        latitude__gte=south, latitude__lte=north,
+                        longitude__gte=west, longitude__lte=east,
+                    )
+                    # Compatibilidad con anuncios antiguos que solo tienen
+                    # polígono. El frontend vuelve a filtrar por bounds y el
+                    # serializer ya calcula centro para nuevos anuncios.
+                    | Q(latitude__isnull=True, longitude__isnull=True, polygon__isnull=False)
                 )
 
         return queryset
@@ -460,6 +463,9 @@ class GoogleLoginView(generics.GenericAPIView):
 
             # Generar JWT tokens
             refresh = RefreshToken.for_user(user)
+            refresh["username"] = user.username
+            refresh["email"] = user.email
+            refresh["is_staff"] = user.is_staff
 
             return Response({
                 'access': str(refresh.access_token),

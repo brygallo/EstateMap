@@ -8,6 +8,54 @@ from .models import Property, PropertyImage, Province, City, Lead, PendingPublic
 User = get_user_model()
 
 
+def polygon_center_lat_lng(polygon):
+    """
+    Return an approximate center for a normalized GeoJSON polygon or a
+    ``[[lat, lng], ...]`` ring. Used so map bbox filtering can include polygon
+    properties without requiring a separate point click.
+    """
+    if not polygon:
+        return None
+
+    ring = None
+    if isinstance(polygon, dict):
+        coordinates = polygon.get('coordinates') or []
+        ring = coordinates[0] if coordinates else None
+        points = [
+            (float(lat), float(lng))
+            for lng, lat in (ring or [])
+            if lat is not None and lng is not None
+        ]
+    elif isinstance(polygon, list):
+        ring = polygon
+        points = [
+            (float(lat), float(lng))
+            for lat, lng in ring
+            if lat is not None and lng is not None
+        ]
+    else:
+        return None
+
+    if len(points) >= 2 and points[0] == points[-1]:
+        points = points[:-1]
+    if not points:
+        return None
+
+    lat = sum(point[0] for point in points) / len(points)
+    lng = sum(point[1] for point in points) / len(points)
+    return lat, lng
+
+
+def ensure_polygon_center(data):
+    if data.get('polygon') and (data.get('latitude') is None or data.get('longitude') is None):
+        center = polygon_center_lat_lng(data.get('polygon'))
+        if center:
+            if data.get('latitude') is None:
+                data['latitude'] = center[0]
+            if data.get('longitude') is None:
+                data['longitude'] = center[1]
+
+
 class CitySerializer(serializers.ModelSerializer):
     """Serializer para ciudades"""
     province_name = serializers.CharField(source='province.name', read_only=True)
@@ -161,6 +209,7 @@ class PropertySerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         uploaded_images = validated_data.pop('uploaded_images', [])
+        ensure_polygon_center(validated_data)
         property_instance = Property.objects.create(**validated_data)
 
         for idx, image in enumerate(uploaded_images):
@@ -177,6 +226,10 @@ class PropertySerializer(serializers.ModelSerializer):
 
         uploaded_images = validated_data.pop('uploaded_images', [])
         images_to_delete_str = validated_data.pop('images_to_delete', None)
+        if 'polygon' in validated_data and ('latitude' not in validated_data or 'longitude' not in validated_data):
+            validated_data['latitude'] = None
+            validated_data['longitude'] = None
+        ensure_polygon_center(validated_data)
 
         # Update property fields
         for attr, value in validated_data.items():
@@ -340,6 +393,7 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
     def get_token(cls, user):
         token = super().get_token(user)
         token["username"] = user.username
+        token["email"] = user.email
         token["is_staff"] = user.is_staff
         return token
 
