@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { Suspense } from 'react';
 import Link from 'next/link';
+import { buildWhatsAppUrl } from '@/lib/constants';
 import {
   Home as HomeIcon,
   KeyRound,
@@ -164,7 +165,7 @@ export default async function HomePage() {
       />
       <Suspense
         fallback={
-          <div className="h-[calc(100vh-4.5rem)] w-full animate-pulse bg-muted" />
+          <div className="h-[calc(100dvh-3.5rem)] w-full animate-pulse bg-muted" />
         }
       >
         <MapPageClient />
@@ -363,7 +364,7 @@ export default async function HomePage() {
                 </Button>
                 <Button asChild variant="outline" className="rounded-full border-line bg-white">
                   <a
-                    href="https://wa.me/593983738151?text=Hola%20quiero%20publicar%20una%20propiedad%20en%20Geo%20Propiedades"
+                    href={buildWhatsAppUrl('Hola quiero publicar una propiedad en Geo Propiedades')}
                     target="_blank"
                     rel="noreferrer"
                   >

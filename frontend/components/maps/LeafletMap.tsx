@@ -26,10 +26,12 @@ interface LeafletMapProps {
   onMapReady: (map: any) => void;
   onVisiblePropertiesChange: (properties: any[]) => void;
   onBoundsChange?: (bounds: { west: number; south: number; east: number; north: number }) => void;
+  onZoomChange?: (zoom: number) => void;
   onPolygonClick: (property: any) => void;
   onLocate: () => void;
   locating: boolean;
   locationBlocked: boolean;
+  isRefreshing?: boolean;
   hasActiveFilters?: boolean;
   onClearFilters?: () => void;
   onResetView?: () => void;
@@ -47,10 +49,12 @@ const LeafletMap = ({
   onMapReady,
   onVisiblePropertiesChange,
   onBoundsChange,
+  onZoomChange,
   onPolygonClick,
   onLocate,
   locating,
   locationBlocked,
+  isRefreshing = false,
   hasActiveFilters,
   onClearFilters,
   onResetView,
@@ -63,6 +67,7 @@ const LeafletMap = ({
   const mapInstanceRef = useRef<any>(null);
   const [activeLayer, setActiveLayer] = useState<MapLayer>('streets'); // Mapa por defecto
   const [mapZoom, setMapZoom] = useState(7);
+  const [renderLimit, setRenderLimit] = useState(Number.POSITIVE_INFINITY);
 
   const handleInternalMapReady = useCallback((map: any) => {
     mapInstanceRef.current = map;
@@ -139,8 +144,43 @@ const LeafletMap = ({
     };
   }, [selectedProperty, addEdgeLabels, clearEdgeLabels]);
 
+  useEffect(() => {
+    const total = filteredProperties.length;
+    if (total <= 90 || mapZoom < 13) {
+      setRenderLimit(Number.POSITIVE_INFINITY);
+      return;
+    }
+
+    let frame = 0;
+    let cancelled = false;
+    const initial = 80;
+    const step = 45;
+    let currentLimit = initial;
+    setRenderLimit(initial);
+
+    const grow = () => {
+      if (cancelled) return;
+      currentLimit += step;
+      if (currentLimit >= total) {
+        setRenderLimit(Number.POSITIVE_INFINITY);
+        return;
+      }
+
+      setRenderLimit(currentLimit);
+      frame = window.requestAnimationFrame(() => {
+        if (!cancelled) grow();
+      });
+    };
+
+    frame = window.requestAnimationFrame(grow);
+    return () => {
+      cancelled = true;
+      window.cancelAnimationFrame(frame);
+    };
+  }, [filteredProperties.length, mapZoom]);
+
   return (
-    <>
+    <div className="relative h-full w-full">
       <style>{MAP_STYLES}</style>
       <MapContainer
         center={center}
@@ -179,7 +219,12 @@ const LeafletMap = ({
       <ScaleControl position="bottomleft" metric={true} imperial={false} maxWidth={120} />
       <LocationSearch />
       <MapController onMapReady={handleInternalMapReady} />
-      <MapZoomTracker onZoomChange={setMapZoom} />
+      <MapZoomTracker
+        onZoomChange={(zoom) => {
+          setMapZoom(zoom);
+          onZoomChange?.(zoom);
+        }}
+      />
       <MapBoundsTracker properties={filteredProperties} onVisiblePropertiesChange={onVisiblePropertiesChange} onBoundsChange={onBoundsChange} />
       <MapEmptyState
         hasProperties={filteredProperties.length > 0}
@@ -199,9 +244,10 @@ const LeafletMap = ({
             addEdgeLabels,
             polygonLayersRef,
             mapInstanceRef,
+            renderLimit,
           }),
         // eslint-disable-next-line react-hooks/exhaustive-deps
-        [filteredProperties, selectedProperty, mapZoom, onPolygonClick, hoverTimeoutRef, addEdgeLabels, getPropertyTypeLabel, getStatusLabel]
+        [filteredProperties, selectedProperty, mapZoom, onPolygonClick, hoverTimeoutRef, addEdgeLabels, getPropertyTypeLabel, getStatusLabel, renderLimit]
       )}
 
       {/* Ubicación del usuario: punto azul + círculo de precisión (estilo Google Maps) */}
@@ -231,8 +277,16 @@ const LeafletMap = ({
           </CircleMarker>
         </>
       )}
-    </MapContainer>
-    </>
+      </MapContainer>
+
+      {isRefreshing && (
+        <div className="pointer-events-none absolute inset-x-4 top-4 z-nav overflow-hidden rounded-full border border-white/70 bg-white/80 shadow-card backdrop-blur">
+          <div className="h-1.5 w-full bg-primary/10">
+            <div className="map-refresh-bar h-full w-1/2 rounded-full bg-primary/80" />
+          </div>
+        </div>
+      )}
+    </div>
   );
 };
 

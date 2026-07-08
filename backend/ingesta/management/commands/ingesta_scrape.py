@@ -32,6 +32,11 @@ class Command(BaseCommand):
         parser.add_argument("--limit", type=int, default=None, help="tope de anuncios")
         parser.add_argument("--dry-run", action="store_true", help="no escribe paquete, solo reporta")
         parser.add_argument("--no-images", action="store_true", help="no descargar imágenes")
+        parser.add_argument(
+            "--skip-known",
+            action="store_true",
+            help="saltar URLs ya guardadas en ListingCruda para generar lotes sucesivos",
+        )
 
     def handle(self, *args, **opts):
         if opts["all"]:
@@ -70,10 +75,19 @@ class Command(BaseCommand):
         ))
 
         counters = {"ok": 0, "sin_ubicacion": 0, "fuera_ec": 0, "imagenes": 0}
+        skip_url = None
+        if opts["skip_known"]:
+            conocidas = set(
+                ListingCruda.objects.filter(fuente=fuente)
+                .exclude(source_url="")
+                .values_list("source_url", flat=True)
+            )
+            skip_url = conocidas.__contains__
+            self._log(f"saltando {len(conocidas)} URLs ya conocidas")
 
         def run(writer):
             for data in scraper.scrape(limit=opts["limit"], log=self._log,
-                                       searches=searches):
+                                       searches=searches, skip_url=skip_url):
                 ok, lat, lng, motivo = validate_location(
                     data.get("latitude"), data.get("longitude")
                 )

@@ -2,8 +2,7 @@
 
 import { Polygon, Marker } from 'react-leaflet';
 import L from 'leaflet';
-import * as turf from '@turf/turf';
-import { statusMarker, statusColor, priceMarkerHtml } from '@/lib/mapMarkers';
+import { statusMarker, statusColor, priceMarkerHtml, iconMarkerHtml } from '@/lib/mapMarkers';
 import { getMapPriceLabel } from './utils';
 
 interface BuildPropertyLayersParams {
@@ -15,6 +14,7 @@ interface BuildPropertyLayersParams {
   addEdgeLabels: (layer: any) => void;
   polygonLayersRef: React.MutableRefObject<Record<string, any>>;
   mapInstanceRef: React.MutableRefObject<any>;
+  renderLimit?: number;
 }
 
 // Construye las capas visibles del mapa (polígonos, marcadores de precio y
@@ -29,6 +29,7 @@ export function buildPropertyLayers({
   addEdgeLabels,
   polygonLayersRef,
   mapInstanceRef,
+  renderLimit = Number.POSITIVE_INFINITY,
 }: BuildPropertyLayersParams): JSX.Element[] {
   const polygons: JSX.Element[] = [];
   const markers: JSX.Element[] = [];
@@ -61,12 +62,42 @@ export function buildPropertyLayers({
       baseColor: string;
     };
   }>();
-  const shouldClusterPrices = mapZoom < 12 && filteredProperties.length > 35;
-  const maxRichMarkers = mapZoom >= 16 ? 140 : mapZoom >= 14 ? 90 : mapZoom >= 12 ? 42 : filteredProperties.length <= 35 ? 35 : 0;
-  const maxPolygons = mapZoom >= 16 ? 140 : mapZoom >= 14 ? 70 : mapZoom >= 13 ? 30 : 0;
-  const minLabelDistance = mapZoom >= 16 ? 0.001 : mapZoom >= 14 ? 0.0024 : mapZoom >= 12 ? 0.007 : 0.014;
+  const currentBounds = mapInstanceRef.current?.getBounds?.();
+  const visiblePropertyCount = currentBounds
+    ? filteredProperties.filter((property) => {
+        const lat = Number(property.latitude);
+        const lng = Number(property.longitude);
+        if (Number.isFinite(lat) && Number.isFinite(lng) && currentBounds.contains([lat, lng])) return true;
+
+        if (property.polygon?.coordinates?.[0]) {
+          return property.polygon.coordinates[0].some((point: any) => {
+            const [pointLng, pointLat] = point;
+            return currentBounds.contains([Number(pointLat), Number(pointLng)]);
+          });
+        }
+
+        if (Array.isArray(property.polygon) && property.polygon.length >= 3) {
+          return property.polygon.some((point: any) => {
+            const [pointLat, pointLng] = point;
+            return currentBounds.contains([Number(pointLat), Number(pointLng)]);
+          });
+        }
+
+        return false;
+      }).length
+    : filteredProperties.length;
+  const shouldUseDetailedVisibleRender = visiblePropertyCount > 0 && visiblePropertyCount <= 20;
+  const shouldClusterPrices = !shouldUseDetailedVisibleRender && mapZoom < 13 && filteredProperties.length > 35;
+  const maxRichMarkers = shouldUseDetailedVisibleRender
+    ? 20
+    : mapZoom >= 16 ? 160 : mapZoom >= 14 ? 110 : mapZoom >= 12 ? 70 : filteredProperties.length <= 35 ? 35 : 0;
+  const maxPolygons = shouldUseDetailedVisibleRender
+    ? 20
+    : mapZoom >= 16 ? 160 : mapZoom >= 14 ? 80 : mapZoom >= 12 ? 24 : 0;
+  const minLabelDistance = mapZoom >= 16 ? 0.0008 : mapZoom >= 14 ? 0.0018 : mapZoom >= 12 ? 0.0035 : 0.014;
   const clusterPrecision = mapZoom <= 6 ? 0 : mapZoom <= 8 ? 1 : 2;
   const minClusterDistance = mapZoom <= 6 ? 1.05 : mapZoom <= 8 ? 0.48 : 0.2;
+  let processedVisibleProperties = 0;
 
   filteredProperties.forEach((p, idx) => {
     // Handle both GeoJSON and simple array formats for properties with polygons
@@ -91,25 +122,45 @@ export function buildPropertyLayers({
     const formattedPrice = getMapPriceLabel(p.price);
     const priceIconColor = marker.solid;
 
-    // Calculate centroid for price label position
+    // Prefer the stored center from the backend. Computing Turf centroids for
+    // every polygon on every render is expensive while panning/zooming.
     let labelPosition: [number, number] | null = null;
+    const lat = Number(p.latitude);
+    const lng = Number(p.longitude);
 
-    if (leafletCoordinates) {
-      // Calculate centroid using turf
-      try {
-        const polygonCoords = leafletCoordinates.map((coord: any) => [coord[1], coord[0]]); // Convert to [lng, lat] for turf
-        polygonCoords.push(polygonCoords[0]); // Close the polygon
-        const turfPolygon = turf.polygon([polygonCoords]);
-        const centroid = turf.centroid(turfPolygon);
-        labelPosition = [centroid.geometry.coordinates[1], centroid.geometry.coordinates[0]];
-      } catch (error) {
-        console.error('Error calculating centroid:', error);
-        // Fallback to first coordinate
-        labelPosition = leafletCoordinates[0];
+    if (Number.isFinite(lat) && Number.isFinite(lng)) {
+      labelPosition = [lat, lng];
+    } else if (leafletCoordinates?.length) {
+      const totals = leafletCoordinates.reduce(
+        (acc: { lat: number; lng: number; count: number }, coord: any) => {
+          const pointLat = Number(coord?.[0]);
+          const pointLng = Number(coord?.[1]);
+          if (!Number.isFinite(pointLat) || !Number.isFinite(pointLng)) return acc;
+          acc.lat += pointLat;
+          acc.lng += pointLng;
+          acc.count += 1;
+          return acc;
+        },
+        { lat: 0, lng: 0, count: 0 }
+      );
+      if (totals.count > 0) {
+        labelPosition = [totals.lat / totals.count, totals.lng / totals.count];
       }
-    } else if (p.latitude && p.longitude) {
-      labelPosition = [p.latitude, p.longitude];
     }
+
+    if (currentBounds) {
+      const hasVisibleMarker = labelPosition ? currentBounds.contains(labelPosition) : false;
+      const hasVisiblePolygonVertex = leafletCoordinates?.some((coord: any) => {
+        const pointLat = Number(coord?.[0]);
+        const pointLng = Number(coord?.[1]);
+        return Number.isFinite(pointLat) && Number.isFinite(pointLng) && currentBounds.contains([pointLat, pointLng]);
+      });
+
+      if (!hasVisibleMarker && !hasVisiblePolygonVertex) return;
+    }
+
+    if (!shouldClusterPrices && !isSelected && processedVisibleProperties >= renderLimit) return;
+    processedVisibleProperties += 1;
 
     // Los poligonos son costosos en Leaflet; solo se dibujan al acercar
     // bastante o cuando la propiedad esta seleccionada.
@@ -233,16 +284,23 @@ export function buildPropertyLayers({
       }
       usedPositions.push(candidate.position);
 
+      const useCompactMarker = mapZoom < 12 && !candidate.isSelected && !shouldUseDetailedVisibleRender;
       const markerIcon = new L.DivIcon({
-        className: 'map-rich-marker-icon',
-        html: priceMarkerHtml({
-          status: candidate.property.status,
-          type: candidate.property.property_type,
-          price: candidate.formattedPrice,
-          selected: candidate.isSelected,
-        }),
-        iconSize: [100, 42],
-        iconAnchor: [50, 42]
+        className: useCompactMarker ? 'map-marker-icon' : 'map-rich-marker-icon',
+        html: useCompactMarker
+          ? `<div>${iconMarkerHtml({
+              status: candidate.property.status,
+              type: candidate.property.property_type,
+              selected: false,
+            })}</div>`
+          : `<div>${priceMarkerHtml({
+              status: candidate.property.status,
+              type: candidate.property.property_type,
+              price: candidate.formattedPrice,
+              selected: candidate.isSelected,
+            })}</div>`,
+        iconSize: useCompactMarker ? [30, 30] : [100, 42],
+        iconAnchor: useCompactMarker ? [0, 0] : [50, 42]
       });
 
       markers.push(
@@ -332,20 +390,18 @@ export function buildPropertyLayers({
           return;
         }
 
-        if (bucket.count === 1) {
-          singletonMarkers.push({
-            key: `cluster-overflow-single-${key}`,
-            property: bucket.sample.property,
-            position: bucket.sample.position,
-            formattedPrice: bucket.sample.formattedPrice,
-            priceIconColor: bucket.sample.baseColor,
-            priceRingColor: bucket.sample.ringColor,
-            shadowColor: bucket.sample.shadowColor,
-            baseColor: bucket.sample.baseColor,
-            isSelected: false,
-            priority: Number.parseFloat(String(bucket.sample.property.price)) || 0,
-          });
-        }
+        singletonMarkers.push({
+          key: `cluster-overflow-${key}`,
+          property: bucket.sample.property,
+          position: clusterPosition,
+          formattedPrice: bucket.count > 1 ? `${bucket.count}` : bucket.sample.formattedPrice,
+          priceIconColor: bucket.sample.baseColor,
+          priceRingColor: bucket.sample.ringColor,
+          shadowColor: bucket.sample.shadowColor,
+          baseColor: bucket.sample.baseColor,
+          isSelected: false,
+          priority: bucket.count * 1_000_000 + (Number.parseFloat(String(bucket.sample.property.price)) || 0),
+        });
       });
 
     displayClusters
@@ -402,16 +458,16 @@ export function buildPropertyLayers({
 
     singletonMarkers
       .sort((a, b) => b.priority - a.priority)
-      .slice(0, mapZoom <= 7 ? 30 : 60)
+      .slice(0, mapZoom <= 7 ? 80 : mapZoom <= 10 ? 120 : 160)
       .forEach((candidate) => {
         const markerIcon = new L.DivIcon({
           className: 'map-rich-marker-icon',
-          html: priceMarkerHtml({
+          html: `<div>${priceMarkerHtml({
             status: candidate.property.status,
             type: candidate.property.property_type,
             price: candidate.formattedPrice,
             selected: false,
-          }),
+          })}</div>`,
           iconSize: [100, 42],
           iconAnchor: [50, 42]
         });

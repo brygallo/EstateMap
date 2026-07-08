@@ -20,10 +20,22 @@ import type { MapBounds, Property } from '@/lib/types';
 const LeafletMap = dynamic(() => import('@/components/maps/LeafletMap'), {
   ssr: false,
   loading: () => (
-    <div className="flex h-full w-full items-center justify-center bg-background">
-      <div className="text-center">
+    <div className="relative h-full w-full overflow-hidden bg-muted">
+      {/* Trama tenue tipo mapa para que el hueco no se sienta vacío mientras
+          carga Leaflet. */}
+      <div
+        className="absolute inset-0 opacity-40"
+        style={{
+          backgroundImage:
+            'linear-gradient(rgba(148,163,184,0.18) 1px, transparent 1px), linear-gradient(90deg, rgba(148,163,184,0.18) 1px, transparent 1px)',
+          backgroundSize: '48px 48px',
+        }}
+        aria-hidden
+      />
+      <div className="absolute inset-0 animate-pulse bg-gradient-to-br from-transparent via-white/30 to-transparent" aria-hidden />
+      <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-center">
         <Loader2 className="mx-auto h-10 w-10 animate-spin text-primary" strokeWidth={2} />
-        <p className="mt-4 text-sm text-textSecondary">Cargando mapa...</p>
+        <p className="mt-4 text-sm font-medium text-textSecondary">Cargando mapa…</p>
       </div>
     </div>
   ),
@@ -41,6 +53,7 @@ const MapPage = () => {
   const hoverTimeoutRef = useRef<any>(null);
 
   const [bounds, setBounds] = useState<MapBounds | null>(null);
+  const [mapZoom, setMapZoom] = useState(7);
   const [visibleProperties, setVisibleProperties] = useState<Property[]>([]);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [selectedProperty, setSelectedProperty] = useState<Property | null>(null);
@@ -52,11 +65,13 @@ const MapPage = () => {
     owners,
     locations,
     loading,
+    error,
+    retry,
     totalCount,
     handleFilterChange,
     clearFilters,
     hasActiveFilters,
-  } = usePropertyFilters({ token, bounds });
+  } = usePropertyFilters({ token, bounds, zoom: mapZoom });
   const geo = useGeolocation(mapRef, properties, loading);
   const sidebarProperties =
     !loading && properties.length > 0 && visibleProperties.length === 0
@@ -165,7 +180,7 @@ const MapPage = () => {
   }, [isModalOpen]);
 
   return (
-    <div className="relative h-[calc(100vh-3.5rem)] overflow-hidden lg:flex">
+    <div className="relative h-[calc(100dvh-3.5rem)] overflow-hidden lg:flex">
       {/* Botón para abrir filtros y propiedades en móvil (con conteo explícito) */}
       <Button
         onClick={() => setSidebarOpen(!sidebarOpen)}
@@ -194,7 +209,7 @@ const MapPage = () => {
         bg-white text-textPrimary
         overflow-y-auto
         transition-transform duration-300 ease-in-out
-        inset-x-0 bottom-0 max-h-[85vh] rounded-t-2xl shadow-cardHover
+        inset-x-0 bottom-0 max-h-[85dvh] rounded-t-2xl shadow-cardHover
         ${sidebarOpen ? 'translate-y-0' : 'translate-y-full'}
         lg:inset-auto lg:left-0 lg:h-full lg:max-h-none lg:w-96 lg:flex-shrink-0
         lg:translate-y-0 lg:rounded-none lg:border-r lg:border-line lg:shadow-none
@@ -218,6 +233,8 @@ const MapPage = () => {
           onPropertyOpen={handleSidebarPropertyOpen}
           onCloseMobile={() => setSidebarOpen(false)}
           loading={loading}
+          error={error}
+          onRetry={retry}
           totalCount={totalCount}
           userLocation={geo.userLocation}
           onZoomOut={handleZoomOut}
@@ -240,10 +257,12 @@ const MapPage = () => {
           onMapReady={handleMapReady}
           onVisiblePropertiesChange={setVisibleProperties}
           onBoundsChange={setBounds}
+          onZoomChange={setMapZoom}
           onPolygonClick={handlePolygonClick}
           onLocate={geo.handleGetMyLocation}
           locating={geo.loadingLocation}
           locationBlocked={geo.locationBlocked}
+          isRefreshing={loading}
           hasActiveFilters={hasActiveFilters}
           onClearFilters={clearFilters}
           onResetView={handleResetMapView}
@@ -253,15 +272,6 @@ const MapPage = () => {
           center={DEFAULT_CENTER}
         />
 
-        {/* Estado de carga de propiedades del área (desktop; en móvil lo indica el botón) */}
-        {loading && (
-          <div className="animate-fade-in pointer-events-none absolute left-1/2 top-20 z-nav hidden -translate-x-1/2 lg:block">
-            <div className="flex items-center gap-2 rounded-full border border-line bg-white/95 px-3.5 py-1.5 shadow-cardHover backdrop-blur">
-              <Loader2 className="h-4 w-4 animate-spin text-primary" strokeWidth={2} />
-              <span className="text-xs font-medium text-textPrimary">Cargando propiedades del área…</span>
-            </div>
-          </div>
-        )}
       </div>
 
       {selectedProperty && !isModalOpen && !sidebarOpen && (
@@ -304,7 +314,12 @@ const MapPage = () => {
 
       <style>{`
         .leaflet-interactive { cursor: pointer !important; }
-        .property-polygon { transition: none !important; }
+        .property-polygon {
+          transition:
+            fill-opacity 240ms cubic-bezier(0.2, 0, 0, 1),
+            stroke-opacity 240ms cubic-bezier(0.2, 0, 0, 1),
+            stroke-width 180ms cubic-bezier(0.2, 0, 0, 1) !important;
+        }
         .leaflet-zoom-animated { will-change: auto !important; }
         @keyframes fade-in {
           from { opacity: 0; transform: translateY(-10px); }

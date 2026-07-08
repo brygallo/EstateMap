@@ -49,7 +49,8 @@ def _apply_fields(prop, data, fuente, lat, lng):
     prop.last_seen_at = timezone.now()
 
 
-def upsert_property(data, fuente, reader=None, image_urls=None, log=None):
+def upsert_property(data, fuente, reader=None, image_urls=None, log=None,
+                    require_images=False):
     """
     Crea o actualiza una ``Property`` a partir del dict canónico ``data``.
 
@@ -57,9 +58,12 @@ def upsert_property(data, fuente, reader=None, image_urls=None, log=None):
     - ``reader`` (flujo paquete/import): las lee del paquete en disco.
     - ``image_urls`` (flujo directo/un solo paso): las descarga a un temporal en
       memoria y las sube a MinIO.
+    - ``require_images``: si el flujo directo esperaba imágenes y no queda
+      ninguna adjunta, una propiedad recién creada se revierte.
 
     Devuelve ``(resultado, prop)`` donde resultado ∈
-    {'created', 'updated', 'skipped_no_location', 'skipped_duplicate'}.
+    {'created', 'updated', 'skipped_no_location', 'skipped_duplicate',
+    'skipped_no_images'}.
     """
     from real_estate.models import Property
 
@@ -150,7 +154,25 @@ def upsert_property(data, fuente, reader=None, image_urls=None, log=None):
         if image_paths:
             sync_property_images(prop, image_paths)
     elif image_urls:
-        attach_images_from_urls(prop, image_urls)
+        attached = attach_images_from_urls(prop, image_urls)
+        if attached == 0:
+            if created:
+                prop.delete()
+            if log:
+                log(
+                    f"[imagenes] {external_id or prop.pk}: omitido; "
+                    "no se pudo adjuntar ninguna imagen"
+                )
+            return "skipped_no_images", None
+    elif require_images and prop.images.count() == 0:
+        if created:
+            prop.delete()
+        if log:
+            log(
+                f"[imagenes] {external_id or prop.pk}: omitido; "
+                "el scraper no entregó imágenes"
+            )
+        return "skipped_no_images", None
 
     return ("created" if created else "updated"), prop
 

@@ -134,6 +134,9 @@ const VerifyEmail = () => {
                       id="code"
                       name="code"
                       type="text"
+                      inputMode="numeric"
+                      pattern="[0-9]*"
+                      autoComplete="one-time-code"
                       placeholder="123456"
                       maxLength={6}
                       className={`h-12 rounded-input pl-10 text-center font-geo text-2xl tracking-widest ${

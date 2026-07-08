@@ -122,6 +122,7 @@ const ImageGallery = ({ images, initialIndex, onClose }: any) => {
         <img
           src={activeImage.image}
           alt={`Imagen ${currentIndex + 1}`}
+          decoding="async"
           className="max-h-full max-w-full rounded-xl object-contain"
           onClick={(e) => e.stopPropagation()}
         />
@@ -159,7 +160,7 @@ const ImageGallery = ({ images, initialIndex, onClose }: any) => {
                 idx === currentIndex ? 'border-white scale-105' : 'border-transparent opacity-60 hover:opacity-100'
               )}
             >
-              <img src={img.image} alt="" className="h-full w-full object-cover" />
+              <img src={img.image} alt="" loading="lazy" decoding="async" className="h-full w-full object-cover" />
             </button>
           ))}
         </div>
@@ -390,6 +391,7 @@ const PropertyModal = ({ property: initialProperty, isOpen, onClose, onViewOnMap
                 <img
                   src={activeImage.image}
                   alt={property.title}
+                  decoding="async"
                   className="h-full w-full object-cover"
                 />
                 <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-black/70 to-transparent" aria-hidden />
@@ -436,7 +438,7 @@ const PropertyModal = ({ property: initialProperty, isOpen, onClose, onViewOnMap
                           idx === safeImageIndex ? 'border-white scale-110' : 'border-transparent opacity-60 hover:opacity-100'
                         )}
                       >
-                        <img src={img.image} alt="" className="h-full w-full object-cover" />
+                        <img src={img.image} alt="" loading="lazy" decoding="async" className="h-full w-full object-cover" />
                       </button>
                     ))}
                     {images.length > 5 && (
@@ -623,7 +625,7 @@ const PropertyModal = ({ property: initialProperty, isOpen, onClose, onViewOnMap
               </div>
 
               {/* Zona de contacto: las propiedades importadas redirigen al contacto real de origen. */}
-              <div className="sticky bottom-0 -mx-3 space-y-2 border-t border-line bg-white/95 px-3 pb-3 pt-2 shadow-[0_-12px_30px_rgba(32,45,40,0.08)] backdrop-blur">
+              <div className="space-y-2 rounded-card border border-line bg-white p-3 shadow-card">
                 {isImported ? (
                   contactPhone ? (
                     <a
@@ -693,7 +695,11 @@ const PropertyModal = ({ property: initialProperty, isOpen, onClose, onViewOnMap
                       </div>
                     )}
 
-                    <LeadForm propertyId={property.id} source="property_modal" />
+                    <LeadForm
+                      propertyId={property.id}
+                      source="property_modal"
+                      showTitle={!contactPhone}
+                    />
                   </>
                 )}
               </div>

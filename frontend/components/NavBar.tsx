@@ -51,7 +51,7 @@ const NavBar = () => {
 
   const initials = (user?.username || 'U').slice(0, 2).toUpperCase();
   const navLinkClass =
-    'inline-flex h-9 items-center gap-2 rounded-button px-3 text-sm font-medium text-textSecondary transition-colors hover:bg-background hover:text-textPrimary';
+    'inline-flex h-9 items-center gap-2 rounded-button px-3 text-sm font-medium text-textSecondary transition-colors hover:bg-background hover:text-textPrimary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-offset-2';
 
   return (
     <nav className="sticky top-0 z-nav border-b border-line bg-white shadow-[0_1px_0_rgba(32,45,40,0.04)]">

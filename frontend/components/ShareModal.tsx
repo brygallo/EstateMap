@@ -2,6 +2,7 @@
 
 import { QRCodeSVG } from 'qrcode.react';
 import { useState } from 'react';
+import { toast } from 'sonner';
 import { Share2, Copy, Check, Download } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
@@ -33,10 +34,40 @@ const ShareModal = ({
 }: ShareModalProps) => {
   const [copied, setCopied] = useState(false);
 
-  const handleCopyLink = () => {
-    navigator.clipboard.writeText(shareUrl);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+  const handleCopyLink = async () => {
+    const markCopied = () => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    };
+
+    try {
+      if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(shareUrl);
+        markCopied();
+        return;
+      }
+      throw new Error('Clipboard API no disponible');
+    } catch {
+      const textarea = document.createElement('textarea');
+      textarea.value = shareUrl;
+      textarea.setAttribute('readonly', '');
+      textarea.style.position = 'fixed';
+      textarea.style.opacity = '0';
+      document.body.appendChild(textarea);
+      textarea.select();
+      let ok = false;
+      try {
+        ok = document.execCommand('copy');
+      } catch {
+        ok = false;
+      }
+      document.body.removeChild(textarea);
+      if (ok) {
+        markCopied();
+      } else {
+        toast.error('No se pudo copiar el enlace. Cópialo manualmente.');
+      }
+    }
   };
 
   const handleDownloadQR = () => {

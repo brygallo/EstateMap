@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState, useRef } from 'react';
-import { useRouter } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -31,6 +31,7 @@ import {
 
 import { useAuth } from '@/lib/auth-context';
 import { cn } from '@/lib/utils';
+import { buildWhatsAppUrl } from '@/lib/constants';
 import { trackEvent } from '@/lib/analytics';
 import LocationSelect from '@/components/LocationSelect';
 import LocationPermissionModal from '@/components/LocationPermissionModal';
@@ -147,7 +148,11 @@ function SectionCard({
 }
 
 const AddPropertyPage = () => {
+  const params = useParams();
+  const propertyId = typeof params?.id === 'string' ? params.id : null;
+  const isEditMode = Boolean(propertyId);
   const mapRef = useRef<any>(null);
+  const [loadingProperty, setLoadingProperty] = useState(Boolean(propertyId));
   const [polygonCoords, setPolygonCoords] = useState<any[]>([]);
   const [locationMode, setLocationMode] = useState<'point' | 'polygon'>('point');
   const [area, setArea] = useState(0);
@@ -163,6 +168,8 @@ const AddPropertyPage = () => {
   // Images
   const [images, setImages] = useState<any[]>([]);
   const [imageFiles, setImageFiles] = useState<File[]>([]);
+  const [existingImages, setExistingImages] = useState<any[]>([]);
+  const [imagesToDelete, setImagesToDelete] = useState<number[]>([]);
 
   // Geocoding
   const [loadingLocation, setLoadingLocation] = useState(false);
@@ -181,12 +188,19 @@ const AddPropertyPage = () => {
   const [accountEmail, setAccountEmail] = useState('');
   const [accountPassword, setAccountPassword] = useState('');
   const [creatingAccount, setCreatingAccount] = useState(false);
+  // Gate de publicación: por defecto ofrece registrarse, pero si el usuario ya
+  // tiene cuenta puede iniciar sesión ('login') y publicar sin crear otra.
+  const [gateMode, setGateMode] = useState<'register' | 'login'>('register');
+  const [loggingIn, setLoggingIn] = useState(false);
+  // Cuando el login desde el gate tiene éxito, esperamos a que el token entre en
+  // contexto para disparar la publicación automáticamente.
+  const [pendingPublish, setPendingPublish] = useState(false);
   const formStartedRef = useRef(false);
   const polygonTrackedRef = useRef(false);
   const locationInitRef = useRef(false);
   const reverseGeocodeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const { token, logout } = useAuth();
+  const { token, logout, login } = useAuth();
   const router = useRouter();
   const API_URL = process.env.NEXT_PUBLIC_API_URL || '/api';
 
@@ -218,6 +232,7 @@ const AddPropertyPage = () => {
   const trackFormStarted = () => {
     if (formStartedRef.current) return;
     formStartedRef.current = true;
+    if (isEditMode) return;
     trackEvent('publication_form_started', {
       has_session: Boolean(token),
       draft_loaded: draftLoaded,
@@ -254,10 +269,97 @@ const AddPropertyPage = () => {
   };
 
   useEffect(() => {
+    if (!isEditMode || !propertyId) return;
+
+    let cancelled = false;
+    const loadProperty = async () => {
+      setLoadingProperty(true);
+      try {
+        const { apiGet } = await import('@/lib/api');
+        const res = await apiGet(`/properties/${propertyId}/`);
+
+        if (!res.ok) {
+          if (res.status === 401) {
+            toast.error('Tu sesión ha expirado. Por favor, inicia sesión nuevamente.');
+            logout();
+            router.push('/iniciar-sesion');
+          } else if (res.status === 404) {
+            toast.error('Propiedad no encontrada');
+            router.push('/mis-propiedades');
+          } else {
+            toast.error('Error al cargar la propiedad');
+            router.push('/mis-propiedades');
+          }
+          return;
+        }
+
+        const property = await res.json();
+        if (cancelled) return;
+
+        form.reset({
+          title: property.title || '',
+          description: property.description || '',
+          propertyType: property.property_type || 'land',
+          status: property.status || 'for_sale',
+          address: property.address || '',
+          price: property.price?.toString() || '',
+          isNegotiable: property.is_negotiable ?? true,
+          contactPhone: property.contact_phone || '',
+          builtArea: property.built_area?.toString() || '',
+          rooms: property.rooms !== undefined ? String(property.rooms) : '0',
+          bathrooms: property.bathrooms !== undefined ? String(property.bathrooms) : '0',
+          parkingSpaces: property.parking_spaces !== undefined ? String(property.parking_spaces) : '0',
+          floors: property.floors?.toString() || '',
+          furnished: property.furnished || false,
+          yearBuilt: property.year_built?.toString() || '',
+        });
+
+        setCity(property.city || 'Macas');
+        setProvince(property.province || 'Morona Santiago');
+        setLatitude(property.latitude?.toString() || '');
+        setLongitude(property.longitude?.toString() || '');
+
+        if (property.polygon) {
+          let coords: any[] = [];
+          if (property.polygon.coordinates && Array.isArray(property.polygon.coordinates[0])) {
+            coords = property.polygon.coordinates[0].map((c: any) => [c[1], c[0]]);
+          } else if (Array.isArray(property.polygon)) {
+            coords = property.polygon;
+          }
+          setPolygonCoords(coords);
+          setLocationMode(coords.length >= 3 ? 'polygon' : 'point');
+        } else if (property.latitude && property.longitude) {
+          setLocationMode('point');
+        }
+
+        setArea(parseFloat(property.area) || 0);
+        setShowMeasurements(property.show_measurements !== undefined ? property.show_measurements : true);
+        setExistingImages(Array.isArray(property.images) ? property.images : []);
+        setImagesToDelete([]);
+        setImages([]);
+        setImageFiles([]);
+      } catch (error) {
+        console.error('Error loading property:', error);
+        toast.error('Error de conexión');
+        router.push('/mis-propiedades');
+      } finally {
+        if (!cancelled) setLoadingProperty(false);
+      }
+    };
+
+    void loadProperty();
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isEditMode, propertyId]);
+
+  useEffect(() => {
+    if (isEditMode) return;
     trackEvent('publication_form_viewed', {
       has_session: Boolean(token),
     });
-  }, [token]);
+  }, [isEditMode, token]);
 
   useEffect(() => {
     return () => {
@@ -266,6 +368,7 @@ const AddPropertyPage = () => {
   }, []);
 
   useEffect(() => {
+    if (isEditMode) return;
     if (typeof window === 'undefined') return;
 
     const storedDraft = localStorage.getItem(PROPERTY_DRAFT_STORAGE_KEY);
@@ -308,11 +411,12 @@ const AddPropertyPage = () => {
       console.error('Error loading property draft:', error);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [isEditMode]);
 
   // Pedir permiso de ubicación recién cuando el usuario llega al paso del mapa,
   // no al cargar la página. Así no interrumpimos antes de que tenga contexto.
   useEffect(() => {
+    if (isEditMode) return;
     if (currentStep !== 1 || locationInitRef.current) return;
     if (typeof window === 'undefined') return;
     locationInitRef.current = true;
@@ -348,7 +452,7 @@ const AddPropertyPage = () => {
         }
       );
     }
-  }, [currentStep]);
+  }, [currentStep, isEditMode]);
 
   // Load all properties to show as reference
   useEffect(() => {
@@ -444,6 +548,7 @@ const AddPropertyPage = () => {
   };
 
   const savePublicationDraft = () => {
+    if (isEditMode) return;
     if (typeof window === 'undefined') return;
     if (!hasDraftContent()) return;
 
@@ -509,7 +614,7 @@ const AddPropertyPage = () => {
       `Detalles: ${v.description || 'Por completar'}`,
     ].join('\n');
 
-    return `https://wa.me/593983738151?text=${encodeURIComponent(message)}`;
+    return buildWhatsAppUrl(message);
   };
 
   const buildUsername = (email: string) => {
@@ -580,6 +685,7 @@ const AddPropertyPage = () => {
   };
 
   const handleWhatsAppHelp = async () => {
+    if (isEditMode) return;
     savePublicationDraft();
     await savePendingPublication('whatsapp_help');
     trackEvent('publication_whatsapp_help_clicked', {
@@ -637,7 +743,67 @@ const AddPropertyPage = () => {
     }
   };
 
+  // Iniciar sesión con una cuenta existente desde el gate y publicar el borrador.
+  const handleLoginAndPublish = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setLoggingIn(true);
+    savePublicationDraft();
+
+    try {
+      const res = await fetch(`${API_URL}/login/`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: accountEmail, password: accountPassword }),
+      });
+      const data = await res.json().catch(() => ({}));
+
+      if (!res.ok) {
+        const errorCode = data.code || data.detail;
+        if (errorCode === 'email_not_verified') {
+          const emailToVerify = data.email || accountEmail;
+          toast.info('Verifica tu correo para publicar el anuncio.');
+          router.push(`/verificar-correo?email=${encodeURIComponent(emailToVerify)}`);
+          return;
+        }
+        const message =
+          data.detail ||
+          (Array.isArray(data.email) ? data.email[0] : data.email) ||
+          'Correo o contraseña incorrectos';
+        toast.error(message);
+        trackEvent('publication_login_failed', { status_code: res.status });
+        return;
+      }
+
+      trackEvent('publication_login_from_modal');
+      login(data.access, data.refresh, true);
+      savePublicationDraft();
+      setShowAccountModal(false);
+      // El token entra por contexto en el siguiente render; el efecto de abajo
+      // dispara la publicación cuando ya está disponible.
+      setPendingPublish(true);
+      toast.success('Sesión iniciada. Publicando tu anuncio…');
+    } catch (error) {
+      toast.error('Error de conexión al iniciar sesión');
+      trackEvent('publication_login_failed', { status_code: 'network' });
+    } finally {
+      setLoggingIn(false);
+    }
+  };
+
+  // Tras iniciar sesión en el gate, publica el borrador en cuanto el token existe.
+  useEffect(() => {
+    if (!pendingPublish || !token) return;
+    setPendingPublish(false);
+    void form.handleSubmit(onSubmit)();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pendingPublish, token]);
+
   const handleCancel = () => {
+    if (isEditMode) {
+      router.push('/mis-propiedades');
+      return;
+    }
+
     if (hasDraftContent()) {
       savePublicationDraft();
       void savePendingPublication('exit_prompt');
@@ -667,6 +833,7 @@ const AddPropertyPage = () => {
   });
 
   useEffect(() => {
+    if (isEditMode) return;
     if (!formStartedRef.current || !hasDraftContent()) return;
 
     const timeout = setTimeout(() => {
@@ -675,9 +842,10 @@ const AddPropertyPage = () => {
 
     return () => clearTimeout(timeout);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [draftSignature]);
+  }, [draftSignature, isEditMode]);
 
   useEffect(() => {
+    if (isEditMode) return;
     const handleBeforeUnload = (event: BeforeUnloadEvent) => {
       if (!hasDraftContent()) return;
 
@@ -689,7 +857,7 @@ const AddPropertyPage = () => {
     window.addEventListener('beforeunload', handleBeforeUnload);
     return () => window.removeEventListener('beforeunload', handleBeforeUnload);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [draftSignature]);
+  }, [draftSignature, isEditMode]);
 
   const onSubmit = async (v: PropertyValues) => {
     if (locationMode === 'polygon' && !area) {
@@ -713,7 +881,7 @@ const AddPropertyPage = () => {
       status: v.status,
     });
 
-    if (!token) {
+    if (!token && !isEditMode) {
       savePublicationDraft();
       await savePendingPublication('account_required');
       trackEvent('publication_account_required', {
@@ -759,22 +927,27 @@ const AddPropertyPage = () => {
 
       formData.append('contact_phone', v.contactPhone || '');
 
+      if (isEditMode && imagesToDelete.length > 0) {
+        formData.append('images_to_delete', JSON.stringify(imagesToDelete));
+      }
+
       imageFiles.forEach((file) => {
         formData.append('uploaded_images', file);
       });
 
       const { apiFetch } = await import('@/lib/api');
+      const endpoint = isEditMode && propertyId ? `/properties/${propertyId}/` : '/properties/';
 
-      const res = await apiFetch('/properties/', {
-        method: 'POST',
+      const res = await apiFetch(endpoint, {
+        method: isEditMode ? 'PUT' : 'POST',
         body: formData,
       });
 
       if (res.ok) {
-        if (typeof window !== 'undefined') {
+        if (!isEditMode && typeof window !== 'undefined') {
           localStorage.removeItem(PROPERTY_DRAFT_STORAGE_KEY);
         }
-        trackEvent('publication_created', {
+        trackEvent(isEditMode ? 'publication_updated' : 'publication_created', {
           has_polygon: polygonCoords.length >= 3,
           images_count: imageFiles.length,
           property_type: v.propertyType,
@@ -789,7 +962,7 @@ const AddPropertyPage = () => {
             colors: ['#496D9C', '#688CCA', '#E3EAF4'],
           });
         } catch {}
-        toast.success('Propiedad creada exitosamente');
+        toast.success(isEditMode ? 'Propiedad actualizada exitosamente' : 'Propiedad creada exitosamente');
         setTimeout(() => router.push('/mis-propiedades'), 650);
       } else if (res.status === 401) {
         toast.error('Tu sesión ha expirado. Por favor, inicia sesión nuevamente.');
@@ -798,7 +971,7 @@ const AddPropertyPage = () => {
       } else {
         const errorData = await res.json();
         console.error('Error:', errorData);
-        trackEvent('publication_create_failed', {
+        trackEvent(isEditMode ? 'publication_update_failed' : 'publication_create_failed', {
           status_code: res.status,
           property_type: v.propertyType,
           has_polygon: polygonCoords.length >= 3,
@@ -807,7 +980,7 @@ const AddPropertyPage = () => {
       }
     } catch (error) {
       console.error('Error:', error);
-      trackEvent('publication_create_failed', {
+      trackEvent(isEditMode ? 'publication_update_failed' : 'publication_create_failed', {
         status_code: 'network',
         property_type: v.propertyType,
         has_polygon: polygonCoords.length >= 3,
@@ -1000,9 +1173,10 @@ const AddPropertyPage = () => {
     const MAX_SIZE_MB = 10;
     const ALLOWED_TYPES = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
 
-    const totalImages = images.length + files.length;
+    const activeExistingImages = existingImages.length - imagesToDelete.length;
+    const totalImages = activeExistingImages + images.length + files.length;
     if (totalImages > MAX_IMAGES) {
-      toast.error(`Máximo ${MAX_IMAGES} imágenes por propiedad. Ya tienes ${images.length}.`);
+      toast.error(`Máximo ${MAX_IMAGES} imágenes por propiedad. Ya tienes ${activeExistingImages + images.length}.`);
       e.target.value = '';
       return;
     }
@@ -1059,6 +1233,13 @@ const AddPropertyPage = () => {
     setImageFiles(newFiles);
   };
 
+  const handleToggleExistingImageDelete = (imageId: number) => {
+    if (imageId == null) return;
+    setImagesToDelete((current) =>
+      current.includes(imageId) ? current.filter((id) => id !== imageId) : [...current, imageId]
+    );
+  };
+
   // Reordena imagen (y su File paralelo). La primera imagen es la principal.
   function reorderArray<T>(arr: T[], from: number, to: number): T[] {
     const next = [...arr];
@@ -1101,7 +1282,7 @@ const AddPropertyPage = () => {
       label: 'Fotos',
       title: 'Fotos y publicación',
       description: 'Agrega imágenes y revisa antes de guardar.',
-      done: images.length > 0 || imageFiles.length > 0,
+      done: existingImages.length - imagesToDelete.length > 0 || images.length > 0 || imageFiles.length > 0,
     },
   ];
   const isLastStep = currentStep === wizardSteps.length - 1;
@@ -1176,7 +1357,19 @@ const AddPropertyPage = () => {
   const summaryTypeLabel = FORM_TYPE_LABELS[propertyType] || 'Propiedad';
   const summaryLocation = [city, province].filter(Boolean).join(', ');
   const summaryPrice = values.price ? `$${Number(values.price).toLocaleString()}` : null;
-  const summaryCover = images[0]?.preview || null;
+  const activeExistingImages = existingImages.filter((img) => !imagesToDelete.includes(img.id));
+  const summaryCover = activeExistingImages[0]?.thumbnail || activeExistingImages[0]?.image || images[0]?.preview || null;
+
+  if (loadingProperty) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-background">
+        <div className="text-center">
+          <Loader2 className="mx-auto h-12 w-12 animate-spin text-primary" />
+          <p className="mt-4 text-textSecondary">Cargando propiedad...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background">
@@ -1185,9 +1378,13 @@ const AddPropertyPage = () => {
         <div className="mx-auto max-w-7xl px-4 py-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-2xl font-bold text-textPrimary">Publicar propiedad gratis</h1>
+              <h1 className="text-2xl font-bold text-textPrimary">
+                {isEditMode ? 'Editar propiedad' : 'Publicar propiedad gratis'}
+              </h1>
               <p className="mt-1 text-sm text-textSecondary">
-                Toma entre 5 y 8 minutos. Tu borrador se guarda solo y puedes pedir ayuda por WhatsApp.
+                {isEditMode
+                  ? 'Actualiza la información con el mismo flujo de publicación.'
+                  : 'Toma entre 5 y 8 minutos. Tu borrador se guarda solo y puedes pedir ayuda por WhatsApp.'}
               </p>
             </div>
             <Button variant="outline" onClick={handleCancel} className="rounded-button border-line">
@@ -1798,10 +1995,60 @@ const AddPropertyPage = () => {
               {currentStep === 4 && (
               <>
               <SectionCard icon={<ImagePlus className="h-5 w-5" />} title="Imágenes de la Propiedad">
+                {isEditMode && existingImages.length > 0 && (
+                  <div>
+                    <h4 className="mb-1 text-sm font-semibold text-textPrimary">
+                      Imágenes actuales ({activeExistingImages.length}/{existingImages.length})
+                    </h4>
+                    <p className="mb-3 text-xs text-textSecondary">
+                      Marca las fotos que quieres eliminar. Las nuevas imágenes se agregarán al guardar.
+                    </p>
+                    <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
+                      {existingImages.map((img, index) => {
+                        const marked = imagesToDelete.includes(img.id);
+                        return (
+                          <div
+                            key={img.id ?? index}
+                            className={cn(
+                              'group relative overflow-hidden rounded-input',
+                              !marked && index === 0 && 'ring-2 ring-primary',
+                              marked && 'opacity-55 grayscale'
+                            )}
+                          >
+                            <PreviewImage src={img.thumbnail || img.image} />
+                            {!marked && index === 0 && (
+                              <span className="absolute left-2 top-2 flex items-center gap-1 rounded-md bg-primary px-2 py-0.5 text-[11px] font-semibold text-white shadow-card">
+                                <Star className="h-3 w-3 fill-current" strokeWidth={2} aria-hidden />
+                                Principal
+                              </span>
+                            )}
+                            {marked && (
+                              <span className="absolute left-2 top-2 rounded-md bg-error px-2 py-0.5 text-[11px] font-semibold text-white shadow-card">
+                                Se eliminará
+                              </span>
+                            )}
+                            <button
+                              type="button"
+                              onClick={() => handleToggleExistingImageDelete(img.id)}
+                              className={cn(
+                                'absolute right-2 top-2 rounded-full p-1 text-white shadow-card transition-colors',
+                                marked ? 'bg-primary hover:bg-primaryHover' : 'bg-error hover:bg-error/90'
+                              )}
+                              title={marked ? 'Conservar imagen' : 'Eliminar imagen'}
+                            >
+                              {marked ? <Check className="h-4 w-4" /> : <Trash2 className="h-4 w-4" />}
+                            </button>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+
                 {images.length > 0 && (
                   <div>
                     <h4 className="mb-1 text-sm font-semibold text-textPrimary">
-                      Nuevas Imágenes ({images.length}/10)
+                      {isEditMode ? 'Imágenes nuevas' : 'Nuevas Imágenes'} ({images.length}/10)
                       <span className="ml-2 text-xs font-normal text-muted-foreground">Se optimizan automáticamente</span>
                     </h4>
                     <p className="mb-3 text-xs text-textSecondary">
@@ -1939,7 +2186,7 @@ const AddPropertyPage = () => {
 
                 <div className="mt-4 grid gap-2 text-xs text-textSecondary sm:grid-cols-2">
                   <p><span className="font-semibold text-textPrimary">Ubicación en mapa:</span> {locationMapLabel}</p>
-                  <p><span className="font-semibold text-textPrimary">Fotos:</span> {images.length}</p>
+                  <p><span className="font-semibold text-textPrimary">Fotos:</span> {activeExistingImages.length + images.length}</p>
                 </div>
               </div>
               </>
@@ -1974,20 +2221,32 @@ const AddPropertyPage = () => {
                   <Button
                     type="submit"
                     size="lg"
+                    disabled={form.formState.isSubmitting}
                     className="w-full rounded-button bg-primary py-6 text-lg font-semibold shadow-cardHover sm:flex-1"
                   >
-                    <Check className="mr-2 h-5 w-5" />
-                    {token ? 'Guardar Propiedad' : 'Crear cuenta para publicar'}
+                    {form.formState.isSubmitting ? (
+                      <>
+                        <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                        {isEditMode ? 'Actualizando...' : 'Guardando...'}
+                      </>
+                    ) : (
+                      <>
+                        <Check className="mr-2 h-5 w-5" />
+                        {isEditMode ? 'Actualizar propiedad' : token ? 'Guardar Propiedad' : 'Crear cuenta para publicar'}
+                      </>
+                    )}
                   </Button>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="lg"
-                    onClick={handleWhatsAppHelp}
-                    className="w-full rounded-button border-2 border-primary py-6 font-semibold text-primary hover:bg-primary/5 sm:w-auto"
-                  >
-                    Publicar con ayuda
-                  </Button>
+                  {!isEditMode && (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="lg"
+                      onClick={handleWhatsAppHelp}
+                      className="w-full rounded-button border-2 border-primary py-6 font-semibold text-primary hover:bg-primary/5 sm:w-auto"
+                    >
+                      Publicar con ayuda
+                    </Button>
+                  )}
                   <Button
                     type="button"
                     variant="outline"
@@ -2005,7 +2264,7 @@ const AddPropertyPage = () => {
           </Form>
 
           {/* Contact Support */}
-          <div className="rounded-card border border-primary/15 bg-primaryLight/40 p-6 shadow-card sm:p-8">
+          {!isEditMode && <div className="rounded-card border border-primary/15 bg-primaryLight/40 p-6 shadow-card sm:p-8">
             <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
               <div className="flex items-start gap-3">
                 <Info className="mt-1 h-6 w-6 text-primary" />
@@ -2021,7 +2280,7 @@ const AddPropertyPage = () => {
                 className="rounded-button bg-primary font-semibold shadow-card"
               >
                 <a
-                  href="https://wa.me/593983738151?text=Hola%20necesito%20ayuda%20para%20publicar%20mi%20propiedad"
+                  href={buildWhatsAppUrl('Hola necesito ayuda para publicar mi propiedad')}
                   target="_blank"
                   rel="noreferrer"
                 >
@@ -2031,7 +2290,7 @@ const AddPropertyPage = () => {
                 </a>
               </Button>
             </div>
-          </div>
+          </div>}
         </div>
 
         {/* Resumen lateral (solo desktop): datos clave siempre visibles */}
@@ -2164,14 +2423,16 @@ const AddPropertyPage = () => {
             <div className="border-b border-line px-6 pb-4 pt-6">
               <DialogTitle>Tu anuncio está listo</DialogTitle>
               <DialogDescription className="mt-2">
-              Crea tu cuenta para guardar y publicar este anuncio. El borrador ya está guardado.
+                {gateMode === 'login'
+                  ? 'Inicia sesión con tu cuenta para publicar este anuncio. El borrador ya está guardado.'
+                  : 'Crea tu cuenta o inicia sesión para publicar este anuncio. El borrador ya está guardado.'}
               </DialogDescription>
             </div>
           </DialogHeader>
 
           <div className="px-6">
             <GoogleSignInButton
-              text="signup_with"
+              text={gateMode === 'login' ? 'signin_with' : 'signup_with'}
               onSuccess={() => {
                 savePublicationDraft();
                 setShowAccountModal(false);
@@ -2188,34 +2449,67 @@ const AddPropertyPage = () => {
             </div>
           </div>
 
-          <form onSubmit={handleCreateAccount} className="space-y-4 px-6 pb-6">
-            <div className="grid gap-3 sm:grid-cols-2">
+          {gateMode === 'login' ? (
+            <form onSubmit={handleLoginAndPublish} className="space-y-4 px-6 pb-6">
               <div className="space-y-1.5">
-                <label className="text-sm font-semibold text-textPrimary">Nombre</label>
-                <Input value={accountFirstName} onChange={(e) => setAccountFirstName(e.target.value)} className="h-11 rounded-input" required />
+                <label className="text-sm font-semibold text-textPrimary">Correo</label>
+                <Input type="email" value={accountEmail} onChange={(e) => setAccountEmail(e.target.value)} className="h-11 rounded-input" required />
               </div>
               <div className="space-y-1.5">
-                <label className="text-sm font-semibold text-textPrimary">Apellido</label>
-                <Input value={accountLastName} onChange={(e) => setAccountLastName(e.target.value)} className="h-11 rounded-input" required />
+                <label className="text-sm font-semibold text-textPrimary">Contraseña</label>
+                <Input type="password" value={accountPassword} onChange={(e) => setAccountPassword(e.target.value)} className="h-11 rounded-input" required />
               </div>
-            </div>
-            <div className="space-y-1.5">
-              <label className="text-sm font-semibold text-textPrimary">Correo</label>
-              <Input type="email" value={accountEmail} onChange={(e) => setAccountEmail(e.target.value)} className="h-11 rounded-input" required />
-            </div>
-            <div className="space-y-1.5">
-              <label className="text-sm font-semibold text-textPrimary">Contraseña</label>
-              <Input type="password" value={accountPassword} onChange={(e) => setAccountPassword(e.target.value)} className="h-11 rounded-input" required />
-            </div>
-            <div className="space-y-2 pt-1">
-              <Button type="submit" disabled={creatingAccount} className="h-11 w-full rounded-button bg-primary font-bold">
-                {creatingAccount ? 'Creando cuenta...' : 'Crear cuenta y publicar'}
-              </Button>
-              <Button type="button" variant="outline" className="h-11 w-full rounded-button border-line font-semibold text-textSecondary" onClick={() => setShowAccountModal(false)}>
-                Seguir editando
-              </Button>
-            </div>
-          </form>
+              <div className="space-y-2 pt-1">
+                <Button type="submit" disabled={loggingIn} className="h-11 w-full rounded-button bg-primary font-bold">
+                  {loggingIn ? 'Iniciando sesión...' : 'Iniciar sesión y publicar'}
+                </Button>
+                <Button type="button" variant="outline" className="h-11 w-full rounded-button border-line font-semibold text-textSecondary" onClick={() => setShowAccountModal(false)}>
+                  Seguir editando
+                </Button>
+              </div>
+              <p className="text-center text-sm text-textSecondary">
+                ¿No tienes cuenta?{' '}
+                <button type="button" onClick={() => setGateMode('register')} className="font-semibold text-primary hover:underline">
+                  Regístrate
+                </button>
+              </p>
+            </form>
+          ) : (
+            <form onSubmit={handleCreateAccount} className="space-y-4 px-6 pb-6">
+              <div className="grid gap-3 sm:grid-cols-2">
+                <div className="space-y-1.5">
+                  <label className="text-sm font-semibold text-textPrimary">Nombre</label>
+                  <Input value={accountFirstName} onChange={(e) => setAccountFirstName(e.target.value)} className="h-11 rounded-input" required />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-sm font-semibold text-textPrimary">Apellido</label>
+                  <Input value={accountLastName} onChange={(e) => setAccountLastName(e.target.value)} className="h-11 rounded-input" required />
+                </div>
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-sm font-semibold text-textPrimary">Correo</label>
+                <Input type="email" value={accountEmail} onChange={(e) => setAccountEmail(e.target.value)} className="h-11 rounded-input" required />
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-sm font-semibold text-textPrimary">Contraseña</label>
+                <Input type="password" value={accountPassword} onChange={(e) => setAccountPassword(e.target.value)} className="h-11 rounded-input" required />
+              </div>
+              <div className="space-y-2 pt-1">
+                <Button type="submit" disabled={creatingAccount} className="h-11 w-full rounded-button bg-primary font-bold">
+                  {creatingAccount ? 'Creando cuenta...' : 'Crear cuenta y publicar'}
+                </Button>
+                <Button type="button" variant="outline" className="h-11 w-full rounded-button border-line font-semibold text-textSecondary" onClick={() => setShowAccountModal(false)}>
+                  Seguir editando
+                </Button>
+              </div>
+              <p className="text-center text-sm text-textSecondary">
+                ¿Ya tienes cuenta?{' '}
+                <button type="button" onClick={() => setGateMode('login')} className="font-semibold text-primary hover:underline">
+                  Inicia sesión
+                </button>
+              </p>
+            </form>
+          )}
         </DialogContent>
       </Dialog>
     </div>

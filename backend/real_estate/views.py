@@ -1,6 +1,6 @@
 from rest_framework import viewsets, generics, status, filters
 from rest_framework.pagination import PageNumberPagination
-from django.db.models import Q, F, Count, Sum
+from django.db.models import Q, F, Count, Sum, Prefetch
 from rest_framework_simplejwt.views import TokenObtainPairView
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework.permissions import IsAuthenticated, AllowAny, IsAuthenticatedOrReadOnly
@@ -138,8 +138,6 @@ class PropertyViewSet(viewsets.ModelViewSet):
         la que tiene WhatsApp).
         """
         queryset = Property.objects.exclude(status='inactive').exclude(is_duplicate=True)
-        if getattr(self, 'action', None) == 'list':
-            queryset = queryset.prefetch_related('images')
         params = self.request.query_params
 
         search = params.get('search', '').strip()
@@ -207,6 +205,47 @@ class PropertyViewSet(viewsets.ModelViewSet):
                     # polígono. El frontend vuelve a filtrar por bounds y el
                     # serializer ya calcula centro para nuevos anuncios.
                     | Q(latitude__isnull=True, longitude__isnull=True, polygon__isnull=False)
+                )
+
+        if getattr(self, 'action', None) == 'list':
+            queryset = queryset.only(
+                'id',
+                'title',
+                'property_type',
+                'status',
+                'city',
+                'province',
+                'latitude',
+                'longitude',
+                'polygon',
+                'show_measurements',
+                'area',
+                'rooms',
+                'bathrooms',
+                'parking_spaces',
+                'price',
+                'is_imported',
+                'source',
+                'source_agency',
+                'source_url',
+                'external_id',
+                'created_at',
+            )
+            if params.get('page_size') != '1':
+                queryset = queryset.prefetch_related(
+                    Prefetch(
+                        'images',
+                        queryset=PropertyImage.objects.only(
+                            'id',
+                            'property_id',
+                            'image',
+                            'thumbnail',
+                            'is_main',
+                            'uploaded_at',
+                            'file_size',
+                            'original_filename',
+                        ),
+                    )
                 )
 
         return queryset
@@ -339,6 +378,14 @@ class LeadViewSet(viewsets.ModelViewSet):
         if user.is_staff:
             return qs
         return qs.filter(property__owner=user)
+
+    def perform_create(self, serializer):
+        lead = serializer.save()
+        try:
+            from .email_utils import send_lead_notification
+            send_lead_notification(lead)
+        except Exception as exc:
+            print(f"Error notifying lead: {exc}")
 
 
 class PendingPublicationViewSet(viewsets.ModelViewSet):

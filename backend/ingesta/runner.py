@@ -178,7 +178,8 @@ def run_load(run: IngestaRun, log=None):
                 else:
                     image_urls = data.pop("image_urls", []) if do_images else []
                     result, _prop = upsert_property(
-                        data, fuente, image_urls=image_urls, log=logger
+                        data, fuente, image_urls=image_urls, log=logger,
+                        require_images=do_images,
                     )
                     if result == "created":
                         run.creadas += 1
@@ -186,6 +187,8 @@ def run_load(run: IngestaRun, log=None):
                         run.actualizadas += 1
                     elif result == "skipped_duplicate":
                         run.duplicadas += 1
+                    elif result == "skipped_no_images":
+                        run.errores += 1
             except ScraperBlocked:
                 raise  # bloqueo del portal: aborta el run (mensaje claro abajo)
             except Exception as exc:  # noqa: BLE001 - un anuncio no debe tumbar el run
@@ -282,9 +285,12 @@ def run_refresh(run: IngestaRun, log=None):
                     if ok:
                         image_urls = res.pop("image_urls", []) if do_images else []
                         result, _p = upsert_property(
-                            res, fuente, image_urls=image_urls, log=logger)
+                            res, fuente, image_urls=image_urls, log=logger,
+                            require_images=do_images)
                         if result in ("created", "updated"):
                             run.actualizadas += 1
+                        elif result == "skipped_no_images":
+                            run.errores += 1
             except Exception as exc:  # noqa: BLE001 - una propiedad no tumba el run
                 run.errores += 1
                 logger(f"[item] error refrescando {prop.source_url}: "

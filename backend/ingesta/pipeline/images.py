@@ -81,7 +81,9 @@ def attach_images_from_urls(prop, urls, max_images=MAX_IMAGES):
     temporal. No queda ningún archivo en disco.
 
     Idempotente: si la propiedad ya tiene la misma cantidad de imágenes, no
-    vuelve a descargar. Devuelve cuántas imágenes quedaron adjuntas.
+    vuelve a descargar. Primero descarga las nuevas imágenes a memoria; sólo si
+    al menos una descarga funciona reemplaza las imágenes existentes. Devuelve
+    cuántas imágenes quedaron adjuntas.
     """
     import httpx
     from django.core.files.base import ContentFile
@@ -92,26 +94,31 @@ def attach_images_from_urls(prop, urls, max_images=MAX_IMAGES):
     if existing and existing == len(urls):
         return existing  # ya sincronizado
 
-    # Reemplazo total (borra de MinIO lo anterior).
-    delete_property_images(prop)
-
     headers = {"User-Agent": "GeoPropiedadesBot/1.0 (+agregador)"}
-    saved = 0
+    downloaded = []
     with httpx.Client(timeout=_TIMEOUT, headers=headers, follow_redirects=True) as client:
-        for idx, url in enumerate(urls):
+        for url in urls:
             try:
                 resp = client.get(url)
                 resp.raise_for_status()
-                content = resp.content  # temporal en memoria
                 ext = _ext_from(resp.headers.get("content-type", ""), url)
-                pi = PropertyImage(property=prop, is_main=(idx == 0))
-                # Nombre único por propiedad para no colisionar con otras.
-                pi.image.save(f"p{prop.id}_{idx}{ext}", ContentFile(content), save=False)
-                pi.save()   # optimiza (WEBP) y sube a MinIO
-                saved += 1
-                # 'content' queda libre para el GC al terminar la iteración.
+                downloaded.append((resp.content, ext))
             except Exception:
                 continue
+
+    if not downloaded:
+        return existing
+
+    # Reemplazo total sólo después de confirmar que hay al menos una imagen nueva.
+    delete_property_images(prop)
+
+    saved = 0
+    for idx, (content, ext) in enumerate(downloaded):
+        pi = PropertyImage(property=prop, is_main=(idx == 0))
+        # Nombre único por propiedad para no colisionar con otras.
+        pi.image.save(f"p{prop.id}_{idx}{ext}", ContentFile(content), save=False)
+        pi.save()   # optimiza (WEBP) y sube a MinIO
+        saved += 1
     return saved
 
 

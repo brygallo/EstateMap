@@ -13,6 +13,7 @@ import {
   FormControl,
   FormField,
   FormItem,
+  FormLabel,
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
@@ -22,6 +23,7 @@ import { Button } from '@/components/ui/button';
 interface LeadFormProps {
   propertyId: number;
   source?: string;
+  showTitle?: boolean;
 }
 
 const leadSchema = z.object({
@@ -31,6 +33,7 @@ const leadSchema = z.object({
     .trim()
     .min(1, 'Ingresa tu teléfono')
     .refine((v) => v.replace(/\D/g, '').length >= 6, 'Teléfono no válido'),
+  email: z.string().trim().email('Correo no válido').optional().or(z.literal('')),
   message: z.string().trim().optional(),
 });
 
@@ -40,13 +43,13 @@ type LeadValues = z.infer<typeof leadSchema>;
  * Formulario de contacto por propiedad. Envía un lead (nombre, teléfono,
  * mensaje) al backend de forma pública para que la inmobiliaria mida interés.
  */
-export default function LeadForm({ propertyId, source = 'property_modal' }: LeadFormProps) {
+export default function LeadForm({ propertyId, source = 'property_modal', showTitle = true }: LeadFormProps) {
   const [sent, setSent] = useState(false);
 
   const form = useForm<LeadValues>({
     resolver: zodResolver(leadSchema),
     mode: 'onChange',
-    defaultValues: { name: '', phone: '', message: '' },
+    defaultValues: { name: '', phone: '', email: '', message: '' },
   });
 
   const onSubmit = async (values: LeadValues) => {
@@ -60,6 +63,7 @@ export default function LeadForm({ propertyId, source = 'property_modal' }: Lead
           property: propertyId,
           name: values.name.trim(),
           phone: values.phone.trim(),
+          email: (values.email || '').trim(),
           message: (values.message || '').trim(),
           source,
         }),
@@ -103,21 +107,25 @@ export default function LeadForm({ propertyId, source = 'property_modal' }: Lead
         onSubmit={form.handleSubmit(onSubmit)}
         className="space-y-2.5 rounded-card border border-line bg-background p-3"
       >
-        <h3 className="flex items-center gap-1.5 text-sm font-semibold text-textPrimary">
-          <Mail className="h-4 w-4 text-primary" />
-          ¿Te interesa? Déjanos tus datos
-        </h3>
+        {showTitle && (
+          <h3 className="flex items-center gap-1.5 text-sm font-semibold text-textPrimary">
+            <Mail className="h-4 w-4 flex-shrink-0 text-primary" />
+            <span>¿Te interesa? Déjanos tus datos</span>
+          </h3>
+        )}
 
         <FormField
           control={form.control}
           name="name"
           render={({ field }) => (
             <FormItem className="space-y-1">
+              <FormLabel className="sr-only">Tu nombre (requerido)</FormLabel>
               <FormControl>
                 <Input
                   type="text"
                   placeholder="Tu nombre *"
                   autoComplete="name"
+                  aria-required="true"
                   className="h-10 rounded-input"
                   {...field}
                 />
@@ -132,12 +140,34 @@ export default function LeadForm({ propertyId, source = 'property_modal' }: Lead
           name="phone"
           render={({ field }) => (
             <FormItem className="space-y-1">
+              <FormLabel className="sr-only">Tu teléfono (requerido)</FormLabel>
               <FormControl>
                 <Input
                   type="tel"
                   inputMode="tel"
                   placeholder="Tu teléfono *"
                   autoComplete="tel"
+                  aria-required="true"
+                  className="h-10 rounded-input"
+                  {...field}
+                />
+              </FormControl>
+              <FormMessage className="text-xs" />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="email"
+          render={({ field }) => (
+            <FormItem className="space-y-1">
+              <FormLabel className="sr-only">Tu correo (opcional)</FormLabel>
+              <FormControl>
+                <Input
+                  type="email"
+                  placeholder="Tu correo (opcional)"
+                  autoComplete="email"
                   className="h-10 rounded-input"
                   {...field}
                 />
@@ -152,6 +182,7 @@ export default function LeadForm({ propertyId, source = 'property_modal' }: Lead
           name="message"
           render={({ field }) => (
             <FormItem className="space-y-1">
+              <FormLabel className="sr-only">Mensaje (opcional)</FormLabel>
               <FormControl>
                 <Textarea
                   placeholder="Mensaje (opcional)"
