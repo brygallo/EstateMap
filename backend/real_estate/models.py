@@ -165,6 +165,14 @@ class Property(models.Model):
 
     class Meta:
         ordering = ["-created_at"]
+        indexes = [
+            models.Index(fields=["status", "is_duplicate", "latitude", "longitude"], name="prop_map_bbox_idx"),
+            models.Index(fields=["status", "property_type", "price"], name="prop_filter_price_idx"),
+            models.Index(fields=["province", "city", "status"], name="prop_location_idx"),
+            models.Index(fields=["owner", "status"], name="prop_owner_status_idx"),
+            models.Index(fields=["source", "is_imported", "status"], name="prop_source_status_idx"),
+            models.Index(fields=["-views_count"], name="prop_views_desc_idx"),
+        ]
         constraints = [
             models.UniqueConstraint(
                 fields=["source", "external_id"],
@@ -362,6 +370,11 @@ class Lead(models.Model):
 
     class Meta:
         ordering = ["-created_at"]
+        indexes = [
+            models.Index(fields=["property", "status"], name="lead_property_status_idx"),
+            models.Index(fields=["status", "created_at"], name="lead_status_created_idx"),
+            models.Index(fields=["source", "created_at"], name="lead_source_created_idx"),
+        ]
 
     def __str__(self):
         return f"Lead de {self.name} sobre {self.property_id}"
@@ -402,6 +415,10 @@ class PendingPublication(models.Model):
 
     class Meta:
         ordering = ["-created_at"]
+        indexes = [
+            models.Index(fields=["status", "created_at"], name="pending_status_created_idx"),
+            models.Index(fields=["source", "created_at"], name="pending_source_created_idx"),
+        ]
 
     def __str__(self):
         return self.title or f"Solicitud pendiente {self.pk}"

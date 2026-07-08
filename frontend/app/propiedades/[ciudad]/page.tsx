@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import SeoLanding, { TYPE_LINKS, priceRangeText } from '@/components/SeoLanding';
 import { getProperties, getCities, slugify } from '@/lib/properties';
+import { generateCombosWithCounts, parseComboSlug } from '@/lib/seo-combos';
 
 export const revalidate = 3600;
 // Cities discovered at build time are pre-rendered; new ones render on demand.
@@ -49,6 +50,19 @@ export default async function CiudadPage({ params }: CityPageProps) {
     notFound();
   }
 
+  const relatedLocalLinks = generateCombosWithCounts(city.properties)
+    .map(({ combo, count }) => {
+      const parsed = parseComboSlug(combo);
+      if (!parsed || parsed.locationSlug !== ciudad) return null;
+      const op = parsed.opDef ? ` ${parsed.opDef.label}` : '';
+      return {
+        label: `${parsed.typeDef.plural}${op} en ${city.name} (${count})`,
+        href: `/${combo}`,
+      };
+    })
+    .filter(Boolean)
+    .slice(0, 10) as { label: string; href: string }[];
+
   return (
     <SeoLanding
       title={`Propiedades en ${city.name}`}
@@ -58,7 +72,7 @@ export default async function CiudadPage({ params }: CityPageProps) {
       properties={city.properties}
       pageHref={`/propiedades/${ciudad}`}
       mapHref={`/?search=${encodeURIComponent(city.name)}`}
-      relatedLinks={TYPE_LINKS}
+      relatedLinks={relatedLocalLinks.length ? relatedLocalLinks : TYPE_LINKS}
       emptyMessage={`Aún no hay propiedades publicadas en ${city.name}.`}
     />
   );

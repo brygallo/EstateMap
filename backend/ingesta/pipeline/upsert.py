@@ -16,7 +16,7 @@ from django.utils import timezone
 from .dedup import find_duplicate
 from .images import attach_images_from_urls, image_dhash_from_url, sync_property_images
 from .location import validate_location
-from .normalize import build_dedup_key
+from .normalize import build_dedup_key, sanitize_price
 
 
 # Campos de Property que actualizamos desde el paquete.
@@ -49,7 +49,7 @@ def _apply_fields(prop, data, fuente, lat, lng):
     prop.last_seen_at = timezone.now()
 
 
-def upsert_property(data, fuente, reader=None, image_urls=None):
+def upsert_property(data, fuente, reader=None, image_urls=None, log=None):
     """
     Crea o actualiza una ``Property`` a partir del dict canónico ``data``.
 
@@ -66,6 +66,16 @@ def upsert_property(data, fuente, reader=None, image_urls=None):
     ok, lat, lng, _motivo = validate_location(data.get("latitude"), data.get("longitude"))
     if not ok:
         return "skipped_no_location", None
+
+    # Sanidad de precios: un valor absurdo (área/id/teléfono leído como precio)
+    # se descarta a None ("a consultar") en vez de publicarse. Se aplica aquí,
+    # en el punto único de escritura, para cubrir todos los flujos.
+    status = data.get("status") or "for_sale"
+    for campo, st in (("price", status), ("rent_price", "for_rent")):
+        clean, motivo = sanitize_price(data.get(campo), st)
+        if motivo and log:
+            log(f"[precio] {data.get('external_id', '?')}: {campo} descartado ({motivo})")
+        data[campo] = clean
 
     external_id = (data.get("external_id") or "").strip()
 

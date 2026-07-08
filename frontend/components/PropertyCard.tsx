@@ -16,6 +16,7 @@ import {
   MapPin,
   Layers,
   Ruler,
+  Navigation,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
@@ -43,6 +44,7 @@ interface PropertyCardProps {
   onClick?: () => void;
   onOpenDetails?: () => void;
   selected?: boolean;
+  distanceLabel?: string | null;
 }
 
 const FAVORITES_KEY = 'geo:favorite-properties';
@@ -195,6 +197,7 @@ export default function PropertyCard({
   onClick,
   onOpenDetails,
   selected = false,
+  distanceLabel = null,
 }: PropertyCardProps) {
   const typeLabel = getPropertyTypeLabel(String(property.property_type));
   const statusLabel = getStatusLabel(String(property.status));
@@ -277,6 +280,12 @@ export default function PropertyCard({
           </div>
 
           <div className="mt-1 flex flex-wrap items-center gap-x-2.5 gap-y-0.5 text-[11px] text-textSecondary">
+            {distanceLabel && (
+              <span className="inline-flex items-center gap-1 font-semibold text-primary">
+                <Navigation className="h-3.5 w-3.5" strokeWidth={1.75} aria-hidden />
+                {distanceLabel}
+              </span>
+            )}
             {meta.map(({ icon: Icon, label }, i) => (
               <span key={i} className="inline-flex items-center gap-1">
                 <Icon className="h-3.5 w-3.5 text-primary" strokeWidth={1.75} aria-hidden />

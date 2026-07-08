@@ -73,14 +73,22 @@ export function parseComboSlug(slug: string): ParsedCombo | null {
 }
 
 export type ComboParam = { combo: string };
+export type ComboWithCount = ComboParam & { count: number };
+
+export const MIN_COMBO_PROPERTIES = 2;
+export const MAX_COMBO_PAGES = 700;
 
 /**
  * Genera todas las combinaciones que realmente tienen propiedades, a partir del
  * catálogo. Para cada propiedad produce variantes por ciudad y por provincia,
  * con y sin operación.
  */
-export function generateCombos(properties: Property[]): ComboParam[] {
-  const slugs = new Set<string>();
+export function generateCombosWithCounts(properties: Property[]): ComboWithCount[] {
+  const counts = new Map<string, number>();
+
+  const add = (slug: string) => {
+    counts.set(slug, (counts.get(slug) || 0) + 1);
+  };
 
   for (const p of properties) {
     const typeDef = TYPE_DEFS.find((t) => t.type === p.property_type);
@@ -96,13 +104,21 @@ export function generateCombos(properties: Property[]): ComboParam[] {
     for (const loc of locations) {
       if (!loc) continue;
       // Sin operación (ej. terrenos-en-morona-santiago)
-      slugs.add(buildComboSlug(typeDef.slug, null, loc));
+      add(buildComboSlug(typeDef.slug, null, loc));
       // Con operación (ej. casas-en-venta-en-macas)
-      if (opDef) slugs.add(buildComboSlug(typeDef.slug, opDef.slug, loc));
+      if (opDef) add(buildComboSlug(typeDef.slug, opDef.slug, loc));
     }
   }
 
-  return Array.from(slugs).map((combo) => ({ combo }));
+  return Array.from(counts.entries())
+    .map(([combo, count]) => ({ combo, count }))
+    .filter((item) => item.count >= MIN_COMBO_PROPERTIES)
+    .sort((a, b) => b.count - a.count || a.combo.localeCompare(b.combo))
+    .slice(0, MAX_COMBO_PAGES);
+}
+
+export function generateCombos(properties: Property[]): ComboParam[] {
+  return generateCombosWithCounts(properties).map(({ combo }) => ({ combo }));
 }
 
 /**

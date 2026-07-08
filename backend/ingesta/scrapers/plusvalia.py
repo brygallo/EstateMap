@@ -61,7 +61,7 @@ import html as html_lib
 import os
 import re
 
-from .base import BaseScraper, register
+from .base import BaseScraper, ScraperBlocked, register
 from ..pipeline import normalize
 
 # Búsquedas por defecto: (path del listado, categoria, operacion). Terrenos
@@ -216,6 +216,13 @@ class PlusvaliaScraper(BaseScraper):
     # UA de navegador real (el sitio responde 403 a clientes no-navegador; ver
     # nota de Cloudflare en el docstring del módulo).
     request_delay = 1.5
+    # Si Cloudflare bloquea (403/challenge) esta cantidad de peticiones seguidas,
+    # asumimos un bloqueo real del cliente (no un fallo puntual) y abortamos el
+    # run con ScraperBlocked en vez de reportar "0 resultados" como éxito.
+    _BLOCK_LIMIT = 3
+
+    def __init__(self):
+        self._block_streak = 0
 
     def _client(self):
         """
@@ -370,10 +377,12 @@ class PlusvaliaScraper(BaseScraper):
             resp = client.get(url)
         except Exception as exc:
             log(f"[plusvalia] error en {url}: {exc}")
-            return None
+            return None  # error de red transitorio: no cuenta como bloqueo
         if resp.status_code != 200:
             hint = " (Cloudflare; ¿curl_cffi instalado?)" if resp.status_code == 403 else ""
             log(f"[plusvalia] {url} -> HTTP {resp.status_code}{hint}")
+            if resp.status_code == 403:
+                self._note_block(url, log)
             return None
         text = resp.text
         # Página real de challenge = documento minúsculo con ese <title>. (El
@@ -381,8 +390,22 @@ class PlusvaliaScraper(BaseScraper):
         # que NO se usa como señal.)
         if len(text) < 20000 and "<title>Just a moment" in text:
             log(f"[plusvalia] {url} devolvió el challenge de Cloudflare")
+            self._note_block(url, log)
             return None
+        self._block_streak = 0  # respuesta legítima: se reinicia la racha
         return text
+
+    def _note_block(self, url, log):
+        """Contabiliza un bloqueo (403/challenge). Si se repite ``_BLOCK_LIMIT``
+        veces seguidas, lanza ``ScraperBlocked`` para que el run falle con un
+        mensaje claro en vez de terminar con 0 resultados como si todo fuera
+        bien."""
+        self._block_streak += 1
+        if self._block_streak >= self._BLOCK_LIMIT:
+            raise ScraperBlocked(
+                f"Cloudflare bloqueó {self._block_streak} peticiones seguidas a Plusvalía "
+                f"(última: {url}). Revisa que curl_cffi esté instalado y actualizado."
+            )
 
     def scrape_one(self, url, categoria="", operacion="venta"):
         """Re-scrapea una ficha. Devuelve dict / 'GONE' / None (igual patrón)."""

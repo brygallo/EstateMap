@@ -69,6 +69,8 @@ urlpatterns = [
     path('admin/ingesta/sources/', ingesta_api.sources, name='admin_ingesta_sources'),
     path('admin/ingesta/runs/', ingesta_api.runs, name='admin_ingesta_runs'),
     path('admin/ingesta/launch/', ingesta_api.launch, name='admin_ingesta_launch'),
+    path('admin/ingesta/cancel/', ingesta_api.cancel, name='admin_ingesta_cancel'),
+    path('admin/ingesta/properties/', ingesta_api.properties, name='admin_ingesta_properties'),
 ]
 
 urlpatterns += router.urls
