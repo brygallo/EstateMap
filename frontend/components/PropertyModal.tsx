@@ -21,6 +21,9 @@ import {
   Layers,
   AlignLeft,
   MessageCircle,
+  CalendarDays,
+  BadgeCheck,
+  Mail,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import ShareModal from './ShareModal';
@@ -41,6 +44,17 @@ const getValidImages = (images: any[] | undefined) => {
 const clampImageIndex = (index: number, length: number) => {
   if (length <= 0) return 0;
   return Math.min(Math.max(index, 0), length - 1);
+};
+
+const formatDate = (value: unknown) => {
+  if (!value) return '';
+  const date = new Date(String(value));
+  if (Number.isNaN(date.getTime())) return '';
+  return date.toLocaleDateString('es-EC', {
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+  });
 };
 
 // Image Gallery Component (lightbox a pantalla completa)
@@ -161,10 +175,12 @@ const FeatureTile = ({
   value: any;
   label: string;
 }) => (
-  <div className="flex flex-col items-center justify-center gap-1 rounded-card border border-line bg-surface px-1.5 py-2.5 text-center">
-    <Icon className="h-4 w-4 text-primary" strokeWidth={1.75} aria-hidden />
-    <div className="font-geo text-sm font-semibold tabular-nums text-textPrimary">{value}</div>
-    <div className="text-xs text-textSecondary">{label}</div>
+  <div className="flex min-h-[78px] flex-col items-center justify-center gap-1.5 rounded-card border border-line bg-surface px-2 py-3 text-center">
+    <span className="flex h-8 w-8 items-center justify-center rounded-full bg-primaryLight">
+      <Icon className="h-4 w-4 text-primary" strokeWidth={1.75} aria-hidden />
+    </span>
+    <div className="font-geo text-[15px] font-semibold tabular-nums text-textPrimary">{value}</div>
+    <div className="text-[11px] font-medium leading-tight text-textSecondary">{label}</div>
   </div>
 );
 
@@ -224,9 +240,11 @@ const PropertyModal = ({ property, isOpen, onClose, onViewOnMap }: PropertyModal
   const activeImage = hasImages ? images[safeImageIndex] : null;
   const isImported = Boolean(property.is_imported || property.source_url || property.external_id || property.source);
   const contactPhone = typeof property.contact_phone === 'string' ? property.contact_phone.trim() : '';
+  const contactEmail = typeof property.contact_email === 'string' ? property.contact_email.trim() : '';
   const whatsappPhone = contactPhone.replace(/[^0-9]/g, '');
   const sourceUrl = typeof property.source_url === 'string' ? property.source_url.trim() : '';
   const sourceAgency = typeof property.source_agency === 'string' ? property.source_agency.trim() : '';
+  const publishedDate = formatDate(property.created_at);
   // Mensaje prellenado: el vendedor sabe que el contacto viene de la plataforma, con la URL del anuncio.
   const whatsappPropertyUrl =
     typeof window !== 'undefined' ? `${window.location.origin}/propiedad/${property.id}` : sourceUrl;
@@ -301,15 +319,15 @@ const PropertyModal = ({ property, isOpen, onClose, onViewOnMap }: PropertyModal
         role="dialog"
         aria-modal="true"
         aria-label={`Detalle de ${property.title || 'propiedad'}`}
-        className="fixed right-2 top-1/2 z-panel w-[calc(100%-1rem)] max-w-sm -translate-y-1/2 outline-none animate-panelIn sm:right-4 sm:w-full"
+        className="fixed inset-x-0 bottom-0 z-panel outline-none animate-panelIn sm:inset-x-auto sm:bottom-0 sm:left-0 sm:top-0 sm:w-[480px] sm:max-w-[calc(100vw-2rem)]"
       >
       {/* Panel Container */}
-      <div className="relative overflow-hidden rounded-modal border border-line bg-white shadow-cardHover">
+      <div className="relative overflow-hidden rounded-t-modal border border-line bg-white shadow-cardHover sm:h-full sm:rounded-none sm:rounded-r-modal sm:border-y-0 sm:border-l-0">
         <div>
           {/* Share Button */}
           <button
             onClick={() => setShareModalOpen(true)}
-            className="absolute right-12 top-3 z-10 rounded-card bg-primary/90 p-2 text-white shadow-card transition-colors hover:bg-primary"
+            className="absolute right-12 top-3 z-10 rounded-full bg-black/55 p-2 text-white shadow-card backdrop-blur transition-colors hover:bg-black/75"
             title="Compartir propiedad"
             aria-label="Compartir propiedad"
           >
@@ -319,30 +337,31 @@ const PropertyModal = ({ property, isOpen, onClose, onViewOnMap }: PropertyModal
           {/* Close Button */}
           <button
             onClick={onClose}
-            className="absolute right-3 top-3 z-10 rounded-card bg-white/90 p-2 text-textPrimary shadow-card transition-colors hover:bg-white"
+            className="absolute right-3 top-3 z-10 rounded-full bg-white/95 p-2 text-textPrimary shadow-card backdrop-blur transition-colors hover:bg-white"
             aria-label="Cerrar"
           >
             <X className="h-4 w-4" strokeWidth={2} aria-hidden />
           </button>
 
           {/* Scrollable Content */}
-          <div className="max-h-[calc(100vh-6rem)] overflow-y-auto">
+          <div className="max-h-[86vh] overflow-y-auto sm:h-full sm:max-h-full">
             {/* Image Gallery Section */}
             {activeImage ? (
-              <div className="group relative h-44 cursor-pointer bg-slate-900" onClick={() => setGalleryOpen(true)}>
+              <div className="group relative h-56 cursor-pointer bg-slate-900 sm:h-60" onClick={() => setGalleryOpen(true)}>
                 <img
                   src={activeImage.image}
                   alt={property.title}
                   className="h-full w-full object-cover"
                 />
+                <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-black/70 to-transparent" aria-hidden />
 
                 {/* Image Counter */}
-                <div className="absolute left-3 top-3 rounded-md bg-black/60 px-2 py-0.5 text-[11px] font-medium text-white backdrop-blur">
+                <div className="absolute left-3 top-3 rounded-full bg-black/60 px-2.5 py-1 text-[11px] font-semibold text-white backdrop-blur">
                   {safeImageIndex + 1} / {images.length}
                 </div>
 
                 {/* Expand Icon */}
-                <div className="absolute right-14 top-3 rounded-md bg-black/60 p-2 text-white backdrop-blur">
+                <div className="absolute right-24 top-3 rounded-full bg-black/60 p-2 text-white backdrop-blur">
                   <Maximize2 className="h-4 w-4" strokeWidth={2} aria-hidden />
                 </div>
 
@@ -351,14 +370,14 @@ const PropertyModal = ({ property, isOpen, onClose, onViewOnMap }: PropertyModal
                   <>
                     <button
                       onClick={(e) => { e.stopPropagation(); prevImage(); }}
-                      className="absolute left-3 top-1/2 -translate-y-1/2 rounded-card bg-white/90 p-2 text-textPrimary shadow-card transition-colors hover:bg-white"
+                      className="absolute left-3 top-1/2 -translate-y-1/2 rounded-full bg-white/90 p-2 text-textPrimary shadow-card transition-colors hover:bg-white"
                       aria-label="Imagen anterior"
                     >
                       <ChevronLeft className="h-5 w-5" strokeWidth={2} aria-hidden />
                     </button>
                     <button
                       onClick={(e) => { e.stopPropagation(); nextImage(); }}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 rounded-card bg-white/90 p-2 text-textPrimary shadow-card transition-colors hover:bg-white"
+                      className="absolute right-3 top-1/2 -translate-y-1/2 rounded-full bg-white/90 p-2 text-textPrimary shadow-card transition-colors hover:bg-white"
                       aria-label="Imagen siguiente"
                     >
                       <ChevronRight className="h-5 w-5" strokeWidth={2} aria-hidden />
@@ -368,13 +387,13 @@ const PropertyModal = ({ property, isOpen, onClose, onViewOnMap }: PropertyModal
 
                 {/* Thumbnail Strip */}
                 {images.length > 1 && (
-                  <div className="absolute bottom-3 left-1/2 flex -translate-x-1/2 gap-1.5 rounded-lg bg-black/50 p-1.5 backdrop-blur-sm">
+                  <div className="absolute bottom-3 left-3 right-3 flex gap-1.5 overflow-hidden rounded-lg bg-black/45 p-1.5 backdrop-blur-sm">
                     {images.slice(0, 5).map((img: any, idx: number) => (
                       <button
                         key={idx}
                         onClick={(e) => { e.stopPropagation(); setCurrentImageIndex(idx); }}
                         className={cn(
-                          'h-10 w-10 overflow-hidden rounded-md border transition-all',
+                          'h-10 w-10 flex-shrink-0 overflow-hidden rounded-md border transition-all',
                           idx === safeImageIndex ? 'border-white scale-110' : 'border-transparent opacity-60 hover:opacity-100'
                         )}
                       >
@@ -384,7 +403,7 @@ const PropertyModal = ({ property, isOpen, onClose, onViewOnMap }: PropertyModal
                     {images.length > 5 && (
                       <button
                         onClick={(e) => { e.stopPropagation(); setGalleryOpen(true); }}
-                        className="flex h-10 w-10 items-center justify-center rounded-md bg-black/70 text-xs font-bold text-white transition-colors hover:bg-black/90"
+                        className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-md bg-black/70 text-xs font-bold text-white transition-colors hover:bg-black/90"
                       >
                         +{images.length - 5}
                       </button>
@@ -402,11 +421,11 @@ const PropertyModal = ({ property, isOpen, onClose, onViewOnMap }: PropertyModal
             )}
 
             {/* Content Section */}
-            <div className="p-3">
+            <div className="p-4">
               {/* Header */}
-              <div className="mb-3">
-                <div className="mb-1.5 flex items-start justify-between gap-2">
-                  <h2 className="flex-1 text-base font-bold text-textPrimary">
+              <div className="mb-4">
+                <div className="mb-2 flex items-start justify-between gap-2">
+                  <h2 className="flex-1 text-lg font-bold leading-snug text-textPrimary">
                     {property.title || 'Propiedad'}
                   </h2>
                   <span className={cn('badge flex-shrink-0', getStatusBadgeClass(property.status))}>
@@ -414,24 +433,9 @@ const PropertyModal = ({ property, isOpen, onClose, onViewOnMap }: PropertyModal
                   </span>
                 </div>
 
-                {/* Owner info */}
-                <div className="mb-2 flex items-center gap-2 rounded-card bg-background p-2">
-                  <span className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-card bg-primaryLight text-primary">
-                    <User className="h-4 w-4" strokeWidth={1.75} aria-hidden />
-                  </span>
-                  <div className="min-w-0">
-                    <div className="text-xs font-medium text-textSecondary">Publicado por</div>
-                    <div className="truncate text-sm font-semibold text-textPrimary">
-                      {isImported
-                        ? sourceAgency || 'Fuente externa'
-                        : property.owner_username || `Usuario ${property.owner}`}
-                    </div>
-                  </div>
-                </div>
-
                 {/* Price */}
-                <div className="mb-1.5 flex flex-wrap items-baseline gap-2">
-                  <span className="price text-xl">
+                <div className="mb-2 flex flex-wrap items-baseline gap-2">
+                  <span className="price text-2xl">
                     {formatPrice(property.price)}
                   </span>
                   {hasRentPrice && (
@@ -448,9 +452,9 @@ const PropertyModal = ({ property, isOpen, onClose, onViewOnMap }: PropertyModal
 
                 {/* Location */}
                 {(property.address || property.city) && (
-                  <div className="flex items-center gap-1.5 text-textSecondary">
+                  <div className="flex items-start gap-1.5 text-textSecondary">
                     <MapPin className="h-4 w-4 flex-shrink-0 text-primary" strokeWidth={1.75} aria-hidden />
-                    <span className="text-sm">
+                    <span className="text-sm leading-5">
                       {property.address && <span>{property.address}</span>}
                       {property.address && property.city && <span>, </span>}
                       {property.city && <span>{property.city}</span>}
@@ -461,28 +465,30 @@ const PropertyModal = ({ property, isOpen, onClose, onViewOnMap }: PropertyModal
               </div>
 
               {/* Ver en el mapa: centra el mapa real en la propiedad */}
-              {onViewOnMap && (property.polygon || (property.latitude && property.longitude)) && (
-                <button
-                  type="button"
-                  onClick={onViewOnMap}
-                  className="mb-3 flex w-full items-center justify-center gap-2 rounded-button border border-primary/30 bg-primaryLight py-2 text-sm font-semibold text-primary transition-colors hover:bg-primary hover:text-primary-foreground"
-                >
-                  <MapPinned className="h-4 w-4" strokeWidth={2} aria-hidden />
-                  Ver en el mapa
-                </button>
-              )}
+              <div className="mb-4 grid grid-cols-2 gap-2">
+                {onViewOnMap && (property.polygon || (property.latitude && property.longitude)) && (
+                  <button
+                    type="button"
+                    onClick={onViewOnMap}
+                    className="flex items-center justify-center gap-2 rounded-button border border-primary/30 bg-primaryLight px-3 py-2.5 text-sm font-semibold text-primary transition-colors hover:bg-primary hover:text-primary-foreground"
+                  >
+                    <MapPinned className="h-4 w-4" strokeWidth={2} aria-hidden />
+                    Ver mapa
+                  </button>
+                )}
 
-              {/* Enlace a la ficha completa e indexable de la propiedad */}
-              <a
-                href={`/propiedad/${property.id}`}
-                className="mb-3 flex w-full items-center justify-center gap-2 rounded-button border border-line bg-white py-2 text-sm font-semibold text-textPrimary transition-colors hover:border-primary hover:text-primary"
-              >
-                <ExternalLink className="h-4 w-4" strokeWidth={2} aria-hidden />
-                Ver página completa
-              </a>
+                {/* Enlace secundario a la ficha indexable. El panel ya contiene la informacion completa para decidir. */}
+                <a
+                  href={`/propiedad/${property.id}`}
+                  className="flex items-center justify-center gap-2 rounded-button border border-line bg-white px-3 py-2.5 text-sm font-semibold text-textPrimary transition-colors hover:border-primary hover:text-primary"
+                >
+                  <ExternalLink className="h-4 w-4" strokeWidth={2} aria-hidden />
+                  Ficha completa
+                </a>
+              </div>
 
               {/* Key Features Grid */}
-              <div className="mb-3 grid grid-cols-3 gap-1.5">
+              <div className="mb-4 grid grid-cols-3 gap-2">
                 <FeatureTile icon={Ruler} value={formatArea(property.area)} label="m² total" />
 
                 {property.built_area && (
@@ -508,20 +514,25 @@ const PropertyModal = ({ property, isOpen, onClose, onViewOnMap }: PropertyModal
 
               {/* Description */}
               {property.description && (
-                <div className="mb-3">
+                <div className="mb-4 rounded-card border border-line bg-white p-3">
                   <h3 className="mb-1 flex items-center gap-1.5 text-sm font-semibold text-textPrimary">
                     <AlignLeft className="h-3.5 w-3.5 text-primary" strokeWidth={1.75} aria-hidden />
                     Descripción
                   </h3>
-                  <p className="text-sm leading-relaxed text-textSecondary">{property.description}</p>
+                  <p className="whitespace-pre-line text-sm leading-6 text-textSecondary">{property.description}</p>
                 </div>
               )}
 
               {/* Additional Details */}
-              <div className="mb-3 grid grid-cols-2 gap-1.5">
+              <div className="mb-4 grid grid-cols-2 gap-2">
                 <div className="rounded-card bg-background p-2">
                   <div className="mb-0.5 text-xs font-semibold text-textSecondary">Tipo</div>
                   <div className="text-sm font-semibold text-textPrimary">{getPropertyTypeLabel(property.property_type)}</div>
+                </div>
+
+                <div className="rounded-card bg-background p-2">
+                  <div className="mb-0.5 text-xs font-semibold text-textSecondary">Operación</div>
+                  <div className="text-sm font-semibold text-textPrimary">{getStatusLabel(property.status)}</div>
                 </div>
 
                 {property.year_built && (
@@ -539,8 +550,52 @@ const PropertyModal = ({ property, isOpen, onClose, onViewOnMap }: PropertyModal
                 )}
               </div>
 
+              {/* Datos de publicacion y fuente */}
+              <div className="mb-4 rounded-card border border-line bg-background p-3">
+                <div className="mb-3 flex items-center gap-2">
+                  <span className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-primaryLight text-primary">
+                    <User className="h-4 w-4" strokeWidth={1.75} aria-hidden />
+                  </span>
+                  <div className="min-w-0">
+                    <div className="text-xs font-medium text-textSecondary">{isImported ? 'Fuente' : 'Publicado por'}</div>
+                    <div className="truncate text-sm font-semibold text-textPrimary">
+                      {isImported
+                        ? sourceAgency || 'Fuente externa'
+                        : property.owner_username || `Usuario ${property.owner}`}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="space-y-2 text-sm text-textSecondary">
+                  {publishedDate && (
+                    <div className="flex items-center gap-2">
+                      <CalendarDays className="h-4 w-4 flex-shrink-0 text-primary" strokeWidth={1.75} aria-hidden />
+                      <span>{isImported ? 'Agregado al mapa el ' : 'Publicado el '}{publishedDate}</span>
+                    </div>
+                  )}
+                  {isImported && (
+                    <div className="flex items-center gap-2">
+                      <BadgeCheck className="h-4 w-4 flex-shrink-0 text-success" strokeWidth={1.75} aria-hidden />
+                      <span>Anuncio agregado desde fuente externa</span>
+                    </div>
+                  )}
+                  {contactPhone && (
+                    <div className="flex items-center gap-2">
+                      <Phone className="h-4 w-4 flex-shrink-0 text-primary" strokeWidth={1.75} aria-hidden />
+                      <span>{contactPhone}</span>
+                    </div>
+                  )}
+                  {contactEmail && (
+                    <div className="flex items-center gap-2">
+                      <Mail className="h-4 w-4 flex-shrink-0 text-primary" strokeWidth={1.75} aria-hidden />
+                      <span className="break-all">{contactEmail}</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+
               {/* Zona de contacto: las propiedades importadas redirigen al contacto real de origen. */}
-              <div className="mt-1 space-y-3 border-t border-line pt-3">
+              <div className="sticky bottom-0 -mx-4 space-y-3 border-t border-line bg-white/95 px-4 pb-4 pt-3 backdrop-blur">
                 {isImported ? (
                   contactPhone ? (
                     <a
@@ -642,10 +697,16 @@ const PropertyModal = ({ property, isOpen, onClose, onViewOnMap }: PropertyModal
       {/* Animaciones: el panel entra con escala + fundido (scale+fade). */}
       <style>{`
         @keyframes panelIn {
-          from { transform: translateY(-50%) scale(0.96); opacity: 0; }
-          to { transform: translateY(-50%) scale(1); opacity: 1; }
+          from { transform: translateY(100%); opacity: 0.98; }
+          to { transform: translateY(0); opacity: 1; }
         }
         .animate-panelIn { animation: panelIn 0.25s ease-out; }
+        @media (min-width: 640px) {
+          @keyframes panelIn {
+            from { transform: translateX(-24px); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+          }
+        }
         @keyframes fadeIn {
           from { opacity: 0; }
           to { opacity: 1; }

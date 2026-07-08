@@ -50,12 +50,24 @@ function FitToProperty({
   const map = useMap();
 
   useEffect(() => {
-    if (coordinates && coordinates.length >= 3) {
-      const bounds = L.latLngBounds(coordinates.map(([lat, lng]) => L.latLng(lat, lng)));
-      map.fitBounds(bounds, { padding: [40, 40], maxZoom: 18 });
-    } else {
-      map.setView(center, 16);
-    }
+    const fitMap = () => {
+      map.invalidateSize();
+      if (coordinates && coordinates.length >= 3) {
+        const bounds = L.latLngBounds(coordinates.map(([lat, lng]) => L.latLng(lat, lng)));
+        map.fitBounds(bounds, { padding: [40, 40], maxZoom: 18 });
+      } else {
+        map.setView(center, 16);
+      }
+    };
+
+    fitMap();
+    const resizeTimer = window.setTimeout(fitMap, 120);
+    const settleTimer = window.setTimeout(fitMap, 450);
+
+    return () => {
+      window.clearTimeout(resizeTimer);
+      window.clearTimeout(settleTimer);
+    };
   }, [map, coordinates, center]);
 
   return null;
