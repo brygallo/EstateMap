@@ -11,6 +11,7 @@ import {
   LayoutDashboard,
   LogOut,
   Map,
+  MapPinned,
   Menu,
   Plus,
   ShieldCheck,
@@ -74,6 +75,10 @@ const NavBar = () => {
         <div className="hidden items-center gap-1 md:flex">
           {token ? (
             <>
+              <Link href="/propiedades" className={navLinkClass}>
+                <MapPinned className="h-4 w-4" />
+                Explorar
+              </Link>
               <Link href="/mis-propiedades" className={navLinkClass}>
                 <FolderKanban className="h-4 w-4" />
                 Mis propiedades
@@ -132,6 +137,10 @@ const NavBar = () => {
             </>
           ) : (
             <>
+              <Link href="/propiedades" className={navLinkClass}>
+                <MapPinned className="h-4 w-4" />
+                Explorar
+              </Link>
               <Link href="/ayuda" className={navLinkClass}>
                 <CircleHelp className="h-4 w-4" />
                 Ayuda
@@ -190,6 +199,12 @@ const NavBar = () => {
                   </div>
 
                   <Button asChild variant="ghost" className="justify-start" onClick={closeMobileMenu}>
+                    <Link href="/propiedades">
+                      <MapPinned className="h-4 w-4" />
+                      Explorar propiedades
+                    </Link>
+                  </Button>
+                  <Button asChild variant="ghost" className="justify-start" onClick={closeMobileMenu}>
                     <Link href="/mis-propiedades">
                       <FolderKanban className="h-4 w-4" />
                       Mis Propiedades
@@ -235,6 +250,12 @@ const NavBar = () => {
                 </>
               ) : (
                 <>
+                  <Button asChild variant="ghost" className="justify-start" onClick={closeMobileMenu}>
+                    <Link href="/propiedades">
+                      <MapPinned className="h-4 w-4" />
+                      Explorar propiedades
+                    </Link>
+                  </Button>
                   <Button asChild variant="ghost" className="justify-start" onClick={closeMobileMenu}>
                     <Link href="/iniciar-sesion">
                       <UserIcon className="h-4 w-4" />
