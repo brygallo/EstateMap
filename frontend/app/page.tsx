@@ -72,8 +72,20 @@ const popularSearches = [
 
 export default async function HomePage() {
   const properties = await getProperties();
-  const cities = getCities(properties).slice(0, 12);
-  const featuredProperties = properties.slice(0, 6);
+  const allCities = getCities(properties);
+  const cities = [...allCities]
+    .sort((a, b) => b.count - a.count || a.name.localeCompare(b.name))
+    .slice(0, 12);
+  const mainCitySlugs = new Set(cities.map((city) => city.slug));
+  const extendedCities = [...allCities]
+    .filter((city) => !mainCitySlugs.has(city.slug))
+    .sort((a, b) => a.count - b.count || a.name.localeCompare(b.name))
+    .slice(0, 48);
+  const featuredProperties = await getProperties({
+    includeImages: true,
+    pageSize: 6,
+    revalidate: 900,
+  });
   const forSaleCount = properties.filter((p) => p.status === 'for_sale').length;
   const forRentCount = properties.filter((p) => p.status === 'for_rent').length;
 
@@ -104,6 +116,12 @@ export default async function HomePage() {
           ...cities.map((city, index) => ({
             '@type': 'ListItem',
             position: popularSearches.length + index + 1,
+            name: `Propiedades en ${city.name}`,
+            url: `${SITE_URL}/propiedades/${city.slug}`,
+          })),
+          ...extendedCities.slice(0, 30).map((city, index) => ({
+            '@type': 'ListItem',
+            position: popularSearches.length + cities.length + index + 1,
             name: `Propiedades en ${city.name}`,
             url: `${SITE_URL}/propiedades/${city.slug}`,
           })),
@@ -398,7 +416,7 @@ export default async function HomePage() {
               {cities.length > 0 && (
                 <div>
                   <h2 className="text-xl font-semibold text-textPrimary">
-                    Propiedades por ciudad
+                    Principales ciudades
                   </h2>
                   <div className="mt-4 flex flex-wrap gap-2.5">
                     {cities.map((city) => (
@@ -409,6 +427,31 @@ export default async function HomePage() {
                       >
                         <MapPin className="h-3.5 w-3.5 text-primary" aria-hidden />
                         {city.name}
+                      </Link>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {extendedCities.length > 0 && (
+                <div>
+                  <h2 className="text-xl font-semibold text-textPrimary">
+                    Más ciudades y cantones
+                  </h2>
+                  <p className="mt-2 text-sm leading-6 text-textSecondary">
+                    También indexamos búsquedas locales en ciudades menos
+                    cubiertas, sin dejar fuera los mercados grandes.
+                  </p>
+                  <div className="mt-4 flex flex-wrap gap-2.5">
+                    {extendedCities.map((city) => (
+                      <Link
+                        key={city.slug}
+                        href={`/propiedades/${city.slug}`}
+                        className="inline-flex items-center gap-1.5 rounded-full border border-line bg-white px-4 py-2 text-sm font-medium text-textPrimary shadow-card transition-colors hover:border-primary hover:bg-primaryLight hover:text-primary"
+                      >
+                        <MapPin className="h-3.5 w-3.5 text-primary" aria-hidden />
+                        {city.name}
+                        <span className="text-xs text-textMuted">({city.count})</span>
                       </Link>
                     ))}
                   </div>

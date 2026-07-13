@@ -11,6 +11,7 @@ import {
   generateCombos,
   filterByCombo,
 } from '@/lib/seo-combos';
+import { generatePageMetadata } from '@/lib/metadata';
 
 export const revalidate = 3600;
 // Solo existen las combinaciones generadas en build; cualquier otra da 404.
@@ -41,11 +42,11 @@ export async function generateMetadata({ params }: { params: Params }): Promise<
   }
   const title = titleFor(parsed, locationName);
 
-  return {
+  return generatePageMetadata(
     title,
-    description: `${title}: explora ubicación en el mapa, precio, área y detalles completos de cada propiedad. Contacta directamente al anunciante.`,
-    alternates: { canonical: `/${params.combo}` },
-  };
+    `${title}: explora ubicación en el mapa, precio, área y detalles completos de cada propiedad. Contacta directamente al anunciante.`,
+    `/${params.combo}`
+  );
 }
 
 export default async function ComboPage({ params }: { params: Params }) {

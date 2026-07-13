@@ -27,7 +27,7 @@ function propertyImageUrls(property: { images?: { image?: string }[] }): string[
 }
 
 export async function GET() {
-  const properties = await getProperties();
+  const properties = await getProperties({ includeImages: true, pageSize: 1000 });
 
   const urlBlocks = properties
     .map((property) => {

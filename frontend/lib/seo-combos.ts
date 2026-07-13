@@ -75,8 +75,10 @@ export function parseComboSlug(slug: string): ParsedCombo | null {
 export type ComboParam = { combo: string };
 export type ComboWithCount = ComboParam & { count: number };
 
-export const MIN_COMBO_PROPERTIES = 2;
-export const MAX_COMBO_PAGES = 700;
+// Estrategia long-tail: competimos por ciudades/cantones olvidados, donde una
+// sola propiedad ya puede responder una búsqueda local real.
+export const MIN_COMBO_PROPERTIES = 1;
+export const MAX_COMBO_PAGES = 2000;
 
 /**
  * Genera todas las combinaciones que realmente tienen propiedades, a partir del

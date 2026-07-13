@@ -1,17 +1,16 @@
-import type { Metadata } from 'next';
 import SeoLanding, { TYPE_LINKS, priceRangeText } from '@/components/SeoLanding';
 import { getProperties } from '@/lib/properties';
+import { generatePageMetadata } from '@/lib/metadata';
 
 export const revalidate = 3600;
 
 const PATH = '/locales-comerciales';
 
-export const metadata: Metadata = {
-  title: 'Locales comerciales en venta y alquiler en Ecuador',
-  description:
-    'Locales y propiedades comerciales en venta y alquiler en Ecuador con ubicación en mapa, precio, área y detalles para tu negocio o inversión.',
-  alternates: { canonical: PATH },
-};
+export const metadata = generatePageMetadata(
+  'Locales comerciales en venta y alquiler en Ecuador',
+  'Locales y propiedades comerciales en venta y alquiler en Ecuador con ubicación en mapa, precio, área y detalles para tu negocio o inversión.',
+  PATH
+);
 
 export default async function LocalesComercialesPage() {
   const all = await getProperties();

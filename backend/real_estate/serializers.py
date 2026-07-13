@@ -270,6 +270,31 @@ class PropertySerializer(serializers.ModelSerializer):
         return instance
 
 
+class MapPointPropertySerializer(serializers.ModelSerializer):
+    """Payload minimo para pintar puntos/precios en el mapa."""
+
+    class Meta:
+        model = Property
+        fields = [
+            'id',
+            'property_type',
+            'status',
+            'latitude',
+            'longitude',
+            'polygon',
+            'show_measurements',
+            'price',
+        ]
+
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        if data.get('polygon') and isinstance(data['polygon'], dict):
+            if data['polygon'].get('coordinates'):
+                coords = data['polygon']['coordinates'][0]
+                data['polygon'] = [[coord[1], coord[0]] for coord in coords]
+        return data
+
+
 class MapPropertySerializer(serializers.ModelSerializer):
     """
     Payload liviano para el mapa/listado lateral. Evita enviar descripcion,
@@ -304,6 +329,10 @@ class MapPropertySerializer(serializers.ModelSerializer):
         ]
 
     def get_images(self, obj):
+        request = self.context.get('request')
+        if request and request.query_params.get('include_images') in ('0', 'false', 'False', 'no'):
+            return []
+
         images = list(obj.images.all())
         image = next((img for img in images if img.is_main), images[0] if images else None)
         if image is None:

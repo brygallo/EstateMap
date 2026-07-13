@@ -29,16 +29,31 @@ function normalizeList(data: unknown): Property[] {
   return [];
 }
 
+interface GetPropertiesOptions {
+  includeImages?: boolean;
+  pageSize?: number;
+  revalidate?: number;
+}
+
 /**
  * Fetch every publicly listed property. Returns `[]` on any failure so pages
  * degrade gracefully instead of crashing the build/request.
  */
-export async function getProperties(): Promise<Property[]> {
+export async function getProperties({
+  includeImages = false,
+  pageSize = 2000,
+  revalidate = 3600,
+}: GetPropertiesOptions = {}): Promise<Property[]> {
   try {
-    // The list endpoint is paginated; request a large page so SEO/sitemap
-    // pages get the full catalog in a single request.
-    const res = await fetch(`${API_URL}/properties/?page_size=2000`, {
-      next: { revalidate: 3600 },
+    // The list endpoint is paginated. SEO pages need broad inventory metadata,
+    // but images make the response too large for Next's fetch cache, so they
+    // are opt-in and used only for small featured grids / image sitemap routes.
+    const params = new URLSearchParams({
+      page_size: String(pageSize),
+      include_images: includeImages ? '1' : '0',
+    });
+    const res = await fetch(`${API_URL}/properties/?${params.toString()}`, {
+      next: { revalidate },
     });
     if (!res.ok) return [];
     return normalizeList(await res.json());
@@ -140,6 +155,26 @@ export function getCities(
   const map = new Map<string, { name: string; slug: string; count: number }>();
   for (const p of properties) {
     const name = (p.city || '').trim();
+    if (!name) continue;
+    const slug = slugify(name);
+    if (!slug) continue;
+    const existing = map.get(slug);
+    if (existing) {
+      existing.count += 1;
+    } else {
+      map.set(slug, { name, slug, count: 1 });
+    }
+  }
+  return Array.from(map.values()).sort((a, b) => a.name.localeCompare(b.name));
+}
+
+/** Unique provinces present in the data, sorted, with a URL-safe slug. */
+export function getProvinces(
+  properties: Property[]
+): { name: string; slug: string; count: number }[] {
+  const map = new Map<string, { name: string; slug: string; count: number }>();
+  for (const p of properties) {
+    const name = (p.province || '').trim();
     if (!name) continue;
     const slug = slugify(name);
     if (!slug) continue;

@@ -6,7 +6,6 @@ import dynamic from 'next/dynamic';
 import { Loader2, SlidersHorizontal, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/lib/auth-context';
-import { getPropertyTypeLabel, getStatusLabel } from '@/lib/property-labels';
 import { useGeolocation } from '@/hooks/useGeolocation';
 import { usePropertyFilters } from '@/hooks/usePropertyFilters';
 import { flyToProperty } from '@/lib/map-navigation';
@@ -16,8 +15,8 @@ import LocationPermissionModal from '@/components/LocationPermissionModal';
 import PropertyCard from '@/components/PropertyCard';
 import type { MapBounds, Property } from '@/lib/types';
 
-// Cargar el mapa Leaflet solo en cliente (sin SSR).
-const LeafletMap = dynamic(() => import('@/components/maps/LeafletMap'), {
+// Cargar el mapa MapLibre solo en cliente (sin SSR).
+const MainMap = dynamic(() => import('@/components/maps/MapLibreMap'), {
   ssr: false,
   loading: () => (
     <div className="relative h-full w-full overflow-hidden bg-muted">
@@ -50,21 +49,24 @@ const MapPage = () => {
   const router = useRouter();
 
   const mapRef = useRef<any>(null);
-  const hoverTimeoutRef = useRef<any>(null);
 
   const [bounds, setBounds] = useState<MapBounds | null>(null);
   const [mapZoom, setMapZoom] = useState(7);
-  const [visibleProperties, setVisibleProperties] = useState<Property[]>([]);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [selectedProperty, setSelectedProperty] = useState<Property | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   const {
     filters,
-    properties,
+    mapProperties,
+    cardProperties,
     owners,
     locations,
     loading,
+    mapLoading,
+    cardsLoadingMore,
+    cardsHasMore,
+    loadMoreCards,
     error,
     retry,
     totalCount,
@@ -72,11 +74,8 @@ const MapPage = () => {
     clearFilters,
     hasActiveFilters,
   } = usePropertyFilters({ token, bounds, zoom: mapZoom });
-  const geo = useGeolocation(mapRef, properties, loading);
-  const sidebarProperties =
-    !loading && properties.length > 0 && visibleProperties.length === 0
-      ? properties
-      : visibleProperties;
+  const geo = useGeolocation(mapRef, mapProperties, loading);
+  const sidebarProperties = cardProperties;
 
   const handleMapReady = (map: any) => {
     mapRef.current = map;
@@ -89,7 +88,13 @@ const MapPage = () => {
   }, []);
 
   const handleResetMapView = useCallback(() => {
-    mapRef.current?.flyTo(DEFAULT_CENTER, 7, { duration: 0.9 });
+    const map = mapRef.current;
+    if (!map) return;
+    if (typeof map.fitBounds === 'function' && typeof map.flyToBounds !== 'function') {
+      map.flyTo({ center: [DEFAULT_CENTER[1], DEFAULT_CENTER[0]], zoom: 7, duration: 900 });
+    } else {
+      map.flyTo(DEFAULT_CENTER, 7, { duration: 0.9 });
+    }
   }, []);
 
   // Abrir una propiedad indicada por ?property=<id> (enlaces compartidos).
@@ -134,10 +139,20 @@ const MapPage = () => {
   };
 
   // Clic en el polígono/marcador: mueve el mapa y abre el modal.
-  const handlePolygonClick = (property: Property) => {
+  const handlePolygonClick = async (property: Property) => {
     flyToProperty(mapRef.current, property);
     setSelectedProperty(property);
-    setIsModalOpen(typeof window === 'undefined' || window.innerWidth >= 1024);
+    setIsModalOpen(true);
+
+    try {
+      const { apiFetch } = await import('@/lib/api');
+      const res = await apiFetch(`/properties/${property.id}/`, { skipAuth: !token });
+      if (res.ok) {
+        setSelectedProperty(await res.json());
+      }
+    } catch (err) {
+      console.error('Error cargando detalle de propiedad:', err);
+    }
   };
 
   // "Ver en el mapa" desde el modal: recentra el mapa en la propiedad y, en
@@ -161,13 +176,6 @@ const MapPage = () => {
       router.push(newUrl, { scroll: false });
     }
   };
-
-  // Limpiar el timeout de hover al desmontar.
-  useEffect(() => {
-    return () => {
-      if (hoverTimeoutRef.current) clearTimeout(hoverTimeoutRef.current);
-    };
-  }, []);
 
   useEffect(() => {
     if (!mapRef.current) return;
@@ -239,6 +247,9 @@ const MapPage = () => {
           userLocation={geo.userLocation}
           onZoomOut={handleZoomOut}
           onResetMapView={handleResetMapView}
+          hasMore={cardsHasMore}
+          loadingMore={cardsLoadingMore}
+          onLoadMore={loadMoreCards}
         />
       </div>
 
@@ -249,26 +260,23 @@ const MapPage = () => {
           lg:relative lg:inset-auto lg:left-auto lg:flex-1
         `}
       >
-        <LeafletMap
-          filteredProperties={properties}
+        <MainMap
+          filteredProperties={mapProperties}
           selectedProperty={selectedProperty}
           userLocation={geo.userLocation}
           userAccuracy={geo.accuracy}
           onMapReady={handleMapReady}
-          onVisiblePropertiesChange={setVisibleProperties}
+          onVisiblePropertiesChange={() => {}}
           onBoundsChange={setBounds}
           onZoomChange={setMapZoom}
           onPolygonClick={handlePolygonClick}
           onLocate={geo.handleGetMyLocation}
           locating={geo.loadingLocation}
           locationBlocked={geo.locationBlocked}
-          isRefreshing={loading}
+          isRefreshing={mapLoading && mapProperties.length === 0}
           hasActiveFilters={hasActiveFilters}
           onClearFilters={clearFilters}
           onResetView={handleResetMapView}
-          hoverTimeoutRef={hoverTimeoutRef}
-          getPropertyTypeLabel={getPropertyTypeLabel}
-          getStatusLabel={getStatusLabel}
           center={DEFAULT_CENTER}
         />
 

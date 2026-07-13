@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
-import { AnimatePresence, motion } from 'motion/react';
+import { motion } from 'motion/react';
 import { ExternalLink, Loader2, MapPinned, RotateCw, SearchX, WifiOff, X } from 'lucide-react';
 import MapFilters from '@/components/map/MapFilters';
 import PropertyCard, { PropertyCardSkeleton } from '@/components/PropertyCard';
@@ -40,6 +40,9 @@ interface PropertySidebarProps {
   userLocation?: LatLngPoint | null;
   onZoomOut?: () => void;
   onResetMapView?: () => void;
+  hasMore?: boolean;
+  loadingMore?: boolean;
+  onLoadMore?: () => void;
 
   /** Sync mapa<->card (opcional): id resaltado desde el mapa y notificación de hover. */
   hoveredPropertyId?: number | null;
@@ -66,6 +69,9 @@ export default function PropertySidebar({
   userLocation = null,
   onZoomOut,
   onResetMapView,
+  hasMore = false,
+  loadingMore = false,
+  onLoadMore,
   hoveredPropertyId = null,
   onPropertyHover,
 }: PropertySidebarProps) {
@@ -136,19 +142,23 @@ export default function PropertySidebar({
 
   useEffect(() => {
     const target = loadMoreRef.current;
-    if (!target || hiddenPropertiesCount <= 0) return;
+    if (!target || (hiddenPropertiesCount <= 0 && !hasMore)) return;
 
     const observer = new IntersectionObserver(
       (entries) => {
         if (!entries[0]?.isIntersecting) return;
-        setVisibleCardCount((current) => Math.min(current + CARD_BATCH_SIZE, sortedProperties.length));
+        if (hiddenPropertiesCount > 0) {
+          setVisibleCardCount((current) => Math.min(current + CARD_BATCH_SIZE, sortedProperties.length));
+          return;
+        }
+        if (hasMore && !loadingMore) onLoadMore?.();
       },
       { root: null, rootMargin: '240px 0px', threshold: 0 }
     );
 
     observer.observe(target);
     return () => observer.disconnect();
-  }, [hiddenPropertiesCount, sortedProperties.length]);
+  }, [hasMore, hiddenPropertiesCount, loadingMore, onLoadMore, sortedProperties.length]);
 
   useEffect(() => {
     const id = selectedProperty?.id;
@@ -323,53 +333,58 @@ export default function PropertySidebar({
           )
         ) : (
           <>
-            <AnimatePresence initial={false}>
-              {renderedProperties.map(({ property: p, distanceKm }, idx) => (
-                <motion.div
-                  key={p.id ?? idx}
-                  ref={(el) => {
-                    if (p.id != null) cardRefs.current[p.id] = el;
-                  }}
-                  layout
-                  initial={{ opacity: 0, y: 8 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -8 }}
-                  transition={{ duration: 0.2, ease: 'easeOut' as const }}
-                  onMouseEnter={() => handleEnter(p)}
-                  onMouseLeave={handleLeave}
-                  className={cn(
-                    'rounded-card transition-shadow',
-                    activeHoverId === p.id && selectedProperty?.id !== p.id
-                      ? 'shadow-cardHover ring-1 ring-primary/30'
-                      : ''
-                  )}
-                >
-                  <PropertyCard
-                    property={p}
-                    variant="compact"
-                    selected={selectedProperty?.id === p.id}
-                    distanceLabel={formatDistance(distanceKm)}
-                    onClick={() => onPropertyClick(p)}
-                    onOpenDetails={() => onPropertyOpen(p)}
-                  />
-                  {selectedProperty?.id === p.id && (
-                    <Link
-                      href={`/propiedad/${p.id}`}
-                      className="mt-1.5 flex items-center justify-center gap-1.5 rounded-button border border-line bg-white px-3 py-2 text-[13px] font-semibold text-primary transition-colors hover:border-primary hover:bg-muted focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
-                    >
-                      <ExternalLink className="h-4 w-4" strokeWidth={2} aria-hidden />
-                      Ver página completa
-                    </Link>
-                  )}
-                </motion.div>
-              ))}
-            </AnimatePresence>
-            {hiddenPropertiesCount > 0 && (
+            {renderedProperties.map(({ property: p, distanceKm }, idx) => (
+              <motion.div
+                key={p.id ?? idx}
+                ref={(el) => {
+                  if (p.id != null) cardRefs.current[p.id] = el;
+                }}
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.2, ease: 'easeOut' as const }}
+                onMouseEnter={() => handleEnter(p)}
+                onMouseLeave={handleLeave}
+                className={cn(
+                  'rounded-card transition-shadow',
+                  activeHoverId === p.id && selectedProperty?.id !== p.id
+                    ? 'shadow-cardHover ring-1 ring-primary/30'
+                    : ''
+                )}
+              >
+                <PropertyCard
+                  property={p}
+                  variant="compact"
+                  selected={selectedProperty?.id === p.id}
+                  distanceLabel={formatDistance(distanceKm)}
+                  onClick={() => onPropertyClick(p)}
+                  onOpenDetails={() => onPropertyOpen(p)}
+                />
+                {selectedProperty?.id === p.id && (
+                  <Link
+                    href={`/propiedad/${p.id}`}
+                    className="mt-1.5 flex items-center justify-center gap-1.5 rounded-button border border-line bg-white px-3 py-2 text-[13px] font-semibold text-primary transition-colors hover:border-primary hover:bg-muted focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
+                  >
+                    <ExternalLink className="h-4 w-4" strokeWidth={2} aria-hidden />
+                    Ver página completa
+                  </Link>
+                )}
+              </motion.div>
+            ))}
+            {(hiddenPropertiesCount > 0 || hasMore) && (
               <div
                 ref={loadMoreRef}
                 className="rounded-card border border-line bg-white p-3 text-center text-xs text-textSecondary shadow-card"
               >
-                Mostrando {renderedProperties.length} de {sortedProperties.length}. Desplázate para cargar más.
+                {loadingMore ? (
+                  <span className="inline-flex items-center gap-1.5">
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" strokeWidth={2.25} aria-hidden />
+                    Cargando más propiedades…
+                  </span>
+                ) : hasMore && hiddenPropertiesCount <= 0 ? (
+                  'Desplázate para cargar más propiedades.'
+                ) : (
+                  `Mostrando ${renderedProperties.length} de ${sortedProperties.length}. Desplázate para cargar más.`
+                )}
               </div>
             )}
           </>

@@ -211,7 +211,9 @@ const PropertyModal = ({ property: initialProperty, isOpen, onClose, onViewOnMap
   const [shareModalOpen, setShareModalOpen] = useState(false);
   const [fullProperty, setFullProperty] = useState<any | null>(null);
   const [loadingFullProperty, setLoadingFullProperty] = useState(false);
+  const [sheetExpanded, setSheetExpanded] = useState(false);
   const panelRef = useRef<HTMLDivElement>(null);
+  const sheetTouchStartRef = useRef<number | null>(null);
   const property = fullProperty || initialProperty;
   const images = useMemo(() => getValidImages(property?.images), [property?.images]);
 
@@ -238,6 +240,7 @@ const PropertyModal = ({ property: initialProperty, isOpen, onClose, onViewOnMap
     setFullProperty(null);
     setCurrentImageIndex(0);
     setGalleryOpen(false);
+    setSheetExpanded(false);
   }, [isOpen, initialProperty?.id]);
 
   useEffect(() => {
@@ -295,9 +298,24 @@ const PropertyModal = ({ property: initialProperty, isOpen, onClose, onViewOnMap
   // Anuncio venta + alquiler a la vez: `price` es la venta y `rent_price` el alquiler.
   const rentPriceNum = Number.parseFloat(String(property.rent_price ?? ''));
   const hasRentPrice = property.rent_price != null && Number.isFinite(rentPriceNum) && rentPriceNum > 0;
+  const canWhatsApp = Boolean(contactPhone && whatsappPhone);
+  const canCall = Boolean(contactPhone);
   const nextImage = () => {
     if (images.length === 0) return;
     setCurrentImageIndex((prev) => (prev + 1) % images.length);
+  };
+
+  const handleSheetTouchEnd = (event: React.TouchEvent) => {
+    const start = sheetTouchStartRef.current;
+    sheetTouchStartRef.current = null;
+    if (start == null) return;
+
+    const deltaY = event.changedTouches[0].clientY - start;
+    if (deltaY < -24) setSheetExpanded(true);
+    if (deltaY > 28) {
+      if (sheetExpanded) setSheetExpanded(false);
+      else onClose();
+    }
   };
 
   const prevImage = () => {
@@ -359,15 +377,35 @@ const PropertyModal = ({ property: initialProperty, isOpen, onClose, onViewOnMap
         tabIndex={-1}
         role="complementary"
         aria-label={`Detalle de ${property.title || 'propiedad'}`}
-        className="fixed inset-x-0 bottom-0 z-panel outline-none animate-panelIn lg:relative lg:inset-auto lg:z-0 lg:h-full lg:w-[26rem] lg:flex-shrink-0"
+        className={cn(
+          'fixed inset-x-0 bottom-0 z-panel outline-none animate-panelIn lg:relative lg:inset-auto lg:z-0 lg:h-full lg:w-[26rem] lg:flex-shrink-0',
+          sheetExpanded ? 'mobile-sheet-expanded' : 'mobile-sheet-compact'
+        )}
       >
       {/* Panel Container */}
-      <div className="relative overflow-hidden rounded-t-modal border border-line bg-background shadow-cardHover lg:h-full lg:rounded-none lg:border-0 lg:border-l lg:border-line lg:shadow-none">
+      <div
+        className={cn(
+          'relative overflow-hidden rounded-t-modal border border-line bg-background shadow-cardHover transition-[height] duration-300 ease-out lg:h-full lg:rounded-none lg:border-0 lg:border-l lg:border-line lg:shadow-none',
+          sheetExpanded ? 'h-[92dvh]' : 'h-[48dvh] min-h-[360px]'
+        )}
+      >
+        <button
+          type="button"
+          onClick={() => setSheetExpanded((current) => !current)}
+          onTouchStart={(event) => {
+            sheetTouchStartRef.current = event.touches[0].clientY;
+          }}
+          onTouchEnd={handleSheetTouchEnd}
+          className="absolute inset-x-0 top-0 z-20 flex h-7 items-center justify-center bg-white/95 backdrop-blur lg:hidden"
+          aria-label={sheetExpanded ? 'Contraer ficha' : 'Expandir ficha'}
+        >
+          <span className="h-1.5 w-11 rounded-full bg-slate-300" aria-hidden />
+        </button>
         <div className="flex h-full flex-col">
           {/* Share Button */}
           <button
             onClick={() => setShareModalOpen(true)}
-            className="absolute right-12 top-3 z-10 rounded-full bg-black/55 p-2 text-white shadow-card backdrop-blur transition-colors hover:bg-black/75"
+            className="absolute right-12 top-8 z-10 rounded-full bg-black/55 p-2 text-white shadow-card backdrop-blur transition-colors hover:bg-black/75 lg:top-3"
             title="Compartir propiedad"
             aria-label="Compartir propiedad"
           >
@@ -377,14 +415,14 @@ const PropertyModal = ({ property: initialProperty, isOpen, onClose, onViewOnMap
           {/* Close Button */}
           <button
             onClick={onClose}
-            className="absolute right-3 top-3 z-10 rounded-full bg-white/95 p-2 text-textPrimary shadow-card backdrop-blur transition-colors hover:bg-white"
+            className="absolute right-3 top-8 z-10 rounded-full bg-white/95 p-2 text-textPrimary shadow-card backdrop-blur transition-colors hover:bg-white lg:top-3"
             aria-label="Cerrar"
           >
             <X className="h-4 w-4" strokeWidth={2} aria-hidden />
           </button>
 
           {/* Scrollable Content */}
-          <div className="max-h-[86vh] min-h-0 flex-1 overflow-y-auto overscroll-contain lg:max-h-none">
+          <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain pb-24 pt-7 lg:max-h-none lg:pb-0 lg:pt-0">
             {/* Image Gallery Section */}
             {activeImage ? (
               <div className="group relative h-48 cursor-pointer bg-slate-900 sm:h-52" onClick={() => setGalleryOpen(true)}>
@@ -705,6 +743,49 @@ const PropertyModal = ({ property: initialProperty, isOpen, onClose, onViewOnMap
               </div>
             </div>
           </div>
+
+          <div className="absolute inset-x-0 bottom-0 z-20 border-t border-line bg-white/95 p-3 shadow-[0_-8px_24px_rgba(15,23,42,0.10)] backdrop-blur lg:hidden">
+            {canWhatsApp ? (
+              <div className="grid grid-cols-[0.82fr_1.18fr] gap-2">
+                {canCall && (
+                  <a
+                    href={`tel:${contactPhone}`}
+                    className="flex items-center justify-center gap-2 rounded-button border border-line bg-white px-3 py-3 text-sm font-semibold text-textPrimary"
+                  >
+                    <Phone className="h-4 w-4" strokeWidth={2} aria-hidden />
+                    Llamar
+                  </a>
+                )}
+                <a
+                  href={whatsappUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="wa-bounce flex items-center justify-center gap-2 rounded-button bg-secondary px-3 py-3 text-sm font-semibold text-white shadow-card"
+                >
+                  <MessageCircle className="h-4 w-4" strokeWidth={2} aria-hidden />
+                  WhatsApp
+                </a>
+              </div>
+            ) : sourceUrl ? (
+              <a
+                href={sourceUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex w-full items-center justify-center gap-2 rounded-button bg-primary px-3 py-3 text-sm font-semibold text-white shadow-card"
+              >
+                <ExternalLink className="h-4 w-4" strokeWidth={2} aria-hidden />
+                Contactar
+              </a>
+            ) : (
+              <a
+                href={`/propiedad/${property.id}`}
+                className="flex w-full items-center justify-center gap-2 rounded-button bg-primary px-3 py-3 text-sm font-semibold text-white shadow-card"
+              >
+                <ExternalLink className="h-4 w-4" strokeWidth={2} aria-hidden />
+                Ficha completa
+              </a>
+            )}
+          </div>
         </div>
       </div>
 
@@ -735,7 +816,15 @@ const PropertyModal = ({ property: initialProperty, isOpen, onClose, onViewOnMap
           to { transform: translateY(0); opacity: 1; }
         }
         .animate-panelIn { animation: panelIn 0.25s ease-out; }
+        .mobile-sheet-compact,
+        .mobile-sheet-expanded {
+          max-height: 92dvh;
+        }
         @media (min-width: 1024px) {
+          .mobile-sheet-compact,
+          .mobile-sheet-expanded {
+            max-height: none;
+          }
           @keyframes panelIn {
             from { transform: translateX(24px); opacity: 0; }
             to { transform: translateX(0); opacity: 1; }

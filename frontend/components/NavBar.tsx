@@ -162,6 +162,16 @@ const NavBar = () => {
           )}
         </div>
 
+        <div className="flex items-center gap-2 md:hidden">
+          <Link
+            href="/publicar-propiedad"
+            className="mobile-publish-cta inline-flex h-10 items-center gap-1.5 rounded-full bg-primary px-3 text-xs font-bold text-white shadow-cardHover ring-2 ring-primary/15"
+            onClick={closeMobileMenu}
+          >
+            <Plus className="h-4 w-4" strokeWidth={2.5} aria-hidden />
+            Publicar gratis
+          </Link>
+
         {/* Mobile Menu */}
         <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
           <SheetTrigger asChild>
@@ -286,7 +296,28 @@ const NavBar = () => {
             </div>
           </SheetContent>
         </Sheet>
+        </div>
       </div>
+      <style jsx>{`
+        @keyframes mobilePublishPulse {
+          0%, 100% {
+            transform: translateY(0) scale(1);
+            box-shadow: 0 8px 18px rgba(45, 60, 103, 0.18);
+          }
+          45% {
+            transform: translateY(-1px) scale(1.025);
+            box-shadow: 0 10px 22px rgba(45, 60, 103, 0.26);
+          }
+        }
+        .mobile-publish-cta {
+          animation: mobilePublishPulse 2.4s ease-in-out infinite;
+        }
+        @media (prefers-reduced-motion: reduce) {
+          .mobile-publish-cta {
+            animation: none;
+          }
+        }
+      `}</style>
     </nav>
   );
 };

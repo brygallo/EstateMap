@@ -89,7 +89,11 @@ export function useGeolocation(
     (lat: number, lng: number, zoom: number, delay = 0) => {
       const doFly = () => {
         if (mapRef.current) {
-          mapRef.current.flyTo([lat, lng], zoom, { duration: 1.5 });
+          if (typeof mapRef.current.fitBounds === 'function' && typeof mapRef.current.flyToBounds !== 'function') {
+            mapRef.current.flyTo({ center: [lng, lat], zoom, duration: 520 });
+          } else {
+            mapRef.current.flyTo([lat, lng], zoom, { duration: 0.6 });
+          }
         }
       };
       if (delay) setTimeout(doFly, delay);

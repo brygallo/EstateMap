@@ -182,6 +182,11 @@ const LeafletMap = ({
   return (
     <div className="relative h-full w-full">
       <style>{MAP_STYLES}</style>
+      {isRefreshing && (
+        <div className="pointer-events-none absolute inset-x-0 top-0 z-mapcontrol h-1 overflow-hidden bg-white/45">
+          <div className="map-refresh-bar h-full w-1/2" />
+        </div>
+      )}
       <MapContainer
         center={center}
         zoom={7}

@@ -1,17 +1,16 @@
-import type { Metadata } from 'next';
 import SeoLanding, { TYPE_LINKS, priceRangeText } from '@/components/SeoLanding';
 import { getProperties } from '@/lib/properties';
+import { generatePageMetadata } from '@/lib/metadata';
 
 export const revalidate = 3600;
 
 const PATH = '/casas-en-venta';
 
-export const metadata: Metadata = {
-  title: 'Casas en venta en Ecuador',
-  description:
-    'Encuentra casas en venta en Ecuador con ubicación en mapa, fotos, precio, área, habitaciones y detalles completos de cada propiedad.',
-  alternates: { canonical: PATH },
-};
+export const metadata = generatePageMetadata(
+  'Casas en venta en Ecuador',
+  'Encuentra casas en venta en Ecuador con ubicación en mapa, fotos, precio, área, habitaciones y detalles completos de cada propiedad.',
+  PATH
+);
 
 export default async function CasasEnVentaPage() {
   const all = await getProperties();

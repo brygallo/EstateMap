@@ -9,6 +9,7 @@ export function flyToProperty(map: any, property: Property): void {
   if (!map) return;
 
   try {
+    const isMapLibre = typeof map.fitBounds === 'function' && typeof map.flyToBounds !== 'function';
     const polygon = property.polygon as any;
     if (polygon) {
       let coordinates: number[][] | undefined;
@@ -25,17 +26,33 @@ export function flyToProperty(map: any, property: Property): void {
       if (coordinates && coordinates.length >= 3) {
         const lats = coordinates.map((coord) => coord[1]);
         const lngs = coordinates.map((coord) => coord[0]);
-        const bounds = [
-          [Math.min(...lats), Math.min(...lngs)],
-          [Math.max(...lats), Math.max(...lngs)],
-        ];
-        map.flyToBounds(bounds, { padding: [50, 50], maxZoom: 20, duration: 1.5 });
+        if (isMapLibre) {
+          map.fitBounds(
+            [
+              [Math.min(...lngs), Math.min(...lats)],
+              [Math.max(...lngs), Math.max(...lats)],
+            ],
+            { padding: 50, maxZoom: 20, duration: 520 }
+          );
+        } else {
+          map.flyToBounds(
+            [
+              [Math.min(...lats), Math.min(...lngs)],
+              [Math.max(...lats), Math.max(...lngs)],
+            ],
+            { padding: [50, 50], maxZoom: 20, duration: 1.5 }
+          );
+        }
         return;
       }
     }
 
     if (property.latitude && property.longitude) {
-      map.flyTo([property.latitude, property.longitude], 17, { duration: 1.5 });
+      if (isMapLibre) {
+        map.flyTo({ center: [property.longitude, property.latitude], zoom: 17, duration: 520 });
+      } else {
+        map.flyTo([property.latitude, property.longitude], 17, { duration: 0.6 });
+      }
     }
   } catch (error) {
     console.error('Error moving map:', error);

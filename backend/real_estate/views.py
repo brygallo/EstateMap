@@ -15,6 +15,7 @@ from .models import Property, PropertyImage, Province, City, Lead, PendingPublic
 from django.contrib.auth import get_user_model
 from .serializers import (
     MapPropertySerializer,
+    MapPointPropertySerializer,
     PropertySerializer,
     PropertyImageSerializer,
     ProvinceSerializer,
@@ -231,7 +232,8 @@ class PropertyViewSet(viewsets.ModelViewSet):
                 'external_id',
                 'created_at',
             )
-            if params.get('page_size') != '1':
+            include_images = params.get('include_images') not in ('0', 'false', 'False', 'no')
+            if params.get('page_size') != '1' and include_images:
                 queryset = queryset.prefetch_related(
                     Prefetch(
                         'images',
@@ -259,6 +261,27 @@ class PropertyViewSet(viewsets.ModelViewSet):
         Property.objects.filter(pk=instance.pk).update(views_count=F('views_count') + 1)
         instance.views_count = (instance.views_count or 0) + 1
         serializer = self.get_serializer(instance)
+        return Response(serializer.data)
+
+    @action(detail=False, methods=['get'], permission_classes=[AllowAny])
+    def map_points(self, request):
+        """
+        Puntos ultralivianos para el mapa. No pagina por defecto: 6k puntos con
+        payload minimo pesan mucho menos que 6k cards con miniaturas.
+        """
+        queryset = self.filter_queryset(self.get_queryset()).only(
+            'id',
+            'property_type',
+            'status',
+            'latitude',
+            'longitude',
+            'polygon',
+            'show_measurements',
+            'price',
+        )
+        limit = int(request.query_params.get('limit') or 8000)
+        limit = max(1, min(limit, 12000))
+        serializer = MapPointPropertySerializer(queryset[:limit], many=True, context={'request': request})
         return Response(serializer.data)
 
     @action(detail=False, methods=['get'], permission_classes=[AllowAny])

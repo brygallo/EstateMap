@@ -8,6 +8,7 @@ export function generatePageMetadata(
   const siteName = 'Geo Propiedades Ecuador';
   const baseUrl = process.env.NEXT_PUBLIC_FRONTEND_URL || 'https://geopropiedadesecuador.com';
   const fullUrl = `${baseUrl}${path}`;
+  const ogImage = `${baseUrl}/og-image.png`;
 
   return {
     title,
@@ -19,11 +20,20 @@ export function generatePageMetadata(
       siteName,
       locale: 'es_EC',
       type: 'website',
+      images: [
+        {
+          url: ogImage,
+          width: 1200,
+          height: 630,
+          alt: `${title} | ${siteName}`,
+        },
+      ],
     },
     twitter: {
       card: 'summary_large_image',
       title: `${title} | ${siteName}`,
       description,
+      images: [ogImage],
     },
     alternates: {
       canonical: fullUrl,
