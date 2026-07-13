@@ -9,8 +9,12 @@
 import { getServerApiUrl } from './api-url';
 
 const API_URL = getServerApiUrl();
-export const SITE_URL =
-  process.env.NEXT_PUBLIC_FRONTEND_URL || 'https://geopropiedadesecuador.com';
+// Se normaliza quitando cualquier `/` final para evitar el doble slash `//`
+// cuando se concatena `${SITE_URL}${path}` (el env de producción puede venir
+// con slash final, p. ej. `https://geopropiedadesecuador.com/`).
+export const SITE_URL = (
+  process.env.NEXT_PUBLIC_FRONTEND_URL || 'https://geopropiedadesecuador.com'
+).replace(/\/+$/, '');
 export const SITE_NAME = 'Geo Propiedades Ecuador';
 
 // Tipo de dominio único: reexportamos el canónico de `./types` para no mantener

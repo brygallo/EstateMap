@@ -1,5 +1,5 @@
 import { MetadataRoute } from 'next';
-import { getProperties, getCities, SITE_URL } from '@/lib/properties';
+import { getProperties, getCities, getProvinces, SITE_URL } from '@/lib/properties';
 import { generateCombos } from '@/lib/seo-combos';
 
 // Nota: las imágenes por propiedad se publican en un sitemap de imágenes aparte
@@ -49,6 +49,13 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.7,
   }));
 
+  const provinceRoutes: MetadataRoute.Sitemap = getProvinces(properties).map((province) => ({
+    url: `${SITE_URL}/provincias/${province.slug}`,
+    lastModified: now,
+    changeFrequency: 'daily',
+    priority: 0.72,
+  }));
+
   // Landings por combinación tipo + operación + ubicación (SEO local).
   const comboRoutes: MetadataRoute.Sitemap = generateCombos(properties).map(({ combo }) => ({
     url: `${SITE_URL}/${combo}`,
@@ -57,5 +64,5 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.7,
   }));
 
-  return [...staticRoutes, ...propertyRoutes, ...cityRoutes, ...comboRoutes];
+  return [...staticRoutes, ...propertyRoutes, ...cityRoutes, ...provinceRoutes, ...comboRoutes];
 }

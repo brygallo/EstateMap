@@ -45,6 +45,8 @@ interface PropertyCardProps {
   onOpenDetails?: () => void;
   selected?: boolean;
   distanceLabel?: string | null;
+  /** Carga la imagen con `priority` (para el LCP en grids SEO). */
+  priority?: boolean;
 }
 
 const FAVORITES_KEY = 'geo:favorite-properties';
@@ -198,6 +200,7 @@ export default function PropertyCard({
   onOpenDetails,
   selected = false,
   distanceLabel = null,
+  priority = false,
 }: PropertyCardProps) {
   const typeLabel = getPropertyTypeLabel(String(property.property_type));
   const statusLabel = getStatusLabel(String(property.status));
@@ -340,6 +343,7 @@ export default function PropertyCard({
             sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
             className="object-cover"
             wrapperClassName="absolute inset-0"
+            priority={priority}
           />
         ) : (
           <ImagePlaceholder

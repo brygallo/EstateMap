@@ -222,6 +222,30 @@ bash backend/paquetes/.pipeline/monitor.sh 30
 | 09:48 | reanudado tras reconciliar (local=prod=5401) | 5401 |
 | 10:22 | 040 importado (Creadas 87, act 12, 0 dup) | 5488 |
 | 11:01 | 041 importado (Creadas 92, act 7, 0 dup) | 5580 |
+| 11:28 | 042 scrape trajo solo 10 nuevos; 043 trajo 0 => fuente agotada | 5580 |
+| 11:28 | uploader FATAL en 042 por timeout SSH transitorio (no datos) | 5580 |
+| 11:43 | uploader relanzado; 042 importado (Creadas 4, act 6, 0 dup) | 5584 |
+| 11:43 | **ALL DONE — fuente agotada, pipeline completo** | 5584 |
+
+### CIERRE 2026-07-13 ~11:45 — FUENTE AGOTADA (pipeline completo)
+
+- **Prod = 5584** plusvalia, 0 dup, **0 sin imagen** (5584 external_id distintos).
+- Tail-off de la fuente: 040=99, 041=99, 042=**10**, 043=**0** nuevos. El builder
+  hizo `touch builder.done` y termino; el uploader vacio la cola y salio ("ALL DONE").
+- El FATAL del uploader en 042 fue un **timeout SSH puntual** (`connect ... port 22:
+  Operation timed out`), NO un error de datos. Se relanzo el uploader con el SSH
+  restablecido y el 042 (10 listings) entro idempotente.
+- **Reconciliacion final: local crudas = prod = 5584, 0 huerfanas, 0 huecos**
+  (conjuntos de external_id identicos, verificado por diff de sets).
+- Apagado limpio: daemons host muertos, **sin scrape hijo** en el contenedor
+  (los "AUN VIVO" fueron el falso positivo del grep matcheando su propia linea,
+  ya documentado), sin paquetes pendientes, sin `.tgz` local, `/tmp/plusvalia-*`
+  y temporales de reconciliacion limpios en server+contenedor+local.
+- `builder.done` queda presente marcando la fuente agotada. Para RE-CHEQUEAR mas
+  adelante si Plusvalia publico anuncios nuevos: borrar `builder.done` y relanzar
+  `uploader.sh` + `builder.sh 43` (o el siguiente numero libre).
+
+
 
 **Replica prod->local: COMPLETADA y verificada (2026-07-10).**
 - Local BD: 6302 importadas (5307 plusvalia + 995 properati), 30994 imagenes.

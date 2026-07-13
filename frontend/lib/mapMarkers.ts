@@ -81,7 +81,7 @@ export function priceMarkerHtml({
   const ring = selected ? `0 0 0 3px ${c.ring},` : '';
   const shadowOpacity = selected ? '0.34' : '0.24';
   return `
-    <div class="gp-marker" style="
+    <div class="gp-marker ${selected ? 'gp-marker-selected' : ''}" style="
       position:relative;
       width:112px;
       height:48px;
@@ -148,7 +148,7 @@ export function iconMarkerHtml({
   const ring = selected ? `0 0 0 3px ${c.ring},` : '';
   const shadowOpacity = selected ? '0.34' : '0.24';
   return `
-    <div class="gp-marker" style="
+    <div class="gp-marker ${selected ? 'gp-marker-selected' : ''}" style="
       position:relative;
       width:40px;
       height:44px;

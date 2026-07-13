@@ -123,6 +123,68 @@ export function generateCombos(properties: Property[]): ComboParam[] {
   return generateCombosWithCounts(properties).map(({ combo }) => ({ combo }));
 }
 
+export type CityComboLink = { combo: string; label: string; count: number };
+
+/**
+ * Combos de nivel CIUDAD con más inventario para un tipo (y opción) dado, con el
+ * nombre legible de la ciudad. Se usa para enlazar desde las landings nacionales
+ * (`/casas-en-venta`) hacia la intención por ciudad (`/casas-en-venta-en-quito`),
+ * que es la que Google premia para búsquedas tipo "casas en venta en Quito".
+ */
+export function topCityCombos(
+  properties: Property[],
+  typeSlug: string,
+  opSlug: string | null,
+  limit = 8
+): CityComboLink[] {
+  const typeDef = TYPE_DEFS.find((t) => t.slug === typeSlug);
+  if (!typeDef) return [];
+  const opDef = opSlug ? OP_DEFS.find((o) => o.slug === opSlug) || null : null;
+
+  const agg = new Map<string, { name: string; count: number }>();
+  for (const p of properties) {
+    if (p.property_type !== typeDef.type) continue;
+    if (opDef && p.status !== opDef.status) continue;
+    const cityName = (p.city || '').trim();
+    if (!cityName) continue;
+    const citySlug = slugify(cityName);
+    const entry = agg.get(citySlug);
+    if (entry) entry.count += 1;
+    else agg.set(citySlug, { name: cityName, count: 1 });
+  }
+
+  const opLabel = opDef ? ` ${opDef.label}` : '';
+  return Array.from(agg.entries())
+    .map(([citySlug, { name, count }]) => ({
+      combo: buildComboSlug(typeDef.slug, opDef?.slug ?? null, citySlug),
+      label: `${typeDef.plural}${opLabel} en ${name}`,
+      count,
+    }))
+    .filter((c) => c.count >= MIN_COMBO_PROPERTIES)
+    .sort((a, b) => b.count - a.count || a.label.localeCompare(b.label))
+    .slice(0, limit);
+}
+
+/**
+ * Slug canónico para una combinación, para deduplicar landings casi idénticas.
+ * Un combo SIN operación cuyo inventario es todo una misma operación (p. ej.
+ * `terrenos-en-quito` cuando todos los terrenos de Quito están en venta) es un
+ * duplicado de la variante con operación (`terrenos-en-venta-en-quito`): se
+ * canoniza hacia esa, que es más específica y captura mejor la intención. Los
+ * combos con operación explícita, o los de inventario mixto, son auto-canónicos.
+ */
+export function canonicalComboSlug(parsed: ParsedCombo, matched: Property[]): string {
+  const { typeDef, opDef, locationSlug } = parsed;
+  if (opDef) return buildComboSlug(typeDef.slug, opDef.slug, locationSlug);
+
+  const statuses = new Set(matched.map((p) => p.status));
+  if (statuses.size === 1) {
+    const onlyOp = OP_DEFS.find((o) => o.status === matched[0]?.status);
+    if (onlyOp) return buildComboSlug(typeDef.slug, onlyOp.slug, locationSlug);
+  }
+  return buildComboSlug(typeDef.slug, null, locationSlug);
+}
+
 /**
  * Filtra el catálogo según una combinación parseada y devuelve las propiedades
  * y el nombre legible de la ubicación (ciudad o provincia).

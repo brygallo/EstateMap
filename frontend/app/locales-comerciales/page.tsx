@@ -1,5 +1,6 @@
 import SeoLanding, { TYPE_LINKS, priceRangeText } from '@/components/SeoLanding';
 import { getProperties } from '@/lib/properties';
+import { topCityCombos } from '@/lib/seo-combos';
 import { generatePageMetadata } from '@/lib/metadata';
 
 export const revalidate = 3600;
@@ -15,6 +16,10 @@ export const metadata = generatePageMetadata(
 export default async function LocalesComercialesPage() {
   const all = await getProperties();
   const properties = all.filter((p) => p.property_type === 'commercial');
+  const cityLinks = topCityCombos(all, 'locales-comerciales', null, 12).map((c) => ({
+    label: c.label,
+    href: `/${c.combo}`,
+  }));
 
   return (
     <SeoLanding
@@ -26,6 +31,7 @@ export default async function LocalesComercialesPage() {
       pageHref={PATH}
       mapHref="/?type=commercial"
       relatedLinks={TYPE_LINKS.filter((l) => l.href !== PATH)}
+      cityLinks={cityLinks}
       emptyMessage="Aún no hay locales comerciales publicados. Explora otras propiedades en el mapa."
     />
   );

@@ -3,13 +3,14 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import { motion } from 'motion/react';
-import { ExternalLink, Loader2, MapPinned, RotateCw, SearchX, WifiOff, X } from 'lucide-react';
+import { ExternalLink, Loader2, MapPin, MapPinned, RotateCw, SearchX, WifiOff, X } from 'lucide-react';
 import MapFilters from '@/components/map/MapFilters';
 import PropertyCard, { PropertyCardSkeleton } from '@/components/PropertyCard';
 import { Badge } from '@/components/ui/badge';
+import { trackEvent } from '@/lib/analytics';
 import { formatDistance, getPropertyDistanceKm, type LatLngPoint } from '@/lib/geo';
 import { cn } from '@/lib/utils';
-import type { Owner, Property, PropertyFilters, PropertyLocationGroup } from '@/lib/types';
+import type { MapCityGroup, MapPayloadContext, Owner, Property, PropertyFilters, PropertyLocationGroup } from '@/lib/types';
 
 type SortMode = 'distance' | 'price_asc' | 'price_desc' | 'area_desc' | 'recent';
 const INITIAL_CARD_COUNT = 20;
@@ -24,6 +25,8 @@ interface PropertySidebarProps {
   onClearFilters: () => void;
 
   visibleProperties: Property[];
+  cityGroups?: MapCityGroup[];
+  mapContext?: MapPayloadContext | null;
   selectedProperty: Property | null;
   onPropertyClick: (property: Property) => void;
   onPropertyOpen: (property: Property) => void;
@@ -40,6 +43,7 @@ interface PropertySidebarProps {
   userLocation?: LatLngPoint | null;
   onZoomOut?: () => void;
   onResetMapView?: () => void;
+  onCityGroupClick?: (group: MapCityGroup) => void;
   hasMore?: boolean;
   loadingMore?: boolean;
   onLoadMore?: () => void;
@@ -58,6 +62,8 @@ export default function PropertySidebar({
   onFilterChange,
   onClearFilters,
   visibleProperties,
+  cityGroups = [],
+  mapContext = null,
   selectedProperty,
   onPropertyClick,
   onPropertyOpen,
@@ -69,6 +75,7 @@ export default function PropertySidebar({
   userLocation = null,
   onZoomOut,
   onResetMapView,
+  onCityGroupClick,
   hasMore = false,
   loadingMore = false,
   onLoadMore,
@@ -126,6 +133,25 @@ export default function PropertySidebar({
   }, [propertiesWithDistance, sortMode, userLocation]);
   const renderedProperties = sortedProperties.slice(0, visibleCardCount);
   const hiddenPropertiesCount = Math.max(sortedProperties.length - renderedProperties.length, 0);
+  const dominantCity = cityGroups[0];
+  const cityDominatesView =
+    mapContext?.group_level === 'points' &&
+    dominantCity &&
+    visibleProperties.length > 0 &&
+    dominantCity.count >= Math.max(visibleProperties.length * 0.45, 6);
+  const contextTitle = cityDominatesView ? `Propiedades en ${dominantCity.label}` : mapContext?.title || 'Mapa';
+  const contextSubtitle = cityDominatesView
+    ? `${dominantCity.province || 'Ecuador'} · ${dominantCity.count} propiedades cerca`
+    : mapContext?.subtitle || 'Explora propiedades por zona';
+  const groupLabel = mapContext?.group_level === 'country'
+    ? 'Ciudades destacadas'
+    : mapContext?.group_level === 'province'
+      ? 'Ciudades de la provincia'
+      : mapContext?.group_level === 'city'
+        ? 'Ciudades y zonas'
+        : mapContext?.group_level === 'points'
+          ? 'Zonas cercanas'
+        : 'Ciudades en esta vista';
 
   useEffect(() => {
     setVisibleCardCount(INITIAL_CARD_COUNT);
@@ -174,6 +200,24 @@ export default function PropertySidebar({
   const handleLeave = () => {
     setLocalHoverId(null);
     onPropertyHover?.(null);
+  };
+
+  const handleSortChange = (nextSortMode: SortMode) => {
+    trackEvent('map_results_sorted', {
+      sort_mode: nextSortMode,
+      visible_count: visibleProperties.length,
+      total_count: totalCount,
+    });
+    setSortMode(nextSortMode);
+  };
+
+  const trackEmptyAction = (action: string) => {
+    trackEvent('map_empty_state_action_clicked', {
+      action,
+      has_active_filters: hasActiveFilters,
+      visible_count: visibleProperties.length,
+      total_count: totalCount,
+    });
   };
 
   return (
@@ -230,7 +274,7 @@ export default function PropertySidebar({
             Ordenar
             <select
               value={sortMode}
-              onChange={(event) => setSortMode(event.target.value as SortMode)}
+              onChange={(event) => handleSortChange(event.target.value as SortMode)}
               className="h-8 rounded-md border border-line bg-white px-2 text-xs font-semibold text-textPrimary outline-none transition-colors hover:border-primary focus:border-primary"
             >
               <option value="distance">Más cercanas</option>
@@ -245,6 +289,57 @@ export default function PropertySidebar({
 
       {/* Listado */}
       <div className="space-y-2 bg-background p-2.5 pb-24">
+        {mapContext && (
+          <div className="rounded-card border border-line bg-white p-3 shadow-card">
+            <div className="flex items-center justify-between gap-3">
+              <div className="min-w-0">
+                <p className="truncate text-sm font-semibold text-textPrimary">{contextTitle}</p>
+                <p className="mt-0.5 text-xs text-textSecondary">{contextSubtitle}</p>
+              </div>
+              <Badge variant="secondary" className="rounded-md font-geo tabular-nums">
+                {mapContext.total_count}
+              </Badge>
+            </div>
+          </div>
+        )}
+
+        {cityGroups.length > 0 && (
+          <div className="rounded-card border border-line bg-white p-3 shadow-card">
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <p className="text-sm font-semibold text-textPrimary">{groupLabel}</p>
+                <p className="mt-0.5 text-xs text-textSecondary">Toca una ciudad para acercarte a sus propiedades.</p>
+              </div>
+              <Badge variant="secondary" className="rounded-md font-geo tabular-nums">
+                {cityGroups.length}
+              </Badge>
+            </div>
+            <div className="mt-3 grid gap-2">
+              {cityGroups.slice(0, 12).map((group) => (
+                <button
+                  key={group.id}
+                  type="button"
+                  onClick={() => onCityGroupClick?.(group)}
+                  className="flex items-center justify-between gap-3 rounded-button border border-line bg-background px-3 py-2 text-left transition-colors hover:border-primary hover:bg-primaryLight"
+                >
+                  <span className="flex min-w-0 items-center gap-2">
+                    <MapPin className="h-4 w-4 flex-shrink-0 text-primary" strokeWidth={2} aria-hidden />
+                    <span className="min-w-0">
+                      <span className="block truncate text-sm font-semibold text-textPrimary">{group.label}</span>
+                      {group.province && (
+                        <span className="block truncate text-xs text-textSecondary">{group.province}</span>
+                      )}
+                    </span>
+                  </span>
+                  <span className="rounded-full bg-white px-2.5 py-1 font-geo text-xs font-bold tabular-nums text-primary shadow-card">
+                    {group.count}
+                  </span>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
         {loading && visibleProperties.length === 0 ? (
           <div className="space-y-2" aria-label="Cargando propiedades del área">
             {Array.from({ length: 5 }).map((_, i) => (
@@ -284,7 +379,10 @@ export default function PropertySidebar({
               <div className="mt-3 flex flex-wrap justify-center gap-2">
                 <button
                   type="button"
-                  onClick={onClearFilters}
+                  onClick={() => {
+                    trackEmptyAction('clear_filters');
+                    onClearFilters();
+                  }}
                   className="rounded-button border border-line bg-white px-3 py-1.5 text-xs font-medium text-primary transition-colors hover:bg-muted"
                 >
                   Limpiar filtros
@@ -292,7 +390,10 @@ export default function PropertySidebar({
                 {onZoomOut && (
                   <button
                     type="button"
-                    onClick={onZoomOut}
+                    onClick={() => {
+                      trackEmptyAction('zoom_out');
+                      onZoomOut();
+                    }}
                     className="rounded-button bg-primary px-3 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-primaryHover"
                   >
                     Alejar mapa
@@ -313,7 +414,10 @@ export default function PropertySidebar({
                 {onZoomOut && (
                   <button
                     type="button"
-                    onClick={onZoomOut}
+                    onClick={() => {
+                      trackEmptyAction('zoom_out');
+                      onZoomOut();
+                    }}
                     className="rounded-button bg-primary px-3 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-primaryHover"
                   >
                     Alejar mapa
@@ -322,12 +426,22 @@ export default function PropertySidebar({
                 {onResetMapView && (
                   <button
                     type="button"
-                    onClick={onResetMapView}
+                    onClick={() => {
+                      trackEmptyAction('reset_map');
+                      onResetMapView();
+                    }}
                     className="rounded-button border border-line bg-white px-3 py-1.5 text-xs font-medium text-primary transition-colors hover:bg-muted"
                   >
                     Ver Ecuador
                   </button>
                 )}
+                <Link
+                  href="/publicar-propiedad"
+                  onClick={() => trackEmptyAction('publish_property')}
+                  className="rounded-button border border-line bg-white px-3 py-1.5 text-xs font-medium text-primary transition-colors hover:bg-muted"
+                >
+                  Publicar aquí
+                </Link>
               </div>
             </div>
           )

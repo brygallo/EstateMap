@@ -1,5 +1,6 @@
 import SeoLanding, { TYPE_LINKS, priceRangeText } from '@/components/SeoLanding';
 import { getProperties } from '@/lib/properties';
+import { topCityCombos } from '@/lib/seo-combos';
 import { generatePageMetadata } from '@/lib/metadata';
 
 export const revalidate = 3600;
@@ -17,6 +18,10 @@ export default async function TerrenosEnVentaPage() {
   const properties = all.filter(
     (p) => p.property_type === 'land' && p.status === 'for_sale'
   );
+  const cityLinks = topCityCombos(all, 'terrenos', 'venta', 12).map((c) => ({
+    label: c.label,
+    href: `/${c.combo}`,
+  }));
 
   return (
     <SeoLanding
@@ -28,6 +33,7 @@ export default async function TerrenosEnVentaPage() {
       pageHref={PATH}
       mapHref="/?type=land&status=for_sale"
       relatedLinks={TYPE_LINKS.filter((l) => l.href !== PATH)}
+      cityLinks={cityLinks}
       emptyMessage="Aún no hay terrenos en venta publicados. Explora otras propiedades en el mapa."
     />
   );

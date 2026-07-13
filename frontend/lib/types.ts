@@ -70,6 +70,43 @@ export interface Property {
   updated_at?: string;
 }
 
+export interface PropertyCluster {
+  id: string;
+  is_cluster: true;
+  count: number;
+  label?: string | null;
+  group_level?: 'country' | 'province' | 'city' | 'grid' | string;
+  latitude: number;
+  longitude: number;
+  focus_latitude?: number;
+  focus_longitude?: number;
+  expansion_zoom: number;
+  bounds?: MapBounds;
+  suspicious_count?: number;
+}
+
+export type MapPropertyItem = Property | PropertyCluster;
+
+export interface MapCityGroup {
+  id: string;
+  label: string;
+  province?: string;
+  count: number;
+  latitude: number;
+  longitude: number;
+  zoom: number;
+  bounds?: MapBounds;
+  suspicious_count?: number;
+}
+
+export interface MapPayloadContext {
+  group_level: 'country' | 'province' | 'city' | 'grid' | 'points' | string;
+  title: string;
+  subtitle: string;
+  next_level?: string | null;
+  total_count: number;
+}
+
 /** Propietario tal como lo expone el endpoint `/properties/owners/`. */
 export interface Owner {
   id: number;

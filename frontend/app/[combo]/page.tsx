@@ -10,12 +10,18 @@ import {
   buildComboSlug,
   generateCombos,
   filterByCombo,
+  canonicalComboSlug,
 } from '@/lib/seo-combos';
 import { generatePageMetadata } from '@/lib/metadata';
 
 export const revalidate = 3600;
-// Solo existen las combinaciones generadas en build; cualquier otra da 404.
-export const dynamicParams = false;
+// `sitemap.ts` calcula los combos con datos en vivo cada hora, mientras que
+// `generateStaticParams` solo corre en build; con `dynamicParams = false` los
+// combos nuevos quedaban en 404 pese a estar en el sitemap. Con `true` se
+// renderizan bajo demanda (igual que `propiedades/[ciudad]`), y el propio
+// componente sigue devolviendo `notFound()` si el combo no supera
+// `MIN_COMBO_PROPERTIES`.
+export const dynamicParams = true;
 
 type Params = { combo: string };
 
@@ -41,11 +47,14 @@ export async function generateMetadata({ params }: { params: Params }): Promise<
     return { title: 'Búsqueda no disponible', robots: { index: false, follow: true } };
   }
   const title = titleFor(parsed, locationName);
+  // Dedup de landings casi idénticas: un combo sin operación cuyo inventario es
+  // todo una misma operación canoniza hacia la variante con operación.
+  const canonicalPath = `/${canonicalComboSlug(parsed, matched)}`;
 
   return generatePageMetadata(
     title,
     `${title}: explora ubicación en el mapa, precio, área y detalles completos de cada propiedad. Contacta directamente al anunciante.`,
-    `/${params.combo}`
+    canonicalPath
   );
 }
 
@@ -102,6 +111,7 @@ export default async function ComboPage({ params }: { params: Params }) {
       pageHref={`/${params.combo}`}
       mapHref={mapHref}
       relatedLinks={related.slice(0, 8)}
+      locationName={locationName ?? undefined}
       emptyMessage="No hay propiedades en esta combinación por ahora. Explora el mapa interactivo."
     />
   );

@@ -26,6 +26,7 @@ import {
   Loader2,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { trackEvent } from '@/lib/analytics';
 import ShareModal from './ShareModal';
 import LeadForm from './LeadForm';
 import {
@@ -300,6 +301,18 @@ const PropertyModal = ({ property: initialProperty, isOpen, onClose, onViewOnMap
   const hasRentPrice = property.rent_price != null && Number.isFinite(rentPriceNum) && rentPriceNum > 0;
   const canWhatsApp = Boolean(contactPhone && whatsappPhone);
   const canCall = Boolean(contactPhone);
+  const trackContact = (method: string, source: string) => {
+    trackEvent('property_contact_clicked', {
+      method,
+      source,
+      property_id: property.id,
+      city: property.city,
+      province: property.province,
+      property_type: property.property_type,
+      status: property.status,
+      imported: isImported,
+    });
+  };
   const nextImage = () => {
     if (images.length === 0) return;
     setCurrentImageIndex((prev) => (prev + 1) % images.length);
@@ -670,6 +683,7 @@ const PropertyModal = ({ property: initialProperty, isOpen, onClose, onViewOnMap
                       href={whatsappUrl}
                       target="_blank"
                       rel="noopener noreferrer"
+                      onClick={() => trackContact('whatsapp', 'modal_imported')}
                       className="wa-bounce flex w-full items-center justify-center gap-2 rounded-button bg-secondary px-4 py-2.5 text-sm font-semibold text-white shadow-card transition-colors hover:bg-secondaryHover"
                     >
                       <MessageCircle className="h-4 w-4" strokeWidth={2} aria-hidden />
@@ -680,6 +694,7 @@ const PropertyModal = ({ property: initialProperty, isOpen, onClose, onViewOnMap
                       href={sourceUrl}
                       target="_blank"
                       rel="noopener noreferrer"
+                      onClick={() => trackContact('source_url', 'modal_imported')}
                       className="flex w-full items-center justify-center gap-2 rounded-button bg-primary px-4 py-2.5 text-sm font-semibold text-white shadow-card transition-colors hover:bg-primaryHover"
                     >
                       <ExternalLink className="h-4 w-4" strokeWidth={2} aria-hidden />
@@ -702,6 +717,7 @@ const PropertyModal = ({ property: initialProperty, isOpen, onClose, onViewOnMap
                         <div className="grid grid-cols-2 gap-2">
                           <a
                             href={`tel:${contactPhone}`}
+                            onClick={() => trackContact('call', 'modal_contact_box')}
                             className="flex flex-col items-center gap-1 rounded-button bg-white/20 p-2 transition-all hover:bg-white/30"
                           >
                             <span className="rounded-md bg-white/20 p-1.5">
@@ -714,6 +730,7 @@ const PropertyModal = ({ property: initialProperty, isOpen, onClose, onViewOnMap
                             href={whatsappUrl}
                             target="_blank"
                             rel="noopener noreferrer"
+                            onClick={() => trackContact('whatsapp', 'modal_contact_box')}
                             className="wa-bounce flex flex-col items-center gap-1 rounded-button bg-secondary p-2 transition-all hover:bg-secondaryHover"
                           >
                             <span className="rounded-md bg-white/20 p-1.5">
@@ -750,6 +767,7 @@ const PropertyModal = ({ property: initialProperty, isOpen, onClose, onViewOnMap
                 {canCall && (
                   <a
                     href={`tel:${contactPhone}`}
+                    onClick={() => trackContact('call', 'mobile_sticky')}
                     className="flex items-center justify-center gap-2 rounded-button border border-line bg-white px-3 py-3 text-sm font-semibold text-textPrimary"
                   >
                     <Phone className="h-4 w-4" strokeWidth={2} aria-hidden />
@@ -760,6 +778,7 @@ const PropertyModal = ({ property: initialProperty, isOpen, onClose, onViewOnMap
                   href={whatsappUrl}
                   target="_blank"
                   rel="noopener noreferrer"
+                  onClick={() => trackContact('whatsapp', 'mobile_sticky')}
                   className="wa-bounce flex items-center justify-center gap-2 rounded-button bg-secondary px-3 py-3 text-sm font-semibold text-white shadow-card"
                 >
                   <MessageCircle className="h-4 w-4" strokeWidth={2} aria-hidden />
@@ -771,6 +790,7 @@ const PropertyModal = ({ property: initialProperty, isOpen, onClose, onViewOnMap
                 href={sourceUrl}
                 target="_blank"
                 rel="noopener noreferrer"
+                onClick={() => trackContact('source_url', 'mobile_sticky')}
                 className="flex w-full items-center justify-center gap-2 rounded-button bg-primary px-3 py-3 text-sm font-semibold text-white shadow-card"
               >
                 <ExternalLink className="h-4 w-4" strokeWidth={2} aria-hidden />
@@ -779,6 +799,7 @@ const PropertyModal = ({ property: initialProperty, isOpen, onClose, onViewOnMap
             ) : (
               <a
                 href={`/propiedad/${property.id}`}
+                onClick={() => trackContact('full_page', 'mobile_sticky')}
                 className="flex w-full items-center justify-center gap-2 rounded-button bg-primary px-3 py-3 text-sm font-semibold text-white shadow-card"
               >
                 <ExternalLink className="h-4 w-4" strokeWidth={2} aria-hidden />

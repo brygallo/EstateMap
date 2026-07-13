@@ -38,7 +38,11 @@ export default function AnimatedNumber({
   suffix,
 }: AnimatedNumberProps) {
   const reduceMotion = useReducedMotion();
-  const motionValue = useMotionValue(0);
+  // Se inicializa con `value` (no `0`) para que el render en servidor (SSR/ISR)
+  // ya muestre el número real. Con `0` el HTML servido a crawlers y la primera
+  // carga mostraban "$0" hasta que el useEffect corría en el cliente. El
+  // useEffect de abajo sigue interpolando ante cambios posteriores de `value`.
+  const motionValue = useMotionValue(value);
   const spring = useSpring(motionValue, {
     stiffness: 90,
     damping: 20,

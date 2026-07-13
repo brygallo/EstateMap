@@ -22,6 +22,7 @@ import PropertyCard from '@/components/PropertyCard';
 import {
   getProperties,
   getCities,
+  getProvinces,
   jsonLd,
   SITE_URL,
   SITE_NAME,
@@ -81,6 +82,9 @@ export default async function HomePage() {
     .filter((city) => !mainCitySlugs.has(city.slug))
     .sort((a, b) => a.count - b.count || a.name.localeCompare(b.name))
     .slice(0, 48);
+  const provinces = getProvinces(properties)
+    .sort((a, b) => b.count - a.count || a.name.localeCompare(b.name))
+    .slice(0, 16);
   const featuredProperties = await getProperties({
     includeImages: true,
     pageSize: 6,
@@ -124,6 +128,12 @@ export default async function HomePage() {
             position: popularSearches.length + cities.length + index + 1,
             name: `Propiedades en ${city.name}`,
             url: `${SITE_URL}/propiedades/${city.slug}`,
+          })),
+          ...provinces.map((province, index) => ({
+            '@type': 'ListItem',
+            position: popularSearches.length + cities.length + extendedCities.slice(0, 30).length + index + 1,
+            name: `Propiedades en ${province.name}`,
+            url: `${SITE_URL}/provincias/${province.slug}`,
           })),
         ],
       },
@@ -452,6 +462,26 @@ export default async function HomePage() {
                         <MapPin className="h-3.5 w-3.5 text-primary" aria-hidden />
                         {city.name}
                         <span className="text-xs text-textMuted">({city.count})</span>
+                      </Link>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {provinces.length > 0 && (
+                <div>
+                  <h2 className="text-xl font-semibold text-textPrimary">
+                    Explorar por provincia
+                  </h2>
+                  <div className="mt-4 flex flex-wrap gap-2.5">
+                    {provinces.map((province) => (
+                      <Link
+                        key={province.slug}
+                        href={`/provincias/${province.slug}`}
+                        className="inline-flex items-center gap-1.5 rounded-full border border-line bg-white px-4 py-2 text-sm font-medium text-textPrimary shadow-card transition-colors hover:border-primary hover:bg-primaryLight hover:text-primary"
+                      >
+                        <MapPinned className="h-3.5 w-3.5 text-primary" aria-hidden />
+                        {province.name}
                       </Link>
                     ))}
                   </div>

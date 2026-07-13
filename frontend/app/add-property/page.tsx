@@ -176,6 +176,7 @@ const AddPropertyPage = () => {
 
   // Location permission modal
   const [showLocationModal, setShowLocationModal] = useState(false);
+  const [locationBlocked, setLocationBlocked] = useState(false);
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [showLocationToast, setShowLocationToast] = useState(false);
   const [draftLoaded, setDraftLoaded] = useState(false);
@@ -494,7 +495,9 @@ const AddPropertyPage = () => {
         const permissionStatus = await navigator.permissions.query({ name: 'geolocation' as PermissionName });
 
         if (permissionStatus.state === 'denied') {
-          toast.error('El permiso de ubicación está bloqueado. Por favor habilítalo en la configuración de tu navegador.');
+          setLocationBlocked(true);
+          setShowLocationModal(true);
+          toast.error('El permiso de ubicación está bloqueado. Revisa los pasos para activarlo en tu iPhone o navegador.');
           return;
         }
       } catch (error) {
@@ -513,6 +516,7 @@ const AddPropertyPage = () => {
           localStorage.setItem('hasInitialLocation', 'true');
         }
 
+        setLocationBlocked(false);
         setLoadingLocation(false);
       },
       (error) => {
@@ -528,6 +532,10 @@ const AddPropertyPage = () => {
         }
 
         toast.error(errorMessage);
+        if (error.code === error.PERMISSION_DENIED) {
+          setLocationBlocked(true);
+          setShowLocationModal(true);
+        }
         setLoadingLocation(false);
       },
       {
@@ -1151,6 +1159,10 @@ const AddPropertyPage = () => {
         }
 
         toast.error(errorMessage);
+        if (error.code === error.PERMISSION_DENIED) {
+          setLocationBlocked(true);
+          setShowLocationModal(true);
+        }
         setLoadingLocation(false);
       },
       {
@@ -2361,6 +2373,7 @@ const AddPropertyPage = () => {
         onAccept={handleAcceptLocation}
         onDecline={handleDeclineLocation}
         isLoading={loadingLocation}
+        blocked={locationBlocked}
       />
 
       {/* Location Loading Toast */}

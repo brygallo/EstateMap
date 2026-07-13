@@ -169,7 +169,9 @@ export async function generateMetadata({ params }: PropertyPageProps): Promise<M
   const imageUrl = mainImage?.image || '/og-image.png';
 
   // Base URL for images and page
-  const baseUrl = process.env.NEXT_PUBLIC_FRONTEND_URL || 'https://geopropiedadesecuador.com';
+  const baseUrl = (
+    process.env.NEXT_PUBLIC_FRONTEND_URL || 'https://geopropiedadesecuador.com'
+  ).replace(/\/+$/, '');
   const propertyUrl = `${baseUrl}/propiedad/${property.id}`;
   const imageAbsoluteUrl = imageUrl.startsWith('http') ? imageUrl : `${baseUrl}${imageUrl}`;
 
@@ -266,7 +268,9 @@ export default async function PropertyPage({ params }: PropertyPageProps) {
   ].filter(Boolean);
 
   // Get absolute URL for images
-  const baseUrl = process.env.NEXT_PUBLIC_FRONTEND_URL || 'https://geopropiedadesecuador.com';
+  const baseUrl = (
+    process.env.NEXT_PUBLIC_FRONTEND_URL || 'https://geopropiedadesecuador.com'
+  ).replace(/\/+$/, '');
   const imageUrl = mainImage?.image || '/og-image.png';
   const imageAbsoluteUrl = imageUrl.startsWith('http') ? imageUrl : `${baseUrl}${imageUrl}`;
   const propertyUrl = `${baseUrl}/propiedad/${property.id}`;

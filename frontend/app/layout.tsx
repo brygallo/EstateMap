@@ -9,8 +9,11 @@ import QueryProvider from '@/components/providers/QueryProvider';
 import NavBar from '@/components/NavBar';
 import Footer from '@/components/Footer';
 import { Toaster } from 'sonner';
+import { WHATSAPP_NUMBER } from '@/lib/constants';
 
-const siteUrl = process.env.NEXT_PUBLIC_FRONTEND_URL || 'https://geopropiedadesecuador.com';
+const siteUrl = (
+  process.env.NEXT_PUBLIC_FRONTEND_URL || 'https://geopropiedadesecuador.com'
+).replace(/\/+$/, '');
 
 export const metadata: Metadata = {
   title: {
@@ -138,6 +141,7 @@ export default function RootLayout({
         contactPoint: {
           '@type': 'ContactPoint',
           contactType: 'customer support',
+          telephone: `+${WHATSAPP_NUMBER}`,
           areaServed: 'EC',
           availableLanguage: ['es'],
         },

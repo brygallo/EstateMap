@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { useAuth } from '@/lib/auth-context';
 import { useGeolocation } from '@/hooks/useGeolocation';
 import { usePropertyFilters } from '@/hooks/usePropertyFilters';
+import { trackEvent } from '@/lib/analytics';
 import { flyToProperty } from '@/lib/map-navigation';
 import PropertySidebar from '@/components/map/PropertySidebar';
 import PropertyModal from '@/components/PropertyModal';
@@ -43,6 +44,37 @@ const MainMap = dynamic(() => import('@/components/maps/MapLibreMap'), {
 // Centro de Ecuador para mostrar el país completo al iniciar.
 const DEFAULT_CENTER: [number, number] = [-1.5, -78.5];
 
+const fitMapToBounds = (map: any, bounds?: MapBounds, fallback?: { lat: number; lng: number; zoom: number }) => {
+  if (!map) return;
+  if (fallback && fallback.zoom >= 11.5) {
+    if (typeof map.fitBounds === 'function' && typeof map.flyToBounds !== 'function') {
+      map.flyTo({ center: [fallback.lng, fallback.lat], zoom: fallback.zoom, duration: 700 });
+    } else {
+      map.flyTo([fallback.lat, fallback.lng], fallback.zoom, { duration: 0.7 });
+    }
+    return;
+  }
+  if (bounds) {
+    const samePoint = Math.abs(bounds.west - bounds.east) < 0.0001 && Math.abs(bounds.south - bounds.north) < 0.0001;
+    if (!samePoint && typeof map.fitBounds === 'function' && typeof map.flyToBounds !== 'function') {
+      map.fitBounds(
+        [
+          [bounds.west, bounds.south],
+          [bounds.east, bounds.north],
+        ],
+        { padding: 86, maxZoom: fallback?.zoom ?? 13, duration: 720 }
+      );
+      return;
+    }
+  }
+  if (!fallback) return;
+  if (typeof map.fitBounds === 'function' && typeof map.flyToBounds !== 'function') {
+    map.flyTo({ center: [fallback.lng, fallback.lat], zoom: fallback.zoom, duration: 700 });
+  } else {
+    map.flyTo([fallback.lat, fallback.lng], fallback.zoom, { duration: 0.7 });
+  }
+};
+
 const MapPage = () => {
   const { token } = useAuth();
   const searchParams = useSearchParams();
@@ -59,6 +91,8 @@ const MapPage = () => {
   const {
     filters,
     mapProperties,
+    mapCityGroups,
+    mapContext,
     cardProperties,
     owners,
     locations,
@@ -74,7 +108,8 @@ const MapPage = () => {
     clearFilters,
     hasActiveFilters,
   } = usePropertyFilters({ token, bounds, zoom: mapZoom });
-  const geo = useGeolocation(mapRef, mapProperties, loading);
+  const mapPointProperties = mapProperties.filter((item): item is Property => !(item as any).is_cluster);
+  const geo = useGeolocation(mapRef, mapPointProperties, loading);
   const sidebarProperties = cardProperties;
 
   const handleMapReady = (map: any) => {
@@ -84,18 +119,42 @@ const MapPage = () => {
   const handleZoomOut = useCallback(() => {
     const map = mapRef.current;
     if (!map) return;
+    trackEvent('map_empty_zoom_out_clicked', { zoom: map.getZoom() });
     map.setZoom(Math.max(map.getZoom() - 2, 7));
   }, []);
 
   const handleResetMapView = useCallback(() => {
     const map = mapRef.current;
     if (!map) return;
+    trackEvent('map_reset_view_clicked', { source: 'map_page' });
     if (typeof map.fitBounds === 'function' && typeof map.flyToBounds !== 'function') {
       map.flyTo({ center: [DEFAULT_CENTER[1], DEFAULT_CENTER[0]], zoom: 7, duration: 900 });
     } else {
       map.flyTo(DEFAULT_CENTER, 7, { duration: 0.9 });
     }
   }, []);
+
+  const handleCityGroupClick = useCallback((group: { latitude: number; longitude: number; zoom: number; label: string; bounds?: MapBounds }) => {
+    const map = mapRef.current;
+    if (!map) return;
+    trackEvent('map_city_group_clicked', {
+      city: group.label,
+      zoom: group.zoom,
+    });
+    fitMapToBounds(map, group.bounds, {
+      lat: group.latitude,
+      lng: group.longitude,
+      zoom: group.zoom || 12,
+    });
+  }, []);
+
+  const handleLocate = useCallback(() => {
+    trackEvent('map_locate_clicked', {
+      location_blocked: geo.locationBlocked,
+      has_user_location: Boolean(geo.userLocation),
+    });
+    geo.handleGetMyLocation();
+  }, [geo]);
 
   // Abrir una propiedad indicada por ?property=<id> (enlaces compartidos).
   useEffect(() => {
@@ -125,6 +184,13 @@ const MapPage = () => {
 
   // Clic en el listado: solo mueve el mapa y resalta.
   const handleSidebarPropertyClick = (property: Property) => {
+    trackEvent('property_card_map_focus_clicked', {
+      property_id: property.id,
+      city: property.city,
+      province: property.province,
+      property_type: property.property_type,
+      status: property.status,
+    });
     flyToProperty(mapRef.current, property);
     setSelectedProperty(property);
     setIsModalOpen(false);
@@ -132,6 +198,14 @@ const MapPage = () => {
   };
 
   const handleSidebarPropertyOpen = (property: Property) => {
+    trackEvent('property_card_details_opened', {
+      property_id: property.id,
+      source: 'sidebar',
+      city: property.city,
+      province: property.province,
+      property_type: property.property_type,
+      status: property.status,
+    });
     flyToProperty(mapRef.current, property);
     setSelectedProperty(property);
     setIsModalOpen(true);
@@ -140,6 +214,14 @@ const MapPage = () => {
 
   // Clic en el polígono/marcador: mueve el mapa y abre el modal.
   const handlePolygonClick = async (property: Property) => {
+    trackEvent('property_pin_clicked', {
+      property_id: property.id,
+      city: property.city,
+      province: property.province,
+      property_type: property.property_type,
+      status: property.status,
+      zoom: mapRef.current?.getZoom?.() ?? null,
+    });
     flyToProperty(mapRef.current, property);
     setSelectedProperty(property);
     setIsModalOpen(true);
@@ -158,6 +240,13 @@ const MapPage = () => {
   // "Ver en el mapa" desde el modal: recentra el mapa en la propiedad y, en
   // móvil (donde el panel tapa el mapa), oculta el panel para verlo.
   const handleViewOnMap = () => {
+    if (selectedProperty) {
+      trackEvent('property_detail_view_on_map_clicked', {
+        property_id: selectedProperty.id,
+        city: selectedProperty.city,
+        province: selectedProperty.province,
+      });
+    }
     if (selectedProperty) flyToProperty(mapRef.current, selectedProperty);
     if (typeof window !== 'undefined' && window.innerWidth < 1024) {
       setIsModalOpen(false);
@@ -165,6 +254,13 @@ const MapPage = () => {
   };
 
   const handleCloseModal = () => {
+    if (selectedProperty) {
+      trackEvent('property_detail_closed', {
+        property_id: selectedProperty.id,
+        city: selectedProperty.city,
+        province: selectedProperty.province,
+      });
+    }
     setIsModalOpen(false);
     setSelectedProperty(null);
 
@@ -236,6 +332,8 @@ const MapPage = () => {
           onFilterChange={handleFilterChange}
           onClearFilters={clearFilters}
           visibleProperties={sidebarProperties}
+          cityGroups={mapCityGroups}
+          mapContext={mapContext}
           selectedProperty={selectedProperty}
           onPropertyClick={handleSidebarPropertyClick}
           onPropertyOpen={handleSidebarPropertyOpen}
@@ -247,6 +345,7 @@ const MapPage = () => {
           userLocation={geo.userLocation}
           onZoomOut={handleZoomOut}
           onResetMapView={handleResetMapView}
+          onCityGroupClick={handleCityGroupClick}
           hasMore={cardsHasMore}
           loadingMore={cardsLoadingMore}
           onLoadMore={loadMoreCards}
@@ -270,7 +369,7 @@ const MapPage = () => {
           onBoundsChange={setBounds}
           onZoomChange={setMapZoom}
           onPolygonClick={handlePolygonClick}
-          onLocate={geo.handleGetMyLocation}
+          onLocate={handleLocate}
           locating={geo.loadingLocation}
           locationBlocked={geo.locationBlocked}
           isRefreshing={mapLoading && mapProperties.length === 0}
@@ -318,6 +417,7 @@ const MapPage = () => {
         onAccept={geo.handleAcceptLocation}
         onDecline={geo.handleDeclineLocation}
         isLoading={geo.loadingLocation}
+        blocked={geo.locationBlocked}
       />
 
       <style>{`

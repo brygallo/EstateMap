@@ -19,6 +19,7 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { trackEvent } from '@/lib/analytics';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -48,6 +49,9 @@ const NavBar = () => {
   };
 
   const closeMobileMenu = () => setMobileMenuOpen(false);
+  const trackPublishClick = (source: string) => {
+    trackEvent('publish_cta_clicked', { source, authenticated: Boolean(token) });
+  };
 
   const initials = (user?.username || 'U').slice(0, 2).toUpperCase();
   const navLinkClass =
@@ -98,7 +102,7 @@ const NavBar = () => {
                 size="sm"
                 className="ml-2 h-9 rounded-full bg-primary px-4 font-semibold text-primary-foreground shadow-card hover:bg-primaryHover"
               >
-                <Link href="/publicar-propiedad">
+                <Link href="/publicar-propiedad" onClick={() => trackPublishClick('navbar_desktop_auth')}>
                   <Plus className="h-4 w-4" />
                   Publicar gratis
                 </Link>
@@ -153,7 +157,7 @@ const NavBar = () => {
                 size="sm"
                 className="ml-2 h-9 rounded-full bg-primary px-4 font-semibold text-primary-foreground shadow-card hover:bg-primaryHover"
               >
-                <Link href="/publicar-propiedad">
+                <Link href="/publicar-propiedad" onClick={() => trackPublishClick('navbar_desktop_guest')}>
                   <Plus className="h-4 w-4" />
                   Publicar gratis
                 </Link>
@@ -166,7 +170,10 @@ const NavBar = () => {
           <Link
             href="/publicar-propiedad"
             className="mobile-publish-cta inline-flex h-10 items-center gap-1.5 rounded-full bg-primary px-3 text-xs font-bold text-white shadow-cardHover ring-2 ring-primary/15"
-            onClick={closeMobileMenu}
+            onClick={() => {
+              trackPublishClick('navbar_mobile_pill');
+              closeMobileMenu();
+            }}
           >
             <Plus className="h-4 w-4" strokeWidth={2.5} aria-hidden />
             Publicar gratis
@@ -221,7 +228,7 @@ const NavBar = () => {
                     </Link>
                   </Button>
                   <Button asChild variant="ghost" className="justify-start" onClick={closeMobileMenu}>
-                    <Link href="/publicar-propiedad">
+                    <Link href="/publicar-propiedad" onClick={() => trackPublishClick('navbar_mobile_auth_menu')}>
                       <Plus className="h-4 w-4" />
                       Nueva Propiedad
                     </Link>
@@ -286,7 +293,7 @@ const NavBar = () => {
                     className="justify-start rounded-full bg-primary text-primary-foreground hover:bg-primaryHover"
                     onClick={closeMobileMenu}
                   >
-                    <Link href="/publicar-propiedad">
+                    <Link href="/publicar-propiedad" onClick={() => trackPublishClick('navbar_mobile_guest_menu')}>
                       <Plus className="h-4 w-4" />
                       Publicar gratis
                     </Link>

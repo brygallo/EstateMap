@@ -9,6 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
+import { trackEvent } from '@/lib/analytics';
 import {
   Select,
   SelectContent,
@@ -44,6 +45,14 @@ const STATUS_LABELS: Record<string, string> = {
   for_rent: 'En alquiler',
 };
 
+const QUICK_FILTERS = [
+  { key: 'for_sale', label: 'Venta', patch: { status: 'for_sale' } },
+  { key: 'for_rent', label: 'Alquiler', patch: { status: 'for_rent' } },
+  { key: 'house', label: 'Casas', patch: { propertyType: 'house' } },
+  { key: 'land', label: 'Terrenos', patch: { propertyType: 'land' } },
+  { key: 'apartment', label: 'Departamentos', patch: { propertyType: 'apartment' } },
+] satisfies { key: string; label: string; patch: Partial<PropertyFilters> }[];
+
 // Entrada escalonada de cada campo del panel (respeta reduce-motion via Motion).
 const container: Variants = {
   hidden: {},
@@ -68,7 +77,18 @@ export default function MapFilters({
   onClear,
 }: MapFiltersProps) {
   const [open, setOpen] = useState(false);
-  const update = (patch: Partial<PropertyFilters>) => onChange({ ...filters, ...patch });
+  const update = (patch: Partial<PropertyFilters>, source = 'advanced') => {
+    const next = { ...filters, ...patch };
+    trackEvent('map_filter_changed', {
+      source,
+      property_type: next.propertyType,
+      status: next.status,
+      province: next.province,
+      city: next.city,
+      has_search: Boolean(next.search),
+    });
+    onChange(next);
+  };
 
   // Ciudades disponibles según la provincia elegida (o todas si es "all").
   const selectedProvince = locations.find((g) => g.province === filters.province);
@@ -182,6 +202,35 @@ export default function MapFilters({
             </span>
           )}
         </button>
+      </div>
+
+      <div className="-mx-3 flex gap-2 overflow-x-auto px-3 pb-0.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        {QUICK_FILTERS.map((quick) => {
+          const active =
+            quick.patch.status != null
+              ? filters.status === quick.patch.status
+              : filters.propertyType === quick.patch.propertyType;
+          const patch =
+            quick.patch.status != null
+              ? { status: active ? 'all' : quick.patch.status }
+              : { propertyType: active ? 'all' : quick.patch.propertyType };
+
+          return (
+            <button
+              key={quick.key}
+              type="button"
+              onClick={() => update(patch, 'quick_chip')}
+              className={`shrink-0 rounded-full border px-3 py-1.5 text-xs font-semibold transition-colors ${
+                active
+                  ? 'border-primary bg-primary text-white'
+                  : 'border-line bg-white text-textPrimary hover:border-primary hover:bg-primaryLight hover:text-primary'
+              }`}
+              aria-pressed={active}
+            >
+              {quick.label}
+            </button>
+          );
+        })}
       </div>
 
       {/* Chips de filtros activos */}
