@@ -92,7 +92,11 @@ function filtersToUrlParams(f: PropertyFilters): URLSearchParams {
 }
 
 /** Traduce los filtros de la UI a los query params que entiende el backend. */
-function filtersToApiParams(f: PropertyFilters, bounds: MapBounds | null): URLSearchParams {
+function filtersToApiParams(
+  f: PropertyFilters,
+  bounds: MapBounds | null,
+  options: { pageSize?: number; includeImages?: boolean; page?: number } = {}
+): URLSearchParams {
   const params = new URLSearchParams();
   if (f.search) params.set('search', f.search);
   if (f.propertyType !== 'all') params.set('type', f.propertyType);
@@ -109,9 +113,9 @@ function filtersToApiParams(f: PropertyFilters, bounds: MapBounds | null): URLSe
   if (bounds) {
     params.set('bbox', `${bounds.west},${bounds.south},${bounds.east},${bounds.north}`);
   }
-  // El mapa no debe intentar hidratar miles de tarjetas/marcadores por paneo.
-  // El backend sigue exponiendo `count`; el detalle completo se carga por ID.
-  params.set('page_size', '600');
+  if (options.pageSize) params.set('page_size', String(options.pageSize));
+  if (options.page) params.set('page', String(options.page));
+  if (options.includeImages != null) params.set('include_images', options.includeImages ? '1' : '0');
   return params;
 }
 
@@ -122,6 +126,7 @@ function filtersToApiParams(f: PropertyFilters, bounds: MapBounds | null): URLSe
 function filtersKey(f: PropertyFilters): string {
   const params = filtersToApiParams(f, null);
   params.delete('page_size');
+  params.delete('include_images');
   params.sort();
   return params.toString();
 }
@@ -140,7 +145,6 @@ interface MapResultsCache {
   areas: MapBounds[];
   propertiesById: Map<number, Property>;
   orderedIds: number[];
-  hasGlobal: boolean;
 }
 
 function cacheToList(cache: MapResultsCache): Property[] {
@@ -159,7 +163,6 @@ function getOrCreateCache(
       areas: [],
       propertiesById: new Map(),
       orderedIds: [],
-      hasGlobal: false,
     };
     caches.set(key, cache);
   }
@@ -194,10 +197,15 @@ export function usePropertyFilters({ token, bounds, zoom = 7 }: UsePropertyFilte
   const [filters, setFilters] = useState<PropertyFilters>(() =>
     filtersFromParams(searchParams)
   );
-  const [properties, setProperties] = useState<Property[]>([]);
+  const [mapProperties, setMapProperties] = useState<Property[]>([]);
+  const [cardProperties, setCardProperties] = useState<Property[]>([]);
   const [owners, setOwners] = useState<Owner[]>([]);
   const [locations, setLocations] = useState<PropertyLocationGroup[]>([]);
   const [loading, setLoading] = useState(false);
+  const [cardsLoading, setCardsLoading] = useState(false);
+  const [cardsLoadingMore, setCardsLoadingMore] = useState(false);
+  const [cardsPage, setCardsPage] = useState(1);
+  const [cardsHasMore, setCardsHasMore] = useState(false);
   // true cuando la última carga de propiedades del área falló (red / respuesta
   // no OK). Permite distinguir "0 resultados" real de un error, y ofrecer
   // reintentar en lugar de mostrar una lista vacía silenciosa.
@@ -212,6 +220,7 @@ export function usePropertyFilters({ token, bounds, zoom = 7 }: UsePropertyFilte
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const urlSyncRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const abortRef = useRef<AbortController | null>(null);
+  const cardsAbortRef = useRef<AbortController | null>(null);
   const activeFilterKeyRef = useRef<string>(filtersKey(filters));
   // Cache incremental por filtros: cada bbox nuevo se mezcla por id. El mapa no
   // reemplaza el set entero al panear, solo agrega lo que faltaba.
@@ -227,7 +236,10 @@ export function usePropertyFilters({ token, bounds, zoom = 7 }: UsePropertyFilte
     if (activeFilterKeyRef.current === key) return;
     activeFilterKeyRef.current = key;
     const cache = resultCachesRef.current.get(key);
-    setProperties(cache ? cacheToList(cache) : []);
+    setMapProperties(cache ? cacheToList(cache) : []);
+    setCardProperties([]);
+    setCardsPage(1);
+    setCardsHasMore(false);
     setError(false);
   }, [filters]);
 
@@ -306,7 +318,7 @@ export function usePropertyFilters({ token, bounds, zoom = 7 }: UsePropertyFilte
     };
   }, [filters, token]);
 
-  // Traer propiedades cuando cambian filtros o bounds (con debounce).
+  // Traer puntos ultralivianos del mapa cuando cambian filtros o bounds.
   useEffect(() => {
     if (debounceRef.current) clearTimeout(debounceRef.current);
 
@@ -314,24 +326,17 @@ export function usePropertyFilters({ token, bounds, zoom = 7 }: UsePropertyFilte
       const key = filtersKey(filters);
       const cache = getOrCreateCache(resultCachesRef.current, key);
       const hasCachedResults = cache.propertiesById.size > 0;
-      const useGlobalLoad = zoom <= 7;
 
-      if (useGlobalLoad && cache.hasGlobal) {
-        const cached = cacheToList(cache);
-        if (cached.length) setProperties(cached);
-        return;
-      }
-
-      if (!bounds && !useGlobalLoad) {
-        setProperties(cacheToList(cache));
+      if (!bounds) {
+        setMapProperties(cacheToList(cache));
         return;
       }
 
       // Si el bbox solicitado ya cae dentro de cualquier zona cacheada para
       // estos filtros, no pedimos red ni tocamos el array de propiedades.
-      if (!useGlobalLoad && bounds && cache.areas.some((area) => boundsContains(area, bounds))) {
+      if (cache.areas.some((area) => boundsContains(area, bounds))) {
         const cached = cacheToList(cache);
-        if (cached.length) setProperties(cached);
+        if (cached.length) setMapProperties(cached);
         return;
       }
 
@@ -349,10 +354,10 @@ export function usePropertyFilters({ token, bounds, zoom = 7 }: UsePropertyFilte
 
       try {
         const { apiFetch } = await import('@/lib/api');
-        const params = filtersToApiParams(filters, useGlobalLoad ? null : bounds);
-        if (useGlobalLoad) params.set('page_size', '2000');
+        const params = filtersToApiParams(filters, bounds);
+        params.set('limit', '8000');
         const qs = params.toString();
-        const res = await apiFetch(`/properties/?${qs}`, {
+        const res = await apiFetch(`/properties/map_points/?${qs}`, {
           skipAuth: !token,
           signal: controller.signal,
         });
@@ -360,12 +365,8 @@ export function usePropertyFilters({ token, bounds, zoom = 7 }: UsePropertyFilte
           const data = await res.json();
           const list: Property[] = Array.isArray(data) ? data : data.results ?? [];
           mergeProperties(cache, list);
-          if (useGlobalLoad) {
-            cache.hasGlobal = true;
-          } else if (bounds) {
-            cache.areas.push(bounds);
-          }
-          setProperties(cacheToList(cache));
+          cache.areas.push(bounds);
+          setMapProperties(cacheToList(cache));
           if (abortRef.current === controller) setError(false);
         } else if (abortRef.current === controller) {
           setError(true);
@@ -379,16 +380,87 @@ export function usePropertyFilters({ token, bounds, zoom = 7 }: UsePropertyFilte
         clearTimeout(showTimer);
         if (abortRef.current === controller) setLoading(false);
       }
-    }, 450);
+    }, 220);
 
     return () => {
       if (debounceRef.current) clearTimeout(debounceRef.current);
     };
-  }, [filters, bounds, token, reloadKey, zoom]);
+  }, [filters, bounds, token, reloadKey]);
+
+  const fetchCardsPage = useCallback(
+    async (page: number, mode: 'replace' | 'append' = 'replace') => {
+      if (!bounds) {
+        if (mode === 'replace') {
+          setCardProperties([]);
+          setCardsPage(1);
+          setCardsHasMore(false);
+        }
+        return;
+      }
+
+      if (cardsAbortRef.current) cardsAbortRef.current.abort();
+      const controller = new AbortController();
+      cardsAbortRef.current = controller;
+      if (mode === 'append') setCardsLoadingMore(true);
+      else setCardsLoading(true);
+
+      try {
+        const { apiFetch } = await import('@/lib/api');
+        const params = filtersToApiParams(filters, bounds, {
+          page,
+          pageSize: 20,
+          includeImages: true,
+        });
+        const res = await apiFetch(`/properties/?${params.toString()}`, {
+          skipAuth: !token,
+          signal: controller.signal,
+        });
+        if (!res.ok) {
+          if (cardsAbortRef.current === controller) setError(true);
+          return;
+        }
+
+        const data = await res.json();
+        const list: Property[] = Array.isArray(data) ? data : data.results ?? [];
+        setCardProperties((current) => {
+          if (mode === 'replace') return list;
+          const seen = new Set(current.map((property) => property.id));
+          return [...current, ...list.filter((property) => !seen.has(property.id))];
+        });
+        setCardsPage(page);
+        setCardsHasMore(Boolean(!Array.isArray(data) && data.next));
+        if (cardsAbortRef.current === controller) setError(false);
+      } catch (err: any) {
+        if (err?.name !== 'AbortError') {
+          console.error('Error fetching property cards:', err);
+          if (cardsAbortRef.current === controller) setError(true);
+        }
+      } finally {
+        if (cardsAbortRef.current === controller) {
+          setCardsLoading(false);
+          setCardsLoadingMore(false);
+        }
+      }
+    },
+    [bounds, filters, token]
+  );
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      fetchCardsPage(1, 'replace');
+    }, 750);
+    return () => clearTimeout(timer);
+  }, [fetchCardsPage]);
+
+  const loadMoreCards = useCallback(() => {
+    if (cardsLoading || cardsLoadingMore || !cardsHasMore) return;
+    fetchCardsPage(cardsPage + 1, 'append');
+  }, [cardsHasMore, cardsLoading, cardsLoadingMore, cardsPage, fetchCardsPage]);
 
   useEffect(() => {
     return () => {
       if (abortRef.current) abortRef.current.abort();
+      if (cardsAbortRef.current) cardsAbortRef.current.abort();
       if (urlSyncRef.current) clearTimeout(urlSyncRef.current);
     };
   }, []);
@@ -419,6 +491,9 @@ export function usePropertyFilters({ token, bounds, zoom = 7 }: UsePropertyFilte
   // re-consulta aunque filtros y bounds no hayan cambiado.
   const retry = useCallback(() => {
     resultCachesRef.current.delete(filtersKey(filters));
+    setCardProperties([]);
+    setCardsPage(1);
+    setCardsHasMore(false);
     setError(false);
     setReloadKey((k) => k + 1);
   }, [filters]);
@@ -443,10 +518,16 @@ export function usePropertyFilters({ token, bounds, zoom = 7 }: UsePropertyFilte
 
   return {
     filters,
-    properties,
+    mapProperties,
+    cardProperties,
     owners,
     locations,
-    loading,
+    loading: cardsLoading,
+    mapLoading: loading,
+    cardsLoading,
+    cardsLoadingMore,
+    cardsHasMore,
+    loadMoreCards,
     error,
     retry,
     totalCount,

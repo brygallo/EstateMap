@@ -299,8 +299,8 @@ export function buildPropertyLayers({
               price: candidate.formattedPrice,
               selected: candidate.isSelected,
             })}</div>`,
-        iconSize: useCompactMarker ? [30, 30] : [100, 42],
-        iconAnchor: useCompactMarker ? [0, 0] : [50, 42]
+        iconSize: useCompactMarker ? [40, 44] : [112, 48],
+        iconAnchor: useCompactMarker ? [20, 44] : [56, 48]
       });
 
       markers.push(
@@ -468,8 +468,8 @@ export function buildPropertyLayers({
             price: candidate.formattedPrice,
             selected: false,
           })}</div>`,
-          iconSize: [100, 42],
-          iconAnchor: [50, 42]
+          iconSize: [112, 48],
+          iconAnchor: [56, 48]
         });
 
         markers.push(

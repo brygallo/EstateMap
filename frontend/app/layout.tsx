@@ -95,7 +95,7 @@ export const metadata: Metadata = {
     icon: '/favicon.svg',
     shortcut: '/favicon.svg',
     apple: [
-      { url: '/icon-180x180.svg' },
+      { url: '/icon.svg', type: 'image/svg+xml' },
       { url: '/icon-192x192.svg', sizes: '192x192', type: 'image/svg+xml' },
     ],
   },
@@ -174,8 +174,8 @@ export default function RootLayout({
   };
 
   return (
-    <html lang="es" className={`${GeistSans.variable} ${GeistMono.variable}`}>
-      <body className="font-sans">
+    <html lang="es" className={`${GeistSans.variable} ${GeistMono.variable}`} suppressHydrationWarning>
+      <body className="font-sans" suppressHydrationWarning>
         <Script
           id="sw-cleanup-script"
           strategy="afterInteractive"

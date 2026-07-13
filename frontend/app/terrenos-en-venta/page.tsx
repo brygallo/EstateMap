@@ -1,17 +1,16 @@
-import type { Metadata } from 'next';
 import SeoLanding, { TYPE_LINKS, priceRangeText } from '@/components/SeoLanding';
 import { getProperties } from '@/lib/properties';
+import { generatePageMetadata } from '@/lib/metadata';
 
 export const revalidate = 3600;
 
 const PATH = '/terrenos-en-venta';
 
-export const metadata: Metadata = {
-  title: 'Terrenos en venta en Ecuador',
-  description:
-    'Terrenos y lotes en venta en Ecuador con ubicación y área delimitada en el mapa, precio y detalles para evaluar accesos y oportunidades de inversión.',
-  alternates: { canonical: PATH },
-};
+export const metadata = generatePageMetadata(
+  'Terrenos en venta en Ecuador',
+  'Terrenos y lotes en venta en Ecuador con ubicación y área delimitada en el mapa, precio y detalles para evaluar accesos y oportunidades de inversión.',
+  PATH
+);
 
 export default async function TerrenosEnVentaPage() {
   const all = await getProperties();

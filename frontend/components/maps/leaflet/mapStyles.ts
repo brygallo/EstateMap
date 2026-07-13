@@ -4,11 +4,13 @@ export const MAP_STYLES = `
         .price-label-icon {
           background: transparent !important;
           border: none !important;
+          overflow: visible !important;
           transform: translate(-50%, -50%);
         }
         .map-marker-icon {
           background: transparent !important;
           border: 0 !important;
+          overflow: visible !important;
         }
         .map-marker-icon .gp-marker {
           transition: filter 160ms ease, opacity 160ms ease;
@@ -16,6 +18,7 @@ export const MAP_STYLES = `
         .map-rich-marker-icon {
           background: transparent !important;
           border: 0 !important;
+          overflow: visible !important;
         }
         .map-rich-marker-icon .gp-marker {
           transition: filter 160ms ease, opacity 160ms ease;
@@ -112,7 +115,7 @@ export const MAP_STYLES = `
           background: radial-gradient(circle at 35% 28%, #688CCA 0%, #496D9C 48%, #2D3C67 100%);
           border: 2px solid #ffffff;
           border-radius: 999px;
-          box-shadow: 0 12px 28px rgba(15, 23, 42, 0.24), 0 0 0 7px rgba(73, 109, 156, 0.15);
+          box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.22), 0 2px 5px rgba(15, 23, 42, 0.16);
           color: #ffffff;
           cursor: pointer;
           display: flex;
@@ -123,10 +126,24 @@ export const MAP_STYLES = `
           line-height: 1;
           min-width: 50px;
           padding: 0 12px;
+          position: relative;
           text-shadow: 0 1px 2px rgba(0, 0, 0, 0.28);
           transform: translate(-50%, -50%);
           white-space: nowrap;
           transition: box-shadow 160ms ease, transform 160ms ease;
+        }
+        .map-cluster::before {
+          background: rgba(15, 23, 42, 0.22);
+          border-radius: 999px;
+          bottom: -7px;
+          content: '';
+          filter: blur(6px);
+          height: 10px;
+          left: 50%;
+          position: absolute;
+          transform: translateX(-50%);
+          width: 42px;
+          z-index: -1;
         }
         .map-cluster strong {
           font-size: 16px;

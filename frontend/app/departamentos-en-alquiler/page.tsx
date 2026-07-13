@@ -1,17 +1,16 @@
-import type { Metadata } from 'next';
 import SeoLanding, { TYPE_LINKS, priceRangeText } from '@/components/SeoLanding';
 import { getProperties } from '@/lib/properties';
+import { generatePageMetadata } from '@/lib/metadata';
 
 export const revalidate = 3600;
 
 const PATH = '/departamentos-en-alquiler';
 
-export const metadata: Metadata = {
-  title: 'Departamentos en alquiler en Ecuador',
-  description:
-    'Departamentos en alquiler en Ecuador con mapa interactivo, precios, área, habitaciones y ubicación exacta para elegir mejor tu próximo hogar.',
-  alternates: { canonical: PATH },
-};
+export const metadata = generatePageMetadata(
+  'Departamentos en alquiler en Ecuador',
+  'Departamentos en alquiler en Ecuador con mapa interactivo, precios, área, habitaciones y ubicación exacta para elegir mejor tu próximo hogar.',
+  PATH
+);
 
 export default async function DepartamentosEnAlquilerPage() {
   const all = await getProperties();

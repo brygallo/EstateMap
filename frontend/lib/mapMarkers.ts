@@ -13,21 +13,21 @@ export interface StatusMarker {
 const FOR_SALE: StatusMarker = {
   solid: '#496D9C',
   gradient: 'linear-gradient(135deg, #2D3C67, #496D9C)',
-  shadow: 'rgba(45, 60, 103, 0.30)',
+  shadow: 'rgba(45, 60, 103, 0.20)',
   ring: 'rgba(73, 109, 156, 0.28)',
 };
 
 const FOR_RENT: StatusMarker = {
   solid: '#688CCA',
   gradient: 'linear-gradient(135deg, #496D9C, #688CCA)',
-  shadow: 'rgba(73, 109, 156, 0.30)',
+  shadow: 'rgba(73, 109, 156, 0.20)',
   ring: 'rgba(104, 140, 202, 0.30)',
 };
 
 const INACTIVE: StatusMarker = {
   solid: '#64748B',
   gradient: 'linear-gradient(135deg, #475569, #64748B)',
-  shadow: 'rgba(71, 85, 105, 0.28)',
+  shadow: 'rgba(71, 85, 105, 0.18)',
   ring: 'rgba(100, 116, 139, 0.24)',
 };
 
@@ -78,12 +78,13 @@ export function priceMarkerHtml({
 }): string {
   const c = statusMarker(status);
   const scale = selected ? 'scale(1.06)' : 'scale(1)';
-  const ring = selected ? `0 0 0 4px ${c.ring},` : '';
+  const ring = selected ? `0 0 0 3px ${c.ring},` : '';
+  const shadowOpacity = selected ? '0.34' : '0.24';
   return `
     <div class="gp-marker" style="
       position:relative;
-      width:100px;
-      height:42px;
+      width:112px;
+      height:48px;
       display:flex;
       align-items:flex-start;
       justify-content:center;
@@ -93,13 +94,21 @@ export function priceMarkerHtml({
       pointer-events:auto;
     ">
       <div style="
+        position:absolute; left:50%; bottom:5px; z-index:0;
+        width:48px; height:10px; border-radius:999px;
+        background:rgba(15,23,42,${shadowOpacity});
+        filter:blur(6px);
+        transform:translateX(-50%);
+      "></div>
+      <div style="
         box-sizing:border-box;
+        position:relative; z-index:2;
         display:flex; align-items:center; justify-content:center; gap:5px;
         min-width:76px; max-width:96px; height:30px;
         background:${c.gradient};
         color:#fff; border:2px solid #fff; border-radius:999px;
         padding:4px 9px 4px 5px;
-        box-shadow:${ring} 0 6px 16px ${c.shadow}, 0 2px 5px rgba(15,23,42,0.18);
+        box-shadow:${ring} inset 0 1px 0 rgba(255,255,255,0.18), 0 2px 5px rgba(15,23,42,0.16);
         transition: transform .15s ease, box-shadow .15s ease;
         overflow:hidden;
       ">
@@ -115,7 +124,7 @@ export function priceMarkerHtml({
         ">${price}</span>
       </div>
       <div style="
-        position:absolute; left:50%; bottom:7px;
+        position:absolute; left:50%; bottom:10px; z-index:1;
         width:9px; height:9px; margin-left:-4.5px; background:${c.solid};
         border-right:2px solid #fff; border-bottom:2px solid #fff;
         transform: rotate(45deg); border-bottom-right-radius:2px;
@@ -136,15 +145,30 @@ export function iconMarkerHtml({
 }): string {
   const c = statusMarker(status);
   const scale = selected ? 'scale(1.12)' : 'scale(1)';
-  const ring = selected ? `0 0 0 4px ${c.ring},` : '';
+  const ring = selected ? `0 0 0 3px ${c.ring},` : '';
+  const shadowOpacity = selected ? '0.34' : '0.24';
   return `
-    <div class="gp-marker" style="transform: translate(-50%, -100%) ${scale};">
+    <div class="gp-marker" style="
+      position:relative;
+      width:40px;
+      height:44px;
+      transform:${scale};
+      transform-origin:50% 100%;
+    ">
       <div style="
+        position:absolute; left:50%; bottom:0; z-index:0;
+        width:24px; height:7px; border-radius:999px;
+        background:rgba(15,23,42,${shadowOpacity});
+        filter:blur(5px);
+        transform:translateX(-50%);
+      "></div>
+      <div style="
+        position:absolute; left:50%; top:7px; z-index:1;
         display:flex; align-items:center; justify-content:center;
         width:30px; height:30px; border-radius:999px 999px 999px 6px;
         background:${c.gradient}; border:2px solid #fff;
-        box-shadow:${ring} 0 6px 16px ${c.shadow}, 0 2px 5px rgba(15,23,42,0.18);
-        transform: rotate(-45deg);
+        box-shadow:${ring} inset 0 1px 0 rgba(255,255,255,0.18), 0 2px 5px rgba(15,23,42,0.16);
+        transform: translateX(-50%) rotate(-45deg);
       ">
         <span style="transform: rotate(45deg); display:flex;">${typeIconSvg(type, '#ffffff', 15)}</span>
       </div>
