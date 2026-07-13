@@ -177,7 +177,9 @@ export function useGeolocation(
           name: 'geolocation' as PermissionName,
         });
         if (status.state === 'denied') {
-          notifyLocationError('El permiso de ubicación está bloqueado. Habilítalo desde la configuración de tu navegador.');
+          setLocationBlocked(true);
+          setShowLocationModal(true);
+          notifyLocationError('El permiso de ubicación está bloqueado. Revisa los pasos para activarlo en tu iPhone o navegador.');
           return;
         }
       } catch {
@@ -202,6 +204,10 @@ export function useGeolocation(
       },
       (error) => {
         setLoadingLocation(false);
+        if (error.code === error.PERMISSION_DENIED) {
+          setLocationBlocked(true);
+          setShowLocationModal(true);
+        }
         notifyLocationError(geoErrorMessage(error));
       },
       { enableHighAccuracy: true, timeout: 20000, maximumAge: 0 }
@@ -235,7 +241,10 @@ export function useGeolocation(
       },
       (error) => {
         setLoadingLocation(false);
-        if (error.code === error.PERMISSION_DENIED) setLocationBlocked(true);
+        if (error.code === error.PERMISSION_DENIED) {
+          setLocationBlocked(true);
+          setShowLocationModal(true);
+        }
         notifyLocationError(geoErrorMessage(error));
       },
       { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }

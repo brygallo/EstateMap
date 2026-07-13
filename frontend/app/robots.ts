@@ -1,6 +1,8 @@
 import { MetadataRoute } from 'next';
 
-const siteUrl = process.env.NEXT_PUBLIC_FRONTEND_URL || 'https://geopropiedadesecuador.com';
+const siteUrl = (
+  process.env.NEXT_PUBLIC_FRONTEND_URL || 'https://geopropiedadesecuador.com'
+).replace(/\/+$/, '');
 
 export default function robots(): MetadataRoute.Robots {
   const publicDisallow = [

@@ -1,5 +1,6 @@
 import SeoLanding, { TYPE_LINKS, priceRangeText } from '@/components/SeoLanding';
 import { getProperties } from '@/lib/properties';
+import { topCityCombos } from '@/lib/seo-combos';
 import { generatePageMetadata } from '@/lib/metadata';
 
 export const revalidate = 3600;
@@ -17,6 +18,10 @@ export default async function CasasEnVentaPage() {
   const properties = all.filter(
     (p) => p.property_type === 'house' && p.status === 'for_sale'
   );
+  const cityLinks = topCityCombos(all, 'casas', 'venta', 12).map((c) => ({
+    label: c.label,
+    href: `/${c.combo}`,
+  }));
 
   return (
     <SeoLanding
@@ -28,6 +33,7 @@ export default async function CasasEnVentaPage() {
       pageHref={PATH}
       mapHref="/?type=house&status=for_sale"
       relatedLinks={TYPE_LINKS.filter((l) => l.href !== PATH)}
+      cityLinks={cityLinks}
       emptyMessage="Aún no hay casas en venta publicadas. Explora otras propiedades en el mapa."
     />
   );

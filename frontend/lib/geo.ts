@@ -4,6 +4,15 @@ export type LatLngPoint = { lat: number; lng: number };
 
 const toRadians = (degrees: number) => (degrees * Math.PI) / 180;
 
+// Ecuador continental + Galápagos, con un margen pequeño para no descartar
+// puntos cerca de costa/frontera. Evita clusters fantasma por coordenadas
+// corruptas o lat/lng invertidos.
+export const isPointInEcuadorBounds = (lat: number, lng: number) =>
+  Number.isFinite(lat) &&
+  Number.isFinite(lng) &&
+  ((lat >= -5.45 && lat <= 1.9 && lng >= -81.35 && lng <= -74.75) ||
+    (lat >= -1.75 && lat <= 1.85 && lng >= -92.2 && lng <= -88.45));
+
 export const distanceKm = (a: LatLngPoint, b: LatLngPoint) => {
   const earthRadiusKm = 6371;
   const dLat = toRadians(b.lat - a.lat);
@@ -19,6 +28,7 @@ export const distanceKm = (a: LatLngPoint, b: LatLngPoint) => {
 
 export const getPropertyPoint = (property: Property): LatLngPoint | null => {
   if (typeof property.latitude === 'number' && typeof property.longitude === 'number') {
+    if (!isPointInEcuadorBounds(property.latitude, property.longitude)) return null;
     return { lat: property.latitude, lng: property.longitude };
   }
 
@@ -27,10 +37,11 @@ export const getPropertyPoint = (property: Property): LatLngPoint | null => {
       (acc, [lat, lng]) => ({ lat: acc.lat + lat, lng: acc.lng + lng }),
       { lat: 0, lng: 0 }
     );
-    return {
+    const point = {
       lat: totals.lat / property.polygon.length,
       lng: totals.lng / property.polygon.length,
     };
+    return isPointInEcuadorBounds(point.lat, point.lng) ? point : null;
   }
 
   return null;

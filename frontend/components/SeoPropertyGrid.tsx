@@ -17,6 +17,7 @@ export default function SeoPropertyGrid({
   relatedLinks = [],
   loading = false,
   skeletonCount = 6,
+  priorityCount = 0,
 }: {
   properties: Property[];
   emptyMessage?: string;
@@ -25,6 +26,8 @@ export default function SeoPropertyGrid({
   /** Muestra un grid de skeletons de card en vez de las propiedades. */
   loading?: boolean;
   skeletonCount?: number;
+  /** Nº de primeras tarjetas que cargan su imagen con `priority` (LCP). */
+  priorityCount?: number;
 }) {
   if (loading) {
     return (
@@ -98,12 +101,13 @@ export default function SeoPropertyGrid({
 
   return (
     <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-      {properties.map((property) => (
+      {properties.map((property, index) => (
         <PropertyCard
           key={property.id}
           property={property}
           variant="grid"
           href={`/propiedad/${property.id}`}
+          priority={index < priorityCount}
         />
       ))}
     </div>

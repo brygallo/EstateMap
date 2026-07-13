@@ -24,6 +24,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { trackEvent } from '@/lib/analytics';
 import { WHATSAPP_NUMBER } from '@/lib/constants';
 
 const propertyTypes = [
@@ -84,6 +85,13 @@ export default function AssistedPublishPage() {
   };
 
   const onSubmit = (values: AssistedValues) => {
+    trackEvent('assisted_publication_whatsapp_started', {
+      property_type: values.propertyType,
+      operation: values.operation,
+      city: values.city,
+      has_price: Boolean(values.price),
+      has_details: Boolean(values.details),
+    });
     const whatsappUrl = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(
       buildMessage(values)
     )}`;

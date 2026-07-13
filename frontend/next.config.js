@@ -55,6 +55,24 @@ const nextConfig = {
     ],
   },
   async headers() {
+    // Cabeceras de seguridad aplicadas a todas las rutas. No se incluye
+    // Content-Security-Policy aquí a propósito: requiere una allowlist afinada
+    // (GTM/GA, Google Identity, MapLibre/Leaflet, tiles de OSM, MinIO) y una CSP
+    // mal formada rompería el mapa o el analytics. Queda como follow-up.
+    const securityHeaders = [
+      {
+        key: 'Strict-Transport-Security',
+        value: 'max-age=63072000; includeSubDomains; preload',
+      },
+      { key: 'X-Content-Type-Options', value: 'nosniff' },
+      { key: 'X-Frame-Options', value: 'SAMEORIGIN' },
+      { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
+      {
+        key: 'Permissions-Policy',
+        value: 'camera=(), microphone=(), payment=(), geolocation=(self)',
+      },
+    ];
+
     return [
       {
         source: '/sw.js',
@@ -65,10 +83,22 @@ const nextConfig = {
           },
         ],
       },
+      {
+        source: '/:path*',
+        headers: securityHeaders,
+      },
     ];
   },
   async redirects() {
     return [
+      // Canonicaliza el host: `www` -> apex (evita contenido duplicado en dos
+      // hosts). Corre en el server de Next, que está en la ruta de request.
+      {
+        source: '/:path*',
+        has: [{ type: 'host', value: 'www.geopropiedadesecuador.com' }],
+        destination: 'https://geopropiedadesecuador.com/:path*',
+        permanent: true,
+      },
       { source: '/add-property', destination: '/publicar-propiedad', permanent: true },
       { source: '/my-properties', destination: '/mis-propiedades', permanent: true },
       { source: '/edit-property/:path*', destination: '/editar-propiedad/:path*', permanent: true },

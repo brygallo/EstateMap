@@ -3,6 +3,7 @@
 import { Polygon, Marker } from 'react-leaflet';
 import L from 'leaflet';
 import { statusMarker, statusColor, priceMarkerHtml, iconMarkerHtml } from '@/lib/mapMarkers';
+import { isPointInEcuadorBounds } from '@/lib/geo';
 import { getMapPriceLabel } from './utils';
 
 interface BuildPropertyLayersParams {
@@ -67,19 +68,19 @@ export function buildPropertyLayers({
     ? filteredProperties.filter((property) => {
         const lat = Number(property.latitude);
         const lng = Number(property.longitude);
-        if (Number.isFinite(lat) && Number.isFinite(lng) && currentBounds.contains([lat, lng])) return true;
+        if (isPointInEcuadorBounds(lat, lng) && currentBounds.contains([lat, lng])) return true;
 
         if (property.polygon?.coordinates?.[0]) {
           return property.polygon.coordinates[0].some((point: any) => {
             const [pointLng, pointLat] = point;
-            return currentBounds.contains([Number(pointLat), Number(pointLng)]);
+            return isPointInEcuadorBounds(Number(pointLat), Number(pointLng)) && currentBounds.contains([Number(pointLat), Number(pointLng)]);
           });
         }
 
         if (Array.isArray(property.polygon) && property.polygon.length >= 3) {
           return property.polygon.some((point: any) => {
             const [pointLat, pointLng] = point;
-            return currentBounds.contains([Number(pointLat), Number(pointLng)]);
+            return isPointInEcuadorBounds(Number(pointLat), Number(pointLng)) && currentBounds.contains([Number(pointLat), Number(pointLng)]);
           });
         }
 
@@ -105,11 +106,16 @@ export function buildPropertyLayers({
 
     if (p.polygon?.coordinates?.[0]) {
       // GeoJSON format: convert [lng, lat] to [lat, lng]
-      leafletCoordinates = p.polygon.coordinates[0].map((coord: any) => [coord[1], coord[0]]);
+      leafletCoordinates = p.polygon.coordinates[0]
+        .map((coord: any) => [coord[1], coord[0]])
+        .filter((coord: any) => isPointInEcuadorBounds(Number(coord?.[0]), Number(coord?.[1])));
     } else if (Array.isArray(p.polygon) && p.polygon.length >= 3) {
       // Simple array format: already [lat, lng]
-      leafletCoordinates = p.polygon;
+      leafletCoordinates = p.polygon.filter((coord: any) =>
+        isPointInEcuadorBounds(Number(coord?.[0]), Number(coord?.[1]))
+      );
     }
+    if (leafletCoordinates && leafletCoordinates.length < 3) leafletCoordinates = null;
 
     const isSelected = selectedProperty?.id === p.id;
     // Colores alineados a la paleta navy: azul profundo para venta,
@@ -128,14 +134,14 @@ export function buildPropertyLayers({
     const lat = Number(p.latitude);
     const lng = Number(p.longitude);
 
-    if (Number.isFinite(lat) && Number.isFinite(lng)) {
+    if (isPointInEcuadorBounds(lat, lng)) {
       labelPosition = [lat, lng];
     } else if (leafletCoordinates?.length) {
       const totals = leafletCoordinates.reduce(
         (acc: { lat: number; lng: number; count: number }, coord: any) => {
           const pointLat = Number(coord?.[0]);
           const pointLng = Number(coord?.[1]);
-          if (!Number.isFinite(pointLat) || !Number.isFinite(pointLng)) return acc;
+          if (!isPointInEcuadorBounds(pointLat, pointLng)) return acc;
           acc.lat += pointLat;
           acc.lng += pointLng;
           acc.count += 1;

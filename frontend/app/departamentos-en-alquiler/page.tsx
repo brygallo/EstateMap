@@ -1,5 +1,6 @@
 import SeoLanding, { TYPE_LINKS, priceRangeText } from '@/components/SeoLanding';
 import { getProperties } from '@/lib/properties';
+import { topCityCombos } from '@/lib/seo-combos';
 import { generatePageMetadata } from '@/lib/metadata';
 
 export const revalidate = 3600;
@@ -17,6 +18,10 @@ export default async function DepartamentosEnAlquilerPage() {
   const properties = all.filter(
     (p) => p.property_type === 'apartment' && p.status === 'for_rent'
   );
+  const cityLinks = topCityCombos(all, 'departamentos', 'alquiler', 12).map((c) => ({
+    label: c.label,
+    href: `/${c.combo}`,
+  }));
 
   return (
     <SeoLanding
@@ -28,6 +33,7 @@ export default async function DepartamentosEnAlquilerPage() {
       pageHref={PATH}
       mapHref="/?type=apartment&status=for_rent"
       relatedLinks={TYPE_LINKS.filter((l) => l.href !== PATH)}
+      cityLinks={cityLinks}
       emptyMessage="Aún no hay departamentos en alquiler publicados. Explora otras propiedades en el mapa."
     />
   );

@@ -18,6 +18,8 @@ export default function SeoLanding({
   mapHref,
   mapLabel = 'Ver en el mapa interactivo',
   relatedLinks = [],
+  cityLinks = [],
+  locationName,
   emptyMessage,
 }: {
   title: string;
@@ -27,11 +29,32 @@ export default function SeoLanding({
   mapHref: string;
   mapLabel?: string;
   relatedLinks?: RelatedLink[];
+  /** Enlaces hacia la intención por ciudad (p. ej. "Casas en venta en Quito"). */
+  cityLinks?: RelatedLink[];
+  /** Ubicación (ciudad/provincia) de la página, si aplica: añade schema Place. */
+  locationName?: string;
   emptyMessage?: string;
 }) {
   const hasProperties = properties.length > 0;
   const featuredProperties = properties.slice(0, 8);
   const canonicalHref = pageHref || mapHref;
+
+  // Datos calculados por página para diferenciar la copy (evita que todas las
+  // landings compartan texto byte-idéntico) y para citabilidad por IA.
+  const priceValues = properties
+    .map((p) => Number.parseFloat(String(p.price)))
+    .filter((n) => Number.isFinite(n) && n > 0);
+  const minPrice = priceValues.length ? Math.min(...priceValues) : null;
+  const maxPrice = priceValues.length ? Math.max(...priceValues) : null;
+  const rangeText =
+    minPrice !== null && maxPrice !== null
+      ? minPrice === maxPrice
+        ? ` con precio de referencia ${formatPrice(minPrice)}`
+        : ` con precios desde ${formatPrice(minPrice)} hasta ${formatPrice(maxPrice)}`
+      : '';
+  const countText = `${properties.length} ${
+    properties.length === 1 ? 'propiedad disponible' : 'propiedades disponibles'
+  }`;
   const quickPoints = [
     'Ubicación visible en el mapa',
     'Filtros por precio, tipo y operación',
@@ -57,6 +80,15 @@ export default function SeoLanding({
           },
         },
         about: title,
+        ...(locationName
+          ? {
+              spatialCoverage: {
+                '@type': 'Place',
+                name: locationName,
+                containedInPlace: { '@type': 'Country', name: 'Ecuador' },
+              },
+            }
+          : {}),
       },
       {
         '@type': 'BreadcrumbList',
@@ -93,7 +125,9 @@ export default function SeoLanding({
             name: `¿Dónde encontrar ${title.toLowerCase()}?`,
             acceptedAnswer: {
               '@type': 'Answer',
-              text: `En Geo Propiedades Ecuador puedes encontrar ${title.toLowerCase()} con mapa interactivo, filtros, precio, área, ubicación y contacto directo con el anunciante.`,
+              text: hasProperties
+                ? `En Geo Propiedades Ecuador hay ${countText.toLowerCase()} de ${title.toLowerCase()}${rangeText}, con mapa interactivo, filtros, área, ubicación y contacto directo con el anunciante.`
+                : `En Geo Propiedades Ecuador puedes buscar ${title.toLowerCase()} con mapa interactivo, filtros, precio, área, ubicación y contacto directo con el anunciante.`,
             },
           },
           {
@@ -161,9 +195,19 @@ export default function SeoLanding({
             Respuesta rápida
           </h2>
           <p className="mt-2 text-sm leading-6 text-textSecondary">
-            En Geo Propiedades Ecuador puedes encontrar {title.toLowerCase()} con
-            ubicación en mapa, filtros por precio y características, y contacto
-            directo con anunciantes.
+            {hasProperties ? (
+              <>
+                {countText} de {title.toLowerCase()}
+                {rangeText}. Compara ubicación en el mapa, filtra por precio y
+                características, y contacta directo con los anunciantes.
+              </>
+            ) : (
+              <>
+                En Geo Propiedades Ecuador puedes buscar {title.toLowerCase()} con
+                ubicación en mapa, filtros por precio y características, y contacto
+                directo con anunciantes.
+              </>
+            )}
           </p>
           <div className="mt-5 grid grid-cols-2 gap-3">
             <div className="rounded-lg bg-surface p-3">
@@ -212,9 +256,30 @@ export default function SeoLanding({
           properties={featuredProperties}
           emptyMessage={emptyMessage}
           mapHref={mapHref}
-          relatedLinks={relatedLinks}
+          relatedLinks={relatedLinks.length > 0 ? relatedLinks : cityLinks}
+          priorityCount={2}
         />
       </section>
+
+      {cityLinks.length > 0 && (
+        <nav aria-label="Explora por ciudad" className="mt-12">
+          <h2 className="text-xl font-bold text-textPrimary">Explora por ciudad</h2>
+          <p className="mt-1 text-sm text-textSecondary">
+            Ciudades con más inventario disponible para esta búsqueda.
+          </p>
+          <div className="mt-4 flex flex-wrap gap-2">
+            {cityLinks.map((link) => (
+              <Link
+                key={link.href}
+                href={link.href}
+                className="rounded-full border border-line px-4 py-2 text-sm font-medium text-textPrimary hover:border-primary hover:text-primary"
+              >
+                {link.label}
+              </Link>
+            ))}
+          </div>
+        </nav>
+      )}
 
       {relatedLinks.length > 0 && (
         <nav aria-label="Búsquedas relacionadas" className="mt-12">

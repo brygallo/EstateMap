@@ -24,3 +24,6 @@ marketing-inmobiliarias/
 
 # Paquetes de ingesta (datos scrapeados + imágenes) - no versionar
 backend/paquetes/
+
+# Auditorias locales - no versionar
+geopropiedadesecuador.com-audit/

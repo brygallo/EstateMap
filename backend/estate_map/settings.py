@@ -161,7 +161,34 @@ SIMPLE_JWT = {
     'TOKEN_TYPE_CLAIM': 'token_type',
 }
 
-CORS_ALLOW_ALL_ORIGINS = True
+# CORS: si se define CORS_ALLOWED_ORIGINS (lista separada por comas) se usa esa
+# allowlist explícita; si no, se mantiene el comportamiento previo (abierto) para
+# no romper despliegues existentes. Recomendado en producción:
+#   CORS_ALLOWED_ORIGINS=https://geopropiedadesecuador.com,https://www.geopropiedadesecuador.com
+_cors_origins = os.getenv('CORS_ALLOWED_ORIGINS', '').strip()
+if _cors_origins:
+    CORS_ALLOWED_ORIGINS = [o.strip() for o in _cors_origins.split(',') if o.strip()]
+    CORS_ALLOW_ALL_ORIGINS = False
+else:
+    CORS_ALLOW_ALL_ORIGINS = True
+
+# Endurecimiento de seguridad activo solo fuera de DEBUG (producción). No se
+# habilita SECURE_SSL_REDIRECT para evitar bucles detrás de proxys/healthchecks;
+# la terminación TLS/redirección la hace el proxy. SECURE_PROXY_SSL_HEADER deja
+# que Django reconozca el esquema reenviado por nginx.
+if not DEBUG:
+    SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+    SECURE_CONTENT_TYPE_NOSNIFF = True
+    SECURE_HSTS_SECONDS = 63072000
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+    SECURE_HSTS_PRELOAD = True
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+    X_FRAME_OPTIONS = 'SAMEORIGIN'
+    # CSRF necesita los orígenes de confianza para el panel de admin sobre HTTPS.
+    _csrf_trusted = os.getenv('CSRF_TRUSTED_ORIGINS', '').strip()
+    if _csrf_trusted:
+        CSRF_TRUSTED_ORIGINS = [o.strip() for o in _csrf_trusted.split(',') if o.strip()]
 
 # ============================
 # DJANGO-ALLAUTH CONFIGURATION

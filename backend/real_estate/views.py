@@ -15,7 +15,6 @@ from .models import Property, PropertyImage, Province, City, Lead, PendingPublic
 from django.contrib.auth import get_user_model
 from .serializers import (
     MapPropertySerializer,
-    MapPointPropertySerializer,
     PropertySerializer,
     PropertyImageSerializer,
     ProvinceSerializer,
@@ -40,6 +39,7 @@ from .serializers import (
     AdminDashboardSerializer,
 )
 from .permissions import IsOwnerOrReadOnly, IsAdminUser
+from .services.map_payload import build_map_payload
 import requests
 from google.oauth2 import id_token
 from google.auth.transport import requests as google_requests
@@ -104,6 +104,16 @@ def _parse_float(value):
         return float(value)
     except (TypeError, ValueError):
         return None
+
+
+def _parse_bbox(value):
+    """Parsea ``"oeste,sur,este,norte"`` a una tupla de floats, o None."""
+    if not value:
+        return None
+    parts = [_parse_float(part) for part in value.split(',')]
+    if len(parts) != 4 or any(part is None for part in parts):
+        return None
+    return tuple(parts)
 
 
 class PropertyViewSet(viewsets.ModelViewSet):
@@ -194,19 +204,20 @@ class PropertyViewSet(viewsets.ModelViewSet):
 
         bbox = params.get('bbox')
         if bbox:
-            parts = [_parse_float(p) for p in bbox.split(',')]
-            if len(parts) == 4 and all(p is not None for p in parts):
-                west, south, east, north = parts
-                queryset = queryset.filter(
-                    Q(
-                        latitude__gte=south, latitude__lte=north,
-                        longitude__gte=west, longitude__lte=east,
+            if not getattr(self, '_ignore_map_bbox', False):
+                parts = [_parse_float(p) for p in bbox.split(',')]
+                if len(parts) == 4 and all(p is not None for p in parts):
+                    west, south, east, north = parts
+                    queryset = queryset.filter(
+                        Q(
+                            latitude__gte=south, latitude__lte=north,
+                            longitude__gte=west, longitude__lte=east,
+                        )
+                        # Compatibilidad con anuncios antiguos que solo tienen
+                        # polígono. El frontend vuelve a filtrar por bounds y el
+                        # serializer ya calcula centro para nuevos anuncios.
+                        | Q(latitude__isnull=True, longitude__isnull=True, polygon__isnull=False)
                     )
-                    # Compatibilidad con anuncios antiguos que solo tienen
-                    # polígono. El frontend vuelve a filtrar por bounds y el
-                    # serializer ya calcula centro para nuevos anuncios.
-                    | Q(latitude__isnull=True, longitude__isnull=True, polygon__isnull=False)
-                )
 
         if getattr(self, 'action', None) == 'list':
             queryset = queryset.only(
@@ -266,9 +277,21 @@ class PropertyViewSet(viewsets.ModelViewSet):
     @action(detail=False, methods=['get'], permission_classes=[AllowAny])
     def map_points(self, request):
         """
-        Puntos ultralivianos para el mapa. No pagina por defecto: 6k puntos con
-        payload minimo pesan mucho menos que 6k cards con miniaturas.
+        Payload ultraliviano para el mapa, calculado por vista.
+
+        El cliente manda ``bbox`` + ``zoom`` + filtros. A zoom bajo el backend
+        devuelve agrupadores con conteo; a zoom alto devuelve puntos
+        individuales. Así el frontend no descarga miles de propiedades ni
+        calcula clusters.
         """
+        zoom = _parse_float(request.query_params.get('zoom'))
+        zoom = 7 if zoom is None else zoom
+        # En cualquier zoom de agrupación (zoom < 11.5) el clustering se calcula
+        # sobre TODO el dataset filtrado, ignorando el bbox del viewport. Así los
+        # centroides son estables y los agrupadores no "caminan" al panear. El
+        # bbox sólo se usa para recortar la salida de la grilla (ver viewport).
+        cluster_zoom = zoom < 11.5
+        self._ignore_map_bbox = cluster_zoom
         queryset = self.filter_queryset(self.get_queryset()).only(
             'id',
             'property_type',
@@ -278,11 +301,12 @@ class PropertyViewSet(viewsets.ModelViewSet):
             'polygon',
             'show_measurements',
             'price',
+            'city',
+            'province',
         )
-        limit = int(request.query_params.get('limit') or 8000)
-        limit = max(1, min(limit, 12000))
-        serializer = MapPointPropertySerializer(queryset[:limit], many=True, context={'request': request})
-        return Response(serializer.data)
+        max_items = int(request.query_params.get('limit') or 1000)
+        viewport = _parse_bbox(request.query_params.get('bbox')) if cluster_zoom else None
+        return Response(build_map_payload(queryset, zoom, max_items, viewport=viewport))
 
     @action(detail=False, methods=['get'], permission_classes=[AllowAny])
     def owners(self, request):

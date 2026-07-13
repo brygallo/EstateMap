@@ -74,6 +74,7 @@ export default async function CiudadPage({ params }: CityPageProps) {
       pageHref={`/propiedades/${ciudad}`}
       mapHref={`/?search=${encodeURIComponent(city.name)}`}
       relatedLinks={relatedLocalLinks.length ? relatedLocalLinks : TYPE_LINKS}
+      locationName={city.name}
       emptyMessage={`Aún no hay propiedades publicadas en ${city.name}.`}
     />
   );

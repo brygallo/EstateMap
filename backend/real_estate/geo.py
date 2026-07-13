@@ -10,12 +10,17 @@ that the geometry is well-formed, sits inside Ecuador, and covers a sane area.
 import math
 
 # --- Ecuador bounding box (includes the Galápagos Islands) -------------------
-# Continental Ecuador spans roughly lat [-5.0, 1.5], lng [-81.1, -75.2].
-# Galápagos extends the western/northern edge to ~ -92.0 lng / 1.7 lat.
-ECUADOR_LAT_MIN = -5.10
-ECUADOR_LAT_MAX = 1.75
-ECUADOR_LNG_MIN = -92.10
-ECUADOR_LNG_MAX = -75.15
+# Continental Ecuador and Galápagos are separated so the ocean between them
+# does not become "valid Ecuador" for map clusters.
+ECUADOR_MAINLAND_LAT_MIN = -5.45
+ECUADOR_MAINLAND_LAT_MAX = 1.9
+ECUADOR_MAINLAND_LNG_MIN = -81.35
+ECUADOR_MAINLAND_LNG_MAX = -74.75
+
+GALAPAGOS_LAT_MIN = -1.75
+GALAPAGOS_LAT_MAX = 1.85
+GALAPAGOS_LNG_MIN = -92.2
+GALAPAGOS_LNG_MAX = -88.45
 
 # --- Area limits (square meters) ---------------------------------------------
 # A plot smaller than this is almost certainly a drawing mistake; larger than
@@ -36,11 +41,16 @@ def _is_number(value):
 
 
 def coord_in_ecuador(lat, lng):
-    """True if a ``(lat, lng)`` pair falls inside the Ecuador bounding box."""
-    return (
-        ECUADOR_LAT_MIN <= lat <= ECUADOR_LAT_MAX
-        and ECUADOR_LNG_MIN <= lng <= ECUADOR_LNG_MAX
+    """True if a ``(lat, lng)`` pair falls inside mainland Ecuador or Galápagos."""
+    in_mainland = (
+        ECUADOR_MAINLAND_LAT_MIN <= lat <= ECUADOR_MAINLAND_LAT_MAX
+        and ECUADOR_MAINLAND_LNG_MIN <= lng <= ECUADOR_MAINLAND_LNG_MAX
     )
+    in_galapagos = (
+        GALAPAGOS_LAT_MIN <= lat <= GALAPAGOS_LAT_MAX
+        and GALAPAGOS_LNG_MIN <= lng <= GALAPAGOS_LNG_MAX
+    )
+    return in_mainland or in_galapagos
 
 
 def polygon_area_m2(ring_latlng):

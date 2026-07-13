@@ -4,6 +4,9 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import type {
   MapBounds,
+  MapCityGroup,
+  MapPayloadContext,
+  MapPropertyItem,
   Owner,
   Property,
   PropertyFilters,
@@ -131,6 +134,18 @@ function filtersKey(f: PropertyFilters): string {
   return params.toString();
 }
 
+function mapRequestKey(f: PropertyFilters, zoom: number): string {
+  const zoomBucket = zoom < 11.5 ? Math.floor(zoom * 2) / 2 : 'points';
+  return `${filtersKey(f)}|zoom:${zoomBucket}`;
+}
+
+function mapBoundsCacheKey(bounds: MapBounds, zoom: number): MapBounds {
+  if (zoom <= 9.2) {
+    return { west: -180, south: -90, east: 180, north: 90 };
+  }
+  return bounds;
+}
+
 /** True si `inner` está totalmente contenido dentro de `outer`. */
 function boundsContains(outer: MapBounds, inner: MapBounds): boolean {
   return (
@@ -143,14 +158,9 @@ function boundsContains(outer: MapBounds, inner: MapBounds): boolean {
 
 interface MapResultsCache {
   areas: MapBounds[];
-  propertiesById: Map<number, Property>;
-  orderedIds: number[];
-}
-
-function cacheToList(cache: MapResultsCache): Property[] {
-  return cache.orderedIds
-    .map((id) => cache.propertiesById.get(id))
-    .filter((property): property is Property => Boolean(property));
+  items: MapPropertyItem[];
+  cityGroups: MapCityGroup[];
+  context: MapPayloadContext | null;
 }
 
 function getOrCreateCache(
@@ -161,22 +171,13 @@ function getOrCreateCache(
   if (!cache) {
     cache = {
       areas: [],
-      propertiesById: new Map(),
-      orderedIds: [],
+      items: [],
+      cityGroups: [],
+      context: null,
     };
     caches.set(key, cache);
   }
   return cache;
-}
-
-function mergeProperties(cache: MapResultsCache, list: Property[]) {
-  list.forEach((property) => {
-    if (property.id == null) return;
-    if (!cache.propertiesById.has(property.id)) {
-      cache.orderedIds.push(property.id);
-    }
-    cache.propertiesById.set(property.id, property);
-  });
 }
 
 interface UsePropertyFiltersArgs {
@@ -197,7 +198,9 @@ export function usePropertyFilters({ token, bounds, zoom = 7 }: UsePropertyFilte
   const [filters, setFilters] = useState<PropertyFilters>(() =>
     filtersFromParams(searchParams)
   );
-  const [mapProperties, setMapProperties] = useState<Property[]>([]);
+  const [mapProperties, setMapProperties] = useState<MapPropertyItem[]>([]);
+  const [mapCityGroups, setMapCityGroups] = useState<MapCityGroup[]>([]);
+  const [mapContext, setMapContext] = useState<MapPayloadContext | null>(null);
   const [cardProperties, setCardProperties] = useState<Property[]>([]);
   const [owners, setOwners] = useState<Owner[]>([]);
   const [locations, setLocations] = useState<PropertyLocationGroup[]>([]);
@@ -236,7 +239,9 @@ export function usePropertyFilters({ token, bounds, zoom = 7 }: UsePropertyFilte
     if (activeFilterKeyRef.current === key) return;
     activeFilterKeyRef.current = key;
     const cache = resultCachesRef.current.get(key);
-    setMapProperties(cache ? cacheToList(cache) : []);
+    setMapProperties(cache ? cache.items : []);
+    setMapCityGroups(cache ? cache.cityGroups : []);
+    setMapContext(cache ? cache.context : null);
     setCardProperties([]);
     setCardsPage(1);
     setCardsHasMore(false);
@@ -323,20 +328,25 @@ export function usePropertyFilters({ token, bounds, zoom = 7 }: UsePropertyFilte
     if (debounceRef.current) clearTimeout(debounceRef.current);
 
     debounceRef.current = setTimeout(async () => {
-      const key = filtersKey(filters);
+      const key = mapRequestKey(filters, zoom);
       const cache = getOrCreateCache(resultCachesRef.current, key);
-      const hasCachedResults = cache.propertiesById.size > 0;
+      const hasCachedResults = cache.items.length > 0;
 
       if (!bounds) {
-        setMapProperties(cacheToList(cache));
+        setMapProperties(cache.items);
+        setMapCityGroups(cache.cityGroups);
+        setMapContext(cache.context);
         return;
       }
 
       // Si el bbox solicitado ya cae dentro de cualquier zona cacheada para
       // estos filtros, no pedimos red ni tocamos el array de propiedades.
-      if (cache.areas.some((area) => boundsContains(area, bounds))) {
-        const cached = cacheToList(cache);
-        if (cached.length) setMapProperties(cached);
+      const cacheBounds = mapBoundsCacheKey(bounds, zoom);
+
+      if (cache.areas.some((area) => boundsContains(area, cacheBounds))) {
+        if (cache.items.length) setMapProperties(cache.items);
+        setMapCityGroups(cache.cityGroups);
+        setMapContext(cache.context);
         return;
       }
 
@@ -355,7 +365,8 @@ export function usePropertyFilters({ token, bounds, zoom = 7 }: UsePropertyFilte
       try {
         const { apiFetch } = await import('@/lib/api');
         const params = filtersToApiParams(filters, bounds);
-        params.set('limit', '8000');
+        params.set('zoom', String(zoom));
+        params.set('limit', zoom < 11.5 ? '900' : '1400');
         const qs = params.toString();
         const res = await apiFetch(`/properties/map_points/?${qs}`, {
           skipAuth: !token,
@@ -363,10 +374,16 @@ export function usePropertyFilters({ token, bounds, zoom = 7 }: UsePropertyFilte
         });
         if (res.ok) {
           const data = await res.json();
-          const list: Property[] = Array.isArray(data) ? data : data.results ?? [];
-          mergeProperties(cache, list);
-          cache.areas.push(bounds);
-          setMapProperties(cacheToList(cache));
+          const list: MapPropertyItem[] = Array.isArray(data) ? data : data.items ?? data.results ?? [];
+          const cityGroups: MapCityGroup[] = Array.isArray(data?.city_groups) ? data.city_groups : [];
+          const context: MapPayloadContext | null = data?.context ?? null;
+          cache.items = list;
+          cache.cityGroups = cityGroups;
+          cache.context = context;
+          cache.areas = [cacheBounds];
+          setMapProperties(list);
+          setMapCityGroups(cityGroups);
+          setMapContext(context);
           if (abortRef.current === controller) setError(false);
         } else if (abortRef.current === controller) {
           setError(true);
@@ -385,7 +402,7 @@ export function usePropertyFilters({ token, bounds, zoom = 7 }: UsePropertyFilte
     return () => {
       if (debounceRef.current) clearTimeout(debounceRef.current);
     };
-  }, [filters, bounds, token, reloadKey]);
+  }, [filters, bounds, token, reloadKey, zoom]);
 
   const fetchCardsPage = useCallback(
     async (page: number, mode: 'replace' | 'append' = 'replace') => {
@@ -519,6 +536,8 @@ export function usePropertyFilters({ token, bounds, zoom = 7 }: UsePropertyFilte
   return {
     filters,
     mapProperties,
+    mapCityGroups,
+    mapContext,
     cardProperties,
     owners,
     locations,
