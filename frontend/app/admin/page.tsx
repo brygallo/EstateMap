@@ -19,6 +19,7 @@ import {
   ImageOff,
   AlertTriangle,
   ArrowRight,
+  RefreshCw,
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -60,23 +61,32 @@ const AdminDashboard = () => {
   const { token } = useAuth();
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState('');
 
-  useEffect(() => {
-    const fetchDashboard = async () => {
-      try {
-        const res = await fetch(`${API_URL}/admin/dashboard/`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        if (!res.ok) throw new Error('Error al cargar datos');
-        const json = await res.json();
-        setData(json);
-      } catch (err: any) {
-        setError(err.message);
-      } finally {
+  const fetchDashboard = async () => {
+    const isRefresh = data !== null;
+    if (isRefresh) setRefreshing(true);
+    try {
+      const res = await fetch(`${API_URL}/admin/dashboard/`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) throw new Error('Error al cargar datos');
+      const json = await res.json();
+      setData(json);
+      setError('');
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      if (isRefresh) {
+        setRefreshing(false);
+      } else {
         setLoading(false);
       }
-    };
+    }
+  };
+
+  useEffect(() => {
     if (token) fetchDashboard();
   }, [token]);
 
@@ -86,11 +96,24 @@ const AdminDashboard = () => {
         <AdminSidebar />
         <main className="min-w-0 flex-1 overflow-auto">
           <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-            <div className="mb-8">
-              <h1 className="text-2xl font-bold text-textPrimary">Dashboard</h1>
-              <p className="mt-1 text-sm text-textSecondary">
-                Resumen general de tu portal inmobiliario.
-              </p>
+            <div className="mb-8 flex items-center justify-between">
+              <div>
+                <h1 className="text-2xl font-bold text-textPrimary">Dashboard</h1>
+                <p className="mt-1 text-sm text-textSecondary">
+                  Resumen general de tu portal inmobiliario.
+                </p>
+              </div>
+              <button
+                onClick={fetchDashboard}
+                disabled={refreshing}
+                className={cn(
+                  'inline-flex items-center gap-2 rounded-button bg-primary px-4 py-2 text-sm font-medium text-white transition-all hover:bg-primary/90',
+                  refreshing && 'opacity-60 cursor-not-allowed'
+                )}
+              >
+                <RefreshCw className={cn('h-4 w-4', refreshing && 'animate-spin')} />
+                Actualizar
+              </button>
             </div>
 
             {error && (
@@ -104,7 +127,7 @@ const AdminDashboard = () => {
             ) : data ? (
               <>
                 {/* KPI cards */}
-                <div className="mb-8 grid grid-cols-2 gap-4 lg:grid-cols-5">
+                <div className="mb-8 grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-5">
                   <KpiCard label="Usuarios" value={data.total_users} icon={Users} tone="blue" />
                   <KpiCard label="Propiedades" value={data.total_properties} icon={Building2} tone="indigo" />
                   <KpiCard label="En venta" value={data.properties_for_sale} icon={Tag} tone="green" />
@@ -114,7 +137,7 @@ const AdminDashboard = () => {
 
                 {/* Panel comercial */}
                 <h2 className="mb-3 text-lg font-bold text-textPrimary">Panel comercial</h2>
-                <div className="mb-8 grid grid-cols-2 gap-4 lg:grid-cols-4">
+                <div className="mb-8 grid grid-cols-2 gap-4 md:grid-cols-4 lg:grid-cols-4">
                   <KpiCard label="Activas" value={data.properties_active} icon={CheckCircle2} tone="green" />
                   <KpiCard label="Vistas totales" value={data.total_views} icon={Eye} tone="sky" />
                   <KpiCard label="Contactos" value={data.total_leads} icon={Mail} tone="violet" />
@@ -173,14 +196,14 @@ const AdminDashboard = () => {
                     </TableHeader>
                     <TableBody>
                       {data.recent_users.map((u: any) => (
-                        <TableRow key={u.id}>
+                        <TableRow key={u.id} className="cursor-pointer transition-colors hover:bg-muted/50">
                           <TableCell>
-                            <div className="flex items-center gap-2">
+                            <Link href="/admin/users" className="flex items-center gap-2 hover:no-underline">
                               <Avatar name={u.first_name || u.username} />
                               <span className="font-medium text-textPrimary">
                                 {u.first_name && u.last_name ? `${u.first_name} ${u.last_name}` : u.username}
                               </span>
-                            </div>
+                            </Link>
                           </TableCell>
                           <TableCell className="text-textSecondary">{u.email}</TableCell>
                           <TableCell className="text-textSecondary">{new Date(u.date_joined).toLocaleDateString('es-EC')}</TableCell>
@@ -213,8 +236,12 @@ const AdminDashboard = () => {
                     </TableHeader>
                     <TableBody>
                       {data.recent_properties.map((p: any) => (
-                        <TableRow key={p.id}>
-                          <TableCell className="font-medium text-textPrimary">{p.title || `Propiedad #${p.id}`}</TableCell>
+                        <TableRow key={p.id} className="cursor-pointer transition-colors hover:bg-muted/50">
+                          <TableCell className="font-medium text-textPrimary">
+                            <Link href={`/property/${p.id}`} className="hover:no-underline">
+                              {p.title || `Propiedad #${p.id}`}
+                            </Link>
+                          </TableCell>
                           <TableCell className="text-textSecondary">{typeLabel(p.property_type)}</TableCell>
                           <TableCell><StatusBadge status={p.status} /></TableCell>
                           <TableCell className="font-geo text-textSecondary">${Number(p.price).toLocaleString('es-EC')}</TableCell>
@@ -386,7 +413,7 @@ function Avatar({ name }: { name?: string }) {
 function DashboardSkeleton() {
   return (
     <div>
-      <div className="mb-8 grid grid-cols-2 gap-4 lg:grid-cols-5">
+      <div className="mb-8 grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-5">
         {Array.from({ length: 5 }).map((_, i) => (
           <Card key={i} className="rounded-card shadow-card">
             <CardContent className="p-5">
@@ -397,7 +424,7 @@ function DashboardSkeleton() {
           </Card>
         ))}
       </div>
-      <div className="mb-8 grid grid-cols-2 gap-4 lg:grid-cols-4">
+      <div className="mb-8 grid grid-cols-2 gap-4 md:grid-cols-4 lg:grid-cols-4">
         {Array.from({ length: 8 }).map((_, i) => (
           <Card key={i} className="rounded-card shadow-card">
             <CardContent className="p-5">

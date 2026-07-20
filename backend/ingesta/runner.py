@@ -18,6 +18,7 @@ Robustez (Fase 0):
 import subprocess
 import sys
 import time as _time
+import traceback
 from datetime import timedelta
 
 from django.conf import settings
@@ -84,11 +85,13 @@ def reap_zombie_runs(fuente=None):
         last = run.heartbeat_at or run.started_at or run.created_at
         if last and last < cutoff:
             run.estado = "error"
+            run.current_stage = "watchdog"
+            run.error_detail = "La ejecución dejó de enviar señales de vida durante más de 10 minutos."
             sep = " " if run.mensaje else ""
             run.mensaje = (run.mensaje + sep +
                            "[watchdog] Sin señal de vida; el proceso se considera caído.")[:2000]
             run.finished_at = timezone.now()
-            run.save(update_fields=["estado", "mensaje", "finished_at"])
+            run.save(update_fields=["estado", "mensaje", "current_stage", "error_detail", "finished_at"])
             reaped += 1
     return reaped
 
@@ -136,15 +139,18 @@ def run_load(run: IngestaRun, log=None):
     scraper = get_scraper(fuente.scraper_key)
     if scraper is None:
         run.estado = "error"
+        run.current_stage = "configurando scraper"
         run.mensaje = f"Scraper '{fuente.scraper_key}' no registrado."
+        run.error_detail = run.mensaje
         run.finished_at = timezone.now()
         run.save()
         return run
 
     run.estado = "running"
+    run.current_stage = "preparando fuente"
     run.started_at = timezone.now()
     run.heartbeat_at = timezone.now()
-    run.save(update_fields=["estado", "started_at", "heartbeat_at"])
+    run.save(update_fields=["estado", "current_stage", "started_at", "heartbeat_at"])
     _refresh_disponibles(fuente, scraper)
 
     logger = RunLogger(run, echo=echo)
@@ -166,6 +172,8 @@ def run_load(run: IngestaRun, log=None):
 
     cancelled = False
     try:
+        run.current_stage = "leyendo anuncios del portal"
+        run.save(update_fields=["current_stage"])
         for data in scraper.scrape(limit=run.limit, log=logger, searches=searches,
                                    skip_url=skip_url):
             run.vistos += 1
@@ -209,19 +217,25 @@ def run_load(run: IngestaRun, log=None):
 
         if cancelled:
             run.estado = "cancelled"
+            run.current_stage = "cancelado"
             run.mensaje = f"Cancelado por el usuario tras {run.vistos} anuncios vistos."
         else:
             run.estado = "done"
+            run.current_stage = "completado"
             run.mensaje = f"Completado. {run.errores} anuncios con error individual." \
                 if run.errores else "Completado."
     except ScraperBlocked as exc:
         run.estado = "error"
+        run.current_stage = "bloqueado por el portal"
         run.mensaje = f"Bloqueado por el portal: {exc}"[:2000]
+        run.error_detail = str(exc)
         logger(f"[bloqueo] {exc}")
     except Exception as exc:  # noqa: BLE001 - queremos registrar cualquier fallo
         run.estado = "error"
+        run.current_stage = "fallo fatal"
         run.mensaje = f"{type(exc).__name__}: {exc}"[:2000]
-        logger(f"[fatal] {type(exc).__name__}: {exc}")
+        run.error_detail = traceback.format_exc()
+        logger(f"[fatal] {type(exc).__name__}: {exc}\n{run.error_detail}")
     finally:
         logger.flush()
         run.finished_at = timezone.now()
@@ -256,15 +270,18 @@ def run_refresh(run: IngestaRun, log=None):
     from .pipeline.images import delete_property_images
 
     run.estado = "running"
+    run.current_stage = "preparando actualización"
     run.started_at = timezone.now()
     run.heartbeat_at = timezone.now()
-    run.save(update_fields=["estado", "started_at", "heartbeat_at"])
+    run.save(update_fields=["estado", "current_stage", "started_at", "heartbeat_at"])
     _refresh_disponibles(fuente, scraper)
 
     logger = RunLogger(run, echo=echo)
     do_images = run.con_imagenes
     cancelled = False
     try:
+        run.current_stage = "revisando vigencia y actualizando propiedades"
+        run.save(update_fields=["current_stage"])
         props = Property.objects.filter(source=fuente, is_imported=True).exclude(source_url="")
         for prop in props.iterator():
             run.vistos += 1
@@ -307,14 +324,18 @@ def run_refresh(run: IngestaRun, log=None):
 
         if cancelled:
             run.estado = "cancelled"
+            run.current_stage = "cancelado"
             run.mensaje = f"Cancelado por el usuario tras {run.vistos} propiedades revisadas."
         else:
             run.estado = "done"
+            run.current_stage = "completado"
             run.mensaje = "Actualización y verificación de vigencia completada."
     except Exception as exc:  # noqa: BLE001
         run.estado = "error"
+        run.current_stage = "fallo fatal"
         run.mensaje = f"{type(exc).__name__}: {exc}"[:2000]
-        logger(f"[fatal] {type(exc).__name__}: {exc}")
+        run.error_detail = traceback.format_exc()
+        logger(f"[fatal] {type(exc).__name__}: {exc}\n{run.error_detail}")
     finally:
         logger.flush()
         run.finished_at = timezone.now()

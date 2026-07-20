@@ -422,3 +422,38 @@ class PendingPublication(models.Model):
 
     def __str__(self):
         return self.title or f"Solicitud pendiente {self.pk}"
+
+
+class ActivityEvent(models.Model):
+    """Evento funcional para auditoría, embudos y detección de errores."""
+
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="activity_events",
+    )
+    property = models.ForeignKey(
+        Property,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="activity_events",
+    )
+    session_id = models.CharField(max_length=64, blank=True, default="")
+    event_name = models.CharField(max_length=100)
+    path = models.CharField(max_length=300, blank=True, default="")
+    payload = models.JSONField(default=dict, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+        indexes = [
+            models.Index(fields=["event_name", "created_at"], name="activity_event_date_idx"),
+            models.Index(fields=["user", "created_at"], name="activity_user_date_idx"),
+            models.Index(fields=["property", "created_at"], name="activity_property_date_idx"),
+        ]
+
+    def __str__(self):
+        return f"{self.event_name} ({self.user_id or self.session_id or 'anónimo'})"

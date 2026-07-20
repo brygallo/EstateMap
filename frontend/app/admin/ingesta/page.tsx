@@ -23,6 +23,9 @@ import {
   Plus,
   RefreshCw,
   Search,
+  Eye,
+  Copy,
+  TerminalSquare,
   XCircle,
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -38,6 +41,13 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+} from '@/components/ui/sheet';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8010/api';
 
@@ -61,6 +71,7 @@ interface Run {
   modo: 'load' | 'refresh';
   modo_label: string;
   limit: number | null;
+  con_imagenes: boolean;
   solo_nuevas: boolean;
   vistos: number;
   creadas: number;
@@ -72,6 +83,8 @@ interface Run {
   cargadas: number;
   mensaje: string;
   log: string;
+  current_stage: string;
+  error_detail: string;
   cancel_requested: boolean;
   lanzado_por: string;
   started_at: string | null;
@@ -142,6 +155,9 @@ const IngestaPage = () => {
   const [error, setError] = useState('');
   const [launching, setLaunching] = useState<string>('');
   const [cancelling, setCancelling] = useState(false);
+  const [selectedRun, setSelectedRun] = useState<Run | null>(null);
+  const [runDetailLoading, setRunDetailLoading] = useState(false);
+  const [runFilter, setRunFilter] = useState<'all' | Run['estado']>('all');
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   // Pestaña "Propiedades importadas".
@@ -249,6 +265,22 @@ const IngestaPage = () => {
     }
   };
 
+  const openRunDetail = useCallback(async (run: Run) => {
+    setSelectedRun(run);
+    setRunDetailLoading(true);
+    try {
+      const res = await fetch(`${API_URL}/admin/ingesta/runs/${run.id}/`, {
+        headers: authHeaders(),
+      });
+      if (!res.ok) throw new Error();
+      setSelectedRun(await res.json());
+    } catch {
+      toast.error('No se pudo cargar el detalle de la importación.');
+    } finally {
+      setRunDetailLoading(false);
+    }
+  }, [authHeaders]);
+
   const fetchImported = useCallback(async () => {
     if (!token || !impSource) return;
     setImpLoading(true);
@@ -301,6 +333,13 @@ const IngestaPage = () => {
 
   const runsBySource = (source: Source) =>
     runs.filter((run) => run.fuente === source.slug).slice(0, 4);
+  const filteredRuns = runFilter === 'all' ? runs : runs.filter((run) => run.estado === runFilter);
+
+  useEffect(() => {
+    if (!selectedRun) return;
+    const updated = runs.find((run) => run.id === selectedRun.id);
+    if (updated) setSelectedRun(updated);
+  }, [runs, selectedRun?.id]);
 
   return (
     <AdminRoute>
@@ -643,12 +682,13 @@ const IngestaPage = () => {
                                   <TableHead>Progreso</TableHead>
                                   <TableHead>Resultado</TableHead>
                                   <TableHead>Cuándo</TableHead>
+                                  <TableHead className="text-right">Detalle</TableHead>
                                 </TableRow>
                               </TableHeader>
                               <TableBody>
                                 {runsBySource(s).length === 0 ? (
                                   <TableRow>
-                                    <TableCell colSpan={5} className="py-6 text-center text-textSecondary">
+                                    <TableCell colSpan={6} className="py-6 text-center text-textSecondary">
                                       Este portal todavía no tiene ejecuciones.
                                     </TableCell>
                                   </TableRow>
@@ -687,6 +727,11 @@ const IngestaPage = () => {
                                       <TableCell className="whitespace-nowrap text-sm text-textSecondary">
                                         {formatDate(r.created_at)}
                                       </TableCell>
+                                      <TableCell className="text-right">
+                                        <Button variant="ghost" size="sm" onClick={() => openRunDetail(r)}>
+                                          <Eye className="mr-1.5 h-4 w-4" /> Ver
+                                        </Button>
+                                      </TableCell>
                                     </TableRow>
                                   ))
                                 )}
@@ -721,9 +766,22 @@ const IngestaPage = () => {
 
             {/* Ejecuciones */}
             <div className="mt-8">
-              <h2 className="mb-3 text-lg font-semibold text-textPrimary">
-                Historial general
-              </h2>
+              <div className="mb-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <h2 className="text-lg font-semibold text-textPrimary">Historial general</h2>
+                  <p className="mt-1 text-xs text-textSecondary">Abre cualquier ejecución para consultar su configuración, resultado, errores y log.</p>
+                </div>
+                <div className="flex flex-wrap gap-1">
+                  {([
+                    ['all', 'Todas'], ['error', 'Con error'], ['running', 'En curso'],
+                    ['done', 'Completadas'], ['cancelled', 'Canceladas'],
+                  ] as const).map(([value, label]) => (
+                    <Button key={value} variant={runFilter === value ? 'default' : 'outline'} size="sm" onClick={() => setRunFilter(value)}>
+                      {label}
+                    </Button>
+                  ))}
+                </div>
+              </div>
               <Card>
                 <CardContent className="overflow-x-auto p-0">
                   <Table>
@@ -736,19 +794,21 @@ const IngestaPage = () => {
                         <TableHead>Duplicadas</TableHead>
                         <TableHead>Caducadas</TableHead>
                         <TableHead>Sin ubicación</TableHead>
+                        <TableHead>Errores</TableHead>
                         <TableHead>Lanzó</TableHead>
                         <TableHead>Cuándo</TableHead>
+                        <TableHead className="text-right">Detalle</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {runs.length === 0 ? (
+                      {filteredRuns.length === 0 ? (
                         <TableRow>
-                          <TableCell colSpan={9} className="py-8 text-center text-textSecondary">
-                            Aún no hay ejecuciones. Lanza una arriba.
+                          <TableCell colSpan={11} className="py-8 text-center text-textSecondary">
+                            {runs.length ? 'No hay ejecuciones con este estado.' : 'Aún no hay ejecuciones. Lanza una arriba.'}
                           </TableCell>
                         </TableRow>
                       ) : (
-                        runs.map((r) => (
+                        filteredRuns.map((r) => (
                           <TableRow key={r.id}>
                             <TableCell>
                               <Badge variant="outline" className={ESTADO_STYLE[r.estado]}>
@@ -786,9 +846,15 @@ const IngestaPage = () => {
                             <TableCell>{r.duplicadas}</TableCell>
                             <TableCell>{r.caducadas}</TableCell>
                             <TableCell>{r.sin_ubicacion}</TableCell>
+                            <TableCell className={r.errores ? 'font-semibold text-red-700' : ''}>{r.errores}</TableCell>
                             <TableCell className="text-textSecondary">{r.lanzado_por}</TableCell>
                             <TableCell className="whitespace-nowrap text-textSecondary">
                               {formatDate(r.created_at)}
+                            </TableCell>
+                            <TableCell className="text-right">
+                              <Button variant="ghost" size="sm" onClick={() => openRunDetail(r)}>
+                                <Eye className="mr-1.5 h-4 w-4" /> Abrir
+                              </Button>
                             </TableCell>
                           </TableRow>
                         ))
@@ -998,8 +1064,97 @@ const IngestaPage = () => {
           </div>
         </main>
       </div>
+
+      <Sheet open={!!selectedRun} onOpenChange={(open) => { if (!open) setSelectedRun(null); }}>
+        <SheetContent side="right" className="w-full overflow-y-auto sm:max-w-2xl">
+          <SheetHeader>
+            <SheetTitle>Detalle de importación #{selectedRun?.id}</SheetTitle>
+            <SheetDescription>
+              Diagnóstico persistente de la ejecución. Puedes volver a consultarlo cuando lo necesites.
+            </SheetDescription>
+          </SheetHeader>
+          {selectedRun && (
+            <div className="mt-6 space-y-5">
+              <div className="flex flex-wrap items-center justify-between gap-3 rounded-card border border-line bg-white p-4">
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-wide text-textSecondary">{selectedRun.fuente}</p>
+                  <p className="mt-1 font-semibold text-textPrimary">{selectedRun.modo_label}</p>
+                </div>
+                <Badge variant="outline" className={ESTADO_STYLE[selectedRun.estado]}>{selectedRun.estado_label}</Badge>
+              </div>
+
+              {selectedRun.estado === 'error' && (
+                <div className="rounded-card border border-red-200 bg-red-50 p-4 text-sm text-red-900">
+                  <p className="flex items-center gap-2 font-semibold"><AlertTriangle className="h-4 w-4" /> La importación falló</p>
+                  <p className="mt-2">{selectedRun.mensaje || 'No se registró un mensaje resumido.'}</p>
+                  {selectedRun.current_stage && <p className="mt-2 text-xs text-red-700">Etapa: {selectedRun.current_stage}</p>}
+                </div>
+              )}
+
+              <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+                {[
+                  ['Vistos', selectedRun.vistos], ['Cargadas', selectedRun.cargadas],
+                  ['Nuevas', selectedRun.creadas], ['Actualizadas', selectedRun.actualizadas],
+                  ['Duplicadas', selectedRun.duplicadas], ['Caducadas', selectedRun.caducadas],
+                  ['Sin ubicación', selectedRun.sin_ubicacion], ['Con error', selectedRun.errores],
+                ].map(([label, value]) => (
+                  <div key={String(label)} className="rounded-card border border-line bg-white p-3">
+                    <p className="text-xs text-textSecondary">{label}</p>
+                    <p className="mt-1 font-geo text-xl font-semibold text-textPrimary">{value}</p>
+                  </div>
+                ))}
+              </div>
+
+              <div className="grid gap-3 rounded-card border border-line bg-white p-4 text-sm sm:grid-cols-2">
+                <DetailLine label="Etapa" value={selectedRun.current_stage || 'Sin registro'} />
+                <DetailLine label="Lanzó" value={selectedRun.lanzado_por || 'Sistema'} />
+                <DetailLine label="Inicio" value={formatDate(selectedRun.started_at)} />
+                <DetailLine label="Fin" value={formatDate(selectedRun.finished_at)} />
+                <DetailLine label="Última señal" value={formatDate(selectedRun.heartbeat_at)} />
+                <DetailLine label="Configuración" value={`${selectedRun.limit ? `límite ${selectedRun.limit}` : 'sin límite'} · ${selectedRun.solo_nuevas ? 'solo nuevas' : 'todas'} · ${selectedRun.con_imagenes ? 'con imágenes' : 'sin imágenes'}`} />
+              </div>
+
+              {selectedRun.error_detail && (
+                <LogPanel title="Detalle técnico del error" value={selectedRun.error_detail} tone="error" />
+              )}
+              <LogPanel
+                title="Registro de ejecución"
+                value={selectedRun.log || 'Esta ejecución no generó líneas de registro.'}
+                tone="default"
+              />
+
+              <Button variant="outline" className="w-full" disabled={runDetailLoading} onClick={() => openRunDetail(selectedRun)}>
+                {runDetailLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <RefreshCw className="mr-2 h-4 w-4" />}
+                Actualizar detalle
+              </Button>
+            </div>
+          )}
+        </SheetContent>
+      </Sheet>
     </AdminRoute>
   );
 };
+
+function DetailLine({ label, value }: { label: string; value: string }) {
+  return <div><p className="text-xs text-textSecondary">{label}</p><p className="mt-0.5 font-medium text-textPrimary">{value}</p></div>;
+}
+
+function LogPanel({ title, value, tone }: { title: string; value: string; tone: 'error' | 'default' }) {
+  const copy = async () => {
+    await navigator.clipboard.writeText(value);
+    toast.success('Registro copiado');
+  };
+  return (
+    <div className={`overflow-hidden rounded-card border ${tone === 'error' ? 'border-red-300' : 'border-line'}`}>
+      <div className="flex items-center justify-between bg-slate-900 px-3 py-2 text-slate-100">
+        <p className="flex items-center gap-2 text-xs font-semibold"><TerminalSquare className="h-4 w-4" /> {title}</p>
+        <Button variant="ghost" size="sm" className="h-7 text-slate-200 hover:bg-white/10 hover:text-white" onClick={copy}>
+          <Copy className="mr-1.5 h-3.5 w-3.5" /> Copiar
+        </Button>
+      </div>
+      <pre className="max-h-72 overflow-auto whitespace-pre-wrap break-words bg-slate-950 p-3 text-[11px] leading-5 text-slate-100">{value}</pre>
+    </div>
+  );
+}
 
 export default IngestaPage;

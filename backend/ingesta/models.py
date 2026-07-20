@@ -85,6 +85,8 @@ class IngestaRun(models.Model):
 
     mensaje = models.TextField(blank=True, default="")
     log = models.TextField(blank=True, default="", help_text="Últimas líneas de log de la ejecución")
+    current_stage = models.CharField(max_length=80, blank=True, default="", help_text="Etapa más reciente alcanzada")
+    error_detail = models.TextField(blank=True, default="", help_text="Detalle técnico persistente del error fatal")
     cancel_requested = models.BooleanField(
         default=False, help_text="Marca puesta desde el panel para detener el run de forma ordenada")
     lanzado_por = models.CharField(max_length=150, blank=True, default="")

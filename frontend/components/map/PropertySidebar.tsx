@@ -3,9 +3,9 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import { motion } from 'motion/react';
-import { ExternalLink, Loader2, MapPin, MapPinned, RotateCw, SearchX, WifiOff, X } from 'lucide-react';
+import { Loader2, MapPin, MapPinned, RotateCw, SearchX, WifiOff } from 'lucide-react';
 import MapFilters from '@/components/map/MapFilters';
-import PropertyCard, { PropertyCardSkeleton } from '@/components/PropertyCard';
+import MapPropertyCard, { MapPropertyCardSkeleton } from '@/components/map/MapPropertyCard';
 import { Badge } from '@/components/ui/badge';
 import { trackEvent } from '@/lib/analytics';
 import { formatDistance, getPropertyDistanceKm, type LatLngPoint } from '@/lib/geo';
@@ -30,7 +30,6 @@ interface PropertySidebarProps {
   selectedProperty: Property | null;
   onPropertyClick: (property: Property) => void;
   onPropertyOpen: (property: Property) => void;
-  onCloseMobile: () => void;
 
   /** Cargando propiedades del área tras mover/hacer zoom o cambiar filtros. */
   loading?: boolean;
@@ -67,7 +66,6 @@ export default function PropertySidebar({
   selectedProperty,
   onPropertyClick,
   onPropertyOpen,
-  onCloseMobile,
   loading = false,
   error = false,
   onRetry,
@@ -133,16 +131,7 @@ export default function PropertySidebar({
   }, [propertiesWithDistance, sortMode, userLocation]);
   const renderedProperties = sortedProperties.slice(0, visibleCardCount);
   const hiddenPropertiesCount = Math.max(sortedProperties.length - renderedProperties.length, 0);
-  const dominantCity = cityGroups[0];
-  const cityDominatesView =
-    mapContext?.group_level === 'points' &&
-    dominantCity &&
-    visibleProperties.length > 0 &&
-    dominantCity.count >= Math.max(visibleProperties.length * 0.45, 6);
-  const contextTitle = cityDominatesView ? `Propiedades en ${dominantCity.label}` : mapContext?.title || 'Mapa';
-  const contextSubtitle = cityDominatesView
-    ? `${dominantCity.province || 'Ecuador'} · ${dominantCity.count} propiedades cerca`
-    : mapContext?.subtitle || 'Explora propiedades por zona';
+  const showGroupNavigation = Boolean(mapContext && mapContext.group_level !== 'points');
   const groupLabel = mapContext?.group_level === 'country'
     ? 'Ciudades destacadas'
     : mapContext?.group_level === 'province'
@@ -223,15 +212,8 @@ export default function PropertySidebar({
   return (
     <>
       {/* Encabezado móvil */}
-      <div className="sticky top-0 z-10 flex items-center justify-between border-b border-line bg-white p-3.5 lg:hidden">
+      <div className="sticky top-0 z-10 border-b border-line bg-white px-3.5 pb-3.5 lg:hidden">
         <h2 className="text-base font-bold text-textPrimary">Filtros y propiedades</h2>
-        <button
-          onClick={onCloseMobile}
-          className="rounded-button p-1.5 text-textSecondary transition-colors hover:bg-muted"
-          aria-label="Cerrar panel"
-        >
-          <X className="h-5 w-5" aria-hidden />
-        </button>
       </div>
 
       <MapFilters
@@ -289,12 +271,12 @@ export default function PropertySidebar({
 
       {/* Listado */}
       <div className="space-y-2 bg-background p-2.5 pb-24">
-        {mapContext && (
+        {showGroupNavigation && mapContext && (
           <div className="rounded-card border border-line bg-white p-3 shadow-card">
             <div className="flex items-center justify-between gap-3">
               <div className="min-w-0">
-                <p className="truncate text-sm font-semibold text-textPrimary">{contextTitle}</p>
-                <p className="mt-0.5 text-xs text-textSecondary">{contextSubtitle}</p>
+                <p className="truncate text-sm font-semibold text-textPrimary">{mapContext.title}</p>
+                <p className="mt-0.5 text-xs text-textSecondary">{mapContext.subtitle}</p>
               </div>
               <Badge variant="secondary" className="rounded-md font-geo tabular-nums">
                 {mapContext.total_count}
@@ -303,7 +285,7 @@ export default function PropertySidebar({
           </div>
         )}
 
-        {cityGroups.length > 0 && (
+        {showGroupNavigation && cityGroups.length > 0 && (
           <div className="rounded-card border border-line bg-white p-3 shadow-card">
             <div className="flex items-center justify-between gap-3">
               <div>
@@ -343,7 +325,7 @@ export default function PropertySidebar({
         {loading && visibleProperties.length === 0 ? (
           <div className="space-y-2" aria-label="Cargando propiedades del área">
             {Array.from({ length: 5 }).map((_, i) => (
-              <PropertyCardSkeleton key={i} />
+              <MapPropertyCardSkeleton key={i} />
             ))}
           </div>
         ) : error && visibleProperties.length === 0 ? (
@@ -465,23 +447,13 @@ export default function PropertySidebar({
                     : ''
                 )}
               >
-                <PropertyCard
+                <MapPropertyCard
                   property={p}
-                  variant="compact"
                   selected={selectedProperty?.id === p.id}
                   distanceLabel={formatDistance(distanceKm)}
-                  onClick={() => onPropertyClick(p)}
+                  onMapClick={() => onPropertyClick(p)}
                   onOpenDetails={() => onPropertyOpen(p)}
                 />
-                {selectedProperty?.id === p.id && (
-                  <Link
-                    href={`/propiedad/${p.id}`}
-                    className="mt-1.5 flex items-center justify-center gap-1.5 rounded-button border border-line bg-white px-3 py-2 text-[13px] font-semibold text-primary transition-colors hover:border-primary hover:bg-muted focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
-                  >
-                    <ExternalLink className="h-4 w-4" strokeWidth={2} aria-hidden />
-                    Ver página completa
-                  </Link>
-                )}
               </motion.div>
             ))}
             {(hiddenPropertiesCount > 0 || hasMore) && (

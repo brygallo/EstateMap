@@ -1,9 +1,10 @@
 'use client';
 
-import { useCallback, useEffect, useState, useRef } from 'react';
+import { useCallback, useEffect, useMemo, useState, useRef } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import dynamic from 'next/dynamic';
 import { Loader2, SlidersHorizontal, X } from 'lucide-react';
+import { motion, useDragControls } from 'motion/react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/lib/auth-context';
 import { useGeolocation } from '@/hooks/useGeolocation';
@@ -13,7 +14,7 @@ import { flyToProperty } from '@/lib/map-navigation';
 import PropertySidebar from '@/components/map/PropertySidebar';
 import PropertyModal from '@/components/PropertyModal';
 import LocationPermissionModal from '@/components/LocationPermissionModal';
-import PropertyCard from '@/components/PropertyCard';
+import MapPropertyCard from '@/components/map/MapPropertyCard';
 import type { MapBounds, Property } from '@/lib/types';
 
 // Cargar el mapa MapLibre solo en cliente (sin SSR).
@@ -81,6 +82,7 @@ const MapPage = () => {
   const router = useRouter();
 
   const mapRef = useRef<any>(null);
+  const drawerDragControls = useDragControls();
 
   const [bounds, setBounds] = useState<MapBounds | null>(null);
   const [mapZoom, setMapZoom] = useState(7);
@@ -108,9 +110,21 @@ const MapPage = () => {
     clearFilters,
     hasActiveFilters,
   } = usePropertyFilters({ token, bounds, zoom: mapZoom });
-  const mapPointProperties = mapProperties.filter((item): item is Property => !(item as any).is_cluster);
-  const geo = useGeolocation(mapRef, mapPointProperties, loading);
   const sidebarProperties = cardProperties;
+  // Las cards y los puntos provienen de endpoints distintos. Al unirlos por id,
+  // toda propiedad visible en el listado conserva un pin, incluso si su punto
+  // tuvo que derivarse del centro de un polígono antiguo.
+  const mapDisplayProperties = useMemo(() => {
+    const clusters = mapProperties.filter((item) => (item as any).is_cluster);
+    const points = new Map<number, Property>();
+    mapProperties.forEach((item) => {
+      if (!(item as any).is_cluster) points.set(Number(item.id), item as Property);
+    });
+    cardProperties.forEach((property) => points.set(Number(property.id), property));
+    return [...clusters, ...points.values()];
+  }, [cardProperties, mapProperties]);
+  const mapPointProperties = mapDisplayProperties.filter((item): item is Property => !(item as any).is_cluster);
+  const geo = useGeolocation(mapRef, mapPointProperties, loading);
 
   const handleMapReady = (map: any) => {
     mapRef.current = map;
@@ -283,44 +297,79 @@ const MapPage = () => {
     };
   }, [isModalOpen]);
 
+  // En móvil, el drawer y el detalle deben tener su propio desplazamiento sin
+  // transmitir el gesto a la página ni al mapa que queda debajo.
+  useEffect(() => {
+    if ((!sidebarOpen && !isModalOpen) || window.innerWidth >= 1024) return;
+
+    const previousOverflow = document.body.style.overflow;
+    const previousOverscrollBehavior = document.body.style.overscrollBehavior;
+    document.body.style.overflow = 'hidden';
+    document.body.style.overscrollBehavior = 'none';
+
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      document.body.style.overscrollBehavior = previousOverscrollBehavior;
+    };
+  }, [isModalOpen, sidebarOpen]);
+
   return (
     <div className="relative h-[calc(100dvh-3.5rem)] overflow-hidden lg:flex">
       {/* Botón para abrir filtros y propiedades en móvil (con conteo explícito) */}
-      <Button
-        onClick={() => setSidebarOpen(!sidebarOpen)}
-        className={`fixed bottom-20 left-1/2 z-nav h-12 -translate-x-1/2 gap-2 rounded-full px-5 shadow-cardHover lg:hidden [&_svg]:size-5 ${
-          selectedProperty && !isModalOpen ? 'hidden' : ''
-        }`}
-        aria-label="Abrir filtros y propiedades"
-      >
-        <SlidersHorizontal strokeWidth={2} />
-        <span className="font-semibold tabular-nums">
-          {loading
-            ? 'Cargando…'
-            : `${sidebarProperties.length} ${sidebarProperties.length === 1 ? 'propiedad' : 'propiedades'}`}
-        </span>
-      </Button>
+      {!sidebarOpen && !selectedProperty && !isModalOpen && (
+        <Button
+          onClick={() => setSidebarOpen(true)}
+          className="fixed bottom-20 left-1/2 z-nav h-12 -translate-x-1/2 gap-2 rounded-full px-5 shadow-cardHover lg:hidden [&_svg]:size-5"
+          aria-label="Abrir filtros y propiedades"
+        >
+          <SlidersHorizontal strokeWidth={2} />
+          <span className="font-semibold tabular-nums">
+            {loading
+              ? 'Cargando…'
+              : `${sidebarProperties.length} ${sidebarProperties.length === 1 ? 'propiedad' : 'propiedades'}`}
+          </span>
+        </Button>
+      )}
 
       {/* Fondo oscuro en móvil */}
       {sidebarOpen && (
-        <div className="lg:hidden fixed inset-0 bg-black/50 z-30" onClick={() => setSidebarOpen(false)} />
+        <div
+          className="fixed inset-0 z-30 touch-none bg-black/50 lg:hidden"
+          aria-hidden
+          onPointerDown={(event) => event.preventDefault()}
+        />
       )}
 
       {/* Panel lateral en desktop; drawer inferior en móvil (más natural sobre el mapa) */}
-      <div
+      <motion.div
+        initial={false}
+        animate={{ y: sidebarOpen ? 0 : '100%' }}
+        transition={{ type: 'spring', stiffness: 420, damping: 38 }}
+        drag="y"
+        dragControls={drawerDragControls}
+        dragListener={false}
+        dragConstraints={{ top: 0, bottom: 600 }}
+        dragElastic={0.04}
+        dragSnapToOrigin
+        onDragEnd={(_, info) => {
+          if (info.offset.y > 100 || info.velocity.y > 500) setSidebarOpen(false);
+        }}
         className={`
+        property-sidebar-drawer
         fixed lg:relative z-40 lg:z-0
         bg-white text-textPrimary
-        overflow-y-auto
-        transition-transform duration-300 ease-in-out
+        overscroll-contain overflow-y-auto
         inset-x-0 bottom-0 max-h-[85dvh] rounded-t-2xl shadow-cardHover
-        ${sidebarOpen ? 'translate-y-0' : 'translate-y-full'}
         lg:inset-auto lg:left-0 lg:h-full lg:max-h-none lg:w-96 lg:flex-shrink-0
-        lg:translate-y-0 lg:rounded-none lg:border-r lg:border-line lg:shadow-none
+        lg:rounded-none lg:border-r lg:border-line lg:shadow-none
       `}
       >
         {/* Asa de arrastre (solo móvil) */}
-        <div className="flex justify-center bg-white pt-2 lg:hidden">
+        <div
+          className="flex touch-none cursor-grab justify-center bg-white py-3 active:cursor-grabbing lg:hidden"
+          onPointerDown={(event) => drawerDragControls.start(event)}
+          aria-label="Desliza hacia abajo para cerrar"
+        >
           <span className="h-1.5 w-10 rounded-full bg-line" aria-hidden />
         </div>
 
@@ -337,7 +386,6 @@ const MapPage = () => {
           selectedProperty={selectedProperty}
           onPropertyClick={handleSidebarPropertyClick}
           onPropertyOpen={handleSidebarPropertyOpen}
-          onCloseMobile={() => setSidebarOpen(false)}
           loading={loading}
           error={error}
           onRetry={retry}
@@ -350,7 +398,15 @@ const MapPage = () => {
           loadingMore={cardsLoadingMore}
           onLoadMore={loadMoreCards}
         />
-      </div>
+      </motion.div>
+
+      <style>{`
+        @media (min-width: 1024px) {
+          .property-sidebar-drawer {
+            transform: none !important;
+          }
+        }
+      `}</style>
 
       {/* Mapa: en desktop ocupa el espacio restante entre listado y ficha. */}
       <div
@@ -360,7 +416,7 @@ const MapPage = () => {
         `}
       >
         <MainMap
-          filteredProperties={mapProperties}
+          filteredProperties={mapDisplayProperties}
           selectedProperty={selectedProperty}
           userLocation={geo.userLocation}
           userAccuracy={geo.accuracy}
@@ -392,11 +448,10 @@ const MapPage = () => {
             >
               <X className="h-4 w-4" strokeWidth={2} aria-hidden />
             </button>
-            <PropertyCard
+            <MapPropertyCard
               property={selectedProperty}
-              variant="compact"
               selected
-              onClick={() => flyToProperty(mapRef.current, selectedProperty)}
+              onMapClick={() => flyToProperty(mapRef.current, selectedProperty)}
               onOpenDetails={() => setIsModalOpen(true)}
             />
           </div>

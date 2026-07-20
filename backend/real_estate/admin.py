@@ -1,6 +1,6 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
-from .models import Property, PropertyImage, User, Province, City, Lead, PendingPublication
+from .models import ActivityEvent, Property, PropertyImage, User, Province, City, Lead, PendingPublication
 
 
 class CityInline(admin.TabularInline):
@@ -66,6 +66,14 @@ class PendingPublicationAdmin(admin.ModelAdmin):
     search_fields = ['title', 'contact_phone', 'contact_email', 'city', 'province']
     list_editable = ['status']
     readonly_fields = ['created_at', 'updated_at']
+
+
+@admin.register(ActivityEvent)
+class ActivityEventAdmin(admin.ModelAdmin):
+    list_display = ['event_name', 'user', 'property', 'session_id', 'created_at']
+    list_filter = ['event_name', 'created_at']
+    search_fields = ['event_name', 'user__username', 'user__email', 'property__title', 'session_id']
+    readonly_fields = ['user', 'property', 'session_id', 'event_name', 'path', 'payload', 'created_at']
 
 
 admin.site.register(User, UserAdmin)

@@ -8,7 +8,7 @@ import { Loader2, LocateFixed, Minus, Plus } from 'lucide-react';
 import LayerSwitch, { type MapLayer } from '@/components/map/LayerSwitch';
 import MapLegend from '@/components/map/MapLegend';
 import { trackEvent } from '@/lib/analytics';
-import { isPointInEcuadorBounds } from '@/lib/geo';
+import { getPropertyPoint, isPointInEcuadorBounds } from '@/lib/geo';
 import { iconMarkerHtml, priceMarkerHtml, statusColor } from '@/lib/mapMarkers';
 
 type HtmlMarkerRecord = {
@@ -82,28 +82,8 @@ const getMapPriceLabel = (price: unknown) => {
 };
 
 const getPoint = (property: any): [number, number] | null => {
-  const lat = Number(property.latitude);
-  const lng = Number(property.longitude);
-  if (isPointInEcuadorBounds(lat, lng)) return [lng, lat];
-
-  const polygon = property.polygon;
-  const ring = polygon?.coordinates?.[0] || (Array.isArray(polygon) ? polygon.map((p: number[]) => [p[1], p[0]]) : null);
-  if (!Array.isArray(ring) || ring.length === 0) return null;
-
-  const totals = ring.reduce(
-    (acc: { lng: number; lat: number; count: number }, coord: any) => {
-      const lngValue = Number(coord?.[0]);
-      const latValue = Number(coord?.[1]);
-      if (!isPointInEcuadorBounds(latValue, lngValue)) return acc;
-      acc.lng += lngValue;
-      acc.lat += latValue;
-      acc.count += 1;
-      return acc;
-    },
-    { lng: 0, lat: 0, count: 0 }
-  );
-
-  return totals.count > 0 ? [totals.lng / totals.count, totals.lat / totals.count] : null;
+  const point = getPropertyPoint(property);
+  return point ? [point.lng, point.lat] : null;
 };
 
 const getPolygonCoordinates = (property: any): number[][][] | null => {
@@ -258,6 +238,7 @@ export default function MapLibreMap({
   const markerRefs = useRef<Map<string, HtmlMarkerRecord>>(new Map());
   const clusterMarkerRefs = useRef<Map<string, HtmlMarkerRecord>>(new Map());
   const selectedPropertyRef = useRef<any>(selectedProperty);
+  const mobileInteractionRef = useRef(false);
   const reportedViewportRef = useRef<{
     bounds: { west: number; south: number; east: number; north: number } | null;
     zoom: number | null;
@@ -332,6 +313,8 @@ export default function MapLibreMap({
   useEffect(() => {
     if (!containerRef.current || mapRef.current) return;
 
+    const useMobileInteraction = window.matchMedia('(max-width: 767px), (pointer: coarse)').matches;
+    mobileInteractionRef.current = useMobileInteraction;
     const map = new maplibregl.Map({
       container: containerRef.current,
       style: buildMapStyle(),
@@ -342,7 +325,17 @@ export default function MapLibreMap({
       fadeDuration: 0,
       renderWorldCopies: false,
       refreshExpiredTiles: false,
+      dragRotate: false,
+      pitchWithRotate: false,
+      dragPan: useMobileInteraction
+        ? {
+            linearity: 0.2,
+            maxSpeed: 900,
+            deceleration: 5000,
+          }
+        : true,
     });
+    map.touchZoomRotate.disableRotation();
     mapRef.current = map;
     if (typeof window !== 'undefined') {
       (window as any)._main_map_ref = map;
@@ -659,7 +652,17 @@ export default function MapLibreMap({
     }
 
     const bounds = padBounds(map.getBounds(), 0.28);
-    const maxMarkers = zoom >= 16 ? 320 : zoom >= 14 ? 220 : 130;
+    const maxMarkers = mobileInteractionRef.current
+      ? zoom >= 16
+        ? 140
+        : zoom >= 14
+          ? 100
+          : 70
+      : zoom >= 16
+        ? 320
+        : zoom >= 14
+          ? 220
+          : 130;
     const minDistance = zoom >= 16 ? 0.00045 : zoom >= 14 ? 0.0011 : 0.0028;
     const selectedId = selectedPropertyRef.current?.id;
     const usedPositions: [number, number][] = [];
@@ -704,11 +707,15 @@ export default function MapLibreMap({
           if (!record) {
             const element = document.createElement('button');
             element.type = 'button';
-            element.className = 'maplibre-price-marker maplibre-marker-enter';
+            element.className = mobileInteractionRef.current
+              ? 'maplibre-price-marker'
+              : 'maplibre-price-marker maplibre-marker-enter';
             const marker = new maplibregl.Marker({ element, anchor: 'bottom' }).setLngLat(point).addTo(map);
             record = { marker, element, signature: '' };
             markerRefs.current.set(key, record);
-            window.setTimeout(() => element.classList.remove('maplibre-marker-enter'), 160);
+            if (!mobileInteractionRef.current) {
+              window.setTimeout(() => element.classList.remove('maplibre-marker-enter'), 160);
+            }
           }
 
           record.element.setAttribute('aria-label', `Ver propiedad ${property.id}`);
@@ -787,6 +794,24 @@ export default function MapLibreMap({
 
       <LayerSwitch active={activeLayer} onToggle={() => setActiveLayer((prev) => (prev === 'satellite' ? 'streets' : 'satellite'))} />
       <MapLegend />
+
+      <div
+        className="pointer-events-none absolute right-3 top-20 z-mapcontrol h-16 w-16 rounded-full border border-line bg-white/95 shadow-cardHover backdrop-blur-sm"
+        role="img"
+        aria-label="Orientación del mapa: norte arriba, sur abajo, este a la derecha y oeste a la izquierda"
+      >
+        <span className="absolute left-1/2 top-1 -translate-x-1/2 text-[11px] font-black text-error">N</span>
+        <span className="absolute bottom-1 left-1/2 -translate-x-1/2 text-[10px] font-bold text-textSecondary">S</span>
+        <span className="absolute right-1 top-1/2 -translate-y-1/2 text-[10px] font-bold text-textSecondary">E</span>
+        <span className="absolute left-1 top-1/2 -translate-y-1/2 text-[10px] font-bold text-textSecondary">O</span>
+        <span className="absolute left-1/2 top-[17px] h-[30px] w-px -translate-x-1/2 bg-line" aria-hidden />
+        <span className="absolute left-[17px] top-1/2 h-px w-[30px] -translate-y-1/2 bg-line" aria-hidden />
+        <span
+          className="absolute left-1/2 top-[17px] -translate-x-1/2 border-x-[5px] border-b-[13px] border-x-transparent border-b-error"
+          aria-hidden
+        />
+        <span className="absolute left-1/2 top-1/2 h-2 w-2 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-white bg-primary shadow-card" aria-hidden />
+      </div>
 
       <div className="absolute bottom-6 right-3 z-mapcontrol flex flex-col-reverse gap-2.5">
         <div className="flex flex-col overflow-hidden rounded-lg bg-surface shadow-cardHover ring-1 ring-black/5">
@@ -934,7 +959,10 @@ export default function MapLibreMap({
           height: 48px;
           overflow: visible;
           padding: 0;
-          transition: opacity 140ms ease, transform 180ms cubic-bezier(0.2, 0, 0, 1);
+          /* MapLibre writes transform every frame to keep the marker attached to
+             its geographic position. Animating that property makes the marker
+             lag behind the map while panning. */
+          transition: opacity 140ms ease;
           width: 112px;
         }
         .maplibre-price-marker:focus-visible {

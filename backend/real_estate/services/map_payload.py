@@ -203,9 +203,46 @@ def _display_city_name(city_key, fallback):
 
 
 def _row_has_valid_point(row):
-    if row['latitude'] is None or row['longitude'] is None:
+    point = _row_point(row)
+    if not point:
         return False
-    return coord_in_ecuador(float(row['latitude']), float(row['longitude']))
+    row['latitude'], row['longitude'] = point
+    return True
+
+
+def _row_point(row):
+    """Return the stored point or derive one from the property's polygon."""
+    lat = row.get('latitude')
+    lng = row.get('longitude')
+    if lat is not None and lng is not None:
+        lat = float(lat)
+        lng = float(lng)
+        if coord_in_ecuador(lat, lng):
+            return lat, lng
+
+    polygon = row.get('polygon')
+    if not polygon:
+        return None
+
+    if isinstance(polygon, dict):
+        rings = polygon.get('coordinates') or []
+        ring = rings[0] if rings else []
+        points = [(float(coord[1]), float(coord[0])) for coord in ring if len(coord) >= 2]
+    elif isinstance(polygon, list):
+        points = [(float(coord[0]), float(coord[1])) for coord in polygon if len(coord) >= 2]
+    else:
+        return None
+
+    if len(points) > 1 and points[0] == points[-1]:
+        points.pop()
+    points = [(point_lat, point_lng) for point_lat, point_lng in points if coord_in_ecuador(point_lat, point_lng)]
+    if not points:
+        return None
+
+    return (
+        sum(point[0] for point in points) / len(points),
+        sum(point[1] for point in points) / len(points),
+    )
 
 
 def _group_level_for_zoom(zoom):

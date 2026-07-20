@@ -36,6 +36,7 @@ const EXPLORE_LINKS = [
 const PLATFORM_LINKS = [
   { href: '/', label: 'Mapa interactivo' },
   { href: '/propiedades', label: 'Propiedades en Ecuador' },
+  { href: '/estadisticas-inmobiliarias', label: 'Estadísticas del mercado' },
   { href: '/publicar-propiedad', label: 'Publicar propiedad' },
   { href: '/inmobiliarias', label: 'Inmobiliarias' },
   { href: '/ayuda', label: 'Centro de ayuda' },

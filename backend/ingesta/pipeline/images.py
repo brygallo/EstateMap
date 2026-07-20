@@ -92,7 +92,7 @@ def image_dhash_from_url(url, size=8):
         return ""
 
 
-def attach_images_from_urls(prop, urls, max_images=MAX_IMAGES):
+def attach_images_from_urls(prop, urls, max_images=MAX_IMAGES, force=False):
     """
     Flujo de UN SOLO PASO (scrape directo, sin paquete): por cada URL descarga
     la imagen a un buffer **temporal en memoria**, la entrega a ``PropertyImage``
@@ -100,16 +100,18 @@ def attach_images_from_urls(prop, urls, max_images=MAX_IMAGES):
     temporal. No queda ningún archivo en disco.
 
     Idempotente: si la propiedad ya tiene la misma cantidad de imágenes, no
-    vuelve a descargar. Primero descarga las nuevas imágenes a memoria; sólo si
-    al menos una descarga funciona reemplaza las imágenes existentes. Devuelve
-    cuántas imágenes quedaron adjuntas.
+    vuelve a descargar (salvo ``force=True``, que re-descarga y reemplaza
+    siempre; lo usa el botón admin de "actualizar desde el portal"). Primero
+    descarga las nuevas imágenes a memoria; sólo si al menos una descarga
+    funciona reemplaza las imágenes existentes. Devuelve cuántas imágenes
+    quedaron adjuntas.
     """
     from django.core.files.base import ContentFile
     from real_estate.models import PropertyImage
 
     urls = urls[:max_images]
     existing = prop.images.count()
-    if existing and existing == len(urls):
+    if existing and existing == len(urls) and not force:
         return existing  # ya sincronizado
 
     downloaded = []

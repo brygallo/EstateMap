@@ -38,6 +38,7 @@ import {
   CarouselPrevious,
 } from '@/components/ui/carousel';
 import PropertyDetailMap from '@/components/maps/PropertyDetailMap';
+import AdminRefreshProperty from '@/components/AdminRefreshProperty';
 
 /** Ficha de dato de la propiedad: icono lucide + valor en mono + etiqueta. */
 function StatTile({
@@ -468,6 +469,7 @@ export default async function PropertyPage({ params }: PropertyPageProps) {
                       Precio negociable
                     </Badge>
                   )}
+                  {isImported && <AdminRefreshProperty propertyId={property.id} />}
                 </div>
                 <h1 className="mt-3 text-2xl font-bold leading-tight text-textPrimary sm:text-3xl">
                   {property.title}
