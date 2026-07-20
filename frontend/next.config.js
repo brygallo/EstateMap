@@ -22,6 +22,13 @@ const nextConfig = {
     // Desactivamos la optimización solo en dev; el navegador baja la imagen
     // directo. En producción (MinIO en dominio público) la optimización queda ON.
     unoptimized: process.env.NODE_ENV !== 'production',
+    // AVIF pesa ~20-30% menos que WebP: mejora LCP en fichas y grids (Core Web
+    // Vitals cuentan para ranking). WebP queda de fallback para navegadores
+    // sin soporte AVIF.
+    formats: ['image/avif', 'image/webp'],
+    // Las fotos de propiedades son inmutables (se sube otra si cambia), así
+    // que la variante optimizada puede cachearse un día entero.
+    minimumCacheTTL: 86400,
     remotePatterns: [
       {
         protocol: 'http',

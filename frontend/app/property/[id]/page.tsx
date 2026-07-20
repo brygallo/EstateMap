@@ -16,8 +16,17 @@ import {
   BadgeCheck,
   CalendarDays,
 } from 'lucide-react';
-import { getServerApiUrl } from '@/lib/api-url';
-import { jsonLd, slugify, SITE_URL } from '@/lib/properties';
+import {
+  jsonLd,
+  slugify,
+  SITE_URL,
+  getProperty,
+  getPropertyTypeLabel,
+  getStatusLabel,
+  formatPrice,
+  formatArea,
+  PROPERTY_SCHEMA_TYPE,
+} from '@/lib/properties';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import AnimatedNumber from '@/components/ui/AnimatedNumber';
@@ -66,65 +75,10 @@ interface PropertyPageProps {
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }
 
-// Fetch property data from API
-async function getProperty(id: string) {
-  try {
-    const API_URL = getServerApiUrl();
-    const res = await fetch(`${API_URL}/properties/${id}/`, {
-      cache: 'no-store',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    });
-
-    if (!res.ok) {
-      return null;
-    }
-
-    return await res.json();
-  } catch (error) {
-    console.error('Error fetching property:', error);
-    return null;
-  }
-}
-
-// Helper function to get property type label in Spanish (for user display)
-function getPropertyTypeLabel(type: string): string {
-  const labels: { [key: string]: string } = {
-    house: 'Casa',
-    land: 'Terreno',
-    apartment: 'Apartamento',
-    commercial: 'Propiedad Comercial',
-    other: 'Propiedad',
-  };
-  return labels[type] || 'Propiedad';
-}
-
-// Helper function to get status label in Spanish (for user display)
-function getStatusLabel(status: string): string {
-  const labels: { [key: string]: string } = {
-    for_sale: 'En Venta',
-    for_rent: 'En Alquiler',
-    inactive: 'Inactivo',
-  };
-  return labels[status] || status;
-}
-
-function formatPrice(price: string): string {
-  const value = Number.parseFloat(price);
-  if (!Number.isFinite(value)) {
-    return 'Precio a consultar';
-  }
-  return `$${value.toLocaleString('es-EC')}`;
-}
-
-function formatArea(area: string | null): string {
-  const value = Number.parseFloat(area || '');
-  if (!Number.isFinite(value)) {
-    return '';
-  }
-  return `${Math.round(value)} m²`;
-}
+// La ficha se sirve con ISR (revalida cada 5 min) en vez de `no-store`: los
+// crawlers y usuarios reciben HTML cacheado con TTFB bajo, clave para
+// Core Web Vitals y para que Google gaste su crawl budget en más fichas.
+export const revalidate = 300;
 
 // Generate dynamic metadata with Open Graph tags for social sharing
 export async function generateMetadata({ params }: PropertyPageProps): Promise<Metadata> {
@@ -152,8 +106,8 @@ export async function generateMetadata({ params }: PropertyPageProps): Promise<M
     `${propertyTypeLabel} ${statusLabel.toLowerCase()}`,
     priceFormatted,
     areaFormatted ? `Área ${areaFormatted}` : null,
-    property.rooms > 0 ? `${property.rooms} habitaciones` : null,
-    property.bathrooms > 0 ? `${property.bathrooms} baños` : null,
+    (property.rooms ?? 0) > 0 ? `${property.rooms} habitaciones` : null,
+    (property.bathrooms ?? 0) > 0 ? `${property.bathrooms} baños` : null,
     location ? `En ${location}` : null,
   ].filter(Boolean);
 
@@ -191,7 +145,7 @@ export async function generateMetadata({ params }: PropertyPageProps): Promise<M
       ...(property.property_type === 'land' ? ['terreno', 'lote'] : []),
       ...(property.property_type === 'apartment' ? ['departamento', 'apartamento'] : []),
       ...(property.property_type === 'commercial' ? ['local comercial', 'negocio'] : []),
-    ].filter(Boolean),
+    ].filter(Boolean) as string[],
     authors: [{ name: 'Geo Propiedades Ecuador' }],
     openGraph: {
       title,
@@ -257,13 +211,16 @@ export default async function PropertyPage({ params }: PropertyPageProps) {
   const priceFormatted = formatPrice(property.price);
   const mainImage = property.images?.find((img: any) => img.is_main) || property.images?.[0];
   const areaFormatted = formatArea(property.area);
+  const rooms = property.rooms ?? 0;
+  const bathrooms = property.bathrooms ?? 0;
+  const parkingSpaces = property.parking_spaces ?? 0;
   const location = [property.city, property.province].filter(Boolean).join(', ');
   const summaryParts = [
     `${propertyTypeLabel} ${statusLabel.toLowerCase()}`,
     priceFormatted,
     areaFormatted ? `Área ${areaFormatted}` : null,
-    property.rooms > 0 ? `${property.rooms} habitaciones` : null,
-    property.bathrooms > 0 ? `${property.bathrooms} baños` : null,
+    rooms > 0 ? `${rooms} habitaciones` : null,
+    bathrooms > 0 ? `${bathrooms} baños` : null,
     location ? `En ${location}` : null,
   ].filter(Boolean);
 
@@ -274,26 +231,25 @@ export default async function PropertyPage({ params }: PropertyPageProps) {
   const imageUrl = mainImage?.image || '/og-image.png';
   const imageAbsoluteUrl = imageUrl.startsWith('http') ? imageUrl : `${baseUrl}${imageUrl}`;
   const propertyUrl = `${baseUrl}/propiedad/${property.id}`;
-  const propertySchemaType: Record<string, string> = {
-    house: 'SingleFamilyResidence',
-    apartment: 'Apartment',
-    land: 'LandParcel',
-    commercial: 'CommercialProperty',
-    other: 'Residence',
-  };
+  const areaValue = Number.parseFloat(String(property.area ?? ''));
   const listingStructuredData = {
     '@context': 'https://schema.org',
     '@type': 'RealEstateListing',
+    '@id': `${propertyUrl}#listing`,
+    mainEntityOfPage: propertyUrl,
+    inLanguage: 'es-EC',
     name: property.title || `${propertyTypeLabel} ${statusLabel}`,
     description: property.description || `${propertyTypeLabel} ${statusLabel.toLowerCase()} en Ecuador`,
     url: propertyUrl,
     image:
-      property.images?.length > 0
-        ? property.images
+      (property.images?.length ?? 0) > 0
+        ? property.images!
             .slice(0, 5)
             .map((img: any) => (img.image.startsWith('http') ? img.image : `${baseUrl}${img.image}`))
         : [imageAbsoluteUrl],
     datePosted: property.created_at,
+    dateModified: property.updated_at || property.created_at,
+    publisher: { '@id': `${SITE_URL}/#organization` },
     offers: {
       '@type': 'Offer',
       price: property.price?.toString(),
@@ -303,35 +259,47 @@ export default async function PropertyPage({ params }: PropertyPageProps) {
           ? 'https://schema.org/SoldOut'
           : 'https://schema.org/InStock',
       url: propertyUrl,
-    },
-    itemOffered: {
-      '@type': propertySchemaType[property.property_type] || 'Residence',
-      name: property.title || `${propertyTypeLabel} ${statusLabel}`,
-      description: property.description || undefined,
-      address: {
-        '@type': 'PostalAddress',
-        streetAddress: property.address || undefined,
-        addressLocality: property.city || undefined,
-        addressRegion: property.province || undefined,
-        addressCountry: 'EC',
-      },
-      geo:
-        property.latitude && property.longitude
+      itemOffered: {
+        '@type': PROPERTY_SCHEMA_TYPE[property.property_type] || 'Residence',
+        name: property.title || `${propertyTypeLabel} ${statusLabel}`,
+        description: property.description || undefined,
+        address: {
+          '@type': 'PostalAddress',
+          streetAddress: property.address || undefined,
+          addressLocality: property.city || undefined,
+          addressRegion: property.province || undefined,
+          addressCountry: 'EC',
+        },
+        geo:
+          property.latitude && property.longitude
+            ? {
+                '@type': 'GeoCoordinates',
+                latitude: property.latitude,
+                longitude: property.longitude,
+              }
+            : undefined,
+        floorSize: Number.isFinite(areaValue)
           ? {
-              '@type': 'GeoCoordinates',
-              latitude: property.latitude,
-              longitude: property.longitude,
+              '@type': 'QuantitativeValue',
+              value: areaValue,
+              unitCode: 'MTK',
+              unitText: 'm²',
             }
           : undefined,
-      floorSize: property.area
-        ? {
-            '@type': 'QuantitativeValue',
-            value: property.area,
-            unitText: 'MTR',
-          }
-        : undefined,
-      numberOfRooms: property.rooms || undefined,
-      numberOfBathroomsTotal: property.bathrooms || undefined,
+        numberOfRooms: rooms || undefined,
+        numberOfBedrooms: rooms || undefined,
+        numberOfBathroomsTotal: bathrooms || undefined,
+        amenityFeature:
+          parkingSpaces > 0
+            ? [
+                {
+                  '@type': 'LocationFeatureSpecification',
+                  name: 'Parqueaderos',
+                  value: parkingSpaces,
+                },
+              ]
+            : undefined,
+      },
     },
   };
 
@@ -361,17 +329,17 @@ export default async function PropertyPage({ params }: PropertyPageProps) {
   };
 
   const galleryImages: { image: string }[] =
-    property.images?.length > 0
-      ? property.images.map((img: any) => ({
+    (property.images?.length ?? 0) > 0
+      ? property.images!.map((img: any) => ({
           image: img.image?.startsWith('http') ? img.image : `${baseUrl}${img.image}`,
         }))
       : mainImage
         ? [{ image: imageAbsoluteUrl }]
         : [];
-  const priceValue = Number.parseFloat(property.price);
+  const priceValue = Number.parseFloat(String(property.price));
   const priceIsFinite = Number.isFinite(priceValue);
   // Anuncio venta + alquiler a la vez: `price` es la venta y `rent_price` el alquiler.
-  const rentPriceValue = Number.parseFloat(property.rent_price);
+  const rentPriceValue = Number.parseFloat(String(property.rent_price ?? ''));
   const hasRentPrice = property.rent_price != null && Number.isFinite(rentPriceValue) && rentPriceValue > 0;
   const rentPriceFormatted = hasRentPrice ? formatPrice(String(property.rent_price)) : '';
   const isImported = Boolean(property.is_imported || property.source_url || property.external_id || property.source);
@@ -587,17 +555,17 @@ export default async function PropertyPage({ params }: PropertyPageProps) {
               {/* Características */}
               <h2 className="mb-4 text-lg font-semibold text-textPrimary">Características</h2>
               <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-                {property.area && (
-                  <StatTile icon={Ruler} value={Math.round(parseFloat(property.area))} label="m² Total" />
+                {Number.isFinite(areaValue) && (
+                  <StatTile icon={Ruler} value={Math.round(areaValue)} label="m² Total" />
                 )}
-                {property.rooms > 0 && (
-                  <StatTile icon={BedDouble} value={property.rooms} label="Habitaciones" />
+                {rooms > 0 && (
+                  <StatTile icon={BedDouble} value={rooms} label="Habitaciones" />
                 )}
-                {property.bathrooms > 0 && (
-                  <StatTile icon={Bath} value={property.bathrooms} label="Baños" />
+                {bathrooms > 0 && (
+                  <StatTile icon={Bath} value={bathrooms} label="Baños" />
                 )}
-                {property.parking_spaces > 0 && (
-                  <StatTile icon={Car} value={property.parking_spaces} label="Parqueaderos" />
+                {parkingSpaces > 0 && (
+                  <StatTile icon={Car} value={parkingSpaces} label="Parqueaderos" />
                 )}
               </div>
 

@@ -1,4 +1,6 @@
 import { Metadata } from 'next';
+import { HELP_FAQS } from '@/lib/help-faqs';
+import { jsonLd } from '@/lib/properties';
 
 const siteUrl = (
   process.env.NEXT_PUBLIC_FRONTEND_URL || 'https://geopropiedadesecuador.com'
@@ -46,10 +48,32 @@ export const metadata: Metadata = {
   },
 };
 
+// FAQPage emitido desde el layout (server component) porque la página es un
+// componente cliente: así el schema llega en el HTML inicial para crawlers.
+const faqStructuredData = {
+  '@context': 'https://schema.org',
+  '@type': 'FAQPage',
+  '@id': `${siteUrl}/ayuda#faq`,
+  inLanguage: 'es-EC',
+  mainEntity: HELP_FAQS.map((faq) => ({
+    '@type': 'Question',
+    name: faq.q,
+    acceptedAnswer: { '@type': 'Answer', text: faq.a },
+  })),
+};
+
 export default function HelpLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  return children;
+  return (
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: jsonLd(faqStructuredData) }}
+      />
+      {children}
+    </>
+  );
 }

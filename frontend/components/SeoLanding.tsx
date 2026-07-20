@@ -61,25 +61,35 @@ export default function SeoLanding({
     'Contacto directo con anunciantes',
   ];
 
+  const pageUrl = `${SITE_URL}${canonicalHref.startsWith('/') ? canonicalHref : `/${canonicalHref}`}`;
   const itemListData = {
     '@context': 'https://schema.org',
     '@graph': [
       {
-        '@type': 'WebPage',
+        // CollectionPage + SearchResultsPage describe mejor una landing de
+        // inventario que un WebPage genérico (Google y las IAs entienden que
+        // es un listado de resultados, no un artículo).
+        '@type': ['CollectionPage', 'SearchResultsPage'],
+        '@id': `${pageUrl}#webpage`,
         name: title,
         description: intro,
-        url: `${SITE_URL}${canonicalHref.startsWith('/') ? canonicalHref : `/${canonicalHref}`}`,
-        isPartOf: {
-          '@type': 'WebSite',
-          name: 'Geo Propiedades Ecuador',
-          url: SITE_URL,
-          potentialAction: {
-            '@type': 'SearchAction',
-            target: `${SITE_URL}/?search={search_term_string}`,
-            'query-input': 'required name=search_term_string',
-          },
-        },
+        url: pageUrl,
+        inLanguage: 'es-EC',
+        isPartOf: { '@id': `${SITE_URL}/#website` },
+        publisher: { '@id': `${SITE_URL}/#organization` },
+        mainEntity: { '@id': `${pageUrl}#inventario` },
         about: title,
+        ...(minPrice !== null && maxPrice !== null
+          ? {
+              offers: {
+                '@type': 'AggregateOffer',
+                priceCurrency: 'USD',
+                lowPrice: minPrice,
+                highPrice: maxPrice,
+                offerCount: priceValues.length,
+              },
+            }
+          : {}),
         ...(locationName
           ? {
               spatialCoverage: {
@@ -108,6 +118,7 @@ export default function SeoLanding({
       },
       {
         '@type': 'ItemList',
+        '@id': `${pageUrl}#inventario`,
         name: title,
         numberOfItems: properties.length,
         itemListElement: properties.slice(0, 30).map((p, index) => ({
