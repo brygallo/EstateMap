@@ -137,6 +137,16 @@ REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'rest_framework_simplejwt.authentication.JWTAuthentication',
     ),
+    # NO se define DEFAULT_PAGINATION_CLASS: los endpoints públicos devuelven
+    # arrays planos y la paginación se aplica por viewset admin (AdminPagination).
+    # Rate limiting SOLO para los POST públicos (AllowAny). Se aplica mediante
+    # ScopedRateThrottle en el create de ActivityEventViewSet y
+    # PendingPublicationViewSet; el resto de endpoints no se ve afectado porque
+    # solo se limitan las vistas que declaran throttle_scope.
+    'DEFAULT_THROTTLE_RATES': {
+        'activity_create': '30/min',
+        'pending_create': '10/min',
+    },
 }
 
 SIMPLE_JWT = {

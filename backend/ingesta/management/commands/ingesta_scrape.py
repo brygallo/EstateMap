@@ -92,8 +92,21 @@ class Command(BaseCommand):
                 .exclude(source_url="")
                 .values_list("source_url", flat=True)
             )
-            skip_url = conocidas.__contains__
-            self._log(f"saltando {len(conocidas)} URLs ya conocidas")
+            known_ids = set(
+                ListingCruda.objects.filter(fuente=fuente)
+                .exclude(external_id="")
+                .values_list("external_id", flat=True)
+            )
+            known_ids |= set(
+                Property.objects.filter(source__slug=fuente.slug)
+                .exclude(external_id="")
+                .values_list("external_id", flat=True)
+            )
+
+            def skip_url(url, external_id=None):
+                return (bool(external_id) and str(external_id) in known_ids) or url in conocidas
+
+            self._log(f"saltando {len(known_ids)} IDs y {len(conocidas)} URLs ya conocidas")
 
         def run(writer):
             for data in scraper.scrape(limit=opts["limit"], log=self._log,

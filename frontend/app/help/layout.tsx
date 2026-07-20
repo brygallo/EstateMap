@@ -7,25 +7,25 @@ const siteUrl = (
 ).replace(/\/+$/, '');
 
 export const metadata: Metadata = {
-  title: 'Publica tu Propiedad Gratis',
+  title: 'Ayuda y Preguntas Frecuentes | Geo Propiedades Ecuador',
   description:
-    'Publica tu propiedad gratis en Ecuador con mapas interactivos. Atrae compradores con ubicación exacta, fotos y medidas reales.',
+    'Centro de ayuda para publicar propiedades en Ecuador. Aprende cómo usar nuestros mapas interactivos, sigue la guía para publicar gratis y encuentra respuestas a las preguntas más frecuentes.',
   keywords: [
-    'publicar propiedad gratis',
-    'vender propiedad Ecuador',
-    'arrienda propiedad Ecuador',
+    'ayuda publicar propiedad',
+    'cómo publicar propiedad',
+    'preguntas frecuentes',
+    'guía de publicación',
     'mapa de propiedades',
     'inmobiliaria Ecuador',
     'casas en venta Ecuador',
-    'terrenos en venta Ecuador',
   ],
   alternates: {
     canonical: '/ayuda',
   },
   openGraph: {
-    title: 'Publica tu Propiedad Gratis | Geo Propiedades Ecuador',
+    title: 'Ayuda y Preguntas Frecuentes | Geo Propiedades Ecuador',
     description:
-      'Publica tu propiedad gratis en Ecuador con mapas interactivos. Atrae compradores con ubicación exacta, fotos y medidas reales.',
+      'Centro de ayuda para publicar propiedades en Ecuador. Aprende cómo usar nuestros mapas interactivos, sigue la guía para publicar gratis y encuentra respuestas a las preguntas más frecuentes.',
     url: `${siteUrl}/ayuda`,
     siteName: 'Geo Propiedades Ecuador',
     locale: 'es_EC',
@@ -35,15 +35,15 @@ export const metadata: Metadata = {
         url: `${siteUrl}/og-image.png`,
         width: 1200,
         height: 630,
-        alt: 'Publica tu Propiedad Gratis',
+        alt: 'Ayuda y Preguntas Frecuentes',
       },
     ],
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Publica tu Propiedad Gratis | Geo Propiedades Ecuador',
+    title: 'Ayuda y Preguntas Frecuentes | Geo Propiedades Ecuador',
     description:
-      'Publica tu propiedad gratis en Ecuador con mapas interactivos. Atrae compradores con ubicación exacta, fotos y medidas reales.',
+      'Centro de ayuda para publicar propiedades en Ecuador. Aprende cómo usar nuestros mapas interactivos, sigue la guía para publicar gratis y encuentra respuestas a las preguntas más frecuentes.',
     images: [`${siteUrl}/og-image.png`],
   },
 };

@@ -275,8 +275,8 @@ export default function PropertySidebar({
           <div className="rounded-card border border-line bg-white p-3 shadow-card">
             <div className="flex items-center justify-between gap-3">
               <div className="min-w-0">
+                <p className="text-[11px] font-semibold uppercase tracking-wide text-textSecondary">Vista actual</p>
                 <p className="truncate text-sm font-semibold text-textPrimary">{mapContext.title}</p>
-                <p className="mt-0.5 text-xs text-textSecondary">{mapContext.subtitle}</p>
               </div>
               <Badge variant="secondary" className="rounded-md font-geo tabular-nums">
                 {mapContext.total_count}
@@ -290,7 +290,7 @@ export default function PropertySidebar({
             <div className="flex items-center justify-between gap-3">
               <div>
                 <p className="text-sm font-semibold text-textPrimary">{groupLabel}</p>
-                <p className="mt-0.5 text-xs text-textSecondary">Toca una ciudad para acercarte a sus propiedades.</p>
+                <p className="mt-0.5 text-xs text-textSecondary">Elige una ciudad para saltar a esa zona del mapa.</p>
               </div>
               <Badge variant="secondary" className="rounded-md font-geo tabular-nums">
                 {cityGroups.length}

@@ -208,3 +208,33 @@ class TestPlusvaliaParseDetail:
         assert d["status"] == "for_rent"
         assert d["price"] == 5000.0
         assert d["rent_price"] is None
+
+
+class _FakeClient:
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *_args):
+        return False
+
+
+def test_incremental_compara_id_y_corta_franja_historica(monkeypatch):
+    scraper = PlusvaliaScraper()
+    scraper._KNOWN_STREAK_LIMIT = 3
+    monkeypatch.setattr(scraper, "_client", lambda: _FakeClient())
+    monkeypatch.setattr(scraper, "_sleep", lambda: None)
+    urls = [
+        (f"https://www.plusvalia.com/propiedades/clasificado/slug-{n}.html", str(n), {})
+        for n in range(10, 15)
+    ]
+    monkeypatch.setattr(scraper, "_iter_detail_urls", lambda *_args: iter(urls))
+    opened = []
+    monkeypatch.setattr(scraper, "_scrape_detail", lambda _client, url, *_args: opened.append(url))
+
+    results = list(scraper.scrape(
+        searches=[("/venta/casas", "casa", "venta")],
+        skip_url=lambda _url, external_id=None: external_id in {"10", "11", "12"},
+    ))
+
+    assert results == []
+    assert opened == []

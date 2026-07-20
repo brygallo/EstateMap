@@ -103,14 +103,25 @@ export default async function ComboPage({ params }: { params: Params }) {
 
   // Miga hacia el hub de la ubicación (ciudad o provincia), para que Google
   // entienda la jerarquía Inicio > Propiedades en X > Casas en venta en X.
+  // También sirve para decidir si `locationName` es ciudad o provincia al
+  // pedir las fotos destacadas, porque `mapHref` codifica la ubicación como
+  // `search=`, no como `city=`/`province=` (ver `featuredQuery` abajo).
+  const isCityLocation =
+    !!locationName && !!locationSlug && getCities(properties).some((c) => c.slug === locationSlug);
+  const isProvinceLocation =
+    !!locationName &&
+    !!locationSlug &&
+    !isCityLocation &&
+    getProvinces(properties).some((p) => p.slug === locationSlug);
+
   const breadcrumbs: RelatedLink[] = [];
   if (locationName && locationSlug) {
-    if (getCities(properties).some((c) => c.slug === locationSlug)) {
+    if (isCityLocation) {
       breadcrumbs.push({
         label: `Propiedades en ${locationName}`,
         href: `/propiedades/${locationSlug}`,
       });
-    } else if (getProvinces(properties).some((p) => p.slug === locationSlug)) {
+    } else if (isProvinceLocation) {
       breadcrumbs.push({
         label: `Propiedades en ${locationName}`,
         href: `/provincias/${locationSlug}`,
@@ -127,6 +138,12 @@ export default async function ComboPage({ params }: { params: Params }) {
       properties={matched}
       pageHref={`/${params.combo}`}
       mapHref={mapHref}
+      featuredQuery={{
+        type: typeDef.type,
+        status: opDef?.status,
+        city: isCityLocation ? locationName ?? undefined : undefined,
+        province: isProvinceLocation ? locationName ?? undefined : undefined,
+      }}
       relatedLinks={related.slice(0, 8)}
       locationName={locationName ?? undefined}
       breadcrumbs={breadcrumbs}

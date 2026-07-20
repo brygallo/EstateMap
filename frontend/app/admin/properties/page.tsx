@@ -2,6 +2,7 @@
 
 import AdminRoute from '@/components/AdminRoute';
 import AdminSidebar from '@/components/AdminSidebar';
+import PropertyImage from '@/components/ui/PropertyImage';
 import { useAuth } from '@/lib/auth-context';
 import Link from 'next/link';
 import { useEffect, useState, useCallback, useMemo } from 'react';
@@ -18,23 +19,36 @@ import {
   Search,
   ArrowUpDown,
   Eye,
+  Pencil,
   Trash2,
   ExternalLink,
   Building2,
   Tag,
   KeyRound,
   EyeOff,
+  CheckCircle2,
+  ImageOff,
   MapPin,
 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogFooter,
 } from '@/components/ui/dialog';
 import {
   Table,
@@ -65,6 +79,8 @@ import { Card } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8010/api';
+const PAGE_SIZE = 20;
+const SEARCH_DEBOUNCE_MS = 350;
 
 interface PropertyItem {
   id: number;
@@ -73,11 +89,29 @@ interface PropertyItem {
   status: string;
   price: string;
   city: string;
-  province: string;
-  owner: number | null;
+  address: string;
+  area: string | number | null;
+  views_count: number;
   owner_username: string | null;
   owner_email: string | null;
   created_at: string;
+  image_count: number;
+  thumbnail_url: string | null;
+}
+
+interface PropertyListResponse {
+  count: number;
+  next: string | null;
+  previous: string | null;
+  results: PropertyItem[];
+}
+
+interface EditForm {
+  status: string;
+  title: string;
+  price: string;
+  city: string;
+  description: string;
 }
 
 const FILTERS = [
@@ -108,18 +142,19 @@ const STATUS_LABELS: Record<string, string> = {
 };
 
 interface AdminStats {
-  total_properties: number;
-  properties_for_sale: number;
-  properties_for_rent: number;
-  properties_inactive: number;
-  properties_active: number;
-  total_views: number;
+  total: number;
+  for_sale: number;
+  for_rent: number;
+  inactive: number;
+  active: number;
+  without_images: number;
 }
 
 const AdminPropertiesPage = () => {
   const { token } = useAuth();
   const [properties, setProperties] = useState<PropertyItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [searchInput, setSearchInput] = useState('');
   const [search, setSearch] = useState('');
   const [filter, setFilter] = useState('all');
   const [confirmDelete, setConfirmDelete] = useState<PropertyItem | null>(null);
@@ -129,32 +164,44 @@ const AdminPropertiesPage = () => {
   const [totalPages, setTotalPages] = useState(1);
   const [sorting, setSorting] = useState<SortingState>([]);
 
+  // Editar propiedad
+  const [editing, setEditing] = useState<PropertyItem | null>(null);
+  const [editForm, setEditForm] = useState<EditForm>({ status: '', title: '', price: '', city: '', description: '' });
+  const [editDetailLoading, setEditDetailLoading] = useState(false);
+  const [saving, setSaving] = useState(false);
+
+  // Debounce del buscador: evita disparar una request por cada tecla.
+  useEffect(() => {
+    const handle = setTimeout(() => {
+      setSearch(searchInput);
+      setPage(1);
+    }, SEARCH_DEBOUNCE_MS);
+    return () => clearTimeout(handle);
+  }, [searchInput]);
+
   const fetchProperties = useCallback(async () => {
     setLoading(true);
     try {
       const params = new URLSearchParams();
-      if (search) params.set('search', search);
       params.set('page', String(page));
+      params.set('page_size', String(PAGE_SIZE));
+      if (search) params.set('search', search);
+      if (filter !== 'all') params.set('status', filter);
 
       const res = await fetch(`${API_URL}/admin/properties/?${params}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (!res.ok) throw new Error('Error al cargar propiedades');
-      const json = await res.json();
+      const json: PropertyListResponse = await res.json();
 
-      if (json.results) {
-        setProperties(json.results);
-        setTotalPages(Math.ceil(json.count / (json.results.length || 10)) || 1);
-      } else {
-        setProperties(Array.isArray(json) ? json : []);
-        setTotalPages(1);
-      }
+      setProperties(json.results);
+      setTotalPages(Math.max(1, Math.ceil(json.count / PAGE_SIZE)));
     } catch {
       toast.error('Error al cargar propiedades');
     } finally {
       setLoading(false);
     }
-  }, [token, search, page]);
+  }, [token, search, filter, page]);
 
   useEffect(() => {
     if (token) fetchProperties();
@@ -163,7 +210,7 @@ const AdminPropertiesPage = () => {
   // Métricas globales (todo el catálogo), independientes de la página/filtro.
   const fetchStats = useCallback(async () => {
     try {
-      const res = await fetch(`${API_URL}/admin/dashboard/`, {
+      const res = await fetch(`${API_URL}/admin/properties/stats/`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (res.ok) setStats(await res.json());
@@ -176,10 +223,10 @@ const AdminPropertiesPage = () => {
     if (token) fetchStats();
   }, [token, fetchStats]);
 
-  const filteredProperties = useMemo(
-    () => properties.filter((p) => (filter === 'all' ? true : p.status === filter)),
-    [properties, filter]
-  );
+  const handleFilterChange = (key: string) => {
+    setFilter(key);
+    setPage(1);
+  };
 
   const handleDelete = async (prop: PropertyItem) => {
     try {
@@ -197,6 +244,61 @@ const AdminPropertiesPage = () => {
     setConfirmDelete(null);
   };
 
+  const openEdit = useCallback(async (prop: PropertyItem) => {
+    setEditing(prop);
+    setEditForm({
+      status: prop.status,
+      title: prop.title || '',
+      price: prop.price != null ? String(prop.price) : '',
+      city: prop.city || '',
+      description: '',
+    });
+    setEditDetailLoading(true);
+    try {
+      const res = await fetch(`${API_URL}/admin/properties/${prop.id}/`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (res.ok) {
+        const detail = await res.json();
+        setEditForm((f) => ({ ...f, description: detail.description || '' }));
+      }
+    } catch {
+      // Si falla la carga del detalle, se edita igual sin descripción precargada.
+    } finally {
+      setEditDetailLoading(false);
+    }
+  }, [token]);
+
+  const handleSaveEdit = async () => {
+    if (!editing) return;
+    setSaving(true);
+    try {
+      const res = await fetch(`${API_URL}/admin/properties/${editing.id}/`, {
+        method: 'PATCH',
+        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          status: editForm.status,
+          title: editForm.title,
+          price: editForm.price,
+          city: editForm.city,
+          description: editForm.description,
+        }),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error || err.detail || 'Error al actualizar la propiedad');
+      }
+      toast.success('Propiedad actualizada');
+      setEditing(null);
+      fetchProperties();
+      fetchStats();
+    } catch (err: any) {
+      toast.error(err.message);
+    } finally {
+      setSaving(false);
+    }
+  };
+
   const columns = useMemo<ColumnDef<PropertyItem>[]>(
     () => [
       {
@@ -205,9 +307,28 @@ const AdminPropertiesPage = () => {
         cell: ({ row }) => {
           const p = row.original;
           return (
-            <div className="min-w-0">
-              <p className="max-w-[220px] truncate font-medium text-textPrimary">{p.title || `Propiedad #${p.id}`}</p>
-              <p className="text-xs text-textSecondary sm:hidden">{TYPE_LABELS[p.property_type] || p.property_type}</p>
+            <div className="flex min-w-0 items-center gap-2.5">
+              {p.thumbnail_url ? (
+                <PropertyImage
+                  src={p.thumbnail_url}
+                  alt={p.title || `Propiedad #${p.id}`}
+                  fill
+                  sizes="40px"
+                  className="object-cover"
+                  wrapperClassName="h-10 w-10 flex-shrink-0 rounded-md"
+                />
+              ) : (
+                <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-md bg-muted text-textSecondary">
+                  <ImageOff className="h-4 w-4" />
+                </div>
+              )}
+              <div className="min-w-0">
+                <p className="max-w-[220px] truncate font-medium text-textPrimary">{p.title || `Propiedad #${p.id}`}</p>
+                <p className="text-xs text-textSecondary">
+                  <span className="sm:hidden">{TYPE_LABELS[p.property_type] || p.property_type} · </span>
+                  {p.image_count} foto{p.image_count === 1 ? '' : 's'}
+                </p>
+              </div>
             </div>
           );
         },
@@ -275,8 +396,15 @@ const AdminPropertiesPage = () => {
               >
                 <Eye className="h-4 w-4" />
               </button>
+              <button
+                onClick={() => openEdit(p)}
+                title="Editar"
+                className="rounded-button p-1.5 text-textSecondary transition-colors hover:bg-muted hover:text-textPrimary"
+              >
+                <Pencil className="h-4 w-4" />
+              </button>
               <Link
-                href={`/propiedad/${p.id}`}
+                href={`/property/${p.id}`}
                 target="_blank"
                 title="Abrir en pestaña nueva"
                 className="rounded-button p-1.5 text-textSecondary transition-colors hover:bg-muted hover:text-textPrimary"
@@ -295,11 +423,11 @@ const AdminPropertiesPage = () => {
         },
       },
     ],
-    []
+    [openEdit]
   );
 
   const table = useReactTable({
-    data: filteredProperties,
+    data: properties,
     columns,
     state: { sorting },
     onSortingChange: setSorting,
@@ -319,17 +447,18 @@ const AdminPropertiesPage = () => {
             </div>
 
             {/* Métricas globales */}
-            <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
+            <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
               {stats ? (
                 <>
-                  <MetricTile icon={Building2} label="Total" value={stats.total_properties} tone="primary" />
-                  <MetricTile icon={Tag} label="En venta" value={stats.properties_for_sale} tone="green" />
-                  <MetricTile icon={KeyRound} label="En alquiler" value={stats.properties_for_rent} tone="amber" />
-                  <MetricTile icon={EyeOff} label="Inactivas" value={stats.properties_inactive} tone="slate" />
-                  <MetricTile icon={Eye} label="Vistas" value={stats.total_views} tone="primary" />
+                  <MetricTile icon={Building2} label="Total" value={stats.total} tone="primary" />
+                  <MetricTile icon={Tag} label="En venta" value={stats.for_sale} tone="green" />
+                  <MetricTile icon={KeyRound} label="En alquiler" value={stats.for_rent} tone="amber" />
+                  <MetricTile icon={EyeOff} label="Inactivas" value={stats.inactive} tone="slate" />
+                  <MetricTile icon={CheckCircle2} label="Activas" value={stats.active} tone="green" />
+                  <MetricTile icon={ImageOff} label="Sin imágenes" value={stats.without_images} tone="slate" />
                 </>
               ) : (
-                Array.from({ length: 5 }).map((_, i) => (
+                Array.from({ length: 6 }).map((_, i) => (
                   <Skeleton key={i} className="h-[74px] rounded-card" />
                 ))
               )}
@@ -342,8 +471,8 @@ const AdminPropertiesPage = () => {
                 <Input
                   type="text"
                   placeholder="Buscar por título o propietario..."
-                  value={search}
-                  onChange={(e) => { setSearch(e.target.value); setPage(1); }}
+                  value={searchInput}
+                  onChange={(e) => setSearchInput(e.target.value)}
                   className="rounded-input pl-9"
                 />
               </div>
@@ -354,7 +483,7 @@ const AdminPropertiesPage = () => {
                     variant={filter === f.key ? 'default' : 'outline'}
                     size="sm"
                     className="rounded-button"
-                    onClick={() => setFilter(f.key)}
+                    onClick={() => handleFilterChange(f.key)}
                   >
                     {f.label}
                   </Button>
@@ -366,7 +495,7 @@ const AdminPropertiesPage = () => {
             <Card className="overflow-hidden rounded-card shadow-card">
               {loading ? (
                 <TableSkeleton cols={8} />
-              ) : filteredProperties.length === 0 ? (
+              ) : properties.length === 0 ? (
                 <div className="py-12 text-center text-textSecondary">No se encontraron propiedades</div>
               ) : (
                 <div className="overflow-x-auto">
@@ -463,6 +592,17 @@ const AdminPropertiesPage = () => {
                 </DialogTitle>
               </DialogHeader>
               <div className="space-y-3">
+                {preview.thumbnail_url && (
+                  <PropertyImage
+                    src={preview.thumbnail_url}
+                    alt={preview.title || `Propiedad #${preview.id}`}
+                    fill
+                    sizes="400px"
+                    className="object-cover"
+                    wrapperClassName="h-40 w-full rounded-card"
+                  />
+                )}
+
                 <div className="flex flex-wrap items-center gap-2">
                   <Badge
                     variant="outline"
@@ -473,6 +613,9 @@ const AdminPropertiesPage = () => {
                   <span className="rounded-md bg-muted px-2 py-0.5 text-xs font-medium text-textSecondary">
                     {TYPE_LABELS[preview.property_type] || preview.property_type}
                   </span>
+                  <span className="rounded-md bg-muted px-2 py-0.5 text-xs font-medium text-textSecondary">
+                    {preview.image_count} foto{preview.image_count === 1 ? '' : 's'}
+                  </span>
                 </div>
 
                 <div className="font-geo text-2xl font-semibold text-primary tabular-nums">
@@ -481,7 +624,7 @@ const AdminPropertiesPage = () => {
 
                 <p className="flex items-center gap-1.5 text-sm text-textSecondary">
                   <MapPin className="h-4 w-4 flex-shrink-0 text-primary" strokeWidth={1.75} aria-hidden />
-                  {[preview.city, preview.province].filter(Boolean).join(', ') || 'Sin ubicación'}
+                  {[preview.address, preview.city].filter(Boolean).join(', ') || 'Sin ubicación'}
                 </p>
 
                 <dl className="grid grid-cols-2 gap-3 border-t border-line pt-3 text-sm">
@@ -495,6 +638,14 @@ const AdminPropertiesPage = () => {
                       {new Date(preview.created_at).toLocaleDateString('es-EC')}
                     </dd>
                   </div>
+                  <div>
+                    <dt className="text-xs text-textSecondary">Vistas</dt>
+                    <dd className="font-medium text-textPrimary">{preview.views_count}</dd>
+                  </div>
+                  <div>
+                    <dt className="text-xs text-textSecondary">Área</dt>
+                    <dd className="font-medium text-textPrimary">{preview.area ? `${preview.area} m²` : '—'}</dd>
+                  </div>
                   {preview.owner_email && (
                     <div className="col-span-2 min-w-0">
                       <dt className="text-xs text-textSecondary">Email</dt>
@@ -505,10 +656,17 @@ const AdminPropertiesPage = () => {
 
                 <div className="flex gap-2 pt-1">
                   <Button asChild className="flex-1 rounded-button">
-                    <Link href={`/propiedad/${preview.id}`} target="_blank">
+                    <Link href={`/property/${preview.id}`} target="_blank">
                       <ExternalLink className="mr-2 h-4 w-4" />
                       Ver completa
                     </Link>
+                  </Button>
+                  <Button
+                    variant="outline"
+                    className="rounded-button"
+                    onClick={() => { const p = preview; setPreview(null); openEdit(p); }}
+                  >
+                    <Pencil className="h-4 w-4" />
                   </Button>
                   <Button
                     variant="outline"
@@ -519,6 +677,94 @@ const AdminPropertiesPage = () => {
                   </Button>
                 </div>
               </div>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Editar propiedad */}
+      <Dialog open={!!editing} onOpenChange={(o) => { if (!o) setEditing(null); }}>
+        <DialogContent className="rounded-modal sm:max-w-md">
+          {editing && (
+            <>
+              <DialogHeader>
+                <DialogTitle className="pr-6 text-left text-base">
+                  Editar {editing.title || `propiedad #${editing.id}`}
+                </DialogTitle>
+              </DialogHeader>
+              <div className="space-y-4">
+                <div className="space-y-1.5">
+                  <Label htmlFor="edit-status">Estado</Label>
+                  <Select value={editForm.status} onValueChange={(v) => setEditForm((f) => ({ ...f, status: v }))}>
+                    <SelectTrigger id="edit-status" className="rounded-button border-line">
+                      <SelectValue placeholder="Estado" />
+                    </SelectTrigger>
+                    <SelectContent className="rounded-card">
+                      <SelectItem value="for_sale">En venta</SelectItem>
+                      <SelectItem value="for_rent">En alquiler</SelectItem>
+                      <SelectItem value="inactive">Inactiva</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-1.5">
+                  <Label htmlFor="edit-title">Título</Label>
+                  <Input
+                    id="edit-title"
+                    className="rounded-input"
+                    value={editForm.title}
+                    onChange={(e) => setEditForm((f) => ({ ...f, title: e.target.value }))}
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-1.5">
+                    <Label htmlFor="edit-price">Precio</Label>
+                    <Input
+                      id="edit-price"
+                      type="number"
+                      className="rounded-input"
+                      value={editForm.price}
+                      onChange={(e) => setEditForm((f) => ({ ...f, price: e.target.value }))}
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label htmlFor="edit-city">Ciudad</Label>
+                    <Input
+                      id="edit-city"
+                      className="rounded-input"
+                      value={editForm.city}
+                      onChange={(e) => setEditForm((f) => ({ ...f, city: e.target.value }))}
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-1.5">
+                  <Label htmlFor="edit-description">Descripción</Label>
+                  {editDetailLoading ? (
+                    <Skeleton className="h-20 w-full" />
+                  ) : (
+                    <Textarea
+                      id="edit-description"
+                      rows={4}
+                      value={editForm.description}
+                      onChange={(e) => setEditForm((f) => ({ ...f, description: e.target.value }))}
+                    />
+                  )}
+                </div>
+              </div>
+              <DialogFooter>
+                <Button variant="outline" className="rounded-button" onClick={() => setEditing(null)} disabled={saving}>
+                  Cancelar
+                </Button>
+                <Button
+                  className="rounded-button"
+                  onClick={handleSaveEdit}
+                  disabled={saving || editDetailLoading}
+                >
+                  {saving ? 'Guardando...' : 'Guardar cambios'}
+                </Button>
+              </DialogFooter>
             </>
           )}
         </DialogContent>

@@ -67,6 +67,51 @@ export async function getProperties({
   }
 }
 
+interface GetFeaturedPropertiesOptions {
+  type?: string;
+  status?: string;
+  city?: string;
+  province?: string;
+  limit?: number;
+  revalidate?: number;
+}
+
+/**
+ * Fetch a small page of properties WITH images, for the "Propiedades
+ * destacadas" grid on SEO landing pages. Unlike `getProperties`, this always
+ * requests `include_images=1`; the page size stays small (default 8) so the
+ * response is cheap enough to include images. Returns `[]` on any failure so
+ * callers can fall back to the image-less full list.
+ */
+export async function getFeaturedProperties({
+  type,
+  status,
+  city,
+  province,
+  limit = 8,
+  revalidate = 3600,
+}: GetFeaturedPropertiesOptions = {}): Promise<Property[]> {
+  try {
+    const params = new URLSearchParams({
+      page_size: String(limit),
+      include_images: '1',
+    });
+    if (type) params.set('type', type);
+    if (status) params.set('status', status);
+    if (city) params.set('city', city);
+    if (province) params.set('province', province);
+
+    const res = await fetch(`${API_URL}/properties/?${params.toString()}`, {
+      next: { revalidate },
+    });
+    if (!res.ok) return [];
+    return normalizeList(await res.json());
+  } catch (error) {
+    console.error('Error fetching featured properties:', error);
+    return [];
+  }
+}
+
 export async function getProperty(id: string): Promise<Property | null> {
   try {
     const res = await fetch(`${API_URL}/properties/${id}/`, {

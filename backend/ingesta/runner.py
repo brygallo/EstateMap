@@ -127,6 +127,8 @@ def _refresh_disponibles(fuente, scraper):
 def execute(run_obj: IngestaRun, log=None):
     """Despacha según el modo del run: cargar/actualizar del portal, o refrescar
     las existentes y verificar vigencia."""
+    if run_obj.modo == "verify":
+        return run_verify(run_obj, log=log)
     if run_obj.modo == "refresh":
         return run_refresh(run_obj, log=log)
     return run_load(run_obj, log=log)
@@ -157,18 +159,28 @@ def run_load(run: IngestaRun, log=None):
     searches = (fuente.config or {}).get("searches")
     do_images = run.con_imagenes
 
-    # Modo "por tandas": saltar los anuncios ya importados para avanzar a los
-    # que faltan. Cargamos las URLs ya guardadas de esta fuente en un set.
+    # Modo incremental: se compara primero por el ID estable del portal. La URL
+    # puede cambiar cuando el anunciante edita el título/slug, por lo que usar
+    # únicamente la URL hacía que propiedades conocidas parecieran nuevas.
     skip_url = None
     if run.solo_nuevas:
         from real_estate.models import Property
 
-        conocidas = set(
+        known_urls = set(
             Property.objects.filter(source=fuente, is_imported=True)
             .exclude(source_url="")
             .values_list("source_url", flat=True)
         )
-        skip_url = conocidas.__contains__
+        known_ids = set(
+            Property.objects.filter(source=fuente, is_imported=True)
+            .exclude(external_id="")
+            .values_list("external_id", flat=True)
+        )
+
+        def skip_url(url, external_id=None):
+            return (bool(external_id) and str(external_id) in known_ids) or url in known_urls
+
+        logger(f"[incremental] {len(known_ids)} IDs conocidos cargados; no se abrirán sus fichas.")
 
     cancelled = False
     try:
@@ -249,6 +261,91 @@ def run_load(run: IngestaRun, log=None):
     return run
 
 
+def run_verify(run: IngestaRun, log=None):
+    """Comprueba únicamente si cada anuncio continúa publicado.
+
+    No descarga imágenes ni actualiza campos: los desaparecidos se retiran del
+    mapa mediante ``status=inactive`` y permanecen en admin como auditoría.
+    """
+    echo = log or (lambda *_: None)
+    fuente = run.fuente
+    scraper = get_scraper(fuente.scraper_key)
+    if scraper is None:
+        run.estado = "error"
+        run.current_stage = "configurando scraper"
+        run.mensaje = f"Scraper '{fuente.scraper_key}' no registrado."
+        run.error_detail = run.mensaje
+        run.finished_at = timezone.now()
+        run.save()
+        return run
+
+    from real_estate.models import Property
+    from .pipeline.images import delete_property_images
+
+    run.estado = "running"
+    run.current_stage = "comprobando anuncios vigentes"
+    run.started_at = timezone.now()
+    run.heartbeat_at = timezone.now()
+    run.save(update_fields=["estado", "current_stage", "started_at", "heartbeat_at"])
+    logger = RunLogger(run, echo=echo)
+    cancelled = False
+    try:
+        props = list(
+            Property.objects.filter(source=fuente, is_imported=True)
+            .exclude(status="inactive").exclude(source_url="")
+            .only("id", "source_url", "status")
+        )
+        statuses = scraper.check_many(prop.source_url for prop in props)
+        for prop, exists in zip(props, statuses):
+            run.vistos += 1
+            try:
+                if exists is False:
+                    delete_property_images(prop)
+                    prop.status = "inactive"
+                    prop.save(update_fields=["status"])
+                    run.caducadas += 1
+                    logger(f"[retirada] #{prop.pk} ya no existe: {prop.source_url}")
+                elif exists is None:
+                    run.errores += 1
+            except ScraperBlocked:
+                raise
+            except Exception as exc:  # noqa: BLE001
+                run.errores += 1
+                logger(f"[vigencia] error en {prop.source_url}: {type(exc).__name__}: {exc}")
+
+            if run.vistos % 10 == 0:
+                run.heartbeat_at = timezone.now()
+                run.save(update_fields=["vistos", "caducadas", "errores", "heartbeat_at"])
+                if _cancel_requested(run):
+                    cancelled = True
+                    break
+
+        run.estado = "cancelled" if cancelled else "done"
+        run.current_stage = "cancelado" if cancelled else "completado"
+        run.mensaje = (
+            f"Cancelado tras revisar {run.vistos} anuncios."
+            if cancelled else
+            f"Vigencia comprobada. {run.caducadas} anuncios retirados del mapa."
+        )
+    except ScraperBlocked as exc:
+        run.estado = "error"
+        run.current_stage = "bloqueado por el portal"
+        run.mensaje = f"Bloqueado por el portal: {exc}"[:2000]
+        run.error_detail = str(exc)
+    except Exception as exc:  # noqa: BLE001
+        run.estado = "error"
+        run.current_stage = "fallo fatal"
+        run.mensaje = f"{type(exc).__name__}: {exc}"[:2000]
+        run.error_detail = traceback.format_exc()
+        logger(f"[fatal] {run.error_detail}")
+    finally:
+        logger.flush()
+        run.finished_at = timezone.now()
+        run.heartbeat_at = timezone.now()
+        run.save()
+    return run
+
+
 def run_refresh(run: IngestaRun, log=None):
     """
     Re-visita cada propiedad ya importada de la fuente:
@@ -286,7 +383,15 @@ def run_refresh(run: IngestaRun, log=None):
         for prop in props.iterator():
             run.vistos += 1
             try:
-                res = scraper.scrape_one(prop.source_url)
+                res = scraper.scrape_one(
+                    prop.source_url,
+                    listing={
+                        "coords": (str(prop.latitude), str(prop.longitude)),
+                        "address": prop.address,
+                        "city": prop.city,
+                        "province": prop.province,
+                    },
+                )
 
                 if res == "GONE":
                     if prop.status != "inactive":
