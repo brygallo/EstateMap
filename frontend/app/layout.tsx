@@ -180,6 +180,8 @@ export default function RootLayout({
   return (
     <html lang="es" className={`${GeistSans.variable} ${GeistMono.variable}`} suppressHydrationWarning>
       <body className="font-sans" suppressHydrationWarning>
+        <link rel="preconnect" href="https://minio.geopropiedadesecuador.com" crossOrigin="anonymous" />
+        <link rel="dns-prefetch" href="https://www.googletagmanager.com" />
         <Script
           id="sw-cleanup-script"
           strategy="afterInteractive"
