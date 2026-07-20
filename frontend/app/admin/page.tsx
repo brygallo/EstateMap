@@ -20,6 +20,18 @@ import {
   AlertTriangle,
   ArrowRight,
   RefreshCw,
+  CircleDollarSign,
+  DownloadCloud,
+  GitMerge,
+  MapPinOff,
+  ServerCog,
+  Activity,
+  BarChart3,
+  FileText,
+  MousePointerClick,
+  TrendingDown,
+  TrendingUp,
+  UserCheck,
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -52,9 +64,83 @@ interface DashboardData {
   new_users_30d: number;
   properties_without_images: number;
   properties_incomplete: number;
+  quality: {
+    without_images: number;
+    without_location: number;
+    without_price: number;
+    duplicates: number;
+    inactive: number;
+  };
+  ingestion: {
+    active_runs: number;
+    failed_24h: number;
+    retired_total: number;
+    imported_total: number;
+    sources: SourceHealth[];
+  };
+  owner: OwnerMetrics;
+  generated_at: string;
   recent_users: any[];
   recent_properties: any[];
   recent_leads: any[];
+}
+
+interface OwnerPeriodMetric {
+  value: number;
+  change: number;
+}
+
+interface OwnerMetrics {
+  period: Record<'sessions' | 'new_users' | 'details' | 'contacts' | 'publications', OwnerPeriodMetric>;
+  funnel: Array<{ label: string; value: number; rate: number }>;
+  trends: Array<{ date: string; events: number; users: number; properties: number; leads: number }>;
+  top_properties: Array<{
+    id: number;
+    title: string;
+    city: string;
+    source__slug: string | null;
+    detail_events: number;
+    contact_events: number;
+  }>;
+  source_performance: Array<{
+    slug: string;
+    name: string;
+    active: number;
+    retired: number;
+    details_30d: number;
+    contacts_30d: number;
+    conversion: number;
+    last_import_at: string | null;
+  }>;
+  acquisition_channels: Array<{
+    source: string;
+    channel: string;
+    sessions: number;
+    contacts: number;
+    conversion: number;
+  }>;
+  audience: { active_30d: number; recurring_30d: number; high_intent_users_30d: number };
+  alerts: Array<{ severity: 'critical' | 'warning' | 'ok'; title: string; value: number; href: string }>;
+  weekly_summary: string[];
+  technical: {
+    database: string;
+    storage_bytes: number;
+    release: string;
+    environment: string;
+    failed_runs_24h: number;
+    removed_listings: number;
+  };
+}
+
+interface SourceHealth {
+  slug: string;
+  nombre: string;
+  status: 'healthy' | 'running' | 'error' | 'stale' | 'never';
+  last_import_at: string | null;
+  latest_run_id: number | null;
+  latest_run_status: string | null;
+  imported: number;
+  retired: number;
 }
 
 const AdminDashboard = () => {
@@ -126,6 +212,9 @@ const AdminDashboard = () => {
               <DashboardSkeleton />
             ) : data ? (
               <>
+                <OwnerExecutive metrics={data.owner} />
+                <OperationsCenter data={data} />
+
                 {/* KPI cards */}
                 <div className="mb-8 grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-5">
                   <KpiCard label="Usuarios" value={data.total_users} icon={Users} tone="blue" />
@@ -297,6 +386,354 @@ const AdminDashboard = () => {
     </AdminRoute>
   );
 };
+
+const SOURCE_STATUS = {
+  healthy: { label: 'Al día', className: 'bg-green-100 text-green-700 border-green-200' },
+  running: { label: 'Ejecutándose', className: 'bg-blue-100 text-blue-700 border-blue-200' },
+  error: { label: 'Con error', className: 'bg-red-100 text-red-700 border-red-200' },
+  stale: { label: 'Desactualizada', className: 'bg-amber-100 text-amber-800 border-amber-200' },
+  never: { label: 'Sin ejecutar', className: 'bg-slate-100 text-slate-700 border-slate-200' },
+} satisfies Record<SourceHealth['status'], { label: string; className: string }>;
+
+function OwnerExecutive({ metrics }: { metrics: OwnerMetrics }) {
+  const periodCards = [
+    { key: 'sessions', label: 'Sesiones activas', icon: Activity },
+    { key: 'new_users', label: 'Usuarios nuevos', icon: UserPlus },
+    { key: 'details', label: 'Detalles abiertos', icon: Eye },
+    { key: 'contacts', label: 'Contactos', icon: MousePointerClick },
+    { key: 'publications', label: 'Publicaciones', icon: Building2 },
+  ] as const;
+  const maxEvents = Math.max(1, ...metrics.trends.map((item) => item.events));
+
+  return (
+    <section className="mb-8 space-y-4" aria-labelledby="executive-title">
+      <div>
+        <h2 id="executive-title" className="text-xl font-bold text-textPrimary">Vista ejecutiva</h2>
+        <p className="mt-1 text-sm text-textSecondary">Crecimiento, intención y decisiones de los últimos 7 días frente a los 7 anteriores.</p>
+      </div>
+
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-5">
+        {periodCards.map(({ key, label, icon: Icon }) => {
+          const metric = metrics.period[key];
+          const positive = metric.change >= 0;
+          const ChangeIcon = positive ? TrendingUp : TrendingDown;
+          return (
+            <Card key={key} className="rounded-card shadow-card">
+              <CardContent className="p-4">
+                <div className="flex items-center justify-between">
+                  <Icon className="h-5 w-5 text-primary" />
+                  <span className={cn('flex items-center gap-1 text-xs font-semibold', positive ? 'text-green-700' : 'text-red-700')}>
+                    <ChangeIcon className="h-3.5 w-3.5" /> {metric.change > 0 ? '+' : ''}{metric.change}%
+                  </span>
+                </div>
+                <p className="mt-3 font-geo text-2xl font-bold text-textPrimary">{metric.value.toLocaleString('es-EC')}</p>
+                <p className="text-xs text-textSecondary">{label}</p>
+              </CardContent>
+            </Card>
+          );
+        })}
+      </div>
+
+      <div className="grid gap-4 xl:grid-cols-[minmax(0,1.3fr)_minmax(360px,0.7fr)]">
+        <Card className="rounded-card shadow-card">
+          <CardHeader className="pb-2">
+            <CardTitle className="flex items-center gap-2 text-base"><BarChart3 className="h-4 w-4" /> Actividad de los últimos 14 días</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex h-40 items-end gap-1.5 border-b border-line pb-1 sm:gap-2">
+              {metrics.trends.map((item) => (
+                <div key={item.date} className="group flex h-full min-w-0 flex-1 items-end" title={`${item.date}: ${item.events} eventos`}>
+                  <div
+                    className="w-full rounded-t-sm bg-primary/75 transition-colors group-hover:bg-primary"
+                    style={{ height: `${Math.max(3, (item.events / maxEvents) * 100)}%` }}
+                  />
+                </div>
+              ))}
+            </div>
+            <div className="mt-2 flex justify-between text-[11px] text-textSecondary">
+              <span>{new Date(metrics.trends[0]?.date).toLocaleDateString('es-EC', { day: '2-digit', month: 'short' })}</span>
+              <span>Eventos funcionales registrados</span>
+              <span>{new Date(metrics.trends.at(-1)?.date || '').toLocaleDateString('es-EC', { day: '2-digit', month: 'short' })}</span>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="rounded-card shadow-card">
+          <CardHeader className="pb-2"><CardTitle className="text-base">Audiencia útil · 30 días</CardTitle></CardHeader>
+          <CardContent className="grid grid-cols-3 gap-2">
+            <AudienceMetric label="Activas" value={metrics.audience.active_30d} icon={Activity} />
+            <AudienceMetric label="Recurrentes" value={metrics.audience.recurring_30d} icon={RefreshCw} />
+            <AudienceMetric label="Alta intención" value={metrics.audience.high_intent_users_30d} icon={UserCheck} />
+          </CardContent>
+        </Card>
+      </div>
+
+      <div className="grid gap-4 lg:grid-cols-2">
+        <Card className="rounded-card shadow-card">
+          <CardHeader className="pb-3"><CardTitle className="text-base">Embudo de intención · 30 días</CardTitle></CardHeader>
+          <CardContent className="space-y-3">
+            {metrics.funnel.map((stage) => (
+              <div key={stage.label}>
+                <div className="mb-1 flex items-center justify-between text-xs">
+                  <span className="font-medium text-textPrimary">{stage.label}</span>
+                  <span className="text-textSecondary">{stage.value.toLocaleString('es-EC')} · {stage.rate}%</span>
+                </div>
+                <div className="h-2 overflow-hidden rounded-full bg-muted">
+                  <div className="h-full rounded-full bg-primary" style={{ width: `${Math.max(stage.value ? 2 : 0, stage.rate)}%` }} />
+                </div>
+              </div>
+            ))}
+          </CardContent>
+        </Card>
+
+        <Card className="rounded-card shadow-card">
+          <CardHeader className="pb-3"><CardTitle className="text-base">Decisiones para esta semana</CardTitle></CardHeader>
+          <CardContent className="space-y-2">
+            {metrics.alerts.map((alert) => (
+              <Link key={alert.title} href={alert.href} className={cn(
+                'flex items-center gap-3 rounded-card border p-3 text-sm transition-colors',
+                alert.severity === 'critical' && 'border-red-200 bg-red-50 text-red-900',
+                alert.severity === 'warning' && 'border-amber-200 bg-amber-50 text-amber-900',
+                alert.severity === 'ok' && 'border-green-200 bg-green-50 text-green-900',
+              )}>
+                <AlertTriangle className="h-4 w-4 shrink-0" />
+                <span className="flex-1 font-medium">{alert.title}</span>
+                {alert.value > 0 && <span className="font-geo text-lg font-bold">{alert.value}</span>}
+                <ArrowRight className="h-4 w-4" />
+              </Link>
+            ))}
+          </CardContent>
+        </Card>
+      </div>
+
+      <div className="grid gap-4 xl:grid-cols-2">
+        <ExecutiveTable
+          title="Origen de usuarios · 30 días"
+          headers={['Origen', 'Canal', 'Sesiones', 'Contactos', 'Conversión']}
+          rows={(metrics.acquisition_channels || []).map((source) => [
+            source.source,
+            source.channel,
+            source.sessions.toLocaleString('es-EC'),
+            source.contacts.toLocaleString('es-EC'),
+            `${source.conversion}%`,
+          ])}
+          empty="La atribución aparecerá cuando ingresen nuevas sesiones."
+        />
+        <ExecutiveTable
+          title="Rendimiento por fuente · 30 días"
+          headers={['Fuente', 'Activas', 'Detalles', 'Contactos', 'Conversión']}
+          rows={metrics.source_performance.map((source) => [
+            source.name,
+            source.active.toLocaleString('es-EC'),
+            source.details_30d.toLocaleString('es-EC'),
+            source.contacts_30d.toLocaleString('es-EC'),
+            `${source.conversion}%`,
+          ])}
+          empty="Todavía no hay fuentes con datos."
+        />
+        <ExecutiveTable
+          title="Propiedades con mayor intención · 30 días"
+          headers={['Propiedad', 'Ciudad', 'Detalles', 'Contactos']}
+          rows={metrics.top_properties.map((property) => [
+            <Link key={property.id} href={`/property/${property.id}`} target="_blank" className="block max-w-[240px] truncate font-medium text-primary hover:underline">{property.title || `Propiedad #${property.id}`}</Link>,
+            property.city || '—',
+            property.detail_events.toLocaleString('es-EC'),
+            property.contact_events.toLocaleString('es-EC'),
+          ])}
+          empty="Aún no hay aperturas o contactos registrados."
+        />
+      </div>
+
+      <div className="grid gap-4 lg:grid-cols-[minmax(0,1.4fr)_minmax(300px,0.6fr)]">
+        <Card className="rounded-card shadow-card">
+          <CardHeader className="pb-3"><CardTitle className="flex items-center gap-2 text-base"><FileText className="h-4 w-4" /> Resumen semanal</CardTitle></CardHeader>
+          <CardContent>
+            <ul className="space-y-2 text-sm text-textSecondary">
+              {metrics.weekly_summary.map((line) => <li key={line} className="flex gap-2"><span className="text-primary">•</span><span>{line}</span></li>)}
+            </ul>
+          </CardContent>
+        </Card>
+        <Card className="rounded-card shadow-card">
+          <CardHeader className="pb-3"><CardTitle className="text-base">Diagnóstico técnico</CardTitle></CardHeader>
+          <CardContent className="space-y-2 text-sm">
+            <DiagnosticLine label="Base de datos" value={metrics.technical.database === 'online' ? 'En línea' : metrics.technical.database} good />
+            <DiagnosticLine label="Entorno" value={metrics.technical.environment} />
+            <DiagnosticLine label="Versión" value={metrics.technical.release} />
+            <DiagnosticLine label="Imágenes" value={formatBytes(metrics.technical.storage_bytes)} />
+            <DiagnosticLine label="Fallos 24 h" value={String(metrics.technical.failed_runs_24h)} good={metrics.technical.failed_runs_24h === 0} />
+          </CardContent>
+        </Card>
+      </div>
+    </section>
+  );
+}
+
+function AudienceMetric({ label, value, icon: Icon }: { label: string; value: number; icon: React.ComponentType<{ className?: string }> }) {
+  return (
+    <div className="rounded-card bg-background p-3 text-center">
+      <Icon className="mx-auto h-4 w-4 text-primary" />
+      <p className="mt-2 font-geo text-xl font-bold text-textPrimary">{value.toLocaleString('es-EC')}</p>
+      <p className="text-[11px] text-textSecondary">{label}</p>
+    </div>
+  );
+}
+
+function ExecutiveTable({ title, headers, rows, empty }: { title: string; headers: string[]; rows: React.ReactNode[][]; empty: string }) {
+  return (
+    <Card className="overflow-hidden rounded-card shadow-card">
+      <div className="border-b border-line px-5 py-4"><h3 className="font-semibold text-textPrimary">{title}</h3></div>
+      {rows.length === 0 ? <p className="p-6 text-center text-sm text-textSecondary">{empty}</p> : (
+        <div className="overflow-x-auto">
+          <table className="w-full text-left text-sm">
+            <thead className="bg-muted/40 text-xs text-textSecondary"><tr>{headers.map((header) => <th key={header} className="whitespace-nowrap px-4 py-2.5 font-medium">{header}</th>)}</tr></thead>
+            <tbody>{rows.map((row, index) => <tr key={index} className="border-t border-line">{row.map((cell, cellIndex) => <td key={cellIndex} className="whitespace-nowrap px-4 py-3 text-textSecondary">{cell}</td>)}</tr>)}</tbody>
+          </table>
+        </div>
+      )}
+    </Card>
+  );
+}
+
+function DiagnosticLine({ label, value, good = false }: { label: string; value: string; good?: boolean }) {
+  return <div className="flex items-center justify-between gap-3"><span className="text-textSecondary">{label}</span><span className={cn('truncate font-medium text-textPrimary', good && 'text-green-700')}>{value}</span></div>;
+}
+
+function formatBytes(value: number) {
+  if (!value) return '0 MB';
+  const units = ['B', 'KB', 'MB', 'GB', 'TB'];
+  const index = Math.min(Math.floor(Math.log(value) / Math.log(1024)), units.length - 1);
+  return `${(value / 1024 ** index).toFixed(index > 1 ? 1 : 0)} ${units[index]}`;
+}
+
+function OperationsCenter({ data }: { data: DashboardData }) {
+  const alerts = [
+    {
+      label: 'Sin imágenes',
+      value: data.quality.without_images,
+      description: 'No generan una ficha visual completa.',
+      icon: ImageOff,
+      tone: 'amber',
+      href: '/admin/properties',
+    },
+    {
+      label: 'Sin ubicación',
+      value: data.quality.without_location,
+      description: 'No pueden mostrarse correctamente en el mapa.',
+      icon: MapPinOff,
+      tone: 'rose',
+      href: '/admin/properties',
+    },
+    {
+      label: 'Sin precio',
+      value: data.quality.without_price,
+      description: 'Requieren revisión comercial o de la fuente.',
+      icon: CircleDollarSign,
+      tone: 'orange',
+      href: '/admin/properties',
+    },
+    {
+      label: 'Duplicadas',
+      value: data.quality.duplicates,
+      description: 'Están ocultas del mapa por deduplicación.',
+      icon: GitMerge,
+      tone: 'violet',
+      href: '/admin/ingesta?tab=importadas&estado=duplicadas',
+    },
+  ];
+
+  return (
+    <section className="mb-8" aria-labelledby="operations-title">
+      <div className="mb-3 flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <h2 id="operations-title" className="text-lg font-bold text-textPrimary">Centro de operaciones</h2>
+          <p className="text-sm text-textSecondary">Problemas que requieren atención y estado actual de las fuentes.</p>
+        </div>
+        <p className="text-xs text-textSecondary">
+          Actualizado {new Date(data.generated_at).toLocaleString('es-EC')}
+        </p>
+      </div>
+
+      <div className="grid gap-4 xl:grid-cols-[minmax(0,1.4fr)_minmax(360px,1fr)]">
+        <Card className="rounded-card shadow-card">
+          <CardHeader className="pb-3">
+            <CardTitle className="flex items-center justify-between text-base">
+              <span>Calidad del catálogo</span>
+              <Badge variant="outline" className="border-line bg-background text-textSecondary">
+                {alerts.reduce((sum, alert) => sum + alert.value, 0)} incidencias
+              </Badge>
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="grid gap-3 sm:grid-cols-2">
+            {alerts.map((alert) => {
+              const Icon = alert.icon;
+              return (
+                <Link
+                  key={alert.label}
+                  href={alert.href}
+                  className="group flex items-start gap-3 rounded-card border border-line bg-background p-3 transition-colors hover:border-primary/30 hover:bg-primaryLight/30"
+                >
+                  <span className={cn('flex h-9 w-9 shrink-0 items-center justify-center rounded-button', TONES[alert.tone])}>
+                    <Icon className="h-4 w-4" />
+                  </span>
+                  <span className="min-w-0 flex-1">
+                    <span className="flex items-center justify-between gap-2">
+                      <span className="text-sm font-semibold text-textPrimary">{alert.label}</span>
+                      <span className="font-geo text-lg font-bold text-textPrimary">{alert.value}</span>
+                    </span>
+                    <span className="mt-0.5 block text-xs leading-relaxed text-textSecondary">{alert.description}</span>
+                  </span>
+                  <ArrowRight className="mt-2 h-4 w-4 shrink-0 text-textSecondary transition-transform group-hover:translate-x-0.5" />
+                </Link>
+              );
+            })}
+          </CardContent>
+        </Card>
+
+        <Card className="rounded-card shadow-card">
+          <CardHeader className="pb-3">
+            <CardTitle className="flex items-center justify-between text-base">
+              <span className="flex items-center gap-2"><ServerCog className="h-4 w-4" /> Salud de ingestas</span>
+              <Link href="/admin/ingesta" className="text-xs font-medium text-primary hover:underline">Abrir ingestas</Link>
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="mb-4 grid grid-cols-3 gap-2">
+              <MiniMetric label="En curso" value={data.ingestion.active_runs} />
+              <MiniMetric label="Errores 24 h" value={data.ingestion.failed_24h} danger={data.ingestion.failed_24h > 0} />
+              <MiniMetric label="Retiradas" value={data.ingestion.retired_total} />
+            </div>
+            <div className="space-y-2">
+              {data.ingestion.sources.length === 0 ? (
+                <p className="rounded-card bg-background p-4 text-center text-sm text-textSecondary">No hay fuentes configuradas.</p>
+              ) : data.ingestion.sources.map((source) => {
+                const status = SOURCE_STATUS[source.status];
+                return (
+                  <div key={source.slug} className="flex items-center gap-3 rounded-card border border-line px-3 py-2.5">
+                    <DownloadCloud className="h-4 w-4 shrink-0 text-primary" />
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm font-semibold text-textPrimary">{source.nombre}</p>
+                      <p className="text-xs text-textSecondary">{source.imported.toLocaleString('es-EC')} importadas · {source.retired.toLocaleString('es-EC')} retiradas</p>
+                    </div>
+                    <Badge variant="outline" className={status.className}>{status.label}</Badge>
+                  </div>
+                );
+              })}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    </section>
+  );
+}
+
+function MiniMetric({ label, value, danger = false }: { label: string; value: number; danger?: boolean }) {
+  return (
+    <div className={cn('rounded-card bg-background p-2.5 text-center', danger && 'bg-red-50')}>
+      <p className={cn('font-geo text-xl font-bold text-textPrimary', danger && 'text-red-700')}>{value}</p>
+      <p className={cn('text-[11px] text-textSecondary', danger && 'text-red-700')}>{label}</p>
+    </div>
+  );
+}
 
 const TONES: Record<string, string> = {
   blue: 'bg-blue-100 text-blue-600',

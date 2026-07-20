@@ -298,6 +298,82 @@ class PropertyViewSet(viewsets.ModelViewSet):
         serializer = self.get_serializer(instance)
         return Response(serializer.data)
 
+    @action(detail=True, methods=['get'], permission_classes=[AllowAny])
+    def intelligence(self, request, pk=None):
+        """Contexto comercial de un anuncio frente a inventario comparable real."""
+        from django.utils import timezone
+
+        instance = self.get_object()
+        comparable = Property.objects.exclude(status='inactive').filter(
+            is_duplicate=False,
+            city__iexact=instance.city,
+            property_type=instance.property_type,
+            status=instance.status,
+            price__gt=0,
+            area__gt=0,
+        ).exclude(pk=instance.pk).annotate(
+            price_per_m2=ExpressionWrapper(F('price') / F('area'), output_field=FloatField())
+        ).filter(price_per_m2__gt=1, price_per_m2__lt=10000)
+
+        values = sorted(float(value) for value in comparable.values_list('price_per_m2', flat=True))
+        def pct(ratio):
+            if not values:
+                return None
+            pos = (len(values) - 1) * ratio
+            low, high = int(pos), min(int(pos) + 1, len(values) - 1)
+            return round(values[low] + (values[high] - values[low]) * (pos - low), 2)
+
+        q1, median, q3 = pct(.25), pct(.5), pct(.75)
+        own_price_m2 = (
+            round(float(instance.price) / float(instance.area), 2)
+            if instance.price and instance.area and instance.area > 0 else None
+        )
+        deviation = round((own_price_m2 - median) / median * 100, 1) if own_price_m2 and median else None
+        alert = None
+        if deviation is not None and len(values) >= 4:
+            if own_price_m2 < q1 - 1.5 * (q3 - q1):
+                alert = 'below_range'
+            elif own_price_m2 > q3 + 1.5 * (q3 - q1):
+                alert = 'above_range'
+
+        sector = (instance.address or '').split(',')[0].strip()
+        sector_supply = Property.objects.exclude(status='inactive').filter(
+            is_duplicate=False, city__iexact=instance.city,
+        )
+        if sector:
+            sector_supply = sector_supply.filter(address__icontains=sector)
+        city_views = list(Property.objects.exclude(status='inactive').filter(
+            is_duplicate=False, city__iexact=instance.city,
+        ).values_list('views_count', flat=True))
+        demand_median = sorted(city_views)[len(city_views) // 2] if city_views else 0
+        demand_level = 'high' if instance.views_count > demand_median * 1.5 else ('low' if instance.views_count < demand_median * .5 else 'medium')
+        contacts = instance.activity_events.filter(event_name='property_contact_clicked').count()
+        history = list(instance.price_history.values('price', 'recorded_at'))
+        if not history and instance.price is not None:
+            history = [{'price': instance.price, 'recorded_at': instance.created_at}]
+
+        publication_start = instance.source_published_at or instance.imported_at or instance.created_at
+        publication_basis = 'source' if instance.source_published_at else ('detected' if instance.is_imported else 'platform')
+        return Response({
+            'property_id': instance.pk,
+            'price_per_m2': own_price_m2,
+            'zone': sector or instance.city,
+            'zone_range': {'low': q1, 'median': median, 'high': q3},
+            'comparison': {'sample_size': len(values), 'difference_pct': deviation},
+            'price_alert': alert,
+            'price_history': history,
+            'available_supply': sector_supply.count(),
+            'published_days': max(0, (timezone.now() - publication_start).days),
+            'publication_basis': publication_basis,
+            'source_published_at': instance.source_published_at,
+            'source_updated_at': instance.source_updated_at,
+            'detected_at': instance.imported_at or instance.created_at,
+            'last_seen_at': instance.last_seen_at,
+            'demand': {'level': demand_level, 'views': instance.views_count, 'contacts': contacts,
+                       'city_median_views': demand_median},
+            'methodology': 'Comparables activos del mismo tipo, operación y ciudad; rango habitual P25–P75 y alerta atípica mediante IQR.',
+        })
+
     @action(detail=False, methods=['get'], permission_classes=[AllowAny])
     def map_points(self, request):
         """
@@ -1059,6 +1135,10 @@ class MarketStatsView(generics.GenericAPIView):
     permission_classes = [AllowAny]
 
     def get(self, request):
+        from collections import defaultdict
+        from datetime import timedelta
+        from django.utils import timezone
+
         all_base = Property.objects.exclude(status='inactive').filter(
             area__gt=0,
             price__gt=0,
@@ -1069,6 +1149,20 @@ class MarketStatsView(generics.GenericAPIView):
         # Venta y alquiler usan escalas distintas (precio total vs. mensual).
         # Las métricas principales se limitan a venta para que $/m² sea comparable.
         base = all_base.filter(status='for_sale')
+
+        raw_values = sorted(float(value) for value in base.values_list('price_per_m2', flat=True))
+        def percentile(values, ratio):
+            if not values:
+                return 0
+            position = (len(values) - 1) * ratio
+            low = int(position)
+            high = min(low + 1, len(values) - 1)
+            return values[low] + (values[high] - values[low]) * (position - low)
+        q1, q3 = percentile(raw_values, .25), percentile(raw_values, .75)
+        iqr = q3 - q1
+        lower, upper = max(1, q1 - 1.5 * iqr), min(10000, q3 + 1.5 * iqr)
+        outliers_excluded = base.exclude(price_per_m2__gte=lower, price_per_m2__lte=upper).count()
+        base = base.filter(price_per_m2__gte=lower, price_per_m2__lte=upper)
 
         overall = base.aggregate(
             count=Count('id'),
@@ -1093,6 +1187,51 @@ class MarketStatsView(generics.GenericAPIView):
             )
             return list(rows)
 
+        now = timezone.now()
+        active_rows = list(base.values(
+            'id', 'city', 'address', 'property_type', 'created_at', 'last_seen_at',
+            'views_count', 'price_per_m2',
+        ))
+        market_days = []
+        demand = defaultdict(lambda: {'supply': 0, 'views': 0})
+        city_periods = defaultdict(lambda: {'recent': [], 'previous': []})
+        sector_stats = defaultdict(list)
+        for row in active_rows:
+            # El catálogo aquí es activo: su permanencia continúa hasta hoy.
+            market_days.append(max(0, (now - row['created_at']).days))
+            city = (row['city'] or 'Sin ciudad').strip()
+            demand[city]['supply'] += 1
+            demand[city]['views'] += row['views_count'] or 0
+            age = now - row['created_at']
+            if age <= timedelta(days=90):
+                city_periods[city]['recent'].append(row['price_per_m2'])
+            elif age <= timedelta(days=180):
+                city_periods[city]['previous'].append(row['price_per_m2'])
+            # `address` es el nivel geográfico más fino disponible actualmente.
+            sector = (row['address'] or '').split(',')[0].strip()
+            if sector and sector.lower() != city.lower():
+                sector_stats[(city, sector)].append(row['price_per_m2'])
+
+        evolution = []
+        for city, periods in city_periods.items():
+            if len(periods['recent']) < 2 or len(periods['previous']) < 2:
+                continue
+            recent = sum(periods['recent']) / len(periods['recent'])
+            previous = sum(periods['previous']) / len(periods['previous'])
+            evolution.append({'city': city, 'current_price_m2': recent, 'previous_price_m2': previous,
+                              'change_pct': round((recent - previous) / previous * 100, 1) if previous else 0})
+        evolution.sort(key=lambda row: row['change_pct'], reverse=True)
+        supply_demand = [
+            {'city': city, **values, 'demand_per_listing': round(values['views'] / values['supply'], 1)}
+            for city, values in demand.items() if values['supply'] >= 3
+        ]
+        supply_demand.sort(key=lambda row: row['demand_per_listing'], reverse=True)
+        by_sector = [
+            {'city': city, 'sector': sector, 'count': len(values), 'avg_price_m2': sum(values) / len(values)}
+            for (city, sector), values in sector_stats.items() if len(values) >= 2
+        ]
+        by_sector.sort(key=lambda row: (-row['count'], row['city'], row['sector']))
+
         return Response({
             'overall': overall,
             'by_city': grouped('city', 'province', limit=15),
@@ -1105,7 +1244,13 @@ class MarketStatsView(generics.GenericAPIView):
                     avg_area=Avg('area'),
                 ).order_by('-count')
             ),
-            'methodology': 'Las métricas principales usan propiedades en venta activas con precio y área válidos; se excluyen duplicados y valores extremos.',
+            'by_sector': by_sector[:20],
+            'evolution': evolution[:15],
+            'growth_zones': [row for row in evolution if row['change_pct'] > 0][:8],
+            'supply_demand': supply_demand[:15],
+            'estimated_market_days': round(sum(market_days) / len(market_days)) if market_days else 0,
+            'outliers_excluded': outliers_excluded,
+            'methodology': 'Propiedades en venta activas con precio y área válidos. Los extremos se excluyen con el método IQR; evolución compara altas de los últimos 90 días con los 90 anteriores y demanda usa visualizaciones por anuncio.',
         })
 
 
@@ -1117,6 +1262,8 @@ class AdminDashboardView(generics.GenericAPIView):
     def get(self, request):
         from django.utils import timezone
         from datetime import timedelta
+        from ingesta.models import Fuente, IngestaRun, ListingRetirada
+        from .services.admin_metrics import AdminMetricsService
 
         properties = Property.objects.all()
         # Inmuebles sin imágenes e incompletos (sin descripción, sin título,
@@ -1130,6 +1277,41 @@ class AdminDashboardView(generics.GenericAPIView):
         ).count()
 
         thirty_days_ago = timezone.now() - timedelta(days=30)
+        now = timezone.now()
+        one_day_ago = now - timedelta(days=1)
+        stale_cutoff = now - timedelta(days=2)
+        active_catalog = properties.exclude(status='inactive').filter(is_duplicate=False)
+        without_location = active_catalog.filter(
+            Q(latitude__isnull=True) | Q(longitude__isnull=True)
+        ).count()
+        without_price = active_catalog.filter(
+            Q(price__isnull=True) | Q(price__lte=0)
+        ).count()
+
+        source_health = []
+        for source in Fuente.objects.all():
+            latest_run = source.runs.order_by('-created_at').first()
+            active_run = source.runs.filter(estado__in=['pending', 'running']).first()
+            if active_run:
+                health = 'running'
+            elif latest_run and latest_run.estado == 'error' and latest_run.created_at >= one_day_ago:
+                health = 'error'
+            elif source.last_import_at is None:
+                health = 'never'
+            elif source.last_import_at < stale_cutoff:
+                health = 'stale'
+            else:
+                health = 'healthy'
+            source_health.append({
+                'slug': source.slug,
+                'nombre': source.nombre,
+                'status': health,
+                'last_import_at': source.last_import_at,
+                'latest_run_id': latest_run.id if latest_run else None,
+                'latest_run_status': latest_run.estado if latest_run else None,
+                'imported': properties.filter(source=source, is_imported=True).count(),
+                'retired': source.retiradas.count(),
+            })
 
         data = {
             'total_users': User.objects.count(),
@@ -1147,6 +1329,22 @@ class AdminDashboardView(generics.GenericAPIView):
             'new_users_30d': User.objects.filter(date_joined__gte=thirty_days_ago).count(),
             'properties_without_images': without_images,
             'properties_incomplete': incomplete,
+            'quality': {
+                'without_images': without_images,
+                'without_location': without_location,
+                'without_price': without_price,
+                'duplicates': properties.filter(is_duplicate=True).count(),
+                'inactive': properties.filter(status='inactive').count(),
+            },
+            'ingestion': {
+                'active_runs': IngestaRun.objects.filter(estado__in=['pending', 'running']).count(),
+                'failed_24h': IngestaRun.objects.filter(estado='error', created_at__gte=one_day_ago).count(),
+                'retired_total': ListingRetirada.objects.count(),
+                'imported_total': properties.filter(is_imported=True).count(),
+                'sources': source_health,
+            },
+            'owner': AdminMetricsService(now=now).build(),
+            'generated_at': now,
             'recent_users': AdminUserSerializer(
                 User.objects.order_by('-date_joined')[:5], many=True
             ).data,
@@ -1276,7 +1474,7 @@ class AdminPropertyViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         queryset = (
-            Property.objects.select_related('owner')
+            Property.objects.select_related('owner', 'source')
             .prefetch_related('images')
             .annotate(image_count_annotated=Count('images', distinct=True))
             .order_by('-created_at')
@@ -1284,6 +1482,11 @@ class AdminPropertyViewSet(viewsets.ModelViewSet):
         status_param = self.request.query_params.get('status')
         if status_param in ('for_sale', 'for_rent', 'inactive'):
             queryset = queryset.filter(status=status_param)
+        origin = self.request.query_params.get('origin')
+        if origin == 'imported':
+            queryset = queryset.filter(is_imported=True)
+        elif origin == 'users':
+            queryset = queryset.filter(is_imported=False, owner__isnull=False)
         return queryset
 
     def get_serializer_class(self):
@@ -1336,4 +1539,6 @@ class AdminPropertyViewSet(viewsets.ModelViewSet):
             'inactive': base.filter(status='inactive').count(),
             'active': base.exclude(status='inactive').count(),
             'without_images': without_images,
+            'imported': base.filter(is_imported=True).count(),
+            'users': base.filter(is_imported=False, owner__isnull=False).count(),
         })

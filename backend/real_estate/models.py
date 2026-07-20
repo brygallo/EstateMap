@@ -153,6 +153,14 @@ class Property(models.Model):
         help_text="Propiedad canónica (la que sí se muestra) de la que este anuncio es duplicado",
     )
     imported_at = models.DateTimeField(null=True, blank=True)
+    source_published_at = models.DateTimeField(
+        null=True, blank=True,
+        help_text="Fecha original de publicación declarada por el portal externo",
+    )
+    source_updated_at = models.DateTimeField(
+        null=True, blank=True,
+        help_text="Última actualización declarada por el portal externo",
+    )
     last_seen_at = models.DateTimeField(null=True, blank=True,
                                         help_text="Última vez visto en la fuente (para caducar)")
 
@@ -193,6 +201,18 @@ class Property(models.Model):
         return self.status == "for_rent"
 
 
+class PropertyPriceHistory(models.Model):
+    """Store the auditable timeline of published property prices."""
+
+    property = models.ForeignKey(Property, on_delete=models.CASCADE, related_name="price_history")
+    price = models.DecimalField(max_digits=12, decimal_places=2)
+    recorded_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["recorded_at"]
+        indexes = [models.Index(fields=["property", "recorded_at"], name="property_price_date_idx")]
+
+
 class PropertyImage(models.Model):
     """Images for properties stored in MinIO with optimization"""
     property = models.ForeignKey(
@@ -223,41 +243,14 @@ class PropertyImage(models.Model):
 
     def save(self, *args, **kwargs):
         """Override save to optimize image on upload"""
-        from .image_utils import optimize_image, create_thumbnail
+        from .image_utils import ImageOptimizationService
 
-        if self.image and not self.pk:  # Solo optimizar en la primera carga
-            # Guardar nombre original
+        if self.image and not self.pk:
             self.original_filename = self.image.name
-
-            # Guardar tamaño original para logging
-            original_size = self.image.size
-
-            # Optimizar imagen principal
-            self.image = optimize_image(
-                self.image,
-                max_width=1920,
-                max_height=1920,
-                quality=85,
-                format='WEBP'
-            )
-
-            # Crear thumbnail
-            self.thumbnail = create_thumbnail(
-                self.image,
-                size=(400, 400),
-                quality=80
-            )
-
-            # Actualizar tamaño del archivo
+            result = ImageOptimizationService().process(self.image)
+            self.image = result.image
+            self.thumbnail = result.thumbnail
             self.file_size = self.image.size
-
-            # Log del ahorro de espacio
-            if original_size > 0:
-                savings = ((original_size - self.image.size) / original_size) * 100
-                print(f"Imagen optimizada: {self.original_filename}")
-                print(f"  Tamaño original: {round(original_size / 1024, 2)} KB")
-                print(f"  Tamaño optimizado: {round(self.image.size / 1024, 2)} KB")
-                print(f"  Ahorro: {round(savings, 2)}%")
 
         super().save(*args, **kwargs)
 

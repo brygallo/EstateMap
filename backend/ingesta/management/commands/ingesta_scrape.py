@@ -15,7 +15,7 @@ import os
 from django.core.management.base import BaseCommand, CommandError
 from django.utils import timezone
 
-from ingesta.models import Fuente, ListingCruda
+from ingesta.models import Fuente, ListingCruda, ListingRetirada
 from ingesta.packaging import PaqueteWriter
 from ingesta.pipeline.images import download_images
 from ingesta.pipeline.location import validate_location
@@ -102,15 +102,44 @@ class Command(BaseCommand):
                 .exclude(external_id="")
                 .values_list("external_id", flat=True)
             )
+            retiradas_urls = set(
+                ListingRetirada.objects.filter(fuente=fuente)
+                .exclude(source_url="")
+                .values_list("source_url", flat=True)
+            )
+            retiradas_ids = set(
+                ListingRetirada.objects.filter(fuente=fuente)
+                .exclude(external_id="")
+                .values_list("external_id", flat=True)
+            )
+            conocidas |= retiradas_urls
+            known_ids |= retiradas_ids
 
             def skip_url(url, external_id=None):
                 return (bool(external_id) and str(external_id) in known_ids) or url in conocidas
 
-            self._log(f"saltando {len(known_ids)} IDs y {len(conocidas)} URLs ya conocidas")
+            self._log(
+                f"saltando {len(known_ids)} IDs y {len(conocidas)} URLs ya conocidas "
+                f"({len(retiradas_ids)} retiradas)"
+            )
+
+        on_gone = None
+        if not dry and scraper.key == "plusvalia":
+            def on_gone(url, external_id, http_status):
+                ListingRetirada.objects.update_or_create(
+                    fuente=fuente,
+                    external_id=str(external_id),
+                    defaults={"source_url": url, "http_status": http_status},
+                )
 
         def run(writer):
             for data in scraper.scrape(limit=opts["limit"], log=self._log,
-                                       searches=searches, skip_url=skip_url):
+                                       searches=searches, skip_url=skip_url,
+                                       on_gone=on_gone):
+                if scraper.key == "plusvalia" and data.get("external_id"):
+                    ListingRetirada.objects.filter(
+                        fuente=fuente, external_id=str(data["external_id"])
+                    ).delete()
                 ok, lat, lng, motivo = validate_location(
                     data.get("latitude"), data.get("longitude")
                 )

@@ -7,7 +7,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8010/api';
 type StatRow = { city?: string; province?: string; property_type?: string; status?: string; count: number; avg_price_m2: number; avg_price: number; avg_area: number };
-type Stats = { overall: StatRow & { min_price_m2: number; max_price_m2: number }; by_city: StatRow[]; by_property_type: StatRow[]; by_operation: StatRow[]; methodology: string };
+type Stats = { overall: StatRow & { min_price_m2: number; max_price_m2: number }; by_city: StatRow[]; by_property_type: StatRow[]; by_operation: StatRow[]; by_sector: Array<{ city: string; sector: string; count: number; avg_price_m2: number }>; evolution: Array<{ city: string; current_price_m2: number; previous_price_m2: number; change_pct: number }>; growth_zones: Array<{ city: string; change_pct: number }>; supply_demand: Array<{ city: string; supply: number; views: number; demand_per_listing: number }>; estimated_market_days: number; outliers_excluded: number; methodology: string };
 const money = (value?: number) => new Intl.NumberFormat('es-EC', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(Number(value || 0));
 const number = (value?: number) => new Intl.NumberFormat('es-EC', { maximumFractionDigits: 0 }).format(Number(value || 0));
 const typeLabels: Record<string, string> = { land: 'Terrenos', house: 'Casas', apartment: 'Departamentos', commercial: 'Locales comerciales', other: 'Otros' };
@@ -44,6 +44,8 @@ export default function MarketStatsClient() {
             <Kpi icon={Building2} label="Propiedades analizadas" value={number(data.overall.count)} />
             <Kpi icon={TrendingUp} label="Precio promedio" value={money(data.overall.avg_price)} />
             <Kpi icon={BarChart3} label="Área promedio" value={`${number(data.overall.avg_area)} m²`} />
+            <Kpi icon={TrendingUp} label="Tiempo estimado en mercado" value={`${number(data.estimated_market_days)} días`} />
+            <Kpi icon={BarChart3} label="Valores extremos excluidos" value={number(data.outliers_excluded)} />
           </section>
           <section className="mt-10 grid gap-6 lg:grid-cols-[1.4fr_0.6fr]">
             <div className="rounded-card border border-line bg-white p-5 shadow-card sm:p-7">
@@ -59,10 +61,19 @@ export default function MarketStatsClient() {
               <div className="rounded-card bg-primaryLight p-5 text-sm leading-6 text-textSecondary"><p className="font-semibold text-textPrimary">Cómo leer estos datos</p><p className="mt-1">{data.methodology}</p><p className="mt-2">Los valores son referenciales y no sustituyen un avalúo profesional.</p></div>
             </div>
           </section>
+          <section className="mt-8 grid gap-6 lg:grid-cols-3">
+            <StatsTable title="Evolución por ciudad" rows={data.evolution.map((row) => [row.city, `${row.change_pct > 0 ? '+' : ''}${row.change_pct}%`, `${money(row.current_price_m2)}/m²`])} />
+            <StatsTable title="Oferta frente a demanda" rows={data.supply_demand.map((row) => [row.city, `${row.supply} anuncios`, `${row.demand_per_listing} vistas/anuncio`])} />
+            <StatsTable title="Sectores con inventario" rows={data.by_sector.map((row) => [`${row.sector}, ${row.city}`, `${row.count} anuncios`, `${money(row.avg_price_m2)}/m²`])} />
+          </section>
         </>}
       </div>
     </main>
   );
+}
+
+function StatsTable({ title, rows }: { title: string; rows: string[][] }) {
+  return <div className="rounded-card border border-line bg-white p-5 shadow-card"><h2 className="text-lg font-bold text-textPrimary">{title}</h2><div className="mt-3 divide-y divide-line">{rows.slice(0, 8).map((row, index) => <div key={`${row[0]}-${index}`} className="grid grid-cols-[1fr_auto] gap-x-3 py-3 text-sm"><span className="font-semibold text-textPrimary">{row[0]}</span><span className="font-geo font-bold text-primary">{row[2]}</span><span className="col-span-2 text-xs text-textSecondary">{row[1]}</span></div>)}</div>{!rows.length && <p className="mt-3 text-sm text-textSecondary">Aún no hay suficientes datos comparables.</p>}</div>;
 }
 
 function Kpi({ icon: Icon, label, value }: { icon: typeof Ruler; label: string; value: string }) {

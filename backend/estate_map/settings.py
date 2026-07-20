@@ -38,6 +38,7 @@ SITE_ID = 1
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'estate_map.observability.ObservabilityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'corsheaders.middleware.CorsMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -47,6 +48,20 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'allauth.account.middleware.AccountMiddleware',
 ]
+
+RELEASE_SHA = os.getenv('RELEASE_SHA', 'development')
+ENVIRONMENT = os.getenv('ENVIRONMENT', 'development')
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {'plain': {'format': '%(asctime)s %(levelname)s %(name)s %(message)s'}},
+    'handlers': {'console': {'class': 'logging.StreamHandler', 'formatter': 'plain'}},
+    'loggers': {
+        'observability': {'handlers': ['console'], 'level': os.getenv('OBSERVABILITY_LOG_LEVEL', 'INFO'), 'propagate': False},
+        'django.request': {'handlers': ['console'], 'level': 'WARNING', 'propagate': False},
+    },
+}
 
 ROOT_URLCONF = 'estate_map.urls'
 
@@ -306,13 +321,15 @@ ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp']
 IMAGE_OPTIMIZATION = {
     'MAX_WIDTH': 1920,
     'MAX_HEIGHT': 1920,
-    'QUALITY': 85,  # 85% de calidad - excelente balance calidad/tamaño
-    'FORMAT': 'WEBP',  # WebP ofrece mejor compresión que JPEG/PNG
-    'THUMBNAIL_SIZE': (400, 400),
-    'THUMBNAIL_QUALITY': 80,
+    'QUALITY': 88,
+    'FORMAT': 'WEBP',
+    'THUMBNAIL_SIZE': (640, 640),
+    'THUMBNAIL_QUALITY': 82,
+    'PRESERVE_MAX_BYTES': 512 * 1024,
+    'MINIMUM_SAVINGS_RATIO': 0.12,
 }
 
-# Límites por tipo de usuario (futuro: implementar diferentes límites por plan)
+# User-specific limits can be introduced here when subscription plans are implemented.
 MAX_IMAGES_PER_PROPERTY = 10
 MAX_IMAGE_SIZE_MB = 10
 

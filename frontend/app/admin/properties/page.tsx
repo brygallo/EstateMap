@@ -29,6 +29,8 @@ import {
   CheckCircle2,
   ImageOff,
   MapPin,
+  DownloadCloud,
+  UserRound,
 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -97,6 +99,8 @@ interface PropertyItem {
   created_at: string;
   image_count: number;
   thumbnail_url: string | null;
+  is_imported: boolean;
+  source_name: string | null;
 }
 
 interface PropertyListResponse {
@@ -148,6 +152,8 @@ interface AdminStats {
   inactive: number;
   active: number;
   without_images: number;
+  imported: number;
+  users: number;
 }
 
 const AdminPropertiesPage = () => {
@@ -157,6 +163,7 @@ const AdminPropertiesPage = () => {
   const [searchInput, setSearchInput] = useState('');
   const [search, setSearch] = useState('');
   const [filter, setFilter] = useState('all');
+  const [origin, setOrigin] = useState<'all' | 'imported' | 'users'>('all');
   const [confirmDelete, setConfirmDelete] = useState<PropertyItem | null>(null);
   const [preview, setPreview] = useState<PropertyItem | null>(null);
   const [stats, setStats] = useState<AdminStats | null>(null);
@@ -187,6 +194,7 @@ const AdminPropertiesPage = () => {
       params.set('page_size', String(PAGE_SIZE));
       if (search) params.set('search', search);
       if (filter !== 'all') params.set('status', filter);
+      if (origin !== 'all') params.set('origin', origin);
 
       const res = await fetch(`${API_URL}/admin/properties/?${params}`, {
         headers: { Authorization: `Bearer ${token}` },
@@ -201,7 +209,7 @@ const AdminPropertiesPage = () => {
     } finally {
       setLoading(false);
     }
-  }, [token, search, filter, page]);
+  }, [token, search, filter, origin, page]);
 
   useEffect(() => {
     if (token) fetchProperties();
@@ -326,7 +334,7 @@ const AdminPropertiesPage = () => {
                 <p className="max-w-[220px] truncate font-medium text-textPrimary">{p.title || `Propiedad #${p.id}`}</p>
                 <p className="text-xs text-textSecondary">
                   <span className="sm:hidden">{TYPE_LABELS[p.property_type] || p.property_type} · </span>
-                  {p.image_count} foto{p.image_count === 1 ? '' : 's'}
+                  {p.image_count} foto{p.image_count === 1 ? '' : 's'} · {p.is_imported ? p.source_name || 'Importada' : 'Usuario'}
                 </p>
               </div>
             </div>
@@ -447,7 +455,7 @@ const AdminPropertiesPage = () => {
             </div>
 
             {/* Métricas globales */}
-            <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
+            <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-8">
               {stats ? (
                 <>
                   <MetricTile icon={Building2} label="Total" value={stats.total} tone="primary" />
@@ -456,6 +464,8 @@ const AdminPropertiesPage = () => {
                   <MetricTile icon={EyeOff} label="Inactivas" value={stats.inactive} tone="slate" />
                   <MetricTile icon={CheckCircle2} label="Activas" value={stats.active} tone="green" />
                   <MetricTile icon={ImageOff} label="Sin imágenes" value={stats.without_images} tone="slate" />
+                  <MetricTile icon={DownloadCloud} label="Importadas" value={stats.imported} tone="primary" />
+                  <MetricTile icon={UserRound} label="De usuarios" value={stats.users} tone="green" />
                 </>
               ) : (
                 Array.from({ length: 6 }).map((_, i) => (
@@ -489,6 +499,27 @@ const AdminPropertiesPage = () => {
                   </Button>
                 ))}
               </div>
+            </div>
+
+            <div className="mb-6 flex flex-wrap items-center gap-2 rounded-card border border-line bg-surface p-2">
+              <span className="px-2 text-xs font-semibold uppercase tracking-wide text-textSecondary">Origen</span>
+              {([
+                ['all', 'Todas'],
+                ['imported', 'Importadas de portales'],
+                ['users', 'Publicadas por usuarios'],
+              ] as const).map(([key, label]) => (
+                <Button
+                  key={key}
+                  variant={origin === key ? 'default' : 'ghost'}
+                  size="sm"
+                  className="rounded-button"
+                  onClick={() => { setOrigin(key); setPage(1); }}
+                >
+                  {key === 'imported' && <DownloadCloud className="mr-1.5 h-4 w-4" />}
+                  {key === 'users' && <UserRound className="mr-1.5 h-4 w-4" />}
+                  {label}
+                </Button>
+              ))}
             </div>
 
             {/* Table */}

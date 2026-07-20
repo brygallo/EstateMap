@@ -65,6 +65,10 @@ export interface Property {
   source_agency?: string;
   source_url?: string;
   external_id?: string;
+  imported_at?: string | null;
+  source_published_at?: string | null;
+  source_updated_at?: string | null;
+  last_seen_at?: string | null;
   views_count?: number;
   created_at?: string;
   updated_at?: string;

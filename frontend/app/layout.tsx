@@ -10,6 +10,7 @@ import NavBar from '@/components/NavBar';
 import Footer from '@/components/Footer';
 import { Toaster } from 'sonner';
 import { WHATSAPP_NUMBER } from '@/lib/constants';
+import AnalyticsPageView from '@/components/AnalyticsPageView';
 
 const siteUrl = (
   process.env.NEXT_PUBLIC_FRONTEND_URL || 'https://geopropiedadesecuador.com'
@@ -180,6 +181,7 @@ export default function RootLayout({
   return (
     <html lang="es" className={`${GeistSans.variable} ${GeistMono.variable}`} suppressHydrationWarning>
       <body className="font-sans" suppressHydrationWarning>
+        <AnalyticsPageView />
         <link rel="preconnect" href="https://minio.geopropiedadesecuador.com" crossOrigin="anonymous" />
         <link rel="dns-prefetch" href="https://www.googletagmanager.com" />
         <Script

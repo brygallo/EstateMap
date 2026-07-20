@@ -130,3 +130,31 @@ class ListingCruda(models.Model):
 
     def __str__(self):
         return f"{self.fuente.slug}:{self.external_id}"
+
+
+class ListingRetirada(models.Model):
+    """Listing that the source portal confirmed as removed (HTTP 404/410).
+
+    Keeping this record prevents incremental runs from reopening the same dead
+    detail page and lets its ID count toward the known historical streak.
+    """
+
+    fuente = models.ForeignKey(Fuente, on_delete=models.CASCADE, related_name="retiradas")
+    external_id = models.CharField(max_length=120, db_index=True)
+    source_url = models.URLField(max_length=500, blank=True, default="")
+    http_status = models.PositiveSmallIntegerField(default=404)
+    first_seen_at = models.DateTimeField(auto_now_add=True)
+    last_seen_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = "Anuncio retirado"
+        verbose_name_plural = "Anuncios retirados"
+        ordering = ["-last_seen_at"]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["fuente", "external_id"], name="uniq_retirada_fuente_external_id"
+            )
+        ]
+
+    def __str__(self):
+        return f"{self.fuente.slug}:{self.external_id} ({self.http_status})"
