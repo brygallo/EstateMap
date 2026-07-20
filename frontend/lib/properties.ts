@@ -76,6 +76,62 @@ interface GetFeaturedPropertiesOptions {
   revalidate?: number;
 }
 
+export interface NearbyProperty extends Property {
+  distanceKm: number;
+}
+
+function distanceInKm(latA: number, lngA: number, latB: number, lngB: number): number {
+  const radians = (degrees: number) => (degrees * Math.PI) / 180;
+  const earthRadiusKm = 6371;
+  const deltaLat = radians(latB - latA);
+  const deltaLng = radians(lngB - lngA);
+  const value =
+    Math.sin(deltaLat / 2) ** 2 +
+    Math.cos(radians(latA)) * Math.cos(radians(latB)) * Math.sin(deltaLng / 2) ** 2;
+  return earthRadiusKm * 2 * Math.atan2(Math.sqrt(value), Math.sqrt(1 - value));
+}
+
+/** Obtiene las propiedades geográficamente más próximas para una ficha. */
+export async function getNearbyProperties(
+  property: Pick<Property, 'id' | 'latitude' | 'longitude'>,
+  limit = 4
+): Promise<NearbyProperty[]> {
+  const latitude = Number(property.latitude);
+  const longitude = Number(property.longitude);
+  if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) return [];
+
+  try {
+    // Ventana de unos 50 km; la distancia exacta se calcula después con Haversine.
+    const latitudeDelta = 0.45;
+    const longitudeDelta = 0.45 / Math.max(Math.cos((latitude * Math.PI) / 180), 0.2);
+    const params = new URLSearchParams({
+      bbox: [longitude - longitudeDelta, latitude - latitudeDelta, longitude + longitudeDelta, latitude + latitudeDelta].join(','),
+      page_size: '60',
+      include_images: '1',
+    });
+    const response = await fetch(`${API_URL}/properties/?${params.toString()}`, {
+      next: { revalidate: 300 },
+    });
+    if (!response.ok) return [];
+
+    return normalizeList(await response.json())
+      .filter((candidate) =>
+        candidate.id !== property.id &&
+        Number.isFinite(Number(candidate.latitude)) &&
+        Number.isFinite(Number(candidate.longitude))
+      )
+      .map((candidate) => ({
+        ...candidate,
+        distanceKm: distanceInKm(latitude, longitude, Number(candidate.latitude), Number(candidate.longitude)),
+      }))
+      .sort((a, b) => a.distanceKm - b.distanceKm)
+      .slice(0, limit);
+  } catch (error) {
+    console.error('Error fetching nearby properties:', error);
+    return [];
+  }
+}
+
 /**
  * Fetch a small page of properties WITH images, for the "Propiedades
  * destacadas" grid on SEO landing pages. Unlike `getProperties`, this always
