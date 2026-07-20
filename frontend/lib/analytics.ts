@@ -10,16 +10,47 @@ declare global {
 export function trackEvent(eventName: string, payload: EventPayload = {}) {
   if (typeof window === 'undefined') return;
 
+  const params = new URLSearchParams(window.location.search);
+  const attributionKey = 'geo:first-attribution';
+  let attribution: Record<string, string> = {};
+  try {
+    attribution = JSON.parse(window.localStorage.getItem(attributionKey) || '{}');
+  } catch {
+    attribution = {};
+  }
+  if (!attribution.landing_page) {
+    const referrer = document.referrer || '';
+    let referrerHost = '';
+    try { referrerHost = referrer ? new URL(referrer).hostname : ''; } catch { /* URL inválida */ }
+    const medium = params.get('utm_medium') || '';
+    const source = params.get('utm_source') || referrerHost || 'direct';
+    const channel = medium === 'organic' || (!medium && referrerHost && /google|bing|yahoo|duckduckgo/.test(referrerHost))
+      ? 'organic'
+      : medium || (referrerHost ? 'referral' : 'direct');
+    attribution = {
+      source,
+      medium,
+      campaign: params.get('utm_campaign') || '',
+      term: params.get('utm_term') || '',
+      content: params.get('utm_content') || '',
+      channel,
+      referrer,
+      landing_page: `${window.location.pathname}${window.location.search}`.slice(0, 300),
+    };
+    try { window.localStorage.setItem(attributionKey, JSON.stringify(attribution)); } catch { /* almacenamiento bloqueado */ }
+  }
+
+  const enrichedPayload = { attribution, ...payload };
   const eventPayload = {
     event: eventName,
-    ...payload,
+    ...enrichedPayload,
   };
 
   window.dataLayer = window.dataLayer || [];
   window.dataLayer.push(eventPayload);
 
   if (typeof window.gtag === 'function') {
-    window.gtag('event', eventName, payload);
+    window.gtag('event', eventName, enrichedPayload);
   }
 
   // Auditoría funcional propia: permite detectar embudos incompletos y contar
@@ -44,7 +75,7 @@ export function trackEvent(eventName: string, payload: EventPayload = {}) {
         event_name: eventName,
         session_id: sessionId,
         path: `${window.location.pathname}${window.location.search}`.slice(0, 300),
-        payload,
+        payload: enrichedPayload,
       }),
     }).catch(() => undefined);
   } catch {

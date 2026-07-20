@@ -31,6 +31,7 @@ def _source_dict(f):
         "total": qs.count(),
         "activas": qs.exclude(status="inactive").exclude(is_duplicate=True).count(),
         "duplicados": qs.filter(is_duplicate=True).count(),
+        "retiradas": f.retiradas.count(),
         "disponibles": f.disponibles,
         "disponibles_at": f.disponibles_at,
         "last_import_at": f.last_import_at,

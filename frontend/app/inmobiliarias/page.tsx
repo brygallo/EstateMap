@@ -110,11 +110,11 @@ export default function InmobiliariasPage() {
               Para inmobiliarias y corredores
             </span>
             <h1 className="mt-4 text-3xl font-bold leading-tight sm:text-5xl">
-              Publica tus propiedades donde los compradores las buscan: en el mapa
+              Centraliza tu inventario, mide qué propiedades generan intención y asigna contactos a tus agentes
             </h1>
             <p className="mt-5 text-base leading-7 text-white/80 sm:text-lg">
-              Geo Propiedades conecta tus inmuebles con interesados de todo Ecuador. Ubicación
-              exacta, contacto directo por WhatsApp y un panel para no perder ningún lead.
+              Publica en el mapa, compara el rendimiento de cada inmueble y gestiona desde un
+              solo panel los contactos directos que recibe tu equipo.
             </p>
             <div className="mt-8 flex flex-wrap gap-3">
               <Button asChild size="lg" className="bg-secondary text-white hover:bg-secondaryHover">

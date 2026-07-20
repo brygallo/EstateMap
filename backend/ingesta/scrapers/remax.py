@@ -37,7 +37,7 @@ ni headers especiales; ``httpx`` normal también suele bastar aquí.
 """
 import re
 
-from .base import BaseScraper, register
+from .base import BaseScraper, parse_source_datetime, register
 from ..pipeline import normalize
 
 API_BASE = "https://api-ec.redremax.com/remaxweb-ec/api"
@@ -112,7 +112,7 @@ class RemaxScraper(BaseScraper):
             log(f"[remax] {url} -> respuesta no-JSON")
             return None
 
-    def scrape(self, limit=None, log=None, searches=None, skip_url=None):
+    def scrape(self, limit=None, log=None, searches=None, skip_url=None, on_gone=None):
         searches = searches or DEFAULT_SEARCHES
         log = log or (lambda *_: None)
         seen = set()
@@ -284,4 +284,11 @@ class RemaxScraper(BaseScraper):
             "contact_email": _email(associate),
             "source_agency": normalize.clean_text(source_agency, 150),
             "image_urls": images,
+            "source_published_at": parse_source_datetime(
+                obj.get("publishedAt") or obj.get("datePublished") or obj.get("createdAt")
+                or listrec.get("publishedAt") or listrec.get("createdAt")
+            ),
+            "source_updated_at": parse_source_datetime(
+                obj.get("updatedAt") or obj.get("dateModified") or listrec.get("updatedAt")
+            ),
         }

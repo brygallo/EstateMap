@@ -381,11 +381,11 @@ export default async function HomePage() {
                 <Building2 className="h-5 w-5" aria-hidden />
               </span>
               <h2 className="mt-4 text-2xl font-semibold tracking-tight text-textPrimary">
-                Publica tu propiedad gratis
+                Publica gratis, entiende exactamente dónde está la demanda y recibe contactos directos sin comisiones
               </h2>
               <p className="mt-3 text-sm leading-6 text-textSecondary">
-                Tu anuncio aparece con fotos, precio, medidas, ubicación en mapa y contacto
-                directo por llamada o WhatsApp.
+                Tu anuncio aparece con fotos, precio, medidas y ubicación en el mapa. Además,
+                puedes comparar su precio, demanda y desempeño frente a propiedades similares.
               </p>
               <div className="mt-5 flex flex-col gap-3 sm:flex-row">
                 <Button asChild className="rounded-full bg-primary font-semibold hover:bg-primaryHover">

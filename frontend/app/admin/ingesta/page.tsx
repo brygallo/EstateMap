@@ -57,6 +57,7 @@ interface Source {
   activa: boolean;
   total: number;
   activas: number;
+  retiradas: number;
   disponibles: number;
   disponibles_at: string | null;
   last_import_at: string | null;
@@ -558,7 +559,7 @@ const IngestaPage = () => {
                               </div>
                             </div>
                           </div>
-                          <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 lg:min-w-[520px]">
+                          <div className="grid grid-cols-2 gap-2 sm:grid-cols-5 lg:min-w-[620px]">
                             <div className="rounded-card bg-background p-3">
                               <p className="text-xs text-textSecondary">En portal</p>
                               <p className="font-geo text-xl font-semibold text-textPrimary">
@@ -572,6 +573,10 @@ const IngestaPage = () => {
                             <div className="rounded-card bg-background p-3">
                               <p className="text-xs text-textSecondary">En mapa</p>
                               <p className="font-geo text-xl font-semibold text-primary">{s.activas}</p>
+                            </div>
+                            <div className="rounded-card bg-background p-3">
+                              <p className="text-xs text-textSecondary">Retiradas</p>
+                              <p className="font-geo text-xl font-semibold text-amber-700">{s.retiradas}</p>
                             </div>
                             <div className="rounded-card bg-background p-3">
                               <p className="text-xs text-textSecondary">Última</p>

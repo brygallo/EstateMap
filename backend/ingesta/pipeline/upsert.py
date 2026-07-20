@@ -43,6 +43,10 @@ def _apply_fields(prop, data, fuente, lat, lng):
     prop.source_url = (data.get("source_url") or "")[:500]
     prop.external_id = (data.get("external_id") or "")[:120]
     prop.is_imported = True
+    if data.get("source_published_at"):
+        prop.source_published_at = data["source_published_at"]
+    if data.get("source_updated_at"):
+        prop.source_updated_at = data["source_updated_at"]
     prop.dedup_key = build_dedup_key(lat, lng)
     if data.get("image_hash"):
         prop.image_hash = data["image_hash"][:32]

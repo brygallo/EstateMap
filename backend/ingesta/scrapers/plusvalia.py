@@ -68,7 +68,7 @@ import html as html_lib
 import os
 import re
 
-from .base import BaseScraper, ScraperBlocked, register
+from .base import BaseScraper, ScraperBlocked, extract_html_source_dates, register
 from ..pipeline import normalize
 
 # Búsquedas por defecto: (path del listado, categoria, operacion). Terrenos
@@ -151,6 +151,7 @@ _IMG_RE = re.compile(
     r'https://img\d*\.naventcdn\.com/avisos/(?:resize/)?[0-9/]+?/\d+x\d+/\d+\.(?:jpe?g|png|webp)',
     re.I,
 )
+_IMG_SIZE_RE = re.compile(r"/(\d+)x(\d+)/")
 # Estado del aviso que el servidor inyecta en el JS inline de la ficha
 # (``postingStatus = "ONLINE"``). Un aviso finalizado/vendido puede seguir
 # sirviéndose con HTTP 200 (la ficha muestra la pestaña "Finalizado"), así que
@@ -264,7 +265,7 @@ class PlusvaliaScraper(BaseScraper):
             )
             return httpx.Client(timeout=25.0, headers=headers, follow_redirects=True)
 
-    def scrape(self, limit=None, log=None, searches=None, skip_url=None):
+    def scrape(self, limit=None, log=None, searches=None, skip_url=None, on_gone=None):
         searches = searches or DEFAULT_SEARCHES
         log = log or (lambda *_: None)
         seen = set()
@@ -307,13 +308,28 @@ class PlusvaliaScraper(BaseScraper):
                             continue
                         still.append(entry)
                         continue
-                    entry[3] = 0
-                    still.append(entry)
                     self._sleep()
                     data = self._scrape_detail(client, detail_url, categoria,
-                                               operacion, log, rec)
-                    if data is None:
+                                               operacion, log, rec,
+                                               ext, on_gone)
+                    if data == "GONE":
+                        entry[3] = known_streak + 1
+                        if entry[3] >= self._KNOWN_STREAK_LIMIT:
+                            log(
+                                f"[plusvalia] {categoria}/{operacion}: franja histórica alcanzada "
+                                f"({entry[3]} conocidos o retirados consecutivos); categoría terminada."
+                            )
+                            continue
+                        still.append(entry)
                         continue
+                    if data is None:
+                        # A transient error is neither persisted nor treated as
+                        # a known historical listing.
+                        entry[3] = 0
+                        still.append(entry)
+                        continue
+                    entry[3] = 0
+                    still.append(entry)
                     yield data
                     produced += 1
                     if limit and produced >= limit:
@@ -394,7 +410,7 @@ class PlusvaliaScraper(BaseScraper):
             }
         return records
 
-    def _fetch(self, client, url, log):
+    def _fetch(self, client, url, log, on_gone=None):
         """
         Descarga una URL. Devuelve el HTML o ``None``. Con ``curl_cffi`` pasa
         Cloudflare; si algún día vuelve a caer (403 / página "Just a moment"),
@@ -410,6 +426,12 @@ class PlusvaliaScraper(BaseScraper):
             log(f"[plusvalia] {url} -> HTTP {resp.status_code}{hint}")
             if resp.status_code == 403:
                 self._note_block(url, log)
+            elif resp.status_code in (404, 410) and on_gone:
+                on_gone(resp.status_code)
+            return None
+        if on_gone and "/propiedades/" not in str(resp.url):
+            log(f"[plusvalia] {url} -> redirigida fuera de propiedades")
+            on_gone(410)
             return None
         text = resp.text
         # Página real de challenge = documento minúsculo con ese <title>. (El
@@ -500,10 +522,22 @@ class PlusvaliaScraper(BaseScraper):
                 self._sleep()
         return total
 
-    def _scrape_detail(self, client, detail_url, categoria, operacion, log, listing=None):
-        html_text = self._fetch(client, detail_url, log)
+    def _scrape_detail(self, client, detail_url, categoria, operacion, log,
+                       listing=None, external_id=None, on_gone=None):
+        gone_status = []
+
+        def mark_gone(http_status):
+            gone_status.append(http_status)
+            if on_gone:
+                on_gone(detail_url, external_id or detail_url, http_status)
+
+        html_text = self._fetch(client, detail_url, log, on_gone=mark_gone)
         if html_text is None:
-            return None
+            return "GONE" if gone_status else None
+        status_match = _POSTING_STATUS_RE.search(html_text)
+        if status_match and status_match.group(1) != "ONLINE":
+            mark_gone(410)
+            return "GONE"
         return self._parse_detail(html_text, detail_url, categoria, operacion, listing)
 
     def _parse_detail(self, h, detail_url, categoria, operacion, listing=None):
@@ -624,16 +658,18 @@ class PlusvaliaScraper(BaseScraper):
         # Imágenes únicas (por nombre de archivo final), orden de aparición. Se
         # limita a 40: la ficha incluye también fotos de anuncios recomendados
         # al final, que no son de esta propiedad.
-        images = []
-        seen_img = set()
+        images_by_file = {}
+        image_order = []
         for u in _IMG_RE.findall(h):
             fname = u.rsplit("/", 1)[-1].split("?")[0]
-            if fname in seen_img:
-                continue
-            seen_img.add(fname)
-            images.append(u)
-            if len(images) >= 40:
-                break
+            size_match = _IMG_SIZE_RE.search(u)
+            pixel_area = int(size_match.group(1)) * int(size_match.group(2)) if size_match else 0
+            if fname not in images_by_file:
+                image_order.append(fname)
+                images_by_file[fname] = (pixel_area, u)
+            elif pixel_area > images_by_file[fname][0]:
+                images_by_file[fname] = (pixel_area, u)
+        images = [images_by_file[fname][1] for fname in image_order[:40]]
 
         return {
             "external_id": external_id,
@@ -658,4 +694,5 @@ class PlusvaliaScraper(BaseScraper):
             "contact_email": "",
             "source_agency": source_agency,
             "image_urls": images,
+            **extract_html_source_dates(h),
         }

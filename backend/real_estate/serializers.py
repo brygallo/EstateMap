@@ -754,13 +754,14 @@ class AdminPropertyListSerializer(serializers.ModelSerializer):
     owner_email = serializers.SerializerMethodField()
     image_count = serializers.SerializerMethodField()
     thumbnail_url = serializers.SerializerMethodField()
+    source_name = serializers.SerializerMethodField()
 
     class Meta:
         model = Property
         fields = [
             'id', 'title', 'property_type', 'status', 'price', 'city', 'address',
             'area', 'views_count', 'owner_username', 'owner_email', 'created_at',
-            'image_count', 'thumbnail_url',
+            'image_count', 'thumbnail_url', 'is_imported', 'source_name',
         ]
 
     def get_owner_username(self, obj):
@@ -788,6 +789,9 @@ class AdminPropertyListSerializer(serializers.ModelSerializer):
             return source.url
         return None
 
+    def get_source_name(self, obj):
+        return obj.source.nombre if obj.source else None
+
 
 class AdminDashboardSerializer(serializers.Serializer):
     """Serializer para estadísticas del dashboard admin."""
@@ -806,6 +810,10 @@ class AdminDashboardSerializer(serializers.Serializer):
     new_users_30d = serializers.IntegerField()
     properties_without_images = serializers.IntegerField()
     properties_incomplete = serializers.IntegerField()
+    quality = serializers.JSONField()
+    ingestion = serializers.JSONField()
+    owner = serializers.JSONField()
+    generated_at = serializers.DateTimeField()
     recent_users = AdminUserSerializer(many=True)
     recent_properties = AdminPropertyListSerializer(many=True)
     recent_leads = LeadSerializer(many=True)

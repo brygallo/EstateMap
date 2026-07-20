@@ -19,7 +19,7 @@ que casi todos traen lat/lng (requisito para entrar al mapa).
 import html as html_lib
 import re
 
-from .base import BaseScraper, register
+from .base import BaseScraper, extract_html_source_dates, register
 from ..pipeline import normalize
 
 # Búsquedas por defecto (categoria, operacion). Terrenos primero. Se puede
@@ -99,7 +99,7 @@ class ProperatiScraper(BaseScraper):
         }
         return httpx.Client(timeout=25.0, headers=headers, follow_redirects=True)
 
-    def scrape(self, limit=None, log=None, searches=None, skip_url=None):
+    def scrape(self, limit=None, log=None, searches=None, skip_url=None, on_gone=None):
         searches = searches or DEFAULT_SEARCHES
         log = log or (lambda *_: None)
         seen_ids = set()
@@ -269,4 +269,5 @@ class ProperatiScraper(BaseScraper):
             "contact_email": "",
             "source_agency": normalize.clean_text(_dt_value(h, "agency-name"), 150),
             "image_urls": images,
+            **extract_html_source_dates(h),
         }

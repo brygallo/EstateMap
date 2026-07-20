@@ -39,6 +39,7 @@ import {
 } from '@/components/ui/carousel';
 import PropertyDetailMap from '@/components/maps/PropertyDetailMap';
 import AdminRefreshProperty from '@/components/AdminRefreshProperty';
+import PropertyIntelligence from '@/components/PropertyIntelligence';
 
 /** Ficha de dato de la propiedad: icono lucide + valor en mono + etiqueta. */
 function StatTile({
@@ -186,7 +187,7 @@ export async function generateMetadata({ params }: PropertyPageProps): Promise<M
       'og:type': 'article',
       'og:price:amount': property.price.toString(),
       'og:price:currency': 'USD',
-      'article:published_time': property.created_at || new Date().toISOString(),
+      'article:published_time': property.source_published_at || property.imported_at || property.created_at || new Date().toISOString(),
       'article:author': property.owner_username || 'Geo Propiedades Ecuador',
       'product:price:amount': property.price.toString(),
       'product:price:currency': 'USD',
@@ -248,8 +249,8 @@ export default async function PropertyPage({ params }: PropertyPageProps) {
             .slice(0, 5)
             .map((img: any) => (img.image.startsWith('http') ? img.image : `${baseUrl}${img.image}`))
         : [imageAbsoluteUrl],
-    datePosted: property.created_at,
-    dateModified: property.updated_at || property.created_at,
+    datePosted: property.source_published_at || property.imported_at || property.created_at,
+    dateModified: property.source_updated_at || property.updated_at || property.created_at,
     publisher: { '@id': `${SITE_URL}/#organization` },
     offers: {
       '@type': 'Offer',
@@ -351,8 +352,14 @@ export default async function PropertyPage({ params }: PropertyPageProps) {
   // Mensaje de WhatsApp con referencia al anuncio y la URL de su ficha en nuestro sitio.
   const waMessage = `Hola, vi este anuncio en Geo Propiedades: ${property.title || 'esta propiedad'}\n${propertyUrl}`;
   const waLink = `https://wa.me/${waPhone}?text=${encodeURIComponent(waMessage)}`;
-  const publishedDate = property.created_at
-    ? new Date(property.created_at).toLocaleDateString('es-EC', {
+  const publicationDate = isImported
+    ? property.source_published_at || property.imported_at || property.created_at
+    : property.created_at;
+  const publicationLabel = isImported
+    ? (property.source_published_at ? 'Publicado originalmente el ' : 'Detectado en Geo Propiedades el ')
+    : 'Publicado el ';
+  const publishedDate = publicationDate
+    ? new Date(publicationDate).toLocaleDateString('es-EC', {
         day: 'numeric',
         month: 'long',
         year: 'numeric',
@@ -535,6 +542,8 @@ export default async function PropertyPage({ params }: PropertyPageProps) {
             </div>
           </section>
 
+          <PropertyIntelligence propertyId={property.id} />
+
           {/* Cuerpo: contenido + tarjeta de contacto */}
           <div className="mt-8 grid grid-cols-1 gap-8 lg:grid-cols-3">
             {/* Columna principal */}
@@ -665,7 +674,7 @@ export default async function PropertyPage({ params }: PropertyPageProps) {
                 {publishedDate && (
                   <div className="mb-4 flex items-center gap-2 text-sm text-textSecondary">
                     <CalendarDays className="h-4 w-4 flex-shrink-0" strokeWidth={1.75} aria-hidden />
-                    {isImported ? 'Agregado al mapa el ' : 'Publicado el '}{publishedDate}
+                    {publicationLabel}{publishedDate}
                   </div>
                 )}
 

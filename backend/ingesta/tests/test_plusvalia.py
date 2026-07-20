@@ -94,6 +94,23 @@ class TestPlusvaliaParseDetail:
         assert all("naventcdn.com" in u for u in d["image_urls"])
         assert "Tumbaco" in d["description"]
 
+    def test_uses_highest_resolution_variant_for_each_image(self):
+        html = PROYECTO_HTML.replace(
+            "</body>",
+            '<img src="https://img10.naventcdn.com/avisos/9/01/48/15/45/11/360x266/1611512005.jpg"/>'
+            '<img src="https://img10.naventcdn.com/avisos/9/01/48/15/45/11/1200x1200/1611512005.jpg"/>'
+            "</body>",
+        )
+
+        data = self.scraper._parse_detail(
+            html,
+            "https://www.plusvalia.com/propiedades/proyecto/ememhoin-nuevo-proyecto-de-casas-148154511.html",
+            "casa",
+            "venta",
+        )
+
+        assert "/1200x1200/1611512005.jpg" in data["image_urls"][0]
+
     def test_descripcion_quita_cta_leer_descripcion_completa(self):
         html = CLASIFICADO_HTML.replace(
             '<div id="reactDescription"><div><p>Proyecto de casas en Tumbaco.<br>Areas verdes.</p></div></div></section>',
@@ -218,6 +235,26 @@ class _FakeClient:
         return False
 
 
+class _GoneResponse:
+    status_code = 410
+
+
+class _GoneClient(_FakeClient):
+    def get(self, _url):
+        return _GoneResponse()
+
+
+class _RedirectResponse:
+    status_code = 200
+    url = "https://www.plusvalia.com/"
+    text = "<html></html>"
+
+
+class _RedirectClient(_FakeClient):
+    def get(self, _url):
+        return _RedirectResponse()
+
+
 def test_incremental_compara_id_y_corta_franja_historica(monkeypatch):
     scraper = PlusvaliaScraper()
     scraper._KNOWN_STREAK_LIMIT = 3
@@ -238,3 +275,50 @@ def test_incremental_compara_id_y_corta_franja_historica(monkeypatch):
 
     assert results == []
     assert opened == []
+
+
+def test_http_gone_se_notifica_y_cuenta_para_corte_historico(monkeypatch):
+    scraper = PlusvaliaScraper()
+    scraper._KNOWN_STREAK_LIMIT = 2
+    monkeypatch.setattr(scraper, "_client", lambda: _GoneClient())
+    monkeypatch.setattr(scraper, "_sleep", lambda: None)
+    urls = [
+        (f"https://www.plusvalia.com/propiedades/clasificado/slug-{n}.html", str(n), {})
+        for n in range(10, 14)
+    ]
+    monkeypatch.setattr(scraper, "_iter_detail_urls", lambda *_args: iter(urls))
+    gone = []
+
+    results = list(scraper.scrape(
+        searches=[("/venta/casas", "casa", "venta")],
+        on_gone=lambda url, external_id, status: gone.append((url, external_id, status)),
+    ))
+
+    assert results == []
+    assert [(external_id, status) for _url, external_id, status in gone] == [
+        ("10", 410),
+        ("11", 410),
+    ]
+
+
+def test_redirect_fuera_de_propiedades_se_registra_como_retirada():
+    scraper = PlusvaliaScraper()
+    gone = []
+
+    result = scraper._scrape_detail(
+        _RedirectClient(),
+        "https://www.plusvalia.com/propiedades/clasificado/slug-10.html",
+        "casa",
+        "venta",
+        lambda *_args: None,
+        {},
+        "10",
+        lambda url, external_id, status: gone.append((url, external_id, status)),
+    )
+
+    assert result == "GONE"
+    assert gone == [(
+        "https://www.plusvalia.com/propiedades/clasificado/slug-10.html",
+        "10",
+        410,
+    )]

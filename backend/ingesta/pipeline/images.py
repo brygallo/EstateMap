@@ -14,7 +14,9 @@ Límite prudente por anuncio para controlar el almacenamiento.
 """
 import os
 
-MAX_IMAGES = 5
+from django.conf import settings
+
+MAX_IMAGES = getattr(settings, "MAX_IMAGES_PER_PROPERTY", 10)
 _TIMEOUT = 20.0
 
 # Fingerprint que pasa Cloudflare también desde IPs de datacenter (Contabo);

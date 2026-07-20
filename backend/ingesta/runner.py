@@ -32,6 +32,7 @@ from .scrapers.base import ScraperBlocked
 
 # Un run sin señal de vida durante este tiempo se considera muerto.
 STALE_AFTER = timedelta(minutes=10)
+RETIRED_RECHECK_AFTER = timedelta(days=30)
 
 
 class RunLogger:
@@ -124,6 +125,32 @@ def _refresh_disponibles(fuente, scraper):
         pass
 
 
+def _load_known_listings(fuente):
+    """Return URLs and stable IDs that an incremental run must not reopen."""
+    from real_estate.models import Property
+
+    from .models import ListingRetirada
+
+    properties = Property.objects.filter(source=fuente, is_imported=True)
+    retired = ListingRetirada.objects.filter(
+        fuente=fuente,
+        last_seen_at__gte=timezone.now() - RETIRED_RECHECK_AFTER,
+    )
+    known_urls = set(
+        properties.exclude(source_url="").values_list("source_url", flat=True)
+    )
+    known_ids = set(
+        properties.exclude(external_id="").values_list("external_id", flat=True)
+    )
+    retired_urls = set(
+        retired.exclude(source_url="").values_list("source_url", flat=True)
+    )
+    retired_ids = set(
+        retired.exclude(external_id="").values_list("external_id", flat=True)
+    )
+    return known_urls | retired_urls, known_ids | retired_ids, len(retired_ids)
+
+
 def execute(run_obj: IngestaRun, log=None):
     """Despacha según el modo del run: cargar/actualizar del portal, o refrescar
     las existentes y verificar vigencia."""
@@ -163,33 +190,42 @@ def run_load(run: IngestaRun, log=None):
     # puede cambiar cuando el anunciante edita el título/slug, por lo que usar
     # únicamente la URL hacía que propiedades conocidas parecieran nuevas.
     skip_url = None
+    on_gone = None
     if run.solo_nuevas:
-        from real_estate.models import Property
-
-        known_urls = set(
-            Property.objects.filter(source=fuente, is_imported=True)
-            .exclude(source_url="")
-            .values_list("source_url", flat=True)
-        )
-        known_ids = set(
-            Property.objects.filter(source=fuente, is_imported=True)
-            .exclude(external_id="")
-            .values_list("external_id", flat=True)
-        )
+        known_urls, known_ids, retired_count = _load_known_listings(fuente)
 
         def skip_url(url, external_id=None):
             return (bool(external_id) and str(external_id) in known_ids) or url in known_urls
 
-        logger(f"[incremental] {len(known_ids)} IDs conocidos cargados; no se abrirán sus fichas.")
+        logger(
+            f"[incremental] {len(known_ids)} IDs conocidos "
+            f"({retired_count} retirados); no se abrirán sus fichas."
+        )
+
+    if scraper.key == "plusvalia":
+        from .models import ListingRetirada
+
+        def on_gone(url, external_id, http_status):
+            ListingRetirada.objects.update_or_create(
+                fuente=fuente,
+                external_id=str(external_id),
+                defaults={"source_url": url, "http_status": http_status},
+            )
 
     cancelled = False
     try:
         run.current_stage = "leyendo anuncios del portal"
         run.save(update_fields=["current_stage"])
         for data in scraper.scrape(limit=run.limit, log=logger, searches=searches,
-                                   skip_url=skip_url):
+                                   skip_url=skip_url, on_gone=on_gone):
             run.vistos += 1
             try:
+                if scraper.key == "plusvalia" and data.get("external_id"):
+                    from .models import ListingRetirada
+
+                    ListingRetirada.objects.filter(
+                        fuente=fuente, external_id=str(data["external_id"])
+                    ).delete()
                 ok, lat, lng, _motivo = validate_location(
                     data.get("latitude"), data.get("longitude")
                 )
