@@ -146,7 +146,7 @@ const LocationSelect = ({
   const [loadingProvinces, setLoadingProvinces] = useState(true);
   const [loadingCities, setLoadingCities] = useState(false);
 
-  const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api';
+  const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8010/api';
 
   useEffect(() => {
     loadProvinces();

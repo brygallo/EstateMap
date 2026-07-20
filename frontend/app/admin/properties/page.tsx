@@ -64,7 +64,7 @@ import {
 import { Card } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api';
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8010/api';
 
 interface PropertyItem {
   id: number;

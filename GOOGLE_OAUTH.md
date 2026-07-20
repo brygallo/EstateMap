@@ -14,10 +14,10 @@
 5. APIs & Services → **Credentials** → **+ CREATE CREDENTIALS** → **OAuth client ID**:
    - Type: **Web application**
    - Authorized JavaScript origins:
-     - Desarrollo: `http://localhost:3000`
+     - Desarrollo: `http://localhost:3010`
      - Producción: `https://tu-dominio.com`
    - Authorized redirect URIs:
-     - Desarrollo: `http://localhost:3000`
+     - Desarrollo: `http://localhost:3010`
      - Producción: `https://tu-dominio.com`
 6. Copia **Client ID** y **Client Secret**
 
@@ -62,7 +62,7 @@ docker-compose exec backend python manage.py migrate
 
 ### 4. Probar
 
-- Desarrollo: http://localhost:3000/login
+- Desarrollo: http://localhost:3010/login
 - Producción: https://tu-dominio.com/login
 - Debe aparecer el botón **"Continuar con Google"**
 
@@ -123,7 +123,7 @@ docker-compose up -d
 
 ### Error 400: redirect_uri_mismatch:
 - Agrega tu URL exacta a "Authorized redirect URIs" en Google Console
-- Para desarrollo: `http://localhost:3000`
+- Para desarrollo: `http://localhost:3010`
 - Para producción: `https://tu-dominio.com` (requiere HTTPS)
 
 ---
