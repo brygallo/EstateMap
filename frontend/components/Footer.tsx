@@ -39,6 +39,7 @@ const PLATFORM_LINKS = [
   { href: '/estadisticas-inmobiliarias', label: 'Estadísticas del mercado' },
   { href: '/publicar-propiedad', label: 'Publicar propiedad' },
   { href: '/inmobiliarias', label: 'Inmobiliarias' },
+  { href: '/guias', label: 'Guías inmobiliarias' },
   { href: '/ayuda', label: 'Centro de ayuda' },
 ];
 

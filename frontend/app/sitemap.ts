@@ -1,6 +1,7 @@
 import { MetadataRoute } from 'next';
 import { getProperties, getCities, getProvinces, slugify, SITE_URL, Property } from '@/lib/properties';
 import { generateCombos, parseComboSlug } from '@/lib/seo-combos';
+import { GUIDES } from '@/lib/guias';
 
 // Nota: las imágenes por propiedad se publican en un sitemap de imágenes aparte
 // (app/image-sitemap.xml/route.ts), porque el campo `images` de
@@ -57,12 +58,18 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${SITE_URL}/publicar-propiedad`, lastModified: globalLatest, changeFrequency: 'monthly', priority: 0.8 },
     { url: `${SITE_URL}/publicar-asistido`, lastModified: globalLatest, changeFrequency: 'monthly', priority: 0.8 },
     { url: `${SITE_URL}/inmobiliarias`, lastModified: globalLatest, changeFrequency: 'monthly', priority: 0.8 },
-    { url: `${SITE_URL}/estadisticas-inmobiliarias`, lastModified: globalLatest, changeFrequency: 'daily', priority: 0.8 },
     ...TYPE_ROUTES.map((path) => ({
       url: `${SITE_URL}${path}`,
       lastModified: globalLatest,
       changeFrequency: 'daily' as const,
       priority: 0.8,
+    })),
+    { url: `${SITE_URL}/guias`, lastModified: new Date(GUIDES[0].updated), changeFrequency: 'monthly', priority: 0.7 },
+    ...GUIDES.map((guide) => ({
+      url: `${SITE_URL}/guias/${guide.slug}`,
+      lastModified: new Date(guide.updated),
+      changeFrequency: 'monthly' as const,
+      priority: 0.65,
     })),
   ];
 
