@@ -300,7 +300,7 @@ class PropertyViewSet(viewsets.ModelViewSet):
 
     @action(detail=True, methods=['get'], permission_classes=[AllowAny])
     def intelligence(self, request, pk=None):
-        """Contexto comercial de un anuncio frente a inventario comparable real."""
+        """Build commercial context against genuinely comparable inventory."""
         from django.utils import timezone
 
         instance = self.get_object()
@@ -1197,7 +1197,7 @@ class MarketStatsView(generics.GenericAPIView):
         city_periods = defaultdict(lambda: {'recent': [], 'previous': []})
         sector_stats = defaultdict(list)
         for row in active_rows:
-            # El catálogo aquí es activo: su permanencia continúa hasta hoy.
+            # Active catalog entries remain available through the current day.
             market_days.append(max(0, (now - row['created_at']).days))
             city = (row['city'] or 'Sin ciudad').strip()
             demand[city]['supply'] += 1
@@ -1207,7 +1207,7 @@ class MarketStatsView(generics.GenericAPIView):
                 city_periods[city]['recent'].append(row['price_per_m2'])
             elif age <= timedelta(days=180):
                 city_periods[city]['previous'].append(row['price_per_m2'])
-            # `address` es el nivel geográfico más fino disponible actualmente.
+            # `address` is currently the finest available geographic level.
             sector = (row['address'] or '').split(',')[0].strip()
             if sector and sector.lower() != city.lower():
                 sector_stats[(city, sector)].append(row['price_per_m2'])

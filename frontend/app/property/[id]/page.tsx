@@ -15,6 +15,7 @@ import {
   ChevronRight,
   BadgeCheck,
   CalendarDays,
+  Navigation,
 } from 'lucide-react';
 import {
   jsonLd,
@@ -26,20 +27,16 @@ import {
   formatPrice,
   formatArea,
   PROPERTY_SCHEMA_TYPE,
+  getNearbyProperties,
 } from '@/lib/properties';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import AnimatedNumber from '@/components/ui/AnimatedNumber';
-import {
-  Carousel,
-  CarouselContent,
-  CarouselItem,
-  CarouselNext,
-  CarouselPrevious,
-} from '@/components/ui/carousel';
+import PropertyGallery from '@/components/PropertyGallery';
 import PropertyDetailMap from '@/components/maps/PropertyDetailMap';
 import AdminRefreshProperty from '@/components/AdminRefreshProperty';
 import PropertyIntelligence from '@/components/PropertyIntelligence';
+import PropertyCard from '@/components/PropertyCard';
 
 /** Ficha de dato de la propiedad: icono lucide + valor en mono + etiqueta. */
 function StatTile({
@@ -206,6 +203,8 @@ export default async function PropertyPage({ params }: PropertyPageProps) {
   if (!property) {
     notFound();
   }
+
+  const nearbyProperties = await getNearbyProperties(property, 4);
 
   const mapUrl = `/?property=${resolvedParams.id}`;
   const propertyTypeLabel = getPropertyTypeLabel(property.property_type);
@@ -409,49 +408,15 @@ export default async function PropertyPage({ params }: PropertyPageProps) {
             </ol>
           </nav>
 
-          {/* Hero: gran carrusel de fotos */}
+          {/* Galería de fotos con mosaico, miniaturas y vista ampliada */}
           {galleryImages.length > 0 ? (
-            <Carousel
-              opts={{ loop: galleryImages.length > 1 }}
-              className="group relative overflow-hidden rounded-hero border border-line bg-slate-900 shadow-cardHover"
-            >
-              <CarouselContent className="ml-0">
-                {galleryImages.map((img, idx) => (
-                  <CarouselItem key={idx} className="pl-0">
-                    <div className="relative aspect-[16/10] w-full sm:aspect-[16/8] md:aspect-[16/7]">
-                      <img
-                        src={img.image}
-                        alt={`${property.title} — imagen ${idx + 1}`}
-                        className="h-full w-full object-cover"
-                        loading={idx === 0 ? 'eager' : 'lazy'}
-                      />
-                    </div>
-                  </CarouselItem>
-                ))}
-              </CarouselContent>
-
-              {/* Badges sobre la foto */}
-              <div className="pointer-events-none absolute left-4 top-4 flex flex-wrap gap-2">
-                <span
-                  className={`inline-flex items-center rounded-full px-3.5 py-1.5 text-sm font-semibold shadow-cardHover ${statusOverlayClass(property.status)}`}
-                >
-                  {statusLabel}
-                </span>
-                <span className="inline-flex items-center rounded-full bg-white/90 px-3.5 py-1.5 text-sm font-semibold text-textPrimary shadow-cardHover backdrop-blur">
-                  {propertyTypeLabel}
-                </span>
-              </div>
-
-              {galleryImages.length > 1 && (
-                <>
-                  <span className="pointer-events-none absolute bottom-4 right-4 rounded-full bg-black/60 px-3 py-1 text-xs font-medium text-white backdrop-blur">
-                    {galleryImages.length} fotos
-                  </span>
-                  <CarouselPrevious className="left-4 h-10 w-10 border-none bg-white/90 text-textPrimary opacity-0 shadow-cardHover transition-opacity hover:bg-white group-hover:opacity-100 focus-visible:opacity-100" />
-                  <CarouselNext className="right-4 h-10 w-10 border-none bg-white/90 text-textPrimary opacity-0 shadow-cardHover transition-opacity hover:bg-white group-hover:opacity-100 focus-visible:opacity-100" />
-                </>
-              )}
-            </Carousel>
+            <PropertyGallery
+              images={galleryImages}
+              title={property.title || 'Propiedad'}
+              statusLabel={statusLabel}
+              propertyTypeLabel={propertyTypeLabel}
+              statusClassName={statusOverlayClass(property.status)}
+            />
           ) : (
             <div className="flex aspect-[16/7] w-full items-center justify-center rounded-hero border border-line bg-muted text-textSecondary">
               <div className="flex flex-col items-center gap-2">
@@ -751,6 +716,43 @@ export default async function PropertyPage({ params }: PropertyPageProps) {
               </div>
             </aside>
           </div>
+
+          {nearbyProperties.length > 0 && (
+            <section className="mt-12 border-t border-line pt-10" aria-labelledby="nearby-properties-title">
+              <div className="mb-5 flex flex-wrap items-end justify-between gap-3">
+                <div>
+                  <div className="mb-1 flex items-center gap-2 text-sm font-semibold text-primary">
+                    <Navigation className="h-4 w-4" aria-hidden />
+                    Cerca de esta ubicación
+                  </div>
+                  <h2 id="nearby-properties-title" className="text-2xl font-bold text-textPrimary">
+                    Publicaciones cercanas
+                  </h2>
+                  <p className="mt-1 text-sm text-textSecondary">
+                    Ordenadas desde la propiedad más próxima. La distancia es aproximada en línea recta.
+                  </p>
+                </div>
+                <Link href={mapUrl} className="text-sm font-semibold text-primary hover:underline">
+                  Explorar en el mapa
+                </Link>
+              </div>
+
+              <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+                {nearbyProperties.map((nearby) => (
+                  <PropertyCard
+                    key={nearby.id}
+                    property={nearby}
+                    href={`/propiedad/${nearby.id}`}
+                    distanceLabel={
+                      nearby.distanceKm < 1
+                        ? `${Math.max(10, Math.round(nearby.distanceKm * 1000))} m de distancia`
+                        : `${nearby.distanceKm.toFixed(1)} km de distancia`
+                    }
+                  />
+                ))}
+              </div>
+            </section>
+          )}
         </div>
       </div>
 

@@ -36,7 +36,7 @@ _REGISTRY = {}
 
 
 def parse_source_datetime(value):
-    """Normaliza fechas ISO del portal; devuelve None si el dato no es fiable."""
+    """Normalize portal ISO dates and return None when the value is unreliable."""
     if not value:
         return None
     raw = str(value).strip()
@@ -58,7 +58,7 @@ def parse_source_datetime(value):
 
 
 def extract_html_source_dates(html_text):
-    """Extrae fechas Schema.org/meta sin inventarlas cuando el portal no las expone."""
+    """Extract Schema.org or meta dates without fabricating unavailable values."""
     def find(keys):
         for key in keys:
             patterns = [

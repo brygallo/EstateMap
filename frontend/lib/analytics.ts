@@ -21,7 +21,7 @@ export function trackEvent(eventName: string, payload: EventPayload = {}) {
   if (!attribution.landing_page) {
     const referrer = document.referrer || '';
     let referrerHost = '';
-    try { referrerHost = referrer ? new URL(referrer).hostname : ''; } catch { /* URL inválida */ }
+    try { referrerHost = referrer ? new URL(referrer).hostname : ''; } catch { /* Invalid URL */ }
     const medium = params.get('utm_medium') || '';
     const source = params.get('utm_source') || referrerHost || 'direct';
     const channel = medium === 'organic' || (!medium && referrerHost && /google|bing|yahoo|duckduckgo/.test(referrerHost))
@@ -37,7 +37,7 @@ export function trackEvent(eventName: string, payload: EventPayload = {}) {
       referrer,
       landing_page: `${window.location.pathname}${window.location.search}`.slice(0, 300),
     };
-    try { window.localStorage.setItem(attributionKey, JSON.stringify(attribution)); } catch { /* almacenamiento bloqueado */ }
+    try { window.localStorage.setItem(attributionKey, JSON.stringify(attribution)); } catch { /* Storage is unavailable */ }
   }
 
   const enrichedPayload = { attribution, ...payload };
