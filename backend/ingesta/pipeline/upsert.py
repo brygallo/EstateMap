@@ -50,7 +50,7 @@ def _apply_fields(prop, data, fuente, lat, lng):
 
 
 def upsert_property(data, fuente, reader=None, image_urls=None, log=None,
-                    require_images=False):
+                    require_images=False, force_images=False):
     """
     Crea o actualiza una ``Property`` a partir del dict canónico ``data``.
 
@@ -60,6 +60,8 @@ def upsert_property(data, fuente, reader=None, image_urls=None, log=None,
       memoria y las sube a MinIO.
     - ``require_images``: si el flujo directo esperaba imágenes y no queda
       ninguna adjunta, una propiedad recién creada se revierte.
+    - ``force_images``: re-descarga y reemplaza las imágenes aunque la cantidad
+      no haya cambiado (refresh manual desde el panel admin).
 
     Devuelve ``(resultado, prop)`` donde resultado ∈
     {'created', 'updated', 'skipped_no_location', 'skipped_duplicate',
@@ -154,7 +156,7 @@ def upsert_property(data, fuente, reader=None, image_urls=None, log=None,
         if image_paths:
             sync_property_images(prop, image_paths)
     elif image_urls:
-        attached = attach_images_from_urls(prop, image_urls)
+        attached = attach_images_from_urls(prop, image_urls, force=force_images)
         if attached == 0:
             if created:
                 prop.delete()

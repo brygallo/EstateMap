@@ -3,6 +3,8 @@ node_modules
 frontend/dist
 frontend/.next
 frontend/.next-host
+# Salidas alternativas usadas para verificaciones locales de Next.js
+frontend/.next-*
 
 # Python
 __pycache__
@@ -27,3 +29,6 @@ backend/paquetes/
 
 # Auditorias locales - no versionar
 geopropiedadesecuador.com-audit/
+
+# Metadatos locales del IDE
+.idea/jsLibraryMappings.xml

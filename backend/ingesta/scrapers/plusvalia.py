@@ -151,6 +151,12 @@ _IMG_RE = re.compile(
     r'https://img\d*\.naventcdn\.com/avisos/(?:resize/)?[0-9/]+?/\d+x\d+/\d+\.(?:jpe?g|png|webp)',
     re.I,
 )
+# Estado del aviso que el servidor inyecta en el JS inline de la ficha
+# (``postingStatus = "ONLINE"``). Un aviso finalizado/vendido puede seguir
+# sirviéndose con HTTP 200 (la ficha muestra la pestaña "Finalizado"), así que
+# el 404/410 no basta para detectar caducados. El ``[A-Z_]+`` evita capturar la
+# inicialización vacía ``let postingStatus = "";`` que aparece antes.
+_POSTING_STATUS_RE = re.compile(r'postingStatus = "([A-Z_]+)"')
 
 
 def _clean_detail_description(value):
@@ -426,6 +432,9 @@ class PlusvaliaScraper(BaseScraper):
             if resp.status_code != 200:
                 return None
             if "/propiedades/" not in str(resp.url):
+                return "GONE"
+            m = _POSTING_STATUS_RE.search(resp.text)
+            if m and m.group(1) != "ONLINE":
                 return "GONE"
             # Nota: al re-scrapear un clasificado suelto no hay contexto de
             # listado, así que sus coordenadas (que sólo publica el listado) no

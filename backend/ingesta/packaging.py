@@ -19,6 +19,11 @@ import os
 MANIFEST_NAME = "manifest.json"
 LISTINGS_NAME = "listings.jsonl"
 IMAGES_DIR = "images"
+SUPPORTED_FORMATS = {1}
+
+
+class PaqueteInvalido(ValueError):
+    """El paquete está incompleto, corrupto o no cumple el contrato."""
 
 
 class PaqueteWriter:
@@ -73,19 +78,88 @@ class PaqueteReader:
     def __init__(self, path):
         self.path = path
         self.listings_path = os.path.join(path, LISTINGS_NAME)
+        self.manifest_path = os.path.join(path, MANIFEST_NAME)
+        if not os.path.isdir(path):
+            raise FileNotFoundError(f"No se encontró el paquete {path}")
         if not os.path.isfile(self.listings_path):
             raise FileNotFoundError(f"No se encontró {LISTINGS_NAME} en {path}")
+        if not os.path.isfile(self.manifest_path):
+            raise FileNotFoundError(
+                f"No se encontró {MANIFEST_NAME} en {path}; "
+                "el paquete puede estar incompleto"
+            )
 
     def read_manifest(self):
-        with open(os.path.join(self.path, MANIFEST_NAME), encoding="utf-8") as fh:
-            return json.load(fh)
+        try:
+            with open(self.manifest_path, encoding="utf-8") as fh:
+                manifest = json.load(fh)
+        except json.JSONDecodeError as exc:
+            raise PaqueteInvalido(
+                f"{MANIFEST_NAME} no contiene JSON válido: {exc}"
+            ) from exc
+        self._validate_manifest(manifest)
+        return manifest
+
+    def validate(self):
+        """Valida todo antes de que la importación modifique la base de datos."""
+        manifest = self.read_manifest()
+        total = 0
+        ids = set()
+        for line_number, listing in self._iter_listings_with_line():
+            if not isinstance(listing, dict):
+                raise PaqueteInvalido(
+                    f"{LISTINGS_NAME}, línea {line_number}: se esperaba un objeto JSON"
+                )
+            external_id = str(listing.get("external_id") or "").strip()
+            if not external_id:
+                raise PaqueteInvalido(
+                    f"{LISTINGS_NAME}, línea {line_number}: external_id es obligatorio"
+                )
+            if external_id in ids:
+                raise PaqueteInvalido(
+                    f"{LISTINGS_NAME}, línea {line_number}: external_id duplicado: {external_id}"
+                )
+            ids.add(external_id)
+            total += 1
+        if manifest["total"] != total:
+            raise PaqueteInvalido(
+                f"El manifiesto declara {manifest['total']} anuncios, pero "
+                f"{LISTINGS_NAME} contiene {total}"
+            )
+        return manifest
+
+    @staticmethod
+    def _validate_manifest(manifest):
+        if not isinstance(manifest, dict):
+            raise PaqueteInvalido("manifest.json debe contener un objeto JSON")
+        if manifest.get("formato") not in SUPPORTED_FORMATS:
+            raise PaqueteInvalido(
+                f"Formato de paquete no soportado: {manifest.get('formato')!r}"
+            )
+        fuente = manifest.get("fuente")
+        if not isinstance(fuente, dict):
+            raise PaqueteInvalido("Falta el objeto 'fuente' en manifest.json")
+        for field in ("slug", "nombre", "base_url"):
+            if not isinstance(fuente.get(field), str) or not fuente[field].strip():
+                raise PaqueteInvalido(f"Falta fuente.{field} en manifest.json")
+        if not isinstance(manifest.get("total"), int) or manifest["total"] < 0:
+            raise PaqueteInvalido("manifest.total debe ser un entero no negativo")
 
     def iter_listings(self):
+        for _line_number, listing in self._iter_listings_with_line():
+            yield listing
+
+    def _iter_listings_with_line(self):
         with open(self.listings_path, encoding="utf-8") as fh:
-            for line in fh:
+            for line_number, line in enumerate(fh, 1):
                 line = line.strip()
                 if line:
-                    yield json.loads(line)
+                    try:
+                        yield line_number, json.loads(line)
+                    except json.JSONDecodeError as exc:
+                        raise PaqueteInvalido(
+                            f"{LISTINGS_NAME}, línea {line_number}: JSON inválido: {exc}"
+                        ) from exc
 
     def image_paths(self, external_id):
         """Rutas absolutas de las imágenes de un anuncio, ordenadas."""

@@ -1,6 +1,8 @@
+import logging
 from rest_framework import viewsets, generics, status, filters
 from rest_framework.pagination import PageNumberPagination
-from django.db.models import Q, F, Count, Sum, Prefetch
+from rest_framework.throttling import ScopedRateThrottle
+from django.db.models import Q, F, Count, Sum, Avg, Min, Max, FloatField, ExpressionWrapper, Prefetch
 from rest_framework_simplejwt.views import TokenObtainPairView
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework.permissions import IsAuthenticated, AllowAny, IsAuthenticatedOrReadOnly
@@ -11,7 +13,7 @@ from rest_framework.settings import api_settings
 from django.http import HttpResponse, Http404
 from django.views import View
 from django.conf import settings
-from .models import Property, PropertyImage, Province, City, Lead, PendingPublication
+from .models import ActivityEvent, Property, PropertyImage, Province, City, Lead, PendingPublication
 from django.contrib.auth import get_user_model
 from .serializers import (
     MapPropertySerializer,
@@ -23,6 +25,7 @@ from .serializers import (
     LeadStatusSerializer,
     PendingPublicationSerializer,
     PendingPublicationStatusSerializer,
+    ActivityEventSerializer,
     CustomTokenObtainPairSerializer,
     RegisterSerializer,
     VerifyEmailSerializer,
@@ -36,6 +39,7 @@ from .serializers import (
     AdminUserSerializer,
     AdminUserDetailSerializer,
     AdminPropertySerializer,
+    AdminPropertyListSerializer,
     AdminDashboardSerializer,
 )
 from .permissions import IsOwnerOrReadOnly, IsAdminUser
@@ -43,6 +47,26 @@ from .services.map_payload import build_map_payload
 import requests
 from google.oauth2 import id_token
 from google.auth.transport import requests as google_requests
+
+logger = logging.getLogger(__name__)
+
+
+class AdminPagination(PageNumberPagination):
+    """Paginación compartida por los viewsets del panel admin.
+
+    Respuesta: ``{count, next, previous, results}``. El cliente puede pedir
+    ``?page_size=N``. NO se registra como paginación global por defecto para no
+    romper los endpoints públicos que devuelven arrays planos.
+    """
+    page_size = 20
+    page_size_query_param = 'page_size'
+    max_page_size = 200
+
+
+class ActivityEventPagination(AdminPagination):
+    """Paginación admin con página más grande para el feed de actividad."""
+    page_size = 50
+    max_page_size = 500
 
 
 class ProvinceViewSet(viewsets.ReadOnlyModelViewSet):
@@ -443,17 +467,37 @@ class PendingPublicationViewSet(viewsets.ModelViewSet):
     queryset = PendingPublication.objects.all()
     serializer_class = PendingPublicationSerializer
     http_method_names = ['get', 'post', 'patch', 'head', 'options']
+    pagination_class = AdminPagination
 
     def get_permissions(self):
         if self.action == 'create':
             return [AllowAny()]
         return [IsAuthenticated(), IsAdminUser()]
 
+    def get_throttles(self):
+        # Solo el POST público (create) se limita por tasa; el resto es admin.
+        if self.action == 'create':
+            self.throttle_scope = 'pending_create'
+            return [ScopedRateThrottle()]
+        return []
+
     def get_queryset(self):
         user = self.request.user
-        if user and user.is_authenticated and user.is_staff:
-            return PendingPublication.objects.all()
-        return PendingPublication.objects.none()
+        if not (user and user.is_authenticated and user.is_staff):
+            return PendingPublication.objects.none()
+        queryset = PendingPublication.objects.all().order_by('-created_at')
+        status_param = self.request.query_params.get('status')
+        if status_param:
+            queryset = queryset.filter(status=status_param)
+        search = (self.request.query_params.get('search') or '').strip()
+        if search:
+            queryset = queryset.filter(
+                Q(title__icontains=search)
+                | Q(city__icontains=search)
+                | Q(contact_phone__icontains=search)
+                | Q(contact_email__icontains=search)
+            )
+        return queryset
 
     def get_serializer_class(self):
         if self.action == 'partial_update':
@@ -467,6 +511,44 @@ class PendingPublicationViewSet(viewsets.ModelViewSet):
             send_pending_publication_notification(pending)
         except Exception as exc:
             print(f"Error notifying pending publication: {exc}")
+
+
+class ActivityEventViewSet(viewsets.ModelViewSet):
+    """Captura pública de eventos; consulta completa reservada a administradores."""
+
+    serializer_class = ActivityEventSerializer
+    queryset = ActivityEvent.objects.select_related('user', 'property').all()
+    http_method_names = ['get', 'post', 'head', 'options']
+    filter_backends = [filters.SearchFilter, filters.OrderingFilter]
+    search_fields = ['event_name', 'user__username', 'user__email', 'property__title']
+    ordering_fields = ['created_at', 'event_name']
+    ordering = ['-created_at']
+    pagination_class = ActivityEventPagination
+
+    def get_permissions(self):
+        if self.action == 'create':
+            return [AllowAny()]
+        return [IsAuthenticated(), IsAdminUser()]
+
+    def get_throttles(self):
+        # Solo el POST público (create) se limita por tasa; el resto es admin.
+        if self.action == 'create':
+            self.throttle_scope = 'activity_create'
+            return [ScopedRateThrottle()]
+        return []
+
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        user_id = self.request.query_params.get('user')
+        property_id = self.request.query_params.get('property')
+        event_name = self.request.query_params.get('event_name')
+        if user_id and str(user_id).isdigit():
+            queryset = queryset.filter(user_id=user_id)
+        if property_id and str(property_id).isdigit():
+            queryset = queryset.filter(property_id=property_id)
+        if event_name:
+            queryset = queryset.filter(event_name=event_name)
+        return queryset
 
 
 class CustomTokenObtainPairView(TokenObtainPairView):
@@ -971,6 +1053,62 @@ class ChangePasswordView(generics.GenericAPIView):
 User = get_user_model()
 
 
+class MarketStatsView(generics.GenericAPIView):
+    """Indicadores públicos calculados únicamente con inventario activo real."""
+
+    permission_classes = [AllowAny]
+
+    def get(self, request):
+        all_base = Property.objects.exclude(status='inactive').filter(
+            area__gt=0,
+            price__gt=0,
+            is_duplicate=False,
+        ).annotate(
+            price_per_m2=ExpressionWrapper(F('price') / F('area'), output_field=FloatField())
+        ).filter(price_per_m2__gt=1, price_per_m2__lt=10000)
+        # Venta y alquiler usan escalas distintas (precio total vs. mensual).
+        # Las métricas principales se limitan a venta para que $/m² sea comparable.
+        base = all_base.filter(status='for_sale')
+
+        overall = base.aggregate(
+            count=Count('id'),
+            avg_price_m2=Avg('price_per_m2'),
+            avg_price=Avg('price'),
+            avg_area=Avg('area'),
+            min_price_m2=Min('price_per_m2'),
+            max_price_m2=Max('price_per_m2'),
+        )
+
+        def grouped(*fields, limit=12):
+            rows = (
+                base.values(*fields)
+                .annotate(
+                    count=Count('id'),
+                    avg_price_m2=Avg('price_per_m2'),
+                    avg_price=Avg('price'),
+                    avg_area=Avg('area'),
+                )
+                .filter(count__gte=3)
+                .order_by('-count')[:limit]
+            )
+            return list(rows)
+
+        return Response({
+            'overall': overall,
+            'by_city': grouped('city', 'province', limit=15),
+            'by_property_type': grouped('property_type', limit=8),
+            'by_operation': list(
+                all_base.values('status').annotate(
+                    count=Count('id'),
+                    avg_price_m2=Avg('price_per_m2'),
+                    avg_price=Avg('price'),
+                    avg_area=Avg('area'),
+                ).order_by('-count')
+            ),
+            'methodology': 'Las métricas principales usan propiedades en venta activas con precio y área válidos; se excluyen duplicados y valores extremos.',
+        })
+
+
 class AdminDashboardView(generics.GenericAPIView):
     """Dashboard con estadísticas del sistema."""
     permission_classes = [IsAuthenticated, IsAdminUser]
@@ -1012,11 +1150,15 @@ class AdminDashboardView(generics.GenericAPIView):
             'recent_users': AdminUserSerializer(
                 User.objects.order_by('-date_joined')[:5], many=True
             ).data,
-            'recent_properties': AdminPropertySerializer(
-                Property.objects.order_by('-created_at')[:5], many=True
+            'recent_properties': AdminPropertyListSerializer(
+                Property.objects.select_related('owner')
+                .prefetch_related('images')
+                .order_by('-created_at')[:5],
+                many=True,
             ).data,
             'recent_leads': LeadSerializer(
-                Lead.objects.select_related('property')[:5], many=True
+                Lead.objects.select_related('property').order_by('-created_at')[:5],
+                many=True,
             ).data,
         }
         return Response(data)
@@ -1030,6 +1172,36 @@ class AdminUserViewSet(viewsets.ModelViewSet):
     search_fields = ['username', 'email', 'first_name', 'last_name']
     ordering_fields = ['date_joined', 'username', 'email']
     ordering = ['-date_joined']
+    pagination_class = AdminPagination
+
+    def get_queryset(self):
+        # Anota los contadores para evitar N+1 en el listado (el serializer lee
+        # los atributos anotados y solo cae al .count() por fila si faltan).
+        queryset = User.objects.all().annotate(
+            properties_count_annotated=Count('properties', distinct=True),
+            activity_count_annotated=Count('activity_events', distinct=True),
+            contact_clicks_count_annotated=Count(
+                'activity_events',
+                filter=Q(activity_events__event_name='property_contact_clicked'),
+                distinct=True,
+            ),
+        ).order_by('-date_joined')
+
+        is_active = self.request.query_params.get('is_active')
+        if is_active is not None:
+            if is_active.lower() in ('true', '1'):
+                queryset = queryset.filter(is_active=True)
+            elif is_active.lower() in ('false', '0'):
+                queryset = queryset.filter(is_active=False)
+
+        is_staff = self.request.query_params.get('is_staff')
+        if is_staff is not None:
+            if is_staff.lower() in ('true', '1'):
+                queryset = queryset.filter(is_staff=True)
+            elif is_staff.lower() in ('false', '0'):
+                queryset = queryset.filter(is_staff=False)
+
+        return queryset
 
     def get_serializer_class(self):
         if self.action == 'retrieve':
@@ -1063,6 +1235,11 @@ class AdminUserViewSet(viewsets.ModelViewSet):
             setattr(user, field, value)
         user.save()
 
+        logger.info(
+            "admin_audit action=user.update actor=%s target_user=%s changes=%s",
+            request.user.pk, user.pk, data,
+        )
+
         serializer = self.get_serializer(user)
         return Response(serializer.data)
 
@@ -1073,7 +1250,12 @@ class AdminUserViewSet(viewsets.ModelViewSet):
                 {'error': 'No puedes eliminar tu propia cuenta'},
                 status=status.HTTP_400_BAD_REQUEST
             )
+        target_id = user.pk
         user.delete()
+        logger.info(
+            "admin_audit action=user.delete actor=%s target_user=%s",
+            request.user.pk, target_id,
+        )
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
@@ -1086,9 +1268,72 @@ class AdminPropertyViewSet(viewsets.ModelViewSet):
     search_fields = ['title', 'owner__username', 'owner__first_name', 'owner__last_name', 'city']
     ordering_fields = ['created_at', 'price', 'title']
     ordering = ['-created_at']
-    http_method_names = ['get', 'delete', 'head', 'options']
+    http_method_names = ['get', 'patch', 'delete', 'head', 'options']
+    pagination_class = AdminPagination
+
+    # Campos editables vía PATCH admin.
+    PATCH_ALLOWED_FIELDS = {'status', 'title', 'price', 'city', 'description'}
+
+    def get_queryset(self):
+        queryset = (
+            Property.objects.select_related('owner')
+            .prefetch_related('images')
+            .annotate(image_count_annotated=Count('images', distinct=True))
+            .order_by('-created_at')
+        )
+        status_param = self.request.query_params.get('status')
+        if status_param in ('for_sale', 'for_rent', 'inactive'):
+            queryset = queryset.filter(status=status_param)
+        return queryset
+
+    def get_serializer_class(self):
+        if self.action == 'list':
+            return AdminPropertyListSerializer
+        return AdminPropertySerializer
+
+    def partial_update(self, request, *args, **kwargs):
+        prop = self.get_object()
+        data = {k: v for k, v in request.data.items() if k in self.PATCH_ALLOWED_FIELDS}
+
+        if not data:
+            return Response(
+                {'error': 'Solo se permite modificar: status, title, price, city, description'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        serializer = AdminPropertySerializer(prop, data=data, partial=True, context=self.get_serializer_context())
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+
+        logger.info(
+            "admin_audit action=property.update actor=%s target_property=%s changes=%s",
+            request.user.pk, prop.pk, list(data.keys()),
+        )
+
+        return Response(serializer.data)
 
     def destroy(self, request, *args, **kwargs):
         prop = self.get_object()
+        target_id = prop.pk
         prop.delete()
+        logger.info(
+            "admin_audit action=property.delete actor=%s target_property=%s",
+            request.user.pk, target_id,
+        )
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+    @action(detail=False, methods=['get'])
+    def stats(self, request):
+        """Contadores livianos para el panel de propiedades del admin."""
+        base = Property.objects.all()
+        without_images = (
+            base.annotate(num_images=Count('images')).filter(num_images=0).count()
+        )
+        return Response({
+            'total': base.count(),
+            'for_sale': base.filter(status='for_sale').count(),
+            'for_rent': base.filter(status='for_rent').count(),
+            'inactive': base.filter(status='inactive').count(),
+            'active': base.exclude(status='inactive').count(),
+            'without_images': without_images,
+        })

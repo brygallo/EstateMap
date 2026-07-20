@@ -393,8 +393,13 @@ mkdir -p /tmp/plusvalia-001
 tar -xzf /tmp/plusvalia-001.tgz -C /tmp/plusvalia-001 --strip-components=1
 
 docker cp /tmp/plusvalia-001 estatemap_backend:/tmp/plusvalia-001
+docker exec estatemap_backend python manage.py ingesta_import /tmp/plusvalia-001 --validate-only
 docker exec estatemap_backend python manage.py ingesta_import /tmp/plusvalia-001
 ```
+
+La importacion tambien valida automaticamente antes de escribir. El paso
+`--validate-only` permite comprobar de forma explicita el manifiesto, el total,
+el JSONL y que no existan `external_id` repetidos.
 
 ### 6. Verificar importacion
 

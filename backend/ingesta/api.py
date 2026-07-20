@@ -46,6 +46,7 @@ def _run_dict(r):
         "modo": r.modo,
         "modo_label": r.get_modo_display(),
         "limit": r.limit,
+        "con_imagenes": r.con_imagenes,
         "solo_nuevas": r.solo_nuevas,
         "vistos": r.vistos,
         "creadas": r.creadas,
@@ -57,6 +58,8 @@ def _run_dict(r):
         "cargadas": r.cargadas,
         "mensaje": r.mensaje,
         "log": r.log,
+        "current_stage": r.current_stage,
+        "error_detail": r.error_detail,
         "cancel_requested": r.cancel_requested,
         "lanzado_por": r.lanzado_por,
         "started_at": r.started_at,
@@ -85,8 +88,29 @@ def sources(request):
 @permission_classes([IsAuthenticated, IsAdminUser])
 def runs(request):
     reap_zombie_runs()
-    qs = IngestaRun.objects.select_related("fuente").all()[:20]
+    qs = IngestaRun.objects.select_related("fuente").all()
+    source = (request.GET.get("source") or "").strip()
+    run_status = (request.GET.get("status") or "").strip()
+    if source:
+        qs = qs.filter(fuente__slug=source)
+    if run_status:
+        qs = qs.filter(estado=run_status)
+    try:
+        limit = min(max(int(request.GET.get("limit", 100)), 1), 200)
+    except (TypeError, ValueError):
+        limit = 100
+    qs = qs[:limit]
     return Response([_run_dict(r) for r in qs])
+
+
+@api_view(["GET"])
+@permission_classes([IsAuthenticated, IsAdminUser])
+def run_detail(request, run_id):
+    reap_zombie_runs()
+    run = IngestaRun.objects.select_related("fuente").filter(pk=run_id).first()
+    if run is None:
+        return Response({"error": "Ejecución no encontrada."}, status=status.HTTP_404_NOT_FOUND)
+    return Response(_run_dict(run))
 
 
 @api_view(["POST"])
@@ -203,6 +227,73 @@ def properties(request):
         "num_pages": (total + page_size - 1) // page_size if total else 1,
         "results": results,
     })
+
+
+@api_view(["POST"])
+@permission_classes([IsAuthenticated, IsAdminUser])
+def refresh_property(request):
+    """
+    Re-scrapea UNA propiedad importada desde su portal de origen y actualiza
+    todo (datos e imágenes, forzando la re-descarga). Body: ``{property_id}``.
+    Síncrono: un solo anuncio tarda pocos segundos. Si el aviso ya no está
+    vigente en el portal, la marca inactiva y borra sus imágenes.
+    """
+    from real_estate.models import Property
+
+    from .pipeline.images import delete_property_images
+    from .pipeline.upsert import upsert_property
+
+    prop = Property.objects.filter(pk=request.data.get("property_id")).first()
+    if prop is None:
+        return Response({"error": "Propiedad no encontrada."},
+                        status=status.HTTP_404_NOT_FOUND)
+    if not prop.is_imported or prop.source is None or not prop.source_url:
+        return Response({"error": "La propiedad no proviene de un portal importado."},
+                        status=status.HTTP_400_BAD_REQUEST)
+
+    scraper = get_scraper(prop.source.scraper_key)
+    if scraper is None:
+        return Response({"error": f"Scraper '{prop.source.scraper_key}' no registrado."},
+                        status=status.HTTP_400_BAD_REQUEST)
+
+    res = scraper.scrape_one(prop.source_url)
+    if res == "GONE":
+        if prop.status != "inactive":
+            delete_property_images(prop)
+            prop.status = "inactive"
+            prop.save(update_fields=["status"])
+        return Response({
+            "result": "gone",
+            "detail": "El anuncio ya no está vigente en el portal; se marcó inactiva.",
+        })
+    if res is None:
+        return Response(
+            {"error": "No se pudo leer el anuncio en el portal (error transitorio). "
+                      "Inténtalo de nuevo en unos minutos."},
+            status=status.HTTP_502_BAD_GATEWAY,
+        )
+
+    # Los clasificados no publican coordenadas en la ficha (solo el listado);
+    # se conservan las que ya tiene la propiedad.
+    if res.get("latitude") is None or res.get("longitude") is None:
+        res["latitude"], res["longitude"] = prop.latitude, prop.longitude
+
+    image_urls = res.pop("image_urls", [])
+    result, updated = upsert_property(
+        res, prop.source, image_urls=image_urls,
+        require_images=bool(image_urls), force_images=True,
+    )
+    if result in ("created", "updated") and updated is not None:
+        return Response({
+            "result": "updated",
+            "detail": "Propiedad actualizada desde el portal (imágenes incluidas).",
+            "images": updated.images.count(),
+        })
+    if result == "skipped_no_images":
+        return Response({"error": "El portal no entregó ninguna imagen descargable."},
+                        status=status.HTTP_502_BAD_GATEWAY)
+    return Response({"error": f"No se pudo actualizar ({result})."},
+                    status=status.HTTP_400_BAD_REQUEST)
 
 
 @api_view(["POST"])

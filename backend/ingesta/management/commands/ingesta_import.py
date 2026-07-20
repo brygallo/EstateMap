@@ -15,7 +15,7 @@ from django.core.management.base import BaseCommand, CommandError
 from django.utils import timezone
 
 from ingesta.models import Fuente
-from ingesta.packaging import PaqueteReader
+from ingesta.packaging import PaqueteInvalido, PaqueteReader
 from ingesta.pipeline.images import delete_property_images
 from ingesta.pipeline.upsert import upsert_property
 
@@ -28,6 +28,10 @@ class Command(BaseCommand):
         parser.add_argument("--expire", action="store_true",
                             help="caducar (inactivar) lo que ya no está en el paquete")
         parser.add_argument("--limit", type=int, default=None, help="tope de anuncios (pruebas)")
+        parser.add_argument(
+            "--validate-only", action="store_true",
+            help="validar integridad del paquete sin modificar la base",
+        )
 
     def handle(self, *args, **opts):
         try:
@@ -35,7 +39,20 @@ class Command(BaseCommand):
         except FileNotFoundError as exc:
             raise CommandError(str(exc))
 
-        manifest = reader.read_manifest()
+        try:
+            manifest = reader.validate()
+        except (OSError, PaqueteInvalido) as exc:
+            raise CommandError(f"Paquete inválido: {exc}") from exc
+
+        if opts["validate_only"]:
+            self.stdout.write(self.style.SUCCESS(
+                f"Paquete válido: {manifest['total']} anuncios de "
+                f"{manifest['fuente']['nombre']}"
+            ))
+            return
+
+        if opts["expire"] and opts["limit"] is not None:
+            raise CommandError("No se puede combinar --expire con --limit: caducaría anuncios válidos.")
         f = manifest["fuente"]
         fuente, _ = Fuente.objects.get_or_create(
             slug=f["slug"],

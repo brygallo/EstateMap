@@ -27,19 +27,31 @@ export const distanceKm = (a: LatLngPoint, b: LatLngPoint) => {
 };
 
 export const getPropertyPoint = (property: Property): LatLngPoint | null => {
-  if (typeof property.latitude === 'number' && typeof property.longitude === 'number') {
-    if (!isPointInEcuadorBounds(property.latitude, property.longitude)) return null;
-    return { lat: property.latitude, lng: property.longitude };
+  const latitude = Number(property.latitude);
+  const longitude = Number(property.longitude);
+  if (isPointInEcuadorBounds(latitude, longitude)) {
+    return { lat: latitude, lng: longitude };
   }
 
-  if (Array.isArray(property.polygon) && property.polygon.length > 0) {
-    const totals = property.polygon.reduce(
+  const polygon = property.polygon;
+  const ring = Array.isArray(polygon)
+    ? polygon.map(([lat, lng]) => [Number(lat), Number(lng)] as const)
+    : polygon?.coordinates?.[0]?.map(([lng, lat]) => [Number(lat), Number(lng)] as const) || [];
+  const validPoints = ring.filter(([lat, lng]) => isPointInEcuadorBounds(lat, lng));
+  if (validPoints.length > 1) {
+    const [firstLat, firstLng] = validPoints[0];
+    const [lastLat, lastLng] = validPoints[validPoints.length - 1];
+    if (firstLat === lastLat && firstLng === lastLng) validPoints.pop();
+  }
+
+  if (validPoints.length > 0) {
+    const totals = validPoints.reduce(
       (acc, [lat, lng]) => ({ lat: acc.lat + lat, lng: acc.lng + lng }),
       { lat: 0, lng: 0 }
     );
     const point = {
-      lat: totals.lat / property.polygon.length,
-      lng: totals.lng / property.polygon.length,
+      lat: totals.lat / validPoints.length,
+      lng: totals.lng / validPoints.length,
     };
     return isPointInEcuadorBounds(point.lat, point.lng) ? point : null;
   }

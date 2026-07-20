@@ -3,7 +3,7 @@ from rest_framework.validators import UniqueValidator
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from django.contrib.auth import get_user_model
 from django.contrib.auth.password_validation import validate_password
-from .models import Property, PropertyImage, Province, City, Lead, PendingPublication
+from .models import ActivityEvent, Property, PropertyImage, Province, City, Lead, PendingPublication
 
 User = get_user_model()
 
@@ -407,6 +407,44 @@ class PendingPublicationStatusSerializer(serializers.ModelSerializer):
         read_only_fields = ['id']
 
 
+class ActivityEventSerializer(serializers.ModelSerializer):
+    user_label = serializers.SerializerMethodField()
+    property_title = serializers.CharField(source='property.title', read_only=True)
+
+    class Meta:
+        model = ActivityEvent
+        fields = [
+            'id', 'user', 'user_label', 'session_id', 'event_name', 'path',
+            'property', 'property_title', 'payload', 'created_at',
+        ]
+        read_only_fields = ['id', 'user', 'property', 'property_title', 'created_at']
+
+    def get_user_label(self, obj):
+        if not obj.user:
+            return 'Anónimo'
+        return obj.user.get_full_name().strip() or obj.user.username
+
+    def validate_event_name(self, value):
+        value = str(value).strip()[:100]
+        if not value or not all(char.isalnum() or char in '_-.' for char in value):
+            raise serializers.ValidationError('Nombre de evento inválido')
+        return value
+
+    def validate_payload(self, value):
+        if not isinstance(value, dict):
+            raise serializers.ValidationError('El payload debe ser un objeto')
+        return value
+
+    def create(self, validated_data):
+        request = self.context.get('request')
+        payload = validated_data.get('payload') or {}
+        property_id = payload.get('property_id')
+        validated_data['user'] = request.user if request and request.user.is_authenticated else None
+        if property_id is not None:
+            validated_data['property'] = Property.objects.filter(pk=property_id).first()
+        return super().create(validated_data)
+
+
 class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
     """Return token along with basic user information."""
 
@@ -614,36 +652,67 @@ class ChangePasswordSerializer(serializers.Serializer):
 class AdminUserSerializer(serializers.ModelSerializer):
     """Serializer para listar usuarios en el panel admin."""
     properties_count = serializers.SerializerMethodField()
+    activity_count = serializers.SerializerMethodField()
+    contact_clicks_count = serializers.SerializerMethodField()
 
     class Meta:
         model = User
         fields = [
             'id', 'username', 'email', 'first_name', 'last_name',
-            'is_active', 'is_staff', 'is_email_verified', 'date_joined',
-            'avatar_url', 'properties_count',
+            'is_active', 'is_staff', 'is_email_verified', 'date_joined', 'last_login',
+            'avatar_url', 'properties_count', 'activity_count', 'contact_clicks_count',
         ]
         read_only_fields = ['id', 'date_joined', 'email', 'username']
 
     def get_properties_count(self, obj):
+        annotated = getattr(obj, 'properties_count_annotated', None)
+        if annotated is not None:
+            return annotated
         return obj.properties.count()
+
+    def get_activity_count(self, obj):
+        annotated = getattr(obj, 'activity_count_annotated', None)
+        if annotated is not None:
+            return annotated
+        return obj.activity_events.count()
+
+    def get_contact_clicks_count(self, obj):
+        annotated = getattr(obj, 'contact_clicks_count_annotated', None)
+        if annotated is not None:
+            return annotated
+        return obj.activity_events.filter(event_name='property_contact_clicked').count()
 
 
 class AdminUserDetailSerializer(serializers.ModelSerializer):
     """Serializer para detalle de usuario en el panel admin."""
     properties = PropertySerializer(many=True, read_only=True)
     properties_count = serializers.SerializerMethodField()
+    activity_count = serializers.SerializerMethodField()
+    contact_clicks_count = serializers.SerializerMethodField()
+    recent_activity = serializers.SerializerMethodField()
 
     class Meta:
         model = User
         fields = [
             'id', 'username', 'email', 'first_name', 'last_name',
-            'is_active', 'is_staff', 'is_email_verified', 'date_joined',
-            'avatar_url', 'oauth_provider', 'properties_count', 'properties',
+            'is_active', 'is_staff', 'is_email_verified', 'date_joined', 'last_login',
+            'avatar_url', 'oauth_provider', 'properties_count', 'activity_count',
+            'contact_clicks_count', 'recent_activity', 'properties',
         ]
         read_only_fields = ['id', 'date_joined', 'email', 'username']
 
     def get_properties_count(self, obj):
         return obj.properties.count()
+
+    def get_activity_count(self, obj):
+        return obj.activity_events.count()
+
+    def get_contact_clicks_count(self, obj):
+        return obj.activity_events.filter(event_name='property_contact_clicked').count()
+
+    def get_recent_activity(self, obj):
+        events = obj.activity_events.select_related('property')[:50]
+        return ActivityEventSerializer(events, many=True, context=self.context).data
 
 
 class AdminPropertySerializer(serializers.ModelSerializer):
@@ -675,6 +744,51 @@ class AdminPropertySerializer(serializers.ModelSerializer):
         return data
 
 
+class AdminPropertyListSerializer(serializers.ModelSerializer):
+    """Serializer liviano para el listado de propiedades del panel admin.
+
+    No embebe el array completo de imágenes ni el polígono: solo un contador de
+    imágenes (anotado o del prefetch) y la URL de la primera imagen.
+    """
+    owner_username = serializers.SerializerMethodField()
+    owner_email = serializers.SerializerMethodField()
+    image_count = serializers.SerializerMethodField()
+    thumbnail_url = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Property
+        fields = [
+            'id', 'title', 'property_type', 'status', 'price', 'city', 'address',
+            'area', 'views_count', 'owner_username', 'owner_email', 'created_at',
+            'image_count', 'thumbnail_url',
+        ]
+
+    def get_owner_username(self, obj):
+        if obj.owner:
+            full_name = f"{obj.owner.first_name} {obj.owner.last_name}".strip()
+            return full_name if full_name else obj.owner.username
+        return None
+
+    def get_owner_email(self, obj):
+        return obj.owner.email if obj.owner else None
+
+    def get_image_count(self, obj):
+        annotated = getattr(obj, 'image_count_annotated', None)
+        if annotated is not None:
+            return annotated
+        return len(obj.images.all())
+
+    def get_thumbnail_url(self, obj):
+        images = list(obj.images.all())
+        if not images:
+            return None
+        main = next((img for img in images if img.is_main), images[0])
+        source = main.thumbnail or main.image
+        if source and hasattr(source, 'url'):
+            return source.url
+        return None
+
+
 class AdminDashboardSerializer(serializers.Serializer):
     """Serializer para estadísticas del dashboard admin."""
     total_users = serializers.IntegerField()
@@ -693,5 +807,5 @@ class AdminDashboardSerializer(serializers.Serializer):
     properties_without_images = serializers.IntegerField()
     properties_incomplete = serializers.IntegerField()
     recent_users = AdminUserSerializer(many=True)
-    recent_properties = AdminPropertySerializer(many=True)
+    recent_properties = AdminPropertyListSerializer(many=True)
     recent_leads = LeadSerializer(many=True)

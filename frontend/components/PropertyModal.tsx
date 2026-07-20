@@ -676,7 +676,11 @@ const PropertyModal = ({ property: initialProperty, isOpen, onClose, onViewOnMap
               </div>
 
               {/* Zona de contacto: las propiedades importadas redirigen al contacto real de origen. */}
-              <div className="space-y-2 rounded-card border border-line bg-white p-3 shadow-card">
+              <div
+                className={`space-y-2 rounded-card border border-line bg-white p-3 shadow-card ${
+                  isImported && (contactPhone || sourceUrl) ? 'hidden lg:block' : ''
+                }`}
+              >
                 {isImported ? (
                   contactPhone ? (
                     <a
@@ -708,7 +712,7 @@ const PropertyModal = ({ property: initialProperty, isOpen, onClose, onViewOnMap
                 ) : (
                   <>
                     {contactPhone && (
-                      <div className="rounded-card bg-primary p-3 text-white">
+                      <div className="hidden rounded-card bg-primary p-3 text-white lg:block">
                         <h3 className="mb-1.5 flex items-center gap-1.5 text-xs font-bold">
                           <Phone className="h-4 w-4" strokeWidth={2} aria-hidden />
                           Contacto directo
@@ -743,7 +747,7 @@ const PropertyModal = ({ property: initialProperty, isOpen, onClose, onViewOnMap
                     )}
 
                     {contactPhone && (
-                      <div className="flex items-center gap-3" aria-hidden>
+                      <div className="hidden items-center gap-3 lg:flex" aria-hidden>
                         <span className="h-px flex-1 bg-line" />
                         <span className="text-xs font-medium text-textSecondary">o déjanos tus datos</span>
                         <span className="h-px flex-1 bg-line" />
