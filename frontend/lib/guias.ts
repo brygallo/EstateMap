@@ -286,6 +286,206 @@ export const GUIDES: Guide[] = [
       { label: 'Impuestos y gastos al comprar o vender', href: '/guias/impuestos-y-gastos-al-comprar-o-vender-una-propiedad' },
     ],
   },
+  {
+    slug: 'mejores-zonas-para-vivir-en-quito',
+    title: 'Mejores zonas para vivir en Quito: guía por sectores',
+    description:
+      'Comparativa de sectores de Quito para vivir o invertir: norte moderno, valles de Cumbayá, Tumbaco y Los Chillos, centro histórico y sur, con perfil de cada zona.',
+    updated: '2026-07-20',
+    intro:
+      'Quito es una ciudad larga y de sectores muy distintos entre sí: la experiencia de vivir en La Carolina no se parece a la de Cumbayá ni a la del centro histórico. Esta guía resume el perfil de las zonas más buscadas para decidir dónde comprar o arrendar según tu presupuesto y estilo de vida.',
+    sections: [
+      {
+        heading: 'Cómo elegir zona en Quito',
+        paragraphs: [
+          'Antes de comparar sectores, define tres cosas: dónde pasas el día (trabajo, colegios), cuánto tráfico estás dispuesto a asumir y si prefieres departamento céntrico o casa con espacio. En Quito la distancia en kilómetros engaña: cruzar la ciudad en hora pico puede tomar más de una hora, y los valles dependen de pocas vías de acceso.',
+        ],
+      },
+      {
+        heading: 'Norte moderno: La Carolina, República del Salvador, Quito Tenis',
+        paragraphs: [
+          'Es el Quito corporativo y de servicios: parques (La Carolina, Metropolitano), centros comerciales, hospitales y oficinas. Predominan los departamentos, con edificios nuevos alrededor del parque La Carolina y de la avenida República del Salvador. La González Suárez y Bellavista, con vista a la ciudad, están entre los sectores de mayor precio por metro cuadrado.',
+          'Quito Tenis, El Bosque y Ponceano, más al norte, mezclan casas consolidadas y edificios, con un perfil familiar y buen acceso a servicios.',
+        ],
+      },
+      {
+        heading: 'Los valles: Cumbayá, Tumbaco y Los Chillos',
+        paragraphs: [
+          'Los valles ofrecen mejor clima, casas con jardín y urbanizaciones cerradas. Cumbayá es el más consolidado (y el más caro): colegios reconocidos, universidades, gastronomía y la Ruta Viva como acceso. Tumbaco continúa el crecimiento con precios algo menores, y el valle de Los Chillos (San Rafael, Sangolquí) es la alternativa con mejor relación precio-espacio.',
+          'El costo oculto de los valles es la movilidad: si trabajas en el norte de Quito, presupuesta el tiempo (y el peaje) de los accesos diarios.',
+        ],
+      },
+      {
+        heading: 'Centro histórico y sur',
+        paragraphs: [
+          'El centro histórico, patrimonio de la humanidad, combina vivienda tradicional con proyectos de rehabilitación; conviene revisar bien el estado del inmueble y la normativa patrimonial antes de comprar. El sur (Quitumbe, Solanda, Chillogallo) concentra la vivienda más accesible de la ciudad, con transporte masivo (Metro, Trolebús) y comercio de barrio consolidado.',
+        ],
+      },
+      {
+        heading: 'Precios: compara con datos del mercado',
+        paragraphs: [
+          'Los precios por metro cuadrado cambian por sector y por antigüedad del inmueble. Antes de ofertar, compara lo publicado en el sector que te interesa en el mapa y revisa las estadísticas de precio por metro cuadrado por ciudad para tener una referencia objetiva de negociación.',
+        ],
+      },
+    ],
+    faqs: [
+      {
+        q: '¿Cuáles son las zonas más caras de Quito?',
+        a: 'Tradicionalmente la González Suárez, Bellavista y los alrededores del parque La Carolina en la ciudad, y Cumbayá en los valles, concentran los precios por metro cuadrado más altos.',
+      },
+      {
+        q: '¿Qué zona de Quito conviene para familias con niños?',
+        a: 'Los valles (Cumbayá, Tumbaco, Los Chillos) por espacio, clima y oferta de colegios, y en la ciudad sectores como Quito Tenis o Ponceano. La decisión suele definirse por la cercanía al colegio y al trabajo.',
+      },
+      {
+        q: '¿Dónde buscar vivienda económica en Quito?',
+        a: 'El sur de la ciudad (Quitumbe, Solanda, Chillogallo) y sectores periféricos del norte como Carcelén o Calderón ofrecen los precios más accesibles, con buena conexión de transporte público.',
+      },
+    ],
+    related: [
+      { label: 'Propiedades en Quito', href: '/propiedades/quito' },
+      { label: 'Estadísticas del mercado', href: '/estadisticas-inmobiliarias' },
+      { label: 'Cómo comprar una propiedad en Ecuador', href: '/guias/como-comprar-una-propiedad-en-ecuador' },
+      { label: 'Crédito hipotecario en Ecuador', href: '/guias/credito-hipotecario-en-ecuador' },
+    ],
+  },
+  {
+    slug: 'mejores-zonas-para-vivir-en-cuenca',
+    title: 'Mejores zonas para vivir en Cuenca: guía por sectores',
+    description:
+      'Sectores de Cuenca para vivir o invertir: centro histórico, El Ejido, Ordóñez Lasso, Puertas del Sol, Challuabamba y más, con el perfil de cada zona.',
+    updated: '2026-07-20',
+    intro:
+      'Cuenca combina escala manejable, servicios y calidad de vida, y por eso atrae tanto a familias locales como a jubilados extranjeros. Los sectores tienen personalidades marcadas: esta guía resume las zonas más buscadas para comprar o arrendar.',
+    sections: [
+      {
+        heading: 'Centro histórico y El Ejido',
+        paragraphs: [
+          'El centro histórico, patrimonio de la humanidad, ofrece casas coloniales y departamentos en edificios rehabilitados, a pasos de todo; revisa siempre la normativa patrimonial antes de intervenir un inmueble. Cruzando el río Tomebamba, El Ejido mezcla edificios modernos con la cercanía del centro: es de los sectores más demandados para departamentos.',
+        ],
+      },
+      {
+        heading: 'Ordóñez Lasso y la avenida de los ríos',
+        paragraphs: [
+          'El corredor de la avenida Ordóñez Lasso, junto al Tomebamba, concentra edificios con amenities y es popular entre residentes extranjeros por su caminabilidad y servicios. La cercanía al río y a supermercados y clínicas lo mantiene con demanda estable de compra y arriendo.',
+        ],
+      },
+      {
+        heading: 'Puertas del Sol, Misicata y Yanuncay',
+        paragraphs: [
+          'Al oeste y suroeste, sectores como Puertas del Sol, Misicata y los alrededores de la avenida 1 de Mayo ofrecen casas y condominios familiares con buena relación precio-espacio, cerca de centros comerciales y colegios.',
+        ],
+      },
+      {
+        heading: 'Challuabamba y las afueras en crecimiento',
+        paragraphs: [
+          'Challuabamba, hacia la autopista Cuenca-Azogues, es la zona de expansión: terrenos amplios, quintas y proyectos nuevos con clima algo más templado. Ricaurte y Baños completan las opciones periféricas, cada una con su centro parroquial consolidado. En estas zonas verifica siempre la disponibilidad real de servicios (agua, alcantarillado) y los accesos.',
+        ],
+      },
+      {
+        heading: 'Precios: compara antes de ofertar',
+        paragraphs: [
+          'Cuenca mantiene precios por metro cuadrado menores a los de Quito o Guayaquil en segmentos comparables. Revisa lo publicado por sector en el mapa y las estadísticas de precio por metro cuadrado para negociar con una referencia objetiva.',
+        ],
+      },
+    ],
+    faqs: [
+      {
+        q: '¿Por qué Cuenca es popular entre jubilados extranjeros?',
+        a: 'Por la combinación de costo de vida moderado, servicios de salud, clima templado, escala caminable y un centro histórico patrimonial. Sectores como Ordóñez Lasso y El Ejido concentran gran parte de esa demanda.',
+      },
+      {
+        q: '¿Qué zona de Cuenca está en crecimiento para invertir?',
+        a: 'Challuabamba es la zona de expansión más visible, con terrenos y proyectos nuevos junto a la autopista Cuenca-Azogues. Como en toda zona en desarrollo, verifica servicios básicos, accesos y la plusvalía real del sector.',
+      },
+      {
+        q: '¿Dónde arrendar cerca del centro de Cuenca?',
+        a: 'El Ejido y el corredor de Ordóñez Lasso son las opciones clásicas: departamentos modernos a minutos del centro histórico, con alta oferta de arriendo.',
+      },
+    ],
+    related: [
+      { label: 'Propiedades en Cuenca', href: '/propiedades/cuenca' },
+      { label: 'Estadísticas del mercado', href: '/estadisticas-inmobiliarias' },
+      { label: 'Cómo comprar una propiedad en Ecuador', href: '/guias/como-comprar-una-propiedad-en-ecuador' },
+    ],
+  },
+  {
+    slug: 'arrendar-en-ecuador-contrato-derechos-y-obligaciones',
+    title: 'Arrendar una vivienda en Ecuador: contrato, derechos y obligaciones',
+    description:
+      'Qué debe tener un contrato de arriendo en Ecuador, cuánto se paga de garantía, qué derechos protege la Ley de Inquilinato y consejos para inquilinos y arrendadores.',
+    updated: '2026-07-20',
+    intro:
+      'El arriendo de vivienda en Ecuador está regulado por la Ley de Inquilinato, que protege tanto al inquilino como al propietario, pero solo funciona bien cuando hay contrato claro. Esta guía resume lo esencial para arrendar (o dar en arriendo) sin sorpresas.',
+    sections: [
+      {
+        heading: 'El contrato: siempre por escrito',
+        paragraphs: [
+          'Aunque el arriendo verbal existe en la práctica, el contrato escrito es lo que evita conflictos: sin él, probar el canon pactado, el plazo o el estado del inmueble se vuelve un problema para ambas partes. Un buen contrato de arriendo debe incluir al menos:',
+        ],
+        bullets: [
+          'Identificación de las partes y del inmueble (dirección exacta y qué incluye: parqueo, bodega, muebles).',
+          'Canon mensual, forma y fecha de pago.',
+          'Plazo del contrato y condiciones de renovación.',
+          'Monto de la garantía y condiciones de devolución.',
+          'Quién paga servicios básicos, alícuotas de condominio y reparaciones menores.',
+          'Inventario del estado del inmueble (idealmente con fotos firmadas por ambos).',
+        ],
+      },
+      {
+        heading: 'Garantía y pagos',
+        paragraphs: [
+          'Lo usual en el mercado es entregar una garantía equivalente a uno o dos meses de arriendo, que se devuelve al terminar el contrato descontando daños no atribuibles al uso normal. La garantía no reemplaza al último mes de arriendo, salvo que el contrato lo pacte expresamente.',
+          'Pide siempre recibo o transfiere por medios trazables: el historial de pagos es tu mejor defensa como inquilino, y la del propietario ante un impago.',
+        ],
+      },
+      {
+        heading: 'Derechos del inquilino',
+        paragraphs: [],
+        bullets: [
+          'Recibir el inmueble en condiciones de habitabilidad y que el propietario asuma las reparaciones estructurales.',
+          'Límites legales al canon y a sus incrementos: la Ley de Inquilinato fija topes en función del avalúo del inmueble y no permite subir el arriendo a discreción durante el plazo pactado.',
+          'No ser desalojado sin causa legal y sin el proceso correspondiente: la terminación por decisión del propietario exige notificación con la anticipación que fija la ley.',
+          'Devolución de la garantía al entregar el inmueble en el estado acordado.',
+        ],
+      },
+      {
+        heading: 'Obligaciones del inquilino y del propietario',
+        paragraphs: [
+          'El inquilino debe pagar puntualmente, cuidar el inmueble, asumir reparaciones locativas menores y no subarrendar ni cambiar el uso sin autorización. El propietario debe garantizar el uso pacífico del inmueble, hacer las reparaciones mayores y respetar el contrato y los plazos de notificación.',
+        ],
+      },
+      {
+        heading: 'Consejos si eres el propietario',
+        paragraphs: [],
+        bullets: [
+          'Verifica al inquilino: referencias, capacidad de pago y, si es posible, un garante o seguro de arriendo.',
+          'Firma inventario de entrega con fotos y lecturas de medidores.',
+          'Publica el anuncio con precio, fotos reales y ubicación exacta: filtras curiosos y llegas a inquilinos serios más rápido.',
+          'Ante mora, actúa pronto y por las vías legales: los acuerdos informales prolongados complican el desalojo.',
+        ],
+      },
+    ],
+    faqs: [
+      {
+        q: '¿Cuánto se paga de garantía en un arriendo en Ecuador?',
+        a: 'Lo habitual en el mercado es el equivalente a uno o dos meses de arriendo. Debe constar en el contrato junto con las condiciones de devolución al entregar el inmueble.',
+      },
+      {
+        q: '¿Pueden subirme el arriendo cuando el propietario quiera?',
+        a: 'No durante el plazo pactado en el contrato. Además, la Ley de Inquilinato fija límites al canon en función del avalúo del inmueble. Cualquier ajuste debe respetar el contrato y la ley.',
+      },
+      {
+        q: '¿Qué pasa si arriendo sin contrato escrito?',
+        a: 'El arriendo sigue existiendo legalmente, pero probar las condiciones pactadas se vuelve difícil para ambas partes. Ante cualquier conflicto (garantía, plazo, desalojo), el contrato escrito y los recibos de pago son la principal evidencia.',
+      },
+    ],
+    related: [
+      { label: 'Departamentos en alquiler', href: '/departamentos-en-alquiler' },
+      { label: 'Publicar propiedad gratis', href: '/publicar-propiedad' },
+      { label: 'Cómo vender tu propiedad más rápido', href: '/guias/como-vender-tu-propiedad-mas-rapido' },
+    ],
+  },
 ];
 
 export function getGuide(slug: string): Guide | undefined {
