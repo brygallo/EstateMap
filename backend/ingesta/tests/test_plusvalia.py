@@ -11,6 +11,9 @@ fixtures HTML que reproducen los marcadores reales del sitio:
 
 Las constantes de fixture están tomadas del HTML servido real por Plusvalía.
 """
+import pytest
+
+from ingesta.scrapers.base import ScraperBlocked
 from ingesta.scrapers.plusvalia import PlusvaliaScraper
 
 
@@ -255,6 +258,48 @@ class _RedirectClient(_FakeClient):
         return _RedirectResponse()
 
 
+class _Response:
+    def __init__(self, status_code, headers=None):
+        self.status_code = status_code
+        self.headers = headers or {}
+        self.url = "https://www.plusvalia.com/propiedades/clasificado/x-10.html"
+        self.text = "<html>" + ("x" * 20000) + "</html>"
+
+
+class _SequenceClient:
+    def __init__(self, responses):
+        self.responses = iter(responses)
+
+    def get(self, _url):
+        return next(self.responses)
+
+
+def test_429_aplica_backoff_y_reintenta(monkeypatch):
+    scraper = PlusvaliaScraper()
+    sleeps = []
+    monkeypatch.setattr("ingesta.scrapers.plusvalia.time.sleep", sleeps.append)
+    monkeypatch.setattr("ingesta.scrapers.plusvalia.random.uniform", lambda *_: 1.0)
+    client = _SequenceClient([_Response(429, {"Retry-After": "20"}), _Response(200)])
+
+    response = scraper._get_with_backoff(client, "https://example.test/10", lambda *_: None)
+
+    assert response.status_code == 200
+    assert sleeps == [20]
+
+
+def test_403_repetido_aborta_despues_de_backoff(monkeypatch):
+    scraper = PlusvaliaScraper()
+    sleeps = []
+    monkeypatch.setattr("ingesta.scrapers.plusvalia.time.sleep", sleeps.append)
+    monkeypatch.setattr("ingesta.scrapers.plusvalia.random.uniform", lambda *_: 1.0)
+    client = _SequenceClient([_Response(403), _Response(403), _Response(403)])
+
+    with pytest.raises(ScraperBlocked):
+        scraper._get_with_backoff(client, "https://example.test/10", lambda *_: None)
+
+    assert sleeps == [15, 30]
+
+
 def test_incremental_compara_id_y_corta_franja_historica(monkeypatch):
     scraper = PlusvaliaScraper()
     scraper._KNOWN_STREAK_LIMIT = 3
@@ -266,15 +311,18 @@ def test_incremental_compara_id_y_corta_franja_historica(monkeypatch):
     ]
     monkeypatch.setattr(scraper, "_iter_detail_urls", lambda *_args: iter(urls))
     opened = []
+    scanned = []
     monkeypatch.setattr(scraper, "_scrape_detail", lambda _client, url, *_args: opened.append(url))
 
     results = list(scraper.scrape(
         searches=[("/venta/casas", "casa", "venta")],
         skip_url=lambda _url, external_id=None: external_id in {"10", "11", "12"},
+        on_scan=lambda **event: scanned.append(event),
     ))
 
     assert results == []
     assert opened == []
+    assert scanned == [{"skipped": True}] * 3
 
 
 def test_http_gone_se_notifica_y_cuenta_para_corte_historico(monkeypatch):

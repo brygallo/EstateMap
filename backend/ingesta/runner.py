@@ -216,8 +216,18 @@ def run_load(run: IngestaRun, log=None):
     try:
         run.current_stage = "leyendo anuncios del portal"
         run.save(update_fields=["current_stage"])
+
+        def on_scan(*, skipped=False):
+            run.revisados += 1
+            if skipped:
+                run.saltados += 1
+            if run.revisados % 10 == 0:
+                run.heartbeat_at = timezone.now()
+                run.save(update_fields=["revisados", "saltados", "heartbeat_at"])
+
         for data in scraper.scrape(limit=run.limit, log=logger, searches=searches,
-                                   skip_url=skip_url, on_gone=on_gone):
+                                   skip_url=skip_url, on_gone=on_gone,
+                                   on_scan=on_scan):
             run.vistos += 1
             try:
                 if scraper.key == "plusvalia" and data.get("external_id"):
@@ -286,6 +296,7 @@ def run_load(run: IngestaRun, log=None):
         logger(f"[fatal] {type(exc).__name__}: {exc}\n{run.error_detail}")
     finally:
         logger.flush()
+        run.save(update_fields=["revisados", "saltados"])
         run.finished_at = timezone.now()
         run.heartbeat_at = timezone.now()
         run.save()

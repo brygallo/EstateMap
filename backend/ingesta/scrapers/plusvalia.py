@@ -66,7 +66,9 @@ Desactivado por defecto.
 """
 import html as html_lib
 import os
+import random
 import re
+import time
 
 from .base import BaseScraper, ScraperBlocked, extract_html_source_dates, register
 from ..pipeline import normalize
@@ -234,6 +236,8 @@ class PlusvaliaScraper(BaseScraper):
     # asumimos un bloqueo real del cliente (no un fallo puntual) y abortamos el
     # run con ScraperBlocked en vez de reportar "0 resultados" como éxito.
     _BLOCK_LIMIT = 3
+    _BACKOFF_BASE_SECONDS = 15
+    _BACKOFF_MAX_SECONDS = 300
     # En modo incremental, 120 resultados consecutivos ya conocidos dentro de
     # una categoría indican que alcanzamos la zona histórica del listado. Es
     # suficientemente amplio para absorber anuncios promocionados/reordenados.
@@ -265,7 +269,8 @@ class PlusvaliaScraper(BaseScraper):
             )
             return httpx.Client(timeout=25.0, headers=headers, follow_redirects=True)
 
-    def scrape(self, limit=None, log=None, searches=None, skip_url=None, on_gone=None):
+    def scrape(self, limit=None, log=None, searches=None, skip_url=None, on_gone=None,
+               on_scan=None):
         searches = searches or DEFAULT_SEARCHES
         log = log or (lambda *_: None)
         seen = set()
@@ -296,6 +301,8 @@ class PlusvaliaScraper(BaseScraper):
                         continue
                     seen.add(detail_url)
                     if skip_url and skip_url(detail_url, ext):
+                        if on_scan:
+                            on_scan(skipped=True)
                         saltados += 1
                         entry[3] = known_streak + 1
                         if saltados % 200 == 0:
@@ -308,6 +315,8 @@ class PlusvaliaScraper(BaseScraper):
                             continue
                         still.append(entry)
                         continue
+                    if on_scan:
+                        on_scan(skipped=False)
                     self._sleep()
                     data = self._scrape_detail(client, detail_url, categoria,
                                                operacion, log, rec,
@@ -416,17 +425,13 @@ class PlusvaliaScraper(BaseScraper):
         Cloudflare; si algún día vuelve a caer (403 / página "Just a moment"),
         lo registra y sigue sin reventar.
         """
-        try:
-            resp = client.get(url)
-        except Exception as exc:
-            log(f"[plusvalia] error en {url}: {exc}")
-            return None  # error de red transitorio: no cuenta como bloqueo
+        resp = self._get_with_backoff(client, url, log)
+        if resp is None:
+            return None
         if resp.status_code != 200:
             hint = " (Cloudflare; ¿curl_cffi instalado?)" if resp.status_code == 403 else ""
             log(f"[plusvalia] {url} -> HTTP {resp.status_code}{hint}")
-            if resp.status_code == 403:
-                self._note_block(url, log)
-            elif resp.status_code in (404, 410) and on_gone:
+            if resp.status_code in (404, 410) and on_gone:
                 on_gone(resp.status_code)
             return None
         if on_gone and "/propiedades/" not in str(resp.url):
@@ -444,6 +449,36 @@ class PlusvaliaScraper(BaseScraper):
         self._block_streak = 0  # respuesta legítima: se reinicia la racha
         return text
 
+    def _get_with_backoff(self, client, url, log):
+        """GET con espera exponencial para límites temporales del portal."""
+        attempt = 0
+        while True:
+            try:
+                resp = client.get(url)
+            except Exception as exc:
+                log(f"[plusvalia] error en {url}: {exc}")
+                return None
+
+            if resp.status_code not in (403, 429):
+                return resp
+
+            attempt += 1
+            self._note_block(url, log)
+            retry_after = 0
+            headers = getattr(resp, "headers", {}) or {}
+            try:
+                retry_after = max(0, int(headers.get("Retry-After", 0)))
+            except (TypeError, ValueError):
+                retry_after = 0
+            exponential = self._BACKOFF_BASE_SECONDS * (2 ** (attempt - 1))
+            delay = min(self._BACKOFF_MAX_SECONDS, max(retry_after, exponential))
+            delay *= random.uniform(1.0, 1.2)
+            log(
+                f"[plusvalia] HTTP {resp.status_code}; protección anti-baneo: "
+                f"esperando {round(delay)}s antes del intento {attempt + 1}."
+            )
+            time.sleep(delay)
+
     def _note_block(self, url, log):
         """Contabiliza un bloqueo (403/challenge). Si se repite ``_BLOCK_LIMIT``
         veces seguidas, lanza ``ScraperBlocked`` para que el run falle con un
@@ -459,9 +494,8 @@ class PlusvaliaScraper(BaseScraper):
     def scrape_one(self, url, categoria="", operacion="venta", listing=None):
         """Re-scrapea una ficha. Devuelve dict / 'GONE' / None (igual patrón)."""
         with self._client() as client:
-            try:
-                resp = client.get(url)
-            except Exception:
+            resp = self._get_with_backoff(client, url, lambda *_: None)
+            if resp is None:
                 return None
             if resp.status_code in (404, 410):
                 return "GONE"
@@ -469,6 +503,7 @@ class PlusvaliaScraper(BaseScraper):
                 return None
             if "/propiedades/" not in str(resp.url):
                 return "GONE"
+            self._block_streak = 0
             m = _POSTING_STATUS_RE.search(resp.text)
             if m and m.group(1) != "ONLINE":
                 return "GONE"
@@ -490,15 +525,11 @@ class PlusvaliaScraper(BaseScraper):
                 self._sleep()
 
     def _check_exists_with_client(self, client, url):
-        try:
-            resp = client.get(url)
-        except Exception:
+        resp = self._get_with_backoff(client, url, lambda *_: None)
+        if resp is None:
             return None
         if resp.status_code in (404, 410):
             return False
-        if resp.status_code == 403:
-            self._note_block(url, lambda *_: None)
-            return None
         if resp.status_code != 200:
             return None
         if "/propiedades/" not in str(resp.url):

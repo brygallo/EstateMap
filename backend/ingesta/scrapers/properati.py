@@ -99,7 +99,8 @@ class ProperatiScraper(BaseScraper):
         }
         return httpx.Client(timeout=25.0, headers=headers, follow_redirects=True)
 
-    def scrape(self, limit=None, log=None, searches=None, skip_url=None, on_gone=None):
+    def scrape(self, limit=None, log=None, searches=None, skip_url=None, on_gone=None,
+               on_scan=None):
         searches = searches or DEFAULT_SEARCHES
         log = log or (lambda *_: None)
         seen_ids = set()
@@ -115,10 +116,14 @@ class ProperatiScraper(BaseScraper):
                     seen_ids.add(detail_url)
                     # Modo "solo nuevas": si ya está importado, no lo descargamos.
                     if skip_url and skip_url(detail_url):
+                        if on_scan:
+                            on_scan(skipped=True)
                         saltados += 1
                         if saltados % 200 == 0:
                             log(f"[properati] saltados {saltados} ya importados...")
                         continue
+                    if on_scan:
+                        on_scan(skipped=False)
                     self._sleep()
                     data = self._scrape_detail(client, detail_url, categoria, operacion, log)
                     if data is None:

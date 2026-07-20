@@ -74,6 +74,8 @@ interface Run {
   con_imagenes: boolean;
   solo_nuevas: boolean;
   vistos: number;
+  revisados: number;
+  saltados: number;
   creadas: number;
   actualizadas: number;
   duplicadas: number;
@@ -245,6 +247,21 @@ const IngestaPage = () => {
     }
   };
 
+  const launchOnlyNew = (source: string) => {
+    const requested = window.prompt('¿Cuántas propiedades nuevas deseas importar?', '500');
+    if (requested === null) return;
+    const limit = Number(requested.trim());
+    if (!Number.isInteger(limit) || limit < 1 || limit > 5000) {
+      toast.error('Ingresa un número entero entre 1 y 5.000.');
+      return;
+    }
+    launch(source, {
+      limit,
+      only_new: true,
+      label: `siguientes ${limit}`,
+    });
+  };
+
   const cancelRun = async (runId: number) => {
     if (!confirm('¿Detener esta ingesta? Se conservará lo ya importado.')) return;
     setCancelling(true);
@@ -330,6 +347,11 @@ const IngestaPage = () => {
   };
 
   const progressPct = (run: Run) => {
+    if (run.solo_nuevas) {
+      const available = sources.find((source) => source.slug === run.fuente)?.disponibles;
+      if (!available) return null;
+      return Math.min(100, Math.round((run.revisados / available) * 100));
+    }
     if (!run.limit) return null;
     return Math.min(100, Math.round((run.vistos / run.limit) * 100));
   };
@@ -432,7 +454,7 @@ const IngestaPage = () => {
                         Ingesta en curso: {activeRun.fuente}
                       </p>
                       <p className="mt-1 text-xs text-amber-800">
-                        {activeRun.cargadas} cargadas · {activeRun.creadas} nuevas · {activeRun.actualizadas} actualizadas · vistos {activeRun.vistos}
+                        {activeRun.cargadas} cargadas · {activeRun.creadas} nuevas · {activeRun.actualizadas} actualizadas · {activeRun.revisados} revisados · {activeRun.saltados} ya importados · vistos {activeRun.vistos}
                         {activeRun.errores > 0 && ` · ${activeRun.errores} con error`}
                       </p>
                     </div>
@@ -607,15 +629,9 @@ const IngestaPage = () => {
                           <Button
                             size="sm"
                             disabled={!s.activa || !!launching || runActive}
-                            onClick={() =>
-                              launch(s.slug, {
-                                limit: 500,
-                                only_new: true,
-                                label: 'siguientes 500',
-                              })
-                            }
+                            onClick={() => launchOnlyNew(s.slug)}
                           >
-                            {launching === s.slug + 'siguientes 500' ? (
+                            {launching.startsWith(s.slug + 'siguientes ') ? (
                               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                             ) : (
                               <Plus className="mr-2 h-4 w-4" />
@@ -1084,6 +1100,8 @@ const IngestaPage = () => {
 
               <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
                 {[
+                  ['Progreso', progressPct(selectedRun) !== null ? `${progressPct(selectedRun)}%` : '—'],
+                  ['Revisados', selectedRun.revisados], ['Ya importados', selectedRun.saltados],
                   ['Vistos', selectedRun.vistos], ['Cargadas', selectedRun.cargadas],
                   ['Nuevas', selectedRun.creadas], ['Actualizadas', selectedRun.actualizadas],
                   ['Duplicadas', selectedRun.duplicadas], ['Caducadas', selectedRun.caducadas],

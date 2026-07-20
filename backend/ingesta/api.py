@@ -50,6 +50,8 @@ def _run_dict(r):
         "con_imagenes": r.con_imagenes,
         "solo_nuevas": r.solo_nuevas,
         "vistos": r.vistos,
+        "revisados": r.revisados,
+        "saltados": r.saltados,
         "creadas": r.creadas,
         "actualizadas": r.actualizadas,
         "duplicadas": r.duplicadas,
