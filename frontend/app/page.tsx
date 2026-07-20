@@ -31,7 +31,11 @@ import {
 export const revalidate = 3600;
 
 export const metadata: Metadata = {
-  title: 'Todas las propiedades en un mapa | Compra, alquila o vende en Ecuador',
+  // `absolute` evita que el template del layout añada otra vez la marca y el
+  // título pase de ~60 caracteres (Google lo truncaría en resultados).
+  title: {
+    absolute: 'Propiedades en venta y alquiler en Ecuador | Geo Propiedades',
+  },
   description:
     'Encuentra propiedades en venta y alquiler en Ecuador en un solo mapa. Busca casas, terrenos, departamentos y locales cerca de ti, sin saltar entre portales ni adivinar la ubicación.',
   alternates: {
