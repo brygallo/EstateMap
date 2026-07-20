@@ -367,6 +367,12 @@ export default function PropertyCard({
             <span className="line-clamp-1">{location}</span>
           </p>
         )}
+        {distanceLabel && (
+          <p className="mt-1.5 inline-flex items-center gap-1 rounded-full bg-primaryLight px-2.5 py-1 text-xs font-semibold text-primary">
+            <Navigation className="h-3.5 w-3.5" strokeWidth={1.75} aria-hidden />
+            {distanceLabel}
+          </p>
+        )}
         <div className="mt-2.5 flex flex-wrap items-baseline gap-1.5">
           {hasPrice ? (
             <AnimatedNumber
