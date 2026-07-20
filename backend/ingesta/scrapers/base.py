@@ -118,7 +118,8 @@ class BaseScraper:
         """Datos para crear/actualizar la ``Fuente`` en la base."""
         return {"slug": self.key, "nombre": self.nombre, "base_url": self.base_url, "scraper": self.key}
 
-    def scrape(self, limit=None, log=None, searches=None, skip_url=None, on_gone=None):
+    def scrape(self, limit=None, log=None, searches=None, skip_url=None, on_gone=None,
+               on_scan=None):
         """
         Generador que produce dicts canónicos. ``limit`` acota el total.
         ``log`` es un callable opcional para mensajes de progreso.
@@ -127,6 +128,8 @@ class BaseScraper:
         URL de un anuncio, se salta sin descargarlo (modo "solo nuevas" / tandas).
         ``on_gone`` receives ``(url, external_id, http_status)`` when the portal
         confirms that a detail page is gone, allowing callers to persist it.
+        ``on_scan`` receives ``skipped=True`` for known listings and False for
+        listings whose detail will be inspected.
         """
         raise NotImplementedError
 

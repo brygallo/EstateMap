@@ -112,7 +112,8 @@ class RemaxScraper(BaseScraper):
             log(f"[remax] {url} -> respuesta no-JSON")
             return None
 
-    def scrape(self, limit=None, log=None, searches=None, skip_url=None, on_gone=None):
+    def scrape(self, limit=None, log=None, searches=None, skip_url=None, on_gone=None,
+               on_scan=None):
         searches = searches or DEFAULT_SEARCHES
         log = log or (lambda *_: None)
         seen = set()
@@ -137,10 +138,14 @@ class RemaxScraper(BaseScraper):
                     seen.add(ext)
                     source_url = self._source_url(rec)
                     if skip_url and skip_url(source_url):
+                        if on_scan:
+                            on_scan(skipped=True)
                         saltados += 1
                         if saltados % 200 == 0:
                             log(f"[remax] saltados {saltados} ya importados...")
                         continue
+                    if on_scan:
+                        on_scan(skipped=False)
                     self._sleep()
                     data = self._scrape_detail(client, slug, ext, rec, log)
                     if data is None:

@@ -76,6 +76,10 @@ class IngestaRun(models.Model):
     )
 
     vistos = models.PositiveIntegerField(default=0)
+    revisados = models.PositiveIntegerField(
+        default=0, help_text="Anuncios encontrados en listados, incluidos los ya importados")
+    saltados = models.PositiveIntegerField(
+        default=0, help_text="Anuncios omitidos porque ya estaban importados")
     creadas = models.PositiveIntegerField(default=0)
     actualizadas = models.PositiveIntegerField(default=0)
     duplicadas = models.PositiveIntegerField(default=0)
