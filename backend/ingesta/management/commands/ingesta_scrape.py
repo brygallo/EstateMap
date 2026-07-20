@@ -77,8 +77,18 @@ class Command(BaseCommand):
         counters = {"ok": 0, "sin_ubicacion": 0, "fuera_ec": 0, "imagenes": 0}
         skip_url = None
         if opts["skip_known"]:
+            # Union de crudas + propiedades ya importadas: en LOCAL gobiernan
+            # las crudas; en PRODUCCIÓN (donde no hay crudas históricas) son
+            # las Property las que saben qué anuncios ya existen.
+            from real_estate.models import Property
+
             conocidas = set(
                 ListingCruda.objects.filter(fuente=fuente)
+                .exclude(source_url="")
+                .values_list("source_url", flat=True)
+            )
+            conocidas |= set(
+                Property.objects.filter(source__slug=fuente.slug)
                 .exclude(source_url="")
                 .values_list("source_url", flat=True)
             )
