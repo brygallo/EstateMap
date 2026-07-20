@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import SeoLanding, { priceRangeText, RelatedLink } from '@/components/SeoLanding';
-import { getProperties } from '@/lib/properties';
+import { getCities, getProperties, getProvinces } from '@/lib/properties';
 import {
   TYPE_DEFS,
   OP_DEFS,
@@ -101,6 +101,23 @@ export default async function ComboPage({ params }: { params: Params }) {
     }
   }
 
+  // Miga hacia el hub de la ubicación (ciudad o provincia), para que Google
+  // entienda la jerarquía Inicio > Propiedades en X > Casas en venta en X.
+  const breadcrumbs: RelatedLink[] = [];
+  if (locationName && locationSlug) {
+    if (getCities(properties).some((c) => c.slug === locationSlug)) {
+      breadcrumbs.push({
+        label: `Propiedades en ${locationName}`,
+        href: `/propiedades/${locationSlug}`,
+      });
+    } else if (getProvinces(properties).some((p) => p.slug === locationSlug)) {
+      breadcrumbs.push({
+        label: `Propiedades en ${locationName}`,
+        href: `/provincias/${locationSlug}`,
+      });
+    }
+  }
+
   return (
     <SeoLanding
       title={title}
@@ -112,6 +129,7 @@ export default async function ComboPage({ params }: { params: Params }) {
       mapHref={mapHref}
       relatedLinks={related.slice(0, 8)}
       locationName={locationName ?? undefined}
+      breadcrumbs={breadcrumbs}
       emptyMessage="No hay propiedades en esta combinación por ahora. Explora el mapa interactivo."
     />
   );

@@ -82,6 +82,8 @@ export default async function ProvinciaPage({ params }: ProvincePageProps) {
         ...province.cityLinks,
         ...(relatedProvinceLinks.length ? relatedProvinceLinks : TYPE_LINKS),
       ].slice(0, 30)}
+      locationName={province.name}
+      breadcrumbs={[{ label: 'Propiedades', href: '/propiedades' }]}
       emptyMessage={`Aún no hay propiedades publicadas en ${province.name}.`}
     />
   );

@@ -21,6 +21,7 @@ export default function SeoLanding({
   cityLinks = [],
   locationName,
   emptyMessage,
+  breadcrumbs = [],
 }: {
   title: string;
   intro: string;
@@ -34,6 +35,8 @@ export default function SeoLanding({
   /** Ubicación (ciudad/provincia) de la página, si aplica: añade schema Place. */
   locationName?: string;
   emptyMessage?: string;
+  /** Migas intermedias entre "Inicio" y la página actual (visibles + JSON-LD). */
+  breadcrumbs?: RelatedLink[];
 }) {
   const hasProperties = properties.length > 0;
   const featuredProperties = properties.slice(0, 8);
@@ -109,9 +112,15 @@ export default function SeoLanding({
             name: 'Inicio',
             item: SITE_URL,
           },
+          ...breadcrumbs.map((crumb, index) => ({
+            '@type': 'ListItem',
+            position: index + 2,
+            name: crumb.label,
+            item: `${SITE_URL}${crumb.href}`,
+          })),
           {
             '@type': 'ListItem',
-            position: 2,
+            position: breadcrumbs.length + 2,
             name: title,
           },
         ],
@@ -160,6 +169,30 @@ export default function SeoLanding({
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: jsonLd(itemListData) }}
       />
+
+      {breadcrumbs.length > 0 && (
+        <nav aria-label="Migas de pan" className="mb-5">
+          <ol className="flex flex-wrap items-center gap-1.5 text-sm text-textSecondary">
+            <li>
+              <Link href="/" className="transition-colors hover:text-primary">
+                Inicio
+              </Link>
+            </li>
+            {breadcrumbs.map((crumb) => (
+              <li key={crumb.href} className="flex items-center gap-1.5">
+                <span aria-hidden className="text-line">/</span>
+                <Link href={crumb.href} className="transition-colors hover:text-primary">
+                  {crumb.label}
+                </Link>
+              </li>
+            ))}
+            <li className="flex items-center gap-1.5" aria-current="page">
+              <span aria-hidden className="text-line">/</span>
+              <span className="font-medium text-textPrimary">{title}</span>
+            </li>
+          </ol>
+        </nav>
+      )}
 
       <header className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_360px] lg:items-start">
         <div>
