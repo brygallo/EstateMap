@@ -34,11 +34,18 @@ El dominio está detrás de Cloudflare y responde 403 ("Just a moment…") a
 handshake TLS (distinto al de un navegador) y lo marca como bot.
 
 Solución (verificada, sin navegador ni cookies): usar **``curl_cffi`` imitando
-el fingerprint de Chrome** (``impersonate="chrome"``). Con eso el handshake es
-idéntico al de Chrome real y Cloudflare sirve el HTML normal (200) tanto en
-listados como en fichas. No hace falta Playwright, ni resolver Turnstile, ni
-``cf_clearance``. ``curl_cffi`` está en ``requirements``; si faltara, el
-scraper cae a httpx (que recibirá 403 y degradará con gracia).
+el fingerprint de Chrome Android** (``impersonate="chrome99_android"``). Con eso
+el handshake es idéntico al de un Chrome real y Cloudflare sirve el HTML normal
+(200) tanto en listados como en fichas. No hace falta Playwright, ni resolver
+Turnstile, ni ``cf_clearance``. ``curl_cffi`` está en ``requirements``; si
+faltara, el scraper cae a httpx (que recibirá 403 y degradará con gracia).
+
+OJO con el fingerprint elegido: desde IPs residenciales pasan varios
+(``chrome``, ``firefox``…), pero desde IPs de datacenter (p. ej. el servidor
+Contabo de producción) Cloudflare bloquea TODOS los fingerprints de escritorio
+y **solo pasa ``chrome99_android``** (verificado 2026-07-20 probando chrome136,
+chrome131, safari184, firefox135 → 403; chrome99_android → 200). Lo mismo
+aplica al CDN de imágenes (naventcdn.com), ver ``ingesta/pipeline/images.py``.
 
 COORDENADAS (reales y EXACTAS, NO se adivinan). Plusvalía publica la
 geolocalización exacta de cada anuncio en el objeto
@@ -236,7 +243,7 @@ class PlusvaliaScraper(BaseScraper):
         try:
             from curl_cffi import requests as cffi_requests
             return cffi_requests.Session(
-                impersonate="chrome", timeout=30.0, headers=headers,
+                impersonate="chrome99_android", timeout=30.0, headers=headers,
                 allow_redirects=True,
             )
         except Exception:  # pragma: no cover - fallback sin curl_cffi

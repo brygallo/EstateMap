@@ -64,10 +64,11 @@ docker-compose up --build
 
 3) Accesos
 
-- Frontend: http://localhost:3000
-- Backend API: http://localhost:8000/api/
-- Admin: http://localhost:8000/admin/
-- MinIO Console: http://localhost:9001
+- Frontend: http://localhost:3010
+- Backend API: http://localhost:8010/api/
+- Admin: http://localhost:8010/admin/
+- MinIO API: http://localhost:9010
+- MinIO Console: http://localhost:9011
 
 4) Crear superusuario (opcional)
 

@@ -1,9 +1,9 @@
 """
 Ciclo de vida de imágenes.
 
-- ``download_images`` (LOCAL, durante scrape): baja las imágenes del anuncio al
-  paquete. No optimiza aquí; la optimización a WEBP + thumbnail la hace el
-  pipeline existente de ``PropertyImage`` al importar.
+- ``download_images`` (durante scrape, local o servidor): baja las imágenes del
+  anuncio al paquete. No optimiza aquí; la optimización a WEBP + thumbnail la
+  hace el pipeline existente de ``PropertyImage`` al importar.
 - ``sync_property_images`` (PRODUCCIÓN, durante import): sincroniza las imágenes
   del paquete con la ``Property``, reutilizando ``PropertyImage.save`` (WEBP +
   thumbnail en MinIO). Borra las imágenes que ya no vienen en el paquete.
@@ -17,18 +17,38 @@ import os
 MAX_IMAGES = 5
 _TIMEOUT = 20.0
 
+# Fingerprint que pasa Cloudflare también desde IPs de datacenter (Contabo);
+# los de escritorio ("chrome", "firefox"...) reciben 403 ahí. Ver el docstring
+# CLOUDFLARE en ``ingesta/scrapers/plusvalia.py``.
+_IMPERSONATE = "chrome99_android"
+
+
+def _image_client():
+    """
+    Cliente HTTP para descargar imágenes. El CDN de Plusvalía (naventcdn.com)
+    está detrás de Cloudflare igual que el sitio: httpx normal recibe 403 desde
+    IPs de datacenter, así que se usa ``curl_cffi`` imitando Chrome Android.
+    Si ``curl_cffi`` no está instalado, cae a httpx (funciona desde IPs
+    residenciales).
+    """
+    try:
+        from curl_cffi import requests as cffi_requests
+        return cffi_requests.Session(
+            impersonate=_IMPERSONATE, timeout=_TIMEOUT, allow_redirects=True,
+        )
+    except Exception:
+        import httpx
+        headers = {"User-Agent": "GeoPropiedadesBot/1.0 (+agregador)"}
+        return httpx.Client(timeout=_TIMEOUT, headers=headers, follow_redirects=True)
+
 
 def download_images(urls, dest_dir, max_images=MAX_IMAGES):
     """
     Descarga hasta ``max_images`` imágenes a ``dest_dir``. Devuelve la lista de
-    nombres de archivo guardados (ej. ['0.jpg', '1.jpg']). Solo se usa en LOCAL;
-    importa httpx de forma diferida para no exigirlo en producción.
+    nombres de archivo guardados (ej. ['0.jpg', '1.jpg']).
     """
-    import httpx
-
     saved = []
-    headers = {"User-Agent": "GeoPropiedadesBot/1.0 (+agregador; contacto en el sitio)"}
-    with httpx.Client(timeout=_TIMEOUT, headers=headers, follow_redirects=True) as client:
+    with _image_client() as client:
         for i, url in enumerate(urls[:max_images]):
             try:
                 resp = client.get(url)
@@ -51,12 +71,11 @@ def image_dhash_from_url(url, size=8):
     """
     import io
 
-    import httpx
     from PIL import Image
 
-    headers = {"User-Agent": "GeoPropiedadesBot/1.0 (+agregador)"}
     try:
-        resp = httpx.get(url, timeout=_TIMEOUT, headers=headers, follow_redirects=True)
+        with _image_client() as client:
+            resp = client.get(url)
         resp.raise_for_status()
         img = Image.open(io.BytesIO(resp.content)).convert("L").resize(
             (size + 1, size), Image.LANCZOS
@@ -85,7 +104,6 @@ def attach_images_from_urls(prop, urls, max_images=MAX_IMAGES):
     al menos una descarga funciona reemplaza las imágenes existentes. Devuelve
     cuántas imágenes quedaron adjuntas.
     """
-    import httpx
     from django.core.files.base import ContentFile
     from real_estate.models import PropertyImage
 
@@ -94,9 +112,8 @@ def attach_images_from_urls(prop, urls, max_images=MAX_IMAGES):
     if existing and existing == len(urls):
         return existing  # ya sincronizado
 
-    headers = {"User-Agent": "GeoPropiedadesBot/1.0 (+agregador)"}
     downloaded = []
-    with httpx.Client(timeout=_TIMEOUT, headers=headers, follow_redirects=True) as client:
+    with _image_client() as client:
         for url in urls:
             try:
                 resp = client.get(url)

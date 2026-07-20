@@ -2,7 +2,7 @@
  * Cliente API con auto-renovación de tokens
  */
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api';
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8010/api';
 
 interface FetchOptions extends RequestInit {
   skipAuth?: boolean;

@@ -17,7 +17,7 @@ const nextConfig = {
     NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL,
   },
   images: {
-    // En desarrollo, MinIO está en localhost:9000 y el servidor de Next (dentro
+    // En desarrollo, MinIO está en localhost:9010 y el servidor de Next (dentro
     // del contenedor) no puede alcanzarlo para optimizar -> la miniatura falla.
     // Desactivamos la optimización solo en dev; el navegador baja la imagen
     // directo. En producción (MinIO en dominio público) la optimización queda ON.
@@ -26,25 +26,25 @@ const nextConfig = {
       {
         protocol: 'http',
         hostname: 'localhost',
-        port: '9000',
+        port: '9010',
         pathname: '/estatemap/**',
       },
       {
         protocol: 'https',
         hostname: 'localhost',
-        port: '9000',
+        port: '9010',
         pathname: '/estatemap/**',
       },
       {
         protocol: 'http',
         hostname: '127.0.0.1',
-        port: '9000',
+        port: '9010',
         pathname: '/estatemap/**',
       },
       {
         protocol: 'https',
         hostname: '127.0.0.1',
-        port: '9000',
+        port: '9010',
         pathname: '/estatemap/**',
       },
       {

@@ -34,7 +34,7 @@ import {
 import { cn } from '@/lib/utils';
 import AnimatedNumber from '@/components/ui/AnimatedNumber';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api';
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8010/api';
 
 interface DashboardData {
   total_users: number;

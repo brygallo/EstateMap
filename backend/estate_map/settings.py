@@ -326,4 +326,4 @@ EMAIL_VERIFICATION_CODE_EXPIRY_MINUTES = 30
 PASSWORD_RESET_TOKEN_EXPIRY_HOURS = 24
 
 # Frontend URL for email links
-FRONTEND_URL = os.getenv('FRONTEND_URL', 'http://localhost:5173')
+FRONTEND_URL = os.getenv('FRONTEND_URL', 'http://localhost:3010')

@@ -88,7 +88,7 @@ console.log('\n📝 Iconos SVG generados exitosamente!');
 console.log('\n⚠️  IMPORTANTE: Los iconos están en formato SVG.');
 console.log('Para convertirlos a PNG, tienes 2 opciones:\n');
 console.log('Opción 1 (Recomendada): Usa el generador web');
-console.log('  → Abre: http://localhost:5173/generate-icons.html');
+console.log('  → Abre: http://localhost:3010/generate-icons.html');
 console.log('  → Descarga todos los iconos PNG\n');
 console.log('Opción 2: Usa una herramienta online');
 console.log('  → https://cloudconvert.com/svg-to-png');

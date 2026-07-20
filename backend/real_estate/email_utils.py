@@ -62,7 +62,7 @@ El equipo de Geo Propiedades Ecuador
 def send_password_reset_email(user, token):
     """Envía correo con link para resetear contraseña usando template HTML"""
     # En producción, esto debería ser tu dominio real
-    frontend_url = getattr(settings, 'FRONTEND_URL', 'http://localhost:5173')
+    frontend_url = getattr(settings, 'FRONTEND_URL', 'http://localhost:3010')
     reset_link = f"{frontend_url}/reset-password?token={token}"
 
     subject = 'Recupera tu contraseña - Geo Propiedades Ecuador'
@@ -149,7 +149,7 @@ def send_welcome_email(user):
     subject = '¡Bienvenido a Geo Propiedades Ecuador!'
 
     # Obtener URL del frontend
-    frontend_url = getattr(settings, 'FRONTEND_URL', 'http://localhost:5173')
+    frontend_url = getattr(settings, 'FRONTEND_URL', 'http://localhost:3010')
 
     # Contexto para el template
     context = {
@@ -203,7 +203,7 @@ def send_pending_publication_notification(pending):
         return
 
     subject = 'Nueva publicación pendiente - Geo Propiedades Ecuador'
-    admin_url = f"{getattr(settings, 'FRONTEND_URL', 'http://localhost:3000')}/admin/pending-publications"
+    admin_url = f"{getattr(settings, 'FRONTEND_URL', 'http://localhost:3010')}/admin/pending-publications"
     body = f"""
 Nueva publicación pendiente:
 
@@ -235,7 +235,7 @@ def send_lead_notification(lead):
     if not recipients:
         return
 
-    frontend_url = getattr(settings, 'FRONTEND_URL', 'http://localhost:3000')
+    frontend_url = getattr(settings, 'FRONTEND_URL', 'http://localhost:3010')
     property_url = f"{frontend_url}/property/{prop.id}"
     panel_url = f"{frontend_url}/mis-propiedades"
     property_title = prop.title or f"Propiedad #{prop.id}"
