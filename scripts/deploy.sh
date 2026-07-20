@@ -40,11 +40,10 @@ if ! git fetch origin main; then
 fi
 git reset --hard origin/main
 
-echo "🛑 Stopping existing containers..."
-docker-compose -f docker-compose.prod.yml down
-
-echo "🔨 Building Docker images..."
-docker-compose -f docker-compose.prod.yml build --no-cache
+echo "🔨 Building Docker images while the current services stay online..."
+# Keep the running containers available during the slow part of the deploy.
+# Docker's layer cache also avoids reinstalling unchanged Python/Node packages.
+docker-compose -f docker-compose.prod.yml build
 
 echo "🔍 Checking pending migrations..."
 docker-compose -f docker-compose.prod.yml run --rm backend \
@@ -59,7 +58,9 @@ docker-compose -f docker-compose.prod.yml run --rm backend \
     python manage.py collectstatic --noinput --verbosity 2
 
 echo "🚀 Starting services..."
-docker-compose -f docker-compose.prod.yml up -d
+# Recreate only the services whose image/configuration changed. Do not run
+# `down`: that would turn the whole build and migration time into downtime.
+docker-compose -f docker-compose.prod.yml up -d --remove-orphans
 
 echo "⏳ Waiting for services to be ready..."
 sleep 5
@@ -71,4 +72,3 @@ echo "📋 Recent logs:"
 docker-compose -f docker-compose.prod.yml logs --tail=50
 
 echo "✅ Deployment completed successfully!"
-
