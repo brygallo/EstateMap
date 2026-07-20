@@ -5,6 +5,7 @@ import {
   formatPrice,
   SITE_URL,
 } from '@/lib/properties';
+import { GUIDES } from '@/lib/guias';
 
 // llms.txt dinámico (spec llmstxt.org): antes era un archivo estático en
 // public/ y las IAs leían un inventario congelado. Ahora se regenera cada hora
@@ -71,6 +72,10 @@ ${cityLines}
 ## Provincias con inventario
 
 ${provinceLines}
+
+## Guías inmobiliarias
+
+${GUIDES.map((g) => `- [${g.title}](${SITE_URL}/guias/${g.slug}): ${g.description}`).join('\n')}
 
 ## Cómo interpretar páginas de categoría
 
