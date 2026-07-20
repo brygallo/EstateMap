@@ -156,7 +156,7 @@ class ProperatiScraper(BaseScraper):
             url = html_lib.unescape(nxt.group(1)) if nxt else None
             self._sleep()
 
-    def scrape_one(self, url, categoria="", operacion="venta"):
+    def scrape_one(self, url, categoria="", operacion="venta", listing=None):
         """
         Re-scrapea un anuncio por su URL (para actualizar / verificar vigencia).
         Devuelve el dict canónico, la cadena 'GONE' si ya no existe (404/410 o

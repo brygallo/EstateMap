@@ -233,6 +233,10 @@ class PlusvaliaScraper(BaseScraper):
     # asumimos un bloqueo real del cliente (no un fallo puntual) y abortamos el
     # run con ScraperBlocked en vez de reportar "0 resultados" como éxito.
     _BLOCK_LIMIT = 3
+    # En modo incremental, 120 resultados consecutivos ya conocidos dentro de
+    # una categoría indican que alcanzamos la zona histórica del listado. Es
+    # suficientemente amplio para absorber anuncios promocionados/reordenados.
+    _KNOWN_STREAK_LIMIT = 120
 
     def __init__(self):
         self._block_streak = 0
@@ -276,25 +280,35 @@ class PlusvaliaScraper(BaseScraper):
             for path, categoria, operacion in searches:
                 start = _abs(path, self.base_url)
                 active.append([self._iter_detail_urls(client, start, log),
-                               categoria, operacion])
+                               categoria, operacion, 0])
 
             while active:
                 still = []
                 for entry in active:
-                    it, categoria, operacion = entry
+                    it, categoria, operacion, known_streak = entry
                     try:
                         detail_url, ext, rec = next(it)
                     except StopIteration:
                         continue  # esta búsqueda se agotó; no vuelve a 'still'
-                    still.append(entry)
                     if detail_url in seen:
+                        still.append(entry)
                         continue
                     seen.add(detail_url)
-                    if skip_url and skip_url(detail_url):
+                    if skip_url and skip_url(detail_url, ext):
                         saltados += 1
+                        entry[3] = known_streak + 1
                         if saltados % 200 == 0:
                             log(f"[plusvalia] saltados {saltados} ya importados...")
+                        if entry[3] >= self._KNOWN_STREAK_LIMIT:
+                            log(
+                                f"[plusvalia] {categoria}/{operacion}: franja histórica alcanzada "
+                                f"({entry[3]} conocidos consecutivos); categoría terminada."
+                            )
+                            continue
+                        still.append(entry)
                         continue
+                    entry[3] = 0
+                    still.append(entry)
                     self._sleep()
                     data = self._scrape_detail(client, detail_url, categoria,
                                                operacion, log, rec)
@@ -420,7 +434,7 @@ class PlusvaliaScraper(BaseScraper):
                 f"(última: {url}). Revisa que curl_cffi esté instalado y actualizado."
             )
 
-    def scrape_one(self, url, categoria="", operacion="venta"):
+    def scrape_one(self, url, categoria="", operacion="venta", listing=None):
         """Re-scrapea una ficha. Devuelve dict / 'GONE' / None (igual patrón)."""
         with self._client() as client:
             try:
@@ -436,10 +450,43 @@ class PlusvaliaScraper(BaseScraper):
             m = _POSTING_STATUS_RE.search(resp.text)
             if m and m.group(1) != "ONLINE":
                 return "GONE"
-            # Nota: al re-scrapear un clasificado suelto no hay contexto de
-            # listado, así que sus coordenadas (que sólo publica el listado) no
-            # están disponibles aquí; sí para proyectos (postingGeolocation).
-            return self._parse_detail(resp.text, url, categoria, operacion)
+            # En actualizaciones se reciben las coordenadas ya verificadas de
+            # nuestra propiedad. Plusvalía no repite las de los clasificados en
+            # la ficha, por lo que conservarlas permite actualizar sus datos.
+            return self._parse_detail(resp.text, url, categoria, operacion, listing=listing)
+
+    def check_exists(self, url):
+        """Chequeo liviano: una sola petición y ninguna normalización de datos."""
+        with self._client() as client:
+            return self._check_exists_with_client(client, url)
+
+    def check_many(self, urls):
+        """Comprueba todo el lote reutilizando la conexión/TLS de Plusvalía."""
+        with self._client() as client:
+            for url in urls:
+                yield self._check_exists_with_client(client, url)
+                self._sleep()
+
+    def _check_exists_with_client(self, client, url):
+        try:
+            resp = client.get(url)
+        except Exception:
+            return None
+        if resp.status_code in (404, 410):
+            return False
+        if resp.status_code == 403:
+            self._note_block(url, lambda *_: None)
+            return None
+        if resp.status_code != 200:
+            return None
+        if "/propiedades/" not in str(resp.url):
+            return False
+        if len(resp.text) < 20000 and "<title>Just a moment" in resp.text:
+            self._note_block(url, lambda *_: None)
+            return None
+        self._block_streak = 0
+        status_match = _POSTING_STATUS_RE.search(resp.text)
+        return not status_match or status_match.group(1) == "ONLINE"
 
     def count_available(self):
         """Suma aproximada de anuncios de las búsquedas por defecto (cabecera)."""

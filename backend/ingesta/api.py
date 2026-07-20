@@ -328,7 +328,8 @@ def launch(request):
     except (TypeError, ValueError):
         limit = None
 
-    modo = "refresh" if request.data.get("modo") == "refresh" else "load"
+    requested_mode = request.data.get("modo")
+    modo = requested_mode if requested_mode in {"refresh", "verify"} else "load"
     # En 'refresh' no re-descargamos imágenes por defecto (más rápido); en 'load' sí.
     con_imagenes = modo == "load"
 

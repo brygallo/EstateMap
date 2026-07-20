@@ -58,6 +58,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${SITE_URL}/publicar-propiedad`, lastModified: globalLatest, changeFrequency: 'monthly', priority: 0.8 },
     { url: `${SITE_URL}/publicar-asistido`, lastModified: globalLatest, changeFrequency: 'monthly', priority: 0.8 },
     { url: `${SITE_URL}/inmobiliarias`, lastModified: globalLatest, changeFrequency: 'monthly', priority: 0.8 },
+    { url: `${SITE_URL}/estadisticas-inmobiliarias`, lastModified: globalLatest, changeFrequency: 'daily', priority: 0.8 },
     ...TYPE_ROUTES.map((path) => ({
       url: `${SITE_URL}${path}`,
       lastModified: globalLatest,

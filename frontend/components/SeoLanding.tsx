@@ -1,16 +1,32 @@
 import Link from 'next/link';
 import { ArrowRight, CheckCircle2, MapPin, PlusCircle, Search } from 'lucide-react';
 import SeoPropertyGrid from '@/components/SeoPropertyGrid';
-import { Property, SITE_URL, formatPrice, jsonLd } from '@/lib/properties';
+import {
+  Property,
+  SITE_URL,
+  formatPrice,
+  getFeaturedProperties,
+  jsonLd,
+} from '@/lib/properties';
 
 export type RelatedLink = { label: string; href: string };
+
+/** Filtros explícitos para el grid de "Propiedades destacadas" (con fotos),
+ * usados cuando `mapHref` no trae `type`/`status`/`city`/`province` legibles
+ * (p. ej. páginas que arman el mapa con `search=`). */
+export type FeaturedQuery = {
+  type?: string;
+  status?: string;
+  city?: string;
+  province?: string;
+};
 
 /**
  * Reusable server-rendered landing page for SEO segments (by type, by city…).
  * Renders an H1, intro copy, a crawlable property grid, related internal links
  * and an ItemList JSON-LD so search engines understand the listing set.
  */
-export default function SeoLanding({
+export default async function SeoLanding({
   title,
   intro,
   properties,
@@ -22,6 +38,7 @@ export default function SeoLanding({
   locationName,
   emptyMessage,
   breadcrumbs = [],
+  featuredQuery,
 }: {
   title: string;
   intro: string;
@@ -37,26 +54,62 @@ export default function SeoLanding({
   emptyMessage?: string;
   /** Migas intermedias entre "Inicio" y la página actual (visibles + JSON-LD). */
   breadcrumbs?: RelatedLink[];
+  /** Filtros explícitos para las fotos destacadas cuando `mapHref` no los expone. */
+  featuredQuery?: FeaturedQuery;
 }) {
   const hasProperties = properties.length > 0;
   const featuredProperties = properties.slice(0, 8);
   const canonicalHref = pageHref || mapHref;
+
+  // El grid "destacado" se pinta con fotos reales: `properties` llega sin
+  // imágenes (viene de `getProperties({ includeImages: false })` para que la
+  // lista completa sea cacheable), así que se pide aparte una página chica
+  // con `include_images=1`, filtrada con lo que se pueda leer de `mapHref`
+  // (o lo que la página haya pasado explícito en `featuredQuery`).
+  const parsedMapUrl = new URL(mapHref, SITE_URL);
+  const featuredFilters = {
+    type: featuredQuery?.type ?? parsedMapUrl.searchParams.get('type') ?? undefined,
+    status: featuredQuery?.status ?? parsedMapUrl.searchParams.get('status') ?? undefined,
+    city: featuredQuery?.city ?? parsedMapUrl.searchParams.get('city') ?? undefined,
+    province:
+      featuredQuery?.province ?? parsedMapUrl.searchParams.get('province') ?? undefined,
+  };
+  const featuredWithImages = await getFeaturedProperties({
+    ...featuredFilters,
+    limit: 8,
+  });
+  const featuredList = featuredWithImages.length
+    ? featuredWithImages
+    : properties.slice(0, 8);
 
   // Datos calculados por página para diferenciar la copy (evita que todas las
   // landings compartan texto byte-idéntico) y para citabilidad por IA.
   const priceValues = properties
     .map((p) => Number.parseFloat(String(p.price)))
     .filter((n) => Number.isFinite(n) && n > 0);
-  const minPrice = priceValues.length ? Math.min(...priceValues) : null;
-  const maxPrice = priceValues.length ? Math.max(...priceValues) : null;
+  // Filtro de outliers basado en la mediana: un precio mal parseado (p. ej.
+  // $379 en un listado de casas de $150k) no debe convertirse en el "desde"
+  // que se muestra/promete en la copy y el JSON-LD.
+  const sortedPrices = priceValues.slice().sort((a, b) => a - b);
+  const medianPrice = sortedPrices.length
+    ? sortedPrices[Math.floor(sortedPrices.length / 2)]
+    : 0;
+  const priceFloor = medianPrice * 0.02;
+  const cleanPrices = priceValues.filter((n) => n >= priceFloor);
+  const minPrice = cleanPrices.length ? Math.min(...cleanPrices) : null;
+  const maxPrice = cleanPrices.length ? Math.max(...cleanPrices) : null;
   const rangeText =
     minPrice !== null && maxPrice !== null
       ? minPrice === maxPrice
         ? ` con precio de referencia ${formatPrice(minPrice)}`
         : ` con precios desde ${formatPrice(minPrice)} hasta ${formatPrice(maxPrice)}`
       : '';
+  // Solo se baja de mayúscula la primera letra (p. ej. "Casas en venta en
+  // Quito" -> "casas en venta en Quito"): con `.toLowerCase()` los nombres
+  // propios como "Quito" o "Ecuador" quedaban en minúscula.
+  const segment = title.charAt(0).toLowerCase() + title.slice(1);
   const countText = `${properties.length} ${
-    properties.length === 1 ? 'propiedad disponible' : 'propiedades disponibles'
+    properties.length === 1 ? 'publicación' : 'publicaciones'
   }`;
   const quickPoints = [
     'Ubicación visible en el mapa',
@@ -142,12 +195,12 @@ export default function SeoLanding({
         mainEntity: [
           {
             '@type': 'Question',
-            name: `¿Dónde encontrar ${title.toLowerCase()}?`,
+            name: `¿Dónde encontrar ${segment}?`,
             acceptedAnswer: {
               '@type': 'Answer',
               text: hasProperties
-                ? `En Geo Propiedades Ecuador hay ${countText.toLowerCase()} de ${title.toLowerCase()}${rangeText}, con mapa interactivo, filtros, área, ubicación y contacto directo con el anunciante.`
-                : `En Geo Propiedades Ecuador puedes buscar ${title.toLowerCase()} con mapa interactivo, filtros, precio, área, ubicación y contacto directo con el anunciante.`,
+                ? `En Geo Propiedades Ecuador hay ${countText} de ${segment}${rangeText}, con mapa interactivo, filtros, área, ubicación y contacto directo con el anunciante.`
+                : `En Geo Propiedades Ecuador puedes buscar ${segment} con mapa interactivo, filtros, precio, área, ubicación y contacto directo con el anunciante.`,
             },
           },
           {
@@ -241,13 +294,13 @@ export default function SeoLanding({
           <p className="mt-2 text-sm leading-6 text-textSecondary">
             {hasProperties ? (
               <>
-                {countText} de {title.toLowerCase()}
+                Hay {countText} de {segment}
                 {rangeText}. Compara ubicación en el mapa, filtra por precio y
                 características, y contacta directo con los anunciantes.
               </>
             ) : (
               <>
-                En Geo Propiedades Ecuador puedes buscar {title.toLowerCase()} con
+                En Geo Propiedades Ecuador puedes buscar {segment} con
                 ubicación en mapa, filtros por precio y características, y contacto
                 directo con anunciantes.
               </>
@@ -297,7 +350,7 @@ export default function SeoLanding({
           )}
         </div>
         <SeoPropertyGrid
-          properties={featuredProperties}
+          properties={featuredList}
           emptyMessage={emptyMessage}
           mapHref={mapHref}
           relatedLinks={relatedLinks.length > 0 ? relatedLinks : cityLinks}
@@ -390,13 +443,19 @@ export const TYPE_LINKS: RelatedLink[] = [
 
 /** Formats an approximate price range for intro copy. */
 export function priceRangeText(properties: Property[]): string {
-  const prices = properties
+  const priceValues = properties
     .map((p) => Number.parseFloat(String(p.price)))
-    .filter((n) => Number.isFinite(n) && n > 0)
-    .sort((a, b) => a - b);
-  if (!prices.length) return '';
-  const min = prices[0];
-  const max = prices[prices.length - 1];
+    .filter((n) => Number.isFinite(n) && n > 0);
+  if (!priceValues.length) return '';
+  // Mismo filtro de outliers que en el componente: un precio mal parseado no
+  // debe convertirse en el "desde" de la intro.
+  const sortedPrices = priceValues.slice().sort((a, b) => a - b);
+  const medianPrice = sortedPrices[Math.floor(sortedPrices.length / 2)];
+  const priceFloor = medianPrice * 0.02;
+  const cleanPrices = priceValues.filter((n) => n >= priceFloor);
+  if (!cleanPrices.length) return '';
+  const min = Math.min(...cleanPrices);
+  const max = Math.max(...cleanPrices);
   if (min === max) return ` Precio de referencia: ${formatPrice(min)}.`;
   return ` Precios desde ${formatPrice(min)} hasta ${formatPrice(max)}.`;
 }

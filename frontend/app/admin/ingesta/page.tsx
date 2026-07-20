@@ -19,7 +19,6 @@ import {
   History,
   ImageOff,
   Loader2,
-  PlayCircle,
   Plus,
   RefreshCw,
   Search,
@@ -68,7 +67,7 @@ interface Run {
   fuente: string;
   estado: 'pending' | 'running' | 'done' | 'error' | 'cancelled';
   estado_label: string;
-  modo: 'load' | 'refresh';
+  modo: 'load' | 'refresh' | 'verify';
   modo_label: string;
   limit: number | null;
   con_imagenes: boolean;
@@ -206,13 +205,16 @@ const IngestaPage = () => {
 
   const launch = async (
     source: string,
-    opts: { limit?: number | null; only_new?: boolean; modo?: 'load' | 'refresh'; label: string },
+    opts: { limit?: number | null; only_new?: boolean; modo?: 'load' | 'refresh' | 'verify'; label: string },
   ) => {
     if (opts.label.includes('todo')) {
       if (!confirm('¿Ejecutar la ingesta de TODO el país? Puede tardar horas.')) return;
     }
     if (opts.modo === 'refresh') {
-      if (!confirm('¿Actualizar las propiedades ya importadas y verificar cuáles siguen vigentes?')) return;
+      if (!confirm('¿Actualizar todos los datos de las propiedades importadas? Este proceso puede tardar.')) return;
+    }
+    if (opts.modo === 'verify') {
+      if (!confirm('¿Comprobar vigencia y retirar del mapa los anuncios que Plusvalía confirme como desaparecidos?')) return;
     }
     setLaunching(source + opts.label);
     try {
@@ -599,22 +601,6 @@ const IngestaPage = () => {
                         <div className="flex flex-wrap gap-2 border-b border-line pb-5">
                           <Button
                             size="sm"
-                            variant="outline"
-                            disabled={!s.activa || !!launching || runActive}
-                            onClick={() =>
-                              launch(s.slug, { limit: 500, label: 'primeras 500' })
-                            }
-                          >
-                            {launching === s.slug + 'primeras 500' ? (
-                              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                            ) : (
-                              <Plus className="mr-2 h-4 w-4" />
-                            )}
-                            Cargar 500
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="outline"
                             disabled={!s.activa || !!launching || runActive}
                             onClick={() =>
                               launch(s.slug, {
@@ -629,37 +615,37 @@ const IngestaPage = () => {
                             ) : (
                               <Plus className="mr-2 h-4 w-4" />
                             )}
-                            Cargar nuevas
-                          </Button>
-                          <Button
-                            size="sm"
-                            disabled={!s.activa || !!launching || runActive}
-                            onClick={() =>
-                              launch(s.slug, { limit: null, label: 'todo el país' })
-                            }
-                          >
-                            {launching === s.slug + 'todo el país' ? (
-                              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                            ) : (
-                              <PlayCircle className="mr-2 h-4 w-4" />
-                            )}
-                            Todo el país
+                            Buscar solo nuevas
                           </Button>
                           <Button
                             size="sm"
                             variant="outline"
                             disabled={!s.activa || !!launching || runActive || s.total === 0}
-                            title="Re-visita las ya importadas: actualiza sus datos y marca inactivas las que ya no existen en el portal"
+                            title="Solo comprueba si el anuncio continúa publicado; no procesa datos ni imágenes"
+                            onClick={() => launch(s.slug, { modo: 'verify', label: 'retirar desaparecidas' })}
+                          >
+                            {launching === s.slug + 'retirar desaparecidas' ? (
+                              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            ) : (
+                              <Search className="mr-2 h-4 w-4" />
+                            )}
+                            Retirar desaparecidas
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            disabled={!s.activa || !!launching || runActive || s.total === 0}
+                            title="Actualiza precio, descripción, contacto y demás datos de todas las propiedades existentes"
                             onClick={() =>
-                              launch(s.slug, { modo: 'refresh', label: 'actualizar y verificar vigencia' })
+                              launch(s.slug, { modo: 'refresh', label: 'actualizar todos los datos' })
                             }
                           >
-                            {launching === s.slug + 'actualizar y verificar vigencia' ? (
+                            {launching === s.slug + 'actualizar todos los datos' ? (
                               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                             ) : (
                               <RefreshCw className="mr-2 h-4 w-4" />
                             )}
-                            Actualizar / vigencia
+                            Actualizar todos los datos
                           </Button>
                         </div>
                         {runActive && (

@@ -13,9 +13,10 @@ import {
   type ColumnDef,
   type SortingState,
 } from '@tanstack/react-table';
-import { ArrowUpDown, Eye } from 'lucide-react';
+import { AlertCircle, ArrowUpDown, Eye, RefreshCw, Search } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Card } from '@/components/ui/card';
 import {
@@ -33,9 +34,18 @@ import {
   DialogTitle,
   DialogDescription,
 } from '@/components/ui/dialog';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationNext,
+  PaginationPrevious,
+} from '@/components/ui/pagination';
 import { cn } from '@/lib/utils';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8010/api';
+const PAGE_SIZE = 20;
 
 interface PendingPublication {
   id: number;
@@ -74,32 +84,76 @@ const SOURCE_LABELS: Record<string, string> = {
   other: 'Otro',
 };
 
+const STATUS_TABS = [
+  { key: 'all', label: 'Todos' },
+  { key: 'new', label: STATUS_LABELS.new },
+  { key: 'contacted', label: STATUS_LABELS.contacted },
+  { key: 'converted', label: STATUS_LABELS.converted },
+  { key: 'discarded', label: STATUS_LABELS.discarded },
+];
+
+const digitsOnly = (phone: string) => (phone || '').replace(/\D/g, '');
+
+const isValidPhone = (phone: string) => {
+  const digits = digitsOnly(phone);
+  return digits.length >= 8 && digits.length <= 15;
+};
+
 export default function PendingPublicationsPage() {
   const { token } = useAuth();
   const [items, setItems] = useState<PendingPublication[]>([]);
+  const [count, setCount] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
   const [selected, setSelected] = useState<PendingPublication | null>(null);
   const [sorting, setSorting] = useState<SortingState>([]);
+
+  const [statusFilter, setStatusFilter] = useState('all');
+  const [searchInput, setSearchInput] = useState('');
+  const [search, setSearch] = useState('');
+  const [page, setPage] = useState(1);
+
+  // Debounce the search box before it hits the query string.
+  useEffect(() => {
+    const timer = setTimeout(() => setSearch(searchInput.trim()), 400);
+    return () => clearTimeout(timer);
+  }, [searchInput]);
+
+  // Reset to page 1 whenever the filters change.
+  useEffect(() => {
+    setPage(1);
+  }, [statusFilter, search]);
 
   const fetchItems = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetch(`${API_URL}/pending-publications/`, {
+      const params = new URLSearchParams();
+      params.set('page', String(page));
+      params.set('page_size', String(PAGE_SIZE));
+      if (statusFilter !== 'all') params.set('status', statusFilter);
+      if (search) params.set('search', search);
+
+      const res = await fetch(`${API_URL}/pending-publications/?${params.toString()}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (!res.ok) throw new Error('Error al cargar pendientes');
       const json = await res.json();
-      setItems(json.results || json || []);
+      setItems(json.results || []);
+      setCount(json.count ?? 0);
+      setError(false);
     } catch (error: any) {
+      setError(true);
       toast.error(error.message || 'Error al cargar pendientes');
     } finally {
       setLoading(false);
     }
-  }, [token]);
+  }, [token, page, statusFilter, search]);
 
   useEffect(() => {
     if (token) fetchItems();
   }, [token, fetchItems]);
+
+  const totalPages = Math.max(1, Math.ceil(count / PAGE_SIZE));
 
   const updateStatus = async (item: PendingPublication, status: string) => {
     try {
@@ -125,7 +179,7 @@ export default function PendingPublicationsPage() {
       `Propiedad: ${item.title || 'Sin título'}`,
       `Ciudad: ${item.city || 'Sin ciudad'}`,
     ].join('\n');
-    return `https://wa.me/${item.contact_phone.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(message)}`;
+    return `https://wa.me/${digitsOnly(item.contact_phone)}?text=${encodeURIComponent(message)}`;
   };
 
   const columns = useMemo<ColumnDef<PendingPublication>[]>(
@@ -188,14 +242,26 @@ export default function PendingPublicationsPage() {
         header: () => <div className="text-right">Acciones</div>,
         cell: ({ row }) => {
           const item = row.original;
+          const hasPhone = Boolean(item.contact_phone);
+          const validPhone = hasPhone && isValidPhone(item.contact_phone);
           return (
             <div className="flex justify-end gap-2">
               <Button variant="outline" size="sm" className="rounded-button" onClick={() => setSelected(item)}>
                 <Eye className="h-4 w-4" /> Ver
               </Button>
-              {item.contact_phone && (
-                <Button asChild size="sm" className="rounded-button">
-                  <a href={whatsappUrl(item)} target="_blank" rel="noreferrer">WhatsApp</a>
+              {hasPhone && (
+                <Button
+                  asChild={validPhone}
+                  disabled={!validPhone}
+                  size="sm"
+                  className="rounded-button"
+                  title={validPhone ? undefined : 'Teléfono inválido, no se puede abrir WhatsApp'}
+                >
+                  {validPhone ? (
+                    <a href={whatsappUrl(item)} target="_blank" rel="noreferrer">WhatsApp</a>
+                  ) : (
+                    'WhatsApp'
+                  )}
                 </Button>
               )}
             </div>
@@ -215,6 +281,8 @@ export default function PendingPublicationsPage() {
     getSortedRowModel: getSortedRowModel(),
   });
 
+  const hasFilters = statusFilter !== 'all' || Boolean(search);
+
   return (
     <AdminRoute>
       <div className="flex min-h-[calc(100vh-3rem)] bg-background">
@@ -226,11 +294,43 @@ export default function PendingPublicationsPage() {
               <p className="mt-1 text-sm text-textSecondary">Contacta a quienes no terminaron de publicar.</p>
             </div>
 
+            <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <Tabs value={statusFilter} onValueChange={setStatusFilter}>
+                <TabsList>
+                  {STATUS_TABS.map((tab) => (
+                    <TabsTrigger key={tab.key} value={tab.key}>
+                      {tab.label}
+                    </TabsTrigger>
+                  ))}
+                </TabsList>
+              </Tabs>
+              <div className="relative sm:w-72">
+                <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-textSecondary" />
+                <Input
+                  type="text"
+                  placeholder="Buscar por nombre, ciudad, teléfono..."
+                  value={searchInput}
+                  onChange={(e) => setSearchInput(e.target.value)}
+                  className="rounded-input pl-9"
+                />
+              </div>
+            </div>
+
             <Card className="overflow-hidden rounded-card shadow-card">
               {loading ? (
                 <TableSkeleton cols={6} />
+              ) : error ? (
+                <div className="flex flex-col items-center gap-3 py-12 text-center">
+                  <AlertCircle className="h-8 w-8 text-error" />
+                  <p className="text-textSecondary">No se pudieron cargar las publicaciones pendientes.</p>
+                  <Button variant="outline" size="sm" className="rounded-button" onClick={() => fetchItems()}>
+                    <RefreshCw className="h-4 w-4" /> Reintentar
+                  </Button>
+                </div>
               ) : items.length === 0 ? (
-                <div className="py-12 text-center text-textSecondary">No hay solicitudes pendientes</div>
+                <div className="py-12 text-center text-textSecondary">
+                  {hasFilters ? 'No hay pendientes que coincidan con el filtro.' : 'No hay solicitudes pendientes'}
+                </div>
               ) : (
                 <div className="overflow-x-auto">
                   <Table>
@@ -261,6 +361,34 @@ export default function PendingPublicationsPage() {
                   </Table>
                 </div>
               )}
+
+              {!loading && !error && totalPages > 1 && (
+                <div className="border-t border-line p-4">
+                  <Pagination>
+                    <PaginationContent>
+                      <PaginationItem>
+                        <PaginationPrevious
+                          href="#"
+                          aria-disabled={page === 1}
+                          className={cn('rounded-button', page === 1 && 'pointer-events-none opacity-50')}
+                          onClick={(e) => { e.preventDefault(); setPage((p) => Math.max(1, p - 1)); }}
+                        />
+                      </PaginationItem>
+                      <PaginationItem>
+                        <span className="px-3 text-sm text-textSecondary">Página {page} de {totalPages}</span>
+                      </PaginationItem>
+                      <PaginationItem>
+                        <PaginationNext
+                          href="#"
+                          aria-disabled={page === totalPages}
+                          className={cn('rounded-button', page === totalPages && 'pointer-events-none opacity-50')}
+                          onClick={(e) => { e.preventDefault(); setPage((p) => Math.min(totalPages, p + 1)); }}
+                        />
+                      </PaginationItem>
+                    </PaginationContent>
+                  </Pagination>
+                </div>
+              )}
             </Card>
           </div>
         </main>
@@ -287,9 +415,7 @@ export default function PendingPublicationsPage() {
 
               <div>
                 <p className="mb-2 text-sm font-semibold text-textPrimary">Borrador</p>
-                <pre className="max-h-56 overflow-auto rounded-card border border-line bg-muted/40 p-4 text-xs">
-                  {JSON.stringify(selected.draft || {}, null, 2)}
-                </pre>
+                <DraftSummary draft={selected.draft} />
               </div>
 
               <div className="flex flex-col gap-2 sm:flex-row">
@@ -310,6 +436,56 @@ export default function PendingPublicationsPage() {
         </DialogContent>
       </Dialog>
     </AdminRoute>
+  );
+}
+
+function humanizeKey(key: string) {
+  const spaced = key.replace(/_/g, ' ').trim();
+  return spaced.charAt(0).toUpperCase() + spaced.slice(1);
+}
+
+function formatDraftValue(value: unknown): string {
+  if (value === null || value === undefined || value === '') return '—';
+  if (typeof value === 'boolean') return value ? 'Sí' : 'No';
+  if (Array.isArray(value)) {
+    if (!value.length) return '—';
+    return value.map((v) => (typeof v === 'object' && v !== null ? JSON.stringify(v) : String(v))).join(', ');
+  }
+  if (typeof value === 'object') return JSON.stringify(value);
+  return String(value);
+}
+
+function DraftSummary({ draft }: { draft: any }) {
+  const [showRaw, setShowRaw] = useState(false);
+  const entries = draft && typeof draft === 'object' ? Object.entries(draft) : [];
+
+  if (!entries.length) {
+    return <p className="rounded-card border border-dashed border-line p-4 text-center text-sm text-textSecondary">Sin datos de borrador.</p>;
+  }
+
+  return (
+    <div>
+      <div className="grid gap-2 sm:grid-cols-2">
+        {entries.map(([key, value]) => (
+          <div key={key} className="rounded-card border border-line p-3">
+            <p className="text-xs font-semibold uppercase text-textSecondary">{humanizeKey(key)}</p>
+            <p className="mt-1 break-words text-sm text-textPrimary">{formatDraftValue(value)}</p>
+          </div>
+        ))}
+      </div>
+      <button
+        type="button"
+        className="mt-2 text-xs font-medium text-textSecondary underline-offset-2 hover:text-textPrimary hover:underline"
+        onClick={() => setShowRaw((v) => !v)}
+      >
+        {showRaw ? 'Ocultar JSON crudo' : 'Ver JSON crudo'}
+      </button>
+      {showRaw && (
+        <pre className="mt-2 max-h-56 overflow-auto rounded-card border border-line bg-muted/40 p-4 text-xs">
+          {JSON.stringify(draft || {}, null, 2)}
+        </pre>
+      )}
+    </div>
   );
 }
 

@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { useEffect } from 'react';
 import { useAuth } from '@/lib/auth-context';
 import { Formik, Form, Field, ErrorMessage } from 'formik';
 import * as Yup from 'yup';
@@ -15,8 +16,18 @@ import GoogleSignInButton from '@/components/GoogleSignInButton';
 
 export default function LoginPage() {
   const router = useRouter();
-  const { login } = useAuth();
+  const { login, token, user, loading } = useAuth();
   const API_URL = process.env.NEXT_PUBLIC_API_URL || '/api';
+
+  useEffect(() => {
+    if (!loading && token && user) {
+      router.replace('/');
+    }
+  }, [loading, token, user, router]);
+
+  if (loading || (token && user)) {
+    return null;
+  }
 
   const validationSchema = Yup.object({
     email: Yup.string().email('Correo inválido').required('Campo requerido'),

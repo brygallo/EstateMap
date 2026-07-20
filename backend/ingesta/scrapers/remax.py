@@ -177,7 +177,7 @@ class RemaxScraper(BaseScraper):
                 return
             self._sleep()
 
-    def scrape_one(self, url, categoria="", operacion="venta"):
+    def scrape_one(self, url, categoria="", operacion="venta", listing=None):
         """Re-scrapea por URL. Devuelve dict / 'GONE' / None."""
         m = re.search(r"/listings/(?:buy|rent)/([a-z0-9\-]+)", url) or \
             re.search(r"/([a-z0-9\-]+)/?$", url)

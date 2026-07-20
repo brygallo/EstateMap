@@ -60,7 +60,8 @@ class IngestaRun(models.Model):
 
     MODOS = [
         ("load", "Cargar/actualizar desde el portal"),
-        ("refresh", "Actualizar existentes y verificar vigencia"),
+        ("verify", "Retirar anuncios desaparecidos"),
+        ("refresh", "Actualizar todos los datos"),
     ]
 
     fuente = models.ForeignKey(Fuente, on_delete=models.CASCADE, related_name="runs")

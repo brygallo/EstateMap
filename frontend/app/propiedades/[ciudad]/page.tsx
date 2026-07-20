@@ -73,6 +73,7 @@ export default async function CiudadPage({ params }: CityPageProps) {
       properties={city.properties}
       pageHref={`/propiedades/${ciudad}`}
       mapHref={`/?search=${encodeURIComponent(city.name)}`}
+      featuredQuery={{ city: city.name }}
       relatedLinks={relatedLocalLinks.length ? relatedLocalLinks : TYPE_LINKS}
       locationName={city.name}
       breadcrumbs={[{ label: 'Propiedades', href: '/propiedades' }]}

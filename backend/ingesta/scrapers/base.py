@@ -78,7 +78,7 @@ class BaseScraper:
         """
         raise NotImplementedError
 
-    def scrape_one(self, url, categoria="", operacion="venta"):
+    def scrape_one(self, url, categoria="", operacion="venta", listing=None):
         """
         Re-scrapea un solo anuncio por su URL. Debe devolver el dict canónico,
         la cadena ``'GONE'`` si ya no existe, o ``None`` ante error transitorio.
@@ -86,6 +86,21 @@ class BaseScraper:
         implementan).
         """
         return None
+
+    def check_exists(self, url):
+        """Comprueba vigencia sin exigir datos completos. True/False/None;
+        None representa un fallo transitorio y nunca debe retirar el anuncio."""
+        result = self.scrape_one(url)
+        if result == "GONE":
+            return False
+        if result is None:
+            return None
+        return True
+
+    def check_many(self, urls):
+        """Versión por lote; los scrapers pueden reutilizar una sesión HTTP."""
+        for url in urls:
+            yield self.check_exists(url)
 
     def count_available(self):
         """Total aproximado de anuncios que ofrece el portal. 0 si no aplica."""
