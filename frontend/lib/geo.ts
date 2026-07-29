@@ -73,3 +73,59 @@ export const formatDistance = (distance: number | null) => {
   if (distance < 10) return `${distance.toFixed(1).replace('.0', '')} km`;
   return `${Math.round(distance)} km`;
 };
+
+export interface PropertyViewportDecision {
+  zoom: number;
+  count: number;
+  radiusKm: number | null;
+  nearestKm: number | null;
+}
+
+/**
+ * Escoge el encuadre más cercano que todavía muestra suficiente oferta.
+ * En móvil requiere menos resultados porque el viewport y el listado son menores.
+ */
+export const getPropertyViewportDecision = (
+  location: LatLngPoint,
+  properties: Property[],
+  mobile = false
+): PropertyViewportDecision => {
+  const distances = properties
+    .map((property) => {
+      const point = getPropertyPoint(property);
+      return point ? distanceKm(location, point) : null;
+    })
+    .filter((value): value is number => typeof value === 'number' && Number.isFinite(value))
+    .sort((a, b) => a - b);
+
+  if (distances.length === 0) {
+    return { zoom: 10, count: 0, radiusKm: null, nearestKm: null };
+  }
+
+  const desired = mobile ? 4 : 7;
+  const bands = [
+    { radiusKm: 2, zoom: 15 },
+    { radiusKm: 5, zoom: 14 },
+    { radiusKm: 12, zoom: 13 },
+    { radiusKm: 30, zoom: 12 },
+    { radiusKm: 70, zoom: 11 },
+    { radiusKm: 150, zoom: 9.5 },
+  ];
+
+  for (const band of bands) {
+    const count = distances.filter((distance) => distance <= band.radiusKm).length;
+    if (count >= desired) {
+      return { ...band, count, nearestKm: distances[0] };
+    }
+  }
+
+  const nearest = distances[0];
+  const fallback =
+    bands.find((band) => nearest <= band.radiusKm) ||
+    { radiusKm: 300, zoom: 8 };
+  return {
+    ...fallback,
+    count: distances.filter((distance) => distance <= fallback.radiusKm).length,
+    nearestKm: nearest,
+  };
+};

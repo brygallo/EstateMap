@@ -1,6 +1,5 @@
 import type { Metadata } from 'next';
-import { GeistSans } from 'geist/font/sans';
-import { GeistMono } from 'geist/font/mono';
+import { Plus_Jakarta_Sans, JetBrains_Mono } from 'next/font/google';
 import Script from 'next/script';
 import './globals.css';
 import 'leaflet/dist/leaflet.css';
@@ -11,6 +10,21 @@ import Footer from '@/components/Footer';
 import { Toaster } from 'sonner';
 import { WHATSAPP_NUMBER } from '@/lib/constants';
 import AnalyticsPageView from '@/components/AnalyticsPageView';
+
+// Aents typography. The families come from the Brand Book; next/font self-hosts
+// them, so no request leaves for a font CDN. The variable names match the ones
+// the token bridge publishes, and the token file keeps the fallback chain.
+const jakarta = Plus_Jakarta_Sans({
+  subsets: ['latin'],
+  display: 'swap',
+  variable: '--font-jakarta',
+});
+
+const jetbrainsMono = JetBrains_Mono({
+  subsets: ['latin'],
+  display: 'swap',
+  variable: '--font-jetbrains',
+});
 
 const siteUrl = (
   process.env.NEXT_PUBLIC_FRONTEND_URL || 'https://geopropiedadesecuador.com'
@@ -64,7 +78,7 @@ export const metadata: Metadata = {
     type: 'website',
     images: [
       {
-        url: `${siteUrl}/og-image.png`,
+        url: `${siteUrl}/opengraph-image`,
         width: 1200,
         height: 630,
         alt: 'Geo Propiedades Ecuador - propiedades en un solo mapa',
@@ -76,7 +90,7 @@ export const metadata: Metadata = {
     title: 'Geo Propiedades Ecuador - Propiedades en un solo mapa',
     description:
       'Encuentra propiedades cerca de ti, compra, alquila o vende con mapa, filtros y contacto directo.',
-    images: [`${siteUrl}/og-image.png`],
+    images: [`${siteUrl}/opengraph-image`],
   },
   other: {
     'geo.region': 'EC',
@@ -179,7 +193,7 @@ export default function RootLayout({
   };
 
   return (
-    <html lang="es" className={`${GeistSans.variable} ${GeistMono.variable}`} suppressHydrationWarning>
+    <html lang="es" className={`${jakarta.variable} ${jetbrainsMono.variable}`} suppressHydrationWarning>
       <body className="font-sans" suppressHydrationWarning>
         <AnalyticsPageView />
         <link rel="preconnect" href="https://minio.geopropiedadesecuador.com" crossOrigin="anonymous" />
@@ -297,7 +311,13 @@ export default function RootLayout({
                 Saltar al contenido
               </a>
               <NavBar />
-              <main id="main" tabIndex={-1} className="flex-grow focus:outline-none">{children}</main>
+              <main
+                id="main"
+                tabIndex={-1}
+                className="flex-grow pt-[var(--app-header-height)] focus:outline-none"
+              >
+                {children}
+              </main>
               <Footer />
             </div>
             <Toaster richColors position="top-right" />

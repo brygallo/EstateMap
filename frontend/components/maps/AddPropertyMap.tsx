@@ -3,6 +3,7 @@
 import { MapContainer, TileLayer, Marker, Polygon } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import { useState, useMemo } from 'react';
+import aentsTokens from '@/lib/aents-tokens.json';
 
 import { userLocationIcon, defaultCenter } from './add-property/leaflet-setup';
 import { MapRefBinder } from './add-property/MapRefBinder';
@@ -61,13 +62,13 @@ const AddPropertyMap = ({
           transition: all 0.2s ease;
         }
         .distance-input:hover {
-          border-color: #496D9C !important;
+          border-color: var(--primary-strong) !important;
           background: white !important;
         }
         .distance-input:focus {
-          border-color: #496D9C !important;
+          border-color: var(--primary-strong) !important;
           background: white !important;
-          box-shadow: 0 0 0 2px rgba(73, 109, 156, 0.2) !important;
+          box-shadow: 0 0 0 2px color-mix(in srgb, var(--primary-strong) 20%, transparent) !important;
         }
         .distance-input::-webkit-inner-spin-button,
         .distance-input::-webkit-outer-spin-button {
@@ -209,8 +210,8 @@ const AddPropertyMap = ({
                 key={`reference-polygon-${property.id || idx}`}
                 positions={leafletCoordinates}
                 pathOptions={{
-                  color: '#496D9C',
-                  fillColor: '#E3EAF4',
+                  color: aentsTokens.light['--primary-strong'],
+                  fillColor: aentsTokens.light['--primary-soft'],
                   fillOpacity: 0.18,
                   weight: 1.5,
                   interactive: false,

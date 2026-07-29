@@ -3,36 +3,13 @@
 import { useEffect, useState, useCallback, useRef } from 'react';
 import { toast, type ExternalToast } from 'sonner';
 import type { Property } from '@/lib/types';
-import { distanceKm, getPropertyPoint, type LatLngPoint } from '@/lib/geo';
+import { getPropertyViewportDecision, type LatLngPoint } from '@/lib/geo';
 
 type MapRef = React.MutableRefObject<any>;
 type PendingAdaptiveLocation = { location: LatLngPoint; readyAt: number };
 
 const LOCATION_DISCOVERY_ZOOM = 10;
 const ADAPTIVE_ZOOM_DELAY_MS = 1200;
-
-const getAdaptiveLocationZoom = (location: LatLngPoint, properties: Property[]) => {
-  const distances = properties
-    .map((property) => {
-      const point = getPropertyPoint(property);
-      return point ? distanceKm(location, point) : null;
-    })
-    .filter((value): value is number => typeof value === 'number' && Number.isFinite(value))
-    .sort((a, b) => a - b);
-
-  if (distances.length === 0) return LOCATION_DISCOVERY_ZOOM;
-
-  const within2Km = distances.filter((distance) => distance <= 2).length;
-  const within5Km = distances.filter((distance) => distance <= 5).length;
-  const nearest = distances[0];
-
-  if (within2Km >= 5) return 15;
-  if (within5Km >= 8 || nearest <= 1.5) return 14;
-  if (nearest <= 5) return 13;
-  if (nearest <= 12) return 12;
-  if (nearest <= 30) return 11;
-  return LOCATION_DISCOVERY_ZOOM;
-};
 
 /**
  * Encapsula toda la lógica de geolocalización del mapa: el modal de permiso en
@@ -49,6 +26,7 @@ export function useGeolocation(
   const [loadingLocation, setLoadingLocation] = useState(false);
   const [showLocationModal, setShowLocationModal] = useState(false);
   const [locationBlocked, setLocationBlocked] = useState(false);
+  const [nearbyPropertyCount, setNearbyPropertyCount] = useState(0);
   const [adaptiveZoomTick, setAdaptiveZoomTick] = useState(0);
   const locationToastIdRef = useRef<string | number | null>(null);
   const pendingAdaptiveLocationRef = useRef<PendingAdaptiveLocation | null>(null);
@@ -128,10 +106,19 @@ export function useGeolocation(
     if (propertiesLoading) return;
 
     const { location } = pending;
-    const zoom = getAdaptiveLocationZoom(location, properties);
+    const mobile = window.matchMedia('(max-width: 767px), (pointer: coarse)').matches;
+    const decision = getPropertyViewportDecision(location, properties, mobile);
+    const zoom = decision.zoom;
+    setNearbyPropertyCount(decision.count);
     pendingAdaptiveLocationRef.current = null;
     if (zoom !== mapRef.current.getZoom?.()) {
       flyTo(location.lat, location.lng, zoom);
+    }
+    if (decision.count > 0) {
+      toast.success(
+        `${decision.count} ${decision.count === 1 ? 'propiedad encontrada' : 'propiedades encontradas'} cerca de ti`,
+        toastOptions
+      );
     }
   }, [adaptiveZoomTick, flyTo, mapRef, properties, propertiesLoading]);
 
@@ -148,13 +135,16 @@ export function useGeolocation(
     }
   };
 
-  // Decidir si mostrar el modal de permiso o recuperar ubicación automáticamente.
+  // En móvil la ubicación es parte central de la experiencia del mapa, por eso
+  // se ofrece en cada entrada a la página principal aunque antes se haya
+  // elegido "Ahora no". En escritorio se conserva la preferencia guardada.
   useEffect(() => {
     if (typeof window === 'undefined') return;
 
     const permissionAsked = localStorage.getItem('locationPermissionAsked');
+    const isMobile = window.matchMedia('(max-width: 767px), (pointer: coarse)').matches;
 
-    if (!permissionAsked) {
+    if (isMobile || !permissionAsked) {
       const t = setTimeout(() => setShowLocationModal(true), 500);
       return () => clearTimeout(t);
     }
@@ -257,6 +247,7 @@ export function useGeolocation(
     loadingLocation,
     showLocationModal,
     locationBlocked,
+    nearbyPropertyCount,
     handleAcceptLocation,
     handleDeclineLocation,
     handleGetMyLocation,

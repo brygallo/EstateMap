@@ -51,7 +51,7 @@ export const metadata: Metadata = {
     type: 'website',
     images: [
       {
-        url: `${SITE_URL}/og-image.png`,
+        url: `${SITE_URL}/opengraph-image`,
         width: 1200,
         height: 630,
         alt: 'Mapa inmobiliario de propiedades en Ecuador',
@@ -63,7 +63,7 @@ export const metadata: Metadata = {
     title: 'Todas las propiedades en un mapa',
     description:
       'Encuentra casas, terrenos, departamentos y locales cerca de ti, con mapa, filtros y contacto directo.',
-    images: [`${SITE_URL}/og-image.png`],
+    images: [`${SITE_URL}/opengraph-image`],
   },
 };
 
@@ -197,7 +197,7 @@ export default async function HomePage() {
       />
       <Suspense
         fallback={
-          <div className="h-[calc(100dvh-3.5rem)] w-full animate-pulse bg-muted" />
+          <div className="h-[calc(100dvh-var(--app-header-height))] w-full animate-pulse bg-muted" />
         }
       >
         <MapPageClient />
@@ -242,7 +242,7 @@ export default async function HomePage() {
                 </div>
               </div>
               <div className="p-4 sm:p-5">
-                <div className="font-geo text-2xl font-semibold text-[#7A5B20] tabular-nums">
+                <div className="font-geo text-2xl font-semibold text-[var(--warning-strong)] tabular-nums">
                   {forRentCount}
                 </div>
                 <div className="mt-1 text-xs font-medium uppercase tracking-wide text-textSecondary">
@@ -296,7 +296,7 @@ export default async function HomePage() {
                 text: 'Filtra departamentos, casas y locales por presupuesto y zona sin perder el contexto de ubicación.',
                 href: '/departamentos-en-alquiler',
                 link: 'Ver alquileres',
-                tone: 'bg-secondary/15 text-[#7A5B20]',
+                tone: 'bg-secondary/15 text-[var(--warning-strong)]',
               },
               {
                 icon: Trees,

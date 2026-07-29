@@ -1,7 +1,17 @@
 // Fuente única de verdad para el estilo de marcadores del mapa.
-// - Color por ESTADO (venta/alquiler/inactivo), alineado a la paleta navy.
+// - Color por ESTADO (venta/alquiler/inactivo), con los tokens de marca Aents.
 // - Icono por TIPO de propiedad (casa/depto/terreno/comercial).
 // Cambiar aquí reestiliza todos los mapas (home, detalle, publicar).
+import aentsTokens from '@/lib/aents-tokens.json';
+
+// These values are consumed by APIs that cannot resolve CSS custom properties
+// (MapLibre GL `paint` expressions, Leaflet path options and base64 SVG data
+// URLs), so the raw Aents token values are read instead of `var(--token)`.
+const tokens = aentsTokens.light;
+
+// Builds an rgba() string from the `*-rgb` companion token (e.g. "27 134 72").
+const tokenRgba = (rgbToken: string, alpha: string) =>
+  `rgba(${(tokens as Record<string, string>)[rgbToken].split(' ').join(', ')}, ${alpha})`;
 
 export interface StatusMarker {
   solid: string;
@@ -11,24 +21,24 @@ export interface StatusMarker {
 }
 
 const FOR_SALE: StatusMarker = {
-  solid: '#496D9C',
-  gradient: 'linear-gradient(135deg, #2D3C67, #496D9C)',
-  shadow: 'rgba(45, 60, 103, 0.20)',
-  ring: 'rgba(73, 109, 156, 0.28)',
+  solid: tokens['--primary-strong'],
+  gradient: `linear-gradient(135deg, ${tokens['--accent-alt-strong']}, ${tokens['--primary-strong']})`,
+  shadow: tokenRgba('--accent-alt-strong-rgb', '0.20'),
+  ring: tokenRgba('--primary-strong-rgb', '0.28'),
 };
 
 const FOR_RENT: StatusMarker = {
-  solid: '#688CCA',
-  gradient: 'linear-gradient(135deg, #496D9C, #688CCA)',
-  shadow: 'rgba(73, 109, 156, 0.20)',
-  ring: 'rgba(104, 140, 202, 0.30)',
+  solid: tokens['--accent-alt'],
+  gradient: `linear-gradient(135deg, ${tokens['--primary-strong']}, ${tokens['--accent-alt']})`,
+  shadow: tokenRgba('--primary-strong-rgb', '0.20'),
+  ring: tokenRgba('--accent-alt-rgb', '0.30'),
 };
 
 const INACTIVE: StatusMarker = {
-  solid: '#64748B',
-  gradient: 'linear-gradient(135deg, #475569, #64748B)',
-  shadow: 'rgba(71, 85, 105, 0.18)',
-  ring: 'rgba(100, 116, 139, 0.24)',
+  solid: tokens['--text-muted'],
+  gradient: `linear-gradient(135deg, ${tokens['--text-secondary']}, ${tokens['--text-muted']})`,
+  shadow: tokenRgba('--text-secondary-rgb', '0.18'),
+  ring: tokenRgba('--text-muted-rgb', '0.24'),
 };
 
 export function statusMarker(status?: string): StatusMarker {
@@ -116,7 +126,7 @@ export function priceMarkerHtml({
           ${typeIconSvg(type, '#ffffff', 12)}
         </span>
         <span style="
-          font-family:var(--font-geist-mono), ui-monospace, 'SFMono-Regular', monospace;
+          font-family:var(--font-jetbrains), var(--font-mono);
           font-size:12px; font-weight:800; line-height:1; letter-spacing:0;
           font-variant-numeric:tabular-nums; white-space:nowrap;
           overflow:hidden; text-overflow:ellipsis;

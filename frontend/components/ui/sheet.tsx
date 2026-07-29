@@ -56,22 +56,59 @@ interface SheetContentProps
 const SheetContent = React.forwardRef<
   React.ElementRef<typeof SheetPrimitive.Content>,
   SheetContentProps
->(({ side = "right", className, children, ...props }, ref) => (
-  <SheetPortal>
-    <SheetOverlay />
-    <SheetPrimitive.Content
-      ref={ref}
-      className={cn(sheetVariants({ side }), className)}
-      {...props}
-    >
-      <SheetPrimitive.Close className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-secondary">
-        <X className="h-4 w-4" />
-        <span className="sr-only">Close</span>
-      </SheetPrimitive.Close>
-      {children}
-    </SheetPrimitive.Content>
-  </SheetPortal>
-))
+>(({ side = "right", className, children, onTouchStart, onTouchEnd, ...props }, ref) => {
+  const closeRef = React.useRef<HTMLButtonElement>(null)
+  const touchStartRef = React.useRef<{ x: number; y: number } | null>(null)
+
+  const handleTouchStart: React.TouchEventHandler<HTMLDivElement> = (event) => {
+    const touch = event.touches[0]
+    touchStartRef.current = touch ? { x: touch.clientX, y: touch.clientY } : null
+    onTouchStart?.(event)
+  }
+
+  const handleTouchEnd: React.TouchEventHandler<HTMLDivElement> = (event) => {
+    const start = touchStartRef.current
+    const touch = event.changedTouches[0]
+    touchStartRef.current = null
+
+    if (start && touch) {
+      const deltaX = touch.clientX - start.x
+      const deltaY = touch.clientY - start.y
+      const horizontal = Math.abs(deltaX) > Math.abs(deltaY) * 1.2
+      const vertical = Math.abs(deltaY) > Math.abs(deltaX) * 1.2
+      const shouldClose =
+        (side === "right" && horizontal && deltaX > 72) ||
+        (side === "left" && horizontal && deltaX < -72) ||
+        (side === "bottom" && vertical && deltaY > 72) ||
+        (side === "top" && vertical && deltaY < -72)
+
+      if (shouldClose) closeRef.current?.click()
+    }
+    onTouchEnd?.(event)
+  }
+
+  return (
+    <SheetPortal>
+      <SheetOverlay />
+      <SheetPrimitive.Content
+        ref={ref}
+        className={cn(sheetVariants({ side }), "overscroll-contain", className)}
+        onTouchStart={handleTouchStart}
+        onTouchEnd={handleTouchEnd}
+        {...props}
+      >
+        <SheetPrimitive.Close
+          ref={closeRef}
+          className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-secondary"
+        >
+          <X className="h-4 w-4" />
+          <span className="sr-only">Cerrar</span>
+        </SheetPrimitive.Close>
+        {children}
+      </SheetPrimitive.Content>
+    </SheetPortal>
+  )
+})
 SheetContent.displayName = SheetPrimitive.Content.displayName
 
 const SheetHeader = ({

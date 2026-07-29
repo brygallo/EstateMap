@@ -1,6 +1,7 @@
 import { Metadata } from 'next';
 import { HELP_FAQS } from '@/lib/help-faqs';
 import { jsonLd } from '@/lib/properties';
+import BrandAtmosphere from '@/components/aents/BrandAtmosphere';
 
 const siteUrl = (
   process.env.NEXT_PUBLIC_FRONTEND_URL || 'https://geopropiedadesecuador.com'
@@ -32,7 +33,7 @@ export const metadata: Metadata = {
     type: 'website',
     images: [
       {
-        url: `${siteUrl}/og-image.png`,
+        url: `${siteUrl}/opengraph-image`,
         width: 1200,
         height: 630,
         alt: 'Ayuda y Preguntas Frecuentes',
@@ -44,7 +45,7 @@ export const metadata: Metadata = {
     title: 'Ayuda y Preguntas Frecuentes | Geo Propiedades Ecuador',
     description:
       'Centro de ayuda para publicar propiedades en Ecuador. Aprende cómo usar nuestros mapas interactivos, sigue la guía para publicar gratis y encuentra respuestas a las preguntas más frecuentes.',
-    images: [`${siteUrl}/og-image.png`],
+    images: [`${siteUrl}/opengraph-image`],
   },
 };
 
@@ -73,7 +74,10 @@ export default function HelpLayout({
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: jsonLd(faqStructuredData) }}
       />
-      {children}
+      <div className="aents-page-shell relative overflow-hidden">
+        <BrandAtmosphere className="opacity-40" />
+        <div className="relative">{children}</div>
+      </div>
     </>
   );
 }

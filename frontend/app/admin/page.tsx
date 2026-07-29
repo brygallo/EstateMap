@@ -2,7 +2,7 @@
 
 import AdminRoute from '@/components/AdminRoute';
 import AdminSidebar from '@/components/AdminSidebar';
-import { useAuth } from '@/lib/auth-context';
+import { apiGet } from '@/lib/api';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import {
@@ -46,8 +46,6 @@ import {
 } from '@/components/ui/table';
 import { cn } from '@/lib/utils';
 import AnimatedNumber from '@/components/ui/AnimatedNumber';
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8010/api';
 
 interface DashboardData {
   total_users: number;
@@ -144,7 +142,6 @@ interface SourceHealth {
 }
 
 const AdminDashboard = () => {
-  const { token } = useAuth();
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -154,9 +151,7 @@ const AdminDashboard = () => {
     const isRefresh = data !== null;
     if (isRefresh) setRefreshing(true);
     try {
-      const res = await fetch(`${API_URL}/admin/dashboard/`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const res = await apiGet('/admin/dashboard/');
       if (!res.ok) throw new Error('Error al cargar datos');
       const json = await res.json();
       setData(json);
@@ -173,8 +168,8 @@ const AdminDashboard = () => {
   };
 
   useEffect(() => {
-    if (token) fetchDashboard();
-  }, [token]);
+    fetchDashboard();
+  }, []);
 
   return (
     <AdminRoute>

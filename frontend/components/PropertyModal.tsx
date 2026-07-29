@@ -27,6 +27,7 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { trackEvent } from '@/lib/analytics';
+import { ecuadorPhoneHref, normalizeEcuadorPhone } from '@/lib/phone';
 import ShareModal from './ShareModal';
 import LeadForm from './LeadForm';
 import {
@@ -62,6 +63,8 @@ const formatDate = (value: unknown) => {
 const ImageGallery = ({ images, initialIndex, onClose }: any) => {
   const validImages = useMemo(() => getValidImages(images), [images]);
   const [currentIndex, setCurrentIndex] = useState(() => clampImageIndex(initialIndex, validImages.length));
+  const touchStartRef = useRef<{ x: number; y: number } | null>(null);
+  const suppressCloseRef = useRef(false);
 
   useEffect(() => {
     if (validImages.length === 0) {
@@ -83,6 +86,23 @@ const ImageGallery = ({ images, initialIndex, onClose }: any) => {
     setCurrentIndex((prev: number) => (prev - 1 + validImages.length) % validImages.length);
   };
 
+  const handleGalleryTouchEnd = (event: React.TouchEvent) => {
+    const start = touchStartRef.current;
+    const touch = event.changedTouches[0];
+    touchStartRef.current = null;
+    if (!start || !touch || validImages.length < 2) return;
+
+    const deltaX = touch.clientX - start.x;
+    const deltaY = touch.clientY - start.y;
+    if (Math.abs(deltaX) < 44 || Math.abs(deltaX) <= Math.abs(deltaY) * 1.2) return;
+
+    suppressCloseRef.current = true;
+    deltaX < 0 ? nextImage() : prevImage();
+    window.setTimeout(() => {
+      suppressCloseRef.current = false;
+    }, 0);
+  };
+
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Escape') onClose();
     if (e.key === 'ArrowRight') nextImage();
@@ -92,7 +112,14 @@ const ImageGallery = ({ images, initialIndex, onClose }: any) => {
   return (
     <div
       className="fixed inset-0 z-modal flex items-center justify-center bg-black/95 outline-none animate-fadeIn"
-      onClick={onClose}
+      onClick={() => {
+        if (!suppressCloseRef.current) onClose();
+      }}
+      onTouchStart={(event) => {
+        const touch = event.touches[0];
+        touchStartRef.current = touch ? { x: touch.clientX, y: touch.clientY } : null;
+      }}
+      onTouchEnd={handleGalleryTouchEnd}
       onKeyDown={handleKeyDown}
       tabIndex={0}
       role="dialog"
@@ -215,6 +242,8 @@ const PropertyModal = ({ property: initialProperty, isOpen, onClose, onViewOnMap
   const [sheetExpanded, setSheetExpanded] = useState(false);
   const panelRef = useRef<HTMLDivElement>(null);
   const sheetTouchStartRef = useRef<number | null>(null);
+  const carouselTouchStartRef = useRef<{ x: number; y: number } | null>(null);
+  const carouselSwipedRef = useRef(false);
   const property = fullProperty || initialProperty;
   const images = useMemo(() => getValidImages(property?.images), [property?.images]);
 
@@ -287,7 +316,8 @@ const PropertyModal = ({ property: initialProperty, isOpen, onClose, onViewOnMap
   const isImported = Boolean(property.is_imported || property.source_url || property.external_id || property.source);
   const contactPhone = typeof property.contact_phone === 'string' ? property.contact_phone.trim() : '';
   const contactEmail = typeof property.contact_email === 'string' ? property.contact_email.trim() : '';
-  const whatsappPhone = contactPhone.replace(/[^0-9]/g, '');
+  const whatsappPhone = normalizeEcuadorPhone(contactPhone);
+  const callablePhone = ecuadorPhoneHref(contactPhone);
   const sourceUrl = typeof property.source_url === 'string' ? property.source_url.trim() : '';
   const sourceAgency = typeof property.source_agency === 'string' ? property.source_agency.trim() : '';
   const publishedDate = formatDate(property.created_at);
@@ -325,15 +355,32 @@ const PropertyModal = ({ property: initialProperty, isOpen, onClose, onViewOnMap
 
     const deltaY = event.changedTouches[0].clientY - start;
     if (deltaY < -24) setSheetExpanded(true);
-    if (deltaY > 28) {
-      if (sheetExpanded) setSheetExpanded(false);
-      else onClose();
-    }
+    // Bajar el asa siempre descarta la ficha completa. Antes, si estaba
+    // expandida, el primer gesto solo la dejaba a media pantalla y obligaba a
+    // repetirlo.
+    if (deltaY > 28) onClose();
   };
 
   const prevImage = () => {
     if (images.length === 0) return;
     setCurrentImageIndex((prev) => (prev - 1 + images.length) % images.length);
+  };
+
+  const handleCarouselTouchEnd = (event: React.TouchEvent) => {
+    const start = carouselTouchStartRef.current;
+    const touch = event.changedTouches[0];
+    carouselTouchStartRef.current = null;
+    if (!start || !touch || images.length < 2) return;
+
+    const deltaX = touch.clientX - start.x;
+    const deltaY = touch.clientY - start.y;
+    if (Math.abs(deltaX) < 40 || Math.abs(deltaX) <= Math.abs(deltaY) * 1.2) return;
+
+    carouselSwipedRef.current = true;
+    deltaX < 0 ? nextImage() : prevImage();
+    window.setTimeout(() => {
+      carouselSwipedRef.current = false;
+    }, 0);
   };
 
   // Generate share URL using the canonical property route with Open Graph meta tags
@@ -381,7 +428,7 @@ const PropertyModal = ({ property: initialProperty, isOpen, onClose, onViewOnMap
     <>
       {/* Scrim solo en móvil: cierra al tocar fuera sin tapar el mapa en desktop. */}
       <div
-        className="fixed inset-0 z-backdrop bg-black/40 lg:hidden"
+        className="fixed inset-x-0 bottom-0 top-[var(--app-header-height)] z-backdrop bg-black/40 lg:hidden"
         onClick={onClose}
         aria-hidden="true"
       />
@@ -398,8 +445,8 @@ const PropertyModal = ({ property: initialProperty, isOpen, onClose, onViewOnMap
       {/* Panel Container */}
       <div
         className={cn(
-          'relative overflow-hidden rounded-t-modal border border-line bg-background shadow-cardHover transition-[height] duration-300 ease-out lg:h-full lg:rounded-none lg:border-0 lg:border-l lg:border-line lg:shadow-none',
-          sheetExpanded ? 'h-[92dvh]' : 'h-[48dvh] min-h-[360px]'
+          'property-detail-panel relative overflow-hidden rounded-t-modal border border-line bg-background shadow-cardHover transition-[height] duration-300 ease-out lg:h-full lg:rounded-none lg:border-0 lg:border-l lg:border-line lg:shadow-none',
+          sheetExpanded ? 'h-[calc(100dvh-var(--app-header-height))]' : 'h-[48dvh] min-h-[360px]'
         )}
       >
         <button
@@ -438,7 +485,17 @@ const PropertyModal = ({ property: initialProperty, isOpen, onClose, onViewOnMap
           <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain pb-24 pt-7 lg:max-h-none lg:pb-0 lg:pt-0">
             {/* Image Gallery Section */}
             {activeImage ? (
-              <div className="group relative h-48 cursor-pointer bg-slate-900 sm:h-52" onClick={() => setGalleryOpen(true)}>
+              <div
+                className="property-detail-gallery group relative h-48 touch-pan-y cursor-pointer bg-slate-900 sm:h-56 lg:h-64"
+                onClick={() => {
+                  if (!carouselSwipedRef.current) setGalleryOpen(true);
+                }}
+                onTouchStart={(event) => {
+                  const touch = event.touches[0];
+                  carouselTouchStartRef.current = touch ? { x: touch.clientX, y: touch.clientY } : null;
+                }}
+                onTouchEnd={handleCarouselTouchEnd}
+              >
                 <img
                   src={activeImage.image}
                   alt={property.title}
@@ -663,7 +720,7 @@ const PropertyModal = ({ property: initialProperty, isOpen, onClose, onViewOnMap
                   {contactPhone && (
                     <div className="flex items-center gap-2">
                       <Phone className="h-4 w-4 flex-shrink-0 text-primary" strokeWidth={1.75} aria-hidden />
-                      <span>{contactPhone}</span>
+                      <span>{callablePhone}</span>
                     </div>
                   )}
                   {contactEmail && (
@@ -717,10 +774,10 @@ const PropertyModal = ({ property: initialProperty, isOpen, onClose, onViewOnMap
                           <Phone className="h-4 w-4" strokeWidth={2} aria-hidden />
                           Contacto directo
                         </h3>
-                        <div className="mb-2 text-sm font-bold">{contactPhone}</div>
+                        <div className="mb-2 text-sm font-bold">{callablePhone}</div>
                         <div className="grid grid-cols-2 gap-2">
                           <a
-                            href={`tel:${contactPhone}`}
+                            href={`tel:${callablePhone}`}
                             onClick={() => trackContact('call', 'modal_contact_box')}
                             className="flex flex-col items-center gap-1 rounded-button bg-white/20 p-2 transition-all hover:bg-white/30"
                           >
@@ -770,7 +827,7 @@ const PropertyModal = ({ property: initialProperty, isOpen, onClose, onViewOnMap
               <div className="grid grid-cols-[0.82fr_1.18fr] gap-2">
                 {canCall && (
                   <a
-                    href={`tel:${contactPhone}`}
+                    href={`tel:${callablePhone}`}
                     onClick={() => trackContact('call', 'mobile_sticky')}
                     className="flex items-center justify-center gap-2 rounded-button border border-line bg-white px-3 py-3 text-sm font-semibold text-textPrimary"
                   >

@@ -2,7 +2,6 @@
 
 import { useMapEvents } from 'react-leaflet';
 import { useEffect, useCallback } from 'react';
-import { padBounds } from './utils';
 
 // Rastrea los límites del mapa y filtra las propiedades visibles.
 export function MapBoundsTracker({
@@ -27,7 +26,7 @@ export function MapBoundsTracker({
 
   const reportBounds = useCallback(() => {
     if (!onBoundsChange) return;
-    const b = padBounds(map.getBounds());
+    const b = map.getBounds();
     onBoundsChange({
       west: b.getWest(),
       south: b.getSouth(),

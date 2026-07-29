@@ -238,7 +238,7 @@ export function formatArea(area?: number | string | null): string {
 export function getMainImageUrl(property: Property, baseUrl = SITE_URL): string {
   const main =
     property.images?.find((img) => img.is_main) || property.images?.[0];
-  const url = main?.image || '/og-image.png';
+  const url = main?.image || '/opengraph-image';
   return url.startsWith('http') ? url : `${baseUrl}${url}`;
 }
 

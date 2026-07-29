@@ -19,6 +19,7 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Card } from '@/components/ui/card';
+import { ecuadorPhoneHref, normalizeEcuadorPhone } from '@/lib/phone';
 import {
   Table,
   TableBody,
@@ -179,7 +180,7 @@ export default function PendingPublicationsPage() {
       `Propiedad: ${item.title || 'Sin título'}`,
       `Ciudad: ${item.city || 'Sin ciudad'}`,
     ].join('\n');
-    return `https://wa.me/${digitsOnly(item.contact_phone)}?text=${encodeURIComponent(message)}`;
+    return `https://wa.me/${normalizeEcuadorPhone(item.contact_phone)}?text=${encodeURIComponent(message)}`;
   };
 
   const columns = useMemo<ColumnDef<PendingPublication>[]>(
@@ -205,7 +206,7 @@ export default function PendingPublicationsPage() {
           const item = row.original;
           return (
             <div className="text-textSecondary">
-              <p>{item.contact_phone || 'Sin teléfono'}</p>
+              <p>{item.contact_phone ? ecuadorPhoneHref(item.contact_phone) : 'Sin teléfono'}</p>
               {item.contact_email && <p className="text-xs">{item.contact_email}</p>}
             </div>
           );
@@ -405,7 +406,7 @@ export default function PendingPublicationsPage() {
               </DialogHeader>
 
               <div className="grid gap-3 text-sm sm:grid-cols-2">
-                <Info label="Teléfono" value={selected.contact_phone || '—'} />
+                <Info label="Teléfono" value={selected.contact_phone ? ecuadorPhoneHref(selected.contact_phone) : '—'} />
                 <Info label="Email" value={selected.contact_email || '—'} />
                 <Info label="Ciudad" value={`${selected.city || '—'}${selected.province ? `, ${selected.province}` : ''}`} />
                 <Info label="Precio" value={selected.price || '—'} />

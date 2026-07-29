@@ -209,6 +209,7 @@ export function usePropertyFilters({ token, bounds, zoom = 7 }: UsePropertyFilte
   const [cardsLoadingMore, setCardsLoadingMore] = useState(false);
   const [cardsPage, setCardsPage] = useState(1);
   const [cardsHasMore, setCardsHasMore] = useState(false);
+  const [cardsPageSize, setCardsPageSize] = useState(20);
   // true cuando la última carga de propiedades del área falló (red / respuesta
   // no OK). Permite distinguir "0 resultados" real de un error, y ofrecer
   // reintentar en lugar de mostrar una lista vacía silenciosa.
@@ -228,6 +229,14 @@ export function usePropertyFilters({ token, bounds, zoom = 7 }: UsePropertyFilte
   // Cache incremental por filtros: cada bbox nuevo se mezcla por id. El mapa no
   // reemplaza el set entero al panear, solo agrega lo que faltaba.
   const resultCachesRef = useRef<Map<string, MapResultsCache>>(new Map());
+
+  useEffect(() => {
+    const mobileQuery = window.matchMedia('(max-width: 767px), (pointer: coarse)');
+    const updatePageSize = () => setCardsPageSize(mobileQuery.matches ? 8 : 20);
+    updatePageSize();
+    mobileQuery.addEventListener('change', updatePageSize);
+    return () => mobileQuery.removeEventListener('change', updatePageSize);
+  }, []);
 
   useEffect(() => {
     const next = filtersFromParams(searchParams);
@@ -425,7 +434,7 @@ export function usePropertyFilters({ token, bounds, zoom = 7 }: UsePropertyFilte
         const { apiFetch } = await import('@/lib/api');
         const params = filtersToApiParams(filters, bounds, {
           page,
-          pageSize: 20,
+          pageSize: cardsPageSize,
           includeImages: true,
         });
         const res = await apiFetch(`/properties/?${params.toString()}`, {
@@ -459,7 +468,7 @@ export function usePropertyFilters({ token, bounds, zoom = 7 }: UsePropertyFilte
         }
       }
     },
-    [bounds, filters, token]
+    [bounds, cardsPageSize, filters, token]
   );
 
   useEffect(() => {

@@ -1,5 +1,6 @@
 import Link from 'next/link';
-import { MessageCircle, MapPin, Map, Mail, ArrowUpRight } from 'lucide-react';
+import Image from 'next/image';
+import { MessageCircle, MapPin, Mail, ArrowUpRight } from 'lucide-react';
 import { buildWhatsAppUrl } from '@/lib/constants';
 
 const whatsappHref = buildWhatsAppUrl('Hola necesito ayuda con Geo Propiedades');
@@ -85,6 +86,8 @@ const LinkColumn = ({
 
 const Footer = () => (
   <footer className="relative overflow-hidden bg-navy-500 text-white">
+    <div className="aents-footer-grid pointer-events-none absolute inset-0" aria-hidden />
+    <div className="aents-footer-glow pointer-events-none absolute" aria-hidden />
     {/* Acento superior + resplandor sutil de marca */}
     <div className="h-px w-full bg-gradient-to-r from-transparent via-navy-300/70 to-transparent" />
     <div aria-hidden className="pointer-events-none absolute -top-32 right-0 h-80 w-80 rounded-full bg-navy-400/50 blur-3xl" />
@@ -94,15 +97,39 @@ const Footer = () => (
       <div className="grid gap-12 lg:grid-cols-12 lg:gap-10">
         {/* Marca */}
         <div className="lg:col-span-5">
-          <div className="flex items-center gap-2.5">
-            <div className="flex h-10 w-10 items-center justify-center rounded-[10px] bg-white text-navy-500 shadow-lg shadow-black/25">
-              <Map className="h-5 w-5" strokeWidth={2} aria-hidden />
-            </div>
-            <span className="text-lg font-bold tracking-tight text-white">
-              Geo Propiedades <span className="text-navy-200">Ecuador</span>
-            </span>
+          {/*
+            Aents is the primary mark in this footer and the product signs
+            underneath it. Approved lockup, negative variant for dark surfaces,
+            served from a 240px master. Never redrawn or recoloured: see
+            public/aents/README.md.
+          */}
+          <div className="aents-footer-brand">
+            <a
+              href="https://aents.net"
+              target="_blank"
+              rel="noreferrer"
+              className="inline-block transition-opacity duration-200 hover:opacity-80"
+              aria-label="Aents — Software for people"
+            >
+              <Image
+                src="/aents/aents-negative-240.png"
+                alt="Aents"
+                width={240}
+                height={55}
+                className="h-auto w-[220px] sm:w-[240px]"
+                unoptimized
+              />
+              <span className="mt-2 block text-base font-medium text-[var(--lavender,#c8b6ff)]">
+                Software for people.
+              </span>
+            </a>
           </div>
-          <p className="mt-5 max-w-sm text-sm leading-relaxed text-navy-100/75">
+
+          <p className="aents-footer-origin">
+            <span className="aents-footer-origin-dot" aria-hidden />
+            Geo Propiedades Ecuador, un producto digital del ecosistema Aents.
+          </p>
+          <p className="mt-6 max-w-sm text-sm leading-relaxed text-navy-100/75">
             Encuentra casas, departamentos, terrenos y locales directamente en el mapa.
             Publica gratis y llega a compradores en todo Ecuador.
           </p>
@@ -135,11 +162,12 @@ const Footer = () => (
         </div>
 
         {/* Enlaces */}
-        <LinkColumn title="Explorar" links={EXPLORE_LINKS} className="lg:col-span-3" />
-        <LinkColumn title="Plataforma" links={PLATFORM_LINKS} className="lg:col-span-2" />
+        <div className="aents-footer-columns contents lg:col-span-5 lg:grid lg:grid-cols-5 lg:gap-8">
+          <LinkColumn title="Explorar" links={EXPLORE_LINKS} className="lg:col-span-3" />
+          <LinkColumn title="Plataforma" links={PLATFORM_LINKS} className="lg:col-span-2" />
 
-        {/* Contacto */}
-        <div className="lg:col-span-2">
+          {/* Contacto */}
+          <div className="lg:col-span-5">
           <h2 className={headingClass}>Contacto</h2>
           <ul className="mt-5 space-y-3.5 text-sm text-navy-100/70">
             <li>
@@ -159,6 +187,7 @@ const Footer = () => (
               Ecuador
             </li>
           </ul>
+          </div>
         </div>
       </div>
 
@@ -166,9 +195,23 @@ const Footer = () => (
       <div className="mt-14 border-t border-white/10 pt-6">
         <div className="flex flex-col items-center justify-between gap-4 sm:flex-row">
           <p className={mutedClass}>
-            © {new Date().getFullYear()} Geo Propiedades Ecuador. Todos los derechos reservados.
+            © {new Date().getFullYear()} Geo Propiedades Ecuador, un producto de{' '}
+            <a
+              href="https://aents.net"
+              target="_blank"
+              rel="noreferrer"
+              className="font-semibold text-navy-100/70 underline-offset-2 transition-colors hover:text-white hover:underline"
+            >
+              Aents
+            </a>
+            . Todos los derechos reservados.
           </p>
           <div className="flex items-center gap-6">
+            <span className="aents-footer-signal" aria-hidden>
+              <i />
+              <i />
+              <b />
+            </span>
             <Link href="/ayuda" className={`group inline-flex items-center gap-1 ${mutedClass} transition-colors hover:text-white`}>
               Ayuda
               <ArrowUpRight className="h-3 w-3 transition-transform duration-200 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" aria-hidden />

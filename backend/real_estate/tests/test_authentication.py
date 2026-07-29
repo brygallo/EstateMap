@@ -221,6 +221,35 @@ class TestAuthentication:
         assert decoded['user_id'] == str(user.id)
         assert decoded['username'] == user.username
 
+    def test_refresh_token_renews_session(self, api_client, create_user):
+        """A valid refresh token issues a new access token."""
+        password = 'TestPass123!'
+        user = create_user(password=password)
+        login_response = api_client.post(
+            reverse('token_obtain_pair'),
+            {'email': user.email, 'password': password},
+            format='json',
+        )
+
+        response = api_client.post(
+            reverse('token_refresh'),
+            {'refresh': login_response.data['refresh']},
+            format='json',
+        )
+
+        assert response.status_code == status.HTTP_200_OK
+        assert response.data.get('access')
+
+    def test_invalid_refresh_token_is_rejected(self, api_client):
+        """An invalid refresh token cannot prolong a session."""
+        response = api_client.post(
+            reverse('token_refresh'),
+            {'refresh': 'invalid-token'},
+            format='json',
+        )
+
+        assert response.status_code == status.HTTP_401_UNAUTHORIZED
+
 
 @pytest.mark.django_db
 @pytest.mark.unit

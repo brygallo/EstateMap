@@ -120,7 +120,9 @@ const MapPage = () => {
     mapProperties.forEach((item) => {
       if (!(item as any).is_cluster) points.set(Number(item.id), item as Property);
     });
-    cardProperties.forEach((property) => points.set(Number(property.id), property));
+    cardProperties.forEach((property) =>
+      points.set(Number(property.id), { ...property, is_card_result: true } as Property)
+    );
     return [...clusters, ...points.values()];
   }, [cardProperties, mapProperties]);
   const mapPointProperties = mapDisplayProperties.filter((item): item is Property => !(item as any).is_cluster);
@@ -314,7 +316,7 @@ const MapPage = () => {
   }, [isModalOpen, sidebarOpen]);
 
   return (
-    <div className="relative h-[calc(100dvh-3.5rem)] overflow-hidden lg:flex">
+    <div className="relative h-[calc(100dvh-var(--app-header-height))] overflow-hidden lg:flex">
       {/* Botón para abrir filtros y propiedades en móvil (con conteo explícito) */}
       {!sidebarOpen && !selectedProperty && !isModalOpen && (
         <Button
@@ -334,7 +336,7 @@ const MapPage = () => {
       {/* Fondo oscuro en móvil */}
       {sidebarOpen && (
         <div
-          className="fixed inset-0 z-30 touch-none bg-black/50 lg:hidden"
+          className="fixed inset-x-0 bottom-0 top-[var(--app-header-height)] z-30 touch-none bg-black/50 lg:hidden"
           aria-hidden
           onPointerDown={(event) => event.preventDefault()}
         />
@@ -428,7 +430,7 @@ const MapPage = () => {
           onLocate={handleLocate}
           locating={geo.loadingLocation}
           locationBlocked={geo.locationBlocked}
-          isRefreshing={mapLoading && mapProperties.length === 0}
+          isRefreshing={mapLoading}
           hasActiveFilters={hasActiveFilters}
           onClearFilters={clearFilters}
           onResetView={handleResetMapView}

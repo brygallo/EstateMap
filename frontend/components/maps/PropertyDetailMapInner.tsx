@@ -145,7 +145,7 @@ const PropertyDetailMapInner = ({
             box-shadow:0 4px 12px rgba(32,45,40,0.24);
             border:2px solid #ffffff;
             text-shadow:0 1px 2px rgba(0,0,0,0.28);
-            font-family:var(--font-geist-mono), ui-monospace, 'SFMono-Regular', monospace;
+            font-family:var(--font-jetbrains), var(--font-mono);
             font-variant-numeric:tabular-nums;
             transform:translate(-50%, -50%);
           ">${formattedPrice}</div>

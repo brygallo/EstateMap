@@ -5,6 +5,7 @@ import 'leaflet/dist/leaflet.css';
 import { useEffect, useState, useRef, useCallback, useMemo } from 'react';
 import L from 'leaflet';
 import * as turf from '@turf/turf';
+import aentsTokens from '@/lib/aents-tokens.json';
 import LayerSwitch, { type MapLayer } from '@/components/map/LayerSwitch';
 import MapControls from '@/components/map/MapControls';
 import MapLegend from '@/components/map/MapLegend';
@@ -17,6 +18,11 @@ import { MapZoomTracker } from './leaflet/MapZoomTracker';
 import { MapEmptyState } from './leaflet/MapEmptyState';
 import { LocationSearch } from './leaflet/LocationSearch';
 import { buildPropertyLayers } from './leaflet/buildPropertyLayers';
+
+// Leaflet path options are consumed by the SVG/Canvas renderer, which does not
+// resolve CSS custom properties, so the raw token value is read from the JSON.
+// Functional signal color for geolocation (not a brand color).
+const USER_LOCATION_COLOR = aentsTokens.light['--info'];
 
 interface LeafletMapProps {
   filteredProperties: any[];
@@ -262,13 +268,13 @@ const LeafletMap = ({
             <Circle
               center={[userLocation.lat, userLocation.lng]}
               radius={userAccuracy}
-              pathOptions={{ stroke: false, fillColor: '#3e97ff', fillOpacity: 0.12 }}
+              pathOptions={{ stroke: false, fillColor: USER_LOCATION_COLOR, fillOpacity: 0.12 }}
             />
           ) : null}
           <CircleMarker
             center={[userLocation.lat, userLocation.lng]}
             radius={9}
-            pathOptions={{ color: '#ffffff', weight: 3, fillColor: '#3e97ff', fillOpacity: 1 }}
+            pathOptions={{ color: '#ffffff', weight: 3, fillColor: USER_LOCATION_COLOR, fillOpacity: 1 }}
           >
             <Popup>
               <div className="text-center">

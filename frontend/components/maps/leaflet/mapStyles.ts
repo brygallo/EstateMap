@@ -32,9 +32,9 @@ export const MAP_STYLES = `
           will-change: opacity, fill-opacity, stroke-opacity;
         }
         .map-price-pin {
-          --marker-bg: #496D9C;
-          --marker-ring: rgba(73, 109, 156, 0.28);
-          --marker-shadow: rgba(45, 60, 103, 0.30);
+          --marker-bg: var(--primary-strong);
+          --marker-ring: rgb(var(--primary-strong-rgb) / 0.28);
+          --marker-shadow: rgb(var(--accent-alt-strong-rgb) / 0.30);
           align-items: center;
           display: flex;
           flex-direction: column;
@@ -47,7 +47,7 @@ export const MAP_STYLES = `
           border-radius: 999px;
           box-shadow: 0 8px 18px rgba(15, 23, 42, 0.22);
           color: #ffffff;
-          font-family: var(--font-geist-mono), ui-monospace, 'SFMono-Regular', monospace;
+          font-family: var(--font-jetbrains), var(--font-mono);
           font-size: 12px;
           font-variant-numeric: tabular-nums;
           font-weight: 900;
@@ -84,8 +84,8 @@ export const MAP_STYLES = `
           box-shadow: 0 12px 28px var(--marker-shadow), 0 0 0 7px var(--marker-ring), 0 0 0 12px rgba(255, 255, 255, 0.62);
         }
         .map-pin {
-          --pin-color: #496D9C;
-          --pin-shadow: rgba(45, 60, 103, 0.28);
+          --pin-color: var(--primary-strong);
+          --pin-shadow: rgb(var(--accent-alt-strong-rgb) / 0.28);
           align-items: center;
           background: var(--pin-color);
           border: 2px solid #ffffff;
@@ -107,19 +107,19 @@ export const MAP_STYLES = `
         }
         .map-pin:hover,
         .map-pin-selected {
-          box-shadow: 0 10px 24px var(--pin-shadow), 0 0 0 6px rgba(73, 109, 156, 0.16);
+          box-shadow: 0 10px 24px var(--pin-shadow), 0 0 0 6px rgb(var(--primary-strong-rgb) / 0.16);
           transform: rotate(-45deg) scale(1.14);
         }
         .map-cluster {
           align-items: center;
-          background: radial-gradient(circle at 35% 28%, #688CCA 0%, #496D9C 48%, #2D3C67 100%);
+          background: radial-gradient(circle at 35% 28%, var(--accent-alt) 0%, var(--primary-strong) 48%, var(--accent-alt-strong) 100%);
           border: 2px solid #ffffff;
           border-radius: 999px;
           box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.22), 0 2px 5px rgba(15, 23, 42, 0.16);
           color: #ffffff;
           cursor: pointer;
           display: flex;
-          font-family: var(--font-geist-mono), ui-monospace, 'SFMono-Regular', monospace;
+          font-family: var(--font-jetbrains), var(--font-mono);
           font-variant-numeric: tabular-nums;
           height: 50px;
           justify-content: center;
@@ -159,7 +159,7 @@ export const MAP_STYLES = `
           pointer-events: auto;
         }
         .map-refresh-bar {
-          background: linear-gradient(90deg, transparent, rgba(73, 109, 156, 0.95), transparent);
+          background: linear-gradient(90deg, transparent, rgb(var(--primary-strong-rgb) / 0.95), transparent);
           animation: mapRefreshSlide 1.2s cubic-bezier(0.4, 0, 0.2, 1) infinite;
           transform-origin: left center;
         }

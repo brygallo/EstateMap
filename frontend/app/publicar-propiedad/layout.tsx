@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import BrandAtmosphere from '@/components/aents/BrandAtmosphere';
 
 export const metadata: Metadata = {
   title: 'Publicar propiedad gratis en Ecuador',
@@ -16,5 +17,10 @@ export default function PublicarPropiedadLayout({
 }: {
   children: React.ReactNode;
 }) {
-  return children;
+  return (
+    <div className="aents-page-shell relative overflow-hidden">
+      <BrandAtmosphere className="opacity-40" />
+      <div className="relative">{children}</div>
+    </div>
+  );
 }

@@ -231,18 +231,18 @@ export default function PropertyCard({
     return (
       <div
         aria-pressed={selected}
-        className={`card card-hover flex gap-2.5 p-2 ${
-          selected ? 'ring-2 ring-primary border-primary' : ''
+        className={`aents-property-card aents-property-card-compact flex gap-2 p-1.5 ${
+          selected ? 'is-selected ring-2 ring-primary border-primary' : ''
         }`}
       >
         {/* Miniatura */}
-        <div className="relative h-[76px] w-[76px] flex-shrink-0 overflow-hidden rounded-lg">
+        <div className="relative h-[68px] w-[68px] flex-shrink-0 overflow-hidden rounded-lg">
           {thumbUrl ? (
             <PropertyImage
               src={thumbUrl}
               alt={heading}
               fill
-              sizes="76px"
+              sizes="68px"
               className="object-cover"
               wrapperClassName="absolute inset-0"
             />
@@ -266,14 +266,14 @@ export default function PropertyCard({
         {/* Contenido */}
         <div className="flex min-w-0 flex-1 flex-col justify-center">
           <div className="flex items-start justify-between gap-1.5">
-            <h3 className="line-clamp-2 text-[13px] font-semibold leading-tight text-textPrimary">
+            <h3 className="line-clamp-2 text-[12px] font-semibold leading-tight text-textPrimary">
               {heading}
             </h3>
             <span className={`badge ${operationBadgeClass} flex-shrink-0`}>{statusLabel}</span>
           </div>
 
           <div className="mt-1 flex flex-wrap items-baseline gap-x-1.5 gap-y-0.5">
-            <span className="price text-[15px] font-bold">{formatPrice(property.price)}</span>
+            <span className="price text-[14px] font-bold">{formatPrice(property.price)}</span>
             {isRent && !hasRentPrice && <span className="text-[11px] font-medium text-textSecondary">/mes</span>}
             {hasRentPrice && (
               <span className="text-[11px] font-medium text-textSecondary">
@@ -282,7 +282,7 @@ export default function PropertyCard({
             )}
           </div>
 
-          <div className="mt-1 flex flex-wrap items-center gap-x-2.5 gap-y-0.5 text-[11px] text-textSecondary">
+          <div className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[10px] text-textSecondary">
             {distanceLabel && (
               <span className="inline-flex items-center gap-1 font-semibold text-primary">
                 <Navigation className="h-3.5 w-3.5" strokeWidth={1.75} aria-hidden />
@@ -297,18 +297,18 @@ export default function PropertyCard({
             ))}
           </div>
 
-          <div className="mt-2 grid grid-cols-2 gap-1.5">
+          <div className="mt-1.5 grid grid-cols-2 gap-1.5">
             <button
               type="button"
               onClick={onClick}
-              className="rounded-md border border-line bg-white px-2 py-1 text-[11px] font-semibold text-textPrimary transition-colors hover:border-primary hover:text-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
+              className="rounded-md border border-line bg-white px-2 py-0.5 text-[10px] font-semibold text-textPrimary transition-colors hover:border-primary hover:text-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
             >
               Ver mapa
             </button>
             <button
               type="button"
               onClick={onOpenDetails}
-              className="rounded-md bg-primary px-2 py-1 text-[11px] font-semibold text-white transition-colors hover:bg-primaryHover focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
+              className="rounded-md bg-primary px-2 py-0.5 text-[10px] font-semibold text-white transition-colors hover:bg-primaryHover focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
             >
               Detalle
             </button>
@@ -334,7 +334,7 @@ export default function PropertyCard({
 
   const body = (
     <>
-      <div className="relative aspect-[4/3] overflow-hidden">
+      <div className="aents-property-media relative aspect-[4/3] overflow-hidden">
         {hasImage ? (
           <PropertyImage
             src={getMainImageUrl(property)}
@@ -352,12 +352,28 @@ export default function PropertyCard({
             iconClassName="h-14 w-14"
           />
         )}
+        <div className="aents-image-scrim absolute inset-0" aria-hidden />
         <div className="absolute left-2.5 top-2.5 z-10">
           <Badge className={cn('border-transparent shadow-card', operationBadgeClass)}>
             {statusLabel}
           </Badge>
         </div>
         <FavoriteButton propertyId={property.id} />
+        <div className="absolute inset-x-0 bottom-0 z-[2] flex items-end justify-between gap-2 p-3">
+          <div className="aents-price-glass rounded-lg px-2.5 py-1.5 text-white">
+            {hasPrice ? (
+              <AnimatedNumber
+                value={priceNum}
+                format={{ maximumFractionDigits: 0 }}
+                prefix="$"
+                className="font-geo text-lg font-bold text-white"
+              />
+            ) : (
+              <span className="font-geo text-lg font-bold text-white">{formatPrice(property.price)}</span>
+            )}
+            {isRent && !hasRentPrice && <span className="ml-1 text-[10px] font-medium text-white/70">/mes</span>}
+          </div>
+        </div>
       </div>
       <div className="p-4">
         <h3 className="line-clamp-1 text-base font-semibold text-textPrimary">{heading}</h3>
@@ -373,26 +389,11 @@ export default function PropertyCard({
             {distanceLabel}
           </p>
         )}
-        <div className="mt-2.5 flex flex-wrap items-baseline gap-1.5">
-          {hasPrice ? (
-            <AnimatedNumber
-              value={priceNum}
-              format={{ maximumFractionDigits: 0 }}
-              prefix="$"
-              className="price font-geo text-xl font-semibold"
-            />
-          ) : (
-            <span className="price font-geo text-xl font-semibold">{formatPrice(property.price)}</span>
-          )}
-          {isRent && !hasRentPrice && (
-            <span className="text-sm font-medium text-textSecondary">/mes</span>
-          )}
-          {hasRentPrice && (
-            <span className="text-sm font-medium text-textSecondary">
-              · Alquiler {formatPrice(property.rent_price)}/mes
-            </span>
-          )}
-        </div>
+        {hasRentPrice && (
+          <p className="mt-2 font-geo text-sm font-semibold text-primary">
+            Alquiler {formatPrice(property.rent_price)}/mes
+          </p>
+        )}
         <div className="mt-3 flex flex-wrap items-center gap-1.5 border-t border-line pt-3">
           {statTiles.map((tile, i) => (
             <StatTile key={i} icon={tile.icon} label={tile.label} />
@@ -403,7 +404,7 @@ export default function PropertyCard({
   );
 
   return (
-    <article className="overflow-hidden rounded-card border border-line bg-surface shadow-card transition-all duration-200 hover:-translate-y-0.5 hover:shadow-cardHover">
+    <article className="aents-property-card group overflow-hidden rounded-card border border-line bg-surface">
       {href ? (
         <Link href={href} className="block">
           {body}

@@ -126,7 +126,7 @@ export default function HelpPage() {
   return (
     <div className="min-h-screen bg-background text-textPrimary">
       {/* Hero */}
-      <section className="relative overflow-hidden bg-gradient-to-br from-[#2D3C67] via-primary to-[#688CCA] text-white">
+      <section className="relative overflow-hidden bg-gradient-to-br from-[var(--accent-alt-strong)] via-primary to-[var(--accent-alt)] text-white">
         <div
           aria-hidden
           className="pointer-events-none absolute inset-0 opacity-[0.18]"
@@ -311,7 +311,7 @@ export default function HelpPage() {
         </section>
 
         {/* CTA final */}
-        <section className="relative overflow-hidden rounded-card bg-gradient-to-br from-primary to-[#2D3C67] p-8 text-white shadow-cardHover md:p-10">
+        <section className="relative overflow-hidden rounded-card bg-gradient-to-br from-primary to-[var(--accent-alt-strong)] p-8 text-white shadow-cardHover md:p-10">
           <div
             aria-hidden
             className="pointer-events-none absolute -right-16 -bottom-16 h-56 w-56 rounded-full bg-white/10 blur-3xl"

@@ -33,16 +33,16 @@ const LocationPermissionModal = ({
   if (!isOpen) return null;
 
   return (
-    <div className={`pointer-events-none fixed inset-x-0 bottom-4 z-top flex justify-center px-4 transition-all duration-300 sm:justify-end ${isVisible ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'}`}>
-      <div className="pointer-events-auto w-full max-w-xl rounded-modal border border-line bg-surface p-4 shadow-cardHover">
-        <div className="flex gap-3">
-          <div className={`hidden h-11 w-11 flex-shrink-0 items-center justify-center rounded-card sm:flex ${
+    <div className={`pointer-events-none fixed inset-x-0 bottom-3 z-top flex justify-center px-3 transition-all duration-300 sm:justify-end ${isVisible ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'}`}>
+      <div className="pointer-events-auto w-full max-w-lg rounded-modal border border-line bg-surface p-3 shadow-cardHover">
+        <div className="flex gap-2.5">
+          <div className={`hidden h-9 w-9 flex-shrink-0 items-center justify-center rounded-card sm:flex ${
             blocked ? 'bg-warningBg text-warning' : 'bg-primaryLight text-primary'
           }`}>
             {blocked ? (
-              <AlertCircle className="h-6 w-6" strokeWidth={1.75} aria-hidden />
+              <AlertCircle className="h-5 w-5" strokeWidth={1.75} aria-hidden />
             ) : (
-              <MapPin className="h-6 w-6" strokeWidth={1.75} aria-hidden />
+              <MapPin className="h-5 w-5" strokeWidth={1.75} aria-hidden />
             )}
           </div>
           <div className="min-w-0 flex-1">
@@ -51,7 +51,7 @@ const LocationPermissionModal = ({
                 <h2 className="text-base font-semibold text-textPrimary">
                   {blocked ? 'Activa la ubicación para usar el mapa cerca de ti' : 'Ver propiedades cerca de ti'}
                 </h2>
-                <p className="mt-1 text-sm leading-5 text-textSecondary">
+                <p className="mt-0.5 text-sm text-textSecondary">
                   {blocked
                     ? 'Tu iPhone o navegador está bloqueando el permiso. Cámbialo una vez y luego vuelve a tocar “Intentar de nuevo”.'
                     : 'Podemos centrar el mapa en tu zona. Tu ubicación no se comparte con terceros.'}
@@ -93,13 +93,13 @@ const LocationPermissionModal = ({
               </div>
             )}
 
-            <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:justify-end">
+            <div className="mt-2.5 flex flex-col gap-1.5 sm:flex-row sm:justify-end">
               <Button
                 type="button"
                 variant="outline"
                 onClick={onDecline}
                 disabled={isLoading}
-                className="h-9 border-line"
+                className="h-8 border-line px-3"
               >
                 Ahora no
               </Button>
@@ -107,7 +107,7 @@ const LocationPermissionModal = ({
                 type="button"
                 onClick={onAccept}
                 disabled={isLoading}
-                className="h-9"
+                className="h-8 px-3"
               >
                 {isLoading ? (
                   <>

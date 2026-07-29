@@ -28,7 +28,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [loading, setLoading] = useState(true);
   const refreshTimerRef = useRef<NodeJS.Timeout | null>(null);
 
-  const decodeJWT = (t: string): any | null => {
+  const decodeJWT = useCallback((t: string): any | null => {
     try {
       const base64Url = t.split('.')[1];
       const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
@@ -42,9 +42,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     } catch {
       return null;
     }
-  };
+  }, []);
 
-  const setSessionToken = (newToken: string | null) => {
+  const setSessionToken = useCallback((newToken: string | null) => {
     setToken(newToken);
     if (newToken) {
       const payload = decodeJWT(newToken);
@@ -57,13 +57,27 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     } else {
       setUser(null);
     }
-  };
+  }, [decodeJWT]);
+
+  const logout = useCallback(() => {
+    localStorage.removeItem('token');
+    localStorage.removeItem('refreshToken');
+    sessionStorage.removeItem('token');
+    sessionStorage.removeItem('refreshToken');
+    setSessionToken(null);
+
+    if (refreshTimerRef.current) {
+      clearTimeout(refreshTimerRef.current);
+      refreshTimerRef.current = null;
+    }
+  }, [setSessionToken]);
 
   // Función para renovar el token
   const refreshToken = useCallback(async (): Promise<boolean> => {
     const refresh = localStorage.getItem('refreshToken') || sessionStorage.getItem('refreshToken');
 
     if (!refresh) {
+      logout();
       return false;
     }
 
@@ -97,7 +111,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         }
 
         setSessionToken(newAccessToken);
-        scheduleTokenRefresh();
         return true;
       } else {
         // Si el refresh token expiró, cerrar sesión
@@ -108,25 +121,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       console.error('Error al renovar token:', error);
       return false;
     }
-  }, []);
-
-  // Programar la renovación automática del token
-  const scheduleTokenRefresh = useCallback(() => {
-    // Limpiar timer existente
-    if (refreshTimerRef.current) {
-      clearTimeout(refreshTimerRef.current);
-    }
-
-    // Renovar el token 5 minutos antes de que expire (expira en 1 hora)
-    // 55 minutos = 3300000 ms
-    const refreshTime = 55 * 60 * 1000;
-
-    refreshTimerRef.current = setTimeout(() => {
-      refreshToken();
-    }, refreshTime);
-  }, [refreshToken]);
+  }, [logout, setSessionToken]);
 
   const login = (accessToken: string, refreshToken: string, remember: boolean) => {
+    // Evitar mezclar una sesión persistente anterior con la nueva.
+    localStorage.removeItem('token');
+    localStorage.removeItem('refreshToken');
+    sessionStorage.removeItem('token');
+    sessionStorage.removeItem('refreshToken');
+
     if (remember) {
       localStorage.setItem('token', accessToken);
       localStorage.setItem('refreshToken', refreshToken);
@@ -135,37 +138,61 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       sessionStorage.setItem('refreshToken', refreshToken);
     }
     setSessionToken(accessToken);
-    scheduleTokenRefresh();
-  };
-
-  const logout = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('refreshToken');
-    sessionStorage.removeItem('token');
-    sessionStorage.removeItem('refreshToken');
-    setSessionToken(null);
-
-    // Limpiar timer de renovación
-    if (refreshTimerRef.current) {
-      clearTimeout(refreshTimerRef.current);
-    }
   };
 
   useEffect(() => {
     const stored = localStorage.getItem('token') || sessionStorage.getItem('token');
     if (stored) {
       setSessionToken(stored);
-      scheduleTokenRefresh();
     }
     setLoading(false);
+  }, [setSessionToken]);
 
-    // Limpiar timer al desmontar
+  useEffect(() => {
+    if (refreshTimerRef.current) {
+      clearTimeout(refreshTimerRef.current);
+      refreshTimerRef.current = null;
+    }
+
+    if (!token) return;
+
+    const payload = decodeJWT(token);
+    const expiresAt = Number(payload?.exp) * 1000;
+    // Renovar cinco minutos antes de la expiración real. Un token ya vencido
+    // o cercano a vencer se renueva inmediatamente al restaurar la sesión.
+    const refreshIn = Number.isFinite(expiresAt)
+      ? Math.max(expiresAt - Date.now() - 5 * 60 * 1000, 0)
+      : 0;
+
+    refreshTimerRef.current = setTimeout(() => {
+      void refreshToken();
+    }, refreshIn);
+
     return () => {
       if (refreshTimerRef.current) {
         clearTimeout(refreshTimerRef.current);
+        refreshTimerRef.current = null;
       }
     };
-  }, [scheduleTokenRefresh]);
+  }, [token, decodeJWT, refreshToken]);
+
+  useEffect(() => {
+    const refreshIfNeeded = () => {
+      if (document.visibilityState !== 'visible' || !token) return;
+      const payload = decodeJWT(token);
+      const expiresAt = Number(payload?.exp) * 1000;
+      if (!Number.isFinite(expiresAt) || expiresAt - Date.now() < 5 * 60 * 1000) {
+        void refreshToken();
+      }
+    };
+
+    document.addEventListener('visibilitychange', refreshIfNeeded);
+    window.addEventListener('focus', refreshIfNeeded);
+    return () => {
+      document.removeEventListener('visibilitychange', refreshIfNeeded);
+      window.removeEventListener('focus', refreshIfNeeded);
+    };
+  }, [token, decodeJWT, refreshToken]);
 
   return (
     <AuthContext.Provider value={{ token, user, login, logout, loading, refreshToken }}>

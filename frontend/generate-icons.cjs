@@ -13,13 +13,19 @@ const path = require('path');
 const sizes = [72, 96, 128, 144, 152, 192, 384, 512];
 const publicDir = path.join(__dirname, 'public');
 
+// Aents brand tokens. Static SVG files cannot resolve CSS custom properties,
+// so the token values are inlined as literals from lib/aents-tokens.json.
+const aentsTokens = require('./lib/aents-tokens.json');
+const BRAND_GRADIENT_FROM = aentsTokens.light['--primary-strong'];
+const BRAND_GRADIENT_TO = aentsTokens.light['--accent-alt'];
+
 // SVG base template
 const generateSVG = (size) => `<?xml version="1.0" encoding="UTF-8"?>
 <svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" xmlns="http://www.w3.org/2000/svg">
   <defs>
     <linearGradient id="bgGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" style="stop-color:#1E3A8A;stop-opacity:1" />
-      <stop offset="100%" style="stop-color:#3B82F6;stop-opacity:1" />
+      <stop offset="0%" style="stop-color:${BRAND_GRADIENT_FROM};stop-opacity:1" />
+      <stop offset="100%" style="stop-color:${BRAND_GRADIENT_TO};stop-opacity:1" />
     </linearGradient>
   </defs>
 

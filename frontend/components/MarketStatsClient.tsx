@@ -25,7 +25,7 @@ export default function MarketStatsClient() {
 
   return (
     <main className="min-h-screen bg-background">
-      <section className="border-b border-line bg-gradient-to-br from-primary via-primaryHover to-[#172554] text-white">
+      <section className="border-b border-line bg-gradient-to-br from-primary via-primaryHover to-[var(--navy)] text-white">
         <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8 lg:py-24">
           <div className="max-w-3xl">
             <span className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-sm font-semibold ring-1 ring-white/20"><TrendingUp className="h-4 w-4" /> Datos del mercado ecuatoriano</span>
@@ -53,7 +53,7 @@ export default function MarketStatsClient() {
               <p className="mt-1 text-sm text-textSecondary">Compara rápidamente dónde es más costoso comprar o alquilar.</p>
               <div className="mt-6 space-y-4">{data.by_city.map((row) => <div key={`${row.province}-${row.city}`}>
                 <div className="mb-1.5 flex items-end justify-between gap-3 text-sm"><span className="min-w-0 font-semibold text-textPrimary"><MapPin className="mr-1 inline h-3.5 w-3.5 text-primary" />{row.city || 'Sin ciudad'} <small className="font-normal text-textSecondary">({row.count})</small></span><span className="shrink-0 font-geo font-bold text-primary">{money(row.avg_price_m2)}/m²</span></div>
-                <div className="h-2 overflow-hidden rounded-full bg-muted"><div className="h-full rounded-full bg-gradient-to-r from-primary to-[#688CCA]" style={{ width: `${Math.max(4, Number(row.avg_price_m2) / maxCityPrice * 100)}%` }} /></div>
+                <div className="h-2 overflow-hidden rounded-full bg-muted"><div className="h-full rounded-full bg-gradient-to-r from-primary to-[var(--accent-alt)]" style={{ width: `${Math.max(4, Number(row.avg_price_m2) / maxCityPrice * 100)}%` }} /></div>
               </div>)}</div>
             </div>
             <div className="space-y-6">

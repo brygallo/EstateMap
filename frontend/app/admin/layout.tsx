@@ -1,4 +1,5 @@
 import { Metadata } from 'next';
+import BrandAtmosphere from '@/components/aents/BrandAtmosphere';
 
 export const metadata: Metadata = {
   robots: {
@@ -12,5 +13,10 @@ export default function AdminLayout({
 }: {
   children: React.ReactNode;
 }) {
-  return children;
+  return (
+    <div className="aents-page-shell relative min-h-[calc(100dvh-var(--app-header-height))] overflow-hidden">
+      <BrandAtmosphere className="opacity-50" />
+      <div className="relative">{children}</div>
+    </div>
+  );
 }

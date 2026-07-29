@@ -88,8 +88,9 @@
 
             // Background gradient
             const gradient = ctx.createLinearGradient(0, 0, size, size);
-            gradient.addColorStop(0, '#1E3A8A');
-            gradient.addColorStop(1, '#3B82F6');
+            // Aents brand tokens: --primary-strong -> --accent-alt (literals, canvas has no CSS vars)
+            gradient.addColorStop(0, '#1B8648');
+            gradient.addColorStop(1, '#14B8A6');
             ctx.fillStyle = gradient;
             ctx.fillRect(0, 0, size, size);
 

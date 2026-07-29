@@ -1,13 +1,14 @@
 'use client';
 
 import Link from 'next/link';
+import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 import { useAuth } from '@/lib/auth-context';
 import { Formik, Form, Field, ErrorMessage } from 'formik';
 import * as Yup from 'yup';
 import { toast } from 'sonner';
-import { Building2, Mail, Lock, ArrowRight, Loader2 } from 'lucide-react';
+import { Mail, Lock, ArrowRight, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -103,8 +104,8 @@ export default function LoginPage() {
     <div className="space-y-8">
       {/* Logo y título */}
       <div className="text-center">
-        <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-card bg-primary shadow-card">
-          <Building2 className="h-8 w-8 text-primary-foreground" strokeWidth={1.75} />
+        <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-card border border-primary/20 bg-white shadow-card">
+          <Image src="/aents/aents-symbol.png" alt="" width={48} height={48} className="h-12 w-12" priority />
         </div>
         <h1 className="text-3xl font-bold text-textPrimary">Geo Propiedades Ecuador</h1>
         <p className="mt-2 text-sm text-textSecondary">

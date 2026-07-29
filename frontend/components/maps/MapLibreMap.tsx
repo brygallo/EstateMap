@@ -10,6 +10,11 @@ import MapLegend from '@/components/map/MapLegend';
 import { trackEvent } from '@/lib/analytics';
 import { getPropertyPoint, isPointInEcuadorBounds } from '@/lib/geo';
 import { iconMarkerHtml, priceMarkerHtml, statusColor } from '@/lib/mapMarkers';
+import aentsTokens from '@/lib/aents-tokens.json';
+
+// MapLibre GL `paint` properties are resolved by the GL renderer, not by CSS,
+// so layer colors must use the raw Aents token values instead of `var(--token)`.
+const mapTokens = aentsTokens.light;
 
 type HtmlMarkerRecord = {
   marker: maplibregl.Marker;
@@ -265,18 +270,23 @@ export default function MapLibreMap({
     if (!map) return;
 
     const bounds = map.getBounds();
-    const paddedBounds = padBounds(bounds);
+    const visibleBounds = {
+      west: bounds.getWest(),
+      south: bounds.getSouth(),
+      east: bounds.getEast(),
+      north: bounds.getNorth(),
+    };
     const zoom = map.getZoom();
     const shouldReportBounds = boundsChangedEnough(
       reportedViewportRef.current.bounds,
-      paddedBounds,
+      visibleBounds,
       zoom,
       reportedViewportRef.current.zoom
     );
 
     if (shouldReportBounds) {
-      reportedViewportRef.current = { bounds: paddedBounds, zoom };
-      onBoundsChange?.(paddedBounds);
+      reportedViewportRef.current = { bounds: visibleBounds, zoom };
+      onBoundsChange?.(visibleBounds);
     }
     onZoomChange?.(zoom);
     setViewportTick((current) => current + 1);
@@ -360,7 +370,7 @@ export default function MapLibreMap({
         source: 'property-polygons',
         minzoom: 14,
         paint: {
-          'fill-color': ['match', ['get', 'status'], 'for_rent', statusColor('for_rent'), 'inactive', '#64748B', statusColor('for_sale')],
+          'fill-color': ['match', ['get', 'status'], 'for_rent', statusColor('for_rent'), 'inactive', statusColor('inactive'), statusColor('for_sale')],
           'fill-opacity': 0.18,
         },
       });
@@ -370,7 +380,7 @@ export default function MapLibreMap({
         source: 'property-polygons',
         minzoom: 14,
         paint: {
-          'line-color': ['match', ['get', 'status'], 'for_rent', statusColor('for_rent'), 'inactive', '#64748B', statusColor('for_sale')],
+          'line-color': ['match', ['get', 'status'], 'for_rent', statusColor('for_rent'), 'inactive', statusColor('inactive'), statusColor('for_sale')],
           'line-width': 2,
           'line-opacity': 0.85,
         },
@@ -382,7 +392,15 @@ export default function MapLibreMap({
         maxzoom: HTML_MARKER_MIN_ZOOM,
         filter: ['has', 'point_count'],
         paint: {
-          'circle-color': ['step', ['get', 'point_count'], '#496D9C', 25, '#2D3C67', 100, '#172554'],
+          'circle-color': [
+            'step',
+            ['get', 'point_count'],
+            mapTokens['--primary-strong'],
+            25,
+            mapTokens['--accent-alt-strong'],
+            100,
+            mapTokens['--navy'],
+          ],
           'circle-radius': ['step', ['get', 'point_count'], 21, 25, 26, 100, 32],
           'circle-stroke-color': '#ffffff',
           'circle-stroke-width': 2,
@@ -411,7 +429,7 @@ export default function MapLibreMap({
         maxzoom: HTML_MARKER_MIN_ZOOM + 0.5,
         filter: ['!', ['has', 'point_count']],
         paint: {
-          'circle-color': ['match', ['get', 'status'], 'for_rent', statusColor('for_rent'), 'inactive', '#64748B', statusColor('for_sale')],
+          'circle-color': ['match', ['get', 'status'], 'for_rent', statusColor('for_rent'), 'inactive', statusColor('inactive'), statusColor('for_sale')],
           'circle-radius': ['interpolate', ['linear'], ['zoom'], 7, 5, 12, 7, 16, 9],
           'circle-stroke-color': '#ffffff',
           'circle-stroke-width': 2,
@@ -422,20 +440,20 @@ export default function MapLibreMap({
         id: 'selected-polygon-fill',
         type: 'fill',
         source: 'selected-polygon',
-        paint: { 'fill-color': '#496D9C', 'fill-opacity': 0.34 },
+        paint: { 'fill-color': mapTokens['--primary-strong'], 'fill-opacity': 0.34 },
       });
       map.addLayer({
         id: 'selected-polygon-line',
         type: 'line',
         source: 'selected-polygon',
-        paint: { 'line-color': '#2D3C67', 'line-width': 3 },
+        paint: { 'line-color': mapTokens['--accent-alt-strong'], 'line-width': 3 },
       });
       map.addLayer({
         id: 'selected-point',
         type: 'circle',
         source: 'selected-property',
         paint: {
-          'circle-color': '#2D3C67',
+          'circle-color': mapTokens['--accent-alt-strong'],
           'circle-radius': 10,
           'circle-stroke-color': '#ffffff',
           'circle-stroke-width': 3,
@@ -447,7 +465,10 @@ export default function MapLibreMap({
         source: 'user-location',
         paint: {
           'circle-radius': 28,
-          'circle-color': '#3e97ff',
+          // Functional signal (geolocation), not brand color: stays blue. The
+          // halo uses the plain token and the dot the strong one, so the two
+          // stay distinguishable from each other.
+          'circle-color': mapTokens['--info'],
           'circle-opacity': 0.14,
           'circle-stroke-width': 0,
         },
@@ -458,7 +479,8 @@ export default function MapLibreMap({
         source: 'user-location',
         paint: {
           'circle-radius': 7,
-          'circle-color': '#1a73e8',
+          // Functional signal (geolocation), not brand color: stays blue.
+          'circle-color': mapTokens['--info-strong'],
           'circle-stroke-color': '#ffffff',
           'circle-stroke-width': 3,
         },
@@ -646,7 +668,13 @@ export default function MapLibreMap({
     if (!loaded || !map) return;
 
     const zoom = map.getZoom();
-    if (zoom < HTML_MARKER_MIN_ZOOM) {
+    // A zoom bajo el backend muestra agrupadores, pero las cards del viewport
+    // también necesitan una referencia visible en el mapa. Renderizamos solo
+    // los puntos correspondientes al listado para evitar llenar el mapa.
+    const markerProperties = zoom < HTML_MARKER_MIN_ZOOM
+      ? pointProperties.filter((property) => property?.is_card_result)
+      : pointProperties;
+    if (markerProperties.length === 0) {
       clearHtmlMarkers();
       return;
     }
@@ -670,7 +698,7 @@ export default function MapLibreMap({
     let renderedCount = 0;
 
     const frame = window.requestAnimationFrame(() => {
-      pointProperties
+      markerProperties
         .map((property) => {
           const point = getPoint(property);
           if (!point) return null;
@@ -680,7 +708,10 @@ export default function MapLibreMap({
           return {
             property,
             point,
-            priority: (property.id === selectedId ? 1_000_000_000 : 0) + priceValue,
+            priority:
+              (property.id === selectedId ? 1_000_000_000 : 0) +
+              (property.is_card_result ? 500_000_000 : 0) +
+              priceValue,
           };
         })
         .filter((item): item is { property: any; point: [number, number]; priority: number } => Boolean(item))
@@ -786,8 +817,12 @@ export default function MapLibreMap({
   return (
     <div className="relative h-full w-full">
       {isRefreshing && (
-        <div className="pointer-events-none absolute inset-x-0 top-0 z-mapcontrol h-1 overflow-hidden bg-white/45">
-          <div className="maplibre-refresh-bar h-full w-1/2" />
+        <div
+          className="aents-map-progress aents-progress aents-progress--indeterminate pointer-events-none absolute inset-x-0 top-0 z-mapcontrol"
+          role="progressbar"
+          aria-label="Actualizando propiedades del mapa"
+        >
+          <span className="aents-progress__fill" aria-hidden />
         </div>
       )}
       <div ref={containerRef} className="h-full w-full" />
@@ -795,26 +830,8 @@ export default function MapLibreMap({
       <LayerSwitch active={activeLayer} onToggle={() => setActiveLayer((prev) => (prev === 'satellite' ? 'streets' : 'satellite'))} />
       <MapLegend />
 
-      <div
-        className="pointer-events-none absolute right-3 top-20 z-mapcontrol h-16 w-16 rounded-full border border-line bg-white/95 shadow-cardHover backdrop-blur-sm"
-        role="img"
-        aria-label="Orientación del mapa: norte arriba, sur abajo, este a la derecha y oeste a la izquierda"
-      >
-        <span className="absolute left-1/2 top-1 -translate-x-1/2 text-[11px] font-black text-error">N</span>
-        <span className="absolute bottom-1 left-1/2 -translate-x-1/2 text-[10px] font-bold text-textSecondary">S</span>
-        <span className="absolute right-1 top-1/2 -translate-y-1/2 text-[10px] font-bold text-textSecondary">E</span>
-        <span className="absolute left-1 top-1/2 -translate-y-1/2 text-[10px] font-bold text-textSecondary">O</span>
-        <span className="absolute left-1/2 top-[17px] h-[30px] w-px -translate-x-1/2 bg-line" aria-hidden />
-        <span className="absolute left-[17px] top-1/2 h-px w-[30px] -translate-y-1/2 bg-line" aria-hidden />
-        <span
-          className="absolute left-1/2 top-[17px] -translate-x-1/2 border-x-[5px] border-b-[13px] border-x-transparent border-b-error"
-          aria-hidden
-        />
-        <span className="absolute left-1/2 top-1/2 h-2 w-2 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-white bg-primary shadow-card" aria-hidden />
-      </div>
-
       <div className="absolute bottom-6 right-3 z-mapcontrol flex flex-col-reverse gap-2.5">
-        <div className="flex flex-col overflow-hidden rounded-lg bg-surface shadow-cardHover ring-1 ring-black/5">
+        <div className="map-glass-control flex flex-col overflow-hidden rounded-xl">
           <button type="button" onClick={() => zoomBy(1)} aria-label="Acercar" className="flex h-10 w-10 items-center justify-center text-textPrimary transition-colors hover:bg-muted">
             <Plus className="h-5 w-5" strokeWidth={2} aria-hidden />
           </button>
@@ -829,7 +846,7 @@ export default function MapLibreMap({
           disabled={locating}
           aria-label="Ir a mi ubicación"
           title={locationBlocked ? 'Ubicación desactivada - tócalo para reintentar' : 'Ir a mi ubicación'}
-          className={`flex h-10 w-10 items-center justify-center rounded-lg bg-surface shadow-cardHover ring-1 ring-black/5 transition-colors hover:bg-muted disabled:cursor-not-allowed ${
+          className={`map-glass-control flex h-10 w-10 items-center justify-center rounded-xl transition-colors hover:bg-white disabled:cursor-not-allowed ${
             locationBlocked ? 'text-error' : 'text-textPrimary'
           }`}
         >
@@ -839,7 +856,7 @@ export default function MapLibreMap({
 
       {filteredProperties.length === 0 && !isRefreshing && (
         <div className="pointer-events-none absolute inset-x-4 top-20 z-mapcontrol mx-auto max-w-xs">
-          <div className="map-empty-state rounded-card border border-line bg-white/95 p-3 text-center shadow-cardHover backdrop-blur">
+          <div className="map-empty-state aents-glass-panel rounded-card p-3 text-center">
             <p className="text-sm font-semibold text-textPrimary">
               {hasActiveFilters ? 'No hay propiedades con estos filtros' : 'No hay propiedades en esta vista'}
             </p>
@@ -904,14 +921,14 @@ export default function MapLibreMap({
         }
         .maplibre-cluster {
           align-items: center;
-          background: radial-gradient(circle at 35% 28%, #688CCA 0%, #496D9C 48%, #2D3C67 100%);
+          background: radial-gradient(circle at 35% 28%, var(--accent-alt) 0%, var(--primary-strong) 48%, var(--accent-alt-strong) 100%);
           border: 2px solid #ffffff;
           border-radius: 999px;
           box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.22), 0 2px 5px rgba(15, 23, 42, 0.16);
           color: #ffffff;
           display: flex;
           flex-direction: column;
-          font-family: var(--font-geist-mono), ui-monospace, 'SFMono-Regular', monospace;
+          font-family: var(--font-jetbrains), var(--font-mono);
           font-variant-numeric: tabular-nums;
           height: 54px;
           justify-content: center;
@@ -924,7 +941,7 @@ export default function MapLibreMap({
           white-space: nowrap;
         }
         .maplibre-cluster-marker:hover .maplibre-cluster {
-          box-shadow: 0 0 0 3px rgba(73, 109, 156, 0.22), inset 0 1px 0 rgba(255, 255, 255, 0.22), 0 3px 7px rgba(15, 23, 42, 0.18);
+          box-shadow: 0 0 0 3px rgb(var(--primary-strong-rgb) / 0.22), inset 0 1px 0 rgba(255, 255, 255, 0.22), 0 3px 7px rgba(15, 23, 42, 0.18);
         }
         .maplibre-cluster strong {
           font-size: 16px;
@@ -932,7 +949,7 @@ export default function MapLibreMap({
         }
         .maplibre-cluster em {
           display: block;
-          font-family: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+          font-family: var(--font-jakarta), var(--font-sans);
           font-size: 9px;
           font-style: normal;
           font-weight: 800;
@@ -973,7 +990,7 @@ export default function MapLibreMap({
         }
         .maplibre-price-marker .gp-marker-selected::before {
           animation: selectedMarkerPulse 1.8s ease-out infinite;
-          background: rgba(73, 109, 156, 0.18);
+          background: rgb(var(--primary-strong-rgb) / 0.18);
           border-radius: 999px;
           bottom: 8px;
           content: '';
@@ -995,16 +1012,6 @@ export default function MapLibreMap({
         .maplibre-price-marker:hover .gp-marker {
           filter: saturate(1.04);
         }
-        .maplibre-refresh-bar {
-          background: linear-gradient(90deg, transparent, rgba(73, 109, 156, 0.95), transparent);
-          animation: mapRefreshSlide 0.95s cubic-bezier(0.4, 0, 0.2, 1) infinite;
-          transform-origin: left center;
-        }
-        @keyframes mapRefreshSlide {
-          0% { transform: translateX(-110%) scaleX(0.45); }
-          50% { transform: translateX(55%) scaleX(0.8); }
-          100% { transform: translateX(220%) scaleX(0.45); }
-        }
         @keyframes mapMarkerContentIn {
           from {
             opacity: 0;
@@ -1025,7 +1032,7 @@ export default function MapLibreMap({
         @media (prefers-reduced-motion: reduce) {
           .maplibre-cluster-marker,
           .maplibre-price-marker,
-          .maplibre-refresh-bar {
+          .aents-map-progress {
             animation-duration: 1ms !important;
             transition-duration: 1ms !important;
           }

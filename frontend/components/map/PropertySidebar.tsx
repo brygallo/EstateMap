@@ -226,7 +226,7 @@ export default function PropertySidebar({
       />
 
       {/* Encabezado del listado: distingue "visibles en el mapa" de "total encontradas" */}
-      <div className="flex items-center justify-between border-t border-line bg-white px-3.5 py-2.5">
+      <div className="flex items-center justify-between border-t border-line bg-white px-3 py-2">
         <div className="flex items-center gap-2">
           <div className="flex flex-col">
             <span className="text-xs font-semibold uppercase tracking-wide text-textSecondary">
@@ -251,7 +251,7 @@ export default function PropertySidebar({
       </div>
 
       {visibleProperties.length > 1 && (
-        <div className="border-t border-line bg-white px-3.5 py-2">
+        <div className="border-t border-line bg-white px-3 py-1.5">
           <label className="flex items-center justify-between gap-2 text-xs font-medium text-textSecondary">
             Ordenar
             <select

@@ -37,6 +37,8 @@ import PropertyDetailMap from '@/components/maps/PropertyDetailMap';
 import AdminRefreshProperty from '@/components/AdminRefreshProperty';
 import PropertyIntelligence from '@/components/PropertyIntelligence';
 import PropertyCard from '@/components/PropertyCard';
+import BrandAtmosphere from '@/components/aents/BrandAtmosphere';
+import { ecuadorPhoneHref, normalizeEcuadorPhone } from '@/lib/phone';
 
 /** Ficha de dato de la propiedad: icono lucide + valor en mono + etiqueta. */
 function StatTile({
@@ -49,9 +51,9 @@ function StatTile({
   label: string;
 }) {
   return (
-    <div className="flex flex-col items-center justify-center gap-2 rounded-card border border-line bg-surface px-3 py-5 text-center transition-all duration-200 hover:-translate-y-0.5 hover:shadow-cardHover">
-      <span className="flex h-11 w-11 items-center justify-center rounded-full bg-primaryLight">
-        <Icon className="h-5 w-5 text-primary" strokeWidth={1.75} aria-hidden />
+    <div className="flex flex-col items-center justify-center gap-1.5 rounded-card border border-line bg-surface/90 px-3 py-3 text-center transition-all duration-200 hover:-translate-y-0.5 hover:shadow-cardHover">
+      <span className="flex h-9 w-9 items-center justify-center rounded-full bg-primaryLight">
+        <Icon className="h-4 w-4 text-primary" strokeWidth={1.75} aria-hidden />
       </span>
       <div className="font-geo text-2xl font-semibold tabular-nums text-textPrimary">{value}</div>
       <div className="text-xs font-medium text-textSecondary">{label}</div>
@@ -119,7 +121,7 @@ export async function generateMetadata({ params }: PropertyPageProps): Promise<M
 
   // Get main image
   const mainImage = property.images?.find((img: any) => img.is_main) || property.images?.[0];
-  const imageUrl = mainImage?.image || '/og-image.png';
+  const imageUrl = mainImage?.image || '/opengraph-image';
 
   // Base URL for images and page
   const baseUrl = (
@@ -156,8 +158,6 @@ export async function generateMetadata({ params }: PropertyPageProps): Promise<M
       images: [
         {
           url: imageAbsoluteUrl,
-          width: 1200,
-          height: 630,
           alt: title,
         },
         // Include all property images (up to 5)
@@ -229,7 +229,7 @@ export default async function PropertyPage({ params }: PropertyPageProps) {
   const baseUrl = (
     process.env.NEXT_PUBLIC_FRONTEND_URL || 'https://geopropiedadesecuador.com'
   ).replace(/\/+$/, '');
-  const imageUrl = mainImage?.image || '/og-image.png';
+  const imageUrl = mainImage?.image || '/opengraph-image';
   const imageAbsoluteUrl = imageUrl.startsWith('http') ? imageUrl : `${baseUrl}${imageUrl}`;
   const propertyUrl = `${baseUrl}/propiedad/${property.id}`;
   const areaValue = Number.parseFloat(String(property.area ?? ''));
@@ -345,7 +345,8 @@ export default async function PropertyPage({ params }: PropertyPageProps) {
   const rentPriceFormatted = hasRentPrice ? formatPrice(String(property.rent_price)) : '';
   const isImported = Boolean(property.is_imported || property.source_url || property.external_id || property.source);
   const contactPhone = typeof property.contact_phone === 'string' ? property.contact_phone.trim() : '';
-  const waPhone = contactPhone ? contactPhone.replace(/[^0-9]/g, '') : '';
+  const waPhone = normalizeEcuadorPhone(contactPhone);
+  const callablePhone = ecuadorPhoneHref(contactPhone);
   const sourceUrl = typeof property.source_url === 'string' ? property.source_url.trim() : '';
   const sourceAgency = typeof property.source_agency === 'string' ? property.source_agency.trim() : '';
   // Mensaje de WhatsApp con referencia al anuncio y la URL de su ficha en nuestro sitio.
@@ -377,8 +378,9 @@ export default async function PropertyPage({ params }: PropertyPageProps) {
       />
 
       {/* Full property content — indexable and shareable */}
-      <div className="min-h-screen bg-background pb-16">
-        <div className="mx-auto max-w-6xl px-4 pt-8">
+      <div className="aents-page-shell relative min-h-screen overflow-hidden bg-background pb-16">
+        <BrandAtmosphere className="opacity-45" />
+        <div className="relative mx-auto max-w-6xl px-4 pt-8">
           {/* Breadcrumb */}
           <nav aria-label="Migas de pan" className="mb-6">
             <ol className="flex flex-wrap items-center gap-1.5 text-sm text-textSecondary">
@@ -684,11 +686,11 @@ export default async function PropertyPage({ params }: PropertyPageProps) {
                           Contactar por WhatsApp
                         </a>
                         <a
-                          href={`tel:${contactPhone}`}
+                          href={`tel:${callablePhone}`}
                           className="inline-flex w-full items-center justify-center gap-2 rounded-button border border-line bg-white px-5 py-3 text-base font-semibold text-textPrimary transition-colors duration-200 hover:bg-slate-50 focus:outline-none focus-visible:ring-4 focus-visible:ring-primary/15"
                         >
                           <Phone className="h-5 w-5" strokeWidth={1.75} aria-hidden />
-                          {contactPhone}
+                          {callablePhone}
                         </a>
                       </>
                     )

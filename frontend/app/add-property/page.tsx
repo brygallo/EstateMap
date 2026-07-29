@@ -1,6 +1,9 @@
 'use client';
 
 import { useEffect, useState, useRef } from 'react';
+// Read as data: this palette is handed to a library that does not resolve
+// CSS custom properties.
+import aentsTokens from '@/lib/aents-tokens.json';
 import { useParams, useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -191,7 +194,7 @@ const AddPropertyPage = () => {
   const [creatingAccount, setCreatingAccount] = useState(false);
   // Gate de publicación: por defecto ofrece registrarse, pero si el usuario ya
   // tiene cuenta puede iniciar sesión ('login') y publicar sin crear otra.
-  const [gateMode, setGateMode] = useState<'register' | 'login'>('register');
+  const [gateMode, setGateMode] = useState<'register' | 'login'>('login');
   const [loggingIn, setLoggingIn] = useState(false);
   // Cuando el login desde el gate tiene éxito, esperamos a que el token entre en
   // contexto para disparar la publicación automáticamente.
@@ -898,7 +901,8 @@ const AddPropertyPage = () => {
         property_type: v.propertyType,
         status: v.status,
       });
-      toast.info('Tu anuncio está listo. Crea una cuenta para publicarlo.');
+      toast.info('Tu anuncio está listo. Inicia sesión para publicarlo.');
+      setGateMode('login');
       setShowAccountModal(true);
       return;
     }
@@ -967,7 +971,11 @@ const AddPropertyPage = () => {
             particleCount: 90,
             spread: 70,
             origin: { y: 0.7 },
-            colors: ['#496D9C', '#688CCA', '#E3EAF4'],
+            colors: [
+              aentsTokens.light['--primary-strong'],
+              aentsTokens.light['--accent-alt'],
+              aentsTokens.light['--primary-soft'],
+            ],
           });
         } catch {}
         toast.success(isEditMode ? 'Propiedad actualizada exitosamente' : 'Propiedad creada exitosamente');
@@ -1050,9 +1058,7 @@ const AddPropertyPage = () => {
   const locationMapLabel =
     locationMode === 'point'
       ? 'Solo ubicación'
-      : showMeasurements
-        ? 'Polígono con medidas'
-        : 'Polígono sin medidas';
+      : 'Polígono sin medidas';
 
   // Autocompleta ciudad/provincia a partir del punto marcado en el mapa
   // (reverse geocoding con Nominatim). Con debounce para respetar el límite de
@@ -1432,7 +1438,7 @@ const AddPropertyPage = () => {
               className="space-y-4 lg:space-y-6"
             >
               {/* Progress + autosave */}
-              <div className="sticky top-16 z-20 overflow-hidden rounded-card border border-line bg-white/95 shadow-cardHover backdrop-blur">
+              <div className="overflow-hidden rounded-card border border-line bg-white shadow-card">
                 <div className="flex flex-col gap-3 border-b border-line px-4 py-3 lg:flex-row lg:items-center lg:justify-between">
                   <div className="min-w-0">
                     <div className="flex flex-wrap items-center gap-2">
@@ -1687,16 +1693,8 @@ const AddPropertyPage = () => {
                           title: 'Polígono sin medidas',
                           description: 'Contorno aproximado, sin distancias.',
                           icon: Pentagon,
-                          active: locationMode === 'polygon' && !showMeasurements,
+                          active: locationMode === 'polygon',
                           onClick: () => handleLocationModeChange('polygon', false),
-                        },
-                        {
-                          key: 'polygon-measured',
-                          title: 'Polígono con medidas',
-                          description: 'Contorno con lados medidos.',
-                          icon: Ruler,
-                          active: locationMode === 'polygon' && showMeasurements,
-                          onClick: () => handleLocationModeChange('polygon', true),
                         },
                       ].map((option) => (
                         <button
@@ -2244,7 +2242,7 @@ const AddPropertyPage = () => {
                     ) : (
                       <>
                         <Check className="mr-2 h-5 w-5" />
-                        {isEditMode ? 'Actualizar propiedad' : token ? 'Guardar Propiedad' : 'Crear cuenta para publicar'}
+                        {isEditMode ? 'Actualizar propiedad' : token ? 'Guardar Propiedad' : 'Iniciar sesión para publicar'}
                       </>
                     )}
                   </Button>
@@ -2395,7 +2393,7 @@ const AddPropertyPage = () => {
           <DialogHeader>
             <DialogTitle>Tu anuncio no se ha publicado</DialogTitle>
             <DialogDescription>
-              Guardamos el borrador en este navegador. Puedes volver luego, crear tu cuenta para publicarlo o pedir ayuda por WhatsApp.
+              Guardamos el borrador en este navegador. Puedes volver luego, iniciar sesión —o crear una cuenta si aún no tienes— y publicarlo.
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-3">
@@ -2438,7 +2436,7 @@ const AddPropertyPage = () => {
               <DialogDescription className="mt-2">
                 {gateMode === 'login'
                   ? 'Inicia sesión con tu cuenta para publicar este anuncio. El borrador ya está guardado.'
-                  : 'Crea tu cuenta o inicia sesión para publicar este anuncio. El borrador ya está guardado.'}
+                  : 'Crea una cuenta para publicar este anuncio. El borrador ya está guardado.'}
               </DialogDescription>
             </div>
           </DialogHeader>
@@ -2483,7 +2481,7 @@ const AddPropertyPage = () => {
               <p className="text-center text-sm text-textSecondary">
                 ¿No tienes cuenta?{' '}
                 <button type="button" onClick={() => setGateMode('register')} className="font-semibold text-primary hover:underline">
-                  Regístrate
+                  Crea una
                 </button>
               </p>
             </form>

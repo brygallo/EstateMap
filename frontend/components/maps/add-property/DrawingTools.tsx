@@ -6,6 +6,12 @@ import '@geoman-io/leaflet-geoman-free';
 import '@geoman-io/leaflet-geoman-free/dist/leaflet-geoman.css';
 import { useEffect, useRef, useCallback } from 'react';
 import * as turf from '@turf/turf';
+import aentsTokens from '@/lib/aents-tokens.json';
+
+// Leaflet/Geoman style options are consumed by canvas/SVG APIs that cannot
+// resolve CSS custom properties, so raw token values are read from JSON here.
+const BRAND_STROKE = aentsTokens.light['--primary-strong'];
+const TOOL_HINT = aentsTokens.light['--info'];
 
 /* ===================== Dibujo & medición ===================== */
 export function DrawingTools({
@@ -77,7 +83,7 @@ export function DrawingTools({
           background: white;
           padding: 4px 8px;
           border-radius: 6px;
-          border: 1px solid #496D9C;
+          border: 1px solid var(--primary-strong);
           box-shadow: 0 2px 6px rgba(0,0,0,0.15);
         ">
           <input type="number" step="0.1" min="0.1"
@@ -87,14 +93,14 @@ export function DrawingTools({
                         font-size: 12px;
                         font-weight: 600;
                         padding: 2px 4px;
-                        border: 1px solid #ddd;
+                        border: 1px solid var(--border);
                         border-radius: 3px;
                         text-align: center;
                         outline: none;
-                        background: #f8f9fa;
-                        color: #333;"
+                        background: var(--surface);
+                        color: var(--text);"
                  value="${lengthMeters.toFixed(1)}" />
-          <span style="font-size: 11px; color: #666; font-weight: 500;">m</span>
+          <span style="font-size: 11px; color: var(--text-muted); font-weight: 500;">m</span>
         </div>
       `;
 
@@ -230,7 +236,7 @@ export function DrawingTools({
 
   const stylePolygon = (layer: any) => {
     layer.setStyle?.({
-      color: '#496D9C',
+      color: BRAND_STROKE,
       weight: 2.5,
       fillOpacity: 0.15,
       lineJoin: 'round',
@@ -303,8 +309,8 @@ export function DrawingTools({
       snappable: true,
       snapDistance: 20,
       allowSelfIntersection: false,
-      templineStyle: { color: '#1971c2' },
-      hintlineStyle: { color: '#1971c2', dashArray: [4, 4] },
+      templineStyle: { color: TOOL_HINT },
+      hintlineStyle: { color: TOOL_HINT, dashArray: [4, 4] },
       continueDrawing: false,
       editable: true,
     });
@@ -512,7 +518,7 @@ export function DrawingTools({
 
           // Create polygon from initial data
           const polygon = L.polygon(initialPolygon, {
-            color: '#496D9C',
+            color: BRAND_STROKE,
             weight: 2.5,
             fillOpacity: 0.15,
             lineJoin: 'round',

@@ -1,4 +1,5 @@
 import { Metadata } from 'next';
+import BrandAtmosphere from '@/components/aents/BrandAtmosphere';
 
 export const metadata: Metadata = {
   robots: {
@@ -13,8 +14,9 @@ export default function AuthLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background px-4 py-16 sm:px-6 lg:px-8">
-      <div className="w-full max-w-md">{children}</div>
+    <div className="aents-page-shell relative flex min-h-screen items-center justify-center overflow-hidden bg-background px-4 py-16 sm:px-6 lg:px-8">
+      <BrandAtmosphere />
+      <div className="aents-shell-content relative w-full max-w-md">{children}</div>
     </div>
   );
 }

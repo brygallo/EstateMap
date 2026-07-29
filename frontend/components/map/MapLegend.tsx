@@ -8,7 +8,7 @@ import { statusColor } from '@/lib/mapMarkers';
 const ITEMS = [
   { label: 'En venta', color: statusColor('for_sale') },
   { label: 'En alquiler', color: statusColor('for_rent') },
-  { label: 'Inactivo', color: '#64748B' },
+  { label: 'Inactivo', color: 'var(--text-muted)' },
 ];
 
 /**

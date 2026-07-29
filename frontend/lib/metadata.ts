@@ -10,7 +10,7 @@ export function generatePageMetadata(
     process.env.NEXT_PUBLIC_FRONTEND_URL || 'https://geopropiedadesecuador.com'
   ).replace(/\/+$/, '');
   const fullUrl = `${baseUrl}${path}`;
-  const ogImage = `${baseUrl}/og-image.png`;
+  const ogImage = `${baseUrl}/opengraph-image`;
 
   return {
     title,

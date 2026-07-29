@@ -34,7 +34,7 @@ export default function LayerSwitch({ active, onToggle }: LayerSwitchProps) {
       >
         <span
           className="block h-[52px] w-full bg-cover bg-center"
-          style={{ backgroundColor: '#cfd8dc', backgroundImage: `url("${targetThumb}")` }}
+          style={{ backgroundColor: 'var(--border)', backgroundImage: `url("${targetThumb}")` }}
         />
         <span className="block bg-surface py-1 text-center text-[0.7rem] font-semibold text-textPrimary">
           {targetLabel}

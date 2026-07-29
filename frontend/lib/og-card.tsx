@@ -1,8 +1,17 @@
 /**
  * Tarjeta Open Graph compartida (1200x630) para las landings SEO dinámicas.
  * Se renderiza con `next/og` (satori): solo estilos inline y flexbox.
- * Los hex vienen de la paleta navy de tailwind.config.js.
+ * Los hex vienen de los tokens Aents.
  */
+import aentsTokens from '@/lib/aents-tokens.json';
+
+// Satori does not resolve CSS custom properties: the Aents tokens must be
+// inlined as literal hex values read from the JSON source of truth.
+const tokens = aentsTokens.light;
+const PRIMARY_STRONG = tokens['--primary-strong'];
+const ACCENT_ALT_STRONG = tokens['--accent-alt-strong'];
+const ACCENT_ALT = tokens['--accent-alt'];
+const PRIMARY_SOFT = tokens['--primary-soft'];
 
 export const OG_SIZE = { width: 1200, height: 630 };
 
@@ -24,7 +33,7 @@ export function OgCard({
         flexDirection: 'column',
         justifyContent: 'space-between',
         padding: 64,
-        backgroundImage: 'linear-gradient(135deg, #2D3C67 0%, #496D9C 55%, #688CCA 100%)',
+        backgroundImage: `linear-gradient(135deg, ${ACCENT_ALT_STRONG} 0%, ${PRIMARY_STRONG} 55%, ${ACCENT_ALT} 100%)`,
         color: '#FFFFFF',
         fontFamily: 'sans-serif',
       }}
@@ -48,7 +57,7 @@ export function OgCard({
               height: 56,
               borderRadius: 9999,
               backgroundColor: '#FFFFFF',
-              color: '#2D3C67',
+              color: ACCENT_ALT_STRONG,
               fontSize: 26,
               fontWeight: 800,
             }}
@@ -90,7 +99,7 @@ export function OgCard({
               display: 'flex',
               fontSize: 32,
               fontWeight: 500,
-              color: '#E7E2F3',
+              color: PRIMARY_SOFT,
               maxWidth: 1000,
             }}
           >
@@ -105,7 +114,7 @@ export function OgCard({
           alignItems: 'center',
           justifyContent: 'space-between',
           fontSize: 26,
-          color: '#E7E2F3',
+          color: PRIMARY_SOFT,
         }}
       >
         <div style={{ display: 'flex' }}>Todas las propiedades en un solo mapa</div>
