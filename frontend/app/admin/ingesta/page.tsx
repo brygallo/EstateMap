@@ -5,6 +5,7 @@ import AdminSidebar from '@/components/AdminSidebar';
 import { useAuth } from '@/lib/auth-context';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
+import { requestErrorMessage } from '@/lib/form-errors';
 import {
   AlertTriangle,
   Building2,
@@ -240,8 +241,8 @@ const IngestaPage = () => {
         toast.success(`Ingesta lanzada (${opts.label}). Sigue el progreso abajo.`);
       }
       await fetchAll();
-    } catch {
-      toast.error('Error de conexión al lanzar la ingesta.');
+    } catch (error) {
+      toast.error(requestErrorMessage(error, 'iniciar la ingesta'));
     } finally {
       setLaunching('');
     }
@@ -278,8 +279,8 @@ const IngestaPage = () => {
         toast.success('Cancelación solicitada. Se detendrá en unos segundos.');
       }
       await fetchAll();
-    } catch {
-      toast.error('Error de conexión al cancelar la ingesta.');
+    } catch (error) {
+      toast.error(requestErrorMessage(error, 'cancelar la ingesta'));
     } finally {
       setCancelling(false);
     }

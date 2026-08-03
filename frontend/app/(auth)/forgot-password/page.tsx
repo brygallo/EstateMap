@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent } from '@/components/ui/card';
+import { fetchWithTimeout, requestErrorMessage, responseErrorMessage } from '@/lib/form-errors';
 
 const ForgotPassword = () => {
   const [emailSent, setEmailSent] = useState(false);
@@ -21,7 +22,7 @@ const ForgotPassword = () => {
 
   const handleSubmit = async (values: any, { setSubmitting }: any) => {
     try {
-      const res = await fetch(`${API_URL}/request-password-reset/`, {
+      const res = await fetchWithTimeout(`${API_URL}/request-password-reset/`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(values),
@@ -29,14 +30,14 @@ const ForgotPassword = () => {
       const data = await res.json().catch(() => ({}));
 
       if (!res.ok) {
-        toast.error(data.error || 'Error al enviar el correo');
+        toast.error(data.error || await responseErrorMessage(res, 'No se pudo enviar el correo.'));
         return;
       }
 
       setEmailSent(true);
       toast.success(data.message || 'Correo enviado exitosamente');
     } catch (err) {
-      toast.error('Error de conexión');
+      toast.error(requestErrorMessage(err, 'solicitar la recuperación de contraseña'));
     } finally {
       setSubmitting(false);
     }

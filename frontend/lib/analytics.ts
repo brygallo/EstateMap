@@ -7,8 +7,22 @@ declare global {
   }
 }
 
+// Search and AI crawlers execute JavaScript, so they used to fire this beacon
+// and land in ActivityEvent as if they were people: about 78% of the recorded
+// sessions were Googlebot, GoogleOther and meta-externalagent. Skipping them
+// keeps the funnel readable — the panel counts humans only.
+const CRAWLER_UA = /bot|crawler|spider|crawling|headless|chrome-lighthouse|google(other|-inspectiontool)|externalagent|externalhit|preview|slurp|bytespider|embedly|quora link preview|whatsapp|telegram|discord|pinterest|python-requests|axios|node-fetch|curl|wget/i;
+
+function isCrawler(): boolean {
+  const nav = window.navigator;
+  if (!nav) return false;
+  if (nav.webdriver) return true;
+  return CRAWLER_UA.test(nav.userAgent || '');
+}
+
 export function trackEvent(eventName: string, payload: EventPayload = {}) {
   if (typeof window === 'undefined') return;
+  if (isCrawler()) return;
 
   const params = new URLSearchParams(window.location.search);
   const attributionKey = 'geo:first-attribution';

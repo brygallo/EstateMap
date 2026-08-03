@@ -19,8 +19,8 @@ if (typeof window !== 'undefined') {
 }
 
 export interface PropertyDetailMapProps {
-  latitude: number;
-  longitude: number;
+  latitude?: number | string | null;
+  longitude?: number | string | null;
   polygon?: any;
   status?: string;
   price?: number | string | null;
@@ -43,9 +43,11 @@ function toLeafletCoordinates(polygon: any): [number, number][] | null {
 function FitToProperty({
   coordinates,
   center,
+  hasLocation,
 }: {
   coordinates: [number, number][] | null;
   center: [number, number];
+  hasLocation: boolean;
 }) {
   const map = useMap();
 
@@ -56,7 +58,7 @@ function FitToProperty({
         const bounds = L.latLngBounds(coordinates.map(([lat, lng]) => L.latLng(lat, lng)));
         map.fitBounds(bounds, { padding: [40, 40], maxZoom: 18 });
       } else {
-        map.setView(center, 16);
+        map.setView(center, hasLocation ? 16 : 6);
       }
     };
 
@@ -68,7 +70,7 @@ function FitToProperty({
       window.clearTimeout(resizeTimer);
       window.clearTimeout(settleTimer);
     };
-  }, [map, coordinates, center]);
+  }, [map, coordinates, center, hasLocation]);
 
   return null;
 }
@@ -86,7 +88,25 @@ const PropertyDetailMapInner = ({
     setActiveLayer((prev) => (prev === 'satellite' ? 'streets' : 'satellite'));
 
   const coordinates = useMemo(() => toLeafletCoordinates(polygon), [polygon]);
-  const center: [number, number] = [latitude, longitude];
+  const latitudeNumber = Number(latitude);
+  const longitudeNumber = Number(longitude);
+  const hasPoint = Number.isFinite(latitudeNumber) && Number.isFinite(longitudeNumber)
+    && latitudeNumber >= -90 && latitudeNumber <= 90
+    && longitudeNumber >= -180 && longitudeNumber <= 180;
+  const polygonCenter = useMemo<[number, number] | null>(() => {
+    if (!coordinates) return null;
+    try {
+      const ring = coordinates.map(([lat, lng]) => [lng, lat]);
+      ring.push(ring[0]);
+      const centroid = turf.centroid(turf.polygon([ring]));
+      return [centroid.geometry.coordinates[1], centroid.geometry.coordinates[0]];
+    } catch {
+      return coordinates[0] ?? null;
+    }
+  }, [coordinates]);
+  const center: [number, number] = polygonCenter
+    ?? (hasPoint ? [latitudeNumber, longitudeNumber] : [-1.8312, -78.1834]);
+  const hasLocation = Boolean(coordinates || hasPoint);
 
   // Colores alineados con la home: verde profundo (venta), dorado (alquiler),
   // gris neutro (inactivo).
@@ -99,21 +119,12 @@ const PropertyDetailMapInner = ({
 
   // Posición de la etiqueta de precio: centroide del polígono o el propio punto.
   const labelPosition = useMemo<[number, number]>(() => {
-    if (coordinates) {
-      try {
-        const ring = coordinates.map(([lat, lng]) => [lng, lat]);
-        ring.push(ring[0]);
-        const centroid = turf.centroid(turf.polygon([ring]));
-        return [centroid.geometry.coordinates[1], centroid.geometry.coordinates[0]];
-      } catch {
-        return coordinates[0];
-      }
-    }
+    if (polygonCenter) return polygonCenter;
     return center;
-  }, [coordinates, center]);
+  }, [polygonCenter, center]);
 
   const markerIcon = useMemo(() => {
-    if (coordinates) return null;
+    if (coordinates || !hasPoint) return null;
     return new L.Icon({
       iconUrl:
         'data:image/svg+xml;base64,' +
@@ -125,7 +136,7 @@ const PropertyDetailMapInner = ({
       iconSize: [32, 32],
       iconAnchor: [16, 32],
     });
-  }, [coordinates, baseColor]);
+  }, [coordinates, hasPoint, baseColor]);
 
   const priceIcon = useMemo(() => {
     if (!formattedPrice) return null;
@@ -163,7 +174,7 @@ const PropertyDetailMapInner = ({
       `}</style>
       <MapContainer
         center={center}
-        zoom={16}
+        zoom={hasLocation ? 16 : 6}
         maxZoom={21}
         scrollWheelZoom={false}
         className="h-64 w-full relative z-0"
@@ -189,7 +200,7 @@ const PropertyDetailMapInner = ({
 
         <LayerSwitch active={activeLayer} onToggle={toggleLayer} />
         <ScaleControl position="bottomright" metric imperial={false} maxWidth={120} />
-        <FitToProperty coordinates={coordinates} center={center} />
+        <FitToProperty coordinates={coordinates} center={center} hasLocation={hasLocation} />
 
         {coordinates ? (
           <Polygon
@@ -200,7 +211,7 @@ const PropertyDetailMapInner = ({
           markerIcon && <Marker position={center} icon={markerIcon} keyboard={false} alt={title || ''} />
         )}
 
-        {priceIcon && <Marker position={labelPosition} icon={priceIcon} interactive={false} keyboard={false} alt="" zIndexOffset={500} />}
+        {hasLocation && priceIcon && <Marker position={labelPosition} icon={priceIcon} interactive={false} keyboard={false} alt="" zIndexOffset={500} />}
       </MapContainer>
     </>
   );

@@ -68,3 +68,19 @@ def clear_mailbox():
 def reset_email_backend(settings):
     """Ensure we're using console backend for tests"""
     settings.EMAIL_BACKEND = 'django.core.mail.backends.locmem.EmailBackend'
+
+
+@pytest.fixture(autouse=True)
+def celery_runs_inline():
+    """
+    Run tasks in-process during tests.
+
+    Without this, anything calling .delay() tries to reach a real broker and the
+    test fails on a refused connection instead of on its own assertion.
+    """
+    from estate_map.celery import app
+
+    previous = app.conf.task_always_eager
+    app.conf.task_always_eager = True
+    yield
+    app.conf.task_always_eager = previous

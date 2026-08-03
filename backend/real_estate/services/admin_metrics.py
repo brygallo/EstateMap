@@ -90,6 +90,18 @@ def _build_owner_metrics(now=None):
     }
 
     month_events = ActivityEvent.objects.filter(created_at__gte=month_start)
+    contact_methods = [
+        {
+            "method": row["payload__method"] or "unknown",
+            "count": row["count"],
+        }
+        for row in (
+            month_events.filter(event_name="property_contact_clicked")
+            .values("payload__method")
+            .annotate(count=Count("id"))
+            .order_by("-count", "payload__method")
+        )
+    ]
     # Atribución first-touch capturada por el cliente. Se agrupa por sesión para
     # no inflar visitas cuando una misma persona genera varios eventos.
     acquisition = {}
@@ -243,6 +255,7 @@ def _build_owner_metrics(now=None):
         "top_properties": top_properties,
         "source_performance": source_performance,
         "acquisition_channels": acquisition_channels[:20],
+        "contact_methods": contact_methods,
         "audience": {
             "active_30d": active_users_30d,
             "recurring_30d": recurring_sessions,

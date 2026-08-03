@@ -11,6 +11,11 @@ services:
     env_file:
       - .env.prod
 
+    environment:
+      # The web process enqueues the optimization, so it needs the broker as
+      # much as the worker does. Shared Redis, index 0 for this system.
+      CELERY_BROKER_URL: ${CELERY_BROKER_URL:-redis://aents-redis:6379/0}
+
     command: gunicorn estate_map.wsgi:application --bind 0.0.0.0:8000 --workers 3
 
     extra_hosts:
@@ -19,12 +24,66 @@ services:
     volumes:
       - static_volume:/app/staticfiles
       - media_volume:/app/media
+      - pending_images:/app/tmp/pending-images
 
     ports:
       - "8000:8000"
 
     networks:
       - estatemap_network
+      - aents_shared
+
+  # Image optimization runs here instead of inside the upload request. The
+  # broker is the host's Redis, shared with the other Aents systems; this
+  # project owns database index 0 (see settings.py for the registry).
+  worker:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: estatemap_worker
+    restart: always
+
+    env_file:
+      - .env.prod
+
+    environment:
+      CELERY_BROKER_URL: ${CELERY_BROKER_URL:-redis://aents-redis:6379/0}
+
+    # -B runs beat inside the worker: one process covers both the queue and the
+    # hourly sweep. Safe here because this system runs exactly one worker.
+    command: celery -A estate_map worker -B --loglevel=info --concurrency=1 --max-tasks-per-child=50
+
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+    volumes:
+      # Same staging directory the web container writes uploads to. Without this
+      # shared volume the worker cannot see the file it is asked to optimize.
+      - pending_images:/app/tmp/pending-images
+
+    # This queue is secondary and takes as long as it takes, so it is sized to
+    # stay out of everyone's way on an 8 GB / 4 vCPU host shared with Aents, the
+    # mail stack and nginx. One task at a time; 512 MB covers a single 1920px
+    # encode with room for the decoded source.
+    mem_limit: 512m
+    memswap_limit: 512m
+    cpus: 1
+    # Relative CPU weight, default is 1024. Under contention the kernel serves
+    # web traffic first and lets the optimizer wait.
+    cpu_shares: 256
+
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+    depends_on:
+      - backend
+
+    networks:
+      - estatemap_network
+      - aents_shared
 
   frontend:
     build:
@@ -55,13 +114,21 @@ services:
     depends_on:
       - backend
 
+    # No aents_shared here: the frontend never talks to the broker.
     networks:
       - estatemap_network
 
 volumes:
   static_volume:
   media_volume:
+  pending_images:
 
 networks:
   estatemap_network:
     driver: bridge
+
+  # Cross-project network carrying the Redis every Aents system shares. Created
+  # once by the aents-shared stack; declared external here so this compose joins
+  # it instead of trying to own it.
+  aents_shared:
+    external: true

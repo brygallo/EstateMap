@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import SeoLanding, { TYPE_LINKS, priceRangeText } from '@/components/SeoLanding';
-import { getProperties, getCities, slugify } from '@/lib/properties';
+import { getProperties, getCities, getLocationCatalog, slugify } from '@/lib/properties';
 import { generateCombosWithCounts, parseComboSlug } from '@/lib/seo-combos';
 import { generatePageMetadata } from '@/lib/metadata';
 
@@ -16,9 +16,17 @@ interface CityPageProps {
 async function resolveCity(slug: string) {
   const properties = await getProperties();
   const match = getCities(properties).find((c) => c.slug === slug);
-  if (!match) return null;
-  const cityProperties = properties.filter((p) => slugify(p.city || '') === slug);
-  return { name: match.name, properties: cityProperties };
+  if (match) {
+    const cityProperties = properties.filter((p) => slugify(p.city || '') === slug);
+    return { name: match.name, properties: cityProperties };
+  }
+
+  // No listings right now: fall back to the stable canton catalogue so the page
+  // keeps answering 200 with an empty state instead of 404-ing an indexed URL.
+  // A slug missing from the catalogue too is a genuine 404.
+  const { cities } = await getLocationCatalog();
+  const known = cities.find((c) => c.slug === slug);
+  return known ? { name: known.name, properties: [] } : null;
 }
 
 export async function generateStaticParams() {
@@ -36,11 +44,18 @@ export async function generateMetadata({
     return { title: 'Ciudad no encontrada', robots: { index: false, follow: false } };
   }
 
-  return generatePageMetadata(
+  const metadata = generatePageMetadata(
     `Propiedades en ${city.name}`,
     `Casas, departamentos, terrenos y locales en venta y alquiler en ${city.name}, Ecuador. Cobertura para ciudades principales, cantones y búsquedas locales con mapa, precios y fotos.`,
     `/propiedades/${ciudad}`
   );
+
+  // Out of stock, not gone: crawlable so it recovers on its own when listings
+  // return, but out of the index while it has nothing to show.
+  if (city.properties.length === 0) {
+    return { ...metadata, robots: { index: false, follow: true } };
+  }
+  return metadata;
 }
 
 export default async function CiudadPage({ params }: CityPageProps) {

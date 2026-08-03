@@ -215,6 +215,12 @@ class PropertyPriceHistory(models.Model):
 
 class PropertyImage(models.Model):
     """Images for properties stored in MinIO with optimization"""
+
+    class Status(models.TextChoices):
+        PENDING = "pending", "Pendiente de optimizar"
+        READY = "ready", "Optimizada"
+        FAILED = "failed", "Falló la optimización"
+
     property = models.ForeignKey(
         Property,
         on_delete=models.CASCADE,
@@ -222,6 +228,7 @@ class PropertyImage(models.Model):
     )
     image = models.ImageField(
         upload_to="properties/",
+        blank=True,
         validators=[validate_image_size, validate_image_dimensions, validate_image_format]
     )
     thumbnail = models.ImageField(
@@ -235,24 +242,32 @@ class PropertyImage(models.Model):
     file_size = models.IntegerField(default=0, help_text="Tamaño del archivo en bytes")
     uploaded_at = models.DateTimeField(auto_now_add=True)
 
+    # Optimization is done by a Celery worker, not by the request that uploaded
+    # the file, so a row exists before `image` points at anything in MinIO.
+    status = models.CharField(
+        max_length=10,
+        choices=Status.choices,
+        default=Status.READY,
+        db_index=True,
+        help_text="Estado del pipeline de optimización",
+    )
+    pending_path = models.CharField(
+        max_length=500,
+        blank=True,
+        help_text="Ruta del original en disco mientras espera al worker",
+    )
+    optimization_error = models.TextField(blank=True)
+
     class Meta:
         ordering = ["-is_main", "-uploaded_at"]
 
     def __str__(self):
         return f"Image for {self.property.title or f'Property {self.property.pk}'}"
 
-    def save(self, *args, **kwargs):
-        """Override save to optimize image on upload"""
-        from .image_utils import ImageOptimizationService
-
-        if self.image and not self.pk:
-            self.original_filename = self.image.name
-            result = ImageOptimizationService().process(self.image)
-            self.image = result.image
-            self.thumbnail = result.thumbnail
-            self.file_size = self.image.size
-
-        super().save(*args, **kwargs)
+    # Not a @property: the FK above is named `property` and shadows the builtin
+    # inside this class body.
+    def is_ready(self):
+        return self.status == self.Status.READY and bool(self.image)
 
 
 class EmailVerificationToken(models.Model):

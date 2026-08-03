@@ -10,7 +10,9 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
 from rest_framework.settings import api_settings
-from django.http import HttpResponse, Http404
+from pathlib import Path
+from django.http import HttpResponse, Http404, FileResponse, HttpResponseRedirect
+from django.shortcuts import get_object_or_404
 from django.views import View
 from django.conf import settings
 from .models import ActivityEvent, Property, PropertyImage, Province, City, Lead, PendingPublication
@@ -461,6 +463,46 @@ class PropertyViewSet(viewsets.ModelViewSet):
         ]
         return Response(result)
 
+    @action(detail=False, methods=['get'], permission_classes=[AllowAny])
+    def catalog(self, request):
+        """
+        Stable catalogue of the country's provinces and cantons, read from the
+        `Province`/`City` tables and NOT from the inventory.
+
+        `locations` derives its values from the active properties, so a city
+        whose listings all expire disappears from the list. SEO landing pages
+        need the opposite: knowing the canton exists even with no listings
+        today, so they can answer 200 with an empty state instead of a 404 that
+        drops an already ranked URL from the index.
+        """
+        provinces = {}
+
+        # Official cantons, so a location keeps resolving even with no listings.
+        rows = (
+            City.objects.select_related('province')
+            .values('name', 'province__name')
+            .order_by('province__name', 'name')
+        )
+        for row in rows:
+            provinces.setdefault(row['province__name'], set()).add(row['name'])
+
+        # Plus every city name a property has ever carried, including inactive
+        # and duplicate ones. The scraper stores colloquial names that do not
+        # always match the official canton ("Los Bancos" vs "San Miguel de los
+        # Bancos"), and those are the spellings already indexed as URLs.
+        historic = Property.objects.values('province', 'city').distinct()
+        for row in historic:
+            prov = (row['province'] or '').strip()
+            city = (row['city'] or '').strip()
+            if prov and city:
+                provinces.setdefault(prov, set()).add(city)
+
+        result = [
+            {'province': prov, 'cities': sorted(cities)}
+            for prov, cities in sorted(provinces.items(), key=lambda kv: kv[0].lower())
+        ]
+        return Response(result)
+
     @action(detail=False, methods=['get'], permission_classes=[IsAuthenticated])
     def my_properties(self, request):
         """Get only the properties owned by the current user (including inactive)"""
@@ -785,6 +827,38 @@ class ImageProxyView(View):
             logger = logging.getLogger(__name__)
             logger.error(f"Error fetching image from MinIO: {minio_url} - {str(e)}")
             raise Http404("Image not found")
+
+
+class PendingImageView(View):
+    """
+    Serve a freshly uploaded image from local staging while the worker is still
+    optimizing it.
+
+    Without this there is a window where the row exists but nothing in MinIO
+    does, and the client would render a broken image. Lookup is by row id, never
+    by path, so a crafted URL cannot walk out of the staging directory.
+    """
+
+    def get(self, request, image_id):
+        from .models import PropertyImage
+
+        image = get_object_or_404(PropertyImage, pk=image_id)
+
+        # Once optimized the file belongs in MinIO; do not keep proxying it.
+        if image.status != PropertyImage.Status.PENDING or not image.pending_path:
+            if image.image:
+                return HttpResponseRedirect(image.image.url)
+            raise Http404("Image not available")
+
+        path = Path(image.pending_path)
+        if not path.is_file() or path.parent != Path(settings.IMAGE_UPLOAD_TEMP_DIR):
+            raise Http404("Image not available")
+
+        response = FileResponse(path.open("rb"))
+        # Deliberately not cached: this URL stops being valid the moment the
+        # worker finishes, which is usually seconds away.
+        response["Cache-Control"] = "no-store"
+        return response
 
 
 class VerifyEmailView(generics.GenericAPIView):

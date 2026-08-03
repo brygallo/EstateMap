@@ -123,6 +123,28 @@ export function generateCombos(properties: Property[]): ComboParam[] {
   return generateCombosWithCounts(properties).map(({ combo }) => ({ combo }));
 }
 
+/**
+ * Readable name of a location (city or province) looked up across the whole
+ * catalogue, without filtering by type or operation.
+ *
+ * Tells apart two cases that used to collapse into the same 404: a landing
+ * whose inventory ran out temporarily (the location exists and the URL was
+ * already indexed) versus an invented slug (the location does not exist). Only
+ * the second one deserves a 404.
+ */
+export function resolveLocationName(
+  properties: Property[],
+  locationSlug: string
+): string | null {
+  for (const p of properties) {
+    const city = (p.city || '').trim();
+    if (city && slugify(city) === locationSlug) return city;
+    const province = (p.province || '').trim();
+    if (province && slugify(province) === locationSlug) return province;
+  }
+  return null;
+}
+
 export type CityComboLink = { combo: string; label: string; count: number };
 
 /**

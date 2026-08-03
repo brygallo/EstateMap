@@ -5,6 +5,7 @@ import { useAuth } from '@/lib/auth-context';
 import { buildWhatsAppUrl } from '@/lib/constants';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
+import { requestErrorMessage, responseErrorMessage } from '@/lib/form-errors';
 import {
   BarChart3,
   Eye,
@@ -173,11 +174,11 @@ const MyPropertiesPage = () => {
         logout();
         router.push('/iniciar-sesion');
       } else {
-        toast.error('Error al eliminar la propiedad');
+        toast.error(await responseErrorMessage(res, 'No se pudo eliminar la propiedad.'));
       }
     } catch (err) {
       console.error('Error:', err);
-      toast.error('Error de conexión');
+      toast.error(requestErrorMessage(err, 'eliminar la propiedad'));
     }
   };
 

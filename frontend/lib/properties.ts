@@ -67,6 +67,57 @@ export async function getProperties({
   }
 }
 
+export type LocationCatalog = {
+  cities: { name: string; slug: string; province: string }[];
+  provinces: { name: string; slug: string }[];
+};
+
+const EMPTY_CATALOG: LocationCatalog = { cities: [], provinces: [] };
+
+/**
+ * Stable list of the country's provinces and cantons, independent of what is
+ * currently listed.
+ *
+ * `getCities`/`getProvinces` derive their values from the live inventory, so a
+ * canton whose listings all expire vanishes and its landing page starts
+ * answering 404 — dropping a URL Google had already indexed. This catalogue
+ * lets those pages tell "no stock right now" apart from "no such place".
+ * Returns an empty catalogue on failure, which keeps the previous behaviour.
+ */
+export async function getLocationCatalog(revalidate = 86400): Promise<LocationCatalog> {
+  try {
+    const res = await fetch(`${API_URL}/properties/catalog/`, { next: { revalidate } });
+    if (!res.ok) return EMPTY_CATALOG;
+    const data = await res.json();
+    if (!Array.isArray(data)) return EMPTY_CATALOG;
+
+    // Deduped by slug: province values stored on properties vary in casing
+    // ("MORONA SANTIAGO" vs "Morona Santiago"), which would otherwise yield the
+    // same location twice.
+    const cities = new Map<string, LocationCatalog['cities'][number]>();
+    const provinces = new Map<string, LocationCatalog['provinces'][number]>();
+    for (const entry of data) {
+      const province = (entry?.province || '').trim();
+      if (!province) continue;
+      const provinceSlug = slugify(province);
+      if (provinceSlug && !provinces.has(provinceSlug)) {
+        provinces.set(provinceSlug, { name: province, slug: provinceSlug });
+      }
+      for (const city of entry?.cities || []) {
+        const name = (city || '').trim();
+        const citySlug = name ? slugify(name) : '';
+        if (citySlug && !cities.has(citySlug)) {
+          cities.set(citySlug, { name, slug: citySlug, province });
+        }
+      }
+    }
+    return { cities: [...cities.values()], provinces: [...provinces.values()] };
+  } catch (error) {
+    console.error('Error fetching location catalog:', error);
+    return EMPTY_CATALOG;
+  }
+}
+
 interface GetFeaturedPropertiesOptions {
   type?: string;
   status?: string;
@@ -116,6 +167,9 @@ export async function getNearbyProperties(
 
     return normalizeList(await response.json())
       .filter((candidate) =>
+        // An id-less candidate would render as `/propiedad/null`, a link only
+        // crawlers ever follow — it cost ~180 requests answered with 404.
+        candidate.id != null &&
         candidate.id !== property.id &&
         Number.isFinite(Number(candidate.latitude)) &&
         Number.isFinite(Number(candidate.longitude))

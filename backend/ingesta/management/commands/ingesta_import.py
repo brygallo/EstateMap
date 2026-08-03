@@ -16,7 +16,7 @@ from django.utils import timezone
 
 from ingesta.models import Fuente
 from ingesta.packaging import PaqueteInvalido, PaqueteReader
-from ingesta.pipeline.images import delete_property_images
+from ingesta.pipeline.retirement import retire_property
 from ingesta.pipeline.upsert import upsert_property
 
 
@@ -99,8 +99,6 @@ class Command(BaseCommand):
         ).exclude(external_id__in=seen_ids).exclude(status="inactive")
         count = 0
         for prop in stale:
-            delete_property_images(prop)
-            prop.status = "inactive"
-            prop.save(update_fields=["status"])
+            retire_property(prop)
             count += 1
         return count

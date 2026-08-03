@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
-import { AlertCircle, Activity, ExternalLink, MousePointerClick, RefreshCw } from 'lucide-react';
+import { AlertCircle, Activity, ChevronDown, ExternalLink, Info, MousePointerClick, RefreshCw, UserRound } from 'lucide-react';
 import { toast } from 'sonner';
 import AdminRoute from '@/components/AdminRoute';
 import AdminSidebar from '@/components/AdminSidebar';
@@ -32,7 +32,9 @@ const CONTACT_EVENT = 'property_contact_clicked';
 
 type EventItem = {
   id: number;
+  user: number | null;
   user_label: string;
+  session_id: string;
   event_name: string;
   property: number | null;
   property_title: string | null;
@@ -68,6 +70,13 @@ const EVENT_OPTIONS = [
 ];
 
 const eventLabel = (eventName: string) => EVENT_LABELS[eventName] || eventName;
+
+const CONTACT_METHOD_LABELS: Record<string, string> = {
+  whatsapp: 'Abrió WhatsApp',
+  call: 'Inició una llamada',
+  source_url: 'Abrió la fuente original',
+  phone_reveal: 'Vio el número de teléfono',
+};
 
 export default function AdminActivityPage() {
   const { token } = useAuth();
@@ -258,36 +267,94 @@ function EventsTableHeader() {
 }
 
 function EventRow({ event }: { event: EventItem }) {
+  const [expanded, setExpanded] = useState(false);
+  const method = String(event.payload.method || 'clic');
   const title = event.event_name === CONTACT_EVENT
-    ? `Contacto · ${String(event.payload.method || 'clic')}`
+    ? `Contacto · ${CONTACT_METHOD_LABELS[method] || method}`
     : eventLabel(event.event_name);
   const subtitle = String(event.payload.source || event.path || '');
 
+  const details = eventDetails(event);
+
   return (
-    <div className="grid grid-cols-[1fr_auto] items-center gap-3 border-b border-line px-4 py-3 last:border-0 sm:grid-cols-[1.1fr_1.2fr_0.8fr_auto]">
-      <div className="min-w-0">
-        <p className="truncate text-sm font-medium text-textPrimary">{title}</p>
-        <p className="truncate text-xs text-textSecondary">{subtitle}</p>
-      </div>
-      <div className="hidden min-w-0 sm:block">
-        {event.property ? (
-          <Link
-            href={`/property/${event.property}`}
-            className="inline-flex max-w-full items-center gap-1 truncate text-sm text-primary"
+    <div className="border-b border-line last:border-0">
+      <div className="grid grid-cols-[1fr_auto] items-center gap-3 px-4 py-3 transition-colors hover:bg-muted/30 sm:grid-cols-[1.1fr_1.2fr_0.8fr_auto]">
+        <div className="min-w-0">
+          <p className="truncate text-sm font-medium text-textPrimary">{title}</p>
+          <p className="truncate text-xs text-textSecondary">{subtitle}</p>
+          <button
+            type="button"
+            onClick={() => setExpanded((value) => !value)}
+            className="mt-1 inline-flex items-center gap-1 text-xs font-semibold text-primary hover:underline"
+            aria-expanded={expanded}
           >
-            #{event.property} {event.property_title || ''}
-            <ExternalLink className="h-3 w-3 shrink-0" />
-          </Link>
-        ) : (
-          <span className="text-sm text-textSecondary">—</span>
-        )}
+            <Info className="h-3.5 w-3.5" /> {expanded ? 'Ocultar información' : 'Más información'}
+            <ChevronDown className={cn('h-3.5 w-3.5 transition-transform', expanded && 'rotate-180')} />
+          </button>
+        </div>
+        <div className="hidden min-w-0 sm:block">
+          {event.property ? (
+            <Link href={`/property/${event.property}`} target="_blank" className="inline-flex max-w-full items-center gap-1 truncate text-sm text-primary hover:underline">
+              #{event.property} {event.property_title || ''}<ExternalLink className="h-3 w-3 shrink-0" />
+            </Link>
+          ) : <span className="text-sm text-textSecondary">—</span>}
+        </div>
+        <div className="hidden min-w-0 sm:block">
+          {event.user ? (
+            <Link href={`/admin/users?user=${event.user}`} className="inline-flex items-center gap-1 truncate text-sm text-primary hover:underline">
+              <UserRound className="h-3.5 w-3.5 shrink-0" /> {event.user_label}
+            </Link>
+          ) : <span className="truncate text-sm text-textSecondary">{event.user_label}</span>}
+        </div>
+        <span className="whitespace-nowrap text-xs text-textSecondary">
+          {new Date(event.created_at).toLocaleString('es-EC', { dateStyle: 'short', timeStyle: 'short' })}
+        </span>
       </div>
-      <span className="hidden truncate text-sm text-textSecondary sm:block">{event.user_label}</span>
-      <span className="whitespace-nowrap text-xs text-textSecondary">
-        {new Date(event.created_at).toLocaleString('es-EC', { dateStyle: 'short', timeStyle: 'short' })}
-      </span>
+
+      {expanded && (
+        <div className="border-t border-line/70 bg-muted/20 px-4 py-4">
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            {details.map(({ label, value }) => (
+              <div key={label} className="rounded-card border border-line bg-white p-3">
+                <p className="text-[11px] font-medium uppercase tracking-wide text-textSecondary">{label}</p>
+                <p className="mt-1 break-words text-sm font-medium text-textPrimary">{value}</p>
+              </div>
+            ))}
+          </div>
+          <div className="mt-3 flex flex-wrap gap-2">
+            {event.property && <Button asChild size="sm" variant="outline"><Link href={`/property/${event.property}`} target="_blank">Abrir propiedad <ExternalLink className="h-3.5 w-3.5" /></Link></Button>}
+            {event.user && <Button asChild size="sm" variant="outline"><Link href={`/admin/users?user=${event.user}`}>Ver usuario <UserRound className="h-3.5 w-3.5" /></Link></Button>}
+            {event.path && <Button asChild size="sm" variant="ghost"><Link href={event.path} target="_blank">Abrir página registrada <ExternalLink className="h-3.5 w-3.5" /></Link></Button>}
+          </div>
+        </div>
+      )}
     </div>
   );
+}
+
+function eventDetails(event: EventItem) {
+  const payload = event.payload || {};
+  const attribution = payload.attribution && typeof payload.attribution === 'object'
+    ? payload.attribution as Record<string, unknown>
+    : {};
+  const candidates = [
+    ['Evento', eventLabel(event.event_name)],
+    ['Método', CONTACT_METHOD_LABELS[String(payload.method || '')] || payload.method],
+    ['Origen del botón', payload.source],
+    ['Ruta', event.path],
+    ['Propiedad', event.property ? `#${event.property} · ${event.property_title || 'Sin título'}` : null],
+    ['Usuario', event.user ? `${event.user_label} (#${event.user})` : event.user_label],
+    ['Ciudad', payload.city],
+    ['Provincia', payload.province],
+    ['Tipo de propiedad', payload.property_type],
+    ['Estado HTTP', payload.status_code],
+    ['Canal', attribution.channel],
+    ['Campaña', attribution.campaign],
+    ['Fecha exacta', new Date(event.created_at).toLocaleString('es-EC', { dateStyle: 'full', timeStyle: 'medium' })],
+  ];
+  return candidates
+    .filter((item): item is [string, unknown] => item[1] !== undefined && item[1] !== null && item[1] !== '')
+    .map(([label, value]) => ({ label, value: typeof value === 'boolean' ? (value ? 'Sí' : 'No') : String(value) }));
 }
 
 function LoadingRows() {

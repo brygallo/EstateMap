@@ -6,6 +6,7 @@ import { toast } from 'sonner';
 import { KeyRound, Mail, UserRound } from 'lucide-react';
 import { useAuth } from '@/lib/auth-context';
 import { apiGet, apiPatch, apiPost } from '@/lib/api';
+import { requestErrorMessage } from '@/lib/form-errors';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -65,7 +66,7 @@ const AccountPage = () => {
         }
       } catch (error) {
         console.error('Error cargando perfil:', error);
-        toast.error('Error de conexión al cargar perfil');
+        toast.error(requestErrorMessage(error, 'cargar el perfil'));
       } finally {
         setLoadingProfile(false);
       }
@@ -93,7 +94,7 @@ const AccountPage = () => {
       }
     } catch (error) {
       console.error('Error guardando perfil:', error);
-      toast.error('Error de conexión al guardar');
+      toast.error(requestErrorMessage(error, 'guardar el perfil'));
     } finally {
       setSavingProfile(false);
     }
@@ -130,7 +131,7 @@ const AccountPage = () => {
       }
     } catch (error) {
       console.error('Error cambiando contraseña:', error);
-      toast.error('Error de conexión al cambiar contraseña');
+      toast.error(requestErrorMessage(error, 'cambiar la contraseña'));
     } finally {
       setChangingPassword(false);
     }
@@ -153,7 +154,7 @@ const AccountPage = () => {
       }
     } catch (error) {
       console.error('Error solicitando cambio de email:', error);
-      toast.error('Error de conexión al solicitar cambio de email');
+      toast.error(requestErrorMessage(error, 'solicitar el cambio de correo'));
     }
   };
 
@@ -176,7 +177,7 @@ const AccountPage = () => {
       }
     } catch (error) {
       console.error('Error verificando cambio de email:', error);
-      toast.error('Error de conexión al verificar código');
+      toast.error(requestErrorMessage(error, 'verificar el código'));
     }
   };
 

@@ -117,6 +117,7 @@ interface OwnerMetrics {
     contacts: number;
     conversion: number;
   }>;
+  contact_methods: Array<{ method: string; count: number }>;
   audience: { active_30d: number; recurring_30d: number; high_intent_users_30d: number };
   alerts: Array<{ severity: 'critical' | 'warning' | 'ok'; title: string; value: number; href: string }>;
   weekly_summary: string[];
@@ -391,6 +392,13 @@ const SOURCE_STATUS = {
 } satisfies Record<SourceHealth['status'], { label: string; className: string }>;
 
 function OwnerExecutive({ metrics }: { metrics: OwnerMetrics }) {
+  const contactMethodLabels: Record<string, string> = {
+    phone_reveal: 'Vieron el número',
+    whatsapp: 'Abrieron WhatsApp',
+    call: 'Iniciaron una llamada',
+    source_url: 'Abrieron la fuente original',
+    unknown: 'Otros contactos',
+  };
   const periodCards = [
     { key: 'sessions', label: 'Sesiones activas', icon: Activity },
     { key: 'new_users', label: 'Usuarios nuevos', icon: UserPlus },
@@ -502,6 +510,15 @@ function OwnerExecutive({ metrics }: { metrics: OwnerMetrics }) {
       </div>
 
       <div className="grid gap-4 xl:grid-cols-2">
+        <ExecutiveTable
+          title="Acciones de contacto · 30 días"
+          headers={['Acción', 'Cantidad']}
+          rows={(metrics.contact_methods || []).map((item) => [
+            contactMethodLabels[item.method] || item.method,
+            item.count.toLocaleString('es-EC'),
+          ])}
+          empty="Las acciones de contacto aparecerán cuando los usuarios interactúen con los anuncios."
+        />
         <ExecutiveTable
           title="Origen de usuarios · 30 días"
           headers={['Origen', 'Canal', 'Sesiones', 'Contactos', 'Conversión']}

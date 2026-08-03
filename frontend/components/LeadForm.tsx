@@ -19,6 +19,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
+import { requestErrorMessage, responseErrorMessage } from '@/lib/form-errors';
 
 interface LeadFormProps {
   propertyId: number;
@@ -73,10 +74,10 @@ export default function LeadForm({ propertyId, source = 'property_modal', showTi
         setSent(true);
         toast.success('¡Mensaje enviado! Te contactarán pronto.');
       } else {
-        toast.error('No se pudo enviar tu mensaje. Intenta de nuevo.');
+        toast.error(await responseErrorMessage(res, 'No se pudo enviar tu mensaje. Intenta nuevamente.'));
       }
-    } catch {
-      toast.error('Error de conexión. Intenta de nuevo.');
+    } catch (error) {
+      toast.error(requestErrorMessage(error, 'enviar tu mensaje'));
     }
   };
 

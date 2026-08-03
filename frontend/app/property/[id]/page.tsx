@@ -33,12 +33,13 @@ import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import AnimatedNumber from '@/components/ui/AnimatedNumber';
 import PropertyGallery from '@/components/PropertyGallery';
-import PropertyDetailMap from '@/components/maps/PropertyDetailMap';
+import PropertyNearbyMap from '@/components/maps/PropertyNearbyMap';
 import AdminRefreshProperty from '@/components/AdminRefreshProperty';
 import PropertyIntelligence from '@/components/PropertyIntelligence';
 import PropertyCard from '@/components/PropertyCard';
 import BrandAtmosphere from '@/components/aents/BrandAtmosphere';
-import { ecuadorPhoneHref, normalizeEcuadorPhone } from '@/lib/phone';
+import { normalizeEcuadorPhone } from '@/lib/phone';
+import { PhoneReveal, TrackedContactLink } from '@/components/PropertyContactActions';
 
 /** Ficha de dato de la propiedad: icono lucide + valor en mono + etiqueta. */
 function StatTile({
@@ -129,6 +130,7 @@ export async function generateMetadata({ params }: PropertyPageProps): Promise<M
   ).replace(/\/+$/, '');
   const propertyUrl = `${baseUrl}/propiedad/${property.id}`;
   const imageAbsoluteUrl = imageUrl.startsWith('http') ? imageUrl : `${baseUrl}${imageUrl}`;
+  const priceAmount = property.price != null ? String(property.price) : null;
 
   return {
     title,
@@ -178,16 +180,23 @@ export async function generateMetadata({ params }: PropertyPageProps): Promise<M
     alternates: {
       canonical: propertyUrl,
     },
-    // Additional meta tags for Facebook and social platforms
+    // Additional meta tags for Facebook and social platforms. Imported listings
+    // may carry no price ("a consultar"), so the price tags are only emitted
+    // when there is a real amount: rendering them from a null price used to
+    // throw and turn the whole page into a 500 for crawlers.
     other: {
       'fb:app_id': process.env.NEXT_PUBLIC_FB_APP_ID || '',
       'og:type': 'article',
-      'og:price:amount': property.price.toString(),
-      'og:price:currency': 'USD',
+      ...(priceAmount
+        ? {
+            'og:price:amount': priceAmount,
+            'og:price:currency': 'USD',
+            'product:price:amount': priceAmount,
+            'product:price:currency': 'USD',
+          }
+        : {}),
       'article:published_time': property.source_published_at || property.imported_at || property.created_at || new Date().toISOString(),
       'article:author': property.owner_username || 'Geo Propiedades Ecuador',
-      'product:price:amount': property.price.toString(),
-      'product:price:currency': 'USD',
     },
   };
 }
@@ -251,10 +260,14 @@ export default async function PropertyPage({ params }: PropertyPageProps) {
     datePosted: property.source_published_at || property.imported_at || property.created_at,
     dateModified: property.source_updated_at || property.updated_at || property.created_at,
     publisher: { '@id': `${SITE_URL}/#organization` },
+    // Listings imported as "a consultar" carry no price. Emitting an Offer with
+    // an undefined price is invalid structured data, so the price fields are
+    // dropped and the offer is still published for its availability and URL.
     offers: {
       '@type': 'Offer',
-      price: property.price?.toString(),
-      priceCurrency: 'USD',
+      ...(property.price != null
+        ? { price: String(property.price), priceCurrency: 'USD' }
+        : {}),
       availability:
         property.status === 'inactive'
           ? 'https://schema.org/SoldOut'
@@ -346,12 +359,19 @@ export default async function PropertyPage({ params }: PropertyPageProps) {
   const isImported = Boolean(property.is_imported || property.source_url || property.external_id || property.source);
   const contactPhone = typeof property.contact_phone === 'string' ? property.contact_phone.trim() : '';
   const waPhone = normalizeEcuadorPhone(contactPhone);
-  const callablePhone = ecuadorPhoneHref(contactPhone);
   const sourceUrl = typeof property.source_url === 'string' ? property.source_url.trim() : '';
   const sourceAgency = typeof property.source_agency === 'string' ? property.source_agency.trim() : '';
   // Mensaje de WhatsApp con referencia al anuncio y la URL de su ficha en nuestro sitio.
   const waMessage = `Hola, vi este anuncio en Geo Propiedades: ${property.title || 'esta propiedad'}\n${propertyUrl}`;
   const waLink = `https://wa.me/${waPhone}?text=${encodeURIComponent(waMessage)}`;
+  const contactTrackingProps = {
+    propertyId: property.id,
+    city: property.city,
+    province: property.province,
+    propertyType: property.property_type,
+    status: property.status,
+    imported: isImported,
+  };
   const publicationDate = isImported
     ? property.source_published_at || property.imported_at || property.created_at
     : property.created_at;
@@ -477,25 +497,31 @@ export default async function PropertyPage({ params }: PropertyPageProps) {
                 )}
                 <div className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-1">
                   {contactPhone ? (
-                    <a
+                    <TrackedContactLink
                       href={waLink}
+                      method="whatsapp"
+                      source="property_page_price_card"
+                      {...contactTrackingProps}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="wa-cta inline-flex items-center justify-center gap-2 rounded-button bg-secondary px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-secondaryHover"
                     >
                       <MessageCircle className="h-4 w-4" strokeWidth={2} aria-hidden />
                       WhatsApp
-                    </a>
+                    </TrackedContactLink>
                   ) : isImported && sourceUrl ? (
-                    <a
+                    <TrackedContactLink
                       href={sourceUrl}
+                      method="source_url"
+                      source="property_page_price_card"
+                      {...contactTrackingProps}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="inline-flex items-center justify-center gap-2 rounded-button bg-primary px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-primaryHover"
                     >
                       <ExternalLink className="h-4 w-4" strokeWidth={2} aria-hidden />
                       Contactar anunciante
-                    </a>
+                    </TrackedContactLink>
                   ) : null}
                   <Link
                     href={mapUrl}
@@ -559,26 +585,11 @@ export default async function PropertyPage({ params }: PropertyPageProps) {
               )}
 
               {/* Ubicación */}
-              {(property.address || property.city) && (
-                <>
-                  <Separator className="my-6 bg-line" />
-                  <h2 className="mb-3 text-lg font-semibold text-textPrimary">Ubicación</h2>
-                  <div className="overflow-hidden rounded-card border border-line bg-surface">
-                    {property.latitude && property.longitude ? (
-                      <PropertyDetailMap
-                        latitude={property.latitude}
-                        longitude={property.longitude}
-                        polygon={property.polygon}
-                        status={property.status}
-                        price={property.price}
-                        title={property.title}
-                      />
-                    ) : (
-                      <div className="flex h-40 items-center justify-center bg-muted text-textSecondary">
-                        <MapPin className="mr-2 h-5 w-5 text-primary" strokeWidth={1.75} aria-hidden />
-                        Ubicación aproximada disponible en el mapa
-                      </div>
-                    )}
+              <>
+                <Separator className="my-6 bg-line" />
+                <h2 className="mb-3 text-lg font-semibold text-textPrimary">Ubicación</h2>
+                <div className="overflow-hidden rounded-card border border-line bg-surface">
+                    <PropertyNearbyMap property={property} nearbyProperties={nearbyProperties} />
                     <div className="flex items-center gap-2 px-4 py-3 text-sm text-textSecondary">
                       <MapPin className="h-4 w-4 flex-shrink-0 text-primary" strokeWidth={1.75} aria-hidden />
                       <span>
@@ -586,16 +597,23 @@ export default async function PropertyPage({ params }: PropertyPageProps) {
                         {property.address && property.city && <>, </>}
                         {property.city && <>{property.city}</>}
                         {property.province && <>, {property.province}</>}
+                        {!property.address && !property.city && !property.province && <>Ubicación no especificada</>}
                       </span>
                     </div>
+                    {nearbyProperties.length > 0 && (
+                      <p className="border-t border-line px-4 py-2.5 text-xs text-textSecondary">
+                        Selecciona otro marcador para abrir la ficha completa de una propiedad cercana.
+                      </p>
+                    )}
                   </div>
-                </>
-              )}
+              </>
             </div>
 
             {/* Tarjeta de contacto (sticky) */}
             <aside className="lg:col-span-1">
-              <div className="rounded-card border border-line bg-surface p-6 shadow-card lg:sticky lg:top-6">
+              {/* Sticks below the fixed header, not at the viewport edge: with
+                  `top-6` the card parked underneath the bar. */}
+              <div className="rounded-card border border-line bg-surface p-6 shadow-card lg:sticky lg:top-[calc(var(--app-header-height)+1.5rem)]">
                 <div className="text-xs font-medium uppercase tracking-wide text-textSecondary">
                   Precio
                 </div>
@@ -647,27 +665,43 @@ export default async function PropertyPage({ params }: PropertyPageProps) {
 
                 {/* CTA de contacto */}
                 <div className="flex flex-col gap-3">
+                  {contactPhone && (
+                    <div className="flex items-center justify-center gap-2 rounded-button border border-line bg-background px-5 py-3 text-sm">
+                      <Phone className="h-4 w-4 text-primary" strokeWidth={1.75} aria-hidden />
+                      <PhoneReveal
+                        phone={`+${waPhone}`}
+                        source="property_page_contact_section"
+                        {...contactTrackingProps}
+                      />
+                    </div>
+                  )}
                   {isImported ? (
                     contactPhone ? (
-                      <a
+                      <TrackedContactLink
                         href={waLink}
+                        method="whatsapp"
+                        source="property_page_contact_section"
+                        {...contactTrackingProps}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="wa-cta inline-flex w-full items-center justify-center gap-2 rounded-button bg-secondary px-5 py-3 text-base font-semibold text-white shadow-card transition-colors duration-200 hover:bg-secondaryHover focus:outline-none focus-visible:ring-4 focus-visible:ring-secondary/25"
                       >
                         <MessageCircle className="h-5 w-5" strokeWidth={2} aria-hidden />
                         Contactar por WhatsApp
-                      </a>
+                      </TrackedContactLink>
                     ) : sourceUrl ? (
-                      <a
+                      <TrackedContactLink
                         href={sourceUrl}
+                        method="source_url"
+                        source="property_page_contact_section"
+                        {...contactTrackingProps}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="inline-flex w-full items-center justify-center gap-2 rounded-button bg-primary px-5 py-3 text-base font-semibold text-white shadow-card transition-colors duration-200 hover:bg-primaryHover focus:outline-none focus-visible:ring-4 focus-visible:ring-primary/25"
                       >
                         <ExternalLink className="h-5 w-5" strokeWidth={2} aria-hidden />
                         Contactar en {sourceAgency || 'la página original'}
-                      </a>
+                      </TrackedContactLink>
                     ) : (
                       <div className="rounded-card border border-line bg-background p-3 text-sm text-textSecondary">
                         Esta propiedad viene de una fuente externa y no tiene contacto disponible.
@@ -676,22 +710,28 @@ export default async function PropertyPage({ params }: PropertyPageProps) {
                   ) : (
                     contactPhone && (
                       <>
-                        <a
+                        <TrackedContactLink
                           href={waLink}
+                          method="whatsapp"
+                          source="property_page_contact_section"
+                          {...contactTrackingProps}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="wa-cta inline-flex w-full items-center justify-center gap-2 rounded-button bg-secondary px-5 py-3 text-base font-semibold text-white shadow-card transition-colors duration-200 hover:bg-secondaryHover focus:outline-none focus-visible:ring-4 focus-visible:ring-secondary/25"
                         >
                           <MessageCircle className="h-5 w-5" strokeWidth={2} aria-hidden />
                           Contactar por WhatsApp
-                        </a>
-                        <a
-                          href={`tel:${callablePhone}`}
+                        </TrackedContactLink>
+                        <TrackedContactLink
+                          href={`tel:+${waPhone}`}
+                          method="call"
+                          source="property_page_contact_section"
+                          {...contactTrackingProps}
                           className="inline-flex w-full items-center justify-center gap-2 rounded-button border border-line bg-white px-5 py-3 text-base font-semibold text-textPrimary transition-colors duration-200 hover:bg-slate-50 focus:outline-none focus-visible:ring-4 focus-visible:ring-primary/15"
                         >
                           <Phone className="h-5 w-5" strokeWidth={1.75} aria-hidden />
-                          {callablePhone}
-                        </a>
+                          Llamar
+                        </TrackedContactLink>
                       </>
                     )
                   )}

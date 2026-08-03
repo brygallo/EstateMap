@@ -6,6 +6,7 @@ import { RefreshCw } from 'lucide-react';
 import { toast } from 'sonner';
 import { useAuth } from '@/lib/auth-context';
 import { getPublicApiUrl } from '@/lib/api-url';
+import { requestErrorMessage } from '@/lib/form-errors';
 import { Button } from '@/components/ui/button';
 
 /**
@@ -41,8 +42,8 @@ export default function AdminRefreshProperty({ propertyId }: { propertyId: numbe
         toast.success(data.detail || 'Propiedad actualizada desde el portal.');
       }
       router.refresh();
-    } catch {
-      toast.error('Error de conexión al actualizar la propiedad.');
+    } catch (error) {
+      toast.error(requestErrorMessage(error, 'actualizar la propiedad'));
     } finally {
       setBusy(false);
     }

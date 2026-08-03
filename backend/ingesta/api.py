@@ -243,7 +243,7 @@ def refresh_property(request):
     """
     from real_estate.models import Property
 
-    from .pipeline.images import delete_property_images
+    from .pipeline.retirement import retire_property
     from .pipeline.upsert import upsert_property
 
     prop = Property.objects.filter(pk=request.data.get("property_id")).first()
@@ -261,13 +261,10 @@ def refresh_property(request):
 
     res = scraper.scrape_one(prop.source_url)
     if res == "GONE":
-        if prop.status != "inactive":
-            delete_property_images(prop)
-            prop.status = "inactive"
-            prop.save(update_fields=["status"])
+        retire_property(prop)
         return Response({
             "result": "gone",
-            "detail": "El anuncio ya no está vigente en el portal; se marcó inactiva.",
+            "detail": "El anuncio ya no está vigente; se eliminaron la propiedad y sus imágenes.",
         })
     if res is None:
         return Response(

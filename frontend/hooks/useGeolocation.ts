@@ -4,6 +4,17 @@ import { useEffect, useState, useCallback, useRef } from 'react';
 import { toast, type ExternalToast } from 'sonner';
 import type { Property } from '@/lib/types';
 import { getPropertyViewportDecision, type LatLngPoint } from '@/lib/geo';
+import {
+  LOCATION_STORAGE_KEYS,
+  geolocationErrorMessage,
+  getGeolocationPermission,
+  hasPreviousLocationSuccess,
+  markLocationSuccess,
+  requestBrowserLocation,
+  safeStorageSet,
+  wasLocationPromptDismissed,
+  watchGeolocationPermission,
+} from '@/lib/browser-geolocation';
 
 type MapRef = React.MutableRefObject<any>;
 type PendingAdaptiveLocation = { location: LatLngPoint; readyAt: number };
@@ -122,124 +133,127 @@ export function useGeolocation(
     }
   }, [adaptiveZoomTick, flyTo, mapRef, properties, propertiesLoading]);
 
-  const geoErrorMessage = (error: GeolocationPositionError): string => {
-    switch (error.code) {
-      case error.PERMISSION_DENIED:
-        return 'Permiso de ubicación denegado. Habilítalo desde la configuración de tu navegador.';
-      case error.POSITION_UNAVAILABLE:
-        return 'Ubicación no disponible. Activa los servicios de ubicación en tu dispositivo.';
-      case error.TIMEOUT:
-        return 'Se agotó el tiempo de espera. Verifica tu señal GPS o Wi-Fi e intenta de nuevo.';
-      default:
-        return 'No se pudo obtener tu ubicación';
-    }
-  };
-
-  // En móvil la ubicación es parte central de la experiencia del mapa, por eso
-  // se ofrece en cada entrada a la página principal aunque antes se haya
-  // elegido "Ahora no". En escritorio se conserva la preferencia guardada.
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-
-    const permissionAsked = localStorage.getItem('locationPermissionAsked');
-    const isMobile = window.matchMedia('(max-width: 767px), (pointer: coarse)').matches;
-
-    if (isMobile || !permissionAsked) {
-      const t = setTimeout(() => setShowLocationModal(true), 500);
-      return () => clearTimeout(t);
-    }
-  }, []);
-
   const handleAcceptLocation = useCallback(async () => {
     setShowLocationModal(false);
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('locationPermissionAsked', 'true');
-    }
+    safeStorageSet(LOCATION_STORAGE_KEYS.mapPromptDismissed, 'true');
 
     if (!navigator.geolocation) {
       notifyLocationError('Tu navegador no soporta geolocalización');
       return;
     }
 
-    if (navigator.permissions?.query) {
-      try {
-        const status = await navigator.permissions.query({
-          name: 'geolocation' as PermissionName,
-        });
-        if (status.state === 'denied') {
-          setLocationBlocked(true);
-          setShowLocationModal(true);
-          notifyLocationError('El permiso de ubicación está bloqueado. Revisa los pasos para activarlo en tu iPhone o navegador.');
-          return;
-        }
-      } catch {
-        // Permissions API no soportada (iOS Safari): continuar igualmente.
-      }
+    if (await getGeolocationPermission() === 'denied') {
+      setLocationBlocked(true);
+      notifyLocationError('La ubicación está bloqueada. Toca el botón de ubicación para ver cómo activarla.');
+      return;
     }
 
     setLoadingLocation(true);
     notifyLocationLoading();
-    navigator.geolocation.getCurrentPosition(
-      (position) => {
-        const { latitude, longitude, accuracy: acc } = position.coords;
-        setUserLocation({ lat: latitude, lng: longitude });
-        setAccuracy(typeof acc === 'number' ? acc : null);
-        centerOnLocation(latitude, longitude);
-        if (typeof window !== 'undefined') {
-          localStorage.setItem('hasInitialLocation', 'true');
-        }
-        setLoadingLocation(false);
-        setLocationBlocked(false);
-        notifyLocationSuccess('Ubicación encontrada');
-      },
-      (error) => {
-        setLoadingLocation(false);
-        if (error.code === error.PERMISSION_DENIED) {
-          setLocationBlocked(true);
-          setShowLocationModal(true);
-        }
-        notifyLocationError(geoErrorMessage(error));
-      },
-      { enableHighAccuracy: true, timeout: 20000, maximumAge: 0 }
-    );
+    try {
+      const position = await requestBrowserLocation('discovery');
+      const { latitude, longitude, accuracy: acc } = position.coords;
+      setUserLocation({ lat: latitude, lng: longitude });
+      setAccuracy(typeof acc === 'number' ? acc : null);
+      centerOnLocation(latitude, longitude);
+      markLocationSuccess();
+      setLocationBlocked(false);
+      notifyLocationSuccess('Ubicación encontrada');
+    } catch (error) {
+      const geoError = error as GeolocationPositionError;
+      if (geoError.code === 1) setLocationBlocked(true);
+      notifyLocationError(geolocationErrorMessage(error));
+    } finally {
+      setLoadingLocation(false);
+    }
   }, [centerOnLocation, notifyLocationError, notifyLocationLoading, notifyLocationSuccess]);
+
+  // El aviso propio de la aplicación solo se muestra antes de la primera
+  // decisión. Si el navegador ya tiene el permiso (o ya obtuvimos una
+  // ubicación anteriormente), ubicamos el mapa directamente. Esto evita que
+  // en móvil se vuelva a pedir permiso en cada visita.
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    let cancelled = false;
+    let modalTimer: ReturnType<typeof setTimeout> | undefined;
+
+    const initializeLocation = async () => {
+      const permissionAsked = wasLocationPromptDismissed(LOCATION_STORAGE_KEYS.mapPromptDismissed);
+      const permissionGranted = await getGeolocationPermission() === 'granted';
+
+      if (cancelled) return;
+
+      if (permissionGranted || hasPreviousLocationSuccess()) {
+        void handleAcceptLocation();
+        return;
+      }
+
+      if (!permissionAsked) {
+        modalTimer = setTimeout(() => {
+          if (!cancelled) setShowLocationModal(true);
+        }, 500);
+      }
+    };
+
+    void initializeLocation();
+
+    return () => {
+      cancelled = true;
+      if (modalTimer) clearTimeout(modalTimer);
+    };
+  }, [handleAcceptLocation]);
+
+  useEffect(() => {
+    let unsubscribe: () => void = () => undefined;
+    let cancelled = false;
+    void watchGeolocationPermission((state) => {
+      if (cancelled) return;
+      setLocationBlocked(state === 'denied');
+      if (state === 'granted') setShowLocationModal(false);
+    }).then((cleanup) => {
+      if (cancelled) cleanup();
+      else unsubscribe = cleanup;
+    });
+    return () => {
+      cancelled = true;
+      unsubscribe();
+    };
+  }, []);
 
   const handleDeclineLocation = useCallback(() => {
     setShowLocationModal(false);
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('locationPermissionAsked', 'true');
-      localStorage.setItem('hasInitialLocation', 'false');
-    }
+    safeStorageSet(LOCATION_STORAGE_KEYS.mapPromptDismissed, 'true');
   }, []);
 
-  const handleGetMyLocation = useCallback(() => {
+  const handleGetMyLocation = useCallback(async () => {
     if (!navigator.geolocation) {
       notifyLocationError('Tu navegador no soporta geolocalización.');
       return;
     }
+    if (locationBlocked) {
+      setShowLocationModal(true);
+      return;
+    }
     setLoadingLocation(true);
     notifyLocationLoading();
-    navigator.geolocation.getCurrentPosition(
-      (position) => {
-        const { latitude, longitude, accuracy: acc } = position.coords;
-        setUserLocation({ lat: latitude, lng: longitude });
-        setAccuracy(typeof acc === 'number' ? acc : null);
-        centerOnLocation(latitude, longitude);
-        setLoadingLocation(false);
-        setLocationBlocked(false);
-        notifyLocationSuccess('Ubicación encontrada');
-      },
-      (error) => {
-        setLoadingLocation(false);
-        if (error.code === error.PERMISSION_DENIED) {
-          setLocationBlocked(true);
-          setShowLocationModal(true);
-        }
-        notifyLocationError(geoErrorMessage(error));
-      },
-      { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
-    );
-  }, [centerOnLocation, notifyLocationError, notifyLocationLoading, notifyLocationSuccess]);
+    try {
+      const position = await requestBrowserLocation('discovery');
+      const { latitude, longitude, accuracy: acc } = position.coords;
+      setUserLocation({ lat: latitude, lng: longitude });
+      setAccuracy(typeof acc === 'number' ? acc : null);
+      centerOnLocation(latitude, longitude);
+      markLocationSuccess();
+      setLocationBlocked(false);
+      notifyLocationSuccess('Ubicación encontrada');
+    } catch (error) {
+      const geoError = error as GeolocationPositionError;
+      if (geoError.code === 1) setLocationBlocked(true);
+      notifyLocationError(geolocationErrorMessage(error));
+    } finally {
+      setLoadingLocation(false);
+    }
+  }, [centerOnLocation, locationBlocked, notifyLocationError, notifyLocationLoading, notifyLocationSuccess]);
 
   return {
     userLocation,

@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import Image from 'next/image';
-import { MessageCircle, MapPin, Mail, ArrowUpRight } from 'lucide-react';
+import { ArrowUpRight, Mail, MapPin, MessageCircle } from 'lucide-react';
 import { buildWhatsAppUrl } from '@/lib/constants';
 
 const whatsappHref = buildWhatsAppUrl('Hola necesito ayuda con Geo Propiedades');
@@ -50,17 +50,16 @@ const SOCIAL_LINKS = [
   { href: whatsappHref, label: 'WhatsApp', icon: WhatsappIcon },
 ];
 
-// Clases reutilizables: cambiar el token `navy-*` en tailwind.config.js
-// reestiliza el footer completo de un solo lugar.
-const headingClass = 'text-xs font-semibold uppercase tracking-[0.18em] text-navy-200';
-const linkClass = 'text-sm text-navy-100/70 transition-colors hover:text-white';
-const mutedClass = 'text-xs text-navy-100/50';
-const contactIconClass = 'h-4 w-4 flex-shrink-0 text-navy-200';
+// Column headings borrow the header's sublabel treatment — same size and
+// tracking — recoloured to lavender for the navy surface.
+const headingClass = 'text-[11px] font-semibold uppercase tracking-[0.16em] text-[var(--lavender)]';
+const mutedClass = 'text-xs text-white/60';
+const contactIconClass = 'h-4 w-4 flex-shrink-0 text-[var(--lavender)]';
 
 const FooterLink = ({ href, label }: { href: string; label: string }) => (
   <li>
-    <Link href={href} className={`group inline-flex items-center gap-1 ${linkClass}`}>
-      <span className="transition-transform duration-200 group-hover:translate-x-0.5">{label}</span>
+    <Link href={href} className="aents-footer-link">
+      {label}
     </Link>
   </li>
 );
@@ -85,13 +84,9 @@ const LinkColumn = ({
 );
 
 const Footer = () => (
-  <footer className="relative overflow-hidden bg-navy-500 text-white">
-    <div className="aents-footer-grid pointer-events-none absolute inset-0" aria-hidden />
-    <div className="aents-footer-glow pointer-events-none absolute" aria-hidden />
-    {/* Acento superior + resplandor sutil de marca */}
-    <div className="h-px w-full bg-gradient-to-r from-transparent via-navy-300/70 to-transparent" />
-    <div aria-hidden className="pointer-events-none absolute -top-32 right-0 h-80 w-80 rounded-full bg-navy-400/50 blur-3xl" />
-    <div aria-hidden className="pointer-events-none absolute -bottom-40 left-0 h-80 w-80 rounded-full bg-navy-300/20 blur-3xl" />
+  <footer className="aents-site-footer relative overflow-hidden">
+    <div className="aents-footer-grid" aria-hidden />
+    <div className="aents-footer-glow" aria-hidden />
 
     <div className="relative mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
       <div className="grid gap-12 lg:grid-cols-12 lg:gap-10">
@@ -99,28 +94,30 @@ const Footer = () => (
         <div className="lg:col-span-5">
           {/*
             Aents is the primary mark in this footer and the product signs
-            underneath it. Approved lockup, negative variant for dark surfaces,
-            served from a 240px master. Never redrawn or recoloured: see
-            public/aents/README.md.
+            underneath it. This is <AentsLogo size={88} tone="negative" tagline />
+            from @aents/ui-web, the exact call apps/web makes in its own footer:
+            the brand tile plus live type, not a flattened lockup image. The
+            wordmark and tagline sizes come from .aents-site-footer__brand.
           */}
           <div className="aents-footer-brand">
             <a
               href="https://aents.net"
               target="_blank"
               rel="noreferrer"
-              className="inline-block transition-opacity duration-200 hover:opacity-80"
+              className="logo-lockup transition-opacity duration-200 hover:opacity-80"
               aria-label="Aents — Software for people"
             >
               <Image
-                src="/aents/aents-negative-240.png"
-                alt="Aents"
-                width={240}
-                height={55}
-                className="h-auto w-[220px] sm:w-[240px]"
-                unoptimized
+                src="/aents/aents-brand-tile-256.png"
+                alt=""
+                width={88}
+                height={88}
+                className="aents-brand-symbol h-[88px] w-[88px]"
+                aria-hidden
               />
-              <span className="mt-2 block text-base font-medium text-[var(--lavender,#c8b6ff)]">
-                Software for people.
+              <span className="logo-text">
+                <span className="logo-wordmark">Aents</span>
+                <span className="logo-tagline">Software for people.</span>
               </span>
             </a>
           </div>
@@ -129,7 +126,8 @@ const Footer = () => (
             <span className="aents-footer-origin-dot" aria-hidden />
             Geo Propiedades Ecuador, un producto digital del ecosistema Aents.
           </p>
-          <p className="mt-6 max-w-sm text-sm leading-relaxed text-navy-100/75">
+
+          <p className="mt-6 max-w-sm text-sm leading-relaxed text-white/75">
             Encuentra casas, departamentos, terrenos y locales directamente en el mapa.
             Publica gratis y llega a compradores en todo Ecuador.
           </p>
@@ -138,7 +136,7 @@ const Footer = () => (
             href={whatsappHref}
             target="_blank"
             rel="noreferrer"
-            className="mt-6 inline-flex items-center gap-2 rounded-full bg-white px-5 py-2.5 text-sm font-semibold text-navy-500 shadow-lg shadow-black/25 transition-all duration-200 hover:-translate-y-0.5 hover:bg-navy-100"
+            className="aents-footer-action mt-6 inline-flex items-center gap-2 rounded-full px-5 py-2.5 text-sm font-semibold"
           >
             <MessageCircle className="h-4 w-4" strokeWidth={2.25} aria-hidden />
             Escríbenos por WhatsApp
@@ -153,7 +151,7 @@ const Footer = () => (
                 target="_blank"
                 rel="noreferrer"
                 aria-label={label}
-                className="flex h-10 w-10 items-center justify-center rounded-full bg-white/10 text-white ring-1 ring-white/10 transition-all duration-200 hover:-translate-y-0.5 hover:bg-white/20 hover:ring-white/20"
+                className="aents-footer-social flex h-10 w-10 items-center justify-center rounded-full"
               >
                 <Icon className="h-5 w-5" />
               </a>
@@ -162,37 +160,37 @@ const Footer = () => (
         </div>
 
         {/* Enlaces */}
-        <div className="aents-footer-columns contents lg:col-span-5 lg:grid lg:grid-cols-5 lg:gap-8">
-          <LinkColumn title="Explorar" links={EXPLORE_LINKS} className="lg:col-span-3" />
-          <LinkColumn title="Plataforma" links={PLATFORM_LINKS} className="lg:col-span-2" />
+        <div className="aents-footer-columns grid gap-10 sm:grid-cols-2 lg:col-span-7 lg:grid-cols-3 lg:gap-8">
+          <LinkColumn title="Explorar" links={EXPLORE_LINKS} />
+          <LinkColumn title="Plataforma" links={PLATFORM_LINKS} />
 
           {/* Contacto */}
-          <div className="lg:col-span-5">
-          <h2 className={headingClass}>Contacto</h2>
-          <ul className="mt-5 space-y-3.5 text-sm text-navy-100/70">
-            <li>
-              <a href={whatsappHref} target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 transition-colors hover:text-white">
-                <MessageCircle className={contactIconClass} strokeWidth={2} aria-hidden />
-                +593 98 373 8151
-              </a>
-            </li>
-            <li>
-              <a href="mailto:soporte@geopropiedades.ec" className="inline-flex items-center gap-2 transition-colors hover:text-white">
-                <Mail className={contactIconClass} strokeWidth={2} aria-hidden />
-                Soporte
-              </a>
-            </li>
-            <li className="inline-flex items-center gap-2">
-              <MapPin className={contactIconClass} strokeWidth={2} aria-hidden />
-              Ecuador
-            </li>
-          </ul>
+          <div>
+            <h2 className={headingClass}>Contacto</h2>
+            <ul className="mt-5 space-y-3.5 text-sm text-white/70">
+              <li>
+                <a href={whatsappHref} target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 transition-colors hover:text-white">
+                  <MessageCircle className={contactIconClass} strokeWidth={2} aria-hidden />
+                  +593 98 373 8151
+                </a>
+              </li>
+              <li>
+                <a href="mailto:soporte@geopropiedades.ec" className="inline-flex items-center gap-2 transition-colors hover:text-white">
+                  <Mail className={contactIconClass} strokeWidth={2} aria-hidden />
+                  Soporte
+                </a>
+              </li>
+              <li className="inline-flex items-center gap-2">
+                <MapPin className={contactIconClass} strokeWidth={2} aria-hidden />
+                Ecuador
+              </li>
+            </ul>
           </div>
         </div>
       </div>
 
       {/* Barra inferior */}
-      <div className="mt-14 border-t border-white/10 pt-6">
+      <div className="mt-14 border-t border-white/[0.12] pt-6">
         <div className="flex flex-col items-center justify-between gap-4 sm:flex-row">
           <p className={mutedClass}>
             © {new Date().getFullYear()} Geo Propiedades Ecuador, un producto de{' '}
@@ -200,7 +198,7 @@ const Footer = () => (
               href="https://aents.net"
               target="_blank"
               rel="noreferrer"
-              className="font-semibold text-navy-100/70 underline-offset-2 transition-colors hover:text-white hover:underline"
+              className="font-semibold text-white/80 underline-offset-2 transition-colors hover:text-white hover:underline"
             >
               Aents
             </a>

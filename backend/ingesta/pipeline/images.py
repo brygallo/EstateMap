@@ -16,6 +16,8 @@ import os
 
 from django.conf import settings
 
+from real_estate.uploads import publish_optimized
+
 MAX_IMAGES = getattr(settings, "MAX_IMAGES_PER_PROPERTY", 10)
 _TIMEOUT = 20.0
 
@@ -96,17 +98,15 @@ def image_dhash_from_url(url, size=8):
 
 def attach_images_from_urls(prop, urls, max_images=MAX_IMAGES, force=False):
     """
-    Flujo de UN SOLO PASO (scrape directo, sin paquete): por cada URL descarga
-    la imagen a un buffer **temporal en memoria**, la entrega a ``PropertyImage``
-    (que la optimiza a WEBP + thumbnail y la **sube a MinIO**) y libera el
-    temporal. No queda ningún archivo en disco.
+    Single-pass flow (direct scrape, no package): downloads each URL into an
+    in-memory buffer, optimizes it to WebP plus a thumbnail, uploads both to
+    MinIO and releases the buffer. Nothing is left on disk.
 
-    Idempotente: si la propiedad ya tiene la misma cantidad de imágenes, no
-    vuelve a descargar (salvo ``force=True``, que re-descarga y reemplaza
-    siempre; lo usa el botón admin de "actualizar desde el portal"). Primero
-    descarga las nuevas imágenes a memoria; sólo si al menos una descarga
-    funciona reemplaza las imágenes existentes. Devuelve cuántas imágenes
-    quedaron adjuntas.
+    Idempotent: if the property already has the same number of images it does
+    not download again, unless ``force=True``, which always re-downloads and
+    replaces — that is what the admin "refresh from portal" button uses. New
+    images are downloaded first, and the existing ones are only replaced once at
+    least one download succeeded. Returns how many images ended up attached.
     """
     from django.core.files.base import ContentFile
     from real_estate.models import PropertyImage
@@ -136,19 +136,26 @@ def attach_images_from_urls(prop, urls, max_images=MAX_IMAGES, force=False):
     saved = 0
     for idx, (content, ext) in enumerate(downloaded):
         pi = PropertyImage(property=prop, is_main=(idx == 0))
-        # Nombre único por propiedad para no colisionar con otras.
-        pi.image.save(f"p{prop.id}_{idx}{ext}", ContentFile(content), save=False)
-        pi.save()   # optimiza (WEBP) y sube a MinIO
+        # Optimized inline rather than queued: the ingest already runs detached
+        # from any request, so there is nobody waiting on the encode. The model
+        # no longer optimizes on save, so skipping this would publish the raw
+        # download with no thumbnail.
+        source = ContentFile(content, name=f"p{prop.id}_{idx}{ext}")
+        pi.original_filename = source.name
+        publish_optimized(pi, source)
+        pi.save()
         saved += 1
     return saved
 
 
 def sync_property_images(prop, image_paths):
     """
-    Deja la Property con exactamente las imágenes de ``image_paths``.
-    Estrategia simple e idempotente: si la cantidad cambió, se reemplazan todas
-    (borrando las anteriores de MinIO). Reutiliza ``PropertyImage.save`` para
-    optimizar (WEBP) y generar thumbnail.
+    Leaves the Property holding exactly the images in ``image_paths``.
+
+    Simple and idempotent: if the count changed, all of them are replaced and
+    the old objects are removed from MinIO. Optimization to WebP and thumbnail
+    generation happen inline, because the ingest runs detached from any request
+    and nobody is waiting on it.
     """
     from django.core.files import File
     from real_estate.models import PropertyImage
@@ -168,7 +175,9 @@ def sync_property_images(prop, image_paths):
         ext = os.path.splitext(path)[1] or ".jpg"
         with open(path, "rb") as fh:
             pi = PropertyImage(property=prop, is_main=(idx == 0))
-            pi.image.save(f"p{prop.id}_{idx}{ext}", File(fh), save=False)
+            source = File(fh, name=f"p{prop.id}_{idx}{ext}")
+            pi.original_filename = source.name
+            publish_optimized(pi, source)
             pi.save()
 
 

@@ -203,13 +203,18 @@ def run_load(run: IngestaRun, log=None):
         )
 
     if scraper.key == "plusvalia":
-        from .models import ListingRetirada
+        from .pipeline.retirement import retire_listing
 
         def on_gone(url, external_id, http_status):
-            ListingRetirada.objects.update_or_create(
+            deleted_id = retire_listing(
                 fuente=fuente,
-                external_id=str(external_id),
-                defaults={"source_url": url, "http_status": http_status},
+                external_id=external_id,
+                source_url=url,
+                http_status=http_status,
+            )
+            logger(
+                f"[retirada] {external_id} eliminado del catálogo"
+                + (f" (propiedad #{deleted_id})" if deleted_id else " (no llegó a importarse)")
             )
 
     cancelled = False
@@ -327,7 +332,7 @@ def run_verify(run: IngestaRun, log=None):
         return run
 
     from real_estate.models import Property
-    from .pipeline.images import delete_property_images
+    from .pipeline.retirement import retire_property
 
     run.estado = "running"
     run.current_stage = "comprobando anuncios vigentes"
@@ -347,11 +352,11 @@ def run_verify(run: IngestaRun, log=None):
             run.vistos += 1
             try:
                 if exists is False:
-                    delete_property_images(prop)
-                    prop.status = "inactive"
-                    prop.save(update_fields=["status"])
+                    property_id = prop.pk
+                    source_url = prop.source_url
+                    retire_property(prop)
                     run.caducadas += 1
-                    logger(f"[retirada] #{prop.pk} ya no existe: {prop.source_url}")
+                    logger(f"[retirada] #{property_id} eliminada: {source_url}")
                 elif exists is None:
                     run.errores += 1
             except ScraperBlocked:
@@ -411,7 +416,7 @@ def run_refresh(run: IngestaRun, log=None):
         return run
 
     from real_estate.models import Property
-    from .pipeline.images import delete_property_images
+    from .pipeline.retirement import retire_property
 
     run.estado = "running"
     run.current_stage = "preparando actualización"
@@ -441,11 +446,11 @@ def run_refresh(run: IngestaRun, log=None):
                 )
 
                 if res == "GONE":
-                    if prop.status != "inactive":
-                        delete_property_images(prop)
-                        prop.status = "inactive"
-                        prop.save(update_fields=["status"])
+                    property_id = prop.pk
+                    source_url = prop.source_url
+                    retire_property(prop)
                     run.caducadas += 1
+                    logger(f"[retirada] #{property_id} eliminada: {source_url}")
                 elif res is None:
                     pass  # error transitorio: no tocamos la propiedad
                 else:

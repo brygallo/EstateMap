@@ -24,7 +24,8 @@ const LocationPermissionModal = ({
   useEffect(() => {
     if (isOpen) {
       // Small delay for animation
-      setTimeout(() => setIsVisible(true), 10);
+      const timer = setTimeout(() => setIsVisible(true), 10);
+      return () => clearTimeout(timer);
     } else {
       setIsVisible(false);
     }
@@ -32,9 +33,19 @@ const LocationPermissionModal = ({
 
   if (!isOpen) return null;
 
+  const userAgent = typeof navigator === 'undefined' ? '' : navigator.userAgent;
+  const isAndroid = /Android/i.test(userAgent);
+  const isIOS = /iPhone|iPad|iPod/i.test(userAgent);
+  const browserName = /CriOS|Chrome/i.test(userAgent) ? 'Chrome' : 'Safari';
+
   return (
-    <div className={`pointer-events-none fixed inset-x-0 bottom-3 z-top flex justify-center px-3 transition-all duration-300 sm:justify-end ${isVisible ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'}`}>
-      <div className="pointer-events-auto w-full max-w-lg rounded-modal border border-line bg-surface p-3 shadow-cardHover">
+    <div className={`pointer-events-none fixed inset-x-0 bottom-3 z-top flex justify-center px-3 transition-all duration-300 ${isVisible ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'}`}>
+      <div
+        className="pointer-events-auto w-full max-w-lg rounded-modal border border-line bg-surface p-3 shadow-cardHover"
+        role="dialog"
+        aria-modal="false"
+        aria-labelledby="location-permission-title"
+      >
         <div className="flex gap-2.5">
           <div className={`hidden h-9 w-9 flex-shrink-0 items-center justify-center rounded-card sm:flex ${
             blocked ? 'bg-warningBg text-warning' : 'bg-primaryLight text-primary'
@@ -48,7 +59,7 @@ const LocationPermissionModal = ({
           <div className="min-w-0 flex-1">
             <div className="flex items-start justify-between gap-3">
               <div>
-                <h2 className="text-base font-semibold text-textPrimary">
+                <h2 id="location-permission-title" className="text-base font-semibold text-textPrimary">
                   {blocked ? 'Activa la ubicación para usar el mapa cerca de ti' : 'Ver propiedades cerca de ti'}
                 </h2>
                 <p className="mt-0.5 text-sm text-textSecondary">
@@ -73,12 +84,28 @@ const LocationPermissionModal = ({
                 <div className="flex items-start gap-2">
                   <Smartphone className="mt-0.5 h-4 w-4 flex-shrink-0 text-warning" strokeWidth={2} aria-hidden />
                   <div className="min-w-0">
-                    <p className="text-sm font-semibold text-textPrimary">En iPhone</p>
+                    <p className="text-sm font-semibold text-textPrimary">
+                      {isAndroid ? 'En Android' : isIOS ? `En iPhone con ${browserName}` : 'En tu navegador'}
+                    </p>
                     <ol className="mt-1 list-decimal space-y-1 pl-4 text-xs leading-5 text-textSecondary">
-                      <li>Abre Ajustes del iPhone.</li>
-                      <li>Entra a Privacidad y seguridad, luego Localización.</li>
-                      <li>Activa Localización.</li>
-                      <li>Busca Safari o Chrome y permite ubicación mientras usas la app.</li>
+                      {isAndroid ? (
+                        <>
+                          <li>Toca el candado o icono junto a la dirección.</li>
+                          <li>Entra a Permisos y cambia Ubicación a Permitir.</li>
+                          <li>Verifica que la ubicación del teléfono esté activa.</li>
+                        </>
+                      ) : isIOS ? (
+                        <>
+                          <li>Abre Ajustes, Privacidad y seguridad, Localización.</li>
+                          <li>Activa Localización y selecciona {browserName}.</li>
+                          <li>Elige Mientras se usa la app.</li>
+                        </>
+                      ) : (
+                        <>
+                          <li>Toca el candado junto a la dirección del sitio.</li>
+                          <li>Cambia Ubicación a Permitir.</li>
+                        </>
+                      )}
                       <li>Regresa aquí y toca Intentar de nuevo.</li>
                     </ol>
                   </div>
@@ -87,7 +114,7 @@ const LocationPermissionModal = ({
                 <div className="mt-3 flex items-start gap-2">
                   <Settings className="mt-0.5 h-4 w-4 flex-shrink-0 text-primary" strokeWidth={2} aria-hidden />
                   <p className="text-xs leading-5 text-textSecondary">
-                    Si Safari no vuelve a preguntar, toca el icono <span className="font-semibold text-textPrimary">aA</span> o candado junto a la barra, entra a ajustes del sitio y cambia Ubicación a permitir.
+                    Si el navegador no vuelve a preguntar, abre los ajustes de este sitio y cambia Ubicación a permitir.
                   </p>
                 </div>
               </div>

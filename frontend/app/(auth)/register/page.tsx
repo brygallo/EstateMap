@@ -12,6 +12,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent } from '@/components/ui/card';
 import GoogleSignInButton from '@/components/GoogleSignInButton';
+import { fetchWithTimeout, requestErrorMessage } from '@/lib/form-errors';
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -30,7 +31,7 @@ export default function RegisterPage() {
 
   const handleSubmit = async (values: any, { setSubmitting, setErrors }: any) => {
     try {
-      const res = await fetch(`${API_URL}/register/`, {
+      const res = await fetchWithTimeout(`${API_URL}/register/`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -61,7 +62,7 @@ export default function RegisterPage() {
       toast.success('Registro exitoso. Por favor verifica tu correo electrónico.');
       router.push(`/verificar-correo?email=${encodeURIComponent(values.email)}`);
     } catch (err) {
-      toast.error('Error de conexión');
+      toast.error(requestErrorMessage(err, 'crear la cuenta'));
     } finally {
       setSubmitting(false);
     }

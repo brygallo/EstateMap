@@ -34,6 +34,8 @@ services:
     environment:
       DB_HOST: db
       DB_PORT: 5432
+      # The web process is the one that enqueues, so it needs the broker too.
+      CELERY_BROKER_URL: redis://redis:6379/0
     command: >
       sh -c "python manage.py migrate &&
              python init_minio.py &&
@@ -47,6 +49,37 @@ services:
         condition: service_healthy
       minio:
         condition: service_started
+  redis:
+    # Dev-only broker. Production reuses the host's Redis, shared with the other
+    # Aents systems; here a throwaway container keeps the setup self-contained.
+    image: redis:7-alpine
+    command: redis-server --appendonly yes --maxmemory-policy noeviction
+    ports:
+      - "6389:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+  worker:
+    build: ./backend
+    env_file:
+      - .env
+    environment:
+      DB_HOST: db
+      DB_PORT: 5432
+      CELERY_BROKER_URL: redis://redis:6379/0
+    command: celery -A estate_map worker -B --loglevel=info --concurrency=1
+    volumes:
+      # Same bind mount as backend, so both see the staging directory.
+      - ./backend:/app
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
   frontend:
     build:
       context: ./frontend
@@ -67,3 +100,4 @@ services:
 volumes:
   postgres_data:
   minio_data:
+  redis_data:

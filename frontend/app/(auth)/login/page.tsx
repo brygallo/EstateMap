@@ -14,6 +14,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent } from '@/components/ui/card';
 import GoogleSignInButton from '@/components/GoogleSignInButton';
+import { fetchWithTimeout, requestErrorMessage } from '@/lib/form-errors';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -51,7 +52,7 @@ export default function LoginPage() {
 
   const handleSubmit = async (values: any, { setSubmitting }: any) => {
     try {
-      const res = await fetch(`${API_URL}/login/`, {
+      const res = await fetchWithTimeout(`${API_URL}/login/`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: values.email, password: values.password }),
@@ -94,7 +95,7 @@ export default function LoginPage() {
         typeof window !== 'undefined' && localStorage.getItem('propertyPublicationDraft');
       router.push(hasPropertyDraft ? '/publicar-propiedad' : '/');
     } catch (err) {
-      toast.error('Error de conexión');
+      toast.error(requestErrorMessage(err, 'iniciar sesión'));
     } finally {
       setSubmitting(false);
     }

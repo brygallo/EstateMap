@@ -11,6 +11,7 @@ import {
   generateCombos,
   filterByCombo,
   canonicalComboSlug,
+  resolveLocationName,
 } from '@/lib/seo-combos';
 import { generatePageMetadata } from '@/lib/metadata';
 
@@ -42,11 +43,17 @@ export async function generateMetadata({ params }: { params: Params }): Promise<
   if (!parsed) return {};
 
   const properties = await getProperties();
-  const { matched, locationName } = filterByCombo(properties, parsed);
+  const { matched, locationName: matchedLocation } = filterByCombo(properties, parsed);
   if (matched.length < MIN_COMBO_PROPERTIES) {
-    return { title: 'Búsqueda no disponible', robots: { index: false, follow: true } };
+    // Out of stock, not gone: kept crawlable so it recovers its ranking when
+    // listings come back, but hidden from the index while it has nothing.
+    const fallbackName = resolveLocationName(properties, parsed.locationSlug);
+    return {
+      title: fallbackName ? `${titleFor(parsed, fallbackName)} — sin disponibilidad` : 'Búsqueda no disponible',
+      robots: { index: false, follow: true },
+    };
   }
-  const title = titleFor(parsed, locationName);
+  const title = titleFor(parsed, matchedLocation);
   // Dedup de landings casi idénticas: un combo sin operación cuyo inventario es
   // todo una misma operación canoniza hacia la variante con operación.
   const canonicalPath = `/${canonicalComboSlug(parsed, matched)}`;
@@ -63,8 +70,15 @@ export default async function ComboPage({ params }: { params: Params }) {
   if (!parsed) notFound();
 
   const properties = await getProperties();
-  const { matched, locationName } = filterByCombo(properties, parsed);
-  if (matched.length < MIN_COMBO_PROPERTIES) notFound();
+  const { matched, locationName: matchedLocation } = filterByCombo(properties, parsed);
+
+  // Inventory churns daily, so a landing that runs out of listings is normal —
+  // and answering 404 drops a URL Google already had indexed. The page stays at
+  // 200 with its alternatives (and `noindex, follow` from `generateMetadata`)
+  // while empty, so it re-enters the index by itself once stock returns. Only a
+  // location that does not exist in the catalogue is a real 404.
+  const locationName = matchedLocation ?? resolveLocationName(properties, parsed.locationSlug);
+  if (!locationName) notFound();
 
   const { typeDef, opDef, locationSlug } = parsed;
   const title = titleFor(parsed, locationName);
@@ -147,7 +161,7 @@ export default async function ComboPage({ params }: { params: Params }) {
       relatedLinks={related.slice(0, 8)}
       locationName={locationName ?? undefined}
       breadcrumbs={breadcrumbs}
-      emptyMessage="No hay propiedades en esta combinación por ahora. Explora el mapa interactivo."
+      emptyMessage={`Ahora mismo no hay ${title.toLowerCase()}. Revisa las búsquedas relacionadas de abajo o explora el mapa interactivo: el inventario se actualiza cada día.`}
     />
   );
 }

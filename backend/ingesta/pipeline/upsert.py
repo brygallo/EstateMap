@@ -14,7 +14,7 @@ from django.db import IntegrityError, transaction
 from django.utils import timezone
 
 from .dedup import find_duplicate
-from .images import attach_images_from_urls, image_dhash_from_url, sync_property_images
+from .images import attach_images_from_urls, delete_property_images, image_dhash_from_url, sync_property_images
 from .location import validate_location
 from .normalize import build_dedup_key, sanitize_price
 
@@ -116,7 +116,7 @@ def upsert_property(data, fuente, reader=None, image_urls=None, log=None,
             existing_phone = bool((dup.contact_phone or "").strip())
             if new_phone and not existing_phone:
                 # Preferencia: el anuncio CON WhatsApp gana. Creamos el nuevo y
-                # ocultamos el anterior (queda enlazado como duplicado).
+                # eliminamos el anterior después de crear el reemplazo.
                 demote = dup
             else:
                 # Empate o el existente ya tiene contacto -> gana el existente.
@@ -149,11 +149,6 @@ def upsert_property(data, fuente, reader=None, image_urls=None, log=None,
         _apply_fields(prop, data, fuente, lat, lng)
         prop.save()
 
-    if demote is not None:
-        demote.is_duplicate = True
-        demote.duplicate_of = prop
-        demote.save(update_fields=["is_duplicate", "duplicate_of"])
-
     # Imágenes: flujo paquete (reader) o flujo directo (image_urls -> MinIO).
     if reader is not None and external_id:
         image_paths = reader.image_paths(external_id)
@@ -179,6 +174,12 @@ def upsert_property(data, fuente, reader=None, image_urls=None, log=None,
                 "el scraper no entregó imágenes"
             )
         return "skipped_no_images", None
+
+    # El reemplazo ya quedó completo: ahora sí liberamos la copia anterior y
+    # sus archivos. Nunca se elimina antes de validar el nuevo anuncio.
+    if demote is not None:
+        delete_property_images(demote)
+        demote.delete()
 
     return ("created" if created else "updated"), prop
 

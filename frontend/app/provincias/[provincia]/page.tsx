@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import SeoLanding, { TYPE_LINKS, priceRangeText } from '@/components/SeoLanding';
 import { generatePageMetadata } from '@/lib/metadata';
-import { getCities, getProperties, getProvinces, slugify } from '@/lib/properties';
+import { getCities, getLocationCatalog, getProperties, getProvinces, slugify } from '@/lib/properties';
 import { generateCombosWithCounts, parseComboSlug } from '@/lib/seo-combos';
 
 export const revalidate = 3600;
@@ -15,7 +15,14 @@ interface ProvincePageProps {
 async function resolveProvince(slug: string) {
   const properties = await getProperties();
   const match = getProvinces(properties).find((province) => province.slug === slug);
-  if (!match) return null;
+  if (!match) {
+    // No listings right now: fall back to the stable province catalogue so the
+    // page keeps answering 200 with an empty state instead of 404-ing an
+    // indexed URL. A slug missing from the catalogue too is a genuine 404.
+    const { provinces } = await getLocationCatalog();
+    const known = provinces.find((province) => province.slug === slug);
+    return known ? { name: known.name, properties: [], cityLinks: [] } : null;
+  }
 
   const provinceProperties = properties.filter((property) => slugify(property.province || '') === slug);
   const cityLinks = getCities(provinceProperties).slice(0, 24).map((city) => ({
@@ -41,11 +48,18 @@ export async function generateMetadata({
     return { title: 'Provincia no encontrada', robots: { index: false, follow: false } };
   }
 
-  return generatePageMetadata(
+  const metadata = generatePageMetadata(
     `Propiedades en ${province.name}`,
     `Casas, departamentos, terrenos y locales en venta y alquiler en ${province.name}, Ecuador. Explora ciudades, cantones y búsquedas locales con mapa, precios y contacto directo.`,
     `/provincias/${provincia}`
   );
+
+  // Out of stock, not gone: crawlable so it recovers on its own when listings
+  // return, but out of the index while it has nothing to show.
+  if (province.properties.length === 0) {
+    return { ...metadata, robots: { index: false, follow: true } };
+  }
+  return metadata;
 }
 
 export default async function ProvinciaPage({ params }: ProvincePageProps) {

@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent } from '@/components/ui/card';
+import { fetchWithTimeout, requestErrorMessage, responseErrorMessage } from '@/lib/form-errors';
 
 const ResetPassword = () => {
   const router = useRouter();
@@ -33,7 +34,7 @@ const ResetPassword = () => {
     }
 
     try {
-      const res = await fetch(`${API_URL}/reset-password/`, {
+      const res = await fetchWithTimeout(`${API_URL}/reset-password/`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -44,14 +45,14 @@ const ResetPassword = () => {
       const data = await res.json().catch(() => ({}));
 
       if (!res.ok) {
-        toast.error(data.error || 'Error al restablecer la contraseña');
+        toast.error(data.error || await responseErrorMessage(res, 'No se pudo restablecer la contraseña.'));
         return;
       }
 
       toast.success(data.message || 'Contraseña actualizada exitosamente');
       setTimeout(() => router.push('/iniciar-sesion'), 1500);
     } catch (err) {
-      toast.error('Error de conexión');
+      toast.error(requestErrorMessage(err, 'restablecer la contraseña'));
     } finally {
       setSubmitting(false);
     }

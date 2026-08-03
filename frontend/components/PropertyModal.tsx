@@ -27,6 +27,7 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { trackEvent } from '@/lib/analytics';
+import { PhoneReveal } from '@/components/PropertyContactActions';
 import { ecuadorPhoneHref, normalizeEcuadorPhone } from '@/lib/phone';
 import ShareModal from './ShareModal';
 import LeadForm from './LeadForm';
@@ -112,8 +113,8 @@ const ImageGallery = ({ images, initialIndex, onClose }: any) => {
   return (
     <div
       className="fixed inset-0 z-modal flex items-center justify-center bg-black/95 outline-none animate-fadeIn"
-      onClick={() => {
-        if (!suppressCloseRef.current) onClose();
+      onClick={(event) => {
+        if (event.target === event.currentTarget && !suppressCloseRef.current) onClose();
       }}
       onTouchStart={(event) => {
         const touch = event.touches[0];
@@ -129,12 +130,12 @@ const ImageGallery = ({ images, initialIndex, onClose }: any) => {
       {/* Close Button */}
       <button
         onClick={(e) => { e.stopPropagation(); onClose(); }}
-        className="fixed right-4 top-4 inline-flex items-center gap-2 rounded-full border-2 border-black bg-white px-4 py-2 text-sm font-bold text-black shadow-cardHover transition-all hover:bg-slate-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/70"
-        style={{ zIndex: 2147483647 }}
+        className="fixed right-3 inline-flex h-11 w-11 items-center justify-center rounded-full border border-white/30 bg-white text-black shadow-cardHover transition-all hover:bg-slate-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/70 sm:right-4 sm:h-auto sm:w-auto sm:gap-2 sm:px-4 sm:py-2"
+        style={{ zIndex: 2147483647, top: 'max(0.75rem, env(safe-area-inset-top))' }}
         aria-label="Cerrar galería"
       >
         <X className="h-6 w-6" strokeWidth={3} aria-hidden />
-        <span>Cerrar</span>
+        <span className="hidden sm:inline">Cerrar</span>
       </button>
 
       {/* Image Counter */}
@@ -146,7 +147,7 @@ const ImageGallery = ({ images, initialIndex, onClose }: any) => {
       </div>
 
       {/* Main Image */}
-      <div className="relative flex h-full w-full items-center justify-center p-4">
+      <div className="relative flex h-full w-full items-center justify-center p-4" onClick={() => { if (!suppressCloseRef.current) onClose(); }}>
         <img
           src={activeImage.image}
           alt={`Imagen ${currentIndex + 1}`}
@@ -241,7 +242,8 @@ const PropertyModal = ({ property: initialProperty, isOpen, onClose, onViewOnMap
   const [loadingFullProperty, setLoadingFullProperty] = useState(false);
   const [sheetExpanded, setSheetExpanded] = useState(false);
   const panelRef = useRef<HTMLDivElement>(null);
-  const sheetTouchStartRef = useRef<number | null>(null);
+  const sheetScrollRef = useRef<HTMLDivElement>(null);
+  const sheetTouchStartRef = useRef<{ x: number; y: number; scrollTop: number } | null>(null);
   const carouselTouchStartRef = useRef<{ x: number; y: number } | null>(null);
   const carouselSwipedRef = useRef(false);
   const property = fullProperty || initialProperty;
@@ -348,17 +350,44 @@ const PropertyModal = ({ property: initialProperty, isOpen, onClose, onViewOnMap
     setCurrentImageIndex((prev) => (prev + 1) % images.length);
   };
 
+  const handleSheetTouchStart = (event: React.TouchEvent) => {
+    const touch = event.touches[0];
+    if (!touch) return;
+    sheetTouchStartRef.current = {
+      x: touch.clientX,
+      y: touch.clientY,
+      scrollTop: sheetScrollRef.current?.scrollTop ?? 0,
+    };
+  };
+
+  const collapseSheet = () => {
+    setSheetExpanded(false);
+    sheetScrollRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
   const handleSheetTouchEnd = (event: React.TouchEvent) => {
     const start = sheetTouchStartRef.current;
     sheetTouchStartRef.current = null;
-    if (start == null) return;
+    const touch = event.changedTouches[0];
+    if (!start || !touch) return;
 
-    const deltaY = event.changedTouches[0].clientY - start;
-    if (deltaY < -24) setSheetExpanded(true);
-    // Bajar el asa siempre descarta la ficha completa. Antes, si estaba
-    // expandida, el primer gesto solo la dejaba a media pantalla y obligaba a
-    // repetirlo.
-    if (deltaY > 28) onClose();
+    const deltaX = touch.clientX - start.x;
+    const deltaY = touch.clientY - start.y;
+    // El carrusel conserva el gesto horizontal. El panel solo responde a un
+    // desplazamiento claramente vertical para evitar aperturas accidentales.
+    if (Math.abs(deltaY) < 36 || Math.abs(deltaY) <= Math.abs(deltaX) * 1.15) return;
+
+    if (deltaY < 0 && !sheetExpanded) {
+      setSheetExpanded(true);
+      return;
+    }
+
+    // El gesto hacia abajo solo controla la ficha cuando el contenido ya está
+    // arriba. Si está desplazado, dejamos que el scroll vuelva normalmente.
+    if (deltaY > 0 && start.scrollTop <= 2) {
+      if (sheetExpanded) collapseSheet();
+      else onClose();
+    }
   };
 
   const prevImage = () => {
@@ -451,12 +480,10 @@ const PropertyModal = ({ property: initialProperty, isOpen, onClose, onViewOnMap
       >
         <button
           type="button"
-          onClick={() => setSheetExpanded((current) => !current)}
-          onTouchStart={(event) => {
-            sheetTouchStartRef.current = event.touches[0].clientY;
-          }}
+          onClick={() => sheetExpanded ? collapseSheet() : setSheetExpanded(true)}
+          onTouchStart={handleSheetTouchStart}
           onTouchEnd={handleSheetTouchEnd}
-          className="absolute inset-x-0 top-0 z-20 flex h-7 items-center justify-center bg-white/95 backdrop-blur lg:hidden"
+          className="absolute inset-x-0 top-0 z-20 flex h-7 touch-none items-center justify-center bg-white/95 backdrop-blur lg:hidden"
           aria-label={sheetExpanded ? 'Contraer ficha' : 'Expandir ficha'}
         >
           <span className="h-1.5 w-11 rounded-full bg-slate-300" aria-hidden />
@@ -482,7 +509,12 @@ const PropertyModal = ({ property: initialProperty, isOpen, onClose, onViewOnMap
           </button>
 
           {/* Scrollable Content */}
-          <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain pb-24 pt-7 lg:max-h-none lg:pb-0 lg:pt-0">
+          <div
+            ref={sheetScrollRef}
+            className="min-h-0 flex-1 touch-pan-y overflow-y-auto overscroll-contain pb-24 pt-7 lg:max-h-none lg:pb-0 lg:pt-0"
+            onTouchStart={handleSheetTouchStart}
+            onTouchEnd={handleSheetTouchEnd}
+          >
             {/* Image Gallery Section */}
             {activeImage ? (
               <div
@@ -720,7 +752,16 @@ const PropertyModal = ({ property: initialProperty, isOpen, onClose, onViewOnMap
                   {contactPhone && (
                     <div className="flex items-center gap-2">
                       <Phone className="h-4 w-4 flex-shrink-0 text-primary" strokeWidth={1.75} aria-hidden />
-                      <span>{callablePhone}</span>
+                      <PhoneReveal
+                        phone={callablePhone}
+                        source="modal_publication_contact"
+                        propertyId={property.id}
+                        city={property.city}
+                        province={property.province}
+                        propertyType={property.property_type}
+                        status={property.status}
+                        imported={isImported}
+                      />
                     </div>
                   )}
                   {contactEmail && (
@@ -774,7 +815,17 @@ const PropertyModal = ({ property: initialProperty, isOpen, onClose, onViewOnMap
                           <Phone className="h-4 w-4" strokeWidth={2} aria-hidden />
                           Contacto directo
                         </h3>
-                        <div className="mb-2 text-sm font-bold">{callablePhone}</div>
+                        <PhoneReveal
+                          phone={callablePhone}
+                          source="modal_contact_box"
+                          propertyId={property.id}
+                          city={property.city}
+                          province={property.province}
+                          propertyType={property.property_type}
+                          status={property.status}
+                          imported={isImported}
+                          className="mb-2 inline-block text-sm font-bold text-white underline-offset-2 hover:underline"
+                        />
                         <div className="grid grid-cols-2 gap-2">
                           <a
                             href={`tel:${callablePhone}`}

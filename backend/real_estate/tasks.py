@@ -1,0 +1,153 @@
+"""
+Background image processing.
+
+The upload request only writes the original to local disk and returns; the two
+WebP encodes and the two MinIO PUTs happen here. Keeping them out of the request
+is the whole point — with ten images they used to run inside the atomic block,
+before the response.
+"""
+
+import logging
+import os
+import time
+from pathlib import Path
+
+from celery import shared_task
+from django.conf import settings
+from django.core.files import File
+from django.db import transaction
+
+logger = logging.getLogger(__name__)
+
+
+class PendingImageMissing(Exception):
+    """The temp file is gone — nothing to optimize, and retrying cannot help."""
+
+
+@shared_task(
+    bind=True,
+    autoretry_for=(OSError,),
+    retry_backoff=True,
+    retry_kwargs={"max_retries": 3},
+    acks_late=True,
+)
+def optimize_property_image(self, image_id):
+    """Optimize one PropertyImage from its temp file and publish it to storage."""
+    from .image_utils import ImageOptimizationService
+    from .models import PropertyImage
+
+    try:
+        instance = PropertyImage.objects.get(pk=image_id)
+    except PropertyImage.DoesNotExist:
+        # The property was deleted between upload and processing. Not an error.
+        logger.info("PropertyImage %s vanished before optimization", image_id)
+        return {"id": image_id, "status": "gone"}
+
+    if instance.status == PropertyImage.Status.READY:
+        return {"id": image_id, "status": "already-ready"}
+
+    source = Path(instance.pending_path) if instance.pending_path else None
+    if not source or not source.exists():
+        instance.status = PropertyImage.Status.FAILED
+        instance.optimization_error = "El archivo temporal ya no existe."
+        instance.save(update_fields=["status", "optimization_error"])
+        raise PendingImageMissing(f"Temp file missing for PropertyImage {image_id}")
+
+    started = time.monotonic()
+    try:
+        with source.open("rb") as handle:
+            django_file = File(handle, name=instance.original_filename or source.name)
+            result = ImageOptimizationService().process(django_file)
+
+            # Both saves push to MinIO. save=False so the row is written once,
+            # with every field, instead of three times.
+            instance.image.save(result.image.name, result.image, save=False)
+            instance.thumbnail.save(result.thumbnail.name, result.thumbnail, save=False)
+
+        instance.file_size = instance.image.size
+        instance.status = PropertyImage.Status.READY
+        instance.optimization_error = ""
+        instance.pending_path = ""
+        instance.save(
+            update_fields=[
+                "image",
+                "thumbnail",
+                "file_size",
+                "status",
+                "optimization_error",
+                "pending_path",
+            ]
+        )
+    except ValueError as exc:
+        # Unreadable or oversized image: a retry would fail identically.
+        instance.status = PropertyImage.Status.FAILED
+        instance.optimization_error = str(exc)
+        instance.save(update_fields=["status", "optimization_error"])
+        logger.warning("PropertyImage %s could not be optimized: %s", image_id, exc)
+        _discard(source)
+        return {"id": image_id, "status": "failed", "error": str(exc)}
+
+    _discard(source)
+    elapsed = time.monotonic() - started
+    logger.info(
+        "PropertyImage %s optimized in %.2fs (%s bytes, preserved=%s)",
+        image_id,
+        elapsed,
+        instance.file_size,
+        result.preserved,
+    )
+    return {"id": image_id, "status": "ready", "bytes": instance.file_size}
+
+
+@shared_task
+def sweep_pending_images():
+    """
+    Re-queue rows whose task never ran, and drop temp files nobody claims.
+
+    Covers the window where the web process wrote a temp file and enqueued a task
+    but the worker was down long enough for the message to be lost.
+    """
+    from .models import PropertyImage
+
+    max_age = getattr(settings, "IMAGE_UPLOAD_TEMP_MAX_AGE_HOURS", 48)
+    requeued = 0
+    for image in PropertyImage.objects.filter(status=PropertyImage.Status.PENDING):
+        if image.pending_path and Path(image.pending_path).exists():
+            optimize_property_image.delay(image.pk)
+            requeued += 1
+
+    removed = 0
+    temp_dir = Path(getattr(settings, "IMAGE_UPLOAD_TEMP_DIR", ""))
+    if temp_dir.exists():
+        claimed = set(
+            PropertyImage.objects.filter(status=PropertyImage.Status.PENDING)
+            .exclude(pending_path="")
+            .values_list("pending_path", flat=True)
+        )
+        cutoff = time.time() - max_age * 3600
+        for path in temp_dir.iterdir():
+            if str(path) in claimed or not path.is_file():
+                continue
+            if path.stat().st_mtime < cutoff:
+                _discard(path)
+                removed += 1
+
+    logger.info("sweep_pending_images: %s re-queued, %s orphans removed", requeued, removed)
+    return {"requeued": requeued, "removed": removed}
+
+
+def _discard(path):
+    try:
+        os.unlink(path)
+    except OSError:
+        logger.debug("Could not remove temp file %s", path, exc_info=True)
+
+
+def enqueue_optimization(image_id):
+    """
+    Queue the task once the surrounding transaction commits.
+
+    Called from the serializer. Before the commit the worker could pick the id up
+    and find no row, because it reads from its own connection.
+    """
+    transaction.on_commit(lambda: optimize_property_image.delay(image_id))

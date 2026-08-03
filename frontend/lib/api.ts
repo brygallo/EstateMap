@@ -2,6 +2,8 @@
  * Cliente API con auto-renovación de tokens
  */
 
+import { fetchWithTimeout } from '@/lib/form-errors';
+
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8010/api';
 
 interface FetchOptions extends RequestInit {
@@ -52,7 +54,7 @@ async function refreshAccessToken(): Promise<string | null> {
   }
 
   try {
-    const response = await fetch(`${API_URL}/token/refresh/`, {
+    const response = await fetchWithTimeout(`${API_URL}/token/refresh/`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -109,7 +111,7 @@ export async function apiFetch(endpoint: string, options: FetchOptions = {}): Pr
 
   // Si no necesita autenticación, hacer la petición directamente
   if (skipAuth) {
-    return fetch(`${API_URL}${endpoint}`, fetchOptions);
+    return fetchWithTimeout(`${API_URL}${endpoint}`, fetchOptions);
   }
 
   // Obtener el token actual
@@ -130,7 +132,7 @@ export async function apiFetch(endpoint: string, options: FetchOptions = {}): Pr
   };
 
   // Hacer la petición
-  const response = await fetch(`${API_URL}${endpoint}`, {
+  const response = await fetchWithTimeout(`${API_URL}${endpoint}`, {
     ...fetchOptions,
     headers,
   });
@@ -146,7 +148,7 @@ export async function apiFetch(endpoint: string, options: FetchOptions = {}): Pr
         Authorization: `Bearer ${newToken}`,
       };
 
-      return fetch(`${API_URL}${endpoint}`, {
+      return fetchWithTimeout(`${API_URL}${endpoint}`, {
         ...fetchOptions,
         headers: retryHeaders,
       });

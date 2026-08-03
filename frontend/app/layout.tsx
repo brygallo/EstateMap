@@ -320,7 +320,16 @@ export default function RootLayout({
               </main>
               <Footer />
             </div>
-            <Toaster richColors position="top-right" />
+            <Toaster
+              richColors
+              position="top-center"
+              className="app-toaster"
+              toastOptions={{
+                classNames: {
+                  toast: 'app-toast',
+                },
+              }}
+            />
           </QueryProvider>
         </AuthProvider>
       </body>

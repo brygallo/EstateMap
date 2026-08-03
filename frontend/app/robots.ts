@@ -33,7 +33,11 @@ const AI_CRAWLERS = [
 ];
 
 export default function robots(): MetadataRoute.Robots {
+  // The REST API carries no indexable content, but crawlers were spending about
+  // a third of their budget on it (`/api/properties/`, `map_points`, and the
+  // analytics beacon). Blocking it sends that budget back to the listings.
   const publicDisallow = [
+    '/api/',
     '/cuenta',
     '/account',
     '/add-property',

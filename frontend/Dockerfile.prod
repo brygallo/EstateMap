@@ -38,7 +38,16 @@ ENV NEXT_TELEMETRY_DISABLED=1
 # Build Next.js application
 RUN npm run build
 
-# Stage 3: Runner (Production)
+# Stage 3: sharp
+# Next.js standalone does not bundle sharp, and without it every image
+# optimization request fails in production ("sharp is required to be installed
+# in standalone mode"). Building it in its own stage keeps the runtime copy
+# deterministic instead of relying on the build tracer to pick it up.
+FROM node:20-bullseye-slim AS sharpdeps
+WORKDIR /sharp
+RUN npm init -y > /dev/null && npm install --omit=dev sharp@0.33.5
+
+# Stage 4: Runner (Production)
 FROM node:20-bullseye-slim AS runner
 WORKDIR /app
 
@@ -53,6 +62,8 @@ RUN groupadd -r nodejs --gid 1001 \
 COPY --from=builder /app/public ./public
 COPY --from=builder /app/.next/standalone ./
 COPY --from=builder /app/.next/static ./.next/static
+# Merges into the standalone node_modules without replacing it.
+COPY --from=sharpdeps /sharp/node_modules/ ./node_modules/
 
 # Set correct permissions
 RUN chown -R nextjs:nodejs /app

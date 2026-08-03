@@ -64,14 +64,18 @@ const NavBar = () => {
       <Suspense fallback={null}>
         <NavigationProgress />
       </Suspense>
-      <div className="aents-header-grid" aria-hidden />
-      <div className="aents-header-aura" aria-hidden />
       <div className="relative mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
         {/* Logo */}
-        <Link href="/" className="group flex items-center gap-3" onClick={closeMobileMenu}>
-          <div className="aents-brand-mark flex h-10 w-10 items-center justify-center rounded-[12px]">
-            <Image src="/aents/aents-symbol.png" alt="" width={30} height={30} className="h-[30px] w-[30px]" priority />
-          </div>
+        <Link href="/" className="logo-lockup group min-w-0" onClick={closeMobileMenu}>
+          <Image
+            src="/aents/aents-brand-tile-256.png"
+            alt=""
+            width={38}
+            height={38}
+            className="aents-brand-symbol h-[38px] w-[38px]"
+            aria-hidden
+            priority
+          />
           <div className="min-w-0">
             <span className="block truncate text-base font-semibold leading-tight text-textPrimary">
               Geo Propiedades
@@ -200,10 +204,15 @@ const NavBar = () => {
           </SheetTrigger>
           <SheetContent side="right" className="w-72 border-line bg-surface sm:w-80">
             <SheetHeader>
-              <SheetTitle className="flex items-center gap-2 text-left">
-                <div className="flex h-9 w-9 items-center justify-center rounded-[10px] bg-primary text-white">
-                  <Image src="/aents/aents-symbol.png" alt="" width={24} height={24} className="h-6 w-6" />
-                </div>
+              <SheetTitle className="logo-lockup text-left">
+                <Image
+                  src="/aents/aents-brand-tile-256.png"
+                  alt=""
+                  width={34}
+                  height={34}
+                  className="aents-brand-symbol h-[34px] w-[34px]"
+                  aria-hidden
+                />
                 Geo Propiedades
               </SheetTitle>
             </SheetHeader>

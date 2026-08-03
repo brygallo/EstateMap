@@ -38,6 +38,7 @@ SITE_ID = 1
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'estate_map.upload_errors.UploadErrorMiddleware',
     'estate_map.observability.ObservabilityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'corsheaders.middleware.CorsMiddleware',
@@ -308,11 +309,12 @@ STORAGES = {
 # ========================================
 # FILE UPLOAD SETTINGS
 # ========================================
-# Tamaño máximo de upload (10MB por archivo)
-DATA_UPLOAD_MAX_MEMORY_SIZE = 10 * 1024 * 1024  # 10MB
-
-# Tamaño máximo total de request (50MB para múltiples archivos)
-FILE_UPLOAD_MAX_MEMORY_SIZE = 50 * 1024 * 1024  # 50MB
+# Límite del cuerpo no-archivo. Los archivos se validan individualmente en el
+# serializador; este margen evita rechazar multipart válidos antes de llegar a él.
+DATA_UPLOAD_MAX_MEMORY_SIZE = 60 * 1024 * 1024
+# Umbral para pasar archivos de memoria a disco temporal (no es un límite total).
+FILE_UPLOAD_MAX_MEMORY_SIZE = 5 * 1024 * 1024
+DATA_UPLOAD_MAX_NUMBER_FILES = 10
 
 # Formatos de imagen permitidos
 ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp']
@@ -332,6 +334,68 @@ IMAGE_OPTIMIZATION = {
 # User-specific limits can be introduced here when subscription plans are implemented.
 MAX_IMAGES_PER_PROPERTY = 10
 MAX_IMAGE_SIZE_MB = 10
+MAX_PROPERTY_UPLOAD_MB = 50
+
+# ========================================
+# CELERY / SHARED AENTS BROKER
+# ========================================
+# One Redis serves every Aents system on the host; each project owns a database
+# index so a FLUSHDB in one never wipes another's queue. Registry:
+#
+#   0 / 1  geoPropiedades  (broker / results)   <- this project
+#   2 / 3  aents           (broker / results)
+#   4+     free for the next system
+#
+# Workers are not shared. A worker imports its own project's tasks, so each
+# system runs its own worker against its own index.
+CELERY_BROKER_URL = os.getenv("CELERY_BROKER_URL", "redis://127.0.0.1:6379/0")
+
+# No result backend on purpose. Nothing reads the return value of an image
+# optimization, so storing one would write a Redis key per task that is never
+# looked at — and it would burn a second database index per system.
+CELERY_RESULT_BACKEND = os.getenv("CELERY_RESULT_BACKEND") or None
+CELERY_TASK_IGNORE_RESULT = True
+
+# Ack after the task finishes, not when it is delivered: if a worker is killed
+# mid-optimization the image is re-queued instead of silently lost.
+CELERY_TASK_ACKS_LATE = True
+CELERY_TASK_REJECT_ON_WORKER_LOST = True
+# This queue is deliberately secondary: one task at a time, taking as long as it
+# takes, so it can never compete with web traffic on a host shared with the
+# other Aents systems and the mail stack.
+CELERY_WORKER_CONCURRENCY = 1
+CELERY_WORKER_PREFETCH_MULTIPLIER = 1
+# Recycle a child that grows past 300 MB. Pillow holds a decoded bitmap per
+# image (~256 MB for a 64 MP source), and this returns that memory to the host
+# instead of letting it accumulate across tasks.
+CELERY_WORKER_MAX_MEMORY_PER_CHILD = 300_000  # KB
+CELERY_TASK_SERIALIZER = "json"
+CELERY_ACCEPT_CONTENT = ["json"]
+CELERY_TIMEZONE = TIME_ZONE
+# Generous, because latency does not matter here. The limit exists only so a
+# corrupt file cannot pin the single worker process forever and stall the queue.
+CELERY_TASK_SOFT_TIME_LIMIT = 600
+CELERY_TASK_TIME_LIMIT = 900
+
+# Hourly safety net: re-queue images whose message was lost and delete temp
+# files nobody claims. Embedded beat (-B) is fine because there is exactly one
+# worker per system; with several, each would fire its own copy.
+CELERY_BEAT_SCHEDULE = {
+    "sweep-pending-images": {
+        "task": "real_estate.tasks.sweep_pending_images",
+        "schedule": 60 * 60,
+    },
+}
+
+# Uploads land here first so the request only pays a local disk write, and the
+# worker picks them up afterwards. It must be a real path shared between the web
+# process and the worker (a Docker volume when they are separate containers).
+IMAGE_UPLOAD_TEMP_DIR = os.getenv(
+    "IMAGE_UPLOAD_TEMP_DIR",
+    str(BASE_DIR / "tmp" / "pending-images"),
+)
+# Safety net for temp files whose task never ran (worker down during the upload).
+IMAGE_UPLOAD_TEMP_MAX_AGE_HOURS = int(os.getenv("IMAGE_UPLOAD_TEMP_MAX_AGE_HOURS", "48"))
 
 
 # ========================================

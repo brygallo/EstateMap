@@ -116,20 +116,20 @@ export default function PropertyGallery({
       </section>
 
       {lightboxOpen && (
-        <div className="fixed inset-0 z-modal flex flex-col bg-black/95" role="dialog" aria-modal="true" aria-label={`Galería de ${title}`} onClick={() => setLightboxOpen(false)}>
-          <div className="flex items-center justify-between px-4 py-3 text-white" onClick={(event) => event.stopPropagation()}>
+        <div className="fixed inset-0 z-modal flex flex-col bg-black/95" role="dialog" aria-modal="true" aria-label={`Galería de ${title}`} onClick={(event) => { if (event.target === event.currentTarget) setLightboxOpen(false); }}>
+          <div className="flex items-center justify-between px-4 py-3 text-white">
             <span className="text-sm font-semibold">{activeIndex + 1} / {validImages.length}</span>
-            <button type="button" onClick={() => setLightboxOpen(false)} className="inline-flex items-center gap-2 rounded-full bg-white px-4 py-2 text-sm font-bold text-black" aria-label="Cerrar galería">
-              <X className="h-5 w-5" aria-hidden /> Cerrar
+            <button type="button" onClick={(event) => { event.stopPropagation(); setLightboxOpen(false); }} className="fixed right-3 z-50 inline-flex h-11 w-11 items-center justify-center rounded-full border border-white/30 bg-white text-black shadow-cardHover sm:static sm:h-auto sm:w-auto sm:gap-2 sm:px-4 sm:py-2" style={{ top: 'max(0.75rem, env(safe-area-inset-top))' }} aria-label="Cerrar galería">
+              <X className="h-6 w-6" strokeWidth={2.5} aria-hidden /><span className="hidden text-sm font-bold sm:inline">Cerrar</span>
             </button>
           </div>
 
-          <div className="relative min-h-0 flex-1" onClick={(event) => event.stopPropagation()}>
-            <img src={validImages[activeIndex].image} alt={`${title} — imagen ${activeIndex + 1}`} className="h-full w-full object-contain px-4 pb-4" />
+          <div className="relative min-h-0 flex-1" onClick={() => setLightboxOpen(false)}>
+            <img onClick={(event) => event.stopPropagation()} src={validImages[activeIndex].image} alt={`${title} — imagen ${activeIndex + 1}`} className="h-full w-full object-contain px-4 pb-4" />
             {validImages.length > 1 && (
               <>
-                <button type="button" onClick={previous} className="absolute left-3 top-1/2 -translate-y-1/2 rounded-full bg-white/95 p-3 text-black shadow-cardHover" aria-label="Imagen anterior"><ChevronLeft className="h-6 w-6" aria-hidden /></button>
-                <button type="button" onClick={next} className="absolute right-3 top-1/2 -translate-y-1/2 rounded-full bg-white/95 p-3 text-black shadow-cardHover" aria-label="Imagen siguiente"><ChevronRight className="h-6 w-6" aria-hidden /></button>
+                <button type="button" onClick={(event) => { event.stopPropagation(); previous(); }} className="absolute left-3 top-1/2 -translate-y-1/2 rounded-full bg-white/95 p-3 text-black shadow-cardHover" aria-label="Imagen anterior"><ChevronLeft className="h-6 w-6" aria-hidden /></button>
+                <button type="button" onClick={(event) => { event.stopPropagation(); next(); }} className="absolute right-3 top-1/2 -translate-y-1/2 rounded-full bg-white/95 p-3 text-black shadow-cardHover" aria-label="Imagen siguiente"><ChevronRight className="h-6 w-6" aria-hidden /></button>
               </>
             )}
           </div>

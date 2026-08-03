@@ -4,6 +4,7 @@ import AdminRoute from '@/components/AdminRoute';
 import AdminSidebar from '@/components/AdminSidebar';
 import { useAuth } from '@/lib/auth-context';
 import { useEffect, useState, useCallback, useMemo, useRef } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { toast } from 'sonner';
 import {
   useReactTable,
@@ -149,6 +150,7 @@ const hasUnfinishedPublication = (events: ActivityEvent[] = []) => {
 
 const AdminUsersPage = () => {
   const { token, user: currentUser } = useAuth();
+  const searchParams = useSearchParams();
   const [users, setUsers] = useState<UserItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
@@ -175,6 +177,26 @@ const AdminUsersPage = () => {
       setDetailLoading(false);
     }
   }, [token]);
+
+  const linkedUserLoadedRef = useRef<number | null>(null);
+  useEffect(() => {
+    const userId = Number(searchParams.get('user'));
+    if (!token || !Number.isInteger(userId) || userId <= 0 || linkedUserLoadedRef.current === userId) return;
+    linkedUserLoadedRef.current = userId;
+    setDetailLoading(true);
+    fetch(`${API_URL}/admin/users/${userId}/`, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+      .then(async (response) => {
+        if (!response.ok) throw new Error();
+        setSelectedUser(await response.json());
+      })
+      .catch(() => {
+        linkedUserLoadedRef.current = null;
+        toast.error('No se pudo abrir el usuario asociado a la actividad');
+      })
+      .finally(() => setDetailLoading(false));
+  }, [searchParams, token]);
 
   const fetchUsers = useCallback(async (pageNum: number, searchValue: string, filterValue: string) => {
     setLoading(true);

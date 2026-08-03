@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth-context';
 import { toast } from 'sonner';
+import { requestErrorMessage } from '@/lib/form-errors';
 
 interface GoogleSignInButtonProps {
   text?: 'signin_with' | 'signup_with' | 'continue_with' | 'signin';
@@ -118,7 +119,7 @@ export default function GoogleSignInButton({
         router.push(hasPropertyDraft ? '/publicar-propiedad' : '/');
       }
     } catch (err) {
-      const errorMessage = 'Error de conexión con el servidor';
+      const errorMessage = requestErrorMessage(err, 'iniciar sesión con Google');
       toast.error(errorMessage);
       if (onError) onError(errorMessage);
     }

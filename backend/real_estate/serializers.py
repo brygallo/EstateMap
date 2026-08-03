@@ -1,9 +1,16 @@
+import json
+
 from rest_framework import serializers
 from rest_framework.validators import UniqueValidator
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from django.contrib.auth import get_user_model
 from django.contrib.auth.password_validation import validate_password
+from django.core.exceptions import ValidationError as DjangoValidationError
+from django.db import transaction
+from django.urls import reverse
+from django.conf import settings
 from .models import ActivityEvent, Property, PropertyImage, Province, City, Lead, PendingPublication
+from .validators import validate_image_dimensions, validate_image_format, validate_image_size
 
 User = get_user_model()
 
@@ -80,6 +87,37 @@ class ProvinceSerializer(serializers.ModelSerializer):
         return obj.cities.count()
 
 
+def stage_property_image(property_instance, uploaded_file, idx, is_main):
+    """
+    Persist an upload as a pending row and hand the work to the worker.
+
+    The row is created before the bytes reach MinIO, so the API can answer
+    immediately and the client already has an id to track.
+    """
+    from .tasks import enqueue_optimization
+    from .uploads import stash_upload
+
+    try:
+        path, size = stash_upload(uploaded_file)
+    except OSError as exc:
+        raise serializers.ValidationError({
+            'uploaded_images': [
+                f"La imagen {idx + 1} no pudo guardarse. Verifica el archivo e inténtalo nuevamente."
+            ]
+        }) from exc
+
+    image = PropertyImage.objects.create(
+        property=property_instance,
+        is_main=is_main,
+        original_filename=uploaded_file.name or '',
+        file_size=size,
+        status=PropertyImage.Status.PENDING,
+        pending_path=path,
+    )
+    enqueue_optimization(image.pk)
+    return image
+
+
 class PropertyImageSerializer(serializers.ModelSerializer):
     image = serializers.SerializerMethodField()
     thumbnail = serializers.SerializerMethodField()
@@ -87,21 +125,33 @@ class PropertyImageSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = PropertyImage
-        fields = ['id', 'image', 'thumbnail', 'is_main', 'uploaded_at', 'file_size', 'file_size_kb', 'original_filename']
-        read_only_fields = ['uploaded_at', 'file_size', 'original_filename']
+        fields = [
+            'id', 'image', 'thumbnail', 'is_main', 'uploaded_at',
+            'file_size', 'file_size_kb', 'original_filename', 'status',
+        ]
+        read_only_fields = ['uploaded_at', 'file_size', 'original_filename', 'status']
 
     def get_image(self, obj):
         if obj.image:
-            # Option 1: Direct MinIO URL (for development)
-            # Return the direct URL from MinIO storage
+            # Direct MinIO URL: the optimized master is already published.
             return obj.image.url if hasattr(obj.image, 'url') else None
-        return None
+        # Still queued. Serve it from local staging so the client shows the photo
+        # right after upload instead of a broken image for a few seconds.
+        return self._pending_url(obj)
 
     def get_thumbnail(self, obj):
         if obj.thumbnail:
-            # Return the direct URL from MinIO storage
             return obj.thumbnail.url if hasattr(obj.thumbnail, 'url') else None
-        return None
+        # No thumbnail exists until the worker runs; the full staged file stands
+        # in for it, which is acceptable because it is short-lived.
+        return self._pending_url(obj)
+
+    def _pending_url(self, obj):
+        if obj.status != PropertyImage.Status.PENDING:
+            return None
+        path = reverse('pending_image', kwargs={'image_id': obj.pk})
+        request = self.context.get('request')
+        return request.build_absolute_uri(path) if request else path
 
     def get_file_size_kb(self, obj):
         """Return file size in KB for better readability"""
@@ -158,13 +208,33 @@ class PropertySerializer(serializers.ModelSerializer):
             return value
 
         # Validar número máximo de imágenes
-        if len(value) > 10:
-            raise serializers.ValidationError("No se pueden subir más de 10 imágenes por propiedad")
+        max_images = getattr(settings, 'MAX_IMAGES_PER_PROPERTY', 10)
+        existing_count = self.instance.images.count() if self.instance else 0
+        if self.instance:
+            raw_deletions = self.initial_data.get('images_to_delete')
+            try:
+                deletion_ids = json.loads(raw_deletions) if isinstance(raw_deletions, str) else raw_deletions
+            except (TypeError, ValueError, json.JSONDecodeError):
+                deletion_ids = []
+            if isinstance(deletion_ids, list):
+                existing_count -= self.instance.images.filter(id__in=deletion_ids).count()
+        if existing_count + len(value) > max_images:
+            raise serializers.ValidationError(
+                f"La propiedad no puede tener más de {max_images} imágenes. "
+                f"Actualmente tiene {existing_count} y se intentan agregar {len(value)}."
+            )
+
+        max_total_bytes = getattr(settings, 'MAX_PROPERTY_UPLOAD_MB', 50) * 1024 * 1024
+        total_bytes = sum(image.size for image in value)
+        if total_bytes > max_total_bytes:
+            raise serializers.ValidationError(
+                f"El conjunto de imágenes supera {getattr(settings, 'MAX_PROPERTY_UPLOAD_MB', 50)}MB."
+            )
 
         # Validar cada imagen
         for idx, image in enumerate(value):
             # Validar tamaño (10MB máximo)
-            max_size_mb = 10
+            max_size_mb = getattr(settings, 'MAX_IMAGE_SIZE_MB', 10)
             if image.size > max_size_mb * 1024 * 1024:
                 size_mb = round(image.size / (1024 * 1024), 2)
                 raise serializers.ValidationError(
@@ -179,6 +249,15 @@ class PropertySerializer(serializers.ModelSerializer):
                     f"Formato de imagen {idx + 1} no permitido. "
                     f"Use JPEG, PNG o WebP"
                 )
+
+            try:
+                validate_image_size(image)
+                validate_image_dimensions(image)
+                validate_image_format(image)
+                image.seek(0)
+            except DjangoValidationError as exc:
+                message = exc.messages[0] if exc.messages else str(exc)
+                raise serializers.ValidationError(f"Imagen {idx + 1}: {message}")
 
         return value
 
@@ -207,23 +286,19 @@ class PropertySerializer(serializers.ModelSerializer):
         except PolygonValidationError as exc:
             raise serializers.ValidationError(str(exc))
 
+    @transaction.atomic
     def create(self, validated_data):
         uploaded_images = validated_data.pop('uploaded_images', [])
         ensure_polygon_center(validated_data)
         property_instance = Property.objects.create(**validated_data)
 
         for idx, image in enumerate(uploaded_images):
-            PropertyImage.objects.create(
-                property=property_instance,
-                image=image,
-                is_main=(idx == 0)
-            )
+            stage_property_image(property_instance, image, idx, is_main=(idx == 0))
 
         return property_instance
 
+    @transaction.atomic
     def update(self, instance, validated_data):
-        import json
-
         uploaded_images = validated_data.pop('uploaded_images', [])
         images_to_delete_str = validated_data.pop('images_to_delete', None)
         if 'polygon' in validated_data and ('latitude' not in validated_data or 'longitude' not in validated_data):
@@ -236,36 +311,36 @@ class PropertySerializer(serializers.ModelSerializer):
             setattr(instance, attr, value)
         instance.save()
 
-        # Delete images if requested
-        if images_to_delete_str:
-            try:
-                images_to_delete = json.loads(images_to_delete_str)
-                if isinstance(images_to_delete, list):
-                    # Delete images and their files from storage
-                    images = PropertyImage.objects.filter(
-                        id__in=images_to_delete,
-                        property=instance
-                    )
-                    for img in images:
-                        # Delete the actual file from storage
-                        if img.image:
-                            img.image.delete(save=False)
-                        if img.thumbnail:
-                            img.thumbnail.delete(save=False)
-                        img.delete()
-            except (json.JSONDecodeError, ValueError):
-                pass  # Ignore invalid JSON
+        try:
+            images_to_delete = json.loads(images_to_delete_str) if images_to_delete_str else []
+        except (json.JSONDecodeError, TypeError, ValueError):
+            raise serializers.ValidationError({'images_to_delete': ['La lista de imágenes a eliminar no es válida.']})
+        if not isinstance(images_to_delete, list):
+            raise serializers.ValidationError({'images_to_delete': ['La lista de imágenes a eliminar no es válida.']})
+        deleting = list(PropertyImage.objects.filter(id__in=images_to_delete, property=instance))
+        deleting_ids = {image.id for image in deleting}
 
         # Add new images if provided
         if uploaded_images:
             # If there are no existing images, make the first one main
-            has_main = instance.images.filter(is_main=True).exists()
+            has_main = instance.images.filter(is_main=True).exclude(id__in=deleting_ids).exists()
             for idx, image in enumerate(uploaded_images):
-                PropertyImage.objects.create(
-                    property=instance,
-                    image=image,
-                    is_main=(idx == 0 and not has_main)
+                stage_property_image(
+                    instance, image, idx, is_main=(idx == 0 and not has_main)
                 )
+
+        # Delete only after every replacement image was processed successfully.
+        # Physical objects are removed after the database commit so a rollback
+        # never leaves restored rows pointing at files that were already erased.
+        for old_image in deleting:
+            files = [
+                (old_image.image.storage, old_image.image.name) if old_image.image else None,
+                (old_image.thumbnail.storage, old_image.thumbnail.name) if old_image.thumbnail else None,
+            ]
+            old_image.delete()
+            transaction.on_commit(
+                lambda files=files: [storage.delete(name) for item in files if item for storage, name in [item]]
+            )
 
         return instance
 

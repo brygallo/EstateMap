@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent } from '@/components/ui/card';
+import { fetchWithTimeout, requestErrorMessage } from '@/lib/form-errors';
 
 const VerifyEmail = () => {
   const router = useRouter();
@@ -30,7 +31,7 @@ const VerifyEmail = () => {
 
   const handleSubmit = async (values: any, { setSubmitting }: any) => {
     try {
-      const res = await fetch(`${API_URL}/verify-email/`, {
+      const res = await fetchWithTimeout(`${API_URL}/verify-email/`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(values),
@@ -45,7 +46,7 @@ const VerifyEmail = () => {
       toast.success(data.message || 'Correo verificado exitosamente');
       setTimeout(() => router.push('/iniciar-sesion'), 1500);
     } catch (err) {
-      toast.error('Error de conexión');
+      toast.error(requestErrorMessage(err, 'verificar el correo'));
     } finally {
       setSubmitting(false);
     }
@@ -59,7 +60,7 @@ const VerifyEmail = () => {
 
     setResending(true);
     try {
-      const res = await fetch(`${API_URL}/resend-verification/`, {
+      const res = await fetchWithTimeout(`${API_URL}/resend-verification/`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email }),
@@ -73,7 +74,7 @@ const VerifyEmail = () => {
 
       toast.success(data.message || 'Código reenviado exitosamente');
     } catch (err) {
-      toast.error('Error de conexión');
+      toast.error(requestErrorMessage(err, 'reenviar el código'));
     } finally {
       setResending(false);
     }

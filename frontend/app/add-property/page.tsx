@@ -36,6 +36,18 @@ import { useAuth } from '@/lib/auth-context';
 import { cn } from '@/lib/utils';
 import { buildWhatsAppUrl } from '@/lib/constants';
 import { trackEvent } from '@/lib/analytics';
+import { fetchWithTimeout, requestErrorMessage, responseErrorMessage } from '@/lib/form-errors';
+import {
+  LOCATION_STORAGE_KEYS,
+  geolocationErrorMessage,
+  getGeolocationPermission,
+  hasPreviousLocationSuccess,
+  markLocationSuccess,
+  requestBrowserLocation,
+  safeStorageSet,
+  wasLocationPromptDismissed,
+  watchGeolocationPermission,
+} from '@/lib/browser-geolocation';
 import LocationSelect from '@/components/LocationSelect';
 import LocationPermissionModal from '@/components/LocationPermissionModal';
 import GoogleSignInButton from '@/components/GoogleSignInButton';
@@ -53,6 +65,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Skeleton } from '@/components/ui/skeleton';
+import { compressImage } from '@/lib/image-compression';
 import {
   Dialog,
   DialogContent,
@@ -344,7 +357,7 @@ const AddPropertyPage = () => {
         setImageFiles([]);
       } catch (error) {
         console.error('Error loading property:', error);
-        toast.error('Error de conexión');
+        toast.error(requestErrorMessage(error, 'cargar la propiedad'));
         router.push('/mis-propiedades');
       } finally {
         if (!cancelled) setLoadingProperty(false);
@@ -425,38 +438,64 @@ const AddPropertyPage = () => {
     if (typeof window === 'undefined') return;
     locationInitRef.current = true;
 
-    const locationPermissionAsked = localStorage.getItem('locationPermissionAsked');
-    const hasInitialLocation = localStorage.getItem('hasInitialLocation');
+    let cancelled = false;
 
-    if (!locationPermissionAsked && !hasInitialLocation) {
-      setShowLocationModal(true);
-    } else if (hasInitialLocation === 'true' && navigator.geolocation) {
-      setLoadingLocation(true);
-      setShowLocationToast(true);
+    const initializeLocation = async () => {
+      const permission = await getGeolocationPermission();
+      if (cancelled) return;
 
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
+      if (permission === 'denied') {
+        setLocationBlocked(true);
+        return;
+      }
+
+      if (permission === 'granted' || hasPreviousLocationSuccess()) {
+        setLoadingLocation(true);
+        setShowLocationToast(true);
+        try {
+          const position = await requestBrowserLocation('discovery');
+          if (cancelled) return;
           const { latitude, longitude } = position.coords;
           setUserLocation({ lat: latitude, lng: longitude });
-          setLoadingLocation(false);
-
-          setTimeout(() => {
+          markLocationSuccess();
+        } catch {
+          // El usuario todavía puede buscar o marcar la ubicación manualmente.
+        } finally {
+          if (!cancelled) {
+            setLoadingLocation(false);
             setShowLocationToast(false);
-          }, 2000);
-        },
-        (error) => {
-          console.error('Error obteniendo ubicación:', error);
-          setLoadingLocation(false);
-          setShowLocationToast(false);
-        },
-        {
-          enableHighAccuracy: true,
-          timeout: 20000,
-          maximumAge: 0,
+          }
         }
-      );
-    }
+        return;
+      }
+
+      if (!wasLocationPromptDismissed(LOCATION_STORAGE_KEYS.publicationPromptDismissed)) {
+        setShowLocationModal(true);
+      }
+    };
+
+    void initializeLocation();
+    return () => {
+      cancelled = true;
+    };
   }, [currentStep, isEditMode]);
+
+  useEffect(() => {
+    let unsubscribe: () => void = () => undefined;
+    let cancelled = false;
+    void watchGeolocationPermission((state) => {
+      if (cancelled) return;
+      setLocationBlocked(state === 'denied');
+      if (state === 'granted') setShowLocationModal(false);
+    }).then((cleanup) => {
+      if (cancelled) cleanup();
+      else unsubscribe = cleanup;
+    });
+    return () => {
+      cancelled = true;
+      unsubscribe();
+    };
+  }, []);
 
   // Load all properties to show as reference
   useEffect(() => {
@@ -483,79 +522,38 @@ const AddPropertyPage = () => {
 
   const handleAcceptLocation = async () => {
     setShowLocationModal(false);
-
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('locationPermissionAsked', 'true');
-    }
+    safeStorageSet(LOCATION_STORAGE_KEYS.publicationPromptDismissed, 'true');
 
     if (!navigator.geolocation) {
       toast.error('Tu navegador no soporta geolocalización');
       return;
     }
 
-    if (navigator.permissions && navigator.permissions.query) {
-      try {
-        const permissionStatus = await navigator.permissions.query({ name: 'geolocation' as PermissionName });
-
-        if (permissionStatus.state === 'denied') {
-          setLocationBlocked(true);
-          setShowLocationModal(true);
-          toast.error('El permiso de ubicación está bloqueado. Revisa los pasos para activarlo en tu iPhone o navegador.');
-          return;
-        }
-      } catch (error) {
-        // Permissions API no disponible (iOS Safari): continuar de todos modos
-      }
+    if (await getGeolocationPermission() === 'denied') {
+      setLocationBlocked(true);
+      toast.error('La ubicación está bloqueada. Cámbiala en la configuración del sitio e intenta de nuevo.');
+      return;
     }
 
     setLoadingLocation(true);
-
-    navigator.geolocation.getCurrentPosition(
-      (position) => {
-        const { latitude, longitude } = position.coords;
-        setUserLocation({ lat: latitude, lng: longitude });
-
-        if (typeof window !== 'undefined') {
-          localStorage.setItem('hasInitialLocation', 'true');
-        }
-
-        setLocationBlocked(false);
-        setLoadingLocation(false);
-      },
-      (error) => {
-        console.error('Error obteniendo ubicación:', error);
-        const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
-        const isAndroid = /Android/.test(navigator.userAgent);
-
-        let errorMessage = 'No se pudo obtener tu ubicación';
-        if (isIOS) {
-          errorMessage = 'Permiso denegado. Para habilitarlo en iPhone: Configuración > Safari > Ubicación > Permitir';
-        } else if (isAndroid) {
-          errorMessage = 'Permiso denegado. Para habilitarlo: Configuración del sitio > Permisos > Ubicación > Permitir';
-        }
-
-        toast.error(errorMessage);
-        if (error.code === error.PERMISSION_DENIED) {
-          setLocationBlocked(true);
-          setShowLocationModal(true);
-        }
-        setLoadingLocation(false);
-      },
-      {
-        enableHighAccuracy: true,
-        timeout: 20000,
-        maximumAge: 0,
-      }
-    );
+    try {
+      const position = await requestBrowserLocation('discovery');
+      const { latitude, longitude } = position.coords;
+      setUserLocation({ lat: latitude, lng: longitude });
+      markLocationSuccess();
+      setLocationBlocked(false);
+    } catch (error) {
+      const geoError = error as GeolocationPositionError;
+      if (geoError.code === 1) setLocationBlocked(true);
+      toast.error(geolocationErrorMessage(error));
+    } finally {
+      setLoadingLocation(false);
+    }
   };
 
   const handleDeclineLocation = () => {
     setShowLocationModal(false);
-
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('locationPermissionAsked', 'true');
-      localStorage.setItem('hasInitialLocation', 'false');
-    }
+    safeStorageSet(LOCATION_STORAGE_KEYS.publicationPromptDismissed, 'true');
   };
 
   const savePublicationDraft = () => {
@@ -714,7 +712,7 @@ const AddPropertyPage = () => {
     savePublicationDraft();
 
     try {
-      const res = await fetch(`${API_URL}/register/`, {
+      const res = await fetchWithTimeout(`${API_URL}/register/`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -745,7 +743,7 @@ const AddPropertyPage = () => {
       toast.success('Cuenta creada. Verifica tu correo para publicar el anuncio.');
       router.push(`/verificar-correo?email=${encodeURIComponent(accountEmail)}`);
     } catch (error) {
-      toast.error('Error de conexión al crear cuenta');
+      toast.error(requestErrorMessage(error, 'crear la cuenta'));
       trackEvent('publication_account_create_failed', {
         status_code: 'network',
       });
@@ -761,7 +759,7 @@ const AddPropertyPage = () => {
     savePublicationDraft();
 
     try {
-      const res = await fetch(`${API_URL}/login/`, {
+      const res = await fetchWithTimeout(`${API_URL}/login/`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: accountEmail, password: accountPassword }),
@@ -794,7 +792,7 @@ const AddPropertyPage = () => {
       setPendingPublish(true);
       toast.success('Sesión iniciada. Publicando tu anuncio…');
     } catch (error) {
-      toast.error('Error de conexión al iniciar sesión');
+      toast.error(requestErrorMessage(error, 'iniciar sesión'));
       trackEvent('publication_login_failed', { status_code: 'network' });
     } finally {
       setLoggingIn(false);
@@ -985,14 +983,14 @@ const AddPropertyPage = () => {
         logout();
         router.push('/iniciar-sesion');
       } else {
-        const errorData = await res.json();
-        console.error('Error:', errorData);
+        const message = await responseErrorMessage(res, 'No se pudo guardar la propiedad. Revisa los datos e inténtalo nuevamente.');
+        console.error('Error al guardar la propiedad:', res.status, message);
         trackEvent(isEditMode ? 'publication_update_failed' : 'publication_create_failed', {
           status_code: res.status,
           property_type: v.propertyType,
           has_polygon: polygonCoords.length >= 3,
         });
-        toast.error('No se pudo guardar la propiedad');
+        toast.error(message);
       }
     } catch (error) {
       console.error('Error:', error);
@@ -1001,7 +999,7 @@ const AddPropertyPage = () => {
         property_type: v.propertyType,
         has_polygon: polygonCoords.length >= 3,
       });
-      toast.error('Error de conexión');
+      toast.error(requestErrorMessage(error, isEditMode ? 'actualizar la propiedad' : 'publicar la propiedad'));
     }
   };
 
@@ -1118,7 +1116,7 @@ const AddPropertyPage = () => {
     }
   };
 
-  const handleGetMyLocation = () => {
+  const handleGetMyLocation = async () => {
     trackEvent('publication_location_requested', {
       has_session: Boolean(token),
     });
@@ -1128,55 +1126,31 @@ const AddPropertyPage = () => {
       return;
     }
 
+    if (locationBlocked) {
+      setShowLocationModal(true);
+      return;
+    }
+
     setLoadingLocation(true);
-
-    navigator.geolocation.getCurrentPosition(
-      (position) => {
-        const { latitude, longitude } = position.coords;
-        setUserLocation({ lat: latitude, lng: longitude });
-        if (locationMode === 'point') {
-          setLatitude(latitude.toString());
-          setLongitude(longitude.toString());
-          reverseGeocodeLocation(latitude, longitude);
-        }
-
-        if (mapRef.current) {
-          mapRef.current.flyTo([latitude, longitude], 17, {
-            duration: 1.2,
-          });
-        }
-
-        setLoadingLocation(false);
-      },
-      (error) => {
-        console.error('Error obteniendo ubicación:', error);
-        let errorMessage = 'No se pudo obtener tu ubicación';
-
-        switch (error.code) {
-          case error.PERMISSION_DENIED:
-            errorMessage = 'Permiso de ubicación denegado. Por favor, habilita la ubicación en tu navegador.';
-            break;
-          case error.POSITION_UNAVAILABLE:
-            errorMessage = 'Información de ubicación no disponible.';
-            break;
-          case error.TIMEOUT:
-            errorMessage = 'Tiempo de espera agotado al obtener la ubicación.';
-            break;
-        }
-
-        toast.error(errorMessage);
-        if (error.code === error.PERMISSION_DENIED) {
-          setLocationBlocked(true);
-          setShowLocationModal(true);
-        }
-        setLoadingLocation(false);
-      },
-      {
-        enableHighAccuracy: true,
-        timeout: 10000,
-        maximumAge: 0,
+    try {
+      const position = await requestBrowserLocation('precise');
+      const { latitude, longitude } = position.coords;
+      setUserLocation({ lat: latitude, lng: longitude });
+      markLocationSuccess();
+      if (locationMode === 'point') {
+        setLatitude(latitude.toString());
+        setLongitude(longitude.toString());
+        reverseGeocodeLocation(latitude, longitude);
       }
-    );
+      mapRef.current?.flyTo([latitude, longitude], 17, { duration: 1.2 });
+      setLocationBlocked(false);
+    } catch (error) {
+      const geoError = error as GeolocationPositionError;
+      if (geoError.code === 1) setLocationBlocked(true);
+      toast.error(geolocationErrorMessage(error));
+    } finally {
+      setLoadingLocation(false);
+    }
   };
 
   const bindMapRef = (map: any) => {
@@ -1184,11 +1158,12 @@ const AddPropertyPage = () => {
     mapRef.current = map;
   };
 
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
 
     const MAX_IMAGES = 10;
     const MAX_SIZE_MB = 10;
+    const MAX_TOTAL_SIZE_MB = 50;
     const ALLOWED_TYPES = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
 
     const activeExistingImages = existingImages.length - imagesToDelete.length;
@@ -1201,21 +1176,52 @@ const AddPropertyPage = () => {
 
     const validFiles: File[] = [];
     const errors: string[] = [];
+    let savedBytes = 0;
 
-    files.forEach((file) => {
+    for (const file of files) {
       const sizeMB = file.size / (1024 * 1024);
       if (sizeMB > MAX_SIZE_MB) {
         errors.push(`"${file.name}" es demasiado grande (${sizeMB.toFixed(2)}MB). Máximo: ${MAX_SIZE_MB}MB`);
-        return;
+        continue;
       }
 
       if (!ALLOWED_TYPES.includes(file.type.toLowerCase())) {
         errors.push(`"${file.name}" tiene un formato no permitido. Use: JPG, PNG o WebP`);
-        return;
+        continue;
       }
 
-      validFiles.push(file);
-    });
+      // The bitmap decoded to validate dimensions is handed straight to the
+      // compressor, so the file is only decoded once.
+      let bitmap: ImageBitmap;
+      try {
+        bitmap = await createImageBitmap(file, { imageOrientation: 'from-image' });
+        const { width, height } = bitmap;
+        if (width < 200 || height < 200) {
+          bitmap.close();
+          errors.push(`"${file.name}" debe medir al menos 200×200 píxeles (${width}×${height}).`);
+          continue;
+        }
+        if (width > 8000 || height > 8000 || width * height > 64_000_000) {
+          bitmap.close();
+          errors.push(`"${file.name}" supera el límite seguro de 8000×8000 o 64 megapíxeles.`);
+          continue;
+        }
+      } catch {
+        errors.push(`"${file.name}" está corrupta o no es una imagen legible.`);
+        continue;
+      }
+
+      const { file: prepared, originalBytes, compressed } = await compressImage(file, bitmap);
+      if (compressed) savedBytes += originalBytes - prepared.size;
+      validFiles.push(prepared);
+    }
+
+    const currentBytes = imageFiles.reduce((total, file) => total + file.size, 0);
+    const selectedBytes = validFiles.reduce((total, file) => total + file.size, 0);
+    if ((currentBytes + selectedBytes) / (1024 * 1024) > MAX_TOTAL_SIZE_MB) {
+      errors.push(`El conjunto de imágenes supera ${MAX_TOTAL_SIZE_MB}MB. Reduce la cantidad o el tamaño de las fotos.`);
+      validFiles.length = 0;
+    }
 
     if (errors.length > 0) {
       toast.error('Algunas imágenes no se pudieron agregar: ' + errors.join(' · '));
@@ -1225,7 +1231,14 @@ const AddPropertyPage = () => {
       trackEvent('publication_images_added', {
         files_count: validFiles.length,
         total_images: images.length + validFiles.length,
+        saved_bytes: savedBytes,
       });
+
+      if (savedBytes > 512 * 1024) {
+        toast.success(
+          `Fotos optimizadas: ${(savedBytes / (1024 * 1024)).toFixed(1)} MB menos por subir.`,
+        );
+      }
 
       setImageFiles([...imageFiles, ...validFiles]);
 
