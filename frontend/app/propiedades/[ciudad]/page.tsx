@@ -4,6 +4,7 @@ import SeoLanding, { TYPE_LINKS, priceRangeText } from '@/components/SeoLanding'
 import { getProperties, getCities, getLocationCatalog, slugify } from '@/lib/properties';
 import { generateCombosWithCounts, parseComboSlug } from '@/lib/seo-combos';
 import { generatePageMetadata } from '@/lib/metadata';
+import { MIN_LISTINGS_FOR_PROMOTION } from '@/lib/market-stats';
 
 export const revalidate = 3600;
 // Cities discovered at build time are pre-rendered; new ones render on demand.
@@ -78,6 +79,18 @@ export default async function CiudadPage({ params }: CityPageProps) {
     })
     .filter(Boolean)
     .slice(0, 10) as { label: string; href: string }[];
+
+  // Cross-link to the city's m² price page when it has enough comparable
+  // sale inventory to be indexable.
+  const comparableSales = city.properties.filter(
+    (p) => p.status === 'for_sale' && Number(p.price) > 0 && Number(p.area) > 0
+  ).length;
+  if (comparableSales >= MIN_LISTINGS_FOR_PROMOTION) {
+    relatedLocalLinks.unshift({
+      label: `Precio del metro cuadrado en ${city.name}`,
+      href: `/estadisticas-inmobiliarias/${ciudad}`,
+    });
+  }
 
   return (
     <SeoLanding

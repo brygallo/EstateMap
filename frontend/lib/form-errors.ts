@@ -33,17 +33,22 @@ function firstMessage(value: unknown): string | null {
 }
 
 export async function responseErrorMessage(response: Response, fallback: string): Promise<string> {
+  const requestId = response.headers.get('x-request-id');
+  const reference = requestId ? ` Código de seguimiento: ${requestId}.` : '';
+  if (response.status >= 500) {
+    return `${STATUS_MESSAGES[response.status] || fallback}${reference}`;
+  }
   try {
     const contentType = response.headers.get('content-type') || '';
     if (contentType.includes('json')) {
       const data = await response.clone().json();
       const message = firstMessage(data);
-      if (message) return message;
+      if (message) return `${message}${reference}`;
     }
   } catch {
     // Fall through to a stable status-based message.
   }
-  return STATUS_MESSAGES[response.status] || fallback;
+  return `${STATUS_MESSAGES[response.status] || fallback}${reference}`;
 }
 
 export function requestErrorMessage(error: unknown, action: string): string {

@@ -1,5 +1,5 @@
 """
-Background image processing.
+Background image processing and frontend cache invalidation.
 
 The upload request only writes the original to local disk and returns; the two
 WebP encodes and the two MinIO PUTs happen here. Keeping them out of the request
@@ -12,12 +12,22 @@ import os
 import time
 from pathlib import Path
 
+import requests
 from celery import shared_task
 from django.conf import settings
 from django.core.files import File
 from django.db import transaction
+from django.core.cache import cache
 
 logger = logging.getLogger(__name__)
+
+
+@shared_task
+def system_worker_heartbeat():
+    """Publish a cheap liveness signal used by health checks and the admin."""
+    timestamp = time.time()
+    cache.set("system:worker:heartbeat", timestamp, 5 * 60)
+    return {"timestamp": timestamp}
 
 
 class PendingImageMissing(Exception):
@@ -134,6 +144,55 @@ def sweep_pending_images():
 
     logger.info("sweep_pending_images: %s re-queued, %s orphans removed", requeued, removed)
     return {"requeued": requeued, "removed": removed}
+
+
+@shared_task(
+    bind=True,
+    autoretry_for=(requests.RequestException,),
+    retry_backoff=True,
+    retry_kwargs={"max_retries": 2},
+)
+def revalidate_frontend_tags(self, tags):
+    """
+    Tell Next.js to drop the cache entries tagged with `tags`.
+
+    Bounded on purpose: two retries with backoff and a 5s timeout. A bulk import
+    fires one of these per listing, so a frontend that is down or slow must cost
+    a handful of quick failures, not a queue full of tasks hammering it. Serving
+    a slightly stale page is a far cheaper outcome than a retry storm.
+    """
+    url = getattr(settings, "NEXT_REVALIDATE_URL", "")
+    secret = getattr(settings, "REVALIDATE_SECRET", "")
+    if not url or not secret:
+        logger.debug("Revalidation skipped (NEXT_REVALIDATE_URL/REVALIDATE_SECRET unset)")
+        return {"status": "disabled"}
+
+    try:
+        response = requests.post(
+            url,
+            json={"tags": list(tags)},
+            headers={"x-revalidate-secret": secret},
+            timeout=5,
+        )
+    except requests.RequestException as exc:
+        # Let autoretry handle the first couple of failures; once retries are
+        # exhausted the exception must not bubble up as a task error.
+        if (self.request.retries or 0) >= self.max_retries:
+            logger.warning("Revalidation gave up for %s: %s", tags, exc)
+            return {"status": "failed", "error": str(exc)}
+        raise
+
+    if response.status_code >= 400:
+        # A 401/404 means the route or the secret is misconfigured; retrying
+        # would fail identically, so log it and stop.
+        logger.warning(
+            "Revalidation rejected for %s: HTTP %s %s",
+            tags, response.status_code, response.text[:200],
+        )
+        return {"status": "rejected", "code": response.status_code}
+
+    logger.debug("Revalidated %s", tags)
+    return {"status": "ok", "tags": list(tags)}
 
 
 def _discard(path):

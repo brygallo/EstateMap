@@ -57,13 +57,66 @@ export async function getProperties({
       include_images: includeImages ? '1' : '0',
     });
     const res = await fetch(`${API_URL}/properties/?${params.toString()}`, {
-      next: { revalidate },
+      next: { revalidate, tags: ['properties'] },
     });
     if (!res.ok) return [];
     return normalizeList(await res.json());
   } catch (error) {
     console.error('Error fetching properties:', error);
     return [];
+  }
+}
+
+export type PropertyGroup = {
+  city: string;
+  province: string;
+  property_type: string;
+  status: string;
+  count: number;
+};
+
+export type PropertySummary = {
+  total: number;
+  by_status: Record<string, number>;
+  by_property_type: Record<string, number>;
+  by_city: { name: string; province: string; count: number }[];
+  by_province: { name: string; count: number }[];
+  groups: PropertyGroup[];
+};
+
+const EMPTY_SUMMARY: PropertySummary = {
+  total: 0,
+  by_status: {},
+  by_property_type: {},
+  by_city: [],
+  by_province: [],
+  groups: [],
+};
+
+/**
+ * Inventory totals counted by the database.
+ *
+ * Counting the array returned by `getProperties` silently under-reports: the
+ * list endpoint caps `page_size` at 2000, so once the catalogue passed that
+ * mark every counter on the site froze at 2000. These aggregates always cover
+ * the full inventory and cost one small request instead of a full download.
+ */
+export async function getPropertySummary(
+  filters: Record<string, string> = {},
+  revalidate = 3600,
+): Promise<PropertySummary> {
+  try {
+    const query = new URLSearchParams(filters).toString();
+    const res = await fetch(`${API_URL}/properties/summary/${query ? `?${query}` : ''}`, {
+      next: { revalidate, tags: ['properties'] },
+    });
+    if (!res.ok) return EMPTY_SUMMARY;
+    const data = await res.json();
+    if (!data || typeof data !== 'object') return EMPTY_SUMMARY;
+    return { ...EMPTY_SUMMARY, ...data } as PropertySummary;
+  } catch (error) {
+    console.error('Error fetching property summary:', error);
+    return EMPTY_SUMMARY;
   }
 }
 
@@ -86,7 +139,9 @@ const EMPTY_CATALOG: LocationCatalog = { cities: [], provinces: [] };
  */
 export async function getLocationCatalog(revalidate = 86400): Promise<LocationCatalog> {
   try {
-    const res = await fetch(`${API_URL}/properties/catalog/`, { next: { revalidate } });
+    const res = await fetch(`${API_URL}/properties/catalog/`, {
+      next: { revalidate, tags: ['catalog'] },
+    });
     if (!res.ok) return EMPTY_CATALOG;
     const data = await res.json();
     if (!Array.isArray(data)) return EMPTY_CATALOG;
@@ -161,7 +216,7 @@ export async function getNearbyProperties(
       include_images: '1',
     });
     const response = await fetch(`${API_URL}/properties/?${params.toString()}`, {
-      next: { revalidate: 300 },
+      next: { revalidate: 300, tags: ['properties'] },
     });
     if (!response.ok) return [];
 
@@ -212,7 +267,7 @@ export async function getFeaturedProperties({
     if (province) params.set('province', province);
 
     const res = await fetch(`${API_URL}/properties/?${params.toString()}`, {
-      next: { revalidate },
+      next: { revalidate, tags: ['properties'] },
     });
     if (!res.ok) return [];
     return normalizeList(await res.json());
@@ -225,7 +280,7 @@ export async function getFeaturedProperties({
 export async function getProperty(id: string): Promise<Property | null> {
   try {
     const res = await fetch(`${API_URL}/properties/${id}/`, {
-      next: { revalidate: 300 },
+      next: { revalidate: 300, tags: ['properties', `property-${id}`] },
       headers: { 'Content-Type': 'application/json' },
     });
     if (!res.ok) return null;
@@ -322,6 +377,49 @@ export function getCities(
       existing.count += 1;
     } else {
       map.set(slug, { name, slug, count: 1 });
+    }
+  }
+  return Array.from(map.values()).sort((a, b) => a.name.localeCompare(b.name));
+}
+
+/**
+ * Same shape as `getCities`, but counted server-side over the whole inventory.
+ *
+ * The API groups by the raw stored value, so the same canton arrives split
+ * across spellings ("QUITO" / "Quito"); merging by slug collapses them.
+ */
+export function citiesFromSummary(
+  summary: PropertySummary
+): { name: string; slug: string; count: number }[] {
+  const map = new Map<string, { name: string; slug: string; count: number }>();
+  for (const row of summary.by_city) {
+    const name = (row.name || '').trim();
+    const slug = name ? slugify(name) : '';
+    if (!slug) continue;
+    const existing = map.get(slug);
+    if (existing) {
+      existing.count += row.count;
+    } else {
+      map.set(slug, { name, slug, count: row.count });
+    }
+  }
+  return Array.from(map.values()).sort((a, b) => a.name.localeCompare(b.name));
+}
+
+/** Provinces counted server-side over the whole inventory. */
+export function provincesFromSummary(
+  summary: PropertySummary
+): { name: string; slug: string; count: number }[] {
+  const map = new Map<string, { name: string; slug: string; count: number }>();
+  for (const row of summary.by_province) {
+    const name = (row.name || '').trim();
+    const slug = name ? slugify(name) : '';
+    if (!slug) continue;
+    const existing = map.get(slug);
+    if (existing) {
+      existing.count += row.count;
+    } else {
+      map.set(slug, { name, slug, count: row.count });
     }
   }
   return Array.from(map.values()).sort((a, b) => a.name.localeCompare(b.name));

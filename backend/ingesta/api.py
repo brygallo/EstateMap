@@ -7,6 +7,8 @@ Rutas (montadas bajo /api/admin/ingesta/ en real_estate/urls.py):
   GET  runs/            -> últimas ejecuciones (para seguir el progreso)
   POST launch/          -> lanza una ejecución {source, limit, only_new}
 """
+import logging
+
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
@@ -18,11 +20,33 @@ from .models import Fuente, IngestaRun
 from .runner import launch_subprocess, reap_zombie_runs
 from .scrapers import available_scrapers, get_scraper
 
+logger = logging.getLogger(__name__)
+
 
 def _source_dict(f):
+    from datetime import timedelta
+    from django.db.models import Q, Sum
+    from django.utils import timezone
     from real_estate.models import Property
 
     qs = Property.objects.filter(source=f, is_imported=True)
+    latest_run = f.runs.order_by("-created_at").first()
+    active_run = f.runs.filter(estado__in=["pending", "running"]).order_by("-created_at").first()
+    now = timezone.now()
+    if active_run:
+        health = "running"
+    elif latest_run and latest_run.estado == "error":
+        health = "error"
+    elif f.last_import_at is None:
+        health = "never"
+    elif f.last_import_at < now - timedelta(days=2):
+        health = "stale"
+    else:
+        health = "healthy"
+    duration_seconds = None
+    if latest_run and latest_run.started_at:
+        duration_end = latest_run.finished_at or latest_run.heartbeat_at or now
+        duration_seconds = max(0, int((duration_end - latest_run.started_at).total_seconds()))
     return {
         "slug": f.slug,
         "nombre": f.nombre,
@@ -31,10 +55,16 @@ def _source_dict(f):
         "total": qs.count(),
         "activas": qs.exclude(status="inactive").exclude(is_duplicate=True).count(),
         "duplicados": qs.filter(is_duplicate=True).count(),
+        "inactivas": qs.filter(status="inactive").count(),
+        "sin_ubicacion": qs.filter(Q(latitude__isnull=True) | Q(longitude__isnull=True)).count(),
+        "image_bytes": qs.aggregate(total=Sum("images__file_size"))["total"] or 0,
         "retiradas": f.retiradas.count(),
         "disponibles": f.disponibles,
         "disponibles_at": f.disponibles_at,
         "last_import_at": f.last_import_at,
+        "health": health,
+        "latest_run": _run_dict(latest_run) if latest_run else None,
+        "duration_seconds": duration_seconds,
     }
 
 
@@ -229,6 +259,113 @@ def properties(request):
         "page_size": page_size,
         "num_pages": (total + page_size - 1) // page_size if total else 1,
         "results": results,
+    })
+
+
+MAINTENANCE_CATEGORIES = {
+    "duplicates": "Duplicadas importadas",
+    "inactive": "Inactivas importadas",
+    "missing_location": "Importadas sin ubicación",
+    "orphan_source": "Importadas sin fuente",
+}
+
+
+def _maintenance_queryset(category):
+    from django.db.models import Q
+    from real_estate.models import Property
+
+    queryset = Property.objects.filter(is_imported=True)
+    if category == "duplicates":
+        return queryset.filter(is_duplicate=True)
+    if category == "inactive":
+        return queryset.filter(status="inactive")
+    if category == "missing_location":
+        return queryset.filter(Q(latitude__isnull=True) | Q(longitude__isnull=True))
+    if category == "orphan_source":
+        return queryset.filter(source__isnull=True)
+    return None
+
+
+def _maintenance_summary(category):
+    from django.db.models import Count, Sum
+
+    queryset = _maintenance_queryset(category)
+    if queryset is None:
+        return None
+    totals = queryset.aggregate(
+        properties=Count("id", distinct=True),
+        image_count=Count("images", distinct=True),
+        bytes=Sum("images__file_size"),
+    )
+    sample = list(queryset.order_by("-id").values(
+        "id", "title", "city", "status", "source__nombre",
+    )[:5])
+    return {
+        "category": category,
+        "label": MAINTENANCE_CATEGORIES[category],
+        "properties": totals["properties"] or 0,
+        "images": totals["image_count"] or 0,
+        "bytes": totals["bytes"] or 0,
+        "sample": sample,
+    }
+
+
+@api_view(["GET"])
+@permission_classes([IsAuthenticated, IsAdminUser])
+def maintenance_preview(request):
+    """Return exact cleanup candidates without mutating catalog data."""
+    category = (request.GET.get("category") or "").strip()
+    if category:
+        summary = _maintenance_summary(category)
+        if summary is None:
+            return Response({"error": "Categoría de mantenimiento inválida."}, status=status.HTTP_400_BAD_REQUEST)
+        return Response(summary)
+    return Response([_maintenance_summary(key) for key in MAINTENANCE_CATEGORIES])
+
+
+@api_view(["POST"])
+@permission_classes([IsAuthenticated, IsAdminUser])
+def maintenance_cleanup(request):
+    """Delete one bounded batch of imported-only candidates and their media."""
+    from django.db import transaction
+    from .pipeline.images import delete_property_images
+
+    category = str(request.data.get("category") or "").strip()
+    if request.data.get("confirmation") != "ELIMINAR IMPORTADAS":
+        return Response(
+            {"error": "Escribe ELIMINAR IMPORTADAS para confirmar."},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+    queryset = _maintenance_queryset(category)
+    if queryset is None:
+        return Response({"error": "Categoría de mantenimiento inválida."}, status=status.HTTP_400_BAD_REQUEST)
+    try:
+        batch_size = min(max(int(request.data.get("batch_size", 100)), 1), 200)
+    except (TypeError, ValueError):
+        batch_size = 100
+
+    deleted_ids = []
+    with transaction.atomic():
+        candidates = list(queryset.select_for_update().prefetch_related("images").order_by("id")[:batch_size])
+        for prop in candidates:
+            # The base query and this explicit guard ensure user-created listings
+            # can never enter maintenance cleanup, even if data changes mid-run.
+            if not prop.is_imported:
+                continue
+            deleted_ids.append(prop.pk)
+            delete_property_images(prop)
+            prop.delete()
+
+    remaining = _maintenance_queryset(category).count()
+    logger.info(
+        "admin_audit action=imported.cleanup actor=%s category=%s deleted=%s remaining=%s",
+        request.user.pk, category, len(deleted_ids), remaining,
+    )
+    return Response({
+        "category": category,
+        "deleted": len(deleted_ids),
+        "deleted_ids": deleted_ids,
+        "remaining": remaining,
     })
 
 

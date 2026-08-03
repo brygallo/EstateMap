@@ -1,4 +1,6 @@
 import logging
+import math
+import hashlib
 from rest_framework import viewsets, generics, status, filters
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.throttling import ScopedRateThrottle
@@ -15,7 +17,12 @@ from django.http import HttpResponse, Http404, FileResponse, HttpResponseRedirec
 from django.shortcuts import get_object_or_404
 from django.views import View
 from django.conf import settings
-from .models import ActivityEvent, Property, PropertyImage, Province, City, Lead, PendingPublication
+from django.core.cache import cache
+from django.utils.cache import patch_cache_control
+from .bot_detection import is_bot_request
+from .throttling import AntiScraperScopedThrottle
+from .cache_utils import versioned_key
+from .models import ActivityEvent, Property, PropertyImage, Province, City, Lead, PendingPublication, SystemIncident
 from django.contrib.auth import get_user_model
 from .serializers import (
     MapPropertySerializer,
@@ -53,6 +60,70 @@ from google.auth.transport import requests as google_requests
 logger = logging.getLogger(__name__)
 
 
+# ===== Public read cache =====
+#
+# The endpoints cached below are all `AllowAny` aggregates that never read
+# `request.user`: two anonymous visitors get byte-identical payloads. Caching is
+# still restricted to anonymous requests so an authenticated response can never
+# be served from — or written into — a shared entry, and so `Cache-Control:
+# public` never travels next to an Authorization header.
+#
+# Keys carry the inventory version (see `cache_utils`), so a Property save
+# invalidates every entry at once instead of us deleting keys we cannot
+# enumerate (bbox and filter combinations are effectively unbounded).
+
+CACHE_TTL_CATALOG = 60 * 60 * 24
+CACHE_TTL_LOCATIONS = 60 * 60
+CACHE_TTL_SUMMARY = 60 * 10
+CACHE_TTL_INTELLIGENCE = 60 * 10
+CACHE_TTL_MAP_POINTS = 120
+CACHE_TTL_MARKET_STATS = 60 * 30
+CACHE_TTL_GEO = 60 * 60 * 24
+
+# Browsers revalidate quickly; the shared caches (CDN / reverse proxy) are the
+# ones allowed to hold a payload for as long as the server-side entry lives.
+BROWSER_MAX_AGE = 60
+
+
+def _is_public_read(request):
+    """True when a request may be served from, and stored in, the shared cache."""
+    return request.method in ('GET', 'HEAD') and not request.user.is_authenticated
+
+
+def _public_response(data, request, s_maxage):
+    """Wrap a cached payload, tagging it for browser and CDN reuse when public."""
+    response = Response(data)
+    if _is_public_read(request):
+        patch_cache_control(response, public=True, max_age=BROWSER_MAX_AGE, s_maxage=s_maxage)
+    return response
+
+
+def _query_signature(params):
+    """Order-independent representation of a querystring, for use in cache keys."""
+    return '&'.join(f'{key}={value}' for key, value in sorted(params.items()))
+
+
+# Query params that change what `PropertyViewSet.get_queryset` returns. Listing
+# them explicitly keeps unrelated params (cache busters, analytics tags) from
+# fragmenting the cache.
+_FILTER_PARAMS = (
+    'search', 'type', 'property_type', 'status', 'city', 'province',
+    'min_price', 'minPrice', 'max_price', 'maxPrice',
+    'min_area', 'minArea', 'max_area', 'maxArea',
+    'rooms', 'bathrooms', 'owner', 'user',
+)
+
+
+def _filter_signature(params, extra=()):
+    """Stable string describing the inventory filters a request applies."""
+    parts = []
+    for name in (*_FILTER_PARAMS, *extra):
+        value = params.get(name)
+        if value not in (None, ''):
+            parts.append(f'{name}={value}')
+    return '&'.join(parts)
+
+
 class AdminPagination(PageNumberPagination):
     """Paginación compartida por los viewsets del panel admin.
 
@@ -84,13 +155,33 @@ class ProvinceViewSet(viewsets.ReadOnlyModelViewSet):
     ordering_fields = ['name', 'created_at']
     ordering = ['name']
 
+    def list(self, request, *args, **kwargs):
+        """Cached listing: the province table changes once every few years."""
+        if not _is_public_read(request):
+            return super().list(request, *args, **kwargs)
+        key = versioned_key('provinces:list', _query_signature(request.query_params))
+        data = cache.get(key)
+        if data is None:
+            # `list()` on a plain list drops the serializer reference DRF hangs
+            # off ReturnList, which would otherwise be pickled into Redis.
+            data = list(super().list(request, *args, **kwargs).data)
+            cache.set(key, data, CACHE_TTL_GEO)
+        return _public_response(data, request, s_maxage=CACHE_TTL_GEO)
+
     @action(detail=True, methods=['get'])
     def cities(self, request, pk=None):
         """Obtener todas las ciudades de una provincia"""
-        province = self.get_object()
-        cities = province.cities.all()
-        serializer = CitySerializer(cities, many=True)
-        return Response(serializer.data)
+        if not _is_public_read(request):
+            province = self.get_object()
+            return Response(list(CitySerializer(province.cities.all(), many=True).data))
+        key = versioned_key('province:cities', pk)
+        data = cache.get(key)
+        if data is None:
+            province = self.get_object()
+            cities = province.cities.all()
+            data = list(CitySerializer(cities, many=True).data)
+            cache.set(key, data, CACHE_TTL_GEO)
+        return _public_response(data, request, s_maxage=CACHE_TTL_GEO)
 
 
 class CityViewSet(viewsets.ReadOnlyModelViewSet):
@@ -113,6 +204,18 @@ class CityViewSet(viewsets.ReadOnlyModelViewSet):
         if province_id is not None:
             queryset = queryset.filter(province_id=province_id)
         return queryset
+
+    def list(self, request, *args, **kwargs):
+        """Cached listing: the canton table is stable, and every filter that can
+        narrow it (province, search, ordering) travels in the querystring."""
+        if not _is_public_read(request):
+            return super().list(request, *args, **kwargs)
+        key = versioned_key('cities:list', _query_signature(request.query_params))
+        data = cache.get(key)
+        if data is None:
+            data = list(super().list(request, *args, **kwargs).data)
+            cache.set(key, data, CACHE_TTL_GEO)
+        return _public_response(data, request, s_maxage=CACHE_TTL_GEO)
 
 class PropertyPagination(PageNumberPagination):
     """
@@ -142,6 +245,27 @@ def _parse_bbox(value):
     return tuple(parts)
 
 
+def _snap_bbox(value):
+    """
+    Round a bbox *outward* to 3 decimals (~110 m) so that panning by a few
+    pixels lands on the same cache entry instead of recomputing the payload.
+
+    Rounding outward rather than to nearest is what makes this safe to cache:
+    the snapped box always contains the requested one, so the answer is a
+    superset of the viewport and nothing that belongs on screen goes missing.
+    """
+    parsed = _parse_bbox(value)
+    if parsed is None:
+        return None
+    west, south, east, north = parsed
+    return (
+        math.floor(west * 1000) / 1000,
+        math.floor(south * 1000) / 1000,
+        math.ceil(east * 1000) / 1000,
+        math.ceil(north * 1000) / 1000,
+    )
+
+
 class PropertyViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticatedOrReadOnly, IsOwnerOrReadOnly]
     queryset = Property.objects.all()
@@ -153,6 +277,22 @@ class PropertyViewSet(viewsets.ModelViewSet):
         if self.action == 'list':
             return MapPropertySerializer
         return super().get_serializer_class()
+
+    def get_throttles(self):
+        # Only the two hottest public reads are rate limited, and only against
+        # scraping: the rates are far above human browsing and above what a
+        # well-behaved crawler does. Every other action stays unthrottled
+        # because only views declaring throttle_scope are limited.
+        if self.action == 'map_points':
+            self.throttle_scope = 'map_points'
+            return [AntiScraperScopedThrottle()]
+        if self.action == 'list':
+            self.throttle_scope = 'property_list'
+            return [AntiScraperScopedThrottle()]
+        if self.action in {'create', 'update', 'partial_update'}:
+            self.throttle_scope = 'property_write'
+            return [ScopedRateThrottle()]
+        return []
 
     def get_queryset(self):
         """
@@ -228,7 +368,9 @@ class PropertyViewSet(viewsets.ModelViewSet):
         if owner and owner != 'all' and str(owner).isdigit():
             queryset = queryset.filter(owner_id=int(owner))
 
-        bbox = params.get('bbox')
+        # `map_points` snaps the viewport to a coarse grid before querying so its
+        # cache key describes exactly the payload that was computed.
+        bbox = getattr(self, '_bbox_override', None) or params.get('bbox')
         if bbox:
             if not getattr(self, '_ignore_map_bbox', False):
                 parts = [_parse_float(p) for p in bbox.split(',')]
@@ -292,11 +434,46 @@ class PropertyViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         serializer.save(owner=self.request.user)
 
+    def create(self, request, *args, **kwargs):
+        """Create once for a client idempotency key, including upload retries."""
+        idempotency_key = (request.headers.get('Idempotency-Key') or '').strip()[:128]
+        if not idempotency_key:
+            return super().create(request, *args, **kwargs)
+
+        digest = hashlib.sha256(
+            f"{request.user.pk}:{idempotency_key}".encode('utf-8')
+        ).hexdigest()
+        result_key = f"property:create:result:{digest}"
+        lock_key = f"property:create:lock:{digest}"
+        existing_id = cache.get(result_key)
+        if existing_id:
+            existing = Property.objects.filter(pk=existing_id, owner=request.user).first()
+            if existing is not None:
+                response = Response(self.get_serializer(existing).data, status=status.HTTP_200_OK)
+                response['X-Idempotent-Replay'] = 'true'
+                return response
+
+        if not cache.add(lock_key, '1', 60):
+            return Response(
+                {'detail': 'Esta publicación ya se está procesando. Espera un momento.'},
+                status=status.HTTP_409_CONFLICT,
+            )
+        try:
+            response = super().create(request, *args, **kwargs)
+            if response.status_code == status.HTTP_201_CREATED and response.data.get('id'):
+                cache.set(result_key, response.data['id'], 60 * 60 * 24)
+            return response
+        finally:
+            cache.delete(lock_key)
+
     def retrieve(self, request, *args, **kwargs):
         """Devuelve el detalle e incrementa el contador de vistas de forma atómica."""
         instance = self.get_object()
-        Property.objects.filter(pk=instance.pk).update(views_count=F('views_count') + 1)
-        instance.views_count = (instance.views_count or 0) + 1
+        # Crawlers get the full detail, they just do not move the view counter:
+        # it feeds the demand signal shown to owners, which must be human-only.
+        if not is_bot_request(request):
+            Property.objects.filter(pk=instance.pk).update(views_count=F('views_count') + 1)
+            instance.views_count = (instance.views_count or 0) + 1
         serializer = self.get_serializer(instance)
         return Response(serializer.data)
 
@@ -304,6 +481,15 @@ class PropertyViewSet(viewsets.ModelViewSet):
     def intelligence(self, request, pk=None):
         """Build commercial context against genuinely comparable inventory."""
         from django.utils import timezone
+
+        # The comparables scan walks every active listing in the city, so this is
+        # the most expensive detail endpoint on the site and the one crawlers hit
+        # right after the property page itself.
+        cache_key = versioned_key('intelligence', pk)
+        if _is_public_read(request):
+            cached = cache.get(cache_key)
+            if cached is not None:
+                return _public_response(cached, request, s_maxage=CACHE_TTL_INTELLIGENCE)
 
         instance = self.get_object()
         comparable = Property.objects.exclude(status='inactive').filter(
@@ -349,14 +535,16 @@ class PropertyViewSet(viewsets.ModelViewSet):
         ).values_list('views_count', flat=True))
         demand_median = sorted(city_views)[len(city_views) // 2] if city_views else 0
         demand_level = 'high' if instance.views_count > demand_median * 1.5 else ('low' if instance.views_count < demand_median * .5 else 'medium')
-        contacts = instance.activity_events.filter(event_name='property_contact_clicked').count()
+        contacts = instance.activity_events.filter(
+            event_name='property_contact_clicked', is_bot=False
+        ).count()
         history = list(instance.price_history.values('price', 'recorded_at'))
         if not history and instance.price is not None:
             history = [{'price': instance.price, 'recorded_at': instance.created_at}]
 
         publication_start = instance.source_published_at or instance.imported_at or instance.created_at
         publication_basis = 'source' if instance.source_published_at else ('detected' if instance.is_imported else 'platform')
-        return Response({
+        payload = {
             'property_id': instance.pk,
             'price_per_m2': own_price_m2,
             'zone': sector or instance.city,
@@ -374,7 +562,10 @@ class PropertyViewSet(viewsets.ModelViewSet):
             'demand': {'level': demand_level, 'views': instance.views_count, 'contacts': contacts,
                        'city_median_views': demand_median},
             'methodology': 'Comparables activos del mismo tipo, operación y ciudad; rango habitual P25–P75 y alerta atípica mediante IQR.',
-        })
+        }
+        if _is_public_read(request):
+            cache.set(cache_key, payload, CACHE_TTL_INTELLIGENCE)
+        return _public_response(payload, request, s_maxage=CACHE_TTL_INTELLIGENCE)
 
     @action(detail=False, methods=['get'], permission_classes=[AllowAny])
     def map_points(self, request):
@@ -394,6 +585,22 @@ class PropertyViewSet(viewsets.ModelViewSet):
         # bbox sólo se usa para recortar la salida de la grilla (ver viewport).
         cluster_zoom = zoom < 11.5
         self._ignore_map_bbox = cluster_zoom
+        snapped = _snap_bbox(request.query_params.get('bbox'))
+        self._bbox_override = ','.join(f'{coord:.3f}' for coord in snapped) if snapped else None
+
+        max_items = int(request.query_params.get('limit') or 1000)
+        cache_key = versioned_key(
+            'map_points',
+            f'z{zoom}',
+            f'n{max_items}',
+            self._bbox_override or 'all',
+            _filter_signature(request.query_params),
+        )
+        if _is_public_read(request):
+            cached = cache.get(cache_key)
+            if cached is not None:
+                return _public_response(cached, request, s_maxage=CACHE_TTL_MAP_POINTS)
+
         queryset = self.filter_queryset(self.get_queryset()).only(
             'id',
             'property_type',
@@ -406,9 +613,11 @@ class PropertyViewSet(viewsets.ModelViewSet):
             'city',
             'province',
         )
-        max_items = int(request.query_params.get('limit') or 1000)
-        viewport = _parse_bbox(request.query_params.get('bbox')) if cluster_zoom else None
-        return Response(build_map_payload(queryset, zoom, max_items, viewport=viewport))
+        viewport = snapped if cluster_zoom else None
+        payload = build_map_payload(queryset, zoom, max_items, viewport=viewport)
+        if _is_public_read(request):
+            cache.set(cache_key, payload, CACHE_TTL_MAP_POINTS)
+        return _public_response(payload, request, s_maxage=CACHE_TTL_MAP_POINTS)
 
     @action(detail=False, methods=['get'], permission_classes=[AllowAny])
     def owners(self, request):
@@ -443,6 +652,12 @@ class PropertyViewSet(viewsets.ModelViewSet):
         exactamente con los guardados en cada propiedad (para el filtro iexact),
         independientemente de qué esté cargado en el bbox actual.
         """
+        cache_key = versioned_key('locations')
+        if _is_public_read(request):
+            cached = cache.get(cache_key)
+            if cached is not None:
+                return _public_response(cached, request, s_maxage=CACHE_TTL_LOCATIONS)
+
         rows = (
             Property.objects.exclude(status='inactive')
             .values('province', 'city')
@@ -461,7 +676,9 @@ class PropertyViewSet(viewsets.ModelViewSet):
             {'province': prov, 'cities': sorted(cities)}
             for prov, cities in sorted(provinces.items(), key=lambda kv: kv[0].lower())
         ]
-        return Response(result)
+        if _is_public_read(request):
+            cache.set(cache_key, result, CACHE_TTL_LOCATIONS)
+        return _public_response(result, request, s_maxage=CACHE_TTL_LOCATIONS)
 
     @action(detail=False, methods=['get'], permission_classes=[AllowAny])
     def catalog(self, request):
@@ -475,6 +692,12 @@ class PropertyViewSet(viewsets.ModelViewSet):
         today, so they can answer 200 with an empty state instead of a 404 that
         drops an already ranked URL from the index.
         """
+        cache_key = versioned_key('catalog')
+        if _is_public_read(request):
+            cached = cache.get(cache_key)
+            if cached is not None:
+                return _public_response(cached, request, s_maxage=CACHE_TTL_CATALOG)
+
         provinces = {}
 
         # Official cantons, so a location keeps resolving even with no listings.
@@ -501,7 +724,81 @@ class PropertyViewSet(viewsets.ModelViewSet):
             {'province': prov, 'cities': sorted(cities)}
             for prov, cities in sorted(provinces.items(), key=lambda kv: kv[0].lower())
         ]
-        return Response(result)
+        if _is_public_read(request):
+            cache.set(cache_key, result, CACHE_TTL_CATALOG)
+        return _public_response(result, request, s_maxage=CACHE_TTL_CATALOG)
+
+    @action(detail=False, methods=['get'], permission_classes=[AllowAny])
+    def summary(self, request):
+        """
+        Aggregate counts over the whole active inventory, computed in SQL.
+
+        Counters used to be derived from the length of a fetched page, but the
+        list endpoint caps ``page_size`` at 2000, so every total froze at 2000
+        once the catalogue grew past that cap. This endpoint accepts the same
+        query filters as the list and always counts the full match.
+        """
+        cache_key = versioned_key(
+            'properties:summary',
+            _filter_signature(request.query_params, extra=('bbox',)),
+        )
+        if _is_public_read(request):
+            cached = cache.get(cache_key)
+            if cached is not None:
+                return _public_response(cached, request, s_maxage=CACHE_TTL_SUMMARY)
+
+        # One GROUP BY feeds every breakdown. `order_by()` clears the model's
+        # default ordering, which Django would otherwise add to the GROUP BY
+        # and split the aggregates row by row.
+        groups = [
+            {
+                'city': (row['city'] or '').strip(),
+                'province': (row['province'] or '').strip(),
+                'property_type': row['property_type'] or '',
+                'status': row['status'] or '',
+                'count': row['count'],
+            }
+            for row in self.get_queryset()
+            .order_by()
+            .values('city', 'province', 'property_type', 'status')
+            .annotate(count=Count('id'))
+        ]
+
+        def totals_by(key):
+            totals = {}
+            for row in groups:
+                value = row[key]
+                if not value:
+                    continue
+                totals[value] = totals.get(value, 0) + row['count']
+            return totals
+
+        cities = {}
+        for row in groups:
+            if not row['city']:
+                continue
+            entry = cities.setdefault(
+                (row['city'], row['province']),
+                {'name': row['city'], 'province': row['province'], 'count': 0},
+            )
+            entry['count'] += row['count']
+
+        payload = {
+            'total': sum(row['count'] for row in groups),
+            'by_status': totals_by('status'),
+            'by_property_type': totals_by('property_type'),
+            'by_city': sorted(cities.values(), key=lambda row: -row['count']),
+            'by_province': [
+                {'name': name, 'count': count}
+                for name, count in sorted(totals_by('province').items(), key=lambda kv: -kv[1])
+            ],
+            # Raw cross-tab so the SEO landings can count type x operation x
+            # location combinations without downloading the catalogue.
+            'groups': groups,
+        }
+        if _is_public_read(request):
+            cache.set(cache_key, payload, CACHE_TTL_SUMMARY)
+        return _public_response(payload, request, s_maxage=CACHE_TTL_SUMMARY)
 
     @action(detail=False, methods=['get'], permission_classes=[IsAuthenticated])
     def my_properties(self, request):
@@ -666,6 +963,14 @@ class ActivityEventViewSet(viewsets.ModelViewSet):
             queryset = queryset.filter(property_id=property_id)
         if event_name:
             queryset = queryset.filter(event_name=event_name)
+        # Optional `is_bot` filter so the admin log can be narrowed to humans or
+        # to crawlers. Without the parameter the listing keeps showing both.
+        is_bot = self.request.query_params.get('is_bot')
+        if is_bot is not None:
+            if str(is_bot).lower() in ('true', '1'):
+                queryset = queryset.filter(is_bot=True)
+            elif str(is_bot).lower() in ('false', '0'):
+                queryset = queryset.filter(is_bot=False)
         return queryset
 
 
@@ -1209,9 +1514,18 @@ class MarketStatsView(generics.GenericAPIView):
     permission_classes = [AllowAny]
 
     def get(self, request):
-        from collections import defaultdict
+        from collections import Counter, defaultdict
         from datetime import timedelta
         from django.utils import timezone
+
+        # This one pulls every active listing into Python to build the sector,
+        # evolution and demand tables; the SEO stats pages are server-rendered
+        # from it, so it runs on cold crawls too.
+        cache_key = versioned_key('market_stats', _query_signature(request.query_params))
+        if _is_public_read(request):
+            cached = cache.get(cache_key)
+            if cached is not None:
+                return _public_response(cached, request, s_maxage=CACHE_TTL_MARKET_STATS)
 
         all_base = Property.objects.exclude(status='inactive').filter(
             area__gt=0,
@@ -1220,6 +1534,11 @@ class MarketStatsView(generics.GenericAPIView):
         ).annotate(
             price_per_m2=ExpressionWrapper(F('price') / F('area'), output_field=FloatField())
         ).filter(price_per_m2__gt=1, price_per_m2__lt=10000)
+        # Optional city scope so the frontend can server-render one stats page
+        # per city; every metric below narrows naturally through this filter.
+        city_scope = (request.query_params.get('city') or '').strip()
+        if city_scope:
+            all_base = all_base.filter(city__iexact=city_scope)
         # Venta y alquiler usan escalas distintas (precio total vs. mensual).
         # Las métricas principales se limitan a venta para que $/m² sea comparable.
         base = all_base.filter(status='for_sale')
@@ -1264,18 +1583,17 @@ class MarketStatsView(generics.GenericAPIView):
         now = timezone.now()
         active_rows = list(base.values(
             'id', 'city', 'address', 'property_type', 'created_at', 'last_seen_at',
-            'views_count', 'price_per_m2',
+            'price_per_m2',
         ))
         market_days = []
-        demand = defaultdict(lambda: {'supply': 0, 'views': 0})
         city_periods = defaultdict(lambda: {'recent': [], 'previous': []})
-        sector_stats = defaultdict(list)
+        # Sectors come from free-text addresses, so casing varies ("Puembo" vs
+        # "PUEMBO"): group case-insensitively and display the most common form.
+        sector_stats = defaultdict(lambda: {'names': Counter(), 'values': []})
         for row in active_rows:
             # Active catalog entries remain available through the current day.
             market_days.append(max(0, (now - row['created_at']).days))
             city = (row['city'] or 'Sin ciudad').strip()
-            demand[city]['supply'] += 1
-            demand[city]['views'] += row['views_count'] or 0
             age = now - row['created_at']
             if age <= timedelta(days=90):
                 city_periods[city]['recent'].append(row['price_per_m2'])
@@ -1284,7 +1602,9 @@ class MarketStatsView(generics.GenericAPIView):
             # `address` is currently the finest available geographic level.
             sector = (row['address'] or '').split(',')[0].strip()
             if sector and sector.lower() != city.lower():
-                sector_stats[(city, sector)].append(row['price_per_m2'])
+                entry = sector_stats[(city, sector.casefold())]
+                entry['names'][sector] += 1
+                entry['values'].append(row['price_per_m2'])
 
         evolution = []
         for city, periods in city_periods.items():
@@ -1295,18 +1615,18 @@ class MarketStatsView(generics.GenericAPIView):
             evolution.append({'city': city, 'current_price_m2': recent, 'previous_price_m2': previous,
                               'change_pct': round((recent - previous) / previous * 100, 1) if previous else 0})
         evolution.sort(key=lambda row: row['change_pct'], reverse=True)
-        supply_demand = [
-            {'city': city, **values, 'demand_per_listing': round(values['views'] / values['supply'], 1)}
-            for city, values in demand.items() if values['supply'] >= 3
-        ]
-        supply_demand.sort(key=lambda row: row['demand_per_listing'], reverse=True)
         by_sector = [
-            {'city': city, 'sector': sector, 'count': len(values), 'avg_price_m2': sum(values) / len(values)}
-            for (city, sector), values in sector_stats.items() if len(values) >= 2
+            {
+                'city': city,
+                'sector': entry['names'].most_common(1)[0][0],
+                'count': len(entry['values']),
+                'avg_price_m2': sum(entry['values']) / len(entry['values']),
+            }
+            for (city, _sector_key), entry in sector_stats.items() if len(entry['values']) >= 2
         ]
         by_sector.sort(key=lambda row: (-row['count'], row['city'], row['sector']))
 
-        return Response({
+        payload = {
             'overall': overall,
             'by_city': grouped('city', 'province', limit=15),
             'by_property_type': grouped('property_type', limit=8),
@@ -1321,11 +1641,13 @@ class MarketStatsView(generics.GenericAPIView):
             'by_sector': by_sector[:20],
             'evolution': evolution[:15],
             'growth_zones': [row for row in evolution if row['change_pct'] > 0][:8],
-            'supply_demand': supply_demand[:15],
             'estimated_market_days': round(sum(market_days) / len(market_days)) if market_days else 0,
             'outliers_excluded': outliers_excluded,
-            'methodology': 'Propiedades en venta activas con precio y área válidos. Los extremos se excluyen con el método IQR; evolución compara altas de los últimos 90 días con los 90 anteriores y demanda usa visualizaciones por anuncio.',
-        })
+            'methodology': 'Propiedades en venta activas con precio y área válidos. Los extremos se excluyen con el método IQR; evolución compara altas de los últimos 90 días con los 90 anteriores.',
+        }
+        if _is_public_read(request):
+            cache.set(cache_key, payload, CACHE_TTL_MARKET_STATS)
+        return _public_response(payload, request, s_maxage=CACHE_TTL_MARKET_STATS)
 
 
 class AdminDashboardView(generics.GenericAPIView):
@@ -1436,6 +1758,122 @@ class AdminDashboardView(generics.GenericAPIView):
         return Response(data)
 
 
+class AdminSystemStatusView(generics.GenericAPIView):
+    """Operational status and aggregated incidents for staff users."""
+
+    permission_classes = [IsAuthenticated, IsAdminUser]
+
+    def get(self, request):
+        import time
+        from datetime import timedelta
+        from django.db import connection
+        from django.utils import timezone
+        from ingesta.models import IngestaRun
+
+        now = timezone.now()
+        components = {}
+        try:
+            with connection.cursor() as cursor:
+                cursor.execute("SELECT 1")
+                cursor.fetchone()
+            components["database"] = {"status": "healthy", "label": "Base de datos"}
+        except Exception:
+            components["database"] = {"status": "error", "label": "Base de datos"}
+
+        try:
+            cache_key = "system:admin:probe"
+            cache.set(cache_key, "ok", 10)
+            cache_ok = cache.get(cache_key) == "ok"
+            components["cache"] = {
+                "status": "healthy" if cache_ok else "error",
+                "label": "Redis y caché",
+            }
+            heartbeat = cache.get("system:worker:heartbeat")
+            worker_age = int(time.time() - heartbeat) if heartbeat else None
+            components["worker"] = {
+                "status": "healthy" if worker_age is not None and worker_age < 180 else "stale",
+                "label": "Worker de tareas",
+                "age_seconds": worker_age,
+            }
+        except Exception:
+            components["cache"] = {"status": "error", "label": "Redis y caché"}
+            components["worker"] = {"status": "unknown", "label": "Worker de tareas", "age_seconds": None}
+
+        failed_images = PropertyImage.objects.filter(status=PropertyImage.Status.FAILED).count()
+        old_pending_images = PropertyImage.objects.filter(
+            status=PropertyImage.Status.PENDING,
+            uploaded_at__lt=now - timedelta(hours=2),
+        ).count()
+        components["images"] = {
+            "status": "error" if failed_images else "stale" if old_pending_images else "healthy",
+            "label": "Procesamiento de imágenes",
+            "failed": failed_images,
+            "pending_old": old_pending_images,
+        }
+
+        stalled_runs = IngestaRun.objects.filter(
+            estado__in=["pending", "running"],
+            created_at__lt=now - timedelta(hours=6),
+        ).count()
+        failed_runs = IngestaRun.objects.filter(
+            estado="error",
+            created_at__gte=now - timedelta(hours=24),
+        ).count()
+        components["ingestion"] = {
+            "status": "error" if stalled_runs else "stale" if failed_runs else "healthy",
+            "label": "Importaciones",
+            "stalled": stalled_runs,
+            "failed_24h": failed_runs,
+        }
+
+        open_incidents = SystemIncident.objects.filter(resolved=False)
+        incident_rows = list(open_incidents.values(
+            "id", "kind", "severity", "status_code", "method", "path", "message",
+            "request_id", "occurrences", "first_seen_at", "last_seen_at",
+        )[:50])
+        alerts = []
+        for key, component in components.items():
+            if component["status"] != "healthy":
+                alerts.append({
+                    "component": key,
+                    "severity": "critical" if component["status"] == "error" else "warning",
+                    "title": f"{component['label']}: requiere revisión",
+                })
+        if incident_rows:
+            alerts.append({
+                "component": "incidents",
+                "severity": "critical",
+                "title": f"{len(incident_rows)} errores del sistema sin resolver",
+            })
+
+        overall = "healthy"
+        statuses = {component["status"] for component in components.values()}
+        if "error" in statuses:
+            overall = "error"
+        elif statuses - {"healthy"}:
+            overall = "degraded"
+        return Response({
+            "status": overall,
+            "components": components,
+            "alerts": alerts,
+            "incidents": incident_rows,
+            "generated_at": now,
+        })
+
+    def post(self, request):
+        incident_id = request.data.get("incident_id")
+        incident = SystemIncident.objects.filter(pk=incident_id).first()
+        if incident is None:
+            return Response({"error": "Incidencia no encontrada."}, status=status.HTTP_404_NOT_FOUND)
+        incident.resolved = bool(request.data.get("resolved", True))
+        incident.save(update_fields=["resolved", "last_seen_at"])
+        logger.info(
+            "admin_audit action=incident.resolve actor=%s incident=%s resolved=%s",
+            request.user.pk, incident.pk, incident.resolved,
+        )
+        return Response({"id": incident.pk, "resolved": incident.resolved})
+
+
 class AdminUserViewSet(viewsets.ModelViewSet):
     """CRUD de usuarios para admins."""
     permission_classes = [IsAuthenticated, IsAdminUser]
@@ -1451,10 +1889,18 @@ class AdminUserViewSet(viewsets.ModelViewSet):
         # los atributos anotados y solo cae al .count() por fila si faltan).
         queryset = User.objects.all().annotate(
             properties_count_annotated=Count('properties', distinct=True),
-            activity_count_annotated=Count('activity_events', distinct=True),
+            # Crawler events never count as user activity.
+            activity_count_annotated=Count(
+                'activity_events',
+                filter=Q(activity_events__is_bot=False),
+                distinct=True,
+            ),
             contact_clicks_count_annotated=Count(
                 'activity_events',
-                filter=Q(activity_events__event_name='property_contact_clicked'),
+                filter=Q(
+                    activity_events__event_name='property_contact_clicked',
+                    activity_events__is_bot=False,
+                ),
                 distinct=True,
             ),
         ).order_by('-date_joined')

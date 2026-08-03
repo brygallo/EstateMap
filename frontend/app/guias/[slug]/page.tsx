@@ -7,23 +7,25 @@ import { jsonLd, SITE_URL, SITE_NAME } from '@/lib/properties';
 import { generatePageMetadata } from '@/lib/metadata';
 
 interface GuidePageProps {
-  params: { slug: string };
+  params: Promise<{ slug: string }>;
 }
 
 export function generateStaticParams() {
   return GUIDES.map((guide) => ({ slug: guide.slug }));
 }
 
-export function generateMetadata({ params }: GuidePageProps): Metadata {
-  const guide = getGuide(params.slug);
+export async function generateMetadata({ params }: GuidePageProps): Promise<Metadata> {
+  const { slug } = await params;
+  const guide = getGuide(slug);
   if (!guide) {
     return { title: 'Guía no encontrada', robots: { index: false, follow: false } };
   }
   return generatePageMetadata(guide.title, guide.description, `/guias/${guide.slug}`);
 }
 
-export default function GuiaPage({ params }: GuidePageProps) {
-  const guide = getGuide(params.slug);
+export default async function GuiaPage({ params }: GuidePageProps) {
+  const { slug } = await params;
+  const guide = getGuide(slug);
   if (!guide) notFound();
 
   const guideUrl = `${SITE_URL}/guias/${guide.slug}`;

@@ -43,8 +43,8 @@ export default function PropertyNearbyMap({ property, nearbyProperties }: Proper
     setMapProperties(initialProperties);
   }, [initialProperties]);
 
-  // Igual que el mapa principal: cada encuadre solicita solo los puntos o
-  // agrupadores que corresponden al área visible, sin descargar el catálogo.
+  // Match the main map: each viewport requests only the points or clusters
+  // within the visible area instead of downloading the full catalog.
   useEffect(() => {
     if (!bounds) return;
     const controller = new AbortController();
@@ -68,7 +68,7 @@ export default function PropertyNearbyMap({ property, nearbyProperties }: Proper
           : payload.items ?? payload.results ?? [];
         setMapProperties(items);
       } catch (error: any) {
-        if (error?.name !== 'AbortError') console.error('No se pudieron cargar las propiedades del mapa:', error);
+        if (error?.name !== 'AbortError') console.error('Could not load map properties:', error);
       } finally {
         if (!controller.signal.aborted) setLoadingProperties(false);
       }

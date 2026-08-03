@@ -23,7 +23,7 @@ export default function LayerSwitch({ active, onToggle }: LayerSwitchProps) {
   const targetThumb = isSatellite ? MAP_THUMB : SATELLITE_THUMB;
 
   return (
-    <div className="absolute bottom-9 left-3 z-mapcontrol">
+    <div className="absolute bottom-3 left-3 z-mapcontrol sm:bottom-9">
       <button
         type="button"
         onClick={onToggle}

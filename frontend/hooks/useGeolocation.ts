@@ -8,6 +8,7 @@ import {
   LOCATION_STORAGE_KEYS,
   geolocationErrorMessage,
   getGeolocationPermission,
+  getLastSuccessfulLocation,
   hasPreviousLocationSuccess,
   markLocationSuccess,
   requestBrowserLocation,
@@ -156,7 +157,7 @@ export function useGeolocation(
       setUserLocation({ lat: latitude, lng: longitude });
       setAccuracy(typeof acc === 'number' ? acc : null);
       centerOnLocation(latitude, longitude);
-      markLocationSuccess();
+      markLocationSuccess(latitude, longitude);
       setLocationBlocked(false);
       notifyLocationSuccess('Ubicación encontrada');
     } catch (error) {
@@ -185,6 +186,11 @@ export function useGeolocation(
       if (cancelled) return;
 
       if (permissionGranted || hasPreviousLocationSuccess()) {
+        const cachedLocation = getLastSuccessfulLocation();
+        if (cachedLocation) {
+          setUserLocation(cachedLocation);
+          centerOnLocation(cachedLocation.lat, cachedLocation.lng);
+        }
         void handleAcceptLocation();
         return;
       }
@@ -243,7 +249,7 @@ export function useGeolocation(
       setUserLocation({ lat: latitude, lng: longitude });
       setAccuracy(typeof acc === 'number' ? acc : null);
       centerOnLocation(latitude, longitude);
-      markLocationSuccess();
+      markLocationSuccess(latitude, longitude);
       setLocationBlocked(false);
       notifyLocationSuccess('Ubicación encontrada');
     } catch (error) {

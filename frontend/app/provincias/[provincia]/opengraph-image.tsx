@@ -8,7 +8,7 @@ export const size = OG_SIZE;
 export const contentType = 'image/png';
 export const revalidate = 3600;
 
-export default async function Image({ params }: { params: { provincia: string } }) {
+export default async function Image({ params }: { params: Promise<{ provincia: string }> }) {
   const { provincia } = await params;
   const properties = await getProperties();
   const province = getProvinces(properties).find((p) => p.slug === provincia);

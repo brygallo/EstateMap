@@ -15,6 +15,12 @@ services:
       # The web process enqueues the optimization, so it needs the broker as
       # much as the worker does. Shared Redis, index 0 for this system.
       CELERY_BROKER_URL: ${CELERY_BROKER_URL:-redis://aents-redis:6379/0}
+      # Index 1 on the same instance holds the public read cache, so flushing
+      # the cache can never drop queued tasks.
+      REDIS_CACHE_URL: ${REDIS_CACHE_URL:-redis://aents-redis:6379/1}
+      # On-demand revalidation of the Next.js cache; REVALIDATE_SECRET comes
+      # from .env.prod and an empty one turns the call into a no-op.
+      NEXT_REVALIDATE_URL: ${NEXT_REVALIDATE_URL:-http://frontend:3000/api/revalidate}
 
     command: gunicorn estate_map.wsgi:application --bind 0.0.0.0:8000 --workers 3
 
@@ -22,12 +28,19 @@ services:
       - "host.docker.internal:host-gateway"
 
     volumes:
-      - static_volume:/app/staticfiles
+      - static_volume:/app/static
       - media_volume:/app/media
       - pending_images:/app/tmp/pending-images
 
     ports:
-      - "8000:8000"
+      - "127.0.0.1:8000:8000"
+
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; r=urllib.request.Request('http://127.0.0.1:8000/api/health/', headers={'X-Forwarded-Proto':'https'}); urllib.request.urlopen(r, timeout=3)"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
 
     networks:
       - estatemap_network
@@ -48,6 +61,8 @@ services:
 
     environment:
       CELERY_BROKER_URL: ${CELERY_BROKER_URL:-redis://aents-redis:6379/0}
+      REDIS_CACHE_URL: ${REDIS_CACHE_URL:-redis://aents-redis:6379/1}
+      NEXT_REVALIDATE_URL: ${NEXT_REVALIDATE_URL:-http://frontend:3000/api/revalidate}
 
     # -B runs beat inside the worker: one process covers both the queue and the
     # hourly sweep. Safe here because this system runs exactly one worker.
@@ -107,12 +122,21 @@ services:
       PORT: 3000
       # Google OAuth debe estar disponible en runtime también
       NEXT_PUBLIC_GOOGLE_CLIENT_ID: ${NEXT_PUBLIC_GOOGLE_CLIENT_ID}
+      REVALIDATE_SECRET: ${REVALIDATE_SECRET}
 
     ports:
-      - "3000:3000"
+      - "127.0.0.1:3000:3000"
+
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3000/robots.txt').then(r=>{if(!r.ok)process.exit(1)}).catch(()=>process.exit(1))"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
 
     depends_on:
-      - backend
+      backend:
+        condition: service_healthy
 
     # No aents_shared here: the frontend never talks to the broker.
     networks:

@@ -10,7 +10,7 @@ export const size = OG_SIZE;
 export const contentType = 'image/png';
 export const revalidate = 3600;
 
-export default async function Image({ params }: { params: { combo: string } }) {
+export default async function Image({ params }: { params: Promise<{ combo: string }> }) {
   const { combo } = await params;
   const parsed = parseComboSlug(combo);
   let title = 'Propiedades en Ecuador';

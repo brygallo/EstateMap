@@ -45,7 +45,7 @@ RUN npm run build
 # deterministic instead of relying on the build tracer to pick it up.
 FROM node:20-bullseye-slim AS sharpdeps
 WORKDIR /sharp
-RUN npm init -y > /dev/null && npm install --omit=dev sharp@0.33.5
+RUN npm init -y > /dev/null && npm install --omit=dev sharp@0.35.3
 
 # Stage 4: Runner (Production)
 FROM node:20-bullseye-slim AS runner

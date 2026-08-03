@@ -1,15 +1,8 @@
-const withPWA = require('next-pwa')({
-  dest: 'public',
-  register: false,
-  skipWaiting: true,
-  // Keep PWA tooling installed but fully disabled to prevent stale SW caches.
-  disable: true,
-});
-
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
   output: 'standalone', // Enable standalone output for Docker
+  outputFileTracingRoot: __dirname,
   // Permite aislar la carpeta de build (evita que un `next dev` en el host y el
   // server en Docker compartan `.next` y se corrompan). Por defecto es `.next`.
   distDir: process.env.NEXT_DIST_DIR || '.next',
@@ -119,10 +112,6 @@ const nextConfig = {
       { source: '/verify-email', destination: '/verificar-correo', permanent: true },
     ];
   },
-  // Disable static page generation for dynamic routes
-  experimental: {
-    missingSuspenseWithCSRBailout: false,
-  },
   webpack: (config) => {
     // Exclude old src directory from build
     config.module.rules.push({
@@ -133,4 +122,4 @@ const nextConfig = {
   },
 };
 
-module.exports = withPWA(nextConfig);
+module.exports = nextConfig;

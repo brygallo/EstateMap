@@ -70,10 +70,12 @@ class PendingPublicationAdmin(admin.ModelAdmin):
 
 @admin.register(ActivityEvent)
 class ActivityEventAdmin(admin.ModelAdmin):
-    list_display = ['event_name', 'user', 'property', 'session_id', 'created_at']
-    list_filter = ['event_name', 'created_at']
+    list_display = ['event_name', 'user', 'property', 'session_id', 'is_bot', 'created_at']
+    list_filter = ['event_name', 'is_bot', 'created_at']
     search_fields = ['event_name', 'user__username', 'user__email', 'property__title', 'session_id']
-    readonly_fields = ['user', 'property', 'session_id', 'event_name', 'path', 'payload', 'created_at']
+    readonly_fields = [
+        'user', 'property', 'session_id', 'event_name', 'path', 'payload', 'is_bot', 'created_at',
+    ]
 
 
 admin.site.register(User, UserAdmin)

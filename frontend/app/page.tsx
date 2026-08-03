@@ -21,8 +21,9 @@ import MapPageClient from '@/components/MapPageClient';
 import PropertyCard from '@/components/PropertyCard';
 import {
   getProperties,
-  getCities,
-  getProvinces,
+  getPropertySummary,
+  citiesFromSummary,
+  provincesFromSummary,
   jsonLd,
   SITE_URL,
   SITE_NAME,
@@ -76,8 +77,10 @@ const popularSearches = [
 ];
 
 export default async function HomePage() {
-  const properties = await getProperties();
-  const allCities = getCities(properties);
+  // Counted by the database: the list endpoint caps `page_size` at 2000, so
+  // deriving these numbers from a fetched page stopped at 2000 properties.
+  const summary = await getPropertySummary();
+  const allCities = citiesFromSummary(summary);
   const cities = [...allCities]
     .sort((a, b) => b.count - a.count || a.name.localeCompare(b.name))
     .slice(0, 12);
@@ -86,7 +89,7 @@ export default async function HomePage() {
     .filter((city) => !mainCitySlugs.has(city.slug))
     .sort((a, b) => a.count - b.count || a.name.localeCompare(b.name))
     .slice(0, 48);
-  const provinces = getProvinces(properties)
+  const provinces = provincesFromSummary(summary)
     .sort((a, b) => b.count - a.count || a.name.localeCompare(b.name))
     .slice(0, 16);
   const featuredProperties = await getProperties({
@@ -94,8 +97,9 @@ export default async function HomePage() {
     pageSize: 6,
     revalidate: 900,
   });
-  const forSaleCount = properties.filter((p) => p.status === 'for_sale').length;
-  const forRentCount = properties.filter((p) => p.status === 'for_rent').length;
+  const totalCount = summary.total;
+  const forSaleCount = summary.by_status.for_sale || 0;
+  const forRentCount = summary.by_status.for_rent || 0;
 
   const homeStructuredData = {
     '@context': 'https://schema.org',
@@ -227,7 +231,7 @@ export default async function HomePage() {
             <div className="grid grid-cols-3 overflow-hidden rounded-card border border-line bg-white shadow-card">
               <div className="border-r border-line p-4 sm:p-5">
                 <div className="font-geo text-2xl font-semibold text-primary tabular-nums">
-                  {properties.length}
+                  {totalCount.toLocaleString('es-EC')}
                 </div>
                 <div className="mt-1 text-xs font-medium uppercase tracking-wide text-textSecondary">
                   propiedades
@@ -235,7 +239,7 @@ export default async function HomePage() {
               </div>
               <div className="border-r border-line p-4 sm:p-5">
                 <div className="font-geo text-2xl font-semibold text-primary tabular-nums">
-                  {forSaleCount}
+                  {forSaleCount.toLocaleString('es-EC')}
                 </div>
                 <div className="mt-1 text-xs font-medium uppercase tracking-wide text-textSecondary">
                   en venta
@@ -243,7 +247,7 @@ export default async function HomePage() {
               </div>
               <div className="p-4 sm:p-5">
                 <div className="font-geo text-2xl font-semibold text-[var(--warning-strong)] tabular-nums">
-                  {forRentCount}
+                  {forRentCount.toLocaleString('es-EC')}
                 </div>
                 <div className="mt-1 text-xs font-medium uppercase tracking-wide text-textSecondary">
                   alquiler

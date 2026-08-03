@@ -295,8 +295,8 @@ export function usePropertyFilters({ token, bounds, zoom = 7 }: UsePropertyFilte
     };
   }, [token]);
 
-  // Total de resultados que cumplen los filtros SIN restringir al bbox visible.
-  // Se pide `page_size=1` porque solo interesa el `count` de la paginación DRF.
+  // Count every matching row through the aggregate endpoint. The public list
+  // endpoint is intentionally capped and must never be used as a catalog total.
   useEffect(() => {
     let cancelled = false;
     const controller = new AbortController();
@@ -304,20 +304,13 @@ export function usePropertyFilters({ token, bounds, zoom = 7 }: UsePropertyFilte
       try {
         const { apiFetch } = await import('@/lib/api');
         const params = filtersToApiParams(filters, null);
-        params.set('page_size', '1');
-        const res = await apiFetch(`/properties/?${params.toString()}`, {
+        const res = await apiFetch(`/properties/summary/?${params.toString()}`, {
           skipAuth: !token,
           signal: controller.signal,
         });
         if (res.ok && !cancelled) {
           const data = await res.json();
-          setTotalCount(
-            typeof data?.count === 'number'
-              ? data.count
-              : Array.isArray(data)
-                ? data.length
-                : null
-          );
+          setTotalCount(typeof data?.total === 'number' ? data.total : null);
         }
       } catch (err: any) {
         if (err?.name !== 'AbortError') {
@@ -502,6 +495,13 @@ export function usePropertyFilters({ token, bounds, zoom = 7 }: UsePropertyFilte
       if (urlSyncRef.current) clearTimeout(urlSyncRef.current);
       urlSyncRef.current = setTimeout(() => {
         const params = filtersToUrlParams(next);
+        if (typeof window !== 'undefined') {
+          const currentParams = new URLSearchParams(window.location.search);
+          ['property', 'lat', 'lng', 'zoom'].forEach((key) => {
+            const value = currentParams.get(key);
+            if (value != null) params.set(key, value);
+          });
+        }
         const query = params.toString();
         router.replace(query ? `/?${query}` : '/', { scroll: false });
       }, 300);

@@ -3,9 +3,17 @@ import {
   getCities,
   getProvinces,
   formatPrice,
+  slugify,
   SITE_URL,
 } from '@/lib/properties';
 import { generateCombosWithCounts, parseComboSlug } from '@/lib/seo-combos';
+import {
+  getMarketStats,
+  MIN_LISTINGS_FOR_PROMOTION,
+  TYPE_LABELS,
+  integer,
+  money,
+} from '@/lib/market-stats';
 
 // Versión extendida y dinámica del llms.txt: enumera todo el directorio de
 // páginas hub (ciudades, provincias y búsquedas por intención) con conteos
@@ -14,7 +22,7 @@ import { generateCombosWithCounts, parseComboSlug } from '@/lib/seo-combos';
 export const revalidate = 3600;
 
 export async function GET() {
-  const properties = await getProperties();
+  const [properties, stats] = await Promise.all([getProperties(), getMarketStats()]);
   const cities = getCities(properties).sort(
     (a, b) => b.count - a.count || a.name.localeCompare(b.name)
   );
@@ -43,6 +51,32 @@ export async function GET() {
   const provinceLines = provinces
     .map((p) => `- Propiedades en ${p.name} (${p.count}): ${SITE_URL}/provincias/${p.slug}`)
     .join('\n');
+
+  // Real m² figures inline: AI assistants answering "cuánto cuesta el m² en X"
+  // can quote the number and cite the per-city stats page as the source.
+  const statsSection = stats
+    ? `## Precios del metro cuadrado (datos reales del inventario)
+
+Precio promedio nacional: ${money(stats.overall.avg_price_m2)}/m² sobre ${integer(stats.overall.count)} propiedades en venta activas (extremos excluidos con método IQR). Rango observado: ${money(stats.overall.min_price_m2)} a ${money(stats.overall.max_price_m2)} por m². Estadísticas completas: ${SITE_URL}/estadisticas-inmobiliarias
+
+Por ciudad:
+${stats.by_city
+  .filter((row) => row.city && row.count >= MIN_LISTINGS_FOR_PROMOTION)
+  .map(
+    (row) =>
+      `- ${row.city}: ${money(row.avg_price_m2)}/m² promedio (${row.count} propiedades en venta) — ${SITE_URL}/estadisticas-inmobiliarias/${slugify(row.city as string)}`
+  )
+  .join('\n')}
+
+Por tipo de propiedad:
+${stats.by_property_type
+  .map(
+    (row) =>
+      `- ${TYPE_LABELS[row.property_type || ''] || row.property_type}: ${money(row.avg_price_m2)}/m² promedio (${row.count} anuncios)`
+  )
+  .join('\n')}
+`
+    : '';
 
   const comboLines = generateCombosWithCounts(properties)
     .slice(0, 120)
@@ -103,6 +137,7 @@ ${cityLines}
 
 ${provinceLines}
 
+${statsSection}
 ## Búsquedas locales por intención (tipo + operación + ubicación)
 
 ${comboLines}

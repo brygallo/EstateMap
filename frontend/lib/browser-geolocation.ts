@@ -5,6 +5,8 @@ export const LOCATION_STORAGE_KEYS = {
   mapPromptDismissed: 'mapLocationPromptDismissed',
   publicationPromptDismissed: 'publicationLocationPromptDismissed',
   lastSuccessAt: 'locationLastSuccessAt',
+  lastLatitude: 'locationLastLatitude',
+  lastLongitude: 'locationLastLongitude',
 } as const;
 
 let pendingRequest: Promise<GeolocationPosition> | null = null;
@@ -27,8 +29,23 @@ export function safeStorageSet(key: string, value: string): void {
   }
 }
 
-export function markLocationSuccess(): void {
+export function markLocationSuccess(latitude?: number, longitude?: number): void {
   safeStorageSet(LOCATION_STORAGE_KEYS.lastSuccessAt, Date.now().toString());
+  if (Number.isFinite(latitude) && Number.isFinite(longitude)) {
+    safeStorageSet(LOCATION_STORAGE_KEYS.lastLatitude, String(latitude));
+    safeStorageSet(LOCATION_STORAGE_KEYS.lastLongitude, String(longitude));
+  }
+}
+
+export function getLastSuccessfulLocation(): { lat: number; lng: number } | null {
+  const storedLatitude = safeStorageGet(LOCATION_STORAGE_KEYS.lastLatitude);
+  const storedLongitude = safeStorageGet(LOCATION_STORAGE_KEYS.lastLongitude);
+  if (storedLatitude == null || storedLongitude == null) return null;
+  const lat = Number(storedLatitude);
+  const lng = Number(storedLongitude);
+  if (!Number.isFinite(lat) || !Number.isFinite(lng)) return null;
+  if (lat < -90 || lat > 90 || lng < -180 || lng > 180) return null;
+  return { lat, lng };
 }
 
 export function hasPreviousLocationSuccess(): boolean {

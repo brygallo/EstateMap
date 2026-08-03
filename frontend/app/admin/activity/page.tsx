@@ -40,6 +40,7 @@ type EventItem = {
   property_title: string | null;
   path: string;
   payload: Record<string, unknown>;
+  is_bot: boolean;
   created_at: string;
 };
 
@@ -85,6 +86,7 @@ export default function AdminActivityPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
   const [eventName, setEventName] = useState('');
+  const [traffic, setTraffic] = useState<'all' | 'human' | 'bot'>('human');
   const [page, setPage] = useState(1);
 
   const contactsOnly = eventName === CONTACT_EVENT;
@@ -98,6 +100,7 @@ export default function AdminActivityPage() {
       params.set('page', String(page));
       params.set('page_size', String(PAGE_SIZE));
       if (eventName) params.set('event_name', eventName);
+      if (traffic !== 'all') params.set('is_bot', traffic === 'bot' ? 'true' : 'false');
 
       const response = await fetch(`${API_URL}/activity-events/?${params.toString()}`, {
         headers: { Authorization: `Bearer ${token}` },
@@ -113,7 +116,7 @@ export default function AdminActivityPage() {
     } finally {
       setLoading(false);
     }
-  }, [token, page, eventName]);
+  }, [token, page, eventName, traffic]);
 
   useEffect(() => {
     void load();
@@ -121,7 +124,7 @@ export default function AdminActivityPage() {
 
   useEffect(() => {
     setPage(1);
-  }, [eventName]);
+  }, [eventName, traffic]);
 
   const toggleContactsOnly = () => setEventName((current) => (current === CONTACT_EVENT ? '' : CONTACT_EVENT));
 
@@ -151,6 +154,8 @@ export default function AdminActivityPage() {
                 eventName={eventName}
                 onToggleContactsOnly={toggleContactsOnly}
                 onEventNameChange={setEventName}
+                traffic={traffic}
+                onTrafficChange={setTraffic}
               />
             </div>
 
@@ -222,11 +227,15 @@ function FiltersCard({
   eventName,
   onToggleContactsOnly,
   onEventNameChange,
+  traffic,
+  onTrafficChange,
 }: {
   contactsOnly: boolean;
   eventName: string;
   onToggleContactsOnly: () => void;
   onEventNameChange: (value: string) => void;
+  traffic: 'all' | 'human' | 'bot';
+  onTrafficChange: (value: 'all' | 'human' | 'bot') => void;
 }) {
   return (
     <Card className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between">
@@ -245,6 +254,16 @@ function FiltersCard({
                 {option.label}
               </SelectItem>
             ))}
+          </SelectContent>
+        </Select>
+        <Select value={traffic} onValueChange={(value) => onTrafficChange(value as 'all' | 'human' | 'bot')}>
+          <SelectTrigger className="w-full sm:w-40">
+            <SelectValue placeholder="Tipo de tráfico" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="human">Personas</SelectItem>
+            <SelectItem value="bot">Bots</SelectItem>
+            <SelectItem value="all">Todo el tráfico</SelectItem>
           </SelectContent>
         </Select>
         <Button size="sm" onClick={onToggleContactsOnly}>
@@ -294,7 +313,7 @@ function EventRow({ event }: { event: EventItem }) {
         </div>
         <div className="hidden min-w-0 sm:block">
           {event.property ? (
-            <Link href={`/property/${event.property}`} target="_blank" className="inline-flex max-w-full items-center gap-1 truncate text-sm text-primary hover:underline">
+            <Link href={`/propiedad/${event.property}`} target="_blank" className="inline-flex max-w-full items-center gap-1 truncate text-sm text-primary hover:underline">
               #{event.property} {event.property_title || ''}<ExternalLink className="h-3 w-3 shrink-0" />
             </Link>
           ) : <span className="text-sm text-textSecondary">—</span>}
@@ -322,10 +341,16 @@ function EventRow({ event }: { event: EventItem }) {
             ))}
           </div>
           <div className="mt-3 flex flex-wrap gap-2">
-            {event.property && <Button asChild size="sm" variant="outline"><Link href={`/property/${event.property}`} target="_blank">Abrir propiedad <ExternalLink className="h-3.5 w-3.5" /></Link></Button>}
+            {event.property && <Button asChild size="sm" variant="outline"><Link href={`/propiedad/${event.property}`} target="_blank">Abrir propiedad <ExternalLink className="h-3.5 w-3.5" /></Link></Button>}
             {event.user && <Button asChild size="sm" variant="outline"><Link href={`/admin/users?user=${event.user}`}>Ver usuario <UserRound className="h-3.5 w-3.5" /></Link></Button>}
             {event.path && <Button asChild size="sm" variant="ghost"><Link href={event.path} target="_blank">Abrir página registrada <ExternalLink className="h-3.5 w-3.5" /></Link></Button>}
           </div>
+          <details className="mt-3 rounded-card border border-line bg-slate-950 text-slate-100">
+            <summary className="cursor-pointer px-3 py-2 text-xs font-semibold">Payload técnico completo</summary>
+            <pre className="max-h-56 overflow-auto whitespace-pre-wrap break-words border-t border-slate-800 p-3 text-[11px] leading-5">
+              {JSON.stringify(event.payload || {}, null, 2)}
+            </pre>
+          </details>
         </div>
       )}
     </div>
@@ -344,6 +369,8 @@ function eventDetails(event: EventItem) {
     ['Ruta', event.path],
     ['Propiedad', event.property ? `#${event.property} · ${event.property_title || 'Sin título'}` : null],
     ['Usuario', event.user ? `${event.user_label} (#${event.user})` : event.user_label],
+    ['Sesión', event.session_id || 'Sin identificador'],
+    ['Tráfico', event.is_bot ? 'Bot o crawler' : 'Persona'],
     ['Ciudad', payload.city],
     ['Provincia', payload.province],
     ['Tipo de propiedad', payload.property_type],

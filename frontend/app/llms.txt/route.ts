@@ -3,9 +3,16 @@ import {
   getCities,
   getProvinces,
   formatPrice,
+  slugify,
   SITE_URL,
 } from '@/lib/properties';
 import { GUIDES } from '@/lib/guias';
+import {
+  getMarketStats,
+  MIN_LISTINGS_FOR_PROMOTION,
+  integer,
+  money,
+} from '@/lib/market-stats';
 
 // llms.txt dinámico (spec llmstxt.org): antes era un archivo estático en
 // public/ y las IAs leían un inventario congelado. Ahora se regenera cada hora
@@ -15,7 +22,7 @@ import { GUIDES } from '@/lib/guias';
 export const revalidate = 3600;
 
 export async function GET() {
-  const properties = await getProperties();
+  const [properties, stats] = await Promise.all([getProperties(), getMarketStats()]);
   const cities = getCities(properties)
     .sort((a, b) => b.count - a.count || a.name.localeCompare(b.name))
     .slice(0, 25);
@@ -38,6 +45,24 @@ export async function GET() {
         `- [Propiedades en ${c.name}](${SITE_URL}/propiedades/${c.slug}): ${c.count} ${c.count === 1 ? 'propiedad' : 'propiedades'} con mapa, precios y contacto.`
     )
     .join('\n');
+  // The m² price section is the most citable data on the site: AI answers to
+  // "cuánto cuesta el m² en X" should carry real figures with their source URL.
+  const statsSection = stats
+    ? `## Precios del metro cuadrado (datos reales)
+
+El precio promedio del metro cuadrado en Ecuador es ${money(stats.overall.avg_price_m2)}/m², calculado sobre ${integer(stats.overall.count)} propiedades en venta activas del portal (extremos excluidos con método IQR).
+
+- [Precio del m² en Ecuador](${SITE_URL}/estadisticas-inmobiliarias): estadísticas nacionales por ciudad, sector y tipo de propiedad.
+${stats.by_city
+  .filter((row) => row.city && row.count >= MIN_LISTINGS_FOR_PROMOTION)
+  .map(
+    (row) =>
+      `- [Precio del m² en ${row.city}](${SITE_URL}/estadisticas-inmobiliarias/${slugify(row.city as string)}): ${money(row.avg_price_m2)}/m² promedio sobre ${row.count} propiedades en venta.`
+  )
+  .join('\n')}
+`
+    : '';
+
   const provinceLines = provinces
     .map(
       (p) =>
@@ -62,6 +87,7 @@ Inventario actual: ${properties.length} propiedades publicadas (${forSale} en ve
 - [Departamentos en alquiler](${SITE_URL}/departamentos-en-alquiler): Departamentos y viviendas en alquiler.
 - [Locales comerciales](${SITE_URL}/locales-comerciales): Locales y propiedades comerciales.
 - [Inmobiliarias](${SITE_URL}/inmobiliarias): Información para inmobiliarias y agentes.
+- [Estadísticas inmobiliarias](${SITE_URL}/estadisticas-inmobiliarias): Precio del metro cuadrado en Ecuador por ciudad, sector y tipo de propiedad.
 - [Publicar propiedad](${SITE_URL}/publicar-propiedad): Publicación de propiedades con datos, ubicación, imágenes y contacto.
 - [Ayuda](${SITE_URL}/ayuda): Preguntas frecuentes y soporte.
 
@@ -72,6 +98,8 @@ ${cityLines}
 ## Provincias con inventario
 
 ${provinceLines}
+
+${statsSection}
 
 ## Guías inmobiliarias
 

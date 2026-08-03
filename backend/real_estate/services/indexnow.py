@@ -11,7 +11,9 @@ masiva de la ingesta no dispare cientos de requests.
 
 import logging
 import os
+import re
 import threading
+import unicodedata
 
 import requests
 from django.conf import settings
@@ -80,6 +82,19 @@ def submit_urls(paths: list[str]) -> None:
             _timer.start()
 
 
-def submit_property(property_id) -> None:
+def _slugify(value: str) -> str:
+    """Mirror of the frontend slugify (lib/properties.ts) so pinged stats URLs
+    match the routes Next.js actually serves."""
+    value = unicodedata.normalize("NFD", value.lower())
+    value = "".join(ch for ch in value if unicodedata.category(ch) != "Mn")
+    value = re.sub(r"[^a-z0-9]+", "-", value)
+    return value.strip("-")
+
+
+def submit_property(property_id, city: str | None = None) -> None:
     """Avisa que la ficha de una propiedad cambió, junto con los hubs afectados."""
-    submit_urls([f"/propiedad/{property_id}", "/", "/sitemap.xml"])
+    paths = [f"/propiedad/{property_id}", "/", "/sitemap.xml", "/estadisticas-inmobiliarias"]
+    city_slug = _slugify(city) if city else ""
+    if city_slug:
+        paths.append(f"/estadisticas-inmobiliarias/{city_slug}")
+    submit_urls(paths)

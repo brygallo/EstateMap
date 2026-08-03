@@ -23,6 +23,7 @@ from .views import (
     MeView,
     ChangePasswordView,
     AdminDashboardView,
+    AdminSystemStatusView,
     AdminUserViewSet,
     AdminPropertyViewSet,
     MarketStatsView,
@@ -66,6 +67,7 @@ urlpatterns = [
 
     # Admin panel
     path('admin/dashboard/', AdminDashboardView.as_view(), name='admin_dashboard'),
+    path('admin/system-status/', AdminSystemStatusView.as_view(), name='admin_system_status'),
     path('admin/users/', AdminUserViewSet.as_view({'get': 'list'}), name='admin_users_list'),
     path('admin/users/<int:pk>/', AdminUserViewSet.as_view({'get': 'retrieve', 'patch': 'partial_update', 'delete': 'destroy'}), name='admin_users_detail'),
     path('admin/properties/', AdminPropertyViewSet.as_view({'get': 'list'}), name='admin_properties_list'),
@@ -80,6 +82,8 @@ urlpatterns = [
     path('admin/ingesta/cancel/', ingesta_api.cancel, name='admin_ingesta_cancel'),
     path('admin/ingesta/properties/', ingesta_api.properties, name='admin_ingesta_properties'),
     path('admin/ingesta/refresh-property/', ingesta_api.refresh_property, name='admin_ingesta_refresh_property'),
+    path('admin/ingesta/maintenance/', ingesta_api.maintenance_preview, name='admin_ingesta_maintenance_preview'),
+    path('admin/ingesta/maintenance/cleanup/', ingesta_api.maintenance_cleanup, name='admin_ingesta_maintenance_cleanup'),
 ]
 
 urlpatterns += router.urls

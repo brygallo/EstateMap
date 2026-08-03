@@ -8,7 +8,7 @@
  * El slug se genera de forma determinista para poder volver a derivar los
  * filtros a partir del slug en la página, sin depender de una tabla externa.
  */
-import { Property, slugify } from '@/lib/properties';
+import { Property, PropertyGroup, slugify } from '@/lib/properties';
 
 export type TypeDef = {
   slug: string;
@@ -86,29 +86,52 @@ export const MAX_COMBO_PAGES = 2000;
  * con y sin operación.
  */
 export function generateCombosWithCounts(properties: Property[]): ComboWithCount[] {
+  return combosFromRows(
+    properties.map((p) => ({
+      city: (p.city || '') as string,
+      province: (p.province || '') as string,
+      property_type: p.property_type || '',
+      status: p.status || '',
+      count: 1,
+    }))
+  );
+}
+
+/**
+ * Same combinations, counted from the API's aggregated cross-tab.
+ *
+ * The property list is capped at 2000 rows, so counting a fetched page stopped
+ * reflecting reality once the catalogue grew past that cap. Each grouped row
+ * already carries its own `count`, covering the whole inventory.
+ */
+export function generateCombosFromGroups(groups: PropertyGroup[]): ComboWithCount[] {
+  return combosFromRows(groups);
+}
+
+function combosFromRows(rows: PropertyGroup[]): ComboWithCount[] {
   const counts = new Map<string, number>();
 
-  const add = (slug: string) => {
-    counts.set(slug, (counts.get(slug) || 0) + 1);
+  const add = (slug: string, count: number) => {
+    counts.set(slug, (counts.get(slug) || 0) + count);
   };
 
-  for (const p of properties) {
-    const typeDef = TYPE_DEFS.find((t) => t.type === p.property_type);
+  for (const row of rows) {
+    const typeDef = TYPE_DEFS.find((t) => t.type === row.property_type);
     if (!typeDef) continue;
 
-    const opDef = OP_DEFS.find((o) => o.status === p.status) || null;
+    const opDef = OP_DEFS.find((o) => o.status === row.status) || null;
 
     const locations = [
-      (p.city || '').trim() && slugify(p.city as string),
-      (p.province || '').trim() && slugify(p.province as string),
+      (row.city || '').trim() && slugify(row.city),
+      (row.province || '').trim() && slugify(row.province),
     ].filter(Boolean) as string[];
 
     for (const loc of locations) {
       if (!loc) continue;
       // Sin operación (ej. terrenos-en-morona-santiago)
-      add(buildComboSlug(typeDef.slug, null, loc));
+      add(buildComboSlug(typeDef.slug, null, loc), row.count);
       // Con operación (ej. casas-en-venta-en-macas)
-      if (opDef) add(buildComboSlug(typeDef.slug, opDef.slug, loc));
+      if (opDef) add(buildComboSlug(typeDef.slug, opDef.slug, loc), row.count);
     }
   }
 

@@ -34,6 +34,13 @@ from .scrapers.base import ScraperBlocked
 STALE_AFTER = timedelta(minutes=10)
 RETIRED_RECHECK_AFTER = timedelta(days=30)
 
+# Verify mode: when Cloudflare blocks the sweep, pause and resume instead of
+# aborting the whole run. The cooldown stays under STALE_AFTER so the watchdog
+# never mistakes a cooling run for a dead one.
+VERIFY_CHUNK = 100
+VERIFY_COOLDOWN_SECONDS = 8 * 60
+VERIFY_MAX_COOLDOWNS = 4
+
 
 class RunLogger:
     """
@@ -100,6 +107,20 @@ def reap_zombie_runs(fuente=None):
 def _cancel_requested(run):
     """Relee de la base si se pidió cancelar (la marca la pone la API/admin)."""
     return IngestaRun.objects.filter(pk=run.pk, cancel_requested=True).exists()
+
+
+def _cooldown(run, seconds):
+    """Sleep in short slices, keeping the heartbeat alive so the watchdog does
+    not reap the run. Returns False if the user asked to cancel meanwhile."""
+    waited = 0
+    while waited < seconds:
+        if _cancel_requested(run):
+            return False
+        _time.sleep(30)
+        waited += 30
+        run.heartbeat_at = timezone.now()
+        run.save(update_fields=["heartbeat_at"])
+    return True
 
 
 def launch_subprocess(run: IngestaRun):
@@ -316,8 +337,12 @@ def run_load(run: IngestaRun, log=None):
 def run_verify(run: IngestaRun, log=None):
     """Comprueba únicamente si cada anuncio continúa publicado.
 
-    No descarga imágenes ni actualiza campos: los desaparecidos se retiran del
-    mapa mediante ``status=inactive`` y permanecen en admin como auditoría.
+    No images, no field updates: listings the portal confirms as gone are
+    deleted from the catalog (a ``ListingRetirada`` audit row remains). The
+    sweep visits the least recently seen listings first and stamps
+    ``last_seen_at`` on every confirmed one, so an interrupted run (Cloudflare
+    block, cancellation) resumes where it left off when relaunched. Portal
+    blocks trigger a cooldown-and-resume instead of aborting outright.
     """
     echo = log or (lambda *_: None)
     fuente = run.fuente
@@ -331,6 +356,8 @@ def run_verify(run: IngestaRun, log=None):
         run.save()
         return run
 
+    from django.db.models import F
+
     from real_estate.models import Property
     from .pipeline.retirement import retire_property
 
@@ -341,48 +368,87 @@ def run_verify(run: IngestaRun, log=None):
     run.save(update_fields=["estado", "current_stage", "started_at", "heartbeat_at"])
     logger = RunLogger(run, echo=echo)
     cancelled = False
+    total = idx = 0
     try:
-        props = list(
+        qs = (
             Property.objects.filter(source=fuente, is_imported=True)
             .exclude(status="inactive").exclude(source_url="")
-            .only("id", "source_url", "status")
+            .only("id", "source_url", "status", "source", "external_id", "is_imported")
+            .order_by(F("last_seen_at").asc(nulls_first=True), "pk")
         )
-        statuses = scraper.check_many(prop.source_url for prop in props)
-        for prop, exists in zip(props, statuses):
-            run.vistos += 1
-            try:
-                if exists is False:
-                    property_id = prop.pk
-                    source_url = prop.source_url
-                    retire_property(prop)
-                    run.caducadas += 1
-                    logger(f"[retirada] #{property_id} eliminada: {source_url}")
-                elif exists is None:
-                    run.errores += 1
-            except ScraperBlocked:
-                raise
-            except Exception as exc:  # noqa: BLE001
-                run.errores += 1
-                logger(f"[vigencia] error en {prop.source_url}: {type(exc).__name__}: {exc}")
-
-            if run.vistos % 10 == 0:
-                run.heartbeat_at = timezone.now()
-                run.save(update_fields=["vistos", "caducadas", "errores", "heartbeat_at"])
-                if _cancel_requested(run):
-                    cancelled = True
+        props = list(qs[: run.limit] if run.limit else qs)
+        total = len(props)
+        logger(f"[vigencia] {total} anuncios por comprobar (primero los vistos hace más tiempo).")
+        cooldowns = 0
+        while idx < total and not cancelled:
+            chunk = props[idx: idx + VERIFY_CHUNK]
+            checks = scraper.check_many(p.source_url for p in chunk)
+            alive_ids = []
+            blocked = None
+            for prop in chunk:
+                try:
+                    exists = next(checks)
+                except ScraperBlocked as exc:
+                    blocked = exc
                     break
+                idx += 1
+                run.vistos += 1
+                try:
+                    if exists is False:
+                        property_id = prop.pk
+                        source_url = prop.source_url
+                        retire_property(prop)
+                        run.caducadas += 1
+                        logger(f"[retirada] #{property_id} eliminada: {source_url}")
+                    elif exists is None:
+                        run.errores += 1
+                    else:
+                        alive_ids.append(prop.pk)
+                except Exception as exc:  # noqa: BLE001
+                    run.errores += 1
+                    logger(f"[vigencia] error en {prop.source_url}: {type(exc).__name__}: {exc}")
+
+                if run.vistos % 10 == 0:
+                    run.heartbeat_at = timezone.now()
+                    run.save(update_fields=["vistos", "caducadas", "errores", "heartbeat_at"])
+                    if _cancel_requested(run):
+                        cancelled = True
+                        break
+            checks.close()
+            if alive_ids:
+                # Confirmed online = seen at the source. This stamp is also the
+                # resume cursor: a relaunch starts with the stalest listings.
+                Property.objects.filter(pk__in=alive_ids).update(last_seen_at=timezone.now())
+            if blocked is None:
+                cooldowns = 0
+            elif not cancelled:
+                cooldowns += 1
+                if cooldowns > VERIFY_MAX_COOLDOWNS:
+                    raise blocked
+                logger(
+                    f"[bloqueo] {blocked} Enfriamiento {cooldowns}/{VERIFY_MAX_COOLDOWNS}: "
+                    f"pausa de {VERIFY_COOLDOWN_SECONDS // 60} min y se continúa."
+                )
+                logger.flush(save=True)
+                if not _cooldown(run, VERIFY_COOLDOWN_SECONDS):
+                    cancelled = True
+                if hasattr(scraper, "reset_blocks"):
+                    scraper.reset_blocks()
 
         run.estado = "cancelled" if cancelled else "done"
         run.current_stage = "cancelado" if cancelled else "completado"
         run.mensaje = (
-            f"Cancelado tras revisar {run.vistos} anuncios."
+            f"Cancelado tras revisar {run.vistos} anuncios; al relanzar continúa donde quedó."
             if cancelled else
-            f"Vigencia comprobada. {run.caducadas} anuncios retirados del mapa."
+            f"Vigencia comprobada ({run.vistos} anuncios). {run.caducadas} eliminados del catálogo."
         )
     except ScraperBlocked as exc:
         run.estado = "error"
         run.current_stage = "bloqueado por el portal"
-        run.mensaje = f"Bloqueado por el portal: {exc}"[:2000]
+        run.mensaje = (
+            f"Bloqueado por el portal tras revisar {run.vistos} de {total} anuncios "
+            f"({run.caducadas} eliminados). Al relanzar continúa donde quedó. {exc}"
+        )[:2000]
         run.error_detail = str(exc)
     except Exception as exc:  # noqa: BLE001
         run.estado = "error"
@@ -402,8 +468,8 @@ def run_refresh(run: IngestaRun, log=None):
     """
     Re-visita cada propiedad ya importada de la fuente:
     - si el anuncio sigue vigente -> actualiza sus datos (precio, descripción...);
-    - si ya no existe en el portal (404/redirige) -> la marca inactiva y borra
-      sus imágenes (verificación de vigencia).
+    - si ya no existe en el portal (404/redirect/finalizado) -> se elimina del
+      catálogo junto con sus imágenes, dejando un ``ListingRetirada`` de auditoría.
     """
     echo = log or (lambda *_: None)
     fuente = run.fuente

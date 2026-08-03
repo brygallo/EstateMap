@@ -9,14 +9,14 @@ import {
   Store,
 } from 'lucide-react';
 import {
-  getCities,
-  getProperties,
+  citiesFromSummary,
+  getPropertySummary,
   jsonLd,
   SITE_NAME,
   SITE_URL,
 } from '@/lib/properties';
 import {
-  generateCombosWithCounts,
+  generateCombosFromGroups,
   parseComboSlug,
   TYPE_DEFS,
 } from '@/lib/seo-combos';
@@ -49,10 +49,12 @@ function comboLabel(combo: string, count: number): string | null {
 }
 
 export default async function PropiedadesPage() {
-  const properties = await getProperties();
-  const cities = getCities(properties).sort((a, b) => b.count - a.count || a.name.localeCompare(b.name));
+  // Counts come from the database aggregate: the list endpoint caps
+  // `page_size` at 2000, so counting a fetched page under-reported everything.
+  const summary = await getPropertySummary();
+  const cities = citiesFromSummary(summary).sort((a, b) => b.count - a.count || a.name.localeCompare(b.name));
   const topCities = cities.slice(0, 24);
-  const combos = generateCombosWithCounts(properties).slice(0, 36);
+  const combos = generateCombosFromGroups(summary.groups).slice(0, 36);
   const totalCities = cities.length;
 
   const schema = {
@@ -153,7 +155,7 @@ export default async function PropiedadesPage() {
             <h2 className="text-sm font-semibold text-textPrimary">Cobertura actual</h2>
             <div className="mt-4 grid grid-cols-2 gap-3">
               <div className="rounded-lg bg-white p-4">
-                <p className="text-3xl font-bold text-textPrimary">{properties.length}</p>
+                <p className="text-3xl font-bold text-textPrimary">{summary.total.toLocaleString('es-EC')}</p>
                 <p className="mt-1 text-xs text-textSecondary">propiedades publicadas</p>
               </div>
               <div className="rounded-lg bg-white p-4">

@@ -6,6 +6,7 @@ import { useAuth } from '@/lib/auth-context';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import { requestErrorMessage } from '@/lib/form-errors';
+import { cn } from '@/lib/utils';
 import {
   AlertTriangle,
   Building2,
@@ -26,8 +27,12 @@ import {
   Eye,
   Copy,
   TerminalSquare,
+  Trash2,
+  ShieldCheck,
+  HardDrive,
   XCircle,
 } from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -58,10 +63,17 @@ interface Source {
   activa: boolean;
   total: number;
   activas: number;
+  duplicados: number;
+  inactivas: number;
+  sin_ubicacion: number;
+  image_bytes: number;
   retiradas: number;
   disponibles: number;
   disponibles_at: string | null;
   last_import_at: string | null;
+  health: 'healthy' | 'running' | 'error' | 'stale' | 'never';
+  latest_run: Run | null;
+  duration_seconds: number | null;
 }
 
 interface Run {
@@ -122,6 +134,21 @@ interface ImportedResponse {
   results: ImportedProp[];
 }
 
+interface MaintenanceSummary {
+  category: 'duplicates' | 'inactive' | 'missing_location' | 'orphan_source';
+  label: string;
+  properties: number;
+  images: number;
+  bytes: number;
+  sample: Array<{
+    id: number;
+    title: string;
+    city: string;
+    status: string;
+    source__nombre: string | null;
+  }>;
+}
+
 type ImpEstado = 'activas' | 'inactivas' | 'duplicadas' | 'todas';
 
 const IMP_ESTADOS: { value: ImpEstado; label: string }[] = [
@@ -150,6 +177,22 @@ const ESTADO_STYLE: Record<Run['estado'], string> = {
   cancelled: 'bg-orange-100 text-orange-800 border-orange-200',
 };
 
+const HEALTH_LABEL: Record<Source['health'], string> = {
+  healthy: 'Saludable',
+  running: 'Ejecutando',
+  error: 'Con error',
+  stale: 'Atrasada',
+  never: 'Sin ejecutar',
+};
+
+const HEALTH_STYLE: Record<Source['health'], string> = {
+  healthy: 'border-green-200 bg-green-100 text-green-800',
+  running: 'border-amber-200 bg-amber-100 text-amber-800',
+  error: 'border-red-200 bg-red-100 text-red-800',
+  stale: 'border-orange-200 bg-orange-100 text-orange-800',
+  never: 'border-slate-200 bg-slate-100 text-slate-700',
+};
+
 const IngestaPage = () => {
   const { token } = useAuth();
   const [sources, setSources] = useState<Source[]>([]);
@@ -164,7 +207,7 @@ const IngestaPage = () => {
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   // Pestaña "Propiedades importadas".
-  const [activeTab, setActiveTab] = useState<'gestion' | 'importadas'>('gestion');
+  const [activeTab, setActiveTab] = useState<'gestion' | 'importadas' | 'mantenimiento'>('gestion');
   const [impSource, setImpSource] = useState('');
   const [impEstado, setImpEstado] = useState<ImpEstado>('activas');
   const [impSearch, setImpSearch] = useState('');
@@ -172,11 +215,23 @@ const IngestaPage = () => {
   const [impPage, setImpPage] = useState(1);
   const [impData, setImpData] = useState<ImportedResponse | null>(null);
   const [impLoading, setImpLoading] = useState(false);
+  const [maintenance, setMaintenance] = useState<MaintenanceSummary[]>([]);
+  const [maintenanceLoading, setMaintenanceLoading] = useState(false);
+  const [cleanupCategory, setCleanupCategory] = useState<MaintenanceSummary['category'] | null>(null);
+  const [cleanupConfirmation, setCleanupConfirmation] = useState('');
 
   const authHeaders = useCallback(
     () => ({ Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }),
     [token],
   );
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const tab = params.get('tab');
+    if (tab === 'gestion' || tab === 'importadas' || tab === 'mantenimiento') setActiveTab(tab);
+    const estado = params.get('estado');
+    if (IMP_ESTADOS.some((item) => item.value === estado)) setImpEstado(estado as ImpEstado);
+  }, []);
 
   const fetchAll = useCallback(async () => {
     if (!token) return;
@@ -218,7 +273,7 @@ const IngestaPage = () => {
       if (!confirm('¿Actualizar todos los datos de las propiedades importadas? Este proceso puede tardar.')) return;
     }
     if (opts.modo === 'verify') {
-      if (!confirm('¿Comprobar vigencia y retirar del mapa los anuncios que Plusvalía confirme como desaparecidos?')) return;
+      if (!confirm('¿Comprobar vigencia y eliminar del catálogo los anuncios que Plusvalía confirme como desaparecidos? Si se interrumpe, al relanzar continúa donde quedó.')) return;
     }
     setLaunching(source + opts.label);
     try {
@@ -324,6 +379,50 @@ const IngestaPage = () => {
     }
   }, [token, impSource, impEstado, impPage, impQuery, authHeaders]);
 
+  const fetchMaintenance = useCallback(async () => {
+    if (!token) return;
+    setMaintenanceLoading(true);
+    try {
+      const res = await fetch(`${API_URL}/admin/ingesta/maintenance/`, {
+        headers: authHeaders(),
+      });
+      if (!res.ok) throw new Error();
+      setMaintenance(await res.json());
+    } catch {
+      toast.error('No se pudo calcular la vista previa de limpieza.');
+    } finally {
+      setMaintenanceLoading(false);
+    }
+  }, [token, authHeaders]);
+
+  const runCleanup = async (category: MaintenanceSummary['category']) => {
+    if (cleanupConfirmation !== 'ELIMINAR IMPORTADAS') {
+      toast.error('Escribe ELIMINAR IMPORTADAS para confirmar.');
+      return;
+    }
+    setCleanupCategory(category);
+    try {
+      const res = await fetch(`${API_URL}/admin/ingesta/maintenance/cleanup/`, {
+        method: 'POST',
+        headers: authHeaders(),
+        body: JSON.stringify({
+          category,
+          confirmation: cleanupConfirmation,
+          batch_size: 100,
+        }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || 'No se pudo ejecutar la limpieza.');
+      toast.success(`Se eliminaron ${data.deleted} propiedades importadas. Quedan ${data.remaining}.`);
+      setCleanupConfirmation('');
+      await Promise.all([fetchMaintenance(), fetchAll()]);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'No se pudo ejecutar la limpieza.');
+    } finally {
+      setCleanupCategory(null);
+    }
+  };
+
   // Fija la fuente por defecto cuando llegan las fuentes.
   useEffect(() => {
     if (!impSource && sources.length) setImpSource(sources[0].slug);
@@ -333,6 +432,10 @@ const IngestaPage = () => {
   useEffect(() => {
     if (activeTab === 'importadas') fetchImported();
   }, [activeTab, fetchImported]);
+
+  useEffect(() => {
+    if (activeTab === 'mantenimiento') fetchMaintenance();
+  }, [activeTab, fetchMaintenance]);
 
   const runActive = runs.some((r) => r.estado === 'running' || r.estado === 'pending');
   const activeRun = runs.find((r) => r.estado === 'running' || r.estado === 'pending');
@@ -508,11 +611,17 @@ const IngestaPage = () => {
               {([
                 { key: 'gestion', label: 'Gestión de portales', icon: DownloadCloud },
                 { key: 'importadas', label: 'Propiedades importadas', icon: Building2 },
+                { key: 'mantenimiento', label: 'Limpieza segura', icon: ShieldCheck },
               ] as const).map((t) => (
                 <button
                   key={t.key}
                   type="button"
-                  onClick={() => setActiveTab(t.key)}
+                  onClick={() => {
+                    setActiveTab(t.key);
+                    const url = new URL(window.location.href);
+                    url.searchParams.set('tab', t.key);
+                    window.history.replaceState(null, '', url);
+                  }}
                   className={`flex items-center gap-2 border-b-2 px-4 py-2.5 text-sm font-semibold transition-colors ${
                     activeTab === t.key
                       ? 'border-primary text-primary'
@@ -565,6 +674,9 @@ const IngestaPage = () => {
                                 <Badge variant={s.activa ? 'secondary' : 'outline'}>
                                   {s.activa ? 'Activo' : 'Inactivo'}
                                 </Badge>
+                                <Badge variant="outline" className={HEALTH_STYLE[s.health]}>
+                                  {HEALTH_LABEL[s.health]}
+                                </Badge>
                               </CardTitle>
                               <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-textSecondary">
                                 <span className="rounded-full bg-muted px-2.5 py-1 font-mono">{s.slug}</span>
@@ -609,6 +721,22 @@ const IngestaPage = () => {
                         </div>
                       </CardHeader>
                       <CardContent className="space-y-5 p-4 sm:p-5">
+                        <div className="grid gap-2 sm:grid-cols-4">
+                          <SourceDiagnostic label="Duplicadas ocultas" value={s.duplicados} tone={s.duplicados ? 'warning' : 'default'} />
+                          <SourceDiagnostic label="Sin ubicación" value={s.sin_ubicacion} tone={s.sin_ubicacion ? 'danger' : 'default'} />
+                          <SourceDiagnostic label="Inactivas" value={s.inactivas} tone={s.inactivas ? 'warning' : 'default'} />
+                          <SourceDiagnostic label="Espacio de imágenes" value={formatBytes(s.image_bytes)} tone="default" />
+                        </div>
+                        {s.latest_run && (
+                          <div className="flex flex-wrap items-center justify-between gap-2 rounded-card border border-line bg-background px-3 py-2 text-xs">
+                            <span className="text-textSecondary">
+                              Última ejecución #{s.latest_run.id} · {s.latest_run.modo_label} · {s.latest_run.estado_label}
+                            </span>
+                            <span className="font-medium text-textPrimary">
+                              Duración: {formatDuration(s.duration_seconds)}
+                            </span>
+                          </div>
+                        )}
                         {s.disponibles > 0 && (
                           <div>
                             <div className="mb-1 flex justify-between text-xs text-textSecondary">
@@ -1069,6 +1197,98 @@ const IngestaPage = () => {
                 )}
               </div>
             )}
+
+            {activeTab === 'mantenimiento' && (
+              <div className="space-y-5">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+                  <div>
+                    <h2 className="flex items-center gap-2 text-lg font-semibold text-textPrimary">
+                      <ShieldCheck className="h-5 w-5 text-primary" /> Limpieza segura de importadas
+                    </h2>
+                    <p className="mt-1 max-w-3xl text-sm text-textSecondary">
+                      La vista previa solo incluye propiedades importadas. Las publicaciones creadas por usuarios están excluidas en el servidor y nunca pueden borrarse desde aquí.
+                    </p>
+                  </div>
+                  <Button variant="outline" size="sm" onClick={fetchMaintenance} disabled={maintenanceLoading}>
+                    {maintenanceLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <RefreshCw className="mr-2 h-4 w-4" />}
+                    Recalcular
+                  </Button>
+                </div>
+
+                <div className="rounded-card border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
+                  <p className="flex items-center gap-2 font-semibold"><AlertTriangle className="h-4 w-4" /> Eliminación por lotes controlados</p>
+                  <p className="mt-1 text-xs leading-5 text-amber-800">
+                    Cada ejecución elimina como máximo 100 registros y sus imágenes. Revisa la muestra y el espacio estimado antes de confirmar.
+                  </p>
+                </div>
+
+                {maintenanceLoading && maintenance.length === 0 ? (
+                  <div className="grid gap-4 md:grid-cols-2">
+                    {[0, 1, 2, 3].map((item) => <Skeleton key={item} className="h-64" />)}
+                  </div>
+                ) : (
+                  <div className="grid gap-4 md:grid-cols-2">
+                    {maintenance.map((item) => (
+                      <Card key={item.category} className="overflow-hidden">
+                        <CardHeader className="border-b border-line pb-4">
+                          <CardTitle className="flex items-center justify-between gap-3 text-base">
+                            <span>{item.label}</span>
+                            <Badge variant="outline" className={item.properties ? 'border-amber-200 bg-amber-100 text-amber-800' : 'border-green-200 bg-green-100 text-green-800'}>
+                              {item.properties} registros
+                            </Badge>
+                          </CardTitle>
+                        </CardHeader>
+                        <CardContent className="space-y-4 p-4">
+                          <div className="grid grid-cols-2 gap-2">
+                            <MaintenanceMetric icon={Building2} label="Propiedades" value={item.properties.toLocaleString('es-EC')} />
+                            <MaintenanceMetric icon={ImageOff} label="Imágenes" value={item.images.toLocaleString('es-EC')} />
+                            <div className="col-span-2">
+                              <MaintenanceMetric icon={HardDrive} label="Espacio recuperable estimado" value={formatBytes(item.bytes)} />
+                            </div>
+                          </div>
+
+                          <div>
+                            <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-textSecondary">Muestra de candidatos</p>
+                            {item.sample.length ? (
+                              <div className="space-y-1.5">
+                                {item.sample.map((property) => (
+                                  <div key={property.id} className="flex items-center justify-between gap-3 rounded-button bg-background px-3 py-2 text-xs">
+                                    <span className="min-w-0 truncate text-textPrimary">#{property.id} · {property.title || 'Sin título'}</span>
+                                    <span className="shrink-0 text-textSecondary">{property.source__nombre || 'Sin fuente'}</span>
+                                  </div>
+                                ))}
+                              </div>
+                            ) : (
+                              <p className="rounded-button bg-green-50 px-3 py-3 text-xs text-green-800">No hay registros pendientes en esta categoría.</p>
+                            )}
+                          </div>
+
+                          {item.properties > 0 && (
+                            <div className="space-y-2 border-t border-line pt-4">
+                              <Input
+                                value={cleanupConfirmation}
+                                onChange={(event) => setCleanupConfirmation(event.target.value)}
+                                placeholder="Escribe ELIMINAR IMPORTADAS"
+                                aria-label={`Confirmación para ${item.label}`}
+                              />
+                              <Button
+                                variant="outline"
+                                className="w-full border-red-300 text-red-700 hover:bg-red-50"
+                                disabled={cleanupCategory !== null || cleanupConfirmation !== 'ELIMINAR IMPORTADAS'}
+                                onClick={() => void runCleanup(item.category)}
+                              >
+                                {cleanupCategory === item.category ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Trash2 className="mr-2 h-4 w-4" />}
+                                Eliminar siguiente lote de {Math.min(100, item.properties)}
+                              </Button>
+                            </div>
+                          )}
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         </main>
       </div>
@@ -1147,6 +1367,57 @@ const IngestaPage = () => {
 
 function DetailLine({ label, value }: { label: string; value: string }) {
   return <div><p className="text-xs text-textSecondary">{label}</p><p className="mt-0.5 font-medium text-textPrimary">{value}</p></div>;
+}
+
+function SourceDiagnostic({
+  label,
+  value,
+  tone,
+}: {
+  label: string;
+  value: string | number;
+  tone: 'default' | 'warning' | 'danger';
+}) {
+  return (
+    <div className={cn(
+      'rounded-card border px-3 py-2.5',
+      tone === 'danger' && 'border-red-200 bg-red-50',
+      tone === 'warning' && 'border-amber-200 bg-amber-50',
+      tone === 'default' && 'border-line bg-background',
+    )}>
+      <p className="text-[11px] text-textSecondary">{label}</p>
+      <p className="mt-0.5 font-geo text-base font-semibold text-textPrimary">{value}</p>
+    </div>
+  );
+}
+
+function MaintenanceMetric({ icon: Icon, label, value }: { icon: LucideIcon; label: string; value: string }) {
+  return (
+    <div className="flex items-center gap-3 rounded-card bg-background p-3">
+      <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-button bg-primaryLight text-primary">
+        <Icon className="h-4 w-4" />
+      </span>
+      <div className="min-w-0">
+        <p className="text-[11px] text-textSecondary">{label}</p>
+        <p className="truncate font-geo text-base font-semibold text-textPrimary">{value}</p>
+      </div>
+    </div>
+  );
+}
+
+function formatBytes(value: number) {
+  if (!value) return '0 MB';
+  const units = ['B', 'KB', 'MB', 'GB', 'TB'];
+  const index = Math.min(Math.floor(Math.log(value) / Math.log(1024)), units.length - 1);
+  return `${(value / 1024 ** index).toFixed(index > 1 ? 1 : 0)} ${units[index]}`;
+}
+
+function formatDuration(value: number | null) {
+  if (value == null) return '—';
+  if (value < 60) return `${value} s`;
+  const hours = Math.floor(value / 3600);
+  const minutes = Math.floor((value % 3600) / 60);
+  return hours ? `${hours} h ${minutes} min` : `${minutes} min`;
 }
 
 function LogPanel({ title, value, tone }: { title: string; value: string; tone: 'error' | 'default' }) {

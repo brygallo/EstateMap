@@ -82,7 +82,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 
-const AddPropertyMap = dynamic(() => import('@/components/maps/AddPropertyMap'), {
+const DrawLocationMap = dynamic(() => import('@/components/maps/DrawLocationMap'), {
   ssr: false,
   loading: () => (
     <div className="flex h-full w-full items-center justify-center bg-muted">
@@ -95,6 +95,11 @@ const AddPropertyMap = dynamic(() => import('@/components/maps/AddPropertyMap'),
 });
 
 const PROPERTY_DRAFT_STORAGE_KEY = 'propertyPublicationDraft';
+
+const createPublicationRequestId = () => {
+  if (typeof crypto !== 'undefined' && 'randomUUID' in crypto) return crypto.randomUUID();
+  return `publication-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+};
 
 // Solo título y precio son obligatorios a nivel de esquema. El resto de los
 // detalles físicos (área construida, habitaciones, baños, pisos) son opcionales
@@ -197,6 +202,7 @@ const AddPropertyPage = () => {
   const [showLocationToast, setShowLocationToast] = useState(false);
   const [draftLoaded, setDraftLoaded] = useState(false);
   const [draftSavedAt, setDraftSavedAt] = useState<Date | null>(null);
+  const [publicationRequestId, setPublicationRequestId] = useState(createPublicationRequestId);
   const [showExitModal, setShowExitModal] = useState(false);
   const [showAccountModal, setShowAccountModal] = useState(false);
   const [currentStep, setCurrentStep] = useState(0);
@@ -457,7 +463,7 @@ const AddPropertyPage = () => {
           if (cancelled) return;
           const { latitude, longitude } = position.coords;
           setUserLocation({ lat: latitude, lng: longitude });
-          markLocationSuccess();
+          markLocationSuccess(latitude, longitude);
         } catch {
           // El usuario todavía puede buscar o marcar la ubicación manualmente.
         } finally {
@@ -540,7 +546,7 @@ const AddPropertyPage = () => {
       const position = await requestBrowserLocation('discovery');
       const { latitude, longitude } = position.coords;
       setUserLocation({ lat: latitude, lng: longitude });
-      markLocationSuccess();
+      markLocationSuccess(latitude, longitude);
       setLocationBlocked(false);
     } catch (error) {
       const geoError = error as GeolocationPositionError;
@@ -618,7 +624,7 @@ const AddPropertyPage = () => {
       `Area: ${area ? `${area} m2` : 'Por completar'}`,
       `Precio: ${v.price || 'Por completar'}`,
       `Telefono: ${v.contactPhone || 'Por completar'}`,
-      `Tiene poligono dibujado: ${polygonCoords.length >= 3 ? 'Si' : 'No'}`,
+      `Tiene forma del terreno dibujada: ${polygonCoords.length >= 3 ? 'Si' : 'No'}`,
       `Fotos cargadas en el formulario: ${images.length}`,
       `Detalles: ${v.description || 'Por completar'}`,
     ].join('\n');
@@ -874,7 +880,7 @@ const AddPropertyPage = () => {
       return;
     }
     if (locationMode === 'polygon' && polygonCoords.length < 3) {
-      toast.error('Dibuja el polígono o cambia el modo a ubicación puntual.');
+      toast.error('Dibuja la forma del terreno o cambia el modo a ubicación puntual.');
       return;
     }
     if (locationMode === 'point' && (!latitude || !longitude)) {
@@ -951,11 +957,13 @@ const AddPropertyPage = () => {
       const res = await apiFetch(endpoint, {
         method: isEditMode ? 'PUT' : 'POST',
         body: formData,
+        headers: isEditMode ? undefined : { 'Idempotency-Key': publicationRequestId },
       });
 
       if (res.ok) {
         if (!isEditMode && typeof window !== 'undefined') {
           localStorage.removeItem(PROPERTY_DRAFT_STORAGE_KEY);
+          setPublicationRequestId(createPublicationRequestId());
         }
         trackEvent(isEditMode ? 'publication_updated' : 'publication_created', {
           has_polygon: polygonCoords.length >= 3,
@@ -1004,36 +1012,7 @@ const AddPropertyPage = () => {
   };
 
   const handleClear = () => {
-    const map = (window as any)._leaflet_map_ref;
-    if (map) {
-      map.eachLayer((layer: any) => {
-        if (layer.pm && layer instanceof (window as any).L.Polygon) {
-          const path = (layer as any)._path;
-          const hasClassList = !!(path && path.classList);
-          if (layer._edgeMarkers) {
-            layer._edgeMarkers.forEach((m: any) => {
-              if (m && m.remove && m._map) {
-                try {
-                  m.remove();
-                } catch {}
-              }
-            });
-          }
-          try {
-            if (hasClassList) {
-              layer.pm?.disable?.();
-            }
-          } catch {}
-          try {
-            if (hasClassList && map.hasLayer(layer)) {
-              map.removeLayer(layer);
-            } else if (layer.remove) {
-              layer.remove();
-            }
-          } catch {}
-        }
-      });
-    }
+    mapRef.current?.clearPolygon?.();
     setPolygonCoords([]);
   };
 
@@ -1056,7 +1035,7 @@ const AddPropertyPage = () => {
   const locationMapLabel =
     locationMode === 'point'
       ? 'Solo ubicación'
-      : 'Polígono sin medidas';
+      : 'Forma del terreno';
 
   // Autocompleta ciudad/provincia a partir del punto marcado en el mapa
   // (reverse geocoding con Nominatim). Con debounce para respetar el límite de
@@ -1136,7 +1115,7 @@ const AddPropertyPage = () => {
       const position = await requestBrowserLocation('precise');
       const { latitude, longitude } = position.coords;
       setUserLocation({ lat: latitude, lng: longitude });
-      markLocationSuccess();
+      markLocationSuccess(latitude, longitude);
       if (locationMode === 'point') {
         setLatitude(latitude.toString());
         setLongitude(longitude.toString());
@@ -1154,7 +1133,6 @@ const AddPropertyPage = () => {
   };
 
   const bindMapRef = (map: any) => {
-    (window as any)._leaflet_map_ref = map;
     mapRef.current = map;
   };
 
@@ -1294,7 +1272,7 @@ const AddPropertyPage = () => {
     {
       label: 'Ubicación',
       title: 'Ubicación',
-      description: 'Elige punto rápido o polígono con contorno.',
+      description: 'Elige punto rápido o dibuja la forma del terreno.',
       done: locationMode === 'polygon' ? polygonCoords.length >= 3 : Boolean(latitude && longitude),
     },
     {
@@ -1328,7 +1306,7 @@ const AddPropertyPage = () => {
     }
     if (step === 1) {
       if (locationMode === 'polygon' && polygonCoords.length < 3) {
-        toast.error('Dibuja el polígono o cambia a ubicación puntual.');
+        toast.error('Dibuja la forma del terreno o cambia a ubicación puntual.');
         return false;
       }
       if (locationMode === 'point' && (!latitude || !longitude)) {
@@ -1626,7 +1604,54 @@ const AddPropertyPage = () => {
               {/* Map Section */}
               {currentStep === 1 && (
               <>
-              <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_22rem]">
+              <div className="space-y-4">
+                <div className="rounded-card border border-line bg-white p-4 shadow-card">
+                  <h3 className="text-sm font-semibold text-textPrimary">Modo de ubicación</h3>
+                  <div className="mt-3 grid gap-2 sm:grid-cols-2">
+                    {[
+                      {
+                        key: 'point',
+                        title: 'Solo ubicación',
+                        description: 'Un punto rápido en el mapa.',
+                        icon: MapPin,
+                        active: locationMode === 'point',
+                        onClick: () => handleLocationModeChange('point'),
+                      },
+                      {
+                        key: 'polygon',
+                        title: 'Forma del terreno',
+                        description: 'Dibuja el contorno del predio en el mapa.',
+                        icon: Pentagon,
+                        active: locationMode === 'polygon',
+                        onClick: () => handleLocationModeChange('polygon', false),
+                      },
+                    ].map((option) => (
+                      <button
+                        type="button"
+                        key={option.key}
+                        onClick={option.onClick}
+                        className={cn(
+                          'flex w-full items-start gap-3 rounded-card border p-3 text-left transition-colors',
+                          option.active
+                            ? 'border-primary bg-primaryLight text-primary'
+                            : 'border-line bg-surface text-textPrimary hover:bg-muted'
+                        )}
+                      >
+                        <span className={cn(
+                          'mt-0.5 flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-button',
+                          option.active ? 'bg-primary text-white' : 'bg-white text-primary'
+                        )}>
+                          <option.icon className="h-4 w-4" strokeWidth={2} aria-hidden />
+                        </span>
+                        <span className="min-w-0">
+                          <span className="block text-sm font-semibold">{option.title}</span>
+                          <span className="mt-0.5 block text-xs text-textSecondary">{option.description}</span>
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
                 <div className="overflow-hidden rounded-card bg-surface shadow-card">
                   <div className="flex flex-col gap-3 border-b border-line bg-white px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
                     <div>
@@ -1642,23 +1667,41 @@ const AddPropertyPage = () => {
                             : 'Dibuja el contorno aproximado como referencia visual.'}
                       </p>
                     </div>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={handleGetMyLocation}
-                      disabled={loadingLocation}
-                      className="h-9 rounded-button border-line bg-surface"
-                    >
-                      {loadingLocation ? (
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      ) : (
-                        <LocateFixed className="mr-2 h-4 w-4" />
-                      )}
-                      Mi ubicación
-                    </Button>
+                    <div className="flex flex-wrap gap-2">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => {
+                          if (locationMode === 'polygon') handleClear();
+                          else {
+                            setLatitude('');
+                            setLongitude('');
+                          }
+                        }}
+                        disabled={locationMode === 'polygon' ? polygonCoords.length < 3 : !latitude || !longitude}
+                        className="h-9 rounded-button border-error/30 bg-white text-error hover:bg-errorBg hover:text-error"
+                      >
+                        <Trash2 className="mr-2 h-4 w-4" />
+                        {locationMode === 'polygon' ? 'Borrar forma' : 'Borrar ubicación'}
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={handleGetMyLocation}
+                        disabled={loadingLocation}
+                        className="h-9 rounded-button border-line bg-surface"
+                      >
+                        {loadingLocation ? (
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        ) : (
+                          <LocateFixed className="mr-2 h-4 w-4" />
+                        )}
+                        Mi ubicación
+                      </Button>
+                    </div>
                   </div>
 
-                  <div className="relative isolate h-[430px] sm:h-[540px] lg:h-[calc(100vh-13rem)] lg:min-h-[620px]">
+                  <div className="relative isolate h-[480px] sm:h-[620px] lg:h-[calc(100vh-11rem)] lg:min-h-[680px]">
                     <div className="pointer-events-none absolute left-3 top-3 z-20 max-w-[calc(100%-1.5rem)] rounded-card border border-line bg-white/95 px-3 py-2 text-xs shadow-card backdrop-blur">
                       <p className="font-semibold text-textPrimary">{locationMapLabel}</p>
                       <p className="mt-0.5 text-textSecondary">
@@ -1668,10 +1711,10 @@ const AddPropertyPage = () => {
                             : 'Pendiente de marcar punto'
                           : polygonCoords.length >= 3
                             ? `${polygonCoords.length} puntos dibujados${area ? ` · ${area} m²` : ''}`
-                            : 'Pendiente de dibujar polígono'}
+                            : 'Pendiente de dibujar la forma'}
                       </p>
                     </div>
-                    <AddPropertyMap
+                    <DrawLocationMap
                       onMapReady={bindMapRef}
                       onPolygonChange={handlePolygonChange}
                       onLocationChange={locationMode === 'point' ? handlePointLocationChange : undefined}
@@ -1688,54 +1731,7 @@ const AddPropertyPage = () => {
                   </div>
                 </div>
 
-                <aside className="space-y-4">
-                  <div className="rounded-card border border-line bg-white p-4 shadow-card">
-                    <h3 className="text-sm font-semibold text-textPrimary">Modo de ubicación</h3>
-                    <div className="mt-3 space-y-2">
-                      {[
-                        {
-                          key: 'point',
-                          title: 'Solo ubicación',
-                          description: 'Un punto rápido en el mapa.',
-                          icon: MapPin,
-                          active: locationMode === 'point',
-                          onClick: () => handleLocationModeChange('point'),
-                        },
-                        {
-                          key: 'polygon-reference',
-                          title: 'Polígono sin medidas',
-                          description: 'Contorno aproximado, sin distancias.',
-                          icon: Pentagon,
-                          active: locationMode === 'polygon',
-                          onClick: () => handleLocationModeChange('polygon', false),
-                        },
-                      ].map((option) => (
-                        <button
-                          type="button"
-                          key={option.key}
-                          onClick={option.onClick}
-                          className={cn(
-                            'flex w-full items-start gap-3 rounded-card border p-3 text-left transition-colors',
-                            option.active
-                              ? 'border-primary bg-primaryLight text-primary'
-                              : 'border-line bg-surface text-textPrimary hover:bg-muted'
-                          )}
-                        >
-                          <span className={cn(
-                            'mt-0.5 flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-button',
-                            option.active ? 'bg-primary text-white' : 'bg-white text-primary'
-                          )}>
-                            <option.icon className="h-4 w-4" strokeWidth={2} aria-hidden />
-                          </span>
-                          <span className="min-w-0">
-                            <span className="block text-sm font-semibold">{option.title}</span>
-                            <span className="mt-0.5 block text-xs text-textSecondary">{option.description}</span>
-                          </span>
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-
+                <aside className="grid gap-4 md:grid-cols-2">
                   <div className="rounded-card border border-line bg-white p-4 shadow-card">
                     <h3 className="text-sm font-semibold text-textPrimary">Ciudad y referencia</h3>
                     <div className="mt-3 space-y-4">
@@ -1770,7 +1766,7 @@ const AddPropertyPage = () => {
                               ? 'Punto listo para publicar.'
                               : 'Falta marcar un punto.'
                             : polygonCoords.length >= 3
-                              ? 'Polígono listo para publicar.'
+                              ? 'Forma del terreno lista para publicar.'
                               : 'Falta dibujar el contorno.'}
                         </p>
                       </div>
@@ -1783,22 +1779,6 @@ const AddPropertyPage = () => {
                         <Check className="h-4 w-4" strokeWidth={3} />
                       </span>
                     </div>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={() => {
-                        if (locationMode === 'polygon') {
-                          handleClear();
-                        } else {
-                          setLatitude('');
-                          setLongitude('');
-                        }
-                      }}
-                      className="mt-4 w-full rounded-button border-line bg-surface"
-                    >
-                      <Trash2 className="mr-2 h-4 w-4" />
-                      {locationMode === 'polygon' ? 'Limpiar polígono' : 'Limpiar punto'}
-                    </Button>
                   </div>
                 </aside>
               </div>
@@ -1827,10 +1807,10 @@ const AddPropertyPage = () => {
                     <p className="text-sm font-semibold text-textPrimary">{locationMapLabel}</p>
                     <p className="mt-1 text-xs text-textSecondary">
                       {locationMode === 'point'
-                        ? 'Elegiste publicar con punto de ubicación, sin medidas de contorno.'
+                        ? 'Elegiste publicar con un punto de ubicación en el mapa.'
                         : showMeasurements
                           ? 'Las medidas por lado se configuran directamente en el mapa.'
-                          : 'El contorno se usará como referencia visual, sin mostrar distancias por lado.'}
+                          : 'La forma dibujada se usará para mostrar el terreno en el mapa.'}
                     </p>
                   </div>
                 </div>

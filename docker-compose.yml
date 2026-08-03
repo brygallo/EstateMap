@@ -36,6 +36,12 @@ services:
       DB_PORT: 5432
       # The web process is the one that enqueues, so it needs the broker too.
       CELERY_BROKER_URL: redis://redis:6379/0
+      # Index 1 holds the read cache, kept apart from the broker on index 0 so
+      # flushing one never touches the other.
+      REDIS_CACHE_URL: redis://redis:6379/1
+      # On-demand revalidation of the Next.js cache. Without REVALIDATE_SECRET
+      # in .env the backend logs and skips, which is the default in dev.
+      NEXT_REVALIDATE_URL: http://frontend:3000/api/revalidate
     command: >
       sh -c "python manage.py migrate &&
              python init_minio.py &&
@@ -71,6 +77,10 @@ services:
       DB_HOST: db
       DB_PORT: 5432
       CELERY_BROKER_URL: redis://redis:6379/0
+      REDIS_CACHE_URL: redis://redis:6379/1
+      # The worker runs the revalidation task and imports, which invalidate the
+      # same cache the web process reads.
+      NEXT_REVALIDATE_URL: http://frontend:3000/api/revalidate
     command: celery -A estate_map worker -B --loglevel=info --concurrency=1
     volumes:
       # Same bind mount as backend, so both see the staging directory.

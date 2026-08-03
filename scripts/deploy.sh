@@ -10,6 +10,27 @@ if [ ! -f .env.prod ]; then
     exit 1
 fi
 
+# Fail before touching the current release when required production settings
+# are absent or still contain template values.
+required_vars=(
+    DJANGO_SECRET_KEY ALLOWED_HOSTS CORS_ALLOWED_ORIGINS
+    CSRF_TRUSTED_ORIGINS DB_HOST DB_USER DB_PASSWORD DB_NAME
+    MINIO_ENDPOINT MINIO_ACCESS_KEY MINIO_SECRET_KEY MINIO_BUCKET_NAME
+    NEXT_PUBLIC_API_URL NEXT_PUBLIC_FRONTEND_URL FRONTEND_URL REVALIDATE_SECRET
+)
+for var_name in "${required_vars[@]}"; do
+    value=$(grep -E "^${var_name}=" .env.prod | tail -1 | cut -d= -f2-)
+    if [ -z "$value" ] || [[ "$value" == *"your_"* ]] || [[ "$value" == *"replace_with"* ]] || [[ "$value" == *"tu-dominio"* ]]; then
+        echo "❌ Variable de producción ausente o inválida: ${var_name}"
+        exit 1
+    fi
+done
+
+if ! grep -qx 'DEBUG=False' .env.prod; then
+    echo "❌ DEBUG=False es obligatorio en producción"
+    exit 1
+fi
+
 # Check if Google OAuth variables are configured
 if ! grep -q "GOOGLE_CLIENT_ID=your-google-client-id" .env.prod 2>/dev/null; then
     echo "✅ Google OAuth variables appear to be configured"
@@ -25,8 +46,11 @@ else
     fi
 fi
 
-# Load environment variables
-export $(cat .env.prod | grep -v '^#' | xargs)
+# Load environment variables. Values containing spaces or shell metacharacters
+# must be quoted in .env.prod.
+set -a
+source .env.prod
+set +a
 
 echo "📥 Pulling latest changes..."
 # Use fetch + reset instead of pull: idempotent, avoids merge conflicts from
@@ -45,6 +69,10 @@ echo "🔨 Building Docker images while the current services stay online..."
 # Docker's layer cache also avoids reinstalling unchanged Python/Node packages.
 docker-compose -f docker-compose.prod.yml build
 
+echo "🔐 Validating production configuration..."
+docker-compose -f docker-compose.prod.yml run --rm backend python manage.py check --deploy
+docker-compose -f docker-compose.prod.yml run --rm backend python manage.py makemigrations --check --dry-run
+
 echo "🔍 Checking pending migrations..."
 docker-compose -f docker-compose.prod.yml run --rm backend \
     python manage.py showmigrations --plan | tail -20
@@ -62,8 +90,23 @@ echo "🚀 Starting services..."
 # `down`: that would turn the whole build and migration time into downtime.
 docker-compose -f docker-compose.prod.yml up -d --remove-orphans
 
-echo "⏳ Waiting for services to be ready..."
-sleep 5
+echo "⏳ Waiting for services to be healthy..."
+for attempt in $(seq 1 24); do
+    backend_health=$(docker inspect --format='{{if .State.Health}}{{.State.Health.Status}}{{else}}missing{{end}}' estatemap_backend 2>/dev/null || true)
+    frontend_health=$(docker inspect --format='{{if .State.Health}}{{.State.Health.Status}}{{else}}missing{{end}}' estatemap_frontend 2>/dev/null || true)
+    if [ "$backend_health" = "healthy" ] && [ "$frontend_health" = "healthy" ]; then
+        break
+    fi
+    if [ "$attempt" -eq 24 ]; then
+        echo "❌ Services did not become healthy (backend=${backend_health}, frontend=${frontend_health})"
+        docker-compose -f docker-compose.prod.yml logs --tail=100
+        exit 1
+    fi
+    sleep 5
+done
+
+curl --fail --silent --show-error -H 'X-Forwarded-Proto: https' http://127.0.0.1:8000/api/health/ >/dev/null
+curl --fail --silent --show-error http://127.0.0.1:3000/robots.txt >/dev/null
 
 echo "📊 Services status:"
 docker-compose -f docker-compose.prod.yml ps

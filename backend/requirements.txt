@@ -13,6 +13,7 @@ curl_cffi>=0.7  # ingesta/plusvalia: pasa Cloudflare imitando el TLS de Chrome (
 gunicorn>=21.2
 celery>=5.3  # task queue; the Redis broker is shared with the other Aents systems
 redis>=5.0
+django-redis>=5.4  # Django cache backend on the same shared Redis, separate DB index
 dj-database-url>=2.1
 django-allauth>=0.57
 dj-rest-auth>=5.0

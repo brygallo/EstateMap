@@ -99,7 +99,7 @@ const Footer = () => (
             the brand tile plus live type, not a flattened lockup image. The
             wordmark and tagline sizes come from .aents-site-footer__brand.
           */}
-          <div className="aents-footer-brand">
+          <div className="aents-footer-brand aents-site-footer__brand">
             <a
               href="https://aents.net"
               target="_blank"
@@ -108,7 +108,7 @@ const Footer = () => (
               aria-label="Aents — Software for people"
             >
               <Image
-                src="/aents/aents-brand-tile-256.png"
+                src="/aents/aents-brand-tile-1024.png"
                 alt=""
                 width={88}
                 height={88}

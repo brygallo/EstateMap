@@ -311,7 +311,15 @@ def _grid_anchor(lat, lng, grid_size):
     }
 
 
-def _bucket_anchor(row, key, group_level, grid_size):
+def _reference_anchor(row, group_level, grid_size):
+    """
+    Nominal centre of the group: the canton's or province's official location.
+
+    This is NOT where the marker is drawn — that would put the bubble on the
+    colonial centre while the listings sit in the valleys, and send the click
+    somewhere with nothing to show. It is kept only to measure how far a
+    property is from the place it claims to be in (`suspicious_count`).
+    """
     lat = float(row['latitude'])
     lng = float(row['longitude'])
     city = _canonical_city_key(row.get('city'))
@@ -323,10 +331,47 @@ def _bucket_anchor(row, key, group_level, grid_size):
         return PROVINCE_CENTERS.get(province) or _grid_anchor(lat, lng, grid_size)
     if group_level == 'city':
         return _city_anchor(province, city) or _grid_anchor(lat, lng, grid_size)
-
-    # Grid clusters are anchored to the grid-cell center, so they do not drift
-    # as the set of properties inside the cell changes.
     return _grid_anchor(lat, lng, grid_size)
+
+
+def _percentile(sorted_values, ratio):
+    if not sorted_values:
+        return 0.0
+    position = (len(sorted_values) - 1) * ratio
+    low = int(position)
+    high = min(low + 1, len(sorted_values) - 1)
+    return sorted_values[low] + (sorted_values[high] - sorted_values[low]) * (position - low)
+
+
+def _medoid(lats, lngs):
+    """
+    Position of the real property closest to the group's median.
+
+    The median already lands inside the mass of listings, unlike the arithmetic
+    mean, which can fall in the gap between two dense pockets. Snapping it to an
+    actual property closes the remaining case: a national or provincial group
+    whose median falls between Quito and Guayaquil would otherwise draw its
+    bubble over open sea. Snapped, a marker is never on empty ground.
+
+    It is as stable while panning as a fixed anchor, because buckets are always
+    built over the whole filtered dataset and not over the viewport.
+    """
+    if not lats:
+        return {'lat': 0.0, 'lng': 0.0}
+    center_lat = _percentile(sorted(lats), 0.5)
+    center_lng = _percentile(sorted(lngs), 0.5)
+    lat, lng = min(
+        zip(lats, lngs),
+        key=lambda point: _distance_km(point[0], point[1], center_lat, center_lng),
+    )
+    return {'lat': lat, 'lng': lng}
+
+
+def _bucket_center(bucket):
+    return _medoid(
+        [float(row['latitude']) for row in bucket['rows']],
+        [float(row['longitude']) for row in bucket['rows']],
+    )
 
 
 def _build_buckets(valid_rows, group_level, grid_size):
@@ -336,7 +381,7 @@ def _build_buckets(valid_rows, group_level, grid_size):
         lng = float(row['longitude'])
         key, label = _bucket_key_and_label(row, group_level, grid_size)
         city_key = _canonical_city_key(row.get('city'))
-        anchor = _bucket_anchor(row, key, group_level, grid_size)
+        anchor = _reference_anchor(row, group_level, grid_size)
         bucket = buckets.setdefault(key, {
             'count': 0,
             'lat_sum': 0.0,
@@ -387,58 +432,85 @@ def _build_items_from_buckets(buckets, zoom, group_level):
             representative_points.extend(_point_payload(row) for row in bucket['rows'])
             continue
 
+        # The densest micro-cell is the fallback focus for a group whose points
+        # are split in two distant pockets: the median can sit between them.
         densest = max(bucket['micro_buckets'].values(), key=lambda item: item['count'])
-        if group_level in ('country', 'province', 'city'):
-            bucket['focus'] = bucket['anchor']
-        else:
-            bucket['focus'] = {
-                'lat': densest['lat_sum'] / densest['count'],
-                'lng': densest['lng_sum'] / densest['count'],
-            }
+        bucket['focus'] = {
+            'lat': densest['lat_sum'] / densest['count'],
+            'lng': densest['lng_sum'] / densest['count'],
+        }
         clusters.append(_cluster_payload(key, bucket, zoom))
 
     return clusters, representative_points
 
 
 def _cluster_payload(key, bucket, zoom):
-    anchor = bucket.get('anchor') or {
-        'lat': bucket['lat_sum'] / bucket['count'],
-        'lng': bucket['lng_sum'] / bucket['count'],
-    }
-    focus = bucket.get('focus') or {
-        'lat': anchor['lat'],
-        'lng': anchor['lng'],
-    }
+    center = _bucket_center(bucket)
+    focus = bucket.get('focus') or center
+    bounds = _bucket_bounds(bucket)
     return {
         'id': f"cluster:{key}",
         'is_cluster': True,
         'count': bucket['count'],
         'label': bucket.get('label'),
         'group_level': bucket.get('group_level'),
-        'latitude': anchor['lat'],
-        'longitude': anchor['lng'],
+        # Marker position: the median of the group's own properties, so the
+        # bubble is always drawn over the inventory it represents.
+        'latitude': center['lat'],
+        'longitude': center['lng'],
         'focus_latitude': focus['lat'],
         'focus_longitude': focus['lng'],
-        'expansion_zoom': _expansion_zoom_for_group(bucket.get('group_level'), zoom),
-        'bounds': _bucket_bounds(bucket),
+        'expansion_zoom': _expansion_zoom_for_bounds(bounds),
+        'bounds': bounds,
         'suspicious_count': bucket.get('suspicious_count', 0),
     }
 
 
-def _expansion_zoom_for_group(group_level, zoom):
-    if group_level == 'country':
-        return 5.8
-    if group_level == 'province':
-        return 7.4
-    if group_level == 'city':
-        return 12.2
-    return min(max(float(zoom) + 2, 11), 15)
+# Nominal canvas used to translate a span into a zoom level. The client fits the
+# bounds against its own canvas, so this only has to be close enough to cap how
+# far a tight cluster is allowed to zoom in.
+NOMINAL_VIEWPORT_PX = (1100, 700)
+MIN_EXPANSION_ZOOM = 11.0
+MAX_EXPANSION_ZOOM = 16.5
+
+
+def _expansion_zoom_for_bounds(bounds):
+    """
+    Zoom at which the group's own extent fills the screen.
+
+    Ecuador straddles the equator, where a degree of latitude and a degree of
+    longitude cover practically the same number of Mercator pixels, so the two
+    axes can be compared directly. Fixed per-level zooms were the reason a
+    click could land on empty map: a canton the size of the DMQ and a village
+    were both opened at 12.2.
+    """
+    width, height = NOMINAL_VIEWPORT_PX
+    lat_span = max(float(bounds['north']) - float(bounds['south']), 1e-4)
+    lng_span = max(float(bounds['east']) - float(bounds['west']), 1e-4)
+    zoom = min(
+        math.log2(360.0 * width / (512.0 * lng_span)),
+        math.log2(360.0 * height / (512.0 * lat_span)),
+    )
+    return round(min(max(zoom, MIN_EXPANSION_ZOOM), MAX_EXPANSION_ZOOM), 2)
 
 
 def _within_viewport(item, viewport, pad_ratio=0.6):
     west, south, east, north = viewport
     lat_pad = max((north - south) * pad_ratio, 0.02)
     lng_pad = max((east - west) * pad_ratio, 0.02)
+
+    # A group is relevant when its extent overlaps the viewport, not when its
+    # marker happens to fall inside it: a cluster whose properties cross the
+    # edge of the screen was being dropped even though the user can see them.
+    item_bounds = item.get('bounds')
+    if item_bounds:
+        return (
+            float(item_bounds['south']) <= (north + lat_pad)
+            and float(item_bounds['north']) >= (south - lat_pad)
+            and float(item_bounds['west']) <= (east + lng_pad)
+            and float(item_bounds['east']) >= (west - lng_pad)
+        )
+
     lat = float(item['latitude'])
     lng = float(item['longitude'])
     return (
@@ -453,16 +525,42 @@ def _distance_km(lat_a, lng_a, lat_b, lng_b):
     return math.sqrt((lat_delta * lat_delta) + (lng_delta * lng_delta))
 
 
-def _bucket_bounds(bucket):
-    # Bounds always describe the real properties inside the group. The marker
-    # itself stays on a stable political/city anchor, while click navigation can
-    # frame the actual inventory.
-    return {
-        'west': bucket['lng_min'],
-        'south': bucket['lat_min'],
-        'east': bucket['lng_max'],
-        'north': bucket['lat_max'],
-    }
+# Fraction of the group trimmed from each end before framing it. One listing
+# geocoded into the wrong province must not force the camera to pull back far
+# enough to include it, leaving every real listing as an unreadable speck.
+BOUNDS_TRIM = 0.05
+# Never describe a group as smaller than ~150 m across: a whole building's worth
+# of listings shares one coordinate, and a zero-width box has no zoom that fits.
+MIN_BOUNDS_SPAN = 0.0014
+
+
+def _bucket_bounds(bucket, lats=None, lngs=None):
+    """
+    Extent of the group's real properties, trimmed at both ends.
+
+    Bounds are what click navigation frames, so they answer one question: where
+    do I have to point the camera for this group to be visible? Percentiles
+    instead of min/max keep a single mis-geocoded row from answering it wrong.
+    """
+    if lats is None or lngs is None:
+        lats = [float(row['latitude']) for row in bucket['rows']]
+        lngs = [float(row['longitude']) for row in bucket['rows']]
+    lats = sorted(lats)
+    lngs = sorted(lngs)
+
+    south = _percentile(lats, BOUNDS_TRIM)
+    north = _percentile(lats, 1 - BOUNDS_TRIM)
+    west = _percentile(lngs, BOUNDS_TRIM)
+    east = _percentile(lngs, 1 - BOUNDS_TRIM)
+
+    if north - south < MIN_BOUNDS_SPAN:
+        middle = (north + south) / 2
+        south, north = middle - MIN_BOUNDS_SPAN / 2, middle + MIN_BOUNDS_SPAN / 2
+    if east - west < MIN_BOUNDS_SPAN:
+        middle = (east + west) / 2
+        west, east = middle - MIN_BOUNDS_SPAN / 2, middle + MIN_BOUNDS_SPAN / 2
+
+    return {'west': west, 'south': south, 'east': east, 'north': north}
 
 
 def _payload_context(group_level, total_count):
@@ -523,6 +621,8 @@ def _city_group_payload(valid_rows):
             'lng_min': lng,
             'lng_max': lng,
             'anchor': _city_anchor(province_key, city_key),
+            'lats': [],
+            'lngs': [],
             'suspicious_count': 0,
         })
         bucket['count'] += 1
@@ -532,24 +632,26 @@ def _city_group_payload(valid_rows):
         bucket['lat_max'] = max(bucket['lat_max'], lat)
         bucket['lng_min'] = min(bucket['lng_min'], lng)
         bucket['lng_max'] = max(bucket['lng_max'], lng)
+        bucket['lats'].append(lat)
+        bucket['lngs'].append(lng)
         if bucket.get('anchor') and _distance_km(lat, lng, bucket['anchor']['lat'], bucket['anchor']['lng']) > 85:
             bucket['suspicious_count'] += 1
 
     groups = []
     for bucket in buckets.values():
-        anchor = bucket.get('anchor') or {
-            'lat': round(bucket['lat_sum'] / bucket['count'], 3),
-            'lng': round(bucket['lng_sum'] / bucket['count'], 3),
-        }
+        bounds = _bucket_bounds(bucket, bucket['lats'], bucket['lngs'])
+        # Same rule as the map clusters: point at the listings, not at the
+        # canton's official coordinates.
+        center = _medoid(bucket['lats'], bucket['lngs'])
         groups.append({
             'id': bucket['id'],
             'label': bucket['label'],
             'province': bucket['province'],
             'count': bucket['count'],
-            'latitude': anchor['lat'],
-            'longitude': anchor['lng'],
-            'zoom': 12.2,
-            'bounds': _bucket_bounds(bucket),
+            'latitude': center['lat'],
+            'longitude': center['lng'],
+            'zoom': _expansion_zoom_for_bounds(bounds),
+            'bounds': bounds,
             'suspicious_count': bucket.get('suspicious_count', 0),
         })
     return sorted(groups, key=lambda item: (-item['count'], item['label'].lower()))

@@ -19,7 +19,7 @@ export default function MapLegend() {
   const [open, setOpen] = useState(false);
 
   return (
-    <div className="absolute bottom-[128px] left-3 z-mapcontrol">
+    <div className="absolute bottom-[104px] left-3 z-mapcontrol sm:bottom-[128px]">
       <AnimatePresence>
         {open && (
           <motion.div

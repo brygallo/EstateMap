@@ -270,6 +270,38 @@ class PropertyImage(models.Model):
         return self.status == self.Status.READY and bool(self.image)
 
 
+class SystemIncident(models.Model):
+    """Aggregated operational failure without request bodies or credentials."""
+
+    SEVERITY_CHOICES = [
+        ("critical", "Critical"),
+        ("error", "Error"),
+        ("warning", "Warning"),
+    ]
+
+    fingerprint = models.CharField(max_length=64, unique=True)
+    kind = models.CharField(max_length=80, default="http_error")
+    severity = models.CharField(max_length=12, choices=SEVERITY_CHOICES, default="error")
+    status_code = models.PositiveSmallIntegerField(default=500)
+    method = models.CharField(max_length=10, blank=True, default="")
+    path = models.CharField(max_length=500, blank=True, default="")
+    message = models.CharField(max_length=500, blank=True, default="")
+    request_id = models.CharField(max_length=64, blank=True, default="")
+    occurrences = models.PositiveIntegerField(default=1)
+    resolved = models.BooleanField(default=False, db_index=True)
+    first_seen_at = models.DateTimeField(auto_now_add=True)
+    last_seen_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["resolved", "-last_seen_at"]
+        indexes = [
+            models.Index(fields=["resolved", "severity", "-last_seen_at"], name="incident_status_seen_idx"),
+        ]
+
+    def __str__(self):
+        return f"{self.status_code} {self.method} {self.path} ({self.occurrences})"
+
+
 class EmailVerificationToken(models.Model):
     """Token for email verification"""
     user = models.ForeignKey(
@@ -453,6 +485,10 @@ class ActivityEvent(models.Model):
     event_name = models.CharField(max_length=100)
     path = models.CharField(max_length=300, blank=True, default="")
     payload = models.JSONField(default=dict, blank=True)
+    # Set server-side from the User-Agent (see real_estate.bot_detection). Bot
+    # events are stored, never rejected: crawlers keep full access and their
+    # traffic stays graphable, they are just excluded from human metrics.
+    is_bot = models.BooleanField(default=False, db_index=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:

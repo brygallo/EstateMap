@@ -11,13 +11,24 @@ declare global {
 // and land in ActivityEvent as if they were people: about 78% of the recorded
 // sessions were Googlebot, GoogleOther and meta-externalagent. Skipping them
 // keeps the funnel readable — the panel counts humans only.
-const CRAWLER_UA = /bot|crawler|spider|crawling|headless|chrome-lighthouse|google(other|-inspectiontool)|externalagent|externalhit|preview|slurp|bytespider|embedly|quora link preview|whatsapp|telegram|discord|pinterest|python-requests|axios|node-fetch|curl|wget/i;
+const CRAWLER_UA = /bot|crawler|spider|crawling|headless|chrome-lighthouse|google(other|-inspectiontool)|externalagent|externalhit|preview|slurp|bytespider|embedly|quora link preview|whatsapp|telegram|discord|pinterest|python-requests|axios|node-fetch|curl|wget|gptbot|oai-searchbot|chatgpt-user|claudebot|claude-user|anthropic|perplexitybot|amazonbot|meta-externalagent|playwright|puppeteer|pagespeed|gtmetrix|dataforseobot|ahrefsbot|semrushbot/i;
 
 function isCrawler(): boolean {
   const nav = window.navigator;
   if (!nav) return false;
   if (nav.webdriver) return true;
-  return CRAWLER_UA.test(nav.userAgent || '');
+
+  const userAgent = nav.userAgent || '';
+
+  // Cheap headless signal: empty UA string.
+  if (!userAgent) return true;
+
+  // Classic headless tell: zero window dimensions.
+  if (typeof window !== 'undefined' && window.outerWidth === 0 && window.outerHeight === 0) {
+    return true;
+  }
+
+  return CRAWLER_UA.test(userAgent);
 }
 
 export function trackEvent(eventName: string, payload: EventPayload = {}) {

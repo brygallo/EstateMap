@@ -460,10 +460,10 @@ const PropertyModal = ({ property: initialProperty, isOpen, onClose, onViewOnMap
     }
 
     // A downward gesture controls the sheet only when the content is already
-    // at the top. Otherwise, regular scrolling remains in control.
+    // at the top. Otherwise, regular scrolling remains in control. Dismiss it
+    // from either height so a swipe down never leaves the sheet half open.
     if (deltaY > 0 && start.scrollTop <= 2) {
-      if (sheetExpanded) collapseSheet();
-      else dismissSheet();
+      dismissSheet();
     }
   };
 

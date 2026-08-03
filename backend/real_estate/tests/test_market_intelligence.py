@@ -33,3 +33,38 @@ def test_property_intelligence_compares_inventory_and_tracks_price_changes():
     assert response.data["demand"]["level"] == "high"
     assert len(response.data["price_history"]) == 2
     assert response.data["publication_basis"] == "detected"
+
+
+def test_market_stats_city_filter_scopes_every_metric():
+    for index in range(4):
+        Property.objects.create(
+            title=f"Quito {index}", city="Quito",
+            address="CUMBAYÁ, Quito" if index % 2 else "Cumbayá, Quito",
+            property_type="house", status="for_sale", price=100000 + index * 1000,
+            area=100, views_count=5,
+        )
+    for index in range(3):
+        Property.objects.create(
+            title=f"Cuenca {index}", city="Cuenca", address="El Vergel, Cuenca",
+            property_type="apartment", status="for_sale", price=80000 + index * 1000,
+            area=80, views_count=2,
+        )
+
+    client = APIClient()
+    national = client.get("/api/market-stats/")
+    scoped = client.get("/api/market-stats/", {"city": "quito"})
+
+    assert national.status_code == 200
+    assert national.data["overall"]["count"] == 7
+    assert scoped.status_code == 200
+    assert scoped.data["overall"]["count"] == 4
+    assert [row["city"] for row in scoped.data["by_city"]] == ["Quito"]
+    assert all(row["property_type"] == "house" for row in scoped.data["by_property_type"])
+    assert all(row["city"] == "Quito" for row in scoped.data["by_sector"])
+    # "Cumbayá" and "CUMBAYÁ" are the same sector despite the casing.
+    cumbaya = [row for row in scoped.data["by_sector"] if row["sector"].casefold() == "cumbayá"]
+    assert len(cumbaya) == 1 and cumbaya[0]["count"] == 4
+    # Raw visit counts must never leave the API: the site is young and low
+    # traffic numbers on a public page undermine trust.
+    assert "supply_demand" not in scoped.data
+    assert "views" not in str(scoped.data)

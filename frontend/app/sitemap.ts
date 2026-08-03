@@ -2,6 +2,7 @@ import { MetadataRoute } from 'next';
 import { getProperties, getCities, getProvinces, slugify, SITE_URL, Property } from '@/lib/properties';
 import { generateCombos, parseComboSlug } from '@/lib/seo-combos';
 import { GUIDES } from '@/lib/guias';
+import { MIN_LISTINGS_FOR_PROMOTION } from '@/lib/market-stats';
 
 // Nota: las imágenes por propiedad se publican en un sitemap de imágenes aparte
 // (app/image-sitemap.xml/route.ts), porque el campo `images` de
@@ -88,6 +89,22 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.7,
   }));
 
+  // Per-city m² price pages. Counted over comparable sale inventory (the same
+  // population the stats API uses) and gated stricter than the page's own
+  // noindex threshold, so the sitemap never advertises a noindex URL.
+  const statsCityRoutes: MetadataRoute.Sitemap = getCities(
+    properties.filter(
+      (p) => p.status === 'for_sale' && Number(p.price) > 0 && Number(p.area) > 0
+    )
+  )
+    .filter((city) => city.count >= MIN_LISTINGS_FOR_PROMOTION)
+    .map((city) => ({
+      url: `${SITE_URL}/estadisticas-inmobiliarias/${city.slug}`,
+      lastModified: locationLatest.get(city.slug) || globalLatest,
+      changeFrequency: 'daily' as const,
+      priority: 0.75,
+    }));
+
   const provinceRoutes: MetadataRoute.Sitemap = getProvinces(properties).map((province) => ({
     url: `${SITE_URL}/provincias/${province.slug}`,
     lastModified: locationLatest.get(province.slug) || globalLatest,
@@ -107,5 +124,5 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     };
   });
 
-  return [...staticRoutes, ...propertyRoutes, ...cityRoutes, ...provinceRoutes, ...comboRoutes];
+  return [...staticRoutes, ...propertyRoutes, ...cityRoutes, ...statsCityRoutes, ...provinceRoutes, ...comboRoutes];
 }

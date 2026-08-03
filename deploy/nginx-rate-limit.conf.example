@@ -1,0 +1,139 @@
+# nginx Rate Limiting Configuration for EstateMap Production
+# ============================================================
+# This is an EXAMPLE configuration snippet. It must be merged into
+# the real server block on the prod host, NOT deployed as-is.
+# After merging, test with: nginx -t
+# Then reload: systemctl reload nginx
+#
+# IMPORTANT NOTES:
+# - Nginx native (not Docker) runs on the Contabo prod host
+# - These rules protect API endpoints from scrapers and bots
+# - map_points: map visualization (stricter: 5r/s, burst 20)
+# - property_list: property listing (moderate: 10r/s, burst 30)
+# - Localhost and private IPs (Docker/Next.js SSR) are EXEMPT
+#
+# Rate limit zones - define shared state for limiting
+# Each zone: 10MB memory ≈ 160k requests in memory at once
+limit_req_zone $limit_key zone=api_general:10m rate=10r/s;
+limit_req_zone $limit_key zone=api_map:10m rate=5r/s;
+
+# Geo-IP map: exempt localhost and private ranges
+# Maps to 0 (exempt) or 1 (rate-limited)
+geo $limit {
+    default 1;
+    127.0.0.1 0;           # localhost
+    10.0.0.0/8 0;          # Docker internal
+    172.16.0.0/12 0;       # Docker bridge range
+    192.168.0.0/16 0;      # Local network
+}
+
+# Map limit to actual key: empty string (not limited) or IP (limited)
+map $limit $limit_key {
+    0 "";                   # exempt: empty key (bypass zone checks)
+    1 $binary_remote_addr;  # rate-limit: use binary IP for efficiency
+}
+
+# ============================================================
+# Server block excerpt - add these location blocks to the
+# existing server block that proxies to the Docker apps
+# ============================================================
+
+# Example location blocks to add to your server config:
+#
+# location /api/ {
+#     # General API rate limit: 10 req/s, burst 30, no delay
+#     limit_req zone=api_general burst=30 nodelay;
+#     limit_req_status 429;
+#
+#     # Proxy to backend Django app
+#     proxy_pass http://backend:8000;
+#     proxy_set_header Host $host;
+#     proxy_set_header X-Real-IP $remote_addr;
+#     proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+#     proxy_set_header X-Forwarded-Proto $scheme;
+# }
+#
+# location /api/properties/map_points/ {
+#     # Stricter limit for map endpoint: 5 req/s, burst 20, no delay
+#     limit_req zone=api_map burst=20 nodelay;
+#     limit_req_status 429;
+#
+#     # Proxy to backend Django app
+#     proxy_pass http://backend:8000;
+#     proxy_set_header Host $host;
+#     proxy_set_header X-Real-IP $remote_addr;
+#     proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+#     proxy_set_header X-Forwarded-Proto $scheme;
+# }
+#
+# location /api/properties/ {
+#     # Property list endpoint: standard API limit
+#     limit_req zone=api_general burst=30 nodelay;
+#     limit_req_status 429;
+#
+#     # Proxy to backend Django app
+#     proxy_pass http://backend:8000;
+#     proxy_set_header Host $host;
+#     proxy_set_header X-Real-IP $remote_addr;
+#     proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+#     proxy_set_header X-Forwarded-Proto $scheme;
+# }
+
+# ============================================================
+# Rate limit response configuration
+# ============================================================
+# The above limit_req_status 429 will return HTTP 429 (Too Many Requests)
+# with this error page:
+#
+# error_page 429 =429 @rate_limit_reached;
+# location @rate_limit_reached {
+#     default_type application/json;
+#     return 429 '{"error": "Too many requests. Please try again later."}';
+# }
+
+# ============================================================
+# How this works
+# ============================================================
+# 1. $limit geo map checks client IP against exemption list
+#    - Docker containers (internal IPs) → $limit=0 (exempt)
+#    - Public/external IPs → $limit=1 (rate-limited)
+#
+# 2. $limit_key map converts $limit to:
+#    - 0 → empty string (nginx skips rate-limit zones with empty key)
+#    - 1 → $binary_remote_addr (tracks by external IP)
+#
+# 3. limit_req zone=... applies the zone:
+#    - burst=30: allow up to 30 extra requests in queue
+#    - nodelay: process queued requests immediately (don't delay)
+#    - If exceeded, return 429
+#
+# 4. Next.js SSR calls from Docker → private IP → $limit=0 → no limiting
+#    External browser/API calls → public IP → $limit=1 → rate limited
+
+# ============================================================
+# Testing the configuration
+# ============================================================
+# 1. SSH to prod host as root:
+#    ssh -i ~/.ssh/prod_key root@contabo_prod_ip
+#
+# 2. Backup current nginx config:
+#    cp /etc/nginx/nginx.conf /etc/nginx/nginx.conf.backup
+#
+# 3. Merge the zone definitions and location blocks above into
+#    /etc/nginx/nginx.conf or the included server block
+#
+# 4. Test syntax:
+#    nginx -t
+#
+# 5. Reload (zero-downtime):
+#    systemctl reload nginx
+#
+# 6. Check limits are working:
+#    # From external IP (will be limited):
+#    for i in {1..15}; do curl -s -w "%{http_code}\n" http://geopropiedadesecuador.com/api/properties/ | tail -1; done
+#    # Should see some 429 responses after ~5 requests
+#
+# 7. Docker containers are NOT limited (internal IPs):
+#    # From within Docker:
+#    docker exec backend curl -s http://nginx-internal-ip/api/properties/
+#    # Should always get 200, never 429

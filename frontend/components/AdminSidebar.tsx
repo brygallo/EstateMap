@@ -14,6 +14,7 @@ import {
   X,
   DownloadCloud,
   MousePointerClick,
+  ServerCog,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -24,6 +25,7 @@ const navItems = [
   { href: '/admin/pending-publications', label: 'Pendientes', icon: Clock },
   { href: '/admin/activity', label: 'Actividad y clics', icon: MousePointerClick },
   { href: '/admin/ingesta', label: 'Importar', icon: DownloadCloud },
+  { href: '/admin/system', label: 'Estado del sistema', icon: ServerCog },
 ];
 
 const AdminSidebar = () => {

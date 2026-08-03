@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import maplibregl, { type GeoJSONSource, type Map as MapLibreInstance } from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
+import { buildMapStyle } from './maplibre-style';
 import { Loader2, LocateFixed, Minus, Plus } from 'lucide-react';
 import LayerSwitch, { type MapLayer } from '@/components/map/LayerSwitch';
 import MapLegend from '@/components/map/MapLegend';
@@ -157,35 +158,6 @@ const buildPolygonCollection = (properties: any[]): GeoJSON.FeatureCollection =>
     .filter((feature): feature is GeoJSON.Feature => Boolean(feature)),
 });
 
-const buildMapStyle = (): maplibregl.StyleSpecification => ({
-  version: 8,
-  glyphs: 'https://demotiles.maplibre.org/font/{fontstack}/{range}.pbf',
-  sources: {
-    carto: {
-      type: 'raster',
-      tiles: [
-        'https://a.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png',
-        'https://b.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png',
-        'https://c.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png',
-        'https://d.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png',
-      ],
-      tileSize: 256,
-      attribution: '&copy; OpenStreetMap &copy; CARTO',
-      maxzoom: 20,
-    },
-    esri: {
-      type: 'raster',
-      tiles: ['https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'],
-      tileSize: 256,
-      attribution: 'Tiles &copy; Esri',
-      maxzoom: 18,
-    },
-  },
-  layers: [
-    { id: 'carto-base', type: 'raster', source: 'carto' },
-    { id: 'esri-base', type: 'raster', source: 'esri', layout: { visibility: 'none' } },
-  ],
-});
 
 const padBounds = (bounds: maplibregl.LngLatBounds, ratio = 0.75) => {
   const west = bounds.getWest();
@@ -625,17 +597,20 @@ export default function MapLibreMap({
         record.element.onclick = (event) => {
           event.preventDefault();
           event.stopPropagation();
-          const targetZoom = Math.min(Math.max(Number(cluster.expansion_zoom) || map.getZoom() + 2, 11), 15);
+          const targetZoom = Math.min(Math.max(Number(cluster.expansion_zoom) || map.getZoom() + 2, 11), 16.5);
           trackEvent('map_backend_cluster_clicked', {
             group_level: cluster.group_level ?? null,
             count,
             label: label || null,
             target_zoom: targetZoom,
           });
+          // Framing the group's own extent is what guarantees the user lands on
+          // its properties. A fixed centre and zoom per level cannot: it ignores
+          // the active filters, so it used to open on empty map whenever the
+          // matching listings sat away from the canton's official centre.
+          // `expansion_zoom` only caps how far a tight group may zoom in.
           const clusterBounds = getClusterBounds(cluster);
-          const groupLevel = String(cluster.group_level ?? '');
-          const shouldUseExactStep = groupLevel === 'country' || groupLevel === 'province' || groupLevel === 'city';
-          if (!shouldUseExactStep && clusterBounds) {
+          if (clusterBounds) {
             map.fitBounds(clusterBounds, {
               padding: 92,
               maxZoom: targetZoom,
@@ -644,6 +619,7 @@ export default function MapLibreMap({
             });
             return;
           }
+          // Degenerate extent (every listing on one coordinate): nothing to fit.
           map.easeTo({
             center: focusCoordinates,
             zoom: targetZoom,
@@ -1031,6 +1007,13 @@ export default function MapLibreMap({
           0% { opacity: 0.78; transform: translateX(-50%) scale(0.86); }
           70% { opacity: 0; transform: translateX(-50%) scale(1.22); }
           100% { opacity: 0; transform: translateX(-50%) scale(1.22); }
+        }
+        @media (max-width: 639px) {
+          .maplibregl-ctrl-bottom-right {
+            bottom: 72px;
+            left: 96px;
+            right: auto;
+          }
         }
         @media (prefers-reduced-motion: reduce) {
           .maplibre-cluster-marker,

@@ -1,16 +1,24 @@
 import os
 from pathlib import Path
 from datetime import timedelta
+from django.core.exceptions import ImproperlyConfigured
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 SECRET_KEY = os.getenv('SECRET_KEY', os.getenv('DJANGO_SECRET_KEY', 'change-me'))
 DEBUG = os.getenv('DEBUG', 'True') == 'True'
 
+if not DEBUG and (SECRET_KEY == 'change-me' or len(SECRET_KEY) < 50):
+    raise ImproperlyConfigured(
+        'DJANGO_SECRET_KEY/SECRET_KEY must be a random value of at least 50 characters in production.'
+    )
+
 # Parse ALLOWED_HOSTS from comma-separated string.
 # Treat unset/empty as wildcard to avoid DisallowedHost in default deployments.
 allowed_hosts_str = os.getenv('ALLOWED_HOSTS') or '*'
 ALLOWED_HOSTS = [host.strip() for host in allowed_hosts_str.split(',')] if allowed_hosts_str != '*' else ['*']
+if not DEBUG and ALLOWED_HOSTS == ['*']:
+    raise ImproperlyConfigured('ALLOWED_HOSTS must be an explicit allowlist in production.')
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -162,8 +170,22 @@ REST_FRAMEWORK = {
     'DEFAULT_THROTTLE_RATES': {
         'activity_create': '30/min',
         'pending_create': '10/min',
+        # Anti-scraper ceilings for the hottest public reads. They sit far above
+        # real browsing (panning the map fires a handful of requests per minute,
+        # not two per second) and far above what a polite crawler does, so only
+        # bulk scrapers hitting the catalogue in a loop ever reach them. These
+        # limit REQUESTS, not indexing: Googlebot and friends stay well under.
+        'map_points': '120/min',
+        'property_list': '60/min',
+        'property_write': '30/hour',
     },
 }
+
+# Extra client IPs that are never throttled (private and loopback addresses are
+# already exempt, which covers the Next.js server rendering our own pages).
+THROTTLE_EXEMPT_IPS = tuple(
+    ip.strip() for ip in os.getenv('THROTTLE_EXEMPT_IPS', '').split(',') if ip.strip()
+)
 
 SIMPLE_JWT = {
     'ACCESS_TOKEN_LIFETIME': timedelta(hours=1),  # Token de acceso: 1 hora
@@ -196,7 +218,13 @@ if _cors_origins:
     CORS_ALLOWED_ORIGINS = [o.strip() for o in _cors_origins.split(',') if o.strip()]
     CORS_ALLOW_ALL_ORIGINS = False
 else:
-    CORS_ALLOW_ALL_ORIGINS = True
+    CORS_ALLOW_ALL_ORIGINS = DEBUG
+    if not DEBUG:
+        raise ImproperlyConfigured('CORS_ALLOWED_ORIGINS is required in production.')
+
+# Allow the frontend to show a support reference without exposing request or
+# authentication headers. These values contain no user data.
+CORS_EXPOSE_HEADERS = ['X-Request-ID', 'X-Response-Time-Ms', 'X-Release']
 
 # Endurecimiento de seguridad activo solo fuera de DEBUG (producción). No se
 # habilita SECURE_SSL_REDIRECT para evitar bucles detrás de proxys/healthchecks;
@@ -210,11 +238,14 @@ if not DEBUG:
     SECURE_HSTS_PRELOAD = True
     SESSION_COOKIE_SECURE = True
     CSRF_COOKIE_SECURE = True
-    X_FRAME_OPTIONS = 'SAMEORIGIN'
+    SECURE_SSL_REDIRECT = os.getenv('SECURE_SSL_REDIRECT', 'True') == 'True'
+    X_FRAME_OPTIONS = 'DENY'
     # CSRF necesita los orígenes de confianza para el panel de admin sobre HTTPS.
     _csrf_trusted = os.getenv('CSRF_TRUSTED_ORIGINS', '').strip()
     if _csrf_trusted:
         CSRF_TRUSTED_ORIGINS = [o.strip() for o in _csrf_trusted.split(',') if o.strip()]
+    else:
+        raise ImproperlyConfigured('CSRF_TRUSTED_ORIGINS is required in production.')
 
 # ============================
 # DJANGO-ALLAUTH CONFIGURATION
@@ -342,9 +373,14 @@ MAX_PROPERTY_UPLOAD_MB = 50
 # One Redis serves every Aents system on the host; each project owns a database
 # index so a FLUSHDB in one never wipes another's queue. Registry:
 #
-#   0 / 1  geoPropiedades  (broker / results)   <- this project
+#   0      geoPropiedades  (Celery broker)      <- this project
+#   1      geoPropiedades  (Django cache)        <- this project
 #   2 / 3  aents           (broker / results)
 #   4+     free for the next system
+#
+# DB 1 was originally reserved for a Celery result backend, but that was never
+# enabled (see CELERY_RESULT_BACKEND below), so it is repurposed here for the
+# Django cache instead of leaving it idle.
 #
 # Workers are not shared. A worker imports its own project's tasks, so each
 # system runs its own worker against its own index.
@@ -389,11 +425,42 @@ CELERY_TASK_TIME_LIMIT = 900
 # files nobody claims. Embedded beat (-B) is fine because there is exactly one
 # worker per system; with several, each would fire its own copy.
 CELERY_BEAT_SCHEDULE = {
+    "system-worker-heartbeat": {
+        "task": "real_estate.tasks.system_worker_heartbeat",
+        "schedule": 60,
+    },
     "sweep-pending-images": {
         "task": "real_estate.tasks.sweep_pending_images",
         "schedule": 60 * 60,
     },
 }
+
+# ========================================
+# CACHE (shared Redis, DB 1 - see registry above)
+# ========================================
+# Same physical Redis as the Celery broker, but a different DB index so a
+# cache flush can never touch queued tasks (or vice versa). IGNORE_EXCEPTIONS
+# is on purpose: if Redis is unreachable the site must keep serving requests
+# with cache misses instead of raising 500s. Once this becomes the default
+# cache, DRF throttling (DEFAULT_THROTTLE_RATES above) automatically becomes
+# shared across processes instead of per-process LocMemCache.
+CACHES = {
+    "default": {
+        "BACKEND": "django_redis.cache.RedisCache",
+        "LOCATION": os.getenv("REDIS_CACHE_URL", "redis://127.0.0.1:6379/1"),
+        "OPTIONS": {
+            "CLIENT_CLASS": "django_redis.client.DefaultClient",
+            "IGNORE_EXCEPTIONS": True,
+            "SOCKET_CONNECT_TIMEOUT": 2,
+            "SOCKET_TIMEOUT": 2,
+        },
+        "KEY_PREFIX": "estatemap",
+        "TIMEOUT": 300,
+    }
+}
+# Log ignored Redis errors (from IGNORE_EXCEPTIONS above) instead of failing
+# silently, so a down cache is still visible in the logs.
+DJANGO_REDIS_LOG_IGNORED_EXCEPTIONS = True
 
 # Uploads land here first so the request only pays a local disk write, and the
 # worker picks them up afterwards. It must be a real path shared between the web
@@ -426,3 +493,9 @@ PASSWORD_RESET_TOKEN_EXPIRY_HOURS = 24
 
 # Frontend URL for email links
 FRONTEND_URL = os.getenv('FRONTEND_URL', 'http://localhost:3010')
+
+# On-demand revalidation of the Next.js cache. The backend POSTs the tags of
+# whatever it just changed to this route handler; leaving either value empty
+# turns the call into a no-op, which is what dev and CI want.
+NEXT_REVALIDATE_URL = os.getenv('NEXT_REVALIDATE_URL', '')
+REVALIDATE_SECRET = os.getenv('REVALIDATE_SECRET', '')

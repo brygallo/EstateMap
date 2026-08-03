@@ -38,8 +38,9 @@ function titleFor(parsed: ReturnType<typeof parseComboSlug>, locationName: strin
   return `${parsed.typeDef.plural}${op}${loc}`;
 }
 
-export async function generateMetadata({ params }: { params: Params }): Promise<Metadata> {
-  const parsed = parseComboSlug(params.combo);
+export async function generateMetadata({ params }: { params: Promise<Params> }): Promise<Metadata> {
+  const resolvedParams = await params;
+  const parsed = parseComboSlug(resolvedParams.combo);
   if (!parsed) return {};
 
   const properties = await getProperties();
@@ -65,8 +66,9 @@ export async function generateMetadata({ params }: { params: Params }): Promise<
   );
 }
 
-export default async function ComboPage({ params }: { params: Params }) {
-  const parsed = parseComboSlug(params.combo);
+export default async function ComboPage({ params }: { params: Promise<Params> }) {
+  const resolvedParams = await params;
+  const parsed = parseComboSlug(resolvedParams.combo);
   if (!parsed) notFound();
 
   const properties = await getProperties();
@@ -95,7 +97,7 @@ export default async function ComboPage({ params }: { params: Params }) {
   const relatedLabels = new Set<string>();
 
   const addRelated = (label: string, href: string) => {
-    if (href === `/${params.combo}` || relatedLabels.has(href)) return;
+    if (href === `/${resolvedParams.combo}` || relatedLabels.has(href)) return;
     relatedLabels.add(href);
     related.push({ label, href });
   };
@@ -103,7 +105,7 @@ export default async function ComboPage({ params }: { params: Params }) {
   for (const op of OP_DEFS) {
     if (opDef && op.status === opDef.status) continue;
     const slug = buildComboSlug(typeDef.slug, op.slug, locationSlug);
-    if (validSlugs.has(slug) && slug !== params.combo) {
+    if (validSlugs.has(slug) && slug !== resolvedParams.combo) {
       addRelated(`${typeDef.plural} ${op.label} en ${locationName}`, `/${slug}`);
     }
   }
@@ -150,7 +152,7 @@ export default async function ComboPage({ params }: { params: Params }) {
         matched
       )}`}
       properties={matched}
-      pageHref={`/${params.combo}`}
+      pageHref={`/${resolvedParams.combo}`}
       mapHref={mapHref}
       featuredQuery={{
         type: typeDef.type,

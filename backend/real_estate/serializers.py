@@ -10,6 +10,7 @@ from django.core.exceptions import ValidationError as DjangoValidationError
 from django.db import transaction
 from django.urls import reverse
 from django.conf import settings
+from .bot_detection import is_bot_request
 from .models import ActivityEvent, Property, PropertyImage, Province, City, Lead, PendingPublication
 from .validators import validate_image_dimensions, validate_image_format, validate_image_size
 
@@ -500,9 +501,11 @@ class ActivityEventSerializer(serializers.ModelSerializer):
         model = ActivityEvent
         fields = [
             'id', 'user', 'user_label', 'session_id', 'event_name', 'path',
-            'property', 'property_title', 'payload', 'created_at',
+            'property', 'property_title', 'payload', 'is_bot', 'created_at',
         ]
-        read_only_fields = ['id', 'user', 'property', 'property_title', 'created_at']
+        # `is_bot` is read-only on purpose: it is decided server-side from the
+        # User-Agent, so a client can never declare itself human.
+        read_only_fields = ['id', 'user', 'property', 'property_title', 'is_bot', 'created_at']
 
     def get_user_label(self, obj):
         if not obj.user:
@@ -525,6 +528,9 @@ class ActivityEventSerializer(serializers.ModelSerializer):
         payload = validated_data.get('payload') or {}
         property_id = payload.get('property_id')
         validated_data['user'] = request.user if request and request.user.is_authenticated else None
+        # Flag crawlers from the User-Agent, ignoring anything the client sent.
+        # The event is still stored so bot traffic can be graphed on its own.
+        validated_data['is_bot'] = is_bot_request(request)
         if property_id is not None:
             validated_data['property'] = Property.objects.filter(pk=property_id).first()
         return super().create(validated_data)
@@ -759,13 +765,15 @@ class AdminUserSerializer(serializers.ModelSerializer):
         annotated = getattr(obj, 'activity_count_annotated', None)
         if annotated is not None:
             return annotated
-        return obj.activity_events.count()
+        return obj.activity_events.filter(is_bot=False).count()
 
     def get_contact_clicks_count(self, obj):
         annotated = getattr(obj, 'contact_clicks_count_annotated', None)
         if annotated is not None:
             return annotated
-        return obj.activity_events.filter(event_name='property_contact_clicked').count()
+        return obj.activity_events.filter(
+            event_name='property_contact_clicked', is_bot=False
+        ).count()
 
 
 class AdminUserDetailSerializer(serializers.ModelSerializer):
@@ -790,10 +798,12 @@ class AdminUserDetailSerializer(serializers.ModelSerializer):
         return obj.properties.count()
 
     def get_activity_count(self, obj):
-        return obj.activity_events.count()
+        return obj.activity_events.filter(is_bot=False).count()
 
     def get_contact_clicks_count(self, obj):
-        return obj.activity_events.filter(event_name='property_contact_clicked').count()
+        return obj.activity_events.filter(
+            event_name='property_contact_clicked', is_bot=False
+        ).count()
 
     def get_recent_activity(self, obj):
         events = obj.activity_events.select_related('property')[:50]

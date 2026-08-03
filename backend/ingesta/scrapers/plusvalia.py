@@ -491,6 +491,10 @@ class PlusvaliaScraper(BaseScraper):
                 f"(última: {url}). Revisa que curl_cffi esté instalado y actualizado."
             )
 
+    def reset_blocks(self):
+        """Forget the current block streak (used by cooldown-and-resume loops)."""
+        self._block_streak = 0
+
     def scrape_one(self, url, categoria="", operacion="venta", listing=None):
         """Re-scrapea una ficha. Devuelve dict / 'GONE' / None (igual patrón)."""
         with self._client() as client:

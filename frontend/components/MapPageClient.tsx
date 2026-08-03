@@ -45,16 +45,13 @@ const MainMap = dynamic(() => import('@/components/maps/MapLibreMap'), {
 // Centro de Ecuador para mostrar el país completo al iniciar.
 const DEFAULT_CENTER: [number, number] = [-1.5, -78.5];
 
+// Bounds win over centre+zoom, always. The previous order preferred the
+// fallback whenever its zoom was >= 11.5, which was every city jump: the camera
+// went to the canton's nominal centre at a fixed zoom and could land on empty
+// map while the matching listings sat off screen. `zoom` is now only the cap on
+// how far a tightly packed group may zoom in.
 const fitMapToBounds = (map: any, bounds?: MapBounds, fallback?: { lat: number; lng: number; zoom: number }) => {
   if (!map) return;
-  if (fallback && fallback.zoom >= 11.5) {
-    if (typeof map.fitBounds === 'function' && typeof map.flyToBounds !== 'function') {
-      map.flyTo({ center: [fallback.lng, fallback.lat], zoom: fallback.zoom, duration: 700 });
-    } else {
-      map.flyTo([fallback.lat, fallback.lng], fallback.zoom, { duration: 0.7 });
-    }
-    return;
-  }
   if (bounds) {
     const samePoint = Math.abs(bounds.west - bounds.east) < 0.0001 && Math.abs(bounds.south - bounds.north) < 0.0001;
     if (!samePoint && typeof map.fitBounds === 'function' && typeof map.flyToBounds !== 'function') {
@@ -64,6 +61,16 @@ const fitMapToBounds = (map: any, bounds?: MapBounds, fallback?: { lat: number; 
           [bounds.east, bounds.north],
         ],
         { padding: 86, maxZoom: fallback?.zoom ?? 13, duration: 720 }
+      );
+      return;
+    }
+    if (!samePoint && typeof map.flyToBounds === 'function') {
+      map.flyToBounds(
+        [
+          [bounds.south, bounds.west],
+          [bounds.north, bounds.east],
+        ],
+        { padding: [60, 60], maxZoom: fallback?.zoom ?? 13, duration: 0.72 }
       );
       return;
     }
@@ -130,7 +137,37 @@ const MapPage = () => {
 
   const handleMapReady = (map: any) => {
     mapRef.current = map;
+    const latitude = Number(searchParams?.get('lat'));
+    const longitude = Number(searchParams?.get('lng'));
+    const zoom = Number(searchParams?.get('zoom'));
+    if (![latitude, longitude, zoom].every(Number.isFinite)) return;
+    if (latitude < -90 || latitude > 90 || longitude < -180 || longitude > 180 || zoom < 1 || zoom > 21) return;
+
+    if (typeof map.jumpTo === 'function') {
+      map.jumpTo({ center: [longitude, latitude], zoom });
+    } else if (typeof map.setView === 'function') {
+      map.setView([latitude, longitude], zoom, { animate: false });
+    }
   };
+
+  const getContextualShareUrl = useCallback(() => {
+    if (typeof window === 'undefined' || !selectedProperty) return '';
+    const url = new URL(window.location.href);
+    url.pathname = '/';
+    url.searchParams.set('property', String(selectedProperty.id));
+
+    const map = mapRef.current;
+    const center = map?.getCenter?.();
+    const zoom = Number(map?.getZoom?.());
+    const latitude = Number(center?.lat);
+    const longitude = Number(center?.lng);
+    if (Number.isFinite(latitude) && Number.isFinite(longitude) && Number.isFinite(zoom)) {
+      url.searchParams.set('lat', latitude.toFixed(6));
+      url.searchParams.set('lng', longitude.toFixed(6));
+      url.searchParams.set('zoom', zoom.toFixed(2));
+    }
+    return url.toString();
+  }, [selectedProperty]);
 
   const handleZoomOut = useCallback(() => {
     const map = mapRef.current;
@@ -186,7 +223,8 @@ const MapPage = () => {
           const property: Property = await res.json();
           setSelectedProperty(property);
           setIsModalOpen(true);
-          setTimeout(() => flyToProperty(mapRef.current, property), 1000);
+          const hasSharedViewport = ['lat', 'lng', 'zoom'].every((key) => searchParams?.has(key));
+          if (!hasSharedViewport) setTimeout(() => flyToProperty(mapRef.current, property), 1000);
         }
       } catch (err) {
         console.error('Error abriendo la propiedad del enlace:', err);
@@ -321,14 +359,14 @@ const MapPage = () => {
       {!sidebarOpen && !selectedProperty && !isModalOpen && (
         <Button
           onClick={() => setSidebarOpen(true)}
-          className="fixed bottom-20 left-1/2 z-nav h-12 -translate-x-1/2 gap-2 rounded-full px-5 shadow-cardHover lg:hidden [&_svg]:size-5"
+          className="fixed bottom-[max(1rem,env(safe-area-inset-bottom))] left-1/2 z-nav h-12 -translate-x-1/2 gap-2 rounded-full px-5 shadow-cardHover lg:hidden [&_svg]:size-5"
           aria-label="Abrir filtros y propiedades"
         >
           <SlidersHorizontal strokeWidth={2} />
           <span className="font-semibold tabular-nums">
             {loading
               ? 'Cargando…'
-              : `${sidebarProperties.length} ${sidebarProperties.length === 1 ? 'propiedad' : 'propiedades'}`}
+              : `${totalCount ?? sidebarProperties.length} ${(totalCount ?? sidebarProperties.length) === 1 ? 'propiedad' : 'propiedades'}`}
           </span>
         </Button>
       )}
@@ -461,12 +499,13 @@ const MapPage = () => {
       )}
 
       {/* Ficha lateral de detalle */}
-      <PropertyModal
-        property={selectedProperty}
-        isOpen={isModalOpen}
-        onClose={handleCloseModal}
-        onViewOnMap={handleViewOnMap}
-      />
+          <PropertyModal
+            property={selectedProperty}
+            isOpen={isModalOpen}
+            onClose={handleCloseModal}
+            onViewOnMap={handleViewOnMap}
+            getContextualShareUrl={getContextualShareUrl}
+          />
 
       {/* Modal de permiso de ubicación */}
       <LocationPermissionModal
@@ -478,14 +517,12 @@ const MapPage = () => {
       />
 
       <style>{`
-        .leaflet-interactive { cursor: pointer !important; }
         .property-polygon {
           transition:
             fill-opacity 240ms cubic-bezier(0.2, 0, 0, 1),
             stroke-opacity 240ms cubic-bezier(0.2, 0, 0, 1),
             stroke-width 180ms cubic-bezier(0.2, 0, 0, 1) !important;
         }
-        .leaflet-zoom-animated { will-change: auto !important; }
         @keyframes fade-in {
           from { opacity: 0; transform: translateY(-10px); }
           to { opacity: 1; transform: translateY(0); }
