@@ -71,6 +71,25 @@ def reset_email_backend(settings):
 
 
 @pytest.fixture(autouse=True)
+def media_stays_on_local_disk(settings, tmp_path_factory):
+    """
+    Write uploaded files to a temp directory instead of object storage.
+
+    The default storage is S3/MinIO, so any test saving an ImageField reaches
+    for a bucket and dies on missing credentials wherever MinIO is not running
+    — CI, most notably. Each test gets its own directory, so files written by
+    one never show up in another.
+    """
+    settings.STORAGES = {
+        **settings.STORAGES,
+        "default": {
+            "BACKEND": "django.core.files.storage.FileSystemStorage",
+            "OPTIONS": {"location": str(tmp_path_factory.mktemp("media"))},
+        },
+    }
+
+
+@pytest.fixture(autouse=True)
 def celery_runs_inline():
     """
     Run tasks in-process during tests.
