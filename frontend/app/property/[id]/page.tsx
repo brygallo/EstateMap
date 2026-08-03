@@ -584,29 +584,6 @@ export default async function PropertyPage({ params }: PropertyPageProps) {
                 </>
               )}
 
-              {/* Ubicación */}
-              <>
-                <Separator className="my-6 bg-line" />
-                <h2 className="mb-3 text-lg font-semibold text-textPrimary">Ubicación</h2>
-                <div className="overflow-hidden rounded-card border border-line bg-surface">
-                    <PropertyNearbyMap property={property} nearbyProperties={nearbyProperties} />
-                    <div className="flex items-center gap-2 px-4 py-3 text-sm text-textSecondary">
-                      <MapPin className="h-4 w-4 flex-shrink-0 text-primary" strokeWidth={1.75} aria-hidden />
-                      <span>
-                        {property.address && <>{property.address}</>}
-                        {property.address && property.city && <>, </>}
-                        {property.city && <>{property.city}</>}
-                        {property.province && <>, {property.province}</>}
-                        {!property.address && !property.city && !property.province && <>Ubicación no especificada</>}
-                      </span>
-                    </div>
-                    {nearbyProperties.length > 0 && (
-                      <p className="border-t border-line px-4 py-2.5 text-xs text-textSecondary">
-                        Selecciona otro marcador para abrir la ficha completa de una propiedad cercana.
-                      </p>
-                    )}
-                  </div>
-              </>
             </div>
 
             {/* Tarjeta de contacto (sticky) */}
@@ -758,6 +735,28 @@ export default async function PropertyPage({ params }: PropertyPageProps) {
               </div>
             </aside>
           </div>
+
+          {/* El explorador usa todo el viewport: permite comparar ubicaciones
+              sin confinar el mapa a la columna de texto de la ficha. */}
+          <section className="relative left-1/2 mt-10 w-screen -translate-x-1/2 border-y border-line bg-surface" aria-labelledby="property-map-title">
+            <div className="mx-auto max-w-6xl px-4 py-4">
+              <h2 id="property-map-title" className="text-lg font-semibold text-textPrimary">Ubicación y propiedades cercanas</h2>
+              <div className="mt-1 flex items-start gap-2 text-sm text-textSecondary">
+                <MapPin className="mt-0.5 h-4 w-4 flex-shrink-0 text-primary" strokeWidth={1.75} aria-hidden />
+                <span>
+                  {property.address && <>{property.address}</>}
+                  {property.address && property.city && <>, </>}
+                  {property.city && <>{property.city}</>}
+                  {property.province && <>, {property.province}</>}
+                  {!property.address && !property.city && !property.province && <>Ubicación no especificada</>}
+                </span>
+              </div>
+              <p className="mt-1 text-xs text-textSecondary">
+                Mueve el mapa para cargar esa zona. Selecciona un marcador para abrir su ficha completa.
+              </p>
+            </div>
+            <PropertyNearbyMap property={property} nearbyProperties={nearbyProperties} />
+          </section>
 
           {nearbyProperties.length > 0 && (
             <section className="mt-12 border-t border-line pt-10" aria-labelledby="nearby-properties-title">

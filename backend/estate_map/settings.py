@@ -360,6 +360,14 @@ CELERY_TASK_IGNORE_RESULT = True
 # mid-optimization the image is re-queued instead of silently lost.
 CELERY_TASK_ACKS_LATE = True
 CELERY_TASK_REJECT_ON_WORKER_LOST = True
+# Fail fast when publishing. By default kombu retries a failed publish for
+# ~20 seconds, which would turn a broker outage into hung uploads; the caller
+# falls back to optimizing inline instead, so it needs the error quickly.
+CELERY_TASK_PUBLISH_RETRY = False
+CELERY_BROKER_TRANSPORT_OPTIONS = {
+    "socket_connect_timeout": 2,
+    "socket_timeout": 2,
+}
 # This queue is deliberately secondary: one task at a time, taking as long as it
 # takes, so it can never compete with web traffic on a host shared with the
 # other Aents systems and the mail stack.

@@ -1,4 +1,5 @@
 import json
+import logging
 
 from rest_framework import serializers
 from rest_framework.validators import UniqueValidator
@@ -11,6 +12,8 @@ from django.urls import reverse
 from django.conf import settings
 from .models import ActivityEvent, Property, PropertyImage, Province, City, Lead, PendingPublication
 from .validators import validate_image_dimensions, validate_image_format, validate_image_size
+
+logger = logging.getLogger(__name__)
 
 User = get_user_model()
 
@@ -93,18 +96,25 @@ def stage_property_image(property_instance, uploaded_file, idx, is_main):
 
     The row is created before the bytes reach MinIO, so the API can answer
     immediately and the client already has an id to track.
+
+    Returns None when the file could not be staged. It does NOT raise: this runs
+    inside the atomic block that created the Property, so an exception here would
+    roll the whole listing back and the user would lose everything they typed
+    over one unwritable file. A missing photo can be re-uploaded in seconds; a
+    lost publication cannot.
     """
     from .tasks import enqueue_optimization
     from .uploads import stash_upload
 
     try:
         path, size = stash_upload(uploaded_file)
-    except OSError as exc:
-        raise serializers.ValidationError({
-            'uploaded_images': [
-                f"La imagen {idx + 1} no pudo guardarse. Verifica el archivo e inténtalo nuevamente."
-            ]
-        }) from exc
+    except OSError:
+        logger.exception(
+            "Could not stage image %s for property %s; saving the listing without it",
+            idx + 1,
+            property_instance.pk,
+        )
+        return None
 
     image = PropertyImage.objects.create(
         property=property_instance,

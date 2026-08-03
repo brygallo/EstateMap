@@ -109,6 +109,50 @@ def test_sweep_removes_orphan_files_but_keeps_claimed_ones(owned_property, setti
     assert not orphan.exists()
 
 
+def test_broker_outage_still_produces_a_finished_image(
+    owned_property, settings, tmp_path, monkeypatch, django_capture_on_commit_callbacks
+):
+    """A dead broker must cost latency, never the upload."""
+    settings.IMAGE_UPLOAD_TEMP_DIR = str(tmp_path)
+
+    from kombu.exceptions import OperationalError
+
+    def refuse(*args, **kwargs):
+        raise OperationalError("Error 111 connecting to redis:6379. Connection refused.")
+
+    monkeypatch.setattr(optimize_property_image, "delay", refuse)
+
+    # Dispatch happens on commit, which a test transaction never reaches.
+    with django_capture_on_commit_callbacks(execute=True):
+        image = stage_property_image(owned_property, photo(), 0, is_main=True)
+
+    # Optimized inline instead: slower, but the photo is published and complete.
+    image.refresh_from_db()
+    assert image.status == PropertyImage.Status.READY
+    assert image.image
+    assert image.thumbnail
+
+
+def test_unwritable_staging_never_costs_the_listing(owned_property, settings, tmp_path, monkeypatch):
+    """
+    A full or unwritable disk must not roll the Property back.
+
+    stage_property_image runs inside the atomic block that just created the
+    listing, so raising here would discard everything the user typed.
+    """
+    settings.IMAGE_UPLOAD_TEMP_DIR = str(tmp_path)
+    monkeypatch.setattr(
+        "real_estate.uploads.stash_upload",
+        lambda _f: (_ for _ in ()).throw(OSError("No space left on device")),
+    )
+
+    result = stage_property_image(owned_property, photo(), 0, is_main=True)
+
+    assert result is None
+    assert Property.objects.filter(pk=owned_property.pk).exists()
+    assert owned_property.images.count() == 0
+
+
 def test_serializer_serves_pending_images_from_staging(owned_property, settings, tmp_path):
     from real_estate.serializers import PropertyImageSerializer
 

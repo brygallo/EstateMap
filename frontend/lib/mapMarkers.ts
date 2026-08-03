@@ -103,6 +103,7 @@ export function priceMarkerHtml({
       will-change:transform;
       pointer-events:auto;
     ">
+      ${selected ? `<span style="position:absolute;left:50%;top:-17px;z-index:4;transform:translateX(-50%);padding:2px 7px;border-radius:999px;background:#fff;color:${c.solid};font-size:9px;font-weight:800;line-height:1.35;white-space:nowrap;box-shadow:0 2px 8px rgba(15,23,42,.22);">Seleccionada</span>` : ''}
       <div style="
         position:absolute; left:50%; bottom:5px; z-index:0;
         width:48px; height:10px; border-radius:999px;
@@ -165,6 +166,7 @@ export function iconMarkerHtml({
       transform:${scale};
       transform-origin:50% 100%;
     ">
+      ${selected ? `<span style="position:absolute;left:50%;top:-11px;z-index:4;transform:translateX(-50%);padding:2px 7px;border-radius:999px;background:#fff;color:${c.solid};font-size:9px;font-weight:800;line-height:1.35;white-space:nowrap;box-shadow:0 2px 8px rgba(15,23,42,.22);">Seleccionada</span>` : ''}
       <div style="
         position:absolute; left:50%; bottom:0; z-index:0;
         width:24px; height:7px; border-radius:999px;

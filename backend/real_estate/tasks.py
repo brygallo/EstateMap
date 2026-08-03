@@ -145,9 +145,37 @@ def _discard(path):
 
 def enqueue_optimization(image_id):
     """
-    Queue the task once the surrounding transaction commits.
+    Queue the task once the surrounding transaction commits, and fall back to
+    doing the work inline if the broker cannot take it.
 
-    Called from the serializer. Before the commit the worker could pick the id up
-    and find no row, because it reads from its own connection.
+    Two things are going on here.
+
+    The on_commit: before the commit the worker could pick the id up and find no
+    row, because it reads from its own connection.
+
+    The fallback: a broker outage must not cost the user their upload. Publishing
+    is the only new way this request can fail, and it would fail *after* the
+    photo was already accepted. Degrading to a synchronous encode is exactly the
+    behaviour this change replaced — slower, but correct and complete — so the
+    worst case is the old latency instead of a 500.
     """
-    transaction.on_commit(lambda: optimize_property_image.delay(image_id))
+
+    def dispatch():
+        try:
+            optimize_property_image.delay(image_id)
+        except Exception:
+            # Deliberately broad: kombu wraps every transport failure
+            # differently (OperationalError, ConnectionError, socket errors),
+            # and no failure to reach the queue justifies losing the image.
+            logger.warning(
+                "Broker unavailable, optimizing PropertyImage %s inline", image_id,
+                exc_info=True,
+            )
+            try:
+                optimize_property_image(image_id)
+            except Exception:
+                # The row stays pending with its file on disk, so the hourly
+                # sweep retries it once the broker is back.
+                logger.exception("Inline fallback failed for PropertyImage %s", image_id)
+
+    transaction.on_commit(dispatch)

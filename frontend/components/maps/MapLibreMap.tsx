@@ -749,7 +749,10 @@ export default function MapLibreMap({
             }
           }
 
-          record.element.setAttribute('aria-label', `Ver propiedad ${property.id}`);
+          record.element.setAttribute('aria-label', isSelected
+            ? `Propiedad seleccionada ${property.id}`
+            : `Ver propiedad ${property.id}`);
+          record.element.style.zIndex = isSelected ? '5000' : 'auto';
           if (record.signature !== signature) {
             record.element.innerHTML = useIcon
               ? iconMarkerHtml({
