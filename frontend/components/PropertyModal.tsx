@@ -21,16 +21,15 @@ import {
   Layers,
   AlignLeft,
   MessageCircle,
-  BadgeCheck,
   Mail,
   Loader2,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { trackEvent } from '@/lib/analytics';
 import { PhoneReveal } from '@/components/PropertyContactActions';
+import RevealableDescription from '@/components/RevealableDescription';
 import { ecuadorPhoneHref, normalizeEcuadorPhone } from '@/lib/phone';
 import ShareModal from './ShareModal';
-import LeadForm from './LeadForm';
 import {
   getPropertyTypeLabel,
   getStatusLabel,
@@ -232,18 +231,23 @@ interface PropertyModalProps {
   onClose: () => void;
   /** Centra el mapa en la propiedad (y cierra el panel en móvil). */
   onViewOnMap?: () => void;
+  /** Builds a share URL that can preserve the current map viewport and filters. */
+  getContextualShareUrl?: () => string;
 }
 
-const PropertyModal = ({ property: initialProperty, isOpen, onClose, onViewOnMap }: PropertyModalProps) => {
+const PropertyModal = ({ property: initialProperty, isOpen, onClose, onViewOnMap, getContextualShareUrl }: PropertyModalProps) => {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [galleryOpen, setGalleryOpen] = useState(false);
   const [shareModalOpen, setShareModalOpen] = useState(false);
   const [fullProperty, setFullProperty] = useState<any | null>(null);
   const [loadingFullProperty, setLoadingFullProperty] = useState(false);
   const [sheetExpanded, setSheetExpanded] = useState(false);
+  const [sheetDragOffset, setSheetDragOffset] = useState(0);
+  const [sheetDismissing, setSheetDismissing] = useState(false);
   const panelRef = useRef<HTMLDivElement>(null);
   const sheetScrollRef = useRef<HTMLDivElement>(null);
-  const sheetTouchStartRef = useRef<{ x: number; y: number; scrollTop: number } | null>(null);
+  const sheetTouchStartRef = useRef<{ x: number; y: number; scrollTop: number; distanceToBottom: number } | null>(null);
+  const sheetDismissTimerRef = useRef<number | null>(null);
   const carouselTouchStartRef = useRef<{ x: number; y: number } | null>(null);
   const carouselSwipedRef = useRef(false);
   const property = fullProperty || initialProperty;
@@ -267,12 +271,24 @@ const PropertyModal = ({ property: initialProperty, isOpen, onClose, onViewOnMap
     if (isOpen) panelRef.current?.focus();
   }, [isOpen, initialProperty?.id]);
 
+  useEffect(() => () => {
+    if (sheetDismissTimerRef.current != null) {
+      window.clearTimeout(sheetDismissTimerRef.current);
+    }
+  }, []);
+
   useEffect(() => {
     if (!isOpen) return;
     setFullProperty(null);
     setCurrentImageIndex(0);
     setGalleryOpen(false);
     setSheetExpanded(false);
+    setSheetDragOffset(0);
+    setSheetDismissing(false);
+    if (sheetDismissTimerRef.current != null) {
+      window.clearTimeout(sheetDismissTimerRef.current);
+      sheetDismissTimerRef.current = null;
+    }
   }, [isOpen, initialProperty?.id]);
 
   useEffect(() => {
@@ -353,11 +369,59 @@ const PropertyModal = ({ property: initialProperty, isOpen, onClose, onViewOnMap
   const handleSheetTouchStart = (event: React.TouchEvent) => {
     const touch = event.touches[0];
     if (!touch) return;
+    const scrollElement = sheetScrollRef.current;
     sheetTouchStartRef.current = {
       x: touch.clientX,
       y: touch.clientY,
-      scrollTop: sheetScrollRef.current?.scrollTop ?? 0,
+      scrollTop: scrollElement?.scrollTop ?? 0,
+      distanceToBottom: scrollElement
+        ? scrollElement.scrollHeight - scrollElement.scrollTop - scrollElement.clientHeight
+        : Number.POSITIVE_INFINITY,
     };
+  };
+
+  const handleSheetTouchMove = (event: React.TouchEvent) => {
+    const start = sheetTouchStartRef.current;
+    const touch = event.touches[0];
+    if (!start || !touch) return;
+    const deltaX = touch.clientX - start.x;
+    const deltaY = touch.clientY - start.y;
+    if (Math.abs(deltaY) <= Math.abs(deltaX) * 1.15) return;
+
+    const scrollElement = sheetScrollRef.current;
+    const distanceToBottom = scrollElement
+      ? scrollElement.scrollHeight - scrollElement.scrollTop - scrollElement.clientHeight
+      : Number.POSITIVE_INFINITY;
+    const draggingDownFromTop = deltaY > 0 && start.scrollTop <= 2;
+    const draggingUpToExpand = deltaY < 0 && !sheetExpanded;
+    const draggingPastBottom = deltaY < 0 && sheetExpanded && distanceToBottom <= 3;
+
+    if (draggingDownFromTop) {
+      setSheetDragOffset(Math.min(deltaY * 0.72, 180));
+    } else if (draggingUpToExpand) {
+      setSheetDragOffset(Math.max(deltaY * 0.28, -56));
+    } else if (draggingPastBottom) {
+      setSheetDragOffset(Math.max(deltaY * 0.12, -18));
+    }
+  };
+
+  const dismissSheet = () => {
+    if (sheetDismissing) return;
+    if (window.innerWidth >= 1024 || window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      onClose();
+      return;
+    }
+    setSheetDragOffset(0);
+    setSheetDismissing(true);
+    sheetDismissTimerRef.current = window.setTimeout(() => {
+      sheetDismissTimerRef.current = null;
+      onClose();
+    }, 240);
+  };
+
+  const cancelSheetGesture = () => {
+    sheetTouchStartRef.current = null;
+    setSheetDragOffset(0);
   };
 
   const collapseSheet = () => {
@@ -368,13 +432,14 @@ const PropertyModal = ({ property: initialProperty, isOpen, onClose, onViewOnMap
   const handleSheetTouchEnd = (event: React.TouchEvent) => {
     const start = sheetTouchStartRef.current;
     sheetTouchStartRef.current = null;
+    setSheetDragOffset(0);
     const touch = event.changedTouches[0];
     if (!start || !touch) return;
 
     const deltaX = touch.clientX - start.x;
     const deltaY = touch.clientY - start.y;
-    // El carrusel conserva el gesto horizontal. El panel solo responde a un
-    // desplazamiento claramente vertical para evitar aperturas accidentales.
+    // Preserve horizontal carousel gestures. The sheet only reacts to a
+    // clearly vertical movement to prevent accidental transitions.
     if (Math.abs(deltaY) < 36 || Math.abs(deltaY) <= Math.abs(deltaX) * 1.15) return;
 
     if (deltaY < 0 && !sheetExpanded) {
@@ -382,11 +447,23 @@ const PropertyModal = ({ property: initialProperty, isOpen, onClose, onViewOnMap
       return;
     }
 
-    // El gesto hacia abajo solo controla la ficha cuando el contenido ya está
-    // arriba. Si está desplazado, dejamos que el scroll vuelva normalmente.
+    // After reaching the end of the details, one additional deliberate upward
+    // swipe dismisses the sheet. The high threshold prevents accidental closes
+    // during normal scrolling or horizontal gallery gestures.
+    if (deltaY < -72 && sheetExpanded) {
+      const scrollElement = sheetScrollRef.current;
+      const distanceToBottom = scrollElement
+        ? scrollElement.scrollHeight - scrollElement.scrollTop - scrollElement.clientHeight
+        : Number.POSITIVE_INFINITY;
+      if (start.distanceToBottom <= 3 && distanceToBottom <= 3) dismissSheet();
+      return;
+    }
+
+    // A downward gesture controls the sheet only when the content is already
+    // at the top. Otherwise, regular scrolling remains in control.
     if (deltaY > 0 && start.scrollTop <= 2) {
       if (sheetExpanded) collapseSheet();
-      else onClose();
+      else dismissSheet();
     }
   };
 
@@ -415,6 +492,8 @@ const PropertyModal = ({ property: initialProperty, isOpen, onClose, onViewOnMap
   // Generate share URL using the canonical property route with Open Graph meta tags
   const getShareUrl = () => {
     if (typeof window === 'undefined') return '';
+    const contextualUrl = getContextualShareUrl?.();
+    if (contextualUrl) return contextualUrl;
     const baseUrl = window.location.origin;
     return `${baseUrl}/propiedad/${property.id}`;
   };
@@ -458,7 +537,11 @@ const PropertyModal = ({ property: initialProperty, isOpen, onClose, onViewOnMap
       {/* Scrim solo en móvil: cierra al tocar fuera sin tapar el mapa en desktop. */}
       <div
         className="fixed inset-x-0 bottom-0 top-[var(--app-header-height)] z-backdrop bg-black/40 lg:hidden"
-        onClick={onClose}
+        onClick={dismissSheet}
+        style={{
+          opacity: sheetDismissing ? 0 : Math.max(0.18, 1 - Math.max(sheetDragOffset, 0) / 260),
+          transition: sheetDragOffset !== 0 ? 'none' : 'opacity 240ms ease-out',
+        }}
         aria-hidden="true"
       />
       <div
@@ -467,9 +550,13 @@ const PropertyModal = ({ property: initialProperty, isOpen, onClose, onViewOnMap
         role="complementary"
         aria-label={`Detalle de ${property.title || 'propiedad'}`}
         className={cn(
-          'fixed inset-x-0 bottom-0 z-panel outline-none animate-panelIn lg:relative lg:inset-auto lg:z-0 lg:h-full lg:w-[26rem] lg:flex-shrink-0',
+          'fixed inset-x-0 bottom-0 z-panel outline-none animate-panelIn will-change-transform lg:relative lg:inset-auto lg:z-0 lg:h-full lg:w-[26rem] lg:flex-shrink-0 lg:transform-none',
           sheetExpanded ? 'mobile-sheet-expanded' : 'mobile-sheet-compact'
         )}
+        style={{
+          transform: sheetDismissing ? 'translateY(105%)' : `translateY(${sheetDragOffset}px)`,
+          transition: sheetDragOffset !== 0 ? 'none' : 'transform 240ms cubic-bezier(0.22, 1, 0.36, 1)',
+        }}
       >
       {/* Panel Container */}
       <div
@@ -482,8 +569,10 @@ const PropertyModal = ({ property: initialProperty, isOpen, onClose, onViewOnMap
           type="button"
           onClick={() => sheetExpanded ? collapseSheet() : setSheetExpanded(true)}
           onTouchStart={handleSheetTouchStart}
+          onTouchMove={handleSheetTouchMove}
           onTouchEnd={handleSheetTouchEnd}
-          className="absolute inset-x-0 top-0 z-20 flex h-7 touch-none items-center justify-center bg-white/95 backdrop-blur lg:hidden"
+          onTouchCancel={cancelSheetGesture}
+          className="absolute inset-x-0 top-0 z-20 flex h-11 touch-none items-center justify-center bg-white/95 backdrop-blur lg:hidden"
           aria-label={sheetExpanded ? 'Contraer ficha' : 'Expandir ficha'}
         >
           <span className="h-1.5 w-11 rounded-full bg-slate-300" aria-hidden />
@@ -492,7 +581,7 @@ const PropertyModal = ({ property: initialProperty, isOpen, onClose, onViewOnMap
           {/* Share Button */}
           <button
             onClick={() => setShareModalOpen(true)}
-            className="absolute right-12 top-8 z-10 rounded-full bg-black/55 p-2 text-white shadow-card backdrop-blur transition-colors hover:bg-black/75 lg:top-3"
+            className="absolute right-16 top-12 z-10 flex h-11 w-11 items-center justify-center rounded-full bg-black/55 text-white shadow-card backdrop-blur transition-colors hover:bg-black/75 lg:right-12 lg:top-3 lg:h-8 lg:w-8"
             title="Compartir propiedad"
             aria-label="Compartir propiedad"
           >
@@ -501,8 +590,8 @@ const PropertyModal = ({ property: initialProperty, isOpen, onClose, onViewOnMap
 
           {/* Close Button */}
           <button
-            onClick={onClose}
-            className="absolute right-3 top-8 z-10 rounded-full bg-white/95 p-2 text-textPrimary shadow-card backdrop-blur transition-colors hover:bg-white lg:top-3"
+            onClick={dismissSheet}
+            className="absolute right-3 top-12 z-10 flex h-11 w-11 items-center justify-center rounded-full bg-white/95 text-textPrimary shadow-card backdrop-blur transition-colors hover:bg-white lg:top-3 lg:h-8 lg:w-8"
             aria-label="Cerrar"
           >
             <X className="h-4 w-4" strokeWidth={2} aria-hidden />
@@ -511,9 +600,11 @@ const PropertyModal = ({ property: initialProperty, isOpen, onClose, onViewOnMap
           {/* Scrollable Content */}
           <div
             ref={sheetScrollRef}
-            className="min-h-0 flex-1 touch-pan-y overflow-y-auto overscroll-contain pb-24 pt-7 lg:max-h-none lg:pb-0 lg:pt-0"
+            className="min-h-0 flex-1 touch-pan-y overflow-y-auto overscroll-contain pb-24 pt-11 lg:max-h-none lg:pb-0 lg:pt-0"
             onTouchStart={handleSheetTouchStart}
+            onTouchMove={handleSheetTouchMove}
             onTouchEnd={handleSheetTouchEnd}
+            onTouchCancel={cancelSheetGesture}
           >
             {/* Image Gallery Section */}
             {activeImage ? (
@@ -709,7 +800,17 @@ const PropertyModal = ({ property: initialProperty, isOpen, onClose, onViewOnMap
                     <AlignLeft className="h-3.5 w-3.5 text-primary" strokeWidth={1.75} aria-hidden />
                     Descripción
                   </h3>
-                  <p className="whitespace-pre-line text-sm leading-5 text-textSecondary">{property.description}</p>
+                  <RevealableDescription
+                    text={property.description}
+                    source="modal_description_text"
+                    propertyId={property.id}
+                    city={property.city}
+                    province={property.province}
+                    propertyType={property.property_type}
+                    status={property.status}
+                    imported={isImported}
+                    className="whitespace-pre-line text-sm leading-5 text-textSecondary"
+                  />
                 </div>
               )}
 
@@ -743,12 +844,6 @@ const PropertyModal = ({ property: initialProperty, isOpen, onClose, onViewOnMap
                 </div>
 
                 <div className="space-y-1.5 text-xs text-textSecondary">
-                  {isImported && (
-                    <div className="flex items-center gap-2">
-                      <BadgeCheck className="h-4 w-4 flex-shrink-0 text-success" strokeWidth={1.75} aria-hidden />
-                      <span>Anuncio agregado desde fuente externa</span>
-                    </div>
-                  )}
                   {contactPhone && (
                     <div className="flex items-center gap-2">
                       <Phone className="h-4 w-4 flex-shrink-0 text-primary" strokeWidth={1.75} aria-hidden />
@@ -773,69 +868,39 @@ const PropertyModal = ({ property: initialProperty, isOpen, onClose, onViewOnMap
                 </div>
               </div>
 
-              {/* Zona de contacto: las propiedades importadas redirigen al contacto real de origen. */}
-              <div
-                className={`space-y-2 rounded-card border border-line bg-white p-3 shadow-card ${
-                  isImported && (contactPhone || sourceUrl) ? 'hidden lg:block' : ''
-                }`}
-              >
-                {isImported ? (
-                  contactPhone ? (
-                    <a
-                      href={whatsappUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      onClick={() => trackContact('whatsapp', 'modal_imported')}
-                      className="wa-bounce flex w-full items-center justify-center gap-2 rounded-button bg-secondary px-4 py-2.5 text-sm font-semibold text-white shadow-card transition-colors hover:bg-secondaryHover"
-                    >
-                      <MessageCircle className="h-4 w-4" strokeWidth={2} aria-hidden />
-                      Contactar por WhatsApp
-                    </a>
-                  ) : sourceUrl ? (
-                    <a
-                      href={sourceUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      onClick={() => trackContact('source_url', 'modal_imported')}
-                      className="flex w-full items-center justify-center gap-2 rounded-button bg-primary px-4 py-2.5 text-sm font-semibold text-white shadow-card transition-colors hover:bg-primaryHover"
-                    >
-                      <ExternalLink className="h-4 w-4" strokeWidth={2} aria-hidden />
-                      Contactar en {sourceAgency || 'la página original'}
-                    </a>
-                  ) : (
-                    <div className="rounded-card border border-line bg-background p-3 text-sm text-textSecondary">
-                      Esta propiedad viene de una fuente externa y no tiene contacto disponible.
-                    </div>
-                  )
-                ) : (
-                  <>
-                    {contactPhone && (
-                      <div className="hidden rounded-card bg-primary p-3 text-white lg:block">
-                        <h3 className="mb-1.5 flex items-center gap-1.5 text-xs font-bold">
-                          <Phone className="h-4 w-4" strokeWidth={2} aria-hidden />
-                          Contacto directo
-                        </h3>
-                        <PhoneReveal
-                          phone={callablePhone}
-                          source="modal_contact_box"
-                          propertyId={property.id}
-                          city={property.city}
-                          province={property.province}
-                          propertyType={property.property_type}
-                          status={property.status}
-                          imported={isImported}
-                          className="mb-2 inline-block text-sm font-bold text-white underline-offset-2 hover:underline"
-                        />
-                        <div className="grid grid-cols-2 gap-2">
+              {/* Contact actions share the same visual structure for every listing source. */}
+              <div className="hidden lg:block">
+                {contactPhone ? (
+                      <div className="overflow-hidden rounded-card border border-line bg-white shadow-card">
+                        <div className="flex items-center gap-3 border-b border-line bg-primaryLight/60 px-4 py-3">
+                          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary text-white shadow-sm">
+                            <Phone className="h-4 w-4" strokeWidth={2} aria-hidden />
+                          </span>
+                          <div>
+                            <h3 className="text-sm font-bold text-textPrimary">Teléfono del anunciante</h3>
+                            <p className="text-[11px] text-textSecondary">Elige cómo comunicarte</p>
+                          </div>
+                        </div>
+                        <div className="p-4">
+                          <PhoneReveal
+                            phone={callablePhone}
+                            source="modal_contact_box"
+                            propertyId={property.id}
+                            city={property.city}
+                            province={property.province}
+                            propertyType={property.property_type}
+                            status={property.status}
+                            imported={isImported}
+                            className="mb-3 block w-full rounded-button bg-background px-3 py-2.5 text-center font-geo text-base font-bold tabular-nums text-primary transition-colors hover:bg-primaryLight hover:underline"
+                          />
+                          <div className="grid grid-cols-2 gap-2">
                           <a
                             href={`tel:${callablePhone}`}
                             onClick={() => trackContact('call', 'modal_contact_box')}
-                            className="flex flex-col items-center gap-1 rounded-button bg-white/20 p-2 transition-all hover:bg-white/30"
+                            className="flex min-h-11 items-center justify-center gap-2 rounded-button border border-line bg-white px-3 py-2.5 text-sm font-semibold text-textPrimary transition-colors hover:border-primary hover:bg-primaryLight hover:text-primary"
                           >
-                            <span className="rounded-md bg-white/20 p-1.5">
-                              <Phone className="h-4 w-4" strokeWidth={2} aria-hidden />
-                            </span>
-                            <div className="text-xs font-medium">Llamar</div>
+                            <Phone className="h-4 w-4" strokeWidth={2} aria-hidden />
+                            <span>Llamar</span>
                           </a>
 
                           <a
@@ -843,37 +908,48 @@ const PropertyModal = ({ property: initialProperty, isOpen, onClose, onViewOnMap
                             target="_blank"
                             rel="noopener noreferrer"
                             onClick={() => trackContact('whatsapp', 'modal_contact_box')}
-                            className="wa-bounce flex flex-col items-center gap-1 rounded-button bg-secondary p-2 transition-all hover:bg-secondaryHover"
+                            className="wa-bounce flex min-h-11 items-center justify-center gap-2 rounded-button bg-secondary px-3 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-secondaryHover"
                           >
-                            <span className="rounded-md bg-white/20 p-1.5">
-                              <MessageCircle className="h-4 w-4" strokeWidth={2} aria-hidden />
-                            </span>
-                            <div className="text-xs font-medium">WhatsApp</div>
+                            <MessageCircle className="h-4 w-4" strokeWidth={2} aria-hidden />
+                            <span>WhatsApp</span>
                           </a>
                         </div>
+                        </div>
                       </div>
-                    )}
-
-                    {contactPhone && (
-                      <div className="hidden items-center gap-3 lg:flex" aria-hidden>
-                        <span className="h-px flex-1 bg-line" />
-                        <span className="text-xs font-medium text-textSecondary">o déjanos tus datos</span>
-                        <span className="h-px flex-1 bg-line" />
+                ) : sourceUrl ? (
+                  <div className="overflow-hidden rounded-card border border-line bg-white shadow-card">
+                    <div className="flex items-center gap-3 border-b border-line bg-primaryLight/60 px-4 py-3">
+                      <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary text-white shadow-sm">
+                        <ExternalLink className="h-4 w-4" strokeWidth={2} aria-hidden />
+                      </span>
+                      <div>
+                        <h3 className="text-sm font-bold text-textPrimary">Anuncio original</h3>
+                        <p className="text-[11px] text-textSecondary">Publicado por {sourceAgency || 'una fuente externa'}</p>
                       </div>
-                    )}
-
-                    <LeadForm
-                      propertyId={property.id}
-                      source="property_modal"
-                      showTitle={!contactPhone}
-                    />
-                  </>
+                    </div>
+                    <div className="p-4">
+                      <a
+                        href={sourceUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        onClick={() => trackContact('source_url', 'modal_source')}
+                        className="flex min-h-11 w-full items-center justify-center gap-2 rounded-button bg-primary px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-primaryHover"
+                      >
+                        <ExternalLink className="h-4 w-4" strokeWidth={2} aria-hidden />
+                        Ver anuncio original
+                      </a>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="rounded-card border border-line bg-background p-3 text-sm text-textSecondary">
+                    Información del anunciante no disponible.
+                  </div>
                 )}
               </div>
             </div>
           </div>
 
-          <div className="absolute inset-x-0 bottom-0 z-20 border-t border-line bg-white/95 p-3 shadow-[0_-8px_24px_rgba(15,23,42,0.10)] backdrop-blur lg:hidden">
+          <div className="absolute inset-x-0 bottom-0 z-20 border-t border-line bg-white/95 px-3 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] shadow-[0_-8px_24px_rgba(15,23,42,0.10)] backdrop-blur lg:hidden">
             {canWhatsApp ? (
               <div className="grid grid-cols-[0.82fr_1.18fr] gap-2">
                 {canCall && (
@@ -906,7 +982,7 @@ const PropertyModal = ({ property: initialProperty, isOpen, onClose, onViewOnMap
                 className="flex w-full items-center justify-center gap-2 rounded-button bg-primary px-3 py-3 text-sm font-semibold text-white shadow-card"
               >
                 <ExternalLink className="h-4 w-4" strokeWidth={2} aria-hidden />
-                Contactar
+                Ver anuncio original
               </a>
             ) : (
               <a
@@ -976,6 +1052,7 @@ const PropertyModal = ({ property: initialProperty, isOpen, onClose, onViewOnMap
         .wa-bounce:hover { animation: waBounce 0.5s ease; }
         @media (prefers-reduced-motion: reduce) {
           .animate-panelIn, .animate-fadeIn, .wa-bounce:hover { animation: none; }
+          .mobile-sheet-compact, .mobile-sheet-expanded { transition: none !important; }
         }
       `}</style>
       </div>

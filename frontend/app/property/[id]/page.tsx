@@ -38,6 +38,7 @@ import AdminRefreshProperty from '@/components/AdminRefreshProperty';
 import PropertyIntelligence from '@/components/PropertyIntelligence';
 import PropertyCard from '@/components/PropertyCard';
 import BrandAtmosphere from '@/components/aents/BrandAtmosphere';
+import RevealableDescription from '@/components/RevealableDescription';
 import { normalizeEcuadorPhone } from '@/lib/phone';
 import { PhoneReveal, TrackedContactLink } from '@/components/PropertyContactActions';
 
@@ -578,9 +579,12 @@ export default async function PropertyPage({ params }: PropertyPageProps) {
                 <>
                   <Separator className="my-6 bg-line" />
                   <h2 className="mb-3 text-lg font-semibold text-textPrimary">Descripción</h2>
-                  <p className="whitespace-pre-line leading-relaxed text-textSecondary">
-                    {property.description}
-                  </p>
+                  <RevealableDescription
+                    text={property.description}
+                    source="property_page_description_text"
+                    {...contactTrackingProps}
+                    className="whitespace-pre-line leading-relaxed text-textSecondary"
+                  />
                 </>
               )}
 
@@ -681,7 +685,7 @@ export default async function PropertyPage({ params }: PropertyPageProps) {
                       </TrackedContactLink>
                     ) : (
                       <div className="rounded-card border border-line bg-background p-3 text-sm text-textSecondary">
-                        Esta propiedad viene de una fuente externa y no tiene contacto disponible.
+                        Esta propiedad no tiene contacto disponible.
                       </div>
                     )
                   ) : (
@@ -728,16 +732,18 @@ export default async function PropertyPage({ params }: PropertyPageProps) {
                   </Link>
                 </div>
 
-                <div className="mt-5 flex items-center justify-center gap-1.5 text-xs text-textSecondary">
-                  <BadgeCheck className="h-4 w-4 text-success" strokeWidth={1.75} aria-hidden />
-                  {isImported ? 'Anuncio agregado desde fuente externa' : 'Propiedad publicada en Geo Propiedades'}
-                </div>
+                {!isImported && (
+                  <div className="mt-5 flex items-center justify-center gap-1.5 text-xs text-textSecondary">
+                    <BadgeCheck className="h-4 w-4 text-success" strokeWidth={1.75} aria-hidden />
+                    Propiedad publicada en Geo Propiedades
+                  </div>
+                )}
               </div>
             </aside>
           </div>
 
-          {/* El explorador usa todo el viewport: permite comparar ubicaciones
-              sin confinar el mapa a la columna de texto de la ficha. */}
+          {/* The explorer spans the full viewport so locations can be compared
+              without confining the map to the details text column. */}
           <section className="relative left-1/2 mt-10 w-screen -translate-x-1/2 border-y border-line bg-surface" aria-labelledby="property-map-title">
             <div className="mx-auto max-w-6xl px-4 py-4">
               <h2 id="property-map-title" className="text-lg font-semibold text-textPrimary">Ubicación y propiedades cercanas</h2>

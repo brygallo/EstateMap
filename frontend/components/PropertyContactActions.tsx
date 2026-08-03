@@ -5,7 +5,7 @@ import { trackEvent } from '@/lib/analytics';
 
 type ContactMethod = 'whatsapp' | 'call' | 'source_url' | 'phone_reveal';
 
-interface ContactContext {
+export interface ContactContext {
   propertyId: number | string;
   city?: string;
   province?: string;
@@ -24,7 +24,7 @@ interface TrackedContactLinkProps extends ContactContext {
   children: ReactNode;
 }
 
-function trackContact(
+export function trackContact(
   context: ContactContext,
   method: ContactMethod,
   source: string

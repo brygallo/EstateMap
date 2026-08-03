@@ -60,8 +60,11 @@ def _build_owner_metrics(now=None):
     trend_since = now - timedelta(days=13)
     trend_start = trend_since.date()
 
-    current_events = ActivityEvent.objects.filter(created_at__gte=current_start)
-    previous_events = ActivityEvent.objects.filter(
+    # Human traffic only: crawler events are stored with is_bot=True and stay out
+    # of every metric the owner reads as "people". Bot volume is reported apart.
+    human_events = ActivityEvent.objects.filter(is_bot=False)
+    current_events = human_events.filter(created_at__gte=current_start)
+    previous_events = human_events.filter(
         created_at__gte=previous_start, created_at__lt=current_start
     )
     current_users = get_user_model().objects.filter(date_joined__gte=current_start).count()
@@ -72,10 +75,10 @@ def _build_owner_metrics(now=None):
     previous_contacts = previous_events.filter(event_name="property_contact_clicked").count()
     current_details = current_events.filter(event_name__in=DETAIL_EVENTS).count()
     previous_details = previous_events.filter(event_name__in=DETAIL_EVENTS).count()
-    current_publications = ActivityEvent.objects.filter(
+    current_publications = human_events.filter(
         created_at__gte=current_start, event_name="publication_created"
     ).count()
-    previous_publications = ActivityEvent.objects.filter(
+    previous_publications = human_events.filter(
         created_at__gte=previous_start,
         created_at__lt=current_start,
         event_name="publication_created",
@@ -89,18 +92,84 @@ def _build_owner_metrics(now=None):
         "publications": {"value": current_publications, "change": _change(current_publications, previous_publications)},
     }
 
-    month_events = ActivityEvent.objects.filter(created_at__gte=month_start)
+    month_events = human_events.filter(created_at__gte=month_start)
+    month_bot_events = ActivityEvent.objects.filter(created_at__gte=month_start, is_bot=True)
+    contact_events_month = month_events.filter(event_name="property_contact_clicked")
     contact_methods = [
         {
             "method": row["payload__method"] or "unknown",
             "count": row["count"],
         }
         for row in (
-            month_events.filter(event_name="property_contact_clicked")
+            contact_events_month
             .values("payload__method")
             .annotate(count=Count("id"))
             .order_by("-count", "payload__method")
         )
+    ]
+
+    contacts_total = contact_events_month.count()
+    # Dedup by (session_id or user, property): a person who reveals the phone,
+    # opens WhatsApp and then calls is still a single interested contact.
+    seen_contacts = set()
+    property_unique_contacts = {}
+    for event in contact_events_month.values("id", "session_id", "user_id", "property_id"):
+        # Person key: session, then user, then (as a last resort) the event
+        # itself. An event with neither session_id nor user still represents
+        # a real contact — falling back to a per-event key keeps it counted
+        # in contacts_unique instead of silently dropping it, at the cost of
+        # never being deduped against another event from the same person.
+        person = (
+            event["session_id"]
+            or (f"user:{event['user_id']}" if event["user_id"] else "")
+            or f"event:{event['id']}"
+        )
+        # Property-less contacts still count towards contacts_unique (someone
+        # did contact), but they can't contribute to top_contacted_properties,
+        # so give each one its own key (never dedupe them against each other)
+        # instead of dropping them entirely.
+        property_key = event["property_id"] if event["property_id"] else f"noprop:{event['id']}"
+        key = (person, property_key)
+        if key in seen_contacts:
+            continue
+        seen_contacts.add(key)
+        if event["property_id"]:
+            property_unique_contacts[event["property_id"]] = (
+                property_unique_contacts.get(event["property_id"], 0) + 1
+            )
+    contacts_unique = len(seen_contacts)
+    # Denominator for contact_rate: unique audience over BOTH map-page detail
+    # events (DETAIL_EVENTS only fire there) and property-page views, so a
+    # contact made from /propiedad/<id> (which never fires a DETAIL_EVENTS
+    # event) still has a matching detail view in the denominator instead of
+    # inflating the rate above 100%. Property-page views are identified by
+    # payload.page_type == "property", which is what AnalyticsPageView emits
+    # for /propiedad/<id> — not by path, which is brittle to route changes.
+    month_detail_or_property_view = month_events.filter(
+        Q(event_name__in=DETAIL_EVENTS)
+        | Q(event_name="page_view", payload__page_type="property")
+    )
+    detail_audience = _audience(month_detail_or_property_view)
+    contact_rate = (
+        round((contacts_unique / detail_audience) * 100, 1) if detail_audience else 0.0
+    )
+
+    top_contacted_ids = sorted(
+        property_unique_contacts, key=lambda pid: property_unique_contacts[pid], reverse=True
+    )[:10]
+    top_contacted_lookup = {
+        row["id"]: row
+        for row in Property.objects.filter(id__in=top_contacted_ids).values("id", "title", "city")
+    }
+    top_contacted_properties = [
+        {
+            "id": pid,
+            "title": top_contacted_lookup[pid]["title"],
+            "city": top_contacted_lookup[pid]["city"],
+            "count": property_unique_contacts[pid],
+        }
+        for pid in top_contacted_ids
+        if pid in top_contacted_lookup
     ]
     # Atribución first-touch capturada por el cliente. Se agrupa por sesión para
     # no inflar visitas cuando una misma persona genera varios eventos.
@@ -143,7 +212,7 @@ def _build_owner_metrics(now=None):
             "rate": round((value / base_count) * 100, 1) if base_count else 0,
         })
 
-    event_days = _daily_counts(ActivityEvent.objects.all(), "created_at", trend_since)
+    event_days = _daily_counts(human_events, "created_at", trend_since)
     user_days = _daily_counts(get_user_model().objects.all(), "date_joined", trend_since)
     property_days = _daily_counts(Property.objects.all(), "created_at", trend_since)
     lead_days = _daily_counts(Lead.objects.all(), "created_at", trend_since)
@@ -165,6 +234,7 @@ def _build_owner_metrics(now=None):
                 filter=Q(
                     activity_events__created_at__gte=month_start,
                     activity_events__event_name__in=DETAIL_EVENTS,
+                    activity_events__is_bot=False,
                 ),
             ),
             contact_events=Count(
@@ -172,6 +242,7 @@ def _build_owner_metrics(now=None):
                 filter=Q(
                     activity_events__created_at__gte=month_start,
                     activity_events__event_name="property_contact_clicked",
+                    activity_events__is_bot=False,
                 ),
             ),
         )
@@ -183,7 +254,7 @@ def _build_owner_metrics(now=None):
     source_performance = []
     for source in Fuente.objects.all():
         source_properties = Property.objects.filter(source=source, is_imported=True)
-        source_events = ActivityEvent.objects.filter(
+        source_events = human_events.filter(
             created_at__gte=month_start, property__source=source
         )
         details = source_events.filter(event_name__in=DETAIL_EVENTS).count()
@@ -201,6 +272,8 @@ def _build_owner_metrics(now=None):
     source_performance.sort(key=lambda item: (item["contacts_30d"], item["details_30d"]), reverse=True)
 
     active_users_30d = _audience(month_events)
+    bot_events_30d = month_bot_events.count()
+    bot_sessions_30d = _audience(month_bot_events)
     recurring_sessions = (
         month_events.exclude(session_id="")
         .annotate(day=TruncDate("created_at"))
@@ -256,10 +329,18 @@ def _build_owner_metrics(now=None):
         "source_performance": source_performance,
         "acquisition_channels": acquisition_channels[:20],
         "contact_methods": contact_methods,
+        "contacts_total": contacts_total,
+        "contacts_unique": contacts_unique,
+        "contact_rate": contact_rate,
+        "top_contacted_properties": top_contacted_properties,
         "audience": {
             "active_30d": active_users_30d,
             "recurring_30d": recurring_sessions,
             "high_intent_users_30d": high_intent_users,
+            # Additive keys: how much traffic was discarded as non-human, so the
+            # panel can show the bot share without polluting the human numbers.
+            "bot_events_30d": bot_events_30d,
+            "bot_sessions_30d": bot_sessions_30d,
         },
         "alerts": alerts,
         "weekly_summary": weekly_summary,

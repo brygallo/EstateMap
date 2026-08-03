@@ -118,6 +118,10 @@ interface OwnerMetrics {
     conversion: number;
   }>;
   contact_methods: Array<{ method: string; count: number }>;
+  contacts_total?: number;
+  contacts_unique?: number;
+  contact_rate?: number;
+  top_contacted_properties?: Array<{ id: number; title: string; city: string; count: number }>;
   audience: { active_30d: number; recurring_30d: number; high_intent_users_30d: number };
   alerts: Array<{ severity: 'critical' | 'warning' | 'ok'; title: string; value: number; href: string }>;
   weekly_summary: string[];
@@ -323,7 +327,7 @@ const AdminDashboard = () => {
                       {data.recent_properties.map((p: any) => (
                         <TableRow key={p.id} className="cursor-pointer transition-colors hover:bg-muted/50">
                           <TableCell className="font-medium text-textPrimary">
-                            <Link href={`/property/${p.id}`} className="hover:no-underline">
+                          <Link href={`/propiedad/${p.id}`} className="hover:no-underline">
                               {p.title || `Propiedad #${p.id}`}
                             </Link>
                           </TableCell>
@@ -509,6 +513,53 @@ function OwnerExecutive({ metrics }: { metrics: OwnerMetrics }) {
         </Card>
       </div>
 
+      <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(280px,0.8fr)]">
+        <Card className="rounded-card shadow-card">
+          <CardHeader className="pb-3">
+            <CardTitle className="flex items-center gap-2 text-base"><MousePointerClick className="h-4 w-4" /> Contactos · 30 días</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-3 gap-2">
+              <AudienceMetric label="Total contactos" value={metrics.contacts_total ?? 0} icon={MousePointerClick} />
+              <AudienceMetric label="Contactos únicos" value={metrics.contacts_unique ?? 0} icon={UserCheck} />
+              <AudienceMetric label="Tasa de contacto (únicos / vistas de detalle)" value={metrics.contact_rate ?? 0} icon={TrendingUp} suffix="%" />
+            </div>
+            <div className="mt-4 space-y-2">
+              {(metrics.contact_methods || []).length === 0 ? (
+                <p className="text-sm text-textSecondary">Sin acciones de contacto registradas.</p>
+              ) : metrics.contact_methods.map((item) => (
+                <div key={item.method} className="flex items-center justify-between text-sm">
+                  <span className="text-textSecondary">{contactMethodLabels[item.method] || item.method}</span>
+                  <span className="font-geo font-medium text-textPrimary">{item.count.toLocaleString('es-EC')}</span>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="rounded-card shadow-card">
+          <CardHeader className="pb-3"><CardTitle className="text-base">Propiedades más contactadas · 30 días</CardTitle></CardHeader>
+          <CardContent className="space-y-2">
+            {(metrics.top_contacted_properties || []).length === 0 ? (
+              <p className="text-sm text-textSecondary">Aún no hay contactos registrados este mes.</p>
+            ) : (metrics.top_contacted_properties || []).map((property) => (
+              <Link
+                key={property.id}
+                href={`/property/${property.id}`}
+                target="_blank"
+                className="flex items-center justify-between gap-3 rounded-card border border-line px-3 py-2 text-sm transition-colors hover:border-primary/30 hover:bg-primaryLight/30"
+              >
+                <span className="min-w-0 flex-1 truncate">
+                  <span className="font-medium text-textPrimary">{property.title || `Propiedad #${property.id}`}</span>
+                  <span className="ml-1 text-textSecondary">· {property.city || '—'}</span>
+                </span>
+                <span className="font-geo font-semibold text-textPrimary">{property.count.toLocaleString('es-EC')}</span>
+              </Link>
+            ))}
+          </CardContent>
+        </Card>
+      </div>
+
       <div className="grid gap-4 xl:grid-cols-2">
         <ExecutiveTable
           title="Acciones de contacto · 30 días"
@@ -547,7 +598,7 @@ function OwnerExecutive({ metrics }: { metrics: OwnerMetrics }) {
           title="Propiedades con mayor intención · 30 días"
           headers={['Propiedad', 'Ciudad', 'Detalles', 'Contactos']}
           rows={metrics.top_properties.map((property) => [
-            <Link key={property.id} href={`/property/${property.id}`} target="_blank" className="block max-w-[240px] truncate font-medium text-primary hover:underline">{property.title || `Propiedad #${property.id}`}</Link>,
+            <Link key={property.id} href={`/propiedad/${property.id}`} target="_blank" className="block max-w-[240px] truncate font-medium text-primary hover:underline">{property.title || `Propiedad #${property.id}`}</Link>,
             property.city || '—',
             property.detail_events.toLocaleString('es-EC'),
             property.contact_events.toLocaleString('es-EC'),
@@ -580,11 +631,21 @@ function OwnerExecutive({ metrics }: { metrics: OwnerMetrics }) {
   );
 }
 
-function AudienceMetric({ label, value, icon: Icon }: { label: string; value: number; icon: React.ComponentType<{ className?: string }> }) {
+function AudienceMetric({
+  label,
+  value,
+  icon: Icon,
+  suffix = '',
+}: {
+  label: string;
+  value: number;
+  icon: React.ComponentType<{ className?: string }>;
+  suffix?: string;
+}) {
   return (
     <div className="rounded-card bg-background p-3 text-center">
       <Icon className="mx-auto h-4 w-4 text-primary" />
-      <p className="mt-2 font-geo text-xl font-bold text-textPrimary">{value.toLocaleString('es-EC')}</p>
+      <p className="mt-2 font-geo text-xl font-bold text-textPrimary">{value.toLocaleString('es-EC')}{suffix}</p>
       <p className="text-[11px] text-textSecondary">{label}</p>
     </div>
   );
@@ -649,7 +710,7 @@ function OperationsCenter({ data }: { data: DashboardData }) {
       description: 'Están ocultas del mapa por deduplicación.',
       icon: GitMerge,
       tone: 'violet',
-      href: '/admin/ingesta?tab=importadas&estado=duplicadas',
+      href: '/admin/ingesta?tab=mantenimiento',
     },
   ];
 
