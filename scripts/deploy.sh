@@ -1,5 +1,15 @@
 #!/bin/bash
-set -e
+# pipefail matters here: several steps pipe a manage.py command into `tail`,
+# and without it the pipeline reports tail's exit code, hiding the failure.
+set -eo pipefail
+
+# The braces wrap the whole script on purpose. This file rewrites itself
+# halfway through (`git reset --hard` below pulls the new release), and bash
+# reads a script incrementally: without the group, execution would continue at
+# a byte offset inside the *new* file and silently skip or repeat steps. A
+# compound command is parsed in full before it runs, so the version that
+# started the deploy is the version that finishes it.
+{
 
 echo "🚀 Starting deployment..."
 
@@ -115,3 +125,5 @@ echo "📋 Recent logs:"
 docker-compose -f docker-compose.prod.yml logs --tail=50
 
 echo "✅ Deployment completed successfully!"
+
+}
