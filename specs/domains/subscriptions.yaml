@@ -1,0 +1,220 @@
+version: 1
+domain: subscriptions
+title: Suscripciones y planes
+# 'partial' y no 'not_implemented': las suscripciones no existen, pero este
+# archivo sí describe cosas que existen y que las rodean (los límites globales,
+# la página de precios). El estado del dominio resume lo que hay en el archivo,
+# no el deseo de que hubiera suscripciones.
+status: partial
+summary: >
+  El sistema no tiene suscripciones. No existe modelo de plan, ni campo de plan
+  en User, ni pasarela de pago, ni tope de propiedades por usuario. Lo que sí
+  existe es una tabla de precios estática en la página de inmobiliarias cuyos
+  botones abren WhatsApp, y unos límites técnicos globales iguales para todo el
+  mundo. Este archivo deja constancia de esa diferencia para que nadie vuelva a
+  darla por implementada.
+see_also:
+  - docs/business-rules/subscriptions.md
+  - docs/business-rules/payments.md
+  - docs/workflows/buy-premium.md
+  - specs/permissions/matrix.yaml
+
+rules:
+  - id: SUB-001
+    name: Importación exclusiva para Premium
+    status: not_implemented
+    summary: >
+      No existe ninguna restricción de importación por plan de suscripción,
+      porque no existen los planes.
+    rationale: >
+      Esta regla llegó como ejemplo de lo que se quería especificar, con
+      condiciones de subscription_status y un error PREMIUM_REQUIRED. Al
+      contrastarla con el código no había nada de eso: ni modelo, ni migración,
+      ni endpoint, ni pasarela. Se queda registrada como intención, sin
+      evidencia, y sus casos se generan como tests en skip. Hoy la importación
+      la lanza personal de staff desde el panel, no un usuario con un plan, así
+      que la regla vigente es SUB-002 más la de permisos correspondiente.
+    conditions:
+      user_authenticated: true
+      subscription_status: active
+      required_plan: [premium, business]
+    frontend:
+      visible_when_allowed: true
+      hidden_when_denied: true
+      upgrade_message: Activa Premium para importar propiedades
+    backend:
+      enforce: true
+      denied_http_status: 403
+      note: >
+        El código de error propuesto (PREMIUM_REQUIRED) no está declarado en
+        specs/errors/catalog.yaml a propósito: declararlo sugeriría que la API
+        puede devolverlo, y no puede.
+    tests:
+      unit: false
+      api: false
+      playwright: false
+    cases:
+      - name: Usuario gratuito
+        given: {plan: free}
+        expected: denied
+        note: Comportamiento deseado. Hoy la pregunta ni siquiera se plantea.
+      - name: Usuario premium activo
+        given: {plan: premium, subscription_status: active}
+        expected: allowed
+      - name: Premium vencido
+        given: {plan: premium, subscription_status: expired}
+        expected: denied
+    see_also:
+      - docs/workflows/buy-premium.md
+
+  - id: SUB-002
+    name: Las cuentas no tienen plan ni estado de suscripción
+    status: implemented
+    summary: >
+      El modelo User solo añade correo único, verificación de correo y campos de
+      OAuth sobre el usuario de Django. No hay plan, ni cuota, ni fecha de
+      caducidad, así que no hay ningún punto del sistema donde consultar el nivel
+      de una cuenta.
+    evidence:
+      - file: backend/real_estate/models.py
+        lines: "7-16"
+        symbol: "class User(AbstractUser)"
+        note: >
+          Definición completa del usuario. Los únicos campos propios son email,
+          is_email_verified y los tres de OAuth.
+    cases:
+      - name: Campos disponibles para decidir acceso por plan
+        given: {modelo: User}
+        expected: ninguno
+    tests: {}
+
+  - id: SUB-003
+    name: Los límites de publicación son globales, no por usuario
+    status: implemented
+    summary: >
+      Los topes de imágenes y de peso son constantes de configuración iguales
+      para toda cuenta. Cambiar el límite de una persona concreta exige tocar el
+      despliegue entero.
+    rationale: >
+      El propio archivo de configuración deja anotado que aquí es donde entrarían
+      los límites por usuario cuando existan los planes. Merece la pena citarlo:
+      es la única señal en todo el código de que alguna vez se pensó en ello.
+    evidence:
+      - file: backend/estate_map/settings.py
+        lines: "373-375"
+        symbol: MAX_IMAGES_PER_PROPERTY
+        note: >
+          La línea 367 es el comentario "User-specific limits can be introduced
+          here when subscription plans are implemented".
+    cases:
+      - name: Máximo de imágenes por propiedad
+        given: {constante: MAX_IMAGES_PER_PROPERTY}
+        expected: 10
+      - name: Peso máximo por imagen (MB)
+        given: {constante: MAX_IMAGE_SIZE_MB}
+        expected: 10
+      - name: Peso máximo por lote de subida (MB)
+        given: {constante: MAX_PROPERTY_UPLOAD_MB}
+        expected: 50
+    tests: {}
+
+  - id: SUB-004
+    name: No hay tope de propiedades por cuenta
+    status: implemented
+    summary: >
+      Una cuenta puede publicar tantas propiedades como quiera. El único freno es
+      el throttle de escritura, que limita el ritmo (30 por hora) pero no el
+      total acumulado.
+    evidence:
+      - file: backend/estate_map/settings.py
+        lines: "187-196"
+        symbol: "'property_write': '30/hour'"
+        note: >
+          Los cinco scopes de throttling. Ninguno cuenta propiedades existentes;
+          todos miden peticiones por ventana de tiempo.
+    cases:
+      - name: Cuenta con 500 propiedades publicadas intenta publicar otra
+        given: {propiedades_existentes: 500}
+        expected: allowed
+        note: Sujeto al ritmo de 30 escrituras por hora, no a un tope total.
+    tests: {}
+
+  - id: SUB-005
+    name: La página de inmobiliarias muestra precios pero no cobra
+    status: implemented
+    summary: >
+      La página comercial declara tres planes —Corredor (gratis), Inmobiliaria
+      (29 dólares al mes) y Empresa (a medida)— y sus botones son enlaces a
+      registro o a WhatsApp. No hay checkout,
+      no se persiste ninguna elección y el sistema nunca se entera de qué plan
+      miró alguien.
+    rationale: >
+      Es marketing, y como tal es legítimo. Se especifica para que quede
+      explícito que la tabla de precios no describe ningún comportamiento del
+      sistema: quien lea la web y quien lea la base de datos ven cosas distintas.
+    evidence:
+      - file: frontend/app/inmobiliarias/page.tsx
+        lines: "59-90"
+        symbol: "const PLANS"
+        note: Definición de los tres planes y de los destinos de sus botones.
+      - file: frontend/app/inmobiliarias/page.tsx
+        lines: "16"
+        symbol: WHATSAPP_URL
+        note: Destino real de los botones de contratación.
+    frontend:
+      routes: ["/inmobiliarias"]
+      visible_when_allowed: true
+      note: Página pública, sin sesión.
+    cases:
+      - name: Pulsar el botón del plan de pago
+        given: {plan: inmobiliaria}
+        expected: abre WhatsApp
+      - name: Estado guardado tras elegir un plan
+        given: {plan: inmobiliaria}
+        expected: ninguno
+    tests: {}
+
+  - id: SUB-006
+    name: El límite de 5 propiedades del plan gratuito no se aplica
+    status: not_implemented
+    summary: >
+      La tabla de precios anuncia "Hasta 5 propiedades" en el plan gratuito, pero
+      ningún punto del backend cuenta propiedades por usuario ni rechaza la sexta.
+    rationale: >
+      Es una promesa comercial sin contraparte técnica, y va en la dirección
+      peligrosa: la web promete una restricción que no existe. Si algún día se
+      implementa, esta regla pasa a implemented con su evidencia; mientras tanto
+      queda registrada para que nadie la dé por hecha al calcular capacidad.
+    cases:
+      - name: Cuenta gratuita publica su sexta propiedad
+        given: {plan: free, propiedades_existentes: 5}
+        expected: allowed
+        note: Lo que ocurre hoy. Lo que la web insinúa es denied.
+    tests: {}
+
+  - id: SUB-007
+    name: No se procesan ni se almacenan pagos
+    status: implemented
+    summary: >
+      No hay integración con ninguna pasarela, ningún modelo financiero y ningún
+      campo donde pudiera acabar un dato de tarjeta. El navegador tiene además
+      denegada la API de pagos por cabecera.
+    rationale: >
+      Importa dejarlo escrito por cumplimiento: mientras esto siga siendo cierto,
+      el sistema queda fuera del alcance de PCI DSS. La regla debe revisarse el
+      día que se añada cualquier cobro.
+    evidence:
+      - file: frontend/next.config.js
+        lines: "70-72"
+        symbol: Permissions-Policy
+        note: >
+          La cabecera incluye payment=(), de modo que ni siquiera una integración
+          accidental en cliente podría usar la API de pagos del navegador.
+    cases:
+      - name: Modelos financieros en la base de datos
+        given: {busqueda: "Payment|Invoice|Order|Billing|Subscription"}
+        expected: 0
+      - name: Datos de tarjeta almacenados
+        given: {busqueda: "card_number|cvv"}
+        expected: 0
+    tests: {}

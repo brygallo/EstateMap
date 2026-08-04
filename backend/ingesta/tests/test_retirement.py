@@ -17,6 +17,7 @@ def make_source():
 
 
 def test_retirement_keeps_audit_but_deletes_imported_property(monkeypatch):
+    """SPEC:IMP-013 — retirement deletes imported inventory and retains its audit row."""
     source = make_source()
     prop = Property.objects.create(
         title="Listing retirado",
@@ -57,6 +58,7 @@ def test_never_imported_retirement_only_keeps_small_audit_record():
 
 
 def test_user_published_property_is_never_deleted(monkeypatch):
+    """SPEC:IMP-014 — retirement never deletes user-published inventory."""
     prop = Property.objects.create(title="Publicación de usuario", is_imported=False)
     monkeypatch.setattr(
         "ingesta.pipeline.retirement.delete_property_images",

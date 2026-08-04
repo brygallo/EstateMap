@@ -43,6 +43,10 @@ interface DrawLocationMapProps {
 
 const EMPTY_COLLECTION: GeoJSON.FeatureCollection = { type: 'FeatureCollection', features: [] };
 
+// Screen distance from the first corner at which the touch crosshair snaps to
+// closing the ring. Roughly the vertex handle's own hit area.
+const SNAP_RADIUS_PX = 26;
+
 const isInEcuador = ({ lat, lng }: LatLng) =>
   (lat >= -5.45 && lat <= 1.9 && lng >= -81.35 && lng <= -74.75) ||
   (lat >= -1.75 && lat <= 1.85 && lng >= -92.2 && lng <= -88.45);
@@ -110,6 +114,31 @@ const drawCollection = (vertices: LatLng[], closed: boolean): GeoJSON.FeatureCol
   return { type: 'FeatureCollection', features };
 };
 
+/**
+ * Rubber-band preview: the side that would be committed next, from the last
+ * corner to `cursor`, plus the closing side back to the first corner. On
+ * desktop `cursor` is the mouse; on touch it is the centre crosshair.
+ */
+const cursorCollection = (vertices: LatLng[], cursor: [number, number]): GeoJSON.FeatureCollection => {
+  const last = vertices[vertices.length - 1];
+  const features: GeoJSON.Feature[] = [
+    {
+      type: 'Feature',
+      geometry: { type: 'LineString', coordinates: [[last.lng, last.lat], cursor] },
+      properties: {},
+    },
+  ];
+  if (vertices.length >= 2) {
+    const first = vertices[0];
+    features.push({
+      type: 'Feature',
+      geometry: { type: 'LineString', coordinates: [cursor, [first.lng, first.lat]] },
+      properties: {},
+    });
+  }
+  return { type: 'FeatureCollection', features };
+};
+
 const userLocationElement = () => {
   const el = document.createElement('div');
   el.innerHTML = `
@@ -148,14 +177,23 @@ const DrawLocationMap = ({
   const mobileUXRef = useRef(false);
   mobileUXRef.current = mobileUX;
 
+  // True while the centre crosshair sits on the first corner, i.e. the next tap
+  // closes the ring instead of adding a corner.
+  const [snapToClose, setSnapToClose] = useState(false);
+  const snapToCloseRef = useRef(false);
+
   const verticesRef = useRef<LatLng[]>([]);
   const closedRef = useRef(false);
+  const touchPreviewRef = useRef<(() => void) | undefined>(undefined);
   const vertexMarkersRef = useRef<maplibregl.Marker[]>([]);
   const midMarkersRef = useRef<maplibregl.Marker[]>([]);
   const labelMarkersRef = useRef<maplibregl.Marker[]>([]);
   const pointMarkerRef = useRef<maplibregl.Marker | null>(null);
   const userMarkerRef = useRef<maplibregl.Marker | null>(null);
-  const flownRef = useRef(false);
+  // Position already consumed by the one-time fly. Stored as a string so a
+  // parent that rebuilds the `userCenter` array on every render does not look
+  // like a new position.
+  const flownToRef = useRef<string | null>(null);
   const initialLoadedRef = useRef(false);
 
   const modeRef = useRef(locationMode);
@@ -185,6 +223,14 @@ const DrawLocationMap = ({
     if (closed || vertices.length === 0) {
       const cursorSource = map.getSource('draw-cursor') as maplibregl.GeoJSONSource | undefined;
       cursorSource?.setData(EMPTY_COLLECTION as any);
+      if (snapToCloseRef.current) {
+        snapToCloseRef.current = false;
+        setSnapToClose(false);
+      }
+    } else {
+      // The last corner just moved, so the touch preview anchored to it is
+      // stale even though the crosshair has not moved.
+      touchPreviewRef.current?.();
     }
 
     clearMarkers(vertexMarkersRef);
@@ -526,28 +572,64 @@ const DrawLocationMap = ({
       ) {
         return;
       }
-      const vertices = verticesRef.current;
-      const cursor: [number, number] = [event.lngLat.lng, event.lngLat.lat];
-      const last = vertices[vertices.length - 1];
-      const features: GeoJSON.Feature[] = [
-        {
-          type: 'Feature',
-          geometry: { type: 'LineString', coordinates: [[last.lng, last.lat], cursor] },
-          properties: {},
-        },
-      ];
-      if (vertices.length >= 2) {
-        const first = vertices[0];
-        features.push({
-          type: 'Feature',
-          geometry: { type: 'LineString', coordinates: [cursor, [first.lng, first.lat]] },
-          properties: {},
-        });
-      }
       const src = map.getSource('draw-cursor') as maplibregl.GeoJSONSource | undefined;
-      src?.setData({ type: 'FeatureCollection', features } as any);
+      src?.setData(cursorCollection(verticesRef.current, [event.lngLat.lng, event.lngLat.lat]) as any);
     });
     map.on('mouseout', clearCursorLine);
+
+    // On touch the crosshair in the middle of the screen is the cursor, so the
+    // same preview has to be anchored there and follow the map as it is
+    // panned. Without it you aim blind: the side you are about to add only
+    // appears once it is already committed.
+    const setSnapping = (value: boolean) => {
+      if (snapToCloseRef.current === value) return;
+      snapToCloseRef.current = value;
+      setSnapToClose(value);
+    };
+    const updateTouchPreview = () => {
+      if (
+        !mobileUXRef.current ||
+        modeRef.current !== 'polygon' ||
+        closedRef.current ||
+        verticesRef.current.length === 0
+      ) {
+        setSnapping(false);
+        return;
+      }
+      const vertices = verticesRef.current;
+      const center = map.getCenter();
+      const first = vertices[0];
+      // Aiming the crosshair at the first corner is how you close a ring with a
+      // mouse; on touch the equivalent is parking the crosshair on top of it,
+      // so snap once it is within a fingertip of the target.
+      const centerPx = map.project(center);
+      const firstPx = map.project([first.lng, first.lat]);
+      const snapping =
+        vertices.length >= 3 && Math.hypot(centerPx.x - firstPx.x, centerPx.y - firstPx.y) <= SNAP_RADIUS_PX;
+      setSnapping(snapping);
+
+      const src = map.getSource('draw-cursor') as maplibregl.GeoJSONSource | undefined;
+      if (snapping) {
+        const last = vertices[vertices.length - 1];
+        src?.setData({
+          type: 'FeatureCollection',
+          features: [
+            {
+              type: 'Feature',
+              geometry: {
+                type: 'LineString',
+                coordinates: [[last.lng, last.lat], [first.lng, first.lat]],
+              },
+              properties: {},
+            },
+          ],
+        } as any);
+        return;
+      }
+      src?.setData(cursorCollection(vertices, [center.lng, center.lat]) as any);
+    };
+    touchPreviewRef.current = updateTouchPreview;
+    map.on('move', updateTouchPreview);
 
     // Double click closes the shape (instead of zooming) while drawing.
     map.on('dblclick', (event) => {
@@ -719,11 +801,16 @@ const DrawLocationMap = ({
 
   useEffect(() => {
     const map = mapRef.current;
-    if (!loaded || !map || flownRef.current || !userCenter || !userZoom) return;
+    if (!loaded || !map || !userCenter || !userZoom) return;
+    const position = `${userCenter[0]},${userCenter[1]},${userZoom}`;
+    if (flownToRef.current === position) return;
+    // Consume the position even when we end up not flying: the offer to centre
+    // expires here. Otherwise clearing the shape later would re-run this effect
+    // and yank the camera back, which read as "erasing zooms the map out".
+    flownToRef.current = position;
     // A restored/loaded shape owns the camera: flying away from it to the
     // user's position would hide the very thing being edited.
     if (verticesRef.current.length > 0) return;
-    flownRef.current = true;
     map.flyTo({ center: [userCenter[1], userCenter[0]], zoom: userZoom, duration: 1500 });
   }, [loaded, userCenter, userZoom]);
 
@@ -757,26 +844,44 @@ const DrawLocationMap = ({
           alternative to tapping exact spots on small screens. */}
       {drawing && mobileUX && (
         <div className="pointer-events-none absolute left-1/2 top-1/2 z-mapcontrol -translate-x-1/2 -translate-y-1/2" aria-hidden>
-          <div className="gp-crosshair" />
+          <div className={`gp-crosshair${snapToClose ? ' gp-crosshair-snap' : ''}`} />
         </div>
       )}
 
       {locationMode === 'polygon' && (
-        <div className="absolute inset-x-0 bottom-6 z-mapcontrol flex justify-center px-3">
-          <div className="map-glass-control pointer-events-auto flex max-w-full items-center gap-1.5 overflow-x-auto rounded-xl p-1.5">
+        // The right padding keeps the bar clear of the zoom stack instead of
+        // sliding underneath it on narrow screens.
+        <div className="absolute inset-x-0 bottom-5 z-mapcontrol flex justify-center pl-3 pr-16">
+          <div className="map-glass-control pointer-events-auto flex max-w-full items-center gap-1 overflow-x-auto rounded-lg p-1">
             {drawState !== 'closed' ? (
               <>
                 {mobileUX && (
+                  // Over the first corner the primary action stops being "add"
+                  // and becomes "close": tapping there would only stack a
+                  // corner on top of another one.
                   <button
                     type="button"
                     onClick={() => {
+                      if (snapToClose) {
+                        closePolygon();
+                        return;
+                      }
                       const center = mapRef.current?.getCenter();
                       if (center) addVertex({ lat: center.lat, lng: center.lng });
                     }}
-                    className="flex h-11 shrink-0 items-center gap-1.5 rounded-lg bg-primary px-3.5 text-sm font-semibold text-white transition-colors hover:bg-primaryHover"
+                    className="flex h-9 shrink-0 items-center gap-1 rounded-md bg-primary px-2.5 text-xs font-semibold text-white transition-colors hover:bg-primaryHover"
                   >
-                    <Plus className="h-4 w-4" strokeWidth={2.5} aria-hidden />
-                    Agregar punto
+                    {snapToClose ? (
+                      <>
+                        <Check className="h-3.5 w-3.5" strokeWidth={2.5} aria-hidden />
+                        Cerrar figura
+                      </>
+                    ) : (
+                      <>
+                        <Plus className="h-3.5 w-3.5" strokeWidth={2.5} aria-hidden />
+                        Agregar punto
+                      </>
+                    )}
                   </button>
                 )}
                 <button
@@ -784,25 +889,27 @@ const DrawLocationMap = ({
                   onClick={undoVertex}
                   disabled={vertexCount === 0}
                   aria-label="Deshacer último punto"
-                  className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg text-textPrimary transition-colors hover:bg-muted disabled:opacity-40"
+                  className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md text-textPrimary transition-colors hover:bg-muted disabled:opacity-40"
                 >
-                  <Undo2 className="h-5 w-5" strokeWidth={2} aria-hidden />
+                  <Undo2 className="h-4 w-4" strokeWidth={2} aria-hidden />
                 </button>
-                <button
-                  type="button"
-                  onClick={closePolygon}
-                  disabled={vertexCount < 3}
-                  className="flex h-11 shrink-0 items-center gap-1.5 rounded-lg px-3.5 text-sm font-semibold text-primary transition-colors hover:bg-muted disabled:opacity-40"
-                >
-                  <Check className="h-4 w-4" strokeWidth={2.5} aria-hidden />
-                  Cerrar{vertexCount > 0 ? ` (${vertexCount})` : ''}
-                </button>
+                {!(mobileUX && snapToClose) && (
+                  <button
+                    type="button"
+                    onClick={closePolygon}
+                    disabled={vertexCount < 3}
+                    className="flex h-9 shrink-0 items-center gap-1 rounded-md px-2.5 text-xs font-semibold text-primary transition-colors hover:bg-muted disabled:opacity-40"
+                  >
+                    <Check className="h-3.5 w-3.5" strokeWidth={2.5} aria-hidden />
+                    Cerrar{vertexCount > 0 ? ` (${vertexCount})` : ''}
+                  </button>
+                )}
               </>
             ) : (
               <>
-                <p className="w-28 shrink-0 whitespace-normal px-1 text-center text-[10px] font-medium leading-tight text-textSecondary sm:w-auto sm:px-2 sm:text-left sm:text-xs sm:leading-normal">
+                <p className="shrink-0 whitespace-nowrap px-1.5 text-[11px] font-medium leading-tight text-textSecondary sm:px-2 sm:text-xs">
                   {mobileUX
-                    ? 'Arrastra · mantén pulsado para quitar'
+                    ? 'Mantén pulsado para quitar'
                     : 'Arrastra los puntos · clic derecho quita un punto'}
                 </p>
                 <button
@@ -810,16 +917,16 @@ const DrawLocationMap = ({
                   onClick={() => fitToShape()}
                   aria-label="Centrar la forma en el mapa"
                   title="Centrar la forma"
-                  className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg text-textPrimary transition-colors hover:bg-muted"
+                  className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md text-textPrimary transition-colors hover:bg-muted"
                 >
                   <Maximize2 className="h-4 w-4" strokeWidth={2} aria-hidden />
                 </button>
                 <button
                   type="button"
                   onClick={clearAll}
-                  className="flex h-10 shrink-0 items-center gap-1.5 rounded-lg px-3 text-sm font-semibold text-error transition-colors hover:bg-muted"
+                  className="flex h-9 shrink-0 items-center gap-1 rounded-md px-2.5 text-xs font-semibold text-error transition-colors hover:bg-muted"
                 >
-                  <Eraser className="h-4 w-4" strokeWidth={2} aria-hidden />
+                  <Eraser className="h-3.5 w-3.5" strokeWidth={2} aria-hidden />
                   Limpiar
                 </button>
               </>
@@ -912,6 +1019,13 @@ const DrawLocationMap = ({
           height: 34px;
           position: relative;
           width: 34px;
+        }
+        .gp-crosshair-snap::after, .gp-crosshair-snap::before { opacity: 0; }
+        .gp-crosshair-snap {
+          background: rgb(var(--primary-strong-rgb) / 0.18);
+          border: 3px solid ${BRAND_STROKE};
+          border-radius: 999px;
+          box-shadow: 0 0 0 4px rgb(var(--primary-strong-rgb) / 0.18);
         }
         .gp-crosshair::before, .gp-crosshair::after {
           background: ${BRAND_STROKE};

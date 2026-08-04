@@ -35,3 +35,11 @@ geopropiedadesecuador.com-audit/
 
 # Metadatos locales del IDE
 .idea/jsLibraryMappings.xml
+
+# Spec tooling virtualenv (see scripts/specs.sh)
+.venv-specs/
+
+# Playwright suite (see tests/README.md)
+tests/node_modules/
+tests/playwright-report/
+tests/test-results/

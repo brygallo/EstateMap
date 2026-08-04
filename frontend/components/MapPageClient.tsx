@@ -127,12 +127,19 @@ const MapPage = () => {
 
   const isMobile = useIsMobile();
   const drawerRef = useRef<HTMLDivElement>(null);
+  // The list scrolls inside the sheet, not with it — see the drag surface note
+  // where the drawer is rendered.
+  const drawerScrollRef = useRef<HTMLDivElement>(null);
   const drawerY = useMotionValue(DRAWER_OFFSCREEN);
   // Where the drawer rests. `half` is the state a map app spends most of its
   // time in — enough list to scan, enough map to keep your bearings. Going
   // straight from hidden to covering the map, as the old boolean did, meant
   // every glance at the results lost the pin you were looking at.
   const [drawerSnap, setDrawerSnap] = useState<DrawerSnap>('closed');
+  // Measured height of the sheet. Every resting offset is expressed in terms of
+  // it, and it is not a constant: the sheet grows as the result count and the
+  // first cards arrive. 0 means "not measured yet" — see the fallback below.
+  const [drawerHeight, setDrawerHeight] = useState(0);
   const sidebarOpen = drawerSnap !== 'closed';
   // Tracks a body-initiated drag so a downward flick on the list can hand over
   // to the sheet without the list scrolling at the same time.
@@ -392,31 +399,37 @@ const MapPage = () => {
   // y=0 for one frame — on a phone that is the drawer flashing fully open over
   // the map. The `.property-sidebar-drawer` rule below neutralises the
   // transform at lg, which is the only place desktop needs to differ.
+  //
+  // Re-runs when the measured height changes, not only when the detent does: a
+  // sheet parked at `closed` is translated down by exactly its own height, so a
+  // height measured before the cards arrived left it hundreds of pixels short
+  // of off screen — on a phone that looked like the filter bar opening by
+  // itself over the map.
   useEffect(() => {
-    const height = drawerRef.current?.offsetHeight || window.innerHeight;
+    // Until the first measurement lands, over-estimate: the sheet is capped at
+    // 85dvh, so the viewport height always parks it fully out of sight.
+    const height = drawerHeight || window.innerHeight;
     const controls = animate(drawerY, snapOffsetsFor(height)[drawerSnap], {
       type: 'spring',
       stiffness: 420,
       damping: 38,
     });
     return () => controls.stop();
-  }, [drawerSnap, drawerY]);
+  }, [drawerSnap, drawerHeight, drawerY]);
 
-  // Rotating the device changes the drawer's height, which would strand it
-  // mid-air at an offset computed for the old one.
+  // The sheet's height follows its content, so it has to be watched rather than
+  // read once. Also covers the `max-h-[85dvh]` cap changing when the device is
+  // rotated or the browser chrome collapses.
   useEffect(() => {
-    if (!isMobile) return;
-    const onResize = () => {
-      const height = drawerRef.current?.offsetHeight || window.innerHeight;
-      drawerY.set(snapOffsetsFor(height)[drawerSnap]);
-    };
-    window.addEventListener('resize', onResize);
-    window.addEventListener('orientationchange', onResize);
-    return () => {
-      window.removeEventListener('resize', onResize);
-      window.removeEventListener('orientationchange', onResize);
-    };
-  }, [drawerSnap, drawerY, isMobile]);
+    const node = drawerRef.current;
+    if (!node) return;
+    const measure = () => setDrawerHeight((current) => (current === node.offsetHeight ? current : node.offsetHeight));
+    measure();
+    if (typeof ResizeObserver === 'undefined') return;
+    const observer = new ResizeObserver(measure);
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, []);
 
   const settleDrawer = useCallback(
     (offset: number, velocity: number) => {
@@ -434,17 +447,19 @@ const MapPage = () => {
   );
 
   /**
-   * Hands a downward drag on the list over to the sheet.
+   * Hands a vertical drag on the list over to the sheet.
    *
-   * A native sheet does not require you to find the little grabber: once the
-   * list is scrolled to the top, pulling down moves the sheet instead. The
-   * handover happens on move, not on down, so an upward flick still scrolls.
+   * A native sheet does not require you to find the little grabber: from the
+   * top of the list, pulling down moves the sheet and pushing up opens it to
+   * its full height, exactly like the property sheet. Anywhere else the list
+   * just scrolls. The handover happens on move, not on down, so the direction
+   * is known before the gesture is claimed.
    */
   const handleBodyPointerDown = (event: React.PointerEvent<HTMLDivElement>) => {
     if (!isMobile || event.pointerType === 'mouse') return;
     bodyDragRef.current = {
       y: event.clientY,
-      scrollTop: drawerRef.current?.scrollTop ?? 0,
+      scrollTop: drawerScrollRef.current?.scrollTop ?? 0,
       handedOver: false,
     };
   };
@@ -452,12 +467,26 @@ const MapPage = () => {
   const handleBodyPointerMove = (event: React.PointerEvent<HTMLDivElement>) => {
     const start = bodyDragRef.current;
     if (!start || start.handedOver) return;
+    // Only from the top of the list, and only once the gesture is unambiguous —
+    // otherwise a slow scroll would keep stealing itself.
+    if (start.scrollTop > 2) return;
     const deltaY = event.clientY - start.y;
-    // Only downward, only from the top of the list, and only once the gesture
-    // is unambiguous — otherwise a slow scroll would keep stealing itself.
-    if (deltaY < 12 || start.scrollTop > 2) return;
-    start.handedOver = true;
-    drawerDragControls.start(event);
+
+    if (deltaY >= 12) {
+      start.handedOver = true;
+      drawerDragControls.start(event);
+      return;
+    }
+
+    // Upward from the top while the sheet is only half open: raise it instead
+    // of scrolling a list that is mostly below the fold. Snapped rather than
+    // dragged because the browser is scrolling this same gesture — a detent
+    // change survives the pointercancel that scroll can fire, a drag does not.
+    if (deltaY <= -12 && drawerSnap === 'half') {
+      start.handedOver = true;
+      setDrawerSnap('full');
+      haptic('impact');
+    }
   };
 
   const handleBodyPointerEnd = () => {
@@ -546,15 +575,11 @@ const MapPage = () => {
           bodyDragRef.current = null;
           settleDrawer(drawerY.get(), info.velocity.y);
         }}
-        onPointerDown={handleBodyPointerDown}
-        onPointerMove={handleBodyPointerMove}
-        onPointerUp={handleBodyPointerEnd}
-        onPointerCancel={handleBodyPointerEnd}
         className={`
         property-sidebar-drawer
         fixed lg:relative z-panel lg:z-0
+        flex flex-col overflow-hidden
         bg-white text-textPrimary
-        overscroll-contain overflow-y-auto
         inset-x-0 bottom-0 max-h-[85dvh] rounded-t-2xl shadow-cardHover
         lg:inset-auto lg:left-0 lg:h-full lg:max-h-none lg:w-96 lg:flex-shrink-0
         lg:rounded-none lg:border-r lg:border-line lg:shadow-none
@@ -565,7 +590,7 @@ const MapPage = () => {
             gesto hacia abajo y la X del panel. */}
         <button
           type="button"
-          className="sticky top-0 z-10 flex w-full touch-none cursor-grab justify-center bg-white py-3 active:cursor-grabbing lg:hidden"
+          className="flex w-full flex-none touch-none cursor-grab justify-center bg-white py-3 active:cursor-grabbing lg:hidden"
           onPointerDown={(event) => drawerDragControls.start(event)}
           onClick={() => {
             if (drawerDraggingRef.current) return;
@@ -578,35 +603,60 @@ const MapPage = () => {
           <span className="h-1.5 w-10 rounded-full bg-line" aria-hidden />
         </button>
 
-        <PropertySidebar
-          filters={filters}
-          owners={owners}
-          locations={locations}
-          hasActiveFilters={hasActiveFilters}
-          onFilterChange={handleFilterChange}
-          onClearFilters={clearFilters}
-          onClose={() => setDrawerSnap('closed')}
-          visibleProperties={sidebarProperties}
-          cityGroups={mapCityGroups}
-          mapContext={mapContext}
-          selectedProperty={selectedProperty}
-          onPropertyClick={handleSidebarPropertyClick}
-          onPropertyOpen={handleSidebarPropertyOpen}
-          loading={loading}
-          error={error}
-          onRetry={retry}
-          totalCount={totalCount}
-          userLocation={geo.userLocation}
-          onZoomOut={handleZoomOut}
-          onResetMapView={handleResetMapView}
-          onCityGroupClick={handleCityGroupClick}
-          hasMore={cardsHasMore}
-          loadingMore={cardsLoadingMore}
-          onLoadMore={loadMoreCards}
-        />
+        {/* The scroller is deliberately *inside* the draggable element rather
+            than being it. `drag="y"` makes Framer write `touch-action: pan-x`
+            onto the element it is applied to, which forbids vertical touch
+            panning there and in everything below it — with the list on the
+            draggable node, the sheet could not be scrolled with a finger at
+            all, and neither could the expanded filter panel. */}
+        <div
+          ref={drawerScrollRef}
+          className="property-sidebar-scroll min-h-0 flex-1 overflow-y-auto overscroll-contain"
+          onPointerDown={handleBodyPointerDown}
+          onPointerMove={handleBodyPointerMove}
+          onPointerUp={handleBodyPointerEnd}
+          onPointerCancel={handleBodyPointerEnd}
+        >
+          <PropertySidebar
+            filters={filters}
+            owners={owners}
+            locations={locations}
+            hasActiveFilters={hasActiveFilters}
+            onFilterChange={handleFilterChange}
+            onClearFilters={clearFilters}
+            onClose={() => setDrawerSnap('closed')}
+            visibleProperties={sidebarProperties}
+            cityGroups={mapCityGroups}
+            mapContext={mapContext}
+            selectedProperty={selectedProperty}
+            onPropertyClick={handleSidebarPropertyClick}
+            onPropertyOpen={handleSidebarPropertyOpen}
+            loading={loading}
+            error={error}
+            onRetry={retry}
+            totalCount={totalCount}
+            userLocation={geo.userLocation}
+            onZoomOut={handleZoomOut}
+            onResetMapView={handleResetMapView}
+            onCityGroupClick={handleCityGroupClick}
+            hasMore={cardsHasMore}
+            loadingMore={cardsLoadingMore}
+            onLoadMore={loadMoreCards}
+          />
+        </div>
       </motion.div>
 
       <style>{`
+        /* Framer writes an inline touch-action of pan-x here because the sheet
+           is dragged on the y axis. Touch-action intersects down the tree, so
+           that one declaration also blocks vertical scrolling inside the list
+           and inside the expanded filters. The sheet is dragged from its handle
+           and from the pointer handover below, neither of which needs the
+           browser gesture disabled. */
+        .property-sidebar-drawer {
+          touch-action: auto !important;
+        }
+
         @media (min-width: 1024px) {
           .property-sidebar-drawer {
             transform: none !important;

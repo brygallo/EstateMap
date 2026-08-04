@@ -1,0 +1,551 @@
+version: 1
+domain: publish-property
+title: Flujo de publicar una propiedad
+status: partial
+summary: >-
+  Invariantes del recorrido completo desde que alguien envía el formulario de
+  publicación hasta que la propiedad queda visible en el mapa: la puerta de
+  autenticación, el orden de fases que no puede alterarse, la idempotencia del
+  alta, los umbrales de validación de servidor, el throttle de escritura y los
+  efectos posteriores obligatorios. Verificado contra el código el 2026-08-04,
+  incluyendo cambios sin commitear en views.py, serializers.py, signals.py,
+  cache_utils.py y settings.py. Las reglas de negocio del dato Property viven en
+  specs/domains/properties.yaml, el permiso de creación/edición/borrado en
+  specs/permissions/matrix.yaml, y PendingPublication en specs/domains/leads.yaml;
+  este archivo no las repite, solo describe cómo se encadenan.
+see_also:
+  - docs/workflows/publish-property.md
+  - specs/domains/properties.yaml
+  - specs/domains/leads.yaml
+  - specs/permissions/matrix.yaml
+  - specs/errors/catalog.yaml
+  - docs/technical/celery.md
+
+rules:
+  - id: WFP-001
+    name: Sin sesión, el envío nunca llega a crear la propiedad
+    status: implemented
+    summary: >-
+      El formulario intercepta el submit antes de llamar a `POST
+      /api/properties/`: si no hay token, guarda el borrador local, envía un
+      `PendingPublication` con `source=account_required` (que no entra al mapa)
+      y abre el modal de cuenta; el backend es solo el respaldo si alguien
+      llama a la API directamente.
+    rationale: >-
+      El trabajo del usuario no se pierde ni se descarta. Separar la captura
+      comercial (`PendingPublication`) del alta real (`Property`) evita que un
+      intento sin cuenta ensucie el inventario público, y el backend sigue
+      rechazando con 401 por si el frontend se salta o falla.
+    evidence:
+      - file: frontend/app/add-property/page.tsx
+        lines: "901-914"
+        symbol: "if (!token && !isEditMode && !resumeToken) {"
+        note: Guarda el borrador, envía la solicitud pendiente y abre el modal, sin llamar a /properties/.
+      - file: backend/real_estate/models.py
+        lines: "466-468"
+        symbol: "class PendingPublication(models.Model)"
+        note: "Docstring: no se muestra en el mapa; sirve para seguimiento comercial."
+      - file: backend/real_estate/views.py
+        lines: "308-310"
+        symbol: "permission_classes = [IsAuthenticatedOrReadOnly, IsOwnerOrReadOnly]"
+        note: Respaldo del servidor si la petición llega sin pasar por el frontend.
+    backend:
+      endpoint: POST /api/properties/
+      denied_http_status: 401
+    tests:
+      api: true
+    cases:
+      - name: Llamada directa a la API sin token
+        role: anonymous
+        expected: denied
+      - name: Envío del formulario sin sesión
+        given:
+          token: null
+        expected: "no se llama a POST /api/properties/; se crea un PendingPublication y se abre el modal de cuenta"
+
+  - id: WFP-002
+    name: Tras iniciar sesión desde el modal, la publicación pendiente se reenvía sola
+    status: implemented
+    summary: >-
+      Si el usuario inicia sesión desde el modal de cuenta, el formulario marca
+      `pendingPublish` y un efecto reenvía el mismo envío en cuanto el token del
+      contexto está disponible, sin que el usuario repita nada.
+    rationale: >-
+      El token entra por contexto en el siguiente render, no de forma síncrona
+      tras `login()`; por eso el reenvío depende de un efecto que observa el
+      token en vez de encadenarse directamente tras la llamada de login.
+    evidence:
+      - file: frontend/app/add-property/page.tsx
+        lines: "807-812"
+        symbol: setPendingPublish(true)
+        note: Se marca tras un login exitoso desde el modal.
+      - file: frontend/app/add-property/page.tsx
+        lines: "819-822"
+        symbol: "if (!pendingPublish || !token) return;"
+        note: Efecto que dispara form.handleSubmit(onSubmit) en cuanto ambos están listos.
+    cases:
+      - name: Login exitoso desde el modal con borrador pendiente
+        given:
+          pendingPublish: true
+          token: presente
+        expected: "se reenvía el formulario automáticamente, sin acción del usuario"
+      - name: Login con correo sin verificar
+        given:
+          error_code: email_not_verified
+        expected: "no se marca pendingPublish; redirige a /verificar-correo"
+
+  - id: WFP-003
+    name: El orden de la creación no puede alterarse
+    status: implemented
+    summary: >-
+      Crear una propiedad sigue siempre el mismo orden: validar el payload,
+      crear la fila `Property`, dejar cada imagen en estado `pending` con el
+      original en disco local, encolar su optimización, y solo entonces el
+      worker publica el WebP y la miniatura en MinIO.
+    rationale: >-
+      Invertir el orden rompe algo concreto: subir a MinIO antes de crear la
+      fila dejaría objetos huérfanos si la validación fallara después, y
+      optimizar en la misma petición retrasaría la respuesta con la subida más
+      lenta del lote. El staging a disco local existe para que la API responda
+      rápido con un id que ya se puede mostrar.
+    evidence:
+      - file: backend/real_estate/serializers.py
+        lines: "276-283"
+        symbol: "def create(self, validated_data):"
+        note: Crea Property y luego llama a stage_property_image por cada archivo.
+      - file: backend/real_estate/serializers.py
+        lines: "61-95"
+        symbol: def stage_property_image
+        note: Escribe el original en disco (stash_upload), crea la fila PENDING y llama a enqueue_optimization.
+      - file: backend/real_estate/tasks.py
+        lines: "44-109"
+        symbol: def optimize_property_image
+        note: Único punto que sube imagen y miniatura a MinIO y marca READY.
+    cases:
+      - name: Alta con dos fotos válidas
+        given:
+          fotos: 2
+        expected: "Property creada primero; ambas filas nacen PENDING con archivo en disco; el worker las publica después"
+      - name: Validación de polígono falla
+        given:
+          poligono: invalido
+        expected: "no se crea la Property ni se toca disco ni MinIO"
+
+  - id: WFP-004
+    name: El polígono se valida en servidor antes de crear la fila, con umbrales exactos
+    status: implemented
+    summary: >-
+      La fase de validación exige al menos 3 vértices realmente distintos,
+      todas las coordenadas dentro de Ecuador continental (`lat -5.45..1.9`,
+      `lng -81.35..-74.75`), lados que no se crucen entre sí, y un área entre
+      `10 m²` y `5 000 000 m²`; cualquier incumplimiento corta el flujo antes
+      de `Property.objects.create`.
+    rationale: >-
+      Es parte del orden fijado en WFP-003: la validación de geometría ocurre
+      dentro de `validate_polygon`, que corre antes que `create()`. El detalle
+      regla por regla (tipo GeoJSON, pares de coordenadas, centro derivado)
+      vive en specs/domains/properties.yaml (PROP-006 a PROP-013); aquí solo se
+      fija que es parte obligatoria de la fase de validación del flujo.
+    evidence:
+      - file: backend/real_estate/geo.py
+        lines: "15-18"
+        symbol: ECUADOR_MAINLAND_LAT_MIN
+        note: Límites exactos del bounding box continental.
+      - file: backend/real_estate/geo.py
+        lines: "28-29"
+        symbol: MIN_POLYGON_AREA_M2
+        note: 10.0 y 5_000_000.0 metros cuadrados.
+      - file: backend/real_estate/geo.py
+        lines: "176-222"
+        symbol: def validate_and_normalize_polygon
+        note: Orden interno -- vértices distintos, límites geográficos, autointersección, área.
+      - file: backend/real_estate/serializers.py
+        lines: "250-267"
+        symbol: def validate_polygon
+        note: Punto de entrada desde el serializer, antes de que create() se ejecute.
+    cases:
+      - name: Polígono con 2 vértices distintos
+        given:
+          vertices: 2
+        expected: "400: El polígono debe tener al menos 3 vértices distintos."
+      - name: Vértice fuera de Ecuador
+        given:
+          lat: 10.0
+          lng: -78.0
+        expected: "400: está fuera de Ecuador"
+      - name: Área de 5 m²
+        given:
+          area_m2: 5
+        expected: "400: área demasiado pequeña"
+      - name: Área de 6 000 000 m²
+        given:
+          area_m2: 6000000
+        expected: "400: área demasiado grande"
+
+  - id: WFP-005
+    name: Los límites de imágenes se aplican en la misma fase de validación
+    status: implemented
+    summary: >-
+      Antes de crear la propiedad, cada lote de imágenes se valida completo:
+      máximo 10 por propiedad (contando lo existente menos lo que se va a
+      borrar), 10 MB por archivo, 50 MB de suma del lote, y solo
+      `image/jpeg`, `image/jpg`, `image/png` o `image/webp`.
+    rationale: >-
+      Igual que el polígono, esto ocurre dentro de `validate_uploaded_images`,
+      que corre antes de `create()`/`update()`, de modo que un lote que excede
+      cualquier umbral no llega a escribir ni una sola fila de `PropertyImage`
+      ni a tocar disco. El detalle completo, incluidas las dimensiones mínimas
+      y máximas por imagen, vive en specs/domains/properties.yaml (PROP-026).
+    evidence:
+      - file: backend/estate_map/settings.py
+        lines: "375-377"
+        symbol: MAX_PROPERTY_UPLOAD_MB
+        note: MAX_IMAGES_PER_PROPERTY=10, MAX_IMAGE_SIZE_MB=10, MAX_PROPERTY_UPLOAD_MB=50.
+      - file: backend/estate_map/settings.py
+        lines: "358-360"
+        symbol: ALLOWED_IMAGE_TYPES
+      - file: backend/real_estate/serializers.py
+        lines: "191-247"
+        symbol: def validate_uploaded_images
+        note: Cuenta existentes menos images_to_delete, valida suma del lote y cada imagen, antes de llegar a create/update.
+    cases:
+      - name: Lote de 11 imágenes en una propiedad nueva
+        given:
+          nuevas: 11
+        expected: "400: no puede tener más de 10 imágenes"
+      - name: Una imagen de 12 MB
+        given:
+          tamano_mb: 12
+        expected: "400: es demasiado grande"
+      - name: Lote de 6 imágenes de 9 MB cada una
+        given:
+          suma_mb: 54
+        expected: "400: el conjunto supera 50MB"
+      - name: Imagen en formato GIF
+        given:
+          content_type: image/gif
+        expected: "400: formato no permitido"
+
+  - id: WFP-006
+    name: Repetir el alta con la misma Idempotency-Key devuelve la propiedad ya creada
+    status: implemented
+    summary: >-
+      Si `POST /api/properties/` llega con cabecera `Idempotency-Key` y ya
+      existe un resultado cacheado para ese usuario y esa clave, el `create` no
+      vuelve a crear nada: responde `200` con la propiedad existente y la
+      cabecera `X-Idempotent-Replay: true`.
+    rationale: >-
+      Existe para el reintento de una subida lenta (el cliente no sabe si el
+      primer POST llegó a completarse). El id creado se cachea 24 h bajo un
+      digest de `user.pk + clave`, así que la reproducción está limitada al
+      mismo usuario. El frontend solo manda la cabecera al crear, nunca al
+      editar.
+    evidence:
+      - file: backend/real_estate/views.py
+        lines: "504-511"
+        symbol: "idempotency_key = (request.headers.get('Idempotency-Key')"
+        note: Sin cabecera, se comporta como un create normal.
+      - file: backend/real_estate/views.py
+        lines: "518-523"
+        symbol: "response['X-Idempotent-Replay'] = 'true'"
+      - file: backend/real_estate/views.py
+        lines: "530-532"
+        symbol: "cache.set(result_key, response.data['id'], 60 * 60 * 24)"
+      - file: frontend/app/add-property/page.tsx
+        lines: "983-985"
+        symbol: "Idempotency-Key"
+        note: No se manda en la edición (PUT), solo en la creación.
+    cases:
+      - name: Segundo POST con la misma clave, ya resuelto
+        given:
+          idempotency_key: "abc123"
+          resultado_previo: existe
+        expected:
+          http_status: 200
+          header: "X-Idempotent-Replay: true"
+
+  - id: WFP-007
+    name: "Dos peticiones simultáneas con la misma Idempotency-Key: la segunda espera, no duplica"
+    status: implemented
+    summary: >-
+      Antes de procesar, `create` toma un candado en caché de 60 s por el
+      mismo digest de usuario y clave; si ya está tomado, responde `409` en
+      vez de dejar pasar dos altas a la vez.
+    rationale: >-
+      Sin el candado, dos pestañas o un doble clic con la misma clave podrían
+      pasar ambas la comprobación de "resultado cacheado" (todavía vacío) y
+      crear dos propiedades. El candado se libera en un `finally`, incluso si
+      la petición falla, para no dejar la clave bloqueada 60 s de más.
+    evidence:
+      - file: backend/real_estate/views.py
+        lines: "521-525"
+        symbol: "lock_acquired = cache.add(lock_key, '1', 60)"
+      - file: backend/real_estate/views.py
+        lines: "535-539"
+        symbol: "if lock_acquired:"
+        note: cache.delete(lock_key) en el finally, se ejecute o no la creación.
+    cases:
+      - name: Segunda petición mientras la primera sigue procesando
+        given:
+          idempotency_key: "abc123"
+          candado: tomado
+        expected:
+          http_status: 409
+          error_code: IDEMPOTENCY_CONFLICT
+
+  - id: WFP-008
+    name: El throttle de escritura no exime a nadie, ni siquiera a staff
+    status: implemented
+    summary: >-
+      `create`, `update` y `partial_update` usan `ScopedRateThrottle` normal
+      con `throttle_scope='property_write'` a 30/hora, a diferencia de
+      `map_points` y `list` que usan `AntiScraperScopedThrottle` y eximen al
+      renderizado interno de Next y al staff.
+    rationale: >-
+      Las lecturas públicas se limitan solo contra scraping masivo, muy por
+      encima de la navegación real, así que eximir a clientes de confianza no
+      cuesta nada. La escritura es distinta: 30 altas o ediciones por hora ya
+      es generoso para una persona, y extender la excepción a staff abriría la
+      puerta a que una cuenta de moderación machacara el límite sin darse
+      cuenta. El techo aplica igual a todos.
+    evidence:
+      - file: backend/real_estate/views.py
+        lines: "349-362"
+        symbol: "self.throttle_scope = 'property_write'"
+        note: ScopedRateThrottle, no AntiScraperScopedThrottle, para create/update/partial_update.
+      - file: backend/real_estate/throttling.py
+        lines: "42-51"
+        symbol: "class AntiScraperScopedThrottle(ScopedRateThrottle)"
+        note: Exime staff e IPs internas; solo se usa en map_points y list.
+      - file: backend/estate_map/settings.py
+        lines: "187-189"
+        symbol: "'property_write': '30/hour'"
+    cases:
+      - name: Staff publica más de 30 veces en una hora
+        given:
+          rol: staff
+          escrituras_en_una_hora: 31
+        expected: "429, igual que un usuario normal"
+        note: No ejecutable como llamada única; requiere una ráfaga real.
+
+  - id: WFP-009
+    name: Una caída del broker de Celery degrada la optimización a síncrona, no rompe la publicación
+    status: implemented
+    summary: >-
+      `enqueue_optimization` intenta `optimize_property_image.delay(...)`
+      dentro de `transaction.on_commit`; si el broker no responde, atrapa la
+      excepción y ejecuta la misma tarea en línea, dentro del propio proceso
+      web, en vez de devolver un error al usuario.
+    rationale: >-
+      La foto ya fue aceptada cuando esto ocurre: publicar es la única forma
+      nueva en que esta petición podría fallar, y sería después de que el
+      usuario ya vio su anuncio confirmado. Degradar a síncrono es el mismo
+      comportamiento que existía antes de tener cola -- más lento, pero
+      completo -- así que el peor caso es la latencia antigua, no un 500. Si
+      incluso el intento síncrono falla, la fila queda pending con el archivo
+      en disco para que la barrida horaria la reintente.
+    evidence:
+      - file: backend/real_estate/tasks.py
+        lines: "205-224"
+        symbol: def enqueue_optimization
+        note: transaction.on_commit envuelve el intento asíncrono con fallback síncrono.
+      - file: backend/real_estate/tasks.py
+        lines: "225-238"
+        symbol: "optimize_property_image(image_id)"
+        note: Llamada directa (no .delay) como fallback cuando el broker no responde.
+      - file: backend/real_estate/tasks.py
+        lines: "113-126"
+        symbol: def sweep_pending_images
+        note: Reintento horario si incluso el fallback síncrono falla.
+    cases:
+      - name: Broker caído al terminar la transacción de alta
+        given:
+          broker: caido
+        expected: "la imagen se optimiza en la misma request; la propiedad se crea igual"
+      - name: Broker caído y el fallback síncrono también falla
+        given:
+          broker: caido
+          fallback: falla
+        expected: "la fila queda PENDING con el archivo en disco; la barrida horaria la reintenta"
+
+  - id: WFP-010
+    name: Guardar o borrar una propiedad dispara siempre la misma cadena de efectos posteriores
+    status: implemented
+    summary: >-
+      Cada `post_save`/`post_delete` de `Property` encadena, por señal: una
+      fila de `PropertyPriceHistory` si el precio cambió, la invalidación de
+      hasta ocho contadores de versión en Redis, la revalidación de Next.js
+      encolada en `on_commit`, y un aviso a IndexNow -- también cuando la
+      propiedad se elimina, para que el buscador reciba el 404 antes.
+    rationale: >-
+      Sin esta cadena, publicar dejaría la propiedad invisible hasta que
+      expirara el TTL de caché. La revalidación va deliberadamente por
+      `on_commit`: la tarea vuelve a leer la API, así que dispararla dentro de
+      la transacción reconstruiría la página con el estado anterior al
+      guardado. Una caída de Celery al encolarla solo registra un warning; el
+      alta no falla por eso.
+    evidence:
+      - file: backend/real_estate/signals.py
+        lines: "48-54"
+        symbol: def property_saved
+        note: PropertyPriceHistory si el precio cambió, y submit_property (IndexNow) en todo post_save.
+      - file: backend/real_estate/signals.py
+        lines: "16-45"
+        symbol: def _invalidate
+        note: bump_props_version de seis scopes y encolado de revalidate_frontend_tags en on_commit.
+      - file: backend/real_estate/cache_utils.py
+        lines: "25-34"
+        symbol: VERSION_KEYS
+        note: Ocho generaciones independientes de caché por espacio de nombres.
+      - file: backend/real_estate/signals.py
+        lines: "64-74"
+        symbol: "bump_props_version(\"catalog\")"
+        note: Crear o borrar sube además catalog; editar una existente no lo toca.
+      - file: backend/real_estate/services/indexnow.py
+        lines: "94-100"
+        symbol: def submit_property
+        note: Encola cuatro rutas más el hub de la ciudad; los pings se acumulan 10 s en un solo POST.
+    cases:
+      - name: Alta nueva con precio
+        given:
+          evento: post_save
+          created: true
+        expected: "PropertyPriceHistory creado, seis scopes de caché + catalog invalidados, revalidación encolada, IndexNow avisado"
+      - name: Baja física de una propiedad
+        given:
+          evento: post_delete
+        expected: "misma cadena de invalidación y aviso a IndexNow, sin fila de historial"
+      - name: Broker caído al encolar la revalidación de Next
+        given:
+          broker: caido
+        expected: "se registra un warning; el guardado que la disparó no falla"
+
+  - id: WFP-011
+    name: Ocultar una propiedad es reversible; borrarla desde el panel es físico y arrastra las fotos
+    status: implemented
+    summary: >-
+      `status='inactive'` saca la propiedad del catálogo público pero deja la
+      fila y sus imágenes intactas -- el dueño la sigue viendo en
+      `my_properties` -- mientras que `DELETE /api/properties/<id>/`, al no
+      tener `destroy` propio en `PropertyViewSet`, ejecuta el borrado físico de
+      `ModelViewSet` y arrastra cada `PropertyImage` por `on_delete=CASCADE`.
+    rationale: >-
+      Son dos operaciones con consecuencias muy distintas detrás de la misma
+      palabra "quitar del mapa": una se deshace cambiando el selector de
+      estado, la otra no se deshace nunca. El panel del propietario ofrece
+      ambas por separado a propósito -- "Inactivas" como filtro reversible y
+      "eliminar" con `window.confirm` como acción irreversible.
+    evidence:
+      - file: backend/real_estate/views.py
+        lines: "382-384"
+        symbol: "exclude(status='inactive')"
+        note: Único filtro que saca inactive del catálogo público; no toca la fila.
+      - file: backend/real_estate/views.py
+        lines: "919-922"
+        symbol: def my_properties
+        note: "including inactive: el dueño ve su propiedad inactiva, el público no."
+      - file: backend/real_estate/models.py
+        lines: "250-252"
+        symbol: "on_delete=models.CASCADE"
+        note: PropertyImage.property cae en cascada con la Property.
+      - file: frontend/app/my-properties/page.tsx
+        lines: "218-240"
+        symbol: const handleDelete
+        note: "DELETE /properties/<id>/ tras window.confirm; PropertyViewSet no sobrescribe destroy."
+    cases:
+      - name: Marcar una propiedad como inactive
+        given:
+          status: inactive
+        expected: "desaparece del mapa público; el dueño la sigue viendo; las fotos siguen en MinIO"
+      - name: Eliminar desde el panel del propietario
+        given:
+          accion: DELETE
+        expected: "la fila y todas sus PropertyImage se borran físicamente; no hay vuelta atrás"
+
+  - id: WFP-012
+    name: El selector de estado ofrece exactamente los estados que el modelo admite
+    status: implemented
+    summary: >-
+      El wizard solo permite elegir `for_sale`, `for_rent` e `inactive`, que son
+      las tres choices de `Property.STATUS_CHOICES`. Cualquier otro valor que
+      llegue al API lo rechaza con `400` el `ChoiceField` que DRF genera a partir
+      del modelo.
+    rationale: >-
+      Corregido el 2026-08-04. Hasta entonces el selector ofrecía además
+      "Vendido" (`sold`) y "Alquilado" (`rented`), que el modelo no admite: quien
+      los elegía recibía un error de validación genérico y no entendía por qué.
+
+      La corrección alineó el formulario con el modelo, y no al revés, porque la
+      reducción a tres estados fue una decisión deliberada: la migración
+      `0005_alter_property_status` los retiró explícitamente después de que
+      `0001_initial` sí los tuviera. Revertir eso habría exigido decidir además
+      qué hace el inventario público con un anuncio vendido, ya que
+      `get_queryset` solo excluye `inactive`. Un anuncio que ya no está
+      disponible se marca hoy como inactivo, y la etiqueta del selector lo dice.
+
+      El caso de API se conserva a propósito como guardia de regresión: si
+      alguien vuelve a ofrecer un estado que el modelo no conoce, el test lo
+      detecta. Ver WFP-013 para la alternativa de producto.
+    evidence:
+      - file: frontend/app/add-property/page.tsx
+        symbol: "<SelectItem value=\"inactive\">Inactivo (vendido o alquilado)</SelectItem>"
+        note: Las tres opciones visibles del selector.
+      - file: frontend/app/add-property/page.tsx
+        symbol: "status: z.enum(['for_sale', 'for_rent', 'inactive'])"
+        note: La validación de cliente refleja las choices del modelo.
+      - file: backend/real_estate/models.py
+        symbol: STATUS_CHOICES
+        note: for_sale, for_rent e inactive. La fuente de verdad de los tres.
+    backend:
+      endpoint: POST /api/properties/
+      denied_http_status: 400
+    tests:
+      api: true
+    cases:
+      - name: Publicar con un estado que el modelo no conoce
+        role: authenticated
+        given:
+          status: sold
+          title: Propiedad vendida
+        expected: denied
+        http_status: 400
+        note: >-
+          Guardia de regresión. El selector ya no lo ofrece; esto comprueba que
+          el servidor sigue siendo la última palabra.
+      - name: Estados que el selector ofrece
+        given:
+          selector: add-property
+        expected: [for_sale, for_rent, inactive]
+      - name: Un anuncio que ya se vendió
+        given:
+          situacion: vendido
+        expected: inactive
+        note: No hay estado propio; se marca inactivo y sale del inventario público.
+
+  - id: WFP-013
+    name: Distinguir "vendido" y "alquilado" de "inactivo"
+    status: proposed
+    summary: >-
+      `Property.STATUS_CHOICES` podría recuperar `sold` y `rented` para
+      diferenciar un anuncio que se cerró con éxito de uno que se retiró sin
+      más.
+    rationale: >-
+      Ya no es la corrección de un defecto -- WFP-012 se cerró alineando el
+      formulario con el modelo -- sino una decisión de producto pendiente. Hoy
+      "vendido", "alquilado" y "retirado" comparten el estado `inactive`, así que
+      el sistema no puede responder cuántas propiedades se vendieron, que es
+      justo el dato con el que se demuestra que el portal funciona.
+
+      Implementarlo exige más que una migración: `get_queryset` solo excluye
+      `inactive`, de modo que un `sold` seguiría apareciendo en el mapa mientras
+      no se ajuste ese filtro. Y habría que decidir si un anuncio vendido se
+      oculta o se muestra marcado, que para el posicionamiento no es lo mismo.
+    cases:
+      - name: Marcar una propiedad como vendida debería aceptarse
+        given:
+          status: sold
+        expected: allowed
+      - name: Una propiedad vendida debería salir del catálogo de "en venta"
+        given:
+          status: sold
+        expected: "excluida de los listados filtrados por for_sale"

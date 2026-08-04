@@ -528,7 +528,13 @@ function OwnerExecutive({ metrics }: { metrics: OwnerMetrics }) {
             <div className="grid grid-cols-3 gap-2">
               <AudienceMetric label="Total contactos" value={metrics.contacts_total ?? 0} icon={MousePointerClick} />
               <AudienceMetric label="Contactos únicos" value={metrics.contacts_unique ?? 0} icon={UserCheck} />
-              <AudienceMetric label="Tasa de contacto (únicos / vistas de detalle)" value={metrics.contact_rate ?? 0} icon={TrendingUp} suffix="%" />
+              <AudienceMetric
+                label="Tasa de contacto"
+                hint="Contactos únicos sobre vistas de detalle"
+                value={metrics.contact_rate ?? 0}
+                icon={TrendingUp}
+                suffix="%"
+              />
             </div>
             <div className="mt-4 space-y-2">
               {(metrics.contact_methods || []).length === 0 ? (
@@ -604,7 +610,7 @@ function OwnerExecutive({ metrics }: { metrics: OwnerMetrics }) {
           title="Propiedades con mayor intención · 30 días"
           headers={['Propiedad', 'Ciudad', 'Detalles', 'Contactos']}
           rows={metrics.top_properties.map((property) => [
-            <Link key={property.id} href={`/propiedad/${property.id}`} target="_blank" className="block max-w-[240px] truncate font-medium text-primary hover:underline">{property.title || `Propiedad #${property.id}`}</Link>,
+            <Link key={property.id} href={`/propiedad/${property.id}`} target="_blank" className="block max-w-full truncate font-medium text-primary hover:underline sm:max-w-[240px]">{property.title || `Propiedad #${property.id}`}</Link>,
             property.city || '—',
             property.detail_events.toLocaleString('es-EC'),
             property.contact_events.toLocaleString('es-EC'),
@@ -642,17 +648,19 @@ function AudienceMetric({
   value,
   icon: Icon,
   suffix = '',
+  hint,
 }: {
   label: string;
   value: number;
   icon: React.ComponentType<{ className?: string }>;
   suffix?: string;
+  hint?: string;
 }) {
   return (
-    <div className="rounded-card bg-background p-3 text-center">
+    <div className="min-w-0 rounded-card bg-background p-2 text-center sm:p-3" title={hint}>
       <Icon className="mx-auto h-4 w-4 text-primary" />
-      <p className="mt-2 font-geo text-xl font-bold text-textPrimary">{value.toLocaleString('es-EC')}{suffix}</p>
-      <p className="text-[11px] text-textSecondary">{label}</p>
+      <p className="mt-2 font-geo text-lg font-bold text-textPrimary sm:text-xl">{value.toLocaleString('es-EC')}{suffix}</p>
+      <p className="hyphens-auto break-words text-[11px] leading-tight text-textSecondary">{label}</p>
     </div>
   );
 }
@@ -662,12 +670,39 @@ function ExecutiveTable({ title, headers, rows, empty }: { title: string; header
     <Card className="overflow-hidden rounded-card shadow-card">
       <div className="border-b border-line px-5 py-4"><h3 className="font-semibold text-textPrimary">{title}</h3></div>
       {rows.length === 0 ? <p className="p-6 text-center text-sm text-textSecondary">{empty}</p> : (
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-sm">
-            <thead className="bg-muted/40 text-xs text-textSecondary"><tr>{headers.map((header) => <th key={header} className="whitespace-nowrap px-4 py-2.5 font-medium">{header}</th>)}</tr></thead>
-            <tbody>{rows.map((row, index) => <tr key={index} className="border-t border-line">{row.map((cell, cellIndex) => <td key={cellIndex} className="whitespace-nowrap px-4 py-3 text-textSecondary">{cell}</td>)}</tr>)}</tbody>
-          </table>
-        </div>
+        <>
+          {/* On phones the nowrap table would overflow the card, so each row becomes a stacked block. */}
+          <ul className="divide-y divide-line sm:hidden">
+            {rows.map((row, index) => (
+              <li key={index} className="px-4 py-3 text-sm">
+                {headers.length <= 2 ? (
+                  <div className="flex items-baseline justify-between gap-3">
+                    <span className="min-w-0 break-words text-textSecondary">{row[0]}</span>
+                    <span className="shrink-0 font-medium text-textPrimary">{row[1]}</span>
+                  </div>
+                ) : (
+                  <>
+                    <div className="min-w-0 break-words font-medium text-textPrimary">{row[0]}</div>
+                    <dl className="mt-1.5 grid grid-cols-2 gap-x-3 gap-y-1">
+                      {row.slice(1).map((cell, cellIndex) => (
+                        <div key={cellIndex} className="flex min-w-0 items-baseline justify-between gap-2">
+                          <dt className="truncate text-xs text-textSecondary">{headers[cellIndex + 1]}</dt>
+                          <dd className="shrink-0 text-xs font-medium text-textPrimary">{cell}</dd>
+                        </div>
+                      ))}
+                    </dl>
+                  </>
+                )}
+              </li>
+            ))}
+          </ul>
+          <div className="hidden overflow-x-auto sm:block">
+            <table className="w-full text-left text-sm">
+              <thead className="bg-muted/40 text-xs text-textSecondary"><tr>{headers.map((header) => <th key={header} className="whitespace-nowrap px-4 py-2.5 font-medium">{header}</th>)}</tr></thead>
+              <tbody>{rows.map((row, index) => <tr key={index} className="border-t border-line">{row.map((cell, cellIndex) => <td key={cellIndex} className="whitespace-nowrap px-4 py-3 text-textSecondary">{cell}</td>)}</tr>)}</tbody>
+            </table>
+          </div>
+        </>
       )}
     </Card>
   );

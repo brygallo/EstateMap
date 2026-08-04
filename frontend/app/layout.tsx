@@ -136,11 +136,14 @@ export const metadata: Metadata = {
     },
   },
   icons: {
+    // Only the Aents mark: the tile is a raster export of the approved master,
+    // so there is no SVG to offer. A browser that prefers vector would otherwise
+    // pick whatever SVG it finds and draw a different logo in the tab.
     icon: [
-      { url: '/favicon.svg', type: 'image/svg+xml' },
       { url: '/icon-192.png', sizes: '192x192', type: 'image/png' },
+      { url: '/icon-512.png', sizes: '512x512', type: 'image/png' },
     ],
-    shortcut: '/favicon.svg',
+    shortcut: '/icon-192.png',
     // iOS ignores the manifest for the home-screen icon and reads this tag, and
     // it only accepts PNG. The bled export avoids the white halo iOS composites
     // behind a transparent source.

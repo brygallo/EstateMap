@@ -1,0 +1,2646 @@
+version: 1
+domain: matrix
+title: Matriz de permisos de la API
+status: implemented
+summary: >-
+  Quién puede hacer qué en la API de Geo Propiedades Ecuador. Este archivo es el
+  dueño del vocabulario de permisos: cualquier slug que use otra spec debe estar
+  declarado aquí. Cada regla apunta al código que la aplica hoy; las reglas en
+  estado 'proposed' describen el comportamiento correcto de los huecos
+  detectados y quedan en skip hasta que alguien los cierre.
+see_also:
+  - docs/permissions/matrix.md
+  - GOOGLE_OAUTH.md
+
+catalog:
+  permissions:
+    # --- Catálogo público -------------------------------------------------
+    - slug: properties.read_public
+      description: Leer el catálogo público de propiedades activas y su detalle.
+      roles: [anonymous, authenticated, owner, not_owner, staff, superuser, internal]
+    - slug: properties.read_intelligence
+      description: Leer el informe comercial (comparables, precio/m², demanda) de una propiedad.
+      roles: [anonymous, authenticated, owner, not_owner, staff, superuser, internal]
+    - slug: properties.read_market_stats
+      description: Leer los indicadores agregados de mercado que alimentan las páginas SEO.
+      roles: [anonymous, authenticated, owner, not_owner, staff, superuser, internal]
+    - slug: properties.read_own_inventory
+      description: Listar las propiedades propias, incluidas las inactivas.
+      roles: [authenticated, owner, staff, superuser]
+    - slug: properties.read_full_inventory
+      description: >-
+        Ver el catálogo completo en el panel de inventario, incluidas las
+        inactivas, las duplicadas y las importadas de otros portales.
+      roles: [staff, superuser]
+
+    # --- Escritura de propiedades ----------------------------------------
+    - slug: properties.create
+      description: Publicar una propiedad nueva a nombre propio.
+      roles: [authenticated, unverified, owner, not_owner, staff, superuser]
+    - slug: properties.edit_own
+      description: Modificar una propiedad de la que se es propietario.
+      roles: [owner]
+    - slug: properties.delete_own
+      description: Eliminar una propiedad de la que se es propietario.
+      roles: [owner]
+    - slug: properties.edit_any
+      description: Modificar cualquier propiedad del catálogo por la ruta pública.
+      roles: [staff, superuser]
+    - slug: properties.delete_any
+      description: Eliminar cualquier propiedad del catálogo por la ruta pública.
+      roles: [staff, superuser]
+
+    # --- Mapa y geografía -------------------------------------------------
+    - slug: map.read_points
+      description: Leer el payload de puntos y agrupadores del mapa.
+      roles: [anonymous, authenticated, owner, not_owner, staff, superuser, internal]
+    - slug: map.read_summary
+      description: Leer los contadores agregados del inventario activo.
+      roles: [anonymous, authenticated, owner, not_owner, staff, superuser, internal]
+    - slug: map.read_locations
+      description: Leer las provincias y ciudades presentes en el inventario activo.
+      roles: [anonymous, authenticated, owner, not_owner, staff, superuser, internal]
+    - slug: map.read_catalog
+      description: Leer el catálogo estable de provincias y cantones para las landings SEO.
+      roles: [anonymous, authenticated, owner, not_owner, staff, superuser, internal]
+    - slug: map.read_owners
+      description: Leer la lista de propietarios con inventario activo para el filtro del mapa.
+      roles: [anonymous, authenticated, owner, not_owner, staff, superuser, internal]
+    - slug: geo.read_provinces
+      description: Consultar la tabla oficial de provincias.
+      roles: [anonymous, authenticated, owner, not_owner, staff, superuser, internal]
+    - slug: geo.read_cities
+      description: Consultar la tabla oficial de cantones.
+      roles: [anonymous, authenticated, owner, not_owner, staff, superuser, internal]
+    - slug: geo.write
+      description: Crear o modificar provincias y cantones. Solo existe en el admin de Django.
+      roles: [staff, superuser]
+
+    # --- Imágenes ---------------------------------------------------------
+    - slug: images.read_public
+      description: Descargar una imagen del catálogo, ya sea desde MinIO o desde el staging local.
+      roles: [anonymous, authenticated, owner, not_owner, staff, superuser, internal]
+    - slug: images.upload
+      description: Subir imágenes a una propiedad mediante el campo uploaded_images.
+      roles: [owner]
+    - slug: images.delete
+      description: Eliminar una imagen concreta de una propiedad.
+      roles: [owner, staff, superuser]
+
+    # --- Leads ------------------------------------------------------------
+    - slug: leads.create_public
+      description: Enviar el formulario público de contacto de una propiedad.
+      roles: [anonymous, authenticated, owner, not_owner, staff, superuser]
+    - slug: leads.read_own
+      description: Ver los leads recibidos en las propiedades propias.
+      roles: [owner, authenticated]
+    - slug: leads.update_status_own
+      description: Cambiar el estado de un lead de una propiedad propia.
+      roles: [owner]
+    - slug: leads.delete_own
+      description: Eliminar un lead de una propiedad propia.
+      roles: [owner]
+    - slug: leads.read_all
+      description: Ver la bandeja completa de leads de todas las propiedades.
+      roles: [staff, superuser]
+
+    # --- Publicación asistida --------------------------------------------
+    - slug: pending_publications.create_public
+      description: Registrar una solicitud de publicación sin tener cuenta todavía.
+      roles: [anonymous, authenticated, owner, not_owner, staff, superuser]
+    - slug: pending_publications.read_all
+      description: Ver la bandeja de solicitudes de publicación asistida.
+      roles: [staff, superuser]
+    - slug: pending_publications.update_status
+      description: Cambiar el estado de una solicitud de publicación asistida.
+      roles: [staff, superuser]
+    - slug: pending_publications.create_resume_link
+      description: Generar el enlace de un solo uso que devuelve a alguien a su borrador.
+      roles: [staff, superuser]
+    - slug: pending_publications.revoke_resume_link
+      description: Anular un enlace de continuación ya emitido.
+      roles: [staff, superuser]
+    - slug: publication_drafts.read_by_token
+      description: Leer el borrador asociado a un token de continuación válido.
+      roles: [anonymous, authenticated, owner, not_owner, staff, superuser]
+    - slug: publication_drafts.redeem
+      description: Canjear un token de continuación publicando la propiedad.
+      roles: [anonymous, authenticated, owner, not_owner, staff, superuser]
+
+    # --- Actividad --------------------------------------------------------
+    - slug: activity.create_public
+      description: Emitir un evento de analítica desde el navegador.
+      roles: [anonymous, authenticated, owner, not_owner, staff, superuser]
+    - slug: activity.read_all
+      description: Consultar el registro completo de eventos de actividad.
+      roles: [staff, superuser]
+
+    # --- Autenticación ----------------------------------------------------
+    - slug: auth.login
+      description: Obtener un par de tokens JWT con correo y contraseña.
+      roles: [anonymous, authenticated, unverified, owner, not_owner, staff, superuser]
+    - slug: auth.register
+      description: Crear una cuenta nueva, que nace inactiva hasta verificar el correo.
+      roles: [anonymous, authenticated, unverified, owner, not_owner, staff, superuser]
+    - slug: auth.refresh_token
+      description: Canjear un refresh token por un access token nuevo.
+      roles: [anonymous, authenticated, unverified, owner, not_owner, staff, superuser]
+    - slug: auth.google_login
+      description: Iniciar sesión con un id_token de Google verificado.
+      roles: [anonymous, authenticated, unverified, owner, not_owner, staff, superuser]
+    - slug: auth.verify_email
+      description: Canjear el código de seis dígitos que activa la cuenta.
+      roles: [anonymous, authenticated, unverified, owner, not_owner, staff, superuser]
+    - slug: auth.resend_verification
+      description: Pedir un código de verificación nuevo.
+      roles: [anonymous, authenticated, unverified, owner, not_owner, staff, superuser]
+    - slug: auth.request_password_reset
+      description: Pedir un enlace de recuperación de contraseña.
+      roles: [anonymous, authenticated, unverified, owner, not_owner, staff, superuser]
+    - slug: auth.reset_password
+      description: Fijar una contraseña nueva con un token de recuperación.
+      roles: [anonymous, authenticated, unverified, owner, not_owner, staff, superuser]
+
+    # --- Cuenta propia ----------------------------------------------------
+    - slug: account.read_own_profile
+      description: Leer el perfil de la cuenta con la que se ha iniciado sesión.
+      roles: [authenticated, unverified, owner, not_owner, staff, superuser]
+    - slug: account.update_own_profile
+      description: Modificar nombre y apellidos de la cuenta propia.
+      roles: [authenticated, unverified, owner, not_owner, staff, superuser]
+    - slug: account.change_password
+      description: Cambiar la contraseña propia aportando la actual.
+      roles: [authenticated, unverified, owner, not_owner, staff, superuser]
+    - slug: account.request_email_change
+      description: Pedir el cambio del correo de la cuenta propia.
+      roles: [authenticated, unverified, owner, not_owner, staff, superuser]
+    - slug: account.verify_email_change
+      description: Confirmar el cambio de correo con el código enviado al destino.
+      roles: [authenticated, unverified, owner, not_owner, staff, superuser]
+
+    # --- Panel de administración -----------------------------------------
+    - slug: admin.metrics_read
+      description: Leer el dashboard con métricas de negocio, calidad e ingesta.
+      roles: [staff, superuser]
+    - slug: admin.system_status_read
+      description: Leer el estado operativo y las incidencias abiertas del sistema.
+      roles: [staff, superuser]
+    - slug: admin.system_status_write
+      description: Marcar una incidencia del sistema como resuelta.
+      roles: [staff, superuser]
+    - slug: admin.users_read
+      description: Listar y consultar cuentas de usuario desde el panel.
+      roles: [staff, superuser]
+    - slug: admin.users_update
+      description: Cambiar is_active e is_staff de una cuenta desde el panel.
+      roles: [staff, superuser]
+    - slug: admin.users_delete
+      description: Eliminar una cuenta de usuario desde el panel.
+      roles: [staff, superuser]
+    - slug: admin.properties_read
+      description: Listar propiedades desde el panel, incluidas inactivas y duplicadas.
+      roles: [staff, superuser]
+    - slug: admin.properties_update
+      description: Editar los campos moderables de una propiedad desde el panel.
+      roles: [staff, superuser]
+    - slug: admin.properties_delete
+      description: Eliminar cualquier propiedad desde el panel.
+      roles: [staff, superuser]
+    - slug: admin.properties_bulk_status
+      description: Cambiar el estado de hasta 200 propiedades en una sola operación.
+      roles: [staff, superuser]
+    - slug: admin.properties_transfer_owner
+      description: Cambiar la cuenta propietaria de una propiedad desde el panel.
+      roles: [staff, superuser]
+
+    # --- Ingesta ----------------------------------------------------------
+    - slug: ingesta.read
+      description: Consultar fuentes, ejecuciones y anuncios importados del agregador.
+      roles: [staff, superuser]
+    - slug: ingesta.run
+      description: Lanzar una ejecución de scraping contra un portal externo.
+      roles: [staff, superuser]
+    - slug: ingesta.cancel
+      description: Solicitar la cancelación de una ejecución en curso.
+      roles: [staff, superuser]
+    - slug: ingesta.refresh_property
+      description: Re-scrapear un anuncio importado concreto desde su portal de origen.
+      roles: [staff, superuser]
+    - slug: ingesta.maintenance_read
+      description: Previsualizar los candidatos a limpieza sin modificar nada.
+      roles: [staff, superuser]
+    - slug: ingesta.maintenance_cleanup
+      description: Borrar en lotes anuncios importados y sus imágenes.
+      roles: [staff, superuser]
+
+    # --- Operación --------------------------------------------------------
+    - slug: ops.health_read
+      description: Leer la sonda de salud de base de datos, caché y worker.
+      roles: [anonymous, authenticated, owner, not_owner, staff, superuser, internal]
+
+rules:
+  # =====================================================================
+  # A. PROPIEDADES
+  # =====================================================================
+
+  - id: PERM-001
+    name: El catálogo de propiedades se lee sin cuenta
+    status: implemented
+    summary: >-
+      Cualquiera puede listar las propiedades activas sin autenticarse, porque el
+      catálogo es contenido público indexable.
+    rationale: >-
+      El negocio depende de que Google y los asistentes de IA rastreen el
+      inventario. IsAuthenticatedOrReadOnly deja pasar los métodos seguros y el
+      límite de tasa existe solo contra el scraping masivo, no para cerrar el
+      contenido.
+    evidence:
+      - file: backend/real_estate/views.py
+        lines: "308-333"
+        symbol: "permission_classes = [IsAuthenticatedOrReadOnly, IsOwnerOrReadOnly]"
+        note: El throttle property_list se aplica únicamente a la acción list.
+      - file: backend/real_estate/throttling.py
+        lines: 42-51
+        symbol: class AntiScraperScopedThrottle
+    permissions:
+      required: [properties.read_public]
+    backend:
+      enforce: true
+      endpoint: GET /api/properties/
+      throttle_scope: property_list
+    tests:
+      api: true
+    cases:
+      - name: un visitante anónimo lista el catálogo
+        role: anonymous
+        expected: allowed
+      - name: un usuario autenticado lista el catálogo
+        role: authenticated
+        expected: allowed
+      - name: el renderizado en servidor de Next.js lista el catálogo
+        role: internal
+        expected: allowed
+        note: Sin X-Forwarded-For y desde una IP privada queda exento del throttle.
+
+  - id: PERM-002
+    name: El detalle de una propiedad se lee sin cuenta
+    status: implemented
+    summary: >-
+      El detalle de una propiedad activa es público y su contador de visitas solo
+      se incrementa cuando la petición no viene de un crawler.
+    rationale: >-
+      La ficha es la página que se posiciona en buscadores. El filtro de bots
+      afecta a la métrica, nunca al acceso.
+    evidence:
+      - file: backend/real_estate/views.py
+        lines: "538-546"
+        symbol: def retrieve
+      - file: backend/real_estate/permissions.py
+        lines: "4-9"
+        symbol: class IsOwnerOrReadOnly
+        note: has_object_permission devuelve True para todo método seguro.
+    permissions:
+      required: [properties.read_public]
+    backend:
+      enforce: true
+      endpoint: GET /api/properties/{property_id}/
+    tests:
+      api: true
+    cases:
+      - name: un visitante anónimo abre la ficha
+        role: anonymous
+        expected: allowed
+      - name: un tercero autenticado abre la ficha
+        role: not_owner
+        expected: allowed
+      - name: el propietario abre su propia ficha
+        role: owner
+        expected: allowed
+
+  - id: PERM-003
+    name: Publicar una propiedad exige haber iniciado sesión
+    status: implemented
+    summary: >-
+      Solo un usuario autenticado puede crear una propiedad, y el propietario se
+      fija siempre desde el token, nunca desde el cuerpo de la petición.
+    rationale: >-
+      owner es read_only en el serializer y perform_create lo asigna desde
+      request.user, así que no es posible publicar a nombre de otra persona.
+    evidence:
+      - file: backend/real_estate/views.py
+        lines: "499-501"
+        symbol: def perform_create
+      - file: backend/real_estate/serializers.py
+        lines: "164-171"
+        symbol: read_only_fields
+        note: owner, views_count y los campos de ingesta no se pueden fijar desde el cliente.
+    permissions:
+      required: [properties.create]
+    backend:
+      enforce: true
+      endpoint: POST /api/properties/
+      denied_http_status: 401
+      throttle_scope: property_write
+    tests:
+      api: true
+    cases:
+      - name: un anónimo no puede publicar
+        role: anonymous
+        expected: denied
+      - name: un usuario autenticado supera la barrera de permisos
+        role: authenticated
+        expected: allowed
+        note: >-
+          Sin cuerpo válido la respuesta es 400 de validación, que es
+          precisamente la prueba de que el permiso dejó pasar la petición.
+
+  - id: PERM-004
+    name: La propiedad la edita su dueño o un administrador
+    status: implemented
+    summary: >-
+      Modificar una propiedad requiere ser su propietario o tener is_staff; un
+      tercero autenticado no puede.
+    rationale: >-
+      IsOwnerOrReadOnly deja pasar a staff antes de comparar obj.owner porque el
+      panel de inventario es la pantalla desde la que se modera el catálogo
+      entero. La ruta /api/admin/properties/ sigue existiendo para los cambios
+      acotados con traza de auditoría; esta permite la edición completa.
+    evidence:
+      - file: backend/real_estate/permissions.py
+        lines: "18-26"
+        symbol: user.is_authenticated and user.is_staff
+        note: El atajo de staff precede a la comparación obj.owner == request.user.
+      - file: backend/real_estate/views.py
+        lines: "308-310"
+        symbol: "IsOwnerOrReadOnly"
+      - file: backend/real_estate/views.py
+        lines: "374-384"
+        symbol: "self.action in ("
+        note: >-
+          get_queryset devuelve el catálogo completo a staff en las acciones de
+          detalle, para que una propiedad inactiva o duplicada no responda 404.
+    permissions:
+      required: [properties.edit_own, properties.edit_any]
+    backend:
+      enforce: true
+      endpoint: PATCH /api/properties/{property_id}/
+      denied_http_status: 403
+      throttle_scope: property_write
+    tests:
+      api: true
+    cases:
+      - name: el propietario edita su propiedad
+        role: owner
+        expected: allowed
+        given:
+          title: Propiedad de spec editada
+      - name: un tercero autenticado no puede editarla
+        role: not_owner
+        expected: denied
+        given:
+          title: Intento de secuestro
+      - name: un usuario staff sí puede editarla por la ruta pública
+        role: staff
+        expected: allowed
+        expected_http_status: 200
+        given:
+          title: Edición desde staff
+      - name: un anónimo no puede editarla
+        role: anonymous
+        expected: denied
+        http_status: 401
+        given:
+          title: Intento anónimo
+
+  - id: PERM-005
+    name: La propiedad la elimina su dueño o un administrador
+    status: implemented
+    summary: >-
+      Eliminar una propiedad por la ruta pública exige ser su propietario o
+      tener is_staff.
+    rationale: >-
+      Mismo control de objeto que la edición, con el mismo atajo para staff. El
+      borrado administrativo de /api/admin/properties/ sigue existiendo y es el
+      único que deja traza en el log de auditoría; este no.
+    evidence:
+      - file: backend/real_estate/permissions.py
+        lines: 9-15
+        symbol: def has_object_permission
+    permissions:
+      required: [properties.delete_own, properties.delete_any]
+    backend:
+      enforce: true
+      endpoint: DELETE /api/properties/{property_id}/
+      denied_http_status: 403
+    tests:
+      api: true
+    cases:
+      - name: el propietario elimina su propiedad
+        role: owner
+        expected: allowed
+      - name: un tercero autenticado no puede eliminarla
+        role: not_owner
+        expected: denied
+      - name: un usuario staff elimina una propiedad ajena
+        role: staff
+        expected: allowed
+        expected_http_status: 204
+      - name: un anónimo no puede eliminarla
+        role: anonymous
+        expected: denied
+        http_status: 401
+
+  - id: PERM-006
+    name: El inventario exige sesión y su alcance depende del rol
+    status: implemented
+    summary: >-
+      /my_properties/ solo responde a usuarios autenticados. Un usuario normal
+      recibe exclusivamente sus propiedades, inactivas incluidas; un usuario con
+      is_staff recibe el catálogo completo, incluidas las importadas y las
+      duplicadas.
+    rationale: >-
+      Es la única vía para ver las propiedades con status inactive, que el
+      queryset público excluye para todos. El alcance se decide en el servidor a
+      partir del token: el cliente no envía ningún parámetro de usuario, así que
+      no hay forma de pedir el inventario ajeno sin ser administrador.
+    evidence:
+      - file: backend/real_estate/views.py
+        lines: "919-922"
+        symbol: def my_properties
+        note: >-
+          El alcance sale de request.user.is_staff; para el resto es
+          Property.objects.filter(owner=request.user), sin parámetro de usuario.
+    permissions:
+      required: [properties.read_own_inventory, properties.read_full_inventory]
+    backend:
+      enforce: true
+      endpoint: GET /api/properties/my_properties/
+      denied_http_status: 401
+    tests:
+      api: true
+    cases:
+      - name: un anónimo no puede consultar inventario propio
+        role: anonymous
+        expected: denied
+      - name: el propietario ve su inventario
+        role: owner
+        expected: allowed
+      - name: otro usuario recibe su propia lista, no la ajena
+        role: not_owner
+        expected: allowed
+        note: Responde 200 con página vacía; el filtro es por owner, no por parámetro.
+      - name: un administrador recibe el catálogo entero
+        role: staff
+        expected: allowed
+        expected_http_status: 200
+        note: >-
+          scope='catalog' en la respuesta; incluye propiedades de otras cuentas,
+          inactivas e importadas.
+
+  - id: PERM-007
+    name: Una cuenta con el correo sin verificar puede publicar
+    status: implemented
+    summary: >-
+      Hoy is_email_verified no bloquea ningún endpoint, así que una cuenta activa
+      con el correo sin verificar puede crear propiedades.
+    rationale: >-
+      DEFECTO, no decisión. El campo existe y se escribe, pero la única lectura
+      en un camino de autenticación combina is_active con is_email_verified, y
+      como el registro nace inactivo y la verificación pone ambos flags a la vez,
+      el control real acaba siendo is_active, que Django ya comprueba por su
+      cuenta. Una cuenta reactivada desde el admin o desde
+      PATCH /api/admin/users/{pk}/ publica sin haber verificado nunca su correo.
+      Esta regla fija el comportamiento actual; PERM-008 enuncia el correcto.
+    evidence:
+      - file: backend/real_estate/models.py
+        lines: "12-14"
+        symbol: "is_email_verified = models.BooleanField(default=False)"
+      - file: backend/real_estate/serializers.py
+        lines: "601-603"
+        symbol: not user.is_active and not user.is_email_verified
+        note: Única lectura del campo en un camino de login; ninguna permission class lo mira.
+    permissions:
+      required: [properties.create]
+    backend:
+      enforce: false
+      endpoint: POST /api/properties/
+      note: Ninguna permission class del proyecto lee is_email_verified.
+    tests:
+      api: true
+    cases:
+      - name: una cuenta sin verificar supera la barrera de permisos al publicar
+        role: unverified
+        expected: allowed
+        note: >-
+          400 de validación por falta de cuerpo. Lo relevante es que no es 403,
+          es decir que la verificación de correo no interviene.
+
+  - id: PERM-008
+    name: Publicar debería exigir el correo verificado
+    status: proposed
+    summary: >-
+      Crear una propiedad debe requerir is_email_verified, de modo que una cuenta
+      activa pero sin verificar reciba 403.
+    rationale: >-
+      Cierra el defecto descrito en PERM-007. Requiere una permission class nueva
+      (por ejemplo IsEmailVerified) aplicada a las acciones de escritura de
+      PropertyViewSet. Hasta entonces esta regla queda registrada y en skip.
+    permissions:
+      required: [properties.create]
+    backend:
+      enforce: true
+      endpoint: POST /api/properties/
+      denied_http_status: 403
+    tests:
+      api: true
+    cases:
+      - name: una cuenta sin verificar no debería poder publicar
+        role: unverified
+        expected: denied
+      - name: una cuenta verificada sí debería poder publicar
+        role: authenticated
+        expected: allowed
+
+  - id: PERM-009
+    name: delete_image no comprueba la propiedad (comportamiento actual)
+    status: implemented
+    summary: >-
+      Cualquier usuario autenticado supera la barrera de permisos de
+      /delete_image/ sobre una propiedad que no le pertenece.
+    rationale: >-
+      DEFECTO DE SEGURIDAD, no decisión. El decorador @action declara
+      permission_classes=[IsAuthenticated], y en DRF los kwargs de @action
+      SUSTITUYEN los *_classes del viewset, por lo que IsOwnerOrReadOnly no se
+      evalúa en esta acción. IsAuthenticated no implementa has_object_permission,
+      así que get_object() no comprueba nada más. Resultado: un tercero
+      autenticado puede borrar imágenes ajenas pasando image_id. Atenuante: el
+      frontend no llama nunca a este endpoint. Esta regla congela la realidad
+      para que la suite quede verde; PERM-010 enuncia el comportamiento correcto.
+    evidence:
+      - file: backend/real_estate/views.py
+        lines: "984-1005"
+        symbol: def delete_image
+        note: "@action(detail=True, methods=['delete'], permission_classes=[IsAuthenticated])"
+      - file: backend/real_estate/permissions.py
+        lines: 4-15
+        symbol: class IsOwnerOrReadOnly
+        note: No llega a evaluarse en esta acción concreta.
+    permissions:
+      required: [images.delete]
+    backend:
+      enforce: false
+      endpoint: DELETE /api/properties/{property_id}/delete_image/
+      denied_http_status: 401
+    tests:
+      api: true
+    cases:
+      - name: un anónimo sí queda fuera
+        role: anonymous
+        expected: denied
+      - name: un tercero autenticado NO es rechazado por permisos
+        role: not_owner
+        expected: allowed
+        note: >-
+          400 por falta de image_id. No es 403, y ahí está el hueco: la capa de
+          permisos deja pasar a quien no es propietario.
+      - name: el propietario supera la barrera
+        role: owner
+        expected: allowed
+
+  - id: PERM-010
+    name: delete_image debería exigir ser propietario
+    status: proposed
+    summary: >-
+      Eliminar una imagen debe requerir ser propietario de la propiedad a la que
+      pertenece, y responder 403 a cualquier tercero autenticado.
+    rationale: >-
+      Cierra el defecto de PERM-009. La corrección es declarar
+      permission_classes=[IsAuthenticated, IsOwnerOrReadOnly] en el @action, o
+      quitar el permission_classes del decorador para heredar el del viewset.
+    permissions:
+      required: [images.delete]
+    backend:
+      enforce: true
+      endpoint: DELETE /api/properties/{property_id}/delete_image/
+      denied_http_status: 403
+    tests:
+      api: true
+    cases:
+      - name: un tercero autenticado no debería poder borrar imágenes ajenas
+        role: not_owner
+        expected: denied
+      - name: el propietario sí debería poder
+        role: owner
+        expected: allowed
+
+  - id: PERM-011
+    name: El informe comercial es público (comportamiento actual)
+    status: implemented
+    summary: >-
+      /intelligence/ responde a cualquiera sin autenticación y su payload incluye
+      el contador de visitas y los clics de contacto de la propiedad.
+    rationale: >-
+      El endpoint es AllowAny a propósito para las páginas de detalle
+      renderizadas en servidor, pero el payload expone demand.views,
+      demand.contacts y demand.city_median_views, lo que contradice la regla de
+      producto de no mostrar contadores de visitas públicamente. Además es el
+      endpoint de detalle más caro (recorre todo el inventario activo de la
+      ciudad) y no declara throttle. PERM-012 enuncia la corrección.
+    evidence:
+      - file: backend/real_estate/views.py
+        lines: "550-561"
+        symbol: def intelligence
+        note: "@action(detail=True, methods=['get'], permission_classes=[AllowAny])"
+      - file: backend/real_estate/views.py
+        lines: "631-633"
+        symbol: "'demand': {'level': demand_level, 'views': instance.views_count, 'contacts': contacts,"
+    permissions:
+      required: [properties.read_intelligence]
+    backend:
+      enforce: true
+      endpoint: GET /api/properties/{property_id}/intelligence/
+      note: Sin throttle_scope, a diferencia de map_points y de la lista.
+    tests:
+      api: true
+    cases:
+      - name: un visitante anónimo obtiene el informe completo
+        role: anonymous
+        expected: allowed
+      - name: un tercero autenticado también
+        role: not_owner
+        expected: allowed
+
+  - id: PERM-012
+    name: Las métricas de demanda no deberían ser públicas
+    status: proposed
+    summary: >-
+      El bloque demand de /intelligence/ debe servirse solo al propietario de la
+      propiedad o a staff, y el resto del informe puede seguir siendo público.
+    rationale: >-
+      Cierra el problema descrito en PERM-011 sin perder el valor SEO: los
+      comparables, el rango de precio y la antigüedad pueden seguir siendo
+      públicos; las visitas y los contactos son datos del propietario.
+    permissions:
+      required: [properties.read_intelligence]
+    backend:
+      enforce: true
+      endpoint: GET /api/properties/{property_id}/intelligence/
+      denied_http_status: 403
+      note: >-
+        La denegación aplicaría al bloque de demanda, no al endpoint entero. El
+        caso ejecutable de abajo describe la variante estricta.
+    tests: {}
+    cases:
+      - name: un anónimo no debería ver el contador de visitas
+        role: anonymous
+        expected: denied
+        note: Requiere partir el payload en dos, no una simple negación de acceso.
+      - name: el propietario sí debería verlo
+        role: owner
+        expected: allowed
+
+  # =====================================================================
+  # B. MAPA, AGREGADOS PÚBLICOS Y GEOGRAFÍA
+  # =====================================================================
+
+  - id: PERM-013
+    name: El payload del mapa es público y está limitado contra el scraping
+    status: implemented
+    summary: >-
+      /map_points/ responde sin autenticación y aplica el límite map_points de
+      120 peticiones por minuto, del que quedan exentos staff y los clientes
+      internos.
+    rationale: >-
+      Es el endpoint más caliente del sitio. El límite está muy por encima de la
+      navegación humana y de un crawler educado; solo lo alcanza un scraper en
+      bucle. El SSR de Next.js queda exento por IP privada para que todas las
+      páginas renderizadas en servidor no compartan un único cubo.
+    evidence:
+      - file: backend/real_estate/views.py
+        lines: "640-658"
+        symbol: def map_points
+      - file: backend/real_estate/throttling.py
+        lines: 24-39
+        symbol: def _is_internal_client
+      - file: backend/estate_map/settings.py
+        lines: 172-183
+        symbol: DEFAULT_THROTTLE_RATES
+    permissions:
+      required: [map.read_points]
+    backend:
+      enforce: true
+      endpoint: GET /api/properties/map_points/
+      throttle_scope: map_points
+    tests:
+      api: true
+    cases:
+      - name: un visitante anónimo carga el mapa
+        role: anonymous
+        expected: allowed
+      - name: el renderizado en servidor carga el mapa sin consumir cuota
+        role: internal
+        expected: allowed
+      - name: un usuario staff carga el mapa
+        role: staff
+        expected: allowed
+
+  - id: PERM-014
+    name: Los contadores agregados del catálogo son públicos
+    status: implemented
+    summary: >-
+      /summary/ calcula en SQL los totales del inventario activo y responde sin
+      autenticación.
+    rationale: >-
+      Las landings SEO necesitan contar combinaciones de tipo, operación y
+      ubicación sin descargar el catálogo. La respuesta no depende del usuario,
+      por eso puede cachearse y marcarse como pública.
+    evidence:
+      - file: backend/real_estate/views.py
+        lines: "833-848"
+        symbol: def summary
+      - file: backend/real_estate/views.py
+        lines: "109-118"
+        symbol: def _is_public_read
+        note: Solo las lecturas anónimas se sirven de la caché compartida.
+    permissions:
+      required: [map.read_summary]
+    backend:
+      enforce: true
+      endpoint: GET /api/properties/summary/
+    tests:
+      api: true
+    cases:
+      - name: un visitante anónimo obtiene los totales
+        role: anonymous
+        expected: allowed
+
+  - id: PERM-015
+    name: Las ubicaciones con inventario son públicas
+    status: implemented
+    summary: >-
+      /locations/ devuelve sin autenticación las provincias y ciudades presentes
+      en las propiedades activas.
+    rationale: >-
+      Alimenta el filtro de ubicación del mapa con los valores exactos guardados
+      en cada propiedad, con independencia de lo que haya cargado el viewport.
+    evidence:
+      - file: backend/real_estate/views.py
+        lines: "749-759"
+        symbol: def locations
+    permissions:
+      required: [map.read_locations]
+    backend:
+      enforce: true
+      endpoint: GET /api/properties/locations/
+    tests:
+      api: true
+    cases:
+      - name: un visitante anónimo obtiene las ubicaciones
+        role: anonymous
+        expected: allowed
+
+  - id: PERM-016
+    name: El catálogo estable de cantones es público
+    status: implemented
+    summary: >-
+      /catalog/ devuelve sin autenticación las provincias y cantones oficiales,
+      más los nombres históricos que alguna propiedad haya llevado.
+    rationale: >-
+      Una landing SEO ya posicionada debe seguir respondiendo 200 con estado
+      vacío cuando su cantón se queda sin anuncios, en lugar de un 404 que la
+      saque del índice.
+    evidence:
+      - file: backend/real_estate/views.py
+        lines: "785-799"
+        symbol: def catalog
+    permissions:
+      required: [map.read_catalog]
+    backend:
+      enforce: true
+      endpoint: GET /api/properties/catalog/
+    tests:
+      api: true
+    cases:
+      - name: un visitante anónimo obtiene el catálogo de cantones
+        role: anonymous
+        expected: allowed
+
+  - id: PERM-017
+    name: La lista de propietarios con inventario es pública
+    status: implemented
+    summary: >-
+      /owners/ devuelve sin autenticación el identificador y el nombre visible de
+      cada usuario con al menos una propiedad activa.
+    rationale: >-
+      Alimenta el filtro por usuario del mapa. Expone nombre público y id, nunca
+      correo ni teléfono.
+    evidence:
+      - file: backend/real_estate/views.py
+        lines: "724-745"
+        symbol: def owners
+    permissions:
+      required: [map.read_owners]
+    backend:
+      enforce: true
+      endpoint: GET /api/properties/owners/
+    tests:
+      api: true
+    cases:
+      - name: un visitante anónimo obtiene la lista de propietarios
+        role: anonymous
+        expected: allowed
+
+  - id: PERM-018
+    name: Los indicadores de mercado son públicos
+    status: implemented
+    summary: >-
+      /market-stats/ responde sin autenticación con los indicadores agregados de
+      precio por metro cuadrado del inventario activo en venta.
+    rationale: >-
+      Es la fuente de las páginas de estadísticas renderizadas en servidor, que
+      son parte del plan SEO. Solo agrega inventario activo y excluye extremos
+      con el método IQR; no expone datos de ninguna cuenta.
+    evidence:
+      - file: backend/real_estate/views.py
+        lines: "1799-1814"
+        symbol: class MarketStatsView
+    permissions:
+      required: [properties.read_market_stats]
+    backend:
+      enforce: true
+      endpoint: GET /api/market-stats/
+      note: Sin throttle pese a recorrer todo el inventario activo en Python.
+    tests:
+      api: true
+    cases:
+      - name: un visitante anónimo obtiene los indicadores
+        role: anonymous
+        expected: allowed
+      - name: el renderizado en servidor obtiene los indicadores
+        role: internal
+        expected: allowed
+
+  - id: PERM-019
+    name: Las tablas de provincias y cantones se leen sin cuenta
+    status: implemented
+    summary: >-
+      Las provincias se consultan sin autenticación mediante un viewset de solo
+      lectura.
+    rationale: >-
+      Son datos administrativos estables del país, necesarios para los
+      formularios y las landings.
+    evidence:
+      - file: backend/real_estate/views.py
+        lines: "172-182"
+        symbol: class ProvinceViewSet
+      - file: backend/real_estate/views.py
+        lines: "214-224"
+        symbol: class CityViewSet
+    permissions:
+      required: [geo.read_provinces, geo.read_cities]
+    backend:
+      enforce: true
+      endpoint: GET /api/provinces/
+    tests:
+      api: true
+    cases:
+      - name: un visitante anónimo consulta las provincias
+        role: anonymous
+        expected: allowed
+
+  - id: PERM-020
+    name: La geografía no se puede escribir desde la API
+    status: implemented
+    summary: >-
+      La API no expone creación ni modificación de provincias y cantones: el
+      método no está mapeado y la respuesta es 405 incluso para staff.
+    rationale: >-
+      ProvinceViewSet y CityViewSet son ReadOnlyModelViewSet, así que el router
+      solo enruta list y retrieve. El CRUD completo vive únicamente en el admin
+      de Django, donde queda sujeto a los permisos por modelo.
+    evidence:
+      - file: backend/real_estate/views.py
+        lines: "172-178"
+        symbol: "class ProvinceViewSet(viewsets.ReadOnlyModelViewSet):"
+      - file: backend/real_estate/admin.py
+        lines: 12-31
+        symbol: class ProvinceAdmin
+    permissions:
+      required: [geo.write]
+    backend:
+      enforce: true
+      endpoint: POST /api/provinces/
+      denied_http_status: 405
+    tests:
+      api: true
+    cases:
+      - name: un anónimo no puede crear provincias
+        role: anonymous
+        expected: denied
+      - name: ni siquiera staff puede crear provincias por la API
+        role: staff
+        expected: denied
+
+  # =====================================================================
+  # C. IMÁGENES
+  # =====================================================================
+
+  - id: PERM-021
+    name: El proxy de imágenes es público y sin restricción de objeto
+    status: implemented
+    summary: >-
+      /api/media/<ruta> reenvía cualquier objeto del bucket de MinIO sin
+      autenticación, sin permisos y sin límite de tasa.
+    rationale: >-
+      DEFECTO por exceso de alcance. La vista es un django.views.View plano, así
+      que ni siquiera pasa por JWTAuthentication. Está acotada al bucket
+      configurado, de modo que no permite salir de él, pero sí enumerar y
+      descargar cualquier objeto que contenga, con una cabecera de caché de un
+      año. PERM-022 enuncia la corrección.
+    evidence:
+      - file: backend/real_estate/views.py
+        lines: "1383-1392"
+        symbol: class ImageProxyView
+      - file: backend/real_estate/urls.py
+        lines: "72-74"
+        symbol: name='image_proxy'
+    permissions:
+      required: [images.read_public]
+    backend:
+      enforce: false
+      endpoint: GET /api/media/spec-inexistente.webp
+      note: Responde 404 cuando el objeto no existe; nunca 401 ni 403.
+    tests:
+      api: true
+    cases:
+      - name: un anónimo alcanza el proxy sin credenciales
+        role: anonymous
+        expected: allowed
+        note: >-
+          404 porque el objeto no existe. Lo que demuestra el caso es que no hay
+          ninguna capa de autenticación delante.
+
+  - id: PERM-022
+    name: El proxy de imágenes debería servir solo objetos referenciados
+    status: proposed
+    summary: >-
+      El proxy debe resolver únicamente rutas que correspondan a una PropertyImage
+      existente, y rechazar cualquier otra con 404 sin consultar el bucket.
+    rationale: >-
+      Cierra el problema de PERM-021 sin romper el catálogo público: las imágenes
+      del inventario siguen siendo públicas, pero el bucket deja de ser
+      enumerable a través del backend.
+    permissions:
+      required: [images.read_public]
+    backend:
+      enforce: true
+      endpoint: GET /api/media/spec-inexistente.webp
+      denied_http_status: 404
+    tests: {}
+    cases:
+      - name: una ruta que no corresponde a ninguna imagen no debería consultarse en MinIO
+        role: anonymous
+        expected: denied
+        note: Requiere una PropertyImage de fixture para probar también el caso permitido.
+
+  - id: PERM-023
+    name: Las imágenes en staging son públicas mientras se optimizan
+    status: implemented
+    summary: >-
+      /pending-image/<id>/ sirve sin autenticación el fichero recién subido que
+      todavía está en disco local, buscándolo por identificador de fila y nunca
+      por ruta.
+    rationale: >-
+      Decisión deliberada y acotada: existe una ventana de segundos entre la
+      subida y la aparición del objeto en MinIO, y sin esta vista el cliente
+      pintaría una imagen rota. La búsqueda por id y la comprobación de que el
+      fichero está dentro de IMAGE_UPLOAD_TEMP_DIR impiden salir del directorio,
+      y la respuesta se marca no-store.
+    evidence:
+      - file: backend/real_estate/views.py
+        lines: "1425-1452"
+        symbol: class PendingImageView
+      - file: backend/real_estate/views.py
+        lines: "1447-1449"
+        symbol: path.parent != Path(settings.IMAGE_UPLOAD_TEMP_DIR)
+    permissions:
+      required: [images.read_public]
+    backend:
+      enforce: false
+      endpoint: GET /api/pending-image/{id}/
+      note: Responde 404 si la fila no existe o ya está optimizada.
+    tests:
+      api: true
+    cases:
+      - name: un anónimo alcanza la vista sin credenciales
+        role: anonymous
+        expected: allowed
+        note: 404 porque no hay ninguna PropertyImage de fixture; no hay capa de autenticación.
+
+  # =====================================================================
+  # D. LEADS
+  # =====================================================================
+
+  - id: PERM-024
+    name: El formulario de contacto es público
+    status: implemented
+    summary: >-
+      Cualquiera puede crear un lead sin cuenta, y el estado del lead no se puede
+      fijar desde la petición.
+    rationale: >-
+      Decisión deliberada: el contacto es la conversión del sitio y exigir cuenta
+      la mataría. status es read_only en la creación, así que nadie puede dar de
+      alta un lead ya marcado como gestionado.
+    evidence:
+      - file: backend/real_estate/views.py
+        lines: "1023-1025"
+        symbol: "if self.action == 'create':"
+      - file: backend/real_estate/serializers.py
+        lines: "412-418"
+        symbol: class LeadSerializer
+        note: "read_only_fields incluye status."
+    permissions:
+      required: [leads.create_public]
+    backend:
+      enforce: true
+      endpoint: POST /api/leads/
+      note: A diferencia de los otros dos POST públicos, este no declara throttle.
+    tests:
+      api: true
+    cases:
+      - name: un anónimo envía el formulario de contacto
+        role: anonymous
+        expected: allowed
+      - name: un usuario autenticado también puede enviarlo
+        role: authenticated
+        expected: allowed
+
+  - id: PERM-025
+    name: La creación de leads debería estar limitada por tasa
+    status: proposed
+    summary: >-
+      POST /api/leads/ debe declarar un throttle equivalente al de las otras dos
+      creaciones públicas y responder 429 al superarlo.
+    rationale: >-
+      DEFECTO por inconsistencia. Los tres POST públicos del sistema siguen el
+      mismo patrón (fila nueva más correo de notificación), pero solo
+      pending-publications (10/min) y activity-events (30/min) declaran
+      get_throttles. Además la notificación de lead se envía de forma síncrona,
+      así que cada petición cuesta una conexión SMTP.
+    permissions:
+      required: [leads.create_public]
+    backend:
+      enforce: true
+      endpoint: POST /api/leads/
+      denied_http_status: 429
+      throttle_scope: lead_create
+    tests: {}
+    cases:
+      - name: la petición que supera el límite por minuto debería rechazarse
+        role: anonymous
+        expected: denied
+        note: >-
+          No ejecutable con una sola llamada: hace falta una ráfaga, que el
+          generador no sabe construir.
+
+  - id: PERM-026
+    name: La bandeja de leads exige sesión
+    status: implemented
+    summary: >-
+      Listar leads requiere autenticación, y cada usuario ve solo los de sus
+      propias propiedades salvo que sea staff, que los ve todos.
+    rationale: >-
+      El aislamiento se aplica en el queryset, no con un permiso de objeto: un
+      anónimo recibe none() y un usuario normal solo los leads cuya propiedad le
+      pertenece.
+    evidence:
+      - file: backend/real_estate/views.py
+        lines: "1039-1044"
+        symbol: return qs.filter(property__owner=user)
+    permissions:
+      required: [leads.read_own, leads.read_all]
+    backend:
+      enforce: true
+      endpoint: GET /api/leads/
+      denied_http_status: 401
+    tests:
+      api: true
+    cases:
+      - name: un anónimo no puede listar leads
+        role: anonymous
+        expected: denied
+      - name: el propietario lista los leads de sus propiedades
+        role: owner
+        expected: allowed
+      - name: otro usuario recibe una lista vacía, no la ajena
+        role: not_owner
+        expected: allowed
+      - name: staff lista todos los leads
+        role: staff
+        expected: allowed
+
+  - id: PERM-027
+    name: Un lead concreto solo es accesible para el dueño de su propiedad
+    status: implemented
+    summary: >-
+      Consultar, cambiar el estado o eliminar un lead exige que la propiedad
+      asociada pertenezca al usuario del token; para el resto el lead no existe.
+    rationale: >-
+      No hay comprobación de objeto: la protección es el filtrado del queryset,
+      que convierte el acceso ajeno en 404 en lugar de 403. Es correcto, pero
+      significa que ampliar el queryset perdería la protección sin que salte
+      ningún permiso. El cambio de estado usa además un serializer restringido a
+      status.
+    evidence:
+      - file: backend/real_estate/views.py
+        lines: "1029-1039"
+        symbol: LeadStatusSerializer
+      - file: backend/real_estate/serializers.py
+        lines: "440-445"
+        symbol: class LeadStatusSerializer
+    permissions:
+      required: [leads.read_own, leads.update_status_own, leads.delete_own]
+    backend:
+      enforce: true
+      endpoint: PATCH /api/leads/{id}/
+      denied_http_status: 404
+      note: El aislamiento se manifiesta como 404, no como 403.
+    tests: {}
+    cases:
+      - name: el propietario cambia el estado de un lead suyo
+        role: owner
+        expected: allowed
+      - name: un tercero no encuentra el lead ajeno
+        role: not_owner
+        expected: denied
+      - name: un anónimo es rechazado antes de llegar al queryset
+        role: anonymous
+        expected: denied
+        http_status: 401
+    # No ejecutable: no existe ninguna fila Lead en el mundo de prueba, así que
+    # un 404 no distinguiría el aislamiento de la simple ausencia del recurso.
+
+  # =====================================================================
+  # E. PUBLICACIÓN ASISTIDA
+  # =====================================================================
+
+  - id: PERM-028
+    name: La solicitud de publicación asistida es pública y está limitada
+    status: implemented
+    summary: >-
+      Cualquiera puede registrar una solicitud de publicación sin tener cuenta,
+      con un límite de 10 peticiones por minuto.
+    rationale: >-
+      Decisión deliberada: captura la intención de publicar antes de que la
+      persona complete el registro. El throttle pending_create acota el abuso y
+      status es read_only en la creación.
+    evidence:
+      - file: backend/real_estate/views.py
+        lines: "1064-1072"
+        symbol: "self.throttle_scope = 'pending_create'"
+      - file: backend/estate_map/settings.py
+        lines: 172-183
+        symbol: "'pending_create': '10/min',"
+    permissions:
+      required: [pending_publications.create_public]
+    backend:
+      enforce: true
+      endpoint: POST /api/pending-publications/
+      throttle_scope: pending_create
+    tests:
+      api: true
+    cases:
+      - name: un anónimo registra una solicitud
+        role: anonymous
+        expected: allowed
+
+  - id: PERM-029
+    name: La bandeja de publicación asistida es solo para staff
+    status: implemented
+    summary: >-
+      Listar, consultar y cambiar el estado de las solicitudes de publicación
+      exige is_staff; un usuario autenticado normal recibe 403.
+    rationale: >-
+      Doble barrera deliberada: además del permiso, el queryset devuelve none()
+      para quien no es staff, de modo que un fallo en la capa de permisos no
+      filtraría datos de contacto.
+    evidence:
+      - file: backend/real_estate/views.py
+        lines: "1059-1061"
+        symbol: "return [IsAuthenticated(), IsAdminUser()]"
+      - file: backend/real_estate/views.py
+        lines: "1071-1073"
+        symbol: return PendingPublication.objects.none()
+    permissions:
+      required: [pending_publications.read_all, pending_publications.update_status]
+    backend:
+      enforce: true
+      endpoint: GET /api/pending-publications/
+      denied_http_status: 403
+    tests:
+      api: true
+    cases:
+      - name: un anónimo no accede a la bandeja
+        role: anonymous
+        expected: denied
+        http_status: 401
+      - name: un usuario autenticado normal no accede a la bandeja
+        role: authenticated
+        expected: denied
+      - name: el propietario de propiedades tampoco accede
+        role: owner
+        expected: denied
+      - name: staff accede a la bandeja
+        role: staff
+        expected: allowed
+
+  # =====================================================================
+  # F. ACTIVIDAD
+  # =====================================================================
+
+  - id: PERM-030
+    name: La captura de eventos de analítica es pública y está limitada
+    status: implemented
+    summary: >-
+      Cualquier visitante puede emitir un evento de actividad, con un límite de
+      30 por minuto, y el servidor decide la identidad y la marca de bot.
+    rationale: >-
+      Decisión deliberada: la analítica debe funcionar antes de que exista una
+      sesión. El cliente no controla nada sensible: user sale de request.user o
+      queda nulo, e is_bot se deduce del User-Agent ignorando lo que envíe el
+      cliente.
+    evidence:
+      - file: backend/real_estate/views.py
+        lines: "1294-1302"
+        symbol: "self.throttle_scope = 'activity_create'"
+      - file: backend/real_estate/serializers.py
+        lines: "555-564"
+        symbol: validated_data['is_bot'] = is_bot_request(request)
+    permissions:
+      required: [activity.create_public]
+    backend:
+      enforce: true
+      endpoint: POST /api/activity-events/
+      throttle_scope: activity_create
+    tests:
+      api: true
+    cases:
+      - name: un anónimo emite un evento
+        role: anonymous
+        expected: allowed
+        given:
+          event_name: spec_probe
+          path: /spec
+      - name: un usuario autenticado emite un evento
+        role: authenticated
+        expected: allowed
+        given:
+          event_name: spec_probe
+          path: /spec
+
+  - id: PERM-031
+    name: El registro de actividad solo lo consulta staff
+    status: implemented
+    summary: >-
+      Listar o consultar eventos de actividad exige is_staff; un usuario
+      autenticado normal recibe 403.
+    rationale: >-
+      El registro cruza sesiones, usuarios y propiedades, así que es material de
+      panel. El viewset no expone PATCH ni DELETE, de modo que ni siquiera staff
+      puede alterar un evento desde la API.
+    evidence:
+      - file: backend/real_estate/views.py
+        lines: "1059-1061"
+        symbol: "return [IsAuthenticated(), IsAdminUser()]"
+      - file: backend/real_estate/views.py
+        lines: "1279-1281"
+        symbol: "http_method_names = ['get', 'post', 'head', 'options']"
+    permissions:
+      required: [activity.read_all]
+    backend:
+      enforce: true
+      endpoint: GET /api/activity-events/
+      denied_http_status: 403
+    tests:
+      api: true
+    cases:
+      - name: un anónimo no consulta el registro
+        role: anonymous
+        expected: denied
+        http_status: 401
+      - name: un usuario autenticado normal no consulta el registro
+        role: authenticated
+        expected: denied
+      - name: staff consulta el registro
+        role: staff
+        expected: allowed
+
+  # =====================================================================
+  # G. AUTENTICACIÓN Y CUENTA
+  # =====================================================================
+
+  - id: PERM-032
+    name: El inicio de sesión es público
+    status: implemented
+    summary: >-
+      /login/ acepta correo y contraseña sin autenticación previa y devuelve un
+      par de tokens JWT con los claims username, email e is_staff.
+    rationale: >-
+      Acceso 1 hora y refresh 30 días, con rotación y lista negra tras rotar. Una
+      cuenta que sigue inactiva y sin verificar recibe un error específico con
+      code email_not_verified en lugar de un fallo genérico.
+    evidence:
+      - file: backend/real_estate/views.py
+        lines: "1320-1322"
+        symbol: class CustomTokenObtainPairView
+      - file: backend/estate_map/settings.py
+        lines: 192-212
+        symbol: SIMPLE_JWT
+      - file: backend/real_estate/serializers.py
+        lines: "577-582"
+        symbol: token["is_staff"] = user.is_staff
+    permissions:
+      required: [auth.login]
+    backend:
+      enforce: true
+      endpoint: POST /api/login/
+      note: Sin throttle.
+    tests:
+      api: true
+    cases:
+      - name: un anónimo alcanza el endpoint de login
+        role: anonymous
+        expected: allowed
+        note: 400 por falta de credenciales; no hay barrera de permisos.
+
+  - id: PERM-033
+    name: Los endpoints de autenticación deberían limitar los intentos
+    status: proposed
+    summary: >-
+      Login, registro, refresco de token, recuperación de contraseña y reenvío de
+      código deben declarar un límite de tasa y responder 429 al superarlo.
+    rationale: >-
+      DEFECTO. Ninguno de los siete endpoints públicos de autenticación declara
+      throttle, y no existe bloqueo por intentos fallidos en ninguna parte del
+      backend. Además resend-verification y request-password-reset envían un
+      correo por petición, así que también son un amplificador de envíos.
+    permissions:
+      required: [auth.login, auth.register, auth.request_password_reset, auth.resend_verification]
+    backend:
+      enforce: true
+      endpoint: POST /api/login/
+      denied_http_status: 429
+      throttle_scope: auth_attempt
+    tests: {}
+    cases:
+      - name: el intento que supera el límite debería rechazarse
+        role: anonymous
+        expected: denied
+        note: No ejecutable con una sola llamada; requiere una ráfaga.
+
+  - id: PERM-034
+    name: El registro es público y la cuenta nace inactiva
+    status: implemented
+    summary: >-
+      Cualquiera puede registrarse sin autenticación, y la cuenta se crea con
+      is_active en falso hasta que se canjea el código de verificación.
+    rationale: >-
+      Es el único punto donde is_email_verified tiene efecto real, y solo de
+      forma indirecta: la cuenta nace inactiva y la verificación pone ambos flags
+      a la vez. Ver PERM-007.
+    evidence:
+      - file: backend/real_estate/views.py
+        lines: "1324-1326"
+        symbol: class RegisterView
+      - file: backend/real_estate/serializers.py
+        lines: "628-638"
+        symbol: class RegisterSerializer
+        note: create() pasa is_active=False y emite el token de verificación.
+    permissions:
+      required: [auth.register]
+    backend:
+      enforce: true
+      endpoint: POST /api/register/
+      note: Sin throttle.
+    tests:
+      api: true
+    cases:
+      - name: un anónimo alcanza el registro
+        role: anonymous
+        expected: allowed
+
+  - id: PERM-035
+    name: El inicio de sesión con Google exige un correo verificado por Google
+    status: implemented
+    summary: >-
+      /auth/google/ es público, valida el id_token contra el client_id
+      configurado y rechaza cualquier identidad cuyo claim email_verified no sea
+      exactamente verdadero.
+    rationale: >-
+      El servicio nuevo endurece el flujo respecto al código anterior, que no
+      comprobaba email_verified. La vinculación busca primero por oauth_id y
+      después por correo, con select_for_update para que dos peticiones
+      simultáneas no creen cuentas duplicadas.
+    evidence:
+      - file: backend/real_estate/services/authentication.py
+        lines: 27-39
+        symbol: claims.get("email_verified") is not True
+      - file: backend/real_estate/views.py
+        lines: "1330-1333"
+        symbol: class GoogleLoginView
+    permissions:
+      required: [auth.google_login]
+    backend:
+      enforce: true
+      endpoint: POST /api/auth/google/
+      note: Sin throttle.
+    tests:
+      api: true
+    cases:
+      - name: un anónimo alcanza el endpoint de Google
+        role: anonymous
+        expected: allowed
+        note: 400 por token ausente; el permiso es AllowAny.
+
+  - id: PERM-036
+    name: El refresco de token es público
+    status: implemented
+    summary: >-
+      /token/refresh/ no exige cabecera de autenticación: la credencial es el
+      propio refresh token del cuerpo, que se rota y se manda a la lista negra.
+    rationale: >-
+      ROTATE_REFRESH_TOKENS y BLACKLIST_AFTER_ROTATION están activos, así que un
+      refresh reutilizado deja de servir. La app token_blacklist está instalada.
+    evidence:
+      - file: backend/estate_map/settings.py
+        lines: "201-205"
+        symbol: "'BLACKLIST_AFTER_ROTATION': True,"
+      - file: backend/real_estate/urls.py
+        lines: "45-47"
+        symbol: name='token_refresh'
+    permissions:
+      required: [auth.refresh_token]
+    backend:
+      enforce: true
+      endpoint: POST /api/token/refresh/
+    tests:
+      api: true
+    cases:
+      - name: un anónimo alcanza el refresco de token
+        role: anonymous
+        expected: allowed
+
+  - id: PERM-037
+    name: La verificación de correo es pública
+    status: implemented
+    summary: >-
+      Canjear el código de verificación no exige sesión, porque quien lo usa
+      todavía no puede iniciarla.
+    rationale: >-
+      La credencial es el código de seis dígitos, ligado al usuario y con
+      caducidad. Al canjearlo se activan is_active e is_email_verified a la vez.
+    evidence:
+      - file: backend/real_estate/views.py
+        lines: "1457-1459"
+        symbol: class VerifyEmailView
+      - file: backend/real_estate/views.py
+        lines: "1506-1508"
+        symbol: user.is_email_verified = True
+    permissions:
+      required: [auth.verify_email]
+    backend:
+      enforce: true
+      endpoint: POST /api/verify-email/
+    tests:
+      api: true
+    cases:
+      - name: un anónimo alcanza la verificación
+        role: anonymous
+        expected: allowed
+
+  - id: PERM-038
+    name: La recuperación de contraseña no revela si el correo existe
+    status: implemented
+    summary: >-
+      /request-password-reset/ responde 200 con el mismo mensaje tanto si la
+      cuenta existe como si no.
+    rationale: >-
+      Decisión deliberada y correcta, documentada en el propio código. Sirve de
+      referencia para PERM-039, donde el patrón no se siguió.
+    evidence:
+      - file: backend/real_estate/views.py
+        lines: "1594-1597"
+        symbol: "# Por seguridad, no revelar si el email existe o no"
+    permissions:
+      required: [auth.request_password_reset]
+    backend:
+      enforce: true
+      endpoint: POST /api/request-password-reset/
+    tests:
+      api: true
+    cases:
+      - name: un correo inexistente recibe la misma respuesta afirmativa
+        role: anonymous
+        expected: allowed
+        given:
+          email: nadie-spec@example.com
+
+  - id: PERM-039
+    name: El reenvío de verificación revela si el correo existe
+    status: implemented
+    summary: >-
+      /resend-verification/ responde 404 con el mensaje "Usuario no encontrado"
+      cuando el correo no está registrado.
+    rationale: >-
+      DEFECTO por inconsistencia con PERM-038. Es un oráculo de existencia de
+      cuentas: permite enumerar qué correos están registrados. VerifyEmailView
+      tiene exactamente el mismo problema. PERM-040 enuncia la corrección; esta
+      regla congela la conducta actual para que un cambio la haga saltar.
+    evidence:
+      - file: backend/real_estate/views.py
+        lines: "1475-1479"
+        symbol: "{'error': 'Usuario no encontrado'}"
+    permissions:
+      required: [auth.resend_verification]
+    backend:
+      enforce: false
+      endpoint: POST /api/resend-verification/
+      denied_http_status: 404
+    tests:
+      api: true
+    cases:
+      - name: un correo inexistente recibe 404 en lugar de una respuesta genérica
+        role: anonymous
+        expected: denied
+        given:
+          email: nadie-spec@example.com
+
+  - id: PERM-040
+    name: El reenvío de verificación debería responder siempre lo mismo
+    status: proposed
+    summary: >-
+      /resend-verification/ debe responder 200 con un mensaje genérico exista o
+      no la cuenta, igual que hace la recuperación de contraseña.
+    rationale: >-
+      Cierra el oráculo descrito en PERM-039. La misma corrección aplica a
+      /verify-email/.
+    permissions:
+      required: [auth.resend_verification]
+    backend:
+      enforce: true
+      endpoint: POST /api/resend-verification/
+    tests:
+      api: true
+    cases:
+      - name: un correo inexistente debería recibir 200 genérico
+        role: anonymous
+        expected: allowed
+        given:
+          email: nadie-spec@example.com
+
+  - id: PERM-041
+    name: El perfil propio exige sesión y se resuelve desde el token
+    status: implemented
+    summary: >-
+      /me/ devuelve siempre la cuenta del token, sin aceptar identificador en la
+      ruta, de modo que no existe acceso cruzado posible.
+    rationale: >-
+      get_object devuelve request.user directamente. Es la razón por la que este
+      endpoint no necesita comprobación de objeto.
+    evidence:
+      - file: backend/real_estate/views.py
+        lines: "1778-1783"
+        symbol: return self.request.user
+    permissions:
+      required: [account.read_own_profile]
+    backend:
+      enforce: true
+      endpoint: GET /api/me/
+      denied_http_status: 401
+    tests:
+      api: true
+    cases:
+      - name: un anónimo no puede leer un perfil
+        role: anonymous
+        expected: denied
+      - name: un usuario autenticado lee su perfil
+        role: authenticated
+        expected: allowed
+      - name: staff lee su propio perfil
+        role: staff
+        expected: allowed
+
+  - id: PERM-042
+    name: Un usuario no puede concederse is_staff editando su perfil
+    status: implemented
+    summary: >-
+      La actualización del perfil propio solo admite username, nombre y
+      apellidos; correo, verificación, avatar e is_staff son de solo lectura.
+    rationale: >-
+      Es la defensa contra la escalada de privilegios más obvia: enviar
+      is_staff true a /me/. El serializer lo ignora porque está en
+      read_only_fields, así que la petición devuelve 200 sin cambiar el rol.
+    evidence:
+      - file: backend/real_estate/serializers.py
+        lines: "736-755"
+        symbol: 'read_only_fields = ["id", "email", "is_email_verified", "avatar_url", "is_staff"]'
+    permissions:
+      required: [account.update_own_profile]
+    backend:
+      enforce: true
+      endpoint: PATCH /api/me/
+      denied_http_status: 401
+    tests:
+      api: true
+    cases:
+      - name: un anónimo no puede modificar ningún perfil
+        role: anonymous
+        expected: denied
+        given:
+          first_name: Spec
+      - name: un usuario autenticado edita su nombre e is_staff se ignora
+        role: authenticated
+        expected: allowed
+        given:
+          first_name: Spec
+          is_staff: true
+        note: Responde 200, pero el campo is_staff no se aplica por ser de solo lectura.
+
+  - id: PERM-043
+    name: Cambiar la contraseña exige sesión y la contraseña actual
+    status: implemented
+    summary: >-
+      /change-password/ requiere autenticación y valida old_password contra la
+      contraseña vigente del usuario del token.
+    rationale: >-
+      Evita que un token robado sirva para tomar la cuenta de forma permanente
+      sin conocer la contraseña.
+    evidence:
+      - file: backend/real_estate/views.py
+        lines: "1781-1783"
+        symbol: class ChangePasswordView
+      - file: backend/real_estate/serializers.py
+        lines: "757-759"
+        symbol: "La contraseña actual no es correcta"
+    permissions:
+      required: [account.change_password]
+    backend:
+      enforce: true
+      endpoint: POST /api/change-password/
+      denied_http_status: 401
+    tests:
+      api: true
+    cases:
+      - name: un anónimo no puede cambiar contraseñas
+        role: anonymous
+        expected: denied
+      - name: un usuario autenticado supera la barrera de permisos
+        role: authenticated
+        expected: allowed
+        note: 400 porque no se aporta la contraseña actual.
+
+  - id: PERM-044
+    name: Cambiar el correo de la cuenta exige sesión
+    status: implemented
+    summary: >-
+      Solicitar el cambio de correo requiere autenticación, invalida las
+      solicitudes anteriores y envía el código al correo de destino.
+    rationale: >-
+      El código viaja al correo nuevo, así que quien no controle ese buzón no
+      puede completar el cambio aunque haya iniciado la solicitud.
+    evidence:
+      - file: backend/real_estate/views.py
+        lines: "1648-1650"
+        symbol: class RequestEmailChangeView
+      - file: backend/real_estate/views.py
+        lines: "1666-1668"
+        symbol: EmailChangeToken.objects.filter(user=user, is_used=False).update(is_used=True)
+    permissions:
+      required: [account.request_email_change, account.verify_email_change]
+    backend:
+      enforce: true
+      endpoint: POST /api/request-email-change/
+      denied_http_status: 401
+    tests:
+      api: true
+    cases:
+      - name: un anónimo no puede pedir el cambio de correo
+        role: anonymous
+        expected: denied
+      - name: un usuario autenticado supera la barrera de permisos
+        role: authenticated
+        expected: allowed
+        note: 400 porque no se aporta new_email.
+
+  # =====================================================================
+  # H. PANEL DE ADMINISTRACIÓN Y MÉTRICAS
+  # =====================================================================
+
+  - id: PERM-045
+    name: El dashboard de métricas es solo para staff
+    status: implemented
+    summary: >-
+      /admin/dashboard/ exige autenticación e is_staff, y es la única superficie
+      HTTP de AdminMetricsService.
+    rationale: >-
+      El servicio de métricas de propietario no publica ninguna URL propia, así
+      que su exposición se reduce a este endpoint. Un usuario autenticado normal
+      recibe 403.
+    evidence:
+      - file: backend/real_estate/views.py
+        lines: "1941-1943"
+        symbol: class AdminDashboardView
+      - file: backend/real_estate/views.py
+        lines: "2030-2032"
+        symbol: AdminMetricsService(now=now).build()
+      - file: backend/real_estate/permissions.py
+        lines: "25-30"
+        symbol: class IsAdminUser
+    permissions:
+      required: [admin.metrics_read]
+    backend:
+      enforce: true
+      endpoint: GET /api/admin/dashboard/
+      denied_http_status: 403
+    tests:
+      api: true
+    cases:
+      - name: un anónimo no accede al dashboard
+        role: anonymous
+        expected: denied
+        http_status: 401
+      - name: un usuario autenticado normal no accede al dashboard
+        role: authenticated
+        expected: denied
+      - name: staff accede al dashboard
+        role: staff
+        expected: allowed
+      - name: un superusuario accede al dashboard
+        role: superuser
+        expected: allowed
+
+  - id: PERM-046
+    name: El estado del sistema es solo para staff
+    status: implemented
+    summary: >-
+      Leer el estado operativo y marcar incidencias como resueltas exige
+      is_staff.
+    rationale: >-
+      Expone salud de base de datos, caché, worker, imágenes e ingesta, más las
+      incidencias abiertas con ruta, método y mensaje de error. La resolución
+      queda registrada en el log de auditoría con el actor.
+    evidence:
+      - file: backend/real_estate/views.py
+        lines: "2049-2052"
+        symbol: class AdminSystemStatusView
+      - file: backend/real_estate/views.py
+        lines: "2159-2161"
+        symbol: admin_audit action=incident.resolve
+    permissions:
+      required: [admin.system_status_read, admin.system_status_write]
+    backend:
+      enforce: true
+      endpoint: GET /api/admin/system-status/
+      denied_http_status: 403
+    tests:
+      api: true
+    cases:
+      - name: un anónimo no accede al estado del sistema
+        role: anonymous
+        expected: denied
+        http_status: 401
+      - name: un usuario autenticado normal no accede
+        role: authenticated
+        expected: denied
+      - name: staff accede al estado del sistema
+        role: staff
+        expected: allowed
+
+  - id: PERM-047
+    name: Resolver una incidencia del sistema exige staff
+    status: implemented
+    summary: >-
+      El POST de /admin/system-status/ marca una incidencia como resuelta y está
+      cubierto por el mismo permission_classes de clase que el GET.
+    rationale: >-
+      Verificado explícitamente porque el método POST se define aparte del GET en
+      la misma vista y podría haberse quedado sin cubrir.
+    evidence:
+      - file: backend/real_estate/views.py
+        lines: "2157-2166"
+        symbol: incident.save(update_fields=["resolved", "last_seen_at"])
+      - file: backend/real_estate/views.py
+        lines: "1943-1945"
+        symbol: "permission_classes = [IsAuthenticated, IsAdminUser]"
+    permissions:
+      required: [admin.system_status_write]
+    backend:
+      enforce: true
+      endpoint: POST /api/admin/system-status/
+      denied_http_status: 403
+    tests:
+      api: true
+    cases:
+      - name: un anónimo no puede resolver incidencias
+        role: anonymous
+        expected: denied
+        http_status: 401
+      - name: un usuario autenticado normal no puede resolver incidencias
+        role: authenticated
+        expected: denied
+      - name: staff supera la barrera de permisos
+        role: staff
+        expected: allowed
+        note: 404 porque no se indica una incidencia existente.
+
+  - id: PERM-048
+    name: La gestión de usuarios del panel es solo para staff
+    status: implemented
+    summary: >-
+      Listar cuentas desde el panel exige is_staff; un usuario autenticado normal
+      recibe 403.
+    rationale: >-
+      El listado incluye correo, estado de verificación y contadores de
+      actividad de cada cuenta.
+    evidence:
+      - file: backend/real_estate/views.py
+        lines: "2165-2171"
+        symbol: class AdminUserViewSet
+    permissions:
+      required: [admin.users_read]
+    backend:
+      enforce: true
+      endpoint: GET /api/admin/users/
+      denied_http_status: 403
+    tests:
+      api: true
+    cases:
+      - name: un anónimo no lista usuarios
+        role: anonymous
+        expected: denied
+        http_status: 401
+      - name: un usuario autenticado normal no lista usuarios
+        role: authenticated
+        expected: denied
+      - name: staff lista usuarios
+        role: staff
+        expected: allowed
+
+  - id: PERM-049
+    name: Cualquier staff puede conceder is_staff a otra cuenta
+    status: implemented
+    summary: >-
+      La edición de usuarios del panel admite exactamente is_active e is_staff, y
+      basta con ser staff para otorgar el rol de staff a un tercero.
+    rationale: >-
+      DEFECTO por privilegio excesivo, no decisión. IsAdminUser no mira nunca
+      is_superuser, en todo el backend REST. Las únicas salvaguardas son contra
+      uno mismo: no puedes quitarte staff ni desactivarte. Un staff puede, por
+      tanto, promover a un tercero o degradar a un superusuario. PERM-050 enuncia
+      la corrección.
+    evidence:
+      - file: backend/real_estate/views.py
+        lines: "2219-2238"
+        symbol: "allowed_fields = {'is_active', 'is_staff'}"
+      - file: backend/real_estate/permissions.py
+        lines: "31"
+        symbol: return request.user and request.user.is_authenticated and request.user.is_staff
+        note: No comprueba is_superuser en ningún punto.
+    permissions:
+      required: [admin.users_update]
+    backend:
+      enforce: true
+      endpoint: PATCH /api/admin/users/{owner_id}/
+      denied_http_status: 403
+    tests:
+      api: true
+    cases:
+      - name: un anónimo no puede modificar cuentas
+        role: anonymous
+        expected: denied
+        http_status: 401
+        given:
+          is_staff: true
+      - name: un usuario autenticado normal no puede modificar cuentas
+        role: authenticated
+        expected: denied
+        given:
+          is_staff: true
+      - name: un staff promueve a otra cuenta a staff sin ser superusuario
+        role: staff
+        expected: allowed
+        given:
+          is_staff: true
+
+  - id: PERM-050
+    name: Conceder is_staff debería exigir is_superuser
+    status: proposed
+    summary: >-
+      Otorgar o retirar el rol de staff debe requerir is_superuser, de modo que
+      un staff normal reciba 403 al intentarlo.
+    rationale: >-
+      Cierra el defecto de PERM-049. Requiere una permission class nueva (por
+      ejemplo IsSuperUser) aplicada a las operaciones de elevación de privilegio,
+      dejando is_active en manos de staff.
+    permissions:
+      required: [admin.users_update]
+    backend:
+      enforce: true
+      endpoint: PATCH /api/admin/users/{owner_id}/
+      denied_http_status: 403
+    tests:
+      api: true
+    cases:
+      - name: un staff normal no debería poder conceder is_staff
+        role: staff
+        expected: denied
+        given:
+          is_staff: true
+      - name: un superusuario sí debería poder
+        role: superuser
+        expected: allowed
+        given:
+          is_staff: true
+
+  - id: PERM-051
+    name: Cualquier staff puede eliminar cuentas de usuario
+    status: implemented
+    summary: >-
+      Borrar una cuenta desde el panel exige is_staff y nada más; la única
+      salvaguarda es que nadie puede borrarse a sí mismo.
+    rationale: >-
+      DEFECTO por privilegio excesivo, igual que PERM-049: un staff puede
+      eliminar a un superusuario. La operación sí queda registrada en el log de
+      auditoría con el actor y el objetivo. PERM-052 enuncia la corrección.
+    evidence:
+      - file: backend/real_estate/views.py
+        lines: "2262-2273"
+        symbol: admin_audit action=user.delete
+    permissions:
+      required: [admin.users_delete]
+    backend:
+      enforce: true
+      endpoint: DELETE /api/admin/users/{owner_id}/
+      denied_http_status: 403
+    tests:
+      api: true
+    cases:
+      - name: un anónimo no puede borrar cuentas
+        role: anonymous
+        expected: denied
+        http_status: 401
+      - name: un usuario autenticado normal no puede borrar cuentas
+        role: authenticated
+        expected: denied
+      - name: un staff borra una cuenta ajena sin ser superusuario
+        role: staff
+        expected: allowed
+
+  - id: PERM-052
+    name: Eliminar cuentas debería exigir is_superuser
+    status: proposed
+    summary: >-
+      El borrado de cuentas de usuario debe requerir is_superuser y responder 403
+      a un staff normal.
+    rationale: >-
+      Cierra el defecto de PERM-051. Es la operación más destructiva del panel y
+      hoy está al alcance de cualquier cuenta marcada como staff.
+    permissions:
+      required: [admin.users_delete]
+    backend:
+      enforce: true
+      endpoint: DELETE /api/admin/users/{owner_id}/
+      denied_http_status: 403
+    tests:
+      api: true
+    cases:
+      - name: un staff normal no debería poder borrar cuentas
+        role: staff
+        expected: denied
+      - name: un superusuario sí debería poder
+        role: superuser
+        expected: allowed
+
+  - id: PERM-053
+    name: El listado de propiedades del panel es solo para staff
+    status: implemented
+    summary: >-
+      /admin/properties/ exige is_staff y muestra todo el inventario, incluidas
+      las propiedades inactivas y las duplicadas que el catálogo público oculta.
+    rationale: >-
+      Es la vista de moderación: sin ella no habría forma de recuperar una
+      propiedad inactiva, porque el queryset público las excluye para todos,
+      incluido su propietario.
+    evidence:
+      - file: backend/real_estate/views.py
+        lines: "2268-2276"
+        symbol: class AdminPropertyViewSet
+      - file: backend/real_estate/views.py
+        lines: "2285-2289"
+        symbol: "Property.objects.select_related('owner', 'source')"
+    permissions:
+      required: [admin.properties_read]
+    backend:
+      enforce: true
+      endpoint: GET /api/admin/properties/
+      denied_http_status: 403
+    tests:
+      api: true
+    cases:
+      - name: un anónimo no lista el inventario del panel
+        role: anonymous
+        expected: denied
+        http_status: 401
+      - name: un usuario autenticado normal no lista el inventario del panel
+        role: authenticated
+        expected: denied
+      - name: el propietario tampoco accede al panel
+        role: owner
+        expected: denied
+      - name: staff lista el inventario completo
+        role: staff
+        expected: allowed
+
+  - id: PERM-054
+    name: Los contadores de propiedades del panel son solo para staff
+    status: implemented
+    summary: >-
+      /admin/properties/stats/ exige is_staff igual que el resto del viewset.
+    rationale: >-
+      La acción se enruta explícitamente en urls.py, fuera del router, por lo que
+      conviene verificar que hereda el permission_classes de la clase.
+    evidence:
+      - file: backend/real_estate/views.py
+        lines: "2475-2479"
+        symbol: def stats
+      - file: backend/real_estate/urls.py
+        lines: "80-82"
+        symbol: name='admin_properties_stats'
+    permissions:
+      required: [admin.properties_read]
+    backend:
+      enforce: true
+      endpoint: GET /api/admin/properties/stats/
+      denied_http_status: 403
+    tests:
+      api: true
+    cases:
+      - name: un usuario autenticado normal no ve los contadores
+        role: authenticated
+        expected: denied
+      - name: staff ve los contadores
+        role: staff
+        expected: allowed
+
+  - id: PERM-055
+    name: La edición administrativa de propiedades está acotada a cinco campos
+    status: implemented
+    summary: >-
+      Staff puede editar cualquier propiedad desde el panel, pero solo status,
+      title, price, city y description, y el cambio queda auditado.
+    rationale: >-
+      Es la contrapartida a que IsOwnerOrReadOnly no haga excepción para staff:
+      la moderación existe, pero por una ruta distinta, con campos acotados y con
+      traza. Cualquier otro campo enviado se descarta antes de llegar al
+      serializer.
+    evidence:
+      - file: backend/real_estate/views.py
+        lines: "2281-2283"
+        symbol: "PATCH_ALLOWED_FIELDS = {'status', 'title', 'price', 'city', 'description'}"
+      - file: backend/real_estate/views.py
+        lines: "2337-2354"
+        symbol: admin_audit action=property.update
+    permissions:
+      required: [admin.properties_update]
+    backend:
+      enforce: true
+      endpoint: PATCH /api/admin/properties/{property_id}/
+      denied_http_status: 403
+    tests:
+      api: true
+    cases:
+      - name: un anónimo no puede moderar propiedades
+        role: anonymous
+        expected: denied
+        http_status: 401
+        given:
+          status: inactive
+      - name: el propietario no puede usar la ruta administrativa
+        role: owner
+        expected: denied
+        given:
+          status: inactive
+      - name: staff modera una propiedad ajena
+        role: staff
+        expected: allowed
+        given:
+          status: inactive
+
+  - id: PERM-056
+    name: El borrado administrativo de propiedades es solo para staff
+    status: implemented
+    summary: >-
+      Staff puede eliminar cualquier propiedad desde el panel, incluidas las
+      creadas por usuarios, y el borrado queda auditado.
+    rationale: >-
+      Privilegio amplio y deliberado, pero conviene tenerlo explícito: es la
+      única ruta por la que se puede borrar la propiedad de otra persona.
+    evidence:
+      - file: backend/real_estate/views.py
+        lines: "2425-2431"
+        symbol: admin_audit action=property.delete
+    permissions:
+      required: [admin.properties_delete]
+    backend:
+      enforce: true
+      endpoint: DELETE /api/admin/properties/{property_id}/
+      denied_http_status: 403
+    tests:
+      api: true
+    cases:
+      - name: un usuario autenticado normal no puede borrar por la ruta administrativa
+        role: authenticated
+        expected: denied
+      - name: staff borra una propiedad ajena
+        role: staff
+        expected: allowed
+
+  - id: PERM-057
+    name: El cambio masivo de estado es solo para staff y está acotado
+    status: implemented
+    summary: >-
+      /admin/properties/bulk-status/ exige is_staff, admite como máximo 200
+      identificadores por operación y solo tres estados válidos.
+    rationale: >-
+      El límite de 200 y la lista blanca de estados evitan que un error del panel
+      se convierta en una modificación de todo el catálogo. La operación queda
+      auditada con los identificadores afectados.
+    evidence:
+      - file: backend/real_estate/views.py
+        lines: "2431-2450"
+        symbol: def bulk_status
+      - file: backend/real_estate/views.py
+        lines: "2469-2471"
+        symbol: admin_audit action=property.bulk_status
+    permissions:
+      required: [admin.properties_bulk_status]
+    backend:
+      enforce: true
+      endpoint: POST /api/admin/properties/bulk-status/
+      denied_http_status: 403
+    tests:
+      api: true
+    cases:
+      - name: un anónimo no puede cambiar estados en masa
+        role: anonymous
+        expected: denied
+        http_status: 401
+      - name: un usuario autenticado normal no puede cambiar estados en masa
+        role: authenticated
+        expected: denied
+      - name: staff supera la barrera de permisos
+        role: staff
+        expected: allowed
+        note: 400 porque no se envía la lista de identificadores.
+
+  # =====================================================================
+  # I. INGESTA (AGREGADOR)
+  # =====================================================================
+
+  - id: PERM-058
+    name: Las fuentes de ingesta solo las consulta staff
+    status: implemented
+    summary: >-
+      /admin/ingesta/sources/ exige autenticación e is_staff mediante el
+      decorador permission_classes de la función.
+    rationale: >-
+      Los nueve endpoints de ingesta usan la misma pareja IsAuthenticated más
+      IsAdminUser. Se verificaron uno por uno porque son funciones sueltas y no
+      heredan de ninguna clase con permisos.
+    evidence:
+      - file: backend/ingesta/api.py
+        lines: "131-135"
+        symbol: def sources
+      - file: backend/ingesta/api.py
+        lines: "17"
+        symbol: from real_estate.permissions import IsAdminUser
+    permissions:
+      required: [ingesta.read]
+    backend:
+      enforce: true
+      endpoint: GET /api/admin/ingesta/sources/
+      denied_http_status: 403
+    tests:
+      api: true
+    cases:
+      - name: un anónimo no consulta las fuentes
+        role: anonymous
+        expected: denied
+        http_status: 401
+      - name: un usuario autenticado normal no consulta las fuentes
+        role: authenticated
+        expected: denied
+      - name: staff consulta las fuentes
+        role: staff
+        expected: allowed
+
+  - id: PERM-059
+    name: Las ejecuciones de ingesta solo las consulta staff
+    status: implemented
+    summary: >-
+      /admin/ingesta/runs/ exige is_staff y expone el log completo de cada
+      ejecución del scraper.
+    rationale: >-
+      El log incluye detalle de errores y trazas del portal de origen, material
+      que no debe salir del panel.
+    evidence:
+      - file: backend/ingesta/api.py
+        lines: "139-154"
+        symbol: def runs
+    permissions:
+      required: [ingesta.read]
+    backend:
+      enforce: true
+      endpoint: GET /api/admin/ingesta/runs/
+      denied_http_status: 403
+    tests:
+      api: true
+    cases:
+      - name: un anónimo no consulta las ejecuciones
+        role: anonymous
+        expected: denied
+        http_status: 401
+      - name: un usuario autenticado normal no consulta las ejecuciones
+        role: authenticated
+        expected: denied
+      - name: staff consulta las ejecuciones
+        role: staff
+        expected: allowed
+
+  - id: PERM-060
+    name: Los anuncios importados solo los revisa staff
+    status: implemented
+    summary: >-
+      /admin/ingesta/properties/ exige is_staff para revisar el inventario
+      importado de una fuente.
+    rationale: >-
+      Muestra identificadores externos y URLs de origen que solo tienen sentido
+      en la revisión interna.
+    evidence:
+      - file: backend/ingesta/api.py
+        lines: "210-215"
+        symbol: def properties
+    permissions:
+      required: [ingesta.read]
+    backend:
+      enforce: true
+      endpoint: GET /api/admin/ingesta/properties/
+      denied_http_status: 403
+    tests:
+      api: true
+    cases:
+      - name: un anónimo no revisa los anuncios importados
+        role: anonymous
+        expected: denied
+        http_status: 401
+      - name: un usuario autenticado normal no los revisa
+        role: authenticated
+        expected: denied
+      - name: staff supera la barrera de permisos
+        role: staff
+        expected: allowed
+        note: 404 porque no se indica una fuente existente.
+
+  - id: PERM-061
+    name: Lanzar una ingesta exige staff
+    status: implemented
+    summary: >-
+      /admin/ingesta/launch/ exige is_staff y lanza un subproceso de scraping
+      contra un portal externo.
+    rationale: >-
+      Es la operación con más impacto externo del sistema: consume ancho de banda
+      del portal de origen y puede tardar horas. Además impide dos ejecuciones
+      simultáneas de la misma fuente respondiendo 409.
+    evidence:
+      - file: backend/ingesta/api.py
+        lines: "458-466"
+        symbol: def launch
+      - file: backend/ingesta/api.py
+        lines: "479-484"
+        symbol: "status=status.HTTP_409_CONFLICT,"
+    permissions:
+      required: [ingesta.run]
+    backend:
+      enforce: true
+      endpoint: POST /api/admin/ingesta/launch/
+      denied_http_status: 403
+    tests:
+      api: true
+    cases:
+      - name: un anónimo no puede lanzar una ingesta
+        role: anonymous
+        expected: denied
+        http_status: 401
+      - name: un usuario autenticado normal no puede lanzar una ingesta
+        role: authenticated
+        expected: denied
+      - name: el propietario de propiedades tampoco puede
+        role: owner
+        expected: denied
+    # Deliberadamente sin caso permitido: ejecutarlo lanzaría un scraping real.
+
+  - id: PERM-062
+    name: Cancelar una ejecución exige staff
+    status: implemented
+    summary: >-
+      /admin/ingesta/cancel/ exige is_staff y solo deja la marca
+      cancel_requested, que el proceso atiende en su siguiente punto de control.
+    rationale: >-
+      La cancelación es cooperativa a propósito: no mata el proceso, lo deja
+      terminar de forma ordenada dejando el estado en cancelled.
+    evidence:
+      - file: backend/ingesta/api.py
+        lines: "190-215"
+        symbol: run.cancel_requested = True
+    permissions:
+      required: [ingesta.cancel]
+    backend:
+      enforce: true
+      endpoint: POST /api/admin/ingesta/cancel/
+      denied_http_status: 403
+    tests:
+      api: true
+    cases:
+      - name: un anónimo no puede cancelar ejecuciones
+        role: anonymous
+        expected: denied
+        http_status: 401
+      - name: un usuario autenticado normal no puede cancelar ejecuciones
+        role: authenticated
+        expected: denied
+      - name: staff supera la barrera de permisos
+        role: staff
+        expected: allowed
+        note: 404 porque no hay ninguna ejecución que cancelar.
+
+  - id: PERM-063
+    name: Re-scrapear un anuncio exige staff
+    status: implemented
+    summary: >-
+      /admin/ingesta/refresh-property/ exige is_staff y solo acepta propiedades
+      marcadas como importadas y con fuente y URL de origen.
+    rationale: >-
+      Hace una petición síncrona al portal externo. La comprobación de is_imported
+      impide que la operación toque una publicación creada por un usuario.
+    evidence:
+      - file: backend/ingesta/api.py
+        lines: 372-392
+        symbol: def refresh_property
+    permissions:
+      required: [ingesta.refresh_property]
+    backend:
+      enforce: true
+      endpoint: POST /api/admin/ingesta/refresh-property/
+      denied_http_status: 403
+    tests:
+      api: true
+    cases:
+      - name: un anónimo no puede re-scrapear
+        role: anonymous
+        expected: denied
+        http_status: 401
+      - name: un usuario autenticado normal no puede re-scrapear
+        role: authenticated
+        expected: denied
+    # Sin caso permitido: ejecutarlo dispararía una petición real al portal.
+
+  - id: PERM-064
+    name: La previsualización de mantenimiento exige staff y no modifica nada
+    status: implemented
+    summary: >-
+      /admin/ingesta/maintenance/ exige is_staff y devuelve los candidatos exactos
+      a limpieza sin tocar el catálogo.
+    rationale: >-
+      Separar la previsualización del borrado es lo que permite confirmar el
+      alcance antes de ejecutar una operación irreversible.
+    evidence:
+      - file: backend/ingesta/api.py
+        lines: "332-341"
+        symbol: def maintenance_preview
+    permissions:
+      required: [ingesta.maintenance_read]
+    backend:
+      enforce: true
+      endpoint: GET /api/admin/ingesta/maintenance/
+      denied_http_status: 403
+    tests:
+      api: true
+    cases:
+      - name: un anónimo no previsualiza el mantenimiento
+        role: anonymous
+        expected: denied
+        http_status: 401
+      - name: un usuario autenticado normal no lo previsualiza
+        role: authenticated
+        expected: denied
+      - name: staff previsualiza los candidatos
+        role: staff
+        expected: allowed
+
+  - id: PERM-065
+    name: La limpieza de importados exige staff, confirmación literal y lote acotado
+    status: implemented
+    summary: >-
+      /admin/ingesta/maintenance/cleanup/ exige is_staff, la frase exacta
+      "ELIMINAR IMPORTADAS" en el cuerpo y borra como máximo 200 filas por
+      llamada, todas ellas con is_imported verdadero.
+    rationale: >-
+      Tres salvaguardas encadenadas sobre la operación destructiva más grande del
+      sistema. Hay además una comprobación explícita por fila dentro de la
+      transacción para que nunca entre una publicación creada por un usuario,
+      aunque los datos cambien a mitad de ejecución.
+    evidence:
+      - file: backend/ingesta/api.py
+        lines: "351-367"
+        symbol: '"ELIMINAR IMPORTADAS"'
+      - file: backend/ingesta/api.py
+        lines: "370-373"
+        symbol: if not prop.is_imported
+    permissions:
+      required: [ingesta.maintenance_cleanup]
+    backend:
+      enforce: true
+      endpoint: POST /api/admin/ingesta/maintenance/cleanup/
+      denied_http_status: 403
+    tests:
+      api: true
+    cases:
+      - name: un anónimo no puede lanzar la limpieza
+        role: anonymous
+        expected: denied
+        http_status: 401
+      - name: un usuario autenticado normal no puede lanzar la limpieza
+        role: authenticated
+        expected: denied
+      - name: el propietario de propiedades tampoco puede
+        role: owner
+        expected: denied
+    # Sin caso permitido: es una operación destructiva sobre el catálogo.
+
+  # =====================================================================
+  # J. OPERACIÓN
+  # =====================================================================
+
+  - id: PERM-066
+    name: La sonda de salud es pública
+    status: implemented
+    summary: >-
+      /api/health/ responde sin autenticación con el estado de base de datos,
+      caché y worker, más la release y el entorno desplegados.
+    rationale: >-
+      Decisión deliberada: la usan el proxy y los healthchecks del contenedor,
+      que no tienen credenciales. Expone la SHA de release y el nombre de
+      entorno, nunca datos de usuarios ni de inventario.
+    evidence:
+      - file: backend/estate_map/observability.py
+        lines: 96-99
+        symbol: def health
+      - file: backend/estate_map/urls.py
+        lines: "6"
+        symbol: name='health'
+    permissions:
+      required: [ops.health_read]
+    backend:
+      enforce: false
+      endpoint: GET /api/health/
+      note: Función Django plana, fuera de DRF; sin permission_classes.
+    tests:
+      api: true
+    cases:
+      - name: un anónimo consulta la salud del sistema
+        role: anonymous
+        expected: allowed
+
+  # =====================================================================
+  # K. REGLAS TRANSVERSALES
+  # =====================================================================
+
+  - id: PERM-067
+    name: La API solo acepta JWT, nunca la sesión del admin de Django
+    status: implemented
+    summary: >-
+      DEFAULT_AUTHENTICATION_CLASSES contiene únicamente JWTAuthentication, así
+      que una sesión iniciada en /admin/ no autentica contra /api/.
+    rationale: >-
+      No hay SessionAuthentication en ninguna parte, y ninguna vista sobreescribe
+      authentication_classes. Por eso los endpoints de escritura de la API no
+      dependen de CSRF ni son alcanzables desde una pestaña con la cookie del
+      admin.
+    evidence:
+      - file: backend/estate_map/settings.py
+        lines: 162-165
+        symbol: rest_framework_simplejwt.authentication.JWTAuthentication
+    permissions:
+      required: [auth.login]
+    backend:
+      enforce: true
+      note: Configuración global, no un endpoint concreto.
+    tests: {}
+    cases:
+      - name: una petición sin cabecera Authorization se trata como anónima
+        role: anonymous
+        expected: denied
+        note: Cubierto de forma indirecta por todos los casos anónimos de esta spec.
+
+  - id: PERM-068
+    name: La caché compartida nunca sirve una respuesta autenticada
+    status: implemented
+    summary: >-
+      Solo las lecturas anónimas se leen de la caché, se escriben en ella y se
+      marcan Cache-Control public.
+    rationale: >-
+      _is_public_read exige método seguro y usuario no autenticado. Así una
+      respuesta calculada para una sesión no puede acabar en una entrada
+      compartida, ni la cabecera public viajar junto a un Authorization.
+    evidence:
+      - file: backend/real_estate/views.py
+        lines: "111-120"
+        symbol: not request.user.is_authenticated
+    permissions:
+      required: [properties.read_public]
+    backend:
+      enforce: true
+      endpoint: GET /api/properties/summary/
+      note: El mismo patrón aplica a las nueve lecturas cacheadas.
+    tests: {}
+    cases:
+      - name: una lectura autenticada omite la caché compartida
+        role: authenticated
+        expected: allowed
+        note: >-
+          La diferencia está en la cabecera Cache-Control, no en el código de
+          estado, así que allowed/denied no puede expresarla.
+
+  - id: PERM-069
+    name: El throttling solo existe donde una vista lo declara
+    status: implemented
+    summary: >-
+      No hay DEFAULT_THROTTLE_CLASSES global, así que toda vista que no
+      implemente get_throttles queda sin límite de tasa.
+    rationale: >-
+      Es la razón de fondo de PERM-025 y PERM-033: las tasas están declaradas en
+      DEFAULT_THROTTLE_RATES, pero solo se aplican en los cinco ámbitos que algún
+      viewset activa explícitamente. Conviene tenerlo escrito porque la presencia
+      de DEFAULT_THROTTLE_RATES sugiere lo contrario.
+    evidence:
+      - file: backend/estate_map/settings.py
+        lines: "187-203"
+        symbol: "'property_write': '30/hour',"
+        note: Se declaran las tasas, nunca las clases por defecto.
+      - file: backend/real_estate/views.py
+        lines: "337-350"
+        symbol: def get_throttles
+    permissions:
+      required: [properties.read_public]
+    backend:
+      enforce: true
+      note: Configuración global, no un endpoint concreto.
+    tests: {}
+    cases:
+      - name: un endpoint sin get_throttles no consume ninguna cuota
+        role: anonymous
+        expected: allowed
+        note: Verificable solo con una ráfaga; se documenta, no se ejecuta.
+
+  - id: PERM-070
+    name: El frontend no es la frontera de seguridad
+    status: implemented
+    summary: >-
+      No existe middleware.ts en el frontend, los tokens viven en localStorage y
+      el rol staff se lee decodificando el JWT sin verificar la firma.
+    rationale: >-
+      Toda ruta privada es un bundle público que solo se protege tras hidratar en
+      el navegador, y las peticiones de las páginas de administración salen antes
+      de que el guard emita su veredicto. Lo único que impide la fuga es la
+      autorización del backend, es decir las reglas de esta spec.
+    evidence:
+      - file: frontend/lib/auth-context.tsx
+        symbol: is_staff
+        note: El rol se deriva del payload del JWT decodificado en cliente, sin verificar la firma.
+      - file: frontend/components/AdminRoute.tsx
+        note: Decide qué se pinta, nunca qué se puede hacer.
+    permissions:
+      required: [admin.metrics_read]
+    frontend:
+      hidden_when_denied: true
+      routes:
+        - /admin
+      note: Es experiencia de usuario, no autorización.
+    tests: {}
+    cases:
+      - name: falsificar is_staff en el token local muestra la carcasa del panel
+        role: authenticated
+        expected: denied
+        note: >-
+          El backend sigue rechazando cada llamada; ver PERM-045 a PERM-057, que
+          son los que realmente lo demuestran.

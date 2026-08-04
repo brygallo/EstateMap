@@ -1,7 +1,7 @@
 from django.core.management.base import BaseCommand
 
+from real_estate.geo import polygon_center_lat_lng
 from real_estate.models import Property
-from real_estate.serializers import polygon_center_lat_lng
 
 
 class Command(BaseCommand):

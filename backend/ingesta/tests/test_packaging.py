@@ -23,6 +23,7 @@ def _package(tmp_path, listings, total=None):
 
 
 def test_validate_accepts_complete_package(tmp_path):
+    """SPEC:WFI-005 — a package is validated as a whole before import."""
     reader = _package(tmp_path, [{"external_id": "1"}, {"external_id": "2"}])
     assert reader.validate()["total"] == 2
 

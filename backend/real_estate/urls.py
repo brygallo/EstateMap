@@ -27,6 +27,8 @@ from .views import (
     AdminUserViewSet,
     AdminPropertyViewSet,
     MarketStatsView,
+    PublicationDraftView,
+    PublicationDraftRedeemView,
 )
 
 router = DefaultRouter()
@@ -61,6 +63,10 @@ urlpatterns = [
     path('change-password/', ChangePasswordView.as_view(), name='change_password'),
     path('market-stats/', MarketStatsView.as_view(), name='market_stats'),
 
+    # Resume links: public because the whole point is that there is no account yet.
+    path('publication-drafts/<str:token>/', PublicationDraftView.as_view(), name='publication_draft'),
+    path('publication-drafts/<str:token>/redeem/', PublicationDraftRedeemView.as_view(), name='publication_draft_redeem'),
+
     # Image proxy to serve images from MinIO without CORS issues
     path('pending-image/<int:image_id>/', PendingImageView.as_view(), name='pending_image'),
     re_path(r'^media/(?P<image_path>.+)$', ImageProxyView.as_view(), name='image_proxy'),
@@ -74,6 +80,7 @@ urlpatterns = [
     path('admin/properties/stats/', AdminPropertyViewSet.as_view({'get': 'stats'}), name='admin_properties_stats'),
     path('admin/properties/bulk-status/', AdminPropertyViewSet.as_view({'post': 'bulk_status'}), name='admin_properties_bulk_status'),
     path('admin/properties/<int:pk>/', AdminPropertyViewSet.as_view({'get': 'retrieve', 'patch': 'partial_update', 'delete': 'destroy'}), name='admin_properties_detail'),
+    path('admin/properties/<int:pk>/transfer-owner/', AdminPropertyViewSet.as_view({'post': 'transfer_owner'}), name='admin_properties_transfer_owner'),
 
     # Ingesta (agregador) - panel del frontend
     path('admin/ingesta/sources/', ingesta_api.sources, name='admin_ingesta_sources'),

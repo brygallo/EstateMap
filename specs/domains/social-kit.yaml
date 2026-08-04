@@ -1,0 +1,556 @@
+version: 1
+domain: social-kit
+title: Kit de promoción en redes
+status: implemented
+summary: >-
+  Quien termina de publicar un anuncio aterriza en un kit: láminas listas para
+  Facebook, Instagram y TikTok compuestas con las fotos, el precio y la posición
+  del anuncio, cada una con el código corto y el QR que devuelven a la ficha, más
+  el texto ya redactado para pegar en cada red.
+
+  El kit es también distribución de marca: cada lámina que alguien sube a su
+  perfil lleva el logo y una dirección verificable, así que el portal aparece en
+  el muro de quien vende sin haber pagado por estar ahí.
+
+  La frontera está en SOC-010, que es la única regla de este dominio sin
+  construir: el sistema no publica por cuenta de nadie ni guarda credenciales de
+  terceros. Entrega los archivos y el texto, y quien publica decide.
+see_also:
+  - specs/domains/properties.yaml
+  - specs/ui/visibility-rules.yaml
+  - specs/workflows/publish-property.yaml
+  - specs/permissions/matrix.yaml
+  - docs/technical/cache.md
+
+rules:
+  - id: SOC-001
+    name: Las láminas no muestran nada que la ficha pública no muestre
+    status: implemented
+    summary: >-
+      Una lámina se compone solo con datos que ya viajan al cliente en la ficha
+      pública del anuncio, y nunca con campos que el portal omite a propósito.
+    rationale: >-
+      Una imagen es la peor frontera de privacidad que existe: se descarga, se
+      reenvía por WhatsApp y sobrevive a cualquier corrección posterior en el
+      servidor. Si un contador de visitas o un correo de contacto acaban
+      horneados en un PNG, ya no hay forma de retirarlos.
+
+      La regla se escribe en negativo a propósito, apuntando a VIS-001: lo que no
+      sale en el payload del mapa ni en la ficha tampoco sale en la lámina. El
+      polígono sí puede dibujarse, porque VIS-003 deja constancia de que la forma
+      exacta ya viaja siempre al cliente; la lámina no filtra nada nuevo, solo
+      dibuja lo que cualquiera puede leer del payload.
+
+      La garantía es por construcción y no por lista blanca, que es más débil de
+      lo que parece: nada impide que alguien añada un campo al componer una
+      lámina. Se acepta porque las cuatro funciones que arman el contenido caben
+      en una pantalla y ninguna recibe la propiedad entera; si eso deja de ser
+      cierto, esta regla necesita una tupla cerrada como la de VIS-001.
+    evidence:
+      - file: frontend/app/api/social/[id]/[format]/route.tsx
+        lines: "357-359"
+        symbol: photoLamina
+        note: >-
+          Toma el título, la ciudad, el precio y los hechos declarados. Ni
+          views_count ni contact_phone ni contact_email entran en la lámina.
+      - file: frontend/lib/social-kit.ts
+        lines: "246-248"
+        symbol: buildFacts
+        note: Enumera solo atributos físicos declarados en el anuncio.
+    tests: {}
+    cases:
+      - name: La lámina no incluye el contador de visitas
+        given: {views_count: 340}
+        expected: ausente
+      - name: La lámina no incluye el teléfono ni el correo de contacto
+        given: {contact_phone: "0999999999", contact_email: "duenno@example.com"}
+        expected: ausente
+        note: >-
+          El contacto se pide desde la ficha, que es donde queda registrado el
+          lead. Ponerlo en la imagen se salta esa medición y regala el dato a
+          cualquier scraper que recoja la foto.
+      - name: El polígono sí se dibuja
+        given: {polygon: presente}
+        expected: presente
+      - name: Un anuncio con show_measurements desactivado no gana precisión
+        given: {show_measurements: false}
+        expected: presente
+        note: Rige VIS-003; la lámina dibuja exactamente lo que dibuja el mapa.
+
+  - id: SOC-002
+    name: Cada lámina lleva marca, código corto y QR al anuncio
+    status: implemented
+    summary: >-
+      Toda lámina generada incluye el logotipo del portal, el código corto
+      legible del anuncio y un QR que apunta a esa misma ficha.
+    rationale: >-
+      El QR sirve a quien ve la lámina en una pantalla y puede escanearla. El
+      código corto escrito en claro sirve a todos los demás: a quien la recibe
+      reenviada y recomprimida por WhatsApp hasta que el QR deja de leerse, a
+      quien la ve impresa en una valla, y a quien sencillamente no confía en
+      escanear un código que le llegó de un desconocido.
+
+      Llevar los dos es lo que convierte la lámina en una promesa comprobable
+      —«esto está publicado aquí y lo puedes verificar»— en vez de una imagen
+      suelta que cualquiera podría haber fabricado.
+    evidence:
+      - file: frontend/app/api/social/[id]/[format]/route.tsx
+        lines: "158-160"
+        symbol: VerifyLine
+        note: La dirección verificable, partida en dos filas para que no se corte.
+      - file: frontend/app/api/social/[id]/[format]/route.tsx
+        lines: "120-122"
+        symbol: QrCard
+        note: QR y código impresos juntos.
+      - file: frontend/lib/qr.ts
+        lines: "22"
+        symbol: errorCorrectionLevel
+        note: >-
+          Nivel H: el código sobrevive a la recompresión de las redes, que es lo
+          que decide si sigue escaneando tras un reenvío.
+    tests:
+      unit: true
+    cases:
+      - name: El QR codifica la URL corta del anuncio
+        given: {short_code: "XK4T2"}
+        expected: "https://geopropiedadesecuador.com/p/XK4T2"
+        note: >-
+          Con los parámetros UTM de la red añadidos detrás, según SOC-008. La
+          parte que una persona lee y teclea es la de arriba.
+      - name: El código corto aparece también como texto legible
+        given: {short_code: "XK4T2"}
+        expected: presente
+      - name: Un anuncio sin código cae en la dirección larga
+        given: {short_code: null}
+        expected: "https://geopropiedadesecuador.com/propiedad/8228"
+
+  - id: SOC-003
+    name: El código corto es estable, único y no se puede transcribir mal
+    status: implemented
+    summary: >-
+      Cada anuncio recibe al crearse un código corto único de cinco caracteres,
+      que no cambia nunca y que se escribe con un alfabeto sin caracteres
+      confundibles entre sí.
+    rationale: >-
+      El código existe para que alguien lo teclee mirando una foto, así que la
+      confusión entre 0 y O, o entre 1, I y L, no es un detalle estético: es la
+      diferencia entre llegar al anuncio y llegar a un 404. Se excluyen esos
+      caracteres del alfabeto en origen, que es más barato que intentar adivinar
+      después qué quiso escribir la persona.
+
+      Que no cambie nunca es lo que permite imprimirlo. Un código que se
+      regenerase al editar el anuncio dejaría muertas todas las láminas ya
+      compartidas, que es justo lo contrario de para lo que sirve.
+
+      Se asigna en save() y no en el serializador porque todos los caminos de
+      escritura pasan por ahí —la API, el panel y la ingesta— y un anuncio sin
+      código no se puede promocionar.
+    evidence:
+      - file: backend/real_estate/services/short_codes.py
+        lines: "19"
+        symbol: ALPHABET
+        note: Sin 0, O, 1, I ni L.
+      - file: backend/real_estate/models.py
+        lines: "218-222"
+        symbol: short_code
+        note: >-
+          Solo se asigna cuando está vacío, que es lo que lo hace estable frente
+          a cualquier edición posterior.
+      - file: backend/real_estate/views.py
+        lines: "696-698"
+        symbol: by_code
+        note: Resolución pública, sin distinguir mayúsculas y excluyendo inactivas.
+      - file: backend/real_estate/serializers.py
+        lines: "170"
+        symbol: short_code
+        note: >-
+          Read-only bajo fields='__all__'. Sin esto un cliente podría fijarse su
+          propio código y ocupar el de otro, porque la columna es única.
+    backend:
+      enforce: true
+      endpoint: GET /api/properties/code/{code}/
+    tests:
+      unit: true
+      api: true
+    cases:
+      - name: El alfabeto excluye los caracteres ambiguos
+        given: {alfabeto: "0 O 1 I L"}
+        expected: ausente
+      - name: Editar el anuncio no cambia su código
+        expected: allowed
+      - name: Resolver un código existente devuelve la propiedad
+        role: anonymous
+        expected: allowed
+        expected_http_status: 200
+        note: >-
+          Anónimo a propósito: quien llega escaneando un QR impreso no tiene
+          sesión, y muy a menudo tampoco cuenta.
+      - name: Resolver un código inexistente responde 404
+        expected: denied
+        http_status: 404
+      - name: El código se resuelve sin distinguir mayúsculas
+        given: {code: "xk4t2"}
+        expected: allowed
+        expected_http_status: 200
+        note: Quien teclea desde una foto no respeta las mayúsculas.
+      - name: Un anuncio inactivo no se resuelve por su código
+        given: {status: inactive}
+        expected: denied
+        http_status: 404
+      - name: Un cliente no puede fijar su propio código
+        expected: denied
+        note: >-
+          Sin rol a propósito: no se ejerce contra el endpoint de esta regla sino
+          contra POST/PATCH de /api/properties/, así que el generador lo deja
+          como trazabilidad y quien lo prueba de verdad es
+          test_short_codes.py, que lleva el marcador.
+      - name: Un anuncio creado antes de la migración también tiene código
+        expected: presente
+        note: La migración rellena los existentes; ninguna fila queda sin código.
+
+  - id: SOC-004
+    name: Un anuncio sin fotos también produce kit
+    status: implemented
+    summary: >-
+      Cuando el anuncio no tiene ninguna imagen, o su foto no se puede leer, las
+      láminas se componen con el fondo de marca en lugar de no generarse.
+    rationale: >-
+      Los anuncios sin foto son justamente los que menos se ven y más necesitan
+      que alguien los comparta. Devolver un kit vacío castiga dos veces al mismo
+      anuncio.
+
+      El mismo camino cubre un fallo temporal del almacén de imágenes: una lámina
+      con el fondo de marca es infinitamente mejor que un 500, y quien pidió el
+      kit no tiene forma de saber que MinIO no contestó.
+    evidence:
+      - file: frontend/app/api/social/[id]/[format]/route.tsx
+        lines: "208-210"
+        symbol: PhotoLayer
+        note: Degradado de marca cuando no hay foto utilizable.
+    tests: {}
+    cases:
+      - name: Anuncio sin imágenes
+        given: {images: []}
+        expected: presente
+      - name: Anuncio sin imágenes y sin coordenadas
+        given: {images: [], latitude: null, longitude: null}
+        expected: presente
+        note: Queda la lámina de marca con el precio, la ciudad y el QR.
+      - name: La foto existe pero no se puede descargar
+        expected: presente
+
+  - id: SOC-005
+    name: El precio de la lámina respeta el «a consultar»
+    status: implemented
+    summary: >-
+      Una lámina de un anuncio sin precio escribe «Precio a consultar» y nunca un
+      cero, un guion ni un importe inventado.
+    rationale: >-
+      PROP-004 acepta anuncios sin precio porque los portales publican «a
+      consultar» y el sistema guarda NULL en vez de inventarse un número. Una
+      lámina que imprimiera «$0» convertiría esa ausencia deliberada en una
+      afirmación falsa, y encima en el formato más difícil de desmentir.
+
+      Se cumple reusando el formateador compartido en lugar de escribir otro:
+      esa función ya devuelve «Precio a consultar», y las copias locales de este
+      repo son exactamente lo que hizo divergir «$0» de «Precio a consultar» en
+      pantallas distintas.
+    evidence:
+      - file: frontend/lib/social-kit.ts
+        lines: "279-281"
+        symbol: buildPriceLine
+        note: >-
+          Cuando el anuncio es venta y alquiler a la vez muestra los dos importes
+          con su etiqueta, igual que la ficha.
+      - file: frontend/lib/property-labels.ts
+        lines: "82-85"
+        symbol: formatPrice
+        note: Fuente única del texto «Precio a consultar».
+    tests:
+      unit: true
+    cases:
+      - name: Anuncio sin precio
+        given: {price: null}
+        expected: "Precio a consultar"
+      - name: Anuncio de venta con precio
+        given: {price: 85000, status: for_sale}
+        expected: "$85.000"
+      - name: Anuncio de venta y alquiler a la vez
+        given: {price: 85000, rent_price: 450}
+        expected: ambos importes con su etiqueta
+
+  - id: SOC-006
+    name: La lámina de mapa lleva su atribución horneada
+    status: implemented
+    summary: >-
+      La lámina que dibuja el mapa incluye en la propia imagen la atribución a
+      OpenStreetMap y CARTO.
+    rationale: >-
+      Los tiles del mapa son los mismos que sirve el portal, y su licencia exige
+      la atribución allá donde se muestren. En la web esa línea la pone el
+      control del mapa; en una imagen que se descarga y se sube a Instagram no
+      hay control ninguno, así que la atribución tiene que viajar dentro del
+      píxel o no viaja.
+
+      No es un adorno legal: es la condición bajo la que el portal puede usar
+      esos tiles.
+    evidence:
+      - file: frontend/lib/static-map.ts
+        lines: "25"
+        symbol: ATTRIBUTION
+      - file: frontend/app/api/social/[id]/[format]/route.tsx
+        lines: "345"
+        symbol: ATTRIBUTION
+        note: Impresa en la barra inferior de la lámina de mapa.
+    tests:
+      unit: true
+    cases:
+      - name: La lámina de mapa incluye la atribución
+        expected: "OpenStreetMap"
+      - name: La lámina de mapa incluye a CARTO
+        expected: "CARTO"
+      - name: Una lámina sin mapa no necesita atribución
+        given: {formato: feed}
+        expected: ausente
+
+  - id: SOC-007
+    name: El texto se redacta con los campos del anuncio, sin inventar nada
+    status: implemented
+    summary: >-
+      El texto propuesto para cada red se compone a partir de los campos del
+      anuncio con plantillas, y omite el atributo que falta en vez de rellenarlo.
+    rationale: >-
+      La tentación evidente es pedirle el texto a un modelo de lenguaje y quedar
+      muy bien. El problema es que quien publica va a copiar y pegar ese texto sin
+      leerlo entero, y un anuncio que promete un garaje que no existe es un
+      problema del portal, no de la plantilla.
+
+      Las plantillas son además instantáneas y gratis, que para algo que se
+      genera en cada publicación no es poca cosa. Un campo vacío desaparece de la
+      frase; no se escribe «0 habitaciones».
+    evidence:
+      - file: frontend/lib/social-kit.ts
+        lines: "317-319"
+        symbol: buildCopy
+        note: >-
+          Tres formas distintas y no un párrafo recortado: Facebook admite texto
+          largo, Instagram va corto y con etiquetas, TikTok necesita un gancho.
+      - file: frontend/lib/social-kit.ts
+        lines: "246-248"
+        symbol: buildFacts
+        note: Cada atributo se añade solo si el anuncio lo declara.
+    tests:
+      unit: true
+    cases:
+      - name: Un anuncio sin habitaciones no las menciona
+        given: {rooms: 0}
+        expected: ausente
+      - name: Un anuncio sin área no la menciona
+        given: {area: null}
+        expected: ausente
+      - name: Cada red recibe su propio formato de texto
+        given: {redes: [facebook, instagram, tiktok]}
+        expected: tres textos distintos
+
+  - id: SOC-008
+    name: Los enlaces del kit dicen de qué red vienen
+    status: partial
+    summary: >-
+      Cada enlace y cada QR del kit llevan los parámetros UTM de la red a la que
+      corresponden. Lo que todavía no existe es la pantalla que le devuelve al
+      dueño cuántas visitas trajo cada red.
+    rationale: >-
+      Sin la marca en el enlace el kit es un acto de fe: quien comparte no sabe
+      si sirvió de algo y deja de hacerlo. Los UTM son la mitad barata y ya está
+      puesta; la mitad que convence —«tus publicaciones trajeron 34 visitas
+      reales»— exige agregar ActivityEvent por origen y todavía no está escrita,
+      y por eso la regla queda como `partial` y no como implementada.
+
+      «Reales» será literal cuando exista: el recuento debe excluir los bots por
+      el mismo camino que ya usan las métricas del panel, porque un número
+      inflado por crawlers es peor que no dar número.
+    evidence:
+      - file: frontend/lib/social-kit.ts
+        lines: "151-153"
+        symbol: trackedUrl
+        note: >-
+          utm_source por red, utm_medium=social y utm_campaign=owner_kit, tanto
+          en el texto como en el QR que se imprime.
+    tests:
+      unit: true
+    cases:
+      - name: El enlace de Instagram lleva su utm_source
+        given: {red: instagram}
+        expected: "utm_source=instagram"
+      - name: El QR de la lámina de story lleva el utm de la red
+        given: {red: instagram, formato: story}
+        expected: "utm_source=instagram"
+      - name: El dueño ve cuántas visitas trajo cada red
+        expected: ausente
+        note: Es la parte que falta; queda descrita en specs/proposals/social-kit.yaml.
+
+  - id: SOC-009
+    name: El kit lo abre el propietario, pero las láminas son públicas
+    status: partial
+    summary: >-
+      La pantalla del kit solo se ofrece al propietario del anuncio y a staff,
+      mientras que las URL de las láminas responden a cualquiera. La restricción
+      de la pantalla es de interfaz: no la respalda el servidor.
+    rationale: >-
+      Parece una contradicción y no lo es. La lámina tiene que ser públicamente
+      accesible porque su destino es precisamente ese: que Facebook la descargue
+      para la vista previa, que Instagram la sirva, que cualquiera la vea en un
+      muro. Protegerla con sesión rompería justo el caso de uso.
+
+      Y puede ser pública sin coste porque SOC-001 garantiza que no contiene nada
+      que la ficha no enseñe ya. Lo que se reserva al propietario es la pantalla:
+      no porque los archivos sean secretos, sino porque ofrecerle a un extraño un
+      botón para «promocionar» un anuncio ajeno no significa nada.
+
+      Queda como `partial` porque la comprobación de propiedad vive en el
+      cliente, leyendo el id del JWT sin verificar firma. Es coherente con lo que
+      protege —nada— pero no es una frontera, y escribirlo como `implemented`
+      daría a entender que el servidor la sostiene.
+    frontend:
+      routes: ["/propiedad/{id}/promocionar", "/mis-propiedades"]
+      visible_when_allowed: true
+      hidden_when_denied: true
+      test_id: promote-property-action
+    evidence:
+      - file: frontend/components/promote/PromotionKit.tsx
+        lines: "227-229"
+        symbol: isOwner
+        note: Cortesía de interfaz, no frontera; el comentario del código lo dice.
+      - file: frontend/app/my-properties/page.tsx
+        lines: "535"
+        symbol: promote-property-action
+        note: El acceso al kit solo aparece en el inventario del propio dueño.
+    tests: {}
+    cases:
+      - name: El propietario ve el acceso al kit en su anuncio
+        role: owner
+        expected: allowed
+      - name: Un visitante anónimo no ve el acceso al kit
+        role: anonymous
+        expected: denied
+      - name: Otra persona autenticada tampoco lo ve
+        role: not_owner
+        expected: denied
+      - name: La URL de una lámina responde a un anónimo
+        role: anonymous
+        expected: allowed
+        expected_http_status: 200
+        note: Es un requisito de las vistas previas de las redes, no un descuido.
+
+  - id: SOC-010
+    name: El portal no publica en redes por cuenta de nadie
+    status: not_implemented
+    summary: >-
+      El kit entrega archivos y texto; no guarda credenciales de redes sociales
+      ni publica en el perfil de nadie.
+    rationale: >-
+      Es la frontera de este dominio y conviene escribirla, porque la petición
+      natural es «que lo suba solo». Se decide no hacerlo por dos razones que no
+      dependen de nuestro esfuerzo: Meta cerró la publicación en perfiles
+      personales en 2018 —solo quedan Páginas y cuentas de empresa, previa
+      revisión de su app store—, y TikTok solo deja dejar el contenido en
+      borradores mientras la aplicación no esté auditada.
+
+      Es decir: la publicación automática excluiría precisamente a la mayoría de
+      quien publica un terreno desde el móvil, a cambio de semanas de trámite y
+      de custodiar credenciales ajenas. Lo que sí funciona hoy y para todos es la
+      hoja de compartir del sistema operativo con la imagen ya adjunta, que está
+      a un toque de Instagram, WhatsApp o TikTok.
+
+      Si algún día se construye, será opcional y por consentimiento explícito, y
+      esta regla se sustituye por otra que lo describa.
+    tests: {}
+    cases:
+      - name: El sistema no almacena tokens de redes sociales
+        expected: ausente
+      - name: El kit no hace peticiones a las API de las redes
+        expected: ausente
+      - name: En el móvil, compartir adjunta el archivo de la lámina
+        expected: presente
+      - name: En escritorio, la lámina se descarga
+        expected: presente
+        note: >-
+          navigator.share con archivos no existe en la mayoría de escritorios;
+          la descarga es el camino, no un consuelo.
+
+  - id: SOC-011
+    name: Las láminas se cachean y caducan con el anuncio
+    status: implemented
+    summary: >-
+      Una lámina se genera a demanda y se sirve desde caché, y deja de servir
+      datos viejos en cuanto el anuncio se edita.
+    rationale: >-
+      Componer una lámina implica descargar la foto, transcodificarla y, en la
+      del mapa, pedir hasta nueve tiles. Hacerlo en cada vista previa que pida
+      Facebook sería pagar el coste una y otra vez por una imagen idéntica.
+
+      Y caducarla al editar no es opcional: la lámina lleva el precio impreso. Si
+      alguien baja el precio y la vista previa del enlace sigue enseñando el
+      viejo, el portal está publicando un precio que ya no existe. Los datos los
+      purga la invalidación por etiqueta que ya dispara Django al guardar; el
+      s-maxage corto es lo único que puede quedar rancio, y acota esa ventana a
+      un minuto.
+    evidence:
+      - file: frontend/app/api/social/[id]/[format]/route.tsx
+        lines: "570"
+        symbol: Cache-Control
+        note: >-
+          s-maxage=60 con stale-while-revalidate: absorbe la ráfaga de scrapers
+          que llega al publicar un enlace sin congelar un precio corregido.
+      - file: frontend/lib/properties.ts
+        lines: "288-292"
+        symbol: getProperty
+        note: >-
+          Lectura etiquetada; /api/revalidate purga property-<id> cuando Django
+          avisa de un cambio.
+    tests: {}
+    cases:
+      - name: Dos peticiones seguidas de la misma lámina no la recomponen
+        expected: allowed
+      - name: Cambiar el precio deja de servir la lámina vieja
+        given: {price: 79000}
+        expected: allowed
+
+  - id: SOC-012
+    name: Publicar un anuncio termina en el kit
+    status: implemented
+    summary: >-
+      Al completar la publicación de un anuncio, la persona aterriza en el kit de
+      promoción de ese anuncio y no en el listado de sus propiedades.
+    rationale: >-
+      El minuto siguiente a publicar es el único en que alguien tiene a la vez
+      las ganas y el anuncio delante. Mandarlo al listado gasta ese minuto en
+      enseñarle una tabla.
+
+      El listado sigue estando a un clic, y el kit sigue accesible después desde
+      cada anuncio: no se sustituye un camino por otro, se cambia cuál es el
+      predeterminado en el único momento en que la respuesta es obvia. Editar no
+      cuenta como publicar, y si la respuesta del servidor no trae id se vuelve
+      al listado antes que navegar a una URL rota.
+    frontend:
+      routes: ["/publicar-propiedad", "/propiedad/{id}/promocionar"]
+      test_id: promote-property-action
+    evidence:
+      - file: frontend/app/add-property/page.tsx
+        lines: "1054"
+        symbol: promocionar
+        note: Solo al crear, y solo con id; en cualquier otro caso, /mis-propiedades.
+    tests: {}
+    cases:
+      - name: Tras publicar, la persona ve el kit de su anuncio
+        role: owner
+        expected: allowed
+      - name: Editar un anuncio existente no lleva al kit
+        role: owner
+        expected: denied
+        note: >-
+          Editar no es publicar. Interrumpir una corrección con una pantalla de
+          promoción es ruido.
+      - name: Si la respuesta no trae id se vuelve al listado
+        role: owner
+        expected: allowed

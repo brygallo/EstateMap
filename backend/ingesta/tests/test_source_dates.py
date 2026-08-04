@@ -2,6 +2,7 @@ from ingesta.scrapers.base import extract_html_source_dates, parse_source_dateti
 
 
 def test_extracts_schema_source_dates_from_html():
+    """SPEC:IMP-004 — parseable source dates are preserved."""
     html = '''
       <script type="application/ld+json">
         {"datePosted":"2026-05-10T14:30:00-05:00","dateModified":"2026-06-01"}
@@ -13,4 +14,5 @@ def test_extracts_schema_source_dates_from_html():
 
 
 def test_invalid_source_date_is_not_invented():
+    """SPEC:IMP-004 — invalid source dates remain absent."""
     assert parse_source_datetime("publicado recientemente") is None

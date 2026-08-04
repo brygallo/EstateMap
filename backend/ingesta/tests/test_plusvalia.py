@@ -208,7 +208,7 @@ class TestPlusvaliaParseDetail:
                  "province": "Guayas", "address": "Urdesa"}
 
     def test_venta_y_alquiler_guarda_ambos_precios(self):
-        """Anuncio venta+alquiler: prioriza venta y guarda el alquiler aparte,
+        """SPEC:IMP-005 — venta+alquiler prioriza venta y guarda el alquiler aparte,
         de forma determinista (mismo resultado venga de la búsqueda que venga)."""
         for op in ("venta", "alquiler"):
             d = self.scraper._parse_detail(self._DUAL_HTML, self._DUAL_URL,
@@ -288,6 +288,7 @@ def test_429_aplica_backoff_y_reintenta(monkeypatch):
 
 
 def test_403_repetido_aborta_despues_de_backoff(monkeypatch):
+    """SPEC:WFI-007 — repeated portal blocks raise ScraperBlocked."""
     scraper = PlusvaliaScraper()
     sleeps = []
     monkeypatch.setattr("ingesta.scrapers.plusvalia.time.sleep", sleeps.append)
@@ -301,6 +302,7 @@ def test_403_repetido_aborta_despues_de_backoff(monkeypatch):
 
 
 def test_incremental_compara_id_y_corta_franja_historica(monkeypatch):
+    """SPEC:WFI-009 — incremental mode compares stable IDs and stops on its known streak."""
     scraper = PlusvaliaScraper()
     scraper._KNOWN_STREAK_LIMIT = 3
     monkeypatch.setattr(scraper, "_client", lambda: _FakeClient())

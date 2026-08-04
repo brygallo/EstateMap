@@ -1,0 +1,845 @@
+version: 1
+domain: imports
+title: Importación de anuncios de portales externos
+status: partial
+summary: >-
+  Reglas de negocio del agregador (app `ingesta`): cómo un anuncio de un portal
+  externo se convierte en una `Property` del catálogo, qué se descarta, cómo se
+  deduplica entre fuentes y cuándo se retira. Verificado contra el código el
+  2026-08-04. Plusvalía es hoy la única fuente activa.
+see_also:
+  - docs/workflows/import-properties.md
+  - specs/workflows/import-properties.yaml
+  - PLUSVALIA_IMPORT_RUNBOOK.md
+
+rules:
+  - id: IMP-001
+    name: Una propiedad importada no tiene dueño
+    status: implemented
+    summary: >-
+      Toda propiedad creada por la ingesta queda con `owner` NULL e
+      `is_imported=True`, para distinguirla siempre de una publicación de usuario.
+    rationale: >-
+      `owner` es la frontera entre el catálogo agregado y el contenido de los
+      usuarios. Ninguna ruta de la ingesta asigna owner; el flag `is_imported` es
+      además el filtro que protege a las publicaciones de usuario del borrado
+      masivo (ver IMP-014).
+    evidence:
+      - file: backend/ingesta/pipeline/upsert.py
+        lines: "23-53"
+        symbol: _apply_fields
+        note: Punto único de escritura de campos; nunca toca `owner`.
+      - file: backend/ingesta/pipeline/upsert.py
+        lines: "55-57"
+        symbol: prop.is_imported = True
+      - file: backend/real_estate/models.py
+        lines: "118-120"
+        symbol: owner = models.ForeignKey
+        note: FK nullable; el comentario del bloque de origen documenta la regla.
+    cases:
+      - name: Anuncio importado de Plusvalía
+        given:
+          source: plusvalia
+          external_id: "150575806"
+        expected:
+          owner: null
+          is_imported: true
+      - name: Publicación creada por un usuario
+        given:
+          via: formulario público
+        expected:
+          is_imported: false
+
+  - id: IMP-002
+    name: La clave lógica de un anuncio es (source, external_id)
+    status: implemented
+    summary: >-
+      Reimportar el mismo anuncio actualiza la fila existente en vez de duplicarla,
+      garantizado por una UniqueConstraint y por la captura del IntegrityError de carrera.
+    rationale: >-
+      El backfill por lotes reimporta paquetes solapados, y dos procesos pueden
+      escribir el mismo anuncio a la vez. Sin el candado en base, un reintento
+      duplicaría el catálogo público.
+    evidence:
+      - file: backend/ingesta/pipeline/upsert.py
+        lines: "114-116"
+        symbol: Property.objects.filter(source=fuente, external_id=external_id)
+        note: Búsqueda previa; si existe, la operación se convierte en UPDATE.
+      - file: backend/real_estate/models.py
+        lines: "194-198"
+        symbol: uniq_source_external_when_imported
+        note: UniqueConstraint condicionada a is_imported=True.
+      - file: backend/ingesta/pipeline/upsert.py
+        lines: "152-164"
+        symbol: "except IntegrityError:"
+        note: Una carrera perdida se recupera y se reescribe como actualización.
+    cases:
+      - name: Mismo paquete importado dos veces
+        given:
+          external_id: "150575806"
+          import_count: 2
+        expected:
+          created: 1
+          updated: 1
+      - name: Dos procesos crean el mismo external_id a la vez
+        given:
+          race: true
+        expected: "la fila perdedora se recupera y se actualiza; nunca se duplica"
+
+  - id: IMP-003
+    name: Un precio absurdo se publica como "a consultar", no como dato
+    status: implemented
+    summary: >-
+      Un precio positivo de venta menor a 1.000 USD, un alquiler positivo menor
+      a 20 USD/mes o
+      cualquier valor mayor a 50.000.000 USD se descarta a NULL, pero el anuncio
+      se publica igual.
+    rationale: >-
+      Un valor fuera de rango casi siempre es un área, un teléfono o un id leído
+      como precio. Publicar un dato absurdo daña más la confianza que no publicar
+      precio, y descartar el anuncio entero perdería inventario válido.
+    evidence:
+      - file: backend/ingesta/pipeline/normalize.py
+        lines: "100-122"
+        symbol: sanitize_price
+      - file: backend/ingesta/pipeline/normalize.py
+        lines: "95-97"
+        symbol: _SALE_PRICE_MIN
+        note: Cotas de sanidad para el mercado ecuatoriano, en USD.
+      - file: backend/ingesta/pipeline/upsert.py
+        lines: "100-104"
+        symbol: clean, motivo = sanitize_price
+        note: Se aplica en el punto único de escritura, así cubre todos los flujos.
+    cases:
+      - name: Venta por 250 USD
+        given:
+          price: 250
+          status: for_sale
+        expected: null
+      - name: Alquiler por 15 USD/mes
+        given:
+          price: 15
+          status: for_rent
+        expected: null
+      - name: Alquiler por 450 USD/mes
+        given:
+          price: 450
+          status: for_rent
+        expected: 450
+      - name: Venta por 92.000.000 USD
+        given:
+          price: 92000000
+          status: for_sale
+        expected: null
+      - name: Anuncio sin precio válido sigue publicándose
+        given:
+          price: 250
+        expected: "la propiedad se crea con price NULL"
+
+  - id: IMP-004
+    name: Las fechas de origen no se inventan
+    status: implemented
+    summary: >-
+      `source_published_at` y `source_updated_at` solo se escriben cuando el
+      portal declara una fecha parseable; un texto como "publicado recientemente"
+      deja el campo intacto.
+    rationale: >-
+      Estas fechas alimentan `datePosted`/`dateModified` del structured data. Una
+      fecha inventada es información falsa servida a los buscadores.
+    evidence:
+      - file: backend/ingesta/scrapers/base.py
+        lines: "38-57"
+        symbol: parse_source_datetime
+        note: Devuelve None ante cualquier valor no parseable.
+      - file: backend/ingesta/scrapers/base.py
+        lines: "60-80"
+        symbol: extract_html_source_dates
+      - file: backend/ingesta/pipeline/upsert.py
+        lines: "57-59"
+        symbol: prop.source_published_at = data["source_published_at"]
+        note: Asignación condicionada a que el valor exista.
+    tests:
+      unit: true
+    cases:
+      - name: Schema.org con datePosted ISO
+        given:
+          datePosted: "2026-05-10T14:30:00-05:00"
+        expected: "2026-05-10T14:30:00-05:00"
+      - name: Texto no parseable
+        given:
+          datePosted: publicado recientemente
+        expected: null
+
+  - id: IMP-005
+    name: Venta gana sobre alquiler y el resultado es determinista
+    status: implemented
+    summary: >-
+      Un anuncio publicado a la vez en venta y alquiler queda como `for_sale` con
+      el precio de venta en `price` y el de alquiler en `rent_price`, sin importar
+      por qué búsqueda se encontró.
+    rationale: >-
+      El mismo anuncio aparece en el listado de venta y en el de alquiler. Si el
+      status dependiera de la búsqueda que lo encontró primero, el catálogo
+      mostraría "600.000 USD en alquiler" según el orden del recorrido.
+    evidence:
+      - file: backend/ingesta/scrapers/plusvalia.py
+        lines: "595-611"
+        symbol: prices_by_op
+        note: Empareja operación con monto y prioriza la venta.
+      - file: backend/ingesta/pipeline/upsert.py
+        lines: "48-50"
+        symbol: prop.rent_price = _to_decimal(data.get("rent_price"))
+    tests:
+      unit: true
+    cases:
+      - name: Anuncio de venta y alquiler
+        given:
+          venta: 600000
+          alquiler: 5000
+        expected:
+          status: for_sale
+          price: 600000
+          rent_price: 5000
+      - name: Anuncio solo de alquiler
+        given:
+          alquiler: 5000
+        expected:
+          status: for_rent
+          price: 5000
+          rent_price: null
+
+  - id: IMP-006
+    name: El contacto cae en cascada hasta el anuncio original
+    status: partial
+    summary: >-
+      Una propiedad importada ofrece WhatsApp si hay teléfono y, si no, un enlace
+      al anuncio original; el email guardado nunca llega a ofrecerse como paso
+      intermedio de la cascada.
+    rationale: >-
+      El modelo documenta la cascada teléfono -> email -> `source_url`, pero la UI
+      solo implementa dos escalones. Plusvalía no publica email
+      (`contact_email` siempre vacío), así que hoy no se pierde nada; con una
+      fuente que sí lo traiga, el escalón intermedio faltaría.
+    evidence:
+      - file: backend/real_estate/models.py
+        lines: "142-144"
+        symbol: Enlace al anuncio original (contacto fallback)
+        note: El modelo declara `source_url` como contacto de último recurso.
+      - file: frontend/app/property/[id]/page.tsx
+        lines: "356-358"
+        symbol: "const sourceUrl = typeof property.source_url === 'string'"
+      - file: frontend/app/property/[id]/page.tsx
+        lines: "498-523"
+        symbol: method="source_url"
+        note: "Cascada real renderizada: contactPhone -> sourceUrl. No hay rama de email."
+    cases:
+      - name: Anuncio con WhatsApp
+        given:
+          contact_phone: "593995806119"
+        expected: "botón de WhatsApp"
+      - name: Anuncio importado sin teléfono
+        given:
+          contact_phone: ""
+          source_url: https://www.plusvalia.com/propiedades/clasificado/x-1.html
+        expected: "enlace 'Contactar anunciante' al anuncio original"
+      - name: Anuncio con email pero sin teléfono
+        given:
+          contact_phone: ""
+          contact_email: agente@example.com
+        expected: "el email no se ofrece; se cae directo al enlace del portal"
+        note: Escalón no implementado.
+
+  - id: IMP-007
+    name: La misma foto identifica la misma propiedad entre portales
+    status: implemented
+    summary: >-
+      Si el dHash de la imagen principal coincide exactamente con el de una
+      propiedad canónica de otra fuente, es duplicado aunque ubicación, precio y
+      atributos difieran.
+    rationale: >-
+      Las fotos son la señal más confiable entre portales: el anunciante sube las
+      mismas imágenes. El dHash es perceptual (escala de grises, 9x8, comparación
+      con el píxel de la derecha), así que sobrevive a reescalados y recompresión.
+    evidence:
+      - file: backend/ingesta/pipeline/images.py
+        lines: "70-96"
+        symbol: image_dhash_from_url
+        note: Devuelve 16 caracteres hex, o cadena vacía si falla la descarga.
+      - file: backend/ingesta/pipeline/dedup.py
+        lines: "80-83"
+        symbol: canon.filter(image_hash=image_hash)
+        note: Igualdad exacta, no distancia de Hamming.
+      - file: backend/ingesta/pipeline/upsert.py
+        lines: "110-112"
+        symbol: image_dhash_from_url(image_urls[0])
+        note: Solo se calcula en el flujo directo, sobre la primera imagen.
+    cases:
+      - name: Misma foto, ubicaciones distintas
+        given:
+          image_hash: a1b2c3d4e5f60718
+          distancia_m: 4000
+        expected: "duplicado"
+      - name: Hash que difiere en un bit
+        given:
+          image_hash_nuevo: a1b2c3d4e5f60718
+          image_hash_existente: a1b2c3d4e5f60719
+        expected: "no se considera duplicado por imagen"
+      - name: Descarga de la imagen fallida
+        given:
+          image_hash: ""
+        expected: "la señal de imagen no se evalúa; se pasa a las geográficas"
+
+  - id: IMP-008
+    name: Dedup geográfico entre fuentes por proximidad y atributos
+    status: implemented
+    summary: >-
+      Sin coincidencia de imagen, dos anuncios de fuentes distintas son la misma
+      propiedad si están a menos de 30 m con área compatible (±10 %), o a menos de
+      500 m con área y precio coincidentes dentro de ±3 %.
+    rationale: >-
+      El pin del mismo lote se desplaza entre portales, así que la proximidad
+      estricta no basta; pero relajarla sin exigir área Y precio uniría lotes
+      vecinos de un mismo proyecto. Sin PostGIS: bounding box de ±500 m sobre los
+      índices B-tree y confirmación con haversine en Python.
+    evidence:
+      - file: backend/ingesta/pipeline/dedup.py
+        lines: "15-18"
+        symbol: PROXIMITY_M
+        note: PROXIMITY_M=30, WIDE_RADIUS_M=500, AREA_TOLERANCE=0.10, ATTR_TOLERANCE=0.03.
+      - file: backend/ingesta/pipeline/dedup.py
+        lines: "99-105"
+        symbol: ATTR_TOLERANCE
+      - file: backend/ingesta/pipeline/dedup.py
+        lines: "23-30"
+        symbol: haversine_m
+    cases:
+      - name: A 12 m con áreas 500 y 520
+        given:
+          distancia_m: 12
+          area_nueva: 500
+          area_existente: 520
+        expected: "duplicado"
+      - name: A 12 m con áreas 500 y 900
+        given:
+          distancia_m: 12
+          area_nueva: 500
+          area_existente: 900
+        expected: "no duplicado"
+      - name: A 12 m y a la nueva le falta el área
+        given:
+          distancia_m: 12
+          area_nueva: null
+        expected: "duplicado"
+        note: Un área ausente no descarta por área.
+      - name: A 300 m con área y precio dentro del 3 %
+        given:
+          distancia_m: 300
+          area_nueva: 500
+          area_existente: 505
+          price_nuevo: 100000
+          price_existente: 101000
+        expected: "duplicado"
+      - name: A 300 m con área igual pero precio un 20 % distinto
+        given:
+          distancia_m: 300
+          area_nueva: 500
+          area_existente: 505
+          price_nuevo: 100000
+          price_existente: 120000
+        expected: "no duplicado"
+      - name: A 700 m con todo coincidente
+        given:
+          distancia_m: 700
+        expected: "no duplicado"
+
+  - id: IMP-009
+    name: El teléfono nunca es señal de deduplicación
+    status: implemented
+    summary: >-
+      Dos anuncios que comparten teléfono no se consideran la misma propiedad por
+      ese hecho.
+    rationale: >-
+      Una inmobiliaria tiene un solo número y decenas de propiedades distintas.
+      Usar el teléfono como señal fusionaría inventario legítimo. El parámetro
+      `phone` sigue en la firma de `find_duplicate` por compatibilidad, pero no se
+      evalúa.
+    evidence:
+      - file: backend/ingesta/pipeline/dedup.py
+        lines: "57-62"
+        symbol: NO usamos el teléfono como señal
+      - file: backend/ingesta/pipeline/upsert.py
+        lines: "121-128"
+        symbol: "el teléfono NO se usa: un anunciante tiene muchas propiedades con el mismo"
+    cases:
+      - name: Dos lotes distintos de la misma inmobiliaria
+        given:
+          contact_phone: "593995806119"
+          distancia_m: 3000
+        expected: "no duplicado"
+
+  - id: IMP-010
+    name: En un empate entre fuentes gana el anuncio con teléfono
+    status: implemented
+    summary: >-
+      Ante un duplicado entre fuentes, si el anuncio nuevo trae teléfono y el
+      existente no, el nuevo lo reemplaza; en cualquier otro caso gana el
+      existente y el nuevo se descarta.
+    rationale: >-
+      El contacto directo es lo que convierte una visita en un lead. El reemplazo
+      solo borra la copia anterior y sus archivos DESPUÉS de que el anuncio nuevo
+      quede completo con sus imágenes, para no dejar un hueco si la creación falla.
+    evidence:
+      - file: backend/ingesta/pipeline/upsert.py
+        lines: "135-143"
+        symbol: demote = dup
+      - file: backend/ingesta/pipeline/upsert.py
+        lines: "196-200"
+        symbol: delete_property_images(demote)
+        note: Borrado diferido al final del upsert, nunca antes.
+    cases:
+      - name: Nuevo con teléfono, existente sin él
+        given:
+          nuevo_contact_phone: "593995806119"
+          existente_contact_phone: ""
+        expected: "created; el existente se borra tras completar el nuevo"
+      - name: Ambos con teléfono
+        given:
+          nuevo_contact_phone: "593995806119"
+          existente_contact_phone: "593964146666"
+        expected: skipped_duplicate
+      - name: Ninguno con teléfono
+        given:
+          nuevo_contact_phone: ""
+          existente_contact_phone: ""
+        expected: skipped_duplicate
+
+  - id: IMP-011
+    name: El dedup entre fuentes nunca compara una fuente consigo misma
+    status: implemented
+    summary: >-
+      `find_duplicate` excluye las propiedades de la misma `Fuente`, así que el
+      segundo nivel de deduplicación solo actúa entre portales distintos.
+    rationale: >-
+      Dentro de una fuente manda la clave lógica (IMP-002). Comparar una fuente
+      consigo misma fusionaría lotes vecinos legítimos del mismo portal. Efecto
+      hoy: con Plusvalía como única fuente activa, este nivel no tiene contra qué
+      comparar y en la práctica está inerte.
+    evidence:
+      - file: backend/ingesta/pipeline/dedup.py
+        lines: "74-77"
+        symbol: canon.exclude(source_id=exclude_source_id)
+      - file: backend/ingesta/pipeline/upsert.py
+        lines: "127-132"
+        symbol: exclude_source_id=fuente.id
+    cases:
+      - name: Dos anuncios de Plusvalía a 5 m con la misma área
+        given:
+          source_nuevo: plusvalia
+          source_existente: plusvalia
+        expected: "no se evalúa como duplicado entre fuentes"
+      - name: Anuncio de otra fuente a 5 m con la misma área
+        given:
+          source_nuevo: plusvalia
+          source_existente: properati
+        expected: "duplicado"
+
+  - id: IMP-012
+    name: Sin coordenadas reales dentro de Ecuador, el anuncio no entra
+    status: implemented
+    summary: >-
+      Solo se importa un anuncio que ya trae latitud y longitud y que cae dentro
+      del bounding box de Ecuador continental o Galápagos; la ubicación nunca se
+      adivina.
+    rationale: >-
+      El producto es un mapa: un pin inventado es peor que un anuncio ausente. La
+      geocodificación por texto existe solo como gancho opcional
+      (`PLUSVALIA_GEOCODE=1`, Nominatim, precisión de barrio) y está desactivada.
+    evidence:
+      - file: backend/ingesta/pipeline/location.py
+        lines: "19-33"
+        symbol: validate_location
+        note: Devuelve motivo 'sin_coordenadas' o 'fuera_de_ecuador'.
+      - file: backend/real_estate/geo.py
+        lines: "43-53"
+        symbol: coord_in_ecuador
+      - file: backend/ingesta/scrapers/plusvalia.py
+        lines: "681-682"
+        symbol: "return None  # sin ubicación exacta -> no entra al mapa"
+    tests:
+      unit: true
+    cases:
+      - name: Anuncio con postingGeolocation
+        given:
+          latitude: "-0.221344763440787"
+          longitude: "-78.414314025994880"
+        expected: "se importa"
+      - name: Anuncio sin coordenadas en listado ni ficha
+        given:
+          latitude: null
+        expected: "descartado, cuenta como sin_ubicacion"
+      - name: Coordenadas en Colombia
+        given:
+          latitude: 4.7
+          longitude: -74.07
+        expected: "descartado por fuera_de_ecuador"
+
+  - id: IMP-013
+    name: Un anuncio retirado se borra y deja solo auditoría
+    status: implemented
+    summary: >-
+      Cuando el portal confirma que un anuncio ya no existe, se borran la
+      `Property` y sus imágenes de MinIO, y queda una fila `ListingRetirada` con
+      la URL y el código HTTP.
+    rationale: >-
+      Mantener el anuncio muerto ocuparía almacenamiento y ensuciaría el mapa. La
+      fila de auditoría es barata y cumple dos funciones: impide que el
+      incremental reabra la misma ficha muerta y deja rastro de por qué desapareció.
+    evidence:
+      - file: backend/ingesta/pipeline/retirement.py
+        lines: "9-32"
+        symbol: retire_listing
+      - file: backend/ingesta/pipeline/retirement.py
+        lines: "16-20"
+        symbol: ListingRetirada.objects.update_or_create
+      - file: backend/ingesta/models.py
+        lines: "139-164"
+        symbol: class ListingRetirada
+    tests:
+      unit: true
+    cases:
+      - name: Ficha que responde 410
+        given:
+          http_status: 410
+          importada: true
+        expected:
+          property_borrada: true
+          listing_retirada: true
+      - name: Anuncio que nunca llegó a importarse
+        given:
+          http_status: 404
+          importada: false
+        expected: "solo se crea la fila de auditoría"
+      - name: Aviso con HTTP 200 pero postingStatus distinto de ONLINE
+        given:
+          http_status: 200
+          posting_status: FINISHED
+        expected: "se retira igual"
+
+  - id: IMP-014
+    name: La ingesta nunca borra una publicación de usuario
+    status: implemented
+    summary: >-
+      Ninguna retirada ni limpieza de mantenimiento puede tocar una `Property` con
+      `is_imported=False`, aunque cumpla el resto de condiciones.
+    rationale: >-
+      El catálogo mezcla inventario agregado y publicaciones de usuarios reales.
+      Un borrado en cascada mal filtrado destruiría contenido de clientes, que es
+      irrecuperable. Por eso la comprobación se repite fila a fila incluso dentro
+      del lote de limpieza.
+    evidence:
+      - file: backend/ingesta/pipeline/retirement.py
+        lines: "35-37"
+        symbol: "if not prop.is_imported:"
+      - file: backend/ingesta/api.py
+        lines: "370-377"
+        symbol: "if not prop.is_imported:"
+        note: Segunda comprobación explícita dentro del lote de mantenimiento.
+    tests:
+      unit: true
+    cases:
+      - name: Propiedad de usuario marcada como duplicada
+        given:
+          is_imported: false
+          is_duplicate: true
+        expected: "no se borra ni pierde imágenes"
+      - name: Retirada solicitada sobre una propiedad de usuario
+        given:
+          is_imported: false
+        expected: null
+
+  - id: IMP-015
+    name: last_seen_at marca cada confirmación y ordena la reanudación
+    status: implemented
+    summary: >-
+      `last_seen_at` se sella en cada escritura y en cada confirmación de
+      vigencia, y el barrido de verificación recorre primero las propiedades con
+      el sello más antiguo (nulos primero).
+    rationale: >-
+      Convierte el campo en cursor: un barrido cortado por bloqueo o cancelación
+      se relanza y sigue exactamente donde quedó, sin repetir lo ya comprobado ni
+      dejar huecos permanentes.
+    evidence:
+      - file: backend/ingesta/pipeline/upsert.py
+        lines: "63-65"
+        symbol: prop.last_seen_at = timezone.now()
+      - file: backend/ingesta/runner.py
+        lines: "379-383"
+        symbol: F("last_seen_at").asc(nulls_first=True)
+      - file: backend/ingesta/runner.py
+        lines: "423-425"
+        symbol: update(last_seen_at=timezone.now())
+        note: Sellado por lote de las confirmadas vivas.
+    tests:
+      unit: true
+    cases:
+      - name: Propiedad confirmada viva
+        given:
+          exists: true
+        expected: "last_seen_at actualizado"
+      - name: Barrido con limit 2 sobre fresca, rancia y nunca vista
+        given:
+          limit: 2
+        expected: "se comprueban la nunca vista y la rancia; la fresca queda intacta"
+
+  - id: IMP-016
+    name: Una retirada caduca a los 30 días
+    status: implemented
+    summary: >-
+      Una `ListingRetirada` se considera conocida solo durante 30 días; pasado ese
+      plazo el siguiente run incremental vuelve a comprobar ese anuncio.
+    rationale: >-
+      Un anuncio puede volver a publicarse. Sin caducidad, la fila de auditoría lo
+      condenaría a no reaparecer nunca. Si el anuncio vuelve con datos, su fila de
+      retirada se borra al vuelo.
+    evidence:
+      - file: backend/ingesta/runner.py
+        lines: "35"
+        symbol: RETIRED_RECHECK_AFTER = timedelta(days=30)
+      - file: backend/ingesta/runner.py
+        lines: "156-159"
+        symbol: last_seen_at__gte=timezone.now() - RETIRED_RECHECK_AFTER
+      - file: backend/ingesta/runner.py
+        lines: "259-264"
+        symbol: ListingRetirada.objects.filter(
+        note: Un anuncio que reaparece con datos pierde su fila de retirada.
+    tests:
+      unit: true
+    cases:
+      - name: Retirada de hace 3 días
+        given:
+          dias: 3
+        expected: "sigue siendo conocida; no se reabre la ficha"
+      - name: Retirada de hace 31 días
+        given:
+          dias: 31
+        expected: "deja de ser conocida; se vuelve a comprobar"
+
+  - id: IMP-017
+    name: Cloudflare solo acepta el fingerprint chrome99_android desde el servidor
+    status: implemented
+    summary: >-
+      Todas las peticiones al portal y a su CDN de imágenes se hacen con
+      `curl_cffi` imitando `chrome99_android`, el único fingerprint TLS que
+      Cloudflare acepta desde una IP de datacenter.
+    rationale: >-
+      El bloqueo no es por cookie ni por JS, sino por el handshake TLS/JA3. Desde
+      IPs residenciales pasan varios fingerprints de escritorio, pero desde el
+      servidor de producción todos reciben 403 (verificado el 2026-07-20 con
+      chrome136, chrome131, safari184 y firefox135). Esto es lo que permite
+      scrapear desde producción y deja obsoleta la premisa del runbook de julio.
+    evidence:
+      - file: backend/ingesta/scrapers/plusvalia.py
+        lines: "258-263"
+        symbol: impersonate="chrome99_android"
+      - file: backend/ingesta/pipeline/images.py
+        lines: "24-27"
+        symbol: _IMPERSONATE = "chrome99_android"
+        note: El CDN naventcdn.com está tras el mismo Cloudflare.
+      - file: backend/ingesta/scrapers/plusvalia.py
+        lines: "27-48"
+        symbol: solo pasa ``chrome99_android``
+        note: Docstring con la verificación y los fingerprints descartados.
+    cases:
+      - name: Petición desde el servidor de producción con chrome99_android
+        given:
+          origen: datacenter
+          impersonate: chrome99_android
+        expected: "HTTP 200 con el HTML real"
+      - name: Petición desde el servidor con un fingerprint de escritorio
+        given:
+          origen: datacenter
+          impersonate: chrome136
+        expected: "HTTP 403"
+      - name: curl_cffi ausente en la imagen
+        given:
+          curl_cffi: null
+        expected: "degrada a httpx y el portal responde 403"
+
+  - id: IMP-018
+    name: Una propiedad importada sin ninguna imagen no se publica
+    status: implemented
+    summary: >-
+      Se adjuntan hasta 10 imágenes por anuncio; si no se logra adjuntar ninguna,
+      la propiedad recién creada se revierte, y las imágenes previas de una
+      propiedad existente solo se borran tras confirmar al menos una descarga nueva.
+    rationale: >-
+      Una ficha sin foto no convierte y ensucia el catálogo. El orden importa:
+      borrar primero y descargar después dejaba propiedades sin imagen cuando el
+      CDN bloqueaba a mitad de la operación.
+    evidence:
+      - file: backend/ingesta/pipeline/images.py
+        lines: "21"
+        symbol: MAX_IMAGES = getattr(settings, "MAX_IMAGES_PER_PROPERTY", 10)
+      - file: backend/ingesta/pipeline/images.py
+        lines: "130-135"
+        symbol: "if not downloaded:"
+        note: Reemplazo total solo tras confirmar una descarga válida.
+      - file: backend/ingesta/pipeline/upsert.py
+        lines: "182-200"
+        symbol: return "skipped_no_images", None
+    tests:
+      unit: true
+    cases:
+      - name: Todas las descargas fallan en una propiedad nueva
+        given:
+          descargas_ok: 0
+          created: true
+        expected: "skipped_no_images y la propiedad no queda en base"
+      - name: Todas las descargas fallan en una propiedad existente
+        given:
+          descargas_ok: 0
+          imagenes_previas: 1
+        expected: "conserva sus imágenes anteriores"
+      - name: El anuncio trae 25 imágenes
+        given:
+          image_urls: 25
+        expected: "se adjuntan como máximo 10"
+
+  - id: IMP-019
+    name: is_duplicate y duplicate_of los escribe el pipeline
+    status: not_implemented
+    summary: >-
+      Ningún camino de la ingesta marca una propiedad como duplicada ni la enlaza
+      con su canónica; los campos existen y se leen, pero nadie los rellena.
+    rationale: >-
+      Deriva detectada el 2026-08-04. `Property.is_duplicate` y
+      `Property.duplicate_of` (backend/real_estate/models.py:145-153) se usan para
+      filtrar el mapa, contar "duplicados" en el panel y como categoría de
+      limpieza, pero el upsert resuelve los duplicados omitiendo
+      (`skipped_duplicate`) o borrando la copia perdedora, nunca marcando. El
+      contador `duplicados` del panel de ingesta solo puede reflejar datos
+      históricos. Decidir: o el pipeline los escribe, o los campos se retiran.
+    cases:
+      - name: Duplicado detectado entre fuentes
+        given:
+          resultado_upsert: skipped_duplicate
+        expected: "hoy no se crea ninguna fila marcada is_duplicate=True"
+      - name: Comportamiento esperado si se implementa
+        given:
+          resultado_upsert: skipped_duplicate
+        expected:
+          is_duplicate: true
+          duplicate_of: "id de la canónica"
+
+  - id: IMP-020
+    name: Fuente.activa decide qué fuentes se recorren
+    status: not_implemented
+    summary: >-
+      El flag `Fuente.activa` no gobierna ninguna ejecución: solo se muestra en el
+      panel y en los listados.
+    rationale: >-
+      Deriva detectada el 2026-08-04. El `help_text` del campo
+      (backend/ingesta/models.py:21) dice "Si se incluye al correr --all", pero
+      `ingesta_scrape --all` recorre `available_scrapers()`, es decir los scrapers
+      registrados en código
+      (backend/ingesta/management/commands/ingesta_scrape.py:42-44). Desactivar
+      una fuente con `ingesta_sources --deactivate` no impide lanzarla ni la
+      excluye de ningún recorrido. Es exactamente lo que pasó con Properati:
+      desactivada el 2026-08-03, pero seguiría corriendo si alguien la lanzara.
+    cases:
+      - name: Fuente desactivada incluida en --all
+        given:
+          activa: false
+        expected: "hoy se recorre igual"
+      - name: Comportamiento esperado
+        given:
+          activa: false
+        expected: "excluida de --all y rechazada al lanzarla"
+
+  - id: IMP-021
+    name: Existe una importación programada
+    status: not_implemented
+    summary: >-
+      No hay ninguna tarea periódica de ingesta: toda importación se lanza a mano,
+      desde el panel o por CLI.
+    rationale: >-
+      Deriva detectada el 2026-08-04. `CELERY_BEAT_SCHEDULE`
+      (backend/estate_map/settings.py:429-437) solo contiene
+      `system-worker-heartbeat` y `sweep-pending-images`. Consecuencia: el
+      inventario envejece sin que nada lo refresque, y el propio panel calcula
+      `health = "stale"` a los 2 días sin importación (backend/ingesta/api.py:42).
+      Nadie recibe ese aviso salvo que abra el panel.
+    cases:
+      - name: Estado actual del scheduler
+        given:
+          celery_beat_schedule: [system-worker-heartbeat, sweep-pending-images]
+        expected: "ninguna entrada de ingesta"
+      - name: Comportamiento esperado
+        given:
+          politica: refresco periódico
+        expected: "una entrada de beat que lance load incremental y verify"
+
+  - id: IMP-022
+    name: El scraper de RE/MAX está disponible como fuente
+    status: not_implemented
+    summary: >-
+      RE/MAX no se puede usar: su módulo nunca se importa, así que su decorador
+      `@register` no llega a ejecutarse y la clave no existe en el registro.
+    rationale: >-
+      Deriva detectada el 2026-08-04. `backend/ingesta/scrapers/remax.py` está
+      completo, tiene `@register` y 10 tests que pasan
+      (backend/ingesta/tests/test_remax.py), pero el import está comentado en
+      backend/ingesta/scrapers/__init__.py:12. Resultado: `get_scraper("remax")`
+      devuelve None y la fuente no aparece en el panel. Es código en conservación
+      cuyos tests dan una falsa sensación de cobertura de una fuente viva.
+    cases:
+      - name: Resolver el scraper por clave
+        given:
+          key: remax
+        expected: null
+      - name: Listado de scrapers registrados
+        given:
+          llamada: available_scrapers()
+        expected: [plusvalia, properati]
+
+  - id: IMP-023
+    name: Los anuncios con precio cero no se importan
+    status: implemented
+    summary: >-
+      Si el payload canónico declara `0` en `price` o `rent_price`, el punto
+      único de escritura omite el anuncio. En una actualización, la propiedad
+      existente se conserva sin sobrescribir; el run registra la omisión en
+      `sin_precio` para distinguirla de un error técnico.
+    rationale: >-
+      Cero no representa «precio a consultar»: el portal está publicando un
+      valor que no se desea incorporar al catálogo. Rechazarlo en `upsert_property`
+      cubre la carga directa, los paquetes y las actualizaciones.
+    evidence:
+      - file: backend/ingesta/pipeline/upsert.py
+        lines: "22-29"
+        symbol: def _is_explicit_zero
+      - file: backend/ingesta/pipeline/upsert.py
+        lines: "86-93"
+        symbol: skipped_zero_price
+      - file: backend/ingesta/runner.py
+        lines: "276-297"
+        symbol: run.sin_precio
+      - file: backend/ingesta/models.py
+        lines: "87-91"
+        symbol: sin_precio = models.PositiveIntegerField
+    tests:
+      unit: true
+    cases:
+      - name: Anuncio nuevo con price cero
+        given:
+          price: 0
+        expected: "skipped_zero_price; no se crea Property"
+      - name: Anuncio nuevo con rent_price cero
+        given:
+          rent_price: 0
+        expected: "skipped_zero_price; no se crea Property"
+      - name: Propiedad existente se refresca con precio cero
+        given:
+          precio_anterior: 100000
+          price: 0
+        expected: "se conserva sin cambios y el run incrementa sin_precio"

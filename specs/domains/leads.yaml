@@ -1,0 +1,602 @@
+version: 1
+domain: leads
+title: Captación de interesados
+status: implemented
+summary: >
+  Tres formas de capturar interés antes de que exista una transacción: el
+  contacto sobre una propiedad publicada (Lead), la solicitud de publicación
+  de alguien que todavía no tiene cuenta (PendingPublication), y el registro
+  funcional de eventos de uso (ActivityEvent), cuyo campo is_bot decide qué
+  entra en las métricas que ve el negocio. Los tres endpoints de creación son
+  públicos por diseño; solo dos de los tres llevan límite de ritmo.
+see_also:
+  - backend/real_estate/models.py
+  - backend/real_estate/views.py
+  - backend/real_estate/services/notifications.py
+  - backend/real_estate/email_utils.py
+  - backend/real_estate/management/commands/backfill_activity_is_bot.py
+  - specs/errors/catalog.yaml
+
+rules:
+  - id: LEAD-001
+    name: Crear un lead es público y no tiene límite de ritmo
+    status: implemented
+    summary: >
+      POST /api/leads/ usa AllowAny y no declara get_throttles, así que
+      cualquiera puede enviar el formulario de contacto de una propiedad sin
+      autenticarse y sin tope de peticiones por minuto.
+    rationale: >
+      Es la excepción entre los tres endpoints públicos de este dominio:
+      PendingPublicationViewSet y ActivityEventViewSet sí definen
+      get_throttles para su create, y el propio comentario de settings.py
+      nombra a esos dos como los únicos que se limitan. LeadViewSet no
+      aparece en esa lista. Cada envío además dispara un correo síncrono
+      (ver LEAD-006), así que un abuso aquí no solo satura la base de datos:
+      satura también el servidor de correo saliente en el mismo hilo de la
+      petición HTTP.
+    evidence:
+      - file: backend/real_estate/views.py
+        lines: "1022-1024"
+        symbol: "def get_permissions"
+        note: >
+          get_permissions devuelve AllowAny() para create y no existe ningún
+          get_throttles en LeadViewSet (870-905): sin ese método, DRF aplica
+          solo los throttles globales de DEFAULT_THROTTLE_CLASSES, que aquí
+          no están definidos.
+      - file: backend/estate_map/settings.py
+        lines: "166-174"
+        symbol: DEFAULT_THROTTLE_RATES
+        note: >
+          El comentario dice explícitamente que el rate limiting se aplica
+          "mediante ScopedRateThrottle en el create de ActivityEventViewSet y
+          PendingPublicationViewSet"; LeadViewSet no se menciona porque no lo
+          usa.
+    backend:
+      enforce: false
+      endpoint: POST /api/leads/
+    tests:
+      api: true
+    cases:
+      - name: Visitante anónimo crea un lead
+        role: anonymous
+        expected: allowed
+      - name: Undécima petición en el mismo minuto desde el mismo cliente
+        given: {requests_in_one_minute: 11}
+        expected: allowed
+        note: >
+          A diferencia de pending_create (10/min) o activity_create (30/min),
+          aquí no existe ningún techo que la corte.
+
+  - id: LEAD-002
+    name: "Propuesta: limitar el ritmo de creación de leads"
+    status: proposed
+    summary: >
+      POST /api/leads/ debería llevar un throttle_scope propio (p. ej.
+      lead_create) con un ritmo comparable al de pending_create, para que un
+      script no pueda generar leads en bucle ni disparar el envío síncrono de
+      correo en bucle.
+    rationale: >
+      Es el defecto que registra LEAD-001: mismo endpoint, comportamiento
+      correcto. Se separa en una regla proposed en vez de "arreglar" LEAD-001
+      para que la suite siga describiendo la realidad de hoy mientras deja
+      constancia del hueco. El envío síncrono de correo (LEAD-006) es lo que
+      hace que este límite sea más urgente que en un endpoint que solo
+      escribe en base de datos.
+    conditions:
+      throttle_scope: lead_create
+      suggested_rate: 10/min
+    backend:
+      enforce: true
+      endpoint: POST /api/leads/
+      throttle_scope: lead_create
+      denied_http_status: 429
+      denied_error_code: THROTTLED
+    tests:
+      unit: false
+      api: false
+    cases:
+      - name: Undécima petición en el mismo minuto desde el mismo cliente
+        given: {requests_in_one_minute: 11}
+        expected: denied
+        http_status: 429
+        error_code: THROTTLED
+
+  - id: LEAD-003
+    name: Un lead solo tiene tres estados de gestión
+    status: implemented
+    summary: >
+      Lead.status recorre new, contacted y closed, y PATCH /api/leads/{id}/
+      usa LeadStatusSerializer, que expone únicamente ese campo: quien
+      gestiona la bandeja no puede reescribir nombre, teléfono ni mensaje del
+      interesado.
+    evidence:
+      - file: backend/real_estate/models.py
+        lines: "434-436"
+        symbol: "STATUS_CHOICES = ["
+        note: Los tres estados del ciclo de gestión de un lead.
+      - file: backend/real_estate/serializers.py
+        lines: "440-445"
+        symbol: "class LeadStatusSerializer"
+        note: "fields = ['id', 'status'], sin acceso a name, phone, email ni message."
+    backend:
+      enforce: true
+      endpoint: PATCH /api/leads/{id}/
+      note: >
+        No se marca tests.api porque el caso exige un Lead preexistente sobre
+        una propiedad del owner; spec_support solo construye una Property de
+        fixture, no un Lead. Cubierto a mano en test_leads.py.
+    tests: {}
+    cases:
+      - name: El dueño de la propiedad avanza un lead a contactado
+        role: owner
+        given: {status: contacted}
+        expected: allowed
+      - name: El dueño intenta reescribir el teléfono del interesado vía PATCH
+        role: owner
+        given: {phone: "0999999999"}
+        expected: ignorado
+        note: LeadStatusSerializer no declara ese campo, así que DRF lo descarta.
+
+  - id: LEAD-004
+    name: El origen de un lead se declara en un catálogo cerrado
+    status: implemented
+    summary: >
+      Lead.source solo admite property_modal, property_page, whatsapp, phone
+      u other, con property_modal como valor por defecto cuando el cliente no
+      lo envía.
+    evidence:
+      - file: backend/real_estate/models.py
+        lines: "426-430"
+        symbol: "SOURCE_CHOICES = ["
+        note: Los cinco orígenes válidos de un lead.
+    cases:
+      - name: Formulario del modal del mapa no envía source
+        given: {source: null}
+        expected: property_modal
+      - name: Origen fuera del catálogo
+        given: {source: "facebook_ads"}
+        expected: rechazado por el serializer
+
+  - id: LEAD-005
+    name: Solo el dueño de la propiedad ve sus leads, staff los ve todos
+    status: implemented
+    summary: >
+      GET/PATCH/DELETE sobre /api/leads/ exigen autenticación; el queryset se
+      filtra por property__owner=request.user salvo que el usuario sea staff,
+      que ve todos los leads sin filtrar.
+    evidence:
+      - file: backend/real_estate/views.py
+        lines: "1032-1037"
+        symbol: "def get_queryset"
+        note: >
+          Devuelve Lead.objects.none() si no hay usuario autenticado, el
+          queryset completo si is_staff, y filter(property__owner=user) en
+          cualquier otro caso.
+    backend:
+      enforce: true
+      endpoint: GET /api/leads/
+      denied_http_status: 401
+      denied_error_code: NOT_AUTHENTICATED
+    tests:
+      api: true
+    cases:
+      - name: Visitante anónimo consulta la bandeja de leads
+        role: anonymous
+        expected: denied
+        http_status: 401
+      - name: Dueño de la propiedad ve solo sus propios leads
+        role: owner
+        expected: allowed
+      - name: Usuario autenticado no ve leads de propiedades ajenas
+        given: {role: not_owner}
+        expected: lista vacía, no un 401/403
+        note: >
+          Es un filtrado de queryset, no un rechazo de permiso: IsAuthenticated
+          ya basta para pasar, así que no se genera como caso role+allowed/denied.
+      - name: Staff ve leads de cualquier propiedad
+        role: staff
+        expected: allowed
+
+  - id: LEAD-006
+    name: Crear un lead notifica por correo, en el mismo request
+    status: implemented
+    summary: >
+      LeadViewSet.perform_create guarda el lead y llama de forma síncrona a
+      LeadNotificationService, que envía un correo al dueño de la propiedad y
+      a su contact_email antes de responder al cliente.
+    evidence:
+      - file: backend/real_estate/views.py
+        lines: "1041-1043"
+        symbol: "def perform_create"
+        note: "serializer.save() seguido de LeadNotificationService().notify_created(lead), dentro del mismo ciclo request/response."
+      - file: backend/real_estate/services/notifications.py
+        lines: "13-22"
+        symbol: "class LeadNotificationService"
+        note: notify_created llama a send_lead_notification sin encolarla en Celery.
+      - file: backend/real_estate/email_utils.py
+        lines: "229-246"
+        symbol: "def send_lead_notification"
+        note: Reúne owner.email y property.contact_email como destinatarios.
+    backend:
+      enforce: true
+      endpoint: POST /api/leads/
+      note: >
+        No se marca tests.api: la aserción exige inspeccionar django.core.mail.outbox,
+        algo que el generador no sabe expresar solo con role+allowed/denied.
+        Cubierto a mano en test_leads.py.
+    tests: {}
+    cases:
+      - name: Interesado deja sus datos en una propiedad con dueño y contact_email
+        given: {owner_email: "owner@example.com", property_contact_email: "contacto@example.com"}
+        expected:
+          emails_sent: 1
+          to: ["owner@example.com", "contacto@example.com"]
+
+  - id: LEAD-007
+    name: Un SMTP caído no impide crear el lead
+    status: implemented
+    summary: >
+      send_lead_notification llama a send_mail con fail_silently=True, y
+      notify_created además envuelve toda la llamada en un try/except que
+      solo registra el error: el lead queda guardado aunque el correo falle
+      dos veces por capas distintas.
+    rationale: >
+      Es una doble protección: fail_silently=True evita que Django propague
+      la excepción del backend de correo, y el try/except de
+      LeadNotificationService cubre cualquier otro fallo (DNS, timeout,
+      excepción del propio backend) que fail_silently no capture.
+    evidence:
+      - file: backend/real_estate/email_utils.py
+        lines: "262-268"
+        symbol: "fail_silently=True"
+        note: send_mail no lanza excepción si el envío falla.
+      - file: backend/real_estate/services/notifications.py
+        lines: "16-22"
+        symbol: "except Exception:"
+        note: "logger.exception y return False; perform_create no comprueba el valor de retorno, así que el 201 se responde igual."
+    cases:
+      - name: El backend de correo lanza una excepción al enviar
+        given: {smtp_status: down}
+        expected:
+          lead_created: true
+          http_status: 201
+    tests: {}
+
+  - id: LEAD-008
+    name: Los índices de Lead sirven a la bandeja por propiedad y a los paneles por estado y origen
+    status: implemented
+    summary: >
+      Lead declara tres índices compuestos: (property, status) para la
+      bandeja de una propiedad concreta, (status, created_at) para listar por
+      estado ordenado por fecha, y (source, created_at) para el desglose de
+      leads por canal de captación.
+    evidence:
+      - file: backend/real_estate/models.py
+        lines: "457-459"
+        symbol: lead_property_status_idx
+        note: Los tres índices y las consultas que cubren.
+    cases:
+      - name: Bandeja de leads de una propiedad filtrada por estado
+        given: {consulta: "property__owner + status"}
+        expected: cubierta por lead_property_status_idx
+      - name: Listado admin de leads nuevos ordenado por fecha
+        given: {consulta: "status + created_at"}
+        expected: cubierta por lead_status_created_idx
+    tests: {}
+
+  - id: LEAD-009
+    name: PendingPublication captura interés antes de que exista cuenta, y no aparece en el mapa
+    status: implemented
+    summary: >
+      Es la solicitud de publicar una propiedad que alguien deja sin haber
+      creado o verificado su cuenta todavía; no es un modelo Property, así
+      que nunca se sirve en /map_points/ ni en el catálogo público, y solo se
+      usa para seguimiento comercial.
+    rationale: >
+      La distingo de Lead porque el interesado no existe todavía en el
+      sistema como usuario ni como propiedad: PendingPublication no tiene
+      relación con Property y su serializer no expone nada que el mapa pueda
+      consumir.
+    evidence:
+      - file: backend/real_estate/models.py
+        lines: "466-468"
+        symbol: "class PendingPublication(models.Model)"
+        note: >
+          Docstring: "Solicitud de publicación capturada antes de que el
+          usuario cree o verifique su cuenta. No se muestra en el mapa".
+    cases:
+      - name: PendingPublication en el payload de /map_points/
+        given: {modelo: PendingPublication}
+        expected: nunca aparece
+    tests: {}
+
+  - id: LEAD-010
+    name: PendingPublication distingue tres orígenes de captura
+    status: implemented
+    summary: >
+      El campo source admite account_required (intento de publicar sin
+      cuenta), whatsapp_help (pidió ayuda por WhatsApp) y exit_prompt
+      (abandonó el formulario), además de other como comodín.
+    evidence:
+      - file: backend/real_estate/models.py
+        lines: "426-429"
+        symbol: "SOURCE_CHOICES = ["
+        note: Los cuatro orígenes de una solicitud pendiente.
+      - file: backend/real_estate/serializers.py
+        lines: "466-468"
+        symbol: "def validate_source"
+        note: Cualquier valor fuera del catálogo se normaliza silenciosamente a "other" en vez de rechazar la petición.
+    cases:
+      - name: Alguien intenta publicar sin cuenta y el formulario lo redirige aquí
+        given: {source: account_required}
+        expected: allowed
+      - name: Origen inventado por el cliente
+        given: {source: "tiktok_ads"}
+        expected: guardado como other
+
+  - id: LEAD-011
+    name: Solo staff lee la bandeja de solicitudes pendientes
+    status: implemented
+    summary: >
+      GET/PATCH sobre /api/pending-publications/ exigen IsAuthenticated e
+      IsAdminUser a la vez; el queryset devuelve vacío para cualquiera que no
+      sea staff autenticado, sin excepción para quien creó la solicitud (no
+      hay cuenta que la posea).
+    evidence:
+      - file: backend/real_estate/views.py
+        lines: "1022-1024"
+        symbol: "def get_permissions"
+        note: "return [IsAuthenticated(), IsAdminUser()] para toda acción salvo create."
+      - file: backend/real_estate/views.py
+        lines: "1032-1034"
+        symbol: "def get_queryset"
+        note: "PendingPublication.objects.none() salvo que user.is_staff sea verdadero."
+    backend:
+      enforce: true
+      endpoint: GET /api/pending-publications/
+      denied_http_status: 401
+      denied_error_code: NOT_AUTHENTICATED
+    tests:
+      api: true
+    cases:
+      - name: Visitante anónimo consulta la bandeja
+        role: anonymous
+        expected: denied
+        http_status: 401
+      - name: Usuario autenticado sin is_staff
+        role: authenticated
+        expected: denied
+        http_status: 403
+        note: IsAuthenticated pasa; IsAdminUser deniega con 403, no con el 401 por defecto de la regla.
+      - name: Staff consulta la bandeja completa
+        role: staff
+        expected: allowed
+
+  - id: LEAD-012
+    name: Crear una solicitud pendiente está limitado a 10 por minuto
+    status: implemented
+    summary: >
+      PendingPublicationViewSet.get_throttles aplica ScopedRateThrottle con
+      throttle_scope='pending_create' únicamente al create, y
+      DEFAULT_THROTTLE_RATES fija ese scope en 10/min.
+    evidence:
+      - file: backend/real_estate/views.py
+        lines: "1064-1067"
+        symbol: "throttle_scope = 'pending_create'"
+        note: Solo el POST público se limita; el resto de acciones ya exige staff y no lleva throttle.
+      - file: backend/estate_map/settings.py
+        lines: "172-174"
+        symbol: "'pending_create': '10/min'"
+    backend:
+      enforce: true
+      endpoint: POST /api/pending-publications/
+      throttle_scope: pending_create
+      denied_http_status: 429
+      denied_error_code: THROTTLED
+    tests:
+      api: false
+    cases:
+      - name: Undécima petición en el mismo minuto desde el mismo cliente
+        given: {requests_in_one_minute: 11}
+        expected: denied
+        http_status: 429
+        error_code: THROTTLED
+        note: >
+          No se marca api:true porque el test recurrente mediría el propio
+          throttle en vez de la regla; ver la nota equivalente en PROP-005.
+
+  - id: LEAD-013
+    name: Crear una solicitud pendiente notifica a los administradores, sin bloquear si falla
+    status: implemented
+    summary: >
+      PendingPublicationViewSet.perform_create llama a
+      PendingPublicationNotificationService, que envía un correo a
+      settings.ADMINS (más un correo de respaldo opcional) con
+      fail_silently=True y un try/except propio, igual que LEAD-006/LEAD-007
+      pero para el equipo interno en vez del dueño de una propiedad.
+    evidence:
+      - file: backend/real_estate/views.py
+        lines: "1041-1043"
+        symbol: "def perform_create"
+        note: PendingPublicationNotificationService().notify_created(pending) en el mismo request.
+      - file: backend/real_estate/email_utils.py
+        lines: "194-203"
+        symbol: "def send_pending_publication_notification"
+        note: "recipients sale de settings.ADMINS más PENDING_PUBLICATION_NOTIFY_EMAIL; si queda vacío, la función retorna sin enviar nada."
+      - file: backend/real_estate/services/notifications.py
+        lines: "25-37"
+        symbol: "class PendingPublicationNotificationService"
+        note: Mismo patrón try/except que LeadNotificationService.
+    backend:
+      enforce: true
+      endpoint: POST /api/pending-publications/
+    tests: {}
+    cases:
+      - name: Solicitud pendiente creada sin ADMINS configurados
+        given: {settings_admins: []}
+        expected:
+          publication_created: true
+          emails_sent: 0
+
+  - id: LEAD-014
+    name: is_bot lo decide el servidor a partir del User-Agent, nunca el cliente
+    status: implemented
+    summary: >
+      ActivityEventSerializer.create ignora cualquier valor de is_bot que
+      venga en el cuerpo de la petición y lo recalcula con is_bot_request a
+      partir de la cabecera User-Agent real de la conexión.
+    evidence:
+      - file: backend/real_estate/serializers.py
+        lines: "555-561"
+        symbol: "validated_data['is_bot'] = is_bot_request(request)"
+        note: Sobrescribe el valor ya validado del payload, si lo había.
+      - file: backend/real_estate/serializers.py
+        lines: "535-537"
+        symbol: "read_only_fields = ['id', 'user', 'property', 'property_title', 'is_bot', 'created_at']"
+        note: is_bot es de solo lectura en el serializer expuesto, además de recalcularse en create.
+    backend:
+      enforce: true
+      endpoint: POST /api/activity-events/
+      note: >
+        No se marca tests.api: la aserción compara el is_bot guardado en base
+        de datos, no solo el código de estado HTTP. Cubierto a mano en
+        test_bot_detection.py (test_ingestion_flags_crawlers_and_ignores_client_supplied_value).
+    tests: {}
+    cases:
+      - name: Un bot declara is_bot=false en el cuerpo de la petición
+        given: {user_agent: "Googlebot", body_is_bot: false}
+        expected: {stored_is_bot: true}
+      - name: Un navegador humano declara is_bot=true en el cuerpo
+        given: {user_agent: "Mozilla/5.0 Chrome", body_is_bot: true}
+        expected: {stored_is_bot: false}
+
+  - id: LEAD-015
+    name: Los eventos de bots se guardan siempre; solo se excluyen de las métricas humanas
+    status: implemented
+    summary: >
+      Ningún punto del flujo de creación rechaza una petición por venir de un
+      bot: is_bot solo cambia una columna. Las métricas de negocio filtran
+      is_bot=False para contar personas, pero el tráfico de crawlers queda
+      almacenado y consultable aparte.
+    rationale: >
+      La decisión de negocio es medible en dos direcciones: AdminMetricsService
+      cuenta humanos con is_bot=False para sesiones y contactos, y por
+      separado reporta el volumen de bots del mes (month_bot_events) para que
+      el equipo vea cuánto tráfico está descartando. Nunca hay un 403 ni un
+      429 específico para bots.
+    evidence:
+      - file: backend/real_estate/services/admin_metrics.py
+        lines: "63-65"
+        symbol: "human_events = ActivityEvent.objects.filter(is_bot=False)"
+        note: Base de las métricas de audiencia humana.
+      - file: backend/real_estate/services/admin_metrics.py
+        lines: "96"
+        symbol: "month_bot_events = ActivityEvent.objects.filter(created_at__gte=month_start, is_bot=True)"
+        note: El volumen de bots se reporta, no se descarta.
+    tests: {}
+    cases:
+      - name: Un evento con User-Agent de Googlebot
+        given: {user_agent: "Googlebot"}
+        expected:
+          http_status: 201
+          stored: true
+          counted_in_human_metrics: false
+
+  - id: LEAD-016
+    name: Crear un evento de actividad está limitado a 30 por minuto
+    status: implemented
+    summary: >
+      ActivityEventViewSet.get_throttles aplica ScopedRateThrottle con
+      throttle_scope='activity_create' solo al create, y
+      DEFAULT_THROTTLE_RATES fija ese scope en 30/min.
+    evidence:
+      - file: backend/real_estate/views.py
+        lines: "1294-1297"
+        symbol: "throttle_scope = 'activity_create'"
+      - file: backend/estate_map/settings.py
+        lines: "172-173"
+        symbol: "'activity_create': '30/min'"
+    backend:
+      enforce: true
+      endpoint: POST /api/activity-events/
+      throttle_scope: activity_create
+      denied_http_status: 429
+      denied_error_code: THROTTLED
+    tests:
+      api: false
+    cases:
+      - name: Trigésima primera petición en el mismo minuto desde el mismo cliente
+        given: {requests_in_one_minute: 31}
+        expected: denied
+        http_status: 429
+        error_code: THROTTLED
+        note: No se marca api:true por la misma razón que LEAD-012.
+
+  - id: LEAD-017
+    name: Las métricas de bots solo son fiables desde que el servidor empezó a marcarlos
+    status: implemented
+    summary: >
+      ActivityEvent no guarda el User-Agent, así que las filas creadas antes
+      de que is_bot se calculara en el servidor no tienen forma fiable de
+      reevaluarse: el comando de backfill solo puede actuar sobre payloads
+      que por casualidad llevaran un user agent embebido, algo que el beacon
+      actual ya no envía.
+    rationale: >
+      El propio comando lo advierte en tiempo de ejecución: si no encuentra
+      ninguna fila con user agent en el payload, imprime que las métricas
+      "become accurate from the moment ingestion started flagging bots" y que
+      las filas antiguas se quedan con is_bot=False, es decir, "desconocido,
+      asumido humano". Cualquier comparación histórica de audiencia debe
+      cortar en esa fecha, no promediar hacia atrás.
+    evidence:
+      - file: backend/real_estate/management/commands/backfill_activity_is_bot.py
+        lines: "126-133"
+        symbol: "ActivityEvent does not store the User-Agent, so historical rows"
+        note: Mensaje que el propio comando imprime cuando no hay ningún user agent que reevaluar.
+      - file: backend/real_estate/management/commands/backfill_activity_is_bot.py
+        lines: "5-19"
+        symbol: "Important limitation: ActivityEvent does NOT store the User-Agent."
+        note: Docstring que documenta el límite y confirma que is_bot=False antiguo significa "desconocido", no "verificado humano".
+    cases:
+      - name: Fila de ActivityEvent creada antes de que is_bot existiera
+        given: {created_before_field: true, payload_user_agent: null}
+        expected:
+          is_bot: false
+          significa: desconocido, no verificado humano
+      - name: Comando de backfill sin ninguna fila con user agent embebido
+        given: {rows_with_ua: 0}
+        expected: advertencia de que las métricas son fiables solo desde el arranque del flag
+    tests: {}
+
+  - id: LEAD-018
+    name: PendingPublication distingue tres estados de seguimiento comercial más el estado inicial
+    status: implemented
+    summary: >
+      PendingPublication.status recorre new, contacted, converted y
+      discarded: a diferencia del ciclo de Lead, aquí existe un estado
+      converted para cuando la solicitud termina en una cuenta y una
+      propiedad reales.
+    evidence:
+      - file: backend/real_estate/models.py
+        lines: "434-437"
+        symbol: "STATUS_CHOICES = ["
+        note: Los cuatro estados de una solicitud pendiente.
+      - file: backend/real_estate/serializers.py
+        lines: "484-486"
+        symbol: "class PendingPublicationStatusSerializer"
+        note: "fields = ['id', 'status'], igual patrón restrictivo que LeadStatusSerializer."
+    backend:
+      enforce: true
+      endpoint: PATCH /api/pending-publications/{id}/
+      note: >
+        No se marca tests.api por la misma razón que LEAD-003: el caso exige
+        una PendingPublication preexistente que spec_support no construye.
+    tests: {}
+    cases:
+      - name: Staff marca una solicitud como convertida tras crear la cuenta
+        role: staff
+        given: {status: converted}
+        expected: allowed
+      - name: Usuario autenticado sin is_staff intenta cambiar el estado
+        role: authenticated
+        expected: denied

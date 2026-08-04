@@ -85,6 +85,8 @@ class IngestaRun(models.Model):
     duplicadas = models.PositiveIntegerField(default=0)
     caducadas = models.PositiveIntegerField(default=0, help_text="Ya no vigentes en el portal")
     sin_ubicacion = models.PositiveIntegerField(default=0)
+    sin_precio = models.PositiveIntegerField(
+        default=0, help_text="Anuncios omitidos porque el portal publicó precio cero")
     errores = models.PositiveIntegerField(
         default=0, help_text="Anuncios que fallaron individualmente (no abortan el run)")
 

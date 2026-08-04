@@ -1,6 +1,8 @@
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 from django.conf import settings
+from .geo import polygon_center_lat_lng
+from .services.short_codes import unique_code
 from .validators import validate_image_size, validate_image_dimensions, validate_image_format
 
 
@@ -76,6 +78,10 @@ class Property(models.Model):
     description = models.TextField(blank=True, default="")
     property_type = models.CharField(max_length=30, choices=PROPERTY_TYPE_CHOICES, default="land")
     status = models.CharField(max_length=30, choices=STATUS_CHOICES, default="for_sale")
+    short_code = models.CharField(
+        max_length=12, unique=True, null=True, blank=True, db_index=True,
+        help_text="Código corto imprimible del anuncio; se asigna al crearlo y no cambia nunca",
+    )
 
     # --- Location ---
     address = models.CharField(max_length=255, blank=True, default="")
@@ -191,6 +197,43 @@ class Property(models.Model):
 
     def __str__(self):
         return f"{self.title} - {self.get_status_display()}" if self.title else f"Property {self.pk}"
+
+    def save(self, *args, **kwargs):
+        """
+        A listing that has a shape always has a position.
+
+        Drawing a polygon is how most owners publish, and that path never sets
+        latitude/longitude — the API serializer used to be the only thing
+        filling them in, so anything writing through the admin, a shell or an
+        import left the columns null. A property without coordinates is invisible
+        to every geographic query: it drops out of "nearby", and the bbox filter
+        has to wave through *all* such rows on every viewport request because it
+        cannot place any of them.
+
+        The short code is assigned here for the same reason: every write path
+        goes through save() — the API, the admin, the import pipeline — and a
+        listing without a code cannot be promoted. It is only ever assigned when
+        empty, because the code gets printed onto images that outlive the row.
+        """
+        if not self.short_code:
+            self.short_code = unique_code(type(self))
+            update_fields = kwargs.get('update_fields')
+            if update_fields is not None:
+                kwargs['update_fields'] = set(update_fields) | {'short_code'}
+
+        if self.polygon and (self.latitude is None or self.longitude is None):
+            center = polygon_center_lat_lng(self.polygon)
+            if center:
+                if self.latitude is None:
+                    self.latitude = center[0]
+                if self.longitude is None:
+                    self.longitude = center[1]
+                # A caller saving only `polygon` would otherwise compute the
+                # centre and then not persist it.
+                update_fields = kwargs.get('update_fields')
+                if update_fields is not None:
+                    kwargs['update_fields'] = set(update_fields) | {'latitude', 'longitude'}
+        super().save(*args, **kwargs)
 
     @property
     def is_for_sale(self):
@@ -450,6 +493,16 @@ class PendingPublication(models.Model):
     draft = models.JSONField(default=dict, blank=True)
     source = models.CharField(max_length=30, choices=SOURCE_CHOICES, default="account_required")
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="new")
+    # Set when a resume link is redeemed. Without it, ``converted`` is a claim
+    # nobody can check: the tray could not say which requests became listings.
+    property = models.ForeignKey(
+        Property,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="pending_publications",
+        help_text="Propiedad creada al canjear el enlace de continuación",
+    )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -462,6 +515,55 @@ class PendingPublication(models.Model):
 
     def __str__(self):
         return self.title or f"Solicitud pendiente {self.pk}"
+
+
+class PublicationResumeToken(models.Model):
+    """
+    Enlace de un solo uso que devuelve un borrador abandonado a quien lo escribió.
+
+    The draft itself already lives on the server, but the browser only restores
+    it from ``localStorage``, so it dies with the device. This token is what lets
+    staff hand it back over WhatsApp. It is a bearer credential that travels
+    through a chat and gets forwarded, so its scope is deliberately narrow: it
+    opens one draft, expires, and burns on redemption.
+    """
+
+    pending = models.ForeignKey(
+        PendingPublication,
+        on_delete=models.CASCADE,
+        related_name="resume_tokens",
+    )
+    token = models.CharField(max_length=100, unique=True)
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="issued_resume_tokens",
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    expires_at = models.DateTimeField()
+    revoked_at = models.DateTimeField(null=True, blank=True)
+    redeemed_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+        indexes = [
+            models.Index(fields=["pending", "-created_at"], name="resume_pending_created_idx"),
+        ]
+
+    def __str__(self):
+        return f"Resume token for pending publication {self.pending_id}"
+
+    def is_valid(self):
+        """Usable right now: not revoked, not already redeemed, not expired."""
+        from django.utils import timezone
+
+        return (
+            self.revoked_at is None
+            and self.redeemed_at is None
+            and timezone.now() < self.expires_at
+        )
 
 
 class ActivityEvent(models.Model):

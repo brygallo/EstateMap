@@ -64,7 +64,8 @@ class Command(BaseCommand):
         ))
 
         counters = {"created": 0, "updated": 0,
-                    "skipped_no_location": 0, "skipped_duplicate": 0}
+                    "skipped_no_location": 0, "skipped_zero_price": 0,
+                    "skipped_duplicate": 0}
         seen_ids = []
 
         for i, listing in enumerate(reader.iter_listings()):
@@ -88,6 +89,7 @@ class Command(BaseCommand):
             f"Creadas: {counters['created']}  |  actualizadas: {counters['updated']}"
             f"  |  duplicadas omitidas: {counters['skipped_duplicate']}"
             f"  |  sin ubicación: {counters['skipped_no_location']}"
+            f"  |  precio cero: {counters['skipped_zero_price']}"
             + (f"  |  caducadas: {expirados}" if opts["expire"] else "")
         ))
 

@@ -22,18 +22,29 @@ from django.core.cache import cache
 logger = logging.getLogger(__name__)
 
 VERSION_KEY = "props:ver"
+VERSION_KEYS = {
+    "properties": VERSION_KEY,
+    "map": "props:map:ver",
+    "summary": "props:summary:ver",
+    "detail": "props:detail:ver",
+    "locations": "props:locations:ver",
+    "catalog": "props:catalog:ver",
+    "market_stats": "props:market-stats:ver",
+    "geo": "geo:ver",
+}
 
 # Parts longer than this are hashed instead of embedded verbatim, so a long
 # querystring cannot turn into a multi-kilobyte Redis key.
 MAX_PART_LENGTH = 32
 
 
-def props_version() -> int:
+def props_version(scope: str = "properties") -> int:
     """Current inventory version. Defaults to 1 when the cache is unavailable."""
     try:
-        version = cache.get_or_set(VERSION_KEY, 1, timeout=None)
+        version_key = VERSION_KEYS[scope]
+        version = cache.get_or_set(version_key, 1, timeout=None)
     except Exception:  # pragma: no cover - defensive, cache must never break a read
-        logger.debug("Could not read %s from cache", VERSION_KEY, exc_info=True)
+        logger.debug("Could not read cache version for %s", scope, exc_info=True)
         return 1
     # With IGNORE_EXCEPTIONS a down Redis returns None instead of raising.
     if version is None:
@@ -44,20 +55,28 @@ def props_version() -> int:
         return 1
 
 
-def bump_props_version() -> None:
-    """Invalidate every inventory-derived payload by moving the version forward."""
+def bump_props_version(*scopes: str) -> None:
+    """Invalidate only the requested inventory-derived cache generations."""
+    if not scopes:
+        scopes = tuple(VERSION_KEYS)
+    for scope in scopes:
+        _bump_version(scope)
+
+
+def _bump_version(scope: str) -> None:
+    version_key = VERSION_KEYS[scope]
     try:
-        cache.incr(VERSION_KEY)
+        cache.incr(version_key)
     except ValueError:
         # django-redis raises ValueError when the key does not exist yet (or it
         # was evicted). Seeding it is equivalent to a bump: the readers that
         # cached against the previous value can no longer hit their keys.
         try:
-            cache.set(VERSION_KEY, props_version() + 1, timeout=None)
+            cache.set(version_key, props_version(scope) + 1, timeout=None)
         except Exception:  # pragma: no cover - defensive
-            logger.debug("Could not seed %s", VERSION_KEY, exc_info=True)
+            logger.debug("Could not seed %s", version_key, exc_info=True)
     except Exception:  # pragma: no cover - defensive
-        logger.debug("Could not bump %s", VERSION_KEY, exc_info=True)
+        logger.debug("Could not bump %s", version_key, exc_info=True)
 
 
 def _normalize(part) -> str:
@@ -67,6 +86,6 @@ def _normalize(part) -> str:
     return value
 
 
-def versioned_key(name: str, *parts) -> str:
+def versioned_key(name: str, *parts, scope: str = "properties") -> str:
     """Build ``<name>:v<version>:<part>:<part>`` with long parts hashed."""
-    return f"{name}:v{props_version()}:{':'.join(_normalize(part) for part in parts)}"
+    return f"{name}:v{props_version(scope)}:{':'.join(_normalize(part) for part in parts)}"

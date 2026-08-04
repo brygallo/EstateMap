@@ -23,7 +23,9 @@ def _invalidate(property_id):
     reads the API back, so firing it inside the transaction would let the worker
     rebuild a page from the pre-commit state.
     """
-    bump_props_version()
+    bump_props_version(
+        "properties", "map", "summary", "detail", "locations", "market_stats"
+    )
 
     def dispatch():
         from .tasks import revalidate_frontend_tags
@@ -61,11 +63,14 @@ def property_deleted(sender, instance, **kwargs):
 
 @receiver(post_save, sender=Property, dispatch_uid="cache_property_saved")
 def property_cache_saved(sender, instance, created=False, **kwargs):
+    if created:
+        bump_props_version("catalog")
     _invalidate(instance.pk)
 
 
 @receiver(post_delete, sender=Property, dispatch_uid="cache_property_deleted")
 def property_cache_deleted(sender, instance, **kwargs):
+    bump_props_version("catalog")
     _invalidate(instance.pk)
 
 
@@ -77,4 +82,4 @@ def property_image_changed(sender, instance, **kwargs):
     # Only the Redis layer is bumped here: the worker touches every image row of
     # an upload one by one, and each of those would otherwise become its own
     # frontend revalidation request.
-    bump_props_version()
+    bump_props_version("properties", "detail")

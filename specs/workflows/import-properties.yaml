@@ -1,0 +1,560 @@
+version: 1
+domain: import-properties
+title: Flujo de importación de propiedades
+status: partial
+summary: >-
+  Invariantes del orquestador de la ingesta: los modos de ejecución, los dos
+  caminos (un solo paso y paquete), el orden de fases que no puede alterarse y
+  los efectos secundarios obligatorios de cada escritura. Verificado contra el
+  código el 2026-08-04. Las reglas de negocio del dato importado viven en
+  specs/domains/imports.yaml.
+see_also:
+  - docs/workflows/import-properties.md
+  - specs/domains/imports.yaml
+  - docs/technical/celery.md
+
+rules:
+  - id: WFI-001
+    name: Una ejecución de ingesta tiene exactamente tres modos
+    status: implemented
+    summary: >-
+      Un `IngestaRun` solo puede ser `load` (buscar y cargar), `refresh`
+      (revisitar lo ya importado) o `verify` (comprobar vigencia), y el
+      orquestador despacha por ese campo.
+    rationale: >-
+      Cada modo tiene un coste y un riesgo distintos: `load` descubre inventario,
+      `refresh` reescribe todo lo existente y `verify` comprueba vigencia.
+      Mantenerlos separados evita que una comprobación de vigencia acabe
+      reescribiendo precios o redescargando imágenes.
+
+      Cuidado con leer `verify` como un modo de solo lectura: no lo es. Sella
+      `last_seen_at` en todo lo que sigue vivo (IMP-015) y elimina lo retirado
+      junto con sus objetos en MinIO (IMP-013). Lo que no hace es reescribir los
+      campos del anuncio ni volver a descargar imágenes.
+    evidence:
+      - file: backend/ingesta/models.py
+        lines: "61-65"
+        symbol: "MODOS = ["
+      - file: backend/ingesta/runner.py
+        lines: "175-182"
+        symbol: def execute
+        note: Despacho por run.modo a run_verify, run_refresh o run_load.
+    cases:
+      - name: Run con modo verify
+        given:
+          modo: verify
+        expected: >-
+          se ejecuta run_verify; no reescribe campos del anuncio ni descarga
+          imágenes, pero sella last_seen_at (IMP-015) y puede eliminar anuncios
+          retirados (IMP-013)
+      - name: Run con modo desconocido
+        given:
+          modo: cualquier-otro
+        expected: "cae al comportamiento de load"
+
+  - id: WFI-002
+    name: El modo verify solo se alcanza desde la API
+    status: partial
+    summary: >-
+      `verify` es un modo soportado del modelo pero no tiene bandera en la CLI:
+      solo puede lanzarse con `POST /api/admin/ingesta/launch/`.
+    rationale: >-
+      Asimetría real entre puntos de entrada. `ingesta_load` solo traduce
+      `--refresh` a modo `refresh`, así que una operación de mantenimiento
+      importante (barrido de vigencia) no se puede automatizar ni ejecutar desde
+      un `docker exec` sin crear el run a mano. Es un hueco, no una decisión de
+      diseño documentada.
+    evidence:
+      - file: backend/ingesta/api.py
+        lines: "489-491"
+        symbol: modo = requested_mode if requested_mode in {"refresh", "verify"} else "load"
+      - file: backend/ingesta/management/commands/ingesta_load.py
+        lines: "52-57"
+        symbol: modo="refresh" if opts["refresh"] else "load"
+        note: Único mapeo de modos en la CLI; no contempla verify.
+    backend:
+      endpoint: POST /api/admin/ingesta/launch/
+    cases:
+      - name: Lanzar verify por API
+        given:
+          body:
+            source: plusvalia
+            modo: verify
+        expected: "run creado con modo verify"
+      - name: Intentar verify por CLI
+        given:
+          comando: ingesta_load --source plusvalia
+        expected: "no existe bandera; el run sale como load"
+
+  - id: WFI-003
+    name: Los dos caminos de importación comparten el mismo punto de escritura
+    status: implemented
+    summary: >-
+      El flujo de un solo paso y el flujo por paquete difieren solo en de dónde
+      salen los datos y las imágenes; ambos terminan en `upsert_property`, así que
+      las reglas del dato se aplican una sola vez.
+    rationale: >-
+      El paquete existe para desacoplar el scraping de la escritura (scrapear en
+      un entorno e importar en otro). Si cada camino tuviera su propia escritura,
+      las reglas de precio, dedup y ubicación divergirían entre ellos.
+    evidence:
+      - file: backend/ingesta/runner.py
+        lines: "271-275"
+        symbol: image_urls=image_urls
+        note: Camino directo, las imágenes llegan como URLs y van a MinIO.
+      - file: backend/ingesta/management/commands/ingesta_import.py
+        lines: "70-76"
+        symbol: upsert_property(listing, fuente, reader=reader)
+        note: Camino paquete, las imágenes se leen del disco.
+      - file: backend/ingesta/pipeline/upsert.py
+        lines: "56-73"
+        symbol: def upsert_property
+    cases:
+      - name: Mismo anuncio por los dos caminos
+        given:
+          external_id: "150575806"
+        expected: "una sola fila; el segundo camino actualiza"
+      - name: Imágenes en el camino paquete
+        given:
+          reader: presente
+        expected: "se sincronizan desde images/<external_id>/ del paquete"
+
+  - id: WFI-004
+    name: El orden de las fases no puede alterarse
+    status: implemented
+    summary: >-
+      Ubicación antes de escribir, saneamiento de precio y huella de imagen antes
+      de deduplicar, deduplicación antes de crear, e imágenes solo después de
+      guardar la fila.
+    rationale: >-
+      Cada inversión del orden rompe algo concreto: deduplicar antes de calcular
+      el dHash pierde la señal más fiable; crear antes de deduplicar mete
+      duplicados en el mapa; y adjuntar imágenes antes de guardar deja objetos en
+      MinIO sin fila que los referencie.
+    evidence:
+      - file: backend/ingesta/pipeline/upsert.py
+        lines: "76-95"
+        symbol: ok, lat, lng, _motivo = validate_location
+        note: Ubicación, precio y dHash, en ese orden, antes de buscar duplicados.
+      - file: backend/ingesta/pipeline/upsert.py
+        lines: "97-129"
+        symbol: dup = find_duplicate
+      - file: backend/ingesta/pipeline/upsert.py
+        lines: "173-178"
+        symbol: attached = attach_images_from_urls
+        note: Las imágenes se adjuntan después del save().
+    cases:
+      - name: Anuncio sin coordenadas
+        given:
+          latitude: null
+        expected: "se corta en la fase de ubicación; no se consulta el dedup"
+      - name: Duplicado de otra fuente, y el nuevo no aporta teléfono
+        given:
+          duplicado: true
+          nuevo_con_telefono: false
+        expected: "no se llega a crear la fila ni a descargar imágenes"
+      - name: Duplicado de otra fuente, y el nuevo sí aporta teléfono
+        given:
+          duplicado: true
+          nuevo_con_telefono: true
+        expected: >-
+          se crea la fila y se descargan sus imágenes; el anuncio existente se
+          borra después, ya completado el nuevo
+        note: >-
+          Solo la rama sin teléfono devuelve skipped_duplicate. Con teléfono la
+          ejecución cae hacia abajo y crea el registro. Ver IMP-010.
+
+  - id: WFI-005
+    name: Un paquete se valida entero antes de tocar la base
+    status: implemented
+    summary: >-
+      `ingesta_import` valida manifiesto, formato, cuadre del total, JSON de cada
+      línea y unicidad de `external_id` antes de escribir el primer registro.
+    rationale: >-
+      Un paquete truncado por un scp interrumpido es indistinguible de uno
+      completo hasta que se cuentan las líneas. Importarlo a medias con `--expire`
+      retiraría inventario válido, y el runbook registra al menos un paquete
+      inservible por esa causa.
+    evidence:
+      - file: backend/ingesta/packaging.py
+        lines: "103-129"
+        symbol: def validate
+      - file: backend/ingesta/packaging.py
+        lines: "25-27"
+        symbol: class PaqueteInvalido
+      - file: backend/ingesta/management/commands/ingesta_import.py
+        lines: "42-52"
+        symbol: manifest = reader.validate()
+        note: Falla como CommandError antes de crear la Fuente o escribir nada.
+    tests:
+      unit: true
+    cases:
+      - name: Manifiesto declara 2 y el JSONL trae 1
+        given:
+          total_declarado: 2
+          lineas: 1
+        expected: "PaqueteInvalido; no se escribe nada"
+      - name: Línea 2 con JSON roto
+        given:
+          linea_rota: 2
+        expected: "PaqueteInvalido indicando la línea 2"
+      - name: external_id repetido dentro del paquete
+        given:
+          external_ids: ["1", "1"]
+        expected: "PaqueteInvalido por external_id duplicado"
+      - name: Paquete completo
+        given:
+          total_declarado: 2
+          lineas: 2
+        expected: "válido; procede la importación"
+
+  - id: WFI-006
+    name: Un anuncio corrupto no tumba la ESCRITURA de la ejecución
+    status: partial
+    summary: >-
+      La fase de escritura de cada anuncio (validación de ubicación, upsert,
+      imágenes) va en su propio try/except: un fallo individual suma a
+      `run.errores` y deja una línea de log, pero el run continúa. La fase de
+      scraping no está protegida en el modo `load`.
+    rationale: >-
+      Un recorrido completo del país dura horas. Que un registro con un campo
+      inesperado abortara el run entero significaba perder toda la tanda y
+      reempezar.
+
+      Está como `partial` porque la protección no cubre todo el recorrido: en
+      `run_load` el `for data in scraper.scrape(...)` queda FUERA del try, así
+      que una excepción levantada mientras el generador produce el item (parseo
+      de la ficha, callback `on_gone`) sube al handler exterior y termina el run
+      en estado `error` con `current_stage="fallo fatal"`. `run_refresh` sí
+      envuelve `scrape_one`, así que ahí la regla se cumple entera.
+    evidence:
+      - file: backend/ingesta/runner.py
+        lines: "284-289"
+        symbol: "run.errores += 1"
+      - file: backend/ingesta/runner.py
+        lines: "540-542"
+        symbol: "[item] error refrescando"
+        note: Mismo patrón en el modo refresh.
+    cases:
+      - name: Un anuncio falla al escribirse (ubicación, upsert o imágenes)
+        given:
+          anuncios: 100
+          fallan: 1
+          fase: upsert
+        expected:
+          estado: done
+          errores: 1
+      - name: Un anuncio falla al parsearse dentro del scraper, en modo load
+        given:
+          fase: parseo_en_el_scraper
+          modo: load
+        expected:
+          estado: error
+          current_stage: "fallo fatal"
+        note: >-
+          El try empieza después del for. Ver WFI-014 para la corrección
+          propuesta.
+      - name: Un anuncio se omite por no tener imágenes
+        given:
+          resultado: skipped_no_images
+        expected: "cuenta como error individual, el run sigue"
+
+  - id: WFI-007
+    name: Un bloqueo del portal termina el run en error, nunca en éxito vacío
+    status: implemented
+    summary: >-
+      Tras tres respuestas 403 o de challenge seguidas, el scraper lanza
+      `ScraperBlocked` y el run acaba en estado `error` con el motivo, en vez de
+      reportar "0 resultados" como si todo hubiera ido bien.
+    rationale: >-
+      Un run bloqueado que termina en `done` con cero anuncios es
+      indistinguible de una fuente agotada, y esa confusión retrasa la detección
+      de un cambio de fingerprint durante días. Antes de abortar hay backoff
+      exponencial de 15 s a 300 s respetando `Retry-After`.
+    evidence:
+      - file: backend/ingesta/scrapers/plusvalia.py
+        lines: "482-492"
+        symbol: raise ScraperBlocked(
+      - file: backend/ingesta/scrapers/plusvalia.py
+        lines: "236-240"
+        symbol: _BLOCK_LIMIT
+      - file: backend/ingesta/runner.py
+        lines: "286-288"
+        symbol: "except ScraperBlocked:"
+        note: Se reeleva a propósito para que el run muera con mensaje claro.
+      - file: backend/ingesta/runner.py
+        lines: "311-316"
+        symbol: bloqueado por el portal
+    tests:
+      unit: true
+    cases:
+      - name: Un 429 con Retry-After 20
+        given:
+          status: 429
+          retry_after: 20
+        expected: "espera 20 s y reintenta"
+      - name: Tres 403 seguidos
+        given:
+          status: [403, 403, 403]
+        expected: "ScraperBlocked tras esperar 15 s y 30 s"
+      - name: Run que recibe ScraperBlocked
+        given:
+          excepcion: ScraperBlocked
+        expected:
+          estado: error
+          current_stage: bloqueado por el portal
+
+  - id: WFI-008
+    name: La verificación de vigencia enfría y reanuda, y conserva el progreso
+    status: implemented
+    summary: >-
+      Un bloqueo durante el barrido de vigencia no aborta: pausa 8 minutos y
+      continúa, hasta 4 veces; agotados los enfriamientos el run acaba en `error`
+      pero deja sellado todo lo ya comprobado.
+    rationale: >-
+      El barrido recorre decenas de miles de fichas y siempre topará con
+      Cloudflare. Abortar significaría empezar de cero cada vez. El enfriamiento
+      se mantiene por debajo del umbral del watchdog (10 min) para que un run
+      enfriándose no se confunda con uno muerto, y el heartbeat sigue latiendo
+      durante la pausa.
+    evidence:
+      - file: backend/ingesta/runner.py
+        lines: "37-42"
+        symbol: VERIFY_MAX_COOLDOWNS
+      - file: backend/ingesta/runner.py
+        lines: "422-436"
+        symbol: "if cooldowns > VERIFY_MAX_COOLDOWNS:"
+      - file: backend/ingesta/runner.py
+        lines: "112-123"
+        symbol: def _cooldown
+        note: Duerme a trozos refrescando heartbeat_at y atendiendo la cancelación.
+    tests:
+      unit: true
+    cases:
+      - name: Un bloqueo puntual a mitad del lote
+        given:
+          bloqueos: 1
+        expected:
+          estado: done
+          reset_blocks: 1
+      - name: Bloqueo persistente
+        given:
+          bloqueos: 5
+        expected:
+          estado: error
+          mensaje_contiene: continúa donde quedó
+      - name: Progreso previo a un bloqueo persistente
+        given:
+          comprobadas_antes: 1
+        expected: "las ya comprobadas conservan su last_seen_at"
+
+  - id: WFI-009
+    name: El modo incremental compara por ID y corta en la franja histórica
+    status: implemented
+    summary: >-
+      Un run con `solo_nuevas` salta los anuncios ya conocidos comparando primero
+      el ID estable del portal, y da por terminada una categoría tras 120
+      conocidos consecutivos.
+    rationale: >-
+      La URL cambia cuando el anunciante edita el título, así que comparar por URL
+      hacía que propiedades ya importadas parecieran nuevas. El corte por racha
+      evita recorrer las 400 páginas de listado hasta el fondo en cada tanda; 120
+      es margen suficiente para absorber promocionados y reordenamientos.
+    evidence:
+      - file: backend/ingesta/runner.py
+        lines: "215-224"
+        symbol: def skip_url
+      - file: backend/ingesta/scrapers/plusvalia.py
+        lines: "241-244"
+        symbol: _KNOWN_STREAK_LIMIT
+      - file: backend/ingesta/scrapers/plusvalia.py
+        lines: "303-332"
+        symbol: franja histórica alcanzada
+        note: Tanto los conocidos como los retirados alimentan la racha.
+    tests:
+      unit: true
+    cases:
+      - name: Anuncio conocido por ID con la URL cambiada
+        given:
+          external_id_conocido: true
+          url_nueva: true
+        expected: "se salta sin abrir la ficha"
+      - name: Racha de conocidos por encima del límite
+        given:
+          conocidos_consecutivos: 120
+        expected: "la categoría se cierra"
+      - name: Ficha que responde 410 en medio del recorrido
+        given:
+          http_status: 410
+        expected: "se notifica on_gone y cuenta para la racha"
+
+  - id: WFI-010
+    name: Toda escritura de inventario dispara la invalidación completa
+    status: implemented
+    summary: >-
+      Guardar o borrar una `Property` invalida las generaciones de caché en Redis,
+      encola la revalidación de Next dentro de `on_commit` y notifica a IndexNow,
+      también cuando la propiedad se elimina.
+    rationale: >-
+      Sin esto, una importación queda invisible hasta que expire el TTL. La
+      revalidación va por `on_commit` a propósito: la tarea vuelve a leer la API,
+      así que dispararla dentro de la transacción reconstruiría la página con el
+      estado anterior. El ping de borrado hace que el buscador recrawlee, reciba
+      el 404/410 y saque la URL del índice antes.
+    evidence:
+      - file: backend/real_estate/signals.py
+        lines: "16-45"
+        symbol: bump_props_version
+      - file: backend/real_estate/signals.py
+        lines: "30-45"
+        symbol: transaction.on_commit(dispatch)
+      - file: backend/real_estate/signals.py
+        lines: "57-61"
+        symbol: submit_property(instance.pk, city=instance.city)
+        note: También en post_delete.
+      - file: backend/real_estate/cache_utils.py
+        lines: "58-63"
+        symbol: def bump_props_version
+    cases:
+      - name: Anuncio importado nuevo
+        given:
+          evento: post_save
+        expected: "versiones de caché incrementadas, revalidación encolada, IndexNow notificado"
+      - name: Anuncio retirado
+        given:
+          evento: post_delete
+        expected: "misma cadena, incluido el ping de IndexNow"
+      - name: Broker de Celery caído
+        given:
+          broker: down
+        expected: "se registra un warning y la escritura no falla"
+
+  - id: WFI-011
+    name: Una fuente no puede tener dos ejecuciones a la vez
+    status: implemented
+    summary: >-
+      Lanzar una ingesta con otra `pending` o `running` para la misma fuente se
+      rechaza con 409, después de que el watchdog recupere los runs cuyo proceso
+      murió sin dejar rastro.
+    rationale: >-
+      Dos recorridos simultáneos duplican la carga sobre el portal y adelantan el
+      bloqueo. El orden importa: si el watchdog no corriera antes de la
+      comprobación, un proceso muerto bloquearía la fuente para siempre. El
+      watchdog es perezoso (se dispara al listar o lanzar), no hay cron.
+    evidence:
+      - file: backend/ingesta/api.py
+        lines: "475-484"
+        symbol: estado__in=["pending", "running"]
+      - file: backend/ingesta/runner.py
+        lines: "80-104"
+        symbol: def reap_zombie_runs
+      - file: backend/ingesta/runner.py
+        lines: "33-34"
+        symbol: STALE_AFTER
+    backend:
+      endpoint: POST /api/admin/ingesta/launch/
+      denied_http_status: 409
+    cases:
+      - name: Lanzar con un run activo de la misma fuente
+        given:
+          run_activo: true
+        expected: "409 con el id del run en curso"
+        http_status: 409
+      - name: Lanzar con un run colgado hace 20 minutos
+        given:
+          heartbeat_hace_minutos: 20
+        expected: "el colgado pasa a error y el nuevo run se crea"
+
+  - id: WFI-012
+    name: Los puntos de entrada apuntan por defecto a una fuente viva
+    status: partial
+    summary: >-
+      Tanto la CLI como el endpoint de lanzamiento siguen usando `properati` como
+      fuente por defecto, una fuente purgada y desactivada el 2026-08-03.
+    rationale: >-
+      Bug latente detectado el 2026-08-04. Un `ingesta_load` sin `--source`, o un
+      `POST launch/` sin `source`, crean un run contra Properati: recrean su
+      `Fuente` (porque el scraper sigue registrado) y ponen a scrapear un portal
+      que ya no se quiere agregar. No falla de forma ruidosa, que es lo que lo
+      hace peligroso. El default debería ser explícito u obligatorio.
+    evidence:
+      - file: backend/ingesta/management/commands/ingesta_load.py
+        lines: "28"
+        symbol: parser.add_argument("--source", default="properati", help="slug del scraper")
+      - file: backend/ingesta/api.py
+        lines: "459-461"
+        symbol: source = request.data.get("source", "properati")
+      - file: backend/ingesta/scrapers/__init__.py
+        lines: "7"
+        symbol: from . import properati
+        note: Sigue registrado, así que el default resuelve a un scraper existente.
+    cases:
+      - name: Lanzar sin indicar fuente por CLI
+        given:
+          comando: ingesta_load
+        expected: "hoy crea un run de properati"
+      - name: POST launch sin campo source
+        given:
+          body: {}
+        expected: "hoy crea un run de properati"
+      - name: Comportamiento esperado
+        given:
+          body: {}
+        expected: "error pidiendo la fuente, o default a la única fuente activa"
+
+  - id: WFI-013
+    name: El barrido de vigencia publica un progreso medible
+    status: implemented
+    summary: >-
+      La API informa el total objetivo de los modos `verify` y `refresh` aunque
+      se lancen sin límite. El panel usa ese total con `vistos`, mide las tandas
+      incrementales contra su límite y adapta los contadores visibles a cada
+      modo, por ejemplo «Comprobados» y «Retiradas» para `verify`.
+    rationale: >-
+      Una retirada elimina la propiedad durante el barrido, por lo que el total
+      visible de la fuente disminuye mientras avanza. Sumar las retiradas al
+      inventario elegible restante mantiene estable el denominador y evita que
+      una ejecución activa muestre progreso desconocido.
+    evidence:
+      - file: backend/ingesta/api.py
+        lines: "71-95"
+        symbol: def _run_dict
+        note: Calcula y publica progress_total según el alcance de cada modo.
+      - file: frontend/app/admin/ingesta/page.tsx
+        lines: "423-453"
+        symbol: const progressPct
+        note: Usa vistos sobre progress_total y adapta las etiquetas de verify.
+    tests:
+      unit: true
+    cases:
+      - name: Vigencia sin límite tras retirar un anuncio
+        given:
+          elegibles_restantes: 1
+          vistos: 1
+          caducadas: 1
+        expected:
+          progress_total: 2
+          progreso: "50%"
+
+  - id: WFI-014
+    name: El scraping también debería estar protegido anuncio a anuncio
+    status: proposed
+    summary: >-
+      En modo `load`, la obtención de cada anuncio debería ir dentro del mismo
+      try/except que su escritura, de modo que un fallo de parseo cuente como un
+      error individual y no aborte el run.
+    rationale: >-
+      Hoy la asimetría es silenciosa: `run_refresh` protege `scrape_one` y
+      `run_load` no protege el generador. El síntoma es el peor posible para
+      diagnosticar, porque un fallo en un único anuncio se presenta como "fallo
+      fatal" del run entero, indistinguible de un problema de infraestructura.
+      Ver WFI-006 para el comportamiento actual.
+    cases:
+      - name: Un anuncio falla al parsearse dentro del scraper, en modo load
+        given:
+          fase: parseo_en_el_scraper
+          modo: load
+        expected:
+          estado: done
+          errores: 1
+    tests: {}

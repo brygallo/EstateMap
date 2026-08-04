@@ -1,0 +1,364 @@
+version: 1
+domain: publication-resume
+title: Enlace para retomar una publicación abandonada
+status: implemented
+summary: >-
+  Quien empieza a publicar y abandona deja un PendingPublication con su borrador
+  completo en el servidor (specs/domains/leads.yaml, LEAD-009), pero el borrador
+  que el navegador restaura vive en localStorage y muere con el dispositivo.
+  Este archivo describe el enlace de un solo uso que staff genera desde la
+  bandeja de pendientes, envía por WhatsApp y devuelve a la persona a su
+  formulario con todo lo que había escrito, sin cuenta previa. El muro que la
+  hizo abandonar era precisamente la cuenta (source=account_required), así que el
+  canje publica primero y crea la cuenta después.
+see_also:
+  - specs/domains/leads.yaml
+  - specs/workflows/publish-property.yaml
+  - specs/permissions/matrix.yaml
+  - specs/domains/owner-transfer.yaml
+
+rules:
+  - id: RSM-001
+    name: Staff emite el enlace desde la bandeja de pendientes
+    status: implemented
+    summary: >-
+      Un usuario staff genera, para un PendingPublication concreto, un enlace de
+      continuación con un token opaco, y la solicitud pasa a estado contacted.
+    rationale: >-
+      La emisión es manual y no automática porque el envío también lo es: alguien
+      mira la solicitud, decide que merece seguimiento y escribe por WhatsApp. Un
+      enlace emitido sin que nadie lo mande solo sería una credencial viva sin
+      motivo. Pasar a contacted en el mismo acto evita que la bandeja mienta
+      sobre lo que ya se gestionó.
+    evidence:
+      - file: backend/real_estate/views.py
+        lines: "1100-1129"
+        symbol: def resume_link
+      - file: backend/real_estate/views.py
+        lines: "1059-1061"
+        symbol: "return [IsAuthenticated(), IsAdminUser()]"
+        note: Toda acción del viewset que no sea `create` exige staff.
+      - file: backend/real_estate/email_utils.py
+        lines: 381-404
+        symbol: def create_publication_resume_token
+    permissions:
+      required: [pending_publications.create_resume_link]
+    backend:
+      enforce: true
+      endpoint: POST /api/pending-publications/{pending_id}/resume-link/
+      denied_http_status: 403
+    frontend:
+      routes: ["/admin/pending-publications"]
+      visible_when_allowed: true
+      note: >-
+        El botón devuelve la URL para copiar y la inyecta en el mensaje
+        prellenado de WhatsApp que la fila ya construye con ecuadorPhoneHref.
+    tests:
+      api: true
+    cases:
+      - name: staff emite el enlace de una solicitud nueva
+        role: staff
+        expected: allowed
+        expected_http_status: 201
+        note: Devuelve la URL absoluta y deja la solicitud en contacted.
+      - name: un usuario autenticado cualquiera no puede emitirlo
+        role: not_owner
+        expected: denied
+      - name: un anónimo no puede emitirlo
+        role: anonymous
+        expected: denied
+        http_status: 401
+
+  - id: RSM-002
+    name: El enlace caduca a los catorce días
+    status: implemented
+    summary: >-
+      Un token de continuación deja de servir 14 días después de emitirse, y a
+      partir de ese momento cualquier uso responde 410 RESUME_TOKEN_INVALID.
+    rationale: >-
+      El enlace es una credencial al portador que viaja por WhatsApp y se
+      reenvía sin control. Catorce días cubren de sobra el ritmo real de una
+      conversación comercial y acotan la ventana en que un mensaje reenviado
+      sigue valiendo algo. Las cuatro formas de fallar —inexistente, caducado,
+      revocado y ya canjeado— comparten respuesta: distinguirlas convertiría el
+      endpoint en un oráculo de qué enlaces existieron, y ninguna tiene un
+      remedio distinto del de pedir otro enlace.
+    evidence:
+      - file: backend/estate_map/settings.py
+        lines: "504"
+        symbol: PUBLICATION_RESUME_TOKEN_EXPIRY_DAYS
+      - file: backend/real_estate/models.py
+        lines: "558-566"
+        symbol: def is_valid
+      - file: backend/real_estate/views.py
+        lines: "1255-1266"
+        symbol: def invalid_resume_token_response
+    backend:
+      enforce: true
+      endpoint: GET /api/publication-drafts/{token}/
+      denied_error_code: RESUME_TOKEN_INVALID
+      denied_http_status: 410
+      throttle_scope: resume_read
+    tests:
+      api: true
+    cases:
+      - name: un token recién emitido resuelve el borrador
+        role: anonymous
+        expected: allowed
+        expected_http_status: 200
+      - name: un token de quince días ya no resuelve
+        expected: denied
+        error_code: RESUME_TOKEN_INVALID
+        http_status: 410
+        note: Sin rol porque el estado del token no depende de quién llame; test a mano.
+
+  - id: RSM-003
+    name: El enlace se consume al publicar
+    status: implemented
+    summary: >-
+      Canjear un token crea la propiedad y marca el token como consumido; un
+      segundo canje responde 410 sin crear nada.
+    rationale: >-
+      Sin consumo, el mismo mensaje de WhatsApp reenviado a un grupo publica la
+      misma propiedad tantas veces como se pulse. El consumo es la única defensa
+      real contra el duplicado, porque el enlace no exige sesión, y ocurre en la
+      misma transacción que crea el anuncio: ni se publica dos veces, ni un
+      guardado fallido deja el enlace gastado.
+    evidence:
+      - file: backend/real_estate/views.py
+        lines: "1212-1222"
+        symbol: redeemed_at__isnull=True
+        note: UPDATE condicional dentro de la transacción que crea la propiedad.
+      - file: backend/real_estate/email_utils.py
+        lines: 388-396
+        symbol: revoked_at__isnull=True
+        note: Emitir un enlace nuevo retira el anterior, para que nunca haya dos vivos.
+    backend:
+      enforce: true
+      endpoint: POST /api/publication-drafts/{token}/redeem/
+      denied_error_code: RESUME_TOKEN_INVALID
+      denied_http_status: 410
+      throttle_scope: resume_redeem
+    tests:
+      api: true
+    cases:
+      - name: el primer canje crea la propiedad
+        expected: allowed
+      - name: el segundo canje del mismo token no crea nada
+        expected: denied
+        error_code: RESUME_TOKEN_INVALID
+        http_status: 410
+
+  - id: RSM-004
+    name: Staff puede revocar un enlace ya enviado
+    status: implemented
+    summary: >-
+      Un usuario staff invalida los tokens vigentes de una solicitud en cualquier
+      momento, y el enlace deja de resolver de inmediato aunque no haya caducado.
+    rationale: >-
+      Emitir una credencial sin poder retirarla obliga a esperar catorce días
+      cuando el número de teléfono estaba mal, la persona pide que se borren sus
+      datos o el mensaje acabó en el chat equivocado.
+    evidence:
+      - file: backend/real_estate/views.py
+        lines: "1132-1145"
+        symbol: def revoke_resume_link
+    permissions:
+      required: [pending_publications.revoke_resume_link]
+    backend:
+      enforce: true
+      endpoint: POST /api/pending-publications/{pending_id}/resume-link/revoke/
+      denied_http_status: 403
+    tests:
+      api: true
+    cases:
+      - name: staff revoca el enlace y el token deja de resolver
+        role: staff
+        expected: allowed
+        expected_http_status: 200
+      - name: un usuario autenticado cualquiera no puede revocarlo
+        role: not_owner
+        expected: denied
+
+  - id: RSM-005
+    name: El token solo abre el borrador, nunca la cuenta
+    status: implemented
+    summary: >-
+      La respuesta del token contiene el JSON del borrador y los datos de
+      contacto que la propia persona escribió, y nada más: ni tokens de sesión,
+      ni el resto de solicitudes, ni datos de otras propiedades.
+    rationale: >-
+      Un enlace que se reenvía es un enlace que acaba en manos de terceros. Su
+      alcance tiene que ser exactamente el trabajo que esa persona ya había
+      tecleado; convertirlo en una puerta de sesión haría de cada mensaje de
+      WhatsApp una llave de la cuenta. Por eso el serializer enumera campos en
+      vez de usar `__all__`: añadir una columna al modelo no puede ampliar en
+      silencio lo que ve quien tiene el enlace.
+    evidence:
+      - file: backend/real_estate/serializers.py
+        lines: 486-501
+        symbol: class PublicationDraftSerializer
+      - file: backend/real_estate/views.py
+        lines: "1148-1168"
+        symbol: class PublicationDraftView
+    permissions:
+      required: [publication_drafts.read_by_token]
+    backend:
+      enforce: true
+      endpoint: GET /api/publication-drafts/{token}/
+      throttle_scope: resume_read
+    tests:
+      api: true
+    cases:
+      - name: la respuesta trae el borrador y el contacto propio
+        role: anonymous
+        expected: allowed
+        expected_http_status: 200
+      - name: la respuesta no incluye credenciales ni datos de terceros
+        expected: allowed
+        note: Aserción sobre las claves del payload, no sobre el código HTTP.
+
+  - id: RSM-006
+    name: El borrador se recupera entero salvo las fotografías
+    status: implemented
+    summary: >-
+      Retomar restaura título, descripción, tipo, operación, precio, dirección,
+      ciudad, provincia, coordenadas, polígono, área y características, pero no
+      las imágenes, que nunca llegaron al servidor.
+    rationale: >-
+      El formulario envía en el borrador solo el número de imágenes que había
+      seleccionadas, no los archivos. Prometer "no pierdes nada" y pedir después
+      las fotos otra vez quema la confianza justo en el paso que ya se abandonó
+      una vez, así que la interfaz lo dice al entrar, no al publicar.
+    evidence:
+      - file: frontend/app/add-property/page.tsx
+        lines: "695-697"
+        symbol: "images_count: images.length"
+        note: Lo único que el borrador guarda de las fotos es cuántas había.
+      - file: frontend/app/continuar-publicacion/[token]/page.tsx
+        lines: 40-47
+        symbol: PROPERTY_DRAFT_STORAGE_KEY
+        note: El borrador del servidor se deja donde el formulario ya lo busca.
+    frontend:
+      routes: ["/continuar-publicacion/[token]"]
+      message: Recuperamos todo lo que habías escrito. Solo tendrás que volver a subir las fotos.
+      test_id: resume-photos-notice
+      note: >-
+        La cobertura es de API y no de navegador porque el generador no puede
+        inventarse un token válido para la ruta, y un Playwright que navegue al
+        literal "[token]" solo probaría la pantalla de enlace caducado. El
+        aviso vive en el formulario, que ya se abre con el borrador cargado.
+    tests:
+      api: true
+    cases:
+      - name: el borrador devuelve todo lo escrito y ninguna imagen
+        expected: allowed
+      - name: solo viaja el número de fotos que había seleccionadas
+        expected: allowed
+
+  - id: RSM-007
+    name: Publicar desde el enlace no exige cuenta previa
+    status: implemented
+    summary: >-
+      El canje crea la propiedad y, a partir del correo del borrador, una cuenta
+      a la que se asigna como propietaria; luego se envía a esa dirección el
+      enlace para definir contraseña.
+    rationale: >-
+      El origen account_required dice literalmente que la cuenta fue el muro. Un
+      enlace que devuelve a la persona al mismo muro reproduce el abandono que
+      pretende arreglar. Se invierte el orden: primero convierte, después se
+      registra. Si el borrador no trae correo utilizable, el canje se rechaza y
+      la gestión sigue siendo manual; si el correo ya tiene cuenta, la propiedad
+      va a esa cuenta sin tocarle la contraseña.
+    evidence:
+      - file: backend/real_estate/views.py
+        lines: 1139-1207
+        symbol: class PublicationDraftRedeemView
+      - file: backend/real_estate/services/accounts.py
+        lines: 19-40
+        symbol: def get_or_create_by_email
+      - file: frontend/app/add-property/page.tsx
+        lines: "913-916"
+        symbol: "!resumeToken"
+        note: El enlace hace de sesión, así que el formulario no abre el modal de cuenta.
+    permissions:
+      required: [publication_drafts.redeem]
+    backend:
+      enforce: true
+      endpoint: POST /api/publication-drafts/{token}/redeem/
+      throttle_scope: resume_redeem
+    tests:
+      api: true
+    cases:
+      - name: el canje crea propiedad y cuenta propietaria
+        expected: allowed
+      - name: un borrador sin correo no se puede canjear
+        expected: denied
+        http_status: 400
+      - name: si el correo ya tiene cuenta, la propiedad va a esa cuenta
+        expected: allowed
+        note: No se crea una segunda cuenta ni se toca la contraseña existente.
+
+  - id: RSM-008
+    name: La cuenta creada por canje no puede iniciar sesión hasta definir contraseña
+    status: implemented
+    summary: >-
+      La cuenta que nace de un canje se crea sin contraseña utilizable, de modo
+      que solo se entra a ella tras seguir el enlace enviado al correo.
+    rationale: >-
+      El canje no demuestra que quien pulsó el enlace sea la persona dueña del
+      correo; solo que tenía el enlace. Dejar la cuenta sin contraseña utilizable
+      hace que la prueba de identidad la dé el correo, que es donde tiene que
+      darse. La propiedad, mientras tanto, ya está publicada: nada queda
+      retenido a cambio de registrarse.
+    evidence:
+      - file: backend/real_estate/services/accounts.py
+        lines: "42-65"
+        symbol: user.set_unusable_password()
+      - file: backend/real_estate/email_utils.py
+        lines: 406-446
+        symbol: def send_account_claim_email
+    backend:
+      enforce: true
+      endpoint: POST /api/login/
+      denied_http_status: 401
+    tests:
+      api: true
+    cases:
+      - name: la cuenta recién creada no inicia sesión con contraseña vacía
+        expected: denied
+        http_status: 400
+        note: El serializer rechaza la contraseña vacía antes de mirar la cuenta.
+      - name: tras definir contraseña desde el correo, inicia sesión
+        expected: allowed
+
+  - id: RSM-009
+    name: Un canje cerrado deja la solicitud como convertida y enlazada
+    status: implemented
+    summary: >-
+      Al completarse el canje, el PendingPublication pasa a converted y guarda
+      una referencia a la propiedad creada; una solicitud ya convertida no admite
+      un enlace nuevo.
+    rationale: >-
+      Sin la referencia, la bandeja no puede responder a la única pregunta que
+      justifica el trabajo: de las solicitudes que se contactaron, cuántas
+      acabaron siendo un anuncio real. Antes, converted era una afirmación que
+      nadie podía comprobar.
+    evidence:
+      - file: backend/real_estate/models.py
+        lines: "503-511"
+        symbol: related_name="pending_publications"
+      - file: backend/real_estate/views.py
+        lines: "1218-1220"
+        symbol: pending.status = 'converted'
+      - file: backend/real_estate/views.py
+        lines: "1113-1117"
+        symbol: "'Esta solicitud ya se convirtió en un anuncio.'"
+    tests:
+      api: true
+    cases:
+      - name: tras el canje la solicitud queda converted con la propiedad enlazada
+        expected: allowed
+      - name: una solicitud ya convertida no admite un enlace nuevo
+        expected: denied
+        http_status: 400

@@ -164,6 +164,13 @@ export default function GalleryViewer({
     // Ignore the secondary mouse buttons; they are context menus, not drags.
     if (event.pointerType === 'mouse' && event.button !== 0) return;
 
+    // The prev/next arrows sit inside this surface. Capturing the pointer here
+    // would retarget the matching pointerup to the surface, so the browser
+    // fires `click` on the surface instead of on the arrow and the buttons do
+    // nothing — which is exactly how they broke on desktop. Let controls have
+    // their own gesture.
+    if ((event.target as HTMLElement).closest('button')) return;
+
     (event.currentTarget as HTMLElement).setPointerCapture?.(event.pointerId);
     pointersRef.current.set(event.pointerId, { x: event.clientX, y: event.clientY });
     movedRef.current = false;
@@ -245,6 +252,9 @@ export default function GalleryViewer({
 
   const endGesture = (event: React.PointerEvent) => {
     const pointers = pointersRef.current;
+    // A pointerup that never opened a gesture here — it started on one of the
+    // arrows, or on a non-primary mouse button — is not a tap on the photo.
+    if (!pointers.has(event.pointerId)) return;
     pointers.delete(event.pointerId);
     const start = gestureStartRef.current;
 

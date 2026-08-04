@@ -1,0 +1,357 @@
+version: 1
+domain: catalog
+title: Catálogo de errores de la API
+status: implemented
+summary: >
+  Qué devuelve el sistema cuando algo falla, y qué garantías acompañan a esa
+  respuesta. Este archivo es el dueño del vocabulario de códigos de error: una
+  spec de cualquier otro dominio solo puede referenciar códigos declarados aquí,
+  de modo que un código inventado en una regla se detecta en la validación en vez
+  de convertirse en un contrato imaginario.
+see_also:
+  - docs/errors/api-errors.md
+  - specs/permissions/matrix.yaml
+
+catalog:
+  error_codes:
+    - code: VALIDATION_ERROR
+      http_status: 400
+      description: >
+        Formato por defecto de DRF para errores de serializador. Un objeto cuyas
+        claves son nombres de campo y cuyos valores son listas de mensajes.
+      body:
+        campo: ["mensaje de error"]
+    - code: NOT_AUTHENTICATED
+      http_status: 401
+      description: >
+        Falta la credencial, o el token de acceso caducó (dura 1 hora). El texto
+        llega en inglés: LANGUAGE_CODE es 'en-us' y no hay LocaleMiddleware, así
+        que DRF no traduce sus mensajes por defecto.
+      body:
+        detail: "Authentication credentials were not provided."
+    - code: PERMISSION_DENIED
+      http_status: 403
+      description: >
+        La credencial es válida pero el rol no basta. Se distingue de 401 en que
+        renovar el token no cambia nada.
+      body:
+        detail: "You do not have permission to perform this action."
+    - code: NOT_FOUND
+      http_status: 404
+      description: El recurso no existe, o el queryset de la vista lo excluye para este rol.
+      body:
+        detail: "Not found."
+    - code: EMAIL_NOT_VERIFIED
+      http_status: 400
+      description: >
+        Intento de inicio de sesión con una cuenta cuyo correo no se ha
+        verificado. Lleva un código legible por máquina, a diferencia del resto
+        de errores de validación.
+      body:
+        code: email_not_verified
+    - code: IDEMPOTENCY_CONFLICT
+      http_status: 409
+      description: >
+        Dos peticiones con la misma cabecera Idempotency-Key llegaron a la vez.
+        La segunda se rechaza en lugar de duplicar el alta.
+    - code: RESUME_TOKEN_INVALID
+      http_status: 410
+      description: >
+        El token de continuación no existe, caducó, fue revocado o ya se canjeó.
+        Los cuatro casos comparten respuesta a propósito: distinguirlos permitiría
+        sondear qué enlaces existieron, y ninguno tiene un remedio distinto del de
+        pedir uno nuevo.
+      body:
+        detail: "Este enlace ya no es válido. Pide uno nuevo."
+        code: resume_token_invalid
+      evidence:
+        - file: backend/real_estate/views.py
+          lines: "1255-1266"
+          symbol: def invalid_resume_token_response
+    - code: REQUEST_DATA_TOO_BIG
+      http_status: 413
+      description: >
+        El cuerpo supera DATA_UPLOAD_MAX_MEMORY_SIZE y Django lo corta antes de
+        llegar a la vista.
+      body:
+        detail: "La carga completa supera el tamaño máximo permitido de 50MB."
+    - code: TOO_MANY_FILES
+      http_status: 400
+      description: La petición adjunta más ficheros que DATA_UPLOAD_MAX_NUMBER_FILES.
+      body:
+        detail: "No se pueden enviar más de 10 archivos por solicitud."
+    - code: THROTTLED
+      http_status: 429
+      description: >
+        Se superó el ritmo del scope aplicable. La respuesta incluye Retry-After
+        con los segundos que faltan.
+      body:
+        detail: "Request was throttled. Expected available in N seconds."
+    - code: SERVER_ERROR
+      http_status: 500
+      description: >
+        Excepción no controlada. Se registra como SystemIncident y la respuesta
+        lleva X-Request-ID para poder cruzarla con los logs.
+
+rules:
+  - id: ERR-001
+    name: Toda respuesta lleva identificador de petición
+    status: implemented
+    summary: >
+      El middleware de observabilidad reutiliza la cabecera X-Request-ID que
+      llegue del cliente o genera un uuid4, y la devuelve en toda respuesta junto
+      al tiempo de proceso y la versión desplegada.
+    rationale: >
+      Es el único hilo entre lo que ve una persona usuaria y lo que quedó en los
+      logs del servidor. Sin él, un informe de fallo es irreproducible.
+    evidence:
+      - file: backend/estate_map/observability.py
+        lines: "59-82"
+        symbol: "response[\"X-Request-ID\"] = request_id"
+        note: Generación o propagación del identificador y escritura de las tres cabeceras.
+      - file: backend/estate_map/settings.py
+        lines: "234-236"
+        symbol: CORS_EXPOSE_HEADERS
+        note: >
+          Sin exponerlas por CORS el navegador no puede leerlas, así que la
+          cabecera existiría pero el frontend no la vería.
+    cases:
+      - name: Petición sin cabecera propia
+        given: {"X-Request-ID": null}
+        expected: se genera un uuid4
+      - name: Petición con cabecera propia
+        given: {"X-Request-ID": "abc123"}
+        expected: se devuelve la misma
+      - name: Cabecera de más de 64 caracteres
+        given: {"X-Request-ID": "x…120 caracteres"}
+        expected: truncada a 64
+    tests: {}
+
+  - id: ERR-002
+    name: El identificador de petición solo llega a parte de la interfaz
+    status: partial
+    summary: >
+      El frontend sabe mostrar el identificador como "Código de seguimiento" al
+      construir mensajes de error, pero solo lo hacen las pantallas que pasan por
+      ese ayudante; el resto pierde la referencia.
+    rationale: >
+      La mitad de un mecanismo de soporte es peor que ninguno, porque genera la
+      expectativa de que siempre hay un código que pedir. Queda como partial a
+      propósito, con ERR-003 recogiendo el objetivo.
+    evidence:
+      - file: frontend/lib/form-errors.ts
+        lines: "37"
+        symbol: "Código de seguimiento"
+        note: Construcción del sufijo con la referencia de soporte.
+    cases:
+      - name: Error en una pantalla que usa el ayudante de formularios
+        given: {pantalla: formulario}
+        expected: muestra el código
+      - name: Error en una pantalla que no lo usa
+        given: {pantalla: otra}
+        expected: no muestra el código
+    tests: {}
+
+  - id: ERR-003
+    name: Toda pantalla de error debería mostrar el identificador
+    status: proposed
+    summary: >
+      Cualquier mensaje de error mostrado a una persona usuaria debería incluir
+      el X-Request-ID de la respuesta que lo originó.
+    cases:
+      - name: Error en cualquier pantalla
+        given: {pantalla: cualquiera}
+        expected: muestra el código
+    tests: {}
+
+  - id: ERR-004
+    name: Los incidentes se agregan por huella y no guardan datos de la petición
+    status: implemented
+    summary: >
+      Un fallo no crea una fila por ocurrencia: se calcula una huella y se
+      incrementa un contador. El registro guarda método, ruta, código y el nombre
+      de la excepción, nunca el cuerpo, las cabeceras, la query ni credenciales.
+    rationale: >
+      Es una decisión de privacidad deliberada, no una carencia. Quien intente
+      "mejorar" el diagnóstico añadiendo el cuerpo de la petición estaría metiendo
+      datos personales y contraseñas en una tabla que se consulta desde el panel.
+      Por eso el diagnóstico se cruza por request_id contra los logs, y no
+      ampliando lo que se persiste.
+    evidence:
+      - file: backend/real_estate/models.py
+        lines: "316-344"
+        symbol: "class SystemIncident"
+        note: Los campos existentes son la lista completa de lo que se guarda.
+      - file: backend/real_estate/models.py
+        lines: "325-327"
+        symbol: fingerprint
+        note: Clave única por la que se agregan las ocurrencias.
+      - file: backend/estate_map/observability.py
+        lines: "17"
+        symbol: record_incident
+        note: Único punto de escritura.
+    cases:
+      - name: El mismo fallo ocurre 50 veces
+        given: {ocurrencias: 50}
+        expected: 1 fila con occurrences=50
+      - name: Cuerpo de la petición almacenado
+        given: {peticion: "POST con contraseña"}
+        expected: nada
+    tests: {}
+
+  - id: ERR-005
+    name: Las subidas demasiado grandes responden 413 en JSON
+    status: partial
+    summary: >
+      Un middleware propio traduce las excepciones de subida de Django a
+      respuestas JSON, con 413 para cuerpo excesivo y 400 para exceso de ficheros
+      o petición sospechosa.
+    rationale: >
+      Se marca partial porque no está demostrado que el middleware llegue a
+      ejecutarse: Django envuelve cada capa con convert_exception_to_response, que
+      puede haber convertido ya la excepción en un 400 HTML antes de que suba
+      hasta aquí. No hay ningún test que lo cubra. Hasta comprobarlo con una
+      petición real, el contrato JSON no puede darse por firme.
+    evidence:
+      - file: backend/estate_map/upload_errors.py
+        lines: "5-27"
+        symbol: "class UploadErrorMiddleware"
+        note: Traducción de RequestDataTooBig, TooManyFilesSent y SuspiciousOperation.
+    cases:
+      - name: Cuerpo por encima del máximo
+        given: {tamaño: "60 MB + 1"}
+        expected: 413
+        error_code: REQUEST_DATA_TOO_BIG
+        note: >
+          El umbral real es DATA_UPLOAD_MAX_MEMORY_SIZE (60 MB), pero el mensaje
+          devuelto dice 50MB, que está escrito a mano en el middleware. Ver ERR-009.
+      - name: Más ficheros de los permitidos
+        given: {ficheros: 11}
+        expected: 400
+        error_code: TOO_MANY_FILES
+    tests: {}
+
+  - id: ERR-006
+    name: El 413 de nginx no cumple el contrato de la API
+    status: not_implemented
+    summary: >
+      No existe ninguna directiva client_max_body_size versionada en el
+      repositorio. El nginx de producción es nativo del host y su configuración
+      no está aquí, así que una subida grande puede cortarse antes de llegar a
+      Django y devolver HTML sin X-Request-ID y sin dejar rastro en los logs de la
+      aplicación.
+    rationale: >
+      Es el error más confuso de diagnosticar del sistema: mismo síntoma, dos
+      orígenes, y solo uno de ellos deja huella. Queda registrado hasta que la
+      configuración de nginx se versione junto al resto del despliegue.
+    cases:
+      - name: Subida que supera el límite de nginx
+        given: {origen: nginx}
+        expected: HTML sin X-Request-ID
+      - name: Subida que supera el límite de Django
+        given: {origen: django}
+        expected: JSON con X-Request-ID
+    tests: {}
+
+  - id: ERR-007
+    name: El límite de ritmo responde 429 con Retry-After
+    status: implemented
+    summary: >
+      Los scopes de throttling devuelven 429 indicando cuántos segundos faltan.
+      Los techos anti-scraper de las lecturas públicas eximen a tres cosas, en
+      este orden: cualquier usuario con is_staff, los clientes internos (el
+      renderizado de Next) y las direcciones declaradas en configuración.
+    rationale: >
+      La exención por is_staff se comprueba antes que la IP y no tiene tope
+      alguno: una cuenta de staff comprometida no encuentra ningún límite de
+      ritmo en las lecturas públicas. Se documenta explícitamente porque es la
+      exención menos visible de las tres y la de mayor alcance.
+    evidence:
+      - file: backend/estate_map/settings.py
+        lines: "172-182"
+        symbol: DEFAULT_THROTTLE_RATES
+        note: Los cinco scopes con sus tasas.
+      - file: backend/real_estate/throttling.py
+        lines: "42-51"
+        symbol: "class AntiScraperScopedThrottle"
+        note: >
+          Las tres exenciones, en el orden en que se evalúan: is_staff primero,
+          después el cliente interno, después la lista de IPs.
+      - file: backend/real_estate/throttling.py
+        lines: "45-48"
+        symbol: 'getattr(user, "is_staff", False)'
+        note: La exención de staff, sin tope y evaluada antes que la IP.
+      - file: backend/estate_map/settings.py
+        lines: "193-195"
+        symbol: THROTTLE_EXEMPT_IPS
+        note: Lista adicional de direcciones nunca limitadas.
+    cases:
+      - name: Ritmo de escritura de propiedades
+        given: {scope: property_write}
+        expected: 30/hour
+      - name: Ritmo del mapa
+        given: {scope: map_points}
+        expected: 120/min
+      - name: Cliente interno sobre el mapa
+        given: {scope: map_points, origen: interno}
+        expected: sin límite
+    tests: {}
+
+  - id: ERR-008
+    name: Con la caché caída el sistema sirve, no falla
+    status: implemented
+    summary: >
+      El cliente de Redis ignora los errores de conexión, de modo que una caché
+      inaccesible se traduce en fallos de acierto y no en respuestas 500. Los
+      errores ignorados sí se registran, para que la caída siga siendo visible.
+    rationale: >
+      Sin esto, la misma pieza que existe para acelerar el sitio sería capaz de
+      tumbarlo. Conviene tener presente el efecto lateral: con Redis caído, el
+      throttling de DRF deja de ser compartido entre procesos.
+    evidence:
+      - file: backend/estate_map/settings.py
+        lines: "460-462"
+        symbol: IGNORE_EXCEPTIONS
+        note: Los errores del cliente de caché no se propagan.
+      - file: backend/estate_map/settings.py
+        lines: "470-472"
+        symbol: DJANGO_REDIS_LOG_IGNORED_EXCEPTIONS
+        note: Pero sí se registran, para que la caída no pase inadvertida.
+    cases:
+      - name: Lectura del catálogo con Redis caído
+        given: {redis: caido}
+        expected: 200 con fallo de acierto
+      - name: Silencio en los logs
+        given: {redis: caido}
+        expected: se registra el error
+    tests: {}
+
+  - id: ERR-009
+    name: El mensaje de subida excesiva anuncia un límite que no es el real
+    status: implemented
+    summary: >-
+      El middleware responde "La carga completa supera el tamaño máximo
+      permitido de 50MB", pero el umbral que dispara el error es
+      DATA_UPLOAD_MAX_MEMORY_SIZE, fijado en 60 MB.
+    rationale: >-
+      La cifra está escrita a mano en el texto, así que no se mueve cuando se
+      cambia la configuración. Quien lea el mensaje ajustará sus subidas a 50 MB
+      creyendo que ese es el tope, y quien depure el sistema buscará un límite de
+      50 MB que no existe en ninguna parte. Se registra como regla propia porque
+      es el tipo de detalle que nadie vuelve a mirar.
+    evidence:
+      - file: backend/estate_map/upload_errors.py
+        lines: "14-18"
+        symbol: "50MB"
+        note: La cifra literal dentro del mensaje.
+      - file: backend/estate_map/settings.py
+        symbol: DATA_UPLOAD_MAX_MEMORY_SIZE
+        note: El umbral que de verdad dispara la excepción.
+    cases:
+      - name: Subida de 55 MB
+        given: {tamaño_mb: 55}
+        expected: aceptada por el límite, pese a que el mensaje diga 50MB
+      - name: Cifra del mensaje frente a la configuración
+        given: {mensaje: "50MB", configuracion_mb: 60}
+        expected: no coinciden
+    tests: {}

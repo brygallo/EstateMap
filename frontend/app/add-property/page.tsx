@@ -4,6 +4,10 @@ import { useEffect, useState, useRef } from 'react';
 // Read as data: this palette is handed to a library that does not resolve
 // CSS custom properties.
 import aentsTokens from '@/lib/aents-tokens.json';
+import {
+  PROPERTY_DRAFT_STORAGE_KEY,
+  PUBLICATION_RESUME_TOKEN_KEY,
+} from '@/lib/publication-draft';
 import { useParams, useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -96,8 +100,6 @@ const DrawLocationMap = dynamic(() => import('@/components/maps/DrawLocationMap'
   ),
 });
 
-const PROPERTY_DRAFT_STORAGE_KEY = 'propertyPublicationDraft';
-
 const createPublicationRequestId = () => {
   if (typeof crypto !== 'undefined' && 'randomUUID' in crypto) return crypto.randomUUID();
   return `publication-${Date.now()}-${Math.random().toString(36).slice(2)}`;
@@ -110,7 +112,9 @@ const propertySchema = z.object({
   title: z.string().trim().min(1, 'El título es obligatorio'),
   description: z.string().optional(),
   propertyType: z.enum(['land', 'house', 'apartment', 'commercial', 'other']),
-  status: z.enum(['for_sale', 'for_rent', 'sold', 'rented', 'inactive']),
+  // Mirrors Property.STATUS_CHOICES. Migration 0005 narrowed the model to these
+  // three; offering more here only produced a 400 from the serializer.
+  status: z.enum(['for_sale', 'for_rent', 'inactive']),
   address: z.string().optional(),
   price: z.string().trim().min(1, 'El precio es obligatorio'),
   isNegotiable: z.boolean(),
@@ -204,6 +208,7 @@ const AddPropertyPage = () => {
   const [showLocationToast, setShowLocationToast] = useState(false);
   const [draftLoaded, setDraftLoaded] = useState(false);
   const [draftSavedAt, setDraftSavedAt] = useState<Date | null>(null);
+  const [resumeToken, setResumeToken] = useState<string | null>(null);
   const [publicationRequestId, setPublicationRequestId] = useState(createPublicationRequestId);
   const [showExitModal, setShowExitModal] = useState(false);
   const [showAccountModal, setShowAccountModal] = useState(false);
@@ -395,6 +400,10 @@ const AddPropertyPage = () => {
   useEffect(() => {
     if (isEditMode) return;
     if (typeof window === 'undefined') return;
+
+    // Set by /continuar-publicacion/[token]: this session is somebody coming
+    // back to a draft they abandoned, and they still have no account.
+    setResumeToken(sessionStorage.getItem(PUBLICATION_RESUME_TOKEN_KEY));
 
     const storedDraft = localStorage.getItem(PROPERTY_DRAFT_STORAGE_KEY);
     if (!storedDraft) return;
@@ -898,7 +907,10 @@ const AddPropertyPage = () => {
       status: v.status,
     });
 
-    if (!token && !isEditMode) {
+    // A resume link stands in for the session: its holder already abandoned this
+    // form once at the account wall, so walking them back into it is the one
+    // thing the link exists to prevent.
+    if (!token && !isEditMode && !resumeToken) {
       savePublicationDraft();
       await savePendingPublication('account_required');
       trackEvent('publication_account_required', {
@@ -958,13 +970,40 @@ const AddPropertyPage = () => {
       });
 
       const { apiFetch } = await import('@/lib/api');
-      const endpoint = isEditMode && propertyId ? `/properties/${propertyId}/` : '/properties/';
+      const endpoint = resumeToken
+        ? `/publication-drafts/${resumeToken}/redeem/`
+        : isEditMode && propertyId
+          ? `/properties/${propertyId}/`
+          : '/properties/';
 
       const res = await apiFetch(endpoint, {
-        method: isEditMode ? 'PUT' : 'POST',
+        method: isEditMode && !resumeToken ? 'PUT' : 'POST',
         body: formData,
-        headers: isEditMode ? undefined : { 'Idempotency-Key': publicationRequestId },
+        // The redeem endpoint burns its token on the first success, which is a
+        // stronger guard than the idempotency key and does not need it.
+        skipAuth: Boolean(resumeToken),
+        headers: isEditMode || resumeToken ? undefined : { 'Idempotency-Key': publicationRequestId },
       });
+
+      if (res.ok && resumeToken) {
+        const body = await res.json().catch(() => ({}));
+        localStorage.removeItem(PROPERTY_DRAFT_STORAGE_KEY);
+        sessionStorage.removeItem(PUBLICATION_RESUME_TOKEN_KEY);
+        setResumeToken(null);
+        trackEvent('publication_resume_redeemed', {
+          images_count: imageFiles.length,
+          property_type: v.propertyType,
+          account_created: Boolean(body.account_created),
+        });
+        toast.success(
+          body.account_created
+            ? `Publicado. Te enviamos un correo a ${body.email} para que definas tu contraseña.`
+            : 'Publicado. Entra con tu cuenta para administrarlo.'
+        );
+        const publishedId = body.property?.id;
+        setTimeout(() => router.push(publishedId ? `/propiedad/${publishedId}` : '/'), 900);
+        return;
+      }
 
       if (res.ok) {
         if (!isEditMode && typeof window !== 'undefined') {
@@ -993,8 +1032,33 @@ const AddPropertyPage = () => {
           // The confetti is decorative only; log the failure without blocking the flow.
           console.error('No se pudo mostrar la animación de confetti:', error);
         }
-        toast.success(isEditMode ? 'Propiedad actualizada exitosamente' : 'Propiedad creada exitosamente');
-        setTimeout(() => router.push('/mis-propiedades'), 650);
+        // Only a fresh publication should read the id back off the response —
+        // an edit reuses the same property and has nowhere new to send the owner.
+        let createdPropertyId: number | undefined;
+        if (!isEditMode) {
+          const body = await res.json().catch(() => null);
+          createdPropertyId = body?.id;
+        }
+
+        toast.success(
+          isEditMode
+            ? 'Propiedad actualizada exitosamente'
+            : '¡Publicado! Te preparamos el material para tus redes'
+        );
+        // Publishing (not editing) lands the owner straight in the promo kit while
+        // the momentum is fresh; editing is a correction, not a launch, so it keeps
+        // going back to the list. Fall back to the list if the id is missing so we
+        // never navigate to a URL with "undefined" in it.
+        const destination =
+          !isEditMode && createdPropertyId
+            ? `/propiedad/${createdPropertyId}/promocionar`
+            : '/mis-propiedades';
+        setTimeout(() => router.push(destination), 650);
+      } else if (res.status === 410) {
+        // Expired, revoked or already spent: four causes, one remedy.
+        sessionStorage.removeItem(PUBLICATION_RESUME_TOKEN_KEY);
+        setResumeToken(null);
+        toast.error('Este enlace ya no es válido. Pide uno nuevo por WhatsApp.');
       } else if (res.status === 401) {
         toast.error('Tu sesión ha expirado. Por favor, inicia sesión nuevamente.');
         logout();
@@ -1401,6 +1465,19 @@ const AddPropertyPage = () => {
 
       {/* Main Content */}
       <div className="mx-auto max-w-7xl px-4 py-4 sm:px-6 lg:px-8 lg:py-8">
+        {resumeToken && (
+          <div
+            data-testid="resume-photos-notice"
+            className="mb-4 rounded-card border border-primary/30 bg-primaryLight/40 p-4 shadow-card"
+          >
+            <p className="text-sm font-semibold text-textPrimary">Retomamos tu publicación</p>
+            <p className="mt-1 text-sm text-textSecondary">
+              Recuperamos todo lo que habías escrito. Solo tendrás que volver a subir las fotos, porque
+              esas nunca llegaron a guardarse. Al publicar creamos tu cuenta y te enviamos un correo para
+              que definas tu contraseña.
+            </p>
+          </div>
+        )}
         <div className="mb-4 grid gap-3 rounded-card border border-primary/15 bg-surface p-4 shadow-card md:grid-cols-3">
           {[
             'Ten a mano precio y ciudad',
@@ -1565,9 +1642,7 @@ const AddPropertyPage = () => {
                           <SelectContent>
                             <SelectItem value="for_sale">En venta</SelectItem>
                             <SelectItem value="for_rent">En alquiler</SelectItem>
-                            <SelectItem value="sold">Vendido</SelectItem>
-                            <SelectItem value="rented">Alquilado</SelectItem>
-                            <SelectItem value="inactive">Inactivo</SelectItem>
+                            <SelectItem value="inactive">Inactivo (vendido o alquilado)</SelectItem>
                           </SelectContent>
                         </Select>
                         <FormMessage />
@@ -1717,7 +1792,10 @@ const AddPropertyPage = () => {
                       selectedLocation={latitude && longitude ? { lat: Number(latitude), lng: Number(longitude) } : null}
                       locationMode={locationMode}
                       userCenter={userLocation ? [userLocation.lat, userLocation.lng] : undefined}
-                      userZoom={userLocation ? 12 : undefined}
+                      // Parcel scale, not city scale: the point of centring on
+                      // the person is that they can start drawing their lot
+                      // right away. 12 landed on a whole city.
+                      userZoom={userLocation ? 17 : undefined}
                       userLocation={userLocation}
                       showMeasurements={showMeasurements}
                       referenceProperties={referenceProperties}

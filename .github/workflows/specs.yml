@@ -1,0 +1,97 @@
+name: Specs
+
+# The gate that keeps specs/ honest. It runs on pull requests as well as pushes,
+# unlike deploy.yml which only fires on main: catching a broken rule after the
+# merge defeats the point.
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  specs:
+    name: Specs vs code
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install validator dependencies
+        run: pip install -r tools/specs/requirements.txt
+
+      - name: Validate specs and check generated output
+        # gen_*.py --check writes nothing: it fails when the Markdown or the
+        # derived tests do not match the current YAML, which is the same as
+        # saying someone edited a spec and forgot to regenerate.
+        run: |
+          python tools/specs/gen_docs.py --check
+          python tools/specs/gen_tests.py --check
+          python tools/specs/validate.py
+        env:
+          PYTHONPATH: tools/specs
+
+      - name: Summary
+        if: always()
+        run: |
+          echo "### Reglas de negocio" >> "$GITHUB_STEP_SUMMARY"
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+          PYTHONPATH=tools/specs python tools/specs/validate.py --quiet 2>&1 | head -40 >> "$GITHUB_STEP_SUMMARY" || true
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+
+  e2e:
+    name: Playwright
+    runs-on: ubuntu-latest
+    # Bringing the whole stack up (Postgres, Redis, MinIO, Django and Next)
+    # for every PR is slow and brittle. It runs only when asked for with the
+    # `e2e` label, or on main, where it matters that the real flow still works.
+    if: github.ref == 'refs/heads/main' || contains(github.event.pull_request.labels.*.name, 'e2e')
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+
+      - name: Prepare environment
+        run: cp .env.example .env
+
+      - name: Bring the stack up
+        run: docker compose up -d --wait || docker compose up -d
+
+      - name: Wait for the frontend
+        run: |
+          for i in $(seq 1 60); do
+            if curl -sf -o /dev/null http://localhost:3010; then
+              echo "Frontend ready after ${i}s"; exit 0
+            fi
+            sleep 1
+          done
+          echo "Frontend did not respond within 60s"
+          docker compose logs --tail=80
+          exit 1
+
+      - name: Install Playwright
+        working-directory: tests
+        run: |
+          npm ci || npm install
+          npx playwright install --with-deps chromium
+
+      - name: Run the suite
+        working-directory: tests
+        run: npx playwright test
+        env:
+          E2E_BASE_URL: http://localhost:3010
+
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-report
+          path: tests/playwright-report/
+          retention-days: 7
+
+      - name: Logs on failure
+        if: failure()
+        run: docker compose logs --tail=200

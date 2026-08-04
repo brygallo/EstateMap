@@ -1,5 +1,5 @@
 """Utilidades para envío de correos electrónicos"""
-import random
+import secrets
 import string
 from django.core.mail import send_mail, EmailMultiAlternatives
 from django.template.loader import render_to_string
@@ -10,12 +10,13 @@ from datetime import timedelta
 
 def generate_verification_code():
     """Genera un código de verificación de 6 dígitos"""
-    return ''.join(random.choices(string.digits, k=6))
+    return ''.join(secrets.choice(string.digits) for _ in range(6))
 
 
 def generate_reset_token():
     """Genera un token seguro para reset de contraseña"""
-    return ''.join(random.choices(string.ascii_letters + string.digits, k=64))
+    alphabet = string.ascii_letters + string.digits
+    return ''.join(secrets.choice(alphabet) for _ in range(64))
 
 
 def send_verification_email(user, code):
@@ -360,3 +361,118 @@ El equipo de Geo Propiedades Ecuador
     )
     email.attach_alternative(html_content, "text/html")
     email.send(fail_silently=False)
+
+
+def frontend_url():
+    """Base URL of the portal, used to build every link we email or hand out."""
+    return getattr(settings, 'FRONTEND_URL', 'http://localhost:3010').rstrip('/')
+
+
+def generate_resume_token():
+    """Token opaco e inadivinable para un enlace de continuación."""
+    return secrets.token_urlsafe(48)
+
+
+def build_resume_link(token_string):
+    """URL absoluta que devuelve a alguien a su borrador."""
+    return f"{frontend_url()}/continuar-publicacion/{token_string}"
+
+
+def create_publication_resume_token(pending, created_by=None):
+    """
+    Issue a resume token for a pending publication.
+
+    Any token still live for the same request is revoked first: two working
+    links to the same draft would let the same person publish it twice, which is
+    exactly what the single-use rule exists to prevent.
+    """
+    from .models import PublicationResumeToken
+
+    PublicationResumeToken.objects.filter(
+        pending=pending,
+        revoked_at__isnull=True,
+        redeemed_at__isnull=True,
+    ).update(revoked_at=timezone.now())
+
+    expiry_days = getattr(settings, 'PUBLICATION_RESUME_TOKEN_EXPIRY_DAYS', 14)
+    return PublicationResumeToken.objects.create(
+        pending=pending,
+        token=generate_resume_token(),
+        created_by=created_by,
+        expires_at=timezone.now() + timedelta(days=expiry_days),
+    )
+
+
+def send_account_claim_email(user, reset_token, property_title=''):
+    """
+    Invita a definir contraseña a una cuenta creada sin que su dueño estuviera.
+
+    Redeeming a resume link, or receiving a property by transfer, proves the
+    person had the link, not that they own the mailbox. This email is where that
+    proof actually happens, so the listing is already published by the time it
+    arrives: nothing is being held hostage.
+    """
+    claim_link = f"{frontend_url()}/reset-password?token={reset_token}"
+    subject = 'Tu anuncio está publicado - Geo Propiedades Ecuador'
+    listing = property_title or 'tu propiedad'
+
+    body = f"""
+Hola,
+
+Ya publicamos {listing} en Geo Propiedades Ecuador y creamos una cuenta a tu
+nombre para que puedas administrarla.
+
+Define tu contraseña aquí para entrar:
+
+{claim_link}
+
+Con tu cuenta podrás editar el anuncio, subir más fotos y ver quién pregunta por
+tu propiedad.
+
+Si no reconoces este mensaje, ignóralo: sin definir la contraseña nadie puede
+entrar a esa cuenta.
+
+Saludos,
+El equipo de Geo Propiedades Ecuador
+    """
+
+    send_mail(
+        subject,
+        body,
+        settings.DEFAULT_FROM_EMAIL,
+        [user.email],
+        fail_silently=False,
+    )
+
+
+def send_ownership_transfer_email(user, prop):
+    """Avisa a alguien de que una propiedad pasó a estar a su nombre."""
+    subject = 'Una propiedad pasó a tu cuenta - Geo Propiedades Ecuador'
+    detail_link = f"{frontend_url()}/propiedad/{prop.pk}"
+
+    body = f"""
+Hola,
+
+La propiedad «{prop.title or f'Propiedad {prop.pk}'}» pasó a estar a nombre de tu
+cuenta en Geo Propiedades Ecuador.
+
+Puedes verla aquí:
+
+{detail_link}
+
+Desde ahora eres quien puede editarla, publicarla o retirarla, y quien recibe las
+consultas de las personas interesadas.
+
+Si crees que esto es un error, respóndenos a este correo.
+
+Saludos,
+El equipo de Geo Propiedades Ecuador
+    """
+
+    send_mail(
+        subject,
+        body,
+        settings.DEFAULT_FROM_EMAIL,
+        [user.email],
+        fail_silently=False,
+    )

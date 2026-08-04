@@ -1,0 +1,1035 @@
+version: 1
+domain: pricing
+title: Cálculos y agregados de precio
+# 'partial' y no 'implemented': el portal sí calcula precio por metro cuadrado
+# de verdad, pero varias cosas que la interfaz insinúa (evolución histórica,
+# estadísticas por provincia, un $/m² de alquiler comparable) no las calcula
+# nadie. El estado resume lo que hay en el archivo, no lo que promete la web.
+status: partial
+summary: >
+  Existe un único cálculo de precio en todo el sistema: el precio por metro
+  cuadrado, obtenido como price / area en SQL. Sobre él se construyen dos
+  familias de indicadores con definiciones distintas de "precio típico": las
+  estadísticas públicas de mercado (/api/market-stats/), que usan media
+  aritmética tras excluir extremos por IQR, y el contexto comercial por anuncio
+  (/api/properties/<id>/intelligence/), que usa percentiles P25/P50/P75. Ninguno
+  de los dos mira rent_price, ninguno agrega el historial de precios y las
+  métricas principales se limitan a la venta porque el alquiler está en otra
+  escala. Este archivo describe lo que el código calcula hoy, incluidos los
+  bordes incómodos.
+see_also:
+  - specs/domains/properties.yaml
+  - docs/technical/cache.md
+  - SEO-STRATEGY.md
+
+rules:
+  - id: PRC-001
+    name: Universo de cálculo de las estadísticas de mercado
+    status: implemented
+    summary: >
+      Solo entra en las estadísticas el inventario activo, no duplicado y con
+      price mayor que cero y area mayor que cero; todo lo demás queda fuera antes
+      de dividir.
+    rationale: >
+      Un anuncio importado puede llegar sin precio ("a consultar") o sin metraje,
+      y la política del agregador es no descartarlo (ver PROP en
+      specs/domains/properties.yaml). El coste se paga aquí: los filtros
+      price__gt=0 y area__gt=0 son lo único que impide dividir por None o por
+      cero. Como price es NULL-able, price__gt=0 descarta también los NULL, que
+      es exactamente lo que se quiere: un anuncio sin precio no vota.
+    evidence:
+      - file: backend/real_estate/views.py
+        lines: "1818-1822"
+        symbol: "all_base = Property.objects.exclude(status='inactive')"
+        note: >
+          Queryset base de MarketStatsView. Los cuatro filtros (no inactive,
+          area>0, price>0, is_duplicate=False) se aplican antes de la anotación.
+    backend:
+      endpoint: GET /api/market-stats/
+      note: Endpoint público, AllowAny, cacheado.
+    cases:
+      - name: Anuncio con precio NULL (a consultar)
+        given: {price: null, area: 120, status: for_sale}
+        expected: excluido
+      - name: Anuncio con precio cero
+        given: {price: 0, area: 120, status: for_sale}
+        expected: excluido
+      - name: Anuncio sin área
+        given: {price: 90000, area: null, status: for_sale}
+        expected: excluido
+      - name: Anuncio marcado como duplicado
+        given: {price: 90000, area: 120, is_duplicate: true}
+        expected: excluido
+      - name: Anuncio inactivo
+        given: {price: 90000, area: 120, status: inactive}
+        expected: excluido
+      - name: Anuncio completo y activo
+        given: {price: 90000, area: 120, status: for_sale, is_duplicate: false}
+        expected: incluido
+    tests: {}
+
+  - id: PRC-002
+    name: El precio por metro cuadrado es price dividido por area
+    status: implemented
+    summary: >
+      price_per_m2 se calcula en la base de datos como price / area sobre el área
+      total del terreno, nunca sobre built_area.
+    rationale: >
+      Es la única fórmula de precio del sistema y aparece dos veces, con la misma
+      expresión literal: en las estadísticas de mercado y en el contexto por
+      anuncio. Que use `area` y no `built_area` importa para las casas, donde
+      ambas existen y difieren.
+    evidence:
+      - file: backend/real_estate/views.py
+        lines: "1823-1825"
+        symbol: "price_per_m2=ExpressionWrapper(F('price') / F('area'), output_field=FloatField())"
+        note: Anotación de MarketStatsView, evaluada en SQL como FloatField.
+      - file: backend/real_estate/views.py
+        lines: "572-574"
+        symbol: "price_per_m2=ExpressionWrapper(F('price') / F('area'), output_field=FloatField())"
+        note: La misma expresión en el endpoint intelligence, sobre los comparables.
+    cases:
+      - name: Casa de 300.000 sobre 100 m²
+        given: {price: 300000, area: 100}
+        expected: 3000
+      - name: Terreno de 45.000 sobre 600 m²
+        given: {price: 45000, area: 600}
+        expected: 75
+      - name: Casa con área construida distinta del terreno
+        given: {price: 300000, area: 500, built_area: 180}
+        expected: 600
+        note: built_area no interviene; el divisor es siempre area.
+    tests: {}
+
+  - id: PRC-003
+    name: Banda dura de 1 a 10.000 dólares por metro cuadrado
+    status: implemented
+    summary: >
+      Antes de cualquier estadística se descartan las filas cuyo precio por metro
+      cuadrado no esté estrictamente entre 1 y 10.000 dólares.
+    rationale: >
+      Es un cortafuegos contra los precios mal parseados de la ingesta: un
+      alquiler mensual publicado como precio de venta, o un precio en otra unidad,
+      producen valores absurdos que arrastrarían cualquier media. El detalle que
+      conviene no olvidar es que este recorte ocurre ANTES del cálculo del IQR,
+      así que lo que descarta la banda no aparece en el contador
+      outliers_excluded: el número que la web presenta como "extremos excluidos"
+      es siempre menor que los anuncios realmente descartados.
+    evidence:
+      - file: backend/real_estate/views.py
+        lines: "1824-1826"
+        symbol: "price_per_m2__gt=1, price_per_m2__lt=10000"
+        note: Filtro aplicado sobre all_base, es decir sobre venta y alquiler.
+      - file: backend/real_estate/views.py
+        lines: "573-575"
+        symbol: ").filter(price_per_m2__gt=1, price_per_m2__lt=10000)"
+        note: La misma banda para los comparables del endpoint intelligence.
+    cases:
+      - name: Valor por debajo del piso
+        given: {price_per_m2: 0.5}
+        expected: excluido
+      - name: Valor exactamente en el piso
+        given: {price_per_m2: 1}
+        expected: excluido
+        note: La comparación es estricta (gt), no gte.
+      - name: Valor justo por debajo del techo
+        given: {price_per_m2: 9999}
+        expected: incluido
+      - name: Valor exactamente en el techo
+        given: {price_per_m2: 10000}
+        expected: excluido
+      - name: Atípico enorme por precio mal parseado
+        given: {price: 500000, area: 1}
+        expected: excluido
+        note: >
+          Se descarta, pero no suma en outliers_excluded, que se calcula después.
+    tests: {}
+
+  - id: PRC-004
+    name: Las métricas principales son solo de venta
+    status: implemented
+    summary: >
+      overall, by_city, by_property_type, by_sector, evolution, growth_zones y
+      estimated_market_days se calculan únicamente sobre anuncios con
+      status for_sale.
+    rationale: >
+      Venta y alquiler no comparten escala: en venta price es el precio total y en
+      alquiler es la mensualidad. Mezclarlos daría un $/m² sin significado. El
+      código lo dice en un comentario y lo aplica estrechando el queryset a
+      for_sale justo después del filtro de ciudad.
+    evidence:
+      - file: backend/real_estate/views.py
+        lines: "1832-1834"
+        symbol: "base = all_base.filter(status='for_sale')"
+        note: >
+          Las dos líneas anteriores son el comentario que justifica la
+          separación de escalas.
+    cases:
+      - name: Catálogo con 4 ventas y 3 alquileres
+        given: {for_sale: 4, for_rent: 3}
+        expected: 4
+        note: overall.count solo cuenta las ventas.
+      - name: Catálogo con alquileres únicamente
+        given: {for_sale: 0, for_rent: 12}
+        expected: 0
+        note: overall.count es 0 y los promedios vuelven a NULL (ver PRC-007).
+    tests: {}
+
+  - id: PRC-005
+    name: Exclusión de extremos por el método IQR
+    status: implemented
+    summary: >
+      Sobre la muestra de venta se calculan P25 y P75, y se descartan los valores
+      fuera de [P25 - 1,5·IQR, P75 + 1,5·IQR], recortado además a la banda de 1 a
+      10.000 dólares por metro cuadrado.
+    rationale: >
+      Los percentiles se calculan en Python, sobre la lista ordenada completa,
+      con interpolación lineal entre los dos valores vecinos. El conteo de lo
+      descartado se publica como outliers_excluded y la metodología se muestra al
+      usuario. Con muestras muy pequeñas el filtro es inofensivo por
+      construcción: con un solo valor P25 y P75 coinciden, IQR es cero y ese
+      único anuncio sobrevive.
+    evidence:
+      - file: backend/real_estate/views.py
+        lines: "1845-1855"
+        symbol: "outliers_excluded = base.exclude(price_per_m2__gte=lower, price_per_m2__lte=upper).count()"
+        note: >
+          Cálculo de la muestra ordenada, los percentiles, los límites y el
+          recorte final del queryset.
+      - file: backend/real_estate/views.py
+        lines: "1835-1839"
+        symbol: "def percentile(values, ratio):"
+        note: >
+          Percentil con interpolación lineal. Devuelve 0 cuando la lista está
+          vacía, que es lo que hace inocuo el filtro en un catálogo sin datos.
+    cases:
+      - name: Catálogo de venta vacío
+        given: {values: []}
+        expected: {outliers_excluded: 0, count: 0}
+        note: >
+          Con la lista vacía P25 y P75 valen 0, los límites quedan en [1, 0] y el
+          queryset resultante es vacío sin lanzar ningún error.
+      - name: Un solo anuncio de venta
+        given: {values: [1200]}
+        expected: {outliers_excluded: 0, count: 1}
+        note: IQR cero, límites [1200, 1200]; el anuncio sobrevive.
+      - name: Muestra con un extremo alto
+        given: {values: [900, 950, 1000, 1050, 1100, 9500]}
+        expected: {outliers_excluded: 1}
+        note: >
+          P25 = 962.5, P75 = 1087.5, IQR = 125; el techo queda en 1275 y 9500 cae
+          fuera.
+      - name: Muestra homogénea
+        given: {values: [1000, 1010, 1020, 1030]}
+        expected: {outliers_excluded: 0}
+    tests: {}
+
+  - id: PRC-006
+    name: Los agregados públicos usan media aritmética, no mediana
+    status: implemented
+    summary: >
+      Todo lo que la web publica como "precio promedio" es una media aritmética
+      calculada con Avg de la base de datos, nunca una mediana.
+    rationale: >
+      Es una decisión con consecuencias: la media es sensible a los valores altos
+      que sobrevivan al recorte del IQR, y el mercado inmobiliario es asimétrico
+      por naturaleza. El sistema tiene además la definición contraria en el
+      endpoint intelligence (PRC-016), así que dos partes del mismo producto
+      llaman "precio de referencia" a dos estadísticos distintos. Se deja escrito
+      para que nadie lo descubra comparando cifras que no deberían coincidir.
+    evidence:
+      - file: backend/real_estate/views.py
+        lines: "1850-1855"
+        symbol: "avg_price_m2=Avg('price_per_m2')"
+        note: >
+          Agregado overall: count, media de $/m², media de precio, media de área,
+          y mínimo y máximo de $/m², todos sobre la muestra ya recortada.
+      - file: backend/real_estate/views.py
+        lines: "1934-1936"
+        symbol: "Los extremos se excluyen con el método IQR"
+        note: >
+          Texto de metodología que se sirve en el payload y se muestra en las
+          páginas de estadísticas.
+    frontend:
+      routes: ["/estadisticas-inmobiliarias", "/estadisticas-inmobiliarias/[ciudad]"]
+      note: La cifra grande de la página ("Precio promedio por m²") es este avg_price_m2.
+    cases:
+      - name: Muestra sesgada hacia arriba
+        given: {values: [1000, 2000, 9000]}
+        expected: 4000
+        note: >
+          Ningún valor cae fuera del IQR aquí (techo en 11.500, recortado a
+          10.000). La mediana habría sido 2000.
+      - name: Muestra simétrica
+        given: {values: [1000, 2000, 3000]}
+        expected: 2000
+      - name: Un solo anuncio
+        given: {values: [1750]}
+        expected: 1750
+    tests: {}
+
+  - id: PRC-007
+    name: Sin inventario los promedios son NULL, no cero
+    status: implemented
+    summary: >
+      Cuando no queda ninguna fila tras los filtros, el agregado devuelve count 0
+      y avg_price_m2, avg_price, avg_area, min_price_m2 y max_price_m2 a NULL.
+    rationale: >
+      Es el comportamiento de Avg, Min y Max de Django sobre un queryset vacío, y
+      lo hereda toda la cadena: la API responde 200 con nulos y el frontend los
+      convierte en "$0" al formatearlos (PRC-021). Lo que evita que se publique un
+      "$0/m²" es el umbral de indexación de PRC-020, no el cálculo.
+    evidence:
+      - file: backend/real_estate/views.py
+        lines: "1849-1854"
+        symbol: "count=Count('id'),"
+        note: >
+          El único campo garantizado como número es count; el resto son
+          agregados que devuelven None sin filas.
+    cases:
+      - name: Ciudad sin anuncios de venta
+        given: {rows: 0}
+        expected: {count: 0, avg_price_m2: null, min_price_m2: null, max_price_m2: null}
+      - name: Todos los anuncios de la ciudad son "a consultar"
+        given: {rows: 8, price: null}
+        expected: {count: 0, avg_price_m2: null}
+    tests: {}
+
+  - id: PRC-008
+    name: Los cortes por ciudad y por tipo exigen al menos tres anuncios
+    status: implemented
+    summary: >
+      by_city y by_property_type solo publican grupos con tres o más anuncios de
+      venta, ordenados por número de anuncios y truncados a 15 y 8 filas.
+    rationale: >
+      Un promedio de dos anuncios no es una estadística, es una anécdota, y estas
+      tablas se sirven a Google y a los rastreadores de IA como dato citable. El
+      umbral vive en la función `grouped`, compartida por ambos cortes; el límite
+      de filas se pasa en cada llamada.
+    evidence:
+      - file: backend/real_estate/views.py
+        lines: "1857-1867"
+        symbol: "def grouped(*fields, limit=12):"
+        note: >
+          Agrupa, agrega las tres medias, filtra por count>=3 y ordena por
+          -count.
+      - file: backend/real_estate/views.py
+        lines: "1919-1921"
+        symbol: "'by_city': grouped('city', 'province', limit=15),"
+        note: >
+          by_city agrupa por ciudad y provincia a la vez; by_property_type se
+          queda en 8 filas.
+    cases:
+      - name: Ciudad con dos anuncios de venta
+        given: {city: Puyo, count: 2}
+        expected: omitida
+      - name: Ciudad con tres anuncios de venta
+        given: {city: Puyo, count: 3}
+        expected: incluida
+      - name: Veinte ciudades con inventario suficiente
+        given: {cities_over_threshold: 20}
+        expected: 15
+        note: Se publican las 15 con más anuncios.
+    tests: {}
+
+  - id: PRC-009
+    name: Los sectores salen del texto libre de la dirección
+    status: implemented
+    summary: >
+      El sector es el primer segmento de address antes de la coma; se agrupa
+      ignorando mayúsculas y acentos de caja, se descarta si coincide con la
+      ciudad y solo se publica con dos o más anuncios.
+    rationale: >
+      No existe un catálogo de barrios: address es texto libre y la misma zona
+      llega escrita de varias formas ("Cumbayá", "CUMBAYÁ"). El agrupado usa
+      casefold como clave y muestra la grafía más frecuente del grupo. El umbral
+      aquí es 2, más laxo que el 3 de ciudades y tipos, porque a nivel de sector
+      casi nunca hay tres anuncios.
+    evidence:
+      - file: backend/real_estate/views.py
+        lines: "1880-1895"
+        symbol: "sector_stats = defaultdict(lambda: {'names': Counter(), 'values': []})"
+        note: >
+          Extracción del sector, clave insensible a mayúsculas y recuento de las
+          grafías vistas.
+      - file: backend/real_estate/views.py
+        lines: "1906-1913"
+        symbol: "by_sector = ["
+        note: >
+          Construcción de la tabla: grafía más común, conteo, media aritmética de
+          $/m², umbral de 2 y orden por número de anuncios.
+      - file: backend/real_estate/views.py
+        lines: "1929-1931"
+        symbol: "'by_sector': by_sector[:20],"
+        note: Se publican como mucho 20 sectores.
+    cases:
+      - name: Misma zona con dos grafías distintas
+        given: {addresses: ["Cumbayá, Quito", "CUMBAYÁ, Quito", "Cumbayá, Quito", "CUMBAYÁ, Quito"]}
+        expected: {rows: 1, count: 4}
+        note: Una sola fila; el nombre mostrado es la grafía más frecuente.
+      - name: Sector con un único anuncio
+        given: {addresses: ["El Vergel, Cuenca"]}
+        expected: {rows: 0}
+      - name: Dirección cuyo primer segmento es la propia ciudad
+        given: {city: Macas, addresses: ["Macas, Morona Santiago", "Macas, Morona Santiago"]}
+        expected: {rows: 0}
+        note: Se descarta para no publicar "el sector Macas de la ciudad de Macas".
+      - name: Dirección vacía
+        given: {addresses: ["", ""]}
+        expected: {rows: 0}
+    tests: {}
+
+  - id: PRC-010
+    name: by_operation es el único bloque que mezcla venta y alquiler
+    status: implemented
+    summary: >
+      El corte por operación se calcula sobre all_base, es decir antes de
+      limitar a venta y antes de excluir extremos por IQR, así que su
+      avg_price_m2 mezcla precios totales de venta con mensualidades de alquiler
+      en la misma columna.
+    rationale: >
+      Es correcto en tanto cada fila va etiquetada con su status, pero el nombre
+      del campo miente por omisión: en la fila for_rent, avg_price_m2 son dólares
+      por metro cuadrado AL MES, y no lleva ninguna unidad que lo diga. Además,
+      como no pasa por el recorte del IQR, un anuncio de venta descartado de
+      overall sigue contando aquí. Se deja escrito porque cualquiera que compare
+      overall.avg_price_m2 con la fila for_sale de by_operation encontrará dos
+      números distintos y creerá que hay un fallo.
+    evidence:
+      - file: backend/real_estate/views.py
+        lines: "1921-1926"
+        symbol: "'by_operation': list("
+        note: >
+          Se agrupa por status partiendo de all_base, no de base: sin filtro de
+          operación y sin recorte de extremos.
+    cases:
+      - name: Alquiler de 400 dólares al mes sobre 40 m²
+        given: {status: for_rent, price: 400, area: 40}
+        expected: 10
+        note: Diez dólares por m² al mes, publicados en el mismo campo que la venta.
+      - name: Venta descartada por el IQR
+        given: {status: for_sale, excluded_from_overall: true}
+        expected: incluida
+        note: >
+          Sigue contando en by_operation, que no aplica el recorte.
+      - name: Fila for_sale de by_operation frente a overall
+        given: {outliers_excluded: 3}
+        expected: distintas
+    tests: {}
+
+  - id: PRC-011
+    name: rent_price no entra en ningún cálculo
+    status: implemented
+    summary: >
+      Ninguna estadística lee rent_price: todas las expresiones de precio parten
+      de price, de modo que el alquiler de un anuncio que es venta y alquiler a la
+      vez es invisible para los agregados.
+    rationale: >
+      Es coherente con la semántica del modelo (price es siempre el precio
+      principal, ver specs/domains/properties.yaml) y con PRC-004: como el anuncio
+      mixto se guarda con status for_sale, entra en las estadísticas por su precio
+      de venta y su mensualidad no se cuenta en la fila for_rent. La consecuencia
+      es que el $/m² de alquiler está calculado solo sobre los anuncios que son
+      exclusivamente de alquiler.
+    evidence:
+      - file: backend/real_estate/models.py
+        lines: "113-121"
+        symbol: "rent_price = models.DecimalField"
+        note: >
+          Definición y comentario del campo: solo se puebla cuando el anuncio es
+          venta Y alquiler.
+      - file: backend/real_estate/views.py
+        lines: "1823-1832"
+        symbol: "F('price') / F('area')"
+        note: >
+          El único campo monetario que toca MarketStatsView es price; rent_price
+          no aparece en el archivo.
+    cases:
+      - name: Anuncio de venta y alquiler a la vez
+        given: {status: for_sale, price: 120000, rent_price: 800, area: 100}
+        expected: 1200
+        note: >
+          Contribuye 1200 $/m² a las métricas de venta; los 800 al mes no aparecen
+          en ninguna estadística.
+      - name: Anuncio solo de alquiler
+        given: {status: for_rent, price: 800, rent_price: null, area: 100}
+        expected: 8
+        note: Solo aparece en la fila for_rent de by_operation.
+    tests: {}
+
+  - id: PRC-012
+    name: La evolución compara cohortes de altas, no precios en el tiempo
+    status: implemented
+    summary: >
+      evolution compara la media de $/m² de los anuncios activos creados en los
+      últimos 90 días con la de los creados entre 90 y 180 días atrás, y exige al
+      menos dos anuncios en cada periodo.
+    rationale: >
+      No es una serie histórica: son dos cohortes del inventario que sigue activo
+      hoy, comparadas por fecha de alta. Un anuncio dado de baja no cuenta en su
+      periodo, y todo lo anterior a 180 días se ignora, así que el indicador
+      responde tanto al ritmo de captación como al mercado. El corte usa
+      created_at, que en los anuncios importados es la fecha de detección y no la
+      de publicación en el portal de origen.
+    evidence:
+      - file: backend/real_estate/views.py
+        lines: "1887-1893"
+        symbol: "city_periods[city]['recent'].append(row['price_per_m2'])"
+        note: Reparto en cohortes de 0-90 y 90-180 días por created_at.
+      - file: backend/real_estate/views.py
+        lines: "1903-1909"
+        symbol: "evolution.append("
+        note: >
+          Medias de cada cohorte, variación porcentual redondeada a un decimal y
+          orden descendente por variación.
+      - file: backend/real_estate/views.py
+        lines: "1930-1932"
+        symbol: "'evolution': evolution[:15],"
+        note: Se publican como mucho 15 ciudades.
+    cases:
+      - name: Ciudad con un solo anuncio reciente
+        given: {recent: 1, previous: 5}
+        expected: omitida
+      - name: Ciudad con dos y dos
+        given: {recent: [1100, 1300], previous: [1000, 1000]}
+        expected: {current_price_m2: 1200, previous_price_m2: 1000, change_pct: 20}
+      - name: Ciudad con inventario solo antiguo
+        given: {recent: 0, previous: 9}
+        expected: omitida
+      - name: Anuncio publicado en el origen hace dos años, detectado hace 10 días
+        given: {source_published_at: "hace 2 años", created_at: "hace 10 días"}
+        expected: cohorte reciente
+        note: >
+          El indicador lo trata como oferta nueva porque solo mira created_at.
+    tests: {}
+
+  - id: PRC-013
+    name: growth_zones es evolution filtrada por variación positiva
+    status: implemented
+    summary: >
+      Las "zonas en crecimiento" no son un cálculo aparte: son las filas de
+      evolution con change_pct mayor que cero, cortadas a las ocho primeras.
+    evidence:
+      - file: backend/real_estate/views.py
+        lines: "1931-1933"
+        symbol: "'growth_zones': [row for row in evolution if row['change_pct'] > 0][:8],"
+        note: >
+          Reutiliza la lista ya ordenada por variación descendente, así que las
+          ocho primeras son las de mayor subida.
+    cases:
+      - name: Todas las ciudades bajan
+        given: {change_pcts: [-3, -1.2, -8]}
+        expected: []
+      - name: Variación exactamente cero
+        given: {change_pcts: [0]}
+        expected: []
+        note: La comparación es estricta.
+      - name: Doce ciudades al alza
+        given: {positive_cities: 12}
+        expected: 8
+    tests: {}
+
+  - id: PRC-014
+    name: estimated_market_days mide antigüedad en el portal
+    status: implemented
+    summary: >
+      El "tiempo estimado en el mercado" es la media, redondeada a entero, de los
+      días transcurridos desde created_at de cada anuncio de venta activo, y vale
+      0 cuando no hay ninguno.
+    rationale: >
+      El nombre promete tiempo hasta la venta y el cálculo entrega antigüedad del
+      inventario vivo: como solo entran anuncios activos, los que se vendieron o
+      se retiraron nunca cuentan, y el promedio se sesga a la baja por
+      supervivencia. Además created_at es la fecha de alta en esta base de datos,
+      no la de publicación original, de modo que una importación masiva reinicia
+      el reloj de miles de anuncios a la vez.
+    evidence:
+      - file: backend/real_estate/views.py
+        lines: "1883-1893"
+        symbol: "market_days.append(max(0, (now - row['created_at']).days))"
+        note: >
+          Se recorre el inventario ya filtrado a venta y recortado por IQR; el
+          max(0, ...) impide días negativos si una fecha viniera en el futuro.
+      - file: backend/real_estate/views.py
+        lines: "1932-1934"
+        symbol: "'estimated_market_days'"
+        note: Media redondeada, con 0 como valor por defecto sin muestra.
+    cases:
+      - name: Catálogo vacío
+        given: {rows: 0}
+        expected: 0
+      - name: Tres anuncios de 10, 20 y 33 días
+        given: {days: [10, 20, 33]}
+        expected: 21
+      - name: Anuncio importado hoy que llevaba dos años publicado en su portal
+        given: {source_published_at: "hace 730 días", created_at: "hoy"}
+        expected: 0
+    tests: {}
+
+  - id: PRC-015
+    name: El parámetro city estrecha todas las métricas a la vez
+    status: implemented
+    summary: >
+      El filtro de ciudad se aplica sobre el queryset base sin distinguir
+      mayúsculas, de modo que overall, los cortes, los sectores y la evolución de
+      la respuesta se refieren solo a esa ciudad.
+    rationale: >
+      Es lo que permite servir una página de estadísticas por ciudad renderizada
+      en el servidor sin endpoints adicionales. Como se aplica antes de la
+      separación venta/alquiler y del recorte de extremos, el IQR de una ciudad se
+      calcula con su propia distribución, no con la nacional: una ciudad cara no
+      pierde anuncios por ser cara respecto al país.
+    evidence:
+      - file: backend/real_estate/views.py
+        lines: "1827-1829"
+        symbol: "city_scope = (request.query_params.get('city') or '').strip()"
+        note: Filtro city__iexact aplicado sobre all_base.
+    backend:
+      endpoint: GET /api/market-stats/
+    cases:
+      - name: Sin parámetro
+        given: {city: null}
+        expected: nacional
+      - name: Ciudad en minúsculas
+        given: {city: quito}
+        expected: solo Quito
+        note: La comparación es iexact.
+      - name: Ciudad sin inventario
+        given: {city: "Ciudad inexistente"}
+        expected: {count: 0}
+        note: Responde 200 con agregados vacíos, no 404.
+    tests: {}
+
+  - id: PRC-016
+    name: El contexto por anuncio usa percentiles, no la media
+    status: implemented
+    summary: >
+      El endpoint intelligence describe la zona con P25, mediana y P75 del precio
+      por metro cuadrado de los comparables, calculados con interpolación lineal y
+      redondeados a dos decimales.
+    rationale: >
+      Es la definición contraria a la de las estadísticas públicas (PRC-006), y
+      para el propietario de un anuncio es la correcta: la mediana no se mueve
+      porque en su ciudad haya una mansión. Cuando no hay comparables los tres
+      percentiles vuelven a null en lugar de a cero, de modo que la interfaz puede
+      distinguir "no lo sabemos" de "vale cero".
+    evidence:
+      - file: backend/real_estate/views.py
+        lines: "583-590"
+        symbol: "q1, median, q3 = pct(.25), pct(.5), pct(.75)"
+        note: >
+          Percentiles sobre la lista ordenada de comparables; pct devuelve None
+          con la lista vacía.
+      - file: backend/real_estate/views.py
+        lines: "620-622"
+        symbol: "'zone_range': {'low': q1, 'median': median, 'high': q3}"
+        note: >
+          Cómo se publican, junto con el tamaño de muestra en
+          comparison.sample_size.
+    backend:
+      endpoint: GET /api/properties/{id}/intelligence/
+    cases:
+      - name: Seis comparables entre 900 y 1150
+        given: {values: [900, 950, 1000, 1050, 1100, 1150]}
+        expected: {low: 962.5, median: 1025, high: 1087.5}
+      - name: Sin comparables en la ciudad
+        given: {values: []}
+        expected: {low: null, median: null, high: null}
+      - name: Un solo comparable
+        given: {values: [1300]}
+        expected: {low: 1300, median: 1300, high: 1300}
+    tests: {}
+
+  - id: PRC-017
+    name: La alerta de precio atípico exige cuatro comparables
+    status: implemented
+    summary: >
+      Se marca el anuncio como above_range o below_range solo si su precio por
+      metro cuadrado cae fuera de [P25 - 1,5·IQR, P75 + 1,5·IQR] y hay al menos
+      cuatro comparables; con menos, la alerta es null.
+    rationale: >
+      Es el mismo criterio de extremos que usan las estadísticas públicas, pero
+      aplicado al revés: allí sirve para descartar el dato, aquí para avisar a
+      quien publica. El mínimo de cuatro evita acusar de "fuera de mercado" a un
+      anuncio comparado contra dos vecinos.
+    evidence:
+      - file: backend/real_estate/views.py
+        lines: "594-599"
+        symbol: "alert = 'above_range'"
+        note: >
+          Desviación respecto a la mediana y clasificación de la alerta, con la
+          guarda len(values) >= 4.
+    cases:
+      - name: Anuncio muy por encima de seis comparables
+        given: {own_price_m2: 2800, values: [900, 950, 1000, 1050, 1100, 1150]}
+        expected: above_range
+        note: El techo está en 1275; la desviación publicada es +173.2 %.
+      - name: Anuncio dentro del rango habitual
+        given: {own_price_m2: 1020, values: [900, 950, 1000, 1050, 1100, 1150]}
+        expected: null
+      - name: Solo tres comparables
+        given: {own_price_m2: 9000, values: [900, 950, 1000]}
+        expected: null
+        note: >
+          La desviación sí se calcula y se publica; lo que no se emite es la
+          alerta.
+      - name: Anuncio muy por debajo
+        given: {own_price_m2: 100, values: [900, 950, 1000, 1050, 1100, 1150]}
+        expected: below_range
+    tests: {}
+
+  - id: PRC-018
+    name: El precio por m² del propio anuncio no pasa por ningún filtro
+    status: implemented
+    summary: >
+      own_price_m2 se calcula siempre que el anuncio tenga price y area mayor que
+      cero, sin aplicarle la banda de 1 a 10.000 ni el recorte de extremos que sí
+      se aplica a los comparables.
+    rationale: >
+      Es deliberado en su efecto útil: un anuncio absurdamente caro debe ver su
+      propia cifra y su alerta, no desaparecer del cálculo. El efecto incómodo es
+      que la ficha puede mostrar un $/m² que el sistema jamás aceptaría como dato
+      estadístico, y que la desviación frente a la mediana puede alcanzar
+      porcentajes de varios miles.
+    evidence:
+      - file: backend/real_estate/views.py
+        lines: "584-586"
+        symbol: "own_price_m2 = ("
+        note: >
+          Solo comprueba que price sea verdadero y que area sea mayor que cero;
+          redondea a dos decimales.
+    cases:
+      - name: Anuncio sin precio
+        given: {price: null, area: 100}
+        expected: null
+      - name: Anuncio sin área
+        given: {price: 90000, area: 0}
+        expected: null
+      - name: Anuncio con precio mal parseado
+        given: {price: 500000, area: 1}
+        expected: 500000
+        note: >
+          Se publica tal cual, aunque como comparable de otro anuncio habría sido
+          descartado por PRC-003.
+      - name: Anuncio normal
+        given: {price: 280000, area: 100}
+        expected: 2800
+    tests: {}
+
+  - id: PRC-019
+    name: Los comparables son del mismo tipo, operación y ciudad
+    status: implemented
+    summary: >
+      El conjunto de comparables de un anuncio son los anuncios activos, no
+      duplicados, de la misma ciudad, el mismo property_type y el mismo status,
+      con precio y área válidos, excluido el propio anuncio.
+    rationale: >
+      Comparar por status es lo que evita medir una casa en venta contra
+      alquileres, y es la contraparte por anuncio de la separación de escalas de
+      PRC-004. La ciudad se compara sin distinguir mayúsculas porque el campo es
+      texto libre. Nótese que no hay ningún criterio de proximidad: dos barrios
+      opuestos de la misma ciudad son comparables entre sí.
+    evidence:
+      - file: backend/real_estate/views.py
+        lines: "564-572"
+        symbol: "comparable = Property.objects.exclude(status='inactive').filter("
+        note: >
+          Filtros de comparabilidad más la exclusión del propio pk y la banda de
+          $/m².
+    backend:
+      endpoint: GET /api/properties/{id}/intelligence/
+    cases:
+      - name: Casa en venta en Quito
+        given: {property_type: house, status: for_sale, city: Quito}
+        expected: casas en venta activas de Quito, excluida ella misma
+      - name: Departamento en alquiler comparado con casas
+        given: {property_type: apartment, status: for_rent}
+        expected: 0
+        note: Si la ciudad solo tiene casas en venta, la muestra queda vacía.
+      - name: Ciudad escrita con otra caja
+        given: {city: "QUITO"}
+        expected: comparables de Quito
+    tests: {}
+
+  - id: PRC-020
+    name: Una ciudad necesita tres anuncios de venta para publicar precios
+    status: implemented
+    summary: >
+      La página de estadísticas de una ciudad muestra cifras y entra en el índice
+      solo si overall.count llega a tres; por debajo responde 200 con un mensaje
+      de inventario insuficiente y robots noindex.
+    rationale: >
+      Es la protección frente al problema que crean PRC-005 y PRC-007: con uno o
+      dos anuncios el cálculo no falla, simplemente no significa nada, y
+      publicarlo como "el metro cuadrado en X cuesta Y" sería una cifra citable y
+      falsa. Hay un segundo umbral, más estricto, para decidir qué páginas se
+      promocionan desde el sitemap y los enlaces internos.
+    evidence:
+      - file: frontend/lib/market-stats.ts
+        lines: "63-69"
+        symbol: "export const MIN_LISTINGS_FOR_INDEX = 3;"
+        note: >
+          Junto a MIN_LISTINGS_FOR_PROMOTION = 5, el umbral de las superficies de
+          descubrimiento.
+      - file: frontend/app/estadisticas-inmobiliarias/[ciudad]/page.tsx
+        lines: "85"
+        symbol: "const hasData = Boolean(stats && stats.overall.count >= MIN_LISTINGS_FOR_INDEX);"
+        note: >
+          La misma condición se evalúa en generateMetadata para decidir el
+          noindex.
+    frontend:
+      routes: ["/estadisticas-inmobiliarias/[ciudad]"]
+      hidden_when_denied: true
+      message: Aún no hay suficiente inventario comparable en esta ciudad para calcular precios confiables.
+    cases:
+      - name: Ciudad con dos anuncios de venta
+        given: {count: 2}
+        expected: noindex
+      - name: Ciudad con tres anuncios de venta
+        given: {count: 3}
+        expected: indexada
+      - name: Ciudad con cuatro anuncios de venta
+        given: {count: 4}
+        expected: indexada pero no promocionada
+        note: >
+          Entra en el índice y no en el sitemap ni en generateStaticParams, que
+          exigen cinco.
+    tests: {}
+
+  - id: PRC-021
+    name: Un promedio ausente se formatea como cero dólares
+    status: implemented
+    summary: >
+      El formateador de moneda del frontend convierte null y undefined en 0 antes
+      de formatear, de modo que un promedio inexistente se dibuja como "$0" en
+      lugar de fallar o quedarse vacío.
+    rationale: >
+      Es el eslabón que hace peligroso el NULL de PRC-007: nada en la cadena
+      distingue "no hay datos" de "vale cero". Hoy no se ve porque PRC-020 impide
+      renderizar la página sin inventario, pero cualquier consumidor nuevo del
+      payload que formatee con este ayudante publicará ceros creíbles.
+    evidence:
+      - file: frontend/lib/market-stats.ts
+        lines: "49-57"
+        symbol: "}).format(Number(value || 0));"
+        note: >
+          Mismo fallback en money y en integer; el operador || también convierte
+          el 0 legítimo, sin consecuencia práctica.
+    frontend:
+      routes: ["/estadisticas-inmobiliarias", "/estadisticas-inmobiliarias/[ciudad]"]
+    cases:
+      - name: Promedio nulo
+        given: {value: null}
+        expected: "$0"
+      - name: Promedio ausente
+        given: {value: null, key_present: false}
+        expected: "$0"
+      - name: Promedio con decimales
+        given: {value: 1234.56}
+        expected: "$1235"
+        note: >
+          maximumFractionDigits es 0; el separador de miles depende de la
+          configuración es-EC.
+    tests: {}
+
+  - id: PRC-022
+    name: El rango de precios de las landings descarta lo que baje del 2 % de la mediana
+    status: implemented
+    summary: >
+      El texto "precios desde X hasta Y" de las páginas de aterrizaje toma el
+      mínimo y el máximo de los precios positivos tras descartar los que estén por
+      debajo del 2 % de la mediana del listado.
+    rationale: >
+      Es el único cálculo de precio que vive en el frontend, y su motivo es
+      defensivo: un precio mal parseado (379 dólares en un listado de casas de
+      150.000) se convertiría en el "desde" que la página promete y que el
+      JSON-LD declara como lowPrice. Ojo con la inconsistencia registrada abajo:
+      offerCount cuenta los precios ANTES del descarte, así que el número de
+      ofertas declarado no cuadra con el rango declarado.
+    evidence:
+      - file: frontend/components/SeoLanding.tsx
+        lines: "91-104"
+        symbol: "const priceFloor = medianPrice * 0.02;"
+        note: >
+          Cálculo del piso y de min/max limpios para la copy y el JSON-LD de la
+          landing.
+      - file: frontend/components/SeoLanding.tsx
+        lines: "142-152"
+        symbol: "offerCount: priceValues.length,"
+        note: >
+          AggregateOffer: lowPrice y highPrice salen de la lista filtrada,
+          offerCount de la lista sin filtrar.
+      - file: frontend/components/SeoLanding.tsx
+        lines: "453-469"
+        symbol: "export function priceRangeText(properties: Property[]): string {"
+        note: >
+          Misma lógica, reutilizada por las landings de ciudad, provincia, tipo y
+          combinaciones.
+    frontend:
+      routes: ["/propiedades/[ciudad]", "/provincias/[provincia]", "/casas-en-venta", "/terrenos-en-venta", "/departamentos-en-alquiler", "/locales-comerciales"]
+    cases:
+      - name: Listado con un precio mal parseado
+        given: {prices: [379, 150000, 160000]}
+        expected: {low: 150000, high: 160000, offer_count: 3}
+        note: >
+          La mediana es 150000, el piso 3000 y el 379 se descarta del rango pero
+          sigue contando en offerCount.
+      - name: Listado sin ningún precio
+        given: {prices: []}
+        expected: ""
+        note: No se emite ni la frase ni el bloque AggregateOffer.
+      - name: Listado donde todos los anuncios son "a consultar"
+        given: {prices: [null, null, null]}
+        expected: ""
+      - name: Un solo anuncio con precio
+        given: {prices: [95000]}
+        expected: "Precio de referencia: $95.000."
+    tests: {}
+
+  - id: PRC-023
+    name: El mapa ordena por precio tratando el NULL como cero
+    status: implemented
+    summary: >
+      Al elegir qué anuncios individuales acompañan a los agrupadores, el mapa los
+      ordena por precio descendente tratando el precio ausente como cero, con lo
+      que los anuncios "a consultar" quedan siempre los últimos.
+    rationale: >
+      No es una estadística, pero es la otra decisión del sistema sobre qué hacer
+      con un precio NULL, y tiene consecuencia visible: un anuncio sin precio casi
+      nunca entra en la muestra de puntos representativos cuando hay competencia,
+      por muy relevante que sea. Se registra aquí para que las dos políticas de
+      NULL (excluir en las estadísticas, hundir en el mapa) queden juntas.
+    evidence:
+      - file: backend/real_estate/services/map_payload.py
+        lines: "169-173"
+        symbol: "representative_points.sort(key=lambda item: float(item.get('price') or 0), reverse=True)"
+        note: >
+          Orden descendente y corte a un máximo de puntos que depende del
+          presupuesto del payload.
+    cases:
+      - name: Mezcla de anuncios con y sin precio
+        given: {prices: [120000, null, 90000]}
+        expected: [120000, 90000, null]
+      - name: Todos sin precio
+        given: {prices: [null, null]}
+        expected: orden indeterminado
+        note: Todas las claves valen 0; el orden lo decide la estabilidad del sort.
+    tests: {}
+
+  - id: PRC-024
+    name: El historial de precios nunca se agrega
+    status: implemented
+    summary: >
+      PropertyPriceHistory solo se lee para devolver la línea temporal de un
+      anuncio concreto; ninguna estadística de mercado lo consulta.
+    rationale: >
+      La tabla existe y se escribe en cada cambio de precio, pero el único lector
+      es el endpoint intelligence, y solo para el anuncio pedido. Cuando el
+      anuncio no tiene historial se sintetiza una fila con su precio actual y su
+      fecha de creación, para que la ficha nunca aparezca vacía. Esto es lo que
+      convierte la "evolución" de PRC-012 en lo que es: una comparación de
+      cohortes, porque el dato histórico real está ahí y no se usa.
+    evidence:
+      - file: backend/real_estate/views.py
+        lines: "610-612"
+        symbol: "history = list(instance.price_history.values('price', 'recorded_at'))"
+        note: >
+          Único acceso de lectura al historial en toda la capa de vistas, más el
+          respaldo sintético cuando no hay filas.
+    see_also:
+      - specs/domains/properties.yaml
+    cases:
+      - name: Anuncio que ha cambiado de precio una vez
+        given: {price_changes: 1}
+        expected: 2
+        note: "Dos filas: el precio inicial y el nuevo."
+      - name: Anuncio sin historial y con precio
+        given: {price_changes: 0, price: 90000}
+        expected: 1
+        note: Fila sintética con el precio actual y created_at.
+      - name: Uso del historial en las estadísticas de mercado
+        given: {endpoint: "/api/market-stats/"}
+        expected: 0
+    tests: {}
+
+  - id: PRC-025
+    name: No existe un índice histórico de precios
+    status: not_implemented
+    summary: >
+      Nadie calcula una serie temporal de precio por metro cuadrado, ni por país
+      ni por ciudad, pese a que los datos para hacerlo están guardados.
+    rationale: >
+      La interfaz habla de "evolución del mercado" y de "zonas en crecimiento", y
+      lo que hay detrás es la comparación de cohortes de PRC-012: mide qué se ha
+      dado de alta últimamente, no cómo se han movido los precios. Con
+      PropertyPriceHistory y last_seen_at se podría construir un índice real, pero
+      hoy no existe ni el cálculo ni el almacén de la serie. Se registra como
+      hueco, no como defecto de PRC-012, que está bien implementado para lo que
+      hace.
+    cases:
+      - name: Serie mensual de $/m² por ciudad
+        given: {endpoint: "/api/market-stats/"}
+        expected: no existe
+      - name: Precio del m² en Quito en enero del año pasado
+        given: {city: Quito, month: "hace 18 meses"}
+        expected: no existe
+        note: >
+          El sistema solo sabe responder por el inventario que sigue activo hoy.
+    tests: {}
+
+  - id: PRC-026
+    name: No hay estadísticas de precio por provincia
+    status: not_implemented
+    summary: >
+      El endpoint de estadísticas solo acepta el parámetro city; no existe ningún
+      agregado cuyo nivel sea la provincia, aunque la provincia se devuelva como
+      columna dentro de by_city.
+    rationale: >
+      Las páginas de provincia existen y muestran precios, pero los sacan del
+      rango mínimo-máximo de las fichas listadas (PRC-022), no de un cálculo
+      agregado. Para un país con provincias de mercados muy distintos, es el
+      corte que falta: hoy no se puede responder "cuánto cuesta el m² en Morona
+      Santiago" sin sumar ciudades a mano.
+    frontend:
+      routes: ["/provincias/[provincia]"]
+      note: >
+        La página de provincia no consume /api/market-stats/ en absoluto.
+    cases:
+      - name: Petición de estadísticas por provincia
+        given: {query: "?province=Pichincha"}
+        expected: ignorado
+        note: El parámetro no se lee; se devuelven las cifras nacionales.
+      - name: Precio medio por m² de una provincia
+        given: {province: "Morona Santiago"}
+        expected: no existe
+    tests: {}
+
+  - id: PRC-027
+    name: El alquiler debería tener su propia métrica por metro cuadrado
+    status: proposed
+    summary: >
+      El $/m² mensual del alquiler debería calcularse como una métrica propia, con
+      su propia exclusión de extremos y una unidad explícita, en vez de compartir
+      el campo avg_price_m2 con la venta dentro de by_operation.
+    rationale: >
+      Hoy la única cifra de alquiler que publica el sistema es la fila for_rent de
+      by_operation (PRC-010): sin recorte de extremos, sin umbral mínimo de
+      anuncios y con un nombre de campo que no dice que son dólares al mes. Es la
+      pieza que falta para poder publicar páginas de "cuánto cuesta alquilar en X"
+      con la misma solidez que las de venta. Se deja como propuesta y no como
+      defecto porque el comportamiento actual está descrito y es coherente; lo que
+      falta es una métrica que nadie ha construido.
+    cases:
+      - name: Precio medio de alquiler por m² al mes en una ciudad
+        given: {city: Quito, operation: for_rent}
+        expected: no existe
+      - name: Exclusión de extremos en la muestra de alquiler
+        given: {operation: for_rent}
+        expected: no se aplica
+      - name: Umbral mínimo de anuncios para publicar la cifra de alquiler
+        given: {operation: for_rent, count: 1}
+        expected: se publica igualmente
+        note: >
+          Comportamiento de hoy en by_operation: una sola fila basta para que
+          salga una media.
+    tests: {}

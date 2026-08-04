@@ -1,0 +1,146 @@
+version: 1
+domain: visibility-rules
+title: Qué se muestra y qué se omite
+status: implemented
+summary: >
+  Reglas sobre la información que sale del servidor hacia una persona anónima.
+  Casi todas son omisiones deliberadas, y ese es justo el tipo de decisión que se
+  pierde: quien añade un campo al payload del mapa no tiene forma de saber que la
+  ausencia de otro era intencionada.
+see_also:
+  - docs/business-rules/maps.md
+  - specs/permissions/matrix.yaml
+
+rules:
+  - id: VIS-001
+    name: El payload del mapa no expone contadores de visitas
+    status: partial
+    summary: >
+      Los puntos del mapa se serializan desde una tupla cerrada de columnas, y
+      views_count no está en ella. La regla se cumple en el mapa y NO se cumple
+      en el resto de vistas públicas.
+    rationale: >
+      Es una decisión de producto, no una omisión técnica: enseñar cuántas
+      visitas tiene un anuncio delata qué se mueve y qué no, tanto a la
+      competencia como a quien publica. La tupla cerrada es lo que hace que la
+      regla se sostenga sola en el mapa, porque añadir un campo exige tocarla a
+      propósito.
+
+      Está como `partial` y no como `implemented` porque hay dos fugas
+      verificadas: el detalle público usa `fields = '__all__'`, y `views_count`
+      está en `read_only_fields`, que no es lo mismo que oculto; y el endpoint
+      `intelligence`, que es AllowAny, publica el contador dentro del bloque
+      `demand`. Ver PERM-011 y PERM-012, que documentan esas dos fugas como
+      defecto conocido.
+    evidence:
+      - file: backend/real_estate/services/map_payload.py
+        lines: "7"
+        symbol: POINT_FIELDS
+        note: >
+          Lista blanca de columnas que viajan al cliente. Lo que no está aquí no
+          sale, y ese es el mecanismo que protege la regla.
+      - file: backend/real_estate/services/map_payload.py
+        lines: "137"
+        symbol: "queryset.values(*POINT_FIELDS)"
+        note: Único punto donde se materializan los puntos del mapa.
+    frontend:
+      routes: ["/"]
+      visible_when_allowed: false
+      note: Ninguna pantalla pública renderiza el contador, aunque el dato viaje.
+    backend:
+      endpoint: "GET /api/properties/map_points/"
+      enforce: true
+      note: >
+        Solo este endpoint lo garantiza. `GET /api/properties/{id}/` y
+        `GET /api/properties/{id}/intelligence/` sí devuelven views_count.
+    # Sin tests: el caso que importa es una aserción sobre el payload, y el
+    # generador de Playwright solo sabe navegar a una ruta. La comprobación real
+    # está escrita a mano en tests/e2e/map.spec.ts, con su marcador SPEC:VIS-001.
+    tests: {}
+    cases:
+      - name: Petición anónima al mapa
+        role: anonymous
+        expected: allowed
+        note: Se permite, pero la respuesta no contiene views_count.
+      - name: Campo views_count en el payload del mapa
+        given: {endpoint: map_points}
+        expected: ausente
+      - name: Campo views_count en el detalle público
+        given: {endpoint: "properties/{id}"}
+        expected: presente
+        note: Fuga verificada. Ver PERM-011.
+    see_also:
+      - specs/permissions/matrix.yaml
+
+  - id: VIS-002
+    name: El mapa omite también título, imágenes y datos del anunciante
+    status: implemented
+    summary: >
+      Los puntos llevan lo justo para pintarse y filtrarse. El título, las
+      imágenes, el área, el propietario y el enlace al anuncio de origen se
+      piden aparte, al abrir la ficha.
+    rationale: >
+      Un payload de mapa con todos los datos de cada anuncio es un volcado del
+      catálogo servido en una sola petición: cómodo para el cliente y aún más
+      cómodo para quien quiera copiarlo entero.
+    evidence:
+      - file: backend/real_estate/services/map_payload.py
+        lines: "7-18"
+        symbol: POINT_FIELDS
+        note: Las diez columnas que sí viajan.
+    cases:
+      - name: Columnas declaradas en POINT_FIELDS
+        given: {consulta: POINT_FIELDS}
+        expected: 10
+      - name: Claves de un punto ya emitido
+        given: {consulta: _point_payload}
+        expected: 11
+        note: Las diez columnas más is_cluster, que añade el serializador.
+      - name: Título en el payload del mapa
+        given: {campo: title}
+        expected: ausente
+    tests: {}
+
+  - id: VIS-003
+    name: show_measurements no oculta el polígono
+    status: implemented
+    summary: >
+      El campo show_measurements cambia las etiquetas que dibuja la interfaz,
+      pero el polígono exacto se envía siempre al cliente, esté como esté el
+      campo.
+    rationale: >
+      Se especifica porque el nombre del campo promete otra cosa. Quien lo ponga
+      a false esperando que la forma del terreno deje de ser exacta se llevará una
+      sorpresa: cualquiera puede leer las coordenadas del payload. Lo que hace de
+      verdad es cambiar la ficha a "Medidas: referencia aproximada".
+    evidence:
+      - file: backend/real_estate/models.py
+        lines: "93-95"
+        symbol: show_measurements
+        note: >
+          El help_text dice "Show exact measurements on map or just reference
+          figure", que es lo que induce a error.
+    cases:
+      - name: Propiedad con show_measurements=false
+        given: {show_measurements: false}
+        expected: el polígono viaja igualmente
+      - name: Efecto real del campo
+        given: {show_measurements: false}
+        expected: cambian las etiquetas de la ficha
+    tests: {}
+
+  - id: VIS-004
+    name: Ocultar la forma exacta del terreno cuando se pide
+    status: proposed
+    summary: >
+      Con show_measurements desactivado, el servidor debería enviar una forma
+      aproximada (o solo el centroide) en lugar del polígono exacto.
+    rationale: >
+      Es lo que la interfaz insinúa hoy y el backend no cumple. Queda registrada
+      como propuesta para que la diferencia entre promesa y comportamiento esté
+      escrita en algún sitio; mientras tanto rige VIS-003.
+    cases:
+      - name: Propiedad con show_measurements=false
+        given: {show_measurements: false}
+        expected: polígono aproximado
+    tests: {}

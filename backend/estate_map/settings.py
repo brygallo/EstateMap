@@ -5,10 +5,11 @@ from django.core.exceptions import ImproperlyConfigured
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-SECRET_KEY = os.getenv('SECRET_KEY', os.getenv('DJANGO_SECRET_KEY', 'change-me'))
+INSECURE_DEVELOPMENT_SECRET = 'change-me-development-only-not-for-production-2026'
+SECRET_KEY = os.getenv('SECRET_KEY', os.getenv('DJANGO_SECRET_KEY', INSECURE_DEVELOPMENT_SECRET))
 DEBUG = os.getenv('DEBUG', 'True') == 'True'
 
-if not DEBUG and (SECRET_KEY == 'change-me' or len(SECRET_KEY) < 50):
+if not DEBUG and (SECRET_KEY == INSECURE_DEVELOPMENT_SECRET or len(SECRET_KEY) < 50):
     raise ImproperlyConfigured(
         'DJANGO_SECRET_KEY/SECRET_KEY must be a random value of at least 50 characters in production.'
     )
@@ -30,6 +31,7 @@ INSTALLED_APPS = [
     'django.contrib.sites',
     'rest_framework',
     'rest_framework.authtoken',
+    'rest_framework_simplejwt.token_blacklist',
     'corsheaders',
     'storages',
     'allauth',
@@ -170,6 +172,11 @@ REST_FRAMEWORK = {
     'DEFAULT_THROTTLE_RATES': {
         'activity_create': '30/min',
         'pending_create': '10/min',
+        # Resume links are unauthenticated by design, so the token itself is the
+        # only thing standing between the endpoint and a guessing loop. Reading
+        # is cheap and a person retries; redeeming creates a listing.
+        'resume_read': '20/min',
+        'resume_redeem': '5/hour',
         # Anti-scraper ceilings for the hottest public reads. They sit far above
         # real browsing (panning the map fires a handful of requests per minute,
         # not two per second) and far above what a polite crawler does, so only
@@ -191,7 +198,7 @@ SIMPLE_JWT = {
     'ACCESS_TOKEN_LIFETIME': timedelta(hours=1),  # Token de acceso: 1 hora
     'REFRESH_TOKEN_LIFETIME': timedelta(days=30),  # Token de refresh: 30 días
     'ROTATE_REFRESH_TOKENS': True,  # Rota el refresh token cada vez que se usa
-    'BLACKLIST_AFTER_ROTATION': False,  # No necesitamos blacklist por ahora
+    'BLACKLIST_AFTER_ROTATION': True,
     'UPDATE_LAST_LOGIN': True,
 
     'ALGORITHM': 'HS256',
@@ -490,6 +497,11 @@ DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', 'notificaciones@geopropieda
 # Email verification settings
 EMAIL_VERIFICATION_CODE_EXPIRY_MINUTES = 30
 PASSWORD_RESET_TOKEN_EXPIRY_HOURS = 24
+
+# A resume link is a bearer credential that travels through WhatsApp and gets
+# forwarded without control. Two weeks covers the pace of a real commercial
+# conversation and bounds how long a forwarded message keeps working.
+PUBLICATION_RESUME_TOKEN_EXPIRY_DAYS = 14
 
 # Frontend URL for email links
 FRONTEND_URL = os.getenv('FRONTEND_URL', 'http://localhost:3010')

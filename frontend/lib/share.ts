@@ -55,3 +55,52 @@ export async function attemptNativeShare(input: NativeShareInput): Promise<Share
     return 'unsupported';
   }
 }
+
+/**
+ * Whether this device can hand an actual image file to another app.
+ *
+ * This is the difference between the promotion kit being useful on a phone and
+ * being a download folder. With file sharing, a lamina reaches Instagram or
+ * TikTok in one tap and no account has to be connected to anything; without it,
+ * the person downloads the file and uploads it themselves.
+ *
+ * Support is real on iOS Safari and Android Chrome and absent on most desktops,
+ * which is exactly the split that matters: phones are where people post.
+ */
+export const canShareFiles = (files: File[]): boolean =>
+  typeof navigator !== 'undefined' &&
+  typeof navigator.share === 'function' &&
+  typeof navigator.canShare === 'function' &&
+  navigator.canShare({ files });
+
+/**
+ * Opens the OS share sheet with an image attached.
+ *
+ * The file must already be in hand. Fetching it inside the click handler would
+ * put an await between the tap and `navigator.share`, and iOS drops the user
+ * gesture across that boundary — the sheet then never opens, with no error to
+ * catch. Callers prepare the file ahead of time and call this synchronously.
+ */
+export async function attemptNativeShareFiles(input: {
+  files: File[];
+  title?: string;
+  text?: string;
+}): Promise<ShareOutcome> {
+  if (!canShareFiles(input.files)) return 'unsupported';
+
+  const payload: ShareData = { files: input.files };
+  if (input.title) payload.title = input.title;
+  if (input.text) payload.text = input.text;
+
+  // Some targets accept files but reject a file+text payload. Dropping the text
+  // is better than dropping the share: the caption is on the clipboard anyway.
+  const sharable = navigator.canShare?.(payload) ? payload : { files: input.files };
+
+  try {
+    await navigator.share(sharable);
+    return 'shared';
+  } catch (error) {
+    if (error instanceof DOMException && error.name === 'AbortError') return 'dismissed';
+    return 'unsupported';
+  }
+}

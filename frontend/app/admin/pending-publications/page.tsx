@@ -13,7 +13,7 @@ import {
   type ColumnDef,
   type SortingState,
 } from '@tanstack/react-table';
-import { AlertCircle, ArrowUpDown, Eye, RefreshCw, Search } from 'lucide-react';
+import { AlertCircle, ArrowUpDown, Copy, Eye, Link2, RefreshCw, Search, XCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
@@ -44,9 +44,14 @@ import {
   PaginationPrevious,
 } from '@/components/ui/pagination';
 import { cn } from '@/lib/utils';
-import { apiGet, apiPatch } from '@/lib/api';
+import { apiGet, apiPatch, apiPost } from '@/lib/api';
 
 const PAGE_SIZE = 20;
+
+interface ResumeLink {
+  url: string;
+  expires_at: string;
+}
 
 interface PendingPublication {
   id: number;
@@ -61,6 +66,8 @@ interface PendingPublication {
   source: string;
   status: string;
   draft: any;
+  property: number | null;
+  resume_link: ResumeLink | null;
   created_at: string;
 }
 
@@ -108,6 +115,7 @@ export default function PendingPublicationsPage() {
   const [error, setError] = useState(false);
   const [selected, setSelected] = useState<PendingPublication | null>(null);
   const [sorting, setSorting] = useState<SortingState>([]);
+  const [linkBusy, setLinkBusy] = useState<number | null>(null);
 
   const [statusFilter, setStatusFilter] = useState('all');
   const [searchInput, setSearchInput] = useState('');
@@ -173,8 +181,59 @@ export default function PendingPublicationsPage() {
       '',
       `Propiedad: ${item.title || 'Sin título'}`,
       `Ciudad: ${item.city || 'Sin ciudad'}`,
+      // The link is what turns this message into something actionable: it
+      // reopens the form with everything the person already wrote.
+      ...(item.resume_link
+        ? ['', 'Continúa donde lo dejaste, sin volver a escribir nada:', item.resume_link.url]
+        : []),
     ].join('\n');
     return `https://wa.me/${normalizeEcuadorPhone(item.contact_phone)}?text=${encodeURIComponent(message)}`;
+  };
+
+  const copyToClipboard = async (text: string) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      return true;
+    } catch {
+      return false;
+    }
+  };
+
+  const issueResumeLink = async (item: PendingPublication) => {
+    setLinkBusy(item.id);
+    try {
+      const res = await apiPost(`/pending-publications/${item.id}/resume-link/`);
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error(body.error || 'No se pudo generar el enlace');
+      }
+      const link: ResumeLink = await res.json();
+      const copied = await copyToClipboard(link.url);
+      toast.success(copied ? 'Enlace generado y copiado' : 'Enlace generado');
+      await fetchItems();
+      if (selected?.id === item.id) {
+        setSelected({ ...item, resume_link: link, status: item.status === 'new' ? 'contacted' : item.status });
+      }
+    } catch (error: any) {
+      toast.error(error.message || 'No se pudo generar el enlace');
+    } finally {
+      setLinkBusy(null);
+    }
+  };
+
+  const revokeResumeLink = async (item: PendingPublication) => {
+    setLinkBusy(item.id);
+    try {
+      const res = await apiPost(`/pending-publications/${item.id}/resume-link/revoke/`);
+      if (!res.ok) throw new Error('No se pudo anular el enlace');
+      toast.success('Enlace anulado');
+      await fetchItems();
+      if (selected?.id === item.id) setSelected({ ...item, resume_link: null });
+    } catch (error: any) {
+      toast.error(error.message || 'No se pudo anular el enlace');
+    } finally {
+      setLinkBusy(null);
+    }
   };
 
   const columns = useMemo<ColumnDef<PendingPublication>[]>(
@@ -244,6 +303,25 @@ export default function PendingPublicationsPage() {
               <Button variant="outline" size="sm" className="rounded-button" onClick={() => setSelected(item)}>
                 <Eye className="h-4 w-4" /> Ver
               </Button>
+              {item.status !== 'converted' && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="rounded-button"
+                  disabled={linkBusy === item.id}
+                  title={item.resume_link ? 'Copiar el enlace ya enviado' : 'Generar el enlace para continuar'}
+                  onClick={() =>
+                    item.resume_link
+                      ? copyToClipboard(item.resume_link.url).then((ok) =>
+                          ok ? toast.success('Enlace copiado') : toast.error('No se pudo copiar')
+                        )
+                      : issueResumeLink(item)
+                  }
+                >
+                  {item.resume_link ? <Copy className="h-4 w-4" /> : <Link2 className="h-4 w-4" />}
+                  {item.resume_link ? 'Copiar enlace' : 'Generar enlace'}
+                </Button>
+              )}
               {hasPhone && (
                 <Button
                   asChild={validPhone}
@@ -406,6 +484,63 @@ export default function PendingPublicationsPage() {
                 <Info label="Precio" value={selected.price || '—'} />
                 <Info label="Origen" value={SOURCE_LABELS[selected.source] || selected.source} />
                 <Info label="Estado" value={STATUS_LABELS[selected.status] || selected.status} />
+              </div>
+
+              <div className="rounded-card border border-line p-4">
+                <p className="text-sm font-semibold text-textPrimary">Enlace para continuar</p>
+                {selected.property ? (
+                  <p className="mt-1 text-sm text-textSecondary">
+                    Ya se convirtió en el anuncio #{selected.property}.
+                  </p>
+                ) : selected.resume_link ? (
+                  <>
+                    <p className="mt-1 break-all font-geo text-xs text-textSecondary">
+                      {selected.resume_link.url}
+                    </p>
+                    <p className="mt-1 text-xs text-textSecondary">
+                      Caduca el {new Date(selected.resume_link.expires_at).toLocaleDateString('es-EC')}. Se
+                      gasta al publicar.
+                    </p>
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="rounded-button"
+                        onClick={() =>
+                          copyToClipboard(selected.resume_link!.url).then((ok) =>
+                            ok ? toast.success('Enlace copiado') : toast.error('No se pudo copiar')
+                          )
+                        }
+                      >
+                        <Copy className="h-4 w-4" /> Copiar
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="rounded-button"
+                        disabled={linkBusy === selected.id}
+                        onClick={() => revokeResumeLink(selected)}
+                      >
+                        <XCircle className="h-4 w-4" /> Anular
+                      </Button>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <p className="mt-1 text-sm text-textSecondary">
+                      Devuelve a esta persona su formulario con todo lo que ya escribió. Solo tendrá que
+                      volver a subir las fotos.
+                    </p>
+                    <Button
+                      size="sm"
+                      className="mt-3 rounded-button"
+                      disabled={linkBusy === selected.id}
+                      onClick={() => issueResumeLink(selected)}
+                    >
+                      <Link2 className="h-4 w-4" /> Generar enlace
+                    </Button>
+                  </>
+                )}
               </div>
 
               <div>

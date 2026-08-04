@@ -54,6 +54,7 @@ def test_browser_user_agents_are_not_flagged(user_agent):
 
 
 def test_ingestion_flags_crawlers_and_ignores_client_supplied_value():
+    """SPEC:LEAD-014 — is_bot is decided server-side from the User-Agent, client value ignored."""
     client = APIClient()
     url = reverse("activity-event-list")
     body = {"event_name": "property_pin_clicked", "session_id": "s-1", "is_bot": False}

@@ -5,6 +5,7 @@ from django.utils import timezone
 
 from ingesta import runner
 from ingesta.models import Fuente, IngestaRun, ListingRetirada
+from ingesta.api import _run_dict
 from ingesta.scrapers.base import ScraperBlocked
 from real_estate.models import Property
 
@@ -69,6 +70,28 @@ def install(monkeypatch, scraper):
     monkeypatch.setattr(runner, "_cooldown", lambda run, seconds: True)
 
 
+def test_verify_api_reports_stable_progress_total(fuente):
+    """SPEC:WFI-013 — verify progress includes listings already retired."""
+    make_prop(fuente, "still-active")
+    inactive = make_prop(fuente, "inactive")
+    inactive.status = "inactive"
+    inactive.save(update_fields=["status"])
+    run = make_run(fuente, vistos=1, caducadas=1)
+
+    payload = _run_dict(run)
+
+    assert payload["progress_total"] == 2
+
+
+def test_verify_api_caps_progress_total_to_available_inventory(fuente):
+    """SPEC:WFI-013 — a large limit does not overstate the available work."""
+    make_prop(fuente, "only-listing")
+
+    payload = _run_dict(make_run(fuente, limit=100))
+
+    assert payload["progress_total"] == 1
+
+
 def test_verify_deletes_gone_and_stamps_survivors(monkeypatch, fuente):
     alive = make_prop(fuente, "alive-1")
     gone = make_prop(fuente, "gone-1")
@@ -86,6 +109,7 @@ def test_verify_deletes_gone_and_stamps_survivors(monkeypatch, fuente):
 
 
 def test_verify_visits_stalest_first_and_honors_limit(monkeypatch, fuente):
+    """SPEC:IMP-015 — verification advances the oldest last-seen cursor first."""
     now = timezone.now()
     fresh = make_prop(fuente, "fresh", last_seen=now)
     stale = make_prop(fuente, "stale", last_seen=now - timedelta(days=20))
@@ -106,6 +130,7 @@ def test_verify_visits_stalest_first_and_honors_limit(monkeypatch, fuente):
 
 
 def test_verify_cools_down_and_resumes_after_block(monkeypatch, fuente):
+    """SPEC:WFI-008 — verification cools down and resumes after a transient block."""
     props = [make_prop(fuente, f"p{i}") for i in range(3)]
     answers = {p.source_url: True for p in props}
     answers[props[2].source_url] = False

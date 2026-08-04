@@ -161,7 +161,7 @@ export default function PropertySidebar({
   useEffect(() => {
     const target = loadMoreRef.current;
     if (!target || (hiddenPropertiesCount <= 0 && !hasMore)) return;
-    const scrollRoot = target.closest('.property-sidebar-drawer');
+    const scrollRoot = target.closest('.property-sidebar-scroll');
 
     const observer = new IntersectionObserver(
       (entries) => {

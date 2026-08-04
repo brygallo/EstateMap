@@ -1,0 +1,257 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://geopropiedadesecuador.com/specs/rule.schema.json",
+  "title": "EstateMap spec file",
+  "description": "One YAML file per domain. Every business rule the system enforces lives here, and every rule marked as implemented must point at the code that enforces it.",
+  "type": "object",
+  "required": ["version", "domain", "rules"],
+  "additionalProperties": false,
+  "properties": {
+    "version": {
+      "type": "integer",
+      "const": 1,
+      "description": "Spec format version. Bump only with a matching change in tools/specs/."
+    },
+    "domain": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]*$",
+      "description": "Domain slug. Must match the file name (properties.yaml -> properties)."
+    },
+    "title": { "type": "string" },
+    "status": {
+      "$ref": "#/$defs/status",
+      "description": "Status of the domain as a whole. A not_implemented domain may only hold proposed rules."
+    },
+    "summary": { "type": "string" },
+    "owners": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "see_also": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Relative paths to related docs or specs."
+    },
+    "catalog": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Vocabularies this file declares for the rest of the specs. Anything a rule references must be declared in some catalog, which is what stops typos from silently becoming new concepts.",
+      "properties": {
+        "permissions": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["slug", "description"],
+            "additionalProperties": false,
+            "properties": {
+              "slug": { "type": "string", "pattern": "^[a-z][a-z0-9_]*(\\.[a-z][a-z0-9_]*)+$" },
+              "description": { "type": "string" },
+              "roles": { "type": "array", "items": { "$ref": "#/$defs/role" } }
+            }
+          }
+        },
+        "error_codes": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["code", "http_status", "description"],
+            "additionalProperties": false,
+            "properties": {
+              "code": { "type": "string", "pattern": "^[A-Z][A-Z0-9_]*$" },
+              "http_status": { "type": "integer", "minimum": 100, "maximum": 599 },
+              "description": { "type": "string" },
+              "body": { "type": "object", "additionalProperties": true },
+              "evidence": { "type": "array", "items": { "$ref": "#/$defs/evidence" } }
+            }
+          }
+        }
+      }
+    },
+    "rules": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/rule" }
+    }
+  },
+  "$defs": {
+    "status": {
+      "type": "string",
+      "enum": ["implemented", "partial", "proposed", "not_implemented", "deprecated"],
+      "description": "implemented: the code enforces it today, evidence required. partial: enforced only in some layers, evidence required. proposed/not_implemented: no code exists, evidence forbidden, tests are generated as skipped. deprecated: was enforced, no longer is."
+    },
+    "evidence": {
+      "type": "object",
+      "required": ["file"],
+      "additionalProperties": false,
+      "description": "A pointer to the code that enforces the rule. Validated: the file must exist and the line range must be inside it, so moving or deleting the code breaks CI.",
+      "properties": {
+        "file": {
+          "type": "string",
+          "description": "Repo-relative path, e.g. backend/real_estate/models.py"
+        },
+        "lines": {
+          "type": "string",
+          "pattern": "^[0-9]+(-[0-9]+)?$",
+          "description": "Single line (\"105\") or inclusive range (\"105-108\")."
+        },
+        "symbol": {
+          "type": "string",
+          "description": "Function, class or setting name. Validated as a literal substring of the file, so a rename breaks CI."
+        },
+        "note": { "type": "string" }
+      }
+    },
+    "role": {
+      "type": "string",
+      "enum": [
+        "anonymous",
+        "authenticated",
+        "unverified",
+        "owner",
+        "not_owner",
+        "staff",
+        "superuser",
+        "internal"
+      ]
+    },
+    "case": {
+      "type": "object",
+      "required": ["name", "expected"],
+      "additionalProperties": false,
+      "description": "An executable example. tools/specs/gen_tests.py turns these into real tests when there is enough information, and into traceability stubs when there is not.",
+      "properties": {
+        "name": { "type": "string" },
+        "role": { "$ref": "#/$defs/role" },
+        "given": {
+          "type": "object",
+          "description": "Input state or request payload.",
+          "additionalProperties": true
+        },
+        "expected": {
+          "description": "allowed / denied for permission rules, a literal value for calculations, or an object for richer assertions.",
+          "anyOf": [
+            { "type": "string" },
+            { "type": "number" },
+            { "type": "boolean" },
+            { "type": "null" },
+            { "type": "object", "additionalProperties": true },
+            { "type": "array" }
+          ]
+        },
+        "http_status": {
+          "type": "integer",
+          "minimum": 100,
+          "maximum": 599,
+          "description": "Overrides backend.denied_http_status for this case."
+        },
+        "expected_http_status": {
+          "type": "integer",
+          "minimum": 100,
+          "maximum": 599,
+          "description": "For 'allowed' cases, the exact status the call must return. Without it, 'allowed' only proves the request was not refused on permission grounds — a 400 or a 404 would pass. Set it whenever a valid request body can be built."
+        },
+        "error_code": {
+          "type": "string",
+          "description": "Must exist in specs/errors/catalog.yaml."
+        },
+        "note": { "type": "string" }
+      }
+    },
+    "rule": {
+      "type": "object",
+      "required": ["id", "name", "status", "summary", "cases"],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[A-Z]{2,6}-[0-9]{3}$",
+          "description": "Stable identifier, unique across every spec file. Never reuse an id."
+        },
+        "name": { "type": "string" },
+        "status": { "$ref": "#/$defs/status" },
+        "summary": {
+          "type": "string",
+          "minLength": 10,
+          "description": "One sentence, in Spanish, stating the rule as a fact."
+        },
+        "rationale": { "type": "string" },
+        "evidence": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/evidence" },
+          "description": "Required when status is implemented or partial. Forbidden when status is proposed or not_implemented."
+        },
+        "conditions": {
+          "type": "object",
+          "additionalProperties": true,
+          "description": "Preconditions under which the rule applies."
+        },
+        "permissions": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "required": {
+              "type": "array",
+              "items": { "type": "string" },
+              "description": "Permission slugs. Each must be declared in specs/permissions/matrix.yaml."
+            }
+          }
+        },
+        "backend": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "enforce": { "type": "boolean" },
+            "endpoint": {
+              "type": "string",
+              "pattern": "^(GET|POST|PUT|PATCH|DELETE|HEAD|OPTIONS) /.*$",
+              "description": "Method and path, e.g. 'POST /api/properties/'."
+            },
+            "denied_http_status": { "type": "integer", "minimum": 100, "maximum": 599 },
+            "denied_error_code": { "type": "string" },
+            "throttle_scope": { "type": "string" },
+            "note": { "type": "string" }
+          }
+        },
+        "frontend": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "visible_when_allowed": { "type": "boolean" },
+            "hidden_when_denied": { "type": "boolean" },
+            "routes": {
+              "type": "array",
+              "items": { "type": "string" },
+              "description": "Next.js routes where the rule is visible to the user."
+            },
+            "message": { "type": "string" },
+            "upgrade_message": { "type": "string" },
+            "test_id": {
+              "type": "string",
+              "description": "data-testid used by the Playwright test for this rule."
+            },
+            "note": { "type": "string" }
+          }
+        },
+        "tests": {
+          "type": "object",
+          "additionalProperties": false,
+          "description": "Which layers must cover this rule. The validator enforces that every requested layer has a test tagged SPEC:<id>.",
+          "properties": {
+            "unit": { "type": "boolean" },
+            "api": { "type": "boolean" },
+            "playwright": { "type": "boolean" }
+          }
+        },
+        "cases": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/case" }
+        },
+        "see_also": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      }
+    }
+  }
+}

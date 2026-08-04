@@ -84,6 +84,7 @@ interface Run {
   modo: 'load' | 'refresh' | 'verify';
   modo_label: string;
   limit: number | null;
+  progress_total: number | null;
   con_imagenes: boolean;
   solo_nuevas: boolean;
   vistos: number;
@@ -94,6 +95,7 @@ interface Run {
   duplicadas: number;
   caducadas: number;
   sin_ubicacion: number;
+  sin_precio: number;
   errores: number;
   cargadas: number;
   mensaje: string;
@@ -420,13 +422,38 @@ const IngestaPage = () => {
   };
 
   const progressPct = (run: Run) => {
-    if (run.solo_nuevas) {
-      const available = sources.find((source) => source.slug === run.fuente)?.disponibles;
-      if (!available) return null;
-      return Math.min(100, Math.round((run.revisados / available) * 100));
-    }
-    if (!run.limit) return null;
-    return Math.min(100, Math.round((run.vistos / run.limit) * 100));
+    if (!run.progress_total) return null;
+    if (run.estado === 'done') return 100;
+    const completed = run.modo === 'load' && !run.limit ? run.revisados : run.vistos;
+    return Math.min(100, Math.round((completed / run.progress_total) * 100));
+  };
+
+  const runDetailMetrics = (run: Run): Array<[string, string | number]> => {
+    const progress = progressPct(run);
+    if (run.modo === 'verify') return [
+      ['Progreso', progress !== null ? `${progress}%` : '—'],
+      ['Comprobados', run.vistos],
+      ['Retiradas', run.caducadas],
+      ['Precio cero', run.sin_precio],
+      ['Con error', run.errores],
+    ];
+    if (run.modo === 'refresh') return [
+      ['Progreso', progress !== null ? `${progress}%` : '—'],
+      ['Procesadas', run.vistos],
+      ['Actualizadas', run.actualizadas],
+      ['Retiradas', run.caducadas],
+      ['Precio cero', run.sin_precio],
+      ['Con error', run.errores],
+    ];
+    return [
+      ['Progreso', progress !== null ? `${progress}%` : '—'],
+      ['Revisados', run.revisados], ['Ya importados', run.saltados],
+      ['Vistos', run.vistos], ['Cargadas', run.cargadas],
+      ['Nuevas', run.creadas], ['Actualizadas', run.actualizadas],
+      ['Duplicadas', run.duplicadas], ['Caducadas', run.caducadas],
+      ['Sin ubicación', run.sin_ubicacion], ['Precio cero', run.sin_precio],
+      ['Con error', run.errores],
+    ];
   };
 
   const runsBySource = (source: Source) =>
@@ -527,7 +554,11 @@ const IngestaPage = () => {
                         Ingesta en curso: {activeRun.fuente}
                       </p>
                       <p className="mt-1 text-xs text-amber-800">
-                        {activeRun.cargadas} cargadas · {activeRun.creadas} nuevas · {activeRun.actualizadas} actualizadas · {activeRun.revisados} revisados · {activeRun.saltados} ya importados · vistos {activeRun.vistos}
+                        {activeRun.modo === 'verify'
+                          ? `${activeRun.vistos} comprobados de ${activeRun.progress_total ?? '—'} · ${activeRun.caducadas} retiradas`
+                          : activeRun.modo === 'refresh'
+                            ? `${activeRun.vistos} procesadas de ${activeRun.progress_total ?? '—'} · ${activeRun.actualizadas} actualizadas · ${activeRun.caducadas} retiradas`
+                            : `${activeRun.cargadas} cargadas · ${activeRun.creadas} nuevas · ${activeRun.actualizadas} actualizadas · ${activeRun.revisados} revisados · ${activeRun.saltados} ya importados · vistos ${activeRun.vistos}`}
                         {activeRun.errores > 0 && ` · ${activeRun.errores} con error`}
                       </p>
                     </div>
@@ -818,13 +849,17 @@ const IngestaPage = () => {
                                         )}
                                       </TableCell>
                                       <TableCell className="text-sm">
-                                        vistos {r.vistos}{r.limit ? ` / ${r.limit}` : ''}
+                                        {r.modo === 'verify' ? 'comprobados' : r.modo === 'refresh' ? 'procesadas' : 'vistos'} {r.vistos}{r.progress_total ? ` / ${r.progress_total}` : ''}
                                         {progressPct(r) !== null && (
                                           <span className="ml-2 text-xs font-semibold text-primary">{progressPct(r)}%</span>
                                         )}
                                       </TableCell>
                                       <TableCell className="text-sm">
-                                        {r.creadas} nuevas · {r.actualizadas} act. · {r.caducadas} cad.
+                                        {r.modo === 'verify'
+                                          ? `${r.caducadas} retiradas · ${r.errores} con error`
+                                          : r.modo === 'refresh'
+                                            ? `${r.actualizadas} actualizadas · ${r.caducadas} retiradas`
+                                            : `${r.creadas} nuevas · ${r.actualizadas} act. · ${r.caducadas} cad.`}
                                         {r.mensaje && (
                                           <p className="mt-1 max-w-xs truncate text-xs text-textSecondary">{r.mensaje}</p>
                                         )}
@@ -897,7 +932,7 @@ const IngestaPage = () => {
                         <TableHead>Progreso</TableHead>
                         <TableHead>Actualizadas</TableHead>
                         <TableHead>Duplicadas</TableHead>
-                        <TableHead>Caducadas</TableHead>
+                        <TableHead>Retiradas</TableHead>
                         <TableHead>Sin ubicación</TableHead>
                         <TableHead>Errores</TableHead>
                         <TableHead>Lanzó</TableHead>
@@ -935,11 +970,11 @@ const IngestaPage = () => {
                               )}
                             </TableCell>
                             <TableCell>
-                              <b>{r.cargadas}</b> cargadas
+                              <b>{r.modo === 'load' ? r.cargadas : r.vistos}</b> {r.modo === 'verify' ? 'comprobados' : r.modo === 'refresh' ? 'procesadas' : 'cargadas'}
                               <span className="text-textSecondary">
                                 {' '}
-                                ({r.creadas} nuevas · vistos {r.vistos}
-                                {r.limit ? ` / ${r.limit}` : ''})
+                                ({r.modo === 'verify' ? `${r.caducadas} retiradas` : r.modo === 'refresh' ? `${r.actualizadas} actualizadas · ${r.caducadas} retiradas` : `${r.creadas} nuevas · vistos ${r.vistos}`}
+                                {r.progress_total ? ` / ${r.progress_total}` : ''})
                               </span>
                               {r.mensaje && (
                                 <p className="mt-1 max-w-md truncate text-xs text-textSecondary">
@@ -1289,14 +1324,7 @@ const IngestaPage = () => {
               )}
 
               <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-                {[
-                  ['Progreso', progressPct(selectedRun) !== null ? `${progressPct(selectedRun)}%` : '—'],
-                  ['Revisados', selectedRun.revisados], ['Ya importados', selectedRun.saltados],
-                  ['Vistos', selectedRun.vistos], ['Cargadas', selectedRun.cargadas],
-                  ['Nuevas', selectedRun.creadas], ['Actualizadas', selectedRun.actualizadas],
-                  ['Duplicadas', selectedRun.duplicadas], ['Caducadas', selectedRun.caducadas],
-                  ['Sin ubicación', selectedRun.sin_ubicacion], ['Con error', selectedRun.errores],
-                ].map(([label, value]) => (
+                {runDetailMetrics(selectedRun).map(([label, value]) => (
                   <div key={String(label)} className="rounded-card border border-line bg-white p-3">
                     <p className="text-xs text-textSecondary">{label}</p>
                     <p className="mt-1 font-geo text-xl font-semibold text-textPrimary">{value}</p>

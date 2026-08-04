@@ -7,6 +7,7 @@
  */
 
 import { getServerApiUrl } from './api-url';
+import { getPropertyPoint, type LatLngPoint } from './geo';
 
 const API_URL = getServerApiUrl();
 // Se normaliza quitando cualquier `/` final para evitar el doble slash `//`
@@ -197,14 +198,22 @@ function distanceInKm(latA: number, lngA: number, latB: number, lngB: number): n
   return earthRadiusKm * 2 * Math.atan2(Math.sqrt(value), Math.sqrt(1 - value));
 }
 
-/** Obtiene las propiedades geográficamente más próximas para una ficha. */
+/**
+ * Obtiene las propiedades geográficamente más próximas para una ficha.
+ *
+ * The position comes from `getPropertyPoint`, not from the `latitude` /
+ * `longitude` columns. A hand-drawn listing stores only its polygon — those two
+ * columns are null for every property published through the map — so reading
+ * them directly made this return nothing at all, and the ficha lost its
+ * neighbours entirely. The polygon centroid is the same point the maps plot.
+ */
 export async function getNearbyProperties(
-  property: Pick<Property, 'id' | 'latitude' | 'longitude'>,
+  property: Property,
   limit = 4
 ): Promise<NearbyProperty[]> {
-  const latitude = Number(property.latitude);
-  const longitude = Number(property.longitude);
-  if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) return [];
+  const point = getPropertyPoint(property);
+  if (!point) return [];
+  const { lat: latitude, lng: longitude } = point;
 
   try {
     // Ventana de unos 50 km; la distancia exacta se calcula después con Haversine.
@@ -224,14 +233,13 @@ export async function getNearbyProperties(
       .filter((candidate) =>
         // An id-less candidate would render as `/propiedad/null`, a link only
         // crawlers ever follow — it cost ~180 requests answered with 404.
-        candidate.id != null &&
-        candidate.id !== property.id &&
-        Number.isFinite(Number(candidate.latitude)) &&
-        Number.isFinite(Number(candidate.longitude))
+        candidate.id != null && candidate.id !== property.id
       )
-      .map((candidate) => ({
+      .map((candidate) => ({ candidate, point: getPropertyPoint(candidate) }))
+      .filter((entry): entry is { candidate: Property; point: LatLngPoint } => entry.point !== null)
+      .map(({ candidate, point: candidatePoint }) => ({
         ...candidate,
-        distanceKm: distanceInKm(latitude, longitude, Number(candidate.latitude), Number(candidate.longitude)),
+        distanceKm: distanceInKm(latitude, longitude, candidatePoint.lat, candidatePoint.lng),
       }))
       .sort((a, b) => a.distanceKm - b.distanceKm)
       .slice(0, limit);
@@ -287,6 +295,26 @@ export async function getProperty(id: string): Promise<Property | null> {
     return (await res.json()) as Property;
   } catch (error) {
     console.error('Error fetching property:', error);
+    return null;
+  }
+}
+
+/**
+ * Resolve a property's short code (used in `/p/<code>` share links) to its id.
+ * The backend matches case-insensitively and returns 404 for unknown or
+ * inactive codes, which we surface as null.
+ */
+export async function getPropertyIdByCode(code: string): Promise<number | null> {
+  try {
+    const res = await fetch(`${API_URL}/properties/code/${encodeURIComponent(code)}/`, {
+      next: { revalidate: 300, tags: ['properties'] },
+      headers: { 'Content-Type': 'application/json' },
+    });
+    if (!res.ok) return null;
+    const data = await res.json();
+    return data.id ?? null;
+  } catch (error) {
+    console.error('Error resolving property code:', error);
     return null;
   }
 }

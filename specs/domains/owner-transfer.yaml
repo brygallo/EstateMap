@@ -1,0 +1,314 @@
+version: 1
+domain: owner-transfer
+title: Transferir la propiedad de un anuncio a otra cuenta
+status: implemented
+summary: >-
+  Property.owner se asigna en el servidor al crear (PROP-014) y la ruta pública
+  lo trata como read_only; IsOwnerOrReadOnly niega incluso a staff (PERM-004) y
+  el PATCH del panel filtra contra una lista blanca que no incluye owner. La
+  titularidad se mueve por una acción administrativa propia, para dos casos
+  reales: publicar un anuncio en nombre de alguien que aún no tiene cuenta y
+  entregárselo después, y dejar que el dueño real reclame un anuncio importado
+  que hoy no tiene propietario.
+see_also:
+  - specs/domains/properties.yaml
+  - specs/permissions/matrix.yaml
+  - specs/domains/leads.yaml
+  - specs/domains/publication-resume.yaml
+  - docs/decisions/0002-los-leads-siguen-a-la-propiedad.md
+
+rules:
+  - id: OWN-001
+    name: La transferencia es una acción propia, no un campo editable
+    status: implemented
+    summary: >-
+      Cambiar de propietario se hace por un endpoint dedicado reservado a staff,
+      y no ampliando los campos que admite el PATCH administrativo.
+    rationale: >-
+      El PATCH del panel existe para moderar texto y estado, y su lista blanca es
+      lo que impide que un cliente toque campos que no le corresponden. Meter
+      owner ahí convertiría un cambio de titularidad en una edición más, sin
+      validación del destino, sin notificación y sin una línea de auditoría que
+      diga de quién a quién. Tampoco puede iniciarla el propietario actual:
+      regalar la propiedad entregaría con ella la bandeja de leads.
+    evidence:
+      - file: backend/real_estate/views.py
+        lines: 2311-2361
+        symbol: def transfer_owner
+      - file: backend/real_estate/views.py
+        lines: "2281-2283"
+        symbol: "PATCH_ALLOWED_FIELDS = {'status', 'title', 'price', 'city', 'description'}"
+        note: owner no está, así que un PATCH que solo lo traiga se queda sin cuerpo y responde 400.
+      - file: backend/real_estate/urls.py
+        lines: "83"
+        symbol: admin_properties_transfer_owner
+    permissions:
+      required: [admin.properties_transfer_owner]
+    backend:
+      enforce: true
+      endpoint: POST /api/admin/properties/{property_id}/transfer-owner/
+      denied_http_status: 403
+    frontend:
+      routes: ["/admin/properties"]
+      visible_when_allowed: true
+      test_id: transfer-owner-action
+    tests:
+      api: true
+    cases:
+      - name: staff transfiere la propiedad a otra cuenta
+        role: staff
+        expected: allowed
+        expected_http_status: 200
+        given:
+          email: destino@example.com
+      - name: un usuario autenticado cualquiera no puede transferir
+        role: not_owner
+        expected: denied
+        given:
+          email: destino@example.com
+      - name: el propietario actual tampoco puede transferirla él mismo
+        role: owner
+        expected: denied
+        given:
+          email: destino@example.com
+      - name: un anónimo no puede transferir
+        role: anonymous
+        expected: denied
+        http_status: 401
+        given:
+          email: destino@example.com
+
+  - id: OWN-002
+    name: El destino es una cuenta existente o una invitación por correo
+    status: implemented
+    summary: >-
+      La transferencia acepta el id de una cuenta activa o una dirección de
+      correo; si el correo no tiene cuenta, se crea una invitada sin contraseña
+      utilizable y se le envía el enlace para reclamarla.
+    rationale: >-
+      El caso que motiva todo esto es justamente el de alguien que todavía no
+      tiene cuenta: exigir que se registre antes de poder recibir su anuncio
+      devuelve la fricción al mismo sitio del que se venía huyendo. La cuenta
+      invitada nace igual que la del canje de un borrador, así que la prueba de
+      identidad la sigue dando el correo. Se rechaza el destino cuando la cuenta
+      está desactivada, cuando ya es la propietaria y cuando no se indica
+      ninguno.
+    evidence:
+      - file: backend/real_estate/views.py
+        lines: "2395-2420"
+        symbol: def _resolve_transfer_target
+      - file: backend/real_estate/serializers.py
+        lines: 504-516
+        symbol: class OwnerTransferSerializer
+      - file: backend/real_estate/services/accounts.py
+        lines: 22-40
+        symbol: def get_or_create_by_email
+    backend:
+      enforce: true
+      endpoint: POST /api/admin/properties/{property_id}/transfer-owner/
+      denied_http_status: 400
+    tests:
+      api: true
+    cases:
+      - name: transferir a un correo sin cuenta la crea invitada
+        role: staff
+        expected: allowed
+        expected_http_status: 200
+        given:
+          email: nuevo@example.com
+      - name: una transferencia sin destino se rechaza
+        role: staff
+        expected: denied
+        http_status: 400
+      - name: transferir a una cuenta desactivada se rechaza
+        expected: denied
+        http_status: 400
+      - name: transferir a quien ya es el propietario se rechaza
+        expected: denied
+        http_status: 400
+
+  - id: OWN-003
+    name: Los leads siguen a la propiedad
+    status: implemented
+    summary: >-
+      Al transferir, los leads recibidos antes del cambio quedan asociados a la
+      propiedad y pasan a ser visibles para el nuevo propietario, que deja de
+      serlo para el anterior.
+    rationale: >-
+      Un lead es una pregunta sobre un inmueble concreto, no sobre quien lo
+      publicó: quien tiene que responderla es quien puede vender. Partir el
+      historial dejaría al nuevo dueño recibiendo la misma pregunta dos veces sin
+      saber que ya se contestó. La contrapartida es real y consciente: el nuevo
+      propietario ve los datos de contacto de quienes preguntaron antes de que la
+      propiedad fuese suya. Se acepta porque el propósito con el que esas
+      personas dejaron sus datos —que les respondan por ese inmueble— no cambia
+      al cambiar el titular. La decisión y sus alternativas están en
+      docs/decisions/0002-los-leads-siguen-a-la-propiedad.md.
+    evidence:
+      - file: backend/real_estate/views.py
+        lines: "1039-1041"
+        symbol: return qs.filter(property__owner=user)
+        note: La bandeja se deriva del owner de la propiedad, así que la transferencia la mueve sola.
+    tests:
+      api: true
+    cases:
+      - name: el nuevo propietario ve los leads anteriores a la transferencia
+        expected: allowed
+      - name: el propietario anterior deja de verlos
+        expected: denied
+    see_also:
+      - specs/domains/leads.yaml
+
+  - id: OWN-004
+    name: Tras la transferencia manda el permiso de siempre
+    status: implemented
+    summary: >-
+      Consumada la transferencia, el nuevo propietario edita y borra la propiedad
+      y el anterior recibe 403, sin ninguna excepción para él.
+    rationale: >-
+      La transferencia no inventa un régimen de permisos nuevo: mueve quién es
+      owner y deja que PERM-004 y PERM-005 hagan lo que ya hacen. Cualquier
+      derecho residual del dueño anterior sería una puerta trasera con otro
+      nombre. Por lo mismo, el inventario propio de cada uno cambia sin tocar
+      nada más.
+    evidence:
+      - file: backend/real_estate/permissions.py
+        lines: "22-27"
+        symbol: return obj.owner == request.user
+      - file: backend/real_estate/views.py
+        lines: "2367-2369"
+        symbol: prop.owner = target
+    permissions:
+      required: [properties.edit_own]
+    backend:
+      enforce: true
+      endpoint: PATCH /api/properties/{property_id}/
+      denied_http_status: 403
+    tests:
+      api: true
+    cases:
+      - name: el nuevo propietario edita la propiedad
+        expected: allowed
+      - name: el propietario anterior ya no puede editarla
+        expected: denied
+      - name: la propiedad desaparece del inventario del anterior y aparece en el del nuevo
+        expected: allowed
+
+  - id: OWN-005
+    name: Un anuncio importado que se transfiere deja de ser importado
+    status: implemented
+    summary: >-
+      Al asignar propietario a una propiedad con is_imported, la propiedad se
+      desvincula de la ingesta para que las ejecuciones siguientes no la
+      sobrescriban ni la retiren.
+    rationale: >-
+      La retirada automática selecciona por is_imported y borra lo que ya no
+      aparece en el portal de origen. Un anuncio reclamado por su dueño real y
+      dejado como importado se borraría solo en cuanto el portal externo lo
+      quitara, llevándose por delante un anuncio que ya es del portal y sus
+      leads. Desvincularlo es lo que convierte la reclamación en definitiva.
+    evidence:
+      - file: backend/real_estate/views.py
+        lines: "2374-2380"
+        symbol: prop.is_imported = False
+      - file: backend/ingesta/pipeline/retirement.py
+        lines: "36"
+        symbol: "if not prop.is_imported:"
+        note: La retirada se salta cualquier propiedad que ya no sea importada.
+    tests:
+      api: true
+    cases:
+      - name: transferir un anuncio importado lo desvincula de su fuente
+        expected: allowed
+    see_also:
+      - specs/domains/imports.yaml
+
+  - id: OWN-006
+    name: La transferencia deja rastro y avisa al nuevo propietario
+    status: implemented
+    summary: >-
+      Cada transferencia escribe una línea de auditoría con quién la hizo, la
+      propiedad, el propietario de origen y el de destino, y envía al destino un
+      correo avisando de que ya tiene el anuncio.
+    rationale: >-
+      Es la operación con más consecuencias que puede hacer un administrador
+      sobre un bien ajeno, y la única forma de reconstruir después qué pasó es
+      que quede escrita. El aviso al destinatario no es cortesía: es lo que
+      convierte un cambio hecho por otra persona en algo que él puede discutir.
+      El correo es de mejor esfuerzo, como el resto de notificaciones: un SMTP
+      caído no puede deshacer una transferencia que la línea de auditoría ya da
+      por hecha.
+    evidence:
+      - file: backend/real_estate/views.py
+        lines: "2387-2389"
+        symbol: action=property.transfer_owner
+      - file: backend/real_estate/services/notifications.py
+        lines: "54-72"
+        symbol: class OwnershipTransferNotificationService
+      - file: backend/real_estate/email_utils.py
+        lines: "448-478"
+        symbol: def send_ownership_transfer_email
+    backend:
+      endpoint: POST /api/admin/properties/{property_id}/transfer-owner/
+      note: >-
+        Mismo formato que las líneas admin_audit ya existentes para
+        property.update, property.delete y user.update.
+    tests:
+      api: true
+    cases:
+      - name: la transferencia escribe la línea de auditoría con origen y destino
+        expected: allowed
+      - name: un fallo del correo no deshace la transferencia
+        expected: allowed
+        note: Misma garantía de mejor esfuerzo que las notificaciones de leads.
+
+  - id: OWN-007
+    name: La transferencia invalida el catálogo cacheado
+    status: implemented
+    summary: >-
+      Cambiar de propietario invalida la caché del catálogo público y la del
+      detalle de la propiedad, igual que hace cualquier otra escritura.
+    rationale: >-
+      El propietario aparece en el detalle y alimenta el filtro de propietarios
+      del mapa. Sin invalidar, el portal seguiría atribuyendo el anuncio a quien
+      ya no lo tiene durante todo lo que dure la entrada en caché. No hace falta
+      código nuevo: la transferencia guarda la propiedad, y la señal de post_save
+      ya mueve las versiones de caché.
+    evidence:
+      - file: backend/real_estate/signals.py
+        lines: 64-69
+        symbol: def property_cache_saved
+      - file: backend/real_estate/views.py
+        lines: "2376-2378"
+        symbol: prop.save(update_fields=updated_fields)
+    tests:
+      api: true
+    cases:
+      - name: el detalle público refleja el propietario nuevo tras la transferencia
+        expected: allowed
+    see_also:
+      - docs/technical/cache.md
+
+  - id: OWN-008
+    name: La transferencia no toca el historial ni las métricas
+    status: implemented
+    summary: >-
+      Cambiar de propietario conserva el historial de precios, la fecha de alta y
+      el contador de visitas de la propiedad.
+    rationale: >-
+      Ese historial describe el inmueble y su vida en el mercado, no a su
+      titular. Reiniciarlo al transferir borraría precisamente la información que
+      da valor al anuncio y permitiría maquillar un anuncio viejo pasándolo de
+      una cuenta a otra. Se cumple porque el guardado enumera los campos que
+      cambia y no toca ningún otro.
+    evidence:
+      - file: backend/real_estate/views.py
+        lines: "2368-2379"
+        symbol: updated_fields = ['owner']
+    tests:
+      api: true
+    cases:
+      - name: el historial de precios sobrevive a la transferencia
+        expected: allowed
+      - name: created_at y views_count no cambian
+        expected: allowed

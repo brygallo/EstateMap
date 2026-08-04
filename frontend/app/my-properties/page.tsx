@@ -12,6 +12,7 @@ import {
   Home,
   Inbox,
   LifeBuoy,
+  Megaphone,
   MessageCircle,
   Pencil,
   Plus,
@@ -34,6 +35,35 @@ import { getStatusLabel, formatDate } from '@/lib/property-labels';
 
 type StatusFilter = 'all' | 'for_sale' | 'for_rent' | 'inactive';
 type SortMode = 'recent' | 'views' | 'price_desc' | 'price_asc';
+type OriginFilter = 'all' | 'users' | 'imported';
+
+/** Counters the server computes over the whole inventory, not over the page. */
+interface InventoryStats {
+  total: number;
+  active: number;
+  for_sale: number;
+  for_rent: number;
+  inactive: number;
+  views: number;
+}
+
+interface InventoryResponse {
+  count: number;
+  next: string | null;
+  previous: string | null;
+  results: Property[];
+  stats: InventoryStats;
+  scope: 'own' | 'catalog';
+}
+
+const emptyStats: InventoryStats = {
+  total: 0,
+  active: 0,
+  for_sale: 0,
+  for_rent: 0,
+  inactive: 0,
+  views: 0,
+};
 
 interface Lead {
   id: number;
@@ -54,17 +84,18 @@ const filterOptions: Array<{ value: StatusFilter; label: string }> = [
   { value: 'inactive', label: 'Inactivas' },
 ];
 
+// Only offered to staff: an ordinary account never owns imported listings.
+const originOptions: Array<{ value: OriginFilter; label: string }> = [
+  { value: 'all', label: 'Todo el origen' },
+  { value: 'users', label: 'Publicadas por usuarios' },
+  { value: 'imported', label: 'Importadas' },
+];
+
 const leadStatusLabels: Record<string, string> = {
   new: 'Nuevo',
   contacted: 'Contactado',
   closed: 'Cerrado',
   archived: 'Archivado',
-};
-
-const getNumericValue = (value: number | string | null | undefined) => {
-  if (typeof value === 'number') return value;
-  if (typeof value === 'string') return Number(value) || 0;
-  return 0;
 };
 
 const formatCompactNumber = (value: number) =>
@@ -78,21 +109,36 @@ const MyPropertiesPage = () => {
   const { token, logout, user } = useAuth();
   const router = useRouter();
   const [properties, setProperties] = useState<Property[]>([]);
+  const [stats, setStats] = useState<InventoryStats>(emptyStats);
+  const [scope, setScope] = useState<'own' | 'catalog'>('own');
+  const [nextPage, setNextPage] = useState<number | null>(null);
   const [leads, setLeads] = useState<Lead[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [loadingLeads, setLoadingLeads] = useState(false);
   const [error, setError] = useState(false);
   const [query, setQuery] = useState('');
+  const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
+  const [originFilter, setOriginFilter] = useState<OriginFilter>('all');
   const [sortMode, setSortMode] = useState<SortMode>('recent');
   const [shareModalOpen, setShareModalOpen] = useState(false);
   const [shareAllModalOpen, setShareAllModalOpen] = useState(false);
   const [selectedPropertyId, setSelectedPropertyId] = useState<number | null>(null);
 
+  const isAdminScope = scope === 'catalog';
+  const hasFilters = Boolean(search) || statusFilter !== 'all' || originFilter !== 'all';
+
+  // Typing filters server-side now, so wait for the pause before asking.
   useEffect(() => {
-    fetchMyProperties();
+    const timer = setTimeout(() => setSearch(query.trim()), 350);
+    return () => clearTimeout(timer);
+  }, [query]);
+
+  useEffect(() => {
+    fetchInventory();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [token]);
+  }, [token, search, statusFilter, originFilter, sortMode]);
 
   useEffect(() => {
     if (!token) return;
@@ -100,19 +146,37 @@ const MyPropertiesPage = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token]);
 
-  const fetchMyProperties = async () => {
+  const buildInventoryQuery = (page: number) => {
+    const params = new URLSearchParams({ page: String(page), ordering: sortMode });
+    if (search) params.set('search', search);
+    if (statusFilter !== 'all') params.set('status', statusFilter);
+    if (originFilter !== 'all') params.set('origin', originFilter);
+    return params.toString();
+  };
+
+  // `page` 1 replaces the list; any other page appends, so "Cargar más" keeps
+  // what is already on screen instead of jumping the reader back to the top.
+  const fetchInventory = async (page = 1) => {
     if (!token) return;
-    setLoading(true);
-    setError(false);
+    if (page === 1) {
+      setLoading(true);
+      setError(false);
+    } else {
+      setLoadingMore(true);
+    }
 
     try {
       const { apiGet } = await import('@/lib/api');
 
-      const res = await apiGet('/properties/my_properties/');
+      const res = await apiGet(`/properties/my_properties/?${buildInventoryQuery(page)}`);
 
       if (res.ok) {
-        const data = await res.json();
-        setProperties(data);
+        const data: InventoryResponse = await res.json();
+        const results = data.results ?? [];
+        setProperties((current) => (page === 1 ? results : [...current, ...results]));
+        setStats(data.stats ?? emptyStats);
+        setScope(data.scope ?? 'own');
+        setNextPage(data.next ? page + 1 : null);
       } else if (res.status === 401) {
         toast.error('Tu sesión ha expirado. Por favor, inicia sesión nuevamente.');
         logout();
@@ -127,6 +191,7 @@ const MyPropertiesPage = () => {
       toast.error('Error al cargar las propiedades');
     } finally {
       setLoading(false);
+      setLoadingMore(false);
     }
   };
 
@@ -163,7 +228,7 @@ const MyPropertiesPage = () => {
 
       if (res.ok) {
         toast.success('Propiedad eliminada exitosamente');
-        fetchMyProperties();
+        fetchInventory();
       } else if (res.status === 401) {
         toast.error('Tu sesión ha expirado. Por favor, inicia sesión nuevamente.');
         logout();
@@ -200,52 +265,15 @@ const MyPropertiesPage = () => {
     return url.toString();
   };
 
-  const metrics = useMemo(() => {
-    const active = properties.filter((property) => property.status !== 'inactive').length;
-    const forSale = properties.filter((property) => property.status === 'for_sale').length;
-    const forRent = properties.filter((property) => property.status === 'for_rent').length;
-    const inactive = properties.filter((property) => property.status === 'inactive').length;
-    const views = properties.reduce((total, property) => total + (property.views_count ?? 0), 0);
-    const newLeads = leads.filter((lead) => lead.status === 'new').length;
-
-    return {
-      total: properties.length,
-      active,
-      forSale,
-      forRent,
-      inactive,
-      views,
-      newLeads,
+  // The counters come from the server, which sees the whole inventory; only the
+  // lead figures are local, because leads still arrive in a single response.
+  const metrics = useMemo(
+    () => ({
+      ...stats,
       totalLeads: leads.length,
-    };
-  }, [properties, leads]);
-
-  const filteredProperties = useMemo(() => {
-    const normalizedQuery = query.trim().toLowerCase();
-
-    return [...properties]
-      .filter((property) => {
-        const matchesStatus = statusFilter === 'all' || property.status === statusFilter;
-        const searchable = [
-          property.title,
-          property.address,
-          property.city,
-          property.province,
-          property.source_agency,
-        ]
-          .filter(Boolean)
-          .join(' ')
-          .toLowerCase();
-
-        return matchesStatus && (!normalizedQuery || searchable.includes(normalizedQuery));
-      })
-      .sort((a, b) => {
-        if (sortMode === 'views') return (b.views_count ?? 0) - (a.views_count ?? 0);
-        if (sortMode === 'price_desc') return getNumericValue(b.price) - getNumericValue(a.price);
-        if (sortMode === 'price_asc') return getNumericValue(a.price) - getNumericValue(b.price);
-        return new Date(b.created_at ?? 0).getTime() - new Date(a.created_at ?? 0).getTime();
-      });
-  }, [properties, query, sortMode, statusFilter]);
+    }),
+    [stats, leads]
+  );
 
   const recentLeads = useMemo(() => leads.slice(0, 4), [leads]);
 
@@ -272,7 +300,7 @@ const MyPropertiesPage = () => {
           reload button. */}
       <PullToRefresh
         onRefresh={async () => {
-          await Promise.all([fetchMyProperties(), fetchLeads()]);
+          await Promise.all([fetchInventory(), fetchLeads()]);
         }}
         disabled={loading}
       >
@@ -282,27 +310,26 @@ const MyPropertiesPage = () => {
           <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
             <div className="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
               <div>
-                <p className="text-sm font-semibold text-primary">Cuenta</p>
+                <p className="text-sm font-semibold text-primary">{isAdminScope ? 'Administración' : 'Cuenta'}</p>
                 <h1 className="mt-1 text-3xl font-bold tracking-tight text-textPrimary md:text-4xl">
-                  Mis propiedades
+                  {isAdminScope ? 'Todas las propiedades' : 'Mis propiedades'}
                 </h1>
-                <p className="mt-2 text-textSecondary">Administra tus propiedades registradas.</p>
+                <p className="mt-2 text-textSecondary">
+                  {isAdminScope
+                    ? 'Ves el catálogo completo: propias, de otras cuentas e importadas.'
+                    : 'Administra tus propiedades registradas.'}
+                </p>
               </div>
               <div className="flex flex-wrap gap-3">
                 <Button
                   variant="outline"
                   onClick={handleShareAll}
-                  disabled={loading || properties.length === 0}
+                  disabled={loading || metrics.total === 0}
                   className="border-secondary/30 text-secondary hover:bg-secondary/10 hover:text-secondary"
                 >
                   <Share2 className="h-4 w-4" strokeWidth={1.75} />
                   <span className="hidden md:inline">Compartir mis propiedades</span>
                   <span className="md:hidden">Compartir</span>
-                  {properties.length > 0 && (
-                    <span className="ml-1 rounded-full bg-secondary/15 px-2 py-0.5 text-xs font-bold text-secondary">
-                      {properties.length}
-                    </span>
-                  )}
                 </Button>
                 <Button onClick={() => router.push('/publicar-propiedad')}>
                   <Plus className="h-4 w-4" strokeWidth={2} />
@@ -332,11 +359,11 @@ const MyPropertiesPage = () => {
               </div>
               <h3 className="text-xl font-semibold text-textPrimary">No se pudo cargar tu panel</h3>
               <p className="mt-2 text-textSecondary">Revisa tu conexión e intenta nuevamente.</p>
-              <Button className="mt-6" onClick={fetchMyProperties}>
+              <Button className="mt-6" onClick={() => fetchInventory()}>
                 Reintentar
               </Button>
             </div>
-          ) : properties.length === 0 ? (
+          ) : properties.length === 0 && !hasFilters ? (
             <div className="rounded-card border border-line bg-surface p-12 text-center shadow-card">
               <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-primary/10 text-primary">
                 <Home className="h-8 w-8" strokeWidth={1.75} />
@@ -350,13 +377,12 @@ const MyPropertiesPage = () => {
             </div>
           ) : (
             <div className="space-y-8">
-              <div className="grid grid-cols-2 gap-3 lg:grid-cols-5">
+              <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
                 {[
-                  { label: 'Publicadas', value: metrics.total, icon: Home },
-                  { label: 'Activas', value: metrics.active, icon: BarChart3 },
-                  { label: 'En venta', value: metrics.forSale, icon: Home },
+                  { label: 'Publicadas', value: formatCompactNumber(metrics.total), icon: Home },
+                  { label: 'Activas', value: formatCompactNumber(metrics.active), icon: BarChart3 },
+                  { label: 'En venta', value: formatCompactNumber(metrics.for_sale), icon: Home },
                   { label: 'Vistas', value: formatCompactNumber(metrics.views), icon: Eye },
-                  { label: 'Leads nuevos', value: metrics.newLeads, icon: Inbox },
                 ].map((item) => {
                   const Icon = item.icon;
                   return (
@@ -402,6 +428,19 @@ const MyPropertiesPage = () => {
                             </button>
                           ))}
                         </div>
+                        {isAdminScope && (
+                          <select
+                            value={originFilter}
+                            onChange={(event) => setOriginFilter(event.target.value as OriginFilter)}
+                            className="h-10 rounded-md border border-input bg-background px-3 text-sm text-textPrimary"
+                          >
+                            {originOptions.map((option) => (
+                              <option key={option.value} value={option.value}>
+                                {option.label}
+                              </option>
+                            ))}
+                          </select>
+                        )}
                         <select
                           value={sortMode}
                           onChange={(event) => setSortMode(event.target.value as SortMode)}
@@ -416,7 +455,7 @@ const MyPropertiesPage = () => {
                     </div>
                   </div>
 
-                  {filteredProperties.length === 0 ? (
+                  {properties.length === 0 ? (
                     <div className="rounded-card border border-line bg-surface p-10 text-center shadow-card">
                       <h3 className="text-lg font-semibold text-textPrimary">No hay resultados con estos filtros</h3>
                       <p className="mt-2 text-textSecondary">Limpia la búsqueda o cambia el estado seleccionado.</p>
@@ -426,6 +465,7 @@ const MyPropertiesPage = () => {
                         onClick={() => {
                           setQuery('');
                           setStatusFilter('all');
+                          setOriginFilter('all');
                         }}
                       >
                         Ver todas
@@ -433,7 +473,7 @@ const MyPropertiesPage = () => {
                     </div>
                   ) : (
                     <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-                      {filteredProperties.map((property) => (
+                      {properties.map((property) => (
                         <div key={property.id} className="flex flex-col gap-3">
                           <PropertyCard property={property} />
                           {leadsByProperty[property.id] && (
@@ -459,9 +499,24 @@ const MyPropertiesPage = () => {
                             </div>
                           )}
                           <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-line bg-surface p-2 shadow-card">
-                            <Badge variant="outline" className="bg-background">
-                              {getStatusLabel(property.status)}
-                            </Badge>
+                            <div className="flex flex-wrap items-center gap-1.5">
+                              <Badge variant="outline" className="bg-background">
+                                {getStatusLabel(property.status)}
+                              </Badge>
+                              {/* Editing someone else's listing is a different act
+                                  from editing your own, so the card says whose it is
+                                  before offering the buttons. */}
+                              {isAdminScope && property.is_imported && (
+                                <Badge variant="secondary">
+                                  Importada{property.source_agency ? ` · ${property.source_agency}` : ''}
+                                </Badge>
+                              )}
+                              {isAdminScope && !property.is_imported && property.owner !== user?.id && (
+                                <Badge variant="secondary">
+                                  De {property.owner_username || `cuenta #${property.owner}`}
+                                </Badge>
+                              )}
+                            </div>
                             <div className="flex flex-1 justify-end gap-1">
                               <Button
                                 variant="ghost"
@@ -471,6 +526,17 @@ const MyPropertiesPage = () => {
                               >
                                 <Share2 className="h-4 w-4" strokeWidth={1.75} />
                                 Compartir
+                              </Button>
+                              {/* Plain ghost, no color override: it should read as
+                                  quieter than Editar/Eliminar, not compete with them. */}
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                data-testid="promote-property-action"
+                                onClick={() => router.push(`/propiedad/${property.id}/promocionar`)}
+                              >
+                                <Megaphone className="h-4 w-4" strokeWidth={1.75} />
+                                Promocionar
                               </Button>
                               <Button
                                 variant="ghost"
@@ -494,6 +560,21 @@ const MyPropertiesPage = () => {
                           </div>
                         </div>
                       ))}
+                    </div>
+                  )}
+
+                  {nextPage !== null && (
+                    <div className="flex flex-col items-center gap-2">
+                      <Button
+                        variant="outline"
+                        onClick={() => fetchInventory(nextPage)}
+                        disabled={loadingMore}
+                      >
+                        {loadingMore ? 'Cargando…' : 'Cargar más'}
+                      </Button>
+                      <p className="text-sm text-textMuted">
+                        {properties.length} de {metrics.total}
+                      </p>
                     </div>
                   )}
                 </div>
@@ -547,13 +628,6 @@ const MyPropertiesPage = () => {
                         ))
                       )}
                     </div>
-                  </div>
-
-                  <div className="rounded-card border border-primary/15 bg-primary/5 p-5 shadow-card">
-                    <h2 className="text-base font-semibold text-textPrimary">Siguiente mejora recomendada</h2>
-                    <p className="mt-2 text-sm text-textSecondary">
-                      Convertir estos contactos en una bandeja completa: estados, notas, recordatorios y WhatsApp directo.
-                    </p>
                   </div>
                 </aside>
               </div>

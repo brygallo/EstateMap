@@ -279,6 +279,8 @@ def run_load(run: IngestaRun, log=None):
                         run.actualizadas += 1
                     elif result == "skipped_duplicate":
                         run.duplicadas += 1
+                    elif result == "skipped_zero_price":
+                        run.sin_precio += 1
                     elif result == "skipped_no_images":
                         run.errores += 1
             except ScraperBlocked:
@@ -292,7 +294,7 @@ def run_load(run: IngestaRun, log=None):
                 run.heartbeat_at = timezone.now()
                 run.save(update_fields=[
                     "vistos", "creadas", "actualizadas", "duplicadas",
-                    "sin_ubicacion", "errores", "heartbeat_at",
+                    "sin_ubicacion", "sin_precio", "errores", "heartbeat_at",
                 ])
                 if _cancel_requested(run):
                     cancelled = True
@@ -529,6 +531,8 @@ def run_refresh(run: IngestaRun, log=None):
                             require_images=do_images)
                         if result in ("created", "updated"):
                             run.actualizadas += 1
+                        elif result == "skipped_zero_price":
+                            run.sin_precio += 1
                         elif result == "skipped_no_images":
                             run.errores += 1
             except Exception as exc:  # noqa: BLE001 - una propiedad no tumba el run
@@ -539,7 +543,7 @@ def run_refresh(run: IngestaRun, log=None):
             if run.vistos % 10 == 0:
                 run.heartbeat_at = timezone.now()
                 run.save(update_fields=["vistos", "actualizadas", "caducadas",
-                                        "errores", "heartbeat_at"])
+                                        "sin_precio", "errores", "heartbeat_at"])
                 if _cancel_requested(run):
                     cancelled = True
                     logger("[cancel] Cancelación solicitada desde el panel. Deteniendo…")

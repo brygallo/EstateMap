@@ -92,14 +92,11 @@ const Footer = () => (
       <div className="grid gap-12 lg:grid-cols-12 lg:gap-10">
         {/* Marca */}
         <div className="flex flex-col items-center text-center sm:items-start sm:text-left lg:col-span-5">
-          {/*
-            Aents is the primary mark in this footer and the product signs
-            underneath it. This is <AentsLogo size={88} tone="negative" tagline />
-            from @aents/ui-web, the exact call apps/web makes in its own footer:
-            the brand tile plus live type, not a flattened lockup image. The
-            wordmark and tagline sizes come from .aents-site-footer__brand.
-          */}
           <div className="aents-footer-brand aents-site-footer__brand">
+            {/* Same tile the header carries, so both ends of the page open with
+                the mark the reader already knows. The wordmark and tagline are
+                type, as in AentsLogo: no export of this monorepo carries the
+                wordmark on its own, and none carries the tagline at all. */}
             <a
               href="https://aents.net"
               target="_blank"
@@ -108,12 +105,13 @@ const Footer = () => (
               aria-label="Aents — Software for people"
             >
               <Image
-                src="/aents/aents-brand-tile-1024.png"
+                src="/aents/aents-brand-tile-256.png"
                 alt=""
-                width={88}
-                height={88}
-                className="aents-brand-symbol h-[88px] w-[88px]"
+                width={48}
+                height={48}
+                className="aents-brand-symbol h-12 w-12"
                 aria-hidden
+                unoptimized
               />
               <span className="logo-text">
                 <span className="logo-wordmark">Aents</span>
@@ -198,7 +196,7 @@ const Footer = () => (
               href="https://aents.net"
               target="_blank"
               rel="noreferrer"
-              className="font-semibold text-white/80 underline-offset-2 transition-colors hover:text-white hover:underline"
+              className="font-medium text-white/80 underline-offset-2 transition-colors hover:text-white hover:underline"
             >
               Aents
             </a>

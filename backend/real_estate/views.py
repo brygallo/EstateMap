@@ -6,7 +6,6 @@ from rest_framework.pagination import PageNumberPagination
 from rest_framework.throttling import ScopedRateThrottle
 from django.db.models import Q, F, Count, Sum, Avg, Min, Max, FloatField, ExpressionWrapper, Prefetch
 from rest_framework_simplejwt.views import TokenObtainPairView
-from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework.permissions import IsAuthenticated, AllowAny, IsAuthenticatedOrReadOnly
 from rest_framework.decorators import action
 from rest_framework.response import Response
@@ -18,11 +17,17 @@ from django.shortcuts import get_object_or_404
 from django.views import View
 from django.conf import settings
 from django.core.cache import cache
+from django.db import transaction
+from django.utils import timezone
 from django.utils.cache import patch_cache_control
 from .bot_detection import is_bot_request
 from .throttling import AntiScraperScopedThrottle
 from .cache_utils import versioned_key
-from .models import ActivityEvent, Property, PropertyImage, Province, City, Lead, PendingPublication, SystemIncident
+from .services.short_codes import normalize_code
+from .models import (
+    ActivityEvent, Property, PropertyImage, Province, City, Lead,
+    PendingPublication, PublicationResumeToken, SystemIncident,
+)
 from django.contrib.auth import get_user_model
 from .serializers import (
     MapPropertySerializer,
@@ -34,6 +39,8 @@ from .serializers import (
     LeadStatusSerializer,
     PendingPublicationSerializer,
     PendingPublicationStatusSerializer,
+    PublicationDraftSerializer,
+    OwnerTransferSerializer,
     ActivityEventSerializer,
     CustomTokenObtainPairSerializer,
     RegisterSerializer,
@@ -52,7 +59,20 @@ from .serializers import (
     AdminDashboardSerializer,
 )
 from .permissions import IsOwnerOrReadOnly, IsAdminUser
+from .email_utils import (
+    build_resume_link,
+    create_password_reset_token,
+    create_publication_resume_token,
+)
 from .services.map_payload import build_map_payload
+from .services.accounts import InactiveAccountError, InvitedAccountService
+from .services.authentication import GoogleAuthenticationService, GoogleIdentityError
+from .services.notifications import (
+    AccountClaimNotificationService,
+    LeadNotificationService,
+    OwnershipTransferNotificationService,
+    PendingPublicationNotificationService,
+)
 import requests
 from google.oauth2 import id_token
 from google.auth.transport import requests as google_requests
@@ -79,10 +99,12 @@ CACHE_TTL_INTELLIGENCE = 60 * 10
 CACHE_TTL_MAP_POINTS = 120
 CACHE_TTL_MARKET_STATS = 60 * 30
 CACHE_TTL_GEO = 60 * 60 * 24
+CACHE_TTL_PROPERTY_LIST = 120
 
 # Browsers revalidate quickly; the shared caches (CDN / reverse proxy) are the
 # ones allowed to hold a payload for as long as the server-side entry lives.
 BROWSER_MAX_AGE = 60
+STALE_WHILE_REVALIDATE = 60 * 60
 
 
 def _is_public_read(request):
@@ -94,7 +116,13 @@ def _public_response(data, request, s_maxage):
     """Wrap a cached payload, tagging it for browser and CDN reuse when public."""
     response = Response(data)
     if _is_public_read(request):
-        patch_cache_control(response, public=True, max_age=BROWSER_MAX_AGE, s_maxage=s_maxage)
+        patch_cache_control(
+            response,
+            public=True,
+            max_age=BROWSER_MAX_AGE,
+            s_maxage=s_maxage,
+            stale_while_revalidate=STALE_WHILE_REVALIDATE,
+        )
     return response
 
 
@@ -159,7 +187,7 @@ class ProvinceViewSet(viewsets.ReadOnlyModelViewSet):
         """Cached listing: the province table changes once every few years."""
         if not _is_public_read(request):
             return super().list(request, *args, **kwargs)
-        key = versioned_key('provinces:list', _query_signature(request.query_params))
+        key = versioned_key('provinces:list', _query_signature(request.query_params), scope='geo')
         data = cache.get(key)
         if data is None:
             # `list()` on a plain list drops the serializer reference DRF hangs
@@ -174,7 +202,7 @@ class ProvinceViewSet(viewsets.ReadOnlyModelViewSet):
         if not _is_public_read(request):
             province = self.get_object()
             return Response(list(CitySerializer(province.cities.all(), many=True).data))
-        key = versioned_key('province:cities', pk)
+        key = versioned_key('province:cities', pk, scope='geo')
         data = cache.get(key)
         if data is None:
             province = self.get_object()
@@ -210,7 +238,7 @@ class CityViewSet(viewsets.ReadOnlyModelViewSet):
         narrow it (province, search, ordering) travels in the querystring."""
         if not _is_public_read(request):
             return super().list(request, *args, **kwargs)
-        key = versioned_key('cities:list', _query_signature(request.query_params))
+        key = versioned_key('cities:list', _query_signature(request.query_params), scope='geo')
         data = cache.get(key)
         if data is None:
             data = list(super().list(request, *args, **kwargs).data)
@@ -226,6 +254,17 @@ class PropertyPagination(PageNumberPagination):
     page_size = 300
     page_size_query_param = 'page_size'
     max_page_size = 2000
+
+
+class InventoryPagination(PageNumberPagination):
+    """
+    Paginación del panel "Mis propiedades". Un administrador ve ahí el catálogo
+    entero, que son decenas de miles de filas con sus imágenes: descargarlo de
+    una vez tumbaba la página.
+    """
+    page_size = 24
+    page_size_query_param = 'page_size'
+    max_page_size = 100
 
 
 def _parse_float(value):
@@ -273,6 +312,24 @@ class PropertyViewSet(viewsets.ModelViewSet):
     parser_classes = [MultiPartParser, FormParser, JSONParser]
     pagination_class = PropertyPagination
 
+    def list(self, request, *args, **kwargs):
+        """Cache anonymous listings by their complete, normalized querystring."""
+        if not _is_public_read(request):
+            return super().list(request, *args, **kwargs)
+
+        cache_key = versioned_key(
+            'properties:list',
+            _query_signature(request.query_params),
+            scope='properties',
+        )
+        data = cache.get(cache_key)
+        if data is None:
+            response = super().list(request, *args, **kwargs)
+            # Pagination returns a dict; an unpaginated response is a ReturnList.
+            data = dict(response.data) if isinstance(response.data, dict) else list(response.data)
+            cache.set(cache_key, data, CACHE_TTL_PROPERTY_LIST)
+        return _public_response(data, request, s_maxage=CACHE_TTL_PROPERTY_LIST)
+
     def get_serializer_class(self):
         if self.action == 'list':
             return MapPropertySerializer
@@ -314,6 +371,15 @@ class PropertyViewSet(viewsets.ModelViewSet):
         solo se muestra la versión canónica (la que ganó la preferencia, p. ej.
         la que tiene WhatsApp).
         """
+        user = self.request.user
+        if user.is_authenticated and user.is_staff and self.action in (
+            'retrieve', 'update', 'partial_update', 'destroy', 'delete_image',
+        ):
+            # Staff moderate from the inventory panel, which lists the inactive
+            # and duplicated rows the public queryset hides. Without this, the
+            # listing they just clicked would 404 when opened or edited.
+            return Property.objects.all()
+
         queryset = Property.objects.exclude(status='inactive').exclude(is_duplicate=True)
         params = self.request.query_params
 
@@ -623,6 +689,37 @@ class PropertyViewSet(viewsets.ModelViewSet):
             cache.set(cache_key, payload, CACHE_TTL_MAP_POINTS)
         return _public_response(payload, request, s_maxage=CACHE_TTL_MAP_POINTS)
 
+    @action(
+        detail=False,
+        methods=['get'],
+        permission_classes=[AllowAny],
+        url_path='code/(?P<code>[^/]+)',
+    )
+    def by_code(self, request, code=None):
+        """
+        Resolve the printed short code of a listing back to its id.
+
+        This is what the QR and the human-typed code on a promotion image land
+        on, so it answers to anyone: the person scanning has no session, and
+        very often no account.
+
+        It deliberately does NOT reuse get_queryset(), which layers every search
+        filter in the querystring on top. Someone arriving from a printed code
+        has a listing in mind, not a search, and a stray parameter turning that
+        into a 404 would be impossible to diagnose from the other end. The only
+        filter kept is the one that decides whether a listing is public at all.
+        """
+        normalized = normalize_code(code or '')
+        prop = (
+            Property.objects.filter(short_code=normalized)
+            .exclude(status='inactive')
+            .values('id', 'short_code')
+            .first()
+        )
+        if prop is None:
+            raise Http404('No property matches that code')
+        return _public_response(prop, request, s_maxage=CACHE_TTL_PROPERTY_LIST)
+
     @action(detail=False, methods=['get'], permission_classes=[AllowAny])
     def owners(self, request):
         """
@@ -804,12 +901,84 @@ class PropertyViewSet(viewsets.ModelViewSet):
             cache.set(cache_key, payload, CACHE_TTL_SUMMARY)
         return _public_response(payload, request, s_maxage=CACHE_TTL_SUMMARY)
 
-    @action(detail=False, methods=['get'], permission_classes=[IsAuthenticated])
+    # Sort modes the inventory panel offers, mapped to a deterministic ordering.
+    # Prices are optional, so a NULL must not win the "highest price" sort.
+    INVENTORY_ORDERING = {
+        'recent': ('-created_at',),
+        'views': ('-views_count',),
+        'price_desc': (F('price').desc(nulls_last=True),),
+        'price_asc': (F('price').asc(nulls_last=True),),
+    }
+
+    @action(
+        detail=False,
+        methods=['get'],
+        permission_classes=[IsAuthenticated],
+        pagination_class=InventoryPagination,
+    )
     def my_properties(self, request):
-        """Get only the properties owned by the current user (including inactive)"""
-        properties = Property.objects.filter(owner=request.user)
-        serializer = self.get_serializer(properties, many=True)
-        return Response(serializer.data)
+        """
+        Inventory panel of the signed-in account.
+
+        Staff get the whole catalogue -- inactive, duplicated and imported rows
+        included -- because moderation happens from this same screen. Everyone
+        else gets strictly what they own, which is the only read that does not
+        apply the public status filter.
+
+        Search, status and ordering are resolved here rather than in the client:
+        with the catalogue paginated, filtering the page that happens to be
+        loaded would answer a different question than the one asked.
+        """
+        is_staff = bool(request.user.is_staff)
+        queryset = Property.objects.all() if is_staff else Property.objects.filter(owner=request.user)
+
+        status_param = request.query_params.get('status')
+        if status_param in ('for_sale', 'for_rent', 'inactive'):
+            queryset = queryset.filter(status=status_param)
+
+        origin = request.query_params.get('origin')
+        if origin == 'imported':
+            queryset = queryset.filter(is_imported=True)
+        elif origin == 'users':
+            queryset = queryset.filter(is_imported=False)
+
+        search = (request.query_params.get('search') or '').strip()
+        if search:
+            queryset = queryset.filter(
+                Q(title__icontains=search)
+                | Q(address__icontains=search)
+                | Q(city__icontains=search)
+                | Q(province__icontains=search)
+                | Q(source_agency__icontains=search)
+            )
+
+        # Counters describe the whole filtered inventory, not the page: read off
+        # the page they would say "3 propiedades" to someone who has 9.000.
+        stats = queryset.aggregate(
+            total=Count('id'),
+            for_sale=Count('id', filter=Q(status='for_sale')),
+            for_rent=Count('id', filter=Q(status='for_rent')),
+            inactive=Count('id', filter=Q(status='inactive')),
+            views=Sum('views_count'),
+        )
+        stats['views'] = stats['views'] or 0
+        stats['active'] = stats['total'] - stats['inactive']
+
+        ordering = self.INVENTORY_ORDERING.get(
+            request.query_params.get('ordering'), self.INVENTORY_ORDERING['recent']
+        )
+        queryset = (
+            queryset.select_related('owner')
+            .prefetch_related('images')
+            .order_by(*ordering, '-id')
+        )
+
+        page = self.paginate_queryset(queryset)
+        serializer = self.get_serializer(page, many=True)
+        response = self.get_paginated_response(serializer.data)
+        response.data['stats'] = stats
+        response.data['scope'] = 'catalog' if is_staff else 'own'
+        return response
 
     @action(detail=True, methods=['delete'], permission_classes=[IsAuthenticated])
     def delete_image(self, request, pk=None):
@@ -871,11 +1040,7 @@ class LeadViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         lead = serializer.save()
-        try:
-            from .email_utils import send_lead_notification
-            send_lead_notification(lead)
-        except Exception as exc:
-            print(f"Error notifying lead: {exc}")
+        LeadNotificationService().notify_created(lead)
 
 
 class PendingPublicationViewSet(viewsets.ModelViewSet):
@@ -904,7 +1069,11 @@ class PendingPublicationViewSet(viewsets.ModelViewSet):
         user = self.request.user
         if not (user and user.is_authenticated and user.is_staff):
             return PendingPublication.objects.none()
-        queryset = PendingPublication.objects.all().order_by('-created_at')
+        queryset = (
+            PendingPublication.objects
+            .prefetch_related('resume_tokens')
+            .order_by('-created_at')
+        )
         status_param = self.request.query_params.get('status')
         if status_param:
             queryset = queryset.filter(status=status_param)
@@ -925,11 +1094,181 @@ class PendingPublicationViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         pending = serializer.save()
+        PendingPublicationNotificationService().notify_created(pending)
+
+    @action(detail=True, methods=['post'], url_path='resume-link')
+    def resume_link(self, request, pk=None):
+        """
+        Issue the single-use link that hands this draft back to its author.
+
+        Emission is manual because sending it is manual: somebody reads the
+        request, decides it is worth chasing and writes over WhatsApp. A link
+        minted without anyone sending it would just be a live credential with no
+        reason to exist. Moving the request to `contacted` in the same act keeps
+        the tray from lying about what has already been handled.
+        """
+        pending = self.get_object()
+        if pending.status == 'converted':
+            return Response(
+                {'error': 'Esta solicitud ya se convirtió en un anuncio.'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        token = create_publication_resume_token(pending, created_by=request.user)
+        if pending.status == 'new':
+            pending.status = 'contacted'
+            pending.save(update_fields=['status', 'updated_at'])
+
+        logger.info(
+            "admin_audit action=pending.resume_link_issued actor=%s pending=%s",
+            request.user.pk, pending.pk,
+        )
+        return Response(
+            {'url': build_resume_link(token.token), 'expires_at': token.expires_at},
+            status=status.HTTP_201_CREATED,
+        )
+
+    @action(detail=True, methods=['post'], url_path='resume-link/revoke')
+    def revoke_resume_link(self, request, pk=None):
+        """Kill every live link for this request, without waiting for expiry."""
+        pending = self.get_object()
+        revoked = PublicationResumeToken.objects.filter(
+            pending=pending,
+            revoked_at__isnull=True,
+            redeemed_at__isnull=True,
+        ).update(revoked_at=timezone.now())
+
+        logger.info(
+            "admin_audit action=pending.resume_link_revoked actor=%s pending=%s revoked=%s",
+            request.user.pk, pending.pk, revoked,
+        )
+        return Response({'revoked': revoked})
+
+
+class PublicationDraftView(generics.GenericAPIView):
+    """
+    Hand a draft back to whoever holds a valid resume token.
+
+    Public by necessity: the whole point is that the person has no account yet.
+    The token is therefore the only credential, and it is treated as one — the
+    response carries the draft and nothing else, never a session.
+    """
+
+    permission_classes = [AllowAny]
+    serializer_class = PublicationDraftSerializer
+    throttle_classes = [ScopedRateThrottle]
+    throttle_scope = 'resume_read'
+
+    def get(self, request, token):
+        resume_token = resolve_resume_token(token)
+        if resume_token is None:
+            return invalid_resume_token_response()
+
+        serializer = self.get_serializer(resume_token.pending)
+        return Response({**serializer.data, 'expires_at': resume_token.expires_at})
+
+
+class PublicationDraftRedeemView(generics.GenericAPIView):
+    """
+    Publish from a resume link, creating the account afterwards.
+
+    The `account_required` origin says literally that the account was the wall.
+    A link that walks somebody back into the same wall reproduces the abandonment
+    it is meant to fix, so the order is inverted: publish first, register after.
+    """
+
+    permission_classes = [AllowAny]
+    serializer_class = PropertySerializer
+    parser_classes = [MultiPartParser, FormParser, JSONParser]
+    throttle_classes = [ScopedRateThrottle]
+    throttle_scope = 'resume_redeem'
+
+    def post(self, request, token):
+        resume_token = resolve_resume_token(token)
+        if resume_token is None:
+            return invalid_resume_token_response()
+
+        pending = resume_token.pending
+        email = (pending.contact_email or '').strip()
+        if not email:
+            return Response(
+                {'error': 'Esta solicitud no tiene un correo al que asignar el anuncio.'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
         try:
-            from .email_utils import send_pending_publication_notification
-            send_pending_publication_notification(pending)
-        except Exception as exc:
-            print(f"Error notifying pending publication: {exc}")
+            owner, created = InvitedAccountService().get_or_create_by_email(email)
+        except InactiveAccountError as error:
+            return Response({'error': str(error)}, status=status.HTTP_400_BAD_REQUEST)
+
+        with transaction.atomic():
+            # Burn the token in the same transaction that creates the listing:
+            # the forwarded message must not be able to publish twice, and a
+            # failed save must not leave the link spent.
+            burnt = PublicationResumeToken.objects.filter(
+                pk=resume_token.pk, redeemed_at__isnull=True, revoked_at__isnull=True
+            ).update(redeemed_at=timezone.now())
+            if not burnt:
+                return invalid_resume_token_response()
+
+            prop = serializer.save(owner=owner)
+            pending.status = 'converted'
+            pending.property = prop
+            pending.save(update_fields=['status', 'property', 'updated_at'])
+
+        if created:
+            reset_token = create_password_reset_token(owner)
+            AccountClaimNotificationService().notify_claim(
+                owner, reset_token.token, prop.title
+            )
+
+        logger.info(
+            "resume_redeemed pending=%s property=%s owner=%s new_account=%s",
+            pending.pk, prop.pk, owner.pk, created,
+        )
+        return Response(
+            {
+                'property': serializer.data,
+                'account_created': created,
+                'email': owner.email,
+            },
+            status=status.HTTP_201_CREATED,
+        )
+
+
+def resolve_resume_token(token_string):
+    """The live token behind this string, or None if it cannot be used."""
+    resume_token = (
+        PublicationResumeToken.objects
+        .select_related('pending')
+        .filter(token=token_string)
+        .first()
+    )
+    if resume_token is None or not resume_token.is_valid():
+        return None
+    return resume_token
+
+
+def invalid_resume_token_response():
+    """
+    One answer for missing, expired, revoked and already-redeemed tokens.
+
+    Telling them apart would turn the endpoint into an oracle for which links
+    ever existed, and none of the four cases has a different remedy: ask for a
+    new link.
+    """
+    # `detail` first so a client that reads the first message of an error body
+    # shows the sentence, not the machine-readable code.
+    return Response(
+        {
+            'detail': 'Este enlace ya no es válido. Pide uno nuevo.',
+            'code': 'resume_token_invalid',
+        },
+        status=status.HTTP_410_GONE,
+    )
 
 
 class ActivityEventViewSet(viewsets.ModelViewSet):
@@ -1013,66 +1352,10 @@ class GoogleLoginView(generics.GenericAPIView):
                 google_client_id
             )
 
-            # Obtener datos del usuario desde Google
-            email = idinfo.get('email')
-            google_id = idinfo.get('sub')
-            first_name = idinfo.get('given_name', '')
-            last_name = idinfo.get('family_name', '')
-            picture = idinfo.get('picture', '')
-
-            if not email:
-                return Response(
-                    {'error': 'Email no proporcionado por Google'},
-                    status=status.HTTP_400_BAD_REQUEST
-                )
-
-            User = get_user_model()
-
-            # Buscar usuario por oauth_id o email
-            user = None
-            try:
-                user = User.objects.get(oauth_id=google_id)
-            except User.DoesNotExist:
-                try:
-                    user = User.objects.get(email=email)
-                    # Conectar cuenta OAuth a usuario existente
-                    user.oauth_provider = 'google'
-                    user.oauth_id = google_id
-                    user.avatar_url = picture
-                    user.is_email_verified = True
-                    user.save()
-                except User.DoesNotExist:
-                    # Crear nuevo usuario
-                    username = email.split('@')[0]
-                    counter = 1
-                    original_username = username
-                    while User.objects.filter(username=username).exists():
-                        username = f"{original_username}{counter}"
-                        counter += 1
-
-                    user = User.objects.create(
-                        username=username,
-                        email=email,
-                        first_name=first_name,
-                        last_name=last_name,
-                        oauth_provider='google',
-                        oauth_id=google_id,
-                        avatar_url=picture,
-                        is_email_verified=True,
-                    )
-                    # No se requiere contraseña para usuarios OAuth
-                    user.set_unusable_password()
-                    user.save()
-
-            # Generar JWT tokens
-            refresh = RefreshToken.for_user(user)
-            refresh["username"] = user.username
-            refresh["email"] = user.email
-            refresh["is_staff"] = user.is_staff
+            user, tokens = GoogleAuthenticationService().authenticate(idinfo)
 
             return Response({
-                'access': str(refresh.access_token),
-                'refresh': str(refresh),
+                **tokens,
                 'user': {
                     'id': user.id,
                     'username': user.username,
@@ -1084,14 +1367,15 @@ class GoogleLoginView(generics.GenericAPIView):
                 }
             })
 
-        except ValueError as e:
+        except (ValueError, GoogleIdentityError):
             return Response(
-                {'error': f'Token de Google inválido: {str(e)}'},
+                {'error': 'Token de Google inválido o correo no verificado.'},
                 status=status.HTTP_400_BAD_REQUEST
             )
-        except Exception as e:
+        except Exception:
+            logger.exception('google_login_failed')
             return Response(
-                {'error': f'Error al procesar login con Google: {str(e)}'},
+                {'error': 'No se pudo procesar el inicio de sesión.'},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
 
@@ -2055,6 +2339,83 @@ class AdminPropertyViewSet(viewsets.ModelViewSet):
         )
 
         return Response(serializer.data)
+
+    def transfer_owner(self, request, pk=None):
+        """
+        Move a property to another account.
+
+        Deliberately its own verb instead of another entry in
+        `PATCH_ALLOWED_FIELDS`: a change of title deed deserves target
+        validation, a notification and an audit line saying from whom to whom,
+        none of which a generic field edit would carry.
+        """
+        prop = self.get_object()
+        serializer = OwnerTransferSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        target, created = self._resolve_transfer_target(serializer.validated_data)
+        if isinstance(target, Response):
+            return target
+
+        if prop.owner_id == target.pk:
+            return Response(
+                {'error': 'Esa cuenta ya es la propietaria de esta propiedad.'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        previous_owner_id = prop.owner_id
+        prop.owner = target
+        updated_fields = ['owner']
+        if prop.is_imported:
+            # Retirement selects by `is_imported` and deletes whatever stopped
+            # showing up in the source portal. A claimed listing left as imported
+            # would delete itself the day the external portal drops it, taking
+            # its leads with it. Unlinking is what makes the claim stick.
+            prop.is_imported = False
+            updated_fields.append('is_imported')
+        prop.save(update_fields=updated_fields)
+
+        if created:
+            reset_token = create_password_reset_token(target)
+            AccountClaimNotificationService().notify_claim(
+                target, reset_token.token, prop.title
+            )
+        else:
+            OwnershipTransferNotificationService().notify_transferred(target, prop)
+
+        logger.info(
+            "admin_audit action=property.transfer_owner actor=%s target_property=%s from=%s to=%s new_account=%s",
+            request.user.pk, prop.pk, previous_owner_id, target.pk, created,
+        )
+
+        return Response(
+            AdminPropertySerializer(prop, context=self.get_serializer_context()).data
+        )
+
+    def _resolve_transfer_target(self, data):
+        """Return `(user, created)`, or a `Response` when the target is unusable."""
+        User = get_user_model()
+        user_id = data.get('user_id')
+        if user_id:
+            target = User.objects.filter(pk=user_id).first()
+            if target is None:
+                return Response(
+                    {'error': 'No existe esa cuenta.'},
+                    status=status.HTTP_400_BAD_REQUEST,
+                ), False
+            if not target.is_active:
+                return Response(
+                    {'error': 'Esa cuenta está desactivada; actívala antes de asignarle una propiedad.'},
+                    status=status.HTTP_400_BAD_REQUEST,
+                ), False
+            return target, False
+
+        try:
+            return InvitedAccountService().get_or_create_by_email(data['email'])
+        except (InactiveAccountError, ValueError) as error:
+            return Response(
+                {'error': str(error)}, status=status.HTTP_400_BAD_REQUEST
+            ), False
 
     def destroy(self, request, *args, **kwargs):
         prop = self.get_object()

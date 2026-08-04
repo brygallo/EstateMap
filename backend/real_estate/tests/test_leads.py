@@ -7,6 +7,7 @@ from real_estate.models import Lead, Property
 
 @pytest.mark.django_db
 def test_public_lead_creation_notifies_property_owner(api_client, create_user, clear_mailbox):
+    """SPEC:LEAD-006 — creating a lead sends a synchronous email to the property owner and contact_email."""
     owner = create_user(email='owner@example.com', username='owner')
     property_obj = Property.objects.create(
         owner=owner,

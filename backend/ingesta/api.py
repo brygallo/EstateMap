@@ -69,6 +69,21 @@ def _source_dict(f):
 
 
 def _run_dict(r):
+    progress_total = r.limit or r.fuente.disponibles or None
+    if r.modo in {"verify", "refresh"} and r.estado in {"pending", "running"}:
+        from real_estate.models import Property
+
+        remaining = Property.objects.filter(
+            source=r.fuente,
+            is_imported=True,
+        ).exclude(source_url="")
+        if r.modo == "verify":
+            remaining = remaining.exclude(status="inactive")
+        inventory_total = remaining.count() + r.caducadas
+        progress_total = min(r.limit, inventory_total) if r.limit else inventory_total
+    elif r.modo in {"verify", "refresh"} and r.estado == "done":
+        progress_total = r.vistos
+
     return {
         "id": r.id,
         "fuente": r.fuente.slug,
@@ -77,6 +92,7 @@ def _run_dict(r):
         "modo": r.modo,
         "modo_label": r.get_modo_display(),
         "limit": r.limit,
+        "progress_total": progress_total,
         "con_imagenes": r.con_imagenes,
         "solo_nuevas": r.solo_nuevas,
         "vistos": r.vistos,
@@ -87,6 +103,7 @@ def _run_dict(r):
         "duplicadas": r.duplicadas,
         "caducadas": r.caducadas,
         "sin_ubicacion": r.sin_ubicacion,
+        "sin_precio": r.sin_precio,
         "errores": r.errores,
         "cargadas": r.cargadas,
         "mensaje": r.mensaje,
@@ -429,6 +446,9 @@ def refresh_property(request):
     if result == "skipped_no_images":
         return Response({"error": "El portal no entregó ninguna imagen descargable."},
                         status=status.HTTP_502_BAD_GATEWAY)
+    if result == "skipped_zero_price":
+        return Response({"error": "El portal publicó esta propiedad con precio cero; no se actualizó."},
+                        status=status.HTTP_400_BAD_REQUEST)
     return Response({"error": f"No se pudo actualizar ({result})."},
                     status=status.HTTP_400_BAD_REQUEST)
 

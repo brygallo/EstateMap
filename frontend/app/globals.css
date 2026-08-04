@@ -193,22 +193,19 @@ body {
   font-size: var(--type-small-size);
 }
 
-/* Lockup scale inside the footer, straight from .aents-site-footer__brand. */
-.aents-footer-brand .logo-lockup {
-  gap: var(--spacing-md);
-}
-
+/*
+ * The footer keeps the header's tile and sets the wordmark as type, the way
+ * AentsLogo does — no export carries the wordmark on its own, so the alternative
+ * would be dropping the tile. It stays a step below @aents/ui-web's display2 and
+ * one weight lighter: the Brand Book wordmark is a geometric face, and Plus
+ * Jakarta Sans at 800 reads heavier than the artwork it stands in for.
+ */
 .aents-footer-brand .logo-wordmark {
   color: var(--white);
-  font-size: var(--type-display2-size);
-  line-height: var(--type-display2-line);
-  letter-spacing: -0.03em;
-}
-
-.aents-footer-brand .logo-tagline {
-  color: var(--lavender);
-  font-size: var(--type-bodyLarge-size);
-  line-height: var(--type-bodyLarge-line);
+  font-weight: var(--weight-bold);
+  font-size: var(--type-h2-size);
+  line-height: var(--type-h2-line);
+  letter-spacing: -0.02em;
 }
 
 .aents-nav-link {
@@ -424,12 +421,16 @@ body {
   pointer-events: none;
 }
 
-/* The Aents mark sits straight on the navy — the surface the negative lockup was
-   drawn for — closed by the violet · lavender · green underline. */
+/* The lockup sits straight on the navy — the surface the negative export was
+   drawn for — closed by the violet · lavender · green underline. The padding is
+   wider than .aents-site-footer__brand's in @aents/ui-web because the Brand Book
+   reserves a 2x clear space around the logo (panel 04 · Zona segura): at the
+   120 px width the lockup is served, one grid module is 12 px, so nothing may
+   come closer than 24 px — including that underline. */
 .aents-footer-brand {
   position: relative;
   display: inline-flex;
-  padding: var(--spacing-sm) var(--spacing-lg) var(--spacing-md) 0;
+  padding: var(--spacing-lg) var(--spacing-lg) var(--spacing-lg) 0;
 }
 
 .aents-footer-brand::after {

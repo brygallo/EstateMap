@@ -1,0 +1,121 @@
+version: 1
+domain: social-kit-next
+title: "Propuesta: lo que le falta al kit de promoción"
+status: not_implemented
+summary: >-
+  El kit ya existe y está descrito en specs/domains/social-kit.yaml. Aquí queda
+  lo que se dejó fuera de la primera versión a propósito, para que la decisión
+  esté escrita en algún sitio y no haya que reconstruirla de memoria.
+
+  Son tres cosas, y ninguna está construida: devolverle al dueño cuántas visitas
+  trajo cada red, generar kits para los momentos que no son la publicación
+  inicial, y el video corto que es lo único que TikTok premia de verdad. La
+  publicación automática en Meta no está aquí: está en SOC-010, como decisión de
+  no hacerla.
+see_also:
+  - specs/domains/social-kit.yaml
+  - specs/ui/visibility-rules.yaml
+  - docs/technical/cache.md
+
+rules:
+  - id: SOC-101
+    name: El dueño ve cuántas visitas trajo cada red
+    status: proposed
+    summary: >-
+      El kit muestra, por red, cuántas visitas reales llegaron desde los enlaces
+      que esa persona compartió.
+    rationale: >-
+      Es la mitad que falta de SOC-008. Los UTM ya viajan en cada enlace y en
+      cada QR, así que el dato se está recogiendo; lo que no existe es la
+      pantalla que lo devuelve.
+
+      Sin ella el kit se usa una vez. Con ella se usa cada mes, porque «tus
+      publicaciones trajeron 34 visitas reales» es lo único que convence a
+      alguien de volver a compartir. Y es también lo que el portal podrá
+      enseñarle a una inmobiliaria para justificar por qué le conviene publicar
+      aquí.
+
+      «Reales» tiene que ser literal: el recuento excluye los bots por el mismo
+      camino que ya usan las métricas del panel. Un contador inflado por
+      crawlers es peor que no dar contador, porque destruye la confianza en todo
+      lo demás que diga esa pantalla.
+    tests: {}
+    cases:
+      - name: Las visitas se agrupan por utm_source
+        given: {utm_source: instagram}
+        expected: presente
+      - name: Las visitas de un bot no cuentan
+        given: {is_bot: true}
+        expected: ausente
+      - name: Un anuncio que nadie compartió no muestra un cero desnudo
+        expected: presente
+        note: >-
+          Un «0 visitas» sin contexto se lee como fracaso del portal. Debe decir
+          que aún no se ha compartido.
+      - name: Solo el propietario ve el desglose
+        role: not_owner
+        expected: denied
+
+  - id: SOC-102
+    name: Hay kit para los momentos que no son la publicación
+    status: proposed
+    summary: >-
+      Además del kit inicial, se generan láminas para bajada de precio y para
+      anuncio vendido o alquilado.
+    rationale: >-
+      Un anuncio se comparte bien una vez y luego se queda quieto. Los momentos
+      que dan una excusa para volver a publicarlo son pocos y conocidos: bajó el
+      precio, y se vendió.
+
+      La lámina de «vendido» es la más valiosa de las dos y la menos evidente:
+      no vende ese inmueble, que ya está vendido. La comparte el agente porque
+      es su currículum, y al hacerlo distribuye el logo y el código del portal
+      entre gente que todavía no lo conoce. Es publicidad que se reparte sola.
+
+      Requiere primero un estado que hoy no existe: STATUS_CHOICES sólo tiene
+      for_sale, for_rent e inactive, así que «vendido» y «retirado» son
+      indistinguibles en la base de datos.
+    tests: {}
+    cases:
+      - name: Bajar el precio ofrece la lámina de bajada
+        given: {price_anterior: 90000, price: 79000}
+        expected: presente
+      - name: La lámina de bajada muestra los dos precios
+        expected: presente
+      - name: Marcar como vendido ofrece la lámina de vendido
+        given: {status: sold}
+        expected: presente
+      - name: Un anuncio inactivo no es lo mismo que uno vendido
+        given: {status: inactive}
+        expected: ausente
+        note: Retirar un anuncio no es una venta y no merece felicitación.
+
+  - id: SOC-103
+    name: Un video corto para TikTok y Reels
+    status: proposed
+    summary: >-
+      El kit genera un video de unos ocho segundos con las fotos del anuncio y la
+      lámina de mapa como cierre.
+    rationale: >-
+      TikTok premia video, no imágenes. Hoy el kit le entrega una portada 9:16 y
+      un gancho, y le pide a la persona que arme el resto en la aplicación, que
+      es exactamente la fricción que el kit existe para quitar.
+
+      Se dejó fuera de la primera versión porque cambia la naturaleza del
+      trabajo: componer un PNG cabe en una petición HTTP, codificar un MP4 no.
+      Necesita ffmpeg en una tarea de Celery, un sitio donde guardar el
+      resultado y una forma de avisar de que ya está listo — tres piezas que el
+      resto del kit no necesitaba.
+    tests: {}
+    cases:
+      - name: El video se genera fuera de la petición
+        expected: presente
+        note: Encolado, no síncrono; codificar bloqueando la respuesta no es opción.
+      - name: El video termina con la lámina de mapa
+        expected: presente
+      - name: Un anuncio sin fotos no genera video
+        given: {images: []}
+        expected: ausente
+        note: >-
+          Ocho segundos de fondo de marca no son un video, son una pantalla de
+          carga. Aquí la lámina fija de SOC-004 es mejor respuesta.

@@ -11,6 +11,8 @@ from django.db import transaction
 from django.urls import reverse
 from django.conf import settings
 from .bot_detection import is_bot_request
+from .email_utils import build_resume_link
+from .geo import polygon_center_lat_lng
 from .models import ActivityEvent, Property, PropertyImage, Province, City, Lead, PendingPublication
 from .validators import validate_image_dimensions, validate_image_format, validate_image_size
 
@@ -19,44 +21,9 @@ logger = logging.getLogger(__name__)
 User = get_user_model()
 
 
-def polygon_center_lat_lng(polygon):
-    """
-    Return an approximate center for a normalized GeoJSON polygon or a
-    ``[[lat, lng], ...]`` ring. Used so map bbox filtering can include polygon
-    properties without requiring a separate point click.
-    """
-    if not polygon:
-        return None
-
-    ring = None
-    if isinstance(polygon, dict):
-        coordinates = polygon.get('coordinates') or []
-        ring = coordinates[0] if coordinates else None
-        points = [
-            (float(lat), float(lng))
-            for lng, lat in (ring or [])
-            if lat is not None and lng is not None
-        ]
-    elif isinstance(polygon, list):
-        ring = polygon
-        points = [
-            (float(lat), float(lng))
-            for lat, lng in ring
-            if lat is not None and lng is not None
-        ]
-    else:
-        return None
-
-    if len(points) >= 2 and points[0] == points[-1]:
-        points = points[:-1]
-    if not points:
-        return None
-
-    lat = sum(point[0] for point in points) / len(points)
-    lng = sum(point[1] for point in points) / len(points)
-    return lat, lng
-
-
+# `polygon_center_lat_lng` now lives in `.geo` so that `models.py` can enforce
+# the centre on save without importing this module — serializers already imports
+# models, so the dependency only runs one way.
 def ensure_polygon_center(data):
     if data.get('polygon') and (data.get('latitude') is None or data.get('longitude') is None):
         center = polygon_center_lat_lng(data.get('polygon'))
@@ -192,7 +159,20 @@ class PropertySerializer(serializers.ModelSerializer):
     class Meta:
         model = Property
         fields = '__all__'
-        read_only_fields = ['created_at', 'updated_at', 'owner']
+        # Aggregation, moderation and analytics fields are controlled only by
+        # their dedicated admin/ingestion services, never by the public CRUD.
+        read_only_fields = [
+            'created_at', 'updated_at', 'owner', 'views_count',
+            # The short code is printed onto promotion images and resolves a
+            # public URL. Leaving it writable under fields='__all__' would let a
+            # client pick its own — and squat the codes of listings it does not
+            # own, since the column is unique.
+            'short_code',
+            'source', 'source_agency', 'source_url', 'external_id',
+            'is_imported', 'dedup_key', 'image_hash', 'is_duplicate',
+            'duplicate_of', 'imported_at', 'source_published_at',
+            'source_updated_at', 'last_seen_at',
+        ]
 
     def to_representation(self, instance):
         """Convert polygon from GeoJSON to simple array format for frontend"""
@@ -472,18 +452,33 @@ class LeadStatusSerializer(serializers.ModelSerializer):
 
 
 class PendingPublicationSerializer(serializers.ModelSerializer):
+    resume_link = serializers.SerializerMethodField()
+
     class Meta:
         model = PendingPublication
         fields = [
             'id', 'title', 'contact_phone', 'contact_email', 'city', 'province',
             'property_type', 'operation', 'price', 'draft', 'source', 'status',
-            'created_at',
+            'property', 'resume_link', 'created_at',
         ]
-        read_only_fields = ['id', 'status', 'created_at']
+        read_only_fields = ['id', 'status', 'property', 'resume_link', 'created_at']
 
     def validate_source(self, value):
         valid_sources = {choice[0] for choice in PendingPublication.SOURCE_CHOICES}
         return value if value in valid_sources else "other"
+
+    def get_resume_link(self, obj):
+        """The live link for this request, so the tray shows what was sent."""
+        token = next(
+            (t for t in obj.resume_tokens.all() if t.is_valid()),
+            None,
+        )
+        if token is None:
+            return None
+        return {
+            'url': build_resume_link(token.token),
+            'expires_at': token.expires_at,
+        }
 
 
 class PendingPublicationStatusSerializer(serializers.ModelSerializer):
@@ -491,6 +486,38 @@ class PendingPublicationStatusSerializer(serializers.ModelSerializer):
         model = PendingPublication
         fields = ['id', 'status']
         read_only_fields = ['id']
+
+
+class PublicationDraftSerializer(serializers.ModelSerializer):
+    """
+    What a resume token opens, and nothing else.
+
+    The field list is explicit rather than ``__all__`` on purpose: this payload
+    is served to an anonymous request holding a link that gets forwarded through
+    chats, so its scope has to stay exactly the work that person already typed.
+    """
+
+    class Meta:
+        model = PendingPublication
+        fields = [
+            'title', 'contact_phone', 'contact_email', 'city', 'province',
+            'property_type', 'operation', 'price', 'draft',
+        ]
+        read_only_fields = fields
+
+
+class OwnerTransferSerializer(serializers.Serializer):
+    """Target of an ownership transfer: an existing account, or an address."""
+
+    user_id = serializers.IntegerField(required=False)
+    email = serializers.EmailField(required=False)
+
+    def validate(self, attrs):
+        if not attrs.get('user_id') and not attrs.get('email'):
+            raise serializers.ValidationError(
+                'Indica user_id o email de la cuenta que recibe la propiedad.'
+            )
+        return attrs
 
 
 class ActivityEventSerializer(serializers.ModelSerializer):

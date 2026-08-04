@@ -1,0 +1,16 @@
+{
+  "name": "estatemap-e2e",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Pruebas de extremo a extremo del portal (Next + Django juntos)",
+  "scripts": {
+    "test": "playwright test",
+    "test:headed": "playwright test --headed",
+    "test:ui": "playwright test --ui",
+    "report": "playwright show-report",
+    "install-browsers": "playwright install chromium"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.56.0"
+  }
+}

@@ -19,9 +19,19 @@ in `app/globals.css` is copied verbatim from `@aents/ui-web` and deliberately
 carries no border, background, shadow or hover. Adding any of those draws a
 different logo. It renders at 38 px from a 120 px master, sharp through 3x.
 
-`negative` is the horizontal lockup for dark backgrounds, which is what the
-footer needs. It is served at 120 CSS px wide (the minimum the brand rules allow
-for the full lockup) from a 240 px master, so it stays sharp on 2x screens.
+**Never rebuild the Aents wordmark as text.** `AentsLogo` in `@aents/ui-web`
+composes it in Plus Jakarta Sans, and `packages/brand/README.md` sanctions that
+for sharpness, but the Brand Book plate «Sistema del logo» rules otherwise: panel
+11 lists «No cambiar tipografía» among the forbidden uses, and the approved
+wordmark is not Plus Jakarta Sans — its letterforms and letter-spacing belong to
+the artwork. Panel 04 also reserves a 2x clear space that nothing may invade.
+Both the header and the footer therefore pair the tile with the **product's own**
+name, which no brand rule governs. When the Aents wordmark itself is needed, it
+comes from `negative`, whole.
+
+`negative` is the horizontal lockup for dark backgrounds, flattened to a single
+raster with the approved letterforms. Nothing renders it today; it stays here as
+the only sanctioned way to show the Aents wordmark on this site.
 
 To update: copy the file again from the monorepo. If a smaller mark is ever
 needed, the rules require the symbol alone below 120 px, not a shrunken lockup —

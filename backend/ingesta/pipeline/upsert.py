@@ -19,6 +19,16 @@ from .location import validate_location
 from .normalize import build_dedup_key, sanitize_price
 
 
+def _is_explicit_zero(value):
+    """Return whether a canonical price field explicitly contains numeric zero."""
+    if value is None or isinstance(value, bool):
+        return False
+    try:
+        return Decimal(str(value).strip()) == 0
+    except (InvalidOperation, ValueError):
+        return False
+
+
 # Campos de Property que actualizamos desde el paquete.
 def _apply_fields(prop, data, fuente, lat, lng):
     prop.title = (data.get("title") or "")[:150]
@@ -68,14 +78,19 @@ def upsert_property(data, fuente, reader=None, image_urls=None, log=None,
       no haya cambiado (refresh manual desde el panel admin).
 
     Devuelve ``(resultado, prop)`` donde resultado ∈
-    {'created', 'updated', 'skipped_no_location', 'skipped_duplicate',
-    'skipped_no_images'}.
+    {'created', 'updated', 'skipped_no_location', 'skipped_zero_price',
+    'skipped_duplicate', 'skipped_no_images'}.
     """
     from real_estate.models import Property
 
     ok, lat, lng, _motivo = validate_location(data.get("latitude"), data.get("longitude"))
     if not ok:
         return "skipped_no_location", None
+
+    if any(_is_explicit_zero(data.get(field)) for field in ("price", "rent_price")):
+        if log:
+            log(f"[precio] {data.get('external_id', '?')}: anuncio omitido por precio cero")
+        return "skipped_zero_price", None
 
     # Sanidad de precios: un valor absurdo (área/id/teléfono leído como precio)
     # se descarta a None ("a consultar") en vez de publicarse. Se aplica aquí,

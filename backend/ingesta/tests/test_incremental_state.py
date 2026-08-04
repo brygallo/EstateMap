@@ -40,6 +40,7 @@ def test_removed_listing_is_known_by_the_next_incremental_run():
 
 
 def test_old_removed_listing_is_rechecked_after_thirty_days():
+    """SPEC:IMP-016 — retired-listing suppression expires after thirty days."""
     source = Fuente.objects.create(
         slug="plusvalia",
         nombre="Plusvalia",

@@ -31,7 +31,48 @@ def _data(external_id="pv-1"):
     }
 
 
+@pytest.mark.parametrize("field", ["price", "rent_price"])
+def test_zero_price_is_not_imported(field):
+    """SPEC:IMP-023 — an explicit zero in either price field rejects the listing."""
+    fuente = _fuente()
+    data = _data()
+    data[field] = 0
+
+    result, prop = upsert_property(data, fuente)
+
+    assert result == "skipped_zero_price"
+    assert prop is None
+    assert Property.objects.count() == 0
+
+
+def test_zero_price_does_not_overwrite_existing_property():
+    """SPEC:IMP-023 — refresh with zero leaves the existing row unchanged."""
+    fuente = _fuente()
+    existing = Property.objects.create(
+        source=fuente,
+        external_id="pv-1",
+        source_url="https://www.plusvalia.com/propiedades/pv-1.html",
+        is_imported=True,
+        title="Título anterior",
+        latitude=-0.18,
+        longitude=-78.48,
+        price=100000,
+    )
+    data = _data()
+    data["title"] = "Título con precio cero"
+    data["price"] = 0
+
+    result, prop = upsert_property(data, fuente)
+
+    assert result == "skipped_zero_price"
+    assert prop is None
+    existing.refresh_from_db()
+    assert existing.title == "Título anterior"
+    assert existing.price == 100000
+
+
 def test_created_property_rolls_back_when_all_images_fail(monkeypatch):
+    """SPEC:IMP-018 — a new imported property is rolled back when no image attaches."""
     fuente = _fuente()
     logs = []
 

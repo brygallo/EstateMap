@@ -7,7 +7,6 @@ import {
   ChevronLeft,
   ChevronRight,
   ExternalLink,
-  Maximize2,
   MapPin,
   MapPinned,
   User,
@@ -569,17 +568,6 @@ const PropertyModal = ({ property: initialProperty, isOpen, onClose, onViewOnMap
                 <div className="pointer-events-none absolute left-3 top-3 rounded-full bg-black/60 px-2.5 py-1 text-[11px] font-semibold tabular-nums text-white backdrop-blur">
                   {safeImageIndex + 1} / {images.length}
                 </div>
-
-                {/* Expand. Was a decorative div, so the affordance it advertised
-                    did nothing when tapped directly. */}
-                <button
-                  type="button"
-                  onClick={() => setGalleryOpen(true)}
-                  className="absolute right-24 top-3 flex h-11 w-11 touch-manipulation items-center justify-center rounded-full bg-black/60 text-white backdrop-blur transition-colors hover:bg-black/80"
-                  aria-label="Ver las fotos a pantalla completa"
-                >
-                  <Maximize2 className="h-4 w-4" strokeWidth={2} aria-hidden />
-                </button>
 
                 {/* Navigation arrows: pointer-driven input only. On a
                     touchscreen the strip is swiped, and the arrows sit right

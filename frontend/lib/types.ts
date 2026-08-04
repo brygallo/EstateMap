@@ -32,6 +32,8 @@ export type PropertyPolygon =
 
 export interface Property {
   id: number;
+  /** Código corto imprimible. Resuelve en /p/<code>; se asigna al crear y no cambia. */
+  short_code?: string | null;
   title?: string;
   description?: string;
   property_type: PropertyType | string;

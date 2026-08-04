@@ -225,3 +225,43 @@ def validate_and_normalize_polygon(value):
     closed = distinct + [distinct[0]]
     geojson_coords = [[lng, lat] for lat, lng in closed]
     return {"type": "Polygon", "coordinates": [geojson_coords]}
+
+
+def polygon_center_lat_lng(polygon):
+    """
+    Return an approximate center ``(lat, lng)`` for a normalized GeoJSON polygon
+    or a ``[[lat, lng], ...]`` ring, or ``None`` if the shape has no usable
+    points.
+
+    A listing drawn on the map has no point of its own, so this centroid *is*
+    its location: it is what the bbox filter compares against and what the
+    "nearby" section measures distances from.
+    """
+    if not polygon:
+        return None
+
+    if isinstance(polygon, dict):
+        coordinates = polygon.get("coordinates") or []
+        ring = coordinates[0] if coordinates else None
+        points = [
+            (float(lat), float(lng))
+            for lng, lat in (ring or [])
+            if lat is not None and lng is not None
+        ]
+    elif isinstance(polygon, list):
+        points = [
+            (float(lat), float(lng))
+            for lat, lng in polygon
+            if lat is not None and lng is not None
+        ]
+    else:
+        return None
+
+    if len(points) >= 2 and points[0] == points[-1]:
+        points = points[:-1]
+    if not points:
+        return None
+
+    lat = sum(point[0] for point in points) / len(points)
+    lng = sum(point[1] for point in points) / len(points)
+    return lat, lng

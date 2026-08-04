@@ -32,6 +32,7 @@ import {
   MapPin,
   DownloadCloud,
   UserRound,
+  UserRoundCog,
   MapPinOff,
   CircleDollarSign,
   GitMerge,
@@ -176,6 +177,11 @@ const AdminPropertiesPage = () => {
   const [editDetailLoading, setEditDetailLoading] = useState(false);
   const [saving, setSaving] = useState(false);
 
+  // Cambiar propietario
+  const [transferring, setTransferring] = useState<PropertyItem | null>(null);
+  const [transferEmail, setTransferEmail] = useState('');
+  const [transferSaving, setTransferSaving] = useState(false);
+
   // Debounce del buscador: evita disparar una request por cada tecla.
   useEffect(() => {
     const handle = setTimeout(() => {
@@ -278,6 +284,33 @@ const AdminPropertiesPage = () => {
       toast.error(err.message);
     }
     setConfirmDelete(null);
+  };
+
+  const openTransfer = useCallback((prop: PropertyItem) => {
+    setTransferring(prop);
+    setTransferEmail('');
+  }, []);
+
+  const handleTransfer = async () => {
+    if (!transferring) return;
+    setTransferSaving(true);
+    try {
+      const res = await apiPost(`/admin/properties/${transferring.id}/transfer-owner/`, {
+        email: transferEmail.trim(),
+      });
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error(body.error || 'No se pudo cambiar el propietario');
+      }
+      toast.success('Propiedad transferida');
+      setTransferring(null);
+      fetchProperties();
+      fetchStats();
+    } catch (error: any) {
+      toast.error(error.message || 'No se pudo cambiar el propietario');
+    } finally {
+      setTransferSaving(false);
+    }
   };
 
   const openEdit = useCallback(async (prop: PropertyItem) => {
@@ -476,6 +509,15 @@ const AdminPropertiesPage = () => {
                 <ExternalLink className="h-4 w-4" aria-hidden />
               </Link>
               <button
+                onClick={() => openTransfer(p)}
+                title="Cambiar propietario"
+                aria-label="Cambiar propietario"
+                data-testid="transfer-owner-action"
+                className="rounded-button p-2 text-textSecondary transition-colors hover:bg-muted hover:text-textPrimary"
+              >
+                <UserRoundCog className="h-4 w-4" aria-hidden />
+              </button>
+              <button
                 onClick={() => setConfirmDelete(p)}
                 title="Eliminar"
                 aria-label="Eliminar"
@@ -488,7 +530,7 @@ const AdminPropertiesPage = () => {
         },
       },
     ],
-    [openEdit, properties, selectedIds]
+    [openEdit, openTransfer, properties, selectedIds]
   );
 
   const table = useReactTable({
@@ -512,7 +554,7 @@ const AdminPropertiesPage = () => {
             </div>
 
             {/* Métricas globales */}
-            <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-8">
+            <div className="mb-6 flex flex-nowrap gap-3 overflow-x-auto pb-2">
               {stats ? (
                 <>
                   <MetricTile icon={Building2} label="Total" value={stats.total} tone="primary" />
@@ -921,6 +963,59 @@ const AdminPropertiesPage = () => {
           )}
         </DialogContent>
       </Dialog>
+
+      <Dialog open={!!transferring} onOpenChange={(o) => { if (!o) setTransferring(null); }}>
+        <DialogContent className="max-w-lg rounded-modal">
+          {transferring && (
+            <>
+              <DialogHeader>
+                <DialogTitle>Cambiar propietario</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-4">
+                <div className="rounded-card border border-line p-3 text-sm">
+                  <p className="font-medium text-textPrimary">{transferring.title || `Propiedad #${transferring.id}`}</p>
+                  <p className="text-textSecondary">
+                    Ahora: {transferring.owner_username || transferring.owner_email || 'sin propietario'}
+                  </p>
+                </div>
+                <div>
+                  <Label htmlFor="transfer-email">Correo de quien la recibe</Label>
+                  <Input
+                    id="transfer-email"
+                    type="email"
+                    autoComplete="off"
+                    placeholder="persona@ejemplo.com"
+                    value={transferEmail}
+                    onChange={(e) => setTransferEmail(e.target.value)}
+                  />
+                </div>
+                <p className="text-xs text-textSecondary">
+                  Si ese correo no tiene cuenta, se crea una y se le envía un enlace para definir su
+                  contraseña. Los mensajes de personas interesadas pasan con la propiedad, y quien la tenía
+                  deja de verlos.
+                </p>
+              </div>
+              <DialogFooter>
+                <Button
+                  variant="outline"
+                  className="rounded-button"
+                  onClick={() => setTransferring(null)}
+                  disabled={transferSaving}
+                >
+                  Cancelar
+                </Button>
+                <Button
+                  className="rounded-button"
+                  onClick={handleTransfer}
+                  disabled={transferSaving || !transferEmail.trim()}
+                >
+                  {transferSaving ? 'Transfiriendo...' : 'Transferir'}
+                </Button>
+              </DialogFooter>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
     </AdminRoute>
   );
 };
@@ -960,7 +1055,7 @@ function MetricTile({
     </>
   );
   const className = cn(
-    'flex w-full items-center gap-3 rounded-card border bg-surface p-3 text-left shadow-card',
+    'flex min-w-[150px] flex-none items-center gap-3 rounded-card border bg-surface p-3 text-left shadow-card',
     active ? 'border-primary ring-2 ring-primary/10' : 'border-line',
     onClick && 'transition-colors hover:border-primary/40 hover:bg-primaryLight/20'
   );

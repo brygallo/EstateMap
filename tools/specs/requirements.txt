@@ -1,0 +1,4 @@
+# Dev-time only. Installed into .venv-specs by scripts/specs.sh, never into the
+# backend image: these exist for the spec gate, not for serving requests.
+PyYAML>=6.0
+jsonschema>=4.20
