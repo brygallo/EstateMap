@@ -4,10 +4,12 @@ import { useCallback, useEffect, useMemo, useState, useRef } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import dynamic from 'next/dynamic';
 import { Loader2, SlidersHorizontal, X } from 'lucide-react';
-import { motion, useDragControls } from 'motion/react';
+import { motion, useDragControls, useMotionValue, animate } from 'motion/react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/lib/auth-context';
 import { useGeolocation } from '@/hooks/useGeolocation';
+import { useIsMobile } from '@/hooks/useMediaQuery';
+import { haptic } from '@/lib/haptics';
 import { usePropertyFilters } from '@/hooks/usePropertyFilters';
 import { trackEvent } from '@/lib/analytics';
 import { flyToProperty } from '@/lib/map-navigation';
@@ -23,7 +25,7 @@ const MainMap = dynamic(() => import('@/components/maps/MapLibreMap'), {
   loading: () => (
     <div className="relative h-full w-full overflow-hidden bg-muted">
       {/* Trama tenue tipo mapa para que el hueco no se sienta vacío mientras
-          carga Leaflet. */}
+          carga MapLibre. */}
       <div
         className="absolute inset-0 opacity-40"
         style={{
@@ -45,6 +47,44 @@ const MainMap = dynamic(() => import('@/components/maps/MapLibreMap'), {
 // Centro de Ecuador para mostrar el país completo al iniciar.
 const DEFAULT_CENTER: [number, number] = [-1.5, -78.5];
 
+type DrawerSnap = 'closed' | 'half' | 'full';
+
+/** Where the drawer sits before it has been measured — safely off screen. */
+const DRAWER_OFFSCREEN = 2000;
+/**
+ * Fraction of the drawer's own height that stays below the fold at `half`.
+ * 0.56 leaves the filter bar, the result count and roughly two cards visible,
+ * which is the smallest slice that is still worth opening.
+ */
+const HALF_HIDDEN_RATIO = 0.56;
+
+/** Resting offsets in px, measured from the fully open position. */
+const snapOffsetsFor = (height: number): Record<DrawerSnap, number> => ({
+  full: 0,
+  half: Math.round(height * HALF_HIDDEN_RATIO),
+  closed: height,
+});
+
+/**
+ * Picks the snap a released drag should settle into.
+ *
+ * Velocity is checked before position: a deliberate flick should throw the
+ * sheet past the neighbouring detent, the way a native sheet does, rather than
+ * snapping back because the finger did not travel far enough.
+ */
+const resolveSnap = (offset: number, velocity: number, height: number, from: DrawerSnap): DrawerSnap => {
+  const order: DrawerSnap[] = ['full', 'half', 'closed'];
+  if (Math.abs(velocity) > 550) {
+    const index = order.indexOf(from);
+    const next = velocity > 0 ? index + 1 : index - 1;
+    return order[Math.min(Math.max(next, 0), order.length - 1)];
+  }
+  const offsets = snapOffsetsFor(height);
+  return order.reduce((best, snap) =>
+    Math.abs(offsets[snap] - offset) < Math.abs(offsets[best] - offset) ? snap : best
+  , from);
+};
+
 // Bounds win over centre+zoom, always. The previous order preferred the
 // fallback whenever its zoom was >= 11.5, which was every city jump: the camera
 // went to the canton's nominal centre at a fixed zoom and could land on empty
@@ -54,7 +94,7 @@ const fitMapToBounds = (map: any, bounds?: MapBounds, fallback?: { lat: number; 
   if (!map) return;
   if (bounds) {
     const samePoint = Math.abs(bounds.west - bounds.east) < 0.0001 && Math.abs(bounds.south - bounds.north) < 0.0001;
-    if (!samePoint && typeof map.fitBounds === 'function' && typeof map.flyToBounds !== 'function') {
+    if (!samePoint) {
       map.fitBounds(
         [
           [bounds.west, bounds.south],
@@ -64,23 +104,9 @@ const fitMapToBounds = (map: any, bounds?: MapBounds, fallback?: { lat: number; 
       );
       return;
     }
-    if (!samePoint && typeof map.flyToBounds === 'function') {
-      map.flyToBounds(
-        [
-          [bounds.south, bounds.west],
-          [bounds.north, bounds.east],
-        ],
-        { padding: [60, 60], maxZoom: fallback?.zoom ?? 13, duration: 0.72 }
-      );
-      return;
-    }
   }
   if (!fallback) return;
-  if (typeof map.fitBounds === 'function' && typeof map.flyToBounds !== 'function') {
-    map.flyTo({ center: [fallback.lng, fallback.lat], zoom: fallback.zoom, duration: 700 });
-  } else {
-    map.flyTo([fallback.lat, fallback.lng], fallback.zoom, { duration: 0.7 });
-  }
+  map.flyTo({ center: [fallback.lng, fallback.lat], zoom: fallback.zoom, duration: 700 });
 };
 
 const MapPage = () => {
@@ -90,12 +116,27 @@ const MapPage = () => {
 
   const mapRef = useRef<any>(null);
   const drawerDragControls = useDragControls();
+  // Ignore the click synthesized right after a pointer drag of the handle, so
+  // dragging the drawer does not double as an accidental tap-to-close.
+  const drawerDraggingRef = useRef(false);
 
   const [bounds, setBounds] = useState<MapBounds | null>(null);
   const [mapZoom, setMapZoom] = useState(7);
-  const [sidebarOpen, setSidebarOpen] = useState(false);
   const [selectedProperty, setSelectedProperty] = useState<Property | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+
+  const isMobile = useIsMobile();
+  const drawerRef = useRef<HTMLDivElement>(null);
+  const drawerY = useMotionValue(DRAWER_OFFSCREEN);
+  // Where the drawer rests. `half` is the state a map app spends most of its
+  // time in — enough list to scan, enough map to keep your bearings. Going
+  // straight from hidden to covering the map, as the old boolean did, meant
+  // every glance at the results lost the pin you were looking at.
+  const [drawerSnap, setDrawerSnap] = useState<DrawerSnap>('closed');
+  const sidebarOpen = drawerSnap !== 'closed';
+  // Tracks a body-initiated drag so a downward flick on the list can hand over
+  // to the sheet without the list scrolling at the same time.
+  const bodyDragRef = useRef<{ y: number; scrollTop: number; handedOver: boolean } | null>(null);
 
   const {
     filters,
@@ -248,7 +289,10 @@ const MapPage = () => {
     flyToProperty(mapRef.current, property);
     setSelectedProperty(property);
     setIsModalOpen(false);
-    if (window.innerWidth < 1024) setSidebarOpen(false);
+    // "Show me this one on the map" — get out of the map's way, but keep the
+    // list within a thumb's reach rather than dismissing it outright.
+    if (isMobile) setDrawerSnap('closed');
+    haptic('selection');
   };
 
   const handleSidebarPropertyOpen = (property: Property) => {
@@ -263,11 +307,14 @@ const MapPage = () => {
     flyToProperty(mapRef.current, property);
     setSelectedProperty(property);
     setIsModalOpen(true);
-    if (window.innerWidth < 1024) setSidebarOpen(false);
+    if (isMobile) setDrawerSnap('closed');
   };
 
   // Clic en el polígono/marcador: mueve el mapa y abre el modal.
   const handlePolygonClick = async (property: Property) => {
+    // Pins are small and the finger covers them; the tick is the only immediate
+    // confirmation that the right one was hit, before the camera even moves.
+    haptic('selection');
     trackEvent('property_pin_clicked', {
       property_id: property.id,
       city: property.city,
@@ -302,9 +349,7 @@ const MapPage = () => {
       });
     }
     if (selectedProperty) flyToProperty(mapRef.current, selectedProperty);
-    if (typeof window !== 'undefined' && window.innerWidth < 1024) {
-      setIsModalOpen(false);
-    }
+    if (isMobile) setIsModalOpen(false);
   };
 
   const handleCloseModal = () => {
@@ -327,6 +372,98 @@ const MapPage = () => {
     }
   };
 
+  // Cierre del drawer de filtros con Escape (teclado / lectores de pantalla).
+  // Escape steps down one detent rather than closing outright, matching what
+  // dragging down does.
+  useEffect(() => {
+    if (!sidebarOpen) return;
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setDrawerSnap((current) => (current === 'full' ? 'half' : 'closed'));
+    };
+    document.addEventListener('keydown', onKeyDown);
+    return () => document.removeEventListener('keydown', onKeyDown);
+  }, [sidebarOpen]);
+
+  // Animate to the resting offset whenever the detent changes. Measured on each
+  // run rather than cached: the drawer's height follows its content, and the
+  // result count changes it.
+  // Runs on desktop too, and deliberately so: `useMediaQuery` reports `false`
+  // during hydration, so a desktop-only branch here would park the drawer at
+  // y=0 for one frame — on a phone that is the drawer flashing fully open over
+  // the map. The `.property-sidebar-drawer` rule below neutralises the
+  // transform at lg, which is the only place desktop needs to differ.
+  useEffect(() => {
+    const height = drawerRef.current?.offsetHeight || window.innerHeight;
+    const controls = animate(drawerY, snapOffsetsFor(height)[drawerSnap], {
+      type: 'spring',
+      stiffness: 420,
+      damping: 38,
+    });
+    return () => controls.stop();
+  }, [drawerSnap, drawerY]);
+
+  // Rotating the device changes the drawer's height, which would strand it
+  // mid-air at an offset computed for the old one.
+  useEffect(() => {
+    if (!isMobile) return;
+    const onResize = () => {
+      const height = drawerRef.current?.offsetHeight || window.innerHeight;
+      drawerY.set(snapOffsetsFor(height)[drawerSnap]);
+    };
+    window.addEventListener('resize', onResize);
+    window.addEventListener('orientationchange', onResize);
+    return () => {
+      window.removeEventListener('resize', onResize);
+      window.removeEventListener('orientationchange', onResize);
+    };
+  }, [drawerSnap, drawerY, isMobile]);
+
+  const settleDrawer = useCallback(
+    (offset: number, velocity: number) => {
+      const height = drawerRef.current?.offsetHeight || window.innerHeight;
+      const target = resolveSnap(offset, velocity, height, drawerSnap);
+      if (target !== drawerSnap) haptic('impact');
+      setDrawerSnap(target);
+      // Same detent: the spring in the effect above will not re-run, so nudge
+      // the sheet back to rest here.
+      if (target === drawerSnap) {
+        animate(drawerY, snapOffsetsFor(height)[target], { type: 'spring', stiffness: 420, damping: 38 });
+      }
+    },
+    [drawerSnap, drawerY]
+  );
+
+  /**
+   * Hands a downward drag on the list over to the sheet.
+   *
+   * A native sheet does not require you to find the little grabber: once the
+   * list is scrolled to the top, pulling down moves the sheet instead. The
+   * handover happens on move, not on down, so an upward flick still scrolls.
+   */
+  const handleBodyPointerDown = (event: React.PointerEvent<HTMLDivElement>) => {
+    if (!isMobile || event.pointerType === 'mouse') return;
+    bodyDragRef.current = {
+      y: event.clientY,
+      scrollTop: drawerRef.current?.scrollTop ?? 0,
+      handedOver: false,
+    };
+  };
+
+  const handleBodyPointerMove = (event: React.PointerEvent<HTMLDivElement>) => {
+    const start = bodyDragRef.current;
+    if (!start || start.handedOver) return;
+    const deltaY = event.clientY - start.y;
+    // Only downward, only from the top of the list, and only once the gesture
+    // is unambiguous — otherwise a slow scroll would keep stealing itself.
+    if (deltaY < 12 || start.scrollTop > 2) return;
+    start.handedOver = true;
+    drawerDragControls.start(event);
+  };
+
+  const handleBodyPointerEnd = () => {
+    bodyDragRef.current = null;
+  };
+
   useEffect(() => {
     if (!mapRef.current) return;
     const first = window.setTimeout(() => mapRef.current?.invalidateSize?.(), 80);
@@ -340,7 +477,7 @@ const MapPage = () => {
   // En móvil, el drawer y el detalle deben tener su propio desplazamiento sin
   // transmitir el gesto a la página ni al mapa que queda debajo.
   useEffect(() => {
-    if ((!sidebarOpen && !isModalOpen) || window.innerWidth >= 1024) return;
+    if ((!sidebarOpen && !isModalOpen) || !isMobile) return;
 
     const previousOverflow = document.body.style.overflow;
     const previousOverscrollBehavior = document.body.style.overscrollBehavior;
@@ -351,15 +488,22 @@ const MapPage = () => {
       document.body.style.overflow = previousOverflow;
       document.body.style.overscrollBehavior = previousOverscrollBehavior;
     };
-  }, [isModalOpen, sidebarOpen]);
+  }, [isMobile, isModalOpen, sidebarOpen]);
 
   return (
-    <div className="relative h-[calc(100dvh-var(--app-header-height))] overflow-hidden lg:flex">
+    // Subtracts the mobile tab bar as well as the header, so the map fills the
+    // gap between them exactly instead of pushing the page into a scroll.
+    <div className="relative h-[calc(100dvh-var(--app-header-height)-var(--mobile-tabbar-height)-env(safe-area-inset-bottom))] overflow-hidden lg:h-[calc(100dvh-var(--app-header-height))] lg:flex">
       {/* Botón para abrir filtros y propiedades en móvil (con conteo explícito) */}
       {!sidebarOpen && !selectedProperty && !isModalOpen && (
         <Button
-          onClick={() => setSidebarOpen(true)}
-          className="fixed bottom-[max(1rem,env(safe-area-inset-bottom))] left-1/2 z-nav h-12 -translate-x-1/2 gap-2 rounded-full px-5 shadow-cardHover lg:hidden [&_svg]:size-5"
+          // Opens to `half`, not `full`: the point of tapping the count is to
+          // see the results without losing the map they came from.
+          onClick={() => {
+            setDrawerSnap('half');
+            haptic('impact');
+          }}
+          className="fixed bottom-[calc(var(--mobile-tabbar-height)+env(safe-area-inset-bottom)+0.75rem)] left-1/2 z-nav h-12 -translate-x-1/2 gap-2 rounded-full px-5 shadow-cardHover lg:bottom-4 lg:hidden [&_svg]:size-5"
           aria-label="Abrir filtros y propiedades"
         >
           <SlidersHorizontal strokeWidth={2} />
@@ -371,32 +515,44 @@ const MapPage = () => {
         </Button>
       )}
 
-      {/* Fondo oscuro en móvil */}
-      {sidebarOpen && (
+      {/* Fondo oscuro en móvil: solo cuando el drawer tapa el mapa. En `half`
+          el mapa sigue siendo el contexto activo y oscurecerlo lo contradice. */}
+      {drawerSnap === 'full' && (
         <div
-          className="fixed inset-x-0 bottom-0 top-[var(--app-header-height)] z-30 touch-none bg-black/50 lg:hidden"
+          className="fixed inset-x-0 bottom-0 top-[var(--app-header-height)] z-backdrop touch-none bg-black/50 lg:hidden"
           aria-hidden
-          onPointerDown={(event) => event.preventDefault()}
+          onClick={() => setDrawerSnap('half')}
         />
       )}
 
       {/* Panel lateral en desktop; drawer inferior en móvil (más natural sobre el mapa) */}
       <motion.div
-        initial={false}
-        animate={{ y: sidebarOpen ? 0 : '100%' }}
-        transition={{ type: 'spring', stiffness: 420, damping: 38 }}
+        ref={drawerRef}
+        style={{ y: drawerY }}
         drag="y"
         dragControls={drawerDragControls}
         dragListener={false}
-        dragConstraints={{ top: 0, bottom: 600 }}
+        // `top: 0` pins the fully open position; the bottom bound is generous
+        // so a closing flick is not fought by the constraint on the way out.
+        dragConstraints={{ top: 0, bottom: DRAWER_OFFSCREEN }}
         dragElastic={0.04}
-        dragSnapToOrigin
-        onDragEnd={(_, info) => {
-          if (info.offset.y > 100 || info.velocity.y > 500) setSidebarOpen(false);
+        onDragStart={() => {
+          drawerDraggingRef.current = true;
         }}
+        onDragEnd={(_, info) => {
+          window.setTimeout(() => {
+            drawerDraggingRef.current = false;
+          }, 0);
+          bodyDragRef.current = null;
+          settleDrawer(drawerY.get(), info.velocity.y);
+        }}
+        onPointerDown={handleBodyPointerDown}
+        onPointerMove={handleBodyPointerMove}
+        onPointerUp={handleBodyPointerEnd}
+        onPointerCancel={handleBodyPointerEnd}
         className={`
         property-sidebar-drawer
-        fixed lg:relative z-40 lg:z-0
+        fixed lg:relative z-panel lg:z-0
         bg-white text-textPrimary
         overscroll-contain overflow-y-auto
         inset-x-0 bottom-0 max-h-[85dvh] rounded-t-2xl shadow-cardHover
@@ -404,14 +560,23 @@ const MapPage = () => {
         lg:rounded-none lg:border-r lg:border-line lg:shadow-none
       `}
       >
-        {/* Asa de arrastre (solo móvil) */}
-        <div
-          className="flex touch-none cursor-grab justify-center bg-white py-3 active:cursor-grabbing lg:hidden"
+        {/* Asa de arrastre (solo móvil). Tocarla alterna entre las dos alturas
+            abiertas, que es lo que un grabber hace en iOS; para cerrar están el
+            gesto hacia abajo y la X del panel. */}
+        <button
+          type="button"
+          className="sticky top-0 z-10 flex w-full touch-none cursor-grab justify-center bg-white py-3 active:cursor-grabbing lg:hidden"
           onPointerDown={(event) => drawerDragControls.start(event)}
-          aria-label="Desliza hacia abajo para cerrar"
+          onClick={() => {
+            if (drawerDraggingRef.current) return;
+            setDrawerSnap((current) => (current === 'full' ? 'half' : 'full'));
+            haptic('impact');
+          }}
+          aria-label={drawerSnap === 'full' ? 'Reducir el panel' : 'Ampliar el panel'}
+          aria-expanded={drawerSnap === 'full'}
         >
           <span className="h-1.5 w-10 rounded-full bg-line" aria-hidden />
-        </div>
+        </button>
 
         <PropertySidebar
           filters={filters}
@@ -420,6 +585,7 @@ const MapPage = () => {
           hasActiveFilters={hasActiveFilters}
           onFilterChange={handleFilterChange}
           onClearFilters={clearFilters}
+          onClose={() => setDrawerSnap('closed')}
           visibleProperties={sidebarProperties}
           cityGroups={mapCityGroups}
           mapContext={mapContext}
@@ -478,7 +644,7 @@ const MapPage = () => {
       </div>
 
       {selectedProperty && !isModalOpen && !sidebarOpen && (
-        <div className="fixed inset-x-3 bottom-3 z-panel lg:hidden">
+        <div className="fixed inset-x-3 bottom-[calc(var(--mobile-tabbar-height)+env(safe-area-inset-bottom)+0.75rem)] z-panel lg:hidden">
           <div className="relative rounded-card border border-line bg-white p-2 shadow-cardHover">
             <button
               type="button"
@@ -517,17 +683,19 @@ const MapPage = () => {
       />
 
       <style>{`
-        .property-polygon {
-          transition:
-            fill-opacity 240ms cubic-bezier(0.2, 0, 0, 1),
-            stroke-opacity 240ms cubic-bezier(0.2, 0, 0, 1),
-            stroke-width 180ms cubic-bezier(0.2, 0, 0, 1) !important;
+        @media (prefers-reduced-motion: no-preference) {
+          .property-polygon {
+            transition:
+              fill-opacity 240ms cubic-bezier(0.2, 0, 0, 1),
+              stroke-opacity 240ms cubic-bezier(0.2, 0, 0, 1),
+              stroke-width 180ms cubic-bezier(0.2, 0, 0, 1) !important;
+          }
+          @keyframes fade-in {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+          }
+          .animate-fade-in { animation: fade-in 0.3s ease-out; }
         }
-        @keyframes fade-in {
-          from { opacity: 0; transform: translateY(-10px); }
-          to { opacity: 1; transform: translateY(0); }
-        }
-        .animate-fade-in { animation: fade-in 0.3s ease-out; }
       `}</style>
     </div>
   );

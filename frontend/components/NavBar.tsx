@@ -7,6 +7,8 @@ import { useAuth } from '@/lib/auth-context';
 import { toast } from 'sonner';
 import { Suspense, useState } from 'react';
 import {
+  BarChart3,
+  BookOpen,
   CircleHelp,
   FolderKanban,
   LayoutDashboard,
@@ -56,8 +58,15 @@ const NavBar = () => {
   };
 
   const initials = (user?.username || 'U').slice(0, 2).toUpperCase();
+  const isActive = (href: string) =>
+    pathname === href || (href !== '/' && pathname?.startsWith(href + '/'));
   const navLinkClass = (href: string) =>
-    `aents-nav-link ${pathname === href || (href !== '/' && pathname?.startsWith(href + '/')) ? 'is-active' : ''}`;
+    `aents-nav-link ${isActive(href) ? 'is-active' : ''}`;
+  // Mobile sheet links: same pathname logic as desktop, rendered as a
+  // highlighted ghost button instead of the underlined desktop style.
+  const mobileNavClass = (href: string) =>
+    `justify-start ${isActive(href) ? 'bg-primaryLight/50 font-semibold text-primary hover:bg-primaryLight/50 hover:text-primary' : ''}`;
+  const mobileAriaCurrent = (href: string) => (isActive(href) ? ('page' as const) : undefined);
 
   return (
     <nav className="aents-site-header fixed inset-x-0 top-0 z-nav h-[var(--app-header-height)]">
@@ -98,6 +107,20 @@ const NavBar = () => {
                 <FolderKanban className="h-4 w-4" />
                 Mis propiedades
               </Link>
+              {/* Section links only at lg+ so the md bar (with CTA + avatar) stays uncramped. */}
+              <div className="hidden items-center gap-1 lg:flex">
+                <Link
+                  href="/estadisticas-inmobiliarias"
+                  className={navLinkClass('/estadisticas-inmobiliarias')}
+                >
+                  <BarChart3 className="h-4 w-4" />
+                  Estadísticas
+                </Link>
+                <Link href="/guias" className={navLinkClass('/guias')}>
+                  <BookOpen className="h-4 w-4" />
+                  Guías
+                </Link>
+              </div>
               <Link href="/ayuda" className={navLinkClass('/ayuda')}>
                 <CircleHelp className="h-4 w-4" />
                 Ayuda
@@ -156,6 +179,20 @@ const NavBar = () => {
                 <MapPinned className="h-4 w-4" />
                 Explorar
               </Link>
+              {/* Section links only at lg+ to keep the md guest bar uncramped. */}
+              <div className="hidden items-center gap-1 lg:flex">
+                <Link
+                  href="/estadisticas-inmobiliarias"
+                  className={navLinkClass('/estadisticas-inmobiliarias')}
+                >
+                  <BarChart3 className="h-4 w-4" />
+                  Estadísticas
+                </Link>
+                <Link href="/guias" className={navLinkClass('/guias')}>
+                  <BookOpen className="h-4 w-4" />
+                  Guías
+                </Link>
+              </div>
               <Link href="/ayuda" className={navLinkClass('/ayuda')}>
                 <CircleHelp className="h-4 w-4" />
                 Ayuda
@@ -231,39 +268,68 @@ const NavBar = () => {
                     </span>
                   </div>
 
-                  <Button asChild variant="ghost" className="justify-start" onClick={closeMobileMenu}>
-                    <Link href="/propiedades">
+                  <Button asChild variant="ghost" className={mobileNavClass('/propiedades')} onClick={closeMobileMenu}>
+                    <Link href="/propiedades" aria-current={mobileAriaCurrent('/propiedades')}>
                       <MapPinned className="h-4 w-4" />
                       Explorar propiedades
                     </Link>
                   </Button>
-                  <Button asChild variant="ghost" className="justify-start" onClick={closeMobileMenu}>
-                    <Link href="/mis-propiedades">
+                  <Button asChild variant="ghost" className={mobileNavClass('/mis-propiedades')} onClick={closeMobileMenu}>
+                    <Link href="/mis-propiedades" aria-current={mobileAriaCurrent('/mis-propiedades')}>
                       <FolderKanban className="h-4 w-4" />
                       Mis Propiedades
                     </Link>
                   </Button>
-                  <Button asChild variant="ghost" className="justify-start" onClick={closeMobileMenu}>
-                    <Link href="/publicar-propiedad" onClick={() => trackPublishClick('navbar_mobile_auth_menu')}>
+                  <Button
+                    asChild
+                    variant="ghost"
+                    className={mobileNavClass('/estadisticas-inmobiliarias')}
+                    onClick={closeMobileMenu}
+                  >
+                    <Link
+                      href="/estadisticas-inmobiliarias"
+                      aria-current={mobileAriaCurrent('/estadisticas-inmobiliarias')}
+                    >
+                      <BarChart3 className="h-4 w-4" />
+                      Estadísticas
+                    </Link>
+                  </Button>
+                  <Button asChild variant="ghost" className={mobileNavClass('/guias')} onClick={closeMobileMenu}>
+                    <Link href="/guias" aria-current={mobileAriaCurrent('/guias')}>
+                      <BookOpen className="h-4 w-4" />
+                      Guías
+                    </Link>
+                  </Button>
+                  <Button asChild variant="ghost" className={mobileNavClass('/publicar-propiedad')} onClick={closeMobileMenu}>
+                    <Link
+                      href="/publicar-propiedad"
+                      aria-current={mobileAriaCurrent('/publicar-propiedad')}
+                      onClick={() => trackPublishClick('navbar_mobile_auth_menu')}
+                    >
                       <Plus className="h-4 w-4" />
                       Nueva Propiedad
                     </Link>
                   </Button>
-                  <Button asChild variant="ghost" className="justify-start" onClick={closeMobileMenu}>
-                    <Link href="/cuenta">
+                  <Button asChild variant="ghost" className={mobileNavClass('/cuenta')} onClick={closeMobileMenu}>
+                    <Link href="/cuenta" aria-current={mobileAriaCurrent('/cuenta')}>
                       <UserIcon className="h-4 w-4" />
                       Mi cuenta
                     </Link>
                   </Button>
-                  <Button asChild variant="ghost" className="justify-start" onClick={closeMobileMenu}>
-                    <Link href="/ayuda">
+                  <Button asChild variant="ghost" className={mobileNavClass('/ayuda')} onClick={closeMobileMenu}>
+                    <Link href="/ayuda" aria-current={mobileAriaCurrent('/ayuda')}>
                       <CircleHelp className="h-4 w-4" />
                       Ayuda
                     </Link>
                   </Button>
                   {user?.is_staff && (
-                    <Button asChild variant="ghost" className="justify-start text-warning" onClick={closeMobileMenu}>
-                      <Link href="/admin">
+                    <Button
+                      asChild
+                      variant="ghost"
+                      className={`text-warning ${mobileNavClass('/admin')}`}
+                      onClick={closeMobileMenu}
+                    >
+                      <Link href="/admin" aria-current={mobileAriaCurrent('/admin')}>
                         <LayoutDashboard className="h-4 w-4" />
                         Panel Admin
                       </Link>
@@ -283,20 +349,40 @@ const NavBar = () => {
                 </>
               ) : (
                 <>
-                  <Button asChild variant="ghost" className="justify-start" onClick={closeMobileMenu}>
-                    <Link href="/propiedades">
+                  <Button asChild variant="ghost" className={mobileNavClass('/propiedades')} onClick={closeMobileMenu}>
+                    <Link href="/propiedades" aria-current={mobileAriaCurrent('/propiedades')}>
                       <MapPinned className="h-4 w-4" />
                       Explorar propiedades
                     </Link>
                   </Button>
-                  <Button asChild variant="ghost" className="justify-start" onClick={closeMobileMenu}>
-                    <Link href="/iniciar-sesion">
+                  <Button
+                    asChild
+                    variant="ghost"
+                    className={mobileNavClass('/estadisticas-inmobiliarias')}
+                    onClick={closeMobileMenu}
+                  >
+                    <Link
+                      href="/estadisticas-inmobiliarias"
+                      aria-current={mobileAriaCurrent('/estadisticas-inmobiliarias')}
+                    >
+                      <BarChart3 className="h-4 w-4" />
+                      Estadísticas
+                    </Link>
+                  </Button>
+                  <Button asChild variant="ghost" className={mobileNavClass('/guias')} onClick={closeMobileMenu}>
+                    <Link href="/guias" aria-current={mobileAriaCurrent('/guias')}>
+                      <BookOpen className="h-4 w-4" />
+                      Guías
+                    </Link>
+                  </Button>
+                  <Button asChild variant="ghost" className={mobileNavClass('/iniciar-sesion')} onClick={closeMobileMenu}>
+                    <Link href="/iniciar-sesion" aria-current={mobileAriaCurrent('/iniciar-sesion')}>
                       <UserIcon className="h-4 w-4" />
                       Iniciar sesión
                     </Link>
                   </Button>
-                  <Button asChild variant="ghost" className="justify-start" onClick={closeMobileMenu}>
-                    <Link href="/ayuda">
+                  <Button asChild variant="ghost" className={mobileNavClass('/ayuda')} onClick={closeMobileMenu}>
+                    <Link href="/ayuda" aria-current={mobileAriaCurrent('/ayuda')}>
                       <CircleHelp className="h-4 w-4" />
                       Ayuda
                     </Link>

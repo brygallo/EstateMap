@@ -1,6 +1,7 @@
 'use client';
 
 import { createContext, useContext, useState, useEffect, ReactNode, useCallback, useRef } from 'react';
+import { getPublicApiUrl } from '@/lib/api-url';
 
 interface AuthUserInfo {
   id?: string;
@@ -20,7 +21,7 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8010/api';
+const API_URL = getPublicApiUrl();
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [token, setToken] = useState<string | null>(null);

@@ -22,13 +22,17 @@ import {
   slugify,
   SITE_URL,
   getProperty,
-  getPropertyTypeLabel,
-  getStatusLabel,
-  formatPrice,
-  formatArea,
   PROPERTY_SCHEMA_TYPE,
   getNearbyProperties,
 } from '@/lib/properties';
+import {
+  getPropertyTypeLabel,
+  getStatusLabel,
+  getStatusOverlayClass,
+  formatPrice,
+  formatArea,
+} from '@/lib/property-labels';
+import { formatDistance } from '@/lib/geo';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import AnimatedNumber from '@/components/ui/AnimatedNumber';
@@ -41,6 +45,7 @@ import BrandAtmosphere from '@/components/aents/BrandAtmosphere';
 import RevealableDescription from '@/components/RevealableDescription';
 import { normalizeEcuadorPhone } from '@/lib/phone';
 import { PhoneReveal, TrackedContactLink } from '@/components/PropertyContactActions';
+import PropertyPageActions from '@/components/PropertyPageActions';
 
 /** Ficha de dato de la propiedad: icono lucide + valor en mono + etiqueta. */
 function StatTile({
@@ -61,16 +66,6 @@ function StatTile({
       <div className="text-xs font-medium text-textSecondary">{label}</div>
     </div>
   );
-}
-
-/** Clase de badge sólido por estado, para la sobreimpresión sobre la foto. */
-function statusOverlayClass(status: string): string {
-  const map: Record<string, string> = {
-    for_sale: 'bg-primary text-white',
-    for_rent: 'bg-success text-white',
-    inactive: 'bg-slate-500 text-white',
-  };
-  return map[status] || 'bg-primary text-white';
 }
 
 interface PropertyPageProps {
@@ -399,7 +394,10 @@ export default async function PropertyPage({ params }: PropertyPageProps) {
       />
 
       {/* Full property content — indexable and shareable */}
-      <div className="aents-page-shell relative min-h-screen overflow-hidden bg-background pb-16">
+      {/* overflow-x-clip (not hidden) trims the full-bleed map section's
+          scrollbar-width overhang without creating a scroll container, so the
+          sticky contact card keeps tracking the document scroll. */}
+      <div className="aents-page-shell relative min-h-[calc(100dvh-var(--app-header-height))] overflow-x-clip bg-background pb-16">
         <BrandAtmosphere className="opacity-45" />
         <div className="relative mx-auto max-w-6xl px-4 pt-8">
           {/* Breadcrumb */}
@@ -438,7 +436,7 @@ export default async function PropertyPage({ params }: PropertyPageProps) {
               title={property.title || 'Propiedad'}
               statusLabel={statusLabel}
               propertyTypeLabel={propertyTypeLabel}
-              statusClassName={statusOverlayClass(property.status)}
+              statusClassName={getStatusOverlayClass(property.status)}
             />
           ) : (
             <div className="flex aspect-[16/7] w-full items-center justify-center rounded-hero border border-line bg-muted text-textSecondary">
@@ -456,7 +454,7 @@ export default async function PropertyPage({ params }: PropertyPageProps) {
                   <Badge className="rounded-full bg-primaryLight text-primary hover:bg-primaryLight">
                     {propertyTypeLabel}
                   </Badge>
-                  <Badge className={`rounded-full border-transparent ${statusOverlayClass(property.status)}`}>
+                  <Badge className={`rounded-full border-transparent ${getStatusOverlayClass(property.status)}`}>
                     {statusLabel}
                   </Badge>
                   {property.is_negotiable && (
@@ -561,7 +559,7 @@ export default async function PropertyPage({ params }: PropertyPageProps) {
               <h2 className="mb-4 text-lg font-semibold text-textPrimary">Características</h2>
               <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
                 {Number.isFinite(areaValue) && (
-                  <StatTile icon={Ruler} value={Math.round(areaValue)} label="m² Total" />
+                  <StatTile icon={Ruler} value={Math.round(areaValue)} label="m² total" />
                 )}
                 {rooms > 0 && (
                   <StatTile icon={BedDouble} value={rooms} label="Habitaciones" />
@@ -570,7 +568,7 @@ export default async function PropertyPage({ params }: PropertyPageProps) {
                   <StatTile icon={Bath} value={bathrooms} label="Baños" />
                 )}
                 {parkingSpaces > 0 && (
-                  <StatTile icon={Car} value={parkingSpaces} label="Parqueaderos" />
+                  <StatTile icon={Car} value={parkingSpaces} label="Parqueos" />
                 )}
               </div>
 
@@ -719,7 +717,7 @@ export default async function PropertyPage({ params }: PropertyPageProps) {
 
                   <Link
                     href={mapUrl}
-                    className="inline-flex w-full items-center justify-center gap-2 rounded-button bg-primary px-5 py-3 text-base font-semibold text-white transition-all duration-200 hover:scale-[1.02] hover:bg-primaryHover focus:outline-none focus-visible:ring-4 focus-visible:ring-primary/25"
+                    className="inline-flex w-full items-center justify-center gap-2 rounded-button bg-primary px-5 py-3 text-base font-semibold text-white shadow-card transition-colors duration-200 hover:bg-primaryHover focus:outline-none focus-visible:ring-4 focus-visible:ring-primary/25"
                   >
                     Ver en el mapa interactivo
                     <ArrowRight className="h-5 w-5" strokeWidth={2} aria-hidden />
@@ -790,11 +788,7 @@ export default async function PropertyPage({ params }: PropertyPageProps) {
                     key={nearby.id}
                     property={nearby}
                     href={`/propiedad/${nearby.id}`}
-                    distanceLabel={
-                      nearby.distanceKm < 1
-                        ? `${Math.max(10, Math.round(nearby.distanceKm * 1000))} m de distancia`
-                        : `${nearby.distanceKm.toFixed(1)} km de distancia`
-                    }
+                    distanceLabel={`${formatDistance(nearby.distanceKm)} de distancia`}
                   />
                 ))}
               </div>
@@ -802,6 +796,22 @@ export default async function PropertyPage({ params }: PropertyPageProps) {
           )}
         </div>
       </div>
+
+      {/* Contacto siempre a mano en móvil: la tarjeta sticky solo existe en
+          desktop, así que en el teléfono había que recorrer toda la ficha para
+          encontrar el botón de WhatsApp. */}
+      <PropertyPageActions
+        {...contactTrackingProps}
+        whatsappUrl={contactPhone ? waLink : ''}
+        phone={contactPhone ? waPhone : ''}
+        sourceUrl={sourceUrl}
+        sourceAgency={sourceAgency}
+        shareUrl={propertyUrl}
+        shareTitle={property.title || 'Propiedad en Geo Propiedades'}
+        shareDescription={[priceFormatted, [property.city, property.province].filter(Boolean).join(', ')]
+          .filter(Boolean)
+          .join(' • ')}
+      />
 
       {/* Rebote discreto del CTA de WhatsApp al pasar el cursor */}
       <style>{`

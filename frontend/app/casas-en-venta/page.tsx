@@ -32,6 +32,7 @@ export default async function CasasEnVentaPage() {
       properties={properties}
       pageHref={PATH}
       mapHref="/?type=house&status=for_sale"
+      breadcrumbs={[{ label: 'Propiedades', href: '/propiedades' }]}
       relatedLinks={TYPE_LINKS.filter((l) => l.href !== PATH)}
       cityLinks={cityLinks}
       emptyMessage="Aún no hay casas en venta publicadas. Explora otras propiedades en el mapa."

@@ -32,6 +32,7 @@ export default async function TerrenosEnVentaPage() {
       properties={properties}
       pageHref={PATH}
       mapHref="/?type=land&status=for_sale"
+      breadcrumbs={[{ label: 'Propiedades', href: '/propiedades' }]}
       relatedLinks={TYPE_LINKS.filter((l) => l.href !== PATH)}
       cityLinks={cityLinks}
       emptyMessage="Aún no hay terrenos en venta publicados. Explora otras propiedades en el mapa."

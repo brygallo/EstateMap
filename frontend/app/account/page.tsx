@@ -184,7 +184,7 @@ const AccountPage = () => {
   if (!token) return null;
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-[calc(100dvh-var(--app-header-height))] bg-background">
       <div className="mx-auto max-w-4xl space-y-10 px-4 py-12 md:py-16">
         <header>
           <p className="text-sm font-semibold text-primary">Cuenta</p>

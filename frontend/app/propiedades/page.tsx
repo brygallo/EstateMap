@@ -64,7 +64,7 @@ export default async function PropiedadesPage() {
         '@type': 'CollectionPage',
         name: 'Propiedades en Ecuador',
         description:
-          'Indice nacional de casas, departamentos, terrenos y locales comerciales en Ecuador con paginas por ciudad y busquedas locales.',
+          'Índice nacional de casas, departamentos, terrenos y locales comerciales en Ecuador con páginas por ciudad y búsquedas locales.',
         url: `${SITE_URL}/propiedades`,
         isPartOf: { '@id': `${SITE_URL}/#website` },
         publisher: { '@id': `${SITE_URL}/#organization` },
@@ -96,15 +96,15 @@ export default async function PropiedadesPage() {
             name: '¿Dónde buscar propiedades en Ecuador?',
             acceptedAnswer: {
               '@type': 'Answer',
-              text: `${SITE_NAME} organiza propiedades en Ecuador por ciudad, tipo de inmueble, operacion y ubicacion en mapa para comparar opciones reales del catalogo.`,
+              text: `${SITE_NAME} organiza propiedades en Ecuador por ciudad, tipo de inmueble, operación y ubicación en mapa para comparar opciones reales del catálogo.`,
             },
           },
           {
             '@type': 'Question',
-            name: '¿Las paginas locales se generan con inventario real?',
+            name: '¿Las páginas locales se generan con inventario real?',
             acceptedAnswer: {
               '@type': 'Answer',
-              text: 'Si. Las paginas por ciudad y combinaciones locales se publican a partir de propiedades disponibles en el catalogo, no de listas vacias.',
+              text: 'Sí. Las páginas por ciudad y combinaciones locales se publican a partir de propiedades disponibles en el catálogo, no de listas vacías.',
             },
           },
         ],
@@ -130,8 +130,8 @@ export default async function PropiedadesPage() {
             </h1>
             <p className="mt-4 max-w-3xl text-base leading-7 text-textSecondary">
               Explora casas, departamentos, terrenos y locales comerciales por ciudad,
-              tipo de propiedad y busquedas locales con inventario real. Todo apunta al
-              mapa para comparar ubicacion, precio y contacto directo.
+              tipo de propiedad y búsquedas locales con inventario real. Todo apunta al
+              mapa para comparar ubicación, precio y contacto directo.
             </p>
             <div className="mt-6 flex flex-wrap gap-3">
               <Link
@@ -164,8 +164,8 @@ export default async function PropiedadesPage() {
               </div>
             </div>
             <p className="mt-4 text-sm leading-6 text-textSecondary">
-              Las rutas locales se actualizan con el catalogo para evitar paginas vacias
-              y concentrar autoridad en busquedas que si tienen resultados.
+              Las rutas locales se actualizan con el catálogo para evitar páginas vacías
+              y concentrar autoridad en búsquedas que sí tienen resultados.
             </p>
           </aside>
         </div>
@@ -176,7 +176,7 @@ export default async function PropiedadesPage() {
           <div>
             <h2 className="text-2xl font-bold text-textPrimary">Buscar por tipo</h2>
             <p className="mt-1 text-sm text-textSecondary">
-              Accesos principales para las intenciones inmobiliarias mas comunes.
+              Accesos principales para las intenciones inmobiliarias más comunes.
             </p>
           </div>
         </div>
@@ -225,7 +225,7 @@ export default async function PropiedadesPage() {
                     Propiedades en {city.name}
                   </span>
                   <span className="mt-1 block text-sm text-textSecondary">
-                    {city.count} {city.count === 1 ? 'publicacion' : 'publicaciones'}
+                    {city.count} {city.count === 1 ? 'publicación' : 'publicaciones'}
                   </span>
                 </span>
                 <ArrowRight className="h-4 w-4 text-primary" aria-hidden />
@@ -237,7 +237,7 @@ export default async function PropiedadesPage() {
 
       {combos.length > 0 && (
         <section className="mx-auto max-w-7xl px-4 pb-12 sm:px-6 lg:px-8">
-          <h2 className="text-2xl font-bold text-textPrimary">Busquedas locales fuertes</h2>
+          <h2 className="text-2xl font-bold text-textPrimary">Búsquedas locales fuertes</h2>
           <p className="mt-1 text-sm text-textSecondary">
             Combinaciones creadas solo cuando hay suficientes propiedades reales.
           </p>

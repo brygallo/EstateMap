@@ -10,6 +10,7 @@ import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { trackEvent } from '@/lib/analytics';
+import { haptic } from '@/lib/haptics';
 import {
   Select,
   SelectContent,
@@ -24,6 +25,7 @@ import {
   AREA_MAX,
 } from '@/hooks/usePropertyFilters';
 import type { Owner, PropertyFilters, PropertyLocationGroup } from '@/lib/types';
+import { getPropertyTypeLabel, getStatusLabel } from '@/lib/property-labels';
 
 interface MapFiltersProps {
   filters: PropertyFilters;
@@ -33,17 +35,6 @@ interface MapFiltersProps {
   onChange: (filters: PropertyFilters) => void;
   onClear: () => void;
 }
-
-const TYPE_LABELS: Record<string, string> = {
-  house: 'Casa',
-  apartment: 'Apartamento',
-  land: 'Terreno',
-  commercial: 'Comercial',
-};
-const STATUS_LABELS: Record<string, string> = {
-  for_sale: 'En venta',
-  for_rent: 'En alquiler',
-};
 
 const QUICK_FILTERS = [
   { key: 'for_sale', label: 'Venta', patch: { status: 'for_sale' } },
@@ -79,6 +70,11 @@ export default function MapFilters({
   const [open, setOpen] = useState(false);
   const update = (patch: Partial<PropertyFilters>, source = 'advanced') => {
     const next = { ...filters, ...patch };
+    // Chips and selects re-query the map behind the sheet, so the visible
+    // result is off screen at the moment of the tap. The tick is the local
+    // acknowledgement. Typing in the search box is excluded — a buzz per
+    // keystroke would be unbearable.
+    if (source !== 'search') haptic('selection');
     trackEvent('map_filter_changed', {
       source,
       property_type: next.propertyType,
@@ -98,21 +94,22 @@ export default function MapFilters({
 
   const priceChanged = filters.minPrice !== PRICE_MIN || filters.maxPrice !== PRICE_MAX;
   const areaChanged = filters.minArea !== AREA_MIN || filters.maxArea !== AREA_MAX;
-  const money = (v: number) => `$${v.toLocaleString()}`;
+  // es-EC keeps SSR and client formatting identical (avoids hydration diffs).
+  const money = (v: number) => `$${v.toLocaleString('es-EC')}`;
 
   // Chips de filtros activos (sin la búsqueda, que ya tiene su propio campo).
   const chips: { key: string; label: string; clear: () => void }[] = [];
   if (filters.propertyType !== 'all') {
     chips.push({
       key: 'type',
-      label: TYPE_LABELS[filters.propertyType] || filters.propertyType,
+      label: getPropertyTypeLabel(filters.propertyType),
       clear: () => update({ propertyType: 'all' }),
     });
   }
   if (filters.status !== 'all') {
     chips.push({
       key: 'status',
-      label: STATUS_LABELS[filters.status] || filters.status,
+      label: getStatusLabel(filters.status),
       clear: () => update({ status: 'all' }),
     });
   }
@@ -155,10 +152,10 @@ export default function MapFilters({
   if (areaChanged) {
     const label =
       filters.minArea !== AREA_MIN && filters.maxArea !== AREA_MAX
-        ? `${filters.minArea.toLocaleString()}–${filters.maxArea.toLocaleString()} m²`
+        ? `${filters.minArea.toLocaleString('es-EC')}–${filters.maxArea.toLocaleString('es-EC')} m²`
         : filters.minArea !== AREA_MIN
-          ? `Desde ${filters.minArea.toLocaleString()} m²`
-          : `Hasta ${filters.maxArea.toLocaleString()} m²`;
+          ? `Desde ${filters.minArea.toLocaleString('es-EC')} m²`
+          : `Hasta ${filters.maxArea.toLocaleString('es-EC')} m²`;
     chips.push({
       key: 'area',
       label,
@@ -175,11 +172,19 @@ export default function MapFilters({
             className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-textSecondary"
             aria-hidden
           />
+          {/* `type="search"` gives the platform clear button, and the two
+              hints tell a mobile keyboard to show a search key instead of a
+              newline. */}
           <Input
-            type="text"
+            type="search"
+            inputMode="search"
+            enterKeyHint="search"
+            autoComplete="off"
+            autoCorrect="off"
             value={filters.search}
-            onChange={(e) => update({ search: e.target.value })}
+            onChange={(e) => update({ search: e.target.value }, 'search')}
             placeholder="Buscar propiedad..."
+            aria-label="Buscar propiedad"
             className="h-9 rounded-button border-line pl-9"
           />
         </div>
@@ -189,7 +194,7 @@ export default function MapFilters({
           aria-expanded={open}
           aria-label="Mostrar filtros"
           title="Filtros"
-          className={`relative flex h-9 w-9 shrink-0 items-center justify-center rounded-button border transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary ${
+          className={`relative flex h-10 w-10 shrink-0 items-center justify-center rounded-button border transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary ${
             open || chips.length > 0
               ? 'border-primary bg-primaryLight text-primary'
               : 'border-line bg-white text-textPrimary hover:bg-muted'
@@ -221,7 +226,7 @@ export default function MapFilters({
                 key={quick.key}
                 type="button"
                 onClick={() => update(patch, 'quick_chip')}
-                className={`shrink-0 rounded-full border px-3 py-1.5 text-xs font-semibold transition-colors ${
+                className={`shrink-0 rounded-full border px-3 py-2 text-xs font-semibold transition-colors ${
                   active
                     ? 'border-primary bg-primary text-white'
                     : 'border-line bg-white text-textPrimary hover:border-primary hover:bg-primaryLight hover:text-primary'
@@ -271,11 +276,13 @@ export default function MapFilters({
             transition={{ duration: 0.22, ease: 'easeOut' }}
             className="overflow-hidden"
           >
+            {/* The expanded panel lives inside the sticky header: cap its
+                height and scroll internally so it never eats the whole sheet. */}
             <motion.div
               variants={container}
               initial="hidden"
               animate="show"
-              className="grid gap-3 pt-1 sm:grid-cols-2"
+              className="grid max-h-[55dvh] gap-3 overflow-y-auto overscroll-contain pt-1 sm:grid-cols-2"
             >
               {/* Tipo */}
               <motion.div variants={item} className="space-y-1.5">
@@ -289,10 +296,10 @@ export default function MapFilters({
                   </SelectTrigger>
                   <SelectContent className="rounded-card">
                     <SelectItem value="all">Todos los tipos</SelectItem>
-                    <SelectItem value="house">Casa</SelectItem>
-                    <SelectItem value="apartment">Apartamento</SelectItem>
-                    <SelectItem value="land">Terreno</SelectItem>
-                    <SelectItem value="commercial">Comercial</SelectItem>
+                    <SelectItem value="house">{getPropertyTypeLabel('house')}</SelectItem>
+                    <SelectItem value="apartment">{getPropertyTypeLabel('apartment')}</SelectItem>
+                    <SelectItem value="land">{getPropertyTypeLabel('land')}</SelectItem>
+                    <SelectItem value="commercial">{getPropertyTypeLabel('commercial')}</SelectItem>
                   </SelectContent>
                 </Select>
               </motion.div>
@@ -377,8 +384,10 @@ export default function MapFilters({
                   minValue={filters.minPrice}
                   maxValue={filters.maxPrice}
                   onChange={(min, max) => update({ minPrice: min, maxPrice: max })}
-                  formatValue={(v) => `$${v.toLocaleString()}`}
+                  formatValue={money}
                   theme="light"
+                  minLabel="Precio mínimo"
+                  maxLabel="Precio máximo"
                 />
               </motion.div>
 
@@ -392,8 +401,10 @@ export default function MapFilters({
                   minValue={filters.minArea}
                   maxValue={filters.maxArea}
                   onChange={(min, max) => update({ minArea: min, maxArea: max })}
-                  formatValue={(v) => `${v.toLocaleString()} m²`}
+                  formatValue={(v) => `${v.toLocaleString('es-EC')} m²`}
                   theme="light"
+                  minLabel="Área mínima"
+                  maxLabel="Área máxima"
                 />
               </motion.div>
             </motion.div>

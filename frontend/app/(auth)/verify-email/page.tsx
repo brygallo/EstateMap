@@ -11,12 +11,13 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent } from '@/components/ui/card';
 import { fetchWithTimeout, requestErrorMessage } from '@/lib/form-errors';
+import { getPublicApiUrl } from '@/lib/api-url';
 
 const VerifyEmail = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [resending, setResending] = useState(false);
-  const API_URL = process.env.NEXT_PUBLIC_API_URL || '/api';
+  const API_URL = getPublicApiUrl();
 
   // Obtener email de la URL si existe
   const emailFromUrl = searchParams.get('email') || '';
@@ -116,13 +117,16 @@ const VerifyEmail = () => {
                       id="email"
                       name="email"
                       type="email"
+                      autoComplete="email"
                       placeholder="tu@email.com"
+                      aria-invalid={Boolean(errors.email && touched.email)}
+                      aria-describedby={errors.email && touched.email ? 'verify-email-error' : undefined}
                       className={`h-11 rounded-input pl-10 ${
                         errors.email && touched.email ? 'border-error focus-visible:ring-error' : ''
                       }`}
                     />
                   </div>
-                  <ErrorMessage name="email" component="p" className="text-sm text-error" />
+                  <ErrorMessage name="email" component="p" id="verify-email-error" className="text-sm text-error" />
                 </div>
 
                 {/* Código de verificación */}
@@ -140,12 +144,14 @@ const VerifyEmail = () => {
                       autoComplete="one-time-code"
                       placeholder="123456"
                       maxLength={6}
+                      aria-invalid={Boolean(errors.code && touched.code)}
+                      aria-describedby={errors.code && touched.code ? 'verify-code-error' : undefined}
                       className={`h-12 rounded-input pl-10 text-center font-geo text-2xl tracking-widest ${
                         errors.code && touched.code ? 'border-error focus-visible:ring-error' : ''
                       }`}
                     />
                   </div>
-                  <ErrorMessage name="code" component="p" className="text-sm text-error" />
+                  <ErrorMessage name="code" component="p" id="verify-code-error" className="text-sm text-error" />
                 </div>
 
                 {/* Botón reenviar código */}

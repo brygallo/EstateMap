@@ -37,8 +37,8 @@ export default function MapPropertyCard({
 /** Skeleton con las mismas proporciones del ítem compacto del mapa. */
 export function MapPropertyCardSkeleton() {
   return (
-    <div className="flex gap-2.5 rounded-card border border-line bg-surface p-2 shadow-card">
-      <Skeleton className="h-[76px] w-[76px] flex-shrink-0 rounded-lg" />
+    <div className="flex gap-2 rounded-card border border-line bg-surface p-1.5 shadow-card">
+      <Skeleton className="h-[68px] w-[68px] flex-shrink-0 rounded-lg" />
       <div className="flex min-w-0 flex-1 flex-col justify-center gap-2">
         <div className="flex items-start justify-between gap-2">
           <Skeleton className="h-4 w-3/5" />

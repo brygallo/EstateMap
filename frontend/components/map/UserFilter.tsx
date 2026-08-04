@@ -49,6 +49,7 @@ export default function UserFilter({ users, selectedUserId, onSelect }: UserFilt
           variant="outline"
           role="combobox"
           aria-expanded={isOpen}
+          aria-label="Filtrar por anunciante"
           className="w-full justify-between rounded-button border-line bg-surface px-3 font-normal text-textPrimary hover:bg-muted"
         >
           <span className="flex min-w-0 items-center gap-2">

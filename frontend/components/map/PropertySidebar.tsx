@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import { motion } from 'motion/react';
-import { Loader2, MapPin, MapPinned, RotateCw, SearchX, WifiOff } from 'lucide-react';
+import { Loader2, MapPin, MapPinned, RotateCw, SearchX, WifiOff, X } from 'lucide-react';
 import MapFilters from '@/components/map/MapFilters';
 import MapPropertyCard, { MapPropertyCardSkeleton } from '@/components/map/MapPropertyCard';
 import { Badge } from '@/components/ui/badge';
@@ -23,6 +23,8 @@ interface PropertySidebarProps {
   hasActiveFilters: boolean;
   onFilterChange: (filters: PropertyFilters) => void;
   onClearFilters: () => void;
+  /** Cierra el drawer móvil (muestra el botón X del encabezado si se define). */
+  onClose?: () => void;
 
   visibleProperties: Property[];
   cityGroups?: MapCityGroup[];
@@ -60,6 +62,7 @@ export default function PropertySidebar({
   hasActiveFilters,
   onFilterChange,
   onClearFilters,
+  onClose,
   visibleProperties,
   cityGroups = [],
   mapContext = null,
@@ -89,7 +92,7 @@ export default function PropertySidebar({
   // Scroll automático del listado hacia la card de la propiedad seleccionada
   // (p. ej. al hacer clic en su polígono/etiqueta en el mapa).
   const cardRefs = useRef<Record<number, HTMLDivElement | null>>({});
-  const loadMoreRef = useRef<HTMLDivElement | null>(null);
+  const loadMoreRef = useRef<HTMLButtonElement | null>(null);
   const propertiesWithDistance = useMemo(
     () =>
       visibleProperties.map((property) => ({
@@ -158,6 +161,7 @@ export default function PropertySidebar({
   useEffect(() => {
     const target = loadMoreRef.current;
     if (!target || (hiddenPropertiesCount <= 0 && !hasMore)) return;
+    const scrollRoot = target.closest('.property-sidebar-drawer');
 
     const observer = new IntersectionObserver(
       (entries) => {
@@ -168,7 +172,14 @@ export default function PropertySidebar({
         }
         if (hasMore && !loadingMore) onLoadMore?.();
       },
-      { root: null, rootMargin: '240px 0px', threshold: 0 }
+      {
+        // The cards scroll inside the desktop sidebar/mobile sheet, not inside
+        // the window. Observing the viewport made the sentinel unreliable once
+        // the sheet was transformed or partially open.
+        root: scrollRoot instanceof HTMLElement ? scrollRoot : null,
+        rootMargin: '240px 0px',
+        threshold: 0,
+      }
     );
 
     observer.observe(target);
@@ -211,9 +222,21 @@ export default function PropertySidebar({
 
   return (
     <>
-      {/* Encabezado móvil */}
-      <div className="sticky top-0 z-10 border-b border-line bg-white px-3.5 pb-3.5 lg:hidden">
+      {/* Encabezado móvil. Non-sticky on purpose: MapFilters below is the
+          single sticky bar in this scroll container, so it must not compete
+          with the title for the top slot. */}
+      <div className="flex items-center justify-between gap-2 border-b border-line bg-white px-3.5 pb-2 lg:hidden">
         <h2 className="text-base font-bold text-textPrimary">Filtros y propiedades</h2>
+        {onClose && (
+          <button
+            type="button"
+            onClick={onClose}
+            className="-mr-1.5 flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-button text-textSecondary transition-colors hover:bg-muted hover:text-textPrimary"
+            aria-label="Cerrar filtros"
+          >
+            <X className="h-5 w-5" strokeWidth={2} aria-hidden />
+          </button>
+        )}
       </div>
 
       <MapFilters
@@ -257,7 +280,7 @@ export default function PropertySidebar({
             <select
               value={sortMode}
               onChange={(event) => handleSortChange(event.target.value as SortMode)}
-              className="h-8 rounded-md border border-line bg-white px-2 text-xs font-semibold text-textPrimary outline-none transition-colors hover:border-primary focus:border-primary"
+              className="h-9 rounded-md border border-line bg-white px-2 text-xs font-semibold text-textPrimary outline-none transition-colors hover:border-primary focus:border-primary focus-visible:ring-2 focus-visible:ring-primary/25"
             >
               <option value="distance">Más cercanas</option>
               <option value="price_asc">Menor precio</option>
@@ -457,9 +480,18 @@ export default function PropertySidebar({
               </motion.div>
             ))}
             {(hiddenPropertiesCount > 0 || hasMore) && (
-              <div
+              <button
+                type="button"
                 ref={loadMoreRef}
-                className="rounded-card border border-line bg-white p-3 text-center text-xs text-textSecondary shadow-card"
+                disabled={loadingMore}
+                onClick={() => {
+                  if (hiddenPropertiesCount > 0) {
+                    setVisibleCardCount((current) => Math.min(current + CARD_BATCH_SIZE, sortedProperties.length));
+                  } else if (hasMore && !loadingMore) {
+                    onLoadMore?.();
+                  }
+                }}
+                className="w-full rounded-card border border-line bg-white p-3 text-center text-xs font-medium text-primary shadow-card transition-colors hover:bg-primaryLight disabled:cursor-wait disabled:text-textSecondary"
               >
                 {loadingMore ? (
                   <span className="inline-flex items-center gap-1.5">
@@ -467,11 +499,11 @@ export default function PropertySidebar({
                     Cargando más propiedades…
                   </span>
                 ) : hasMore && hiddenPropertiesCount <= 0 ? (
-                  'Desplázate para cargar más propiedades.'
+                  'Cargar más propiedades'
                 ) : (
-                  `Mostrando ${renderedProperties.length} de ${sortedProperties.length}. Desplázate para cargar más.`
+                  `Mostrar más · ${renderedProperties.length} de ${sortedProperties.length}`
                 )}
-              </div>
+              </button>
             )}
           </>
         )}

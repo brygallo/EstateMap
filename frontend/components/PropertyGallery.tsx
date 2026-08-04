@@ -1,8 +1,9 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
-import { ChevronLeft, ChevronRight, Images, X } from 'lucide-react';
+import { useCallback, useMemo, useState } from 'react';
+import { Images } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import GalleryViewer from '@/components/ui/GalleryViewer';
 
 interface GalleryImage {
   image: string;
@@ -35,30 +36,6 @@ export default function PropertyGallery({
     setLightboxOpen(true);
   }, [validImages.length]);
 
-  const previous = useCallback(() => {
-    setActiveIndex((current) => (current - 1 + validImages.length) % validImages.length);
-  }, [validImages.length]);
-
-  const next = useCallback(() => {
-    setActiveIndex((current) => (current + 1) % validImages.length);
-  }, [validImages.length]);
-
-  useEffect(() => {
-    if (!lightboxOpen) return;
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') setLightboxOpen(false);
-      if (event.key === 'ArrowLeft') previous();
-      if (event.key === 'ArrowRight') next();
-    };
-    const previousOverflow = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
-    window.addEventListener('keydown', handleKeyDown);
-    return () => {
-      document.body.style.overflow = previousOverflow;
-      window.removeEventListener('keydown', handleKeyDown);
-    };
-  }, [lightboxOpen, next, previous]);
-
   if (validImages.length === 0) return null;
 
   const previewImages = validImages.slice(1, 5);
@@ -66,11 +43,51 @@ export default function PropertyGallery({
   return (
     <>
       <section aria-label={`Galería de ${title}`} className="relative overflow-hidden rounded-hero border border-line bg-slate-900 shadow-cardHover">
-        <div className={cn('grid gap-1', validImages.length > 1 && 'md:grid-cols-2')}>
+        {/* Mobile: a scroll-snap strip of every photo. Native scrolling brings
+            its own momentum, rubber-banding and scrollbar-free feel for free —
+            a JS carousel only ever approximates those. Desktop keeps the
+            hero-plus-grid mosaic below. */}
+        <div
+          className="flex snap-x snap-mandatory overflow-x-auto md:hidden"
+          onScroll={(event) => {
+            const strip = event.currentTarget;
+            const position = Math.round(strip.scrollLeft / strip.clientWidth);
+            setActiveIndex(Math.min(Math.max(position, 0), validImages.length - 1));
+          }}
+          aria-label={`${validImages.length} fotos de ${title}`}
+        >
+          {validImages.map((item, index) => (
+            <button
+              key={`${item.image}-strip-${index}`}
+              type="button"
+              onClick={() => show(index)}
+              className="relative aspect-[16/10] w-full flex-none snap-center snap-always overflow-hidden sm:aspect-[16/8]"
+              aria-label={`Ampliar imagen ${index + 1}`}
+            >
+              <img
+                src={item.image}
+                alt={`${title} — imagen ${index + 1}`}
+                // The first photo is the LCP element on a listing page; the rest
+                // must not compete with it for bandwidth on a 3G connection.
+                loading={index === 0 ? 'eager' : 'lazy'}
+                fetchPriority={index === 0 ? 'high' : 'auto'}
+                className="h-full w-full object-cover"
+              />
+            </button>
+          ))}
+        </div>
+
+        {validImages.length > 1 && (
+          <div className="pointer-events-none absolute bottom-4 left-1/2 -translate-x-1/2 rounded-full bg-black/60 px-2.5 py-1 text-xs font-semibold tabular-nums text-white backdrop-blur md:hidden">
+            {activeIndex + 1} / {validImages.length}
+          </div>
+        )}
+
+        <div className={cn('hidden gap-1 md:grid', validImages.length > 1 && 'md:grid-cols-2')}>
           <button
             type="button"
             onClick={() => show(0)}
-            className="group relative block aspect-[16/10] overflow-hidden text-left sm:aspect-[16/8] md:aspect-auto md:h-[32rem]"
+            className="group relative block overflow-hidden text-left md:h-[32rem]"
             aria-label="Ampliar imagen principal"
           >
             <img src={validImages[0].image} alt={`${title} — imagen 1`} className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.02]" />
@@ -107,8 +124,8 @@ export default function PropertyGallery({
 
         <button
           type="button"
-          onClick={() => show(0)}
-          className="absolute bottom-4 right-4 inline-flex items-center gap-2 rounded-full bg-white px-3.5 py-2 text-sm font-semibold text-textPrimary shadow-cardHover transition-colors hover:bg-slate-100"
+          onClick={() => show(activeIndex)}
+          className="absolute bottom-4 right-4 inline-flex min-h-11 touch-manipulation items-center gap-2 rounded-full bg-white px-3.5 py-2 text-sm font-semibold text-textPrimary shadow-cardHover transition-colors hover:bg-slate-100"
         >
           <Images className="h-4 w-4" aria-hidden />
           Ver las {validImages.length} {validImages.length === 1 ? 'foto' : 'fotos'}
@@ -116,34 +133,13 @@ export default function PropertyGallery({
       </section>
 
       {lightboxOpen && (
-        <div className="fixed inset-0 z-modal flex flex-col bg-black/95" role="dialog" aria-modal="true" aria-label={`Galería de ${title}`} onClick={(event) => { if (event.target === event.currentTarget) setLightboxOpen(false); }}>
-          <div className="flex items-center justify-between px-4 py-3 text-white">
-            <span className="text-sm font-semibold">{activeIndex + 1} / {validImages.length}</span>
-            <button type="button" onClick={(event) => { event.stopPropagation(); setLightboxOpen(false); }} className="fixed right-3 z-50 inline-flex h-11 w-11 items-center justify-center rounded-full border border-white/30 bg-white text-black shadow-cardHover sm:static sm:h-auto sm:w-auto sm:gap-2 sm:px-4 sm:py-2" style={{ top: 'max(0.75rem, env(safe-area-inset-top))' }} aria-label="Cerrar galería">
-              <X className="h-6 w-6" strokeWidth={2.5} aria-hidden /><span className="hidden text-sm font-bold sm:inline">Cerrar</span>
-            </button>
-          </div>
-
-          <div className="relative min-h-0 flex-1" onClick={() => setLightboxOpen(false)}>
-            <img onClick={(event) => event.stopPropagation()} src={validImages[activeIndex].image} alt={`${title} — imagen ${activeIndex + 1}`} className="h-full w-full object-contain px-4 pb-4" />
-            {validImages.length > 1 && (
-              <>
-                <button type="button" onClick={(event) => { event.stopPropagation(); previous(); }} className="absolute left-3 top-1/2 -translate-y-1/2 rounded-full bg-white/95 p-3 text-black shadow-cardHover" aria-label="Imagen anterior"><ChevronLeft className="h-6 w-6" aria-hidden /></button>
-                <button type="button" onClick={(event) => { event.stopPropagation(); next(); }} className="absolute right-3 top-1/2 -translate-y-1/2 rounded-full bg-white/95 p-3 text-black shadow-cardHover" aria-label="Imagen siguiente"><ChevronRight className="h-6 w-6" aria-hidden /></button>
-              </>
-            )}
-          </div>
-
-          {validImages.length > 1 && (
-            <div className="flex gap-2 overflow-x-auto px-4 pb-4 pt-2" onClick={(event) => event.stopPropagation()}>
-              {validImages.map((item, index) => (
-                <button key={`${item.image}-thumb-${index}`} type="button" onClick={() => setActiveIndex(index)} className={cn('h-16 w-24 flex-none overflow-hidden rounded-lg border-2', index === activeIndex ? 'border-white' : 'border-transparent opacity-60 hover:opacity-100')} aria-label={`Ver imagen ${index + 1}`}>
-                  <img src={item.image} alt="" className="h-full w-full object-cover" />
-                </button>
-              ))}
-            </div>
-          )}
-        </div>
+        <GalleryViewer
+          images={validImages}
+          index={activeIndex}
+          onIndexChange={setActiveIndex}
+          onClose={() => setLightboxOpen(false)}
+          title={title}
+        />
       )}
     </>
   );

@@ -32,6 +32,7 @@ export default async function DepartamentosEnAlquilerPage() {
       properties={properties}
       pageHref={PATH}
       mapHref="/?type=apartment&status=for_rent"
+      breadcrumbs={[{ label: 'Propiedades', href: '/propiedades' }]}
       relatedLinks={TYPE_LINKS.filter((l) => l.href !== PATH)}
       cityLinks={cityLinks}
       emptyMessage="Aún no hay departamentos en alquiler publicados. Explora otras propiedades en el mapa."

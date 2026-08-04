@@ -56,13 +56,9 @@ export const money = (value?: number) =>
 export const integer = (value?: number) =>
   new Intl.NumberFormat('es-EC', { maximumFractionDigits: 0 }).format(Number(value || 0));
 
-export const TYPE_LABELS: Record<string, string> = {
-  land: 'Terrenos',
-  house: 'Casas',
-  apartment: 'Departamentos',
-  commercial: 'Locales comerciales',
-  other: 'Otros',
-};
+// Aggregate rows read better in plural; the canonical map lives with the rest
+// of the property labels so wording stays consistent across the site.
+export { PROPERTY_TYPE_PLURAL_LABELS as TYPE_LABELS } from './property-labels';
 
 /** Cities need a handful of comparable sale listings before their stats page
  * is worth indexing; below this the page stays crawlable but noindex. */

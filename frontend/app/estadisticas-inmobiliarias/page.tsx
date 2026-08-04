@@ -122,12 +122,26 @@ export default async function MarketStatsPage() {
     : null;
 
   return (
-    <main className="min-h-screen bg-background">
+    <main className="min-h-[calc(100dvh-var(--app-header-height))] bg-background">
       {structuredData && (
         <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLd(structuredData) }} />
       )}
       <section className="border-b border-line bg-gradient-to-br from-primary via-primaryHover to-[var(--navy)] text-white">
         <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8 lg:py-24">
+          {/* Visible counterpart of the BreadcrumbList JSON-LD; light text for the dark hero. */}
+          <nav aria-label="Migas de pan" className="mb-6">
+            <ol className="flex flex-wrap items-center gap-1.5 text-sm text-white/70">
+              <li>
+                <Link href="/" className="transition-colors hover:text-white">
+                  Inicio
+                </Link>
+              </li>
+              <li className="flex items-center gap-1.5" aria-current="page">
+                <span aria-hidden className="text-white/40">/</span>
+                <span className="font-medium text-white">Estadísticas</span>
+              </li>
+            </ol>
+          </nav>
           <div className="max-w-3xl">
             <span className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-sm font-semibold ring-1 ring-white/20">
               <TrendingUp className="h-4 w-4" /> Datos del mercado ecuatoriano

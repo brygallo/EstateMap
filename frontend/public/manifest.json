@@ -1,64 +1,49 @@
 {
-  "name": "Geo Propiedades Ecuador - Gestión de Propiedades",
+  "name": "Geo Propiedades Ecuador - Propiedades en un solo mapa",
   "short_name": "Geo Propiedades",
-  "description": "Aplicación para gestionar y visualizar propiedades en Ecuador con mapas interactivos",
+  "description": "Busca casas, departamentos, terrenos y locales en Ecuador desde un mapa interactivo, con filtros y contacto directo.",
   "start_url": "/",
+  "id": "/",
   "display": "standalone",
   "background_color": "#ffffff",
-  "theme_color": "#1B8648",
-  "orientation": "portrait-primary",
+  "theme_color": "#ffffff",
+  "orientation": "any",
+  "lang": "es-EC",
+  "dir": "ltr",
   "scope": "/",
   "icons": [
     {
-      "src": "/icon-72x72.svg",
-      "sizes": "72x72",
-      "type": "image/svg+xml",
-      "purpose": "any"
-    },
-    {
-      "src": "/icon-96x96.svg",
-      "sizes": "96x96",
-      "type": "image/svg+xml",
-      "purpose": "any"
-    },
-    {
-      "src": "/icon-128x128.svg",
-      "sizes": "128x128",
-      "type": "image/svg+xml",
-      "purpose": "any"
-    },
-    {
-      "src": "/icon-144x144.svg",
-      "sizes": "144x144",
-      "type": "image/svg+xml",
-      "purpose": "any"
-    },
-    {
-      "src": "/icon-152x152.svg",
-      "sizes": "152x152",
-      "type": "image/svg+xml",
-      "purpose": "any"
-    },
-    {
-      "src": "/icon-192x192.svg",
+      "src": "/icon-192.png",
       "sizes": "192x192",
-      "type": "image/svg+xml",
-      "purpose": "any maskable"
-    },
-    {
-      "src": "/icon-384x384.svg",
-      "sizes": "384x384",
-      "type": "image/svg+xml",
+      "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "/icon-512x512.svg",
+      "src": "/icon-512.png",
       "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-maskable-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
       "type": "image/svg+xml",
-      "purpose": "any maskable"
+      "purpose": "any"
     }
   ],
-  "categories": ["business", "productivity", "utilities"],
+  "categories": ["business", "lifestyle", "shopping"],
   "screenshots": [],
   "shortcuts": [
     {
@@ -66,39 +51,21 @@
       "short_name": "Mapa",
       "description": "Ver todas las propiedades en el mapa",
       "url": "/",
-      "icons": [
-        {
-          "src": "/icon-192x192.svg",
-          "sizes": "192x192",
-          "type": "image/svg+xml"
-        }
-      ]
+      "icons": [{ "src": "/icon-192.png", "sizes": "192x192", "type": "image/png" }]
     },
     {
       "name": "Mis Propiedades",
       "short_name": "Propiedades",
       "description": "Administrar mis propiedades",
       "url": "/mis-propiedades",
-      "icons": [
-        {
-          "src": "/icon-192x192.svg",
-          "sizes": "192x192",
-          "type": "image/svg+xml"
-        }
-      ]
+      "icons": [{ "src": "/icon-192.png", "sizes": "192x192", "type": "image/png" }]
     },
     {
       "name": "Nueva Propiedad",
       "short_name": "Nueva",
-      "description": "Agregar una nueva propiedad",
+      "description": "Publicar una nueva propiedad",
       "url": "/publicar-propiedad",
-      "icons": [
-        {
-          "src": "/icon-192x192.svg",
-          "sizes": "192x192",
-          "type": "image/svg+xml"
-        }
-      ]
+      "icons": [{ "src": "/icon-192.png", "sizes": "192x192", "type": "image/png" }]
     }
   ]
 }

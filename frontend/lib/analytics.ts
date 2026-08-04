@@ -1,3 +1,4 @@
+import { getPublicApiUrl } from '@/lib/api-url';
 type EventPayload = Record<string, string | number | boolean | null | undefined>;
 
 declare global {
@@ -88,7 +89,7 @@ export function trackEvent(eventName: string, payload: EventPayload = {}) {
       window.localStorage.setItem(sessionKey, sessionId);
     }
     const token = window.localStorage.getItem('token') || window.sessionStorage.getItem('token');
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8010/api';
+    const apiUrl = getPublicApiUrl();
     void fetch(`${apiUrl}/activity-events/`, {
       method: 'POST',
       keepalive: true,

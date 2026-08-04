@@ -10,13 +10,14 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent } from '@/components/ui/card';
 import { fetchWithTimeout, requestErrorMessage, responseErrorMessage } from '@/lib/form-errors';
+import { getPublicApiUrl } from '@/lib/api-url';
 
 const ResetPassword = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
   const token = searchParams.get('token');
 
-  const API_URL = process.env.NEXT_PUBLIC_API_URL || '/api';
+  const API_URL = getPublicApiUrl();
 
   const validationSchema = Yup.object({
     new_password: Yup.string()
@@ -112,13 +113,16 @@ const ResetPassword = () => {
                       id="new_password"
                       name="new_password"
                       type="password"
+                      autoComplete="new-password"
                       placeholder="••••••••"
+                      aria-invalid={Boolean(errors.new_password && touched.new_password)}
+                      aria-describedby={errors.new_password && touched.new_password ? 'reset-new-password-error' : undefined}
                       className={`h-11 rounded-input pl-10 ${
                         errors.new_password && touched.new_password ? 'border-error focus-visible:ring-error' : ''
                       }`}
                     />
                   </div>
-                  <ErrorMessage name="new_password" component="p" className="text-sm text-error" />
+                  <ErrorMessage name="new_password" component="p" id="reset-new-password-error" className="text-sm text-error" />
                 </div>
 
                 {/* Confirmar contraseña */}
@@ -131,7 +135,10 @@ const ResetPassword = () => {
                       id="confirm_password"
                       name="confirm_password"
                       type="password"
+                      autoComplete="new-password"
                       placeholder="••••••••"
+                      aria-invalid={Boolean(errors.confirm_password && touched.confirm_password)}
+                      aria-describedby={errors.confirm_password && touched.confirm_password ? 'reset-confirm-password-error' : undefined}
                       className={`h-11 rounded-input pl-10 ${
                         errors.confirm_password && touched.confirm_password
                           ? 'border-error focus-visible:ring-error'
@@ -139,7 +146,7 @@ const ResetPassword = () => {
                       }`}
                     />
                   </div>
-                  <ErrorMessage name="confirm_password" component="p" className="text-sm text-error" />
+                  <ErrorMessage name="confirm_password" component="p" id="reset-confirm-password-error" className="text-sm text-error" />
                 </div>
 
                 {/* Requisitos de contraseña */}

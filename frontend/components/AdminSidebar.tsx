@@ -90,7 +90,7 @@ const AdminSidebar = () => {
       <button
         onClick={() => setMobileOpen((o) => !o)}
         aria-label={mobileOpen ? 'Cerrar menú' : 'Abrir menú'}
-        className="fixed bottom-5 right-5 z-50 flex h-12 w-12 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-cardHover transition-colors hover:bg-primaryHover lg:hidden"
+        className="fixed bottom-5 right-5 z-nav flex h-12 w-12 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-cardHover transition-colors hover:bg-primaryHover lg:hidden"
       >
         {mobileOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
       </button>
@@ -99,7 +99,7 @@ const AdminSidebar = () => {
       <div
         onClick={() => setMobileOpen(false)}
         className={cn(
-          'fixed inset-0 z-40 bg-black/40 backdrop-blur-sm transition-opacity duration-200 lg:hidden',
+          'fixed inset-0 z-backdrop bg-black/40 backdrop-blur-sm transition-opacity duration-200 lg:hidden',
           mobileOpen ? 'opacity-100' : 'pointer-events-none opacity-0'
         )}
       />
@@ -107,7 +107,7 @@ const AdminSidebar = () => {
       {/* Sidebar panel */}
       <aside
         className={cn(
-          'fixed left-0 top-16 z-40 h-[calc(100vh-4rem)] w-64 border-r border-line bg-surface shadow-card transition-transform duration-200 ease-in-out',
+          'fixed left-0 top-[var(--app-header-height)] z-panel h-[calc(100dvh-var(--app-header-height))] w-64 border-r border-line bg-surface shadow-card transition-transform duration-200 ease-in-out',
           'lg:sticky lg:z-0 lg:translate-x-0 lg:shadow-none',
           mobileOpen ? 'translate-x-0' : '-translate-x-full'
         )}

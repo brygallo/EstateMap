@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { getPublicApiUrl } from '@/lib/api-url';
 import { Check, ChevronsUpDown, Loader2, MapPin } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -53,6 +54,8 @@ interface ComboboxProps {
   placeholder: string;
   searchPlaceholder: string;
   emptyMessage: string;
+  /** Accessible name for the trigger (the visible text is only the value). */
+  ariaLabel: string;
   disabled?: boolean;
   loading?: boolean;
 }
@@ -68,6 +71,7 @@ const Combobox = ({
   placeholder,
   searchPlaceholder,
   emptyMessage,
+  ariaLabel,
   disabled = false,
   loading = false,
 }: ComboboxProps) => {
@@ -81,6 +85,7 @@ const Combobox = ({
           variant="outline"
           role="combobox"
           aria-expanded={open}
+          aria-label={ariaLabel}
           disabled={disabled || loading}
           className={cn(
             'h-12 w-full justify-between rounded-input border-line px-4 font-normal',
@@ -145,8 +150,10 @@ const LocationSelect = ({
   const [selectedProvinceId, setSelectedProvinceId] = useState<number | null>(null);
   const [loadingProvinces, setLoadingProvinces] = useState(true);
   const [loadingCities, setLoadingCities] = useState(false);
+  const [provincesError, setProvincesError] = useState(false);
+  const [citiesError, setCitiesError] = useState(false);
 
-  const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8010/api';
+  const API_URL = getPublicApiUrl();
 
   useEffect(() => {
     loadProvinces();
@@ -163,14 +170,16 @@ const LocationSelect = ({
   }, [provinceValue, provinces]);
 
   const loadProvinces = async () => {
+    setLoadingProvinces(true);
+    setProvincesError(false);
     try {
       const response = await fetch(`${API_URL}/provinces/`);
-      if (response.ok) {
-        const data = await response.json();
-        setProvinces(data);
-      }
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      const data = await response.json();
+      setProvinces(data);
     } catch (error) {
       console.error('Error cargando provincias:', error);
+      setProvincesError(true);
     } finally {
       setLoadingProvinces(false);
     }
@@ -178,14 +187,15 @@ const LocationSelect = ({
 
   const loadCities = async (provinceId: number) => {
     setLoadingCities(true);
+    setCitiesError(false);
     try {
       const response = await fetch(`${API_URL}/cities/?province=${provinceId}`);
-      if (response.ok) {
-        const data = await response.json();
-        setCities(data);
-      }
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      const data = await response.json();
+      setCities(data);
     } catch (error) {
       console.error('Error cargando ciudades:', error);
+      setCitiesError(true);
     } finally {
       setLoadingCities(false);
     }
@@ -225,8 +235,21 @@ const LocationSelect = ({
           placeholder="Selecciona una provincia..."
           searchPlaceholder="Buscar provincia..."
           emptyMessage="No hay provincias disponibles"
+          ariaLabel="Provincia"
           loading={loadingProvinces}
         />
+        {provincesError && (
+          <p className="text-sm text-error">
+            No se pudieron cargar las provincias.{' '}
+            <button
+              type="button"
+              onClick={loadProvinces}
+              className="font-semibold underline underline-offset-2 hover:opacity-80"
+            >
+              Reintentar
+            </button>
+          </p>
+        )}
       </div>
 
       <div className="space-y-2">
@@ -248,9 +271,22 @@ const LocationSelect = ({
               ? 'Primero selecciona una provincia'
               : 'No hay ciudades disponibles'
           }
+          ariaLabel="Ciudad"
           disabled={!selectedProvinceId}
           loading={loadingCities}
         />
+        {citiesError && selectedProvinceId && (
+          <p className="text-sm text-error">
+            No se pudieron cargar las ciudades.{' '}
+            <button
+              type="button"
+              onClick={() => loadCities(selectedProvinceId)}
+              className="font-semibold underline underline-offset-2 hover:opacity-80"
+            >
+              Reintentar
+            </button>
+          </p>
+        )}
       </div>
     </div>
   );

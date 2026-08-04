@@ -42,20 +42,24 @@ module.exports = {
       // variant weight in here would silently fight hundreds of them.
       fontSize: {
         // Densidad compacta solicitada para Geo Propiedades: el texto de
-        // interfaz baja ~3px sin reducir etiquetas por debajo de 10px.
-        // Los títulos conservan la escala Aents para no perder jerarquía.
-        caption: ['max(10px, calc(var(--type-caption-size) - 3px))', { lineHeight: 'max(13px, calc(var(--type-caption-line) - 2px))' }],
-        xs: ['max(10px, calc(var(--type-small-size) - 3px))', { lineHeight: 'max(14px, calc(var(--type-small-line) - 2px))' }],
-        sm: ['max(10px, calc(var(--type-body-size) - 4px))', { lineHeight: 'max(15px, calc(var(--type-body-line) - 4px))' }],
-        base: ['max(12px, calc(var(--type-bodyLarge-size) - 4px))', { lineHeight: 'max(18px, calc(var(--type-bodyLarge-line) - 4px))' }],
-        lg: ['max(16px, calc(var(--type-h3-size) - 2px))', { lineHeight: 'max(22px, calc(var(--type-h3-line) - 3px))' }],
-        xl: ['max(16px, calc(var(--type-h3-size) - 2px))', { lineHeight: 'max(22px, calc(var(--type-h3-line) - 3px))' }],
+        // interfaz baja ~2px respecto de la escala Aents. Los pisos de max()
+        // son escalonados (10/11/12/14) para que caption < xs < sm < base se
+        // mantenga también en móvil, donde el factor 0.9 empujaba los cuatro
+        // pasos al mismo valor. xl resuelve al token h3 sin resta para que
+        // lg y xl no colapsen; 4xl es el punto medio h1↔display2 y 7xl un
+        // paso por encima de display1, de modo que cada clase responde.
+        caption: ['max(10px, calc(var(--type-caption-size) - 1px))', { lineHeight: 'max(13px, calc(var(--type-caption-line) - 1px))' }],
+        xs: ['max(11px, calc(var(--type-small-size) - 1px))', { lineHeight: 'max(14px, calc(var(--type-small-line) - 1px))' }],
+        sm: ['max(12px, calc(var(--type-body-size) - 2px))', { lineHeight: 'max(16px, calc(var(--type-body-line) - 2px))' }],
+        base: ['max(14px, calc(var(--type-bodyLarge-size) - 2px))', { lineHeight: 'max(20px, calc(var(--type-bodyLarge-line) - 2px))' }],
+        lg: ['max(16px, calc(var(--type-h3-size) - 2px))', { lineHeight: 'max(22px, calc(var(--type-h3-line) - 2px))' }],
+        xl: ['var(--type-h3-size)', { lineHeight: 'var(--type-h3-line)' }],
         '2xl': ['max(20px, calc(var(--type-h2-size) - 2px))', { lineHeight: 'max(26px, calc(var(--type-h2-line) - 3px))' }],
         '3xl': ['var(--type-h1-size)', { lineHeight: 'var(--type-h1-line)' }],
-        '4xl': ['var(--type-h1-size)', { lineHeight: 'var(--type-h1-line)' }],
+        '4xl': ['calc((var(--type-h1-size) + var(--type-display2-size)) / 2)', { lineHeight: 'calc((var(--type-h1-line) + var(--type-display2-line)) / 2)' }],
         '5xl': ['var(--type-display2-size)', { lineHeight: 'var(--type-display2-line)' }],
         '6xl': ['var(--type-display1-size)', { lineHeight: 'var(--type-display1-line)' }],
-        '7xl': ['var(--type-display1-size)', { lineHeight: 'var(--type-display1-line)' }],
+        '7xl': ['calc(var(--type-display1-size) + 8px)', { lineHeight: 'calc(var(--type-display1-line) + 8px)' }],
       },
       colors: {
         // Brand. The product accent (Verde Vital / Río Turquesa) is resolved
@@ -76,7 +80,10 @@ module.exports = {
           DEFAULT: withAlpha('--accent-alt-strong-rgb'),
           foreground: withAlpha('--on-accent-rgb'),
         },
-        secondaryHover: withAlpha('--primary-strong-rgb'),
+        // Hover stays in the teal family. The token set has no pressed step
+        // for accent-alt, so the hover brightens to the pure accent instead of
+        // crossing into the primary green.
+        secondaryHover: withAlpha('--accent-alt-rgb'),
 
         // The former navy scale, from lightest to darkest. It used to be this
         // app's source of truth; now it is a view over the shared palette.

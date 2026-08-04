@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
 import { Info, X } from 'lucide-react';
 import { statusColor } from '@/lib/mapMarkers';
@@ -17,9 +17,30 @@ const ITEMS = [
  */
 export default function MapLegend() {
   const [open, setOpen] = useState(false);
+  const containerRef = useRef<HTMLDivElement | null>(null);
+
+  // Dismiss the open popover with Escape or by clicking/tapping outside it.
+  useEffect(() => {
+    if (!open) return;
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setOpen(false);
+    };
+    const onPointerDown = (event: PointerEvent) => {
+      const container = containerRef.current;
+      if (container && event.target instanceof Node && !container.contains(event.target)) {
+        setOpen(false);
+      }
+    };
+    document.addEventListener('keydown', onKeyDown);
+    document.addEventListener('pointerdown', onPointerDown);
+    return () => {
+      document.removeEventListener('keydown', onKeyDown);
+      document.removeEventListener('pointerdown', onPointerDown);
+    };
+  }, [open]);
 
   return (
-    <div className="absolute bottom-[104px] left-3 z-mapcontrol sm:bottom-[128px]">
+    <div ref={containerRef} className="absolute bottom-[104px] left-3 z-mapcontrol sm:bottom-[128px]">
       <AnimatePresence>
         {open && (
           <motion.div
@@ -35,9 +56,9 @@ export default function MapLegend() {
                 type="button"
                 onClick={() => setOpen(false)}
                 aria-label="Cerrar leyenda"
-                className="rounded p-0.5 text-textSecondary transition-colors hover:bg-muted"
+                className="-mr-1.5 -mt-1.5 rounded p-2.5 text-textSecondary transition-colors hover:bg-muted"
               >
-                <X className="h-3.5 w-3.5" aria-hidden />
+                <X className="h-4 w-4" aria-hidden />
               </button>
             </div>
             <ul className="space-y-1.5">

@@ -72,6 +72,7 @@ urlpatterns = [
     path('admin/users/<int:pk>/', AdminUserViewSet.as_view({'get': 'retrieve', 'patch': 'partial_update', 'delete': 'destroy'}), name='admin_users_detail'),
     path('admin/properties/', AdminPropertyViewSet.as_view({'get': 'list'}), name='admin_properties_list'),
     path('admin/properties/stats/', AdminPropertyViewSet.as_view({'get': 'stats'}), name='admin_properties_stats'),
+    path('admin/properties/bulk-status/', AdminPropertyViewSet.as_view({'post': 'bulk_status'}), name='admin_properties_bulk_status'),
     path('admin/properties/<int:pk>/', AdminPropertyViewSet.as_view({'get': 'retrieve', 'patch': 'partial_update', 'delete': 'destroy'}), name='admin_properties_detail'),
 
     # Ingesta (agregador) - panel del frontend

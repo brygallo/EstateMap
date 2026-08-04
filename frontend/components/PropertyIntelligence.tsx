@@ -2,8 +2,10 @@
 
 import { useEffect, useState } from 'react';
 import { AlertTriangle, BarChart3, Ruler, TrendingUp } from 'lucide-react';
+import { money as formatMoney } from '@/lib/market-stats';
+import { getPublicApiUrl } from '@/lib/api-url';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8010/api';
+const API_URL = getPublicApiUrl();
 type Intelligence = {
   price_per_m2: number | null;
   zone: string;
@@ -17,7 +19,8 @@ type Intelligence = {
   demand: { level: 'low' | 'medium' | 'high'; views: number; contacts: number };
   methodology: string;
 };
-const money = (value: number | null) => value == null ? 'Sin datos' : new Intl.NumberFormat('es-EC', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(value);
+// Shared currency formatter; null means the backend had no sample to compare.
+const money = (value: number | null) => value == null ? 'Sin datos' : formatMoney(value);
 const demandLabel = { low: 'Baja', medium: 'Media', high: 'Alta' };
 const demandColor = {
   low: 'bg-red-500 ring-red-100',
@@ -27,9 +30,39 @@ const demandColor = {
 
 export default function PropertyIntelligence({ propertyId }: { propertyId: number }) {
   const [data, setData] = useState<Intelligence | null>(null);
+  const [loading, setLoading] = useState(true);
   useEffect(() => {
-    fetch(`${API_URL}/properties/${propertyId}/intelligence/`).then((response) => response.ok ? response.json() : null).then(setData).catch(() => undefined);
+    let cancelled = false;
+    fetch(`${API_URL}/properties/${propertyId}/intelligence/`)
+      .then((response) => {
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        return response.json();
+      })
+      .then((payload) => {
+        if (!cancelled) setData(payload);
+      })
+      .catch((error) => {
+        console.error('Error cargando inteligencia del anuncio:', error);
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
   }, [propertyId]);
+  if (loading) {
+    // Skeleton keeps the section from popping in after hydration.
+    return <section className="mt-8 animate-pulse rounded-card border border-line bg-surface p-5 shadow-card sm:p-6" aria-hidden>
+      <div className="h-6 w-56 rounded-card bg-muted" />
+      <div className="mt-2 h-4 w-72 rounded-card bg-muted" />
+      <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="h-24 rounded-card bg-muted" />
+        <div className="h-24 rounded-card bg-muted" />
+        <div className="h-24 rounded-card bg-muted" />
+      </div>
+    </section>;
+  }
   if (!data) return null;
   const difference = data.comparison.difference_pct;
   return <section className="mt-8 rounded-card border border-line bg-surface p-5 shadow-card sm:p-6">

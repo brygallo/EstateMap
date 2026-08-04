@@ -11,6 +11,10 @@ import {
 
 export type RelatedLink = { label: string; href: string };
 
+/** Breadcrumb item; without `href` it renders as plain text (a grouping level
+ * that has no index page of its own, e.g. "Provincias"). */
+export type BreadcrumbItem = { label: string; href?: string };
+
 /** Filtros explícitos para el grid de "Propiedades destacadas" (con fotos),
  * usados cuando `mapHref` no trae `type`/`status`/`city`/`province` legibles
  * (p. ej. páginas que arman el mapa con `search=`). */
@@ -53,7 +57,7 @@ export default async function SeoLanding({
   locationName?: string;
   emptyMessage?: string;
   /** Migas intermedias entre "Inicio" y la página actual (visibles + JSON-LD). */
-  breadcrumbs?: RelatedLink[];
+  breadcrumbs?: BreadcrumbItem[];
   /** Filtros explícitos para las fotos destacadas cuando `mapHref` no los expone. */
   featuredQuery?: FeaturedQuery;
 }) {
@@ -169,7 +173,7 @@ export default async function SeoLanding({
             '@type': 'ListItem',
             position: index + 2,
             name: crumb.label,
-            item: `${SITE_URL}${crumb.href}`,
+            ...(crumb.href ? { item: `${SITE_URL}${crumb.href}` } : {}),
           })),
           {
             '@type': 'ListItem',
@@ -232,11 +236,15 @@ export default async function SeoLanding({
               </Link>
             </li>
             {breadcrumbs.map((crumb) => (
-              <li key={crumb.href} className="flex items-center gap-1.5">
+              <li key={crumb.href ?? crumb.label} className="flex items-center gap-1.5">
                 <span aria-hidden className="text-line">/</span>
-                <Link href={crumb.href} className="transition-colors hover:text-primary">
-                  {crumb.label}
-                </Link>
+                {crumb.href ? (
+                  <Link href={crumb.href} className="transition-colors hover:text-primary">
+                    {crumb.label}
+                  </Link>
+                ) : (
+                  <span>{crumb.label}</span>
+                )}
               </li>
             ))}
             <li className="flex items-center gap-1.5" aria-current="page">

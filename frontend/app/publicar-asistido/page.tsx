@@ -99,7 +99,7 @@ export default function AssistedPublishPage() {
   };
 
   return (
-    <main className="min-h-screen bg-gradient-to-br from-primaryLight/40 via-background to-secondary/10 text-textPrimary">
+    <main className="min-h-[calc(100dvh-var(--app-header-height))] bg-gradient-to-br from-primaryLight/40 via-background to-secondary/10 text-textPrimary">
       <section className="mx-auto grid max-w-6xl gap-8 px-4 py-10 sm:px-6 lg:grid-cols-[1fr_440px] lg:px-8 lg:py-16">
         <div className="flex flex-col justify-center">
           <p className="text-sm font-bold uppercase tracking-wide text-primary">

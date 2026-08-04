@@ -15,11 +15,12 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent } from '@/components/ui/card';
 import GoogleSignInButton from '@/components/GoogleSignInButton';
 import { fetchWithTimeout, requestErrorMessage } from '@/lib/form-errors';
+import { getPublicApiUrl } from '@/lib/api-url';
 
 export default function LoginPage() {
   const router = useRouter();
   const { login, token, user, loading } = useAuth();
-  const API_URL = process.env.NEXT_PUBLIC_API_URL || '/api';
+  const API_URL = getPublicApiUrl();
 
   useEffect(() => {
     if (!loading && token && user) {
@@ -134,13 +135,16 @@ export default function LoginPage() {
                       id="email"
                       name="email"
                       type="email"
+                      autoComplete="email"
                       placeholder="tu@email.com"
+                      aria-invalid={Boolean(errors.email && touched.email)}
+                      aria-describedby={errors.email && touched.email ? 'login-email-error' : undefined}
                       className={`h-11 rounded-input pl-10 ${
                         errors.email && touched.email ? 'border-error focus-visible:ring-error' : ''
                       }`}
                     />
                   </div>
-                  <ErrorMessage name="email" component="p" className="text-sm text-error" />
+                  <ErrorMessage name="email" component="p" id="login-email-error" className="text-sm text-error" />
                 </div>
 
                 {/* Password */}
@@ -153,13 +157,16 @@ export default function LoginPage() {
                       id="password"
                       name="password"
                       type="password"
+                      autoComplete="current-password"
                       placeholder="••••••••"
+                      aria-invalid={Boolean(errors.password && touched.password)}
+                      aria-describedby={errors.password && touched.password ? 'login-password-error' : undefined}
                       className={`h-11 rounded-input pl-10 ${
                         errors.password && touched.password ? 'border-error focus-visible:ring-error' : ''
                       }`}
                     />
                   </div>
-                  <ErrorMessage name="password" component="p" className="text-sm text-error" />
+                  <ErrorMessage name="password" component="p" id="login-password-error" className="text-sm text-error" />
                 </div>
 
                 {/* Remember me */}

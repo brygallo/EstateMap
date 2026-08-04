@@ -22,6 +22,7 @@ import {
 } from 'lucide-react';
 import PrivateRoute from '@/components/PrivateRoute';
 import ShareModal from '@/components/ShareModal';
+import PullToRefresh from '@/components/ui/PullToRefresh';
 import PropertyCard from '@/components/PropertyCard';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -29,6 +30,7 @@ import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
 import type { Property } from '@/lib/types';
 import { cn } from '@/lib/utils';
+import { getStatusLabel, formatDate } from '@/lib/property-labels';
 
 type StatusFilter = 'all' | 'for_sale' | 'for_rent' | 'inactive';
 type SortMode = 'recent' | 'views' | 'price_desc' | 'price_asc';
@@ -52,12 +54,6 @@ const filterOptions: Array<{ value: StatusFilter; label: string }> = [
   { value: 'inactive', label: 'Inactivas' },
 ];
 
-const statusLabels: Record<string, string> = {
-  for_sale: 'En venta',
-  for_rent: 'En alquiler',
-  inactive: 'Inactiva',
-};
-
 const leadStatusLabels: Record<string, string> = {
   new: 'Nuevo',
   contacted: 'Contactado',
@@ -74,10 +70,9 @@ const getNumericValue = (value: number | string | null | undefined) => {
 const formatCompactNumber = (value: number) =>
   new Intl.NumberFormat('es-EC', { notation: 'compact', maximumFractionDigits: 1 }).format(value);
 
-const formatDate = (value?: string) => {
-  if (!value) return 'Sin fecha';
-  return new Intl.DateTimeFormat('es-EC', { day: '2-digit', month: 'short' }).format(new Date(value));
-};
+// Short date for lead rows; falls back when the API sends no timestamp.
+const formatLeadDate = (value?: string) =>
+  formatDate(value, { day: '2-digit', month: 'short' }) || 'Sin fecha';
 
 const MyPropertiesPage = () => {
   const { token, logout, user } = useAuth();
@@ -272,7 +267,16 @@ const MyPropertiesPage = () => {
 
   return (
     <PrivateRoute>
-      <div className="min-h-screen bg-background">
+      {/* The list goes stale as soon as you publish or edit from another tab,
+          and on a phone the reflex for that is to pull down, not to hunt for a
+          reload button. */}
+      <PullToRefresh
+        onRefresh={async () => {
+          await Promise.all([fetchMyProperties(), fetchLeads()]);
+        }}
+        disabled={loading}
+      >
+      <div className="min-h-[calc(100dvh-var(--app-header-height))] bg-background">
         {/* Header */}
         <div className="border-b border-line bg-surface">
           <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
@@ -442,7 +446,7 @@ const MyPropertiesPage = () => {
                                   </p>
                                   <p className="truncate text-xs text-textSecondary">
                                     Último: {leadsByProperty[property.id].latest.name} ·{' '}
-                                    {formatDate(leadsByProperty[property.id].latest.created_at)}
+                                    {formatLeadDate(leadsByProperty[property.id].latest.created_at)}
                                   </p>
                                 </div>
                                 <a
@@ -456,7 +460,7 @@ const MyPropertiesPage = () => {
                           )}
                           <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-line bg-surface p-2 shadow-card">
                             <Badge variant="outline" className="bg-background">
-                              {statusLabels[property.status] ?? property.status}
+                              {getStatusLabel(property.status)}
                             </Badge>
                             <div className="flex flex-1 justify-end gap-1">
                               <Button
@@ -534,7 +538,7 @@ const MyPropertiesPage = () => {
                               </Badge>
                             </div>
                             <div className="mt-2 flex items-center justify-between gap-3 text-xs text-textMuted">
-                              <span>{formatDate(lead.created_at)}</span>
+                              <span>{formatLeadDate(lead.created_at)}</span>
                               <a className="font-medium text-primary hover:underline" href={`tel:${lead.phone}`}>
                                 Llamar
                               </a>
@@ -600,6 +604,7 @@ const MyPropertiesPage = () => {
           title="Compartir Solo Mis Propiedades"
         />
       </div>
+      </PullToRefresh>
     </PrivateRoute>
   );
 };

@@ -11,6 +11,8 @@ import MapLegend from '@/components/map/MapLegend';
 import { trackEvent } from '@/lib/analytics';
 import { getPropertyPoint, isPointInEcuadorBounds } from '@/lib/geo';
 import { iconMarkerHtml, priceMarkerHtml, statusColor } from '@/lib/mapMarkers';
+import { getPropertyTypeLabel } from '@/lib/property-labels';
+import { flyToProperty } from '@/lib/map-navigation';
 import aentsTokens from '@/lib/aents-tokens.json';
 
 // MapLibre GL `paint` properties are resolved by the GL renderer, not by CSS,
@@ -84,7 +86,19 @@ const getMapPriceLabel = (price: unknown) => {
   }
 
   if (value >= 100_000) return `$${Math.round(value / 1_000)}k`;
-  return `$${Math.round(value).toLocaleString('en-US')}`;
+  return `$${Math.round(value).toLocaleString('es-EC')}`;
+};
+
+// Descriptive accessible name for a marker: type + price + city when available,
+// instead of exposing the bare database id to screen readers.
+const getMarkerAriaLabel = (property: any) => {
+  const parts = [
+    getPropertyTypeLabel(String(property?.property_type || '')),
+    getMapPriceLabel(property?.price),
+  ];
+  const city = typeof property?.city === 'string' ? property.city.trim() : '';
+  if (city) parts.push(city);
+  return parts.filter(Boolean).join(', ');
 };
 
 const getPoint = (property: any): [number, number] | null => {
@@ -215,6 +229,7 @@ export default function MapLibreMap({
   const markerRefs = useRef<Map<string, HtmlMarkerRecord>>(new Map());
   const clusterMarkerRefs = useRef<Map<string, HtmlMarkerRecord>>(new Map());
   const selectedPropertyRef = useRef<any>(selectedProperty);
+  const centeredSelectionRef = useRef<string | number | null>(null);
   const mobileInteractionRef = useRef(false);
   const reportedViewportRef = useRef<{
     bounds: { west: number; south: number; east: number; north: number } | null;
@@ -281,6 +296,25 @@ export default function MapLibreMap({
   useEffect(() => {
     selectedPropertyRef.current = selectedProperty;
   }, [selectedProperty]);
+
+  useEffect(() => {
+    const map = mapRef.current;
+    const selectedId = selectedProperty?.id ?? null;
+    if (!loaded || !map || selectedId == null) {
+      if (selectedId == null) centeredSelectionRef.current = null;
+      return;
+    }
+    if (centeredSelectionRef.current === selectedId) return;
+    centeredSelectionRef.current = selectedId;
+    // Wait one frame so a newly opened desktop detail panel has already
+    // resized the map. The selected property then lands in the centre of the
+    // actual visible canvas instead of underneath a panel.
+    const frame = window.requestAnimationFrame(() => {
+      map.resize();
+      flyToProperty(map, selectedProperty);
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [loaded, selectedProperty]);
 
   const clearHtmlMarkers = useCallback(() => {
     markerRefs.current.forEach((record) => record.marker.remove());
@@ -412,21 +446,21 @@ export default function MapLibreMap({
         id: 'selected-polygon-fill',
         type: 'fill',
         source: 'selected-polygon',
-        paint: { 'fill-color': mapTokens['--primary-strong'], 'fill-opacity': 0.34 },
+        paint: { 'fill-color': mapTokens['--primary'], 'fill-opacity': 0.38 },
       });
       map.addLayer({
         id: 'selected-polygon-line',
         type: 'line',
         source: 'selected-polygon',
-        paint: { 'line-color': mapTokens['--accent-alt-strong'], 'line-width': 3 },
+        paint: { 'line-color': mapTokens['--primary-strong'], 'line-width': 4, 'line-opacity': 1 },
       });
       map.addLayer({
         id: 'selected-point',
         type: 'circle',
         source: 'selected-property',
         paint: {
-          'circle-color': mapTokens['--accent-alt-strong'],
-          'circle-radius': 10,
+          'circle-color': mapTokens['--primary'],
+          'circle-radius': 11,
           'circle-stroke-color': '#ffffff',
           'circle-stroke-width': 3,
         },
@@ -582,7 +616,12 @@ export default function MapLibreMap({
           clusterMarkerRefs.current.set(key, record);
         }
 
-        record.element.setAttribute('aria-label', `${count} propiedades`);
+        record.element.setAttribute(
+          'aria-label',
+          label ? `${count} propiedades en ${label}` : `${count} propiedades`
+        );
+        // Map-internal layer ordering inside the MapLibre container's own
+        // stacking context; unrelated to the app-wide Tailwind z-index scale.
         record.element.style.zIndex = label ? String(2000 + Math.min(count, 999)) : String(100 + Math.min(count, 899));
         if (record.signature !== signature) {
           record.element.innerHTML = `
@@ -597,6 +636,11 @@ export default function MapLibreMap({
         record.element.onclick = (event) => {
           event.preventDefault();
           event.stopPropagation();
+          // The previous viewport stays rendered until the request for the new
+          // zoom finishes. Remove the cluster that initiated the transition so
+          // it does not travel with the map and appear to reload in place.
+          record?.marker.remove();
+          clusterMarkerRefs.current.delete(key);
           const targetZoom = Math.min(Math.max(Number(cluster.expansion_zoom) || map.getZoom() + 2, 11), 16.5);
           trackEvent('map_backend_cluster_clicked', {
             group_level: cluster.group_level ?? null,
@@ -707,7 +751,8 @@ export default function MapLibreMap({
 
           const key = String(property.id);
           const useIcon = zoom < 12 && !isSelected;
-          const signature = `${property.status}:${property.property_type}:${property.price}:${isSelected}:${useIcon ? 'icon' : 'price'}`;
+          const isMuted = selectedId != null && !isSelected;
+          const signature = `${property.status}:${property.property_type}:${property.price}:${isSelected}:${isMuted}:${useIcon ? 'icon' : 'price'}`;
           nextKeys.add(key);
 
           let record = markerRefs.current.get(key);
@@ -725,22 +770,28 @@ export default function MapLibreMap({
             }
           }
 
+          const markerDescription = getMarkerAriaLabel(property);
           record.element.setAttribute('aria-label', isSelected
-            ? `Propiedad seleccionada ${property.id}`
-            : `Ver propiedad ${property.id}`);
+            ? `Propiedad seleccionada: ${markerDescription}`
+            : `Ver propiedad: ${markerDescription}`);
+          // Map-internal layer ordering inside the MapLibre container's own
+          // stacking context; unrelated to the app-wide Tailwind z-index scale.
           record.element.style.zIndex = isSelected ? '5000' : 'auto';
+          record.element.style.opacity = isMuted ? '0.62' : '1';
           if (record.signature !== signature) {
             record.element.innerHTML = useIcon
               ? iconMarkerHtml({
                   status: property.status,
                   type: property.property_type,
                   selected: false,
+                  muted: isMuted,
                 })
               : priceMarkerHtml({
                   status: property.status,
                   type: property.property_type,
                   price: getMapPriceLabel(property.price),
                   selected: isSelected,
+                  muted: isMuted,
                 });
             record.signature = signature;
           }
@@ -768,6 +819,26 @@ export default function MapLibreMap({
     (mapRef.current.getSource('selected-property') as GeoJSONSource | undefined)?.setData(selectedPointData);
     (mapRef.current.getSource('selected-polygon') as GeoJSONSource | undefined)?.setData(selectedPolygonData);
   }, [loaded, selectedPointData, selectedPolygonData]);
+
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!loaded || !map) return;
+    const hasSelection = Boolean(selectedProperty);
+    map.setPaintProperty('property-polygons-fill', 'fill-color', hasSelection
+      ? '#8DBDA0'
+      : ['match', ['get', 'status'], 'for_rent', statusColor('for_rent'), 'inactive', statusColor('inactive'), statusColor('for_sale')]);
+    map.setPaintProperty('property-polygons-fill', 'fill-opacity', hasSelection ? 0.11 : 0.18);
+    map.setPaintProperty('property-polygons-line', 'line-color', hasSelection
+      ? '#679A7B'
+      : ['match', ['get', 'status'], 'for_rent', statusColor('for_rent'), 'inactive', statusColor('inactive'), statusColor('for_sale')]);
+    map.setPaintProperty('property-polygons-line', 'line-opacity', hasSelection ? 0.52 : 0.85);
+    map.setPaintProperty('property-points', 'circle-color', hasSelection
+      ? '#6FA886'
+      : ['match', ['get', 'status'], 'for_rent', statusColor('for_rent'), 'inactive', statusColor('inactive'), statusColor('for_sale')]);
+    map.setPaintProperty('property-points', 'circle-opacity', hasSelection
+      ? ['interpolate', ['linear'], ['zoom'], HTML_MARKER_MIN_ZOOM - 0.3, 0.48, HTML_MARKER_MIN_ZOOM + 0.4, 0]
+      : ['interpolate', ['linear'], ['zoom'], HTML_MARKER_MIN_ZOOM - 0.3, 1, HTML_MARKER_MIN_ZOOM + 0.4, 0]);
+  }, [loaded, selectedProperty]);
 
   useEffect(() => {
     if (!loaded || !mapRef.current) return;
@@ -811,11 +882,11 @@ export default function MapLibreMap({
 
       <div className="absolute bottom-6 right-3 z-mapcontrol flex flex-col-reverse gap-2.5">
         <div className="map-glass-control flex flex-col overflow-hidden rounded-xl">
-          <button type="button" onClick={() => zoomBy(1)} aria-label="Acercar" className="flex h-10 w-10 items-center justify-center text-textPrimary transition-colors hover:bg-muted">
+          <button type="button" onClick={() => zoomBy(1)} aria-label="Acercar" className="flex h-11 w-11 items-center justify-center text-textPrimary transition-colors hover:bg-muted lg:h-10 lg:w-10">
             <Plus className="h-5 w-5" strokeWidth={2} aria-hidden />
           </button>
           <span className="mx-2 block h-px bg-line" aria-hidden />
-          <button type="button" onClick={() => zoomBy(-1)} aria-label="Alejar" className="flex h-10 w-10 items-center justify-center text-textPrimary transition-colors hover:bg-muted">
+          <button type="button" onClick={() => zoomBy(-1)} aria-label="Alejar" className="flex h-11 w-11 items-center justify-center text-textPrimary transition-colors hover:bg-muted lg:h-10 lg:w-10">
             <Minus className="h-5 w-5" strokeWidth={2} aria-hidden />
           </button>
         </div>
@@ -825,7 +896,7 @@ export default function MapLibreMap({
           disabled={locating}
           aria-label="Ir a mi ubicación"
           title={locationBlocked ? 'Ubicación desactivada - tócalo para reintentar' : 'Ir a mi ubicación'}
-          className={`map-glass-control flex h-10 w-10 items-center justify-center rounded-xl transition-colors hover:bg-white disabled:cursor-not-allowed ${
+          className={`map-glass-control flex h-11 w-11 items-center justify-center rounded-xl transition-colors hover:bg-white disabled:cursor-not-allowed lg:h-10 lg:w-10 ${
             locationBlocked ? 'text-error' : 'text-textPrimary'
           }`}
         >
@@ -872,7 +943,10 @@ export default function MapLibreMap({
       )}
 
       <style>{`
-        .maplibregl-canvas { outline: none; }
+        .maplibregl-canvas:focus-visible {
+          outline: 2px solid rgb(var(--primary-strong-rgb));
+          outline-offset: -2px;
+        }
         .maplibregl-marker {
           overflow: visible;
         }
@@ -961,8 +1035,11 @@ export default function MapLibreMap({
           transition: opacity 140ms ease;
           width: 112px;
         }
-        .maplibre-price-marker:focus-visible {
-          outline: none;
+        .maplibre-price-marker:focus-visible,
+        .maplibre-cluster-marker:focus-visible {
+          outline: 2px solid rgb(var(--primary-strong-rgb));
+          outline-offset: 2px;
+          border-radius: 8px;
         }
         .maplibre-price-marker .gp-marker {
           transition: filter 90ms ease;

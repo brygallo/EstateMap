@@ -57,7 +57,7 @@ const nextConfig = {
   async headers() {
     // Cabeceras de seguridad aplicadas a todas las rutas. No se incluye
     // Content-Security-Policy aquí a propósito: requiere una allowlist afinada
-    // (GTM/GA, Google Identity, MapLibre/Leaflet, tiles de OSM, MinIO) y una CSP
+    // (GTM/GA, Google Identity, MapLibre, tiles de OSM, MinIO) y una CSP
     // mal formada rompería el mapa o el analytics. Queda como follow-up.
     const securityHeaders = [
       {
@@ -111,14 +111,6 @@ const nextConfig = {
       { source: '/reset-password', destination: '/restablecer-contrasena', permanent: true },
       { source: '/verify-email', destination: '/verificar-correo', permanent: true },
     ];
-  },
-  webpack: (config) => {
-    // Exclude old src directory from build
-    config.module.rules.push({
-      test: /\.(js|jsx|ts|tsx)$/,
-      exclude: /src\/(pages|components)/,
-    });
-    return config;
   },
 };
 

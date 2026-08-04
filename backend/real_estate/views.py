@@ -453,7 +453,8 @@ class PropertyViewSet(viewsets.ModelViewSet):
                 response['X-Idempotent-Replay'] = 'true'
                 return response
 
-        if not cache.add(lock_key, '1', 60):
+        lock_acquired = cache.add(lock_key, '1', 60)
+        if lock_acquired is False:
             return Response(
                 {'detail': 'Esta publicación ya se está procesando. Espera un momento.'},
                 status=status.HTTP_409_CONFLICT,
@@ -464,7 +465,10 @@ class PropertyViewSet(viewsets.ModelViewSet):
                 cache.set(result_key, response.data['id'], 60 * 60 * 24)
             return response
         finally:
-            cache.delete(lock_key)
+            # django-redis returns None when failures are intentionally ignored.
+            # Publishing must remain available even if the cache is unavailable.
+            if lock_acquired:
+                cache.delete(lock_key)
 
     def retrieve(self, request, *args, **kwargs):
         """Devuelve el detalle e incrementa el contador de vistas de forma atómica."""
@@ -1986,7 +1990,7 @@ class AdminPropertyViewSet(viewsets.ModelViewSet):
     search_fields = ['title', 'owner__username', 'owner__first_name', 'owner__last_name', 'city']
     ordering_fields = ['created_at', 'price', 'title']
     ordering = ['-created_at']
-    http_method_names = ['get', 'patch', 'delete', 'head', 'options']
+    http_method_names = ['get', 'post', 'patch', 'delete', 'head', 'options']
     pagination_class = AdminPagination
 
     # Campos editables vía PATCH admin.
@@ -2007,6 +2011,23 @@ class AdminPropertyViewSet(viewsets.ModelViewSet):
             queryset = queryset.filter(is_imported=True)
         elif origin == 'users':
             queryset = queryset.filter(is_imported=False, owner__isnull=False)
+
+        quality = self.request.query_params.get('quality')
+        if quality == 'without_images':
+            queryset = queryset.filter(image_count_annotated=0)
+        elif quality == 'without_location':
+            queryset = queryset.filter(
+                Q(latitude__isnull=True) | Q(longitude__isnull=True)
+            )
+        elif quality == 'without_price':
+            queryset = queryset.filter(Q(price__isnull=True) | Q(price__lte=0))
+        elif quality == 'duplicates':
+            queryset = queryset.filter(is_duplicate=True)
+        elif quality == 'incomplete':
+            queryset = queryset.filter(
+                Q(image_count_annotated=0) | Q(description='') | Q(title='')
+                | Q(area__isnull=True) | Q(area__lte=0)
+            )
         return queryset
 
     def get_serializer_class(self):
@@ -2045,13 +2066,60 @@ class AdminPropertyViewSet(viewsets.ModelViewSet):
         )
         return Response(status=status.HTTP_204_NO_CONTENT)
 
+    @action(detail=False, methods=['post'], url_path='bulk-status')
+    def bulk_status(self, request):
+        """Cambia el estado de un conjunto acotado de propiedades."""
+        raw_ids = request.data.get('ids')
+        new_status = request.data.get('status')
+        valid_statuses = {'for_sale', 'for_rent', 'inactive'}
+
+        if not isinstance(raw_ids, list) or not raw_ids:
+            return Response(
+                {'error': 'Selecciona al menos una propiedad'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        if len(raw_ids) > 200:
+            return Response(
+                {'error': 'Solo puedes actualizar hasta 200 propiedades por operación'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        if new_status not in valid_statuses:
+            return Response(
+                {'error': 'Estado no válido'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        try:
+            property_ids = list(dict.fromkeys(int(value) for value in raw_ids))
+        except (TypeError, ValueError):
+            return Response(
+                {'error': 'Todos los identificadores deben ser números enteros'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        from django.utils import timezone
+        queryset = Property.objects.filter(pk__in=property_ids)
+        matched = queryset.count()
+        updated = queryset.exclude(status=new_status).update(
+            status=new_status,
+            updated_at=timezone.now(),
+        )
+        logger.info(
+            "admin_audit action=property.bulk_status actor=%s targets=%s status=%s matched=%s updated=%s",
+            request.user.pk, property_ids, new_status, matched, updated,
+        )
+        return Response({'matched': matched, 'updated': updated, 'status': new_status})
+
     @action(detail=False, methods=['get'])
     def stats(self, request):
         """Contadores livianos para el panel de propiedades del admin."""
         base = Property.objects.all()
-        without_images = (
-            base.annotate(num_images=Count('images')).filter(num_images=0).count()
-        )
+        with_image_counts = base.annotate(num_images=Count('images'))
+        without_images = with_image_counts.filter(num_images=0).count()
+        incomplete = with_image_counts.filter(
+            Q(num_images=0) | Q(description='') | Q(title='')
+            | Q(area__isnull=True) | Q(area__lte=0)
+        ).count()
         return Response({
             'total': base.count(),
             'for_sale': base.filter(status='for_sale').count(),
@@ -2059,6 +2127,12 @@ class AdminPropertyViewSet(viewsets.ModelViewSet):
             'inactive': base.filter(status='inactive').count(),
             'active': base.exclude(status='inactive').count(),
             'without_images': without_images,
+            'without_location': base.filter(
+                Q(latitude__isnull=True) | Q(longitude__isnull=True)
+            ).count(),
+            'without_price': base.filter(Q(price__isnull=True) | Q(price__lte=0)).count(),
+            'duplicates': base.filter(is_duplicate=True).count(),
+            'incomplete': incomplete,
             'imported': base.filter(is_imported=True).count(),
             'users': base.filter(is_imported=False, owner__isnull=False).count(),
         })

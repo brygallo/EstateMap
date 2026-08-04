@@ -80,6 +80,49 @@ def polygon_area_m2(ring_latlng):
     return abs(area) / 2.0
 
 
+def _orientation(a, b, c):
+    value = (b[1] - a[1]) * (c[0] - b[0]) - (b[0] - a[0]) * (c[1] - b[1])
+    if math.isclose(value, 0.0, abs_tol=1e-12):
+        return 0
+    return 1 if value > 0 else 2
+
+
+def _on_segment(a, b, c):
+    return (
+        min(a[0], c[0]) <= b[0] <= max(a[0], c[0])
+        and min(a[1], c[1]) <= b[1] <= max(a[1], c[1])
+    )
+
+
+def _segments_intersect(a, b, c, d):
+    o1, o2 = _orientation(a, b, c), _orientation(a, b, d)
+    o3, o4 = _orientation(c, d, a), _orientation(c, d, b)
+    if o1 != o2 and o3 != o4:
+        return True
+    return (
+        (o1 == 0 and _on_segment(a, c, b))
+        or (o2 == 0 and _on_segment(a, d, b))
+        or (o3 == 0 and _on_segment(c, a, d))
+        or (o4 == 0 and _on_segment(c, b, d))
+    )
+
+
+def polygon_self_intersects(ring_latlng):
+    """Return True when two non-adjacent polygon edges intersect."""
+    edge_count = len(ring_latlng)
+    for first in range(edge_count):
+        a, b = ring_latlng[first], ring_latlng[(first + 1) % edge_count]
+        for second in range(first + 1, edge_count):
+            if second == first or second == first + 1:
+                continue
+            if first == 0 and second == edge_count - 1:
+                continue
+            c, d = ring_latlng[second], ring_latlng[(second + 1) % edge_count]
+            if _segments_intersect(a, b, c, d):
+                return True
+    return False
+
+
 def _extract_ring_latlng(value):
     """
     Normalize any accepted polygon input into a ``[[lat, lng], ...]`` ring,
@@ -145,9 +188,10 @@ def validate_and_normalize_polygon(value):
     # Drop a trailing closing point so we count real vertices.
     open_ring = ring[:-1] if len(ring) >= 2 and ring[0] == ring[-1] else ring
 
-    # Deduplicate consecutive identical points for the vertex count.
+    # Remove consecutive duplicates and require three genuinely distinct
+    # coordinates (not merely three entries in the array).
     distinct = [p for i, p in enumerate(open_ring) if i == 0 or p != open_ring[i - 1]]
-    if len(distinct) < 3:
+    if len({tuple(point) for point in distinct}) < 3:
         raise PolygonValidationError(
             "El polígono debe tener al menos 3 vértices distintos."
         )
@@ -158,6 +202,11 @@ def validate_and_normalize_polygon(value):
             raise PolygonValidationError(
                 f"La coordenada ({lat:.5f}, {lng:.5f}) está fuera de Ecuador."
             )
+
+    if polygon_self_intersects(distinct):
+        raise PolygonValidationError(
+            "Los lados del polígono no pueden cruzarse entre sí."
+        )
 
     # Area check.
     area = polygon_area_m2(distinct)

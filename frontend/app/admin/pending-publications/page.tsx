@@ -44,8 +44,8 @@ import {
   PaginationPrevious,
 } from '@/components/ui/pagination';
 import { cn } from '@/lib/utils';
+import { apiGet, apiPatch } from '@/lib/api';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8010/api';
 const PAGE_SIZE = 20;
 
 interface PendingPublication {
@@ -134,9 +134,7 @@ export default function PendingPublicationsPage() {
       if (statusFilter !== 'all') params.set('status', statusFilter);
       if (search) params.set('search', search);
 
-      const res = await fetch(`${API_URL}/pending-publications/?${params.toString()}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const res = await apiGet(`/pending-publications/?${params.toString()}`);
       if (!res.ok) throw new Error('Error al cargar pendientes');
       const json = await res.json();
       setItems(json.results || []);
@@ -148,7 +146,7 @@ export default function PendingPublicationsPage() {
     } finally {
       setLoading(false);
     }
-  }, [token, page, statusFilter, search]);
+  }, [page, statusFilter, search]);
 
   useEffect(() => {
     if (token) fetchItems();
@@ -158,11 +156,7 @@ export default function PendingPublicationsPage() {
 
   const updateStatus = async (item: PendingPublication, status: string) => {
     try {
-      const res = await fetch(`${API_URL}/pending-publications/${item.id}/`, {
-        method: 'PATCH',
-        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status }),
-      });
+      const res = await apiPatch(`/pending-publications/${item.id}/`, { status });
       if (!res.ok) throw new Error('No se pudo actualizar');
       toast.success('Estado actualizado');
       fetchItems();
@@ -286,9 +280,9 @@ export default function PendingPublicationsPage() {
 
   return (
     <AdminRoute>
-      <div className="flex min-h-[calc(100vh-3rem)] bg-background">
+      <div className="flex min-h-[calc(100dvh-var(--app-header-height))] bg-background">
         <AdminSidebar />
-        <main className="min-w-0 flex-1 overflow-auto">
+        <main className="min-w-0 flex-1">
           <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
             <div className="mb-6">
               <h1 className="text-2xl font-bold text-textPrimary">Publicaciones Pendientes</h1>
@@ -397,7 +391,7 @@ export default function PendingPublicationsPage() {
 
       {/* Detail dialog */}
       <Dialog open={!!selected} onOpenChange={(o) => { if (!o) setSelected(null); }}>
-        <DialogContent className="max-h-[85vh] max-w-2xl overflow-auto rounded-modal">
+        <DialogContent className="max-h-[85dvh] max-w-2xl overflow-auto rounded-modal">
           {selected && (
             <>
               <DialogHeader>

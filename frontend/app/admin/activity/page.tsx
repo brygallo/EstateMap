@@ -25,8 +25,8 @@ import {
   PaginationPrevious,
 } from '@/components/ui/pagination';
 import { cn } from '@/lib/utils';
+import { apiGet } from '@/lib/api';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8010/api';
 const PAGE_SIZE = 50;
 const CONTACT_EVENT = 'property_contact_clicked';
 
@@ -102,9 +102,7 @@ export default function AdminActivityPage() {
       if (eventName) params.set('event_name', eventName);
       if (traffic !== 'all') params.set('is_bot', traffic === 'bot' ? 'true' : 'false');
 
-      const response = await fetch(`${API_URL}/activity-events/?${params.toString()}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const response = await apiGet(`/activity-events/?${params.toString()}`);
       if (!response.ok) throw new Error('Error al cargar la actividad');
       const data = await response.json();
       setItems(data.results || []);
@@ -136,9 +134,9 @@ export default function AdminActivityPage() {
 
   return (
     <AdminRoute>
-      <div className="flex min-h-[calc(100vh-3rem)] bg-background">
+      <div className="flex min-h-[calc(100dvh-var(--app-header-height))] bg-background">
         <AdminSidebar />
-        <main className="min-w-0 flex-1 overflow-auto">
+        <main className="min-w-0 flex-1">
           <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
             <PageHeader onRefresh={() => void load()} />
 

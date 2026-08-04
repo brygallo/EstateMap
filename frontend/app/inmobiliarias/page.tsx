@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { Check } from 'lucide-react';
+import { Archive, Check, Mail, MapPin, Phone, Plus, Search } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
@@ -21,32 +21,32 @@ const BENEFITS = [
   {
     title: 'Tus propiedades en el mapa',
     desc: 'Cada inmueble se ubica con precisión en el mapa, con polígono del terreno, fotos y precio visible.',
-    icon: 'M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z M15 11a3 3 0 11-6 0 3 3 0 016 0z',
+    icon: MapPin,
   },
   {
     title: 'Contacto directo por WhatsApp',
     desc: 'Los interesados te escriben o llaman al instante desde la ficha, sin intermediarios.',
-    icon: 'M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z',
+    icon: Phone,
   },
   {
     title: 'Leads que sí puedes medir',
     desc: 'Cada contacto queda registrado: nombre, teléfono, mensaje y propiedad de interés.',
-    icon: 'M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z',
+    icon: Mail,
   },
   {
     title: 'Publicación asistida',
     desc: 'Sube fotos, dibuja el terreno y completa los datos con un flujo guiado, en minutos.',
-    icon: 'M12 4v16m8-8H4',
+    icon: Plus,
   },
   {
     title: 'Alcance SEO local',
     desc: 'Tus inmuebles aparecen en páginas por ciudad y tipo (casas en venta, terrenos, etc.).',
-    icon: 'M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z',
+    icon: Search,
   },
   {
     title: 'Panel de gestión',
     desc: 'Administra tus publicaciones, revisa vistas y da seguimiento a los contactos recibidos.',
-    icon: 'M4 6a2 2 0 012-2h12a2 2 0 012 2v2H4V6zM4 10h16v8a2 2 0 01-2 2H6a2 2 0 01-2-2v-8z',
+    icon: Archive,
   },
 ];
 
@@ -89,16 +89,6 @@ const PLANS = [
   },
 ];
 
-function Icon({ d, className = 'h-6 w-6' }: { d: string; className?: string }) {
-  return (
-    <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-      {d.split(' M').map((seg, i) => (
-        <path key={i} strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={i === 0 ? seg : `M${seg}`} />
-      ))}
-    </svg>
-  );
-}
-
 export default function InmobiliariasPage() {
   return (
     <main className="bg-background">
@@ -139,7 +129,7 @@ export default function InmobiliariasPage() {
           {BENEFITS.map((b) => (
             <Card key={b.title} className="rounded-card border-line p-6 shadow-card">
               <div className="flex h-11 w-11 items-center justify-center rounded-lg bg-primary/10 text-primary">
-                <Icon d={b.icon} />
+                <b.icon className="h-6 w-6" strokeWidth={1.75} aria-hidden />
               </div>
               <h3 className="mt-4 text-base font-bold text-textPrimary">{b.title}</h3>
               <p className="mt-2 text-sm leading-6 text-textSecondary">{b.desc}</p>
@@ -193,9 +183,7 @@ export default function InmobiliariasPage() {
                 'Nombre, teléfono y mensaje del interesado',
               ].map((item) => (
                 <li key={item} className="flex items-center gap-2 text-sm text-textPrimary">
-                  <svg className="h-5 w-5 flex-shrink-0 text-success" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                  </svg>
+                  <Check className="h-5 w-5 flex-shrink-0 text-success" strokeWidth={1.75} aria-hidden />
                   {item}
                 </li>
               ))}

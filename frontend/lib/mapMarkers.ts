@@ -5,7 +5,7 @@
 import aentsTokens from '@/lib/aents-tokens.json';
 
 // These values are consumed by APIs that cannot resolve CSS custom properties
-// (MapLibre GL `paint` expressions, Leaflet path options and base64 SVG data
+// (MapLibre GL `paint` expressions and base64 SVG data
 // URLs), so the raw Aents token values are read instead of `var(--token)`.
 const tokens = aentsTokens.light;
 
@@ -39,6 +39,23 @@ const INACTIVE: StatusMarker = {
   gradient: `linear-gradient(135deg, ${tokens['--text-secondary']}, ${tokens['--text-muted']})`,
   shadow: tokenRgba('--text-secondary-rgb', '0.18'),
   ring: tokenRgba('--text-muted-rgb', '0.24'),
+};
+
+// Selection hierarchy on the detail map. The active listing keeps the normal
+// brand green; surrounding listings use a quieter green instead of competing
+// with it through status colors.
+const SELECTED_GREEN: StatusMarker = {
+  solid: tokens['--primary-strong'],
+  gradient: `linear-gradient(135deg, ${tokens['--primary']}, ${tokens['--primary-strong']})`,
+  shadow: tokenRgba('--primary-strong-rgb', '0.24'),
+  ring: tokenRgba('--primary-rgb', '0.34'),
+};
+
+const MUTED_GREEN: StatusMarker = {
+  solid: '#6FA886',
+  gradient: 'linear-gradient(135deg, #8DBDA0, #679A7B)',
+  shadow: 'rgba(27, 134, 72, 0.12)',
+  ring: 'rgba(27, 134, 72, 0.16)',
 };
 
 export function statusMarker(status?: string): StatusMarker {
@@ -80,13 +97,15 @@ export function priceMarkerHtml({
   type,
   price,
   selected = false,
+  muted = false,
 }: {
   status?: string;
   type?: string;
   price: string;
   selected?: boolean;
+  muted?: boolean;
 }): string {
-  const c = statusMarker(status);
+  const c = selected ? SELECTED_GREEN : muted ? MUTED_GREEN : statusMarker(status);
   const scale = selected ? 'scale(1.06)' : 'scale(1)';
   const ring = selected ? `0 0 0 3px ${c.ring},` : '';
   const shadowOpacity = selected ? '0.34' : '0.24';
@@ -149,12 +168,14 @@ export function iconMarkerHtml({
   status,
   type,
   selected = false,
+  muted = false,
 }: {
   status?: string;
   type?: string;
   selected?: boolean;
+  muted?: boolean;
 }): string {
-  const c = statusMarker(status);
+  const c = selected ? SELECTED_GREEN : muted ? MUTED_GREEN : statusMarker(status);
   const scale = selected ? 'scale(1.12)' : 'scale(1)';
   const ring = selected ? `0 0 0 3px ${c.ring},` : '';
   const shadowOpacity = selected ? '0.34' : '0.24';

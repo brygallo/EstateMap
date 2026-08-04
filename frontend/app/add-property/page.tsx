@@ -34,9 +34,11 @@ import {
 
 import { useAuth } from '@/lib/auth-context';
 import { cn } from '@/lib/utils';
+import { getPropertyTypeLabel, getStatusLabel, formatPrice } from '@/lib/property-labels';
 import { buildWhatsAppUrl } from '@/lib/constants';
 import { trackEvent } from '@/lib/analytics';
 import { fetchWithTimeout, requestErrorMessage, responseErrorMessage } from '@/lib/form-errors';
+import { getPublicApiUrl } from '@/lib/api-url';
 import {
   LOCATION_STORAGE_KEYS,
   geolocationErrorMessage,
@@ -225,7 +227,7 @@ const AddPropertyPage = () => {
 
   const { token, logout, login } = useAuth();
   const router = useRouter();
-  const API_URL = process.env.NEXT_PUBLIC_API_URL || '/api';
+  const API_URL = getPublicApiUrl();
 
   const form = useForm<PropertyValues>({
     resolver: zodResolver(propertySchema),
@@ -420,7 +422,7 @@ const AddPropertyPage = () => {
       if (draft.province) setProvince(draft.province);
       if (draft.latitude) setLatitude(draft.latitude);
       if (draft.longitude) setLongitude(draft.longitude);
-      if (draft.polygon) {
+      if (Array.isArray(draft.polygon) && draft.polygon.length >= 3) {
         setPolygonCoords(draft.polygon);
         setLocationMode('polygon');
       }
@@ -922,10 +924,14 @@ const AddPropertyPage = () => {
       formData.append('address', v.address || '');
       formData.append('city', city);
       formData.append('province', province);
-      if (latitude) formData.append('latitude', parseFloat(latitude).toString());
-      if (longitude) formData.append('longitude', parseFloat(longitude).toString());
+      if (locationMode === 'point' && latitude) formData.append('latitude', parseFloat(latitude).toString());
+      if (locationMode === 'point' && longitude) formData.append('longitude', parseFloat(longitude).toString());
       if (locationMode === 'polygon' && polygonCoords.length >= 3) {
         formData.append('polygon', JSON.stringify(polygonCoords));
+      } else if (isEditMode) {
+        // An omitted field preserves the old JSONField during an update. Send
+        // an explicit null when changing an existing polygon to point mode.
+        formData.append('polygon', JSON.stringify(null));
       }
       formData.append('show_measurements', showMeasurements.toString());
 
@@ -983,7 +989,10 @@ const AddPropertyPage = () => {
               aentsTokens.light['--primary-soft'],
             ],
           });
-        } catch {}
+        } catch (error) {
+          // The confetti is decorative only; log the failure without blocking the flow.
+          console.error('No se pudo mostrar la animación de confetti:', error);
+        }
         toast.success(isEditMode ? 'Propiedad actualizada exitosamente' : 'Propiedad creada exitosamente');
         setTimeout(() => router.push('/mis-propiedades'), 650);
       } else if (res.status === 401) {
@@ -1347,31 +1356,17 @@ const AddPropertyPage = () => {
 
   const showBuiltGroup = ['house', 'apartment', 'commercial'].includes(propertyType);
 
-  // Etiquetas legibles para el resumen y el preview del wizard.
-  const FORM_STATUS_LABELS: Record<string, string> = {
-    for_sale: 'En venta',
-    for_rent: 'En alquiler',
-    sold: 'Vendido',
-    rented: 'Alquilado',
-    inactive: 'Inactivo',
-  };
-  const FORM_TYPE_LABELS: Record<string, string> = {
-    house: 'Casa',
-    apartment: 'Apartamento',
-    land: 'Terreno',
-    commercial: 'Comercial',
-    other: 'Otro',
-  };
-  const summaryStatusLabel = FORM_STATUS_LABELS[values.status] || 'En venta';
-  const summaryTypeLabel = FORM_TYPE_LABELS[propertyType] || 'Propiedad';
+  // Readable labels for the wizard summary and preview (shared canonical maps).
+  const summaryStatusLabel = getStatusLabel(values.status) || 'En venta';
+  const summaryTypeLabel = getPropertyTypeLabel(propertyType);
   const summaryLocation = [city, province].filter(Boolean).join(', ');
-  const summaryPrice = values.price ? `$${Number(values.price).toLocaleString()}` : null;
+  const summaryPrice = values.price ? formatPrice(values.price) : null;
   const activeExistingImages = existingImages.filter((img) => !imagesToDelete.includes(img.id));
   const summaryCover = activeExistingImages[0]?.thumbnail || activeExistingImages[0]?.image || images[0]?.preview || null;
 
   if (loadingProperty) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-background">
+      <div className="flex min-h-[calc(100dvh-var(--app-header-height))] items-center justify-center bg-background">
         <div className="text-center">
           <Loader2 className="mx-auto h-12 w-12 animate-spin text-primary" />
           <p className="mt-4 text-textSecondary">Cargando propiedad...</p>
@@ -1381,7 +1376,7 @@ const AddPropertyPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-[calc(100dvh-var(--app-header-height))] bg-background">
       {/* Header */}
       <div className="border-b border-line bg-surface shadow-card">
         <div className="mx-auto max-w-7xl px-4 py-4 sm:px-6 lg:px-8">
@@ -1544,10 +1539,10 @@ const AddPropertyPage = () => {
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            <SelectItem value="land">Terreno</SelectItem>
-                            <SelectItem value="house">Casa</SelectItem>
-                            <SelectItem value="apartment">Apartamento</SelectItem>
-                            <SelectItem value="commercial">Comercial</SelectItem>
+                            <SelectItem value="land">{getPropertyTypeLabel('land')}</SelectItem>
+                            <SelectItem value="house">{getPropertyTypeLabel('house')}</SelectItem>
+                            <SelectItem value="apartment">{getPropertyTypeLabel('apartment')}</SelectItem>
+                            <SelectItem value="commercial">{getPropertyTypeLabel('commercial')}</SelectItem>
                             <SelectItem value="other">Otro</SelectItem>
                           </SelectContent>
                         </Select>
@@ -1701,7 +1696,7 @@ const AddPropertyPage = () => {
                     </div>
                   </div>
 
-                  <div className="relative isolate h-[480px] sm:h-[620px] lg:h-[calc(100vh-11rem)] lg:min-h-[680px]">
+                  <div className="relative isolate h-[480px] sm:h-[620px] lg:h-[calc(100dvh-11rem)] lg:min-h-[680px]">
                     <div className="pointer-events-none absolute left-3 top-3 z-20 max-w-[calc(100%-1.5rem)] rounded-card border border-line bg-white/95 px-3 py-2 text-xs shadow-card backdrop-blur">
                       <p className="font-semibold text-textPrimary">{locationMapLabel}</p>
                       <p className="mt-0.5 text-textSecondary">
@@ -1718,7 +1713,6 @@ const AddPropertyPage = () => {
                       onMapReady={bindMapRef}
                       onPolygonChange={handlePolygonChange}
                       onLocationChange={locationMode === 'point' ? handlePointLocationChange : undefined}
-                      onAreaChange={setArea}
                       initialPolygon={polygonCoords}
                       selectedLocation={latitude && longitude ? { lat: Number(latitude), lng: Number(longitude) } : null}
                       locationMode={locationMode}
@@ -1790,10 +1784,11 @@ const AddPropertyPage = () => {
               <SectionCard icon={<Ruler className="h-5 w-5" />} title="Características del Predio">
                 <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
                   <div className="space-y-2">
-                    <label className="text-sm font-semibold text-textPrimary">
+                    <label htmlFor="property-total-area" className="text-sm font-semibold text-textPrimary">
                       Área Total (m²){locationMode === 'polygon' ? ' *' : ''}
                     </label>
                     <Input
+                      id="property-total-area"
                       type="number"
                       step="0.01"
                       min="0"
@@ -2034,10 +2029,11 @@ const AddPropertyPage = () => {
                               type="button"
                               onClick={() => handleToggleExistingImageDelete(img.id)}
                               className={cn(
-                                'absolute right-2 top-2 rounded-full p-1 text-white shadow-card transition-colors',
+                                'absolute right-2 top-2 rounded-full p-2 text-white shadow-card transition-colors',
                                 marked ? 'bg-primary hover:bg-primaryHover' : 'bg-error hover:bg-error/90'
                               )}
                               title={marked ? 'Conservar imagen' : 'Eliminar imagen'}
+                              aria-label={marked ? 'Conservar imagen' : 'Eliminar imagen'}
                             >
                               {marked ? <Check className="h-4 w-4" /> : <Trash2 className="h-4 w-4" />}
                             </button>
@@ -2078,8 +2074,9 @@ const AddPropertyPage = () => {
                             <button
                               type="button"
                               onClick={() => moveImage(index, 0)}
-                              className="absolute left-2 top-2 flex items-center gap-1 rounded-md bg-black/70 px-2 py-0.5 text-[11px] font-semibold text-white opacity-0 transition-opacity hover:bg-black/90 group-hover:opacity-100"
+                              className="absolute left-2 top-2 flex items-center gap-1 rounded-md bg-black/70 px-2 py-1.5 text-[11px] font-semibold text-white opacity-100 transition-opacity hover:bg-black/90 lg:opacity-0 lg:group-hover:opacity-100 lg:group-focus-within:opacity-100"
                               title="Hacer principal"
+                              aria-label="Hacer principal esta imagen"
                             >
                               <Star className="h-3 w-3" strokeWidth={2} aria-hidden />
                               Principal
@@ -2091,13 +2088,14 @@ const AddPropertyPage = () => {
                           </div>
 
                           {/* Controles de orden */}
-                          <div className="absolute bottom-2 right-2 flex gap-1 opacity-0 transition-opacity group-hover:opacity-100">
+                          <div className="absolute bottom-2 right-2 flex gap-1 opacity-100 transition-opacity lg:opacity-0 lg:group-hover:opacity-100 lg:group-focus-within:opacity-100">
                             <button
                               type="button"
                               onClick={() => moveImage(index, index - 1)}
                               disabled={index === 0}
-                              className="rounded-md bg-white/90 p-1 text-textPrimary shadow-card transition-colors hover:bg-white disabled:cursor-not-allowed disabled:opacity-40"
+                              className="rounded-md bg-white/90 p-2 text-textPrimary shadow-card transition-colors hover:bg-white disabled:cursor-not-allowed disabled:opacity-40"
                               title="Mover a la izquierda"
+                              aria-label="Mover imagen a la izquierda"
                             >
                               <ChevronLeft className="h-4 w-4" strokeWidth={2} aria-hidden />
                             </button>
@@ -2105,8 +2103,9 @@ const AddPropertyPage = () => {
                               type="button"
                               onClick={() => moveImage(index, index + 1)}
                               disabled={index === images.length - 1}
-                              className="rounded-md bg-white/90 p-1 text-textPrimary shadow-card transition-colors hover:bg-white disabled:cursor-not-allowed disabled:opacity-40"
+                              className="rounded-md bg-white/90 p-2 text-textPrimary shadow-card transition-colors hover:bg-white disabled:cursor-not-allowed disabled:opacity-40"
                               title="Mover a la derecha"
+                              aria-label="Mover imagen a la derecha"
                             >
                               <ChevronRight className="h-4 w-4" strokeWidth={2} aria-hidden />
                             </button>
@@ -2115,8 +2114,9 @@ const AddPropertyPage = () => {
                           <button
                             type="button"
                             onClick={() => handleRemoveNewImage(index)}
-                            className="absolute right-2 top-2 rounded-full bg-error p-1 text-white opacity-0 transition-opacity hover:bg-error/90 group-hover:opacity-100"
+                            className="absolute right-2 top-2 rounded-full bg-error p-2 text-white opacity-100 transition-opacity hover:bg-error/90 lg:opacity-0 lg:group-hover:opacity-100 lg:group-focus-within:opacity-100"
                             title="Eliminar imagen"
+                            aria-label="Eliminar imagen"
                           >
                             <X className="h-4 w-4" />
                           </button>
@@ -2126,7 +2126,7 @@ const AddPropertyPage = () => {
                   </div>
                 )}
 
-                <label className="flex h-40 w-full cursor-pointer flex-col items-center justify-center rounded-input border-2 border-dashed border-line transition-all hover:border-primary hover:bg-muted/40">
+                <label className="flex h-40 w-full cursor-pointer flex-col items-center justify-center rounded-input border-2 border-dashed border-line transition-all focus-within:ring-2 focus-within:ring-primary/40 hover:border-primary hover:bg-muted/40">
                   <div className="flex flex-col items-center justify-center px-6 py-4 text-center">
                     <UploadCloud className="mb-3 h-10 w-10 text-textSecondary" />
                     <p className="mb-1 text-sm font-semibold text-textSecondary">Haz clic para subir imágenes</p>
@@ -2136,7 +2136,7 @@ const AddPropertyPage = () => {
                   </div>
                   <input
                     type="file"
-                    className="hidden"
+                    className="sr-only"
                     accept="image/jpeg,image/jpg,image/png,image/webp"
                     multiple
                     onChange={handleImageChange}
@@ -2298,7 +2298,7 @@ const AddPropertyPage = () => {
 
         {/* Resumen lateral (solo desktop): datos clave siempre visibles */}
         <aside className="hidden lg:block">
-          <div className="sticky top-28 space-y-3 rounded-card border border-line bg-surface p-4 shadow-card">
+          <div className="sticky top-[calc(var(--app-header-height)+1.5rem)] space-y-3 rounded-card border border-line bg-surface p-4 shadow-card">
             <p className="text-xs font-semibold uppercase tracking-wide text-textSecondary">Resumen</p>
 
             <div className="overflow-hidden rounded-input bg-muted">
@@ -2456,12 +2456,12 @@ const AddPropertyPage = () => {
           {gateMode === 'login' ? (
             <form onSubmit={handleLoginAndPublish} className="space-y-4 px-6 pb-6">
               <div className="space-y-1.5">
-                <label className="text-sm font-semibold text-textPrimary">Correo</label>
-                <Input type="email" value={accountEmail} onChange={(e) => setAccountEmail(e.target.value)} className="h-11 rounded-input" required />
+                <label htmlFor="gate-login-email" className="text-sm font-semibold text-textPrimary">Correo</label>
+                <Input id="gate-login-email" type="email" autoComplete="email" value={accountEmail} onChange={(e) => setAccountEmail(e.target.value)} className="h-11 rounded-input" required />
               </div>
               <div className="space-y-1.5">
-                <label className="text-sm font-semibold text-textPrimary">Contraseña</label>
-                <Input type="password" value={accountPassword} onChange={(e) => setAccountPassword(e.target.value)} className="h-11 rounded-input" required />
+                <label htmlFor="gate-login-password" className="text-sm font-semibold text-textPrimary">Contraseña</label>
+                <Input id="gate-login-password" type="password" autoComplete="current-password" value={accountPassword} onChange={(e) => setAccountPassword(e.target.value)} className="h-11 rounded-input" required />
               </div>
               <div className="space-y-2 pt-1">
                 <Button type="submit" disabled={loggingIn} className="h-11 w-full rounded-button bg-primary font-bold">
@@ -2482,21 +2482,21 @@ const AddPropertyPage = () => {
             <form onSubmit={handleCreateAccount} className="space-y-4 px-6 pb-6">
               <div className="grid gap-3 sm:grid-cols-2">
                 <div className="space-y-1.5">
-                  <label className="text-sm font-semibold text-textPrimary">Nombre</label>
-                  <Input value={accountFirstName} onChange={(e) => setAccountFirstName(e.target.value)} className="h-11 rounded-input" required />
+                  <label htmlFor="gate-register-first-name" className="text-sm font-semibold text-textPrimary">Nombre</label>
+                  <Input id="gate-register-first-name" autoComplete="given-name" value={accountFirstName} onChange={(e) => setAccountFirstName(e.target.value)} className="h-11 rounded-input" required />
                 </div>
                 <div className="space-y-1.5">
-                  <label className="text-sm font-semibold text-textPrimary">Apellido</label>
-                  <Input value={accountLastName} onChange={(e) => setAccountLastName(e.target.value)} className="h-11 rounded-input" required />
+                  <label htmlFor="gate-register-last-name" className="text-sm font-semibold text-textPrimary">Apellido</label>
+                  <Input id="gate-register-last-name" autoComplete="family-name" value={accountLastName} onChange={(e) => setAccountLastName(e.target.value)} className="h-11 rounded-input" required />
                 </div>
               </div>
               <div className="space-y-1.5">
-                <label className="text-sm font-semibold text-textPrimary">Correo</label>
-                <Input type="email" value={accountEmail} onChange={(e) => setAccountEmail(e.target.value)} className="h-11 rounded-input" required />
+                <label htmlFor="gate-register-email" className="text-sm font-semibold text-textPrimary">Correo</label>
+                <Input id="gate-register-email" type="email" autoComplete="email" value={accountEmail} onChange={(e) => setAccountEmail(e.target.value)} className="h-11 rounded-input" required />
               </div>
               <div className="space-y-1.5">
-                <label className="text-sm font-semibold text-textPrimary">Contraseña</label>
-                <Input type="password" value={accountPassword} onChange={(e) => setAccountPassword(e.target.value)} className="h-11 rounded-input" required />
+                <label htmlFor="gate-register-password" className="text-sm font-semibold text-textPrimary">Contraseña</label>
+                <Input id="gate-register-password" type="password" autoComplete="new-password" value={accountPassword} onChange={(e) => setAccountPassword(e.target.value)} className="h-11 rounded-input" required />
               </div>
               <div className="space-y-2 pt-1">
                 <Button type="submit" disabled={creatingAccount} className="h-11 w-full rounded-button bg-primary font-bold">

@@ -39,11 +39,12 @@ const LocationPermissionModal = ({
   const browserName = /CriOS|Chrome/i.test(userAgent) ? 'Chrome' : 'Safari';
 
   return (
-    <div className={`pointer-events-none fixed inset-x-0 bottom-3 z-top flex justify-center px-3 transition-all duration-300 ${isVisible ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'}`}>
+    <div className={`pointer-events-none fixed inset-x-0 bottom-[calc(var(--mobile-tabbar-height)+env(safe-area-inset-bottom)+0.75rem)] z-top flex justify-center px-3 transition-all duration-300 ${isVisible ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'}`}>
+      {/* Non-blocking banner (no scrim, no scroll lock): a labelled region,
+          not a dialog, so screen readers do not expect modal behavior. */}
       <div
         className="pointer-events-auto w-full max-w-lg rounded-modal border border-line bg-surface p-3 shadow-cardHover"
-        role="dialog"
-        aria-modal="false"
+        role="region"
         aria-labelledby="location-permission-title"
       >
         <div className="flex gap-2.5">

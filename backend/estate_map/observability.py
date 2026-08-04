@@ -4,7 +4,6 @@ import logging
 import os
 import time
 import uuid
-from pathlib import Path
 
 from django.db import connection
 from django.db.models import F
@@ -122,16 +121,6 @@ def health(request):
         checks["cache"] = f"error:{type(exc).__name__}"
         checks["worker"] = "unknown"
         status = "error"
-
-    verification_file = os.getenv("BACKUP_VERIFICATION_FILE", "")
-    if verification_file:
-        path = Path(verification_file)
-        checks["backup_verified"] = path.exists()
-        if path.exists():
-            checks["backup_verified_at"] = int(path.stat().st_mtime)
-    else:
-        checks["backup_verified"] = False
-        checks["backup_note"] = "BACKUP_VERIFICATION_FILE no configurado"
 
     return JsonResponse({
         "status": status,

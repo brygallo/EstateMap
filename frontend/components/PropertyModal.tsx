@@ -26,6 +26,9 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { trackEvent } from '@/lib/analytics';
+import { haptic } from '@/lib/haptics';
+import { useShareAction } from '@/hooks/useShareAction';
+import GalleryViewer from '@/components/ui/GalleryViewer';
 import { PhoneReveal } from '@/components/PropertyContactActions';
 import RevealableDescription from '@/components/RevealableDescription';
 import { ecuadorPhoneHref, normalizeEcuadorPhone } from '@/lib/phone';
@@ -35,6 +38,8 @@ import {
   getStatusLabel,
   getStatusBadgeClass,
   formatArea,
+  formatAreaValue,
+  formatDate,
   formatPrice,
 } from '@/lib/property-labels';
 
@@ -48,23 +53,13 @@ const clampImageIndex = (index: number, length: number) => {
   return Math.min(Math.max(index, 0), length - 1);
 };
 
-const formatDate = (value: unknown) => {
-  if (!value) return '';
-  const date = new Date(String(value));
-  if (Number.isNaN(date.getTime())) return '';
-  return date.toLocaleDateString('es-EC', {
-    day: 'numeric',
-    month: 'long',
-    year: 'numeric',
-  });
-};
-
-// Image Gallery Component (lightbox a pantalla completa)
+// Image Gallery Component (lightbox a pantalla completa).
+// The gesture handling — pinch, finger-tracked swipe, double-tap zoom — lives
+// in GalleryViewer so this lightbox and the one on the listing page behave
+// identically. This wrapper only owns which photo is showing.
 const ImageGallery = ({ images, initialIndex, onClose }: any) => {
   const validImages = useMemo(() => getValidImages(images), [images]);
   const [currentIndex, setCurrentIndex] = useState(() => clampImageIndex(initialIndex, validImages.length));
-  const touchStartRef = useRef<{ x: number; y: number } | null>(null);
-  const suppressCloseRef = useRef(false);
 
   useEffect(() => {
     if (validImages.length === 0) {
@@ -76,124 +71,14 @@ const ImageGallery = ({ images, initialIndex, onClose }: any) => {
 
   if (validImages.length === 0) return null;
 
-  const activeImage = validImages[clampImageIndex(currentIndex, validImages.length)];
-
-  const nextImage = () => {
-    setCurrentIndex((prev: number) => (prev + 1) % validImages.length);
-  };
-
-  const prevImage = () => {
-    setCurrentIndex((prev: number) => (prev - 1 + validImages.length) % validImages.length);
-  };
-
-  const handleGalleryTouchEnd = (event: React.TouchEvent) => {
-    const start = touchStartRef.current;
-    const touch = event.changedTouches[0];
-    touchStartRef.current = null;
-    if (!start || !touch || validImages.length < 2) return;
-
-    const deltaX = touch.clientX - start.x;
-    const deltaY = touch.clientY - start.y;
-    if (Math.abs(deltaX) < 44 || Math.abs(deltaX) <= Math.abs(deltaY) * 1.2) return;
-
-    suppressCloseRef.current = true;
-    deltaX < 0 ? nextImage() : prevImage();
-    window.setTimeout(() => {
-      suppressCloseRef.current = false;
-    }, 0);
-  };
-
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Escape') onClose();
-    if (e.key === 'ArrowRight') nextImage();
-    if (e.key === 'ArrowLeft') prevImage();
-  };
-
   return (
-    <div
-      className="fixed inset-0 z-modal flex items-center justify-center bg-black/95 outline-none animate-fadeIn"
-      onClick={(event) => {
-        if (event.target === event.currentTarget && !suppressCloseRef.current) onClose();
-      }}
-      onTouchStart={(event) => {
-        const touch = event.touches[0];
-        touchStartRef.current = touch ? { x: touch.clientX, y: touch.clientY } : null;
-      }}
-      onTouchEnd={handleGalleryTouchEnd}
-      onKeyDown={handleKeyDown}
-      tabIndex={0}
-      role="dialog"
-      aria-modal="true"
-      aria-label="Galería de imágenes"
-    >
-      {/* Close Button */}
-      <button
-        onClick={(e) => { e.stopPropagation(); onClose(); }}
-        className="fixed right-3 inline-flex h-11 w-11 items-center justify-center rounded-full border border-white/30 bg-white text-black shadow-cardHover transition-all hover:bg-slate-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/70 sm:right-4 sm:h-auto sm:w-auto sm:gap-2 sm:px-4 sm:py-2"
-        style={{ zIndex: 2147483647, top: 'max(0.75rem, env(safe-area-inset-top))' }}
-        aria-label="Cerrar galería"
-      >
-        <X className="h-6 w-6" strokeWidth={3} aria-hidden />
-        <span className="hidden sm:inline">Cerrar</span>
-      </button>
-
-      {/* Image Counter */}
-      <div
-        className="absolute left-4 top-4 z-10 rounded-card bg-white/10 px-3 py-1.5 text-xs font-medium text-white"
-        onClick={(e) => e.stopPropagation()}
-      >
-        {clampImageIndex(currentIndex, validImages.length) + 1} / {validImages.length}
-      </div>
-
-      {/* Main Image */}
-      <div className="relative flex h-full w-full items-center justify-center p-4" onClick={() => { if (!suppressCloseRef.current) onClose(); }}>
-        <img
-          src={activeImage.image}
-          alt={`Imagen ${currentIndex + 1}`}
-          decoding="async"
-          className="max-h-full max-w-full rounded-xl object-contain"
-          onClick={(e) => e.stopPropagation()}
-        />
-
-        {/* Navigation Arrows */}
-        {validImages.length > 1 && (
-          <>
-            <button
-              onClick={(e) => { e.stopPropagation(); prevImage(); }}
-              className="absolute left-4 top-1/2 -translate-y-1/2 rounded-card bg-white/10 p-3 text-white transition-all hover:bg-white/20"
-              aria-label="Imagen anterior"
-            >
-              <ChevronLeft className="h-7 w-7" strokeWidth={2} aria-hidden />
-            </button>
-            <button
-              onClick={(e) => { e.stopPropagation(); nextImage(); }}
-              className="absolute right-4 top-1/2 -translate-y-1/2 rounded-card bg-white/10 p-3 text-white transition-all hover:bg-white/20"
-              aria-label="Imagen siguiente"
-            >
-              <ChevronRight className="h-7 w-7" strokeWidth={2} aria-hidden />
-            </button>
-          </>
-        )}
-      </div>
-
-      {/* Thumbnail Strip */}
-      {validImages.length > 1 && (
-        <div className="absolute bottom-4 left-1/2 flex max-w-[90vw] -translate-x-1/2 gap-2 overflow-x-auto rounded-xl bg-white/10 p-3 backdrop-blur-sm">
-          {validImages.map((img: any, idx: number) => (
-            <button
-              key={idx}
-              onClick={(e) => { e.stopPropagation(); setCurrentIndex(idx); }}
-              className={cn(
-                'h-16 w-16 flex-shrink-0 overflow-hidden rounded-lg border-2 transition-all',
-                idx === currentIndex ? 'border-white scale-105' : 'border-transparent opacity-60 hover:opacity-100'
-              )}
-            >
-              <img src={img.image} alt="" loading="lazy" decoding="async" className="h-full w-full object-cover" />
-            </button>
-          ))}
-        </div>
-      )}
-    </div>
+    <GalleryViewer
+      images={validImages}
+      index={clampImageIndex(currentIndex, validImages.length)}
+      onIndexChange={setCurrentIndex}
+      onClose={onClose}
+      title="la propiedad"
+    />
   );
 };
 
@@ -238,7 +123,8 @@ interface PropertyModalProps {
 const PropertyModal = ({ property: initialProperty, isOpen, onClose, onViewOnMap, getContextualShareUrl }: PropertyModalProps) => {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [galleryOpen, setGalleryOpen] = useState(false);
-  const [shareModalOpen, setShareModalOpen] = useState(false);
+  const shareAction = useShareAction();
+  const shareModalOpen = shareAction.modalOpen;
   const [fullProperty, setFullProperty] = useState<any | null>(null);
   const [loadingFullProperty, setLoadingFullProperty] = useState(false);
   const [sheetExpanded, setSheetExpanded] = useState(false);
@@ -248,10 +134,21 @@ const PropertyModal = ({ property: initialProperty, isOpen, onClose, onViewOnMap
   const sheetScrollRef = useRef<HTMLDivElement>(null);
   const sheetTouchStartRef = useRef<{ x: number; y: number; scrollTop: number; distanceToBottom: number } | null>(null);
   const sheetDismissTimerRef = useRef<number | null>(null);
-  const carouselTouchStartRef = useRef<{ x: number; y: number } | null>(null);
-  const carouselSwipedRef = useRef(false);
+  const carouselStripRef = useRef<HTMLDivElement>(null);
+  const openerElementRef = useRef<HTMLElement | null>(null);
+  // On mobile the panel behaves as a true modal (scrim + scroll lock), so it
+  // must announce itself as a dialog; on desktop it is a docked side panel.
+  const [isMobileViewport, setIsMobileViewport] = useState(false);
   const property = fullProperty || initialProperty;
   const images = useMemo(() => getValidImages(property?.images), [property?.images]);
+
+  useEffect(() => {
+    const query = window.matchMedia('(max-width: 1023px)');
+    const update = () => setIsMobileViewport(query.matches);
+    update();
+    query.addEventListener('change', update);
+    return () => query.removeEventListener('change', update);
+  }, []);
 
   // Cierre con Escape: primero la galería/compartir si están abiertos, luego el panel.
   useEffect(() => {
@@ -259,16 +156,29 @@ const PropertyModal = ({ property: initialProperty, isOpen, onClose, onViewOnMap
     const onKey = (e: KeyboardEvent) => {
       if (e.key !== 'Escape') return;
       if (galleryOpen) { setGalleryOpen(false); return; }
-      if (shareModalOpen) { setShareModalOpen(false); return; }
+      if (shareModalOpen) { shareAction.closeModal(); return; }
       onClose();
     };
     document.addEventListener('keydown', onKey);
     return () => document.removeEventListener('keydown', onKey);
   }, [isOpen, galleryOpen, shareModalOpen, onClose]);
 
-  // Lleva el foco al panel al abrir (lectores de pantalla / teclado).
+  // Lleva el foco al panel al abrir (lectores de pantalla / teclado) y lo
+  // devuelve al elemento que abrió la ficha al cerrarla.
   useEffect(() => {
-    if (isOpen) panelRef.current?.focus();
+    if (isOpen) {
+      // Capture the opener only on the open transition, not when the shown
+      // property changes while the panel already holds focus.
+      if (!openerElementRef.current) {
+        const active = document.activeElement;
+        if (active instanceof HTMLElement) openerElementRef.current = active;
+      }
+      panelRef.current?.focus();
+      return;
+    }
+    const opener = openerElementRef.current;
+    openerElementRef.current = null;
+    if (opener && opener.isConnected) opener.focus();
   }, [isOpen, initialProperty?.id]);
 
   useEffect(() => () => {
@@ -361,10 +271,12 @@ const PropertyModal = ({ property: initialProperty, isOpen, onClose, onViewOnMap
       imported: isImported,
     });
   };
-  const nextImage = () => {
-    if (images.length === 0) return;
-    setCurrentImageIndex((prev) => (prev + 1) % images.length);
-  };
+  // The arrows and thumbnails move the strip, not the index — the strip's
+  // `onScroll` then reports the new index back. Setting the index directly
+  // would leave the photos and the counter out of sync. They also stop at the
+  // ends rather than wrapping, because a snap strip has real edges the finger
+  // can feel and a wrapping arrow would contradict them.
+  const nextImage = () => scrollCarouselTo(safeImageIndex + 1);
 
   const handleSheetTouchStart = (event: React.TouchEvent) => {
     const touch = event.touches[0];
@@ -444,6 +356,7 @@ const PropertyModal = ({ property: initialProperty, isOpen, onClose, onViewOnMap
 
     if (deltaY < 0 && !sheetExpanded) {
       setSheetExpanded(true);
+      haptic('impact');
       return;
     }
 
@@ -467,26 +380,22 @@ const PropertyModal = ({ property: initialProperty, isOpen, onClose, onViewOnMap
     }
   };
 
-  const prevImage = () => {
-    if (images.length === 0) return;
-    setCurrentImageIndex((prev) => (prev - 1 + images.length) % images.length);
-  };
+  const prevImage = () => scrollCarouselTo(safeImageIndex - 1);
 
-  const handleCarouselTouchEnd = (event: React.TouchEvent) => {
-    const start = carouselTouchStartRef.current;
-    const touch = event.changedTouches[0];
-    carouselTouchStartRef.current = null;
-    if (!start || !touch || images.length < 2) return;
-
-    const deltaX = touch.clientX - start.x;
-    const deltaY = touch.clientY - start.y;
-    if (Math.abs(deltaX) < 40 || Math.abs(deltaX) <= Math.abs(deltaY) * 1.2) return;
-
-    carouselSwipedRef.current = true;
-    deltaX < 0 ? nextImage() : prevImage();
-    window.setTimeout(() => {
-      carouselSwipedRef.current = false;
-    }, 0);
+  /**
+   * Drives the strip from the arrows and thumbnails.
+   *
+   * The strip is the source of truth while a finger is on it — its `onScroll`
+   * pushes the index up. This is the other direction, and it must not fire in
+   * response to that scroll or the two fight: bail when the strip is already
+   * showing the requested photo.
+   */
+  const scrollCarouselTo = (index: number) => {
+    const strip = carouselStripRef.current;
+    if (!strip || !strip.clientWidth) return;
+    const target = clampImageIndex(index, images.length) * strip.clientWidth;
+    if (Math.abs(strip.scrollLeft - target) < 2) return;
+    strip.scrollTo({ left: target, behavior: 'smooth' });
   };
 
   // Generate share URL using the canonical property route with Open Graph meta tags
@@ -507,8 +416,8 @@ const PropertyModal = ({ property: initialProperty, isOpen, onClose, onViewOnMap
 
   // Build detailed description for social sharing
   const getShareDescription = () => {
-    const priceFormatted = `$${parseFloat(property.price).toLocaleString()}`;
-    const areaFormatted = property.area ? `${Math.round(parseFloat(property.area))} m²` : '';
+    const priceFormatted = formatPrice(property.price);
+    const areaFormatted = formatArea(property.area);
     const location = [property.city, property.province].filter(Boolean).join(', ');
 
     let description = `${priceFormatted}`;
@@ -547,7 +456,8 @@ const PropertyModal = ({ property: initialProperty, isOpen, onClose, onViewOnMap
       <div
         ref={panelRef}
         tabIndex={-1}
-        role="complementary"
+        role={isMobileViewport ? 'dialog' : 'complementary'}
+        aria-modal={isMobileViewport ? true : undefined}
         aria-label={`Detalle de ${property.title || 'propiedad'}`}
         className={cn(
           'fixed inset-x-0 bottom-0 z-panel outline-none animate-panelIn will-change-transform lg:relative lg:inset-auto lg:z-0 lg:h-full lg:w-[26rem] lg:flex-shrink-0 lg:transform-none',
@@ -578,9 +488,19 @@ const PropertyModal = ({ property: initialProperty, isOpen, onClose, onViewOnMap
           <span className="h-1.5 w-11 rounded-full bg-slate-300" aria-hidden />
         </button>
         <div className="flex h-full flex-col">
-          {/* Share Button */}
+          {/* Share Button. On a phone this opens the OS sheet — WhatsApp is
+              where a property link actually gets sent in Ecuador — and only
+              falls back to the in-app dialog (Facebook, copy, QR) where the
+              Web Share API is missing. */}
           <button
-            onClick={() => setShareModalOpen(true)}
+            onClick={() => {
+              trackEvent('property_share_clicked', { property_id: property.id, source: 'detail_panel' });
+              shareAction.share({
+                title: getShareTitle(),
+                text: getShareDescription(),
+                url: getShareUrl(),
+              });
+            }}
             className="absolute right-16 top-12 z-10 flex h-11 w-11 items-center justify-center rounded-full bg-black/55 text-white shadow-card backdrop-blur transition-colors hover:bg-black/75 lg:right-12 lg:top-3 lg:h-8 lg:w-8"
             title="Compartir propiedad"
             aria-label="Compartir propiedad"
@@ -600,7 +520,12 @@ const PropertyModal = ({ property: initialProperty, isOpen, onClose, onViewOnMap
           {/* Scrollable Content */}
           <div
             ref={sheetScrollRef}
-            className="min-h-0 flex-1 touch-pan-y overflow-y-auto overscroll-contain pb-24 pt-11 lg:max-h-none lg:pb-0 lg:pt-0"
+            // Deliberately NOT `touch-pan-y`: touch-action intersects down the
+            // tree, so pinning this container to the vertical axis would kill
+            // the photo strip's horizontal scroll no matter what the strip
+            // declares. The sheet gesture does not need it — its handlers
+            // already ignore anything that is not clearly vertical.
+            className="min-h-0 flex-1 overflow-y-auto overscroll-contain pb-24 pt-11 lg:max-h-none lg:pb-0 lg:pt-0"
             onTouchStart={handleSheetTouchStart}
             onTouchMove={handleSheetTouchMove}
             onTouchEnd={handleSheetTouchEnd}
@@ -608,53 +533,78 @@ const PropertyModal = ({ property: initialProperty, isOpen, onClose, onViewOnMap
           >
             {/* Image Gallery Section */}
             {activeImage ? (
-              <div
-                className="property-detail-gallery group relative h-48 touch-pan-y cursor-pointer bg-slate-900 sm:h-56 lg:h-64"
-                onClick={() => {
-                  if (!carouselSwipedRef.current) setGalleryOpen(true);
-                }}
-                onTouchStart={(event) => {
-                  const touch = event.touches[0];
-                  carouselTouchStartRef.current = touch ? { x: touch.clientX, y: touch.clientY } : null;
-                }}
-                onTouchEnd={handleCarouselTouchEnd}
-              >
-                <img
-                  src={activeImage.image}
-                  alt={property.title}
-                  decoding="async"
-                  className="h-full w-full object-cover"
-                />
-                <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-black/70 to-transparent" aria-hidden />
+              <div className="property-detail-gallery group relative h-48 bg-slate-900 sm:h-56 lg:h-64">
+                {/* A native scroll-snap strip rather than a JS swipe. The
+                    browser supplies momentum, rubber-banding at the ends and
+                    interruptible scrolling; the previous handler only measured
+                    the finger on touchend, so nothing moved until the gesture
+                    was already over. */}
+                <div
+                  ref={carouselStripRef}
+                  className="flex h-full snap-x snap-mandatory overflow-x-auto overscroll-x-contain"
+                  onScroll={(event) => {
+                    const strip = event.currentTarget;
+                    if (!strip.clientWidth) return;
+                    const position = Math.round(strip.scrollLeft / strip.clientWidth);
+                    const clamped = clampImageIndex(position, images.length);
+                    if (clamped !== safeImageIndex) setCurrentImageIndex(clamped);
+                  }}
+                >
+                  {images.map((img: any, idx: number) => (
+                    <img
+                      key={`${img.image}-${idx}`}
+                      src={img.image}
+                      alt={idx === 0 ? property.title : `${property.title} — imagen ${idx + 1}`}
+                      decoding="async"
+                      loading={idx === 0 ? 'eager' : 'lazy'}
+                      onClick={() => setGalleryOpen(true)}
+                      className="h-full w-full flex-none cursor-pointer snap-center snap-always object-cover"
+                    />
+                  ))}
+                </div>
+                <div className="pointer-events-none absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-black/70 to-transparent" aria-hidden />
 
-                {/* Image Counter */}
-                <div className="absolute left-3 top-3 rounded-full bg-black/60 px-2.5 py-1 text-[11px] font-semibold text-white backdrop-blur">
+                {/* Image Counter. `pointer-events-none` so it never eats a
+                    swipe that starts on top of it. */}
+                <div className="pointer-events-none absolute left-3 top-3 rounded-full bg-black/60 px-2.5 py-1 text-[11px] font-semibold tabular-nums text-white backdrop-blur">
                   {safeImageIndex + 1} / {images.length}
                 </div>
 
-                {/* Expand Icon */}
-                <div className="absolute right-24 top-3 rounded-full bg-black/60 p-2 text-white backdrop-blur">
+                {/* Expand. Was a decorative div, so the affordance it advertised
+                    did nothing when tapped directly. */}
+                <button
+                  type="button"
+                  onClick={() => setGalleryOpen(true)}
+                  className="absolute right-24 top-3 flex h-11 w-11 touch-manipulation items-center justify-center rounded-full bg-black/60 text-white backdrop-blur transition-colors hover:bg-black/80"
+                  aria-label="Ver las fotos a pantalla completa"
+                >
                   <Maximize2 className="h-4 w-4" strokeWidth={2} aria-hidden />
-                </div>
+                </button>
 
-                {/* Navigation Arrows */}
+                {/* Navigation arrows: pointer-driven input only. On a
+                    touchscreen the strip is swiped, and the arrows sit right
+                    where the thumb lands mid-swipe. */}
                 {images.length > 1 && (
-                  <>
+                  <div className="hidden [@media(hover:hover)]:block">
                     <button
+                      type="button"
                       onClick={(e) => { e.stopPropagation(); prevImage(); }}
-                      className="absolute left-3 top-1/2 -translate-y-1/2 rounded-full bg-white/90 p-2 text-textPrimary shadow-card transition-colors hover:bg-white"
+                      disabled={safeImageIndex === 0}
+                      className="absolute left-3 top-1/2 -translate-y-1/2 rounded-full bg-white/90 p-2 text-textPrimary shadow-card transition-colors hover:bg-white disabled:pointer-events-none disabled:opacity-0"
                       aria-label="Imagen anterior"
                     >
                       <ChevronLeft className="h-5 w-5" strokeWidth={2} aria-hidden />
                     </button>
                     <button
+                      type="button"
                       onClick={(e) => { e.stopPropagation(); nextImage(); }}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 rounded-full bg-white/90 p-2 text-textPrimary shadow-card transition-colors hover:bg-white"
+                      disabled={safeImageIndex === images.length - 1}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 rounded-full bg-white/90 p-2 text-textPrimary shadow-card transition-colors hover:bg-white disabled:pointer-events-none disabled:opacity-0"
                       aria-label="Imagen siguiente"
                     >
                       <ChevronRight className="h-5 w-5" strokeWidth={2} aria-hidden />
                     </button>
-                  </>
+                  </div>
                 )}
 
                 {/* Thumbnail Strip */}
@@ -663,9 +613,10 @@ const PropertyModal = ({ property: initialProperty, isOpen, onClose, onViewOnMap
                     {images.slice(0, 5).map((img: any, idx: number) => (
                       <button
                         key={idx}
-                        onClick={(e) => { e.stopPropagation(); setCurrentImageIndex(idx); }}
+                        onClick={(e) => { e.stopPropagation(); scrollCarouselTo(idx); }}
+                        aria-label={`Ver imagen ${idx + 1}`}
                         className={cn(
-                          'h-10 w-10 flex-shrink-0 overflow-hidden rounded-md border transition-all',
+                          'h-12 w-12 flex-shrink-0 overflow-hidden rounded-md border transition-all',
                           idx === safeImageIndex ? 'border-white scale-110' : 'border-transparent opacity-60 hover:opacity-100'
                         )}
                       >
@@ -675,7 +626,8 @@ const PropertyModal = ({ property: initialProperty, isOpen, onClose, onViewOnMap
                     {images.length > 5 && (
                       <button
                         onClick={(e) => { e.stopPropagation(); setGalleryOpen(true); }}
-                        className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-md bg-black/70 text-xs font-bold text-white transition-colors hover:bg-black/90"
+                        aria-label={`Ver las ${images.length} imágenes en la galería`}
+                        className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-md bg-black/70 text-xs font-bold text-white transition-colors hover:bg-black/90"
                       >
                         +{images.length - 5}
                       </button>
@@ -770,14 +722,16 @@ const PropertyModal = ({ property: initialProperty, isOpen, onClose, onViewOnMap
 
               {/* Key Features Grid */}
               <div className="grid grid-cols-3 gap-2">
-                <FeatureTile icon={Ruler} value={formatArea(property.area)} label="m² total" />
+                {formatAreaValue(property.area) && (
+                  <FeatureTile icon={Ruler} value={formatAreaValue(property.area)} label="m² total" />
+                )}
 
                 {property.built_area && (
-                  <FeatureTile icon={Building2} value={formatArea(property.built_area)} label="m² constr." />
+                  <FeatureTile icon={Building2} value={formatAreaValue(property.built_area)} label="m² constr." />
                 )}
 
                 {property.rooms > 0 && (
-                  <FeatureTile icon={BedDouble} value={property.rooms} label="Habitac." />
+                  <FeatureTile icon={BedDouble} value={property.rooms} label="Habitaciones" />
                 )}
 
                 {property.bathrooms > 0 && (
@@ -785,7 +739,7 @@ const PropertyModal = ({ property: initialProperty, isOpen, onClose, onViewOnMap
                 )}
 
                 {property.parking_spaces > 0 && (
-                  <FeatureTile icon={Car} value={property.parking_spaces} label="Parqueo" />
+                  <FeatureTile icon={Car} value={property.parking_spaces} label="Parqueos" />
                 )}
 
                 {property.floors && (
@@ -1010,7 +964,7 @@ const PropertyModal = ({ property: initialProperty, isOpen, onClose, onViewOnMap
       {/* Share Modal */}
       <ShareModal
         isOpen={shareModalOpen}
-        onClose={() => setShareModalOpen(false)}
+        onClose={shareAction.closeModal}
         shareUrl={getShareUrl()}
         title="Compartir Propiedad"
         description="Comparte esta propiedad en redes sociales"

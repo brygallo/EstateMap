@@ -12,6 +12,9 @@ interface RangeSliderProps {
   onChange: (min: number, max: number) => void;
   formatValue?: (v: number) => string;
   theme?: 'light' | 'dark';
+  /** Accessible names for the min/max controls (inputs and slider thumbs). */
+  minLabel?: string;
+  maxLabel?: string;
 }
 
 const RangeSlider = ({
@@ -22,7 +25,9 @@ const RangeSlider = ({
   maxValue,
   onChange,
   formatValue = (v) => v.toString(),
-  theme = 'light'
+  theme = 'light',
+  minLabel = 'Valor mínimo',
+  maxLabel = 'Valor máximo',
 }: RangeSliderProps) => {
   const [isDraggingMin, setIsDraggingMin] = useState(false);
   const [isDraggingMax, setIsDraggingMax] = useState(false);
@@ -218,6 +223,7 @@ const RangeSlider = ({
           max={max}
           step={step}
           value={minInput}
+          aria-label={minLabel}
           title={formattedMinLabel}
           onChange={(e) => setMinInput(e.target.value)}
           onBlur={() => commitInput(true)}
@@ -231,6 +237,7 @@ const RangeSlider = ({
           max={max}
           step={step}
           value={maxInput}
+          aria-label={maxLabel}
           title={formattedMaxLabel}
           onChange={(e) => setMaxInput(e.target.value)}
           onBlur={() => commitInput(false)}
@@ -270,12 +277,12 @@ const RangeSlider = ({
           <div
             role="slider"
             tabIndex={0}
-            aria-label="Valor mínimo"
+            aria-label={minLabel}
             aria-valuemin={min}
             aria-valuemax={maxValue}
             aria-valuenow={minValue}
             aria-valuetext={formattedMinLabel}
-            className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 cursor-grab rounded-full outline-none focus-visible:ring-2 focus-visible:ring-primary/60 focus-visible:ring-offset-2 active:cursor-grabbing"
+            className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 cursor-grab rounded-full p-2.5 outline-none focus-visible:ring-2 focus-visible:ring-primary/60 focus-visible:ring-offset-2 active:cursor-grabbing"
             style={{ left: `${minPercentage}%` }}
             onMouseDown={handleMouseDown(true)}
             onTouchStart={handleTouchStart(true)}
@@ -291,12 +298,12 @@ const RangeSlider = ({
           <div
             role="slider"
             tabIndex={0}
-            aria-label="Valor máximo"
+            aria-label={maxLabel}
             aria-valuemin={minValue}
             aria-valuemax={max}
             aria-valuenow={maxValue}
             aria-valuetext={formattedMaxLabel}
-            className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 cursor-grab rounded-full outline-none focus-visible:ring-2 focus-visible:ring-primary/60 focus-visible:ring-offset-2 active:cursor-grabbing"
+            className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 cursor-grab rounded-full p-2.5 outline-none focus-visible:ring-2 focus-visible:ring-primary/60 focus-visible:ring-offset-2 active:cursor-grabbing"
             style={{ left: `${maxPercentage}%` }}
             onMouseDown={handleMouseDown(false)}
             onTouchStart={handleTouchStart(false)}

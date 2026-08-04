@@ -108,3 +108,48 @@ def test_admin_property_list_filters_imported_and_user_inventory():
     assert imported_response.data["results"][0]["source_name"] == "Plusvalia"
     assert [item["id"] for item in users_response.data["results"]] == [published.id]
     assert users_response.data["results"][0]["source_name"] is None
+
+
+def test_admin_property_quality_filters_and_bulk_status():
+    user_model = get_user_model()
+    admin = user_model.objects.create_user(
+        username="admin-quality",
+        email="admin-quality@example.com",
+        password="test-password",
+        is_staff=True,
+    )
+    complete = Property.objects.create(
+        title="Complete",
+        status="for_sale",
+        price=100000,
+        area=100,
+        latitude=-0.2,
+        longitude=-78.5,
+        description="Complete description",
+    )
+    incomplete = Property.objects.create(
+        title="Incomplete",
+        status="for_sale",
+        price=None,
+        area=None,
+        latitude=None,
+        longitude=None,
+        description="",
+    )
+
+    client = APIClient()
+    client.force_authenticate(user=admin)
+    filtered = client.get(reverse("admin_properties_list"), {"quality": "without_price"})
+    response = client.post(
+        reverse("admin_properties_bulk_status"),
+        {"ids": [complete.id, incomplete.id], "status": "inactive"},
+        format="json",
+    )
+
+    assert [item["id"] for item in filtered.data["results"]] == [incomplete.id]
+    assert response.status_code == 200
+    assert response.data == {"matched": 2, "updated": 2, "status": "inactive"}
+    assert set(Property.objects.filter(status="inactive").values_list("id", flat=True)) == {
+        complete.id,
+        incomplete.id,
+    }

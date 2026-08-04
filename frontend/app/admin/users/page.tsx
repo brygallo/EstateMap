@@ -67,8 +67,7 @@ import {
   SheetHeader,
   SheetTitle,
 } from '@/components/ui/sheet';
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8010/api';
+import { apiGet, apiPatch, apiDelete } from '@/lib/api';
 
 interface UserItem {
   id: number;
@@ -166,9 +165,7 @@ const AdminUsersPage = () => {
     setSelectedUser(user);
     setDetailLoading(true);
     try {
-      const res = await fetch(`${API_URL}/admin/users/${user.id}/`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const res = await apiGet(`/admin/users/${user.id}/`);
       if (!res.ok) throw new Error();
       setSelectedUser(await res.json());
     } catch {
@@ -176,7 +173,7 @@ const AdminUsersPage = () => {
     } finally {
       setDetailLoading(false);
     }
-  }, [token]);
+  }, []);
 
   const linkedUserLoadedRef = useRef<number | null>(null);
   useEffect(() => {
@@ -184,9 +181,7 @@ const AdminUsersPage = () => {
     if (!token || !Number.isInteger(userId) || userId <= 0 || linkedUserLoadedRef.current === userId) return;
     linkedUserLoadedRef.current = userId;
     setDetailLoading(true);
-    fetch(`${API_URL}/admin/users/${userId}/`, {
-      headers: { Authorization: `Bearer ${token}` },
-    })
+    apiGet(`/admin/users/${userId}/`)
       .then(async (response) => {
         if (!response.ok) throw new Error();
         setSelectedUser(await response.json());
@@ -214,9 +209,7 @@ const AdminUsersPage = () => {
         params.set('is_staff', 'true');
       }
 
-      const res = await fetch(`${API_URL}/admin/users/?${params}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const res = await apiGet(`/admin/users/?${params}`);
       if (!res.ok) throw new Error('Error al cargar usuarios');
       const json = await res.json();
 
@@ -227,7 +220,7 @@ const AdminUsersPage = () => {
     } finally {
       setLoading(false);
     }
-  }, [token]);
+  }, []);
 
   const searchTimeoutRef = useRef<NodeJS.Timeout | undefined>(undefined);
 
@@ -265,11 +258,7 @@ const AdminUsersPage = () => {
 
   const handleToggleActive = async (user: UserItem) => {
     try {
-      const res = await fetch(`${API_URL}/admin/users/${user.id}/`, {
-        method: 'PATCH',
-        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ is_active: !user.is_active }),
-      });
+      const res = await apiPatch(`/admin/users/${user.id}/`, { is_active: !user.is_active });
       if (!res.ok) {
         throw new Error();
       }
@@ -283,11 +272,7 @@ const AdminUsersPage = () => {
 
   const handleToggleStaff = async (user: UserItem) => {
     try {
-      const res = await fetch(`${API_URL}/admin/users/${user.id}/`, {
-        method: 'PATCH',
-        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ is_staff: !user.is_staff }),
-      });
+      const res = await apiPatch(`/admin/users/${user.id}/`, { is_staff: !user.is_staff });
       if (!res.ok) {
         throw new Error();
       }
@@ -301,10 +286,7 @@ const AdminUsersPage = () => {
 
   const handleDeleteUser = async (user: UserItem) => {
     try {
-      const res = await fetch(`${API_URL}/admin/users/${user.id}/`, {
-        method: 'DELETE',
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const res = await apiDelete(`/admin/users/${user.id}/`);
       if (!res.ok) {
         throw new Error();
       }
@@ -465,9 +447,9 @@ const AdminUsersPage = () => {
 
   return (
     <AdminRoute>
-      <div className="flex min-h-[calc(100vh-3rem)] bg-background">
+      <div className="flex min-h-[calc(100dvh-var(--app-header-height))] bg-background">
         <AdminSidebar />
-        <main className="min-w-0 flex-1 overflow-auto">
+        <main className="min-w-0 flex-1">
           <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
             <div className="mb-6">
               <h1 className="text-2xl font-bold text-textPrimary">Gestión de Usuarios</h1>
@@ -764,10 +746,11 @@ function ActionButton({
   return (
     <button
       title={title}
+      aria-label={title}
       disabled={disabled}
       onClick={onClick}
       className={cn(
-        'rounded-button p-1.5 transition-colors',
+        'rounded-button p-2 transition-colors',
         disabled ? 'cursor-not-allowed text-slate-300' : className
       )}
     >

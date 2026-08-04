@@ -2,6 +2,7 @@ import { Metadata } from 'next';
 import BrandAtmosphere from '@/components/aents/BrandAtmosphere';
 
 export const metadata: Metadata = {
+  title: 'Editar propiedad',
   robots: {
     index: false,
     follow: false,

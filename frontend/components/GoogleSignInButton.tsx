@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth-context';
 import { toast } from 'sonner';
 import { requestErrorMessage } from '@/lib/form-errors';
+import { getPublicApiUrl } from '@/lib/api-url';
 
 interface GoogleSignInButtonProps {
   text?: 'signin_with' | 'signup_with' | 'continue_with' | 'signin';
@@ -28,7 +29,7 @@ export default function GoogleSignInButton({
   const buttonRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
   const { login } = useAuth();
-  const API_URL = process.env.NEXT_PUBLIC_API_URL || '/api';
+  const API_URL = getPublicApiUrl();
   const GOOGLE_CLIENT_ID = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
   // 'loading' mientras carga el script de Google; 'ready' cuando el botón se
   // renderiza; 'error' si no llega tras el timeout (red lenta / bloqueado).

@@ -13,10 +13,11 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent } from '@/components/ui/card';
 import GoogleSignInButton from '@/components/GoogleSignInButton';
 import { fetchWithTimeout, requestErrorMessage } from '@/lib/form-errors';
+import { getPublicApiUrl } from '@/lib/api-url';
 
 export default function RegisterPage() {
   const router = useRouter();
-  const API_URL = process.env.NEXT_PUBLIC_API_URL || '/api';
+  const API_URL = getPublicApiUrl();
 
   const validationSchema = Yup.object({
     username: Yup.string().required('Campo requerido'),
@@ -120,13 +121,16 @@ export default function RegisterPage() {
                       id="username"
                       name="username"
                       type="text"
+                      autoComplete="username"
                       placeholder="tu_usuario"
+                      aria-invalid={Boolean(errors.username && touched.username)}
+                      aria-describedby={errors.username && touched.username ? 'register-username-error' : undefined}
                       className={`h-11 rounded-input pl-10 ${
                         errors.username && touched.username ? 'border-error focus-visible:ring-error' : ''
                       }`}
                     />
                   </div>
-                  <ErrorMessage name="username" component="p" className="text-sm text-error" />
+                  <ErrorMessage name="username" component="p" id="register-username-error" className="text-sm text-error" />
                 </div>
 
                 {/* First Name & Last Name */}
@@ -138,12 +142,15 @@ export default function RegisterPage() {
                       id="first_name"
                       name="first_name"
                       type="text"
+                      autoComplete="given-name"
                       placeholder="Juan"
+                      aria-invalid={Boolean(errors.first_name && touched.first_name)}
+                      aria-describedby={errors.first_name && touched.first_name ? 'register-first-name-error' : undefined}
                       className={`h-11 rounded-input ${
                         errors.first_name && touched.first_name ? 'border-error focus-visible:ring-error' : ''
                       }`}
                     />
-                    <ErrorMessage name="first_name" component="p" className="text-sm text-error" />
+                    <ErrorMessage name="first_name" component="p" id="register-first-name-error" className="text-sm text-error" />
                   </div>
 
                   <div className="space-y-2">
@@ -153,12 +160,15 @@ export default function RegisterPage() {
                       id="last_name"
                       name="last_name"
                       type="text"
+                      autoComplete="family-name"
                       placeholder="Pérez"
+                      aria-invalid={Boolean(errors.last_name && touched.last_name)}
+                      aria-describedby={errors.last_name && touched.last_name ? 'register-last-name-error' : undefined}
                       className={`h-11 rounded-input ${
                         errors.last_name && touched.last_name ? 'border-error focus-visible:ring-error' : ''
                       }`}
                     />
-                    <ErrorMessage name="last_name" component="p" className="text-sm text-error" />
+                    <ErrorMessage name="last_name" component="p" id="register-last-name-error" className="text-sm text-error" />
                   </div>
                 </div>
 
@@ -172,13 +182,16 @@ export default function RegisterPage() {
                       id="email"
                       name="email"
                       type="email"
+                      autoComplete="email"
                       placeholder="tu@email.com"
+                      aria-invalid={Boolean(errors.email && touched.email)}
+                      aria-describedby={errors.email && touched.email ? 'register-email-error' : undefined}
                       className={`h-11 rounded-input pl-10 ${
                         errors.email && touched.email ? 'border-error focus-visible:ring-error' : ''
                       }`}
                     />
                   </div>
-                  <ErrorMessage name="email" component="p" className="text-sm text-error" />
+                  <ErrorMessage name="email" component="p" id="register-email-error" className="text-sm text-error" />
                 </div>
 
                 {/* Password */}
@@ -191,13 +204,16 @@ export default function RegisterPage() {
                       id="password"
                       name="password"
                       type="password"
+                      autoComplete="new-password"
                       placeholder="••••••••"
+                      aria-invalid={Boolean(errors.password && touched.password)}
+                      aria-describedby={errors.password && touched.password ? 'register-password-error' : undefined}
                       className={`h-11 rounded-input pl-10 ${
                         errors.password && touched.password ? 'border-error focus-visible:ring-error' : ''
                       }`}
                     />
                   </div>
-                  <ErrorMessage name="password" component="p" className="text-sm text-error" />
+                  <ErrorMessage name="password" component="p" id="register-password-error" className="text-sm text-error" />
                 </div>
 
                 {/* Confirm Password */}
@@ -210,13 +226,16 @@ export default function RegisterPage() {
                       id="confirm"
                       name="confirm"
                       type="password"
+                      autoComplete="new-password"
                       placeholder="••••••••"
+                      aria-invalid={Boolean(errors.confirm && touched.confirm)}
+                      aria-describedby={errors.confirm && touched.confirm ? 'register-confirm-error' : undefined}
                       className={`h-11 rounded-input pl-10 ${
                         errors.confirm && touched.confirm ? 'border-error focus-visible:ring-error' : ''
                       }`}
                     />
                   </div>
-                  <ErrorMessage name="confirm" component="p" className="text-sm text-error" />
+                  <ErrorMessage name="confirm" component="p" id="register-confirm-error" className="text-sm text-error" />
                 </div>
 
                 {/* Submit Button */}

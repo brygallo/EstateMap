@@ -46,6 +46,12 @@ import {
 } from '@/components/ui/table';
 import { cn } from '@/lib/utils';
 import AnimatedNumber from '@/components/ui/AnimatedNumber';
+import {
+  getPropertyTypeLabel,
+  getStatusLabel,
+  getStatusBadgeClass,
+  formatBytes,
+} from '@/lib/property-labels';
 
 interface DashboardData {
   total_users: number;
@@ -178,9 +184,9 @@ const AdminDashboard = () => {
 
   return (
     <AdminRoute>
-      <div className="flex min-h-[calc(100vh-3rem)] bg-background">
+      <div className="flex min-h-[calc(100dvh-var(--app-header-height))] bg-background">
         <AdminSidebar />
-        <main className="min-w-0 flex-1 overflow-auto">
+        <main className="min-w-0 flex-1">
           <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
             <div className="mb-8 flex items-center justify-between">
               <div>
@@ -331,7 +337,7 @@ const AdminDashboard = () => {
                               {p.title || `Propiedad #${p.id}`}
                             </Link>
                           </TableCell>
-                          <TableCell className="text-textSecondary">{typeLabel(p.property_type)}</TableCell>
+                          <TableCell className="text-textSecondary">{getPropertyTypeLabel(p.property_type)}</TableCell>
                           <TableCell><StatusBadge status={p.status} /></TableCell>
                           <TableCell className="font-geo text-textSecondary">${Number(p.price).toLocaleString('es-EC')}</TableCell>
                           <TableCell className="text-textSecondary">{p.owner_username || '—'}</TableCell>
@@ -671,13 +677,6 @@ function DiagnosticLine({ label, value, good = false }: { label: string; value: 
   return <div className="flex items-center justify-between gap-3"><span className="text-textSecondary">{label}</span><span className={cn('truncate font-medium text-textPrimary', good && 'text-green-700')}>{value}</span></div>;
 }
 
-function formatBytes(value: number) {
-  if (!value) return '0 MB';
-  const units = ['B', 'KB', 'MB', 'GB', 'TB'];
-  const index = Math.min(Math.floor(Math.log(value) / Math.log(1024)), units.length - 1);
-  return `${(value / 1024 ** index).toFixed(index > 1 ? 1 : 0)} ${units[index]}`;
-}
-
 function OperationsCenter({ data }: { data: DashboardData }) {
   const alerts = [
     {
@@ -686,7 +685,7 @@ function OperationsCenter({ data }: { data: DashboardData }) {
       description: 'No generan una ficha visual completa.',
       icon: ImageOff,
       tone: 'amber',
-      href: '/admin/properties',
+      href: '/admin/properties?quality=without_images',
     },
     {
       label: 'Sin ubicación',
@@ -694,7 +693,7 @@ function OperationsCenter({ data }: { data: DashboardData }) {
       description: 'No pueden mostrarse correctamente en el mapa.',
       icon: MapPinOff,
       tone: 'rose',
-      href: '/admin/properties',
+      href: '/admin/properties?quality=without_location',
     },
     {
       label: 'Sin precio',
@@ -702,7 +701,7 @@ function OperationsCenter({ data }: { data: DashboardData }) {
       description: 'Requieren revisión comercial o de la fuente.',
       icon: CircleDollarSign,
       tone: 'orange',
-      href: '/admin/properties',
+      href: '/admin/properties?quality=without_price',
     },
     {
       label: 'Duplicadas',
@@ -957,19 +956,9 @@ function DashboardSkeleton() {
 }
 
 function StatusBadge({ status }: { status: string }) {
-  const styles: Record<string, string> = {
-    for_sale: 'bg-green-100 text-green-700',
-    for_rent: 'bg-amber-100 text-amber-700',
-    inactive: 'bg-slate-100 text-slate-600',
-  };
-  const labels: Record<string, string> = {
-    for_sale: 'En venta',
-    for_rent: 'En alquiler',
-    inactive: 'Inactiva',
-  };
   return (
-    <Badge variant="outline" className={cn('border-transparent', styles[status] || 'bg-slate-100 text-slate-600')}>
-      {labels[status] || status}
+    <Badge variant="outline" className={cn('border-transparent', getStatusBadgeClass(status))}>
+      {getStatusLabel(status)}
     </Badge>
   );
 }
@@ -1001,17 +990,6 @@ function leadSourceLabel(s: string) {
     other: 'Otro',
   };
   return map[s] || s;
-}
-
-function typeLabel(t: string) {
-  const map: Record<string, string> = {
-    house: 'Casa',
-    land: 'Terreno',
-    apartment: 'Departamento',
-    commercial: 'Comercial',
-    other: 'Otro',
-  };
-  return map[t] || t;
 }
 
 export default AdminDashboard;

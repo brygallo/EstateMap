@@ -5,16 +5,17 @@ import Link from 'next/link';
 import { Formik, Form, Field, ErrorMessage } from 'formik';
 import * as Yup from 'yup';
 import { toast } from 'sonner';
-import { KeyRound, Mail, CheckCircle2, ArrowRight, Loader2 } from 'lucide-react';
+import { KeyRound, Mail, CheckCircle2, ArrowLeft, ArrowRight, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent } from '@/components/ui/card';
 import { fetchWithTimeout, requestErrorMessage, responseErrorMessage } from '@/lib/form-errors';
+import { getPublicApiUrl } from '@/lib/api-url';
 
 const ForgotPassword = () => {
   const [emailSent, setEmailSent] = useState(false);
-  const API_URL = process.env.NEXT_PUBLIC_API_URL || '/api';
+  const API_URL = getPublicApiUrl();
 
   const validationSchema = Yup.object({
     email: Yup.string().email('Correo inválido').required('Campo requerido'),
@@ -100,13 +101,16 @@ const ForgotPassword = () => {
                       id="email"
                       name="email"
                       type="email"
+                      autoComplete="email"
                       placeholder="tu@email.com"
+                      aria-invalid={Boolean(errors.email && touched.email)}
+                      aria-describedby={errors.email && touched.email ? 'forgot-email-error' : undefined}
                       className={`h-11 rounded-input pl-10 ${
                         errors.email && touched.email ? 'border-error focus-visible:ring-error' : ''
                       }`}
                     />
                   </div>
-                  <ErrorMessage name="email" component="p" className="text-sm text-error" />
+                  <ErrorMessage name="email" component="p" id="forgot-email-error" className="text-sm text-error" />
                 </div>
 
                 {/* Submit Button */}
@@ -133,8 +137,12 @@ const ForgotPassword = () => {
 
           {/* Login Link */}
           <div className="mt-6 text-center">
-            <Link href="/iniciar-sesion" className="text-sm font-medium text-primary transition-colors hover:text-secondary">
-              ← Volver al inicio de sesión
+            <Link
+              href="/iniciar-sesion"
+              className="inline-flex items-center gap-1.5 text-sm font-medium text-primary transition-colors hover:text-secondary"
+            >
+              <ArrowLeft className="h-4 w-4" aria-hidden />
+              Volver al inicio de sesión
             </Link>
           </div>
         </CardContent>

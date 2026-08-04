@@ -97,7 +97,8 @@ export default async function ProvinciaPage({ params }: ProvincePageProps) {
         ...(relatedProvinceLinks.length ? relatedProvinceLinks : TYPE_LINKS),
       ].slice(0, 30)}
       locationName={province.name}
-      breadcrumbs={[{ label: 'Propiedades', href: '/propiedades' }]}
+      // There is no /provincias index page, so the grouping level is unlinked.
+      breadcrumbs={[{ label: 'Provincias' }]}
       emptyMessage={`Aún no hay propiedades publicadas en ${province.name}.`}
     />
   );

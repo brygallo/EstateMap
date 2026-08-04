@@ -5,6 +5,7 @@ import AdminSidebar from '@/components/AdminSidebar';
 import PropertyImage from '@/components/ui/PropertyImage';
 import { useAuth } from '@/lib/auth-context';
 import Link from 'next/link';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useState, useCallback, useMemo } from 'react';
 import { toast } from 'sonner';
 import {
@@ -31,6 +32,9 @@ import {
   MapPin,
   DownloadCloud,
   UserRound,
+  MapPinOff,
+  CircleDollarSign,
+  GitMerge,
 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -78,9 +82,11 @@ import {
   PaginationPrevious,
 } from '@/components/ui/pagination';
 import { Card } from '@/components/ui/card';
+import { Checkbox } from '@/components/ui/checkbox';
 import { cn } from '@/lib/utils';
+import { getPropertyTypeLabel, getStatusLabel, getStatusBadgeClass } from '@/lib/property-labels';
+import { apiGet, apiPost, apiPatch, apiDelete } from '@/lib/api';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8010/api';
 const PAGE_SIZE = 20;
 const SEARCH_DEBOUNCE_MS = 350;
 
@@ -125,26 +131,6 @@ const FILTERS = [
   { key: 'inactive', label: 'Inactivas' },
 ];
 
-const TYPE_LABELS: Record<string, string> = {
-  house: 'Casa',
-  land: 'Terreno',
-  apartment: 'Departamento',
-  commercial: 'Comercial',
-  other: 'Otro',
-};
-
-const STATUS_STYLES: Record<string, string> = {
-  for_sale: 'bg-green-100 text-green-700',
-  for_rent: 'bg-amber-100 text-amber-700',
-  inactive: 'bg-slate-100 text-slate-600',
-};
-
-const STATUS_LABELS: Record<string, string> = {
-  for_sale: 'En venta',
-  for_rent: 'En alquiler',
-  inactive: 'Inactiva',
-};
-
 interface AdminStats {
   total: number;
   for_sale: number;
@@ -152,24 +138,37 @@ interface AdminStats {
   inactive: number;
   active: number;
   without_images: number;
+  without_location: number;
+  without_price: number;
+  duplicates: number;
+  incomplete: number;
   imported: number;
   users: number;
 }
 
 const AdminPropertiesPage = () => {
   const { token } = useAuth();
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const [properties, setProperties] = useState<PropertyItem[]>([]);
   const [loading, setLoading] = useState(true);
-  const [searchInput, setSearchInput] = useState('');
-  const [search, setSearch] = useState('');
-  const [filter, setFilter] = useState('all');
-  const [origin, setOrigin] = useState<'all' | 'imported' | 'users'>('all');
+  const [searchInput, setSearchInput] = useState(() => searchParams.get('search') || '');
+  const [search, setSearch] = useState(() => searchParams.get('search') || '');
+  const [filter, setFilter] = useState(() => searchParams.get('status') || 'all');
+  const [origin, setOrigin] = useState<'all' | 'imported' | 'users'>(() => {
+    const value = searchParams.get('origin');
+    return value === 'imported' || value === 'users' ? value : 'all';
+  });
+  const [quality, setQuality] = useState(() => searchParams.get('quality') || 'all');
   const [confirmDelete, setConfirmDelete] = useState<PropertyItem | null>(null);
   const [preview, setPreview] = useState<PropertyItem | null>(null);
   const [stats, setStats] = useState<AdminStats | null>(null);
-  const [page, setPage] = useState(1);
+  const [page, setPage] = useState(() => Math.max(1, Number(searchParams.get('page')) || 1));
   const [totalPages, setTotalPages] = useState(1);
   const [sorting, setSorting] = useState<SortingState>([]);
+  const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
+  const [bulkStatus, setBulkStatus] = useState('inactive');
+  const [bulkSaving, setBulkSaving] = useState(false);
 
   // Editar propiedad
   const [editing, setEditing] = useState<PropertyItem | null>(null);
@@ -195,10 +194,9 @@ const AdminPropertiesPage = () => {
       if (search) params.set('search', search);
       if (filter !== 'all') params.set('status', filter);
       if (origin !== 'all') params.set('origin', origin);
+      if (quality !== 'all') params.set('quality', quality);
 
-      const res = await fetch(`${API_URL}/admin/properties/?${params}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const res = await apiGet(`/admin/properties/?${params}`);
       if (!res.ok) throw new Error('Error al cargar propiedades');
       const json: PropertyListResponse = await res.json();
 
@@ -209,7 +207,22 @@ const AdminPropertiesPage = () => {
     } finally {
       setLoading(false);
     }
-  }, [token, search, filter, origin, page]);
+  }, [search, filter, origin, quality, page]);
+
+  useEffect(() => {
+    const params = new URLSearchParams();
+    if (search) params.set('search', search);
+    if (filter !== 'all') params.set('status', filter);
+    if (origin !== 'all') params.set('origin', origin);
+    if (quality !== 'all') params.set('quality', quality);
+    if (page > 1) params.set('page', String(page));
+    const query = params.toString();
+    router.replace(query ? `/admin/properties?${query}` : '/admin/properties', { scroll: false });
+  }, [filter, origin, page, quality, router, search]);
+
+  useEffect(() => {
+    setSelectedIds(new Set());
+  }, [filter, origin, page, quality, search]);
 
   useEffect(() => {
     if (token) fetchProperties();
@@ -218,14 +231,12 @@ const AdminPropertiesPage = () => {
   // Métricas globales (todo el catálogo), independientes de la página/filtro.
   const fetchStats = useCallback(async () => {
     try {
-      const res = await fetch(`${API_URL}/admin/properties/stats/`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const res = await apiGet('/admin/properties/stats/');
       if (res.ok) setStats(await res.json());
     } catch {
       // Las métricas simplemente no se muestran si falla.
     }
-  }, [token]);
+  }, []);
 
   useEffect(() => {
     if (token) fetchStats();
@@ -236,12 +247,29 @@ const AdminPropertiesPage = () => {
     setPage(1);
   };
 
+  const handleBulkStatus = async () => {
+    if (selectedIds.size === 0) return;
+    setBulkSaving(true);
+    try {
+      const res = await apiPost('/admin/properties/bulk-status/', {
+        ids: Array.from(selectedIds),
+        status: bulkStatus,
+      });
+      const result = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(result.error || 'No se pudieron actualizar las propiedades');
+      toast.success(`${result.updated} propiedades actualizadas`);
+      setSelectedIds(new Set());
+      await Promise.all([fetchProperties(), fetchStats()]);
+    } catch (err: any) {
+      toast.error(err.message);
+    } finally {
+      setBulkSaving(false);
+    }
+  };
+
   const handleDelete = async (prop: PropertyItem) => {
     try {
-      const res = await fetch(`${API_URL}/admin/properties/${prop.id}/`, {
-        method: 'DELETE',
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const res = await apiDelete(`/admin/properties/${prop.id}/`);
       if (!res.ok) throw new Error('Error al eliminar');
       toast.success('Propiedad eliminada');
       fetchProperties();
@@ -263,9 +291,7 @@ const AdminPropertiesPage = () => {
     });
     setEditDetailLoading(true);
     try {
-      const res = await fetch(`${API_URL}/admin/properties/${prop.id}/`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const res = await apiGet(`/admin/properties/${prop.id}/`);
       if (res.ok) {
         const detail = await res.json();
         setEditForm((f) => ({ ...f, description: detail.description || '' }));
@@ -275,22 +301,18 @@ const AdminPropertiesPage = () => {
     } finally {
       setEditDetailLoading(false);
     }
-  }, [token]);
+  }, []);
 
   const handleSaveEdit = async () => {
     if (!editing) return;
     setSaving(true);
     try {
-      const res = await fetch(`${API_URL}/admin/properties/${editing.id}/`, {
-        method: 'PATCH',
-        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          status: editForm.status,
-          title: editForm.title,
-          price: editForm.price,
-          city: editForm.city,
-          description: editForm.description,
-        }),
+      const res = await apiPatch(`/admin/properties/${editing.id}/`, {
+        status: editForm.status,
+        title: editForm.title,
+        price: editForm.price,
+        city: editForm.city,
+        description: editForm.description,
       });
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
@@ -309,6 +331,37 @@ const AdminPropertiesPage = () => {
 
   const columns = useMemo<ColumnDef<PropertyItem>[]>(
     () => [
+      {
+        id: 'select',
+        header: () => {
+          const pageIds = properties.map((property) => property.id);
+          const allSelected = pageIds.length > 0 && pageIds.every((id) => selectedIds.has(id));
+          const someSelected = pageIds.some((id) => selectedIds.has(id));
+          return (
+            <Checkbox
+              aria-label="Seleccionar todas las propiedades de esta página"
+              checked={allSelected ? true : someSelected ? 'indeterminate' : false}
+              onCheckedChange={(checked) => setSelectedIds((current) => {
+                const next = new Set(current);
+                pageIds.forEach((id) => checked ? next.add(id) : next.delete(id));
+                return next;
+              })}
+            />
+          );
+        },
+        cell: ({ row }) => (
+          <Checkbox
+            aria-label={`Seleccionar ${row.original.title || `propiedad ${row.original.id}`}`}
+            checked={selectedIds.has(row.original.id)}
+            onCheckedChange={(checked) => setSelectedIds((current) => {
+              const next = new Set(current);
+              if (checked) next.add(row.original.id);
+              else next.delete(row.original.id);
+              return next;
+            })}
+          />
+        ),
+      },
       {
         accessorKey: 'title',
         header: ({ column }) => <SortHeader column={column} label="Título" />,
@@ -333,7 +386,7 @@ const AdminPropertiesPage = () => {
               <div className="min-w-0">
                 <p className="max-w-[220px] truncate font-medium text-textPrimary">{p.title || `Propiedad #${p.id}`}</p>
                 <p className="text-xs text-textSecondary">
-                  <span className="sm:hidden">{TYPE_LABELS[p.property_type] || p.property_type} · </span>
+                  <span className="sm:hidden">{getPropertyTypeLabel(p.property_type)} · </span>
                   {p.image_count} foto{p.image_count === 1 ? '' : 's'} · {p.is_imported ? p.source_name || 'Importada' : 'Usuario'}
                 </p>
               </div>
@@ -345,7 +398,7 @@ const AdminPropertiesPage = () => {
         accessorKey: 'property_type',
         header: 'Tipo',
         cell: ({ getValue }) => (
-          <span className="text-textSecondary">{TYPE_LABELS[getValue<string>()] || getValue<string>()}</span>
+          <span className="text-textSecondary">{getPropertyTypeLabel(getValue<string>())}</span>
         ),
         meta: { className: 'hidden sm:table-cell' },
       },
@@ -355,8 +408,8 @@ const AdminPropertiesPage = () => {
         cell: ({ getValue }) => {
           const s = getValue<string>();
           return (
-            <Badge variant="outline" className={cn('border-transparent', STATUS_STYLES[s] || 'bg-slate-100 text-slate-600')}>
-              {STATUS_LABELS[s] || s}
+            <Badge variant="outline" className={cn('border-transparent', getStatusBadgeClass(s))}>
+              {getStatusLabel(s)}
             </Badge>
           );
         },
@@ -400,38 +453,42 @@ const AdminPropertiesPage = () => {
               <button
                 onClick={() => setPreview(p)}
                 title="Vista previa rápida"
-                className="rounded-button p-1.5 text-primary transition-colors hover:bg-primaryLight"
+                aria-label="Vista previa rápida"
+                className="rounded-button p-2 text-primary transition-colors hover:bg-primaryLight"
               >
-                <Eye className="h-4 w-4" />
+                <Eye className="h-4 w-4" aria-hidden />
               </button>
               <button
                 onClick={() => openEdit(p)}
                 title="Editar"
-                className="rounded-button p-1.5 text-textSecondary transition-colors hover:bg-muted hover:text-textPrimary"
+                aria-label="Editar"
+                className="rounded-button p-2 text-textSecondary transition-colors hover:bg-muted hover:text-textPrimary"
               >
-                <Pencil className="h-4 w-4" />
+                <Pencil className="h-4 w-4" aria-hidden />
               </button>
               <Link
                 href={`/property/${p.id}`}
                 target="_blank"
                 title="Abrir en pestaña nueva"
-                className="rounded-button p-1.5 text-textSecondary transition-colors hover:bg-muted hover:text-textPrimary"
+                aria-label="Abrir en pestaña nueva"
+                className="rounded-button p-2 text-textSecondary transition-colors hover:bg-muted hover:text-textPrimary"
               >
-                <ExternalLink className="h-4 w-4" />
+                <ExternalLink className="h-4 w-4" aria-hidden />
               </Link>
               <button
                 onClick={() => setConfirmDelete(p)}
                 title="Eliminar"
-                className="rounded-button p-1.5 text-red-500 transition-colors hover:bg-red-50"
+                aria-label="Eliminar"
+                className="rounded-button p-2 text-red-500 transition-colors hover:bg-red-50"
               >
-                <Trash2 className="h-4 w-4" />
+                <Trash2 className="h-4 w-4" aria-hidden />
               </button>
             </div>
           );
         },
       },
     ],
-    [openEdit]
+    [openEdit, properties, selectedIds]
   );
 
   const table = useReactTable({
@@ -445,9 +502,9 @@ const AdminPropertiesPage = () => {
 
   return (
     <AdminRoute>
-      <div className="flex min-h-[calc(100vh-3rem)] bg-background">
+      <div className="flex min-h-[calc(100dvh-var(--app-header-height))] bg-background">
         <AdminSidebar />
-        <main className="min-w-0 flex-1 overflow-auto">
+        <main className="min-w-0 flex-1">
           <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
             <div className="mb-6">
               <h1 className="text-2xl font-bold text-textPrimary">Gestión de Propiedades</h1>
@@ -463,7 +520,7 @@ const AdminPropertiesPage = () => {
                   <MetricTile icon={KeyRound} label="En alquiler" value={stats.for_rent} tone="amber" />
                   <MetricTile icon={EyeOff} label="Inactivas" value={stats.inactive} tone="slate" />
                   <MetricTile icon={CheckCircle2} label="Activas" value={stats.active} tone="green" />
-                  <MetricTile icon={ImageOff} label="Sin imágenes" value={stats.without_images} tone="slate" />
+                  <MetricTile icon={ImageOff} label="Sin imágenes" value={stats.without_images} tone="slate" active={quality === 'without_images'} onClick={() => { setQuality(quality === 'without_images' ? 'all' : 'without_images'); setPage(1); }} />
                   <MetricTile icon={DownloadCloud} label="Importadas" value={stats.imported} tone="primary" />
                   <MetricTile icon={UserRound} label="De usuarios" value={stats.users} tone="green" />
                 </>
@@ -521,6 +578,70 @@ const AdminPropertiesPage = () => {
                 </Button>
               ))}
             </div>
+
+            <div className="mb-6 rounded-card border border-line bg-surface p-3">
+              <div className="mb-2 flex items-center justify-between gap-3">
+                <span className="text-xs font-semibold uppercase tracking-wide text-textSecondary">Calidad del catálogo</span>
+                {quality !== 'all' && (
+                  <button
+                    type="button"
+                    className="text-xs font-semibold text-primary hover:underline"
+                    onClick={() => { setQuality('all'); setPage(1); }}
+                  >
+                    Limpiar filtro
+                  </button>
+                )}
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {stats && ([
+                  ['without_images', 'Sin imágenes', stats.without_images, ImageOff],
+                  ['without_location', 'Sin ubicación', stats.without_location, MapPinOff],
+                  ['without_price', 'Sin precio', stats.without_price, CircleDollarSign],
+                  ['duplicates', 'Duplicadas', stats.duplicates, GitMerge],
+                  ['incomplete', 'Incompletas', stats.incomplete, EyeOff],
+                ] as const).map(([key, label, count, Icon]) => (
+                  <Button
+                    key={key}
+                    variant={quality === key ? 'default' : 'outline'}
+                    size="sm"
+                    className="rounded-button"
+                    onClick={() => { setQuality(quality === key ? 'all' : key); setPage(1); }}
+                  >
+                    <Icon className="mr-1.5 h-4 w-4" />
+                    {label}
+                    <span className={cn('ml-2 rounded-full px-1.5 py-0.5 text-[11px]', quality === key ? 'bg-white/20' : 'bg-muted')}>
+                      {count.toLocaleString('es-EC')}
+                    </span>
+                  </Button>
+                ))}
+              </div>
+            </div>
+
+            {selectedIds.size > 0 && (
+              <div className="sticky top-[calc(var(--app-header-height)+0.5rem)] z-10 mb-4 flex flex-col gap-3 rounded-card border border-primary/20 bg-surface p-3 shadow-card sm:flex-row sm:items-center">
+                <p className="text-sm font-semibold text-textPrimary">
+                  {selectedIds.size} {selectedIds.size === 1 ? 'propiedad seleccionada' : 'propiedades seleccionadas'}
+                </p>
+                <div className="flex flex-1 flex-wrap items-center gap-2 sm:justify-end">
+                  <Select value={bulkStatus} onValueChange={setBulkStatus}>
+                    <SelectTrigger className="h-9 w-[170px] rounded-button border-line">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="for_sale">Poner en venta</SelectItem>
+                      <SelectItem value="for_rent">Poner en alquiler</SelectItem>
+                      <SelectItem value="inactive">Desactivar</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <Button size="sm" className="rounded-button" disabled={bulkSaving} onClick={handleBulkStatus}>
+                    {bulkSaving ? 'Actualizando…' : 'Aplicar estado'}
+                  </Button>
+                  <Button size="sm" variant="ghost" className="rounded-button" disabled={bulkSaving} onClick={() => setSelectedIds(new Set())}>
+                    Cancelar
+                  </Button>
+                </div>
+              </div>
+            )}
 
             {/* Table */}
             <Card className="overflow-hidden rounded-card shadow-card">
@@ -637,12 +758,12 @@ const AdminPropertiesPage = () => {
                 <div className="flex flex-wrap items-center gap-2">
                   <Badge
                     variant="outline"
-                    className={cn('border-transparent', STATUS_STYLES[preview.status] || 'bg-slate-100 text-slate-600')}
+                    className={cn('border-transparent', getStatusBadgeClass(preview.status))}
                   >
-                    {STATUS_LABELS[preview.status] || preview.status}
+                    {getStatusLabel(preview.status)}
                   </Badge>
                   <span className="rounded-md bg-muted px-2 py-0.5 text-xs font-medium text-textSecondary">
-                    {TYPE_LABELS[preview.property_type] || preview.property_type}
+                    {getPropertyTypeLabel(preview.property_type)}
                   </span>
                   <span className="rounded-md bg-muted px-2 py-0.5 text-xs font-medium text-textSecondary">
                     {preview.image_count} foto{preview.image_count === 1 ? '' : 's'}
@@ -809,11 +930,15 @@ function MetricTile({
   label,
   value,
   tone,
+  active = false,
+  onClick,
 }: {
   icon: typeof Building2;
   label: string;
   value: number;
   tone: 'primary' | 'green' | 'amber' | 'slate';
+  active?: boolean;
+  onClick?: () => void;
 }) {
   const toneClass = {
     primary: 'bg-primaryLight text-primary',
@@ -821,8 +946,8 @@ function MetricTile({
     amber: 'bg-amber-100 text-amber-700',
     slate: 'bg-slate-100 text-slate-600',
   }[tone];
-  return (
-    <div className="flex items-center gap-3 rounded-card border border-line bg-surface p-3 shadow-card">
+  const content = (
+    <>
       <span className={cn('flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-card', toneClass)}>
         <Icon className="h-[18px] w-[18px]" strokeWidth={2} aria-hidden />
       </span>
@@ -832,8 +957,14 @@ function MetricTile({
         </div>
         <div className="truncate text-xs text-textSecondary">{label}</div>
       </div>
-    </div>
+    </>
   );
+  const className = cn(
+    'flex w-full items-center gap-3 rounded-card border bg-surface p-3 text-left shadow-card',
+    active ? 'border-primary ring-2 ring-primary/10' : 'border-line',
+    onClick && 'transition-colors hover:border-primary/40 hover:bg-primaryLight/20'
+  );
+  return onClick ? <button type="button" className={className} onClick={onClick}>{content}</button> : <div className={className}>{content}</div>;
 }
 
 function SortHeader({ column, label }: { column: any; label: string }) {

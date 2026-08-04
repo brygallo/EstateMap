@@ -300,27 +300,16 @@ export function jsonLd(data: unknown): string {
   return JSON.stringify(data).replace(/</g, '\\u003c');
 }
 
-// --- Labels ---------------------------------------------------------------
+// --- Labels & formatting --------------------------------------------------
+// Canonical implementations live in `./property-labels`; re-exported here so
+// existing server-side imports (`opengraph-image`, SEO pages) keep working.
 
-export function getPropertyTypeLabel(type?: string): string {
-  const labels: Record<string, string> = {
-    house: 'Casa',
-    land: 'Terreno',
-    apartment: 'Departamento',
-    commercial: 'Local comercial',
-    other: 'Propiedad',
-  };
-  return labels[type || ''] || 'Propiedad';
-}
-
-export function getStatusLabel(status?: string): string {
-  const labels: Record<string, string> = {
-    for_sale: 'En venta',
-    for_rent: 'En alquiler',
-    inactive: 'Inactivo',
-  };
-  return labels[status || ''] || status || '';
-}
+export {
+  getPropertyTypeLabel,
+  getStatusLabel,
+  formatPrice,
+  formatArea,
+} from './property-labels';
 
 export const PROPERTY_SCHEMA_TYPE: Record<string, string> = {
   house: 'SingleFamilyResidence',
@@ -329,20 +318,6 @@ export const PROPERTY_SCHEMA_TYPE: Record<string, string> = {
   commercial: 'CommercialProperty',
   other: 'Residence',
 };
-
-// --- Formatting -----------------------------------------------------------
-
-export function formatPrice(price?: number | string | null): string {
-  const value = Number.parseFloat(String(price ?? ''));
-  if (!Number.isFinite(value)) return 'Precio a consultar';
-  return `$${value.toLocaleString('es-EC')}`;
-}
-
-export function formatArea(area?: number | string | null): string {
-  const value = Number.parseFloat(String(area ?? ''));
-  if (!Number.isFinite(value)) return '';
-  return `${Math.round(value)} m²`;
-}
 
 export function getMainImageUrl(property: Property, baseUrl = SITE_URL): string {
   const main =

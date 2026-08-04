@@ -7,6 +7,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import { requestErrorMessage } from '@/lib/form-errors';
 import { cn } from '@/lib/utils';
+import { getPropertyTypeLabel, formatBytes } from '@/lib/property-labels';
 import {
   AlertTriangle,
   Building2,
@@ -53,8 +54,7 @@ import {
   SheetHeader,
   SheetTitle,
 } from '@/components/ui/sheet';
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8010/api';
+import { apiGet, apiPost } from '@/lib/api';
 
 interface Source {
   slug: string;
@@ -158,14 +158,6 @@ const IMP_ESTADOS: { value: ImpEstado; label: string }[] = [
   { value: 'todas', label: 'Todas' },
 ];
 
-const PROP_TYPE_LABEL: Record<string, string> = {
-  land: 'Terreno',
-  house: 'Casa',
-  apartment: 'Departamento',
-  commercial: 'Comercial',
-  other: 'Otro',
-};
-
 // Portales previstos que aún no tienen scraper (se muestran como "próximamente").
 const PORTALES_PROXIMOS = ['Plusvalía', 'Icasas', 'OLX Ecuador', 'Vive1', 'Remax Ecuador'];
 
@@ -220,11 +212,6 @@ const IngestaPage = () => {
   const [cleanupCategory, setCleanupCategory] = useState<MaintenanceSummary['category'] | null>(null);
   const [cleanupConfirmation, setCleanupConfirmation] = useState('');
 
-  const authHeaders = useCallback(
-    () => ({ Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }),
-    [token],
-  );
-
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const tab = params.get('tab');
@@ -238,8 +225,8 @@ const IngestaPage = () => {
     try {
       setError('');
       const [sRes, rRes] = await Promise.all([
-        fetch(`${API_URL}/admin/ingesta/sources/`, { headers: authHeaders() }),
-        fetch(`${API_URL}/admin/ingesta/runs/`, { headers: authHeaders() }),
+        apiGet('/admin/ingesta/sources/'),
+        apiGet('/admin/ingesta/runs/'),
       ]);
       if (!sRes.ok || !rRes.ok) {
         throw new Error('No se pudo cargar la información de importación.');
@@ -251,7 +238,7 @@ const IngestaPage = () => {
     } finally {
       setLoading(false);
     }
-  }, [token, authHeaders]);
+  }, [token]);
 
   // Carga inicial + poll cada 4s (para ver el progreso en vivo).
   useEffect(() => {
@@ -277,15 +264,11 @@ const IngestaPage = () => {
     }
     setLaunching(source + opts.label);
     try {
-      const res = await fetch(`${API_URL}/admin/ingesta/launch/`, {
-        method: 'POST',
-        headers: authHeaders(),
-        body: JSON.stringify({
-          source,
-          limit: opts.limit ?? null,
-          only_new: opts.only_new ?? false,
-          modo: opts.modo ?? 'load',
-        }),
+      const res = await apiPost('/admin/ingesta/launch/', {
+        source,
+        limit: opts.limit ?? null,
+        only_new: opts.only_new ?? false,
+        modo: opts.modo ?? 'load',
       });
       const data = await res.json();
       if (res.status === 409) {
@@ -322,11 +305,7 @@ const IngestaPage = () => {
     if (!confirm('¿Detener esta ingesta? Se conservará lo ya importado.')) return;
     setCancelling(true);
     try {
-      const res = await fetch(`${API_URL}/admin/ingesta/cancel/`, {
-        method: 'POST',
-        headers: authHeaders(),
-        body: JSON.stringify({ run_id: runId }),
-      });
+      const res = await apiPost('/admin/ingesta/cancel/', { run_id: runId });
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
         toast.error(data.error || 'No se pudo cancelar la ingesta.');
@@ -345,9 +324,7 @@ const IngestaPage = () => {
     setSelectedRun(run);
     setRunDetailLoading(true);
     try {
-      const res = await fetch(`${API_URL}/admin/ingesta/runs/${run.id}/`, {
-        headers: authHeaders(),
-      });
+      const res = await apiGet(`/admin/ingesta/runs/${run.id}/`);
       if (!res.ok) throw new Error();
       setSelectedRun(await res.json());
     } catch {
@@ -355,7 +332,7 @@ const IngestaPage = () => {
     } finally {
       setRunDetailLoading(false);
     }
-  }, [authHeaders]);
+  }, []);
 
   const fetchImported = useCallback(async () => {
     if (!token || !impSource) return;
@@ -367,9 +344,7 @@ const IngestaPage = () => {
         page: String(impPage),
       });
       if (impQuery.trim()) params.set('q', impQuery.trim());
-      const res = await fetch(`${API_URL}/admin/ingesta/properties/?${params.toString()}`, {
-        headers: authHeaders(),
-      });
+      const res = await apiGet(`/admin/ingesta/properties/?${params.toString()}`);
       if (!res.ok) throw new Error();
       setImpData(await res.json());
     } catch {
@@ -377,15 +352,13 @@ const IngestaPage = () => {
     } finally {
       setImpLoading(false);
     }
-  }, [token, impSource, impEstado, impPage, impQuery, authHeaders]);
+  }, [token, impSource, impEstado, impPage, impQuery]);
 
   const fetchMaintenance = useCallback(async () => {
     if (!token) return;
     setMaintenanceLoading(true);
     try {
-      const res = await fetch(`${API_URL}/admin/ingesta/maintenance/`, {
-        headers: authHeaders(),
-      });
+      const res = await apiGet('/admin/ingesta/maintenance/');
       if (!res.ok) throw new Error();
       setMaintenance(await res.json());
     } catch {
@@ -393,7 +366,7 @@ const IngestaPage = () => {
     } finally {
       setMaintenanceLoading(false);
     }
-  }, [token, authHeaders]);
+  }, [token]);
 
   const runCleanup = async (category: MaintenanceSummary['category']) => {
     if (cleanupConfirmation !== 'ELIMINAR IMPORTADAS') {
@@ -402,14 +375,10 @@ const IngestaPage = () => {
     }
     setCleanupCategory(category);
     try {
-      const res = await fetch(`${API_URL}/admin/ingesta/maintenance/cleanup/`, {
-        method: 'POST',
-        headers: authHeaders(),
-        body: JSON.stringify({
-          category,
-          confirmation: cleanupConfirmation,
-          batch_size: 100,
-        }),
+      const res = await apiPost('/admin/ingesta/maintenance/cleanup/', {
+        category,
+        confirmation: cleanupConfirmation,
+        batch_size: 100,
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data.error || 'No se pudo ejecutar la limpieza.');
@@ -472,9 +441,9 @@ const IngestaPage = () => {
 
   return (
     <AdminRoute>
-      <div className="flex min-h-[calc(100vh-3rem)] bg-background">
+      <div className="flex min-h-[calc(100dvh-var(--app-header-height))] bg-background">
         <AdminSidebar />
-        <main className="min-w-0 flex-1 overflow-auto">
+        <main className="min-w-0 flex-1">
           <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:px-8">
             <div className="mb-6 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
               <div>
@@ -1138,7 +1107,7 @@ const IngestaPage = () => {
                                   : 'A consultar'}
                             </p>
                             <p className="mt-0.5 truncate text-xs text-textSecondary">
-                              {PROP_TYPE_LABEL[p.property_type] || p.property_type}
+                              {getPropertyTypeLabel(p.property_type)}
                               {p.city ? ` · ${p.city}` : ''}
                               {p.source_agency ? ` · ${p.source_agency}` : ''}
                             </p>
@@ -1403,13 +1372,6 @@ function MaintenanceMetric({ icon: Icon, label, value }: { icon: LucideIcon; lab
       </div>
     </div>
   );
-}
-
-function formatBytes(value: number) {
-  if (!value) return '0 MB';
-  const units = ['B', 'KB', 'MB', 'GB', 'TB'];
-  const index = Math.min(Math.floor(Math.log(value) / Math.log(1024)), units.length - 1);
-  return `${(value / 1024 ** index).toFixed(index > 1 ? 1 : 0)} ${units[index]}`;
 }
 
 function formatDuration(value: number | null) {

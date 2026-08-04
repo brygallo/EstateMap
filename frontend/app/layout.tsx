@@ -1,10 +1,10 @@
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 import { Plus_Jakarta_Sans, JetBrains_Mono } from 'next/font/google';
 import Script from 'next/script';
 import './globals.css';
 import { AuthProvider } from '@/lib/auth-context';
-import QueryProvider from '@/components/providers/QueryProvider';
 import NavBar from '@/components/NavBar';
+import MobileTabBar from '@/components/MobileTabBar';
 import Footer from '@/components/Footer';
 import { Toaster } from 'sonner';
 import { WHATSAPP_NUMBER } from '@/lib/constants';
@@ -28,6 +28,25 @@ const jetbrainsMono = JetBrains_Mono({
 const siteUrl = (
   process.env.NEXT_PUBLIC_FRONTEND_URL || 'https://geopropiedadesecuador.com'
 ).replace(/\/+$/, '');
+
+// Next's default viewport tag omits `viewport-fit`, which leaves every
+// `env(safe-area-inset-*)` in the app resolving to 0 — the map FAB, the detail
+// sheet's action bar and the lightbox close button were all sitting under the
+// notch and the gesture bar. `cover` is what turns those insets on.
+//
+// The page is left zoomable on purpose: pinch-to-zoom is the only way a
+// low-vision visitor can read a listing, and locking it costs more than the
+// stray double-tap zoom it prevents.
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  viewportFit: 'cover',
+  // Matches `--background`, which is what `.aents-site-header` paints itself
+  // with, so the iOS address bar and the Android status bar read as a
+  // continuation of the header instead of a seam above it. The dark token set
+  // is opt-in via `data-scheme` and nothing sets it, so one value is enough.
+  themeColor: '#FFFFFF',
+};
 
 export const metadata: Metadata = {
   title: {
@@ -54,6 +73,14 @@ export const metadata: Metadata = {
     'alquiler',
   ],
   applicationName: 'Geo Propiedades Ecuador',
+  // Installed on iOS, the page runs without browser chrome; `default` keeps the
+  // status bar legible over the white header instead of letting content slide
+  // under it.
+  appleWebApp: {
+    capable: true,
+    title: 'Geo Propiedades',
+    statusBarStyle: 'default',
+  },
   authors: [{ name: 'Geo Propiedades Ecuador' }],
   creator: 'Geo Propiedades Ecuador',
   publisher: 'Geo Propiedades Ecuador',
@@ -109,12 +136,15 @@ export const metadata: Metadata = {
     },
   },
   icons: {
-    icon: '/favicon.svg',
-    shortcut: '/favicon.svg',
-    apple: [
-      { url: '/icon.svg', type: 'image/svg+xml' },
-      { url: '/icon-192x192.svg', sizes: '192x192', type: 'image/svg+xml' },
+    icon: [
+      { url: '/favicon.svg', type: 'image/svg+xml' },
+      { url: '/icon-192.png', sizes: '192x192', type: 'image/png' },
     ],
+    shortcut: '/favicon.svg',
+    // iOS ignores the manifest for the home-screen icon and reads this tag, and
+    // it only accepts PNG. The bled export avoids the white halo iOS composites
+    // behind a transparent source.
+    apple: [{ url: '/apple-touch-icon.png', sizes: '180x180', type: 'image/png' }],
   },
   manifest: '/manifest.json',
 };
@@ -140,7 +170,7 @@ export default function RootLayout({
           '@type': 'Country',
           name: 'Ecuador',
         },
-        logo: `${siteUrl}/icon-192x192.svg`,
+        logo: `${siteUrl}/icon-512.png`,
         knowsAbout: [
           'propiedades en Ecuador',
           'casas en venta',
@@ -301,35 +331,37 @@ export default function RootLayout({
           strategy="afterInteractive"
         />
         <AuthProvider>
-          <QueryProvider>
-            <div className="min-h-screen flex flex-col bg-background text-textPrimary">
-              <a
-                href="#main"
-                className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[100] focus:rounded-button focus:bg-primary focus:px-4 focus:py-2 focus:text-sm focus:font-medium focus:text-white focus:shadow-card"
-              >
-                Saltar al contenido
-              </a>
-              <NavBar />
-              <main
-                id="main"
-                tabIndex={-1}
-                className="flex-grow pt-[var(--app-header-height)] focus:outline-none"
-              >
-                {children}
-              </main>
-              <Footer />
-            </div>
-            <Toaster
-              richColors
-              position="top-center"
-              className="app-toaster"
-              toastOptions={{
-                classNames: {
-                  toast: 'app-toast',
-                },
-              }}
-            />
-          </QueryProvider>
+          <div className="min-h-screen flex flex-col bg-background text-textPrimary">
+            <a
+              href="#main"
+              className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-top focus:rounded-button focus:bg-primary focus:px-4 focus:py-2 focus:text-sm focus:font-medium focus:text-white focus:shadow-card"
+            >
+              Saltar al contenido
+            </a>
+            <NavBar />
+            <main
+              id="main"
+              tabIndex={-1}
+              // The bottom padding clears the mobile tab bar (its own height
+              // plus the gesture-bar inset) so the last row of any page stays
+              // reachable. It collapses at md, where the bar is hidden.
+              className="flex-grow pt-[var(--app-header-height)] pb-[calc(var(--mobile-tabbar-height)+env(safe-area-inset-bottom))] focus:outline-none md:pb-0"
+            >
+              {children}
+            </main>
+            <Footer />
+            <MobileTabBar />
+          </div>
+          <Toaster
+            richColors
+            position="top-center"
+            className="app-toaster"
+            toastOptions={{
+              classNames: {
+                toast: 'app-toast',
+              },
+            }}
+          />
         </AuthProvider>
       </body>
     </html>

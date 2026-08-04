@@ -19,6 +19,7 @@ import {
   Navigation,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { haptic } from '@/lib/haptics';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import PropertyImage from '@/components/ui/PropertyImage';
@@ -87,6 +88,7 @@ function FavoriteButton({ propertyId }: { propertyId: number }) {
     else ids.delete(propertyId);
     writeFavoriteIds(ids);
     setIsFavorite(next);
+    haptic(next ? 'impact' : 'selection');
   };
 
   return (
@@ -96,7 +98,10 @@ function FavoriteButton({ propertyId }: { propertyId: number }) {
       whileTap={{ scale: 0.85 }}
       aria-pressed={isFavorite}
       aria-label={isFavorite ? 'Quitar de favoritos' : 'Guardar en favoritos'}
-      className="absolute right-2.5 top-2.5 z-10 flex h-8 w-8 items-center justify-center rounded-card bg-white/90 shadow-card backdrop-blur-sm transition-colors hover:bg-white"
+      // The chip stays 32px so it does not crowd the photo, but the `before`
+      // overlay pushes the touch target out to 44px. Growing the button itself
+      // would have moved it off the corner it is anchored to.
+      className="absolute right-2.5 top-2.5 z-10 flex h-8 w-8 items-center justify-center rounded-card bg-white/90 shadow-card backdrop-blur-sm transition-colors before:absolute before:-inset-1.5 before:content-[''] hover:bg-white"
     >
       <motion.span
         key={isFavorite ? 'liked' : 'unliked'}
@@ -223,14 +228,13 @@ export default function PropertyCard({
     const TypeIcon = typeIcon(String(property.property_type));
     const meta: { icon: typeof Ruler; label: string }[] = [
       { icon: TypeIcon, label: typeLabel },
-      ...(area && area !== '0' ? [{ icon: Ruler, label: `${area} m²` }] : []),
+      ...(area ? [{ icon: Ruler, label: area }] : []),
       ...((property.rooms ?? 0) > 0 ? [{ icon: BedDouble, label: String(property.rooms) }] : []),
       ...((property.bathrooms ?? 0) > 0 ? [{ icon: Bath, label: String(property.bathrooms) }] : []),
     ];
 
     return (
       <div
-        aria-pressed={selected}
         className={`aents-property-card aents-property-card-compact flex gap-2 p-1.5 ${
           selected ? 'is-selected ring-2 ring-primary border-primary' : ''
         }`}
@@ -297,18 +301,23 @@ export default function PropertyCard({
             ))}
           </div>
 
+          {/* These two live in the mobile map drawer, which is the densest list
+              in the app and also the one worked entirely with a thumb. They were
+              18px tall; 36px plus the 4px gap clears the 40px comfort floor
+              without forcing the card itself taller. `touch-manipulation` drops
+              the 300ms double-tap wait so the tap feels immediate. */}
           <div className="mt-1.5 grid grid-cols-2 gap-1.5">
             <button
               type="button"
               onClick={onClick}
-              className="rounded-md border border-line bg-white px-2 py-0.5 text-[10px] font-semibold text-textPrimary transition-colors hover:border-primary hover:text-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
+              className="min-h-9 touch-manipulation rounded-md border border-line bg-white px-2 text-[11px] font-semibold text-textPrimary transition-colors hover:border-primary hover:text-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 active:bg-background"
             >
               Ver mapa
             </button>
             <button
               type="button"
               onClick={onOpenDetails}
-              className="rounded-md bg-primary px-2 py-0.5 text-[10px] font-semibold text-white transition-colors hover:bg-primaryHover focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
+              className="min-h-9 touch-manipulation rounded-md bg-primary px-2 text-[11px] font-semibold text-white transition-colors hover:bg-primaryHover focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 active:bg-primaryHover"
             >
               Detalle
             </button>
@@ -324,7 +333,7 @@ export default function PropertyCard({
 
   const statTiles: { icon: typeof Ruler; label: string }[] = [
     { icon: Home, label: typeLabel },
-    ...(area && area !== '0' ? [{ icon: Ruler, label: `${area} m²` }] : []),
+    ...(area ? [{ icon: Ruler, label: area }] : []),
     ...((property.rooms ?? 0) > 0 ? [{ icon: BedDouble, label: `${property.rooms}` }] : []),
     ...((property.bathrooms ?? 0) > 0 ? [{ icon: Bath, label: `${property.bathrooms}` }] : []),
     ...((property.parking_spaces ?? 0) > 0
@@ -409,10 +418,26 @@ export default function PropertyCard({
         <Link href={href} className="block">
           {body}
         </Link>
-      ) : (
-        <div onClick={onClick} className={onClick ? 'block cursor-pointer' : 'block'}>
+      ) : onClick ? (
+        // role="button" instead of a real <button>: the body nests interactive
+        // children (FavoriteButton) and the HTML parser force-closes nested
+        // <button> elements, which would break SSR hydration.
+        <div
+          role="button"
+          tabIndex={0}
+          onClick={onClick}
+          onKeyDown={(event) => {
+            if (event.key === 'Enter' || event.key === ' ') {
+              event.preventDefault();
+              onClick();
+            }
+          }}
+          className="block w-full cursor-pointer text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
+        >
           {body}
         </div>
+      ) : (
+        <div className="block">{body}</div>
       )}
     </article>
   );

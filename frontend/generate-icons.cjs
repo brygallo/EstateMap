@@ -1,102 +1,85 @@
 #!/usr/bin/env node
 
 /**
- * Script para generar iconos PWA
+ * PWA icon export.
  *
- * Este script genera iconos simples en formato SVG que luego se pueden
- * convertir a PNG usando herramientas online o del navegador.
+ * Chrome on Android will not offer "install" unless the manifest lists a raster
+ * icon of at least 192px; it ignores SVG entries. This script exports those
+ * rasters from the vendored Aents brand tile.
+ *
+ * It resizes and pads an approved master — it never redraws it. See
+ * public/aents/README.md: recolouring or vectorising the mark forks the
+ * identity, and the tile is artwork, not a CSS box.
+ *
+ * Run with `node generate-icons.cjs` after the brand tile is updated.
  */
 
 const fs = require('fs');
 const path = require('path');
+const sharp = require('sharp');
 
-const sizes = [72, 96, 128, 144, 152, 192, 384, 512];
 const publicDir = path.join(__dirname, 'public');
+const SOURCE = path.join(publicDir, 'aents', 'aents-brand-tile-1024.png');
 
-// Aents brand tokens. Static SVG files cannot resolve CSS custom properties,
-// so the token values are inlined as literals from lib/aents-tokens.json.
-const aentsTokens = require('./lib/aents-tokens.json');
-const BRAND_GRADIENT_FROM = aentsTokens.light['--primary-strong'];
-const BRAND_GRADIENT_TO = aentsTokens.light['--accent-alt'];
+// "any" icons keep the tile's own silhouette — its rounded corners are part of
+// the mark, and every launcher that reads a non-maskable icon draws it as-is.
+const ANY_SIZES = [192, 512];
+// Maskable icons get cropped to whatever shape the launcher wants, so they need
+// paint in the corners. The tile's artwork already sits inside the 80% safe
+// circle at full scale, so only the transparent corners need filling.
+const MASKABLE_SIZES = [192, 512];
+// iOS never masks; it rounds a square and composites it on white if the source
+// is transparent, which would ring the tile in a pale halo. Ship it bled.
+const APPLE_SIZE = 180;
 
-// SVG base template
-const generateSVG = (size) => `<?xml version="1.0" encoding="UTF-8"?>
-<svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" xmlns="http://www.w3.org/2000/svg">
-  <defs>
-    <linearGradient id="bgGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" style="stop-color:${BRAND_GRADIENT_FROM};stop-opacity:1" />
-      <stop offset="100%" style="stop-color:${BRAND_GRADIENT_TO};stop-opacity:1" />
-    </linearGradient>
-  </defs>
+/**
+ * A canvas of the tile with no transparent corners.
+ *
+ * The backdrop is the same tile scaled past the frame and centre-cropped, so
+ * the corners are filled by the tile's own gradient continuing outward. A flat
+ * colour would seam against the gradient at the top-left, where the tile is
+ * lightest.
+ */
+const bleed = async (size) => {
+  const backdrop = await sharp(SOURCE)
+    .resize(Math.round(size * 1.18), Math.round(size * 1.18), { fit: 'cover' })
+    .toBuffer();
+  const tile = await sharp(SOURCE).resize(size, size, { fit: 'contain' }).toBuffer();
 
-  <!-- Background with rounded corners -->
-  <rect width="${size}" height="${size}" fill="url(#bgGradient)" rx="${size * 0.2}"/>
-
-  <!-- Map Icon -->
-  <g transform="translate(${size/2}, ${size/2})">
-    ${generateMapIcon(size)}
-  </g>
-</svg>`;
-
-const generateMapIcon = (size) => {
-  const scale = size / 512;
-  const iconSize = size * 0.4;
-
-  return `
-    <!-- Left section -->
-    <path d="M ${-iconSize * 0.45},${-iconSize * 0.5}
-             L ${-iconSize * 0.45},${iconSize * 0.5}
-             L ${-iconSize * 0.125},${iconSize * 0.375}
-             L ${-iconSize * 0.125},${-iconSize * 0.375} Z"
-          fill="rgba(255, 255, 255, 0.2)"
-          stroke="white"
-          stroke-width="${4 * scale}"
-          stroke-linejoin="round"
-          stroke-linecap="round"/>
-
-    <!-- Middle section -->
-    <path d="M ${-iconSize * 0.125},${-iconSize * 0.375}
-             L ${-iconSize * 0.125},${iconSize * 0.375}
-             L ${iconSize * 0.2},${iconSize * 0.5}
-             L ${iconSize * 0.2},${-iconSize * 0.5} Z"
-          fill="rgba(255, 255, 255, 0.2)"
-          stroke="white"
-          stroke-width="${4 * scale}"
-          stroke-linejoin="round"
-          stroke-linecap="round"/>
-
-    <!-- Right section -->
-    <path d="M ${iconSize * 0.2},${-iconSize * 0.5}
-             L ${iconSize * 0.2},${iconSize * 0.5}
-             L ${iconSize * 0.45},${iconSize * 0.375}
-             L ${iconSize * 0.45},${-iconSize * 0.375} Z"
-          fill="rgba(255, 255, 255, 0.2)"
-          stroke="white"
-          stroke-width="${4 * scale}"
-          stroke-linejoin="round"
-          stroke-linecap="round"/>
-  `;
+  return sharp(backdrop)
+    .resize(size, size, { fit: 'cover', position: 'centre' })
+    .composite([{ input: tile }])
+    .png()
+    .toBuffer();
 };
 
-console.log('🎨 Generando iconos SVG para PWA...\n');
+const write = async (buffer, filename) => {
+  await fs.promises.writeFile(path.join(publicDir, filename), buffer);
+  console.log(`✅ ${filename}`);
+};
 
-// Generar SVGs
-sizes.forEach(size => {
-  const svg = generateSVG(size);
-  const filename = `icon-${size}x${size}.svg`;
-  const filepath = path.join(publicDir, filename);
+(async () => {
+  if (!fs.existsSync(SOURCE)) {
+    console.error(`No se encontró el master de marca: ${SOURCE}`);
+    process.exit(1);
+  }
 
-  fs.writeFileSync(filepath, svg);
-  console.log(`✅ Generado: ${filename}`);
+  console.log('🎨 Exportando iconos PWA desde el tile de marca Aents...\n');
+
+  for (const size of ANY_SIZES) {
+    const buffer = await sharp(SOURCE).resize(size, size, { fit: 'contain' }).png().toBuffer();
+    await write(buffer, `icon-${size}.png`);
+  }
+
+  for (const size of MASKABLE_SIZES) {
+    await write(await bleed(size), `icon-maskable-${size}.png`);
+  }
+
+  await write(await bleed(APPLE_SIZE), 'apple-touch-icon.png');
+
+  console.log('\n📝 Listo. Los .svg antiguos siguen ahí para compatibilidad,');
+  console.log('   pero el manifest ya apunta a los PNG.');
+})().catch((error) => {
+  console.error(error);
+  process.exit(1);
 });
-
-console.log('\n📝 Iconos SVG generados exitosamente!');
-console.log('\n⚠️  IMPORTANTE: Los iconos están en formato SVG.');
-console.log('Para convertirlos a PNG, tienes 2 opciones:\n');
-console.log('Opción 1 (Recomendada): Usa el generador web');
-console.log('  → Abre: http://localhost:3010/generate-icons.html');
-console.log('  → Descarga todos los iconos PNG\n');
-console.log('Opción 2: Usa una herramienta online');
-console.log('  → https://cloudconvert.com/svg-to-png');
-console.log('  → Sube los archivos SVG generados');
-console.log('  → Descarga como PNG con los mismos nombres\n');

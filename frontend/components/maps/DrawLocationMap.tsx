@@ -5,6 +5,7 @@ import 'maplibre-gl/dist/maplibre-gl.css';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Check, Eraser, Maximize2, Minus, Plus, Undo2 } from 'lucide-react';
 import * as turf from '@turf/turf';
+import { toast } from 'sonner';
 import aentsTokens from '@/lib/aents-tokens.json';
 import LayerSwitch, { type MapLayer } from '@/components/map/LayerSwitch';
 import { applyBaseLayer, buildMapStyle, ECUADOR_CENTER } from './maplibre-style';
@@ -30,7 +31,6 @@ interface DrawLocationMapProps {
   onMapReady: (map: DrawMapHandle) => void;
   onPolygonChange: (coords: [number, number][]) => void;
   onLocationChange?: (coords: LatLng) => void;
-  onAreaChange?: (area: number) => void;
   initialPolygon?: [number, number][];
   selectedLocation?: LatLng | null;
   locationMode?: 'point' | 'polygon';
@@ -42,6 +42,28 @@ interface DrawLocationMapProps {
 }
 
 const EMPTY_COLLECTION: GeoJSON.FeatureCollection = { type: 'FeatureCollection', features: [] };
+
+const isInEcuador = ({ lat, lng }: LatLng) =>
+  (lat >= -5.45 && lat <= 1.9 && lng >= -81.35 && lng <= -74.75) ||
+  (lat >= -1.75 && lat <= 1.85 && lng >= -92.2 && lng <= -88.45);
+
+const polygonError = (vertices: LatLng[]): string | null => {
+  if (vertices.some(({ lat, lng }) => !Number.isFinite(lat) || !Number.isFinite(lng))) {
+    return 'La forma contiene coordenadas inválidas.';
+  }
+  if (vertices.some((vertex) => !isInEcuador(vertex))) {
+    return 'Todos los puntos de la forma deben estar dentro de Ecuador.';
+  }
+  if (new Set(vertices.map(({ lat, lng }) => `${lat},${lng}`)).size < 3) {
+    return 'La forma debe tener al menos 3 puntos distintos.';
+  }
+  const ring = vertices.map(({ lng, lat }) => [lng, lat] as [number, number]);
+  const feature = turf.polygon([[...ring, ring[0]]]);
+  if (turf.kinks(feature).features.length > 0) {
+    return 'Los lados de la forma no pueden cruzarse entre sí.';
+  }
+  return null;
+};
 
 const referenceCollection = (referenceProperties: any[]): GeoJSON.FeatureCollection => ({
   type: 'FeatureCollection',
@@ -135,7 +157,6 @@ const DrawLocationMap = ({
   const userMarkerRef = useRef<maplibregl.Marker | null>(null);
   const flownRef = useRef(false);
   const initialLoadedRef = useRef(false);
-  const suppressNextClickRef = useRef(false);
 
   const modeRef = useRef(locationMode);
   modeRef.current = locationMode;
@@ -186,7 +207,6 @@ const DrawLocationMap = ({
         src?.setData(drawCollection(verticesRef.current, closedRef.current) as any);
       });
       marker.on('dragend', () => {
-        suppressNextClickRef.current = true;
         refreshRef.current?.();
       });
       // Closing tap: while drawing, tapping the first vertex closes the ring.
@@ -248,7 +268,6 @@ const DrawLocationMap = ({
         });
         marker.on('dragend', () => {
           insertedAt = null;
-          suppressNextClickRef.current = true;
           refreshRef.current?.();
         });
         midMarkersRef.current.push(marker);
@@ -331,9 +350,17 @@ const DrawLocationMap = ({
     setVertexCount(vertices.length);
     setDrawState(vertices.length === 0 ? 'idle' : closed ? 'closed' : 'drawing');
     if (emit) {
-      onPolygonChangeRef.current?.(
-        closed ? vertices.map((v) => [v.lat, v.lng] as [number, number]) : []
-      );
+      const error = closed ? polygonError(vertices) : null;
+      if (error) {
+        // Keep the shape visible so the user can repair it, but invalidate the
+        // form until every vertex is valid again.
+        onPolygonChangeRef.current?.([]);
+        toast.error(error);
+      } else {
+        onPolygonChangeRef.current?.(
+          closed ? vertices.map((v) => [v.lat, v.lng] as [number, number]) : []
+        );
+      }
     }
   }, []);
   const refreshRef = useRef<typeof refresh | undefined>(undefined);
@@ -370,6 +397,11 @@ const DrawLocationMap = ({
 
   const closePolygon = useCallback(() => {
     if (verticesRef.current.length < 3 || closedRef.current) return;
+    const error = polygonError(verticesRef.current);
+    if (error) {
+      toast.error(error);
+      return;
+    }
     closedRef.current = true;
     refreshRef.current?.();
   }, []);
@@ -471,10 +503,6 @@ const DrawLocationMap = ({
     });
 
     map.on('click', (event) => {
-      if (suppressNextClickRef.current) {
-        suppressNextClickRef.current = false;
-        return;
-      }
       const { lat, lng } = event.lngLat;
       if (modeRef.current === 'point') {
         onLocationChangeRef.current?.({ lat, lng });
@@ -604,9 +632,32 @@ const DrawLocationMap = ({
   useEffect(() => {
     const map = mapRef.current;
     if (!loaded || !map || initialLoadedRef.current) return;
-    if (!initialPolygon || initialPolygon.length < 3 || verticesRef.current.length > 0) return;
+    if (!Array.isArray(initialPolygon) || initialPolygon.length < 3 || verticesRef.current.length > 0) return;
+    const normalized = initialPolygon.map((coordinate) => ({
+      lat: Number(Array.isArray(coordinate) ? coordinate[0] : Number.NaN),
+      lng: Number(Array.isArray(coordinate) ? coordinate[1] : Number.NaN),
+    }));
+    if (
+      normalized.length > 3 &&
+      normalized[0].lat === normalized[normalized.length - 1].lat &&
+      normalized[0].lng === normalized[normalized.length - 1].lng
+    ) {
+      normalized.pop();
+    }
+    const error = normalized.length < 3
+      ? 'La forma guardada debe tener al menos 3 puntos distintos.'
+      : polygonError(normalized);
+    if (error) {
+      initialLoadedRef.current = true;
+      verticesRef.current = [];
+      closedRef.current = false;
+      onPolygonChangeRef.current?.([]);
+      toast.error(`No se pudo restaurar la forma: ${error}`);
+      refreshRef.current?.(false);
+      return;
+    }
     initialLoadedRef.current = true;
-    verticesRef.current = initialPolygon.map(([lat, lng]) => ({ lat: Number(lat), lng: Number(lng) }));
+    verticesRef.current = normalized;
     closedRef.current = true;
     refreshRef.current?.(false);
     fitToShape(false);
@@ -749,9 +800,9 @@ const DrawLocationMap = ({
               </>
             ) : (
               <>
-                <p className="shrink-0 px-2 text-xs font-medium text-textSecondary">
+                <p className="w-28 shrink-0 whitespace-normal px-1 text-center text-[10px] font-medium leading-tight text-textSecondary sm:w-auto sm:px-2 sm:text-left sm:text-xs sm:leading-normal">
                   {mobileUX
-                    ? 'Arrastra los puntos · mantén pulsado uno para quitarlo'
+                    ? 'Arrastra · mantén pulsado para quitar'
                     : 'Arrastra los puntos · clic derecho quita un punto'}
                 </p>
                 <button

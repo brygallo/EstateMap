@@ -11,8 +11,7 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8010/api';
+import { apiGet, apiPost } from '@/lib/api';
 
 type ComponentState = {
   status: 'healthy' | 'error' | 'stale' | 'unknown';
@@ -64,9 +63,7 @@ export default function AdminSystemPage() {
     if (!token) return;
     setLoading(true);
     try {
-      const response = await fetch(`${API_URL}/admin/system-status/`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const response = await apiGet('/admin/system-status/');
       if (!response.ok) throw new Error();
       setData(await response.json());
     } catch {
@@ -84,11 +81,7 @@ export default function AdminSystemPage() {
     if (!token) return;
     setResolving(incidentId);
     try {
-      const response = await fetch(`${API_URL}/admin/system-status/`, {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ incident_id: incidentId, resolved: true }),
-      });
+      const response = await apiPost('/admin/system-status/', { incident_id: incidentId, resolved: true });
       if (!response.ok) throw new Error();
       toast.success('Incidencia marcada como resuelta.');
       await load();
@@ -101,9 +94,9 @@ export default function AdminSystemPage() {
 
   return (
     <AdminRoute>
-      <div className="flex min-h-[calc(100vh-3rem)] bg-background">
+      <div className="flex min-h-[calc(100dvh-var(--app-header-height))] bg-background">
         <AdminSidebar />
-        <main className="min-w-0 flex-1 overflow-auto">
+        <main className="min-w-0 flex-1">
           <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
             <div className="mb-6 flex flex-wrap items-end justify-between gap-3">
               <div>

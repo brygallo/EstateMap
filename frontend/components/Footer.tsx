@@ -73,7 +73,7 @@ const LinkColumn = ({
   links: { href: string; label: string }[];
   className?: string;
 }) => (
-  <nav aria-label={title} className={className}>
+  <nav aria-label={title} className={`text-center sm:text-left ${className ?? ''}`}>
     <h2 className={headingClass}>{title}</h2>
     <ul className="mt-5 space-y-3.5">
       {links.map((link) => (
@@ -88,10 +88,10 @@ const Footer = () => (
     <div className="aents-footer-grid" aria-hidden />
     <div className="aents-footer-glow" aria-hidden />
 
-    <div className="relative mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
+    <div className="relative mx-auto max-w-7xl px-4 py-12 sm:px-6 sm:py-16 lg:px-8">
       <div className="grid gap-12 lg:grid-cols-12 lg:gap-10">
         {/* Marca */}
-        <div className="lg:col-span-5">
+        <div className="flex flex-col items-center text-center sm:items-start sm:text-left lg:col-span-5">
           {/*
             Aents is the primary mark in this footer and the product signs
             underneath it. This is <AentsLogo size={88} tone="negative" tagline />
@@ -122,7 +122,7 @@ const Footer = () => (
             </a>
           </div>
 
-          <p className="aents-footer-origin">
+          <p className="aents-footer-origin justify-center text-center sm:justify-start sm:text-left">
             <span className="aents-footer-origin-dot" aria-hidden />
             Geo Propiedades Ecuador, un producto digital del ecosistema Aents.
           </p>
@@ -143,7 +143,7 @@ const Footer = () => (
           </a>
 
           {/* Redes sociales */}
-          <div className="mt-8 flex items-center gap-3">
+          <div className="mt-8 flex items-center justify-center gap-3 sm:justify-start">
             {SOCIAL_LINKS.map(({ href, label, icon: Icon }) => (
               <a
                 key={label}
@@ -165,9 +165,9 @@ const Footer = () => (
           <LinkColumn title="Plataforma" links={PLATFORM_LINKS} />
 
           {/* Contacto */}
-          <div>
+          <div className="text-center sm:text-left">
             <h2 className={headingClass}>Contacto</h2>
-            <ul className="mt-5 space-y-3.5 text-sm text-white/70">
+            <ul className="mt-5 flex flex-col items-center space-y-3.5 text-sm text-white/70 sm:items-start">
               <li>
                 <a href={whatsappHref} target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 transition-colors hover:text-white">
                   <MessageCircle className={contactIconClass} strokeWidth={2} aria-hidden />
@@ -192,7 +192,7 @@ const Footer = () => (
       {/* Barra inferior */}
       <div className="mt-14 border-t border-white/[0.12] pt-6">
         <div className="flex flex-col items-center justify-between gap-4 sm:flex-row">
-          <p className={mutedClass}>
+          <p className={`${mutedClass} max-w-xl text-center sm:text-left`}>
             © {new Date().getFullYear()} Geo Propiedades Ecuador, un producto de{' '}
             <a
               href="https://aents.net"
@@ -204,7 +204,7 @@ const Footer = () => (
             </a>
             . Todos los derechos reservados.
           </p>
-          <div className="flex items-center gap-6">
+          <div className="flex flex-wrap items-center justify-center gap-x-5 gap-y-3 sm:justify-end sm:gap-6">
             <span className="aents-footer-signal" aria-hidden>
               <i />
               <i />

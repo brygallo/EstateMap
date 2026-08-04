@@ -3,8 +3,9 @@
  */
 
 import { fetchWithTimeout } from '@/lib/form-errors';
+import { getPublicApiUrl } from '@/lib/api-url';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8010/api';
+const API_URL = getPublicApiUrl();
 
 interface FetchOptions extends RequestInit {
   skipAuth?: boolean;

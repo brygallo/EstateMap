@@ -5,6 +5,7 @@ import { useState } from 'react';
 import { toast } from 'sonner';
 import { Share2, Copy, Check, Download } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { haptic } from '@/lib/haptics';
 import {
   Dialog,
   DialogContent,
@@ -37,6 +38,7 @@ const ShareModal = ({
   const handleCopyLink = async () => {
     const markCopied = () => {
       setCopied(true);
+      haptic('success');
       setTimeout(() => setCopied(false), 2000);
     };
 
@@ -156,7 +158,7 @@ const ShareModal = ({
                 value={shareUrl}
                 readOnly
                 aria-label="Enlace para compartir"
-                className="flex-1 rounded-input border border-line bg-background px-2.5 py-2 text-xs text-textSecondary focus:outline-none"
+                className="flex-1 rounded-input border border-line bg-background px-2.5 py-2 text-xs text-textSecondary focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/25"
               />
               <button
                 onClick={handleCopyLink}

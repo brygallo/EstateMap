@@ -2,6 +2,7 @@
 
 import { type ReactNode, useState } from 'react';
 import { trackEvent } from '@/lib/analytics';
+import { haptic } from '@/lib/haptics';
 
 type ContactMethod = 'whatsapp' | 'call' | 'source_url' | 'phone_reveal';
 
@@ -102,6 +103,9 @@ export function PhoneReveal({
       className={className || 'font-semibold text-primary underline-offset-2 hover:underline'}
       onClick={() => {
         setRevealed(true);
+        // The label swaps in place, so on a phone the finger is often still
+        // covering the thing that changed. The tick confirms it landed.
+        haptic('success');
         trackContact(
           { propertyId, city, province, propertyType, status, imported },
           'phone_reveal',

@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { apiFetch } from '@/lib/api';
 import type {
   MapBounds,
   MapCityGroup,
@@ -226,6 +227,7 @@ export function usePropertyFilters({ token, bounds, zoom = 7 }: UsePropertyFilte
   const abortRef = useRef<AbortController | null>(null);
   const cardsAbortRef = useRef<AbortController | null>(null);
   const activeFilterKeyRef = useRef<string>(filtersKey(filters));
+  const displayedMapKeyRef = useRef<string>(mapRequestKey(filters, zoom));
   // Cache incremental por filtros: cada bbox nuevo se mezcla por id. El mapa no
   // reemplaza el set entero al panear, solo agrega lo que faltaba.
   const resultCachesRef = useRef<Map<string, MapResultsCache>>(new Map());
@@ -262,7 +264,6 @@ export function usePropertyFilters({ token, bounds, zoom = 7 }: UsePropertyFilte
     let cancelled = false;
     (async () => {
       try {
-        const { apiFetch } = await import('@/lib/api');
         const res = await apiFetch('/properties/owners/', { skipAuth: !token });
         if (res.ok && !cancelled) {
           setOwners(await res.json());
@@ -281,7 +282,6 @@ export function usePropertyFilters({ token, bounds, zoom = 7 }: UsePropertyFilte
     let cancelled = false;
     (async () => {
       try {
-        const { apiFetch } = await import('@/lib/api');
         const res = await apiFetch('/properties/locations/', { skipAuth: !token });
         if (res.ok && !cancelled) {
           setLocations(await res.json());
@@ -302,7 +302,6 @@ export function usePropertyFilters({ token, bounds, zoom = 7 }: UsePropertyFilte
     const controller = new AbortController();
     const timer = setTimeout(async () => {
       try {
-        const { apiFetch } = await import('@/lib/api');
         const params = filtersToApiParams(filters, null);
         const res = await apiFetch(`/properties/summary/?${params.toString()}`, {
           skipAuth: !token,
@@ -333,6 +332,17 @@ export function usePropertyFilters({ token, bounds, zoom = 7 }: UsePropertyFilte
       const key = mapRequestKey(filters, zoom);
       const cache = getOrCreateCache(resultCachesRef.current, key);
       const hasCachedResults = cache.items.length > 0;
+
+      // A different zoom bucket represents a different aggregation level.
+      // Do not keep drawing clusters from the previous level while its
+      // replacement is loading, since they move with the camera and look as if
+      // the clicked cluster was loaded twice.
+      if (displayedMapKeyRef.current !== key) {
+        displayedMapKeyRef.current = key;
+        setMapProperties(cache.items);
+        setMapCityGroups(cache.cityGroups);
+        setMapContext(cache.context);
+      }
 
       if (!bounds) {
         setMapProperties(cache.items);
@@ -365,7 +375,6 @@ export function usePropertyFilters({ token, bounds, zoom = 7 }: UsePropertyFilte
       }, hasCachedResults ? 900 : 400);
 
       try {
-        const { apiFetch } = await import('@/lib/api');
         const params = filtersToApiParams(filters, bounds);
         params.set('zoom', String(zoom));
         params.set('limit', zoom < 11.5 ? '900' : '1400');
@@ -424,7 +433,6 @@ export function usePropertyFilters({ token, bounds, zoom = 7 }: UsePropertyFilte
       else setCardsLoading(true);
 
       try {
-        const { apiFetch } = await import('@/lib/api');
         const params = filtersToApiParams(filters, bounds, {
           page,
           pageSize: cardsPageSize,
