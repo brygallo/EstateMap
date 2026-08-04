@@ -21,6 +21,9 @@ backend/.env
 staticfiles/
 media/
 
+# Estado local de Celery beat: lo reescribe el worker en cada arranque
+backend/celerybeat-schedule
+
 # Documentos de marketing (Claude) - no versionar
 marketing-inmobiliarias/
 
