@@ -504,7 +504,7 @@ rules:
     cases:
       - name: Publicar con un estado que el modelo no conoce
         role: authenticated
-        given:
+        body:
           status: sold
           title: Propiedad vendida
         expected: denied

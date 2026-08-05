@@ -24,7 +24,8 @@ def test_own_001_staff_transfiere_la_propiedad_a_otra_cuenta(spec_request):
         method='POST',
         path='/api/admin/properties/{property_id}/transfer-owner/',
         role='staff',
-        payload={'email': 'destino@example.com'},
+        given=None,
+        body={'email': 'destino@example.com'},
     )
     assert_outcome(
         response,
@@ -44,7 +45,8 @@ def test_own_001_un_usuario_autenticado_cualquiera_no_puede_transferir(spec_requ
         method='POST',
         path='/api/admin/properties/{property_id}/transfer-owner/',
         role='not_owner',
-        payload={'email': 'destino@example.com'},
+        given=None,
+        body={'email': 'destino@example.com'},
     )
     assert_outcome(
         response,
@@ -64,7 +66,8 @@ def test_own_001_el_propietario_actual_tampoco_puede_transferirla_el_mismo(spec_
         method='POST',
         path='/api/admin/properties/{property_id}/transfer-owner/',
         role='owner',
-        payload={'email': 'destino@example.com'},
+        given=None,
+        body={'email': 'destino@example.com'},
     )
     assert_outcome(
         response,
@@ -84,7 +87,8 @@ def test_own_001_un_anonimo_no_puede_transferir(spec_request):
         method='POST',
         path='/api/admin/properties/{property_id}/transfer-owner/',
         role='anonymous',
-        payload={'email': 'destino@example.com'},
+        given=None,
+        body={'email': 'destino@example.com'},
     )
     assert_outcome(
         response,
@@ -107,7 +111,8 @@ def test_own_002_transferir_a_un_correo_sin_cuenta_la_crea_invitada(spec_request
         method='POST',
         path='/api/admin/properties/{property_id}/transfer-owner/',
         role='staff',
-        payload={'email': 'nuevo@example.com'},
+        given=None,
+        body={'email': 'nuevo@example.com'},
     )
     assert_outcome(
         response,
@@ -127,7 +132,8 @@ def test_own_002_una_transferencia_sin_destino_se_rechaza(spec_request):
         method='POST',
         path='/api/admin/properties/{property_id}/transfer-owner/',
         role='staff',
-        payload=None,
+        given=None,
+        body=None,
     )
     assert_outcome(
         response,

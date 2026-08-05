@@ -182,11 +182,11 @@ Cualquiera puede listar las propiedades activas sin autenticarse, porque el cat�
 
 **Casos**
 
-| Caso | Rol | Entrada | Esperado |
-| --- | --- | --- | --- |
-| un visitante anónimo lista el catálogo | anonymous | — | allowed |
-| un usuario autenticado lista el catálogo | authenticated | — | allowed |
-| el renderizado en servidor de Next.js lista el catálogo | internal | — | allowed |
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| un visitante anónimo lista el catálogo | anonymous | — | — | allowed |
+| un usuario autenticado lista el catálogo | authenticated | — | — | allowed |
+| el renderizado en servidor de Next.js lista el catálogo | internal | — | — | allowed |
 
 **Cobertura exigida:** api
 
@@ -214,11 +214,11 @@ El detalle de una propiedad activa es público y su contador de visitas solo se 
 
 **Casos**
 
-| Caso | Rol | Entrada | Esperado |
-| --- | --- | --- | --- |
-| un visitante anónimo abre la ficha | anonymous | — | allowed |
-| un tercero autenticado abre la ficha | not_owner | — | allowed |
-| el propietario abre su propia ficha | owner | — | allowed |
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| un visitante anónimo abre la ficha | anonymous | — | — | allowed |
+| un tercero autenticado abre la ficha | not_owner | — | — | allowed |
+| el propietario abre su propia ficha | owner | — | — | allowed |
 
 **Cobertura exigida:** api
 
@@ -248,10 +248,10 @@ Solo un usuario autenticado puede crear una propiedad, y el propietario se fija 
 
 **Casos**
 
-| Caso | Rol | Entrada | Esperado |
-| --- | --- | --- | --- |
-| un anónimo no puede publicar | anonymous | — | denied |
-| un usuario autenticado supera la barrera de permisos | authenticated | — | allowed |
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| un anónimo no puede publicar | anonymous | — | — | denied |
+| un usuario autenticado supera la barrera de permisos | authenticated | — | — | allowed |
 
 **Cobertura exigida:** api
 
@@ -282,12 +282,12 @@ Modificar una propiedad requiere ser su propietario o tener is_staff; un tercero
 
 **Casos**
 
-| Caso | Rol | Entrada | Esperado |
-| --- | --- | --- | --- |
-| el propietario edita su propiedad | owner | `title`=Propiedad de spec editada | allowed |
-| un tercero autenticado no puede editarla | not_owner | `title`=Intento de secuestro | denied |
-| un usuario staff sí puede editarla por la ruta pública | staff | `title`=Edición desde staff | allowed |
-| un anónimo no puede editarla | anonymous | `title`=Intento anónimo | denied (HTTP 401) |
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| el propietario edita su propiedad | owner | — | `title`=Propiedad de spec editada | allowed |
+| un tercero autenticado no puede editarla | not_owner | — | `title`=Intento de secuestro | denied |
+| un usuario staff sí puede editarla por la ruta pública | staff | — | `title`=Edición desde staff | allowed |
+| un anónimo no puede editarla | anonymous | — | `title`=Intento anónimo | denied (HTTP 401) |
 
 **Cobertura exigida:** api
 
@@ -316,12 +316,12 @@ Eliminar una propiedad por la ruta pública exige ser su propietario o tener is_
 
 **Casos**
 
-| Caso | Rol | Entrada | Esperado |
-| --- | --- | --- | --- |
-| el propietario elimina su propiedad | owner | — | allowed |
-| un tercero autenticado no puede eliminarla | not_owner | — | denied |
-| un usuario staff elimina una propiedad ajena | staff | — | allowed |
-| un anónimo no puede eliminarla | anonymous | — | denied (HTTP 401) |
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| el propietario elimina su propiedad | owner | — | — | allowed |
+| un tercero autenticado no puede eliminarla | not_owner | — | — | denied |
+| un usuario staff elimina una propiedad ajena | staff | — | — | allowed |
+| un anónimo no puede eliminarla | anonymous | — | — | denied (HTTP 401) |
 
 **Cobertura exigida:** api
 
@@ -349,12 +349,12 @@ Eliminar una propiedad por la ruta pública exige ser su propietario o tener is_
 
 **Casos**
 
-| Caso | Rol | Entrada | Esperado |
-| --- | --- | --- | --- |
-| un anónimo no puede consultar inventario propio | anonymous | — | denied |
-| el propietario ve su inventario | owner | — | allowed |
-| otro usuario recibe su propia lista, no la ajena | not_owner | — | allowed |
-| un administrador recibe el catálogo entero | staff | — | allowed |
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| un anónimo no puede consultar inventario propio | anonymous | — | — | denied |
+| el propietario ve su inventario | owner | — | — | allowed |
+| otro usuario recibe su propia lista, no la ajena | not_owner | — | — | allowed |
+| un administrador recibe el catálogo entero | staff | — | — | allowed |
 
 **Cobertura exigida:** api
 
@@ -384,9 +384,9 @@ Hoy is_email_verified no bloquea ningún endpoint, así que una cuenta activa co
 
 **Casos**
 
-| Caso | Rol | Entrada | Esperado |
-| --- | --- | --- | --- |
-| una cuenta sin verificar supera la barrera de permisos al publicar | unverified | — | allowed |
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| una cuenta sin verificar supera la barrera de permisos al publicar | unverified | — | — | allowed |
 
 **Cobertura exigida:** api
 
@@ -412,10 +412,10 @@ Crear una propiedad debe requerir is_email_verified, de modo que una cuenta acti
 
 **Casos**
 
-| Caso | Rol | Entrada | Esperado |
-| --- | --- | --- | --- |
-| una cuenta sin verificar no debería poder publicar | unverified | — | denied |
-| una cuenta verificada sí debería poder publicar | authenticated | — | allowed |
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| una cuenta sin verificar no debería poder publicar | unverified | — | — | denied |
+| una cuenta verificada sí debería poder publicar | authenticated | — | — | allowed |
 
 **Cobertura exigida:** api
 
@@ -444,11 +444,11 @@ Cualquier usuario autenticado supera la barrera de permisos de /delete_image/ so
 
 **Casos**
 
-| Caso | Rol | Entrada | Esperado |
-| --- | --- | --- | --- |
-| un anónimo sí queda fuera | anonymous | — | denied |
-| un tercero autenticado NO es rechazado por permisos | not_owner | — | allowed |
-| el propietario supera la barrera | owner | — | allowed |
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| un anónimo sí queda fuera | anonymous | — | — | denied |
+| un tercero autenticado NO es rechazado por permisos | not_owner | — | — | allowed |
+| el propietario supera la barrera | owner | — | — | allowed |
 
 **Cobertura exigida:** api
 
@@ -474,10 +474,10 @@ Eliminar una imagen debe requerir ser propietario de la propiedad a la que perte
 
 **Casos**
 
-| Caso | Rol | Entrada | Esperado |
-| --- | --- | --- | --- |
-| un tercero autenticado no debería poder borrar imágenes ajenas | not_owner | — | denied |
-| el propietario sí debería poder | owner | — | allowed |
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| un tercero autenticado no debería poder borrar imágenes ajenas | not_owner | — | — | denied |
+| el propietario sí debería poder | owner | — | — | allowed |
 
 **Cobertura exigida:** api
 
@@ -506,10 +506,10 @@ Eliminar una imagen debe requerir ser propietario de la propiedad a la que perte
 
 **Casos**
 
-| Caso | Rol | Entrada | Esperado |
-| --- | --- | --- | --- |
-| un visitante anónimo obtiene el informe completo | anonymous | — | allowed |
-| un tercero autenticado también | not_owner | — | allowed |
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| un visitante anónimo obtiene el informe completo | anonymous | — | — | allowed |
+| un tercero autenticado también | not_owner | — | — | allowed |
 
 **Cobertura exigida:** api
 
@@ -536,10 +536,10 @@ El bloque demand de /intelligence/ debe servirse solo al propietario de la propi
 
 **Casos**
 
-| Caso | Rol | Entrada | Esperado |
-| --- | --- | --- | --- |
-| un anónimo no debería ver el contador de visitas | anonymous | — | denied |
-| el propietario sí debería verlo | owner | — | allowed |
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| un anónimo no debería ver el contador de visitas | anonymous | — | — | denied |
+| el propietario sí debería verlo | owner | — | — | allowed |
 
 ### PERM-013 — El payload del mapa es público y está limitado contra el scraping
 
@@ -565,11 +565,11 @@ El bloque demand de /intelligence/ debe servirse solo al propietario de la propi
 
 **Casos**
 
-| Caso | Rol | Entrada | Esperado |
-| --- | --- | --- | --- |
-| un visitante anónimo carga el mapa | anonymous | — | allowed |
-| el renderizado en servidor carga el mapa sin consumir cuota | internal | — | allowed |
-| un usuario staff carga el mapa | staff | — | allowed |
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| un visitante anónimo carga el mapa | anonymous | — | — | allowed |
+| el renderizado en servidor carga el mapa sin consumir cuota | internal | — | — | allowed |
+| un usuario staff carga el mapa | staff | — | — | allowed |
 
 **Cobertura exigida:** api
 
@@ -597,9 +597,9 @@ El bloque demand de /intelligence/ debe servirse solo al propietario de la propi
 
 **Casos**
 
-| Caso | Rol | Entrada | Esperado |
-| --- | --- | --- | --- |
-| un visitante anónimo obtiene los totales | anonymous | — | allowed |
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| un visitante anónimo obtiene los totales | anonymous | — | — | allowed |
 
 **Cobertura exigida:** api
 
@@ -626,9 +626,9 @@ El bloque demand de /intelligence/ debe servirse solo al propietario de la propi
 
 **Casos**
 
-| Caso | Rol | Entrada | Esperado |
-| --- | --- | --- | --- |
-| un visitante anónimo obtiene las ubicaciones | anonymous | — | allowed |
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| un visitante anónimo obtiene las ubicaciones | anonymous | — | — | allowed |
 
 **Cobertura exigida:** api
 
@@ -655,9 +655,9 @@ El bloque demand de /intelligence/ debe servirse solo al propietario de la propi
 
 **Casos**
 
-| Caso | Rol | Entrada | Esperado |
-| --- | --- | --- | --- |
-| un visitante anónimo obtiene el catálogo de cantones | anonymous | — | allowed |
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| un visitante anónimo obtiene el catálogo de cantones | anonymous | — | — | allowed |
 
 **Cobertura exigida:** api
 
@@ -684,9 +684,9 @@ El bloque demand de /intelligence/ debe servirse solo al propietario de la propi
 
 **Casos**
 
-| Caso | Rol | Entrada | Esperado |
-| --- | --- | --- | --- |
-| un visitante anónimo obtiene la lista de propietarios | anonymous | — | allowed |
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| un visitante anónimo obtiene la lista de propietarios | anonymous | — | — | allowed |
 
 **Cobertura exigida:** api
 
@@ -714,10 +714,10 @@ El bloque demand de /intelligence/ debe servirse solo al propietario de la propi
 
 **Casos**
 
-| Caso | Rol | Entrada | Esperado |
-| --- | --- | --- | --- |
-| un visitante anónimo obtiene los indicadores | anonymous | — | allowed |
-| el renderizado en servidor obtiene los indicadores | internal | — | allowed |
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| un visitante anónimo obtiene los indicadores | anonymous | — | — | allowed |
+| el renderizado en servidor obtiene los indicadores | internal | — | — | allowed |
 
 **Cobertura exigida:** api
 
@@ -745,9 +745,9 @@ Las provincias se consultan sin autenticación mediante un viewset de solo lectu
 
 **Casos**
 
-| Caso | Rol | Entrada | Esperado |
-| --- | --- | --- | --- |
-| un visitante anónimo consulta las provincias | anonymous | — | allowed |
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| un visitante anónimo consulta las provincias | anonymous | — | — | allowed |
 
 **Cobertura exigida:** api
 
@@ -776,10 +776,10 @@ La API no expone creación ni modificación de provincias y cantones: el método
 
 **Casos**
 
-| Caso | Rol | Entrada | Esperado |
-| --- | --- | --- | --- |
-| un anónimo no puede crear provincias | anonymous | — | denied |
-| ni siquiera staff puede crear provincias por la API | staff | — | denied |
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| un anónimo no puede crear provincias | anonymous | — | — | denied |
+| ni siquiera staff puede crear provincias por la API | staff | — | — | denied |
 
 **Cobertura exigida:** api
 
@@ -808,9 +808,9 @@ La API no expone creación ni modificación de provincias y cantones: el método
 
 **Casos**
 
-| Caso | Rol | Entrada | Esperado |
-| --- | --- | --- | --- |
-| un anónimo alcanza el proxy sin credenciales | anonymous | — | allowed |
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| un anónimo alcanza el proxy sin credenciales | anonymous | — | — | allowed |
 
 **Cobertura exigida:** api
 
@@ -836,9 +836,9 @@ El proxy debe resolver únicamente rutas que correspondan a una PropertyImage ex
 
 **Casos**
 
-| Caso | Rol | Entrada | Esperado |
-| --- | --- | --- | --- |
-| una ruta que no corresponde a ninguna imagen no debería consultarse en MinIO | anonymous | — | denied |
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| una ruta que no corresponde a ninguna imagen no debería consultarse en MinIO | anonymous | — | — | denied |
 
 ### PERM-023 — Las imágenes en staging son públicas mientras se optimizan
 
@@ -863,9 +863,9 @@ El proxy debe resolver únicamente rutas que correspondan a una PropertyImage ex
 
 **Casos**
 
-| Caso | Rol | Entrada | Esperado |
-| --- | --- | --- | --- |
-| un anónimo alcanza la vista sin credenciales | anonymous | — | allowed |
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| un anónimo alcanza la vista sin credenciales | anonymous | — | — | allowed |
 
 **Cobertura exigida:** api
 
@@ -894,10 +894,10 @@ Cualquiera puede crear un lead sin cuenta, y el estado del lead no se puede fija
 
 **Casos**
 
-| Caso | Rol | Entrada | Esperado |
-| --- | --- | --- | --- |
-| un anónimo envía el formulario de contacto | anonymous | — | allowed |
-| un usuario autenticado también puede enviarlo | authenticated | — | allowed |
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| un anónimo envía el formulario de contacto | anonymous | — | — | allowed |
+| un usuario autenticado también puede enviarlo | authenticated | — | — | allowed |
 
 **Cobertura exigida:** api
 
@@ -924,9 +924,9 @@ POST /api/leads/ debe declarar un throttle equivalente al de las otras dos creac
 
 **Casos**
 
-| Caso | Rol | Entrada | Esperado |
-| --- | --- | --- | --- |
-| la petición que supera el límite por minuto debería rechazarse | anonymous | — | denied |
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| la petición que supera el límite por minuto debería rechazarse | anonymous | — | — | denied |
 
 ### PERM-026 — La bandeja de leads exige sesión
 
@@ -950,12 +950,12 @@ Listar leads requiere autenticación, y cada usuario ve solo los de sus propias 
 
 **Casos**
 
-| Caso | Rol | Entrada | Esperado |
-| --- | --- | --- | --- |
-| un anónimo no puede listar leads | anonymous | — | denied |
-| el propietario lista los leads de sus propiedades | owner | — | allowed |
-| otro usuario recibe una lista vacía, no la ajena | not_owner | — | allowed |
-| staff lista todos los leads | staff | — | allowed |
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| un anónimo no puede listar leads | anonymous | — | — | denied |
+| el propietario lista los leads de sus propiedades | owner | — | — | allowed |
+| otro usuario recibe una lista vacía, no la ajena | not_owner | — | — | allowed |
+| staff lista todos los leads | staff | — | — | allowed |
 
 **Cobertura exigida:** api
 
@@ -985,11 +985,11 @@ Consultar, cambiar el estado o eliminar un lead exige que la propiedad asociada 
 
 **Casos**
 
-| Caso | Rol | Entrada | Esperado |
-| --- | --- | --- | --- |
-| el propietario cambia el estado de un lead suyo | owner | — | allowed |
-| un tercero no encuentra el lead ajeno | not_owner | — | denied |
-| un anónimo es rechazado antes de llegar al queryset | anonymous | — | denied (HTTP 401) |
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| el propietario cambia el estado de un lead suyo | owner | — | — | allowed |
+| un tercero no encuentra el lead ajeno | not_owner | — | — | denied |
+| un anónimo es rechazado antes de llegar al queryset | anonymous | — | — | denied (HTTP 401) |
 
 ### PERM-028 — La solicitud de publicación asistida es pública y está limitada
 
@@ -1014,9 +1014,9 @@ Cualquiera puede registrar una solicitud de publicación sin tener cuenta, con u
 
 **Casos**
 
-| Caso | Rol | Entrada | Esperado |
-| --- | --- | --- | --- |
-| un anónimo registra una solicitud | anonymous | — | allowed |
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| un anónimo registra una solicitud | anonymous | — | — | allowed |
 
 **Cobertura exigida:** api
 
@@ -1045,12 +1045,12 @@ Listar, consultar y cambiar el estado de las solicitudes de publicación exige i
 
 **Casos**
 
-| Caso | Rol | Entrada | Esperado |
-| --- | --- | --- | --- |
-| un anónimo no accede a la bandeja | anonymous | — | denied (HTTP 401) |
-| un usuario autenticado normal no accede a la bandeja | authenticated | — | denied |
-| el propietario de propiedades tampoco accede | owner | — | denied |
-| staff accede a la bandeja | staff | — | allowed |
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| un anónimo no accede a la bandeja | anonymous | — | — | denied (HTTP 401) |
+| un usuario autenticado normal no accede a la bandeja | authenticated | — | — | denied |
+| el propietario de propiedades tampoco accede | owner | — | — | denied |
+| staff accede a la bandeja | staff | — | — | allowed |
 
 **Cobertura exigida:** api
 
@@ -1079,10 +1079,10 @@ Cualquier visitante puede emitir un evento de actividad, con un límite de 30 po
 
 **Casos**
 
-| Caso | Rol | Entrada | Esperado |
-| --- | --- | --- | --- |
-| un anónimo emite un evento | anonymous | `event_name`=spec_probe, `path`=/spec | allowed |
-| un usuario autenticado emite un evento | authenticated | `event_name`=spec_probe, `path`=/spec | allowed |
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| un anónimo emite un evento | anonymous | — | `event_name`=spec_probe, `path`=/spec | allowed |
+| un usuario autenticado emite un evento | authenticated | — | `event_name`=spec_probe, `path`=/spec | allowed |
 
 **Cobertura exigida:** api
 
@@ -1111,11 +1111,11 @@ Listar o consultar eventos de actividad exige is_staff; un usuario autenticado n
 
 **Casos**
 
-| Caso | Rol | Entrada | Esperado |
-| --- | --- | --- | --- |
-| un anónimo no consulta el registro | anonymous | — | denied (HTTP 401) |
-| un usuario autenticado normal no consulta el registro | authenticated | — | denied |
-| staff consulta el registro | staff | — | allowed |
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| un anónimo no consulta el registro | anonymous | — | — | denied (HTTP 401) |
+| un usuario autenticado normal no consulta el registro | authenticated | — | — | denied |
+| staff consulta el registro | staff | — | — | allowed |
 
 **Cobertura exigida:** api
 
@@ -1145,9 +1145,9 @@ Listar o consultar eventos de actividad exige is_staff; un usuario autenticado n
 
 **Casos**
 
-| Caso | Rol | Entrada | Esperado |
-| --- | --- | --- | --- |
-| un anónimo alcanza el endpoint de login | anonymous | — | allowed |
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| un anónimo alcanza el endpoint de login | anonymous | — | — | allowed |
 
 **Cobertura exigida:** api
 
@@ -1174,9 +1174,9 @@ Login, registro, refresco de token, recuperación de contraseña y reenvío de c
 
 **Casos**
 
-| Caso | Rol | Entrada | Esperado |
-| --- | --- | --- | --- |
-| el intento que supera el límite debería rechazarse | anonymous | — | denied |
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| el intento que supera el límite debería rechazarse | anonymous | — | — | denied |
 
 ### PERM-034 — El registro es público y la cuenta nace inactiva
 
@@ -1201,9 +1201,9 @@ Cualquiera puede registrarse sin autenticación, y la cuenta se crea con is_acti
 
 **Casos**
 
-| Caso | Rol | Entrada | Esperado |
-| --- | --- | --- | --- |
-| un anónimo alcanza el registro | anonymous | — | allowed |
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| un anónimo alcanza el registro | anonymous | — | — | allowed |
 
 **Cobertura exigida:** api
 
@@ -1232,9 +1232,9 @@ Cualquiera puede registrarse sin autenticación, y la cuenta se crea con is_acti
 
 **Casos**
 
-| Caso | Rol | Entrada | Esperado |
-| --- | --- | --- | --- |
-| un anónimo alcanza el endpoint de Google | anonymous | — | allowed |
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| un anónimo alcanza el endpoint de Google | anonymous | — | — | allowed |
 
 **Cobertura exigida:** api
 
@@ -1262,9 +1262,9 @@ Cualquiera puede registrarse sin autenticación, y la cuenta se crea con is_acti
 
 **Casos**
 
-| Caso | Rol | Entrada | Esperado |
-| --- | --- | --- | --- |
-| un anónimo alcanza el refresco de token | anonymous | — | allowed |
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| un anónimo alcanza el refresco de token | anonymous | — | — | allowed |
 
 **Cobertura exigida:** api
 
@@ -1292,9 +1292,9 @@ Canjear el código de verificación no exige sesión, porque quien lo usa todav�
 
 **Casos**
 
-| Caso | Rol | Entrada | Esperado |
-| --- | --- | --- | --- |
-| un anónimo alcanza la verificación | anonymous | — | allowed |
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| un anónimo alcanza la verificación | anonymous | — | — | allowed |
 
 **Cobertura exigida:** api
 
@@ -1321,9 +1321,9 @@ Canjear el código de verificación no exige sesión, porque quien lo usa todav�
 
 **Casos**
 
-| Caso | Rol | Entrada | Esperado |
-| --- | --- | --- | --- |
-| un correo inexistente recibe la misma respuesta afirmativa | anonymous | `email`=nadie-spec@example.com | allowed |
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| un correo inexistente recibe la misma respuesta afirmativa | anonymous | — | `email`=nadie-spec@example.com | allowed |
 
 **Cobertura exigida:** api
 
@@ -1351,9 +1351,9 @@ Canjear el código de verificación no exige sesión, porque quien lo usa todav�
 
 **Casos**
 
-| Caso | Rol | Entrada | Esperado |
-| --- | --- | --- | --- |
-| un correo inexistente recibe 404 en lugar de una respuesta genérica | anonymous | `email`=nadie-spec@example.com | denied |
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| un correo inexistente recibe 404 en lugar de una respuesta genérica | anonymous | — | `email`=nadie-spec@example.com | denied |
 
 **Cobertura exigida:** api
 
@@ -1378,9 +1378,9 @@ Canjear el código de verificación no exige sesión, porque quien lo usa todav�
 
 **Casos**
 
-| Caso | Rol | Entrada | Esperado |
-| --- | --- | --- | --- |
-| un correo inexistente debería recibir 200 genérico | anonymous | `email`=nadie-spec@example.com | allowed |
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| un correo inexistente debería recibir 200 genérico | anonymous | — | `email`=nadie-spec@example.com | allowed |
 
 **Cobertura exigida:** api
 
@@ -1408,11 +1408,11 @@ Canjear el código de verificación no exige sesión, porque quien lo usa todav�
 
 **Casos**
 
-| Caso | Rol | Entrada | Esperado |
-| --- | --- | --- | --- |
-| un anónimo no puede leer un perfil | anonymous | — | denied |
-| un usuario autenticado lee su perfil | authenticated | — | allowed |
-| staff lee su propio perfil | staff | — | allowed |
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| un anónimo no puede leer un perfil | anonymous | — | — | denied |
+| un usuario autenticado lee su perfil | authenticated | — | — | allowed |
+| staff lee su propio perfil | staff | — | — | allowed |
 
 **Cobertura exigida:** api
 
@@ -1440,10 +1440,10 @@ La actualización del perfil propio solo admite username, nombre y apellidos; co
 
 **Casos**
 
-| Caso | Rol | Entrada | Esperado |
-| --- | --- | --- | --- |
-| un anónimo no puede modificar ningún perfil | anonymous | `first_name`=Spec | denied |
-| un usuario autenticado edita su nombre e is_staff se ignora | authenticated | `first_name`=Spec, `is_staff`=sí | allowed |
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| un anónimo no puede modificar ningún perfil | anonymous | — | `first_name`=Spec | denied |
+| un usuario autenticado edita su nombre e is_staff se ignora | authenticated | — | `first_name`=Spec, `is_staff`=sí | allowed |
 
 **Cobertura exigida:** api
 
@@ -1472,10 +1472,10 @@ La actualización del perfil propio solo admite username, nombre y apellidos; co
 
 **Casos**
 
-| Caso | Rol | Entrada | Esperado |
-| --- | --- | --- | --- |
-| un anónimo no puede cambiar contraseñas | anonymous | — | denied |
-| un usuario autenticado supera la barrera de permisos | authenticated | — | allowed |
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| un anónimo no puede cambiar contraseñas | anonymous | — | — | denied |
+| un usuario autenticado supera la barrera de permisos | authenticated | — | — | allowed |
 
 **Cobertura exigida:** api
 
@@ -1504,10 +1504,10 @@ Solicitar el cambio de correo requiere autenticación, invalida las solicitudes 
 
 **Casos**
 
-| Caso | Rol | Entrada | Esperado |
-| --- | --- | --- | --- |
-| un anónimo no puede pedir el cambio de correo | anonymous | — | denied |
-| un usuario autenticado supera la barrera de permisos | authenticated | — | allowed |
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| un anónimo no puede pedir el cambio de correo | anonymous | — | — | denied |
+| un usuario autenticado supera la barrera de permisos | authenticated | — | — | allowed |
 
 **Cobertura exigida:** api
 
@@ -1537,12 +1537,12 @@ Solicitar el cambio de correo requiere autenticación, invalida las solicitudes 
 
 **Casos**
 
-| Caso | Rol | Entrada | Esperado |
-| --- | --- | --- | --- |
-| un anónimo no accede al dashboard | anonymous | — | denied (HTTP 401) |
-| un usuario autenticado normal no accede al dashboard | authenticated | — | denied |
-| staff accede al dashboard | staff | — | allowed |
-| un superusuario accede al dashboard | superuser | — | allowed |
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| un anónimo no accede al dashboard | anonymous | — | — | denied (HTTP 401) |
+| un usuario autenticado normal no accede al dashboard | authenticated | — | — | denied |
+| staff accede al dashboard | staff | — | — | allowed |
+| un superusuario accede al dashboard | superuser | — | — | allowed |
 
 **Cobertura exigida:** api
 
@@ -1571,11 +1571,11 @@ Leer el estado operativo y marcar incidencias como resueltas exige is_staff.
 
 **Casos**
 
-| Caso | Rol | Entrada | Esperado |
-| --- | --- | --- | --- |
-| un anónimo no accede al estado del sistema | anonymous | — | denied (HTTP 401) |
-| un usuario autenticado normal no accede | authenticated | — | denied |
-| staff accede al estado del sistema | staff | — | allowed |
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| un anónimo no accede al estado del sistema | anonymous | — | — | denied (HTTP 401) |
+| un usuario autenticado normal no accede | authenticated | — | — | denied |
+| staff accede al estado del sistema | staff | — | — | allowed |
 
 **Cobertura exigida:** api
 
@@ -1604,11 +1604,11 @@ El POST de /admin/system-status/ marca una incidencia como resuelta y está cubi
 
 **Casos**
 
-| Caso | Rol | Entrada | Esperado |
-| --- | --- | --- | --- |
-| un anónimo no puede resolver incidencias | anonymous | — | denied (HTTP 401) |
-| un usuario autenticado normal no puede resolver incidencias | authenticated | — | denied |
-| staff supera la barrera de permisos | staff | — | allowed |
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| un anónimo no puede resolver incidencias | anonymous | — | — | denied (HTTP 401) |
+| un usuario autenticado normal no puede resolver incidencias | authenticated | — | — | denied |
+| staff supera la barrera de permisos | staff | — | — | allowed |
 
 **Cobertura exigida:** api
 
@@ -1636,11 +1636,11 @@ Listar cuentas desde el panel exige is_staff; un usuario autenticado normal reci
 
 **Casos**
 
-| Caso | Rol | Entrada | Esperado |
-| --- | --- | --- | --- |
-| un anónimo no lista usuarios | anonymous | — | denied (HTTP 401) |
-| un usuario autenticado normal no lista usuarios | authenticated | — | denied |
-| staff lista usuarios | staff | — | allowed |
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| un anónimo no lista usuarios | anonymous | — | — | denied (HTTP 401) |
+| un usuario autenticado normal no lista usuarios | authenticated | — | — | denied |
+| staff lista usuarios | staff | — | — | allowed |
 
 **Cobertura exigida:** api
 
@@ -1669,11 +1669,11 @@ La edición de usuarios del panel admite exactamente is_active e is_staff, y bas
 
 **Casos**
 
-| Caso | Rol | Entrada | Esperado |
-| --- | --- | --- | --- |
-| un anónimo no puede modificar cuentas | anonymous | `is_staff`=sí | denied (HTTP 401) |
-| un usuario autenticado normal no puede modificar cuentas | authenticated | `is_staff`=sí | denied |
-| un staff promueve a otra cuenta a staff sin ser superusuario | staff | `is_staff`=sí | allowed |
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| un anónimo no puede modificar cuentas | anonymous | — | `is_staff`=sí | denied (HTTP 401) |
+| un usuario autenticado normal no puede modificar cuentas | authenticated | — | `is_staff`=sí | denied |
+| un staff promueve a otra cuenta a staff sin ser superusuario | staff | — | `is_staff`=sí | allowed |
 
 **Cobertura exigida:** api
 
@@ -1699,10 +1699,10 @@ Otorgar o retirar el rol de staff debe requerir is_superuser, de modo que un sta
 
 **Casos**
 
-| Caso | Rol | Entrada | Esperado |
-| --- | --- | --- | --- |
-| un staff normal no debería poder conceder is_staff | staff | `is_staff`=sí | denied |
-| un superusuario sí debería poder | superuser | `is_staff`=sí | allowed |
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| un staff normal no debería poder conceder is_staff | staff | — | `is_staff`=sí | denied |
+| un superusuario sí debería poder | superuser | — | `is_staff`=sí | allowed |
 
 **Cobertura exigida:** api
 
@@ -1730,11 +1730,11 @@ Borrar una cuenta desde el panel exige is_staff y nada más; la única salvaguar
 
 **Casos**
 
-| Caso | Rol | Entrada | Esperado |
-| --- | --- | --- | --- |
-| un anónimo no puede borrar cuentas | anonymous | — | denied (HTTP 401) |
-| un usuario autenticado normal no puede borrar cuentas | authenticated | — | denied |
-| un staff borra una cuenta ajena sin ser superusuario | staff | — | allowed |
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| un anónimo no puede borrar cuentas | anonymous | — | — | denied (HTTP 401) |
+| un usuario autenticado normal no puede borrar cuentas | authenticated | — | — | denied |
+| un staff borra una cuenta ajena sin ser superusuario | staff | — | — | allowed |
 
 **Cobertura exigida:** api
 
@@ -1760,10 +1760,10 @@ El borrado de cuentas de usuario debe requerir is_superuser y responder 403 a un
 
 **Casos**
 
-| Caso | Rol | Entrada | Esperado |
-| --- | --- | --- | --- |
-| un staff normal no debería poder borrar cuentas | staff | — | denied |
-| un superusuario sí debería poder | superuser | — | allowed |
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| un staff normal no debería poder borrar cuentas | staff | — | — | denied |
+| un superusuario sí debería poder | superuser | — | — | allowed |
 
 **Cobertura exigida:** api
 
@@ -1792,12 +1792,12 @@ El borrado de cuentas de usuario debe requerir is_superuser y responder 403 a un
 
 **Casos**
 
-| Caso | Rol | Entrada | Esperado |
-| --- | --- | --- | --- |
-| un anónimo no lista el inventario del panel | anonymous | — | denied (HTTP 401) |
-| un usuario autenticado normal no lista el inventario del panel | authenticated | — | denied |
-| el propietario tampoco accede al panel | owner | — | denied |
-| staff lista el inventario completo | staff | — | allowed |
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| un anónimo no lista el inventario del panel | anonymous | — | — | denied (HTTP 401) |
+| un usuario autenticado normal no lista el inventario del panel | authenticated | — | — | denied |
+| el propietario tampoco accede al panel | owner | — | — | denied |
+| staff lista el inventario completo | staff | — | — | allowed |
 
 **Cobertura exigida:** api
 
@@ -1826,10 +1826,10 @@ El borrado de cuentas de usuario debe requerir is_superuser y responder 403 a un
 
 **Casos**
 
-| Caso | Rol | Entrada | Esperado |
-| --- | --- | --- | --- |
-| un usuario autenticado normal no ve los contadores | authenticated | — | denied |
-| staff ve los contadores | staff | — | allowed |
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| un usuario autenticado normal no ve los contadores | authenticated | — | — | denied |
+| staff ve los contadores | staff | — | — | allowed |
 
 **Cobertura exigida:** api
 
@@ -1858,11 +1858,11 @@ Staff puede editar cualquier propiedad desde el panel, pero solo status, title, 
 
 **Casos**
 
-| Caso | Rol | Entrada | Esperado |
-| --- | --- | --- | --- |
-| un anónimo no puede moderar propiedades | anonymous | `status`=inactive | denied (HTTP 401) |
-| el propietario no puede usar la ruta administrativa | owner | `status`=inactive | denied |
-| staff modera una propiedad ajena | staff | `status`=inactive | allowed |
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| un anónimo no puede moderar propiedades | anonymous | — | `status`=inactive | denied (HTTP 401) |
+| el propietario no puede usar la ruta administrativa | owner | — | `status`=inactive | denied |
+| staff modera una propiedad ajena | staff | — | `status`=inactive | allowed |
 
 **Cobertura exigida:** api
 
@@ -1890,10 +1890,10 @@ Staff puede eliminar cualquier propiedad desde el panel, incluidas las creadas p
 
 **Casos**
 
-| Caso | Rol | Entrada | Esperado |
-| --- | --- | --- | --- |
-| un usuario autenticado normal no puede borrar por la ruta administrativa | authenticated | — | denied |
-| staff borra una propiedad ajena | staff | — | allowed |
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| un usuario autenticado normal no puede borrar por la ruta administrativa | authenticated | — | — | denied |
+| staff borra una propiedad ajena | staff | — | — | allowed |
 
 **Cobertura exigida:** api
 
@@ -1922,11 +1922,11 @@ Staff puede eliminar cualquier propiedad desde el panel, incluidas las creadas p
 
 **Casos**
 
-| Caso | Rol | Entrada | Esperado |
-| --- | --- | --- | --- |
-| un anónimo no puede cambiar estados en masa | anonymous | — | denied (HTTP 401) |
-| un usuario autenticado normal no puede cambiar estados en masa | authenticated | — | denied |
-| staff supera la barrera de permisos | staff | — | allowed |
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| un anónimo no puede cambiar estados en masa | anonymous | — | — | denied (HTTP 401) |
+| un usuario autenticado normal no puede cambiar estados en masa | authenticated | — | — | denied |
+| staff supera la barrera de permisos | staff | — | — | allowed |
 
 **Cobertura exigida:** api
 
@@ -1955,11 +1955,11 @@ Staff puede eliminar cualquier propiedad desde el panel, incluidas las creadas p
 
 **Casos**
 
-| Caso | Rol | Entrada | Esperado |
-| --- | --- | --- | --- |
-| un anónimo no consulta las fuentes | anonymous | — | denied (HTTP 401) |
-| un usuario autenticado normal no consulta las fuentes | authenticated | — | denied |
-| staff consulta las fuentes | staff | — | allowed |
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| un anónimo no consulta las fuentes | anonymous | — | — | denied (HTTP 401) |
+| un usuario autenticado normal no consulta las fuentes | authenticated | — | — | denied |
+| staff consulta las fuentes | staff | — | — | allowed |
 
 **Cobertura exigida:** api
 
@@ -1987,11 +1987,11 @@ Staff puede eliminar cualquier propiedad desde el panel, incluidas las creadas p
 
 **Casos**
 
-| Caso | Rol | Entrada | Esperado |
-| --- | --- | --- | --- |
-| un anónimo no consulta las ejecuciones | anonymous | — | denied (HTTP 401) |
-| un usuario autenticado normal no consulta las ejecuciones | authenticated | — | denied |
-| staff consulta las ejecuciones | staff | — | allowed |
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| un anónimo no consulta las ejecuciones | anonymous | — | — | denied (HTTP 401) |
+| un usuario autenticado normal no consulta las ejecuciones | authenticated | — | — | denied |
+| staff consulta las ejecuciones | staff | — | — | allowed |
 
 **Cobertura exigida:** api
 
@@ -2019,11 +2019,11 @@ Staff puede eliminar cualquier propiedad desde el panel, incluidas las creadas p
 
 **Casos**
 
-| Caso | Rol | Entrada | Esperado |
-| --- | --- | --- | --- |
-| un anónimo no revisa los anuncios importados | anonymous | — | denied (HTTP 401) |
-| un usuario autenticado normal no los revisa | authenticated | — | denied |
-| staff supera la barrera de permisos | staff | — | allowed |
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| un anónimo no revisa los anuncios importados | anonymous | — | — | denied (HTTP 401) |
+| un usuario autenticado normal no los revisa | authenticated | — | — | denied |
+| staff supera la barrera de permisos | staff | — | — | allowed |
 
 **Cobertura exigida:** api
 
@@ -2052,11 +2052,11 @@ Staff puede eliminar cualquier propiedad desde el panel, incluidas las creadas p
 
 **Casos**
 
-| Caso | Rol | Entrada | Esperado |
-| --- | --- | --- | --- |
-| un anónimo no puede lanzar una ingesta | anonymous | — | denied (HTTP 401) |
-| un usuario autenticado normal no puede lanzar una ingesta | authenticated | — | denied |
-| el propietario de propiedades tampoco puede | owner | — | denied |
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| un anónimo no puede lanzar una ingesta | anonymous | — | — | denied (HTTP 401) |
+| un usuario autenticado normal no puede lanzar una ingesta | authenticated | — | — | denied |
+| el propietario de propiedades tampoco puede | owner | — | — | denied |
 
 **Cobertura exigida:** api
 
@@ -2084,11 +2084,11 @@ Staff puede eliminar cualquier propiedad desde el panel, incluidas las creadas p
 
 **Casos**
 
-| Caso | Rol | Entrada | Esperado |
-| --- | --- | --- | --- |
-| un anónimo no puede cancelar ejecuciones | anonymous | — | denied (HTTP 401) |
-| un usuario autenticado normal no puede cancelar ejecuciones | authenticated | — | denied |
-| staff supera la barrera de permisos | staff | — | allowed |
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| un anónimo no puede cancelar ejecuciones | anonymous | — | — | denied (HTTP 401) |
+| un usuario autenticado normal no puede cancelar ejecuciones | authenticated | — | — | denied |
+| staff supera la barrera de permisos | staff | — | — | allowed |
 
 **Cobertura exigida:** api
 
@@ -2116,10 +2116,10 @@ Staff puede eliminar cualquier propiedad desde el panel, incluidas las creadas p
 
 **Casos**
 
-| Caso | Rol | Entrada | Esperado |
-| --- | --- | --- | --- |
-| un anónimo no puede re-scrapear | anonymous | — | denied (HTTP 401) |
-| un usuario autenticado normal no puede re-scrapear | authenticated | — | denied |
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| un anónimo no puede re-scrapear | anonymous | — | — | denied (HTTP 401) |
+| un usuario autenticado normal no puede re-scrapear | authenticated | — | — | denied |
 
 **Cobertura exigida:** api
 
@@ -2147,11 +2147,11 @@ Staff puede eliminar cualquier propiedad desde el panel, incluidas las creadas p
 
 **Casos**
 
-| Caso | Rol | Entrada | Esperado |
-| --- | --- | --- | --- |
-| un anónimo no previsualiza el mantenimiento | anonymous | — | denied (HTTP 401) |
-| un usuario autenticado normal no lo previsualiza | authenticated | — | denied |
-| staff previsualiza los candidatos | staff | — | allowed |
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| un anónimo no previsualiza el mantenimiento | anonymous | — | — | denied (HTTP 401) |
+| un usuario autenticado normal no lo previsualiza | authenticated | — | — | denied |
+| staff previsualiza los candidatos | staff | — | — | allowed |
 
 **Cobertura exigida:** api
 
@@ -2180,11 +2180,11 @@ Staff puede eliminar cualquier propiedad desde el panel, incluidas las creadas p
 
 **Casos**
 
-| Caso | Rol | Entrada | Esperado |
-| --- | --- | --- | --- |
-| un anónimo no puede lanzar la limpieza | anonymous | — | denied (HTTP 401) |
-| un usuario autenticado normal no puede lanzar la limpieza | authenticated | — | denied |
-| el propietario de propiedades tampoco puede | owner | — | denied |
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| un anónimo no puede lanzar la limpieza | anonymous | — | — | denied (HTTP 401) |
+| un usuario autenticado normal no puede lanzar la limpieza | authenticated | — | — | denied |
+| el propietario de propiedades tampoco puede | owner | — | — | denied |
 
 **Cobertura exigida:** api
 
@@ -2213,9 +2213,9 @@ Staff puede eliminar cualquier propiedad desde el panel, incluidas las creadas p
 
 **Casos**
 
-| Caso | Rol | Entrada | Esperado |
-| --- | --- | --- | --- |
-| un anónimo consulta la salud del sistema | anonymous | — | allowed |
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| un anónimo consulta la salud del sistema | anonymous | — | — | allowed |
 
 **Cobertura exigida:** api
 
@@ -2242,9 +2242,9 @@ DEFAULT_AUTHENTICATION_CLASSES contiene únicamente JWTAuthentication, así que 
 
 **Casos**
 
-| Caso | Rol | Entrada | Esperado |
-| --- | --- | --- | --- |
-| una petición sin cabecera Authorization se trata como anónima | anonymous | — | denied |
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| una petición sin cabecera Authorization se trata como anónima | anonymous | — | — | denied |
 
 ### PERM-068 — La caché compartida nunca sirve una respuesta autenticada
 
@@ -2268,9 +2268,9 @@ Solo las lecturas anónimas se leen de la caché, se escriben en ella y se marca
 
 **Casos**
 
-| Caso | Rol | Entrada | Esperado |
-| --- | --- | --- | --- |
-| una lectura autenticada omite la caché compartida | authenticated | — | allowed |
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| una lectura autenticada omite la caché compartida | authenticated | — | — | allowed |
 
 ### PERM-069 — El throttling solo existe donde una vista lo declara
 
@@ -2294,9 +2294,9 @@ No hay DEFAULT_THROTTLE_CLASSES global, así que toda vista que no implemente ge
 
 **Casos**
 
-| Caso | Rol | Entrada | Esperado |
-| --- | --- | --- | --- |
-| un endpoint sin get_throttles no consume ninguna cuota | anonymous | — | allowed |
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| un endpoint sin get_throttles no consume ninguna cuota | anonymous | — | — | allowed |
 
 ### PERM-070 — El frontend no es la frontera de seguridad
 
@@ -2321,9 +2321,9 @@ No existe middleware.ts en el frontend, los tokens viven en localStorage y el ro
 
 **Casos**
 
-| Caso | Rol | Entrada | Esperado |
-| --- | --- | --- | --- |
-| falsificar is_staff en el token local muestra la carcasa del panel | authenticated | — | denied |
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| falsificar is_staff en el token local muestra la carcasa del panel | authenticated | — | — | denied |
 
 ### PERM-071 — El informe de promoción es del dueño del anuncio
 
@@ -2349,12 +2349,12 @@ Y por eso se decide en el servidor con un permiso de DRF. La comprobación del c
 
 **Casos**
 
-| Caso | Rol | Entrada | Esperado |
-| --- | --- | --- | --- |
-| el propietario consulta su informe | owner | — | allowed |
-| un tercero autenticado no lo ve | not_owner | — | denied (HTTP 403) |
-| un anónimo no lo ve | anonymous | — | denied (HTTP 401) |
-| staff lo consulta de cualquier anuncio | staff | — | allowed |
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| el propietario consulta su informe | owner | — | — | allowed |
+| un tercero autenticado no lo ve | not_owner | — | — | denied (HTTP 403) |
+| un anónimo no lo ve | anonymous | — | — | denied (HTTP 401) |
+| staff lo consulta de cualquier anuncio | staff | — | — | allowed |
 
 **Cobertura exigida:** api
 

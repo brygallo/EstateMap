@@ -1,6 +1,9 @@
 # Matriz de permisos — EstateMap / Geo Propiedades Ecuador
 
-Verificado contra el código el 2026-08-04.
+Verificado contra el código el 2026-08-04. Revisado el 2026-08-05 en lo que tocó el cierre de
+anuncios y el informe de promoción: §1 (clases de permiso), §2.1 (propiedades), §3.1 y §3.2
+(filtrado y comprobaciones por objeto), §3.3 y el punto 10 de §4. El resto del documento conserva la
+verificación del día anterior, y sus referencias `archivo:línea` pueden haberse desplazado.
 
 Este documento describe el estado **actual** del árbol de trabajo, incluidos los cambios sin
 commitear en `backend/real_estate/views.py`, `backend/real_estate/serializers.py`,
@@ -31,9 +34,9 @@ El modelo de usuario es `real_estate.User` (`backend/real_estate/models.py:7-16`
 
 ### Clases de permiso propias
 
-`backend/real_estate/permissions.py` (24 líneas, dos clases):
+`backend/real_estate/permissions.py` (53 líneas, tres clases):
 
-- **`IsOwnerOrReadOnly`** (`:4-15`): solo implementa `has_object_permission`. Devuelve `True`
+- **`IsOwnerOrReadOnly`** (`:4-22`): solo implementa `has_object_permission`. Devuelve `True`
   para métodos seguros (`GET`/`HEAD`/`OPTIONS`), `True` para cualquier usuario con `is_staff`
   y, si no, `obj.owner == request.user`. No implementa `has_permission`, así que por sí sola no
   bloquea nada a nivel de vista. **El atajo de staff existe porque el panel de inventario
@@ -41,7 +44,16 @@ El modelo de usuario es `real_estate.User` (`backend/real_estate/models.py:7-16`
   editar y eliminar.** Para propiedades importadas (`owner=None`) la comparación de dueño siempre
   falla, así que solo staff puede editarlas por esa ruta.
   Uso: solo en `PropertyViewSet.permission_classes` (`backend/real_estate/views.py:274`).
-- **`IsAdminUser`** (`:18-24`): `has_permission` exige autenticado **y** `is_staff`. No mira
+- **`IsPropertyOwnerOrStaff`** (`:25-43`): también solo `has_object_permission`, pero sin
+  atajo para métodos seguros: **una lectura tampoco pasa** si quien pregunta no es el dueño
+  o staff. Devuelve `False` para el anónimo, `True` para `is_staff` y, si no,
+  `obj.owner_id == user.pk`; una propiedad importada (`owner=None`) nunca supera la
+  comparación. Lleva `message` propio, así que el 403 llega con texto en español.
+  Existe para el informe de promoción y **es la excepción deliberada a la publicidad del
+  kit**: las láminas son públicas porque las redes tienen que descargarlas, pero quién
+  llegó a un anuncio y desde dónde es del dueño (`PERM-071`).
+  Uso: solo en la acción `promotion_stats` (`backend/real_estate/views.py:668`).
+- **`IsAdminUser`** (`:46-52`): `has_permission` exige autenticado **y** `is_staff`. No mira
   `is_superuser`.
   Uso: `PendingPublicationViewSet` (`views.py:894`), `ActivityEventViewSet` (`views.py:946`),
   `AdminDashboardView` (`:1600`), `AdminSystemStatusView` (`:1709`), `AdminUserViewSet`
@@ -103,6 +115,8 @@ Permisos de clase: `[IsAuthenticatedOrReadOnly, IsOwnerOrReadOnly]` (`views.py:2
 | `PATCH /api/properties/{id}/` | ídem | ❌ | ❌ | ✅ | ✅ | `property_write` 30/hora |
 | `DELETE /api/properties/{id}/` | ídem | ❌ | ❌ | ✅ | ✅ | ninguno |
 | `DELETE /api/properties/{id}/delete_image/` | `views.py:818-841` | ❌ | ✅ **sobre cualquier propiedad** | ✅ | ✅ | ninguno |
+| `GET /api/properties/{id}/promotion-stats/` | `views.py:664-687`, perms `:668` | ❌ 401 | ❌ 403 | ✅ | ✅ (cualquier anuncio) | ninguno |
+| `GET /api/properties/code/{code}/` | `by_code` `views.py:741-775` (`AllowAny` `:744`) | ✅ | ✅ | ✅ | ✅ | ninguno |
 | `GET /api/properties/{id}/intelligence/` | `views.py:488` (`AllowAny` `:488`) | ✅ | ✅ | ✅ | ✅ | ninguno |
 | `GET /api/properties/map_points/` | `views.py:578` (`AllowAny`) | ✅ | ✅ | ✅ | ✅ | `map_points` 120/min, exento staff e IP interna |
 | `GET /api/properties/owners/` | `views.py:630` (`AllowAny`) | ✅ | ✅ | ✅ | ✅ | ninguno |
@@ -112,17 +126,39 @@ Permisos de clase: `[IsAuthenticatedOrReadOnly, IsOwnerOrReadOnly]` (`views.py:2
 | `GET /api/properties/my_properties/` | `views.py:811-816` (`IsAuthenticated`) | ❌ | ✅ (solo lo suyo) | ✅ | ✅ (**catálogo completo**) | ninguno |
 
 Notas:
-- El `queryset` base excluye `status='inactive'` y `is_duplicate=True`
-  (`views.py:321`), lo que afecta también a `retrieve`/`update`/`destroy`. Un usuario con
-  `is_staff` es la excepción en esas tres acciones: recibe el catálogo completo, para que una
-  propiedad listada en el panel no responda 404 al abrirla.
+- El `queryset` del **catálogo** excluye `status='inactive'` e `is_duplicate=True`
+  (`views.py:407`). Las acciones que se dirigen a **un** anuncio por su id
+  (`retrieve`, `update`, `partial_update`, `destroy`, `delete_image`) no usan ese queryset:
+  resuelven la fila con su propia condición de visibilidad (`views.py:380-405`), que es la
+  suma de tres cosas —no duplicada y no inactiva; **o** cerrada con motivo
+  (`closed_reason` no vacío, `:399`); **o** propia del usuario que pregunta (`:404`)—. Un
+  usuario con `is_staff` se salta las tres y recibe el catálogo completo (`:386-387`), para
+  que una propiedad listada en el panel no responda 404 al abrirla.
+  Consecuencias de permisos, las tres deliberadas (`PROP-034`): **el dueño ya alcanza sus
+  propios anuncios inactivos** por la ficha, cosa que antes no podía; **un anuncio vendido o
+  alquilado sigue resolviendo para cualquiera**, porque su código corto y su QR están
+  impresos en una lámina que se reenvía; y **un anuncio simplemente retirado sigue
+  respondiendo 404** a quien no sea su dueño ni staff.
+- `by_code` no aplica ninguna de esas excepciones por sesión: filtra
+  `exclude(status='inactive', closed_reason='')` (`views.py:769`) y nada más. Es a propósito
+  —la respuesta se cachea con `s-maxage` para servirse desde el borde cuando llega de un QR
+  impreso, y una respuesta que dependiera de quién pregunta ensuciaría esa caché
+  compartida—, así que **el dueño de un anuncio solo inactivo recibe 404 por el código y 200
+  por la ficha**.
+- `promotion-stats` es el único punto del `PropertyViewSet` que exige `IsPropertyOwnerOrStaff`
+  además de `IsAuthenticated` (`views.py:668`). Resuelve el anuncio con
+  `get_object_or_404(Property, pk=pk)` y llama a `check_object_permissions` a mano
+  (`views.py:685-686`): no pasa por `get_object()`, porque el anuncio que más interesa
+  consultar es justo el que se acaba de vender y ya salió del catálogo. Devuelve visitantes
+  por red excluyendo bots; ver [../technical/activity-metrics.md](../technical/activity-metrics.md).
 - `retrieve` incrementa `views_count` de forma atómica solo si `is_bot_request(request)` es
-  falso (`views.py:482-484`).
-- El `owner` se fija siempre desde `request.user` en `perform_create` (`views.py:439`) y es
-  `read_only` en el serializer (`serializers.py:173`, `:197-203`).
+  falso (`views.py:563-571`).
+- El `owner` se fija siempre desde `request.user` en `perform_create` (`views.py:524`) y es
+  `read_only` en el serializer, junto con `short_code` y `closed_at`
+  (`serializers.py:187-202`). El **motivo** del cierre sí es escribible por el dueño —es él
+  quien afirma que vendió—, pero la **fecha** la sella el servidor.
 - `create` soporta idempotencia por cabecera `Idempotency-Key`, con clave derivada de
-  `request.user.pk` (`views.py:443-450`), y la relectura filtra por `owner=request.user`
-  (`views.py:454`).
+  `request.user.pk` (`views.py:527-540`), y la relectura filtra por `owner=request.user`.
 
 ### 2.2 Imágenes
 
@@ -330,8 +366,9 @@ para que **nunca** entre una publicación creada por un usuario (`:352-354`).
 
 | Vista | Regla | `archivo:línea` |
 |---|---|---|
-| `PropertyViewSet` (público) | Excluye `status='inactive'` e `is_duplicate=True` para **todos**, incluido el dueño | `views.py:321` |
-| `PropertyViewSet.my_properties` | staff → `Property.objects.all()`; resto → `filter(owner=request.user)`. Es la única vía para ver las inactivas propias, y llega paginada de 24 en 24 | `views.py:814` |
+| `PropertyViewSet` (catálogo: `list`, `map_points`, agregados) | Excluye `status='inactive'` e `is_duplicate=True` para **todos**, incluido el dueño | `views.py:407` |
+| `PropertyViewSet` (acciones de detalle por id) | No duplicada y no inactiva, **o** cerrada con motivo, **o** propia del usuario. Staff, todo | `views.py:380-405` |
+| `PropertyViewSet.my_properties` | staff → `Property.objects.all()`; resto → `filter(owner=request.user)`. Sigue siendo la única vía para **listar** las inactivas propias, y llega paginada de 24 en 24 | `views.py:973` |
 | `LeadViewSet` | Anónimo → `none()`; staff → todo; resto → `filter(property__owner=user)` | `views.py:867-874` |
 | `PendingPublicationViewSet` | No-staff → `none()` (redundante con el permiso, a propósito) | `views.py:903-906` |
 | `ActivityEventViewSet` | Sin filtro por usuario: la lista completa está protegida solo por `IsAdminUser` | `views.py:955-974` |
@@ -339,8 +376,10 @@ para que **nunca** entre una publicación creada por un usuario (`:352-354`).
 
 ### 3.2 Comprobaciones a nivel de objeto
 
-- La única `has_object_permission` del proyecto es `IsOwnerOrReadOnly` (`permissions.py:9-15`),
-  y solo la aplica `PropertyViewSet`.
+- Las dos únicas `has_object_permission` del proyecto son `IsOwnerOrReadOnly`
+  (`permissions.py:10-22`) e `IsPropertyOwnerOrStaff` (`permissions.py:37-43`), y las dos
+  las aplica solo `PropertyViewSet`: la primera a todo el CRUD, la segunda únicamente a
+  `promotion_stats`.
 - En `LeadViewSet` y en los viewsets admin **no hay** comprobación de objeto: la protección es
   el filtrado del queryset, que convierte el acceso ajeno en 404 en vez de 403. Es correcto,
   pero significa que si alguien amplía el queryset se pierde la protección sin que salte ningún
@@ -359,6 +398,11 @@ commitear) blinda `owner`, `views_count`, `source`, `source_agency`, `source_url
 solo eran `created_at`, `updated_at` y `owner`, es decir un usuario podía marcarse
 `is_imported`/`is_duplicate` o inflar `views_count` al crear o editar una propiedad. **Este
 endurecimiento está sin commitear**: en `main` el agujero sigue abierto.
+
+Desde el 2026-08-05 la lista incluye además `short_code` y `closed_at`
+(`serializers.py:187-202`): el código se imprime en las láminas y es único, así que un cliente
+que lo eligiera podría okupar el de otro anuncio; y la fecha de cierre la sella el servidor,
+aunque el motivo sí lo escriba el dueño.
 
 Otros campos blindados: `Lead.status` (`serializers.py:460`),
 `PendingPublication.status` (`:490`), `ActivityEvent.user`/`property`/`is_bot` (`:516`),
@@ -472,13 +516,15 @@ Responden 404 `"Usuario no encontrado"` (`views.py:1131-1134`, `:1204-1207`), mi
 `request-password-reset` responde 200 genérico precisamente para evitarlo
 (`views.py:1250-1255`). Inconsistencia entre endpoints equivalentes.
 
-**10. El propietario no puede gestionar sus propias propiedades inactivas por la ruta CRUD.**
-`get_queryset` excluye `status='inactive'` (`views.py:321`) sin excepción para el dueño, así que
-`GET/PATCH/DELETE /api/properties/{id}/` devuelven 404 para una propiedad propia inactiva. Solo
-`my_properties` (`views.py:814`) la lista. Es un hueco funcional, no de seguridad, pero convierte
-el estado `inactive` en irreversible desde la API pública. Un usuario con `is_staff` sí tiene esa
-excepción desde que el panel de inventario le muestra el catálogo completo, así que hoy la única
-forma de reactivar una propiedad es que la toque un administrador.
+**10. ~~El propietario no puede gestionar sus propias propiedades inactivas por la ruta CRUD.~~
+Resuelto el 2026-08-05.**
+Hasta entonces `get_queryset` excluía `status='inactive'` sin excepción para el dueño, así que
+`GET/PATCH/DELETE /api/properties/{id}/` devolvían 404 sobre una propiedad propia inactiva y solo
+`my_properties` la listaba: el estado `inactive` era irreversible desde la API pública salvo que
+lo tocara un administrador. Lo arregló el cierre de anuncios (`PROP-034`), que necesitaba lo
+contrario: si marcar «vendido» dejara al dueño fuera de su propio anuncio, cerrar equivaldría a
+perderlo. Hoy la condición de visibilidad de las acciones de detalle incluye `Q(owner=user)`
+(`views.py:404`).
 
 **11. Si Redis cae, el throttling desaparece.**
 `CACHES["default"]["OPTIONS"]["IGNORE_EXCEPTIONS"] = True` (`settings.py:455`). Es una decisión

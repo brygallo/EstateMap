@@ -48,7 +48,7 @@ rules:
       cierto, esta regla necesita una tupla cerrada como la de VIS-001.
     evidence:
       - file: frontend/app/api/social/[id]/[format]/route.tsx
-        lines: "754-756"
+        lines: "773-775"
         symbol: photoLamina
         note: >-
           Toma el título, la ciudad, el precio y los hechos declarados. Ni
@@ -90,11 +90,11 @@ rules:
       alternativa legible si la imagen fue recomprimida o impresa.
     evidence:
       - file: frontend/app/api/social/[id]/[format]/route.tsx
-        lines: "300-314"
+        lines: "318-331"
         symbol: VerifyLine
         note: La dirección principal queda visible sin exponer el identificador corto.
       - file: frontend/app/api/social/[id]/[format]/route.tsx
-        lines: "258-275"
+        lines: "276-292"
         symbol: QrCard
         note: El QR se muestra en una tarjeta de alto contraste, sin imprimir el código corto.
       - file: frontend/lib/qr.ts
@@ -226,7 +226,7 @@ rules:
       kit no tiene forma de saber que MinIO no contestó.
     evidence:
       - file: frontend/app/api/social/[id]/[format]/route.tsx
-        lines: "465-467"
+        lines: "473-475"
         symbol: PhotoLayer
         note: Degradado de marca cuando no hay foto utilizable.
     tests: {}
@@ -301,7 +301,7 @@ rules:
         lines: "25"
         symbol: ATTRIBUTION
       - file: frontend/app/api/social/[id]/[format]/route.tsx
-        lines: "725-727"
+        lines: "744-746"
         symbol: ATTRIBUTION
         note: Impresa en la barra inferior de la lámina de mapa.
     tests:
@@ -488,6 +488,11 @@ rules:
         given: {utm_source: instagram}
         expected: allowed
         expected_http_status: 200
+        note: >-
+          El estado sí se construye (tres visitas de dos sesiones desde esa
+          red), pero el generador solo sabe afirmar sobre el código HTTP: el
+          reparto por red lo comprueba a mano
+          backend/real_estate/tests/test_promotion_stats.py.
       - name: Las visitas de un bot no cuentan
         given: {is_bot: true}
         expected: ausente
@@ -518,6 +523,100 @@ rules:
         expected_http_status: 200
         note: Es justo el anuncio cuyo dueño más quiere ver el resultado.
 
+  - id: SOC-102
+    name: Hay kit para los momentos que no son la publicación
+    status: implemented
+    summary: >-
+      Además del kit inicial, el anuncio produce una lámina de bajada de precio
+      y una de vendido o arrendado, y solo cuando ese momento ocurrió de verdad.
+    rationale: >-
+      Un anuncio se comparte bien una vez y luego se queda quieto. Los momentos
+      que dan una excusa para volver a publicarlo son pocos y conocidos: bajó el
+      precio, y se vendió.
+
+      La lámina de «vendido» es la más valiosa de las dos y la menos evidente:
+      no vende ese inmueble, que ya está vendido. La comparte el agente porque
+      es su currículum, y al hacerlo distribuye el logo y el código del portal
+      entre gente que todavía no lo conoce. Es publicidad que se reparte sola.
+      Por eso no lleva precio: un importe junto a VENDIDO se lee como «se vendió
+      por», que es una cifra que nadie registró.
+
+      Lo que decide si el momento existe es un único predicado compartido, y esa
+      es la parte que evita el fallo obvio: si la pantalla dedujera por su cuenta
+      que hay noticia, acabaría ofreciendo una tarjeta que la ruta responde con
+      404. Cuando el momento no ocurrió la ruta niega la lámina en vez de
+      devolver una sustituta, porque estas URL acaban en `og:image` y una imagen
+      equivocada la cachearían todos los scrapers sin que nadie aguas abajo
+      pueda distinguir cuál recibió.
+
+      Descansa sobre lo que el servidor ya distingue: un anuncio vendido de uno
+      retirado (PROP-033), la ficha y el código corto que se conservan para que
+      el QR impreso resuelva (PROP-034), y el precio anterior publicado solo
+      cuando es fiable (PROP-035).
+    frontend:
+      routes: ["/propiedad/{id}/promocionar"]
+    evidence:
+      - file: frontend/lib/social-kit.ts
+        lines: "679-684"
+        symbol: momentFormats
+        note: >-
+          El predicado único. Dos llamadas —la ruta y la pantalla del kit— para
+          que la interfaz no pueda ofrecer lo que el servidor niega.
+      - file: frontend/lib/social-kit.ts
+        lines: "622-624"
+        symbol: priceDrop
+        note: >-
+          Solo hay bajada si el precio anterior es fiable y además bajó; una
+          subida no es una bajada y no reutiliza la lámina.
+      - file: frontend/lib/social-kit.ts
+        lines: "655-658"
+        symbol: closureKind
+        note: Vendido y arrendado sí; retirado no.
+      - file: frontend/app/api/social/[id]/[format]/route.tsx
+        lines: "1064-1066"
+        symbol: priceDropLamina
+      - file: frontend/app/api/social/[id]/[format]/route.tsx
+        lines: "1235-1237"
+        symbol: soldLamina
+      - file: frontend/components/promote/PromotionKit.tsx
+        lines: "302"
+        symbol: momentFormats
+        note: >-
+          La sección «Novedades de este anuncio», delante del material fijo y
+          ausente mientras no haya noticia.
+    tests:
+      unit: true
+    cases:
+      - name: Bajar el precio ofrece la lámina de bajada
+        given: {previous_price: 90000, price: 79000}
+        expected: presente
+      - name: La lámina de bajada muestra los dos precios
+        expected: presente
+      - name: Subir el precio no ofrece ninguna lámina
+        given: {previous_price: 79000, price: 90000}
+        expected: ausente
+        note: >-
+          Reutilizar la lámina pondría «ANTES» sobre la cifra más barata, que es
+          decir lo contrario de lo que pasó.
+      - name: Marcar como vendido ofrece la lámina de vendido
+        given: {closed_reason: sold}
+        expected: presente
+      - name: La lámina de vendido no imprime el precio
+        given: {closed_reason: sold}
+        expected: ausente
+      - name: Un anuncio inactivo no es lo mismo que uno vendido
+        given: {status: inactive, closed_reason: ""}
+        expected: ausente
+        note: Retirar un anuncio no es una venta y no merece felicitación.
+      - name: Un anuncio retirado tampoco produce lámina de cierre
+        given: {closed_reason: withdrawn}
+        expected: ausente
+      - name: Pedir una lámina de un momento que no ocurrió responde 404
+        expected: ausente
+        note: >-
+          No una lámina sustituta: la URL viaja en `og:image` y una imagen
+          equivocada se quedaría cacheada en cada scraper.
+
   - id: SOC-009
     name: El kit lo abre el propietario, pero las láminas son públicas
     status: partial
@@ -547,7 +646,7 @@ rules:
       test_id: promote-property-action
     evidence:
       - file: frontend/components/promote/PromotionKit.tsx
-        lines: "356-358"
+        lines: "363-365"
         symbol: isOwner
         note: Cortesía de interfaz, no frontera; el comentario del código lo dice.
       - file: frontend/app/mis-propiedades/[id]/page.tsx
@@ -626,7 +725,7 @@ rules:
       un minuto.
     evidence:
       - file: frontend/app/api/social/[id]/[format]/route.tsx
-        lines: "1410-1412"
+        lines: "1436-1438"
         symbol: Cache-Control
         note: >-
           s-maxage=60 con stale-while-revalidate: absorbe la ráfaga de scrapers
@@ -702,7 +801,7 @@ rules:
         symbol: promotionFonts
         note: Se registran Plus Jakarta Sans Regular y ExtraBold en ImageResponse.
       - file: frontend/app/api/social/[id]/[format]/route.tsx
-        lines: "205-207"
+        lines: "210-212"
         symbol: marketingPhotos
         note: La imagen principal se conserva primero y se preparan hasta tres fotos.
       - file: frontend/app/api/social/[id]/[format]/route.tsx
@@ -714,7 +813,7 @@ rules:
         symbol: PhotoCollage
         note: Las piezas verticales distribuyen una foto protagonista y dos de apoyo.
       - file: frontend/app/api/social/[id]/[format]/route.tsx
-        lines: "1358-1358"
+        lines: "1384-1386"
         symbol: customMessage
         note: El mensaje opcional se normaliza y limita antes de dibujarlo.
       - file: frontend/components/promote/PromotionKit.tsx

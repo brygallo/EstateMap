@@ -69,11 +69,11 @@ El middleware de observabilidad reutiliza la cabecera X-Request-ID que llegue de
 
 **Casos**
 
-| Caso | Rol | Entrada | Esperado |
-| --- | --- | --- | --- |
-| Petición sin cabecera propia | — | `X-Request-ID`=— | se genera un uuid4 |
-| Petición con cabecera propia | — | `X-Request-ID`=abc123 | se devuelve la misma |
-| Cabecera de más de 64 caracteres | — | `X-Request-ID`=x…120 caracteres | truncada a 64 |
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| Petición sin cabecera propia | — | `X-Request-ID`=— | — | se genera un uuid4 |
+| Petición con cabecera propia | — | `X-Request-ID`=abc123 | — | se devuelve la misma |
+| Cabecera de más de 64 caracteres | — | `X-Request-ID`=x…120 caracteres | — | truncada a 64 |
 
 ### ERR-002 — El identificador de petición solo llega a parte de la interfaz
 
@@ -91,10 +91,10 @@ El frontend sabe mostrar el identificador como "Código de seguimiento" al const
 
 **Casos**
 
-| Caso | Rol | Entrada | Esperado |
-| --- | --- | --- | --- |
-| Error en una pantalla que usa el ayudante de formularios | — | `pantalla`=formulario | muestra el código |
-| Error en una pantalla que no lo usa | — | `pantalla`=otra | no muestra el código |
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| Error en una pantalla que usa el ayudante de formularios | — | `pantalla`=formulario | — | muestra el código |
+| Error en una pantalla que no lo usa | — | `pantalla`=otra | — | no muestra el código |
 
 ### ERR-003 — Toda pantalla de error debería mostrar el identificador
 
@@ -107,9 +107,9 @@ Cualquier mensaje de error mostrado a una persona usuaria debería incluir el X-
 
 **Casos**
 
-| Caso | Rol | Entrada | Esperado |
-| --- | --- | --- | --- |
-| Error en cualquier pantalla | — | `pantalla`=cualquiera | muestra el código |
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| Error en cualquier pantalla | — | `pantalla`=cualquiera | — | muestra el código |
 
 ### ERR-004 — Los incidentes se agregan por huella y no guardan datos de la petición
 
@@ -129,10 +129,10 @@ Un fallo no crea una fila por ocurrencia: se calcula una huella y se incrementa 
 
 **Casos**
 
-| Caso | Rol | Entrada | Esperado |
-| --- | --- | --- | --- |
-| El mismo fallo ocurre 50 veces | — | `ocurrencias`=50 | 1 fila con occurrences=50 |
-| Cuerpo de la petición almacenado | — | `peticion`=POST con contraseña | nada |
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| El mismo fallo ocurre 50 veces | — | `ocurrencias`=50 | — | 1 fila con occurrences=50 |
+| Cuerpo de la petición almacenado | — | `peticion`=POST con contraseña | — | nada |
 
 ### ERR-005 — Las subidas demasiado grandes responden 413 en JSON
 
@@ -150,10 +150,10 @@ Un middleware propio traduce las excepciones de subida de Django a respuestas JS
 
 **Casos**
 
-| Caso | Rol | Entrada | Esperado |
-| --- | --- | --- | --- |
-| Cuerpo por encima del máximo | — | `tamaño`=60 MB + 1 | 413 `REQUEST_DATA_TOO_BIG` |
-| Más ficheros de los permitidos | — | `ficheros`=11 | 400 `TOO_MANY_FILES` |
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| Cuerpo por encima del máximo | — | `tamaño`=60 MB + 1 | — | 413 `REQUEST_DATA_TOO_BIG` |
+| Más ficheros de los permitidos | — | `ficheros`=11 | — | 400 `TOO_MANY_FILES` |
 
 ### ERR-006 — El 413 de nginx no cumple el contrato de la API
 
@@ -169,10 +169,10 @@ No existe ninguna directiva client_max_body_size versionada en el repositorio. E
 
 **Casos**
 
-| Caso | Rol | Entrada | Esperado |
-| --- | --- | --- | --- |
-| Subida que supera el límite de nginx | — | `origen`=nginx | HTML sin X-Request-ID |
-| Subida que supera el límite de Django | — | `origen`=django | JSON con X-Request-ID |
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| Subida que supera el límite de nginx | — | `origen`=nginx | — | HTML sin X-Request-ID |
+| Subida que supera el límite de Django | — | `origen`=django | — | JSON con X-Request-ID |
 
 ### ERR-007 — El límite de ritmo responde 429 con Retry-After
 
@@ -194,11 +194,11 @@ Los scopes de throttling devuelven 429 indicando cuántos segundos faltan. Los t
 
 **Casos**
 
-| Caso | Rol | Entrada | Esperado |
-| --- | --- | --- | --- |
-| Ritmo de escritura de propiedades | — | `scope`=property_write | 30/hour |
-| Ritmo del mapa | — | `scope`=map_points | 120/min |
-| Cliente interno sobre el mapa | — | `scope`=map_points, `origen`=interno | sin límite |
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| Ritmo de escritura de propiedades | — | `scope`=property_write | — | 30/hour |
+| Ritmo del mapa | — | `scope`=map_points | — | 120/min |
+| Cliente interno sobre el mapa | — | `scope`=map_points, `origen`=interno | — | sin límite |
 
 ### ERR-008 — Con la caché caída el sistema sirve, no falla
 
@@ -217,10 +217,10 @@ El cliente de Redis ignora los errores de conexión, de modo que una caché inac
 
 **Casos**
 
-| Caso | Rol | Entrada | Esperado |
-| --- | --- | --- | --- |
-| Lectura del catálogo con Redis caído | — | `redis`=caido | 200 con fallo de acierto |
-| Silencio en los logs | — | `redis`=caido | se registra el error |
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| Lectura del catálogo con Redis caído | — | `redis`=caido | — | 200 con fallo de acierto |
+| Silencio en los logs | — | `redis`=caido | — | se registra el error |
 
 ### ERR-009 — El mensaje de subida excesiva anuncia un límite que no es el real
 
@@ -237,7 +237,7 @@ El middleware responde "La carga completa supera el tamaño máximo permitido de
 
 **Casos**
 
-| Caso | Rol | Entrada | Esperado |
-| --- | --- | --- | --- |
-| Subida de 55 MB | — | `tamaño_mb`=55 | aceptada por el límite, pese a que el mensaje diga 50MB |
-| Cifra del mensaje frente a la configuración | — | `mensaje`=50MB, `configuracion_mb`=60 | no coinciden |
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| Subida de 55 MB | — | `tamaño_mb`=55 | — | aceptada por el límite, pese a que el mensaje diga 50MB |
+| Cifra del mensaje frente a la configuración | — | `mensaje`=50MB, `configuracion_mb`=60 | — | no coinciden |

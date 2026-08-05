@@ -124,8 +124,18 @@
         "role": { "$ref": "#/$defs/role" },
         "given": {
           "type": "object",
-          "description": "Input state or request payload.",
+          "description": "The state of the world before the request, never the request itself: 'given a listing already marked as sold'. Executable cases materialise it through SpecWorld.apply in backend/real_estate/tests/spec_support.py, which refuses any key it does not know how to build — a case cannot claim a precondition nobody sets up. The request body goes in 'body'.",
           "additionalProperties": true
+        },
+        "body": {
+          "type": "object",
+          "description": "The request body sent to the endpoint. Only meaningful for methods that carry one (POST, PUT, PATCH); declaring it on a GET or DELETE is an error the test harness raises.",
+          "additionalProperties": true
+        },
+        "endpoint": {
+          "type": "string",
+          "pattern": "^(GET|POST|PUT|PATCH|DELETE|HEAD|OPTIONS) /.*$",
+          "description": "Overrides backend.endpoint for this case. For rules whose statement genuinely spans two routes, e.g. 'the listing resolves by its id and by its short code'."
         },
         "expected": {
           "description": "allowed / denied for permission rules, a literal value for calculations, or an object for richer assertions.",

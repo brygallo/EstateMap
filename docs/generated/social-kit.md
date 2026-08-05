@@ -26,6 +26,7 @@ La frontera está en SOC-010, que es la única regla de este dominio sin constru
 | [`SOC-007`](#soc-007--el-texto-se-redacta-con-los-campos-del-anuncio-sin-inventar-nada) | El texto se redacta con los campos del anuncio, sin inventar nada | ✅ Implementada |
 | [`SOC-008`](#soc-008--los-enlaces-del-kit-dicen-de-qué-red-vienen-y-el-dueño-ve-el-resultado) | Los enlaces del kit dicen de qué red vienen, y el dueño ve el resultado | ✅ Implementada |
 | [`SOC-101`](#soc-101--el-dueño-ve-cuántas-visitas-trajo-cada-red) | El dueño ve cuántas visitas trajo cada red | ✅ Implementada |
+| [`SOC-102`](#soc-102--hay-kit-para-los-momentos-que-no-son-la-publicación) | Hay kit para los momentos que no son la publicación | ✅ Implementada |
 | [`SOC-009`](#soc-009--el-kit-lo-abre-el-propietario-pero-las-láminas-son-públicas) | El kit lo abre el propietario, pero las láminas son públicas | 🟡 Parcial |
 | [`SOC-010`](#soc-010--el-portal-no-publica-en-redes-por-cuenta-de-nadie) | El portal no publica en redes por cuenta de nadie | ⛔ No implementada |
 | [`SOC-011`](#soc-011--las-láminas-se-cachean-y-caducan-con-el-anuncio) | Las láminas se cachean y caducan con el anuncio | ✅ Implementada |
@@ -44,17 +45,17 @@ La garantía es por construcción y no por lista blanca, que es más débil de l
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `frontend/app/api/social/[id]/[format]/route.tsx:754-756` (`photoLamina`) — Toma el título, la ciudad, el precio y los hechos declarados. Ni views_count ni contact_phone ni contact_email entran en la lámina.
+- `frontend/app/api/social/[id]/[format]/route.tsx:773-775` (`photoLamina`) — Toma el título, la ciudad, el precio y los hechos declarados. Ni views_count ni contact_phone ni contact_email entran en la lámina.
 - `frontend/lib/social-kit.ts:431-433` (`buildFacts`) — Enumera solo atributos físicos declarados en el anuncio.
 
 **Casos**
 
-| Caso | Rol | Entrada | Esperado |
-| --- | --- | --- | --- |
-| La lámina no incluye el contador de visitas | — | `views_count`=340 | ausente |
-| La lámina no incluye el teléfono ni el correo de contacto | — | `contact_phone`=0999999999, `contact_email`=duenno@example.com | ausente |
-| El polígono sí se dibuja | — | `polygon`=presente | presente |
-| Un anuncio con show_measurements desactivado no gana precisión | — | `show_measurements`=no | presente |
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| La lámina no incluye el contador de visitas | — | `views_count`=340 | — | ausente |
+| La lámina no incluye el teléfono ni el correo de contacto | — | `contact_phone`=0999999999, `contact_email`=duenno@example.com | — | ausente |
+| El polígono sí se dibuja | — | `polygon`=presente | — | presente |
+| Un anuncio con show_measurements desactivado no gana precisión | — | `show_measurements`=no | — | presente |
 
 ### SOC-002 — Cada lámina lleva marca y QR al anuncio
 
@@ -66,17 +67,17 @@ Toda lámina generada incluye el logotipo del portal y un QR que apunta a esa mi
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `frontend/app/api/social/[id]/[format]/route.tsx:300-314` (`VerifyLine`) — La dirección principal queda visible sin exponer el identificador corto.
-- `frontend/app/api/social/[id]/[format]/route.tsx:258-275` (`QrCard`) — El QR se muestra en una tarjeta de alto contraste, sin imprimir el código corto.
+- `frontend/app/api/social/[id]/[format]/route.tsx:318-331` (`VerifyLine`) — La dirección principal queda visible sin exponer el identificador corto.
+- `frontend/app/api/social/[id]/[format]/route.tsx:276-292` (`QrCard`) — El QR se muestra en una tarjeta de alto contraste, sin imprimir el código corto.
 - `frontend/lib/qr.ts:21-23` (`errorCorrectionLevel`) — Nivel H: el código sobrevive a la recompresión de las redes, que es lo que decide si sigue escaneando tras un reenvío.
 
 **Casos**
 
-| Caso | Rol | Entrada | Esperado |
-| --- | --- | --- | --- |
-| El QR codifica la URL corta del anuncio | — | `short_code`=XK4T2 | https://geopropiedadesecuador.com/p/XK4T2 |
-| El código corto no aparece como texto en la lámina | — | `short_code`=XK4T2 | ausente |
-| Un anuncio sin código cae en la dirección larga | — | `short_code`=— | https://geopropiedadesecuador.com/propiedad/8228 |
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| El QR codifica la URL corta del anuncio | — | `short_code`=XK4T2 | — | https://geopropiedadesecuador.com/p/XK4T2 |
+| El código corto no aparece como texto en la lámina | — | `short_code`=XK4T2 | — | ausente |
+| Un anuncio sin código cae en la dirección larga | — | `short_code`=— | — | https://geopropiedadesecuador.com/propiedad/8228 |
 
 **Cobertura exigida:** unit
 
@@ -106,17 +107,17 @@ Se asigna en save() y no en el serializador porque todos los caminos de escritur
 
 **Casos**
 
-| Caso | Rol | Entrada | Esperado |
-| --- | --- | --- | --- |
-| El alfabeto excluye los caracteres ambiguos | — | `alfabeto`=0 O 1 I L | ausente |
-| Editar el anuncio no cambia su código | — | — | allowed |
-| Resolver un código existente devuelve la propiedad | anonymous | — | allowed |
-| Resolver un código inexistente responde 404 | — | — | denied (HTTP 404) |
-| El código se resuelve sin distinguir mayúsculas | — | `code`=xk4t2 | allowed |
-| Un anuncio inactivo no se resuelve por su código | — | `status`=inactive, `closed_reason`= | denied (HTTP 404) |
-| Un anuncio vendido sí se resuelve por su código | — | `closed_reason`=sold | allowed |
-| Un cliente no puede fijar su propio código | — | — | denied |
-| Un anuncio creado antes de la migración también tiene código | — | — | presente |
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| El alfabeto excluye los caracteres ambiguos | — | `alfabeto`=0 O 1 I L | — | ausente |
+| Editar el anuncio no cambia su código | — | — | — | allowed |
+| Resolver un código existente devuelve la propiedad | anonymous | — | — | allowed |
+| Resolver un código inexistente responde 404 | — | — | — | denied (HTTP 404) |
+| El código se resuelve sin distinguir mayúsculas | — | `code`=xk4t2 | — | allowed |
+| Un anuncio inactivo no se resuelve por su código | — | `status`=inactive, `closed_reason`= | — | denied (HTTP 404) |
+| Un anuncio vendido sí se resuelve por su código | — | `closed_reason`=sold | — | allowed |
+| Un cliente no puede fijar su propio código | — | — | — | denied |
+| Un anuncio creado antes de la migración también tiene código | — | — | — | presente |
 
 **Cobertura exigida:** api, unit
 
@@ -134,15 +135,15 @@ El mismo camino cubre un fallo temporal del almacén de imágenes: una lámina c
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `frontend/app/api/social/[id]/[format]/route.tsx:465-467` (`PhotoLayer`) — Degradado de marca cuando no hay foto utilizable.
+- `frontend/app/api/social/[id]/[format]/route.tsx:473-475` (`PhotoLayer`) — Degradado de marca cuando no hay foto utilizable.
 
 **Casos**
 
-| Caso | Rol | Entrada | Esperado |
-| --- | --- | --- | --- |
-| Anuncio sin imágenes | — | `images`= | presente |
-| Anuncio sin imágenes y sin coordenadas | — | `images`=, `latitude`=—, `longitude`=— | presente |
-| La foto existe pero no se puede descargar | — | — | presente |
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| Anuncio sin imágenes | — | `images`= | — | presente |
+| Anuncio sin imágenes y sin coordenadas | — | `images`=, `latitude`=—, `longitude`=— | — | presente |
+| La foto existe pero no se puede descargar | — | — | — | presente |
 
 ### SOC-005 — El precio de la lámina respeta el «a consultar»
 
@@ -160,11 +161,11 @@ Se cumple reusando el formateador compartido en lugar de escribir otro: esa func
 
 **Casos**
 
-| Caso | Rol | Entrada | Esperado |
-| --- | --- | --- | --- |
-| Anuncio sin precio | — | `price`=— | Precio a consultar |
-| Anuncio de venta con precio | — | `price`=85000, `status`=for_sale | $85.000 |
-| Anuncio de venta y alquiler a la vez | — | `price`=85000, `rent_price`=450 | ambos importes con su etiqueta |
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| Anuncio sin precio | — | `price`=— | — | Precio a consultar |
+| Anuncio de venta con precio | — | `price`=85000, `status`=for_sale | — | $85.000 |
+| Anuncio de venta y alquiler a la vez | — | `price`=85000, `rent_price`=450 | — | ambos importes con su etiqueta |
 
 **Cobertura exigida:** unit
 
@@ -182,15 +183,15 @@ No es un adorno legal: es la condición bajo la que el portal puede usar esos ti
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
 - `frontend/lib/static-map.ts:25` (`ATTRIBUTION`)
-- `frontend/app/api/social/[id]/[format]/route.tsx:725-727` (`ATTRIBUTION`) — Impresa en la barra inferior de la lámina de mapa.
+- `frontend/app/api/social/[id]/[format]/route.tsx:744-746` (`ATTRIBUTION`) — Impresa en la barra inferior de la lámina de mapa.
 
 **Casos**
 
-| Caso | Rol | Entrada | Esperado |
-| --- | --- | --- | --- |
-| La lámina de mapa incluye la atribución | — | — | OpenStreetMap |
-| La lámina de mapa incluye a CARTO | — | — | CARTO |
-| Una lámina sin mapa no necesita atribución | — | `formato`=feed | ausente |
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| La lámina de mapa incluye la atribución | — | — | — | OpenStreetMap |
+| La lámina de mapa incluye a CARTO | — | — | — | CARTO |
+| Una lámina sin mapa no necesita atribución | — | `formato`=feed | — | ausente |
 
 **Cobertura exigida:** unit
 
@@ -213,12 +214,12 @@ Las plantillas son además instantáneas y gratis, que para algo que se genera e
 
 **Casos**
 
-| Caso | Rol | Entrada | Esperado |
-| --- | --- | --- | --- |
-| Un anuncio sin habitaciones no las menciona | — | `rooms`=0 | ausente |
-| Un anuncio sin área no la menciona | — | `area`=— | ausente |
-| Cada red recibe su propio formato de texto | — | `redes`=facebook, instagram, tiktok | tres textos distintos |
-| El propietario personaliza el texto sin perder la sugerencia | owner | — | allowed |
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| Un anuncio sin habitaciones no las menciona | — | `rooms`=0 | — | ausente |
+| Un anuncio sin área no la menciona | — | `area`=— | — | ausente |
+| Cada red recibe su propio formato de texto | — | `redes`=facebook, instagram, tiktok | — | tres textos distintos |
+| El propietario personaliza el texto sin perder la sugerencia | owner | — | — | allowed |
 
 **Cobertura exigida:** unit
 
@@ -240,11 +241,11 @@ Cada enlace y cada QR del kit llevan los parámetros UTM de la red a la que corr
 
 **Casos**
 
-| Caso | Rol | Entrada | Esperado |
-| --- | --- | --- | --- |
-| El enlace de Instagram lleva su utm_source | — | `red`=instagram | utm_source=instagram |
-| El QR de la lámina de story lleva el utm de la red | — | `red`=instagram, `formato`=story | utm_source=instagram |
-| El dueño ve cuántas visitas trajo cada red | — | — | presente |
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| El enlace de Instagram lleva su utm_source | — | `red`=instagram | — | utm_source=instagram |
+| El QR de la lámina de story lleva el utm de la red | — | `red`=instagram, `formato`=story | — | utm_source=instagram |
+| El dueño ve cuántas visitas trajo cada red | — | — | — | presente |
 
 **Cobertura exigida:** api, unit
 
@@ -283,21 +284,62 @@ Y un visitante es un `session_id` distinto, no un evento: el navegador repite su
 
 **Casos**
 
-| Caso | Rol | Entrada | Esperado |
-| --- | --- | --- | --- |
-| Las visitas se agrupan por utm_source | owner | `utm_source`=instagram | allowed |
-| Las visitas de un bot no cuentan | — | `is_bot`=sí | ausente |
-| El tráfico que no viene del kit tampoco cuenta | — | `utm_campaign`=summer_ads | ausente |
-| Un anuncio que nadie compartió no muestra un cero desnudo | — | — | presente |
-| Solo el propietario ve el desglose | not_owner | — | denied (HTTP 403) |
-| Un anónimo no accede al desglose | anonymous | — | denied (HTTP 401) |
-| Staff también lo ve | staff | — | allowed |
-| Un anuncio vendido sigue devolviendo su informe | owner | — | allowed |
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| Las visitas se agrupan por utm_source | owner | `utm_source`=instagram | — | allowed |
+| Las visitas de un bot no cuentan | — | `is_bot`=sí | — | ausente |
+| El tráfico que no viene del kit tampoco cuenta | — | `utm_campaign`=summer_ads | — | ausente |
+| Un anuncio que nadie compartió no muestra un cero desnudo | — | — | — | presente |
+| Solo el propietario ve el desglose | not_owner | — | — | denied (HTTP 403) |
+| Un anónimo no accede al desglose | anonymous | — | — | denied (HTTP 401) |
+| Staff también lo ve | staff | — | — | allowed |
+| Un anuncio vendido sigue devolviendo su informe | owner | — | — | allowed |
 
 **Cobertura exigida:** api
 
 - `backend/real_estate/tests/generated/test_spec_social_kit.py`
 - `backend/real_estate/tests/test_promotion_stats.py`
+
+### SOC-102 — Hay kit para los momentos que no son la publicación
+
+**Estado:** ✅ Implementada
+
+Además del kit inicial, el anuncio produce una lámina de bajada de precio y una de vendido o arrendado, y solo cuando ese momento ocurrió de verdad.
+
+> **Por qué:** Un anuncio se comparte bien una vez y luego se queda quieto. Los momentos que dan una excusa para volver a publicarlo son pocos y conocidos: bajó el precio, y se vendió.
+La lámina de «vendido» es la más valiosa de las dos y la menos evidente: no vende ese inmueble, que ya está vendido. La comparte el agente porque es su currículum, y al hacerlo distribuye el logo y el código del portal entre gente que todavía no lo conoce. Es publicidad que se reparte sola. Por eso no lleva precio: un importe junto a VENDIDO se lee como «se vendió por», que es una cifra que nadie registró.
+Lo que decide si el momento existe es un único predicado compartido, y esa es la parte que evita el fallo obvio: si la pantalla dedujera por su cuenta que hay noticia, acabaría ofreciendo una tarjeta que la ruta responde con 404. Cuando el momento no ocurrió la ruta niega la lámina en vez de devolver una sustituta, porque estas URL acaban en `og:image` y una imagen equivocada la cachearían todos los scrapers sin que nadie aguas abajo pueda distinguir cuál recibió.
+Descansa sobre lo que el servidor ya distingue: un anuncio vendido de uno retirado (PROP-033), la ficha y el código corto que se conservan para que el QR impreso resuelva (PROP-034), y el precio anterior publicado solo cuando es fiable (PROP-035).
+
+**Frontend**
+
+- Ruta: `/propiedad/{id}/promocionar`
+
+**Evidencia en el código** (verificada por `tools/specs/validate.py`)
+
+- `frontend/lib/social-kit.ts:679-684` (`momentFormats`) — El predicado único. Dos llamadas —la ruta y la pantalla del kit— para que la interfaz no pueda ofrecer lo que el servidor niega.
+- `frontend/lib/social-kit.ts:622-624` (`priceDrop`) — Solo hay bajada si el precio anterior es fiable y además bajó; una subida no es una bajada y no reutiliza la lámina.
+- `frontend/lib/social-kit.ts:655-658` (`closureKind`) — Vendido y arrendado sí; retirado no.
+- `frontend/app/api/social/[id]/[format]/route.tsx:1064-1066` (`priceDropLamina`)
+- `frontend/app/api/social/[id]/[format]/route.tsx:1235-1237` (`soldLamina`)
+- `frontend/components/promote/PromotionKit.tsx:302` (`momentFormats`) — La sección «Novedades de este anuncio», delante del material fijo y ausente mientras no haya noticia.
+
+**Casos**
+
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| Bajar el precio ofrece la lámina de bajada | — | `previous_price`=90000, `price`=79000 | — | presente |
+| La lámina de bajada muestra los dos precios | — | — | — | presente |
+| Subir el precio no ofrece ninguna lámina | — | `previous_price`=79000, `price`=90000 | — | ausente |
+| Marcar como vendido ofrece la lámina de vendido | — | `closed_reason`=sold | — | presente |
+| La lámina de vendido no imprime el precio | — | `closed_reason`=sold | — | ausente |
+| Un anuncio inactivo no es lo mismo que uno vendido | — | `status`=inactive, `closed_reason`= | — | ausente |
+| Un anuncio retirado tampoco produce lámina de cierre | — | `closed_reason`=withdrawn | — | ausente |
+| Pedir una lámina de un momento que no ocurrió responde 404 | — | — | — | ausente |
+
+**Cobertura exigida:** unit
+
+- `frontend/lib/social-kit.test.ts`
 
 ### SOC-009 — El kit lo abre el propietario, pero las láminas son públicas
 
@@ -319,17 +361,17 @@ Queda como `partial` porque la comprobación de propiedad vive en el cliente, le
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `frontend/components/promote/PromotionKit.tsx:356-358` (`isOwner`) — Cortesía de interfaz, no frontera; el comentario del código lo dice.
+- `frontend/components/promote/PromotionKit.tsx:363-365` (`isOwner`) — Cortesía de interfaz, no frontera; el comentario del código lo dice.
 - `frontend/app/mis-propiedades/[id]/page.tsx:238-244` (`promote-property-action`) — El acceso al kit aparece dentro de la ficha de gestión del propietario.
 
 **Casos**
 
-| Caso | Rol | Entrada | Esperado |
-| --- | --- | --- | --- |
-| El propietario ve el acceso al kit en su anuncio | owner | — | allowed |
-| Un visitante anónimo no ve el acceso al kit | anonymous | — | denied |
-| Otra persona autenticada tampoco lo ve | not_owner | — | denied |
-| La URL de una lámina responde a un anónimo | anonymous | — | allowed |
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| El propietario ve el acceso al kit en su anuncio | owner | — | — | allowed |
+| Un visitante anónimo no ve el acceso al kit | anonymous | — | — | denied |
+| Otra persona autenticada tampoco lo ve | not_owner | — | — | denied |
+| La URL de una lámina responde a un anónimo | anonymous | — | — | allowed |
 
 ### SOC-010 — El portal no publica en redes por cuenta de nadie
 
@@ -345,12 +387,12 @@ Si algún día se construye, será opcional y por consentimiento explícito, y e
 
 **Casos**
 
-| Caso | Rol | Entrada | Esperado |
-| --- | --- | --- | --- |
-| El sistema no almacena tokens de redes sociales | — | — | ausente |
-| El kit no hace peticiones a las API de las redes | — | — | ausente |
-| En el móvil, compartir adjunta el archivo de la lámina | — | — | presente |
-| En escritorio, la lámina se descarga | — | — | presente |
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| El sistema no almacena tokens de redes sociales | — | — | — | ausente |
+| El kit no hace peticiones a las API de las redes | — | — | — | ausente |
+| En el móvil, compartir adjunta el archivo de la lámina | — | — | — | presente |
+| En escritorio, la lámina se descarga | — | — | — | presente |
 
 ### SOC-011 — Las láminas se cachean y caducan con el anuncio
 
@@ -363,15 +405,15 @@ Y caducarla al editar no es opcional: la lámina lleva el precio impreso. Si alg
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `frontend/app/api/social/[id]/[format]/route.tsx:1410-1412` (`Cache-Control`) — s-maxage=60 con stale-while-revalidate: absorbe la ráfaga de scrapers que llega al publicar un enlace sin congelar un precio corregido.
+- `frontend/app/api/social/[id]/[format]/route.tsx:1436-1438` (`Cache-Control`) — s-maxage=60 con stale-while-revalidate: absorbe la ráfaga de scrapers que llega al publicar un enlace sin congelar un precio corregido.
 - `frontend/lib/properties.ts:288-292` (`getProperty`) — Lectura etiquetada; /api/revalidate purga property-<id> cuando Django avisa de un cambio.
 
 **Casos**
 
-| Caso | Rol | Entrada | Esperado |
-| --- | --- | --- | --- |
-| Dos peticiones seguidas de la misma lámina no la recomponen | — | — | allowed |
-| Cambiar el precio deja de servir la lámina vieja | — | `price`=79000 | allowed |
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| Dos peticiones seguidas de la misma lámina no la recomponen | — | — | — | allowed |
+| Cambiar el precio deja de servir la lámina vieja | — | `price`=79000 | — | allowed |
 
 ### SOC-012 — Publicar un anuncio termina en el kit
 
@@ -394,11 +436,11 @@ El listado sigue estando a un clic, y el kit sigue accesible después desde cada
 
 **Casos**
 
-| Caso | Rol | Entrada | Esperado |
-| --- | --- | --- | --- |
-| Tras publicar, la persona ve el kit de su anuncio | owner | — | allowed |
-| Editar un anuncio existente no lleva al kit | owner | — | denied |
-| Si la respuesta no trae id se vuelve al listado | owner | — | allowed |
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| Tras publicar, la persona ve el kit de su anuncio | owner | — | — | allowed |
+| Editar un anuncio existente no lleva al kit | owner | — | — | denied |
+| Si la respuesta no trae id se vuelve al listado | owner | — | — | allowed |
 
 ### SOC-013 — Las láminas priorizan una composición comercial
 
@@ -411,20 +453,20 @@ Las piezas verticales combinan hasta tres fotografías del anuncio, usan la tipo
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
 - `frontend/app/api/social/[id]/[format]/route.tsx:150-160` (`promotionFonts`) — Se registran Plus Jakarta Sans Regular y ExtraBold en ImageResponse.
-- `frontend/app/api/social/[id]/[format]/route.tsx:205-207` (`marketingPhotos`) — La imagen principal se conserva primero y se preparan hasta tres fotos.
+- `frontend/app/api/social/[id]/[format]/route.tsx:210-212` (`marketingPhotos`) — La imagen principal se conserva primero y se preparan hasta tres fotos.
 - `frontend/app/api/social/[id]/[format]/route.tsx:350-377` (`SalesCallout`) — El argumento comercial cambia según venta, arriendo y tipo de inmueble.
 - `frontend/app/api/social/[id]/[format]/route.tsx:496-508` (`PhotoCollage`) — Las piezas verticales distribuyen una foto protagonista y dos de apoyo.
-- `frontend/app/api/social/[id]/[format]/route.tsx:1358-1358` (`customMessage`) — El mensaje opcional se normaliza y limita antes de dibujarlo.
+- `frontend/app/api/social/[id]/[format]/route.tsx:1384-1386` (`customMessage`) — El mensaje opcional se normaliza y limita antes de dibujarlo.
 - `frontend/components/promote/PromotionKit.tsx:442-470` (`Mensaje dentro de la imagen`) — El editor permite cambiar el gancho o restaurar la propuesta base.
 
 **Casos**
 
-| Caso | Rol | Entrada | Esperado |
-| --- | --- | --- | --- |
-| Un terreno en venta comunica su potencial | — | `property_type`=land, `status`=for_sale | DESCUBRE EL POTENCIAL DE ESTE TERRENO |
-| Una propiedad en arriendo invita a conocer el espacio | — | `status`=for_rent | CONOCE TU PRÓXIMO ESPACIO |
-| Una pieza vertical con tres fotos usa composición editorial | — | `format`=portrait, `image_count`=3 | presente |
-| El propietario cambia el mensaje dentro de la imagen | owner | `mensaje`=AGENDA TU VISITA | presente |
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| Un terreno en venta comunica su potencial | — | `property_type`=land, `status`=for_sale | — | DESCUBRE EL POTENCIAL DE ESTE TERRENO |
+| Una propiedad en arriendo invita a conocer el espacio | — | `status`=for_rent | — | CONOCE TU PRÓXIMO ESPACIO |
+| Una pieza vertical con tres fotos usa composición editorial | — | `format`=portrait, `image_count`=3 | — | presente |
+| El propietario cambia el mensaje dentro de la imagen | owner | `mensaje`=AGENDA TU VISITA | — | presente |
 
 **Cobertura exigida:** unit
 

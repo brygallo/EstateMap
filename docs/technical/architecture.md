@@ -8,7 +8,8 @@ un frontend Next.js App Router (`frontend/`), desplegado sobre un host Contabo
 híbrido. Cada afirmación lleva su cita `archivo:línea`.
 
 Documentos hermanos: [caching](./caching.md) · [celery](./celery.md) ·
-[redis](./redis.md) · [flujos de trabajo](../workflows/) ·
+[redis](./redis.md) · [actividad y métricas](./activity-metrics.md) ·
+[flujos de trabajo](../workflows/) ·
 [matriz de permisos](../permissions/matrix.md) ·
 [errores de API](../errors/api-errors.md).
 
@@ -280,7 +281,7 @@ explícitas (`:40-88`).
 
 | Prefijo | ViewSet | Notas |
 |---|---|---|
-| `/api/properties/` | `PropertyViewSet` (`views.py:273`) | Núcleo del catálogo. Acciones extra: `map_points`, `intelligence`, `owners`, `locations`, `catalog`, `summary`, `my_properties`, `delete_image` |
+| `/api/properties/` | `PropertyViewSet` (`views.py:273`) | Núcleo del catálogo. Acciones extra: `map_points`, `intelligence`, `owners`, `locations`, `catalog`, `summary`, `my_properties`, `delete_image`, `code/{code}` y `promotion-stats` (la única privada: dueño o staff, ver [activity-metrics](./activity-metrics.md)) |
 | `/api/provinces/` | `ProvinceViewSet` (`views.py:149`) | Solo lectura, `AllowAny`, cacheado 24 h |
 | `/api/cities/` | `CityViewSet` (`views.py:191`) | Solo lectura, `AllowAny`, cacheado 24 h |
 | `/api/leads/` | `LeadViewSet` (`views.py:844`) | `create` público; el resto autenticado y filtrado por propietario |
@@ -367,6 +368,7 @@ user waiting"), mientras que la subida por HTTP encola el trabajo
 | Módulo | Responsabilidad |
 |---|---|
 | `admin_metrics.py` | `AdminMetricsService.build()` (`:43-50`) arma las métricas del panel del dueño: audiencia por sesiones distintas excluyendo bots, series diarias y variaciones porcentuales. Define los grupos de eventos `DETAIL_EVENTS`, `DISCOVERY_EVENTS` y `PUBLISH_INTENT_EVENTS` (`:12-14`). Es el único punto de `real_estate` que lee modelos de `ingesta` (`:8`). Lo consume `AdminDashboardView` con import diferido (`views.py:1607`) |
+| `promotion_stats.py` | `promotion_stats(property_id)` (`:79`): visitantes reales por red social que trajeron los enlaces del kit de un anuncio. Agrega `ActivityEvent` por `payload.attribution.source` filtrando `campaign="owner_kit"` (`:94-110`), cuenta `session_id` distintos y no filas, excluye bots y nunca mira más atrás del 2026-08-03 (`BOT_FLAGGING_SINCE`, `:61`), que es cuando empezó a marcarse `is_bot`. Devuelve un `state` de tres valores para que la interfaz no pinte un cero desnudo (`:68-70`). Lo consume la acción `promotion_stats` del `PropertyViewSet`, restringida al dueño o a staff. Detalle en [activity-metrics](./activity-metrics.md) |
 | `map_payload.py` | `build_map_payload(queryset, zoom, max_items, viewport)` (`:132`): convierte el queryset en el payload del mapa. A zoom bajo agrupa en clusters con conteo; a zoom alto devuelve puntos. Incluye la tabla de centros por provincia de Ecuador (`:22-45`), el medoide para el centro del cluster (`:346`), el zoom de expansión (`:477`) y el recorte por viewport (`:497`) |
 | `indexnow.py` | Aviso instantáneo a buscadores. Acumula rutas durante `BATCH_SECONDS = 10` en un `threading.Timer` y las envía en un solo POST a `api.indexnow.org` (`:23-83`), para que una importación masiva no dispare cientos de peticiones. `submit_property()` (`:94-100`) pinga la ficha más los hubs afectados: `/`, `/sitemap.xml`, `/estadisticas-inmobiliarias` y `/estadisticas-inmobiliarias/<ciudad>`. Se desactiva solo si el sitio es localhost o si `INDEXNOW_ENABLED` está en falso (`:37-43`). Su `_slugify` (`:85-91`) replica el del frontend para que las URLs pingadas existan |
 | `authentication.py` | **Nuevo, sin commitear.** Extrae de la vista todo el enlace de identidad Google. `GoogleIdentity.from_claims()` (`:27-39`) exige `email`, `sub` y `email_verified is True`, o lanza `GoogleIdentityError`. `GoogleAuthenticationService.authenticate()` (`:45-48`) busca al usuario por `oauth_id`, luego por email (`select_for_update`, dentro de `transaction.atomic`), y si no existe lo crea reservando un `username` con reintentos sobre `IntegrityError`; si el conflicto es la misma identidad Google creada en paralelo, devuelve la existente en lugar de agotar sufijos. Emite los JWT con claims extra `username`, `email` e `is_staff` (`:103-109`). La vista `GoogleLoginView` (`views.py:987-1038`) queda reducida a validar el token con `google.oauth2.id_token`, delegar y serializar |

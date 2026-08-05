@@ -24,7 +24,8 @@ def test_lead_001_visitante_anonimo_crea_un_lead(spec_request):
         method='POST',
         path='/api/leads/',
         role='anonymous',
-        payload=None,
+        given=None,
+        body={'property': '{property_id}', 'name': 'Interesado de spec', 'phone': '0991234567', 'email': 'interesado-spec@example.com', 'message': 'Me interesa esta propiedad.', 'source': 'property_page'},
     )
     assert_outcome(
         response,
@@ -32,7 +33,7 @@ def test_lead_001_visitante_anonimo_crea_un_lead(spec_request):
         denied_status=None,
         rule_id='LEAD-001',
         case_name='Visitante anónimo crea un lead',
-        expected_status=None,
+        expected_status=201,
     )
 
 
@@ -47,7 +48,8 @@ def test_lead_005_visitante_anonimo_consulta_la_bandeja_de_leads(spec_request):
         method='GET',
         path='/api/leads/',
         role='anonymous',
-        payload=None,
+        given=None,
+        body=None,
     )
     assert_outcome(
         response,
@@ -67,7 +69,8 @@ def test_lead_005_dueno_de_la_propiedad_ve_solo_sus_propios_leads(spec_request):
         method='GET',
         path='/api/leads/',
         role='owner',
-        payload=None,
+        given=None,
+        body=None,
     )
     assert_outcome(
         response,
@@ -75,7 +78,7 @@ def test_lead_005_dueno_de_la_propiedad_ve_solo_sus_propios_leads(spec_request):
         denied_status=401,
         rule_id='LEAD-005',
         case_name='Dueño de la propiedad ve solo sus propios leads',
-        expected_status=None,
+        expected_status=200,
     )
 
 def test_lead_005_staff_ve_leads_de_cualquier_propiedad(spec_request):
@@ -87,7 +90,8 @@ def test_lead_005_staff_ve_leads_de_cualquier_propiedad(spec_request):
         method='GET',
         path='/api/leads/',
         role='staff',
-        payload=None,
+        given=None,
+        body=None,
     )
     assert_outcome(
         response,
@@ -95,7 +99,7 @@ def test_lead_005_staff_ve_leads_de_cualquier_propiedad(spec_request):
         denied_status=401,
         rule_id='LEAD-005',
         case_name='Staff ve leads de cualquier propiedad',
-        expected_status=None,
+        expected_status=200,
     )
 
 
@@ -110,7 +114,8 @@ def test_lead_011_visitante_anonimo_consulta_la_bandeja(spec_request):
         method='GET',
         path='/api/pending-publications/',
         role='anonymous',
-        payload=None,
+        given=None,
+        body=None,
     )
     assert_outcome(
         response,
@@ -130,7 +135,8 @@ def test_lead_011_usuario_autenticado_sin_is_staff(spec_request):
         method='GET',
         path='/api/pending-publications/',
         role='authenticated',
-        payload=None,
+        given=None,
+        body=None,
     )
     assert_outcome(
         response,
@@ -150,7 +156,8 @@ def test_lead_011_staff_consulta_la_bandeja_completa(spec_request):
         method='GET',
         path='/api/pending-publications/',
         role='staff',
-        payload=None,
+        given=None,
+        body=None,
     )
     assert_outcome(
         response,
@@ -158,5 +165,5 @@ def test_lead_011_staff_consulta_la_bandeja_completa(spec_request):
         denied_status=401,
         rule_id='LEAD-011',
         case_name='Staff consulta la bandeja completa',
-        expected_status=None,
+        expected_status=200,
     )

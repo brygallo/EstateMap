@@ -7,55 +7,20 @@ summary: >-
   lo que se dejó fuera de la primera versión a propósito, para que la decisión
   esté escrita en algún sitio y no haya que reconstruirla de memoria.
 
-  Eran tres cosas. La primera —devolverle al dueño cuántas visitas trajo cada
-  red— ya está construida y se mudó a specs/domains/social-kit.yaml como
-  SOC-101, que es donde viven las reglas que el código aplica. Quedan dos:
-  generar kits para los momentos que no son la publicación inicial, y el video
-  corto que es lo único que TikTok premia de verdad. La publicación automática
-  en Meta no está aquí: está en SOC-010, como decisión de no hacerla.
+  Eran tres cosas y ya solo queda una. Devolverle al dueño cuántas visitas trajo
+  cada red se construyó y se mudó a specs/domains/social-kit.yaml como SOC-101;
+  las láminas para los momentos que no son la publicación inicial también, como
+  SOC-102. Ahí es donde viven las reglas que el código aplica.
+
+  Queda el video corto, que es lo único que TikTok premia de verdad. La
+  publicación automática en Meta no está aquí: está en SOC-010, como decisión de
+  no hacerla.
 see_also:
   - specs/domains/social-kit.yaml
   - specs/ui/visibility-rules.yaml
   - docs/technical/cache.md
 
 rules:
-  - id: SOC-102
-    name: Hay kit para los momentos que no son la publicación
-    status: proposed
-    summary: >-
-      Además del kit inicial, se generan láminas para bajada de precio y para
-      anuncio vendido o alquilado.
-    rationale: >-
-      Un anuncio se comparte bien una vez y luego se queda quieto. Los momentos
-      que dan una excusa para volver a publicarlo son pocos y conocidos: bajó el
-      precio, y se vendió.
-
-      La lámina de «vendido» es la más valiosa de las dos y la menos evidente:
-      no vende ese inmueble, que ya está vendido. La comparte el agente porque
-      es su currículum, y al hacerlo distribuye el logo y el código del portal
-      entre gente que todavía no lo conoce. Es publicidad que se reparte sola.
-
-      Lo que la bloqueaba ya no la bloquea: el servidor distingue un anuncio
-      vendido de uno retirado (PROP-033), le conserva la ficha y el código corto
-      para que el QR de la lámina resuelva (PROP-034), y publica el precio
-      anterior para la lámina de bajada (PROP-035). Queda `proposed` porque las
-      láminas en sí —composición, textos y la pantalla que las ofrece— son
-      trabajo de frontend y no están escritas.
-    tests: {}
-    cases:
-      - name: Bajar el precio ofrece la lámina de bajada
-        given: {price_anterior: 90000, price: 79000}
-        expected: presente
-      - name: La lámina de bajada muestra los dos precios
-        expected: presente
-      - name: Marcar como vendido ofrece la lámina de vendido
-        given: {closed_reason: sold}
-        expected: presente
-      - name: Un anuncio inactivo no es lo mismo que uno vendido
-        given: {status: inactive, closed_reason: ""}
-        expected: ausente
-        note: Retirar un anuncio no es una venta y no merece felicitación.
-
   - id: SOC-103
     name: Un video corto para TikTok y Reels
     status: proposed

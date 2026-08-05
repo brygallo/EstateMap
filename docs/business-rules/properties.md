@@ -1,6 +1,8 @@
 # Reglas de negocio: Propiedades
 
-Verificado contra el código el 2026-08-04.
+Verificado contra el código el 2026-08-04. Revisado el 2026-08-05 en lo que tocó el cierre de
+anuncios y el precio anterior: §1.1, §2.2, §2.3, §2.4, §7.1, §9.1, §9.2 y §10.1. En el resto,
+las referencias `archivo:línea` pueden haberse desplazado desde entonces.
 
 Este documento describe **solo** lo que está implementado en el repositorio. Cuando una
 capacidad no existe se indica explícitamente con la evidencia. Los identificadores de
@@ -23,7 +25,8 @@ público sin borrar la fila.
 | `title` | `backend/real_estate/models.py:75` | `CharField(max_length=150)`, `blank=True, default=""`. No es obligatorio. En la ingesta se trunca a 150 (`backend/ingesta/pipeline/upsert.py:24`). |
 | `description` | `backend/real_estate/models.py:76` | Texto libre opcional. La ingesta la limpia de HTML preservando saltos de línea (`clean_description`, `backend/ingesta/pipeline/normalize.py:160`). |
 | `property_type` | `backend/real_estate/models.py:77` | Choices `house`, `land`, `apartment`, `commercial`, `other` (`backend/real_estate/models.py:61`). **Default `land`**: el portal nació orientado a terrenos. La ingesta lo deduce por palabras clave del título/categoría/URL y cae a `other` si no reconoce nada (`backend/ingesta/pipeline/normalize.py:31`). |
-| `status` | `backend/real_estate/models.py:78` | Choices `for_sale`, `for_rent`, `inactive` (`backend/real_estate/models.py:69`). Default `for_sale`. Ver §2. |
+| `status` | `backend/real_estate/models.py:78` | Choices `for_sale`, `for_rent`, `inactive` (`backend/real_estate/models.py:72`). Default `for_sale`. **Siguen siendo tres**: «vendido» y «alquilado» no son estados, ver §2.3. |
+| `closed_reason` / `closed_at` | `backend/real_estate/models.py:142-149` | Por qué y cuándo dejó de ofrecerse el anuncio. Vacío = sigue abierto. Ver §2.3. |
 
 Propiedades de conveniencia `is_for_sale` / `is_for_rent` en
 `backend/real_estate/models.py:195` y `backend/real_estate/models.py:199`: comparan
@@ -109,9 +112,81 @@ del anuncio (`backend/ingesta/pipeline/upsert.py:84`).
 - `status='inactive'` desaparece del listado, del mapa y de todos los agregados públicos:
   `Property.objects.exclude(status='inactive')` es la base del queryset público
   (`backend/real_estate/views.py:321`).
-- Las inactivas **solo** se ven en `/api/properties/my_properties/`, que consulta por
-  `owner` sin filtrar el estado (`backend/real_estate/views.py:811`), y en el panel admin
-  (`backend/real_estate/views.py:1925`).
+- Las inactivas **solo** se listan en `/api/properties/my_properties/`, que consulta por
+  `owner` sin filtrar el estado (`backend/real_estate/views.py:973`), y en el panel admin
+  (`backend/real_estate/views.py:2331`).
+- Desde el 2026-08-05 las acciones que se dirigen a **un** anuncio por su id
+  (`retrieve`, `update`, `partial_update`, `destroy`, `delete_image`) no usan ese queryset:
+  resuelven la fila con su propia condición (`backend/real_estate/views.py:380-405`). Ver
+  §2.3.
+
+### 2.3 Cierre de un anuncio: `closed_reason` y `closed_at`
+
+`status` responde «¿qué ofrece este anuncio?». `closed_reason` responde otra pregunta
+distinta: «¿por qué se fue?». Son `sold`, `rented` y `withdrawn`
+(`backend/real_estate/models.py:91-95`), y el valor vacío significa que el anuncio sigue
+abierto. **No hay estados `sold` ni `rented`**, y la decisión de que no los haya está
+razonada en [ADR 0003](../decisions/0003-el-cierre-de-un-anuncio-no-es-un-estado.md).
+
+Un anuncio cerrado es un anuncio `inactive` **con motivo**. La normalización vive en
+`save()` (`backend/real_estate/models.py:258-269`), que es por donde pasan todos los caminos
+de escritura —API, panel e ingesta—:
+
+- Poner `closed_reason` fuerza `status='inactive'` y sella `closed_at` si estaba vacío. Un
+  piso vendido que se quedara en `for_sale` seguiría ofreciéndose en el mapa.
+- Quitar `closed_reason` borra `closed_at`.
+- **Reabrir significa borrar el motivo, no cambiar el estado.** Mientras el motivo siga
+  puesto, el siguiente guardado devuelve la fila a `inactive` él solo. Por eso el serializer
+  limpia el motivo cuando alguien mueve el selector de estado a algo distinto de «Inactivo»
+  (`reopen_on_reactivation`, `backend/real_estate/serializers.py:38-49`), y por eso el cambio
+  de estado en lote del panel admin lo repite a mano: usa `.update()`, que nunca llega a
+  `save()` (`backend/real_estate/views.py:2531-2534`).
+
+`closed_at` es de solo lectura en el API público (§9.1): el motivo lo afirma el dueño, la
+fecha la sella el servidor.
+
+**Un anuncio cerrado conserva ficha y código corto.** Sale del catálogo igual que cualquier
+inactivo, pero sigue resolviéndose individualmente: la condición de las acciones de detalle
+deja pasar cualquier fila con motivo de cierre (`backend/real_estate/views.py:399`) y la ruta
+del código corto excluye solo `inactive` **sin** motivo
+(`backend/real_estate/views.py:769`). El porqué es concreto: la lámina de «vendido» existe
+para reenviarse y lleva impresos el código corto y el QR del anuncio; si la ficha respondiera
+404, el portal estaría repartiendo imágenes que apuntan a un anuncio que él mismo niega.
+
+**Retirar sigue siendo retirar.** Sin motivo de cierre, la ficha desaparece para todo el que
+no sea su dueño o staff, exactamente como antes. La diferencia no es de estado, es de
+intención.
+
+**El dueño alcanza siempre su propio anuncio**, esté como esté
+(`backend/real_estate/views.py:404`). Antes no podía: quien desactivaba un anuncio se quedaba
+sin abrirlo, editarlo ni reactivarlo por la API. Con el cierre habría sido peor, porque
+marcar «vendido» habría equivalido a perder el anuncio.
+
+Ese privilegio es de la ficha y **solo** de la ficha. La ruta por código corto no mira quién
+pregunta a propósito: su respuesta se cachea con `s-maxage` para que la sirva el borde cuando
+llega desde un QR impreso, y una respuesta que dependiera de la sesión ensuciaría esa caché
+compartida. Así que el dueño de un anuncio simplemente inactivo recibe 404 por el código y
+200 por la ficha.
+
+### 2.4 Los momentos de un anuncio
+
+Un anuncio se comparte bien una vez y luego se queda quieto. Los momentos que dan una excusa
+para volver a publicarlo son pocos y conocidos, y el cierre es la mitad de ellos:
+
+| Momento | Qué lo hace cierto |
+| --- | --- |
+| **Bajó el precio** | Hay `previous_price` y `price_changed_at` en la ficha y el anterior es **estrictamente mayor** que el actual (`priceDrop`, `frontend/lib/social-kit.ts:622-640`). Una subida no es una bajada y devuelve `null`: reutilizar el diseño pondría «ANTES» sobre la cifra más barata. |
+| **Se vendió o se alquiló** | `closed_reason` es `sold` o `rented` (`closureKind`, `frontend/lib/social-kit.ts:655-658`; en el backend, `SUCCESSFUL_CLOSURES`, `backend/real_estate/models.py:99`). `withdrawn` **no** cuenta: retirar un anuncio no es un logro, y felicitar a alguien por ello es falso y además ofensivo. |
+
+Lo que decide si el momento existe es un único predicado compartido —`momentFormats`
+(`frontend/lib/social-kit.ts:679-684`)— con dos llamantes: la pantalla del kit y la ruta que
+dibuja la imagen. Si la pantalla lo dedujera por su cuenta acabaría ofreciendo una tarjeta
+que la ruta responde con 404; y cuando el momento no ocurrió, la ruta niega la lámina en vez
+de devolver una sustituta, porque estas URL acaban en `og:image` y una imagen equivocada la
+cachearían todos los *scrapers* sin que nadie aguas abajo pueda distinguir cuál recibió.
+
+La lámina de «vendido» no lleva precio a propósito: un importe junto a VENDIDO se lee como
+«se vendió por», que es una cifra que nadie registró.
 
 ---
 
@@ -364,6 +439,27 @@ El endpoint `intelligence` devuelve el historial y, si está vacío pero hay pre
 una entrada con `created_at` para no mostrar un gráfico vacío
 (`backend/real_estate/views.py:549`).
 
+### 7.1 `previous_price` y `price_changed_at` en la ficha
+
+Desde el 2026-08-05 el detalle de una propiedad publica también el **último salto** de
+precio: `previous_price` y `price_changed_at`, ambos `SerializerMethodField` calculados por
+`_price_change` (`backend/real_estate/serializers.py:204-232`). Lo pide la lámina de «bajó el
+precio» (§2.4), que necesita los dos importes.
+
+La lógica es corta y las tres decisiones que contiene importan:
+
+- Hacen falta **al menos dos filas** de historial; si no, no hubo salto.
+- Si la fila más reciente **no coincide** con el precio actual —alguien escribió la columna
+  sin pasar por `save()`— se devuelve `null` en los dos campos. Hornear un «antes» dudoso en
+  una imagen que sobrevive a la corrección es peor que no ofrecer la lámina.
+- `previous_price` viaja como **texto**, igual que `price`: DRF serializa los decimales así,
+  y dos campos de precio de tipos distintos en el mismo payload son una trampa para quien
+  los compare.
+
+No es una fuga nueva: ambos importes fueron precios públicos mientras estuvieron vigentes, y
+el endpoint `intelligence`, que es `AllowAny`, ya sirve el historial completo. La regla de no
+exponer contadores va de visitas, no de precios.
+
 ---
 
 ## 8. `PropertyImage`
@@ -490,10 +586,16 @@ funcionó (`backend/ingesta/pipeline/images.py:133`).
 
 ### 9.1 Campos de solo lectura
 
-`read_only_fields` (`backend/real_estate/serializers.py:197`): `created_at`, `updated_at`,
-`owner`, `views_count`, `source`, `source_agency`, `source_url`, `external_id`,
-`is_imported`, `dedup_key`, `image_hash`, `is_duplicate`, `duplicate_of`, `imported_at`,
-`source_published_at`, `source_updated_at`, `last_seen_at`.
+`read_only_fields` (`backend/real_estate/serializers.py:187-202`): `created_at`, `updated_at`,
+`owner`, `views_count`, `short_code`, `closed_at`, `source`, `source_agency`, `source_url`,
+`external_id`, `is_imported`, `dedup_key`, `image_hash`, `is_duplicate`, `duplicate_of`,
+`imported_at`, `source_published_at`, `source_updated_at`, `last_seen_at`.
+
+Los dos últimos añadidos tienen el mismo motivo, y no es de agregación: `short_code` se
+imprime en las láminas y la columna es única, así que un cliente que lo eligiera podría
+okupar el código de un anuncio ajeno; y `closed_at` lo sella el servidor porque la fecha de
+un cierre no es de nadie para retrodatarla. `closed_reason`, en cambio, **sí** es escribible:
+es el dueño quien afirma que vendió.
 
 Es decir: **agregación, moderación y analítica se controlan solo desde los servicios de
 ingesta/admin, nunca desde el CRUD público**. Un cliente que mande `views_count`,
@@ -509,10 +611,13 @@ con un cuerpo vacío crea una propiedad válida con `property_type='land'`,
 `status='for_sale'`, `city='Macas'`, `province='Morona Santiago'` y sin precio.
 
 Campos escribibles por el API público: `address`, `area`, `bathrooms`, `built_area`, `city`,
-`contact_email`, `contact_phone`, `description`, `floors`, `furnished`, `images_to_delete`,
-`is_negotiable`, `latitude`, `longitude`, `parking_spaces`, `polygon`, `price`,
-`property_type`, `province`, `rent_price`, `rooms`, `show_measurements`, `status`, `title`,
-`uploaded_images`, `year_built`.
+`closed_reason`, `contact_email`, `contact_phone`, `description`, `floors`, `furnished`,
+`images_to_delete`, `is_negotiable`, `latitude`, `longitude`, `parking_spaces`, `polygon`,
+`price`, `property_type`, `province`, `rent_price`, `rooms`, `show_measurements`, `status`,
+`title`, `uploaded_images`, `year_built`.
+
+`previous_price` y `price_changed_at` no aparecen porque son `SerializerMethodField`: se
+calculan al leer y no se pueden escribir (§7.1).
 
 **No implementado a fecha de hoy**: no existe validación cruzada de precios (nada exige
 `price` cuando `status='for_sale'`, ni impide `rent_price` sin `price`, ni aplica las cotas
@@ -543,9 +648,21 @@ que un punto fuera de Ecuador sin polígono se acepta.
 
 Consecuencia directa para las importadas: como su `owner` es `NULL`, **nadie puede
 editarlas ni borrarlas desde el API público**; solo el `AdminPropertyViewSet`
-(`backend/real_estate/views.py:1925`), restringido a `is_staff`, y su PATCH está limitado a
+(`backend/real_estate/views.py:2331`), restringido a `is_staff`, y su PATCH está limitado a
 `{'status', 'title', 'price', 'city', 'description'}`
-(`PATCH_ALLOWED_FIELDS`, `backend/real_estate/views.py:1938`).
+(`PATCH_ALLOWED_FIELDS`, `backend/real_estate/views.py:2344`).
+
+Esa lista tiene una consecuencia que conviene conocer: **`closed_reason` no está en ella**,
+así que desde el panel admin se puede reabrir un anuncio (cambiando el estado, que arrastra
+el borrado del motivo) pero no cerrarlo. Marcar un anuncio como vendido es hoy cosa de su
+dueño, por el CRUD de propiedades. No es un descuido: un cierre es una afirmación sobre un
+negocio ajeno.
+
+La lectura de la ficha, en cambio, ya no la decide `get_queryset` del catálogo. Las acciones
+dirigidas a un anuncio por su id resuelven la fila con su propia condición de visibilidad
+(`backend/real_estate/views.py:380-405`), detallada en §2.3: cerrado con motivo, o propio, o
+público. La matriz completa está en
+[../permissions/matrix.md](../permissions/matrix.md).
 
 ### 10.2 Idempotencia al publicar
 

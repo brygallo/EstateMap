@@ -24,7 +24,8 @@ def test_perm_001_un_visitante_anonimo_lista_el_catalogo(spec_request):
         method='GET',
         path='/api/properties/',
         role='anonymous',
-        payload=None,
+        given=None,
+        body=None,
     )
     assert_outcome(
         response,
@@ -44,7 +45,8 @@ def test_perm_001_un_usuario_autenticado_lista_el_catalogo(spec_request):
         method='GET',
         path='/api/properties/',
         role='authenticated',
-        payload=None,
+        given=None,
+        body=None,
     )
     assert_outcome(
         response,
@@ -64,7 +66,8 @@ def test_perm_001_el_renderizado_en_servidor_de_next_js_lista_el_catalogo(spec_r
         method='GET',
         path='/api/properties/',
         role='internal',
-        payload=None,
+        given=None,
+        body=None,
     )
     assert_outcome(
         response,
@@ -87,7 +90,8 @@ def test_perm_002_un_visitante_anonimo_abre_la_ficha(spec_request):
         method='GET',
         path='/api/properties/{property_id}/',
         role='anonymous',
-        payload=None,
+        given=None,
+        body=None,
     )
     assert_outcome(
         response,
@@ -107,7 +111,8 @@ def test_perm_002_un_tercero_autenticado_abre_la_ficha(spec_request):
         method='GET',
         path='/api/properties/{property_id}/',
         role='not_owner',
-        payload=None,
+        given=None,
+        body=None,
     )
     assert_outcome(
         response,
@@ -127,7 +132,8 @@ def test_perm_002_el_propietario_abre_su_propia_ficha(spec_request):
         method='GET',
         path='/api/properties/{property_id}/',
         role='owner',
-        payload=None,
+        given=None,
+        body=None,
     )
     assert_outcome(
         response,
@@ -150,7 +156,8 @@ def test_perm_003_un_anonimo_no_puede_publicar(spec_request):
         method='POST',
         path='/api/properties/',
         role='anonymous',
-        payload=None,
+        given=None,
+        body=None,
     )
     assert_outcome(
         response,
@@ -170,7 +177,8 @@ def test_perm_003_un_usuario_autenticado_supera_la_barrera_de_permisos(spec_requ
         method='POST',
         path='/api/properties/',
         role='authenticated',
-        payload=None,
+        given=None,
+        body=None,
     )
     assert_outcome(
         response,
@@ -193,7 +201,8 @@ def test_perm_004_el_propietario_edita_su_propiedad(spec_request):
         method='PATCH',
         path='/api/properties/{property_id}/',
         role='owner',
-        payload={'title': 'Propiedad de spec editada'},
+        given=None,
+        body={'title': 'Propiedad de spec editada'},
     )
     assert_outcome(
         response,
@@ -213,7 +222,8 @@ def test_perm_004_un_tercero_autenticado_no_puede_editarla(spec_request):
         method='PATCH',
         path='/api/properties/{property_id}/',
         role='not_owner',
-        payload={'title': 'Intento de secuestro'},
+        given=None,
+        body={'title': 'Intento de secuestro'},
     )
     assert_outcome(
         response,
@@ -233,7 +243,8 @@ def test_perm_004_un_usuario_staff_si_puede_editarla_por_la_ruta_publica(spec_re
         method='PATCH',
         path='/api/properties/{property_id}/',
         role='staff',
-        payload={'title': 'Edición desde staff'},
+        given=None,
+        body={'title': 'Edición desde staff'},
     )
     assert_outcome(
         response,
@@ -253,7 +264,8 @@ def test_perm_004_un_anonimo_no_puede_editarla(spec_request):
         method='PATCH',
         path='/api/properties/{property_id}/',
         role='anonymous',
-        payload={'title': 'Intento anónimo'},
+        given=None,
+        body={'title': 'Intento anónimo'},
     )
     assert_outcome(
         response,
@@ -276,7 +288,8 @@ def test_perm_005_el_propietario_elimina_su_propiedad(spec_request):
         method='DELETE',
         path='/api/properties/{property_id}/',
         role='owner',
-        payload=None,
+        given=None,
+        body=None,
     )
     assert_outcome(
         response,
@@ -296,7 +309,8 @@ def test_perm_005_un_tercero_autenticado_no_puede_eliminarla(spec_request):
         method='DELETE',
         path='/api/properties/{property_id}/',
         role='not_owner',
-        payload=None,
+        given=None,
+        body=None,
     )
     assert_outcome(
         response,
@@ -316,7 +330,8 @@ def test_perm_005_un_usuario_staff_elimina_una_propiedad_ajena(spec_request):
         method='DELETE',
         path='/api/properties/{property_id}/',
         role='staff',
-        payload=None,
+        given=None,
+        body=None,
     )
     assert_outcome(
         response,
@@ -336,7 +351,8 @@ def test_perm_005_un_anonimo_no_puede_eliminarla(spec_request):
         method='DELETE',
         path='/api/properties/{property_id}/',
         role='anonymous',
-        payload=None,
+        given=None,
+        body=None,
     )
     assert_outcome(
         response,
@@ -359,7 +375,8 @@ def test_perm_006_un_anonimo_no_puede_consultar_inventario_propio(spec_request):
         method='GET',
         path='/api/properties/my_properties/',
         role='anonymous',
-        payload=None,
+        given=None,
+        body=None,
     )
     assert_outcome(
         response,
@@ -379,7 +396,8 @@ def test_perm_006_el_propietario_ve_su_inventario(spec_request):
         method='GET',
         path='/api/properties/my_properties/',
         role='owner',
-        payload=None,
+        given=None,
+        body=None,
     )
     assert_outcome(
         response,
@@ -399,7 +417,8 @@ def test_perm_006_otro_usuario_recibe_su_propia_lista_no_la_ajena(spec_request):
         method='GET',
         path='/api/properties/my_properties/',
         role='not_owner',
-        payload=None,
+        given=None,
+        body=None,
     )
     assert_outcome(
         response,
@@ -419,7 +438,8 @@ def test_perm_006_un_administrador_recibe_el_catalogo_entero(spec_request):
         method='GET',
         path='/api/properties/my_properties/',
         role='staff',
-        payload=None,
+        given=None,
+        body=None,
     )
     assert_outcome(
         response,
@@ -442,7 +462,8 @@ def test_perm_007_una_cuenta_sin_verificar_supera_la_barrera_de_permisos_al_publ
         method='POST',
         path='/api/properties/',
         role='unverified',
-        payload=None,
+        given=None,
+        body=None,
     )
     assert_outcome(
         response,
@@ -466,7 +487,8 @@ def test_perm_008_una_cuenta_sin_verificar_no_deberia_poder_publicar(spec_reques
         method='POST',
         path='/api/properties/',
         role='unverified',
-        payload=None,
+        given=None,
+        body=None,
     )
     assert_outcome(
         response,
@@ -487,7 +509,8 @@ def test_perm_008_una_cuenta_verificada_si_deberia_poder_publicar(spec_request):
         method='POST',
         path='/api/properties/',
         role='authenticated',
-        payload=None,
+        given=None,
+        body=None,
     )
     assert_outcome(
         response,
@@ -510,7 +533,8 @@ def test_perm_009_un_anonimo_si_queda_fuera(spec_request):
         method='DELETE',
         path='/api/properties/{property_id}/delete_image/',
         role='anonymous',
-        payload=None,
+        given=None,
+        body=None,
     )
     assert_outcome(
         response,
@@ -530,7 +554,8 @@ def test_perm_009_un_tercero_autenticado_no_es_rechazado_por_permisos(spec_reque
         method='DELETE',
         path='/api/properties/{property_id}/delete_image/',
         role='not_owner',
-        payload=None,
+        given=None,
+        body=None,
     )
     assert_outcome(
         response,
@@ -550,7 +575,8 @@ def test_perm_009_el_propietario_supera_la_barrera(spec_request):
         method='DELETE',
         path='/api/properties/{property_id}/delete_image/',
         role='owner',
-        payload=None,
+        given=None,
+        body=None,
     )
     assert_outcome(
         response,
@@ -574,7 +600,8 @@ def test_perm_010_un_tercero_autenticado_no_deberia_poder_borrar_imagenes_ajenas
         method='DELETE',
         path='/api/properties/{property_id}/delete_image/',
         role='not_owner',
-        payload=None,
+        given=None,
+        body=None,
     )
     assert_outcome(
         response,
@@ -595,7 +622,8 @@ def test_perm_010_el_propietario_si_deberia_poder(spec_request):
         method='DELETE',
         path='/api/properties/{property_id}/delete_image/',
         role='owner',
-        payload=None,
+        given=None,
+        body=None,
     )
     assert_outcome(
         response,
@@ -618,7 +646,8 @@ def test_perm_011_un_visitante_anonimo_obtiene_el_informe_completo(spec_request)
         method='GET',
         path='/api/properties/{property_id}/intelligence/',
         role='anonymous',
-        payload=None,
+        given=None,
+        body=None,
     )
     assert_outcome(
         response,
@@ -638,7 +667,8 @@ def test_perm_011_un_tercero_autenticado_tambien(spec_request):
         method='GET',
         path='/api/properties/{property_id}/intelligence/',
         role='not_owner',
-        payload=None,
+        given=None,
+        body=None,
     )
     assert_outcome(
         response,
@@ -661,7 +691,8 @@ def test_perm_013_un_visitante_anonimo_carga_el_mapa(spec_request):
         method='GET',
         path='/api/properties/map_points/',
         role='anonymous',
-        payload=None,
+        given=None,
+        body=None,
     )
     assert_outcome(
         response,
@@ -681,7 +712,8 @@ def test_perm_013_el_renderizado_en_servidor_carga_el_mapa_sin_consumir_cuota(sp
         method='GET',
         path='/api/properties/map_points/',
         role='internal',
-        payload=None,
+        given=None,
+        body=None,
     )
     assert_outcome(
         response,
@@ -701,7 +733,8 @@ def test_perm_013_un_usuario_staff_carga_el_mapa(spec_request):
         method='GET',
         path='/api/properties/map_points/',
         role='staff',
-        payload=None,
+        given=None,
+        body=None,
     )
     assert_outcome(
         response,
@@ -724,7 +757,8 @@ def test_perm_014_un_visitante_anonimo_obtiene_los_totales(spec_request):
         method='GET',
         path='/api/properties/summary/',
         role='anonymous',
-        payload=None,
+        given=None,
+        body=None,
     )
     assert_outcome(
         response,
@@ -747,7 +781,8 @@ def test_perm_015_un_visitante_anonimo_obtiene_las_ubicaciones(spec_request):
         method='GET',
         path='/api/properties/locations/',
         role='anonymous',
-        payload=None,
+        given=None,
+        body=None,
     )
     assert_outcome(
         response,
@@ -770,7 +805,8 @@ def test_perm_016_un_visitante_anonimo_obtiene_el_catalogo_de_cantones(spec_requ
         method='GET',
         path='/api/properties/catalog/',
         role='anonymous',
-        payload=None,
+        given=None,
+        body=None,
     )
     assert_outcome(
         response,
@@ -793,7 +829,8 @@ def test_perm_017_un_visitante_anonimo_obtiene_la_lista_de_propietarios(spec_req
         method='GET',
         path='/api/properties/owners/',
         role='anonymous',
-        payload=None,
+        given=None,
+        body=None,
     )
     assert_outcome(
         response,
@@ -816,7 +853,8 @@ def test_perm_018_un_visitante_anonimo_obtiene_los_indicadores(spec_request):
         method='GET',
         path='/api/market-stats/',
         role='anonymous',
-        payload=None,
+        given=None,
+        body=None,
     )
     assert_outcome(
         response,
@@ -836,7 +874,8 @@ def test_perm_018_el_renderizado_en_servidor_obtiene_los_indicadores(spec_reques
         method='GET',
         path='/api/market-stats/',
         role='internal',
-        payload=None,
+        given=None,
+        body=None,
     )
     assert_outcome(
         response,
@@ -859,7 +898,8 @@ def test_perm_019_un_visitante_anonimo_consulta_las_provincias(spec_request):
         method='GET',
         path='/api/provinces/',
         role='anonymous',
-        payload=None,
+        given=None,
+        body=None,
     )
     assert_outcome(
         response,
@@ -882,7 +922,8 @@ def test_perm_020_un_anonimo_no_puede_crear_provincias(spec_request):
         method='POST',
         path='/api/provinces/',
         role='anonymous',
-        payload=None,
+        given=None,
+        body=None,
     )
     assert_outcome(
         response,
@@ -902,7 +943,8 @@ def test_perm_020_ni_siquiera_staff_puede_crear_provincias_por_la_api(spec_reque
         method='POST',
         path='/api/provinces/',
         role='staff',
-        payload=None,
+        given=None,
+        body=None,
     )
     assert_outcome(
         response,
@@ -925,7 +967,8 @@ def test_perm_021_un_anonimo_alcanza_el_proxy_sin_credenciales(spec_request):
         method='GET',
         path='/api/media/spec-inexistente.webp',
         role='anonymous',
-        payload=None,
+        given=None,
+        body=None,
     )
     assert_outcome(
         response,
@@ -948,7 +991,8 @@ def test_perm_023_un_anonimo_alcanza_la_vista_sin_credenciales(spec_request):
         method='GET',
         path='/api/pending-image/{id}/',
         role='anonymous',
-        payload=None,
+        given=None,
+        body=None,
     )
     assert_outcome(
         response,
@@ -971,7 +1015,8 @@ def test_perm_024_un_anonimo_envia_el_formulario_de_contacto(spec_request):
         method='POST',
         path='/api/leads/',
         role='anonymous',
-        payload=None,
+        given=None,
+        body=None,
     )
     assert_outcome(
         response,
@@ -991,7 +1036,8 @@ def test_perm_024_un_usuario_autenticado_tambien_puede_enviarlo(spec_request):
         method='POST',
         path='/api/leads/',
         role='authenticated',
-        payload=None,
+        given=None,
+        body=None,
     )
     assert_outcome(
         response,
@@ -1014,7 +1060,8 @@ def test_perm_026_un_anonimo_no_puede_listar_leads(spec_request):
         method='GET',
         path='/api/leads/',
         role='anonymous',
-        payload=None,
+        given=None,
+        body=None,
     )
     assert_outcome(
         response,
@@ -1034,7 +1081,8 @@ def test_perm_026_el_propietario_lista_los_leads_de_sus_propiedades(spec_request
         method='GET',
         path='/api/leads/',
         role='owner',
-        payload=None,
+        given=None,
+        body=None,
     )
     assert_outcome(
         response,
@@ -1054,7 +1102,8 @@ def test_perm_026_otro_usuario_recibe_una_lista_vacia_no_la_ajena(spec_request):
         method='GET',
         path='/api/leads/',
         role='not_owner',
-        payload=None,
+        given=None,
+        body=None,
     )
     assert_outcome(
         response,
@@ -1074,7 +1123,8 @@ def test_perm_026_staff_lista_todos_los_leads(spec_request):
         method='GET',
         path='/api/leads/',
         role='staff',
-        payload=None,
+        given=None,
+        body=None,
     )
     assert_outcome(
         response,
@@ -1097,7 +1147,8 @@ def test_perm_028_un_anonimo_registra_una_solicitud(spec_request):
         method='POST',
         path='/api/pending-publications/',
         role='anonymous',
-        payload=None,
+        given=None,
+        body=None,
     )
     assert_outcome(
         response,
@@ -1120,7 +1171,8 @@ def test_perm_029_un_anonimo_no_accede_a_la_bandeja(spec_request):
         method='GET',
         path='/api/pending-publications/',
         role='anonymous',
-        payload=None,
+        given=None,
+        body=None,
     )
     assert_outcome(
         response,
@@ -1140,7 +1192,8 @@ def test_perm_029_un_usuario_autenticado_normal_no_accede_a_la_bandeja(spec_requ
         method='GET',
         path='/api/pending-publications/',
         role='authenticated',
-        payload=None,
+        given=None,
+        body=None,
     )
     assert_outcome(
         response,
@@ -1160,7 +1213,8 @@ def test_perm_029_el_propietario_de_propiedades_tampoco_accede(spec_request):
         method='GET',
         path='/api/pending-publications/',
         role='owner',
-        payload=None,
+        given=None,
+        body=None,
     )
     assert_outcome(
         response,
@@ -1180,7 +1234,8 @@ def test_perm_029_staff_accede_a_la_bandeja(spec_request):
         method='GET',
         path='/api/pending-publications/',
         role='staff',
-        payload=None,
+        given=None,
+        body=None,
     )
     assert_outcome(
         response,
@@ -1203,7 +1258,8 @@ def test_perm_030_un_anonimo_emite_un_evento(spec_request):
         method='POST',
         path='/api/activity-events/',
         role='anonymous',
-        payload={'event_name': 'spec_probe', 'path': '/spec'},
+        given=None,
+        body={'event_name': 'spec_probe', 'path': '/spec'},
     )
     assert_outcome(
         response,
@@ -1223,7 +1279,8 @@ def test_perm_030_un_usuario_autenticado_emite_un_evento(spec_request):
         method='POST',
         path='/api/activity-events/',
         role='authenticated',
-        payload={'event_name': 'spec_probe', 'path': '/spec'},
+        given=None,
+        body={'event_name': 'spec_probe', 'path': '/spec'},
     )
     assert_outcome(
         response,
@@ -1246,7 +1303,8 @@ def test_perm_031_un_anonimo_no_consulta_el_registro(spec_request):
         method='GET',
         path='/api/activity-events/',
         role='anonymous',
-        payload=None,
+        given=None,
+        body=None,
     )
     assert_outcome(
         response,
@@ -1266,7 +1324,8 @@ def test_perm_031_un_usuario_autenticado_normal_no_consulta_el_registro(spec_req
         method='GET',
         path='/api/activity-events/',
         role='authenticated',
-        payload=None,
+        given=None,
+        body=None,
     )
     assert_outcome(
         response,
@@ -1286,7 +1345,8 @@ def test_perm_031_staff_consulta_el_registro(spec_request):
         method='GET',
         path='/api/activity-events/',
         role='staff',
-        payload=None,
+        given=None,
+        body=None,
     )
     assert_outcome(
         response,
@@ -1309,7 +1369,8 @@ def test_perm_032_un_anonimo_alcanza_el_endpoint_de_login(spec_request):
         method='POST',
         path='/api/login/',
         role='anonymous',
-        payload=None,
+        given=None,
+        body=None,
     )
     assert_outcome(
         response,
@@ -1332,7 +1393,8 @@ def test_perm_034_un_anonimo_alcanza_el_registro(spec_request):
         method='POST',
         path='/api/register/',
         role='anonymous',
-        payload=None,
+        given=None,
+        body=None,
     )
     assert_outcome(
         response,
@@ -1355,7 +1417,8 @@ def test_perm_035_un_anonimo_alcanza_el_endpoint_de_google(spec_request):
         method='POST',
         path='/api/auth/google/',
         role='anonymous',
-        payload=None,
+        given=None,
+        body=None,
     )
     assert_outcome(
         response,
@@ -1378,7 +1441,8 @@ def test_perm_036_un_anonimo_alcanza_el_refresco_de_token(spec_request):
         method='POST',
         path='/api/token/refresh/',
         role='anonymous',
-        payload=None,
+        given=None,
+        body=None,
     )
     assert_outcome(
         response,
@@ -1401,7 +1465,8 @@ def test_perm_037_un_anonimo_alcanza_la_verificacion(spec_request):
         method='POST',
         path='/api/verify-email/',
         role='anonymous',
-        payload=None,
+        given=None,
+        body=None,
     )
     assert_outcome(
         response,
@@ -1424,7 +1489,8 @@ def test_perm_038_un_correo_inexistente_recibe_la_misma_respuesta_afirmativa(spe
         method='POST',
         path='/api/request-password-reset/',
         role='anonymous',
-        payload={'email': 'nadie-spec@example.com'},
+        given=None,
+        body={'email': 'nadie-spec@example.com'},
     )
     assert_outcome(
         response,
@@ -1447,7 +1513,8 @@ def test_perm_039_un_correo_inexistente_recibe_404_en_lugar_de_una_respuesta_gen
         method='POST',
         path='/api/resend-verification/',
         role='anonymous',
-        payload={'email': 'nadie-spec@example.com'},
+        given=None,
+        body={'email': 'nadie-spec@example.com'},
     )
     assert_outcome(
         response,
@@ -1471,7 +1538,8 @@ def test_perm_040_un_correo_inexistente_deberia_recibir_200_generico(spec_reques
         method='POST',
         path='/api/resend-verification/',
         role='anonymous',
-        payload={'email': 'nadie-spec@example.com'},
+        given=None,
+        body={'email': 'nadie-spec@example.com'},
     )
     assert_outcome(
         response,
@@ -1494,7 +1562,8 @@ def test_perm_041_un_anonimo_no_puede_leer_un_perfil(spec_request):
         method='GET',
         path='/api/me/',
         role='anonymous',
-        payload=None,
+        given=None,
+        body=None,
     )
     assert_outcome(
         response,
@@ -1514,7 +1583,8 @@ def test_perm_041_un_usuario_autenticado_lee_su_perfil(spec_request):
         method='GET',
         path='/api/me/',
         role='authenticated',
-        payload=None,
+        given=None,
+        body=None,
     )
     assert_outcome(
         response,
@@ -1534,7 +1604,8 @@ def test_perm_041_staff_lee_su_propio_perfil(spec_request):
         method='GET',
         path='/api/me/',
         role='staff',
-        payload=None,
+        given=None,
+        body=None,
     )
     assert_outcome(
         response,
@@ -1557,7 +1628,8 @@ def test_perm_042_un_anonimo_no_puede_modificar_ningun_perfil(spec_request):
         method='PATCH',
         path='/api/me/',
         role='anonymous',
-        payload={'first_name': 'Spec'},
+        given=None,
+        body={'first_name': 'Spec'},
     )
     assert_outcome(
         response,
@@ -1577,7 +1649,8 @@ def test_perm_042_un_usuario_autenticado_edita_su_nombre_e_is_staff_se_ignora(sp
         method='PATCH',
         path='/api/me/',
         role='authenticated',
-        payload={'first_name': 'Spec', 'is_staff': True},
+        given=None,
+        body={'first_name': 'Spec', 'is_staff': True},
     )
     assert_outcome(
         response,
@@ -1600,7 +1673,8 @@ def test_perm_043_un_anonimo_no_puede_cambiar_contrasenas(spec_request):
         method='POST',
         path='/api/change-password/',
         role='anonymous',
-        payload=None,
+        given=None,
+        body=None,
     )
     assert_outcome(
         response,
@@ -1620,7 +1694,8 @@ def test_perm_043_un_usuario_autenticado_supera_la_barrera_de_permisos(spec_requ
         method='POST',
         path='/api/change-password/',
         role='authenticated',
-        payload=None,
+        given=None,
+        body=None,
     )
     assert_outcome(
         response,
@@ -1643,7 +1718,8 @@ def test_perm_044_un_anonimo_no_puede_pedir_el_cambio_de_correo(spec_request):
         method='POST',
         path='/api/request-email-change/',
         role='anonymous',
-        payload=None,
+        given=None,
+        body=None,
     )
     assert_outcome(
         response,
@@ -1663,7 +1739,8 @@ def test_perm_044_un_usuario_autenticado_supera_la_barrera_de_permisos(spec_requ
         method='POST',
         path='/api/request-email-change/',
         role='authenticated',
-        payload=None,
+        given=None,
+        body=None,
     )
     assert_outcome(
         response,
@@ -1686,7 +1763,8 @@ def test_perm_045_un_anonimo_no_accede_al_dashboard(spec_request):
         method='GET',
         path='/api/admin/dashboard/',
         role='anonymous',
-        payload=None,
+        given=None,
+        body=None,
     )
     assert_outcome(
         response,
@@ -1706,7 +1784,8 @@ def test_perm_045_un_usuario_autenticado_normal_no_accede_al_dashboard(spec_requ
         method='GET',
         path='/api/admin/dashboard/',
         role='authenticated',
-        payload=None,
+        given=None,
+        body=None,
     )
     assert_outcome(
         response,
@@ -1726,7 +1805,8 @@ def test_perm_045_staff_accede_al_dashboard(spec_request):
         method='GET',
         path='/api/admin/dashboard/',
         role='staff',
-        payload=None,
+        given=None,
+        body=None,
     )
     assert_outcome(
         response,
@@ -1746,7 +1826,8 @@ def test_perm_045_un_superusuario_accede_al_dashboard(spec_request):
         method='GET',
         path='/api/admin/dashboard/',
         role='superuser',
-        payload=None,
+        given=None,
+        body=None,
     )
     assert_outcome(
         response,
@@ -1769,7 +1850,8 @@ def test_perm_046_un_anonimo_no_accede_al_estado_del_sistema(spec_request):
         method='GET',
         path='/api/admin/system-status/',
         role='anonymous',
-        payload=None,
+        given=None,
+        body=None,
     )
     assert_outcome(
         response,
@@ -1789,7 +1871,8 @@ def test_perm_046_un_usuario_autenticado_normal_no_accede(spec_request):
         method='GET',
         path='/api/admin/system-status/',
         role='authenticated',
-        payload=None,
+        given=None,
+        body=None,
     )
     assert_outcome(
         response,
@@ -1809,7 +1892,8 @@ def test_perm_046_staff_accede_al_estado_del_sistema(spec_request):
         method='GET',
         path='/api/admin/system-status/',
         role='staff',
-        payload=None,
+        given=None,
+        body=None,
     )
     assert_outcome(
         response,
@@ -1832,7 +1916,8 @@ def test_perm_047_un_anonimo_no_puede_resolver_incidencias(spec_request):
         method='POST',
         path='/api/admin/system-status/',
         role='anonymous',
-        payload=None,
+        given=None,
+        body=None,
     )
     assert_outcome(
         response,
@@ -1852,7 +1937,8 @@ def test_perm_047_un_usuario_autenticado_normal_no_puede_resolver_incidencias(sp
         method='POST',
         path='/api/admin/system-status/',
         role='authenticated',
-        payload=None,
+        given=None,
+        body=None,
     )
     assert_outcome(
         response,
@@ -1872,7 +1958,8 @@ def test_perm_047_staff_supera_la_barrera_de_permisos(spec_request):
         method='POST',
         path='/api/admin/system-status/',
         role='staff',
-        payload=None,
+        given=None,
+        body=None,
     )
     assert_outcome(
         response,
@@ -1895,7 +1982,8 @@ def test_perm_048_un_anonimo_no_lista_usuarios(spec_request):
         method='GET',
         path='/api/admin/users/',
         role='anonymous',
-        payload=None,
+        given=None,
+        body=None,
     )
     assert_outcome(
         response,
@@ -1915,7 +2003,8 @@ def test_perm_048_un_usuario_autenticado_normal_no_lista_usuarios(spec_request):
         method='GET',
         path='/api/admin/users/',
         role='authenticated',
-        payload=None,
+        given=None,
+        body=None,
     )
     assert_outcome(
         response,
@@ -1935,7 +2024,8 @@ def test_perm_048_staff_lista_usuarios(spec_request):
         method='GET',
         path='/api/admin/users/',
         role='staff',
-        payload=None,
+        given=None,
+        body=None,
     )
     assert_outcome(
         response,
@@ -1958,7 +2048,8 @@ def test_perm_049_un_anonimo_no_puede_modificar_cuentas(spec_request):
         method='PATCH',
         path='/api/admin/users/{owner_id}/',
         role='anonymous',
-        payload={'is_staff': True},
+        given=None,
+        body={'is_staff': True},
     )
     assert_outcome(
         response,
@@ -1978,7 +2069,8 @@ def test_perm_049_un_usuario_autenticado_normal_no_puede_modificar_cuentas(spec_
         method='PATCH',
         path='/api/admin/users/{owner_id}/',
         role='authenticated',
-        payload={'is_staff': True},
+        given=None,
+        body={'is_staff': True},
     )
     assert_outcome(
         response,
@@ -1998,7 +2090,8 @@ def test_perm_049_un_staff_promueve_a_otra_cuenta_a_staff_sin_ser_superusuario(s
         method='PATCH',
         path='/api/admin/users/{owner_id}/',
         role='staff',
-        payload={'is_staff': True},
+        given=None,
+        body={'is_staff': True},
     )
     assert_outcome(
         response,
@@ -2022,7 +2115,8 @@ def test_perm_050_un_staff_normal_no_deberia_poder_conceder_is_staff(spec_reques
         method='PATCH',
         path='/api/admin/users/{owner_id}/',
         role='staff',
-        payload={'is_staff': True},
+        given=None,
+        body={'is_staff': True},
     )
     assert_outcome(
         response,
@@ -2043,7 +2137,8 @@ def test_perm_050_un_superusuario_si_deberia_poder(spec_request):
         method='PATCH',
         path='/api/admin/users/{owner_id}/',
         role='superuser',
-        payload={'is_staff': True},
+        given=None,
+        body={'is_staff': True},
     )
     assert_outcome(
         response,
@@ -2066,7 +2161,8 @@ def test_perm_051_un_anonimo_no_puede_borrar_cuentas(spec_request):
         method='DELETE',
         path='/api/admin/users/{owner_id}/',
         role='anonymous',
-        payload=None,
+        given=None,
+        body=None,
     )
     assert_outcome(
         response,
@@ -2086,7 +2182,8 @@ def test_perm_051_un_usuario_autenticado_normal_no_puede_borrar_cuentas(spec_req
         method='DELETE',
         path='/api/admin/users/{owner_id}/',
         role='authenticated',
-        payload=None,
+        given=None,
+        body=None,
     )
     assert_outcome(
         response,
@@ -2106,7 +2203,8 @@ def test_perm_051_un_staff_borra_una_cuenta_ajena_sin_ser_superusuario(spec_requ
         method='DELETE',
         path='/api/admin/users/{owner_id}/',
         role='staff',
-        payload=None,
+        given=None,
+        body=None,
     )
     assert_outcome(
         response,
@@ -2130,7 +2228,8 @@ def test_perm_052_un_staff_normal_no_deberia_poder_borrar_cuentas(spec_request):
         method='DELETE',
         path='/api/admin/users/{owner_id}/',
         role='staff',
-        payload=None,
+        given=None,
+        body=None,
     )
     assert_outcome(
         response,
@@ -2151,7 +2250,8 @@ def test_perm_052_un_superusuario_si_deberia_poder(spec_request):
         method='DELETE',
         path='/api/admin/users/{owner_id}/',
         role='superuser',
-        payload=None,
+        given=None,
+        body=None,
     )
     assert_outcome(
         response,
@@ -2174,7 +2274,8 @@ def test_perm_053_un_anonimo_no_lista_el_inventario_del_panel(spec_request):
         method='GET',
         path='/api/admin/properties/',
         role='anonymous',
-        payload=None,
+        given=None,
+        body=None,
     )
     assert_outcome(
         response,
@@ -2194,7 +2295,8 @@ def test_perm_053_un_usuario_autenticado_normal_no_lista_el_inventario_del_panel
         method='GET',
         path='/api/admin/properties/',
         role='authenticated',
-        payload=None,
+        given=None,
+        body=None,
     )
     assert_outcome(
         response,
@@ -2214,7 +2316,8 @@ def test_perm_053_el_propietario_tampoco_accede_al_panel(spec_request):
         method='GET',
         path='/api/admin/properties/',
         role='owner',
-        payload=None,
+        given=None,
+        body=None,
     )
     assert_outcome(
         response,
@@ -2234,7 +2337,8 @@ def test_perm_053_staff_lista_el_inventario_completo(spec_request):
         method='GET',
         path='/api/admin/properties/',
         role='staff',
-        payload=None,
+        given=None,
+        body=None,
     )
     assert_outcome(
         response,
@@ -2257,7 +2361,8 @@ def test_perm_054_un_usuario_autenticado_normal_no_ve_los_contadores(spec_reques
         method='GET',
         path='/api/admin/properties/stats/',
         role='authenticated',
-        payload=None,
+        given=None,
+        body=None,
     )
     assert_outcome(
         response,
@@ -2277,7 +2382,8 @@ def test_perm_054_staff_ve_los_contadores(spec_request):
         method='GET',
         path='/api/admin/properties/stats/',
         role='staff',
-        payload=None,
+        given=None,
+        body=None,
     )
     assert_outcome(
         response,
@@ -2300,7 +2406,8 @@ def test_perm_055_un_anonimo_no_puede_moderar_propiedades(spec_request):
         method='PATCH',
         path='/api/admin/properties/{property_id}/',
         role='anonymous',
-        payload={'status': 'inactive'},
+        given=None,
+        body={'status': 'inactive'},
     )
     assert_outcome(
         response,
@@ -2320,7 +2427,8 @@ def test_perm_055_el_propietario_no_puede_usar_la_ruta_administrativa(spec_reque
         method='PATCH',
         path='/api/admin/properties/{property_id}/',
         role='owner',
-        payload={'status': 'inactive'},
+        given=None,
+        body={'status': 'inactive'},
     )
     assert_outcome(
         response,
@@ -2340,7 +2448,8 @@ def test_perm_055_staff_modera_una_propiedad_ajena(spec_request):
         method='PATCH',
         path='/api/admin/properties/{property_id}/',
         role='staff',
-        payload={'status': 'inactive'},
+        given=None,
+        body={'status': 'inactive'},
     )
     assert_outcome(
         response,
@@ -2363,7 +2472,8 @@ def test_perm_056_un_usuario_autenticado_normal_no_puede_borrar_por_la_ruta_admi
         method='DELETE',
         path='/api/admin/properties/{property_id}/',
         role='authenticated',
-        payload=None,
+        given=None,
+        body=None,
     )
     assert_outcome(
         response,
@@ -2383,7 +2493,8 @@ def test_perm_056_staff_borra_una_propiedad_ajena(spec_request):
         method='DELETE',
         path='/api/admin/properties/{property_id}/',
         role='staff',
-        payload=None,
+        given=None,
+        body=None,
     )
     assert_outcome(
         response,
@@ -2406,7 +2517,8 @@ def test_perm_057_un_anonimo_no_puede_cambiar_estados_en_masa(spec_request):
         method='POST',
         path='/api/admin/properties/bulk-status/',
         role='anonymous',
-        payload=None,
+        given=None,
+        body=None,
     )
     assert_outcome(
         response,
@@ -2426,7 +2538,8 @@ def test_perm_057_un_usuario_autenticado_normal_no_puede_cambiar_estados_en_masa
         method='POST',
         path='/api/admin/properties/bulk-status/',
         role='authenticated',
-        payload=None,
+        given=None,
+        body=None,
     )
     assert_outcome(
         response,
@@ -2446,7 +2559,8 @@ def test_perm_057_staff_supera_la_barrera_de_permisos(spec_request):
         method='POST',
         path='/api/admin/properties/bulk-status/',
         role='staff',
-        payload=None,
+        given=None,
+        body=None,
     )
     assert_outcome(
         response,
@@ -2469,7 +2583,8 @@ def test_perm_058_un_anonimo_no_consulta_las_fuentes(spec_request):
         method='GET',
         path='/api/admin/ingesta/sources/',
         role='anonymous',
-        payload=None,
+        given=None,
+        body=None,
     )
     assert_outcome(
         response,
@@ -2489,7 +2604,8 @@ def test_perm_058_un_usuario_autenticado_normal_no_consulta_las_fuentes(spec_req
         method='GET',
         path='/api/admin/ingesta/sources/',
         role='authenticated',
-        payload=None,
+        given=None,
+        body=None,
     )
     assert_outcome(
         response,
@@ -2509,7 +2625,8 @@ def test_perm_058_staff_consulta_las_fuentes(spec_request):
         method='GET',
         path='/api/admin/ingesta/sources/',
         role='staff',
-        payload=None,
+        given=None,
+        body=None,
     )
     assert_outcome(
         response,
@@ -2532,7 +2649,8 @@ def test_perm_059_un_anonimo_no_consulta_las_ejecuciones(spec_request):
         method='GET',
         path='/api/admin/ingesta/runs/',
         role='anonymous',
-        payload=None,
+        given=None,
+        body=None,
     )
     assert_outcome(
         response,
@@ -2552,7 +2670,8 @@ def test_perm_059_un_usuario_autenticado_normal_no_consulta_las_ejecuciones(spec
         method='GET',
         path='/api/admin/ingesta/runs/',
         role='authenticated',
-        payload=None,
+        given=None,
+        body=None,
     )
     assert_outcome(
         response,
@@ -2572,7 +2691,8 @@ def test_perm_059_staff_consulta_las_ejecuciones(spec_request):
         method='GET',
         path='/api/admin/ingesta/runs/',
         role='staff',
-        payload=None,
+        given=None,
+        body=None,
     )
     assert_outcome(
         response,
@@ -2595,7 +2715,8 @@ def test_perm_060_un_anonimo_no_revisa_los_anuncios_importados(spec_request):
         method='GET',
         path='/api/admin/ingesta/properties/',
         role='anonymous',
-        payload=None,
+        given=None,
+        body=None,
     )
     assert_outcome(
         response,
@@ -2615,7 +2736,8 @@ def test_perm_060_un_usuario_autenticado_normal_no_los_revisa(spec_request):
         method='GET',
         path='/api/admin/ingesta/properties/',
         role='authenticated',
-        payload=None,
+        given=None,
+        body=None,
     )
     assert_outcome(
         response,
@@ -2635,7 +2757,8 @@ def test_perm_060_staff_supera_la_barrera_de_permisos(spec_request):
         method='GET',
         path='/api/admin/ingesta/properties/',
         role='staff',
-        payload=None,
+        given=None,
+        body=None,
     )
     assert_outcome(
         response,
@@ -2658,7 +2781,8 @@ def test_perm_061_un_anonimo_no_puede_lanzar_una_ingesta(spec_request):
         method='POST',
         path='/api/admin/ingesta/launch/',
         role='anonymous',
-        payload=None,
+        given=None,
+        body=None,
     )
     assert_outcome(
         response,
@@ -2678,7 +2802,8 @@ def test_perm_061_un_usuario_autenticado_normal_no_puede_lanzar_una_ingesta(spec
         method='POST',
         path='/api/admin/ingesta/launch/',
         role='authenticated',
-        payload=None,
+        given=None,
+        body=None,
     )
     assert_outcome(
         response,
@@ -2698,7 +2823,8 @@ def test_perm_061_el_propietario_de_propiedades_tampoco_puede(spec_request):
         method='POST',
         path='/api/admin/ingesta/launch/',
         role='owner',
-        payload=None,
+        given=None,
+        body=None,
     )
     assert_outcome(
         response,
@@ -2721,7 +2847,8 @@ def test_perm_062_un_anonimo_no_puede_cancelar_ejecuciones(spec_request):
         method='POST',
         path='/api/admin/ingesta/cancel/',
         role='anonymous',
-        payload=None,
+        given=None,
+        body=None,
     )
     assert_outcome(
         response,
@@ -2741,7 +2868,8 @@ def test_perm_062_un_usuario_autenticado_normal_no_puede_cancelar_ejecuciones(sp
         method='POST',
         path='/api/admin/ingesta/cancel/',
         role='authenticated',
-        payload=None,
+        given=None,
+        body=None,
     )
     assert_outcome(
         response,
@@ -2761,7 +2889,8 @@ def test_perm_062_staff_supera_la_barrera_de_permisos(spec_request):
         method='POST',
         path='/api/admin/ingesta/cancel/',
         role='staff',
-        payload=None,
+        given=None,
+        body=None,
     )
     assert_outcome(
         response,
@@ -2784,7 +2913,8 @@ def test_perm_063_un_anonimo_no_puede_re_scrapear(spec_request):
         method='POST',
         path='/api/admin/ingesta/refresh-property/',
         role='anonymous',
-        payload=None,
+        given=None,
+        body=None,
     )
     assert_outcome(
         response,
@@ -2804,7 +2934,8 @@ def test_perm_063_un_usuario_autenticado_normal_no_puede_re_scrapear(spec_reques
         method='POST',
         path='/api/admin/ingesta/refresh-property/',
         role='authenticated',
-        payload=None,
+        given=None,
+        body=None,
     )
     assert_outcome(
         response,
@@ -2827,7 +2958,8 @@ def test_perm_064_un_anonimo_no_previsualiza_el_mantenimiento(spec_request):
         method='GET',
         path='/api/admin/ingesta/maintenance/',
         role='anonymous',
-        payload=None,
+        given=None,
+        body=None,
     )
     assert_outcome(
         response,
@@ -2847,7 +2979,8 @@ def test_perm_064_un_usuario_autenticado_normal_no_lo_previsualiza(spec_request)
         method='GET',
         path='/api/admin/ingesta/maintenance/',
         role='authenticated',
-        payload=None,
+        given=None,
+        body=None,
     )
     assert_outcome(
         response,
@@ -2867,7 +3000,8 @@ def test_perm_064_staff_previsualiza_los_candidatos(spec_request):
         method='GET',
         path='/api/admin/ingesta/maintenance/',
         role='staff',
-        payload=None,
+        given=None,
+        body=None,
     )
     assert_outcome(
         response,
@@ -2890,7 +3024,8 @@ def test_perm_065_un_anonimo_no_puede_lanzar_la_limpieza(spec_request):
         method='POST',
         path='/api/admin/ingesta/maintenance/cleanup/',
         role='anonymous',
-        payload=None,
+        given=None,
+        body=None,
     )
     assert_outcome(
         response,
@@ -2910,7 +3045,8 @@ def test_perm_065_un_usuario_autenticado_normal_no_puede_lanzar_la_limpieza(spec
         method='POST',
         path='/api/admin/ingesta/maintenance/cleanup/',
         role='authenticated',
-        payload=None,
+        given=None,
+        body=None,
     )
     assert_outcome(
         response,
@@ -2930,7 +3066,8 @@ def test_perm_065_el_propietario_de_propiedades_tampoco_puede(spec_request):
         method='POST',
         path='/api/admin/ingesta/maintenance/cleanup/',
         role='owner',
-        payload=None,
+        given=None,
+        body=None,
     )
     assert_outcome(
         response,
@@ -2953,7 +3090,8 @@ def test_perm_066_un_anonimo_consulta_la_salud_del_sistema(spec_request):
         method='GET',
         path='/api/health/',
         role='anonymous',
-        payload=None,
+        given=None,
+        body=None,
     )
     assert_outcome(
         response,
@@ -2976,7 +3114,8 @@ def test_perm_071_el_propietario_consulta_su_informe(spec_request):
         method='GET',
         path='/api/properties/{property_id}/promotion-stats/',
         role='owner',
-        payload=None,
+        given=None,
+        body=None,
     )
     assert_outcome(
         response,
@@ -2996,7 +3135,8 @@ def test_perm_071_un_tercero_autenticado_no_lo_ve(spec_request):
         method='GET',
         path='/api/properties/{property_id}/promotion-stats/',
         role='not_owner',
-        payload=None,
+        given=None,
+        body=None,
     )
     assert_outcome(
         response,
@@ -3016,7 +3156,8 @@ def test_perm_071_un_anonimo_no_lo_ve(spec_request):
         method='GET',
         path='/api/properties/{property_id}/promotion-stats/',
         role='anonymous',
-        payload=None,
+        given=None,
+        body=None,
     )
     assert_outcome(
         response,
@@ -3036,7 +3177,8 @@ def test_perm_071_staff_lo_consulta_de_cualquier_anuncio(spec_request):
         method='GET',
         path='/api/properties/{property_id}/promotion-stats/',
         role='staff',
-        payload=None,
+        given=None,
+        body=None,
     )
     assert_outcome(
         response,

@@ -397,24 +397,24 @@ rules:
       - name: el propietario edita su propiedad
         role: owner
         expected: allowed
-        given:
+        body:
           title: Propiedad de spec editada
       - name: un tercero autenticado no puede editarla
         role: not_owner
         expected: denied
-        given:
+        body:
           title: Intento de secuestro
       - name: un usuario staff sí puede editarla por la ruta pública
         role: staff
         expected: allowed
         expected_http_status: 200
-        given:
+        body:
           title: Edición desde staff
       - name: un anónimo no puede editarla
         role: anonymous
         expected: denied
         http_status: 401
-        given:
+        body:
           title: Intento anónimo
 
   - id: PERM-005
@@ -1293,13 +1293,13 @@ rules:
       - name: un anónimo emite un evento
         role: anonymous
         expected: allowed
-        given:
+        body:
           event_name: spec_probe
           path: /spec
       - name: un usuario autenticado emite un evento
         role: authenticated
         expected: allowed
-        given:
+        body:
           event_name: spec_probe
           path: /spec
 
@@ -1547,7 +1547,7 @@ rules:
       - name: un correo inexistente recibe la misma respuesta afirmativa
         role: anonymous
         expected: allowed
-        given:
+        body:
           email: nadie-spec@example.com
 
   - id: PERM-039
@@ -1577,7 +1577,7 @@ rules:
       - name: un correo inexistente recibe 404 en lugar de una respuesta genérica
         role: anonymous
         expected: denied
-        given:
+        body:
           email: nadie-spec@example.com
 
   - id: PERM-040
@@ -1600,7 +1600,7 @@ rules:
       - name: un correo inexistente debería recibir 200 genérico
         role: anonymous
         expected: allowed
-        given:
+        body:
           email: nadie-spec@example.com
 
   - id: PERM-041
@@ -1661,12 +1661,12 @@ rules:
       - name: un anónimo no puede modificar ningún perfil
         role: anonymous
         expected: denied
-        given:
+        body:
           first_name: Spec
       - name: un usuario autenticado edita su nombre e is_staff se ignora
         role: authenticated
         expected: allowed
-        given:
+        body:
           first_name: Spec
           is_staff: true
         note: Responde 200, pero el campo is_staff no se aplica por ser de solo lectura.
@@ -1924,17 +1924,17 @@ rules:
         role: anonymous
         expected: denied
         http_status: 401
-        given:
+        body:
           is_staff: true
       - name: un usuario autenticado normal no puede modificar cuentas
         role: authenticated
         expected: denied
-        given:
+        body:
           is_staff: true
       - name: un staff promueve a otra cuenta a staff sin ser superusuario
         role: staff
         expected: allowed
-        given:
+        body:
           is_staff: true
 
   - id: PERM-050
@@ -1959,12 +1959,12 @@ rules:
       - name: un staff normal no debería poder conceder is_staff
         role: staff
         expected: denied
-        given:
+        body:
           is_staff: true
       - name: un superusuario sí debería poder
         role: superuser
         expected: allowed
-        given:
+        body:
           is_staff: true
 
   - id: PERM-051
@@ -2128,17 +2128,17 @@ rules:
         role: anonymous
         expected: denied
         http_status: 401
-        given:
+        body:
           status: inactive
       - name: el propietario no puede usar la ruta administrativa
         role: owner
         expected: denied
-        given:
+        body:
           status: inactive
       - name: staff modera una propiedad ajena
         role: staff
         expected: allowed
-        given:
+        body:
           status: inactive
 
   - id: PERM-056

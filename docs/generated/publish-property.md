@@ -50,10 +50,10 @@ El formulario intercepta el submit antes de llamar a `POST /api/properties/`: si
 
 **Casos**
 
-| Caso | Rol | Entrada | Esperado |
-| --- | --- | --- | --- |
-| Llamada directa a la API sin token | anonymous | — | denied |
-| Envío del formulario sin sesión | — | `token`=— | no se llama a POST /api/properties/; se crea un PendingPublication y se abre el modal de cuenta |
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| Llamada directa a la API sin token | anonymous | — | — | denied |
+| Envío del formulario sin sesión | — | `token`=— | — | no se llama a POST /api/properties/; se crea un PendingPublication y se abre el modal de cuenta |
 
 **Cobertura exigida:** api
 
@@ -74,10 +74,10 @@ Si el usuario inicia sesión desde el modal de cuenta, el formulario marca `pend
 
 **Casos**
 
-| Caso | Rol | Entrada | Esperado |
-| --- | --- | --- | --- |
-| Login exitoso desde el modal con borrador pendiente | — | `pendingPublish`=sí, `token`=presente | se reenvía el formulario automáticamente, sin acción del usuario |
-| Login con correo sin verificar | — | `error_code`=email_not_verified | no se marca pendingPublish; redirige a /verificar-correo |
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| Login exitoso desde el modal con borrador pendiente | — | `pendingPublish`=sí, `token`=presente | — | se reenvía el formulario automáticamente, sin acción del usuario |
+| Login con correo sin verificar | — | `error_code`=email_not_verified | — | no se marca pendingPublish; redirige a /verificar-correo |
 
 ### WFP-003 — El orden de la creación no puede alterarse
 
@@ -95,10 +95,10 @@ Crear una propiedad sigue siempre el mismo orden: validar el payload, crear la f
 
 **Casos**
 
-| Caso | Rol | Entrada | Esperado |
-| --- | --- | --- | --- |
-| Alta con dos fotos válidas | — | `fotos`=2 | Property creada primero; ambas filas nacen PENDING con archivo en disco; el worker las publica después |
-| Validación de polígono falla | — | `poligono`=invalido | no se crea la Property ni se toca disco ni MinIO |
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| Alta con dos fotos válidas | — | `fotos`=2 | — | Property creada primero; ambas filas nacen PENDING con archivo en disco; el worker las publica después |
+| Validación de polígono falla | — | `poligono`=invalido | — | no se crea la Property ni se toca disco ni MinIO |
 
 ### WFP-004 — El polígono se valida en servidor antes de crear la fila, con umbrales exactos
 
@@ -117,12 +117,12 @@ La fase de validación exige al menos 3 vértices realmente distintos, todas las
 
 **Casos**
 
-| Caso | Rol | Entrada | Esperado |
-| --- | --- | --- | --- |
-| Polígono con 2 vértices distintos | — | `vertices`=2 | 400: El polígono debe tener al menos 3 vértices distintos. |
-| Vértice fuera de Ecuador | — | `lat`=10.0, `lng`=-78.0 | 400: está fuera de Ecuador |
-| Área de 5 m² | — | `area_m2`=5 | 400: área demasiado pequeña |
-| Área de 6 000 000 m² | — | `area_m2`=6000000 | 400: área demasiado grande |
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| Polígono con 2 vértices distintos | — | `vertices`=2 | — | 400: El polígono debe tener al menos 3 vértices distintos. |
+| Vértice fuera de Ecuador | — | `lat`=10.0, `lng`=-78.0 | — | 400: está fuera de Ecuador |
+| Área de 5 m² | — | `area_m2`=5 | — | 400: área demasiado pequeña |
+| Área de 6 000 000 m² | — | `area_m2`=6000000 | — | 400: área demasiado grande |
 
 ### WFP-005 — Los límites de imágenes se aplican en la misma fase de validación
 
@@ -140,12 +140,12 @@ Antes de crear la propiedad, cada lote de imágenes se valida completo: máximo 
 
 **Casos**
 
-| Caso | Rol | Entrada | Esperado |
-| --- | --- | --- | --- |
-| Lote de 11 imágenes en una propiedad nueva | — | `nuevas`=11 | 400: no puede tener más de 10 imágenes |
-| Una imagen de 12 MB | — | `tamano_mb`=12 | 400: es demasiado grande |
-| Lote de 6 imágenes de 9 MB cada una | — | `suma_mb`=54 | 400: el conjunto supera 50MB |
-| Imagen en formato GIF | — | `content_type`=image/gif | 400: formato no permitido |
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| Lote de 11 imágenes en una propiedad nueva | — | `nuevas`=11 | — | 400: no puede tener más de 10 imágenes |
+| Una imagen de 12 MB | — | `tamano_mb`=12 | — | 400: es demasiado grande |
+| Lote de 6 imágenes de 9 MB cada una | — | `suma_mb`=54 | — | 400: el conjunto supera 50MB |
+| Imagen en formato GIF | — | `content_type`=image/gif | — | 400: formato no permitido |
 
 ### WFP-006 — Repetir el alta con la misma Idempotency-Key devuelve la propiedad ya creada
 
@@ -164,9 +164,9 @@ Si `POST /api/properties/` llega con cabecera `Idempotency-Key` y ya existe un r
 
 **Casos**
 
-| Caso | Rol | Entrada | Esperado |
-| --- | --- | --- | --- |
-| Segundo POST con la misma clave, ya resuelto | — | `idempotency_key`=abc123, `resultado_previo`=existe | `http_status`=200, `header`=X-Idempotent-Replay: true |
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| Segundo POST con la misma clave, ya resuelto | — | `idempotency_key`=abc123, `resultado_previo`=existe | — | `http_status`=200, `header`=X-Idempotent-Replay: true |
 
 ### WFP-007 — Dos peticiones simultáneas con la misma Idempotency-Key: la segunda espera, no duplica
 
@@ -183,9 +183,9 @@ Antes de procesar, `create` toma un candado en caché de 60 s por el mismo diges
 
 **Casos**
 
-| Caso | Rol | Entrada | Esperado |
-| --- | --- | --- | --- |
-| Segunda petición mientras la primera sigue procesando | — | `idempotency_key`=abc123, `candado`=tomado | `http_status`=409, `error_code`=IDEMPOTENCY_CONFLICT |
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| Segunda petición mientras la primera sigue procesando | — | `idempotency_key`=abc123, `candado`=tomado | — | `http_status`=409, `error_code`=IDEMPOTENCY_CONFLICT |
 
 ### WFP-008 — El throttle de escritura no exime a nadie, ni siquiera a staff
 
@@ -203,9 +203,9 @@ Antes de procesar, `create` toma un candado en caché de 60 s por el mismo diges
 
 **Casos**
 
-| Caso | Rol | Entrada | Esperado |
-| --- | --- | --- | --- |
-| Staff publica más de 30 veces en una hora | — | `rol`=staff, `escrituras_en_una_hora`=31 | 429, igual que un usuario normal |
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| Staff publica más de 30 veces en una hora | — | `rol`=staff, `escrituras_en_una_hora`=31 | — | 429, igual que un usuario normal |
 
 ### WFP-009 — Una caída del broker de Celery degrada la optimización a síncrona, no rompe la publicación
 
@@ -223,10 +223,10 @@ Antes de procesar, `create` toma un candado en caché de 60 s por el mismo diges
 
 **Casos**
 
-| Caso | Rol | Entrada | Esperado |
-| --- | --- | --- | --- |
-| Broker caído al terminar la transacción de alta | — | `broker`=caido | la imagen se optimiza en la misma request; la propiedad se crea igual |
-| Broker caído y el fallback síncrono también falla | — | `broker`=caido, `fallback`=falla | la fila queda PENDING con el archivo en disco; la barrida horaria la reintenta |
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| Broker caído al terminar la transacción de alta | — | `broker`=caido | — | la imagen se optimiza en la misma request; la propiedad se crea igual |
+| Broker caído y el fallback síncrono también falla | — | `broker`=caido, `fallback`=falla | — | la fila queda PENDING con el archivo en disco; la barrida horaria la reintenta |
 
 ### WFP-010 — Guardar o borrar una propiedad dispara siempre la misma cadena de efectos posteriores
 
@@ -246,11 +246,11 @@ Cada `post_save`/`post_delete` de `Property` encadena, por señal: una fila de `
 
 **Casos**
 
-| Caso | Rol | Entrada | Esperado |
-| --- | --- | --- | --- |
-| Alta nueva con precio | — | `evento`=post_save, `created`=sí | PropertyPriceHistory creado, seis scopes de caché + catalog invalidados, revalidación encolada, IndexNow avisado |
-| Baja física de una propiedad | — | `evento`=post_delete | misma cadena de invalidación y aviso a IndexNow, sin fila de historial |
-| Broker caído al encolar la revalidación de Next | — | `broker`=caido | se registra un warning; el guardado que la disparó no falla |
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| Alta nueva con precio | — | `evento`=post_save, `created`=sí | — | PropertyPriceHistory creado, seis scopes de caché + catalog invalidados, revalidación encolada, IndexNow avisado |
+| Baja física de una propiedad | — | `evento`=post_delete | — | misma cadena de invalidación y aviso a IndexNow, sin fila de historial |
+| Broker caído al encolar la revalidación de Next | — | `broker`=caido | — | se registra un warning; el guardado que la disparó no falla |
 
 ### WFP-011 — Ocultar una propiedad es reversible; borrarla desde el panel es físico y arrastra las fotos
 
@@ -269,10 +269,10 @@ Cada `post_save`/`post_delete` de `Property` encadena, por señal: una fila de `
 
 **Casos**
 
-| Caso | Rol | Entrada | Esperado |
-| --- | --- | --- | --- |
-| Marcar una propiedad como inactive | — | `status`=inactive | desaparece del mapa público; el dueño la sigue viendo; las fotos siguen en MinIO |
-| Eliminar desde el panel del propietario | — | `accion`=DELETE | la fila y todas sus PropertyImage se borran físicamente; no hay vuelta atrás |
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| Marcar una propiedad como inactive | — | `status`=inactive | — | desaparece del mapa público; el dueño la sigue viendo; las fotos siguen en MinIO |
+| Eliminar desde el panel del propietario | — | `accion`=DELETE | — | la fila y todas sus PropertyImage se borran físicamente; no hay vuelta atrás |
 
 ### WFP-012 — El selector de estado ofrece exactamente los estados que el modelo admite
 
@@ -297,11 +297,11 @@ El caso de API se conserva a propósito como guardia de regresión: si alguien v
 
 **Casos**
 
-| Caso | Rol | Entrada | Esperado |
-| --- | --- | --- | --- |
-| Publicar con un estado que el modelo no conoce | authenticated | `status`=sold, `title`=Propiedad vendida | denied (HTTP 400) |
-| Estados que el selector ofrece | — | `selector`=add-property | for_sale, for_rent, inactive |
-| Un anuncio que ya se vendió | — | `situacion`=vendido | inactive |
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| Publicar con un estado que el modelo no conoce | authenticated | — | `status`=sold, `title`=Propiedad vendida | denied (HTTP 400) |
+| Estados que el selector ofrece | — | `selector`=add-property | — | for_sale, for_rent, inactive |
+| Un anuncio que ya se vendió | — | `situacion`=vendido | — | inactive |
 
 **Cobertura exigida:** api
 
@@ -320,7 +320,7 @@ Se conserva como propuesta porque la alternativa sigue sobre la mesa para el dí
 
 **Casos**
 
-| Caso | Rol | Entrada | Esperado |
-| --- | --- | --- | --- |
-| Marcar una propiedad como vendida debería aceptarse | — | `status`=sold | allowed |
-| Una propiedad vendida debería salir del catálogo de "en venta" | — | `status`=sold | excluida de los listados filtrados por for_sale |
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| Marcar una propiedad como vendida debería aceptarse | — | `status`=sold | — | allowed |
+| Una propiedad vendida debería salir del catálogo de "en venta" | — | `status`=sold | — | excluida de los listados filtrados por for_sale |

@@ -140,17 +140,24 @@ def render_rule(rule: dict[str, Any], markers: dict[str, set[str]]) -> str:
     if cases:
         parts.append("**Casos**")
         parts.append("")
-        parts.append("| Caso | Rol | Entrada | Esperado |")
-        parts.append("| --- | --- | --- | --- |")
+        # Two columns, not one: the state a case starts from and the request it
+        # then makes are different things, and reading them merged is how they
+        # got confused in the first place.
+        parts.append("| Caso | Rol | Estado previo | Cuerpo | Esperado |")
+        parts.append("| --- | --- | --- | --- | --- |")
         for case in cases:
             given = fmt_value(case.get("given")) if case.get("given") else "—"
+            body = fmt_value(case.get("body")) if case.get("body") else "—"
             expected = fmt_value(case.get("expected"))
             if case.get("http_status"):
                 expected += f" (HTTP {case['http_status']})"
             if case.get("error_code"):
                 expected += f" `{case['error_code']}`"
+            name = case["name"]
+            if case.get("endpoint"):
+                name += f" — `{case['endpoint']}`"
             parts.append(
-                f"| {case['name']} | {case.get('role', '—')} | {given} | {expected} |"
+                f"| {name} | {case.get('role', '—')} | {given} | {body} | {expected} |"
             )
         parts.append("")
 

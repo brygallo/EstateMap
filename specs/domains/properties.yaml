@@ -127,6 +127,7 @@ rules:
       - name: Un usuario autenticado consulta sus propias propiedades
         role: authenticated
         expected: allowed
+        expected_http_status: 200
 
   - id: PROP-030
     name: El inventario llega paginado y con contadores del total
@@ -606,6 +607,7 @@ rules:
       - name: El dueño borra su propiedad
         role: owner
         expected: allowed
+        expected_http_status: 204
       - name: Otro usuario autenticado no puede borrarla
         role: not_owner
         expected: denied
@@ -1324,6 +1326,14 @@ rules:
       Hasta ahora no podía: `get_queryset` excluía `inactive` para todo el que
       no fuera staff, así que quien desactivaba un anuncio se quedaba sin poder
       abrirlo, editarlo ni reactivarlo por la API.
+
+      Ese privilegio es de la ficha por id y solo de ella. La ruta por código
+      corto no mira quién pregunta a propósito: su respuesta se cachea con
+      `s-maxage` para que la sirva el borde cuando llega desde un QR impreso, y
+      una respuesta que dependiera de la sesión ensuciaría esa caché compartida.
+      Por eso el dueño de un anuncio simplemente inactivo recibe 404 por el
+      código y 200 por la ficha, y por eso cada caso de abajo dice contra qué
+      ruta se comprueba.
     evidence:
       - file: backend/real_estate/views.py
         lines: "385-405"
@@ -1343,6 +1353,7 @@ rules:
     cases:
       - name: La ficha de un anuncio vendido responde a un anónimo
         role: anonymous
+        endpoint: GET /api/properties/{property_id}/
         given: {closed_reason: sold}
         expected: allowed
         expected_http_status: 200
@@ -1358,9 +1369,18 @@ rules:
         http_status: 404
       - name: El dueño alcanza su anuncio inactivo
         role: owner
+        endpoint: GET /api/properties/{property_id}/
         given: {status: inactive}
         expected: allowed
         expected_http_status: 200
+      - name: El dueño tampoco alcanza su anuncio inactivo por el código corto
+        role: owner
+        given: {status: inactive}
+        expected: denied
+        http_status: 404
+        note: >-
+          La ruta por código es pública y cacheada; no distingue quién pregunta.
+          El dueño llega a su anuncio por la ficha, que es la que sí lo hace.
 
   - id: PROP-035
     name: La ficha publica el precio anterior y cuándo cambió

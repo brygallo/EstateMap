@@ -24,7 +24,8 @@ def test_soc_003_resolver_un_codigo_existente_devuelve_la_propiedad(spec_request
         method='GET',
         path='/api/properties/code/{code}/',
         role='anonymous',
-        payload=None,
+        given=None,
+        body=None,
     )
     assert_outcome(
         response,
@@ -47,7 +48,8 @@ def test_soc_101_las_visitas_se_agrupan_por_utm_source(spec_request):
         method='GET',
         path='/api/properties/{property_id}/promotion-stats/',
         role='owner',
-        payload={'utm_source': 'instagram'},
+        given={'utm_source': 'instagram'},
+        body=None,
     )
     assert_outcome(
         response,
@@ -67,7 +69,8 @@ def test_soc_101_solo_el_propietario_ve_el_desglose(spec_request):
         method='GET',
         path='/api/properties/{property_id}/promotion-stats/',
         role='not_owner',
-        payload=None,
+        given=None,
+        body=None,
     )
     assert_outcome(
         response,
@@ -87,7 +90,8 @@ def test_soc_101_un_anonimo_no_accede_al_desglose(spec_request):
         method='GET',
         path='/api/properties/{property_id}/promotion-stats/',
         role='anonymous',
-        payload=None,
+        given=None,
+        body=None,
     )
     assert_outcome(
         response,
@@ -107,7 +111,8 @@ def test_soc_101_staff_tambien_lo_ve(spec_request):
         method='GET',
         path='/api/properties/{property_id}/promotion-stats/',
         role='staff',
-        payload=None,
+        given=None,
+        body=None,
     )
     assert_outcome(
         response,
@@ -127,7 +132,8 @@ def test_soc_101_un_anuncio_vendido_sigue_devolviendo_su_informe(spec_request):
         method='GET',
         path='/api/properties/{property_id}/promotion-stats/',
         role='owner',
-        payload=None,
+        given=None,
+        body=None,
     )
     assert_outcome(
         response,

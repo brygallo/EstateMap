@@ -53,11 +53,11 @@ Está como `partial` y no como `implemented` porque hay dos fugas verificadas: e
 
 **Casos**
 
-| Caso | Rol | Entrada | Esperado |
-| --- | --- | --- | --- |
-| Petición anónima al mapa | anonymous | — | allowed |
-| Campo views_count en el payload del mapa | — | `endpoint`=map_points | ausente |
-| Campo views_count en el detalle público | — | `endpoint`=properties/{id} | presente |
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| Petición anónima al mapa | anonymous | — | — | allowed |
+| Campo views_count en el payload del mapa | — | `endpoint`=map_points | — | ausente |
+| Campo views_count en el detalle público | — | `endpoint`=properties/{id} | — | presente |
 
 **Ver también:** `specs/permissions/matrix.yaml`
 
@@ -77,11 +77,11 @@ Los puntos llevan lo justo para pintarse y filtrarse. El título, las imágenes,
 
 **Casos**
 
-| Caso | Rol | Entrada | Esperado |
-| --- | --- | --- | --- |
-| Columnas declaradas en POINT_FIELDS | — | `consulta`=POINT_FIELDS | 10 |
-| Claves de un punto ya emitido | — | `consulta`=_point_payload | 11 |
-| Título en el payload del mapa | — | `campo`=title | ausente |
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| Columnas declaradas en POINT_FIELDS | — | `consulta`=POINT_FIELDS | — | 10 |
+| Claves de un punto ya emitido | — | `consulta`=_point_payload | — | 11 |
+| Título en el payload del mapa | — | `campo`=title | — | ausente |
 
 ### VIS-003 — show_measurements no oculta el polígono
 
@@ -100,10 +100,10 @@ El campo show_measurements cambia las etiquetas que dibuja la interfaz, pero el 
 
 **Casos**
 
-| Caso | Rol | Entrada | Esperado |
-| --- | --- | --- | --- |
-| Propiedad con show_measurements=false | — | `show_measurements`=no | el polígono viaja igualmente |
-| Efecto real del campo | — | `show_measurements`=no | cambian las etiquetas de la ficha |
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| Propiedad con show_measurements=false | — | `show_measurements`=no | — | el polígono viaja igualmente |
+| Efecto real del campo | — | `show_measurements`=no | — | cambian las etiquetas de la ficha |
 
 ### VIS-004 — Ocultar la forma exacta del terreno cuando se pide
 
@@ -119,6 +119,6 @@ Con show_measurements desactivado, el servidor debería enviar una forma aproxim
 
 **Casos**
 
-| Caso | Rol | Entrada | Esperado |
-| --- | --- | --- | --- |
-| Propiedad con show_measurements=false | — | `show_measurements`=no | polígono aproximado |
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| Propiedad con show_measurements=false | — | `show_measurements`=no | — | polígono aproximado |

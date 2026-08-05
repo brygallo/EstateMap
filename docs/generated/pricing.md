@@ -66,14 +66,14 @@ Solo entra en las estadísticas el inventario activo, no duplicado y con price m
 
 **Casos**
 
-| Caso | Rol | Entrada | Esperado |
-| --- | --- | --- | --- |
-| Anuncio con precio NULL (a consultar) | — | `price`=—, `area`=120, `status`=for_sale | excluido |
-| Anuncio con precio cero | — | `price`=0, `area`=120, `status`=for_sale | excluido |
-| Anuncio sin área | — | `price`=90000, `area`=—, `status`=for_sale | excluido |
-| Anuncio marcado como duplicado | — | `price`=90000, `area`=120, `is_duplicate`=sí | excluido |
-| Anuncio inactivo | — | `price`=90000, `area`=120, `status`=inactive | excluido |
-| Anuncio completo y activo | — | `price`=90000, `area`=120, `status`=for_sale, `is_duplicate`=no | incluido |
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| Anuncio con precio NULL (a consultar) | — | `price`=—, `area`=120, `status`=for_sale | — | excluido |
+| Anuncio con precio cero | — | `price`=0, `area`=120, `status`=for_sale | — | excluido |
+| Anuncio sin área | — | `price`=90000, `area`=—, `status`=for_sale | — | excluido |
+| Anuncio marcado como duplicado | — | `price`=90000, `area`=120, `is_duplicate`=sí | — | excluido |
+| Anuncio inactivo | — | `price`=90000, `area`=120, `status`=inactive | — | excluido |
+| Anuncio completo y activo | — | `price`=90000, `area`=120, `status`=for_sale, `is_duplicate`=no | — | incluido |
 
 ### PRC-002 — El precio por metro cuadrado es price dividido por area
 
@@ -92,11 +92,11 @@ price_per_m2 se calcula en la base de datos como price / area sobre el área tot
 
 **Casos**
 
-| Caso | Rol | Entrada | Esperado |
-| --- | --- | --- | --- |
-| Casa de 300.000 sobre 100 m² | — | `price`=300000, `area`=100 | 3000 |
-| Terreno de 45.000 sobre 600 m² | — | `price`=45000, `area`=600 | 75 |
-| Casa con área construida distinta del terreno | — | `price`=300000, `area`=500, `built_area`=180 | 600 |
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| Casa de 300.000 sobre 100 m² | — | `price`=300000, `area`=100 | — | 3000 |
+| Terreno de 45.000 sobre 600 m² | — | `price`=45000, `area`=600 | — | 75 |
+| Casa con área construida distinta del terreno | — | `price`=300000, `area`=500, `built_area`=180 | — | 600 |
 
 ### PRC-003 — Banda dura de 1 a 10.000 dólares por metro cuadrado
 
@@ -115,13 +115,13 @@ Antes de cualquier estadística se descartan las filas cuyo precio por metro cua
 
 **Casos**
 
-| Caso | Rol | Entrada | Esperado |
-| --- | --- | --- | --- |
-| Valor por debajo del piso | — | `price_per_m2`=0.5 | excluido |
-| Valor exactamente en el piso | — | `price_per_m2`=1 | excluido |
-| Valor justo por debajo del techo | — | `price_per_m2`=9999 | incluido |
-| Valor exactamente en el techo | — | `price_per_m2`=10000 | excluido |
-| Atípico enorme por precio mal parseado | — | `price`=500000, `area`=1 | excluido |
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| Valor por debajo del piso | — | `price_per_m2`=0.5 | — | excluido |
+| Valor exactamente en el piso | — | `price_per_m2`=1 | — | excluido |
+| Valor justo por debajo del techo | — | `price_per_m2`=9999 | — | incluido |
+| Valor exactamente en el techo | — | `price_per_m2`=10000 | — | excluido |
+| Atípico enorme por precio mal parseado | — | `price`=500000, `area`=1 | — | excluido |
 
 ### PRC-004 — Las métricas principales son solo de venta
 
@@ -140,10 +140,10 @@ overall, by_city, by_property_type, by_sector, evolution, growth_zones y estimat
 
 **Casos**
 
-| Caso | Rol | Entrada | Esperado |
-| --- | --- | --- | --- |
-| Catálogo con 4 ventas y 3 alquileres | — | `for_sale`=4, `for_rent`=3 | 4 |
-| Catálogo con alquileres únicamente | — | `for_sale`=0, `for_rent`=12 | 0 |
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| Catálogo con 4 ventas y 3 alquileres | — | `for_sale`=4, `for_rent`=3 | — | 4 |
+| Catálogo con alquileres únicamente | — | `for_sale`=0, `for_rent`=12 | — | 0 |
 
 ### PRC-005 — Exclusión de extremos por el método IQR
 
@@ -164,12 +164,12 @@ Sobre la muestra de venta se calculan P25 y P75, y se descartan los valores fuer
 
 **Casos**
 
-| Caso | Rol | Entrada | Esperado |
-| --- | --- | --- | --- |
-| Catálogo de venta vacío | — | `values`= | `outliers_excluded`=0, `count`=0 |
-| Un solo anuncio de venta | — | `values`=1200 | `outliers_excluded`=0, `count`=1 |
-| Muestra con un extremo alto | — | `values`=900, 950, 1000, 1050, 1100, 9500 | `outliers_excluded`=1 |
-| Muestra homogénea | — | `values`=1000, 1010, 1020, 1030 | `outliers_excluded`=0 |
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| Catálogo de venta vacío | — | `values`= | — | `outliers_excluded`=0, `count`=0 |
+| Un solo anuncio de venta | — | `values`=1200 | — | `outliers_excluded`=0, `count`=1 |
+| Muestra con un extremo alto | — | `values`=900, 950, 1000, 1050, 1100, 9500 | — | `outliers_excluded`=1 |
+| Muestra homogénea | — | `values`=1000, 1010, 1020, 1030 | — | `outliers_excluded`=0 |
 
 ### PRC-006 — Los agregados públicos usan media aritmética, no mediana
 
@@ -196,11 +196,11 @@ Todo lo que la web publica como "precio promedio" es una media aritmética calcu
 
 **Casos**
 
-| Caso | Rol | Entrada | Esperado |
-| --- | --- | --- | --- |
-| Muestra sesgada hacia arriba | — | `values`=1000, 2000, 9000 | 4000 |
-| Muestra simétrica | — | `values`=1000, 2000, 3000 | 2000 |
-| Un solo anuncio | — | `values`=1750 | 1750 |
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| Muestra sesgada hacia arriba | — | `values`=1000, 2000, 9000 | — | 4000 |
+| Muestra simétrica | — | `values`=1000, 2000, 3000 | — | 2000 |
+| Un solo anuncio | — | `values`=1750 | — | 1750 |
 
 ### PRC-007 — Sin inventario los promedios son NULL, no cero
 
@@ -219,10 +219,10 @@ Cuando no queda ninguna fila tras los filtros, el agregado devuelve count 0 y av
 
 **Casos**
 
-| Caso | Rol | Entrada | Esperado |
-| --- | --- | --- | --- |
-| Ciudad sin anuncios de venta | — | `rows`=0 | `count`=0, `avg_price_m2`=—, `min_price_m2`=—, `max_price_m2`=— |
-| Todos los anuncios de la ciudad son "a consultar" | — | `rows`=8, `price`=— | `count`=0, `avg_price_m2`=— |
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| Ciudad sin anuncios de venta | — | `rows`=0 | — | `count`=0, `avg_price_m2`=—, `min_price_m2`=—, `max_price_m2`=— |
+| Todos los anuncios de la ciudad son "a consultar" | — | `rows`=8, `price`=— | — | `count`=0, `avg_price_m2`=— |
 
 ### PRC-008 — Los cortes por ciudad y por tipo exigen al menos tres anuncios
 
@@ -243,11 +243,11 @@ by_city y by_property_type solo publican grupos con tres o más anuncios de vent
 
 **Casos**
 
-| Caso | Rol | Entrada | Esperado |
-| --- | --- | --- | --- |
-| Ciudad con dos anuncios de venta | — | `city`=Puyo, `count`=2 | omitida |
-| Ciudad con tres anuncios de venta | — | `city`=Puyo, `count`=3 | incluida |
-| Veinte ciudades con inventario suficiente | — | `cities_over_threshold`=20 | 15 |
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| Ciudad con dos anuncios de venta | — | `city`=Puyo, `count`=2 | — | omitida |
+| Ciudad con tres anuncios de venta | — | `city`=Puyo, `count`=3 | — | incluida |
+| Veinte ciudades con inventario suficiente | — | `cities_over_threshold`=20 | — | 15 |
 
 ### PRC-009 — Los sectores salen del texto libre de la dirección
 
@@ -269,12 +269,12 @@ El sector es el primer segmento de address antes de la coma; se agrupa ignorando
 
 **Casos**
 
-| Caso | Rol | Entrada | Esperado |
-| --- | --- | --- | --- |
-| Misma zona con dos grafías distintas | — | `addresses`=Cumbayá, Quito, CUMBAYÁ, Quito, Cumbayá, Quito, CUMBAYÁ, Quito | `rows`=1, `count`=4 |
-| Sector con un único anuncio | — | `addresses`=El Vergel, Cuenca | `rows`=0 |
-| Dirección cuyo primer segmento es la propia ciudad | — | `city`=Macas, `addresses`=Macas, Morona Santiago, Macas, Morona Santiago | `rows`=0 |
-| Dirección vacía | — | `addresses`=,  | `rows`=0 |
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| Misma zona con dos grafías distintas | — | `addresses`=Cumbayá, Quito, CUMBAYÁ, Quito, Cumbayá, Quito, CUMBAYÁ, Quito | — | `rows`=1, `count`=4 |
+| Sector con un único anuncio | — | `addresses`=El Vergel, Cuenca | — | `rows`=0 |
+| Dirección cuyo primer segmento es la propia ciudad | — | `city`=Macas, `addresses`=Macas, Morona Santiago, Macas, Morona Santiago | — | `rows`=0 |
+| Dirección vacía | — | `addresses`=,  | — | `rows`=0 |
 
 ### PRC-010 — by_operation es el único bloque que mezcla venta y alquiler
 
@@ -293,11 +293,11 @@ El corte por operación se calcula sobre all_base, es decir antes de limitar a v
 
 **Casos**
 
-| Caso | Rol | Entrada | Esperado |
-| --- | --- | --- | --- |
-| Alquiler de 400 dólares al mes sobre 40 m² | — | `status`=for_rent, `price`=400, `area`=40 | 10 |
-| Venta descartada por el IQR | — | `status`=for_sale, `excluded_from_overall`=sí | incluida |
-| Fila for_sale de by_operation frente a overall | — | `outliers_excluded`=3 | distintas |
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| Alquiler de 400 dólares al mes sobre 40 m² | — | `status`=for_rent, `price`=400, `area`=40 | — | 10 |
+| Venta descartada por el IQR | — | `status`=for_sale, `excluded_from_overall`=sí | — | incluida |
+| Fila for_sale de by_operation frente a overall | — | `outliers_excluded`=3 | — | distintas |
 
 ### PRC-011 — rent_price no entra en ningún cálculo
 
@@ -318,10 +318,10 @@ Ninguna estadística lee rent_price: todas las expresiones de precio parten de p
 
 **Casos**
 
-| Caso | Rol | Entrada | Esperado |
-| --- | --- | --- | --- |
-| Anuncio de venta y alquiler a la vez | — | `status`=for_sale, `price`=120000, `rent_price`=800, `area`=100 | 1200 |
-| Anuncio solo de alquiler | — | `status`=for_rent, `price`=800, `rent_price`=—, `area`=100 | 8 |
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| Anuncio de venta y alquiler a la vez | — | `status`=for_sale, `price`=120000, `rent_price`=800, `area`=100 | — | 1200 |
+| Anuncio solo de alquiler | — | `status`=for_rent, `price`=800, `rent_price`=—, `area`=100 | — | 8 |
 
 ### PRC-012 — La evolución compara cohortes de altas, no precios en el tiempo
 
@@ -342,12 +342,12 @@ evolution compara la media de $/m² de los anuncios activos creados en los últi
 
 **Casos**
 
-| Caso | Rol | Entrada | Esperado |
-| --- | --- | --- | --- |
-| Ciudad con un solo anuncio reciente | — | `recent`=1, `previous`=5 | omitida |
-| Ciudad con dos y dos | — | `recent`=1100, 1300, `previous`=1000, 1000 | `current_price_m2`=1200, `previous_price_m2`=1000, `change_pct`=20 |
-| Ciudad con inventario solo antiguo | — | `recent`=0, `previous`=9 | omitida |
-| Anuncio publicado en el origen hace dos años, detectado hace 10 días | — | `source_published_at`=hace 2 años, `created_at`=hace 10 días | cohorte reciente |
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| Ciudad con un solo anuncio reciente | — | `recent`=1, `previous`=5 | — | omitida |
+| Ciudad con dos y dos | — | `recent`=1100, 1300, `previous`=1000, 1000 | — | `current_price_m2`=1200, `previous_price_m2`=1000, `change_pct`=20 |
+| Ciudad con inventario solo antiguo | — | `recent`=0, `previous`=9 | — | omitida |
+| Anuncio publicado en el origen hace dos años, detectado hace 10 días | — | `source_published_at`=hace 2 años, `created_at`=hace 10 días | — | cohorte reciente |
 
 ### PRC-013 — growth_zones es evolution filtrada por variación positiva
 
@@ -363,11 +363,11 @@ Las "zonas en crecimiento" no son un cálculo aparte: son las filas de evolution
 
 **Casos**
 
-| Caso | Rol | Entrada | Esperado |
-| --- | --- | --- | --- |
-| Todas las ciudades bajan | — | `change_pcts`=-3, -1.2, -8 |  |
-| Variación exactamente cero | — | `change_pcts`=0 |  |
-| Doce ciudades al alza | — | `positive_cities`=12 | 8 |
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| Todas las ciudades bajan | — | `change_pcts`=-3, -1.2, -8 | — |  |
+| Variación exactamente cero | — | `change_pcts`=0 | — |  |
+| Doce ciudades al alza | — | `positive_cities`=12 | — | 8 |
 
 ### PRC-014 — estimated_market_days mide antigüedad en el portal
 
@@ -387,11 +387,11 @@ El "tiempo estimado en el mercado" es la media, redondeada a entero, de los día
 
 **Casos**
 
-| Caso | Rol | Entrada | Esperado |
-| --- | --- | --- | --- |
-| Catálogo vacío | — | `rows`=0 | 0 |
-| Tres anuncios de 10, 20 y 33 días | — | `days`=10, 20, 33 | 21 |
-| Anuncio importado hoy que llevaba dos años publicado en su portal | — | `source_published_at`=hace 730 días, `created_at`=hoy | 0 |
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| Catálogo vacío | — | `rows`=0 | — | 0 |
+| Tres anuncios de 10, 20 y 33 días | — | `days`=10, 20, 33 | — | 21 |
+| Anuncio importado hoy que llevaba dos años publicado en su portal | — | `source_published_at`=hace 730 días, `created_at`=hoy | — | 0 |
 
 ### PRC-015 — El parámetro city estrecha todas las métricas a la vez
 
@@ -413,11 +413,11 @@ El filtro de ciudad se aplica sobre el queryset base sin distinguir mayúsculas,
 
 **Casos**
 
-| Caso | Rol | Entrada | Esperado |
-| --- | --- | --- | --- |
-| Sin parámetro | — | `city`=— | nacional |
-| Ciudad en minúsculas | — | `city`=quito | solo Quito |
-| Ciudad sin inventario | — | `city`=Ciudad inexistente | `count`=0 |
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| Sin parámetro | — | `city`=— | — | nacional |
+| Ciudad en minúsculas | — | `city`=quito | — | solo Quito |
+| Ciudad sin inventario | — | `city`=Ciudad inexistente | — | `count`=0 |
 
 ### PRC-016 — El contexto por anuncio usa percentiles, no la media
 
@@ -442,11 +442,11 @@ El endpoint intelligence describe la zona con P25, mediana y P75 del precio por 
 
 **Casos**
 
-| Caso | Rol | Entrada | Esperado |
-| --- | --- | --- | --- |
-| Seis comparables entre 900 y 1150 | — | `values`=900, 950, 1000, 1050, 1100, 1150 | `low`=962.5, `median`=1025, `high`=1087.5 |
-| Sin comparables en la ciudad | — | `values`= | `low`=—, `median`=—, `high`=— |
-| Un solo comparable | — | `values`=1300 | `low`=1300, `median`=1300, `high`=1300 |
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| Seis comparables entre 900 y 1150 | — | `values`=900, 950, 1000, 1050, 1100, 1150 | — | `low`=962.5, `median`=1025, `high`=1087.5 |
+| Sin comparables en la ciudad | — | `values`= | — | `low`=—, `median`=—, `high`=— |
+| Un solo comparable | — | `values`=1300 | — | `low`=1300, `median`=1300, `high`=1300 |
 
 ### PRC-017 — La alerta de precio atípico exige cuatro comparables
 
@@ -465,12 +465,12 @@ Se marca el anuncio como above_range o below_range solo si su precio por metro c
 
 **Casos**
 
-| Caso | Rol | Entrada | Esperado |
-| --- | --- | --- | --- |
-| Anuncio muy por encima de seis comparables | — | `own_price_m2`=2800, `values`=900, 950, 1000, 1050, 1100, 1150 | above_range |
-| Anuncio dentro del rango habitual | — | `own_price_m2`=1020, `values`=900, 950, 1000, 1050, 1100, 1150 | — |
-| Solo tres comparables | — | `own_price_m2`=9000, `values`=900, 950, 1000 | — |
-| Anuncio muy por debajo | — | `own_price_m2`=100, `values`=900, 950, 1000, 1050, 1100, 1150 | below_range |
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| Anuncio muy por encima de seis comparables | — | `own_price_m2`=2800, `values`=900, 950, 1000, 1050, 1100, 1150 | — | above_range |
+| Anuncio dentro del rango habitual | — | `own_price_m2`=1020, `values`=900, 950, 1000, 1050, 1100, 1150 | — | — |
+| Solo tres comparables | — | `own_price_m2`=9000, `values`=900, 950, 1000 | — | — |
+| Anuncio muy por debajo | — | `own_price_m2`=100, `values`=900, 950, 1000, 1050, 1100, 1150 | — | below_range |
 
 ### PRC-018 — El precio por m² del propio anuncio no pasa por ningún filtro
 
@@ -489,12 +489,12 @@ own_price_m2 se calcula siempre que el anuncio tenga price y area mayor que cero
 
 **Casos**
 
-| Caso | Rol | Entrada | Esperado |
-| --- | --- | --- | --- |
-| Anuncio sin precio | — | `price`=—, `area`=100 | — |
-| Anuncio sin área | — | `price`=90000, `area`=0 | — |
-| Anuncio con precio mal parseado | — | `price`=500000, `area`=1 | 500000 |
-| Anuncio normal | — | `price`=280000, `area`=100 | 2800 |
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| Anuncio sin precio | — | `price`=—, `area`=100 | — | — |
+| Anuncio sin área | — | `price`=90000, `area`=0 | — | — |
+| Anuncio con precio mal parseado | — | `price`=500000, `area`=1 | — | 500000 |
+| Anuncio normal | — | `price`=280000, `area`=100 | — | 2800 |
 
 ### PRC-019 — Los comparables son del mismo tipo, operación y ciudad
 
@@ -517,11 +517,11 @@ El conjunto de comparables de un anuncio son los anuncios activos, no duplicados
 
 **Casos**
 
-| Caso | Rol | Entrada | Esperado |
-| --- | --- | --- | --- |
-| Casa en venta en Quito | — | `property_type`=house, `status`=for_sale, `city`=Quito | casas en venta activas de Quito, excluida ella misma |
-| Departamento en alquiler comparado con casas | — | `property_type`=apartment, `status`=for_rent | 0 |
-| Ciudad escrita con otra caja | — | `city`=QUITO | comparables de Quito |
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| Casa en venta en Quito | — | `property_type`=house, `status`=for_sale, `city`=Quito | — | casas en venta activas de Quito, excluida ella misma |
+| Departamento en alquiler comparado con casas | — | `property_type`=apartment, `status`=for_rent | — | 0 |
+| Ciudad escrita con otra caja | — | `city`=QUITO | — | comparables de Quito |
 
 ### PRC-020 — Una ciudad necesita tres anuncios de venta para publicar precios
 
@@ -548,11 +548,11 @@ La página de estadísticas de una ciudad muestra cifras y entra en el índice s
 
 **Casos**
 
-| Caso | Rol | Entrada | Esperado |
-| --- | --- | --- | --- |
-| Ciudad con dos anuncios de venta | — | `count`=2 | noindex |
-| Ciudad con tres anuncios de venta | — | `count`=3 | indexada |
-| Ciudad con cuatro anuncios de venta | — | `count`=4 | indexada pero no promocionada |
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| Ciudad con dos anuncios de venta | — | `count`=2 | — | noindex |
+| Ciudad con tres anuncios de venta | — | `count`=3 | — | indexada |
+| Ciudad con cuatro anuncios de venta | — | `count`=4 | — | indexada pero no promocionada |
 
 ### PRC-021 — Un promedio ausente se formatea como cero dólares
 
@@ -576,11 +576,11 @@ El formateador de moneda del frontend convierte null y undefined en 0 antes de f
 
 **Casos**
 
-| Caso | Rol | Entrada | Esperado |
-| --- | --- | --- | --- |
-| Promedio nulo | — | `value`=— | $0 |
-| Promedio ausente | — | `value`=—, `key_present`=no | $0 |
-| Promedio con decimales | — | `value`=1234.56 | $1235 |
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| Promedio nulo | — | `value`=— | — | $0 |
+| Promedio ausente | — | `value`=—, `key_present`=no | — | $0 |
+| Promedio con decimales | — | `value`=1234.56 | — | $1235 |
 
 ### PRC-022 — El rango de precios de las landings descarta lo que baje del 2 % de la mediana
 
@@ -612,12 +612,12 @@ El texto "precios desde X hasta Y" de las páginas de aterrizaje toma el mínimo
 
 **Casos**
 
-| Caso | Rol | Entrada | Esperado |
-| --- | --- | --- | --- |
-| Listado con un precio mal parseado | — | `prices`=379, 150000, 160000 | `low`=150000, `high`=160000, `offer_count`=3 |
-| Listado sin ningún precio | — | `prices`= |  |
-| Listado donde todos los anuncios son "a consultar" | — | `prices`=—, —, — |  |
-| Un solo anuncio con precio | — | `prices`=95000 | Precio de referencia: $95.000. |
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| Listado con un precio mal parseado | — | `prices`=379, 150000, 160000 | — | `low`=150000, `high`=160000, `offer_count`=3 |
+| Listado sin ningún precio | — | `prices`= | — |  |
+| Listado donde todos los anuncios son "a consultar" | — | `prices`=—, —, — | — |  |
+| Un solo anuncio con precio | — | `prices`=95000 | — | Precio de referencia: $95.000. |
 
 ### PRC-023 — El mapa ordena por precio tratando el NULL como cero
 
@@ -636,10 +636,10 @@ Al elegir qué anuncios individuales acompañan a los agrupadores, el mapa los o
 
 **Casos**
 
-| Caso | Rol | Entrada | Esperado |
-| --- | --- | --- | --- |
-| Mezcla de anuncios con y sin precio | — | `prices`=120000, —, 90000 | 120000, 90000, — |
-| Todos sin precio | — | `prices`=—, — | orden indeterminado |
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| Mezcla de anuncios con y sin precio | — | `prices`=120000, —, 90000 | — | 120000, 90000, — |
+| Todos sin precio | — | `prices`=—, — | — | orden indeterminado |
 
 ### PRC-024 — El historial de precios nunca se agrega
 
@@ -658,11 +658,11 @@ PropertyPriceHistory solo se lee para devolver la línea temporal de un anuncio 
 
 **Casos**
 
-| Caso | Rol | Entrada | Esperado |
-| --- | --- | --- | --- |
-| Anuncio que ha cambiado de precio una vez | — | `price_changes`=1 | 2 |
-| Anuncio sin historial y con precio | — | `price_changes`=0, `price`=90000 | 1 |
-| Uso del historial en las estadísticas de mercado | — | `endpoint`=/api/market-stats/ | 0 |
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| Anuncio que ha cambiado de precio una vez | — | `price_changes`=1 | — | 2 |
+| Anuncio sin historial y con precio | — | `price_changes`=0, `price`=90000 | — | 1 |
+| Uso del historial en las estadísticas de mercado | — | `endpoint`=/api/market-stats/ | — | 0 |
 
 **Ver también:** `specs/domains/properties.yaml`
 
@@ -680,10 +680,10 @@ Nadie calcula una serie temporal de precio por metro cuadrado, ni por país ni p
 
 **Casos**
 
-| Caso | Rol | Entrada | Esperado |
-| --- | --- | --- | --- |
-| Serie mensual de $/m² por ciudad | — | `endpoint`=/api/market-stats/ | no existe |
-| Precio del m² en Quito en enero del año pasado | — | `city`=Quito, `month`=hace 18 meses | no existe |
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| Serie mensual de $/m² por ciudad | — | `endpoint`=/api/market-stats/ | — | no existe |
+| Precio del m² en Quito en enero del año pasado | — | `city`=Quito, `month`=hace 18 meses | — | no existe |
 
 ### PRC-026 — No hay estadísticas de precio por provincia
 
@@ -705,10 +705,10 @@ El endpoint de estadísticas solo acepta el parámetro city; no existe ningún a
 
 **Casos**
 
-| Caso | Rol | Entrada | Esperado |
-| --- | --- | --- | --- |
-| Petición de estadísticas por provincia | — | `query`=?province=Pichincha | ignorado |
-| Precio medio por m² de una provincia | — | `province`=Morona Santiago | no existe |
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| Petición de estadísticas por provincia | — | `query`=?province=Pichincha | — | ignorado |
+| Precio medio por m² de una provincia | — | `province`=Morona Santiago | — | no existe |
 
 ### PRC-027 — El alquiler debería tener su propia métrica por metro cuadrado
 
@@ -724,8 +724,8 @@ El $/m² mensual del alquiler debería calcularse como una métrica propia, con 
 
 **Casos**
 
-| Caso | Rol | Entrada | Esperado |
-| --- | --- | --- | --- |
-| Precio medio de alquiler por m² al mes en una ciudad | — | `city`=Quito, `operation`=for_rent | no existe |
-| Exclusión de extremos en la muestra de alquiler | — | `operation`=for_rent | no se aplica |
-| Umbral mínimo de anuncios para publicar la cifra de alquiler | — | `operation`=for_rent, `count`=1 | se publica igualmente |
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| Precio medio de alquiler por m² al mes en una ciudad | — | `city`=Quito, `operation`=for_rent | — | no existe |
+| Exclusión de extremos en la muestra de alquiler | — | `operation`=for_rent | — | no se aplica |
+| Umbral mínimo de anuncios para publicar la cifra de alquiler | — | `operation`=for_rent, `count`=1 | — | se publica igualmente |

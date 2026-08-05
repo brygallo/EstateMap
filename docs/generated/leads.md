@@ -59,10 +59,10 @@ POST /api/leads/ usa AllowAny y no declara get_throttles, así que cualquiera pu
 
 **Casos**
 
-| Caso | Rol | Entrada | Esperado |
-| --- | --- | --- | --- |
-| Visitante anónimo crea un lead | anonymous | — | allowed |
-| Undécima petición en el mismo minuto desde el mismo cliente | — | `requests_in_one_minute`=11 | allowed |
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| Visitante anónimo crea un lead | anonymous | — | — | allowed |
+| Undécima petición en el mismo minuto desde el mismo cliente | — | `requests_in_one_minute`=11 | — | allowed |
 
 **Cobertura exigida:** api
 
@@ -95,9 +95,9 @@ POST /api/leads/ debería llevar un throttle_scope propio (p. ej. lead_create) c
 
 **Casos**
 
-| Caso | Rol | Entrada | Esperado |
-| --- | --- | --- | --- |
-| Undécima petición en el mismo minuto desde el mismo cliente | — | `requests_in_one_minute`=11 | denied (HTTP 429) `THROTTLED` |
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| Undécima petición en el mismo minuto desde el mismo cliente | — | `requests_in_one_minute`=11 | — | denied (HTTP 429) `THROTTLED` |
 
 ### LEAD-003 — Un lead solo tiene tres estados de gestión
 
@@ -120,10 +120,10 @@ Lead.status recorre new, contacted y closed, y PATCH /api/leads/{id}/ usa LeadSt
 
 **Casos**
 
-| Caso | Rol | Entrada | Esperado |
-| --- | --- | --- | --- |
-| El dueño de la propiedad avanza un lead a contactado | owner | `status`=contacted | allowed |
-| El dueño intenta reescribir el teléfono del interesado vía PATCH | owner | `phone`=0999999999 | ignorado |
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| El dueño de la propiedad avanza un lead a contactado | owner | `status`=contacted | — | allowed |
+| El dueño intenta reescribir el teléfono del interesado vía PATCH | owner | `phone`=0999999999 | — | ignorado |
 
 ### LEAD-004 — El origen de un lead se declara en un catálogo cerrado
 
@@ -138,10 +138,10 @@ Lead.source solo admite property_modal, property_page, whatsapp, phone u other, 
 
 **Casos**
 
-| Caso | Rol | Entrada | Esperado |
-| --- | --- | --- | --- |
-| Formulario del modal del mapa no envía source | — | `source`=— | property_modal |
-| Origen fuera del catálogo | — | `source`=facebook_ads | rechazado por el serializer |
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| Formulario del modal del mapa no envía source | — | `source`=— | — | property_modal |
+| Origen fuera del catálogo | — | `source`=facebook_ads | — | rechazado por el serializer |
 
 ### LEAD-005 — Solo el dueño de la propiedad ve sus leads, staff los ve todos
 
@@ -164,12 +164,12 @@ GET/PATCH/DELETE sobre /api/leads/ exigen autenticación; el queryset se filtra 
 
 **Casos**
 
-| Caso | Rol | Entrada | Esperado |
-| --- | --- | --- | --- |
-| Visitante anónimo consulta la bandeja de leads | anonymous | — | denied (HTTP 401) |
-| Dueño de la propiedad ve solo sus propios leads | owner | — | allowed |
-| Usuario autenticado no ve leads de propiedades ajenas | — | `role`=not_owner | lista vacía, no un 401/403 |
-| Staff ve leads de cualquier propiedad | staff | — | allowed |
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| Visitante anónimo consulta la bandeja de leads | anonymous | — | — | denied (HTTP 401) |
+| Dueño de la propiedad ve solo sus propios leads | owner | — | — | allowed |
+| Usuario autenticado no ve leads de propiedades ajenas | — | `role`=not_owner | — | lista vacía, no un 401/403 |
+| Staff ve leads de cualquier propiedad | staff | — | — | allowed |
 
 **Cobertura exigida:** api
 
@@ -197,9 +197,9 @@ LeadViewSet.perform_create guarda el lead y llama de forma síncrona a LeadNotif
 
 **Casos**
 
-| Caso | Rol | Entrada | Esperado |
-| --- | --- | --- | --- |
-| Interesado deja sus datos en una propiedad con dueño y contact_email | — | `owner_email`=owner@example.com, `property_contact_email`=contacto@example.com | `emails_sent`=1, `to`=owner@example.com, contacto@example.com |
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| Interesado deja sus datos en una propiedad con dueño y contact_email | — | `owner_email`=owner@example.com, `property_contact_email`=contacto@example.com | — | `emails_sent`=1, `to`=owner@example.com, contacto@example.com |
 
 ### LEAD-007 — Un SMTP caído no impide crear el lead
 
@@ -218,9 +218,9 @@ send_lead_notification llama a send_mail con fail_silently=True, y notify_create
 
 **Casos**
 
-| Caso | Rol | Entrada | Esperado |
-| --- | --- | --- | --- |
-| El backend de correo lanza una excepción al enviar | — | `smtp_status`=down | `lead_created`=sí, `http_status`=201 |
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| El backend de correo lanza una excepción al enviar | — | `smtp_status`=down | — | `lead_created`=sí, `http_status`=201 |
 
 ### LEAD-008 — Los índices de Lead sirven a la bandeja por propiedad y a los paneles por estado y origen
 
@@ -235,10 +235,10 @@ Lead declara tres índices compuestos: (property, status) para la bandeja de una
 
 **Casos**
 
-| Caso | Rol | Entrada | Esperado |
-| --- | --- | --- | --- |
-| Bandeja de leads de una propiedad filtrada por estado | — | `consulta`=property__owner + status | cubierta por lead_property_status_idx |
-| Listado admin de leads nuevos ordenado por fecha | — | `consulta`=status + created_at | cubierta por lead_status_created_idx |
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| Bandeja de leads de una propiedad filtrada por estado | — | `consulta`=property__owner + status | — | cubierta por lead_property_status_idx |
+| Listado admin de leads nuevos ordenado por fecha | — | `consulta`=status + created_at | — | cubierta por lead_status_created_idx |
 
 ### LEAD-009 — PendingPublication captura interés antes de que exista cuenta, y no aparece en el mapa
 
@@ -257,9 +257,9 @@ Es la solicitud de publicar una propiedad que alguien deja sin haber creado o ve
 
 **Casos**
 
-| Caso | Rol | Entrada | Esperado |
-| --- | --- | --- | --- |
-| PendingPublication en el payload de /map_points/ | — | `modelo`=PendingPublication | nunca aparece |
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| PendingPublication en el payload de /map_points/ | — | `modelo`=PendingPublication | — | nunca aparece |
 
 ### LEAD-010 — PendingPublication distingue tres orígenes de captura
 
@@ -275,10 +275,10 @@ El campo source admite account_required (intento de publicar sin cuenta), whatsa
 
 **Casos**
 
-| Caso | Rol | Entrada | Esperado |
-| --- | --- | --- | --- |
-| Alguien intenta publicar sin cuenta y el formulario lo redirige aquí | — | `source`=account_required | allowed |
-| Origen inventado por el cliente | — | `source`=tiktok_ads | guardado como other |
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| Alguien intenta publicar sin cuenta y el formulario lo redirige aquí | — | `source`=account_required | — | allowed |
+| Origen inventado por el cliente | — | `source`=tiktok_ads | — | guardado como other |
 
 ### LEAD-011 — Solo staff lee la bandeja de solicitudes pendientes
 
@@ -301,11 +301,11 @@ GET/PATCH sobre /api/pending-publications/ exigen IsAuthenticated e IsAdminUser 
 
 **Casos**
 
-| Caso | Rol | Entrada | Esperado |
-| --- | --- | --- | --- |
-| Visitante anónimo consulta la bandeja | anonymous | — | denied (HTTP 401) |
-| Usuario autenticado sin is_staff | authenticated | — | denied (HTTP 403) |
-| Staff consulta la bandeja completa | staff | — | allowed |
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| Visitante anónimo consulta la bandeja | anonymous | — | — | denied (HTTP 401) |
+| Usuario autenticado sin is_staff | authenticated | — | — | denied (HTTP 403) |
+| Staff consulta la bandeja completa | staff | — | — | allowed |
 
 **Cobertura exigida:** api
 
@@ -333,9 +333,9 @@ PendingPublicationViewSet.get_throttles aplica ScopedRateThrottle con throttle_s
 
 **Casos**
 
-| Caso | Rol | Entrada | Esperado |
-| --- | --- | --- | --- |
-| Undécima petición en el mismo minuto desde el mismo cliente | — | `requests_in_one_minute`=11 | denied (HTTP 429) `THROTTLED` |
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| Undécima petición en el mismo minuto desde el mismo cliente | — | `requests_in_one_minute`=11 | — | denied (HTTP 429) `THROTTLED` |
 
 ### LEAD-013 — Crear una solicitud pendiente notifica a los administradores, sin bloquear si falla
 
@@ -357,9 +357,9 @@ PendingPublicationViewSet.perform_create llama a PendingPublicationNotificationS
 
 **Casos**
 
-| Caso | Rol | Entrada | Esperado |
-| --- | --- | --- | --- |
-| Solicitud pendiente creada sin ADMINS configurados | — | `settings_admins`= | `publication_created`=sí, `emails_sent`=0 |
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| Solicitud pendiente creada sin ADMINS configurados | — | `settings_admins`= | — | `publication_created`=sí, `emails_sent`=0 |
 
 ### LEAD-014 — is_bot lo decide el servidor a partir del User-Agent, nunca el cliente
 
@@ -382,10 +382,10 @@ ActivityEventSerializer.create ignora cualquier valor de is_bot que venga en el 
 
 **Casos**
 
-| Caso | Rol | Entrada | Esperado |
-| --- | --- | --- | --- |
-| Un bot declara is_bot=false en el cuerpo de la petición | — | `user_agent`=Googlebot, `body_is_bot`=no | `stored_is_bot`=sí |
-| Un navegador humano declara is_bot=true en el cuerpo | — | `user_agent`=Mozilla/5.0 Chrome, `body_is_bot`=sí | `stored_is_bot`=no |
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| Un bot declara is_bot=false en el cuerpo de la petición | — | `user_agent`=Googlebot, `body_is_bot`=no | — | `stored_is_bot`=sí |
+| Un navegador humano declara is_bot=true en el cuerpo | — | `user_agent`=Mozilla/5.0 Chrome, `body_is_bot`=sí | — | `stored_is_bot`=no |
 
 ### LEAD-015 — Los eventos de bots se guardan siempre; solo se excluyen de las métricas humanas
 
@@ -404,9 +404,9 @@ Ningún punto del flujo de creación rechaza una petición por venir de un bot: 
 
 **Casos**
 
-| Caso | Rol | Entrada | Esperado |
-| --- | --- | --- | --- |
-| Un evento con User-Agent de Googlebot | — | `user_agent`=Googlebot | `http_status`=201, `stored`=sí, `counted_in_human_metrics`=no |
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| Un evento con User-Agent de Googlebot | — | `user_agent`=Googlebot | — | `http_status`=201, `stored`=sí, `counted_in_human_metrics`=no |
 
 ### LEAD-016 — Crear un evento de actividad está limitado a 30 por minuto
 
@@ -430,9 +430,9 @@ ActivityEventViewSet.get_throttles aplica ScopedRateThrottle con throttle_scope=
 
 **Casos**
 
-| Caso | Rol | Entrada | Esperado |
-| --- | --- | --- | --- |
-| Trigésima primera petición en el mismo minuto desde el mismo cliente | — | `requests_in_one_minute`=31 | denied (HTTP 429) `THROTTLED` |
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| Trigésima primera petición en el mismo minuto desde el mismo cliente | — | `requests_in_one_minute`=31 | — | denied (HTTP 429) `THROTTLED` |
 
 ### LEAD-017 — Las métricas de bots solo son fiables desde que el servidor empezó a marcarlos
 
@@ -451,10 +451,10 @@ ActivityEvent no guarda el User-Agent, así que las filas creadas antes de que i
 
 **Casos**
 
-| Caso | Rol | Entrada | Esperado |
-| --- | --- | --- | --- |
-| Fila de ActivityEvent creada antes de que is_bot existiera | — | `created_before_field`=sí, `payload_user_agent`=— | `is_bot`=no, `significa`=desconocido, no verificado humano |
-| Comando de backfill sin ninguna fila con user agent embebido | — | `rows_with_ua`=0 | advertencia de que las métricas son fiables solo desde el arranque del flag |
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| Fila de ActivityEvent creada antes de que is_bot existiera | — | `created_before_field`=sí, `payload_user_agent`=— | — | `is_bot`=no, `significa`=desconocido, no verificado humano |
+| Comando de backfill sin ninguna fila con user agent embebido | — | `rows_with_ua`=0 | — | advertencia de que las métricas son fiables solo desde el arranque del flag |
 
 ### LEAD-018 — PendingPublication distingue tres estados de seguimiento comercial más el estado inicial
 
@@ -477,7 +477,7 @@ PendingPublication.status recorre new, contacted, converted y discarded: a difer
 
 **Casos**
 
-| Caso | Rol | Entrada | Esperado |
-| --- | --- | --- | --- |
-| Staff marca una solicitud como convertida tras crear la cuenta | staff | `status`=converted | allowed |
-| Usuario autenticado sin is_staff intenta cambiar el estado | authenticated | — | denied |
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| Staff marca una solicitud como convertida tras crear la cuenta | staff | `status`=converted | — | allowed |
+| Usuario autenticado sin is_staff intenta cambiar el estado | authenticated | — | — | denied |

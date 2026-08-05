@@ -35,8 +35,8 @@ import {
   formatDate,
   formatPrice,
   getPropertyTypeLabel,
-  getStatusBadgeClass,
-  getStatusLabel,
+  getListingStatusBadgeClass,
+  getListingStatusLabel,
 } from '@/lib/property-labels';
 import type { Property } from '@/lib/types';
 
@@ -150,16 +150,16 @@ export default function OwnerPropertyDetailPage() {
               <PropertyGallery
                 images={property.images || []}
                 title={property.title || `Propiedad #${property.id}`}
-                statusLabel={getStatusLabel(property.status)}
+                statusLabel={getListingStatusLabel(property)}
                 propertyTypeLabel={getPropertyTypeLabel(property.property_type)}
-                statusClassName={getStatusBadgeClass(property.status)}
+                statusClassName={getListingStatusBadgeClass(property)}
               />
 
               <section className="rounded-card border border-line bg-surface p-5 shadow-card sm:p-6">
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                   <div className="min-w-0">
                     <div className="flex flex-wrap gap-2">
-                      <Badge className={getStatusBadgeClass(property.status)}>{getStatusLabel(property.status)}</Badge>
+                      <Badge className={getListingStatusBadgeClass(property)}>{getListingStatusLabel(property)}</Badge>
                       {property.is_imported && <Badge variant="secondary">Importada</Badge>}
                     </div>
                     <h1 className="mt-3 text-2xl font-bold text-textPrimary sm:text-3xl">{property.title || `Propiedad #${property.id}`}</h1>

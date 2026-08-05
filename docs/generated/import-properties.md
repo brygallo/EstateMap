@@ -46,10 +46,10 @@ Cuidado con leer `verify` como un modo de solo lectura: no lo es. Sella `last_se
 
 **Casos**
 
-| Caso | Rol | Entrada | Esperado |
-| --- | --- | --- | --- |
-| Run con modo verify | — | `modo`=verify | se ejecuta run_verify; no reescribe campos del anuncio ni descarga imágenes, pero sella last_seen_at (IMP-015) y puede eliminar anuncios retirados (IMP-013) |
-| Run con modo desconocido | — | `modo`=cualquier-otro | cae al comportamiento de load |
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| Run con modo verify | — | `modo`=verify | — | se ejecuta run_verify; no reescribe campos del anuncio ni descarga imágenes, pero sella last_seen_at (IMP-015) y puede eliminar anuncios retirados (IMP-013) |
+| Run con modo desconocido | — | `modo`=cualquier-otro | — | cae al comportamiento de load |
 
 ### WFI-002 — El modo verify solo se alcanza desde la API
 
@@ -70,10 +70,10 @@ Cuidado con leer `verify` como un modo de solo lectura: no lo es. Sella `last_se
 
 **Casos**
 
-| Caso | Rol | Entrada | Esperado |
-| --- | --- | --- | --- |
-| Lanzar verify por API | — | `body`=`source`=plusvalia, `modo`=verify | run creado con modo verify |
-| Intentar verify por CLI | — | `comando`=ingesta_load --source plusvalia | no existe bandera; el run sale como load |
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| Lanzar verify por API | — | `body`=`source`=plusvalia, `modo`=verify | — | run creado con modo verify |
+| Intentar verify por CLI | — | `comando`=ingesta_load --source plusvalia | — | no existe bandera; el run sale como load |
 
 ### WFI-003 — Los dos caminos de importación comparten el mismo punto de escritura
 
@@ -91,10 +91,10 @@ El flujo de un solo paso y el flujo por paquete difieren solo en de dónde salen
 
 **Casos**
 
-| Caso | Rol | Entrada | Esperado |
-| --- | --- | --- | --- |
-| Mismo anuncio por los dos caminos | — | `external_id`=150575806 | una sola fila; el segundo camino actualiza |
-| Imágenes en el camino paquete | — | `reader`=presente | se sincronizan desde images/<external_id>/ del paquete |
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| Mismo anuncio por los dos caminos | — | `external_id`=150575806 | — | una sola fila; el segundo camino actualiza |
+| Imágenes en el camino paquete | — | `reader`=presente | — | se sincronizan desde images/<external_id>/ del paquete |
 
 ### WFI-004 — El orden de las fases no puede alterarse
 
@@ -112,11 +112,11 @@ Ubicación antes de escribir, saneamiento de precio y huella de imagen antes de 
 
 **Casos**
 
-| Caso | Rol | Entrada | Esperado |
-| --- | --- | --- | --- |
-| Anuncio sin coordenadas | — | `latitude`=— | se corta en la fase de ubicación; no se consulta el dedup |
-| Duplicado de otra fuente, y el nuevo no aporta teléfono | — | `duplicado`=sí, `nuevo_con_telefono`=no | no se llega a crear la fila ni a descargar imágenes |
-| Duplicado de otra fuente, y el nuevo sí aporta teléfono | — | `duplicado`=sí, `nuevo_con_telefono`=sí | se crea la fila y se descargan sus imágenes; el anuncio existente se borra después, ya completado el nuevo |
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| Anuncio sin coordenadas | — | `latitude`=— | — | se corta en la fase de ubicación; no se consulta el dedup |
+| Duplicado de otra fuente, y el nuevo no aporta teléfono | — | `duplicado`=sí, `nuevo_con_telefono`=no | — | no se llega a crear la fila ni a descargar imágenes |
+| Duplicado de otra fuente, y el nuevo sí aporta teléfono | — | `duplicado`=sí, `nuevo_con_telefono`=sí | — | se crea la fila y se descargan sus imágenes; el anuncio existente se borra después, ya completado el nuevo |
 
 ### WFI-005 — Un paquete se valida entero antes de tocar la base
 
@@ -134,12 +134,12 @@ Ubicación antes de escribir, saneamiento de precio y huella de imagen antes de 
 
 **Casos**
 
-| Caso | Rol | Entrada | Esperado |
-| --- | --- | --- | --- |
-| Manifiesto declara 2 y el JSONL trae 1 | — | `total_declarado`=2, `lineas`=1 | PaqueteInvalido; no se escribe nada |
-| Línea 2 con JSON roto | — | `linea_rota`=2 | PaqueteInvalido indicando la línea 2 |
-| external_id repetido dentro del paquete | — | `external_ids`=1, 1 | PaqueteInvalido por external_id duplicado |
-| Paquete completo | — | `total_declarado`=2, `lineas`=2 | válido; procede la importación |
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| Manifiesto declara 2 y el JSONL trae 1 | — | `total_declarado`=2, `lineas`=1 | — | PaqueteInvalido; no se escribe nada |
+| Línea 2 con JSON roto | — | `linea_rota`=2 | — | PaqueteInvalido indicando la línea 2 |
+| external_id repetido dentro del paquete | — | `external_ids`=1, 1 | — | PaqueteInvalido por external_id duplicado |
+| Paquete completo | — | `total_declarado`=2, `lineas`=2 | — | válido; procede la importación |
 
 **Cobertura exigida:** unit
 
@@ -161,11 +161,11 @@ Está como `partial` porque la protección no cubre todo el recorrido: en `run_l
 
 **Casos**
 
-| Caso | Rol | Entrada | Esperado |
-| --- | --- | --- | --- |
-| Un anuncio falla al escribirse (ubicación, upsert o imágenes) | — | `anuncios`=100, `fallan`=1, `fase`=upsert | `estado`=done, `errores`=1 |
-| Un anuncio falla al parsearse dentro del scraper, en modo load | — | `fase`=parseo_en_el_scraper, `modo`=load | `estado`=error, `current_stage`=fallo fatal |
-| Un anuncio se omite por no tener imágenes | — | `resultado`=skipped_no_images | cuenta como error individual, el run sigue |
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| Un anuncio falla al escribirse (ubicación, upsert o imágenes) | — | `anuncios`=100, `fallan`=1, `fase`=upsert | — | `estado`=done, `errores`=1 |
+| Un anuncio falla al parsearse dentro del scraper, en modo load | — | `fase`=parseo_en_el_scraper, `modo`=load | — | `estado`=error, `current_stage`=fallo fatal |
+| Un anuncio se omite por no tener imágenes | — | `resultado`=skipped_no_images | — | cuenta como error individual, el run sigue |
 
 ### WFI-007 — Un bloqueo del portal termina el run en error, nunca en éxito vacío
 
@@ -184,11 +184,11 @@ Tras tres respuestas 403 o de challenge seguidas, el scraper lanza `ScraperBlock
 
 **Casos**
 
-| Caso | Rol | Entrada | Esperado |
-| --- | --- | --- | --- |
-| Un 429 con Retry-After 20 | — | `status`=429, `retry_after`=20 | espera 20 s y reintenta |
-| Tres 403 seguidos | — | `status`=403, 403, 403 | ScraperBlocked tras esperar 15 s y 30 s |
-| Run que recibe ScraperBlocked | — | `excepcion`=ScraperBlocked | `estado`=error, `current_stage`=bloqueado por el portal |
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| Un 429 con Retry-After 20 | — | `status`=429, `retry_after`=20 | — | espera 20 s y reintenta |
+| Tres 403 seguidos | — | `status`=403, 403, 403 | — | ScraperBlocked tras esperar 15 s y 30 s |
+| Run que recibe ScraperBlocked | — | `excepcion`=ScraperBlocked | — | `estado`=error, `current_stage`=bloqueado por el portal |
 
 **Cobertura exigida:** unit
 
@@ -210,11 +210,11 @@ Un bloqueo durante el barrido de vigencia no aborta: pausa 8 minutos y continúa
 
 **Casos**
 
-| Caso | Rol | Entrada | Esperado |
-| --- | --- | --- | --- |
-| Un bloqueo puntual a mitad del lote | — | `bloqueos`=1 | `estado`=done, `reset_blocks`=1 |
-| Bloqueo persistente | — | `bloqueos`=5 | `estado`=error, `mensaje_contiene`=continúa donde quedó |
-| Progreso previo a un bloqueo persistente | — | `comprobadas_antes`=1 | las ya comprobadas conservan su last_seen_at |
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| Un bloqueo puntual a mitad del lote | — | `bloqueos`=1 | — | `estado`=done, `reset_blocks`=1 |
+| Bloqueo persistente | — | `bloqueos`=5 | — | `estado`=error, `mensaje_contiene`=continúa donde quedó |
+| Progreso previo a un bloqueo persistente | — | `comprobadas_antes`=1 | — | las ya comprobadas conservan su last_seen_at |
 
 **Cobertura exigida:** unit
 
@@ -236,11 +236,11 @@ Un run con `solo_nuevas` salta los anuncios ya conocidos comparando primero el I
 
 **Casos**
 
-| Caso | Rol | Entrada | Esperado |
-| --- | --- | --- | --- |
-| Anuncio conocido por ID con la URL cambiada | — | `external_id_conocido`=sí, `url_nueva`=sí | se salta sin abrir la ficha |
-| Racha de conocidos por encima del límite | — | `conocidos_consecutivos`=120 | la categoría se cierra |
-| Ficha que responde 410 en medio del recorrido | — | `http_status`=410 | se notifica on_gone y cuenta para la racha |
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| Anuncio conocido por ID con la URL cambiada | — | `external_id_conocido`=sí, `url_nueva`=sí | — | se salta sin abrir la ficha |
+| Racha de conocidos por encima del límite | — | `conocidos_consecutivos`=120 | — | la categoría se cierra |
+| Ficha que responde 410 en medio del recorrido | — | `http_status`=410 | — | se notifica on_gone y cuenta para la racha |
 
 **Cobertura exigida:** unit
 
@@ -263,11 +263,11 @@ Guardar o borrar una `Property` invalida las generaciones de caché en Redis, en
 
 **Casos**
 
-| Caso | Rol | Entrada | Esperado |
-| --- | --- | --- | --- |
-| Anuncio importado nuevo | — | `evento`=post_save | versiones de caché incrementadas, revalidación encolada, IndexNow notificado |
-| Anuncio retirado | — | `evento`=post_delete | misma cadena, incluido el ping de IndexNow |
-| Broker de Celery caído | — | `broker`=down | se registra un warning y la escritura no falla |
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| Anuncio importado nuevo | — | `evento`=post_save | — | versiones de caché incrementadas, revalidación encolada, IndexNow notificado |
+| Anuncio retirado | — | `evento`=post_delete | — | misma cadena, incluido el ping de IndexNow |
+| Broker de Celery caído | — | `broker`=down | — | se registra un warning y la escritura no falla |
 
 ### WFI-011 — Una fuente no puede tener dos ejecuciones a la vez
 
@@ -290,10 +290,10 @@ Lanzar una ingesta con otra `pending` o `running` para la misma fuente se rechaz
 
 **Casos**
 
-| Caso | Rol | Entrada | Esperado |
-| --- | --- | --- | --- |
-| Lanzar con un run activo de la misma fuente | — | `run_activo`=sí | 409 con el id del run en curso (HTTP 409) |
-| Lanzar con un run colgado hace 20 minutos | — | `heartbeat_hace_minutos`=20 | el colgado pasa a error y el nuevo run se crea |
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| Lanzar con un run activo de la misma fuente | — | `run_activo`=sí | — | 409 con el id del run en curso (HTTP 409) |
+| Lanzar con un run colgado hace 20 minutos | — | `heartbeat_hace_minutos`=20 | — | el colgado pasa a error y el nuevo run se crea |
 
 ### WFI-012 — Los puntos de entrada apuntan por defecto a una fuente viva
 
@@ -311,11 +311,11 @@ Tanto la CLI como el endpoint de lanzamiento siguen usando `properati` como fuen
 
 **Casos**
 
-| Caso | Rol | Entrada | Esperado |
-| --- | --- | --- | --- |
-| Lanzar sin indicar fuente por CLI | — | `comando`=ingesta_load | hoy crea un run de properati |
-| POST launch sin campo source | — | `body`= | hoy crea un run de properati |
-| Comportamiento esperado | — | `body`= | error pidiendo la fuente, o default a la única fuente activa |
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| Lanzar sin indicar fuente por CLI | — | `comando`=ingesta_load | — | hoy crea un run de properati |
+| POST launch sin campo source | — | `body`= | — | hoy crea un run de properati |
+| Comportamiento esperado | — | `body`= | — | error pidiendo la fuente, o default a la única fuente activa |
 
 ### WFI-013 — El barrido de vigencia publica un progreso medible
 
@@ -332,9 +332,9 @@ La API informa el total objetivo de los modos `verify` y `refresh` aunque se lan
 
 **Casos**
 
-| Caso | Rol | Entrada | Esperado |
-| --- | --- | --- | --- |
-| Vigencia sin límite tras retirar un anuncio | — | `elegibles_restantes`=1, `vistos`=1, `caducadas`=1 | `progress_total`=2, `progreso`=50% |
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| Vigencia sin límite tras retirar un anuncio | — | `elegibles_restantes`=1, `vistos`=1, `caducadas`=1 | — | `progress_total`=2, `progreso`=50% |
 
 **Cobertura exigida:** unit
 
@@ -352,6 +352,6 @@ En modo `load`, la obtención de cada anuncio debería ir dentro del mismo try/e
 
 **Casos**
 
-| Caso | Rol | Entrada | Esperado |
-| --- | --- | --- | --- |
-| Un anuncio falla al parsearse dentro del scraper, en modo load | — | `fase`=parseo_en_el_scraper, `modo`=load | `estado`=done, `errores`=1 |
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| Un anuncio falla al parsearse dentro del scraper, en modo load | — | `fase`=parseo_en_el_scraper, `modo`=load | — | `estado`=done, `errores`=1 |

@@ -59,23 +59,23 @@ rules:
         role: staff
         expected: allowed
         expected_http_status: 200
-        given:
+        body:
           email: destino@example.com
       - name: un usuario autenticado cualquiera no puede transferir
         role: not_owner
         expected: denied
-        given:
+        body:
           email: destino@example.com
       - name: el propietario actual tampoco puede transferirla él mismo
         role: owner
         expected: denied
-        given:
+        body:
           email: destino@example.com
       - name: un anónimo no puede transferir
         role: anonymous
         expected: denied
         http_status: 401
-        given:
+        body:
           email: destino@example.com
 
   - id: OWN-002
@@ -114,7 +114,7 @@ rules:
         role: staff
         expected: allowed
         expected_http_status: 200
-        given:
+        body:
           email: nuevo@example.com
       - name: una transferencia sin destino se rechaza
         role: staff

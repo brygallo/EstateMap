@@ -55,10 +55,10 @@ Toda propiedad creada por la ingesta queda con `owner` NULL e `is_imported=True`
 
 **Casos**
 
-| Caso | Rol | Entrada | Esperado |
-| --- | --- | --- | --- |
-| Anuncio importado de Plusvalía | — | `source`=plusvalia, `external_id`=150575806 | `owner`=—, `is_imported`=sí |
-| Publicación creada por un usuario | — | `via`=formulario público | `is_imported`=no |
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| Anuncio importado de Plusvalía | — | `source`=plusvalia, `external_id`=150575806 | — | `owner`=—, `is_imported`=sí |
+| Publicación creada por un usuario | — | `via`=formulario público | — | `is_imported`=no |
 
 ### IMP-002 — La clave lógica de un anuncio es (source, external_id)
 
@@ -76,10 +76,10 @@ Reimportar el mismo anuncio actualiza la fila existente en vez de duplicarla, ga
 
 **Casos**
 
-| Caso | Rol | Entrada | Esperado |
-| --- | --- | --- | --- |
-| Mismo paquete importado dos veces | — | `external_id`=150575806, `import_count`=2 | `created`=1, `updated`=1 |
-| Dos procesos crean el mismo external_id a la vez | — | `race`=sí | la fila perdedora se recupera y se actualiza; nunca se duplica |
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| Mismo paquete importado dos veces | — | `external_id`=150575806, `import_count`=2 | — | `created`=1, `updated`=1 |
+| Dos procesos crean el mismo external_id a la vez | — | `race`=sí | — | la fila perdedora se recupera y se actualiza; nunca se duplica |
 
 ### IMP-003 — Un precio absurdo se publica como "a consultar", no como dato
 
@@ -97,13 +97,13 @@ Un precio positivo de venta menor a 1.000 USD, un alquiler positivo menor a 20 U
 
 **Casos**
 
-| Caso | Rol | Entrada | Esperado |
-| --- | --- | --- | --- |
-| Venta por 250 USD | — | `price`=250, `status`=for_sale | — |
-| Alquiler por 15 USD/mes | — | `price`=15, `status`=for_rent | — |
-| Alquiler por 450 USD/mes | — | `price`=450, `status`=for_rent | 450 |
-| Venta por 92.000.000 USD | — | `price`=92000000, `status`=for_sale | — |
-| Anuncio sin precio válido sigue publicándose | — | `price`=250 | la propiedad se crea con price NULL |
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| Venta por 250 USD | — | `price`=250, `status`=for_sale | — | — |
+| Alquiler por 15 USD/mes | — | `price`=15, `status`=for_rent | — | — |
+| Alquiler por 450 USD/mes | — | `price`=450, `status`=for_rent | — | 450 |
+| Venta por 92.000.000 USD | — | `price`=92000000, `status`=for_sale | — | — |
+| Anuncio sin precio válido sigue publicándose | — | `price`=250 | — | la propiedad se crea con price NULL |
 
 ### IMP-004 — Las fechas de origen no se inventan
 
@@ -121,10 +121,10 @@ Un precio positivo de venta menor a 1.000 USD, un alquiler positivo menor a 20 U
 
 **Casos**
 
-| Caso | Rol | Entrada | Esperado |
-| --- | --- | --- | --- |
-| Schema.org con datePosted ISO | — | `datePosted`=2026-05-10T14:30:00-05:00 | 2026-05-10T14:30:00-05:00 |
-| Texto no parseable | — | `datePosted`=publicado recientemente | — |
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| Schema.org con datePosted ISO | — | `datePosted`=2026-05-10T14:30:00-05:00 | — | 2026-05-10T14:30:00-05:00 |
+| Texto no parseable | — | `datePosted`=publicado recientemente | — | — |
 
 **Cobertura exigida:** unit
 
@@ -145,10 +145,10 @@ Un anuncio publicado a la vez en venta y alquiler queda como `for_sale` con el p
 
 **Casos**
 
-| Caso | Rol | Entrada | Esperado |
-| --- | --- | --- | --- |
-| Anuncio de venta y alquiler | — | `venta`=600000, `alquiler`=5000 | `status`=for_sale, `price`=600000, `rent_price`=5000 |
-| Anuncio solo de alquiler | — | `alquiler`=5000 | `status`=for_rent, `price`=5000, `rent_price`=— |
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| Anuncio de venta y alquiler | — | `venta`=600000, `alquiler`=5000 | — | `status`=for_sale, `price`=600000, `rent_price`=5000 |
+| Anuncio solo de alquiler | — | `alquiler`=5000 | — | `status`=for_rent, `price`=5000, `rent_price`=— |
 
 **Cobertura exigida:** unit
 
@@ -170,11 +170,11 @@ Una propiedad importada ofrece WhatsApp si hay teléfono y, si no, un enlace al 
 
 **Casos**
 
-| Caso | Rol | Entrada | Esperado |
-| --- | --- | --- | --- |
-| Anuncio con WhatsApp | — | `contact_phone`=593995806119 | botón de WhatsApp |
-| Anuncio importado sin teléfono | — | `contact_phone`=, `source_url`=https://www.plusvalia.com/propiedades/clasificado/x-1.html | enlace 'Contactar anunciante' al anuncio original |
-| Anuncio con email pero sin teléfono | — | `contact_phone`=, `contact_email`=agente@example.com | el email no se ofrece; se cae directo al enlace del portal |
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| Anuncio con WhatsApp | — | `contact_phone`=593995806119 | — | botón de WhatsApp |
+| Anuncio importado sin teléfono | — | `contact_phone`=, `source_url`=https://www.plusvalia.com/propiedades/clasificado/x-1.html | — | enlace 'Contactar anunciante' al anuncio original |
+| Anuncio con email pero sin teléfono | — | `contact_phone`=, `contact_email`=agente@example.com | — | el email no se ofrece; se cae directo al enlace del portal |
 
 ### IMP-007 — La misma foto identifica la misma propiedad entre portales
 
@@ -192,11 +192,11 @@ Si el dHash de la imagen principal coincide exactamente con el de una propiedad 
 
 **Casos**
 
-| Caso | Rol | Entrada | Esperado |
-| --- | --- | --- | --- |
-| Misma foto, ubicaciones distintas | — | `image_hash`=a1b2c3d4e5f60718, `distancia_m`=4000 | duplicado |
-| Hash que difiere en un bit | — | `image_hash_nuevo`=a1b2c3d4e5f60718, `image_hash_existente`=a1b2c3d4e5f60719 | no se considera duplicado por imagen |
-| Descarga de la imagen fallida | — | `image_hash`= | la señal de imagen no se evalúa; se pasa a las geográficas |
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| Misma foto, ubicaciones distintas | — | `image_hash`=a1b2c3d4e5f60718, `distancia_m`=4000 | — | duplicado |
+| Hash que difiere en un bit | — | `image_hash_nuevo`=a1b2c3d4e5f60718, `image_hash_existente`=a1b2c3d4e5f60719 | — | no se considera duplicado por imagen |
+| Descarga de la imagen fallida | — | `image_hash`= | — | la señal de imagen no se evalúa; se pasa a las geográficas |
 
 ### IMP-008 — Dedup geográfico entre fuentes por proximidad y atributos
 
@@ -214,14 +214,14 @@ Sin coincidencia de imagen, dos anuncios de fuentes distintas son la misma propi
 
 **Casos**
 
-| Caso | Rol | Entrada | Esperado |
-| --- | --- | --- | --- |
-| A 12 m con áreas 500 y 520 | — | `distancia_m`=12, `area_nueva`=500, `area_existente`=520 | duplicado |
-| A 12 m con áreas 500 y 900 | — | `distancia_m`=12, `area_nueva`=500, `area_existente`=900 | no duplicado |
-| A 12 m y a la nueva le falta el área | — | `distancia_m`=12, `area_nueva`=— | duplicado |
-| A 300 m con área y precio dentro del 3 % | — | `distancia_m`=300, `area_nueva`=500, `area_existente`=505, `price_nuevo`=100000, `price_existente`=101000 | duplicado |
-| A 300 m con área igual pero precio un 20 % distinto | — | `distancia_m`=300, `area_nueva`=500, `area_existente`=505, `price_nuevo`=100000, `price_existente`=120000 | no duplicado |
-| A 700 m con todo coincidente | — | `distancia_m`=700 | no duplicado |
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| A 12 m con áreas 500 y 520 | — | `distancia_m`=12, `area_nueva`=500, `area_existente`=520 | — | duplicado |
+| A 12 m con áreas 500 y 900 | — | `distancia_m`=12, `area_nueva`=500, `area_existente`=900 | — | no duplicado |
+| A 12 m y a la nueva le falta el área | — | `distancia_m`=12, `area_nueva`=— | — | duplicado |
+| A 300 m con área y precio dentro del 3 % | — | `distancia_m`=300, `area_nueva`=500, `area_existente`=505, `price_nuevo`=100000, `price_existente`=101000 | — | duplicado |
+| A 300 m con área igual pero precio un 20 % distinto | — | `distancia_m`=300, `area_nueva`=500, `area_existente`=505, `price_nuevo`=100000, `price_existente`=120000 | — | no duplicado |
+| A 700 m con todo coincidente | — | `distancia_m`=700 | — | no duplicado |
 
 ### IMP-009 — El teléfono nunca es señal de deduplicación
 
@@ -238,9 +238,9 @@ Dos anuncios que comparten teléfono no se consideran la misma propiedad por ese
 
 **Casos**
 
-| Caso | Rol | Entrada | Esperado |
-| --- | --- | --- | --- |
-| Dos lotes distintos de la misma inmobiliaria | — | `contact_phone`=593995806119, `distancia_m`=3000 | no duplicado |
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| Dos lotes distintos de la misma inmobiliaria | — | `contact_phone`=593995806119, `distancia_m`=3000 | — | no duplicado |
 
 ### IMP-010 — En un empate entre fuentes gana el anuncio con teléfono
 
@@ -257,11 +257,11 @@ Ante un duplicado entre fuentes, si el anuncio nuevo trae teléfono y el existen
 
 **Casos**
 
-| Caso | Rol | Entrada | Esperado |
-| --- | --- | --- | --- |
-| Nuevo con teléfono, existente sin él | — | `nuevo_contact_phone`=593995806119, `existente_contact_phone`= | created; el existente se borra tras completar el nuevo |
-| Ambos con teléfono | — | `nuevo_contact_phone`=593995806119, `existente_contact_phone`=593964146666 | skipped_duplicate |
-| Ninguno con teléfono | — | `nuevo_contact_phone`=, `existente_contact_phone`= | skipped_duplicate |
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| Nuevo con teléfono, existente sin él | — | `nuevo_contact_phone`=593995806119, `existente_contact_phone`= | — | created; el existente se borra tras completar el nuevo |
+| Ambos con teléfono | — | `nuevo_contact_phone`=593995806119, `existente_contact_phone`=593964146666 | — | skipped_duplicate |
+| Ninguno con teléfono | — | `nuevo_contact_phone`=, `existente_contact_phone`= | — | skipped_duplicate |
 
 ### IMP-011 — El dedup entre fuentes nunca compara una fuente consigo misma
 
@@ -278,10 +278,10 @@ Ante un duplicado entre fuentes, si el anuncio nuevo trae teléfono y el existen
 
 **Casos**
 
-| Caso | Rol | Entrada | Esperado |
-| --- | --- | --- | --- |
-| Dos anuncios de Plusvalía a 5 m con la misma área | — | `source_nuevo`=plusvalia, `source_existente`=plusvalia | no se evalúa como duplicado entre fuentes |
-| Anuncio de otra fuente a 5 m con la misma área | — | `source_nuevo`=plusvalia, `source_existente`=properati | duplicado |
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| Dos anuncios de Plusvalía a 5 m con la misma área | — | `source_nuevo`=plusvalia, `source_existente`=plusvalia | — | no se evalúa como duplicado entre fuentes |
+| Anuncio de otra fuente a 5 m con la misma área | — | `source_nuevo`=plusvalia, `source_existente`=properati | — | duplicado |
 
 ### IMP-012 — Sin coordenadas reales dentro de Ecuador, el anuncio no entra
 
@@ -299,11 +299,11 @@ Solo se importa un anuncio que ya trae latitud y longitud y que cae dentro del b
 
 **Casos**
 
-| Caso | Rol | Entrada | Esperado |
-| --- | --- | --- | --- |
-| Anuncio con postingGeolocation | — | `latitude`=-0.221344763440787, `longitude`=-78.414314025994880 | se importa |
-| Anuncio sin coordenadas en listado ni ficha | — | `latitude`=— | descartado, cuenta como sin_ubicacion |
-| Coordenadas en Colombia | — | `latitude`=4.7, `longitude`=-74.07 | descartado por fuera_de_ecuador |
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| Anuncio con postingGeolocation | — | `latitude`=-0.221344763440787, `longitude`=-78.414314025994880 | — | se importa |
+| Anuncio sin coordenadas en listado ni ficha | — | `latitude`=— | — | descartado, cuenta como sin_ubicacion |
+| Coordenadas en Colombia | — | `latitude`=4.7, `longitude`=-74.07 | — | descartado por fuera_de_ecuador |
 
 **Cobertura exigida:** unit
 
@@ -325,11 +325,11 @@ Cuando el portal confirma que un anuncio ya no existe, se borran la `Property` y
 
 **Casos**
 
-| Caso | Rol | Entrada | Esperado |
-| --- | --- | --- | --- |
-| Ficha que responde 410 | — | `http_status`=410, `importada`=sí | `property_borrada`=sí, `listing_retirada`=sí |
-| Anuncio que nunca llegó a importarse | — | `http_status`=404, `importada`=no | solo se crea la fila de auditoría |
-| Aviso con HTTP 200 pero postingStatus distinto de ONLINE | — | `http_status`=200, `posting_status`=FINISHED | se retira igual |
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| Ficha que responde 410 | — | `http_status`=410, `importada`=sí | — | `property_borrada`=sí, `listing_retirada`=sí |
+| Anuncio que nunca llegó a importarse | — | `http_status`=404, `importada`=no | — | solo se crea la fila de auditoría |
+| Aviso con HTTP 200 pero postingStatus distinto de ONLINE | — | `http_status`=200, `posting_status`=FINISHED | — | se retira igual |
 
 **Cobertura exigida:** unit
 
@@ -350,10 +350,10 @@ Ninguna retirada ni limpieza de mantenimiento puede tocar una `Property` con `is
 
 **Casos**
 
-| Caso | Rol | Entrada | Esperado |
-| --- | --- | --- | --- |
-| Propiedad de usuario marcada como duplicada | — | `is_imported`=no, `is_duplicate`=sí | no se borra ni pierde imágenes |
-| Retirada solicitada sobre una propiedad de usuario | — | `is_imported`=no | — |
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| Propiedad de usuario marcada como duplicada | — | `is_imported`=no, `is_duplicate`=sí | — | no se borra ni pierde imágenes |
+| Retirada solicitada sobre una propiedad de usuario | — | `is_imported`=no | — | — |
 
 **Cobertura exigida:** unit
 
@@ -375,10 +375,10 @@ Ninguna retirada ni limpieza de mantenimiento puede tocar una `Property` con `is
 
 **Casos**
 
-| Caso | Rol | Entrada | Esperado |
-| --- | --- | --- | --- |
-| Propiedad confirmada viva | — | `exists`=sí | last_seen_at actualizado |
-| Barrido con limit 2 sobre fresca, rancia y nunca vista | — | `limit`=2 | se comprueban la nunca vista y la rancia; la fresca queda intacta |
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| Propiedad confirmada viva | — | `exists`=sí | — | last_seen_at actualizado |
+| Barrido con limit 2 sobre fresca, rancia y nunca vista | — | `limit`=2 | — | se comprueban la nunca vista y la rancia; la fresca queda intacta |
 
 **Cobertura exigida:** unit
 
@@ -400,10 +400,10 @@ Una `ListingRetirada` se considera conocida solo durante 30 días; pasado ese pl
 
 **Casos**
 
-| Caso | Rol | Entrada | Esperado |
-| --- | --- | --- | --- |
-| Retirada de hace 3 días | — | `dias`=3 | sigue siendo conocida; no se reabre la ficha |
-| Retirada de hace 31 días | — | `dias`=31 | deja de ser conocida; se vuelve a comprobar |
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| Retirada de hace 3 días | — | `dias`=3 | — | sigue siendo conocida; no se reabre la ficha |
+| Retirada de hace 31 días | — | `dias`=31 | — | deja de ser conocida; se vuelve a comprobar |
 
 **Cobertura exigida:** unit
 
@@ -425,11 +425,11 @@ Todas las peticiones al portal y a su CDN de imágenes se hacen con `curl_cffi` 
 
 **Casos**
 
-| Caso | Rol | Entrada | Esperado |
-| --- | --- | --- | --- |
-| Petición desde el servidor de producción con chrome99_android | — | `origen`=datacenter, `impersonate`=chrome99_android | HTTP 200 con el HTML real |
-| Petición desde el servidor con un fingerprint de escritorio | — | `origen`=datacenter, `impersonate`=chrome136 | HTTP 403 |
-| curl_cffi ausente en la imagen | — | `curl_cffi`=— | degrada a httpx y el portal responde 403 |
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| Petición desde el servidor de producción con chrome99_android | — | `origen`=datacenter, `impersonate`=chrome99_android | — | HTTP 200 con el HTML real |
+| Petición desde el servidor con un fingerprint de escritorio | — | `origen`=datacenter, `impersonate`=chrome136 | — | HTTP 403 |
+| curl_cffi ausente en la imagen | — | `curl_cffi`=— | — | degrada a httpx y el portal responde 403 |
 
 ### IMP-018 — Una propiedad importada sin ninguna imagen no se publica
 
@@ -447,11 +447,11 @@ Se adjuntan hasta 10 imágenes por anuncio; si no se logra adjuntar ninguna, la 
 
 **Casos**
 
-| Caso | Rol | Entrada | Esperado |
-| --- | --- | --- | --- |
-| Todas las descargas fallan en una propiedad nueva | — | `descargas_ok`=0, `created`=sí | skipped_no_images y la propiedad no queda en base |
-| Todas las descargas fallan en una propiedad existente | — | `descargas_ok`=0, `imagenes_previas`=1 | conserva sus imágenes anteriores |
-| El anuncio trae 25 imágenes | — | `image_urls`=25 | se adjuntan como máximo 10 |
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| Todas las descargas fallan en una propiedad nueva | — | `descargas_ok`=0, `created`=sí | — | skipped_no_images y la propiedad no queda en base |
+| Todas las descargas fallan en una propiedad existente | — | `descargas_ok`=0, `imagenes_previas`=1 | — | conserva sus imágenes anteriores |
+| El anuncio trae 25 imágenes | — | `image_urls`=25 | — | se adjuntan como máximo 10 |
 
 **Cobertura exigida:** unit
 
@@ -469,10 +469,10 @@ Ningún camino de la ingesta marca una propiedad como duplicada ni la enlaza con
 
 **Casos**
 
-| Caso | Rol | Entrada | Esperado |
-| --- | --- | --- | --- |
-| Duplicado detectado entre fuentes | — | `resultado_upsert`=skipped_duplicate | hoy no se crea ninguna fila marcada is_duplicate=True |
-| Comportamiento esperado si se implementa | — | `resultado_upsert`=skipped_duplicate | `is_duplicate`=sí, `duplicate_of`=id de la canónica |
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| Duplicado detectado entre fuentes | — | `resultado_upsert`=skipped_duplicate | — | hoy no se crea ninguna fila marcada is_duplicate=True |
+| Comportamiento esperado si se implementa | — | `resultado_upsert`=skipped_duplicate | — | `is_duplicate`=sí, `duplicate_of`=id de la canónica |
 
 ### IMP-020 — Fuente.activa decide qué fuentes se recorren
 
@@ -486,10 +486,10 @@ El flag `Fuente.activa` no gobierna ninguna ejecución: solo se muestra en el pa
 
 **Casos**
 
-| Caso | Rol | Entrada | Esperado |
-| --- | --- | --- | --- |
-| Fuente desactivada incluida en --all | — | `activa`=no | hoy se recorre igual |
-| Comportamiento esperado | — | `activa`=no | excluida de --all y rechazada al lanzarla |
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| Fuente desactivada incluida en --all | — | `activa`=no | — | hoy se recorre igual |
+| Comportamiento esperado | — | `activa`=no | — | excluida de --all y rechazada al lanzarla |
 
 ### IMP-021 — Existe una importación programada
 
@@ -503,10 +503,10 @@ No hay ninguna tarea periódica de ingesta: toda importación se lanza a mano, d
 
 **Casos**
 
-| Caso | Rol | Entrada | Esperado |
-| --- | --- | --- | --- |
-| Estado actual del scheduler | — | `celery_beat_schedule`=system-worker-heartbeat, sweep-pending-images | ninguna entrada de ingesta |
-| Comportamiento esperado | — | `politica`=refresco periódico | una entrada de beat que lance load incremental y verify |
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| Estado actual del scheduler | — | `celery_beat_schedule`=system-worker-heartbeat, sweep-pending-images | — | ninguna entrada de ingesta |
+| Comportamiento esperado | — | `politica`=refresco periódico | — | una entrada de beat que lance load incremental y verify |
 
 ### IMP-022 — El scraper de RE/MAX está disponible como fuente
 
@@ -520,10 +520,10 @@ RE/MAX no se puede usar: su módulo nunca se importa, así que su decorador `@re
 
 **Casos**
 
-| Caso | Rol | Entrada | Esperado |
-| --- | --- | --- | --- |
-| Resolver el scraper por clave | — | `key`=remax | — |
-| Listado de scrapers registrados | — | `llamada`=available_scrapers() | plusvalia, properati |
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| Resolver el scraper por clave | — | `key`=remax | — | — |
+| Listado de scrapers registrados | — | `llamada`=available_scrapers() | — | plusvalia, properati |
 
 ### IMP-023 — Los anuncios con precio cero no se importan
 
@@ -542,11 +542,11 @@ Si el payload canónico declara `0` en `price` o `rent_price`, el punto único d
 
 **Casos**
 
-| Caso | Rol | Entrada | Esperado |
-| --- | --- | --- | --- |
-| Anuncio nuevo con price cero | — | `price`=0 | skipped_zero_price; no se crea Property |
-| Anuncio nuevo con rent_price cero | — | `rent_price`=0 | skipped_zero_price; no se crea Property |
-| Propiedad existente se refresca con precio cero | — | `precio_anterior`=100000, `price`=0 | se conserva sin cambios y el run incrementa sin_precio |
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| Anuncio nuevo con price cero | — | `price`=0 | — | skipped_zero_price; no se crea Property |
+| Anuncio nuevo con rent_price cero | — | `rent_price`=0 | — | skipped_zero_price; no se crea Property |
+| Propiedad existente se refresca con precio cero | — | `precio_anterior`=100000, `price`=0 | — | se conserva sin cambios y el run incrementa sin_precio |
 
 **Cobertura exigida:** unit
 

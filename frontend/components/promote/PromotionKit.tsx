@@ -36,6 +36,7 @@ import {
   buildHeadline,
   laminaFilename,
   laminaPath,
+  momentFormats,
   shortUrl,
   type CopyTone,
   type SocialFormat,
@@ -294,6 +295,12 @@ export default function PromotionKit({ property }: { property: Property }) {
   const caption = customCopy[copyKey] ?? suggestedCaption;
   const headline = buildHeadline(property);
 
+  // Asked of `social-kit` rather than derived here from `closed_reason` and
+  // `previous_price`: the route answers 404 when the moment did not happen, and
+  // one shared predicate is what stops this screen from ever drawing a card for
+  // an image the route refuses to render.
+  const moments = useMemo(() => momentFormats(property), [property]);
+
   // Bumped by every kit action so the results panel re-reads itself: after the
   // first share the panel has something different to say, and asking someone to
   // reload the page to see it defeats the point of showing it.
@@ -461,6 +468,34 @@ export default function PromotionKit({ property }: { property: Property }) {
                 Restaurar base
               </Button>
             </section>
+
+            {/* Ahead of the standing material on purpose: a price drop or a
+                closure is news, and news is the only thing that earns a second
+                post about a listing somebody already shared once. Absent for
+                most listings, which is why these never sit in NETWORK_FORMATS. */}
+            {moments.length > 0 ? (
+              <section className="flex flex-col gap-4">
+                <div>
+                  <h2 className="text-lg font-bold text-textPrimary">Novedades de este anuncio</h2>
+                  <p className="text-sm text-textSecondary">
+                    Algo cambió y da motivo para volver a publicarlo.
+                  </p>
+                </div>
+                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                  {moments.map((format) => (
+                    <LaminaCard
+                      key={format}
+                      property={property}
+                      format={format}
+                      network={item}
+                      caption={caption}
+                      artworkMessage={artworkMessage}
+                      onEvent={trackKitEvent}
+                    />
+                  ))}
+                </div>
+              </section>
+            ) : null}
 
             <section className="flex flex-col gap-4">
               <h2 className="text-lg font-bold text-textPrimary">

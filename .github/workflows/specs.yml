@@ -61,6 +61,34 @@ jobs:
       - name: Bring the stack up
         run: docker compose up -d --wait || docker compose up -d
 
+      - name: Wait for the backend
+        # `--wait` only knows about the containers that declare a healthcheck,
+        # and the Django one does not: it still has to run `migrate` before it
+        # answers anything. Waiting on a real endpoint is what proves the
+        # migrations finished, and the seeding step below needs that.
+        run: |
+          for i in $(seq 1 120); do
+            if curl -sf -o /dev/null http://localhost:8010/api/properties/summary/; then
+              echo "Backend ready after ${i}s"; exit 0
+            fi
+            sleep 1
+          done
+          echo "Backend did not respond within 120s"
+          docker compose logs --tail=80 backend
+          exit 1
+
+      - name: Seed the catalogue
+        # Before the frontend is touched, on purpose. Next caches these pages
+        # for an hour (`export const revalidate = 3600` on /propiedades and on
+        # the city pages), and in dev that cache lives on disk and survives a
+        # container restart — measured. Seeding after the first render would
+        # therefore serve an empty catalogue to the whole suite while the API
+        # already had the inventory, which is the most confusing failure of all.
+        #
+        # The command bumps the Redis version keys itself, so Django does not
+        # answer from a summary it cached while the database was empty.
+        run: docker compose exec -T backend python manage.py seed_e2e
+
       - name: Wait for the frontend
         run: |
           for i in $(seq 1 60); do
@@ -72,6 +100,30 @@ jobs:
           echo "Frontend did not respond within 60s"
           docker compose logs --tail=80
           exit 1
+
+      - name: Warm the routes the suite walks
+        # `next dev` compiles a route the first time it is asked for, and on a
+        # cold CI box that first compile can outlast Playwright's 45s test
+        # timeout — the catalogue tests navigate through three routes in a row,
+        # so they were the ones paying for it. Paying it here instead turns a
+        # navigation timeout into a slow step. Best effort: a failure to warm
+        # must not fail the job, the tests will say so themselves.
+        continue-on-error: true
+        run: |
+          base=http://localhost:3010
+          curl -sf -o /dev/null "$base/" || true
+          for path in /propiedades /registro /iniciar-sesion /publicar-propiedad; do
+            curl -sf -o /dev/null "$base$path" || true
+          done
+          city=$(curl -sf "$base/propiedades" | grep -o 'href="/propiedades/[^"]*"' | head -1 | sed 's/.*href="//;s/"//')
+          if [ -n "$city" ]; then
+            echo "Warming $city"
+            property=$(curl -sf "$base$city" | grep -o 'href="/propiedad/[^"]*"' | head -1 | sed 's/.*href="//;s/"//')
+            if [ -n "$property" ]; then
+              echo "Warming $property"
+              curl -sf -o /dev/null "$base$property" || true
+            fi
+          fi
 
       - name: Install Playwright
         working-directory: tests

@@ -4,11 +4,11 @@
 
 Vista legible de `specs/`. Cada regla marcada como implementada apunta a las líneas de código que la aplican, y `tools/specs/validate.py` comprueba que ese código siga existiendo, así que esta página no puede quedarse desfasada en silencio.
 
-**Total de reglas: 252**
+**Total de reglas: 253**
 
 | Estado | Reglas |
 | --- | --- |
-| ✅ Implementada | 214 |
+| ✅ Implementada | 215 |
 | ⛔ No implementada | 13 |
 | 🟡 Parcial | 9 |
 | 📝 Propuesta (sin código) | 16 |
@@ -21,7 +21,7 @@ Vista legible de `specs/`. Cada regla marcada como implementada apunta a las lí
 | owner-transfer | `specs/domains/owner-transfer.yaml` | 8 | [owner-transfer.md](./owner-transfer.md) |
 | properties | `specs/domains/properties.yaml` | 35 | [properties.md](./properties.md) |
 | publication-resume | `specs/domains/publication-resume.yaml` | 9 | [publication-resume.md](./publication-resume.md) |
-| social-kit | `specs/domains/social-kit.yaml` | 14 | [social-kit.md](./social-kit.md) |
+| social-kit | `specs/domains/social-kit.yaml` | 15 | [social-kit.md](./social-kit.md) |
 | subscriptions | `specs/domains/subscriptions.yaml` | 7 | [subscriptions.md](./subscriptions.md) |
 | catalog | `specs/errors/catalog.yaml` | 9 | [catalog.md](./catalog.md) |
 | matrix | `specs/permissions/matrix.yaml` | 71 | [matrix.md](./matrix.md) |

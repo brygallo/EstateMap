@@ -67,11 +67,11 @@ price es siempre el precio principal de la operación del anuncio, y rent_price 
 
 **Casos**
 
-| Caso | Rol | Entrada | Esperado |
-| --- | --- | --- | --- |
-| Anuncio solo de venta | — | `status`=for_sale, `price`=120000, `rent_price`=— | price es el precio de venta |
-| Anuncio solo de alquiler | — | `status`=for_rent, `price`=400, `rent_price`=— | price es el precio de alquiler mensual |
-| Anuncio de venta y alquiler a la vez | — | `status`=for_sale, `price`=120000, `rent_price`=800 | price es la venta y rent_price el alquiler mensual |
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| Anuncio solo de venta | — | `status`=for_sale, `price`=120000, `rent_price`=— | — | price es el precio de venta |
+| Anuncio solo de alquiler | — | `status`=for_rent, `price`=400, `rent_price`=— | — | price es el precio de alquiler mensual |
+| Anuncio de venta y alquiler a la vez | — | `status`=for_sale, `price`=120000, `rent_price`=800 | — | price es la venta y rent_price el alquiler mensual |
 
 ### PROP-002 — status inactive saca la propiedad del catálogo público
 
@@ -93,11 +93,11 @@ Una propiedad con status='inactive' desaparece del listado, del mapa y de todos 
 
 **Casos**
 
-| Caso | Rol | Entrada | Esperado |
-| --- | --- | --- | --- |
-| Una propiedad activa aparece en el listado público | — | `status`=for_sale | visible |
-| Una propiedad inactiva no aparece en el listado público | — | `status`=inactive | oculta |
-| Un duplicado marcado tampoco aparece | — | `status`=for_sale, `is_duplicate`=sí | oculta |
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| Una propiedad activa aparece en el listado público | — | `status`=for_sale | — | visible |
+| Una propiedad inactiva no aparece en el listado público | — | `status`=inactive | — | oculta |
+| Un duplicado marcado tampoco aparece | — | `status`=for_sale, `is_duplicate`=sí | — | oculta |
 
 ### PROP-003 — Solo el dueño autenticado ve sus propiedades inactivas
 
@@ -118,10 +118,10 @@ Una propiedad con status='inactive' desaparece del listado, del mapa y de todos 
 
 **Casos**
 
-| Caso | Rol | Entrada | Esperado |
-| --- | --- | --- | --- |
-| Un visitante anónimo no puede consultar la bandeja | anonymous | — | denied (HTTP 401) |
-| Un usuario autenticado consulta sus propias propiedades | authenticated | — | allowed |
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| Un visitante anónimo no puede consultar la bandeja | anonymous | — | — | denied (HTTP 401) |
+| Un usuario autenticado consulta sus propias propiedades | authenticated | — | — | allowed |
 
 **Cobertura exigida:** api
 
@@ -148,11 +148,11 @@ my_properties responde con el sobre paginado de DRF (count, next, previous, resu
 
 **Casos**
 
-| Caso | Rol | Entrada | Esperado |
-| --- | --- | --- | --- |
-| Los contadores no describen la página sino el total | — | `properties`=50, `page_size`=24 | stats.total = 50 aunque results traiga 24 |
-| Un administrador reconoce su alcance | — | `is_staff`=sí | scope = 'catalog' |
-| Un propietario normal recibe su propio alcance | — | `is_staff`=no | scope = 'own' |
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| Los contadores no describen la página sino el total | — | `properties`=50, `page_size`=24 | — | stats.total = 50 aunque results traiga 24 |
+| Un administrador reconoce su alcance | — | `is_staff`=sí | — | scope = 'catalog' |
+| Un propietario normal recibe su propio alcance | — | `is_staff`=no | — | scope = 'own' |
 
 ### PROP-004 — Precio y área son opcionales
 
@@ -170,11 +170,11 @@ Una propiedad puede publicarse sin price y sin area, porque los anuncios importa
 
 **Casos**
 
-| Caso | Rol | Entrada | Esperado |
-| --- | --- | --- | --- |
-| Anuncio importado sin precio | — | `price`=— | se publica igual |
-| Terreno sin metraje declarado | — | `area`=— | se publica igual |
-| Los comparables de precio por m² excluyen los incompletos | — | `price`=—, `area`=500 | excluida del cálculo de precio por m² |
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| Anuncio importado sin precio | — | `price`=— | — | se publica igual |
+| Terreno sin metraje declarado | — | `area`=— | — | se publica igual |
+| Los comparables de precio por m² excluyen los incompletos | — | `price`=—, `area`=500 | — | excluida del cálculo de precio por m² |
 
 ### PROP-005 — El API público no exige ningún campo para publicar
 
@@ -196,10 +196,10 @@ PropertySerializer no declara ningún campo obligatorio, así que un POST autent
 
 **Casos**
 
-| Caso | Rol | Entrada | Esperado |
-| --- | --- | --- | --- |
-| POST autenticado con cuerpo vacío | authenticated | — | `created`=sí, `property_type`=land, `status`=for_sale, `city`=Macas, `province`=Morona Santiago |
-| No existe validación cruzada de precios | — | `status`=for_sale, `price`=— | aceptado |
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| POST autenticado con cuerpo vacío | authenticated | — | — | `created`=sí, `property_type`=land, `status`=for_sale, `city`=Macas, `province`=Morona Santiago |
+| No existe validación cruzada de precios | — | `status`=for_sale, `price`=— | — | aceptado |
 
 ### PROP-006 — El polígono GeoJSON debe ser de tipo Polygon
 
@@ -213,11 +213,11 @@ Un polígono enviado como objeto GeoJSON se rechaza si su type no es exactamente
 
 **Casos**
 
-| Caso | Rol | Entrada | Esperado |
-| --- | --- | --- | --- |
-| GeoJSON Polygon | — | `type`=Polygon | aceptado |
-| GeoJSON MultiPolygon | — | `type`=MultiPolygon | PolygonValidationError |
-| GeoJSON sin coordinates | — | `type`=Polygon, `coordinates`= | PolygonValidationError |
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| GeoJSON Polygon | — | `type`=Polygon | — | aceptado |
+| GeoJSON MultiPolygon | — | `type`=MultiPolygon | — | PolygonValidationError |
+| GeoJSON sin coordinates | — | `type`=Polygon, `coordinates`= | — | PolygonValidationError |
 
 ### PROP-007 — Cada coordenada del polígono es un par de números
 
@@ -233,12 +233,12 @@ Cada vértice debe ser una lista de exactamente dos elementos numéricos; los st
 
 **Casos**
 
-| Caso | Rol | Entrada | Esperado |
-| --- | --- | --- | --- |
-| Par de floats | — | `point`=-0.2, -78.5 | aceptado |
-| Coordenada de tres elementos | — | `point`=-0.2, -78.5, 100 | PolygonValidationError |
-| Coordenada con un número en texto | — | `point`=-0.2, -78.5 | PolygonValidationError |
-| Coordenada booleana | — | `point`=sí, -78.5 | PolygonValidationError |
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| Par de floats | — | `point`=-0.2, -78.5 | — | aceptado |
+| Coordenada de tres elementos | — | `point`=-0.2, -78.5, 100 | — | PolygonValidationError |
+| Coordenada con un número en texto | — | `point`=-0.2, -78.5 | — | PolygonValidationError |
+| Coordenada booleana | — | `point`=sí, -78.5 | — | PolygonValidationError |
 
 ### PROP-008 — El polígono necesita al menos tres vértices distintos
 
@@ -252,11 +252,11 @@ Se exigen tres coordenadas genuinamente distintas, no tres entradas en el array:
 
 **Casos**
 
-| Caso | Rol | Entrada | Esperado |
-| --- | --- | --- | --- |
-| Triángulo | — | `ring`=-0.2, -78.5, -0.2, -78.49, -0.21, -78.49 | aceptado |
-| Solo dos vértices | — | `ring`=-0.2, -78.5, -0.2, -78.49 | PolygonValidationError |
-| Tres entradas pero una repetida | — | `ring`=-0.2, -78.5, -0.2, -78.5, -0.2, -78.49 | PolygonValidationError |
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| Triángulo | — | `ring`=-0.2, -78.5, -0.2, -78.49, -0.21, -78.49 | — | aceptado |
+| Solo dos vértices | — | `ring`=-0.2, -78.5, -0.2, -78.49 | — | PolygonValidationError |
+| Tres entradas pero una repetida | — | `ring`=-0.2, -78.5, -0.2, -78.5, -0.2, -78.49 | — | PolygonValidationError |
 
 ### PROP-009 — Todo vértice debe caer dentro de Ecuador
 
@@ -273,12 +273,12 @@ Cada coordenada debe estar dentro del bounding box del Ecuador continental (lat 
 
 **Casos**
 
-| Caso | Rol | Entrada | Esperado |
-| --- | --- | --- | --- |
-| Quito, continente | — | `lat`=-0.2, `lng`=-78.5 | sí |
-| Santa Cruz, Galápagos | — | `lat`=-0.75, `lng`=-90.3 | sí |
-| Océano Pacífico entre el continente y Galápagos | — | `lat`=-0.5, `lng`=-85.0 | no |
-| Lima, Perú | — | `lat`=-12.05, `lng`=-77.04 | no |
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| Quito, continente | — | `lat`=-0.2, `lng`=-78.5 | — | sí |
+| Santa Cruz, Galápagos | — | `lat`=-0.75, `lng`=-90.3 | — | sí |
+| Océano Pacífico entre el continente y Galápagos | — | `lat`=-0.5, `lng`=-85.0 | — | no |
+| Lima, Perú | — | `lat`=-12.05, `lng`=-77.04 | — | no |
 
 ### PROP-010 — Los lados del polígono no pueden cruzarse
 
@@ -293,10 +293,10 @@ Un anillo cuyos lados no adyacentes se intersecan se rechaza con el mensaje "Los
 
 **Casos**
 
-| Caso | Rol | Entrada | Esperado |
-| --- | --- | --- | --- |
-| Cuadrilátero en forma de lazo | — | `ring`=-0.2, -78.5, -0.21, -78.49, -0.2, -78.49, -0.21, -78.5 | PolygonValidationError |
-| Triángulo simple | — | `ring`=-0.2, -78.5, -0.2, -78.49, -0.21, -78.49 | aceptado |
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| Cuadrilátero en forma de lazo | — | `ring`=-0.2, -78.5, -0.21, -78.49, -0.2, -78.49, -0.21, -78.5 | — | PolygonValidationError |
+| Triángulo simple | — | `ring`=-0.2, -78.5, -0.2, -78.49, -0.21, -78.49 | — | aceptado |
 
 ### PROP-011 — El área del polígono debe estar entre 10 m² y 500 ha
 
@@ -314,11 +314,11 @@ Un polígono de menos de 10 m² o de más de 5.000.000 m² se rechaza por consid
 
 **Casos**
 
-| Caso | Rol | Entrada | Esperado |
-| --- | --- | --- | --- |
-| Lote de 500 m² | — | `area_m2`=500.0 | aceptado |
-| Polígono por debajo del mínimo | — | `area_m2`=9.9, `min_area_m2`=10.0 | PolygonValidationError |
-| Polígono por encima del máximo | — | `area_m2`=5000001.0, `max_area_m2`=5000000.0 | PolygonValidationError |
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| Lote de 500 m² | — | `area_m2`=500.0 | — | aceptado |
+| Polígono por debajo del mínimo | — | `area_m2`=9.9, `min_area_m2`=10.0 | — | PolygonValidationError |
+| Polígono por encima del máximo | — | `area_m2`=5000001.0, `max_area_m2`=5000000.0 | — | PolygonValidationError |
 
 ### PROP-012 — El polígono se almacena como GeoJSON canónico y cerrado
 
@@ -336,11 +336,11 @@ Sea cual sea el formato de entrada, el polígono se guarda como un GeoJSON Polyg
 
 **Casos**
 
-| Caso | Rol | Entrada | Esperado |
-| --- | --- | --- | --- |
-| Anillo abierto en formato [lat, lng] | — | `ring`=-0.2, -78.5, -0.2, -78.49, -0.21, -78.49 | `type`=Polygon, `first_coordinate`=-78.5, -0.2, `closed`=sí |
-| Texto JSON procedente de FormData | — | `polygon`=[[-0.20,-78.50],[-0.20,-78.49],[-0.21,-78.49]] | `type`=Polygon |
-| Texto que no es JSON | — | `polygon`=no-es-json | Formato de polígono inválido |
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| Anillo abierto en formato [lat, lng] | — | `ring`=-0.2, -78.5, -0.2, -78.49, -0.21, -78.49 | — | `type`=Polygon, `first_coordinate`=-78.5, -0.2, `closed`=sí |
+| Texto JSON procedente de FormData | — | `polygon`=[[-0.20,-78.50],[-0.20,-78.49],[-0.21,-78.49]] | — | `type`=Polygon |
+| Texto que no es JSON | — | `polygon`=no-es-json | — | Formato de polígono inválido |
 
 ### PROP-013 — El centro del polígono rellena las coordenadas que falten
 
@@ -358,10 +358,10 @@ Si un anuncio trae polígono pero no trae latitude/longitude, se guardan las del
 
 **Casos**
 
-| Caso | Rol | Entrada | Esperado |
-| --- | --- | --- | --- |
-| Alta con polígono y sin punto | — | `polygon`=-0.2, -78.5, -0.2, -78.48, -0.18, -78.48, -0.18, -78.5, `latitude`=—, `longitude`=— | `latitude`=-0.19, `longitude`=-78.49 |
-| Alta con polígono y punto explícito | — | `polygon`=-0.2, -78.5, -0.2, -78.49, -0.21, -78.49, `latitude`=-0.205, `longitude`=-78.495 | se respetan las coordenadas enviadas |
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| Alta con polígono y sin punto | — | `polygon`=-0.2, -78.5, -0.2, -78.48, -0.18, -78.48, -0.18, -78.5, `latitude`=—, `longitude`=— | — | `latitude`=-0.19, `longitude`=-78.49 |
+| Alta con polígono y punto explícito | — | `polygon`=-0.2, -78.5, -0.2, -78.49, -0.21, -78.49, `latitude`=-0.205, `longitude`=-78.495 | — | se respetan las coordenadas enviadas |
 
 ### PROP-014 — El dueño se asigna en el servidor y las importadas no tienen dueño
 
@@ -380,10 +380,10 @@ owner se toma siempre de request.user al crear desde el API, y las propiedades q
 
 **Casos**
 
-| Caso | Rol | Entrada | Esperado |
-| --- | --- | --- | --- |
-| Alta desde el API | authenticated | `owner`=99999 | la propiedad queda a nombre del usuario autenticado |
-| Alta desde la ingesta | internal | `is_imported`=sí | — |
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| Alta desde el API | authenticated | `owner`=99999 | — | la propiedad queda a nombre del usuario autenticado |
+| Alta desde la ingesta | internal | `is_imported`=sí | — | — |
 
 ### PROP-015 — Solo el dueño puede modificar o borrar su propiedad
 
@@ -406,11 +406,11 @@ La escritura sobre una propiedad existente exige ser su owner; cualquier otro us
 
 **Casos**
 
-| Caso | Rol | Entrada | Esperado |
-| --- | --- | --- | --- |
-| El dueño borra su propiedad | owner | — | allowed |
-| Otro usuario autenticado no puede borrarla | not_owner | — | denied (HTTP 403) |
-| Un visitante anónimo no puede borrarla | anonymous | — | denied (HTTP 401) |
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| El dueño borra su propiedad | owner | — | — | allowed |
+| Otro usuario autenticado no puede borrarla | not_owner | — | — | denied (HTTP 403) |
+| Un visitante anónimo no puede borrarla | anonymous | — | — | denied (HTTP 401) |
 
 **Cobertura exigida:** api
 
@@ -437,12 +437,12 @@ Sin dueño al que escribir, el contacto de un anuncio importado cae en cascada: 
 
 **Casos**
 
-| Caso | Rol | Entrada | Esperado |
-| --- | --- | --- | --- |
-| Importada con teléfono | — | `is_imported`=sí, `contact_phone`=0999999999, `source_url`=https://www.plusvalia.com/propiedades/123.html | WhatsApp y llamada al anunciante |
-| Importada sin teléfono pero con enlace original | — | `is_imported`=sí, `contact_phone`=, `source_url`=https://www.plusvalia.com/propiedades/123.html | enlace al anuncio original |
-| Importada sin teléfono y sin enlace | — | `is_imported`=sí, `contact_phone`=, `source_url`= | no hay contacto disponible |
-| Importada solo con correo | — | `is_imported`=sí, `contact_phone`=, `contact_email`=ventas@example.com, `source_url`= | el correo se muestra como dato, sin botón de acción |
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| Importada con teléfono | — | `is_imported`=sí, `contact_phone`=0999999999, `source_url`=https://www.plusvalia.com/propiedades/123.html | — | WhatsApp y llamada al anunciante |
+| Importada sin teléfono pero con enlace original | — | `is_imported`=sí, `contact_phone`=, `source_url`=https://www.plusvalia.com/propiedades/123.html | — | enlace al anuncio original |
+| Importada sin teléfono y sin enlace | — | `is_imported`=sí, `contact_phone`=, `source_url`= | — | no hay contacto disponible |
+| Importada solo con correo | — | `is_imported`=sí, `contact_phone`=, `contact_email`=ventas@example.com, `source_url`= | — | el correo se muestra como dato, sin botón de acción |
 
 ### PROP-017 — Un anuncio importado que desaparece del portal se borra
 
@@ -459,10 +459,10 @@ Cuando la verificación no encuentra el anuncio en su portal, la propiedad impor
 
 **Casos**
 
-| Caso | Rol | Entrada | Esperado |
-| --- | --- | --- | --- |
-| Importada que ya no existe en el portal | — | `is_imported`=sí, `http_status`=410 | propiedad eliminada y ListingRetirada creada |
-| Propiedad publicada por un usuario | — | `is_imported`=no | — |
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| Importada que ya no existe en el portal | — | `is_imported`=sí, `http_status`=410 | — | propiedad eliminada y ListingRetirada creada |
+| Propiedad publicada por un usuario | — | `is_imported`=no | — | — |
 
 ### PROP-018 — Un anuncio importado es único por fuente y external_id
 
@@ -479,10 +479,10 @@ La pareja (source, external_id) es única, pero solo para las filas con is_impor
 
 **Casos**
 
-| Caso | Rol | Entrada | Esperado |
-| --- | --- | --- | --- |
-| Reimportar el mismo anuncio | — | `source`=plusvalia, `external_id`=pv-1, `ya_existe`=sí | updated |
-| Dos propiedades de usuario sin fuente | — | `is_imported`=no, `source`=—, `external_id`= | ambas conviven |
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| Reimportar el mismo anuncio | — | `source`=plusvalia, `external_id`=pv-1, `ya_existe`=sí | — | updated |
+| Dos propiedades de usuario sin fuente | — | `is_imported`=no, `source`=—, `external_id`= | — | ambas conviven |
 
 ### PROP-019 — Entre portales gana el anuncio que trae teléfono
 
@@ -500,12 +500,12 @@ Cuando la misma propiedad física aparece en dos portales, se conserva la que ti
 
 **Casos**
 
-| Caso | Rol | Entrada | Esperado |
-| --- | --- | --- | --- |
-| El anuncio nuevo trae teléfono y el existente no | — | `nuevo_contact_phone`=0999999999, `existente_contact_phone`= | se crea el nuevo y se elimina el anterior |
-| El existente ya tiene teléfono | — | `nuevo_contact_phone`=0999999999, `existente_contact_phone`=0988888888 | skipped_duplicate |
-| Ninguno tiene teléfono | — | `nuevo_contact_phone`=, `existente_contact_phone`= | skipped_duplicate |
-| Mismo anunciante con dos propiedades distintas | — | `mismo_telefono`=sí, `distancia_m`=4000 | no se consideran duplicadas |
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| El anuncio nuevo trae teléfono y el existente no | — | `nuevo_contact_phone`=0999999999, `existente_contact_phone`= | — | se crea el nuevo y se elimina el anterior |
+| El existente ya tiene teléfono | — | `nuevo_contact_phone`=0999999999, `existente_contact_phone`=0988888888 | — | skipped_duplicate |
+| Ninguno tiene teléfono | — | `nuevo_contact_phone`=, `existente_contact_phone`= | — | skipped_duplicate |
+| Mismo anunciante con dos propiedades distintas | — | `mismo_telefono`=sí, `distancia_m`=4000 | — | no se consideran duplicadas |
 
 ### PROP-020 — duplicate_of nunca se rellena
 
@@ -519,9 +519,9 @@ Ninguna propiedad queda enlazada a su versión canónica: el campo duplicate_of 
 
 **Casos**
 
-| Caso | Rol | Entrada | Esperado |
-| --- | --- | --- | --- |
-| Se detecta un duplicado entre dos portales | — | `duplicado_detectado`=sí | — |
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| Se detecta un duplicado entre dos portales | — | `duplicado_detectado`=sí | — | — |
 
 ### PROP-021 — is_duplicate solo se lee, nunca se escribe
 
@@ -535,10 +535,10 @@ El flag is_duplicate se consulta en el mapa, el panel de ingesta y las métricas
 
 **Casos**
 
-| Caso | Rol | Entrada | Esperado |
-| --- | --- | --- | --- |
-| Se detecta un duplicado entre dos portales | — | `duplicado_detectado`=sí | no |
-| Fila heredada con el flag activo | — | `is_duplicate`=sí | oculta del catálogo público |
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| Se detecta un duplicado entre dos portales | — | `duplicado_detectado`=sí | — | no |
+| Fila heredada con el flag activo | — | `is_duplicate`=sí | — | oculta del catálogo público |
 
 ### PROP-022 — dedup_key se calcula pero nadie lo consulta
 
@@ -552,9 +552,9 @@ Cada upsert escribe dedup_key con una huella de rejilla geográfica de unos 11 m
 
 **Casos**
 
-| Caso | Rol | Entrada | Esperado |
-| --- | --- | --- | --- |
-| Alta de un anuncio importado con coordenadas | — | `latitude`=-0.18, `longitude`=-78.48 | -0.18,-78.48 |
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| Alta de un anuncio importado con coordenadas | — | `latitude`=-0.18, `longitude`=-78.48 | — | -0.18,-78.48 |
 
 ### PROP-023 — Cada cambio de precio deja una fila en el historial
 
@@ -571,12 +571,12 @@ Al guardar una propiedad con precio se crea una fila en PropertyPriceHistory si 
 
 **Casos**
 
-| Caso | Rol | Entrada | Esperado |
-| --- | --- | --- | --- |
-| Alta con precio | — | `price`=100000, `historial_previo`=0 | 1 |
-| Cambio de precio | — | `price`=90000, `ultimo_registrado`=100000 | 2 |
-| Guardado sin cambiar el precio | — | `price`=100000, `ultimo_registrado`=100000 | 1 |
-| Propiedad sin precio | — | `price`=— | 0 |
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| Alta con precio | — | `price`=100000, `historial_previo`=0 | — | 1 |
+| Cambio de precio | — | `price`=90000, `ultimo_registrado`=100000 | — | 2 |
+| Guardado sin cambiar el precio | — | `price`=100000, `ultimo_registrado`=100000 | — | 1 |
+| Propiedad sin precio | — | `price`=— | — | 0 |
 
 ### PROP-024 — Las visitas solo las cuentan las personas
 
@@ -599,11 +599,11 @@ views_count se incrementa al consultar el detalle únicamente cuando el request 
 
 **Casos**
 
-| Caso | Rol | Entrada | Esperado |
-| --- | --- | --- | --- |
-| Visita de una persona | — | `user_agent`=Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7), `views_count`=10 | 11 |
-| Visita de un crawler | — | `user_agent`=Googlebot/2.1 (+http://www.google.com/bot.html), `views_count`=10 | 10 |
-| El cliente intenta fijar el contador | authenticated | `views_count`=999999 | 0 |
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| Visita de una persona | — | `user_agent`=Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7), `views_count`=10 | — | 11 |
+| Visita de un crawler | — | `user_agent`=Googlebot/2.1 (+http://www.google.com/bot.html), `views_count`=10 | — | 10 |
+| El cliente intenta fijar el contador | authenticated | `views_count`=999999 | — | 0 |
 
 ### PROP-025 — Las fotos se publican en tres estados y la subida nunca cuesta el anuncio
 
@@ -622,12 +622,12 @@ Una PropertyImage nace en pending con el original en disco local, pasa a ready c
 
 **Casos**
 
-| Caso | Rol | Entrada | Esperado |
-| --- | --- | --- | --- |
-| Recién subida | — | `subida_aceptada`=sí | pending |
-| Worker terminado | — | `optimizacion`=ok | ready |
-| Archivo ilegible | — | `optimizacion`=ValueError | failed |
-| Disco lleno al guardar el original | — | `stash_upload`=OSError | — |
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| Recién subida | — | `subida_aceptada`=sí | — | pending |
+| Worker terminado | — | `optimizacion`=ok | — | ready |
+| Archivo ilegible | — | `optimizacion`=ValueError | — | failed |
+| Disco lleno al guardar el original | — | `stash_upload`=OSError | — | — |
 
 ### PROP-026 — Límites de las imágenes de una propiedad
 
@@ -646,13 +646,13 @@ Como máximo 10 imágenes por propiedad, cada una de hasta 10 MB y entre 200x200
 
 **Casos**
 
-| Caso | Rol | Entrada | Esperado |
-| --- | --- | --- | --- |
-| Propiedad que ya tiene diez fotos | — | `existentes`=10, `nuevas`=1 | rechazado |
-| Reemplazo dentro del mismo request | — | `existentes`=10, `a_borrar`=3, `nuevas`=2 | aceptado |
-| Imagen de 120x120 | — | `width`=120, `height`=120 | rechazado |
-| Imagen GIF | — | `content_type`=image/gif | rechazado |
-| Subida combinada por encima del tope | — | `total_mb`=51, `max_property_upload_mb`=50 | rechazado |
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| Propiedad que ya tiene diez fotos | — | `existentes`=10, `nuevas`=1 | — | rechazado |
+| Reemplazo dentro del mismo request | — | `existentes`=10, `a_borrar`=3, `nuevas`=2 | — | aceptado |
+| Imagen de 120x120 | — | `width`=120, `height`=120 | — | rechazado |
+| Imagen GIF | — | `content_type`=image/gif | — | rechazado |
+| Subida combinada por encima del tope | — | `total_mb`=51, `max_property_upload_mb`=50 | — | rechazado |
 
 ### PROP-027 — Ubicación efectiva de una propiedad
 
@@ -672,11 +672,11 @@ La posición de una propiedad es su par latitude/longitude cuando existe y cae d
 
 **Casos**
 
-| Caso | Rol | Entrada | Esperado |
-| --- | --- | --- | --- |
-| Anuncio con punto marcado | — | `latitude`=-2.3086, `longitude`=-78.1181 | se usa el punto guardado |
-| Anuncio dibujado como polígono | — | `latitude`=—, `longitude`=—, `polygon`=anillo de 4 puntos en Macas | se usa el centroide del anillo |
-| Anuncio sin punto ni polígono | — | `latitude`=—, `longitude`=—, `polygon`=— | sin ubicación, queda fuera de los cálculos geográficos |
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| Anuncio con punto marcado | — | `latitude`=-2.3086, `longitude`=-78.1181 | — | se usa el punto guardado |
+| Anuncio dibujado como polígono | — | `latitude`=—, `longitude`=—, `polygon`=anillo de 4 puntos en Macas | — | se usa el centroide del anillo |
+| Anuncio sin punto ni polígono | — | `latitude`=—, `longitude`=—, `polygon`=— | — | sin ubicación, queda fuera de los cálculos geográficos |
 
 ### PROP-028 — Propiedades cercanas de una ficha
 
@@ -693,10 +693,10 @@ La sección "Publicaciones cercanas" de una ficha lista las propiedades ordenada
 
 **Casos**
 
-| Caso | Rol | Entrada | Esperado |
-| --- | --- | --- | --- |
-| Vecino inmediato dibujado como polígono | — | `ficha`=propiedad 13, `candidato`=propiedad 12 a 23 m, sin lat/lng, con polígono | aparece primero |
-| Propiedad sin ubicación efectiva | — | `ficha`=sin lat/lng y sin polígono | sección vacía |
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| Vecino inmediato dibujado como polígono | — | `ficha`=propiedad 13, `candidato`=propiedad 12 a 23 m, sin lat/lng, con polígono | — | aparece primero |
+| Propiedad sin ubicación efectiva | — | `ficha`=sin lat/lng y sin polígono | — | sección vacía |
 
 ### PROP-029 — La ventana de búsqueda de cercanas no garantiza al vecino
 
@@ -710,9 +710,9 @@ La selección de propiedades cercanas debería consultar por proximidad, no reco
 
 **Casos**
 
-| Caso | Rol | Entrada | Esperado |
-| --- | --- | --- | --- |
-| Ciudad con más de 60 anuncios en la ventana | — | `anuncios_en_ventana`=200, `vecino_a`=30 m, `antiguedad_vecino`=fuera de los 60 más recientes | el vecino aparece primero |
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| Ciudad con más de 60 anuncios en la ventana | — | `anuncios_en_ventana`=200, `vecino_a`=30 m, `antiguedad_vecino`=fuera de los 60 más recientes | — | el vecino aparece primero |
 
 ### PROP-031 — Las tarjetas del mapa conservan el contexto visible y cercano
 
@@ -729,11 +729,11 @@ El listado lateral contiene únicamente las propiedades del área visible del ma
 
 **Casos**
 
-| Caso | Rol | Entrada | Esperado |
-| --- | --- | --- | --- |
-| Hay una propiedad seleccionada dentro de la vista | — | `seleccionada_visible`=sí | la seleccionada aparece primero y después sus vecinas visibles |
-| Existe una propiedad cercana fuera del viewport | — | `cercana_visible`=no | no aparece en las tarjetas |
-| No hay selección ni ubicación de la persona | — | — | las tarjetas siguen representando la vista actual del mapa |
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| Hay una propiedad seleccionada dentro de la vista | — | `seleccionada_visible`=sí | — | la seleccionada aparece primero y después sus vecinas visibles |
+| Existe una propiedad cercana fuera del viewport | — | `cercana_visible`=no | — | no aparece en las tarjetas |
+| No hay selección ni ubicación de la persona | — | — | — | las tarjetas siguen representando la vista actual del mapa |
 
 ### PROP-032 — Una ubicación fuera de Ecuador conserva el catálogo visible
 
@@ -751,10 +751,10 @@ Si la geolocalización de la persona cae fuera de Ecuador continental y Galápag
 
 **Casos**
 
-| Caso | Rol | Entrada | Esperado |
-| --- | --- | --- | --- |
-| Persona ubicada fuera de Ecuador | — | `ubicacion`=fuera_de_ecuador | el mapa conserva Ecuador y muestra el mensaje de cobertura |
-| Persona ubicada en Ecuador | — | `ubicacion`=dentro_de_ecuador | el mapa se centra en su ubicación y busca propiedades cercanas |
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| Persona ubicada fuera de Ecuador | — | `ubicacion`=fuera_de_ecuador | — | el mapa conserva Ecuador y muestra el mensaje de cobertura |
+| Persona ubicada en Ecuador | — | `ubicacion`=dentro_de_ecuador | — | el mapa se centra en su ubicación y busca propiedades cercanas |
 
 ### PROP-033 — Un anuncio cerrado dice por qué salió del catálogo
 
@@ -781,13 +781,13 @@ La normalización vive en `save()` porque todos los caminos de escritura pasan p
 
 **Casos**
 
-| Caso | Rol | Entrada | Esperado |
-| --- | --- | --- | --- |
-| Marcar un anuncio como vendido | — | `closed_reason`=sold | status pasa a inactive y closed_at queda sellado |
-| Un anuncio inactivo no es lo mismo que uno vendido | — | `status`=inactive | closed_reason vacío; retirar no es una venta |
-| Un anuncio vendido sale del catálogo público | — | `closed_reason`=sold | oculta |
-| Reactivar un anuncio borra el motivo de cierre | — | `status`=for_sale | closed_reason vacío y closed_at nulo |
-| Los estados siguen siendo tres | — | — | for_sale, for_rent, inactive |
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| Marcar un anuncio como vendido | — | `closed_reason`=sold | — | status pasa a inactive y closed_at queda sellado |
+| Un anuncio inactivo no es lo mismo que uno vendido | — | `status`=inactive | — | closed_reason vacío; retirar no es una venta |
+| Un anuncio vendido sale del catálogo público | — | `closed_reason`=sold | — | oculta |
+| Reactivar un anuncio borra el motivo de cierre | — | `status`=for_sale | — | closed_reason vacío y closed_at nulo |
+| Los estados siguen siendo tres | — | — | — | for_sale, for_rent, inactive |
 
 **Cobertura exigida:** api
 
@@ -802,6 +802,7 @@ Un anuncio con `closed_reason` sigue resolviéndose por su id y por su código c
 > **Por qué:** La lámina de «vendido» existe para que se reenvíe, y lleva impresos el código corto y el QR de ese anuncio. Si la ficha respondiera 404, el portal estaría repartiendo imágenes que apuntan a un anuncio que él mismo niega — justo lo contrario de la promesa comprobable de SOC-002.
 Retirar un anuncio sigue siendo retirarlo: sin motivo de cierre, la ficha desaparece igual que antes. La diferencia no es de estado sino de intención, y por eso la decide `closed_reason` y no `status`.
 El dueño, además, alcanza siempre su propio anuncio esté como esté. Hasta ahora no podía: `get_queryset` excluía `inactive` para todo el que no fuera staff, así que quien desactivaba un anuncio se quedaba sin poder abrirlo, editarlo ni reactivarlo por la API.
+Ese privilegio es de la ficha por id y solo de ella. La ruta por código corto no mira quién pregunta a propósito: su respuesta se cachea con `s-maxage` para que la sirva el borde cuando llega desde un QR impreso, y una respuesta que dependiera de la sesión ensuciaría esa caché compartida. Por eso el dueño de un anuncio simplemente inactivo recibe 404 por el código y 200 por la ficha, y por eso cada caso de abajo dice contra qué ruta se comprueba.
 
 **Backend**
 
@@ -815,12 +816,13 @@ El dueño, además, alcanza siempre su propio anuncio esté como esté. Hasta ah
 
 **Casos**
 
-| Caso | Rol | Entrada | Esperado |
-| --- | --- | --- | --- |
-| La ficha de un anuncio vendido responde a un anónimo | anonymous | `closed_reason`=sold | allowed |
-| El código corto de un anuncio vendido resuelve | anonymous | `closed_reason`=sold | allowed |
-| Un anuncio solo inactivo no resuelve | anonymous | `status`=inactive | denied (HTTP 404) |
-| El dueño alcanza su anuncio inactivo | owner | `status`=inactive | allowed |
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| La ficha de un anuncio vendido responde a un anónimo — `GET /api/properties/{property_id}/` | anonymous | `closed_reason`=sold | — | allowed |
+| El código corto de un anuncio vendido resuelve | anonymous | `closed_reason`=sold | — | allowed |
+| Un anuncio solo inactivo no resuelve | anonymous | `status`=inactive | — | denied (HTTP 404) |
+| El dueño alcanza su anuncio inactivo — `GET /api/properties/{property_id}/` | owner | `status`=inactive | — | allowed |
+| El dueño tampoco alcanza su anuncio inactivo por el código corto | owner | `status`=inactive | — | denied (HTTP 404) |
 
 **Cobertura exigida:** api
 
@@ -848,11 +850,11 @@ Cuando la fila más reciente del historial no coincide con el precio actual —a
 
 **Casos**
 
-| Caso | Rol | Entrada | Esperado |
-| --- | --- | --- | --- |
-| Bajar el precio publica el anterior | — | `price_anterior`=90000, `price`=79000 | presente |
-| Un anuncio cuyo precio nunca se movió no tiene precio anterior | — | — | ausente |
-| El precio anterior viaja como texto, igual que el precio | — | — | "90000.00" |
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| Bajar el precio publica el anterior | — | `price_anterior`=90000, `price`=79000 | — | presente |
+| Un anuncio cuyo precio nunca se movió no tiene precio anterior | — | — | — | ausente |
+| El precio anterior viaja como texto, igual que el precio | — | — | — | "90000.00" |
 
 **Cobertura exigida:** api
 

@@ -57,11 +57,11 @@ No existe ninguna restricción de importación por plan de suscripción, porque 
 
 **Casos**
 
-| Caso | Rol | Entrada | Esperado |
-| --- | --- | --- | --- |
-| Usuario gratuito | — | `plan`=free | denied |
-| Usuario premium activo | — | `plan`=premium, `subscription_status`=active | allowed |
-| Premium vencido | — | `plan`=premium, `subscription_status`=expired | denied |
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| Usuario gratuito | — | `plan`=free | — | denied |
+| Usuario premium activo | — | `plan`=premium, `subscription_status`=active | — | allowed |
+| Premium vencido | — | `plan`=premium, `subscription_status`=expired | — | denied |
 
 **Ver también:** `docs/workflows/buy-premium.md`
 
@@ -79,9 +79,9 @@ El modelo User solo añade correo único, verificación de correo y campos de OA
 
 **Casos**
 
-| Caso | Rol | Entrada | Esperado |
-| --- | --- | --- | --- |
-| Campos disponibles para decidir acceso por plan | — | `modelo`=User | ninguno |
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| Campos disponibles para decidir acceso por plan | — | `modelo`=User | — | ninguno |
 
 ### SUB-003 — Los límites de publicación son globales, no por usuario
 
@@ -100,11 +100,11 @@ Los topes de imágenes y de peso son constantes de configuración iguales para t
 
 **Casos**
 
-| Caso | Rol | Entrada | Esperado |
-| --- | --- | --- | --- |
-| Máximo de imágenes por propiedad | — | `constante`=MAX_IMAGES_PER_PROPERTY | 10 |
-| Peso máximo por imagen (MB) | — | `constante`=MAX_IMAGE_SIZE_MB | 10 |
-| Peso máximo por lote de subida (MB) | — | `constante`=MAX_PROPERTY_UPLOAD_MB | 50 |
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| Máximo de imágenes por propiedad | — | `constante`=MAX_IMAGES_PER_PROPERTY | — | 10 |
+| Peso máximo por imagen (MB) | — | `constante`=MAX_IMAGE_SIZE_MB | — | 10 |
+| Peso máximo por lote de subida (MB) | — | `constante`=MAX_PROPERTY_UPLOAD_MB | — | 50 |
 
 ### SUB-004 — No hay tope de propiedades por cuenta
 
@@ -120,9 +120,9 @@ Una cuenta puede publicar tantas propiedades como quiera. El único freno es el 
 
 **Casos**
 
-| Caso | Rol | Entrada | Esperado |
-| --- | --- | --- | --- |
-| Cuenta con 500 propiedades publicadas intenta publicar otra | — | `propiedades_existentes`=500 | allowed |
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| Cuenta con 500 propiedades publicadas intenta publicar otra | — | `propiedades_existentes`=500 | — | allowed |
 
 ### SUB-005 — La página de inmobiliarias muestra precios pero no cobra
 
@@ -147,10 +147,10 @@ La página comercial declara tres planes —Corredor (gratis), Inmobiliaria (29 
 
 **Casos**
 
-| Caso | Rol | Entrada | Esperado |
-| --- | --- | --- | --- |
-| Pulsar el botón del plan de pago | — | `plan`=inmobiliaria | abre WhatsApp |
-| Estado guardado tras elegir un plan | — | `plan`=inmobiliaria | ninguno |
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| Pulsar el botón del plan de pago | — | `plan`=inmobiliaria | — | abre WhatsApp |
+| Estado guardado tras elegir un plan | — | `plan`=inmobiliaria | — | ninguno |
 
 ### SUB-006 — El límite de 5 propiedades del plan gratuito no se aplica
 
@@ -166,9 +166,9 @@ La tabla de precios anuncia "Hasta 5 propiedades" en el plan gratuito, pero ning
 
 **Casos**
 
-| Caso | Rol | Entrada | Esperado |
-| --- | --- | --- | --- |
-| Cuenta gratuita publica su sexta propiedad | — | `plan`=free, `propiedades_existentes`=5 | allowed |
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| Cuenta gratuita publica su sexta propiedad | — | `plan`=free, `propiedades_existentes`=5 | — | allowed |
 
 ### SUB-007 — No se procesan ni se almacenan pagos
 
@@ -187,7 +187,7 @@ No hay integración con ninguna pasarela, ningún modelo financiero y ningún ca
 
 **Casos**
 
-| Caso | Rol | Entrada | Esperado |
-| --- | --- | --- | --- |
-| Modelos financieros en la base de datos | — | `busqueda`=Payment|Invoice|Order|Billing|Subscription | 0 |
-| Datos de tarjeta almacenados | — | `busqueda`=card_number|cvv | 0 |
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| Modelos financieros en la base de datos | — | `busqueda`=Payment|Invoice|Order|Billing|Subscription | — | 0 |
+| Datos de tarjeta almacenados | — | `busqueda`=card_number|cvv | — | 0 |

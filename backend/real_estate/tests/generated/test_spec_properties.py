@@ -24,7 +24,8 @@ def test_prop_003_un_visitante_anonimo_no_puede_consultar_la_bandeja(spec_reques
         method='GET',
         path='/api/properties/my_properties/',
         role='anonymous',
-        payload=None,
+        given=None,
+        body=None,
     )
     assert_outcome(
         response,
@@ -44,7 +45,8 @@ def test_prop_003_un_usuario_autenticado_consulta_sus_propias_propiedades(spec_r
         method='GET',
         path='/api/properties/my_properties/',
         role='authenticated',
-        payload=None,
+        given=None,
+        body=None,
     )
     assert_outcome(
         response,
@@ -52,7 +54,7 @@ def test_prop_003_un_usuario_autenticado_consulta_sus_propias_propiedades(spec_r
         denied_status=None,
         rule_id='PROP-003',
         case_name='Un usuario autenticado consulta sus propias propiedades',
-        expected_status=None,
+        expected_status=200,
     )
 
 
@@ -67,7 +69,8 @@ def test_prop_015_el_dueno_borra_su_propiedad(spec_request):
         method='DELETE',
         path='/api/properties/{property_id}/',
         role='owner',
-        payload=None,
+        given=None,
+        body=None,
     )
     assert_outcome(
         response,
@@ -75,7 +78,7 @@ def test_prop_015_el_dueno_borra_su_propiedad(spec_request):
         denied_status=None,
         rule_id='PROP-015',
         case_name='El dueño borra su propiedad',
-        expected_status=None,
+        expected_status=204,
     )
 
 def test_prop_015_otro_usuario_autenticado_no_puede_borrarla(spec_request):
@@ -87,7 +90,8 @@ def test_prop_015_otro_usuario_autenticado_no_puede_borrarla(spec_request):
         method='DELETE',
         path='/api/properties/{property_id}/',
         role='not_owner',
-        payload=None,
+        given=None,
+        body=None,
     )
     assert_outcome(
         response,
@@ -107,7 +111,8 @@ def test_prop_015_un_visitante_anonimo_no_puede_borrarla(spec_request):
         method='DELETE',
         path='/api/properties/{property_id}/',
         role='anonymous',
-        payload=None,
+        given=None,
+        body=None,
     )
     assert_outcome(
         response,
@@ -128,9 +133,10 @@ def test_prop_034_la_ficha_de_un_anuncio_vendido_responde_a_un_anonimo(spec_requ
     """
     response = spec_request(
         method='GET',
-        path='/api/properties/code/{code}/',
+        path='/api/properties/{property_id}/',
         role='anonymous',
-        payload={'closed_reason': 'sold'},
+        given={'closed_reason': 'sold'},
+        body=None,
     )
     assert_outcome(
         response,
@@ -150,7 +156,8 @@ def test_prop_034_el_codigo_corto_de_un_anuncio_vendido_resuelve(spec_request):
         method='GET',
         path='/api/properties/code/{code}/',
         role='anonymous',
-        payload={'closed_reason': 'sold'},
+        given={'closed_reason': 'sold'},
+        body=None,
     )
     assert_outcome(
         response,
@@ -170,7 +177,8 @@ def test_prop_034_un_anuncio_solo_inactivo_no_resuelve(spec_request):
         method='GET',
         path='/api/properties/code/{code}/',
         role='anonymous',
-        payload={'status': 'inactive'},
+        given={'status': 'inactive'},
+        body=None,
     )
     assert_outcome(
         response,
@@ -188,9 +196,10 @@ def test_prop_034_el_dueno_alcanza_su_anuncio_inactivo(spec_request):
     """
     response = spec_request(
         method='GET',
-        path='/api/properties/code/{code}/',
+        path='/api/properties/{property_id}/',
         role='owner',
-        payload={'status': 'inactive'},
+        given={'status': 'inactive'},
+        body=None,
     )
     assert_outcome(
         response,
@@ -199,4 +208,25 @@ def test_prop_034_el_dueno_alcanza_su_anuncio_inactivo(spec_request):
         rule_id='PROP-034',
         case_name='El dueño alcanza su anuncio inactivo',
         expected_status=200,
+    )
+
+def test_prop_034_el_dueno_tampoco_alcanza_su_anuncio_inactivo_por_el_codigo_corto(spec_request):
+    """
+    SPEC:PROP-034 — Un anuncio cerrado conserva su ficha y su código corto
+    Case: El dueño tampoco alcanza su anuncio inactivo por el código corto
+    """
+    response = spec_request(
+        method='GET',
+        path='/api/properties/code/{code}/',
+        role='owner',
+        given={'status': 'inactive'},
+        body=None,
+    )
+    assert_outcome(
+        response,
+        expected='denied',
+        denied_status=404,
+        rule_id='PROP-034',
+        case_name='El dueño tampoco alcanza su anuncio inactivo por el código corto',
+        expected_status=None,
     )

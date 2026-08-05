@@ -355,6 +355,63 @@ def check_vocabularies(specs: SpecSet) -> list[Problem]:
     return problems
 
 
+# HTTP methods that carry no request body.
+BODYLESS_METHODS = {"GET", "DELETE", "HEAD", "OPTIONS"}
+
+
+def check_case_shape(specs: SpecSet) -> list[Problem]:
+    """`given` is the world before the call; `body` is the call.
+
+    They used to be one field, and the confusion was invisible: a `given` on a
+    GET was dropped by the harness, so the case ran against the default world
+    and passed for the wrong reason. Both halves of that mistake are caught
+    here — a body no request can carry, and a precondition on a method whose
+    `given` used to mean the payload.
+    """
+
+    problems: list[Problem] = []
+    for spec, rule in specs.rules():
+        backend = rule.get("backend", {}) or {}
+        rule_endpoint = backend.get("endpoint")
+        api_tested = bool((rule.get("tests") or {}).get("api"))
+        for case in rule.get("cases", []) or []:
+            where = f"{spec.rel} → {rule.get('id', '?')} → case '{case.get('name')}'"
+            case_endpoint = case.get("endpoint")
+            if case_endpoint and not rule_endpoint:
+                problems.append(
+                    Problem(
+                        where,
+                        "the case overrides 'endpoint' but the rule declares no "
+                        "'backend.endpoint', so the generator skips it entirely",
+                    )
+                )
+            endpoint = case_endpoint or rule_endpoint
+            if not endpoint:
+                continue
+            method = endpoint.split(" ", 1)[0]
+            if method in BODYLESS_METHODS and case.get("body"):
+                problems.append(
+                    Problem(where, f"declares a 'body' but {method} carries none")
+                )
+            executable = (
+                api_tested
+                and case.get("role")
+                and case.get("expected") in {"allowed", "denied"}
+            )
+            if executable and method not in BODYLESS_METHODS and case.get("given"):
+                problems.append(
+                    Problem(
+                        where,
+                        f"has a 'given' on a {method}, where it used to mean the request "
+                        "payload. If it describes the state before the call, leave it and "
+                        "teach SpecWorld.apply to build it; if it is the payload, it "
+                        "belongs in 'body'.",
+                        level="warning",
+                    )
+                )
+    return problems
+
+
 def check_status_coherence(specs: SpecSet) -> list[Problem]:
     problems: list[Problem] = []
     for spec in specs.files:
@@ -427,6 +484,7 @@ def validate(specs: SpecSet) -> list[Problem]:
         check_schema,
         check_file_naming,
         check_unique_ids,
+        check_case_shape,
         check_status_coherence,
         check_evidence,
         check_vocabularies,

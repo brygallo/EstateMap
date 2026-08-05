@@ -24,7 +24,8 @@ def test_rsm_001_staff_emite_el_enlace_de_una_solicitud_nueva(spec_request):
         method='POST',
         path='/api/pending-publications/{pending_id}/resume-link/',
         role='staff',
-        payload=None,
+        given=None,
+        body=None,
     )
     assert_outcome(
         response,
@@ -44,7 +45,8 @@ def test_rsm_001_un_usuario_autenticado_cualquiera_no_puede_emitirlo(spec_reques
         method='POST',
         path='/api/pending-publications/{pending_id}/resume-link/',
         role='not_owner',
-        payload=None,
+        given=None,
+        body=None,
     )
     assert_outcome(
         response,
@@ -64,7 +66,8 @@ def test_rsm_001_un_anonimo_no_puede_emitirlo(spec_request):
         method='POST',
         path='/api/pending-publications/{pending_id}/resume-link/',
         role='anonymous',
-        payload=None,
+        given=None,
+        body=None,
     )
     assert_outcome(
         response,
@@ -87,7 +90,8 @@ def test_rsm_002_un_token_recien_emitido_resuelve_el_borrador(spec_request):
         method='GET',
         path='/api/publication-drafts/{token}/',
         role='anonymous',
-        payload=None,
+        given=None,
+        body=None,
     )
     assert_outcome(
         response,
@@ -110,7 +114,8 @@ def test_rsm_004_staff_revoca_el_enlace_y_el_token_deja_de_resolver(spec_request
         method='POST',
         path='/api/pending-publications/{pending_id}/resume-link/revoke/',
         role='staff',
-        payload=None,
+        given=None,
+        body=None,
     )
     assert_outcome(
         response,
@@ -130,7 +135,8 @@ def test_rsm_004_un_usuario_autenticado_cualquiera_no_puede_revocarlo(spec_reque
         method='POST',
         path='/api/pending-publications/{pending_id}/resume-link/revoke/',
         role='not_owner',
-        payload=None,
+        given=None,
+        body=None,
     )
     assert_outcome(
         response,
@@ -153,7 +159,8 @@ def test_rsm_005_la_respuesta_trae_el_borrador_y_el_contacto_propio(spec_request
         method='GET',
         path='/api/publication-drafts/{token}/',
         role='anonymous',
-        payload=None,
+        given=None,
+        body=None,
     )
     assert_outcome(
         response,

@@ -55,11 +55,11 @@ Un usuario staff genera, para un PendingPublication concreto, un enlace de conti
 
 **Casos**
 
-| Caso | Rol | Entrada | Esperado |
-| --- | --- | --- | --- |
-| staff emite el enlace de una solicitud nueva | staff | — | allowed |
-| un usuario autenticado cualquiera no puede emitirlo | not_owner | — | denied |
-| un anónimo no puede emitirlo | anonymous | — | denied (HTTP 401) |
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| staff emite el enlace de una solicitud nueva | staff | — | — | allowed |
+| un usuario autenticado cualquiera no puede emitirlo | not_owner | — | — | denied |
+| un anónimo no puede emitirlo | anonymous | — | — | denied (HTTP 401) |
 
 **Cobertura exigida:** api
 
@@ -90,10 +90,10 @@ Un token de continuación deja de servir 14 días después de emitirse, y a part
 
 **Casos**
 
-| Caso | Rol | Entrada | Esperado |
-| --- | --- | --- | --- |
-| un token recién emitido resuelve el borrador | anonymous | — | allowed |
-| un token de quince días ya no resuelve | — | — | denied (HTTP 410) `RESUME_TOKEN_INVALID` |
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| un token recién emitido resuelve el borrador | anonymous | — | — | allowed |
+| un token de quince días ya no resuelve | — | — | — | denied (HTTP 410) `RESUME_TOKEN_INVALID` |
 
 **Cobertura exigida:** api
 
@@ -123,10 +123,10 @@ Canjear un token crea la propiedad y marca el token como consumido; un segundo c
 
 **Casos**
 
-| Caso | Rol | Entrada | Esperado |
-| --- | --- | --- | --- |
-| el primer canje crea la propiedad | — | — | allowed |
-| el segundo canje del mismo token no crea nada | — | — | denied (HTTP 410) `RESUME_TOKEN_INVALID` |
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| el primer canje crea la propiedad | — | — | — | allowed |
+| el segundo canje del mismo token no crea nada | — | — | — | denied (HTTP 410) `RESUME_TOKEN_INVALID` |
 
 **Cobertura exigida:** api
 
@@ -154,10 +154,10 @@ Un usuario staff invalida los tokens vigentes de una solicitud en cualquier mome
 
 **Casos**
 
-| Caso | Rol | Entrada | Esperado |
-| --- | --- | --- | --- |
-| staff revoca el enlace y el token deja de resolver | staff | — | allowed |
-| un usuario autenticado cualquiera no puede revocarlo | not_owner | — | denied |
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| staff revoca el enlace y el token deja de resolver | staff | — | — | allowed |
+| un usuario autenticado cualquiera no puede revocarlo | not_owner | — | — | denied |
 
 **Cobertura exigida:** api
 
@@ -187,10 +187,10 @@ La respuesta del token contiene el JSON del borrador y los datos de contacto que
 
 **Casos**
 
-| Caso | Rol | Entrada | Esperado |
-| --- | --- | --- | --- |
-| la respuesta trae el borrador y el contacto propio | anonymous | — | allowed |
-| la respuesta no incluye credenciales ni datos de terceros | — | — | allowed |
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| la respuesta trae el borrador y el contacto propio | anonymous | — | — | allowed |
+| la respuesta no incluye credenciales ni datos de terceros | — | — | — | allowed |
 
 **Cobertura exigida:** api
 
@@ -219,10 +219,10 @@ Retomar restaura título, descripción, tipo, operación, precio, dirección, ci
 
 **Casos**
 
-| Caso | Rol | Entrada | Esperado |
-| --- | --- | --- | --- |
-| el borrador devuelve todo lo escrito y ninguna imagen | — | — | allowed |
-| solo viaja el número de fotos que había seleccionadas | — | — | allowed |
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| el borrador devuelve todo lo escrito y ninguna imagen | — | — | — | allowed |
+| solo viaja el número de fotos que había seleccionadas | — | — | — | allowed |
 
 **Cobertura exigida:** api
 
@@ -252,11 +252,11 @@ El canje crea la propiedad y, a partir del correo del borrador, una cuenta a la 
 
 **Casos**
 
-| Caso | Rol | Entrada | Esperado |
-| --- | --- | --- | --- |
-| el canje crea propiedad y cuenta propietaria | — | — | allowed |
-| un borrador sin correo no se puede canjear | — | — | denied (HTTP 400) |
-| si el correo ya tiene cuenta, la propiedad va a esa cuenta | — | — | allowed |
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| el canje crea propiedad y cuenta propietaria | — | — | — | allowed |
+| un borrador sin correo no se puede canjear | — | — | — | denied (HTTP 400) |
+| si el correo ya tiene cuenta, la propiedad va a esa cuenta | — | — | — | allowed |
 
 **Cobertura exigida:** api
 
@@ -283,10 +283,10 @@ La cuenta que nace de un canje se crea sin contraseña utilizable, de modo que s
 
 **Casos**
 
-| Caso | Rol | Entrada | Esperado |
-| --- | --- | --- | --- |
-| la cuenta recién creada no inicia sesión con contraseña vacía | — | — | denied (HTTP 400) |
-| tras definir contraseña desde el correo, inicia sesión | — | — | allowed |
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| la cuenta recién creada no inicia sesión con contraseña vacía | — | — | — | denied (HTTP 400) |
+| tras definir contraseña desde el correo, inicia sesión | — | — | — | allowed |
 
 **Cobertura exigida:** api
 
@@ -308,10 +308,10 @@ Al completarse el canje, el PendingPublication pasa a converted y guarda una ref
 
 **Casos**
 
-| Caso | Rol | Entrada | Esperado |
-| --- | --- | --- | --- |
-| tras el canje la solicitud queda converted con la propiedad enlazada | — | — | allowed |
-| una solicitud ya convertida no admite un enlace nuevo | — | — | denied (HTTP 400) |
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| tras el canje la solicitud queda converted con la propiedad enlazada | — | — | — | allowed |
+| una solicitud ya convertida no admite un enlace nuevo | — | — | — | denied (HTTP 400) |
 
 **Cobertura exigida:** api
 

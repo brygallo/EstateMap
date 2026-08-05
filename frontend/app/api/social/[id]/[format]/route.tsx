@@ -144,22 +144,26 @@ function brandTile(): Promise<string> {
  * here are listing titles somebody typed, and a missing glyph is a blank box
  * baked into an image that gets forwarded.
  *
- * Falling back to an empty list rather than throwing, for the same reason
+ * Falling back to `undefined` rather than throwing, for the same reason
  * `brandTile` swallows its error: an unreadable font is a plainer lamina, and a
- * 500 is no lamina at all.
+ * 500 is no lamina at all. `undefined` and not `[]` — an empty list is not "no
+ * preference", it is "no fonts", and Satori answers it with "No fonts are
+ * loaded. At least one font is required to calculate the layout." Omitting the
+ * option is what leaves `next/og` free to use the Geist face it bundles.
  */
-let promotionFontsPromise: Promise<Array<{ name: string; data: Buffer; weight: 400 | 800 }>> | null = null;
+type PromotionFont = { name: string; data: Buffer; weight: 400 | 800 };
+let promotionFontsPromise: Promise<PromotionFont[] | undefined> | null = null;
 function promotionFonts() {
   if (!promotionFontsPromise) {
     promotionFontsPromise = Promise.all([
       readFile(path.join(process.cwd(), 'public', 'fonts', 'PlusJakartaSans-Regular.ttf')),
       readFile(path.join(process.cwd(), 'public', 'fonts', 'PlusJakartaSans-ExtraBold.ttf')),
     ])
-      .then(([regular, extraBold]) => [
-        { name: 'Plus Jakarta Sans', data: regular, weight: 400 as const },
-        { name: 'Plus Jakarta Sans', data: extraBold, weight: 800 as const },
+      .then(([regular, extraBold]): PromotionFont[] => [
+        { name: 'Plus Jakarta Sans', data: regular, weight: 400 },
+        { name: 'Plus Jakarta Sans', data: extraBold, weight: 800 },
       ])
-      .catch(() => []);
+      .catch(() => undefined);
   }
   return promotionFontsPromise;
 }
@@ -356,6 +360,7 @@ function StatusChip({ property, fontSize }: { property: Property; fontSize: numb
         backgroundColor: statusChipColor(property),
         color: '#FFFFFF',
         fontSize,
+        fontWeight: 800,
         letterSpacing: 2,
       }}
     >
@@ -413,6 +418,9 @@ function Eyebrow({
       style={{
         display: 'flex',
         fontSize: fitSize(text, fontSize, maxChars, Math.round(fontSize * 0.72)),
+        // Bold now that there is a bold: at this size, letterspaced caps in the
+        // regular face read as a whisper next to the price they introduce.
+        fontWeight: 800,
         letterSpacing: 2,
         color: accentColor(property),
       }}
@@ -621,6 +629,7 @@ async function mapLamina(
                 style={{
                   display: 'flex',
                   fontSize: 25,
+                  fontWeight: 800,
                   letterSpacing: 2,
                   color: accentColor(property),
                 }}
@@ -631,6 +640,7 @@ async function mapLamina(
                 style={{
                   display: 'flex',
                   fontSize: fitSize(place, 62, 18, 36),
+                  fontWeight: 800,
                   lineHeight: 1.05,
                   color: '#FFFFFF',
                 }}
@@ -715,7 +725,16 @@ async function mapLamina(
           }}
         >
           <BrandRow tile={tile} fontSize={24} />
-          <div style={{ display: 'flex', fontSize: fitSize(place, 50, 22, 34), color: '#FFFFFF' }}>
+          {/* The place carries the weight here, not the price: this is the one
+              lamina whose subject is where the listing is. */}
+          <div
+            style={{
+              display: 'flex',
+              fontSize: fitSize(place, 50, 22, 34),
+              fontWeight: 800,
+              color: '#FFFFFF',
+            }}
+          >
             {place}
           </div>
           <div style={{ display: 'flex', fontSize: fitSize(price, 32, 26, 22), color: FOG }}>
@@ -1051,7 +1070,11 @@ async function priceDropLamina(
 ) {
   const [tile, photo] = await Promise.all([brandTile(), mainPhoto(property)]);
   const title = clamp(property.title ?? '', 58);
-  const PHOTO = 660;
+  // Sized against what the panel below actually needs — badge, eyebrow, the two
+  // prices, the date, the title and the verify line — rather than by ratio. The
+  // panel is opaque, so every pixel it does not use is a pixel of photograph
+  // thrown away.
+  const PHOTO = 880;
 
   return (
     <div
@@ -1085,9 +1108,10 @@ async function priceDropLamina(
           <BrandRow tile={tile} fontSize={26} />
         </div>
 
-        {/* The badge sits on the seam between photo and panel, which is the one
-            place on the composition the eye lands on first. */}
-        <div style={{ position: 'absolute', left: 48, bottom: -26, display: 'flex', alignItems: 'center', gap: 14 }}>
+        {/* Inside the photo and clear of its bottom edge. Hanging it over the
+            seam reads better in a mockup and is invisible in the render: the
+            panel is painted after this block and covers whatever overhangs. */}
+        <div style={{ position: 'absolute', left: 48, bottom: 30, display: 'flex', alignItems: 'center', gap: 14 }}>
           <div
             style={{
               display: 'flex',
@@ -1272,7 +1296,9 @@ async function soldLamina(
           padding: '0 60px',
         }}
       >
-        <div style={{ display: 'flex', fontSize: 27, letterSpacing: 4, color: accent }}>{subject}</div>
+        <div style={{ display: 'flex', fontSize: 27, fontWeight: 800, letterSpacing: 4, color: accent }}>
+          {subject}
+        </div>
 
         <div
           style={{

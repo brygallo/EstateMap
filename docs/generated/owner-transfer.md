@@ -54,12 +54,12 @@ Cambiar de propietario se hace por un endpoint dedicado reservado a staff, y no 
 
 **Casos**
 
-| Caso | Rol | Entrada | Esperado |
-| --- | --- | --- | --- |
-| staff transfiere la propiedad a otra cuenta | staff | `email`=destino@example.com | allowed |
-| un usuario autenticado cualquiera no puede transferir | not_owner | `email`=destino@example.com | denied |
-| el propietario actual tampoco puede transferirla él mismo | owner | `email`=destino@example.com | denied |
-| un anónimo no puede transferir | anonymous | `email`=destino@example.com | denied (HTTP 401) |
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| staff transfiere la propiedad a otra cuenta | staff | — | `email`=destino@example.com | allowed |
+| un usuario autenticado cualquiera no puede transferir | not_owner | — | `email`=destino@example.com | denied |
+| el propietario actual tampoco puede transferirla él mismo | owner | — | `email`=destino@example.com | denied |
+| un anónimo no puede transferir | anonymous | — | `email`=destino@example.com | denied (HTTP 401) |
 
 **Cobertura exigida:** api
 
@@ -88,12 +88,12 @@ La transferencia acepta el id de una cuenta activa o una dirección de correo; s
 
 **Casos**
 
-| Caso | Rol | Entrada | Esperado |
-| --- | --- | --- | --- |
-| transferir a un correo sin cuenta la crea invitada | staff | `email`=nuevo@example.com | allowed |
-| una transferencia sin destino se rechaza | staff | — | denied (HTTP 400) |
-| transferir a una cuenta desactivada se rechaza | — | — | denied (HTTP 400) |
-| transferir a quien ya es el propietario se rechaza | — | — | denied (HTTP 400) |
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| transferir a un correo sin cuenta la crea invitada | staff | — | `email`=nuevo@example.com | allowed |
+| una transferencia sin destino se rechaza | staff | — | — | denied (HTTP 400) |
+| transferir a una cuenta desactivada se rechaza | — | — | — | denied (HTTP 400) |
+| transferir a quien ya es el propietario se rechaza | — | — | — | denied (HTTP 400) |
 
 **Cobertura exigida:** api
 
@@ -114,10 +114,10 @@ Al transferir, los leads recibidos antes del cambio quedan asociados a la propie
 
 **Casos**
 
-| Caso | Rol | Entrada | Esperado |
-| --- | --- | --- | --- |
-| el nuevo propietario ve los leads anteriores a la transferencia | — | — | allowed |
-| el propietario anterior deja de verlos | — | — | denied |
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| el nuevo propietario ve los leads anteriores a la transferencia | — | — | — | allowed |
+| el propietario anterior deja de verlos | — | — | — | denied |
 
 **Cobertura exigida:** api
 
@@ -148,11 +148,11 @@ Consumada la transferencia, el nuevo propietario edita y borra la propiedad y el
 
 **Casos**
 
-| Caso | Rol | Entrada | Esperado |
-| --- | --- | --- | --- |
-| el nuevo propietario edita la propiedad | — | — | allowed |
-| el propietario anterior ya no puede editarla | — | — | denied |
-| la propiedad desaparece del inventario del anterior y aparece en el del nuevo | — | — | allowed |
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| el nuevo propietario edita la propiedad | — | — | — | allowed |
+| el propietario anterior ya no puede editarla | — | — | — | denied |
+| la propiedad desaparece del inventario del anterior y aparece en el del nuevo | — | — | — | allowed |
 
 **Cobertura exigida:** api
 
@@ -173,9 +173,9 @@ Al asignar propietario a una propiedad con is_imported, la propiedad se desvincu
 
 **Casos**
 
-| Caso | Rol | Entrada | Esperado |
-| --- | --- | --- | --- |
-| transferir un anuncio importado lo desvincula de su fuente | — | — | allowed |
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| transferir un anuncio importado lo desvincula de su fuente | — | — | — | allowed |
 
 **Cobertura exigida:** api
 
@@ -204,10 +204,10 @@ Cada transferencia escribe una línea de auditoría con quién la hizo, la propi
 
 **Casos**
 
-| Caso | Rol | Entrada | Esperado |
-| --- | --- | --- | --- |
-| la transferencia escribe la línea de auditoría con origen y destino | — | — | allowed |
-| un fallo del correo no deshace la transferencia | — | — | allowed |
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| la transferencia escribe la línea de auditoría con origen y destino | — | — | — | allowed |
+| un fallo del correo no deshace la transferencia | — | — | — | allowed |
 
 **Cobertura exigida:** api
 
@@ -228,9 +228,9 @@ Cambiar de propietario invalida la caché del catálogo público y la del detall
 
 **Casos**
 
-| Caso | Rol | Entrada | Esperado |
-| --- | --- | --- | --- |
-| el detalle público refleja el propietario nuevo tras la transferencia | — | — | allowed |
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| el detalle público refleja el propietario nuevo tras la transferencia | — | — | — | allowed |
 
 **Cobertura exigida:** api
 
@@ -252,10 +252,10 @@ Cambiar de propietario conserva el historial de precios, la fecha de alta y el c
 
 **Casos**
 
-| Caso | Rol | Entrada | Esperado |
-| --- | --- | --- | --- |
-| el historial de precios sobrevive a la transferencia | — | — | allowed |
-| created_at y views_count no cambian | — | — | allowed |
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| el historial de precios sobrevive a la transferencia | — | — | — | allowed |
+| created_at y views_count no cambian | — | — | — | allowed |
 
 **Cobertura exigida:** api
 

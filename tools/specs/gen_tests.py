@@ -11,6 +11,12 @@ Two kinds of output, both regenerated from scratch:
 * `tests/generated/` — Playwright. Rules with a route and a `data-testid`
   become a visibility assertion in the browser.
 
+A case says two separate things and they must not be confused: `given` is the
+state of the world before the call, and `body` is the call itself. The state is
+handed to `SpecWorld.apply`, which builds it before the request goes out; the
+body is sent as the request payload. They used to share one field, which meant a
+`given` on a GET was silently dropped and the case tested nothing.
+
 Every generated test carries a `SPEC:<id>` marker. That marker is what
 `validate.py` looks for when it checks that a rule is actually covered, so
 generation and validation close the loop on each other.
@@ -103,8 +109,6 @@ def render_pytest(spec: SpecFile) -> str | None:
 
     for rule in rules:
         backend = rule["backend"]
-        endpoint = backend["endpoint"]
-        method, _, path = endpoint.partition(" ")
         denied_status = backend.get("denied_http_status")
         rule_id = rule["id"]
         skip_reason = None
@@ -119,6 +123,10 @@ def render_pytest(spec: SpecFile) -> str | None:
             name = test_name(rule_id, case["name"], taken)
             expected = case["expected"]
             status_override = case.get("http_status")
+            # A rule declares one endpoint, but a statement like "it resolves by
+            # its id and by its short code" is about two. The case may say which
+            # of them it is talking about.
+            method, _, path = (case.get("endpoint") or backend["endpoint"]).partition(" ")
             lines.append("")
             if skip_reason:
                 lines.append(f"@pytest.mark.skip(reason={py_repr(skip_reason)})")
@@ -131,8 +139,12 @@ def render_pytest(spec: SpecFile) -> str | None:
             lines.append(f"        method={py_repr(method)},")
             lines.append(f"        path={py_repr(path)},")
             lines.append(f"        role={py_repr(case['role'])},")
-            payload = case.get("given")
-            lines.append(f"        payload={py_repr(payload) if payload else 'None'},")
+            # `given` is the world before the call; `body` is the call. Passing
+            # the former as the latter was the bug this split exists to kill.
+            given = case.get("given")
+            body = case.get("body")
+            lines.append(f"        given={py_repr(given) if given else 'None'},")
+            lines.append(f"        body={py_repr(body) if body else 'None'},")
             lines.append("    )")
             lines.append("    assert_outcome(")
             lines.append("        response,")

@@ -24,7 +24,8 @@ def test_wfp_001_llamada_directa_a_la_api_sin_token(spec_request):
         method='POST',
         path='/api/properties/',
         role='anonymous',
-        payload=None,
+        given=None,
+        body=None,
     )
     assert_outcome(
         response,
@@ -47,7 +48,8 @@ def test_wfp_012_publicar_con_un_estado_que_el_modelo_no_conoce(spec_request):
         method='POST',
         path='/api/properties/',
         role='authenticated',
-        payload={'status': 'sold', 'title': 'Propiedad vendida'},
+        given=None,
+        body={'status': 'sold', 'title': 'Propiedad vendida'},
     )
     assert_outcome(
         response,
