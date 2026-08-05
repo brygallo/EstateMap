@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback, useRef } from 'react';
 import { toast, type ExternalToast } from 'sonner';
 import type { Property } from '@/lib/types';
-import { getPropertyViewportDecision, type LatLngPoint } from '@/lib/geo';
+import { getPropertyViewportDecision, isPointInEcuadorBounds, type LatLngPoint } from '@/lib/geo';
 import {
   LOCATION_STORAGE_KEYS,
   geolocationErrorMessage,
@@ -72,6 +72,15 @@ export function useGeolocation(
     } else {
       toast.error(message, { ...toastOptions, duration: 6000 });
     }
+    locationToastIdRef.current = null;
+  }, []);
+
+  const notifyOutsideCoverage = useCallback(() => {
+    const id = locationToastIdRef.current;
+    toast.info(
+      'Todavía no tenemos propiedades en tu zona. Navega por el mapa para ver propiedades disponibles en Ecuador.',
+      { ...toastOptions, duration: 6500, ...(id ? { id } : {}) }
+    );
     locationToastIdRef.current = null;
   }, []);
 
@@ -154,6 +163,13 @@ export function useGeolocation(
     try {
       const position = await requestBrowserLocation('discovery');
       const { latitude, longitude, accuracy: acc } = position.coords;
+      if (!isPointInEcuadorBounds(latitude, longitude)) {
+        setUserLocation(null);
+        setAccuracy(null);
+        setLocationBlocked(false);
+        notifyOutsideCoverage();
+        return;
+      }
       setUserLocation({ lat: latitude, lng: longitude });
       setAccuracy(typeof acc === 'number' ? acc : null);
       centerOnLocation(latitude, longitude);
@@ -167,7 +183,7 @@ export function useGeolocation(
     } finally {
       setLoadingLocation(false);
     }
-  }, [centerOnLocation, notifyLocationError, notifyLocationLoading, notifyLocationSuccess]);
+  }, [centerOnLocation, notifyLocationError, notifyLocationLoading, notifyLocationSuccess, notifyOutsideCoverage]);
 
   // El aviso propio de la aplicación solo se muestra antes de la primera
   // decisión. Si el navegador ya tiene el permiso (o ya obtuvimos una
@@ -246,6 +262,13 @@ export function useGeolocation(
     try {
       const position = await requestBrowserLocation('discovery');
       const { latitude, longitude, accuracy: acc } = position.coords;
+      if (!isPointInEcuadorBounds(latitude, longitude)) {
+        setUserLocation(null);
+        setAccuracy(null);
+        setLocationBlocked(false);
+        notifyOutsideCoverage();
+        return;
+      }
       setUserLocation({ lat: latitude, lng: longitude });
       setAccuracy(typeof acc === 'number' ? acc : null);
       centerOnLocation(latitude, longitude);
@@ -259,7 +282,7 @@ export function useGeolocation(
     } finally {
       setLoadingLocation(false);
     }
-  }, [centerOnLocation, locationBlocked, notifyLocationError, notifyLocationLoading, notifyLocationSuccess]);
+  }, [centerOnLocation, locationBlocked, notifyLocationError, notifyLocationLoading, notifyLocationSuccess, notifyOutsideCoverage]);
 
   return {
     userLocation,

@@ -48,8 +48,8 @@ Cambiar de propietario se hace por un endpoint dedicado reservado a staff, y no 
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/real_estate/views.py:2311-2361` (`def transfer_owner`)
-- `backend/real_estate/views.py:2281-2283` (`PATCH_ALLOWED_FIELDS = {'status', 'title', 'price', 'city', 'description'}`) — owner no está, así que un PATCH que solo lo traiga se queda sin cuerpo y responde 400.
+- `backend/real_estate/views.py:2406-2455` (`def transfer_owner`)
+- `backend/real_estate/views.py:2344-2346` (`PATCH_ALLOWED_FIELDS = {'status', 'title', 'price', 'city', 'description'}`) — owner no está, así que un PATCH que solo lo traiga se queda sin cuerpo y responde 400.
 - `backend/real_estate/urls.py:83` (`admin_properties_transfer_owner`)
 
 **Casos**
@@ -82,8 +82,8 @@ La transferencia acepta el id de una cuenta activa o una dirección de correo; s
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/real_estate/views.py:2395-2420` (`def _resolve_transfer_target`)
-- `backend/real_estate/serializers.py:504-516` (`class OwnerTransferSerializer`)
+- `backend/real_estate/views.py:2458-2482` (`def _resolve_transfer_target`)
+- `backend/real_estate/serializers.py:567-578` (`class OwnerTransferSerializer`)
 - `backend/real_estate/services/accounts.py:22-40` (`def get_or_create_by_email`)
 
 **Casos**
@@ -110,7 +110,7 @@ Al transferir, los leads recibidos antes del cambio quedan asociados a la propie
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/real_estate/views.py:1039-1041` (`return qs.filter(property__owner=user)`) — La bandeja se deriva del owner de la propiedad, así que la transferencia la mueve sola.
+- `backend/real_estate/views.py:1096-1098` (`return qs.filter(property__owner=user)`) — La bandeja se deriva del owner de la propiedad, así que la transferencia la mueve sola.
 
 **Casos**
 
@@ -144,7 +144,7 @@ Consumada la transferencia, el nuevo propietario edita y borra la propiedad y el
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
 - `backend/real_estate/permissions.py:22-27` (`return obj.owner == request.user`)
-- `backend/real_estate/views.py:2367-2369` (`prop.owner = target`)
+- `backend/real_estate/views.py:2430-2432` (`prop.owner = target`)
 
 **Casos**
 
@@ -168,7 +168,7 @@ Al asignar propietario a una propiedad con is_imported, la propiedad se desvincu
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/real_estate/views.py:2374-2380` (`prop.is_imported = False`)
+- `backend/real_estate/views.py:2437-2442` (`prop.is_imported = False`)
 - `backend/ingesta/pipeline/retirement.py:36` (`if not prop.is_imported:`) — La retirada se salta cualquier propiedad que ya no sea importada.
 
 **Casos**
@@ -198,7 +198,7 @@ Cada transferencia escribe una línea de auditoría con quién la hizo, la propi
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/real_estate/views.py:2387-2389` (`action=property.transfer_owner`)
+- `backend/real_estate/views.py:2450-2452` (`action=property.transfer_owner`)
 - `backend/real_estate/services/notifications.py:54-72` (`class OwnershipTransferNotificationService`)
 - `backend/real_estate/email_utils.py:448-478` (`def send_ownership_transfer_email`)
 
@@ -224,7 +224,7 @@ Cambiar de propietario invalida la caché del catálogo público y la del detall
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
 - `backend/real_estate/signals.py:64-69` (`def property_cache_saved`)
-- `backend/real_estate/views.py:2376-2378` (`prop.save(update_fields=updated_fields)`)
+- `backend/real_estate/views.py:2439-2441` (`prop.save(update_fields=updated_fields)`)
 
 **Casos**
 
@@ -248,7 +248,7 @@ Cambiar de propietario conserva el historial de precios, la fecha de alta y el c
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/real_estate/views.py:2368-2379` (`updated_fields = ['owner']`)
+- `backend/real_estate/views.py:2431-2441` (`updated_fields = ['owner']`)
 
 **Casos**
 

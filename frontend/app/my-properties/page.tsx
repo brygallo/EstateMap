@@ -7,16 +7,19 @@ import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import { requestErrorMessage, responseErrorMessage } from '@/lib/form-errors';
 import {
+  Archive,
   BarChart3,
-  Eye,
+  CheckCircle2,
+  ExternalLink,
   Home,
-  Inbox,
+  KeyRound,
   LifeBuoy,
   Megaphone,
   MessageCircle,
   Pencil,
   Plus,
   RefreshCw,
+  RotateCcw,
   Search,
   Share2,
   Trash2,
@@ -29,9 +32,29 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
+import PropertyImage from '@/components/ui/PropertyImage';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import type { Property } from '@/lib/types';
 import { cn } from '@/lib/utils';
-import { getStatusLabel, formatDate } from '@/lib/property-labels';
+import {
+  formatArea,
+  formatDate,
+  formatPrice,
+  getClosedReason,
+  getClosureLabel,
+  getListingStatusLabel,
+  getPropertyTypeLabel,
+  getStatusLabel,
+  isClosedListing,
+  isSuccessfulClosure,
+  type ClosedReason,
+} from '@/lib/property-labels';
 
 type StatusFilter = 'all' | 'for_sale' | 'for_rent' | 'inactive';
 type SortMode = 'recent' | 'views' | 'price_desc' | 'price_asc';
@@ -91,12 +114,18 @@ const originOptions: Array<{ value: OriginFilter; label: string }> = [
   { value: 'imported', label: 'Importadas' },
 ];
 
-const leadStatusLabels: Record<string, string> = {
-  new: 'Nuevo',
-  contacted: 'Contactado',
-  closed: 'Cerrado',
-  archived: 'Archivado',
-};
+// Closing a listing is a PATCH of `closed_reason` and nothing else: the server
+// forces `status='inactive'` and stamps `closed_at`. There is no "sold" status.
+const closureOptions: Array<{ value: ClosedReason; label: string; hint: string }> = [
+  { value: 'sold', label: 'Se vendió', hint: 'La propiedad ya cambió de dueño.' },
+  { value: 'rented', label: 'Se arrendó', hint: 'La propiedad ya está arrendada.' },
+  { value: 'withdrawn', label: 'La retiro', hint: 'Ya no quiero publicarla; no hubo venta ni arriendo.' },
+];
+
+// Reopening is the reverse move: writing an operation back onto `status` is what
+// clears the closure server-side. Sending `closed_reason: ''` on its own would
+// leave the listing inactive and therefore still out of the catalogue.
+const reopenOptions: Array<'for_sale' | 'for_rent'> = ['for_sale', 'for_rent'];
 
 const formatCompactNumber = (value: number) =>
   new Intl.NumberFormat('es-EC', { notation: 'compact', maximumFractionDigits: 1 }).format(value);
@@ -115,7 +144,6 @@ const MyPropertiesPage = () => {
   const [leads, setLeads] = useState<Lead[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
-  const [loadingLeads, setLoadingLeads] = useState(false);
   const [error, setError] = useState(false);
   const [query, setQuery] = useState('');
   const [search, setSearch] = useState('');
@@ -125,6 +153,11 @@ const MyPropertiesPage = () => {
   const [shareModalOpen, setShareModalOpen] = useState(false);
   const [shareAllModalOpen, setShareAllModalOpen] = useState(false);
   const [selectedPropertyId, setSelectedPropertyId] = useState<number | null>(null);
+  const [actionProperty, setActionProperty] = useState<Property | null>(null);
+  // Listing whose closure is being decided, and in which direction.
+  const [closureProperty, setClosureProperty] = useState<Property | null>(null);
+  const [closureMode, setClosureMode] = useState<'close' | 'reopen'>('close');
+  const [savingClosure, setSavingClosure] = useState(false);
 
   const isAdminScope = scope === 'catalog';
   const hasFilters = Boolean(search) || statusFilter !== 'all' || originFilter !== 'all';
@@ -156,10 +189,12 @@ const MyPropertiesPage = () => {
 
   // `page` 1 replaces the list; any other page appends, so "Cargar más" keeps
   // what is already on screen instead of jumping the reader back to the top.
-  const fetchInventory = async (page = 1) => {
+  // `silent` refreshes the list and the counters without flashing the skeletons,
+  // for the case where the reader is looking at the row that just changed.
+  const fetchInventory = async (page = 1, { silent = false } = {}) => {
     if (!token) return;
     if (page === 1) {
-      setLoading(true);
+      if (!silent) setLoading(true);
       setError(false);
     } else {
       setLoadingMore(true);
@@ -196,8 +231,6 @@ const MyPropertiesPage = () => {
   };
 
   const fetchLeads = async () => {
-    setLoadingLeads(true);
-
     try {
       const { apiGet } = await import('@/lib/api');
       const res = await apiGet('/leads/');
@@ -211,8 +244,6 @@ const MyPropertiesPage = () => {
     } catch (err) {
       console.error('Error fetching leads:', err);
       setLeads([]);
-    } finally {
-      setLoadingLeads(false);
     }
   };
 
@@ -242,6 +273,56 @@ const MyPropertiesPage = () => {
     }
   };
 
+  /**
+   * Write the closure of a listing, or undo it.
+   *
+   * Closing sends `closed_reason` alone — the server is what forces the listing
+   * out of the catalogue and stamps the date. Reopening sends the operation on
+   * `status`, which is what clears the closure; `closed_reason: ''` on its own
+   * would leave it inactive and just as invisible.
+   */
+  const applyClosure = async (property: Property, payload: Record<string, string>) => {
+    setSavingClosure(true);
+    try {
+      const { apiPatch } = await import('@/lib/api');
+      const res = await apiPatch(`/properties/${property.id}/`, payload);
+
+      if (res.ok) {
+        const updated: Property = await res.json();
+        setProperties((current) =>
+          current.map((item) => (item.id === updated.id ? { ...item, ...updated } : item))
+        );
+        setActionProperty((current) =>
+          current && current.id === updated.id ? { ...current, ...updated } : current
+        );
+        toast.success(
+          isClosedListing(updated)
+            ? `Anuncio marcado como ${getClosureLabel(updated).toLowerCase()}.`
+            : 'Anuncio publicado de nuevo.'
+        );
+        setClosureProperty(null);
+        // The counters and the active filter are decided by the server.
+        fetchInventory(1, { silent: true });
+      } else if (res.status === 401) {
+        toast.error('Tu sesión ha expirado. Por favor, inicia sesión nuevamente.');
+        logout();
+        router.push('/iniciar-sesion');
+      } else {
+        toast.error(await responseErrorMessage(res, 'No se pudo actualizar el anuncio.'));
+      }
+    } catch (err) {
+      console.error('Error updating listing closure:', err);
+      toast.error(requestErrorMessage(err, 'actualizar el anuncio'));
+    } finally {
+      setSavingClosure(false);
+    }
+  };
+
+  const openClosureDialog = (property: Property, mode: 'close' | 'reopen') => {
+    setClosureMode(mode);
+    setClosureProperty(property);
+  };
+
   const handleShare = (propertyId: number) => {
     setSelectedPropertyId(propertyId);
     setShareModalOpen(true);
@@ -265,17 +346,8 @@ const MyPropertiesPage = () => {
     return url.toString();
   };
 
-  // The counters come from the server, which sees the whole inventory; only the
-  // lead figures are local, because leads still arrive in a single response.
-  const metrics = useMemo(
-    () => ({
-      ...stats,
-      totalLeads: leads.length,
-    }),
-    [stats, leads]
-  );
-
-  const recentLeads = useMemo(() => leads.slice(0, 4), [leads]);
+  // The counters come from the server, which sees the whole inventory.
+  const metrics = stats;
 
   const leadsByProperty = useMemo(() => {
     return leads.reduce<Record<number, { count: number; latest: Lead }>>((acc, lead) => {
@@ -377,12 +449,11 @@ const MyPropertiesPage = () => {
             </div>
           ) : (
             <div className="space-y-8">
-              <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+              <div className="grid grid-cols-3 gap-3">
                 {[
                   { label: 'Publicadas', value: formatCompactNumber(metrics.total), icon: Home },
                   { label: 'Activas', value: formatCompactNumber(metrics.active), icon: BarChart3 },
                   { label: 'En venta', value: formatCompactNumber(metrics.for_sale), icon: Home },
-                  { label: 'Vistas', value: formatCompactNumber(metrics.views), icon: Eye },
                 ].map((item) => {
                   const Icon = item.icon;
                   return (
@@ -397,7 +468,7 @@ const MyPropertiesPage = () => {
                 })}
               </div>
 
-              <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_360px]">
+              <div>
                 <div className="space-y-5">
                   <div className="rounded-card border border-line bg-surface p-4 shadow-card">
                     <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
@@ -472,94 +543,66 @@ const MyPropertiesPage = () => {
                       </Button>
                     </div>
                   ) : (
-                    <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-                      {properties.map((property) => (
-                        <div key={property.id} className="flex flex-col gap-3">
-                          <PropertyCard property={property} />
-                          {leadsByProperty[property.id] && (
-                            <div className="rounded-lg border border-primary/15 bg-primary/5 p-3">
-                              <div className="flex items-start justify-between gap-3">
-                                <div className="min-w-0">
-                                  <p className="text-sm font-semibold text-textPrimary">
-                                    {leadsByProperty[property.id].count}{' '}
-                                    {leadsByProperty[property.id].count === 1 ? 'contacto' : 'contactos'}
-                                  </p>
-                                  <p className="truncate text-xs text-textSecondary">
-                                    Último: {leadsByProperty[property.id].latest.name} ·{' '}
-                                    {formatLeadDate(leadsByProperty[property.id].latest.created_at)}
-                                  </p>
-                                </div>
-                                <a
-                                  className="shrink-0 text-sm font-medium text-primary hover:underline"
-                                  href={`tel:${leadsByProperty[property.id].latest.phone}`}
-                                >
-                                  Llamar
-                                </a>
-                              </div>
-                            </div>
-                          )}
-                          <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-line bg-surface p-2 shadow-card">
-                            <div className="flex flex-wrap items-center gap-1.5">
-                              <Badge variant="outline" className="bg-background">
-                                {getStatusLabel(property.status)}
-                              </Badge>
-                              {/* Editing someone else's listing is a different act
-                                  from editing your own, so the card says whose it is
-                                  before offering the buttons. */}
-                              {isAdminScope && property.is_imported && (
-                                <Badge variant="secondary">
-                                  Importada{property.source_agency ? ` · ${property.source_agency}` : ''}
-                                </Badge>
+                    <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+                      {properties.map((property) => {
+                        const closureLabel = getClosureLabel(property);
+                        const closedOn = formatDate(property.closed_at, {
+                          day: '2-digit',
+                          month: 'short',
+                          year: 'numeric',
+                        });
+                        return (
+                          <div key={property.id} className="flex flex-col gap-2">
+                            <PropertyCard
+                              property={property}
+                              onClick={() => router.push(`/mis-propiedades/${property.id}`)}
+                            />
+                            {/* Cierre del anuncio: el dueño marca aquí que se
+                                vendió o se arrendó, y desde aquí lo reabre. */}
+                            <div className="flex flex-wrap items-center justify-between gap-2 rounded-card border border-line bg-surface px-3 py-2 shadow-card">
+                              {closureLabel ? (
+                                <>
+                                  <span className="inline-flex items-center gap-1.5 text-sm font-semibold text-textPrimary">
+                                    {isSuccessfulClosure(property) ? (
+                                      <CheckCircle2 className="h-4 w-4 text-primary" strokeWidth={2} aria-hidden />
+                                    ) : (
+                                      <Archive className="h-4 w-4 text-textSecondary" strokeWidth={2} aria-hidden />
+                                    )}
+                                    {closureLabel}
+                                    {closedOn && (
+                                      <span className="font-normal text-textSecondary">· {closedOn}</span>
+                                    )}
+                                  </span>
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    data-testid="reopen-listing-action"
+                                    onClick={() => openClosureDialog(property, 'reopen')}
+                                  >
+                                    <RotateCcw className="h-4 w-4" strokeWidth={1.75} />
+                                    Reabrir
+                                  </Button>
+                                </>
+                              ) : (
+                                <>
+                                  <span className="text-sm font-medium text-textSecondary">
+                                    {getListingStatusLabel(property)}
+                                  </span>
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    data-testid="close-listing-action"
+                                    onClick={() => openClosureDialog(property, 'close')}
+                                  >
+                                    <KeyRound className="h-4 w-4" strokeWidth={1.75} />
+                                    Ya se vendió o arrendó
+                                  </Button>
+                                </>
                               )}
-                              {isAdminScope && !property.is_imported && property.owner !== user?.id && (
-                                <Badge variant="secondary">
-                                  De {property.owner_username || `cuenta #${property.owner}`}
-                                </Badge>
-                              )}
-                            </div>
-                            <div className="flex flex-1 justify-end gap-1">
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                className="text-secondary hover:bg-secondary/10 hover:text-secondary"
-                                onClick={() => handleShare(property.id)}
-                              >
-                                <Share2 className="h-4 w-4" strokeWidth={1.75} />
-                                Compartir
-                              </Button>
-                              {/* Plain ghost, no color override: it should read as
-                                  quieter than Editar/Eliminar, not compete with them. */}
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                data-testid="promote-property-action"
-                                onClick={() => router.push(`/propiedad/${property.id}/promocionar`)}
-                              >
-                                <Megaphone className="h-4 w-4" strokeWidth={1.75} />
-                                Promocionar
-                              </Button>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                className="text-primary hover:bg-primary/10 hover:text-primary"
-                                onClick={() => router.push(`/editar-propiedad/${property.id}`)}
-                              >
-                                <Pencil className="h-4 w-4" strokeWidth={1.75} />
-                                Editar
-                              </Button>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                className="text-error hover:bg-error/10 hover:text-error"
-                                onClick={() => handleDelete(property.id)}
-                              >
-                                <Trash2 className="h-4 w-4" strokeWidth={1.75} />
-                                Eliminar
-                              </Button>
                             </div>
                           </div>
-                        </div>
-                      ))}
+                        );
+                      })}
                     </div>
                   )}
 
@@ -578,58 +621,6 @@ const MyPropertiesPage = () => {
                     </div>
                   )}
                 </div>
-
-                <aside className="space-y-4">
-                  <div className="rounded-card border border-line bg-surface p-5 shadow-card">
-                    <div className="flex items-center justify-between gap-3">
-                      <div>
-                        <h2 className="text-lg font-semibold text-textPrimary">Contactos recientes</h2>
-                        <p className="text-sm text-textSecondary">{metrics.totalLeads} contactos recibidos</p>
-                      </div>
-                      <Inbox className="h-5 w-5 text-primary" strokeWidth={1.75} />
-                    </div>
-
-                    <div className="mt-4 space-y-3">
-                      {loadingLeads ? (
-                        Array.from({ length: 3 }).map((_, index) => (
-                          <div key={index} className="space-y-2 rounded-lg border border-line p-3">
-                            <Skeleton className="h-4 w-1/2" />
-                            <Skeleton className="h-3 w-3/4" />
-                          </div>
-                        ))
-                      ) : recentLeads.length === 0 ? (
-                        <div className="rounded-lg border border-dashed border-line p-4 text-sm text-textSecondary">
-                          Aún no hay contactos para tus propiedades.
-                        </div>
-                      ) : (
-                        recentLeads.map((lead) => (
-                          <div key={lead.id} className="rounded-lg border border-line bg-background p-3">
-                            <div className="flex items-start justify-between gap-3">
-                              <div className="min-w-0">
-                                <p className="truncate font-semibold text-textPrimary">{lead.name}</p>
-                                <p className="truncate text-sm text-textSecondary">
-                                  {lead.property_title || `Propiedad #${lead.property}`}
-                                </p>
-                              </div>
-                              <Badge
-                                variant={lead.status === 'new' ? 'default' : 'secondary'}
-                                className="shrink-0"
-                              >
-                                {leadStatusLabels[lead.status] ?? lead.status}
-                              </Badge>
-                            </div>
-                            <div className="mt-2 flex items-center justify-between gap-3 text-xs text-textMuted">
-                              <span>{formatLeadDate(lead.created_at)}</span>
-                              <a className="font-medium text-primary hover:underline" href={`tel:${lead.phone}`}>
-                                Llamar
-                              </a>
-                            </div>
-                          </div>
-                        ))
-                      )}
-                    </div>
-                  </div>
-                </aside>
               </div>
             </div>
           )}
@@ -661,6 +652,264 @@ const MyPropertiesPage = () => {
             </Button>
           </div>
         </div>
+
+        <Dialog open={Boolean(actionProperty)} onOpenChange={(open) => !open && setActionProperty(null)}>
+          <DialogContent className="max-h-[90dvh] overflow-y-auto sm:max-w-2xl">
+            {actionProperty && (
+              <>
+                <DialogHeader>
+                  <DialogTitle className="pr-8">{actionProperty.title || `Propiedad #${actionProperty.id}`}</DialogTitle>
+                  <DialogDescription>
+                    {[actionProperty.city, actionProperty.province].filter(Boolean).join(', ') || 'Gestiona esta publicación'}
+                  </DialogDescription>
+                </DialogHeader>
+
+                {actionProperty.images?.[0] && (
+                  <div className="relative aspect-[16/9] overflow-hidden rounded-card bg-background">
+                    <PropertyImage
+                      src={actionProperty.images.find((image) => image.is_main)?.image || actionProperty.images[0].image}
+                      alt={actionProperty.title || `Propiedad #${actionProperty.id}`}
+                      fill
+                      sizes="(max-width: 640px) 100vw, 672px"
+                      className="object-cover"
+                      wrapperClassName="absolute inset-0"
+                    />
+                  </div>
+                )}
+
+                <div className="flex flex-wrap items-center gap-1.5">
+                  <Badge variant="outline" className="bg-background">
+                    {getListingStatusLabel(actionProperty)}
+                  </Badge>
+                  {getClosedReason(actionProperty) && actionProperty.closed_at && (
+                    <Badge variant="secondary">
+                      Cerrado el {formatDate(actionProperty.closed_at, { day: '2-digit', month: 'short', year: 'numeric' })}
+                    </Badge>
+                  )}
+                  {isAdminScope && actionProperty.is_imported && (
+                    <Badge variant="secondary">
+                      Importada{actionProperty.source_agency ? ` · ${actionProperty.source_agency}` : ''}
+                    </Badge>
+                  )}
+                  {isAdminScope && !actionProperty.is_imported && actionProperty.owner !== user?.id && (
+                    <Badge variant="secondary">
+                      De {actionProperty.owner_username || `cuenta #${actionProperty.owner}`}
+                    </Badge>
+                  )}
+                </div>
+
+                <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+                  {[
+                    ['Precio', formatPrice(actionProperty.price)],
+                    ['Tipo', getPropertyTypeLabel(actionProperty.property_type)],
+                    ['Área', formatArea(actionProperty.area) || 'Sin especificar'],
+                    ['Habitaciones', actionProperty.rooms || '—'],
+                    ['Baños', actionProperty.bathrooms || '—'],
+                    ['Vistas', actionProperty.views_count || 0],
+                  ].map(([label, value]) => (
+                    <div key={String(label)} className="rounded-card bg-background p-3">
+                      <p className="text-[11px] font-semibold uppercase tracking-wide text-textSecondary">{label}</p>
+                      <p className="mt-1 break-words font-geo text-sm font-semibold text-textPrimary">{value}</p>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="space-y-3 rounded-card border border-line p-4 text-sm">
+                  <div>
+                    <p className="text-xs font-semibold uppercase tracking-wide text-textSecondary">Ubicación</p>
+                    <p className="mt-1 text-textPrimary">
+                      {[actionProperty.address, actionProperty.city, actionProperty.province]
+                        .filter(Boolean)
+                        .join(', ') || 'Sin ubicación especificada'}
+                    </p>
+                  </div>
+                  {actionProperty.description && (
+                    <div>
+                      <p className="text-xs font-semibold uppercase tracking-wide text-textSecondary">Descripción</p>
+                      <p className="mt-1 whitespace-pre-line leading-5 text-textPrimary">{actionProperty.description}</p>
+                    </div>
+                  )}
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    <div>
+                      <p className="text-xs font-semibold uppercase tracking-wide text-textSecondary">Contacto</p>
+                      <p className="mt-1 text-textPrimary">{actionProperty.contact_phone || 'Sin teléfono'}</p>
+                      {actionProperty.contact_email && <p className="break-all text-textSecondary">{actionProperty.contact_email}</p>}
+                    </div>
+                    <div>
+                      <p className="text-xs font-semibold uppercase tracking-wide text-textSecondary">Publicación</p>
+                      <p className="mt-1 text-textPrimary">
+                        {formatDate(actionProperty.created_at, { day: '2-digit', month: 'short', year: 'numeric' }) || 'Sin fecha'}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                {leadsByProperty[actionProperty.id] && (
+                  <div className="rounded-card border border-primary/15 bg-primary/5 p-3">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <p className="text-sm font-semibold text-textPrimary">
+                          {leadsByProperty[actionProperty.id].count}{' '}
+                          {leadsByProperty[actionProperty.id].count === 1 ? 'contacto' : 'contactos'}
+                        </p>
+                        <p className="truncate text-xs text-textSecondary">
+                          Último: {leadsByProperty[actionProperty.id].latest.name} ·{' '}
+                          {formatLeadDate(leadsByProperty[actionProperty.id].latest.created_at)}
+                        </p>
+                      </div>
+                      <a
+                        className="shrink-0 text-sm font-medium text-primary hover:underline"
+                        href={`tel:${leadsByProperty[actionProperty.id].latest.phone}`}
+                      >
+                        Llamar
+                      </a>
+                    </div>
+                  </div>
+                )}
+
+                <div className="grid grid-cols-2 gap-2">
+                  <Button variant="outline" onClick={() => router.push(`/property/${actionProperty.id}`)}>
+                    <ExternalLink className="h-4 w-4" strokeWidth={1.75} />
+                    Ver publicación
+                  </Button>
+                  <Button
+                    variant="outline"
+                    className="text-secondary hover:bg-secondary/10 hover:text-secondary"
+                    onClick={() => {
+                      setActionProperty(null);
+                      handleShare(actionProperty.id);
+                    }}
+                  >
+                    <Share2 className="h-4 w-4" strokeWidth={1.75} />
+                    Compartir
+                  </Button>
+                  <Button
+                    variant="outline"
+                    data-testid="promote-property-action"
+                    onClick={() => router.push(`/propiedad/${actionProperty.id}/promocionar`)}
+                  >
+                    <Megaphone className="h-4 w-4" strokeWidth={1.75} />
+                    Promocionar
+                  </Button>
+                  <Button
+                    variant="outline"
+                    className="text-primary hover:bg-primary/10 hover:text-primary"
+                    onClick={() => router.push(`/editar-propiedad/${actionProperty.id}`)}
+                  >
+                    <Pencil className="h-4 w-4" strokeWidth={1.75} />
+                    Editar
+                  </Button>
+                  <Button
+                    variant="outline"
+                    className="col-span-2"
+                    onClick={() => {
+                      const target = actionProperty;
+                      setActionProperty(null);
+                      openClosureDialog(target, isClosedListing(target) ? 'reopen' : 'close');
+                    }}
+                  >
+                    {isClosedListing(actionProperty) ? (
+                      <>
+                        <RotateCcw className="h-4 w-4" strokeWidth={1.75} />
+                        Reabrir anuncio
+                      </>
+                    ) : (
+                      <>
+                        <KeyRound className="h-4 w-4" strokeWidth={1.75} />
+                        Ya se vendió o arrendó
+                      </>
+                    )}
+                  </Button>
+                  <Button
+                    variant="outline"
+                    className="col-span-2 text-error hover:bg-error/10 hover:text-error"
+                    onClick={() => {
+                      const propertyId = actionProperty.id;
+                      setActionProperty(null);
+                      handleDelete(propertyId);
+                    }}
+                  >
+                    <Trash2 className="h-4 w-4" strokeWidth={1.75} />
+                    Eliminar
+                  </Button>
+                </div>
+              </>
+            )}
+          </DialogContent>
+        </Dialog>
+
+        {/* Cierre / reapertura del anuncio. Se confirma siempre: marcarlo como
+            vendido lo saca del catálogo público. */}
+        <Dialog
+          open={Boolean(closureProperty)}
+          onOpenChange={(open) => {
+            if (!open && !savingClosure) setClosureProperty(null);
+          }}
+        >
+          <DialogContent className="sm:max-w-md">
+            {closureProperty && closureMode === 'close' && (
+              <>
+                <DialogHeader>
+                  <DialogTitle className="pr-8">¿Cómo se cerró este anuncio?</DialogTitle>
+                  <DialogDescription>
+                    «{closureProperty.title || `Propiedad #${closureProperty.id}`}» saldrá del catálogo
+                    público y dejará de recibir contactos. Su ficha seguirá abierta con la marca de
+                    cerrado, para que el código y el QR que ya imprimiste sigan funcionando. Puedes
+                    reabrirlo cuando quieras.
+                  </DialogDescription>
+                </DialogHeader>
+                <div className="grid gap-2">
+                  {closureOptions.map((option) => (
+                    <button
+                      key={option.value}
+                      type="button"
+                      disabled={savingClosure}
+                      data-testid={`close-listing-${option.value}`}
+                      onClick={() => applyClosure(closureProperty, { closed_reason: option.value })}
+                      className="rounded-card border border-line bg-background px-4 py-3 text-left transition hover:border-primary hover:bg-primary/5 disabled:cursor-not-allowed disabled:opacity-60"
+                    >
+                      <span className="block font-semibold text-textPrimary">{option.label}</span>
+                      <span className="mt-0.5 block text-sm text-textSecondary">{option.hint}</span>
+                    </button>
+                  ))}
+                </div>
+                <Button variant="ghost" disabled={savingClosure} onClick={() => setClosureProperty(null)}>
+                  Cancelar
+                </Button>
+              </>
+            )}
+
+            {closureProperty && closureMode === 'reopen' && (
+              <>
+                <DialogHeader>
+                  <DialogTitle className="pr-8">Volver a publicar el anuncio</DialogTitle>
+                  <DialogDescription>
+                    «{closureProperty.title || `Propiedad #${closureProperty.id}`}» está marcado como{' '}
+                    {getClosureLabel(closureProperty).toLowerCase()}. Al reabrirlo vuelve al catálogo y
+                    al mapa, y se borra la marca de cierre. Elige con qué operación vuelve.
+                  </DialogDescription>
+                </DialogHeader>
+                <div className="grid gap-2">
+                  {reopenOptions.map((status) => (
+                    <button
+                      key={status}
+                      type="button"
+                      disabled={savingClosure}
+                      data-testid={`reopen-listing-${status}`}
+                      onClick={() => applyClosure(closureProperty, { status, closed_reason: '' })}
+                      className="rounded-card border border-line bg-background px-4 py-3 text-left font-semibold text-textPrimary transition hover:border-primary hover:bg-primary/5 disabled:cursor-not-allowed disabled:opacity-60"
+                    >
+                      {getStatusLabel(status)}
+                    </button>
+                  ))}
+                </div>
+                <Button variant="ghost" disabled={savingClosure} onClick={() => setClosureProperty(null)}>
+                  Cancelar
+                </Button>
+              </>
+            )}
+          </DialogContent>
+        </Dialog>
 
         {/* Share Modal - Individual Property */}
         <ShareModal

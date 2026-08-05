@@ -117,3 +117,86 @@ def test_prop_015_un_visitante_anonimo_no_puede_borrarla(spec_request):
         case_name='Un visitante anónimo no puede borrarla',
         expected_status=None,
     )
+
+
+# --- PROP-034: Un anuncio cerrado conserva su ficha y su código corto ---
+
+def test_prop_034_la_ficha_de_un_anuncio_vendido_responde_a_un_anonimo(spec_request):
+    """
+    SPEC:PROP-034 — Un anuncio cerrado conserva su ficha y su código corto
+    Case: La ficha de un anuncio vendido responde a un anónimo
+    """
+    response = spec_request(
+        method='GET',
+        path='/api/properties/code/{code}/',
+        role='anonymous',
+        payload={'closed_reason': 'sold'},
+    )
+    assert_outcome(
+        response,
+        expected='allowed',
+        denied_status=None,
+        rule_id='PROP-034',
+        case_name='La ficha de un anuncio vendido responde a un anónimo',
+        expected_status=200,
+    )
+
+def test_prop_034_el_codigo_corto_de_un_anuncio_vendido_resuelve(spec_request):
+    """
+    SPEC:PROP-034 — Un anuncio cerrado conserva su ficha y su código corto
+    Case: El código corto de un anuncio vendido resuelve
+    """
+    response = spec_request(
+        method='GET',
+        path='/api/properties/code/{code}/',
+        role='anonymous',
+        payload={'closed_reason': 'sold'},
+    )
+    assert_outcome(
+        response,
+        expected='allowed',
+        denied_status=None,
+        rule_id='PROP-034',
+        case_name='El código corto de un anuncio vendido resuelve',
+        expected_status=200,
+    )
+
+def test_prop_034_un_anuncio_solo_inactivo_no_resuelve(spec_request):
+    """
+    SPEC:PROP-034 — Un anuncio cerrado conserva su ficha y su código corto
+    Case: Un anuncio solo inactivo no resuelve
+    """
+    response = spec_request(
+        method='GET',
+        path='/api/properties/code/{code}/',
+        role='anonymous',
+        payload={'status': 'inactive'},
+    )
+    assert_outcome(
+        response,
+        expected='denied',
+        denied_status=404,
+        rule_id='PROP-034',
+        case_name='Un anuncio solo inactivo no resuelve',
+        expected_status=None,
+    )
+
+def test_prop_034_el_dueno_alcanza_su_anuncio_inactivo(spec_request):
+    """
+    SPEC:PROP-034 — Un anuncio cerrado conserva su ficha y su código corto
+    Case: El dueño alcanza su anuncio inactivo
+    """
+    response = spec_request(
+        method='GET',
+        path='/api/properties/code/{code}/',
+        role='owner',
+        payload={'status': 'inactive'},
+    )
+    assert_outcome(
+        response,
+        expected='allowed',
+        denied_status=None,
+        rule_id='PROP-034',
+        case_name='El dueño alcanza su anuncio inactivo',
+        expected_status=200,
+    )

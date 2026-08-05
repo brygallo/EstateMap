@@ -139,6 +139,26 @@ export function centerOf(points: LatLng[]): LatLng | null {
 }
 
 /**
+ * The coordinate that sits `dy` screen pixels below `center` at this zoom.
+ *
+ * A lamina is not an empty frame: a caption bar covers its bottom quarter, and a
+ * plot centred in the raster is really centred behind that bar. Pushing the map
+ * centre south lifts the subject into the part of the image that is actually
+ * visible, which is the same thing a `padding` option does on a real map.
+ */
+export function shiftCenter(center: LatLng, zoom: number, dx: number, dy: number): LatLng {
+  const worldX = lngToWorldX(center.lng, zoom) + dx;
+  const worldY = latToWorldY(center.lat, zoom) + dy;
+  const scale = TILE_SIZE * 2 ** zoom;
+
+  const lng = (worldX / scale) * 360 - 180;
+  // Inverse Mercator: the exact reverse of `latToWorldY`.
+  const n = Math.PI - 2 * Math.PI * (worldY / scale);
+  const lat = (180 / Math.PI) * Math.atan(0.5 * (Math.exp(n) - Math.exp(-n)));
+  return { lat, lng };
+}
+
+/**
  * The tiles covering a frame, positioned relative to its top-left corner.
  *
  * Tiles outside the world at this zoom are dropped rather than requested: near
@@ -200,7 +220,7 @@ export function polygonOverlay(
   mosaic: Mosaic,
   width: number,
   height: number,
-  { stroke = '#ffffff', fill = 'rgba(255,255,255,0.22)', strokeWidth = 6 } = {}
+  { stroke = '#0B7A3E', fill = 'rgba(34,197,94,0.28)', strokeWidth = 9 } = {}
 ): string {
   if (points.length < 3) return '';
 
@@ -213,10 +233,58 @@ export function polygonOverlay(
 
   const svg =
     `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">` +
-    // Two strokes: a dark halo under a light line, so the outline stays visible
-    // over both a pale street and a dark satellite-ish block.
-    `<polygon points="${path}" fill="${fill}" stroke="rgba(15,23,42,0.55)" stroke-width="${strokeWidth + 6}" stroke-linejoin="round" />` +
+    // A white halo under a saturated line, and not the reverse. The basemap is
+    // always CARTO voyager — pale beige streets on near-white blocks — so a
+    // white outline is the one colour guaranteed to vanish into it. The halo is
+    // what keeps the dark line from disappearing over a park or a river.
+    `<polygon points="${path}" fill="${fill}" stroke="rgba(255,255,255,0.92)" stroke-width="${strokeWidth + 8}" stroke-linejoin="round" />` +
     `<polygon points="${path}" fill="none" stroke="${stroke}" stroke-width="${strokeWidth}" stroke-linejoin="round" />` +
+    `</svg>`;
+
+  return `data:image/svg+xml;base64,${Buffer.from(svg).toString('base64')}`;
+}
+
+/**
+ * The location pin, as an SVG data URI sized to the frame.
+ *
+ * Drawn rather than assembled out of Satori boxes because the thing that makes a
+ * pin readable at a glance is its silhouette — a teardrop with a hard white
+ * keyline and a shadow that lifts it off the tiles. A bordered `<div>` can only
+ * ever be a circle, and a circle over a pale basemap reads as a smudge, which is
+ * exactly what the map lamina used to produce.
+ */
+export function markerOverlay(
+  point: LatLng,
+  mosaic: Mosaic,
+  width: number,
+  height: number,
+  { color = '#0B7A3E', radius = 30 }: { color?: string; radius?: number } = {}
+): string {
+  const { x, y } = mosaic.project(point);
+  const keyline = Math.round(radius * 0.22);
+  // The tip has to land on the coordinate, and what lands there is the outside
+  // of the keyline, not the path. A round join on an angle this acute bulges by
+  // half the stroke width, and without this offset the pin grows a white spur
+  // below the place it is pointing at.
+  const tip = y - keyline / 2;
+  // The head floats above the tip, which is the only way a pin can point at a
+  // place without covering it.
+  const head = tip - radius * 2.45;
+  const flank = radius * Math.cos(Math.PI / 6);
+  const shoulder = head + radius * 0.5;
+
+  const teardrop =
+    `M ${x.toFixed(1)} ${tip.toFixed(1)} ` +
+    `L ${(x - flank).toFixed(1)} ${shoulder.toFixed(1)} ` +
+    `A ${radius} ${radius} 0 1 1 ${(x + flank).toFixed(1)} ${shoulder.toFixed(1)} Z`;
+
+  const svg =
+    `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">` +
+    // Just enough contact shadow to seat the pin on the tiles. Any more and it
+    // reads as a smudge next to the tip rather than under it.
+    `<ellipse cx="${x.toFixed(1)}" cy="${(y + 2).toFixed(1)}" rx="${(radius * 0.4).toFixed(1)}" ry="${(radius * 0.13).toFixed(1)}" fill="rgba(15,23,42,0.22)" />` +
+    `<path d="${teardrop}" fill="${color}" stroke="#FFFFFF" stroke-width="${keyline}" stroke-linejoin="round" />` +
+    `<circle cx="${x.toFixed(1)}" cy="${head.toFixed(1)}" r="${(radius * 0.34).toFixed(1)}" fill="#FFFFFF" />` +
     `</svg>`;
 
   return `data:image/svg+xml;base64,${Buffer.from(svg).toString('base64')}`;

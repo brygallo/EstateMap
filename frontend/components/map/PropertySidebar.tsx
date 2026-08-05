@@ -8,7 +8,7 @@ import MapFilters from '@/components/map/MapFilters';
 import MapPropertyCard, { MapPropertyCardSkeleton } from '@/components/map/MapPropertyCard';
 import { Badge } from '@/components/ui/badge';
 import { trackEvent } from '@/lib/analytics';
-import { formatDistance, getPropertyDistanceKm, type LatLngPoint } from '@/lib/geo';
+import { formatDistance, getPropertyDistanceKm, getPropertyPoint, type LatLngPoint } from '@/lib/geo';
 import { cn } from '@/lib/utils';
 import type { MapCityGroup, MapPayloadContext, Owner, Property, PropertyFilters, PropertyLocationGroup } from '@/lib/types';
 
@@ -88,18 +88,23 @@ export default function PropertySidebar({
   const [sortMode, setSortMode] = useState<SortMode>('distance');
   const [visibleCardCount, setVisibleCardCount] = useState(INITIAL_CARD_COUNT);
   const activeHoverId = hoveredPropertyId ?? localHoverId;
+  const activeSortMode: SortMode = selectedProperty ? 'distance' : sortMode;
 
   // Scroll automático del listado hacia la card de la propiedad seleccionada
   // (p. ej. al hacer clic en su polígono/etiqueta en el mapa).
   const cardRefs = useRef<Record<number, HTMLDivElement | null>>({});
   const loadMoreRef = useRef<HTMLButtonElement | null>(null);
+  const distanceOrigin = useMemo(
+    () => (selectedProperty ? getPropertyPoint(selectedProperty) : userLocation),
+    [selectedProperty, userLocation]
+  );
   const propertiesWithDistance = useMemo(
     () =>
       visibleProperties.map((property) => ({
         property,
-        distanceKm: getPropertyDistanceKm(userLocation, property),
+        distanceKm: getPropertyDistanceKm(distanceOrigin, property),
       })),
-    [userLocation, visibleProperties]
+    [distanceOrigin, visibleProperties]
   );
   const sortedProperties = useMemo(() => {
     const getNumber = (value: unknown) => {
@@ -112,26 +117,26 @@ export default function PropertySidebar({
       return Number.isFinite(value) ? value : 0;
     };
 
-    if (sortMode === 'price_asc') {
+    if (activeSortMode === 'price_asc') {
       return [...propertiesWithDistance].sort((a, b) => getNumber(a.property.price) - getNumber(b.property.price));
     }
-    if (sortMode === 'price_desc') {
+    if (activeSortMode === 'price_desc') {
       return [...propertiesWithDistance].sort((a, b) => getNumber(b.property.price) - getNumber(a.property.price));
     }
-    if (sortMode === 'area_desc') {
+    if (activeSortMode === 'area_desc') {
       return [...propertiesWithDistance].sort((a, b) => getNumber(b.property.area) - getNumber(a.property.area));
     }
-    if (sortMode === 'recent') {
+    if (activeSortMode === 'recent') {
       return [...propertiesWithDistance].sort((a, b) => getDateValue(b.property) - getDateValue(a.property));
     }
-    if (!userLocation) return propertiesWithDistance;
+    if (!distanceOrigin) return propertiesWithDistance;
     return [...propertiesWithDistance].sort((a, b) => {
       if (a.distanceKm == null && b.distanceKm == null) return 0;
       if (a.distanceKm == null) return 1;
       if (b.distanceKm == null) return -1;
       return a.distanceKm - b.distanceKm;
     });
-  }, [propertiesWithDistance, sortMode, userLocation]);
+  }, [activeSortMode, distanceOrigin, propertiesWithDistance]);
   const renderedProperties = sortedProperties.slice(0, visibleCardCount);
   const hiddenPropertiesCount = Math.max(sortedProperties.length - renderedProperties.length, 0);
   const showGroupNavigation = Boolean(mapContext && mapContext.group_level !== 'points');
@@ -147,7 +152,7 @@ export default function PropertySidebar({
 
   useEffect(() => {
     setVisibleCardCount(INITIAL_CARD_COUNT);
-  }, [filters, sortMode, visibleProperties]);
+  }, [activeSortMode, filters, visibleProperties]);
 
   useEffect(() => {
     const id = selectedProperty?.id;
@@ -253,7 +258,11 @@ export default function PropertySidebar({
         <div className="flex items-center gap-2">
           <div className="flex flex-col">
             <span className="text-xs font-semibold uppercase tracking-wide text-textSecondary">
-              {userLocation ? 'Cerca de tu ubicación' : 'Visibles en el mapa'}
+              {selectedProperty
+                ? 'Cerca de la seleccionada'
+                : userLocation
+                  ? 'Cerca de tu ubicación'
+                  : 'Visibles en el mapa'}
             </span>
             {totalCount != null && totalCount > visibleProperties.length && (
               <span className="text-[11px] text-textSecondary">
@@ -278,7 +287,8 @@ export default function PropertySidebar({
           <label className="flex items-center justify-between gap-2 text-xs font-medium text-textSecondary">
             Ordenar
             <select
-              value={sortMode}
+              value={activeSortMode}
+              disabled={Boolean(selectedProperty)}
               onChange={(event) => handleSortChange(event.target.value as SortMode)}
               className="h-9 rounded-md border border-line bg-white px-2 text-xs font-semibold text-textPrimary outline-none transition-colors hover:border-primary focus:border-primary focus-visible:ring-2 focus-visible:ring-primary/25"
             >

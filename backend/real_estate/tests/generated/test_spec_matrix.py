@@ -2963,3 +2963,86 @@ def test_perm_066_un_anonimo_consulta_la_salud_del_sistema(spec_request):
         case_name='un anónimo consulta la salud del sistema',
         expected_status=None,
     )
+
+
+# --- PERM-071: El informe de promoción es del dueño del anuncio ---
+
+def test_perm_071_el_propietario_consulta_su_informe(spec_request):
+    """
+    SPEC:PERM-071 — El informe de promoción es del dueño del anuncio
+    Case: el propietario consulta su informe
+    """
+    response = spec_request(
+        method='GET',
+        path='/api/properties/{property_id}/promotion-stats/',
+        role='owner',
+        payload=None,
+    )
+    assert_outcome(
+        response,
+        expected='allowed',
+        denied_status=403,
+        rule_id='PERM-071',
+        case_name='el propietario consulta su informe',
+        expected_status=200,
+    )
+
+def test_perm_071_un_tercero_autenticado_no_lo_ve(spec_request):
+    """
+    SPEC:PERM-071 — El informe de promoción es del dueño del anuncio
+    Case: un tercero autenticado no lo ve
+    """
+    response = spec_request(
+        method='GET',
+        path='/api/properties/{property_id}/promotion-stats/',
+        role='not_owner',
+        payload=None,
+    )
+    assert_outcome(
+        response,
+        expected='denied',
+        denied_status=403,
+        rule_id='PERM-071',
+        case_name='un tercero autenticado no lo ve',
+        expected_status=None,
+    )
+
+def test_perm_071_un_anonimo_no_lo_ve(spec_request):
+    """
+    SPEC:PERM-071 — El informe de promoción es del dueño del anuncio
+    Case: un anónimo no lo ve
+    """
+    response = spec_request(
+        method='GET',
+        path='/api/properties/{property_id}/promotion-stats/',
+        role='anonymous',
+        payload=None,
+    )
+    assert_outcome(
+        response,
+        expected='denied',
+        denied_status=401,
+        rule_id='PERM-071',
+        case_name='un anónimo no lo ve',
+        expected_status=None,
+    )
+
+def test_perm_071_staff_lo_consulta_de_cualquier_anuncio(spec_request):
+    """
+    SPEC:PERM-071 — El informe de promoción es del dueño del anuncio
+    Case: staff lo consulta de cualquier anuncio
+    """
+    response = spec_request(
+        method='GET',
+        path='/api/properties/{property_id}/promotion-stats/',
+        role='staff',
+        payload=None,
+    )
+    assert_outcome(
+        response,
+        expected='allowed',
+        denied_status=403,
+        rule_id='PERM-071',
+        case_name='staff lo consulta de cualquier anuncio',
+        expected_status=200,
+    )

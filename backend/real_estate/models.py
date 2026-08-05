@@ -1,6 +1,7 @@
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 from django.conf import settings
+from django.utils import timezone
 from .geo import polygon_center_lat_lng
 from .services.short_codes import unique_code
 from .validators import validate_image_size, validate_image_dimensions, validate_image_format
@@ -74,6 +75,29 @@ class Property(models.Model):
         ("inactive", "Inactive"),
     ]
 
+    # Why this is not a fourth and fifth `status` value:
+    #
+    # `status` is the operation the listing offers, and every public read in the
+    # project is built on `exclude(status='inactive')` — the map, the SEO
+    # landings, the market stats, the sitemap and the import pipeline. Adding
+    # `sold` and `rented` there would leave a sold listing on the map until each
+    # of those filters was found and changed, and `0005_alter_property_status`
+    # already removed those two values once on purpose.
+    #
+    # A closure is a different fact anyway: it says *why* a listing left the
+    # catalogue, not what it was offering. Keeping it in its own column means
+    # nothing that filters by status has to learn a new word, and the question
+    # "how many properties did the portal actually sell" becomes answerable.
+    CLOSED_REASON_CHOICES = [
+        ("sold", "Sold"),
+        ("rented", "Rented"),
+        ("withdrawn", "Withdrawn"),
+    ]
+
+    # A closure that means success, as opposed to giving up on the listing. Only
+    # these deserve the congratulation image of SOC-102.
+    SUCCESSFUL_CLOSURES = ("sold", "rented")
+
     title = models.CharField(max_length=150, blank=True, default="")
     description = models.TextField(blank=True, default="")
     property_type = models.CharField(max_length=30, choices=PROPERTY_TYPE_CHOICES, default="land")
@@ -113,6 +137,16 @@ class Property(models.Model):
     rent_price = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True,
                                      help_text="Precio de alquiler cuando el anuncio es venta Y alquiler a la vez")
     is_negotiable = models.BooleanField(default=True)
+
+    # --- Closure ---
+    closed_reason = models.CharField(
+        max_length=20, choices=CLOSED_REASON_CHOICES, blank=True, default="", db_index=True,
+        help_text="Por qué se cerró el anuncio: vendido, alquilado o retirado. Vacío = sigue abierto",
+    )
+    closed_at = models.DateTimeField(
+        null=True, blank=True,
+        help_text="Cuándo se cerró el anuncio; se rellena solo al marcar el motivo",
+    )
 
     # --- Ownership & Contact ---
     owner = models.ForeignKey(
@@ -214,7 +248,26 @@ class Property(models.Model):
         goes through save() — the API, the admin, the import pipeline — and a
         listing without a code cannot be promoted. It is only ever assigned when
         empty, because the code gets printed onto images that outlive the row.
+
+        Closing a listing is normalized here too: a sold flat that stayed
+        `for_sale` would keep being offered on the map, and the only mechanism
+        this model has for leaving the public catalogue is `status='inactive'`
+        (PROP-002). Reopening therefore means clearing `closed_reason`, not
+        changing `status` — otherwise the next save would send it straight back.
         """
+        if self.closed_reason:
+            self.status = "inactive"
+            if self.closed_at is None:
+                self.closed_at = timezone.now()
+            update_fields = kwargs.get('update_fields')
+            if update_fields is not None:
+                kwargs['update_fields'] = set(update_fields) | {'status', 'closed_at'}
+        elif self.closed_at is not None:
+            self.closed_at = None
+            update_fields = kwargs.get('update_fields')
+            if update_fields is not None:
+                kwargs['update_fields'] = set(update_fields) | {'closed_at'}
+
         if not self.short_code:
             self.short_code = unique_code(type(self))
             update_fields = kwargs.get('update_fields')
@@ -242,6 +295,11 @@ class Property(models.Model):
     @property
     def is_for_rent(self):
         return self.status == "for_rent"
+
+    @property
+    def is_closed_successfully(self):
+        """True when the listing left the catalogue because it sold or rented."""
+        return self.closed_reason in self.SUCCESSFUL_CLOSURES
 
 
 class PropertyPriceHistory(models.Model):
@@ -599,6 +657,16 @@ class ActivityEvent(models.Model):
             models.Index(fields=["event_name", "created_at"], name="activity_event_date_idx"),
             models.Index(fields=["user", "created_at"], name="activity_user_date_idx"),
             models.Index(fields=["property", "created_at"], name="activity_property_date_idx"),
+            # Per-listing, human-only, time-bounded reads: the promotion report
+            # of SOC-101. Deliberately a plain B-tree and not a GIN index on
+            # `payload`: (property, is_bot, created_at) already cuts the table
+            # down to the few hundred events of one listing inside the window,
+            # and the JSON campaign/source test then runs on that handful. A GIN
+            # index would pay for itself on every single write instead.
+            models.Index(
+                fields=["property", "is_bot", "created_at"],
+                name="activity_prop_human_idx",
+            ),
         ]
 
     def __str__(self):

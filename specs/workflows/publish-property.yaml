@@ -42,7 +42,7 @@ rules:
         symbol: "if (!token && !isEditMode && !resumeToken) {"
         note: Guarda el borrador, envía la solicitud pendiente y abre el modal, sin llamar a /properties/.
       - file: backend/real_estate/models.py
-        lines: "466-468"
+        lines: "524-526"
         symbol: "class PendingPublication(models.Model)"
         note: "Docstring: no se muestra en el mapa; sirve para seguimiento comercial."
       - file: backend/real_estate/views.py
@@ -110,7 +110,7 @@ rules:
       rápido con un id que ya se puede mostrar.
     evidence:
       - file: backend/real_estate/serializers.py
-        lines: "276-283"
+        lines: "338-344"
         symbol: "def create(self, validated_data):"
         note: Crea Property y luego llama a stage_property_image por cada archivo.
       - file: backend/real_estate/serializers.py
@@ -160,7 +160,7 @@ rules:
         symbol: def validate_and_normalize_polygon
         note: Orden interno -- vértices distintos, límites geográficos, autointersección, área.
       - file: backend/real_estate/serializers.py
-        lines: "250-267"
+        lines: "312-328"
         symbol: def validate_polygon
         note: Punto de entrada desde el serializer, antes de que create() se ejecute.
     cases:
@@ -205,7 +205,7 @@ rules:
         lines: "358-360"
         symbol: ALLOWED_IMAGE_TYPES
       - file: backend/real_estate/serializers.py
-        lines: "191-247"
+        lines: "253-308"
         symbol: def validate_uploaded_images
         note: Cuenta existentes menos images_to_delete, valida suma del lote y cada imagen, antes de llegar a create/update.
     cases:
@@ -242,14 +242,14 @@ rules:
       editar.
     evidence:
       - file: backend/real_estate/views.py
-        lines: "504-511"
+        lines: "529-535"
         symbol: "idempotency_key = (request.headers.get('Idempotency-Key')"
         note: Sin cabecera, se comporta como un create normal.
       - file: backend/real_estate/views.py
-        lines: "518-523"
+        lines: "543-547"
         symbol: "response['X-Idempotent-Replay'] = 'true'"
       - file: backend/real_estate/views.py
-        lines: "530-532"
+        lines: "555-557"
         symbol: "cache.set(result_key, response.data['id'], 60 * 60 * 24)"
       - file: frontend/app/add-property/page.tsx
         lines: "983-985"
@@ -278,10 +278,10 @@ rules:
       la petición falla, para no dejar la clave bloqueada 60 s de más.
     evidence:
       - file: backend/real_estate/views.py
-        lines: "521-525"
+        lines: "546-549"
         symbol: "lock_acquired = cache.add(lock_key, '1', 60)"
       - file: backend/real_estate/views.py
-        lines: "535-539"
+        lines: "560-563"
         symbol: "if lock_acquired:"
         note: cache.delete(lock_key) en el finally, se ejecute o no la creación.
     cases:
@@ -437,19 +437,19 @@ rules:
       "eliminar" con `window.confirm` como acción irreversible.
     evidence:
       - file: backend/real_estate/views.py
-        lines: "382-384"
+        lines: "407-409"
         symbol: "exclude(status='inactive')"
         note: Único filtro que saca inactive del catálogo público; no toca la fila.
       - file: backend/real_estate/views.py
-        lines: "919-922"
+        lines: "973-975"
         symbol: def my_properties
         note: "including inactive: el dueño ve su propiedad inactiva, el público no."
       - file: backend/real_estate/models.py
-        lines: "250-252"
+        lines: "308-310"
         symbol: "on_delete=models.CASCADE"
         note: PropertyImage.property cae en cascada con la Property.
       - file: frontend/app/my-properties/page.tsx
-        lines: "218-240"
+        lines: "250-270"
         symbol: const handleDelete
         note: "DELETE /properties/<id>/ tras window.confirm; PropertyViewSet no sobrescribe destroy."
     cases:
@@ -530,21 +530,23 @@ rules:
       diferenciar un anuncio que se cerró con éxito de uno que se retiró sin
       más.
     rationale: >-
-      Ya no es la corrección de un defecto -- WFP-012 se cerró alineando el
-      formulario con el modelo -- sino una decisión de producto pendiente. Hoy
-      "vendido", "alquilado" y "retirado" comparten el estado `inactive`, así que
-      el sistema no puede responder cuántas propiedades se vendieron, que es
-      justo el dato con el que se demuestra que el portal funciona.
+      La necesidad que describía está cubierta desde 2026-08-05, pero por otro
+      camino: PROP-033 añadió una columna `closed_reason` en lugar de dos
+      estados nuevos. El sistema ya puede responder cuántas propiedades se
+      vendieron sin que ninguno de los filtros construidos sobre
+      `exclude(status='inactive')` tenga que aprender una palabra nueva.
 
-      Implementarlo exige más que una migración: `get_queryset` solo excluye
-      `inactive`, de modo que un `sold` seguiría apareciendo en el mapa mientras
-      no se ajuste ese filtro. Y habría que decidir si un anuncio vendido se
-      oculta o se muestra marcado, que para el posicionamiento no es lo mismo.
+      Se conserva como propuesta porque la alternativa sigue sobre la mesa para
+      el día en que un anuncio vendido deba MOSTRARSE marcado en el mapa en vez
+      de ocultarse — que es la única cosa que una columna aparte no resuelve, y
+      que para el posicionamiento no es lo mismo. Mientras esa decisión de
+      producto no se tome, rige PROP-033.
     cases:
       - name: Marcar una propiedad como vendida debería aceptarse
         given:
           status: sold
         expected: allowed
+        note: Hoy se hace con closed_reason='sold'; ver PROP-033.
       - name: Una propiedad vendida debería salir del catálogo de "en venta"
         given:
           status: sold

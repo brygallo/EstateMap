@@ -27,7 +27,7 @@ rules:
       guarda su precio en price y deja rent_price en NULL.
     evidence:
       - file: backend/real_estate/models.py
-        lines: "100-108"
+        lines: "131-138"
         symbol: rent_price
         note: La semántica está escrita como comentario junto a la definición de ambos campos.
       - file: backend/ingesta/pipeline/upsert.py
@@ -35,7 +35,7 @@ rules:
         symbol: prop.rent_price
         note: La ingesta escribe ambos campos por separado desde el dict canónico del scraper.
       - file: frontend/app/property/[id]/page.tsx
-        lines: "351-354"
+        lines: "439-441"
         symbol: hasRentPrice
         note: La ficha pública muestra el precio principal y, solo si hay rent_price > 0, la línea "Alquiler .../mes".
     cases:
@@ -71,7 +71,7 @@ rules:
       los duplicados marcados.
     evidence:
       - file: backend/real_estate/views.py
-        lines: "382-384"
+        lines: "407-409"
         symbol: exclude(status='inactive')
         note: Base de get_queryset en PropertyViewSet; de aquí derivan list, map_points y summary.
       - file: backend/real_estate/models.py
@@ -109,7 +109,7 @@ rules:
       ver también lo que no es suyo.
     evidence:
       - file: backend/real_estate/views.py
-        lines: "919-923"
+        lines: "973-976"
         symbol: my_properties
         note: >-
           La acción declara permission_classes=[IsAuthenticated] y elige entre
@@ -149,11 +149,11 @@ rules:
         symbol: class InventoryPagination
         note: page_size 24, page_size_query_param 'page_size', máximo 100.
       - file: backend/real_estate/views.py
-        lines: "919-923"
+        lines: "973-976"
         symbol: def my_properties
         note: stats se calcula con queryset.aggregate antes de paginar.
       - file: frontend/app/my-properties/page.tsx
-        lines: "158-185"
+        lines: "194-219"
         symbol: const fetchInventory
         note: El cliente manda search, status y ordering y acumula páginas.
     backend:
@@ -186,11 +186,11 @@ rules:
       price > 0 y area > 0 antes de dividir.
     evidence:
       - file: backend/real_estate/models.py
-        lines: "111-113"
+        lines: "135-137"
         symbol: price = models.DecimalField
         note: null=True con help_text que justifica el "a consultar" de los importados.
       - file: backend/real_estate/models.py
-        lines: "96-98"
+        lines: "120-122"
         symbol: area = models.FloatField
         note: null=True, "opcional en anuncios importados".
       - file: backend/ingesta/pipeline/normalize.py
@@ -226,13 +226,13 @@ rules:
       decisión documentada en el código.
     evidence:
       - file: backend/real_estate/serializers.py
-        lines: "161-171"
+        lines: "184-193"
         symbol: fields = '__all__'
         note: >-
           Verificado por introspección del serializer en el contenedor: la lista de
           campos con required=True está vacía.
       - file: backend/real_estate/models.py
-        lines: "75-83"
+        lines: "103-110"
         symbol: property_type = models.CharField
         note: Defaults que rellenan el hueco - property_type='land', status='for_sale', city='Macas', province='Morona Santiago'.
     backend:
@@ -468,11 +468,11 @@ rules:
         symbol: geojson_coords
         note: Cierra el anillo y voltea cada par a [lng, lat].
       - file: backend/real_estate/serializers.py
-        lines: "250-272"
+        lines: "312-333"
         symbol: validate_polygon
         note: Acepta objeto GeoJSON, anillo simple o cualquiera de los dos codificado como texto JSON.
       - file: backend/real_estate/serializers.py
-        lines: "174-183"
+        lines: "234-242"
         symbol: to_representation
         note: A la salida se reconvierte a [[lat, lng], ...] para el frontend.
     cases:
@@ -513,7 +513,7 @@ rules:
         symbol: ensure_polygon_center
         note: Solo rellena los huecos, nunca pisa unas coordenadas enviadas explícitamente.
       - file: backend/real_estate/serializers.py
-        lines: "298-300"
+        lines: "340-342"
         symbol: ensure_polygon_center
         note: En update, un polígono nuevo sin coordenadas nuevas anula las anteriores y las recalcula.
     cases:
@@ -547,14 +547,14 @@ rules:
       que hace que una importada no tenga dueño al que atribuirla.
     evidence:
       - file: backend/real_estate/views.py
-        lines: "499-501"
+        lines: "524-526"
         symbol: perform_create
         note: serializer.save(owner=self.request.user), ignorando cualquier owner del payload.
       - file: backend/real_estate/serializers.py
-        lines: "140-142"
+        lines: "155-157"
         symbol: owner = serializers.PrimaryKeyRelatedField(read_only=True)
       - file: backend/real_estate/models.py
-        lines: "112-118"
+        lines: "152-157"
         symbol: owner = models.ForeignKey
         note: on_delete=SET_NULL, null=True - borrar la cuenta no borra el anuncio.
       - file: backend/ingesta/pipeline/upsert.py
@@ -594,7 +594,7 @@ rules:
         symbol: IsOwnerOrReadOnly
         note: permission_classes = [IsAuthenticatedOrReadOnly, IsOwnerOrReadOnly] en PropertyViewSet.
       - file: backend/real_estate/views.py
-        lines: "2281-2283"
+        lines: "2344-2346"
         symbol: PATCH_ALLOWED_FIELDS
         note: El panel admin puede tocar propiedades ajenas, pero solo status, title, price, city y description.
     backend:
@@ -629,7 +629,7 @@ rules:
       que describe la misma cascada desde el lado de la ingesta.
     evidence:
       - file: backend/real_estate/models.py
-        lines: "122-136"
+        lines: "164-177"
         symbol: source_url
         note: El comentario del bloque de origen declara la cascada, y source_url la cierra como contacto de último recurso.
       - file: frontend/app/property/[id]/page.tsx
@@ -637,7 +637,7 @@ rules:
         symbol: sourceUrl
         note: Ficha pública - WhatsApp si hay teléfono, "Contactar en {agencia}" si hay enlace, aviso si no hay ninguno.
       - file: frontend/components/PropertyModal.tsx
-        lines: "827-899"
+        lines: "907-978"
         symbol: sourceUrl
         note: Modal del mapa - misma cascada, con "Llamar" y "WhatsApp" cuando hay teléfono.
     frontend:
@@ -722,7 +722,7 @@ rules:
       se degrada a actualización.
     evidence:
       - file: backend/real_estate/models.py
-        lines: "194-199"
+        lines: "228-232"
         symbol: uniq_source_external_when_imported
         note: UniqueConstraint con condition=Q(is_imported=True).
       - file: backend/ingesta/pipeline/upsert.py
@@ -873,7 +873,7 @@ rules:
         symbol: PropertyPriceHistory.objects.create
         note: Compara con la última fila por recorded_at y solo escribe si el precio cambió.
       - file: backend/real_estate/models.py
-        lines: "247-254"
+        lines: "305-311"
         symbol: class PropertyPriceHistory
         note: FK en cascada, precio, recorded_at e índice por (property, recorded_at).
     cases:
@@ -910,15 +910,15 @@ rules:
       simultáneos.
     evidence:
       - file: backend/real_estate/views.py
-        lines: "543-551"
+        lines: "568-575"
         symbol: is_bot_request
         note: Property.objects.filter(pk=...).update(views_count=F('views_count') + 1) solo si no es bot.
       - file: backend/real_estate/models.py
-        lines: "174-176"
+        lines: "208-210"
         symbol: views_count
         note: PositiveIntegerField con default 0.
       - file: backend/real_estate/serializers.py
-        lines: "165-170"
+        lines: "188-192"
         symbol: 'views_count'
         note: Está en read_only_fields, así que un cliente no puede inflarlo desde el payload.
     backend:
@@ -958,7 +958,7 @@ rules:
       pending, la API sirve la foto desde el staging local para que no se vea rota.
     evidence:
       - file: backend/real_estate/models.py
-        lines: "265-267"
+        lines: "323-325"
         symbol: FAILED = "failed"
         note: TextChoices con pending, ready y failed; el default del campo es ready.
       - file: backend/real_estate/serializers.py
@@ -1013,7 +1013,7 @@ rules:
         symbol: ALLOWED_IMAGE_TYPES
         note: image/jpeg, image/jpg, image/png y image/webp.
       - file: backend/real_estate/serializers.py
-        lines: "191-247"
+        lines: "253-308"
         symbol: validate_uploaded_images
         note: Aplica en orden el tope por propiedad, el tope combinado y los tres validadores por imagen.
       - file: backend/real_estate/validators.py
@@ -1069,7 +1069,7 @@ rules:
         symbol: polygon_center_lat_lng
         note: Centroide del anillo, aceptando GeoJSON o [[lat, lng], ...] y descartando el punto de cierre repetido.
       - file: backend/real_estate/models.py
-        lines: "196-221"
+        lines: "235-259"
         symbol: save
         note: Rellena el centro al guardar cualquier propiedad con polígono y sin coordenadas, y añade los dos campos a update_fields para que se persistan.
       - file: backend/real_estate/migrations/0027_backfill_polygon_centers.py
@@ -1081,7 +1081,7 @@ rules:
         symbol: getPropertyPoint
         note: Mismo criterio en el cliente, que además valida el punto contra los límites de Ecuador antes de aceptarlo.
       - file: backend/real_estate/views.py
-        lines: "438-446"
+        lines: "463-470"
         symbol: bbox
         note: El filtro por bbox aún deja pasar incondicionalmente las propiedades con lat/lng nulas y polígono; tras la migración esa rama no empareja ninguna fila y queda como red de seguridad.
     cases:
@@ -1124,7 +1124,7 @@ rules:
         symbol: getNearbyProperties
         note: Punto de referencia vía getPropertyPoint, candidatos sin ubicación descartados, orden ascendente por distanceKm y recorte a limit.
       - file: frontend/app/property/[id]/page.tsx
-        lines: "212"
+        lines: "280-282"
         symbol: getNearbyProperties
         note: La ficha pide 4 y solo pinta la sección si hay al menos una.
     cases:
@@ -1164,3 +1164,242 @@ rules:
           antiguedad_vecino: fuera de los 60 más recientes
         expected: el vecino aparece primero
         note: Hoy no aparece en absoluto.
+
+  - id: PROP-031
+    name: Las tarjetas del mapa conservan el contexto visible y cercano
+    status: implemented
+    summary: >-
+      El listado lateral contiene únicamente las propiedades del área visible
+      del mapa. Cuando hay una propiedad seleccionada, esas mismas tarjetas se
+      ordenan por distancia a ella; la selección no incorpora propiedades que
+      estén fuera de la vista actual.
+    rationale: >-
+      La persona debe poder comparar lo que está mirando sin que el listado
+      salte a otro sector. La selección cambia el orden para poner primero la
+      propiedad elegida y sus vecinas, pero el límite espacial sigue siendo el
+      viewport del mapa.
+    evidence:
+      - file: frontend/hooks/usePropertyFilters.ts
+        lines: "418-472"
+        symbol: fetchCardsPage
+        note: Las tarjetas se consultan con el bbox vigente del mapa.
+      - file: frontend/components/map/PropertySidebar.tsx
+        lines: "96-138"
+        symbol: distanceOrigin
+        note: La selección se usa como origen de distancia sin reemplazar visibleProperties.
+    cases:
+      - name: Hay una propiedad seleccionada dentro de la vista
+        given: {seleccionada_visible: true}
+        expected: la seleccionada aparece primero y después sus vecinas visibles
+      - name: Existe una propiedad cercana fuera del viewport
+        given: {cercana_visible: false}
+        expected: no aparece en las tarjetas
+      - name: No hay selección ni ubicación de la persona
+        expected: las tarjetas siguen representando la vista actual del mapa
+
+  - id: PROP-032
+    name: Una ubicación fuera de Ecuador conserva el catálogo visible
+    status: implemented
+    summary: >-
+      Si la geolocalización de la persona cae fuera de Ecuador continental y
+      Galápagos, el mapa no viaja a ese país ni usa ese punto para ordenar las
+      propiedades. Conserva la vista del catálogo ecuatoriano y explica que aún
+      no hay propiedades disponibles en su zona.
+    rationale: >-
+      Llevar el mapa a una ubicación donde el portal no tiene inventario deja
+      una pantalla vacía y parece un error. Mantener Ecuador visible permite que
+      la persona continúe explorando el catálogo.
+    evidence:
+      - file: frontend/hooks/useGeolocation.ts
+        lines: "78-85"
+        symbol: notifyOutsideCoverage
+        note: Muestra el mensaje de cobertura sin tratar la ubicación como un error de permisos.
+      - file: frontend/hooks/useGeolocation.ts
+        lines: "164-178"
+        symbol: isPointInEcuadorBounds
+        note: La aceptación inicial descarta una ubicación exterior antes de centrar el mapa o guardarla.
+      - file: frontend/hooks/useGeolocation.ts
+        lines: "263-277"
+        symbol: isPointInEcuadorBounds
+        note: El botón de ubicación aplica la misma validación.
+    cases:
+      - name: Persona ubicada fuera de Ecuador
+        given: {ubicacion: fuera_de_ecuador}
+        expected: el mapa conserva Ecuador y muestra el mensaje de cobertura
+      - name: Persona ubicada en Ecuador
+        given: {ubicacion: dentro_de_ecuador}
+        expected: el mapa se centra en su ubicación y busca propiedades cercanas
+
+  - id: PROP-033
+    name: Un anuncio cerrado dice por qué salió del catálogo
+    status: implemented
+    summary: >-
+      `closed_reason` (sold / rented / withdrawn) y `closed_at` registran por
+      qué y cuándo dejó de ofrecerse un anuncio. Marcar el motivo lo pone
+      `inactive` solo; reactivarlo borra el motivo.
+    rationale: >-
+      Hasta ahora «vendido», «alquilado» y «retirado» compartían el estado
+      `inactive`, así que el sistema no podía responder cuántas propiedades se
+      vendieron — que es justo el dato con el que se demuestra que el portal
+      funciona — ni ofrecer la lámina de felicitación de SOC-102.
+
+      Se resuelve con una columna aparte y NO añadiendo `sold` y `rented` a
+      STATUS_CHOICES. `status` dice qué operación ofrece el anuncio, y toda
+      lectura pública del proyecto está construida sobre
+      `exclude(status='inactive')`: el mapa, las landings SEO, las estadísticas
+      de mercado, el sitemap y la ingesta. Un cuarto estado dejaría un anuncio
+      vendido en el mapa hasta encontrar y cambiar cada uno de esos filtros, y
+      la migración 0005_alter_property_status ya retiró esos dos valores una vez
+      a propósito. Un cierre es además otro hecho: dice por qué se fue, no qué
+      ofrecía.
+
+      La normalización vive en `save()` porque todos los caminos de escritura
+      pasan por ahí. Reabrir significa borrar `closed_reason`, no cambiar
+      `status`: mientras el motivo siga puesto, el siguiente guardado devolvería
+      la fila a `inactive`.
+    evidence:
+      - file: backend/real_estate/models.py
+        lines: "77-99"
+        symbol: CLOSED_REASON_CHOICES
+        note: Por qué no son dos valores más de STATUS_CHOICES.
+      - file: backend/real_estate/models.py
+        lines: "140-150"
+        symbol: closed_reason = models
+      - file: backend/real_estate/models.py
+        lines: "255-270"
+        symbol: "if self.closed_reason:"
+        note: Cerrar pone inactive y sella la fecha; abrir la borra.
+      - file: backend/real_estate/serializers.py
+        lines: "38-50"
+        symbol: def reopen_on_reactivation
+        note: >-
+          Volver a poner el anuncio en venta lo reabre; si no, el cambio parece
+          aceptado y se deshace solo.
+      - file: backend/real_estate/views.py
+        lines: "2528-2537"
+        symbol: "changes['closed_reason'] = ''"
+        note: >-
+          El cambio de estado en lote escribe con .update(), que nunca llega a
+          save(), así que reabre a mano.
+    backend:
+      enforce: true
+      endpoint: PATCH /api/properties/{property_id}/
+    tests:
+      api: true
+    cases:
+      - name: Marcar un anuncio como vendido
+        given: {closed_reason: sold}
+        expected: "status pasa a inactive y closed_at queda sellado"
+      - name: Un anuncio inactivo no es lo mismo que uno vendido
+        given: {status: inactive}
+        expected: "closed_reason vacío; retirar no es una venta"
+      - name: Un anuncio vendido sale del catálogo público
+        given: {closed_reason: sold}
+        expected: oculta
+      - name: Reactivar un anuncio borra el motivo de cierre
+        given: {status: for_sale}
+        expected: "closed_reason vacío y closed_at nulo"
+      - name: Los estados siguen siendo tres
+        expected: [for_sale, for_rent, inactive]
+        note: WFP-012 sigue vigente; el cierre no añade estados.
+
+  - id: PROP-034
+    name: Un anuncio cerrado conserva su ficha y su código corto
+    status: implemented
+    summary: >-
+      Un anuncio con `closed_reason` sigue resolviéndose por su id y por su
+      código corto, aunque ya no aparezca en el listado ni en el mapa. Uno
+      simplemente `inactive` responde 404 como siempre.
+    rationale: >-
+      La lámina de «vendido» existe para que se reenvíe, y lleva impresos el
+      código corto y el QR de ese anuncio. Si la ficha respondiera 404, el
+      portal estaría repartiendo imágenes que apuntan a un anuncio que él mismo
+      niega — justo lo contrario de la promesa comprobable de SOC-002.
+
+      Retirar un anuncio sigue siendo retirarlo: sin motivo de cierre, la ficha
+      desaparece igual que antes. La diferencia no es de estado sino de
+      intención, y por eso la decide `closed_reason` y no `status`.
+
+      El dueño, además, alcanza siempre su propio anuncio esté como esté.
+      Hasta ahora no podía: `get_queryset` excluía `inactive` para todo el que
+      no fuera staff, así que quien desactivaba un anuncio se quedaba sin poder
+      abrirlo, editarlo ni reactivarlo por la API.
+    evidence:
+      - file: backend/real_estate/views.py
+        lines: "385-405"
+        symbol: "visible |= Q(is_duplicate=False) & ~Q(closed_reason='')"
+        note: >-
+          Las acciones de detalle resuelven la fila por id, no por el catálogo
+          público; el dueño entra siempre.
+      - file: backend/real_estate/views.py
+        lines: "760-772"
+        symbol: "exclude(status='inactive', closed_reason='')"
+        note: El código corto de un anuncio vendido sigue resolviendo.
+    backend:
+      enforce: true
+      endpoint: GET /api/properties/code/{code}/
+    tests:
+      api: true
+    cases:
+      - name: La ficha de un anuncio vendido responde a un anónimo
+        role: anonymous
+        given: {closed_reason: sold}
+        expected: allowed
+        expected_http_status: 200
+      - name: El código corto de un anuncio vendido resuelve
+        role: anonymous
+        given: {closed_reason: sold}
+        expected: allowed
+        expected_http_status: 200
+      - name: Un anuncio solo inactivo no resuelve
+        role: anonymous
+        given: {status: inactive}
+        expected: denied
+        http_status: 404
+      - name: El dueño alcanza su anuncio inactivo
+        role: owner
+        given: {status: inactive}
+        expected: allowed
+        expected_http_status: 200
+
+  - id: PROP-035
+    name: La ficha publica el precio anterior y cuándo cambió
+    status: implemented
+    summary: >-
+      El detalle de una propiedad incluye `previous_price` y `price_changed_at`,
+      leídos del historial que ya escribe una señal al cambiar el precio.
+    rationale: >-
+      La lámina de «bajó el precio» de SOC-102 necesita los dos importes, y el
+      historial ya existía (`PropertyPriceHistory`, escrito por la señal
+      post_save cuando el precio se mueve de verdad). Lo único que faltaba era
+      publicar el último salto.
+
+      No es una fuga nueva: ambos importes fueron precios públicos mientras
+      estuvieron vigentes, y el endpoint `intelligence`, que es AllowAny, ya
+      sirve el historial completo. VIS-001 va de contadores de visitas, no de
+      precios.
+
+      Cuando la fila más reciente del historial no coincide con el precio actual
+      —alguien escribió la columna sin pasar por save()— no se devuelve nada:
+      hornear un «antes» dudoso en una imagen que sobrevive a la corrección es
+      peor que no ofrecer la lámina.
+    evidence:
+      - file: backend/real_estate/serializers.py
+        lines: "196-226"
+        symbol: def _price_change
+      - file: backend/real_estate/signals.py
+        lines: "48-54"
+        symbol: PropertyPriceHistory.objects.create
+        note: Solo escribe cuando el precio cambia; filas consecutivas = precios consecutivos.
+    backend:
+      endpoint: GET /api/properties/{property_id}/
+    tests:
+      api: true
+    cases:
+      - name: Bajar el precio publica el anterior
+        given: {price_anterior: 90000, price: 79000}
+        expected: presente
+      - name: Un anuncio cuyo precio nunca se movió no tiene precio anterior
+        expected: ausente
+      - name: El precio anterior viaja como texto, igual que el precio
+        expected: "\"90000.00\""

@@ -379,9 +379,23 @@ body {
   mask-image: linear-gradient(90deg, transparent, black, transparent);
 }
 
-.aents-shell-content > * {
-  border-color: rgb(var(--primary-rgb) / 0.14);
-  box-shadow: 0 20px 60px rgb(11 18 25 / 0.1), inset 0 1px 0 rgb(255 255 255 / 0.72);
+/*
+ * Field behind the auth card (app/(auth)/layout.tsx, its only user).
+ *
+ * It is tinted because it has to be: --background and the `surface` colour are
+ * both #FFFFFF, so a white card on the default page background is separated
+ * from it by nothing but a hairline.
+ *
+ * This replaces `.aents-shell-content > *`, which set a 60px drop shadow and a
+ * white inset hairline on the shell's direct child. That child was a layout
+ * wrapper — transparent, square, no border — so the rule drew a ghost box
+ * behind every form. Elevation now belongs to the card itself, which has a
+ * background and a radius to carry it.
+ */
+.aents-auth-field {
+  background:
+    radial-gradient(88% 62% at 50% 0%, rgb(var(--primary-rgb) / 0.07), transparent 72%),
+    var(--surface);
 }
 
 @keyframes aentsAuraFloat {

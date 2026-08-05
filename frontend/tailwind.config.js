@@ -18,6 +18,11 @@ module.exports = {
     './app/**/*.{js,ts,jsx,tsx,mdx}',
     './pages/**/*.{js,ts,jsx,tsx,mdx}',
     './components/**/*.{js,ts,jsx,tsx,mdx}',
+    // `lib/` holds the shared label maps (property-labels.ts), and those are
+    // class names too. Without this, a utility written only there is never
+    // generated and renders as nothing at all — which is what happened to the
+    // status overlay of a closed listing: white text on no background.
+    './lib/**/*.{js,ts,jsx,tsx}',
   ],
   theme: {
     extend: {

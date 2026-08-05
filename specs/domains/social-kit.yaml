@@ -48,13 +48,13 @@ rules:
       cierto, esta regla necesita una tupla cerrada como la de VIS-001.
     evidence:
       - file: frontend/app/api/social/[id]/[format]/route.tsx
-        lines: "357-359"
+        lines: "754-756"
         symbol: photoLamina
         note: >-
           Toma el título, la ciudad, el precio y los hechos declarados. Ni
           views_count ni contact_phone ni contact_email entran en la lámina.
       - file: frontend/lib/social-kit.ts
-        lines: "246-248"
+        lines: "431-433"
         symbol: buildFacts
         note: Enumera solo atributos físicos declarados en el anuncio.
     tests: {}
@@ -78,32 +78,27 @@ rules:
         note: Rige VIS-003; la lámina dibuja exactamente lo que dibuja el mapa.
 
   - id: SOC-002
-    name: Cada lámina lleva marca, código corto y QR al anuncio
+    name: Cada lámina lleva marca y QR al anuncio
     status: implemented
     summary: >-
-      Toda lámina generada incluye el logotipo del portal, el código corto
-      legible del anuncio y un QR que apunta a esa misma ficha.
+      Toda lámina generada incluye el logotipo del portal y un QR que apunta a
+      esa misma ficha. El código corto sigue formando parte del enlace interno,
+      pero no se muestra como dato visible en la pieza.
     rationale: >-
-      El QR sirve a quien ve la lámina en una pantalla y puede escanearla. El
-      código corto escrito en claro sirve a todos los demás: a quien la recibe
-      reenviada y recomprimida por WhatsApp hasta que el QR deja de leerse, a
-      quien la ve impresa en una valla, y a quien sencillamente no confía en
-      escanear un código que le llegó de un desconocido.
-
-      Llevar los dos es lo que convierte la lámina en una promesa comprobable
-      —«esto está publicado aquí y lo puedes verificar»— en vez de una imagen
-      suelta que cualquiera podría haber fabricado.
+      El QR permite llegar a la ficha sin llenar el arte con identificadores que
+      no ayudan a vender. La dirección principal del portal queda escrita como
+      alternativa legible si la imagen fue recomprimida o impresa.
     evidence:
       - file: frontend/app/api/social/[id]/[format]/route.tsx
-        lines: "158-160"
+        lines: "300-314"
         symbol: VerifyLine
-        note: La dirección verificable, partida en dos filas para que no se corte.
+        note: La dirección principal queda visible sin exponer el identificador corto.
       - file: frontend/app/api/social/[id]/[format]/route.tsx
-        lines: "120-122"
+        lines: "258-275"
         symbol: QrCard
-        note: QR y código impresos juntos.
+        note: El QR se muestra en una tarjeta de alto contraste, sin imprimir el código corto.
       - file: frontend/lib/qr.ts
-        lines: "22"
+        lines: "21-23"
         symbol: errorCorrectionLevel
         note: >-
           Nivel H: el código sobrevive a la recompresión de las redes, que es lo
@@ -117,9 +112,9 @@ rules:
         note: >-
           Con los parámetros UTM de la red añadidos detrás, según SOC-008. La
           parte que una persona lee y teclea es la de arriba.
-      - name: El código corto aparece también como texto legible
+      - name: El código corto no aparece como texto en la lámina
         given: {short_code: "XK4T2"}
-        expected: presente
+        expected: ausente
       - name: Un anuncio sin código cae en la dirección larga
         given: {short_code: null}
         expected: "https://geopropiedadesecuador.com/propiedad/8228"
@@ -151,17 +146,17 @@ rules:
         symbol: ALPHABET
         note: Sin 0, O, 1, I ni L.
       - file: backend/real_estate/models.py
-        lines: "218-222"
+        lines: "271-274"
         symbol: short_code
         note: >-
           Solo se asigna cuando está vacío, que es lo que lo hace estable frente
           a cualquier edición posterior.
       - file: backend/real_estate/views.py
-        lines: "696-698"
+        lines: "747-749"
         symbol: by_code
         note: Resolución pública, sin distinguir mayúsculas y excluyendo inactivas.
       - file: backend/real_estate/serializers.py
-        lines: "170"
+        lines: "193-195"
         symbol: short_code
         note: >-
           Read-only bajo fields='__all__'. Sin esto un cliente podría fijarse su
@@ -194,9 +189,16 @@ rules:
         expected_http_status: 200
         note: Quien teclea desde una foto no respeta las mayúsculas.
       - name: Un anuncio inactivo no se resuelve por su código
-        given: {status: inactive}
+        given: {status: inactive, closed_reason: ""}
         expected: denied
         http_status: 404
+      - name: Un anuncio vendido sí se resuelve por su código
+        given: {closed_reason: sold}
+        expected: allowed
+        expected_http_status: 200
+        note: >-
+          La lámina de «vendido» lleva ese código impreso y está hecha para que
+          se reenvíe. Ver PROP-034.
       - name: Un cliente no puede fijar su propio código
         expected: denied
         note: >-
@@ -224,7 +226,7 @@ rules:
       kit no tiene forma de saber que MinIO no contestó.
     evidence:
       - file: frontend/app/api/social/[id]/[format]/route.tsx
-        lines: "208-210"
+        lines: "465-467"
         symbol: PhotoLayer
         note: Degradado de marca cuando no hay foto utilizable.
     tests: {}
@@ -257,13 +259,13 @@ rules:
       pantallas distintas.
     evidence:
       - file: frontend/lib/social-kit.ts
-        lines: "279-281"
+        lines: "562-564"
         symbol: buildPriceLine
         note: >-
           Cuando el anuncio es venta y alquiler a la vez muestra los dos importes
           con su etiqueta, igual que la ficha.
       - file: frontend/lib/property-labels.ts
-        lines: "82-85"
+        lines: "171-173"
         symbol: formatPrice
         note: Fuente única del texto «Precio a consultar».
     tests:
@@ -299,7 +301,7 @@ rules:
         lines: "25"
         symbol: ATTRIBUTION
       - file: frontend/app/api/social/[id]/[format]/route.tsx
-        lines: "345"
+        lines: "725-727"
         symbol: ATTRIBUTION
         note: Impresa en la barra inferior de la lámina de mapa.
     tests:
@@ -318,7 +320,8 @@ rules:
     status: implemented
     summary: >-
       El texto propuesto para cada red se compone a partir de los campos del
-      anuncio con plantillas, y omite el atributo que falta en vez de rellenarlo.
+      anuncio con plantillas, omite el atributo que falta en vez de rellenarlo y
+      queda editable para que el propietario lo adapte antes de compartir.
     rationale: >-
       La tentación evidente es pedirle el texto a un modelo de lenguaje y quedar
       muy bien. El problema es que quien publica va a copiar y pegar ese texto sin
@@ -330,15 +333,19 @@ rules:
       frase; no se escribe «0 habitaciones».
     evidence:
       - file: frontend/lib/social-kit.ts
-        lines: "317-319"
+        lines: "839-841"
         symbol: buildCopy
         note: >-
           Tres formas distintas y no un párrafo recortado: Facebook admite texto
           largo, Instagram va corto y con etiquetas, TikTok necesita un gancho.
       - file: frontend/lib/social-kit.ts
-        lines: "246-248"
+        lines: "431-433"
         symbol: buildFacts
         note: Cada atributo se añade solo si el anuncio lo declara.
+      - file: frontend/components/promote/PromotionKit.tsx
+        lines: "227-280"
+        symbol: CopyBlock
+        note: El texto sugerido se puede editar, copiar y restaurar a su base.
     tests:
       unit: true
     cases:
@@ -351,33 +358,42 @@ rules:
       - name: Cada red recibe su propio formato de texto
         given: {redes: [facebook, instagram, tiktok]}
         expected: tres textos distintos
+      - name: El propietario personaliza el texto sin perder la sugerencia
+        role: owner
+        expected: allowed
 
   - id: SOC-008
-    name: Los enlaces del kit dicen de qué red vienen
-    status: partial
+    name: Los enlaces del kit dicen de qué red vienen, y el dueño ve el resultado
+    status: implemented
     summary: >-
       Cada enlace y cada QR del kit llevan los parámetros UTM de la red a la que
-      corresponden. Lo que todavía no existe es la pantalla que le devuelve al
-      dueño cuántas visitas trajo cada red.
+      corresponden, y el propietario puede consultar cuántas visitas reales
+      trajo cada una.
     rationale: >-
       Sin la marca en el enlace el kit es un acto de fe: quien comparte no sabe
-      si sirvió de algo y deja de hacerlo. Los UTM son la mitad barata y ya está
-      puesta; la mitad que convence —«tus publicaciones trajeron 34 visitas
-      reales»— exige agregar ActivityEvent por origen y todavía no está escrita,
-      y por eso la regla queda como `partial` y no como implementada.
+      si sirvió de algo y deja de hacerlo. Los UTM eran la mitad barata; la
+      mitad que convence —«tus publicaciones trajeron 34 visitas reales»— exigía
+      agregar ActivityEvent por origen, y eso es lo que hace ahora
+      GET /api/properties/{id}/promotion-stats/. Por eso la regla deja de ser
+      `partial`.
 
-      «Reales» será literal cuando exista: el recuento debe excluir los bots por
-      el mismo camino que ya usan las métricas del panel, porque un número
-      inflado por crawlers es peor que no dar número.
+      «Reales» es literal: el recuento excluye los bots por el mismo camino que
+      ya usan las métricas del panel, porque un número inflado por crawlers es
+      peor que no dar número.
     evidence:
       - file: frontend/lib/social-kit.ts
-        lines: "151-153"
+        lines: "193-195"
         symbol: trackedUrl
         note: >-
           utm_source por red, utm_medium=social y utm_campaign=owner_kit, tanto
           en el texto como en el QR que se imprime.
+      - file: backend/real_estate/services/promotion_stats.py
+        lines: "79-105"
+        symbol: def promotion_stats
+        note: El agregado por red que cierra la otra mitad de la regla.
     tests:
       unit: true
+      api: true
     cases:
       - name: El enlace de Instagram lleva su utm_source
         given: {red: instagram}
@@ -386,8 +402,121 @@ rules:
         given: {red: instagram, formato: story}
         expected: "utm_source=instagram"
       - name: El dueño ve cuántas visitas trajo cada red
+        expected: presente
+        note: Lo devuelve SOC-101; ver GET /api/properties/{id}/promotion-stats/.
+
+  - id: SOC-101
+    name: El dueño ve cuántas visitas trajo cada red
+    status: implemented
+    summary: >-
+      GET /api/properties/{id}/promotion-stats/ devuelve, por red, cuántos
+      visitantes reales llegaron desde los enlaces del kit de ese anuncio. Solo
+      responde al propietario y a staff.
+    rationale: >-
+      Es la mitad que faltaba de SOC-008. Los UTM ya viajaban en cada enlace y
+      en cada QR, así que el dato se estaba recogiendo; lo que no existía era
+      quien lo devolviera.
+
+      Sin ella el kit se usa una vez. Con ella se usa cada mes, porque «tus
+      publicaciones trajeron 34 visitas reales» es lo único que convence a
+      alguien de volver a compartir.
+
+      Tres decisiones que la regla fija a propósito:
+
+      «Reales» es literal: el recuento excluye `is_bot=True`, decidido en el
+      servidor desde el User-Agent. Un contador inflado por crawlers es peor que
+      no dar contador, porque destruye la confianza en todo lo demás de esa
+      pantalla.
+
+      La ventana es de 90 días y nunca alcanza antes del 2026-08-03, que es
+      cuando empezó a marcarse `is_bot`. Los eventos anteriores llevan el valor
+      por defecto sin User-Agent que reevaluar, así que llamarlos «visitas
+      reales» sería mentir.
+
+      Y un visitante es un `session_id` distinto, no un evento: el navegador
+      repite su sesión en cada beacon, así que contar filas convertiría a una
+      sola persona curioseando en una docena de visitas.
+    evidence:
+      - file: backend/real_estate/services/promotion_stats.py
+        lines: "94-118"
+        symbol: payload__attribution__campaign
+        note: >-
+          Agrega en Postgres con lookups sobre JSONField; el filtro por
+          propiedad y por is_bot va primero para que use el índice.
+      - file: backend/real_estate/services/promotion_stats.py
+        lines: "56-62"
+        symbol: BOT_FLAGGING_SINCE
+        note: La ventana nunca alcanza los datos anteriores al marcado de bots.
+      - file: backend/real_estate/services/promotion_stats.py
+        lines: "64-70"
+        symbol: STATE_NOT_SHARED
+        note: >-
+          Los tres estados que permiten distinguir «nadie lo compartió» de «se
+          compartió y no trajo a nadie».
+      - file: backend/real_estate/models.py
+        lines: "660-670"
+        symbol: activity_prop_human_idx
+        note: >-
+          (property, is_bot, created_at). Sin él la agregación recorre toda la
+          tabla de eventos.
+      - file: backend/real_estate/views.py
+        lines: "665-680"
+        symbol: def promotion_stats
+      - file: backend/real_estate/permissions.py
+        lines: "25-42"
+        symbol: class IsPropertyOwnerOrStaff
+        note: >-
+          Frontera de verdad, en el servidor. A diferencia de las láminas
+          (SOC-009), este dato es del dueño.
+      - file: backend/real_estate/serializers.py
+        lines: "578-591"
+        symbol: PROPERTY_PATH_RE
+        note: >-
+          La visita a una ficha se atribuye a su anuncio leyendo el id de la
+          ruta; el beacon genérico de page_view no manda property_id.
+    permissions:
+      required: [properties.read_promotion_stats]
+    backend:
+      enforce: true
+      endpoint: GET /api/properties/{property_id}/promotion-stats/
+      denied_http_status: 403
+    tests:
+      api: true
+    cases:
+      - name: Las visitas se agrupan por utm_source
+        role: owner
+        given: {utm_source: instagram}
+        expected: allowed
+        expected_http_status: 200
+      - name: Las visitas de un bot no cuentan
+        given: {is_bot: true}
         expected: ausente
-        note: Es la parte que falta; queda descrita en specs/proposals/social-kit.yaml.
+      - name: El tráfico que no viene del kit tampoco cuenta
+        given: {utm_campaign: summer_ads}
+        expected: ausente
+        note: Solo se cuenta utm_campaign=owner_kit.
+      - name: Un anuncio que nadie compartió no muestra un cero desnudo
+        expected: presente
+        note: >-
+          state='not_shared' frente a state='shared_without_visitors'. Un «0
+          visitas» sin contexto se lee como fracaso del portal.
+      - name: Solo el propietario ve el desglose
+        role: not_owner
+        expected: denied
+        http_status: 403
+      - name: Un anónimo no accede al desglose
+        role: anonymous
+        expected: denied
+        http_status: 401
+      - name: Staff también lo ve
+        role: staff
+        expected: allowed
+        expected_http_status: 200
+      - name: Un anuncio vendido sigue devolviendo su informe
+        role: owner
+        expected: allowed
+        expected_http_status: 200
+        note: Es justo el anuncio cuyo dueño más quiere ver el resultado.
 
   - id: SOC-009
     name: El kit lo abre el propietario, pero las láminas son públicas
@@ -412,19 +541,19 @@ rules:
       protege —nada— pero no es una frontera, y escribirlo como `implemented`
       daría a entender que el servidor la sostiene.
     frontend:
-      routes: ["/propiedad/{id}/promocionar", "/mis-propiedades"]
+      routes: ["/propiedad/{id}/promocionar", "/mis-propiedades/{id}"]
       visible_when_allowed: true
       hidden_when_denied: true
       test_id: promote-property-action
     evidence:
       - file: frontend/components/promote/PromotionKit.tsx
-        lines: "227-229"
+        lines: "356-358"
         symbol: isOwner
         note: Cortesía de interfaz, no frontera; el comentario del código lo dice.
-      - file: frontend/app/my-properties/page.tsx
-        lines: "535"
+      - file: frontend/app/mis-propiedades/[id]/page.tsx
+        lines: "238-244"
         symbol: promote-property-action
-        note: El acceso al kit solo aparece en el inventario del propio dueño.
+        note: El acceso al kit aparece dentro de la ficha de gestión del propietario.
     tests: {}
     cases:
       - name: El propietario ve el acceso al kit en su anuncio
@@ -497,7 +626,7 @@ rules:
       un minuto.
     evidence:
       - file: frontend/app/api/social/[id]/[format]/route.tsx
-        lines: "570"
+        lines: "1410-1412"
         symbol: Cache-Control
         note: >-
           s-maxage=60 con stale-while-revalidate: absorbe la ráfaga de scrapers
@@ -554,3 +683,57 @@ rules:
       - name: Si la respuesta no trae id se vuelve al listado
         role: owner
         expected: allowed
+
+  - id: SOC-013
+    name: Las láminas priorizan una composición comercial
+    status: implemented
+    summary: >-
+      Las piezas verticales combinan hasta tres fotografías del anuncio, usan
+      la tipografía de marca con pesos reales y muestran un mensaje comercial
+      adaptado al tipo de propiedad o a su modalidad de publicación.
+    rationale: >-
+      Una sola fotografía con muchos datos se percibe como una ficha técnica.
+      La composición editorial permite enseñar más del inmueble, mientras una
+      jerarquía breve de precio, propuesta y atributos ayuda a detener el
+      desplazamiento y dirigir la atención hacia la ficha.
+    evidence:
+      - file: frontend/app/api/social/[id]/[format]/route.tsx
+        lines: "150-160"
+        symbol: promotionFonts
+        note: Se registran Plus Jakarta Sans Regular y ExtraBold en ImageResponse.
+      - file: frontend/app/api/social/[id]/[format]/route.tsx
+        lines: "205-207"
+        symbol: marketingPhotos
+        note: La imagen principal se conserva primero y se preparan hasta tres fotos.
+      - file: frontend/app/api/social/[id]/[format]/route.tsx
+        lines: "350-377"
+        symbol: SalesCallout
+        note: El argumento comercial cambia según venta, arriendo y tipo de inmueble.
+      - file: frontend/app/api/social/[id]/[format]/route.tsx
+        lines: "496-508"
+        symbol: PhotoCollage
+        note: Las piezas verticales distribuyen una foto protagonista y dos de apoyo.
+      - file: frontend/app/api/social/[id]/[format]/route.tsx
+        lines: "1358-1358"
+        symbol: customMessage
+        note: El mensaje opcional se normaliza y limita antes de dibujarlo.
+      - file: frontend/components/promote/PromotionKit.tsx
+        lines: "442-470"
+        symbol: Mensaje dentro de la imagen
+        note: El editor permite cambiar el gancho o restaurar la propuesta base.
+    tests:
+      unit: true
+    cases:
+      - name: Un terreno en venta comunica su potencial
+        given: {property_type: land, status: for_sale}
+        expected: DESCUBRE EL POTENCIAL DE ESTE TERRENO
+      - name: Una propiedad en arriendo invita a conocer el espacio
+        given: {status: for_rent}
+        expected: CONOCE TU PRÓXIMO ESPACIO
+      - name: Una pieza vertical con tres fotos usa composición editorial
+        given: {format: portrait, image_count: 3}
+        expected: presente
+      - name: El propietario cambia el mensaje dentro de la imagen
+        role: owner
+        given: {mensaje: "AGENDA TU VISITA"}
+        expected: presente

@@ -16,10 +16,13 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { toast } from 'sonner';
-import { Check, Copy, Download, ExternalLink, Loader2, Share2 } from 'lucide-react';
+import { Check, Copy, Download, ExternalLink, Loader2, RotateCcw, Share2 } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import GalleryViewer from '@/components/ui/GalleryViewer';
+import PromotionResults from '@/components/promote/PromotionResults';
+import { trackEvent } from '@/lib/analytics';
 import { useAuth } from '@/lib/auth-context';
 import { haptic } from '@/lib/haptics';
 import {
@@ -28,6 +31,7 @@ import {
   NETWORK_LABELS,
   NETWORK_STEPS,
   SOCIAL_FORMATS,
+  buildArtworkHeadline,
   buildCopy,
   buildHeadline,
   laminaFilename,
@@ -45,6 +49,26 @@ import {
 import type { Property } from '@/lib/types';
 
 const NETWORKS: SocialNetwork[] = ['facebook', 'instagram', 'tiktok', 'whatsapp'];
+
+/**
+ * What the kit reports about itself.
+ *
+ * These three names are read by the backend (`KIT_SHARE_EVENTS`) and they are
+ * the only evidence that the kit was ever used: without them "nobody has
+ * shared this" and "it was shared and brought nobody" are the same row of
+ * zeros, and the owner cannot tell which of the two is their problem.
+ *
+ * Every one of them carries `property_id`, because the report is per listing.
+ */
+type KitEventName =
+  | 'promotion_kit_shared'
+  | 'promotion_kit_downloaded'
+  | 'promotion_kit_copied';
+
+type KitEventHandler = (
+  name: KitEventName,
+  payload?: Record<string, string | number | boolean>
+) => void;
 
 async function fetchLamina(path: string, filename: string): Promise<File | null> {
   try {
@@ -80,20 +104,25 @@ function LaminaCard({
   format,
   network,
   caption,
+  artworkMessage,
+  onEvent,
 }: {
   property: Property;
   format: SocialFormat;
   network: SocialNetwork;
   caption: string;
+  artworkMessage: string;
+  onEvent: KitEventHandler;
 }) {
   const spec = SOCIAL_FORMATS[format];
-  const path = laminaPath(property, format, network);
+  const path = laminaPath(property, format, network, artworkMessage);
   const filename = laminaFilename(property, format);
 
   // The result is stored together with the path it came from, so switching
   // network or format derives "still preparing" from a mismatch instead of
   // resetting state inside the effect and forcing a second render.
   const [loaded, setLoaded] = useState<{ path: string; file: File | null } | null>(null);
+  const [previewOpen, setPreviewOpen] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -110,19 +139,40 @@ function LaminaCard({
 
   const shareable = file !== null && canShareFiles([file]);
 
+  const handleDownload = () => {
+    if (!file) return;
+    downloadFile(file);
+    onEvent('promotion_kit_downloaded', { network, format });
+  };
+
   const handleShare = () => {
     if (!file) return;
     haptic('impact');
     attemptNativeShareFiles({ files: [file], text: caption }).then((outcome) => {
-      if (outcome === 'unsupported') downloadFile(file);
+      // `dismissed` means the sheet opened and the person backed out, which is
+      // not a share and must not be counted as one.
+      if (outcome === 'shared') {
+        onEvent('promotion_kit_shared', { network, format, method: 'native' });
+        return;
+      }
+      if (outcome === 'unsupported') {
+        downloadFile(file);
+        onEvent('promotion_kit_shared', { network, format, method: 'download' });
+      }
     });
   };
 
   return (
-    <div className="flex flex-col overflow-hidden rounded-card border border-line bg-surface shadow-card">
+    <>
+    <div className="flex flex-col overflow-hidden rounded-card border border-line bg-surface shadow-card transition-shadow hover:shadow-cardHover">
       {/* Fixed height so a 9:16 and a 1200x630 sit in cards of the same size;
           otherwise the grid rows step up and down with the aspect ratio. */}
-      <div className="flex h-64 items-center justify-center bg-muted p-3">
+      <button
+        type="button"
+        onClick={() => setPreviewOpen(true)}
+        className="flex h-64 items-center justify-center bg-muted p-3 focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary"
+        aria-label={`Ampliar lámina ${spec.label}`}
+      >
         {/* eslint-disable-next-line @next/next/no-img-element -- generated PNG, not a project asset */}
         <img
           src={path}
@@ -131,7 +181,7 @@ function LaminaCard({
           height={spec.height}
           className="max-h-full w-auto rounded-input object-contain shadow-card"
         />
-      </div>
+      </button>
       <div className="flex flex-1 flex-col gap-3 p-4">
         <div>
           <p className="text-sm font-semibold text-textPrimary">{spec.label}</p>
@@ -143,7 +193,7 @@ function LaminaCard({
             variant="outline"
             className="flex-1"
             disabled={preparing || !file}
-            onClick={() => file && downloadFile(file)}
+            onClick={handleDownload}
           >
             {preparing ? (
               <Loader2 className="animate-spin" aria-hidden />
@@ -161,10 +211,32 @@ function LaminaCard({
         </div>
       </div>
     </div>
+      {previewOpen && (
+        <GalleryViewer
+          images={[{ image: path }]}
+          index={0}
+          onIndexChange={() => undefined}
+          onClose={() => setPreviewOpen(false)}
+          title={`Lámina ${spec.label}`}
+        />
+      )}
+    </>
   );
 }
 
-function CopyBlock({ text }: { text: string }) {
+function CopyBlock({
+  text,
+  suggestedText,
+  onChange,
+  onReset,
+  onCopied,
+}: {
+  text: string;
+  suggestedText: string;
+  onChange: (text: string) => void;
+  onReset: () => void;
+  onCopied: () => void;
+}) {
   const [copied, setCopied] = useState(false);
 
   const handleCopy = useCallback(async () => {
@@ -172,25 +244,35 @@ function CopyBlock({ text }: { text: string }) {
       await navigator.clipboard.writeText(text);
       setCopied(true);
       haptic('success');
+      onCopied();
       setTimeout(() => setCopied(false), 2000);
     } catch {
       toast.error('No se pudo copiar. Selecciona el texto y cópialo a mano.');
     }
-  }, [text]);
+  }, [text, onCopied]);
 
   return (
     <div className="flex flex-col gap-3">
       <textarea
-        readOnly
         value={text}
+        onChange={(event) => onChange(event.target.value)}
         rows={10}
-        aria-label="Texto para publicar"
-        className="w-full resize-none rounded-input border border-line bg-background p-3 font-mono text-xs leading-relaxed text-textSecondary focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/25"
+        aria-label="Edita el texto sugerido para publicar"
+        className="w-full resize-y rounded-input border border-line bg-background p-3 text-sm leading-relaxed text-textPrimary focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/25"
       />
-      <Button onClick={handleCopy} className="self-start">
-        {copied ? <Check aria-hidden /> : <Copy aria-hidden />}
-        {copied ? 'Copiado' : 'Copiar texto'}
-      </Button>
+      <div className="flex flex-wrap items-center gap-2">
+        <Button onClick={handleCopy}>
+          {copied ? <Check aria-hidden /> : <Copy aria-hidden />}
+          {copied ? 'Copiado' : 'Copiar texto'}
+        </Button>
+        {text !== suggestedText ? (
+          <Button variant="outline" onClick={onReset}>
+            <RotateCcw aria-hidden />
+            Restaurar sugerencia
+          </Button>
+        ) : null}
+        <span className="text-xs text-textSecondary">Puedes cambiar el texto antes de publicarlo.</span>
+      </div>
     </div>
   );
 }
@@ -199,25 +281,72 @@ export default function PromotionKit({ property }: { property: Property }) {
   const { user, loading } = useAuth();
   const [network, setNetwork] = useState<SocialNetwork>('facebook');
   const [tone, setTone] = useState<CopyTone>('cercano');
+  const [customCopy, setCustomCopy] = useState<Record<string, string>>({});
+  const suggestedArtworkMessage = useMemo(() => buildArtworkHeadline(property), [property]);
+  const [artworkMessage, setArtworkMessage] = useState(suggestedArtworkMessage);
 
   const link = shortUrl(property);
-  const caption = useMemo(() => buildCopy(property, network, tone), [property, network, tone]);
+  const suggestedCaption = useMemo(
+    () => buildCopy(property, network, tone),
+    [property, network, tone]
+  );
+  const copyKey = `${network}:${tone}`;
+  const caption = customCopy[copyKey] ?? suggestedCaption;
   const headline = buildHeadline(property);
 
+  // Bumped by every kit action so the results panel re-reads itself: after the
+  // first share the panel has something different to say, and asking someone to
+  // reload the page to see it defeats the point of showing it.
+  const [kitActions, setKitActions] = useState(0);
+
+  /**
+   * Report one use of the kit.
+   *
+   * `property_id` is always present because the whole report is per listing;
+   * the backend groups by it and ignores anything without it.
+   */
+  const trackKitEvent = useCallback<KitEventHandler>(
+    (name, payload = {}) => {
+      trackEvent(name, { property_id: property.id, ...payload });
+      setKitActions((value) => value + 1);
+    },
+    [property.id]
+  );
+
   const [linkCopied, setLinkCopied] = useState(false);
-  const handleCopyLink = async () => {
-    try {
-      await navigator.clipboard.writeText(link);
-      setLinkCopied(true);
-      haptic('success');
-      setTimeout(() => setLinkCopied(false), 2000);
-    } catch {
-      toast.error('No se pudo copiar el enlace.');
-    }
+  const copyLink = useCallback(
+    async (payload: Record<string, string | number | boolean>) => {
+      try {
+        await navigator.clipboard.writeText(link);
+        setLinkCopied(true);
+        haptic('success');
+        trackKitEvent('promotion_kit_copied', payload);
+        setTimeout(() => setLinkCopied(false), 2000);
+      } catch {
+        toast.error('No se pudo copiar el enlace.');
+      }
+    },
+    [link, trackKitEvent]
+  );
+
+  const handleCopyLink = () => {
+    void copyLink({ content: 'link', source: 'link_card' });
   };
 
   const handleShareLink = () => {
-    attemptNativeShare({ title: headline, text: caption, url: link });
+    attemptNativeShare({ title: headline, text: caption, url: link }).then((outcome) => {
+      if (outcome === 'shared') {
+        trackKitEvent('promotion_kit_shared', { content: 'link', method: 'native' });
+        return;
+      }
+      // Desktop has no share sheet, and a button that does nothing is worse
+      // than a button that copies. The link on the clipboard is the same thing
+      // the sheet would have handed over.
+      if (outcome === 'unsupported') {
+        void copyLink({ content: 'link', source: 'share_fallback' });
+        toast.success('Enlace copiado. Pégalo donde quieras compartirlo.');
+      }
+    });
   };
 
   // A courtesy gate, not a boundary — every lamina and every word of the copy
@@ -288,6 +417,13 @@ export default function PromotionKit({ property }: { property: Property }) {
         </div>
       </header>
 
+      {/* Right under the link and above the material: on the first visit it
+          says what will happen when the anuncio is shared, and on every visit
+          after that it is the reason to share it again (SOC-101). Private by
+          construction — this screen is only offered to the owner, and visit
+          counts are never shown in public. */}
+      <PromotionResults propertyId={property.id} refreshKey={kitActions} />
+
       <Tabs value={network} onValueChange={(value) => setNetwork(value as SocialNetwork)}>
         <TabsList className="w-full justify-start overflow-x-auto">
           {NETWORKS.map((item) => (
@@ -299,6 +435,33 @@ export default function PromotionKit({ property }: { property: Property }) {
 
         {NETWORKS.map((item) => (
           <TabsContent key={item} value={item} className="mt-6 flex flex-col gap-8">
+            <section className="grid gap-4 rounded-card border border-line bg-surface p-5 shadow-card md:grid-cols-[1fr_auto] md:items-end">
+              <div className="min-w-0">
+                <div className="mb-2 flex items-center justify-between gap-3">
+                  <div>
+                    <h2 className="text-sm font-bold text-textPrimary">Mensaje dentro de la imagen</h2>
+                    <p className="text-xs text-textSecondary">Personaliza el gancho; el diseño se actualiza automáticamente.</p>
+                  </div>
+                  <span className="shrink-0 text-xs text-textSecondary">{artworkMessage.length}/72</span>
+                </div>
+                <input
+                  value={artworkMessage}
+                  onChange={(event) => setArtworkMessage(event.target.value.slice(0, 72))}
+                  maxLength={72}
+                  aria-label="Mensaje comercial de la imagen"
+                  className="h-11 w-full rounded-input border border-line bg-background px-3 text-sm font-semibold text-textPrimary focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/25"
+                />
+              </div>
+              <Button
+                variant="outline"
+                disabled={artworkMessage === suggestedArtworkMessage}
+                onClick={() => setArtworkMessage(suggestedArtworkMessage)}
+              >
+                <RotateCcw aria-hidden />
+                Restaurar base
+              </Button>
+            </section>
+
             <section className="flex flex-col gap-4">
               <h2 className="text-lg font-bold text-textPrimary">
                 Imágenes para {NETWORK_LABELS[item]}
@@ -311,6 +474,8 @@ export default function PromotionKit({ property }: { property: Property }) {
                     format={format}
                     network={item}
                     caption={caption}
+                    artworkMessage={artworkMessage}
+                    onEvent={trackKitEvent}
                   />
                 ))}
               </div>
@@ -318,7 +483,10 @@ export default function PromotionKit({ property }: { property: Property }) {
 
             <section className="flex flex-col gap-4">
               <div className="flex flex-wrap items-center justify-between gap-3">
-                <h2 className="text-lg font-bold text-textPrimary">Texto listo para pegar</h2>
+                <div>
+                  <h2 className="text-lg font-bold text-textPrimary">Texto sugerido para publicar</h2>
+                  <p className="text-xs text-textSecondary">Úsalo como base y personalízalo con tu propia voz.</p>
+                </div>
                 <div className="flex gap-1.5">
                   {(Object.keys(COPY_TONES) as CopyTone[]).map((option) => (
                     <Button
@@ -332,7 +500,27 @@ export default function PromotionKit({ property }: { property: Property }) {
                   ))}
                 </div>
               </div>
-              <CopyBlock text={caption} />
+              <CopyBlock
+                text={caption}
+                suggestedText={suggestedCaption}
+                onChange={(text) =>
+                  setCustomCopy((current) => ({ ...current, [copyKey]: text }))
+                }
+                onReset={() =>
+                  setCustomCopy((current) => {
+                    const next = { ...current };
+                    delete next[copyKey];
+                    return next;
+                  })
+                }
+                onCopied={() =>
+                  trackKitEvent('promotion_kit_copied', {
+                    content: 'caption',
+                    network: item,
+                    tone,
+                  })
+                }
+              />
             </section>
 
             <section className="flex flex-col gap-3 rounded-card border border-line bg-surface p-5">

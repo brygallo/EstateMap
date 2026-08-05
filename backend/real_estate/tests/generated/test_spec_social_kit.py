@@ -34,3 +34,106 @@ def test_soc_003_resolver_un_codigo_existente_devuelve_la_propiedad(spec_request
         case_name='Resolver un código existente devuelve la propiedad',
         expected_status=200,
     )
+
+
+# --- SOC-101: El dueño ve cuántas visitas trajo cada red ---
+
+def test_soc_101_las_visitas_se_agrupan_por_utm_source(spec_request):
+    """
+    SPEC:SOC-101 — El dueño ve cuántas visitas trajo cada red
+    Case: Las visitas se agrupan por utm_source
+    """
+    response = spec_request(
+        method='GET',
+        path='/api/properties/{property_id}/promotion-stats/',
+        role='owner',
+        payload={'utm_source': 'instagram'},
+    )
+    assert_outcome(
+        response,
+        expected='allowed',
+        denied_status=403,
+        rule_id='SOC-101',
+        case_name='Las visitas se agrupan por utm_source',
+        expected_status=200,
+    )
+
+def test_soc_101_solo_el_propietario_ve_el_desglose(spec_request):
+    """
+    SPEC:SOC-101 — El dueño ve cuántas visitas trajo cada red
+    Case: Solo el propietario ve el desglose
+    """
+    response = spec_request(
+        method='GET',
+        path='/api/properties/{property_id}/promotion-stats/',
+        role='not_owner',
+        payload=None,
+    )
+    assert_outcome(
+        response,
+        expected='denied',
+        denied_status=403,
+        rule_id='SOC-101',
+        case_name='Solo el propietario ve el desglose',
+        expected_status=None,
+    )
+
+def test_soc_101_un_anonimo_no_accede_al_desglose(spec_request):
+    """
+    SPEC:SOC-101 — El dueño ve cuántas visitas trajo cada red
+    Case: Un anónimo no accede al desglose
+    """
+    response = spec_request(
+        method='GET',
+        path='/api/properties/{property_id}/promotion-stats/',
+        role='anonymous',
+        payload=None,
+    )
+    assert_outcome(
+        response,
+        expected='denied',
+        denied_status=401,
+        rule_id='SOC-101',
+        case_name='Un anónimo no accede al desglose',
+        expected_status=None,
+    )
+
+def test_soc_101_staff_tambien_lo_ve(spec_request):
+    """
+    SPEC:SOC-101 — El dueño ve cuántas visitas trajo cada red
+    Case: Staff también lo ve
+    """
+    response = spec_request(
+        method='GET',
+        path='/api/properties/{property_id}/promotion-stats/',
+        role='staff',
+        payload=None,
+    )
+    assert_outcome(
+        response,
+        expected='allowed',
+        denied_status=403,
+        rule_id='SOC-101',
+        case_name='Staff también lo ve',
+        expected_status=200,
+    )
+
+def test_soc_101_un_anuncio_vendido_sigue_devolviendo_su_informe(spec_request):
+    """
+    SPEC:SOC-101 — El dueño ve cuántas visitas trajo cada red
+    Case: Un anuncio vendido sigue devolviendo su informe
+    """
+    response = spec_request(
+        method='GET',
+        path='/api/properties/{property_id}/promotion-stats/',
+        role='owner',
+        payload=None,
+    )
+    assert_outcome(
+        response,
+        expected='allowed',
+        denied_status=403,
+        rule_id='SOC-101',
+        case_name='Un anuncio vendido sigue devolviendo su informe',
+        expected_status=200,
+    )

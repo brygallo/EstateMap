@@ -58,7 +58,8 @@ from .serializers import (
     AdminPropertyListSerializer,
     AdminDashboardSerializer,
 )
-from .permissions import IsOwnerOrReadOnly, IsAdminUser
+from .permissions import IsOwnerOrReadOnly, IsAdminUser, IsPropertyOwnerOrStaff
+from .services.promotion_stats import promotion_stats
 from .email_utils import (
     build_resume_link,
     create_password_reset_token,
@@ -372,13 +373,36 @@ class PropertyViewSet(viewsets.ModelViewSet):
         la que tiene WhatsApp).
         """
         user = self.request.user
-        if user.is_authenticated and user.is_staff and self.action in (
+        # Actions that address one listing by its id. They resolve it from the
+        # row itself instead of from the public catalogue query, so who may see
+        # what is decided once, here, rather than by whichever filters happened
+        # to be in the querystring.
+        if self.action in (
             'retrieve', 'update', 'partial_update', 'destroy', 'delete_image',
         ):
             # Staff moderate from the inventory panel, which lists the inactive
             # and duplicated rows the public queryset hides. Without this, the
             # listing they just clicked would 404 when opened or edited.
-            return Property.objects.all()
+            if user.is_authenticated and user.is_staff:
+                return Property.objects.all()
+
+            # A single listing is resolved by its id, never by the search
+            # filters in the querystring: whoever opens one has that listing in
+            # mind, and a stray parameter turning it into a 404 is impossible to
+            # diagnose from the other end. Same argument as `by_code`.
+            visible = Q(is_duplicate=False) & ~Q(status='inactive')
+            # A listing closed as sold or rented keeps an individually
+            # resolvable ficha even though it left the catalogue. The whole
+            # point of the "vendido" image is that it gets forwarded, and
+            # SOC-002 promises its printed code and QR resolve; a 404 would make
+            # the portal look like it invented the listing.
+            visible |= Q(is_duplicate=False) & ~Q(closed_reason='')
+            if user.is_authenticated:
+                # An owner reaches their own listing whatever its state.
+                # Otherwise marking one sold — or simply deactivating it — locks
+                # them out of reopening, editing or promoting it.
+                visible |= Q(owner=user)
+            return Property.objects.filter(visible)
 
         queryset = Property.objects.exclude(status='inactive').exclude(is_duplicate=True)
         params = self.request.query_params
@@ -637,6 +661,31 @@ class PropertyViewSet(viewsets.ModelViewSet):
             cache.set(cache_key, payload, CACHE_TTL_INTELLIGENCE)
         return _public_response(payload, request, s_maxage=CACHE_TTL_INTELLIGENCE)
 
+    @action(
+        detail=True,
+        methods=['get'],
+        url_path='promotion-stats',
+        permission_classes=[IsAuthenticated, IsPropertyOwnerOrStaff],
+    )
+    def promotion_stats(self, request, pk=None):
+        """How many real visitors each network brought back from the kit links.
+
+        This is the half of SOC-008 that was missing, and the reason the kit
+        gets opened a second time: "your posts brought 34 real visitors" is the
+        only sentence that convinces anyone to share again.
+
+        Private on purpose, and enforced here rather than in the client. The
+        promotion images are public because Facebook has to download them, but
+        who arrived and from where belongs to whoever published the listing.
+
+        The listing is fetched by primary key instead of through the public
+        queryset: a sold listing is exactly the one whose owner most wants this
+        report, and it no longer appears in the catalogue.
+        """
+        instance = get_object_or_404(Property, pk=pk)
+        self.check_object_permissions(request, instance)
+        return Response(promotion_stats(instance.pk))
+
     @action(detail=False, methods=['get'], permission_classes=[AllowAny])
     def map_points(self, request):
         """
@@ -708,11 +757,16 @@ class PropertyViewSet(viewsets.ModelViewSet):
         has a listing in mind, not a search, and a stray parameter turning that
         into a 404 would be impossible to diagnose from the other end. The only
         filter kept is the one that decides whether a listing is public at all.
+
+        A listing closed as sold or rented still resolves: the "vendido" image
+        is meant to be forwarded and carries this very code, so answering 404
+        would break the one promise SOC-002 makes. A listing merely deactivated
+        does not — withdrawing an ad means taking it off the air.
         """
         normalized = normalize_code(code or '')
         prop = (
             Property.objects.filter(short_code=normalized)
-            .exclude(status='inactive')
+            .exclude(status='inactive', closed_reason='')
             .values('id', 'short_code')
             .first()
         )
@@ -969,7 +1023,10 @@ class PropertyViewSet(viewsets.ModelViewSet):
         )
         queryset = (
             queryset.select_related('owner')
-            .prefetch_related('images')
+            # `price_history` feeds previous_price on the serializer, which the
+            # kit needs to offer a "price drop" image. Without the prefetch that
+            # is one extra query per row of the page.
+            .prefetch_related('images', 'price_history')
             .order_by(*ordering, '-id')
         )
 
@@ -2193,6 +2250,12 @@ class AdminUserViewSet(viewsets.ModelViewSet):
             ),
         ).order_by('-date_joined')
 
+        if self.action == 'retrieve':
+            # The detail embeds every property of the account with the full
+            # PropertySerializer, which now reads price_history for
+            # previous_price. Without the prefetch that is one query per row.
+            queryset = queryset.prefetch_related('properties__price_history')
+
         is_active = self.request.query_params.get('is_active')
         if is_active is not None:
             if is_active.lower() in ('true', '1'):
@@ -2461,10 +2524,15 @@ class AdminPropertyViewSet(viewsets.ModelViewSet):
         from django.utils import timezone
         queryset = Property.objects.filter(pk__in=property_ids)
         matched = queryset.count()
-        updated = queryset.exclude(status=new_status).update(
-            status=new_status,
-            updated_at=timezone.now(),
-        )
+        changes = {'status': new_status, 'updated_at': timezone.now()}
+        if new_status != 'inactive':
+            # Putting a listing back on the market reopens it. This path uses
+            # .update(), which never reaches Property.save(), so a leftover
+            # closed_reason would survive and drag the row back to `inactive` on
+            # the next ordinary save.
+            changes['closed_reason'] = ''
+            changes['closed_at'] = None
+        updated = queryset.exclude(status=new_status).update(**changes)
         logger.info(
             "admin_audit action=property.bulk_status actor=%s targets=%s status=%s matched=%s updated=%s",
             request.user.pk, property_ids, new_status, matched, updated,

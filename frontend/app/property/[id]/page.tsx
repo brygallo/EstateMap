@@ -16,6 +16,9 @@ import {
   BadgeCheck,
   CalendarDays,
   Navigation,
+  CheckCircle2,
+  Archive,
+  TrendingDown,
 } from 'lucide-react';
 import {
   jsonLd,
@@ -27,10 +30,14 @@ import {
 } from '@/lib/properties';
 import {
   getPropertyTypeLabel,
-  getStatusLabel,
-  getStatusOverlayClass,
+  getListingStatusLabel,
+  getListingStatusOverlayClass,
+  getClosedReason,
+  isSuccessfulClosure,
   formatPrice,
   formatArea,
+  formatDate,
+  type ClosedReason,
 } from '@/lib/property-labels';
 import { formatDistance } from '@/lib/geo';
 import { Badge } from '@/components/ui/badge';
@@ -46,6 +53,40 @@ import RevealableDescription from '@/components/RevealableDescription';
 import { normalizeEcuadorPhone } from '@/lib/phone';
 import { PhoneReveal, TrackedContactLink } from '@/components/PropertyContactActions';
 import PropertyPageActions from '@/components/PropertyPageActions';
+
+// A closed listing keeps its page — the "vendido" image carries its printed
+// code and QR, and SOC-002 promises those resolve — so the page has to say so
+// out loud instead of looking like any other available listing.
+//
+// The copy is written as its own clause ("ya se vendió") rather than as an
+// adjective, because agreement in Spanish depends on the property type:
+// "casa vendida" but "terreno vendido".
+const CLOSURE_HEADLINE: Record<ClosedReason, string> = {
+  sold: 'Esta propiedad ya se vendió',
+  rented: 'Esta propiedad ya se arrendó',
+  withdrawn: 'Este anuncio ya no está disponible',
+};
+
+const CLOSURE_DETAIL: Record<ClosedReason, string> = {
+  sold: 'El anuncio se cerró y ya no recibe contactos. Puedes ver propiedades similares en la misma zona.',
+  rented: 'El anuncio se cerró y ya no recibe contactos. Puedes ver propiedades similares en la misma zona.',
+  withdrawn:
+    'El anunciante retiró esta publicación. Puedes ver otras propiedades disponibles en la misma zona.',
+};
+
+/** Short prefix for the <title> and the OG card of a closed listing. */
+const CLOSURE_TITLE_PREFIX: Record<ClosedReason, string> = {
+  sold: 'Vendido',
+  rented: 'Arrendado',
+  withdrawn: 'Anuncio retirado',
+};
+
+/** Availability the offer keeps once the listing is closed. */
+const CLOSURE_AVAILABILITY: Record<ClosedReason, string> = {
+  sold: 'https://schema.org/SoldOut',
+  rented: 'https://schema.org/OutOfStock',
+  withdrawn: 'https://schema.org/Discontinued',
+};
 
 /** Ficha de dato de la propiedad: icono lucide + valor en mono + etiqueta. */
 function StatTile({
@@ -92,26 +133,37 @@ export async function generateMetadata({ params }: PropertyPageProps): Promise<M
 
   // Build professional title
   const propertyTypeLabel = getPropertyTypeLabel(property.property_type);
-  const statusLabel = getStatusLabel(property.status);
+  const closedReason = getClosedReason(property);
+  const statusLabel = getListingStatusLabel(property);
   const location = [property.city, property.province].filter(Boolean).join(', ');
   const titleSuffix = location ? ` | ${location}` : '';
-  const title = `${propertyTypeLabel} ${statusLabel} - ${property.title}${titleSuffix}`;
+  const title = closedReason
+    ? `${CLOSURE_TITLE_PREFIX[closedReason]}: ${property.title}${titleSuffix}`
+    : `${propertyTypeLabel} ${statusLabel} - ${property.title}${titleSuffix}`;
 
   // Build detailed description
   const priceFormatted = formatPrice(property.price);
   const areaFormatted = formatArea(property.area);
-  const summaryParts = [
-    `${propertyTypeLabel} ${statusLabel.toLowerCase()}`,
-    priceFormatted,
-    areaFormatted ? `Área ${areaFormatted}` : null,
-    (property.rooms ?? 0) > 0 ? `${property.rooms} habitaciones` : null,
-    (property.bathrooms ?? 0) > 0 ? `${property.bathrooms} baños` : null,
-    location ? `En ${location}` : null,
-  ].filter(Boolean);
+  const closedDate = formatDate(property.closed_at);
+  const summaryParts = closedReason
+    ? [
+        CLOSURE_HEADLINE[closedReason],
+        closedDate ? `Cerrado el ${closedDate}` : null,
+        `${propertyTypeLabel}${location ? ` en ${location}` : ''}`,
+        areaFormatted ? `Área ${areaFormatted}` : null,
+      ].filter(Boolean)
+    : [
+        `${propertyTypeLabel} ${statusLabel.toLowerCase()}`,
+        priceFormatted,
+        areaFormatted ? `Área ${areaFormatted}` : null,
+        (property.rooms ?? 0) > 0 ? `${property.rooms} habitaciones` : null,
+        (property.bathrooms ?? 0) > 0 ? `${property.bathrooms} baños` : null,
+        location ? `En ${location}` : null,
+      ].filter(Boolean);
 
   let description = summaryParts.join(' | ');
 
-  if (property.description) {
+  if (property.description && !closedReason) {
     const cleanExcerpt = property.description.replace(/\s+/g, ' ').trim();
     description += ` | ${cleanExcerpt.substring(0, 140)}${cleanExcerpt.length > 140 ? '...' : ''}`;
   }
@@ -126,11 +178,27 @@ export async function generateMetadata({ params }: PropertyPageProps): Promise<M
   ).replace(/\/+$/, '');
   const propertyUrl = `${baseUrl}/propiedad/${property.id}`;
   const imageAbsoluteUrl = imageUrl.startsWith('http') ? imageUrl : `${baseUrl}${imageUrl}`;
-  const priceAmount = property.price != null ? String(property.price) : null;
+  // A closed listing must not advertise a price to the social crawlers either:
+  // `og:price` / `product:price` are read as a live offer.
+  const priceAmount = property.price != null && !closedReason ? String(property.price) : null;
 
   return {
     title,
     description,
+    // A closed listing stays reachable (its printed code and QR must resolve)
+    // but it must not stay in the index: a searcher who lands on something they
+    // cannot buy bounces straight back, and that is exactly the signal Google
+    // reads as a low-quality result for the whole domain. `follow` is kept so
+    // the links out of it — the city page, the nearby listings — keep counting.
+    ...(closedReason
+      ? {
+          robots: {
+            index: false,
+            follow: true,
+            googleBot: { index: false, follow: true },
+          },
+        }
+      : {}),
     keywords: [
       'propiedad',
       'inmobiliaria',
@@ -213,7 +281,16 @@ export default async function PropertyPage({ params }: PropertyPageProps) {
 
   const mapUrl = `/?property=${resolvedParams.id}`;
   const propertyTypeLabel = getPropertyTypeLabel(property.property_type);
-  const statusLabel = getStatusLabel(property.status);
+  // `status` alone cannot tell a sold listing from a withdrawn one: both are
+  // `inactive`, and only `closed_reason` separates them.
+  const closedReason = getClosedReason(property);
+  const isClosed = closedReason !== '';
+  const closedSuccessfully = isSuccessfulClosure(property);
+  const closedDate = formatDate(property.closed_at);
+  const statusLabel = getListingStatusLabel(property);
+  // Fallback name for the structured data of a listing with no title. A closed
+  // one drops the operation: "Casa Vendido" does not agree in Spanish.
+  const schemaFallbackName = isClosed ? propertyTypeLabel : `${propertyTypeLabel} ${statusLabel}`;
   const priceFormatted = formatPrice(property.price);
   const mainImage = property.images?.find((img: any) => img.is_main) || property.images?.[0];
   const areaFormatted = formatArea(property.area);
@@ -222,8 +299,8 @@ export default async function PropertyPage({ params }: PropertyPageProps) {
   const parkingSpaces = property.parking_spaces ?? 0;
   const location = [property.city, property.province].filter(Boolean).join(', ');
   const summaryParts = [
-    `${propertyTypeLabel} ${statusLabel.toLowerCase()}`,
-    priceFormatted,
+    isClosed ? propertyTypeLabel : `${propertyTypeLabel} ${statusLabel.toLowerCase()}`,
+    isClosed ? null : priceFormatted,
     areaFormatted ? `Área ${areaFormatted}` : null,
     rooms > 0 ? `${rooms} habitaciones` : null,
     bathrooms > 0 ? `${bathrooms} baños` : null,
@@ -244,8 +321,10 @@ export default async function PropertyPage({ params }: PropertyPageProps) {
     '@id': `${propertyUrl}#listing`,
     mainEntityOfPage: propertyUrl,
     inLanguage: 'es-EC',
-    name: property.title || `${propertyTypeLabel} ${statusLabel}`,
-    description: property.description || `${propertyTypeLabel} ${statusLabel.toLowerCase()} en Ecuador`,
+    name: property.title || schemaFallbackName,
+    description:
+      property.description ||
+      (isClosed ? `${propertyTypeLabel} en Ecuador` : `${propertyTypeLabel} ${statusLabel.toLowerCase()} en Ecuador`),
     url: propertyUrl,
     image:
       (property.images?.length ?? 0) > 0
@@ -259,19 +338,26 @@ export default async function PropertyPage({ params }: PropertyPageProps) {
     // Listings imported as "a consultar" carry no price. Emitting an Offer with
     // an undefined price is invalid structured data, so the price fields are
     // dropped and the offer is still published for its availability and URL.
+    //
+    // A closed listing drops the price for a different reason: the property is
+    // no longer on offer, and `price` inside an Offer states what it costs to
+    // buy it *now*. Keeping the figure next to SoldOut is a contradiction Google
+    // is entitled to treat as a misleading rich result. The Offer itself stays,
+    // because it is what carries the availability and the described property.
     offers: {
       '@type': 'Offer',
-      ...(property.price != null
+      ...(property.price != null && !isClosed
         ? { price: String(property.price), priceCurrency: 'USD' }
         : {}),
-      availability:
-        property.status === 'inactive'
+      availability: isClosed
+        ? CLOSURE_AVAILABILITY[closedReason]
+        : property.status === 'inactive'
           ? 'https://schema.org/SoldOut'
           : 'https://schema.org/InStock',
       url: propertyUrl,
       itemOffered: {
         '@type': PROPERTY_SCHEMA_TYPE[property.property_type] || 'Residence',
-        name: property.title || `${propertyTypeLabel} ${statusLabel}`,
+        name: property.title || schemaFallbackName,
         description: property.description || undefined,
         address: {
           '@type': 'PostalAddress',
@@ -332,7 +418,7 @@ export default async function PropertyPage({ params }: PropertyPageProps) {
       {
         '@type': 'ListItem',
         position: citySlug ? 3 : 2,
-        name: property.title || `${propertyTypeLabel} ${statusLabel}`,
+        name: property.title || schemaFallbackName,
         item: propertyUrl,
       },
     ],
@@ -353,10 +439,28 @@ export default async function PropertyPage({ params }: PropertyPageProps) {
   const hasRentPrice = property.rent_price != null && Number.isFinite(rentPriceValue) && rentPriceValue > 0;
   const rentPriceFormatted = hasRentPrice ? formatPrice(String(property.rent_price)) : '';
   const isImported = Boolean(property.is_imported || property.source_url || property.external_id || property.source);
-  const contactPhone = typeof property.contact_phone === 'string' ? property.contact_phone.trim() : '';
+  // Nobody is asked to enquire about something that is already sold, so a
+  // closed listing carries no phone and no link to the original ad. Blanking
+  // both here removes every contact CTA at the source — price card, sticky
+  // card and mobile bar — instead of guarding each of them separately.
+  const contactPhone =
+    !isClosed && typeof property.contact_phone === 'string' ? property.contact_phone.trim() : '';
   const waPhone = normalizeEcuadorPhone(contactPhone);
-  const sourceUrl = typeof property.source_url === 'string' ? property.source_url.trim() : '';
+  const sourceUrl =
+    !isClosed && typeof property.source_url === 'string' ? property.source_url.trim() : '';
   const sourceAgency = typeof property.source_agency === 'string' ? property.source_agency.trim() : '';
+  // Where an interested visitor goes instead: the same city, still available.
+  const similarUrl = property.city ? `/propiedades/${slugify(property.city)}` : '/propiedades';
+  const similarLabel = property.city ? `Ver propiedades en ${property.city}` : 'Ver propiedades disponibles';
+  // `previous_price` is the price asked before the current one — it can be a
+  // rise, so only a real drop is announced.
+  const previousPriceValue = Number.parseFloat(String(property.previous_price ?? ''));
+  const hasPriceDrop =
+    !isClosed &&
+    priceIsFinite &&
+    Number.isFinite(previousPriceValue) &&
+    previousPriceValue > priceValue;
+  const priceChangedDate = hasPriceDrop ? formatDate(property.price_changed_at) : '';
   // Mensaje de WhatsApp con referencia al anuncio y la URL de su ficha en nuestro sitio.
   const waMessage = `Hola, vi este anuncio en Geo Propiedades: ${property.title || 'esta propiedad'}\n${propertyUrl}`;
   const waLink = `https://wa.me/${waPhone}?text=${encodeURIComponent(waMessage)}`;
@@ -429,6 +533,48 @@ export default async function PropertyPage({ params }: PropertyPageProps) {
             </ol>
           </nav>
 
+          {/* Anuncio cerrado: lo primero que se lee, antes que las fotos. */}
+          {isClosed && (
+            <section
+              aria-labelledby="closed-listing-title"
+              className={`mb-6 rounded-card border p-5 shadow-card ${
+                closedSuccessfully ? 'border-primary/25 bg-primaryLight' : 'border-line bg-muted'
+              }`}
+            >
+              <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                <div className="flex items-start gap-3">
+                  <span
+                    className={`flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-full ${
+                      closedSuccessfully ? 'bg-primary text-white' : 'bg-textSecondary/15 text-textSecondary'
+                    }`}
+                  >
+                    {closedSuccessfully ? (
+                      <CheckCircle2 className="h-5 w-5" strokeWidth={2} aria-hidden />
+                    ) : (
+                      <Archive className="h-5 w-5" strokeWidth={2} aria-hidden />
+                    )}
+                  </span>
+                  <div>
+                    <h2 id="closed-listing-title" className="text-lg font-bold text-textPrimary">
+                      {CLOSURE_HEADLINE[closedReason]}
+                    </h2>
+                    {closedDate && (
+                      <p className="mt-0.5 text-sm font-medium text-textSecondary">Cerrado el {closedDate}</p>
+                    )}
+                    <p className="mt-1 max-w-prose text-sm text-textSecondary">{CLOSURE_DETAIL[closedReason]}</p>
+                  </div>
+                </div>
+                <Link
+                  href={similarUrl}
+                  className="inline-flex flex-shrink-0 items-center justify-center gap-2 rounded-button bg-primary px-5 py-3 text-sm font-semibold text-white shadow-card transition-colors hover:bg-primaryHover"
+                >
+                  {similarLabel}
+                  <ArrowRight className="h-4 w-4" strokeWidth={2} aria-hidden />
+                </Link>
+              </div>
+            </section>
+          )}
+
           {/* Galería de fotos con mosaico, miniaturas y vista ampliada */}
           {galleryImages.length > 0 ? (
             <PropertyGallery
@@ -436,7 +582,7 @@ export default async function PropertyPage({ params }: PropertyPageProps) {
               title={property.title || 'Propiedad'}
               statusLabel={statusLabel}
               propertyTypeLabel={propertyTypeLabel}
-              statusClassName={getStatusOverlayClass(property.status)}
+              statusClassName={getListingStatusOverlayClass(property)}
             />
           ) : (
             <div className="flex aspect-[16/7] w-full items-center justify-center rounded-hero border border-line bg-muted text-textSecondary">
@@ -454,10 +600,10 @@ export default async function PropertyPage({ params }: PropertyPageProps) {
                   <Badge className="rounded-full bg-primaryLight text-primary hover:bg-primaryLight">
                     {propertyTypeLabel}
                   </Badge>
-                  <Badge className={`rounded-full border-transparent ${getStatusOverlayClass(property.status)}`}>
+                  <Badge className={`rounded-full border-transparent ${getListingStatusOverlayClass(property)}`}>
                     {statusLabel}
                   </Badge>
-                  {property.is_negotiable && (
+                  {property.is_negotiable && !isClosed && (
                     <Badge className="rounded-full border-transparent bg-secondary/10 text-secondary hover:bg-secondary/10">
                       Precio negociable
                     </Badge>
@@ -481,7 +627,9 @@ export default async function PropertyPage({ params }: PropertyPageProps) {
               </div>
 
               <div className="rounded-card border border-line bg-background p-4 lg:min-w-80">
-                <div className="text-xs font-medium uppercase tracking-wide text-textSecondary">Precio</div>
+                <div className="text-xs font-medium uppercase tracking-wide text-textSecondary">
+                  {isClosed ? 'Último precio publicado' : 'Precio'}
+                </div>
                 <div className="mt-1">
                   {priceIsFinite ? (
                     <AnimatedNumber value={priceValue} prefix="$" className="price text-3xl" />
@@ -492,6 +640,13 @@ export default async function PropertyPage({ params }: PropertyPageProps) {
                 {hasRentPrice && (
                   <div className="mt-1 text-sm font-semibold text-textSecondary">
                     Alquiler {rentPriceFormatted}/mes
+                  </div>
+                )}
+                {hasPriceDrop && (
+                  <div className="mt-1 flex items-center gap-1.5 text-sm font-semibold text-secondary">
+                    <TrendingDown className="h-4 w-4" strokeWidth={2} aria-hidden />
+                    Bajó desde {formatPrice(previousPriceValue)}
+                    {priceChangedDate ? ` el ${priceChangedDate}` : ''}
                   </div>
                 )}
                 <div className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-1">
@@ -522,11 +677,14 @@ export default async function PropertyPage({ params }: PropertyPageProps) {
                       Contactar anunciante
                     </TrackedContactLink>
                   ) : null}
+                  {/* A closed listing is off the map (it is `inactive`), so the
+                      map link would land on an empty viewport. The zone is what
+                      is still useful about it. */}
                   <Link
-                    href={mapUrl}
+                    href={isClosed ? similarUrl : mapUrl}
                     className="inline-flex items-center justify-center gap-2 rounded-button border border-line bg-white px-4 py-2.5 text-sm font-semibold text-textPrimary transition-colors hover:border-primary hover:text-primary"
                   >
-                    Ver en mapa
+                    {isClosed ? similarLabel : 'Ver en mapa'}
                     <ArrowRight className="h-4 w-4" strokeWidth={2} aria-hidden />
                   </Link>
                 </div>
@@ -544,7 +702,7 @@ export default async function PropertyPage({ params }: PropertyPageProps) {
                 <Badge className="rounded-full bg-primaryLight text-primary hover:bg-primaryLight">
                   {propertyTypeLabel}
                 </Badge>
-                {property.is_negotiable && (
+                {property.is_negotiable && !isClosed && (
                   <Badge className="rounded-full border-transparent bg-secondary/10 text-secondary hover:bg-secondary/10">
                     Precio negociable
                   </Badge>
@@ -594,7 +752,7 @@ export default async function PropertyPage({ params }: PropertyPageProps) {
                   `top-6` the card parked underneath the bar. */}
               <div className="rounded-card border border-line bg-surface p-6 shadow-card lg:sticky lg:top-[calc(var(--app-header-height)+1.5rem)]">
                 <div className="text-xs font-medium uppercase tracking-wide text-textSecondary">
-                  Precio
+                  {isClosed ? 'Último precio publicado' : 'Precio'}
                 </div>
                 <div className="mt-1 flex items-baseline gap-2">
                   {priceIsFinite ? (
@@ -612,7 +770,14 @@ export default async function PropertyPage({ params }: PropertyPageProps) {
                     Alquiler {rentPriceFormatted}/mes
                   </div>
                 )}
-                {property.is_negotiable && (
+                {hasPriceDrop && (
+                  <div className="mt-1 flex items-center gap-1.5 text-sm font-semibold text-secondary">
+                    <TrendingDown className="h-4 w-4" strokeWidth={2} aria-hidden />
+                    Bajó desde {formatPrice(previousPriceValue)}
+                    {priceChangedDate ? ` el ${priceChangedDate}` : ''}
+                  </div>
+                )}
+                {property.is_negotiable && !isClosed && (
                   <span className="mt-1 inline-block text-sm font-medium text-secondary">
                     Negociable
                   </span>
@@ -654,7 +819,15 @@ export default async function PropertyPage({ params }: PropertyPageProps) {
                       />
                     </div>
                   )}
-                  {isImported ? (
+                  {isClosed ? (
+                    <div className="rounded-card border border-line bg-background p-4 text-sm text-textSecondary">
+                      <p className="font-semibold text-textPrimary">{CLOSURE_HEADLINE[closedReason]}</p>
+                      <p className="mt-1">
+                        Este anuncio ya no recibe contactos
+                        {closedDate ? ` desde el ${closedDate}` : ''}.
+                      </p>
+                    </div>
+                  ) : isImported ? (
                     contactPhone ? (
                       <TrackedContactLink
                         href={waLink}
@@ -716,10 +889,10 @@ export default async function PropertyPage({ params }: PropertyPageProps) {
                   )}
 
                   <Link
-                    href={mapUrl}
+                    href={isClosed ? similarUrl : mapUrl}
                     className="inline-flex w-full items-center justify-center gap-2 rounded-button bg-primary px-5 py-3 text-base font-semibold text-white shadow-card transition-colors duration-200 hover:bg-primaryHover focus:outline-none focus-visible:ring-4 focus-visible:ring-primary/25"
                   >
-                    Ver en el mapa interactivo
+                    {isClosed ? similarLabel : 'Ver en el mapa interactivo'}
                     <ArrowRight className="h-5 w-5" strokeWidth={2} aria-hidden />
                   </Link>
                   <Link
@@ -777,8 +950,11 @@ export default async function PropertyPage({ params }: PropertyPageProps) {
                     Ordenadas desde la propiedad más próxima. La distancia es aproximada en línea recta.
                   </p>
                 </div>
-                <Link href={mapUrl} className="text-sm font-semibold text-primary hover:underline">
-                  Explorar en el mapa
+                <Link
+                  href={isClosed ? similarUrl : mapUrl}
+                  className="text-sm font-semibold text-primary hover:underline"
+                >
+                  {isClosed ? similarLabel : 'Explorar en el mapa'}
                 </Link>
               </div>
 
@@ -806,6 +982,8 @@ export default async function PropertyPage({ params }: PropertyPageProps) {
         phone={contactPhone ? waPhone : ''}
         sourceUrl={sourceUrl}
         sourceAgency={sourceAgency}
+        unavailableLabel={isClosed ? similarLabel : undefined}
+        unavailableHref={isClosed ? similarUrl : undefined}
         shareUrl={propertyUrl}
         shareTitle={property.title || 'Propiedad en Geo Propiedades'}
         shareDescription={[priceFormatted, [property.city, property.province].filter(Boolean).join(', ')]

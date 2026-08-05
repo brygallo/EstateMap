@@ -27,7 +27,8 @@ import AnimatedNumber from '@/components/ui/AnimatedNumber';
 import {
   getPropertyTypeLabel,
   getStatusLabel,
-  getStatusBadgeClass,
+  getListingStatusLabel,
+  getListingStatusBadgeClass,
   formatArea,
   formatPrice,
 } from '@/lib/property-labels';
@@ -209,10 +210,14 @@ export default function PropertyCard({
 }: PropertyCardProps) {
   const typeLabel = getPropertyTypeLabel(String(property.property_type));
   const statusLabel = getStatusLabel(String(property.status));
+  // The badge says "Vendido"/"Arrendado" for a closed listing, where `status`
+  // alone would only say "Inactiva". The heading fallback below keeps the plain
+  // status: "Casa vendido" does not agree in Spanish.
+  const badgeLabel = getListingStatusLabel(property);
   const location = [property.city, property.province].filter(Boolean).join(', ');
   const heading = property.title || `${typeLabel} ${statusLabel.toLowerCase()}`;
   const area = formatArea(property.area);
-  const operationBadgeClass = getStatusBadgeClass(String(property.status));
+  const operationBadgeClass = getListingStatusBadgeClass(property);
   const isRent = property.status === 'for_rent';
   // Anuncio venta + alquiler a la vez: `price` es la venta y `rent_price` el alquiler.
   const rentPriceNum = Number.parseFloat(String(property.rent_price ?? ''));
@@ -273,7 +278,7 @@ export default function PropertyCard({
             <h3 className="line-clamp-2 text-[12px] font-semibold leading-tight text-textPrimary">
               {heading}
             </h3>
-            <span className={`badge ${operationBadgeClass} flex-shrink-0`}>{statusLabel}</span>
+            <span className={`badge ${operationBadgeClass} flex-shrink-0`}>{badgeLabel}</span>
           </div>
 
           <div className="mt-1 flex flex-wrap items-baseline gap-x-1.5 gap-y-0.5">
@@ -364,7 +369,7 @@ export default function PropertyCard({
         <div className="aents-image-scrim absolute inset-0" aria-hidden />
         <div className="absolute left-2.5 top-2.5 z-10">
           <Badge className={cn('border-transparent shadow-card', operationBadgeClass)}>
-            {statusLabel}
+            {badgeLabel}
           </Badge>
         </div>
         <FavoriteButton propertyId={property.id} />

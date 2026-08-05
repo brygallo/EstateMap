@@ -18,6 +18,13 @@ interface PropertyPageActionsProps extends ContactContext {
   shareTitle: string;
   shareDescription: string;
   shareUrl: string;
+  /**
+   * Replaces the "sin contacto" pill when the listing takes no enquiries on
+   * purpose — a closed one. Given a href it becomes a link, so the bar still
+   * offers a way forward instead of a dead end.
+   */
+  unavailableLabel?: string;
+  unavailableHref?: string;
 }
 
 /**
@@ -39,6 +46,8 @@ export default function PropertyPageActions({
   shareTitle,
   shareDescription,
   shareUrl,
+  unavailableLabel,
+  unavailableHref,
   ...context
 }: PropertyPageActionsProps) {
   const shareAction = useShareAction();
@@ -111,9 +120,16 @@ export default function PropertyPageActions({
               <ExternalLink className="h-5 w-5" strokeWidth={2} aria-hidden />
               Ver en {sourceAgency || 'la fuente'}
             </a>
+          ) : unavailableHref ? (
+            <a
+              href={unavailableHref}
+              className="flex h-12 flex-1 touch-manipulation items-center justify-center gap-2 rounded-button bg-primary px-3 text-center text-sm font-semibold text-white shadow-card transition-colors active:bg-primaryHover"
+            >
+              {unavailableLabel || 'Ver más propiedades'}
+            </a>
           ) : (
             <span className="flex h-12 flex-1 items-center justify-center rounded-button border border-line bg-background px-3 text-center text-xs font-medium text-textSecondary">
-              Sin contacto disponible
+              {unavailableLabel || 'Sin contacto disponible'}
             </span>
           )}
         </div>

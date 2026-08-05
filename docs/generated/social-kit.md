@@ -18,17 +18,19 @@ La frontera está en SOC-010, que es la única regla de este dominio sin constru
 | Id | Regla | Estado |
 | --- | --- | --- |
 | [`SOC-001`](#soc-001--las-láminas-no-muestran-nada-que-la-ficha-pública-no-muestre) | Las láminas no muestran nada que la ficha pública no muestre | ✅ Implementada |
-| [`SOC-002`](#soc-002--cada-lámina-lleva-marca-código-corto-y-qr-al-anuncio) | Cada lámina lleva marca, código corto y QR al anuncio | ✅ Implementada |
+| [`SOC-002`](#soc-002--cada-lámina-lleva-marca-y-qr-al-anuncio) | Cada lámina lleva marca y QR al anuncio | ✅ Implementada |
 | [`SOC-003`](#soc-003--el-código-corto-es-estable-único-y-no-se-puede-transcribir-mal) | El código corto es estable, único y no se puede transcribir mal | ✅ Implementada |
 | [`SOC-004`](#soc-004--un-anuncio-sin-fotos-también-produce-kit) | Un anuncio sin fotos también produce kit | ✅ Implementada |
 | [`SOC-005`](#soc-005--el-precio-de-la-lámina-respeta-el-a-consultar) | El precio de la lámina respeta el «a consultar» | ✅ Implementada |
 | [`SOC-006`](#soc-006--la-lámina-de-mapa-lleva-su-atribución-horneada) | La lámina de mapa lleva su atribución horneada | ✅ Implementada |
 | [`SOC-007`](#soc-007--el-texto-se-redacta-con-los-campos-del-anuncio-sin-inventar-nada) | El texto se redacta con los campos del anuncio, sin inventar nada | ✅ Implementada |
-| [`SOC-008`](#soc-008--los-enlaces-del-kit-dicen-de-qué-red-vienen) | Los enlaces del kit dicen de qué red vienen | 🟡 Parcial |
+| [`SOC-008`](#soc-008--los-enlaces-del-kit-dicen-de-qué-red-vienen-y-el-dueño-ve-el-resultado) | Los enlaces del kit dicen de qué red vienen, y el dueño ve el resultado | ✅ Implementada |
+| [`SOC-101`](#soc-101--el-dueño-ve-cuántas-visitas-trajo-cada-red) | El dueño ve cuántas visitas trajo cada red | ✅ Implementada |
 | [`SOC-009`](#soc-009--el-kit-lo-abre-el-propietario-pero-las-láminas-son-públicas) | El kit lo abre el propietario, pero las láminas son públicas | 🟡 Parcial |
 | [`SOC-010`](#soc-010--el-portal-no-publica-en-redes-por-cuenta-de-nadie) | El portal no publica en redes por cuenta de nadie | ⛔ No implementada |
 | [`SOC-011`](#soc-011--las-láminas-se-cachean-y-caducan-con-el-anuncio) | Las láminas se cachean y caducan con el anuncio | ✅ Implementada |
 | [`SOC-012`](#soc-012--publicar-un-anuncio-termina-en-el-kit) | Publicar un anuncio termina en el kit | ✅ Implementada |
+| [`SOC-013`](#soc-013--las-láminas-priorizan-una-composición-comercial) | Las láminas priorizan una composición comercial | ✅ Implementada |
 
 ### SOC-001 — Las láminas no muestran nada que la ficha pública no muestre
 
@@ -42,8 +44,8 @@ La garantía es por construcción y no por lista blanca, que es más débil de l
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `frontend/app/api/social/[id]/[format]/route.tsx:357-359` (`photoLamina`) — Toma el título, la ciudad, el precio y los hechos declarados. Ni views_count ni contact_phone ni contact_email entran en la lámina.
-- `frontend/lib/social-kit.ts:246-248` (`buildFacts`) — Enumera solo atributos físicos declarados en el anuncio.
+- `frontend/app/api/social/[id]/[format]/route.tsx:754-756` (`photoLamina`) — Toma el título, la ciudad, el precio y los hechos declarados. Ni views_count ni contact_phone ni contact_email entran en la lámina.
+- `frontend/lib/social-kit.ts:431-433` (`buildFacts`) — Enumera solo atributos físicos declarados en el anuncio.
 
 **Casos**
 
@@ -54,27 +56,26 @@ La garantía es por construcción y no por lista blanca, que es más débil de l
 | El polígono sí se dibuja | — | `polygon`=presente | presente |
 | Un anuncio con show_measurements desactivado no gana precisión | — | `show_measurements`=no | presente |
 
-### SOC-002 — Cada lámina lleva marca, código corto y QR al anuncio
+### SOC-002 — Cada lámina lleva marca y QR al anuncio
 
 **Estado:** ✅ Implementada
 
-Toda lámina generada incluye el logotipo del portal, el código corto legible del anuncio y un QR que apunta a esa misma ficha.
+Toda lámina generada incluye el logotipo del portal y un QR que apunta a esa misma ficha. El código corto sigue formando parte del enlace interno, pero no se muestra como dato visible en la pieza.
 
-> **Por qué:** El QR sirve a quien ve la lámina en una pantalla y puede escanearla. El código corto escrito en claro sirve a todos los demás: a quien la recibe reenviada y recomprimida por WhatsApp hasta que el QR deja de leerse, a quien la ve impresa en una valla, y a quien sencillamente no confía en escanear un código que le llegó de un desconocido.
-Llevar los dos es lo que convierte la lámina en una promesa comprobable —«esto está publicado aquí y lo puedes verificar»— en vez de una imagen suelta que cualquiera podría haber fabricado.
+> **Por qué:** El QR permite llegar a la ficha sin llenar el arte con identificadores que no ayudan a vender. La dirección principal del portal queda escrita como alternativa legible si la imagen fue recomprimida o impresa.
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `frontend/app/api/social/[id]/[format]/route.tsx:158-160` (`VerifyLine`) — La dirección verificable, partida en dos filas para que no se corte.
-- `frontend/app/api/social/[id]/[format]/route.tsx:120-122` (`QrCard`) — QR y código impresos juntos.
-- `frontend/lib/qr.ts:22` (`errorCorrectionLevel`) — Nivel H: el código sobrevive a la recompresión de las redes, que es lo que decide si sigue escaneando tras un reenvío.
+- `frontend/app/api/social/[id]/[format]/route.tsx:300-314` (`VerifyLine`) — La dirección principal queda visible sin exponer el identificador corto.
+- `frontend/app/api/social/[id]/[format]/route.tsx:258-275` (`QrCard`) — El QR se muestra en una tarjeta de alto contraste, sin imprimir el código corto.
+- `frontend/lib/qr.ts:21-23` (`errorCorrectionLevel`) — Nivel H: el código sobrevive a la recompresión de las redes, que es lo que decide si sigue escaneando tras un reenvío.
 
 **Casos**
 
 | Caso | Rol | Entrada | Esperado |
 | --- | --- | --- | --- |
 | El QR codifica la URL corta del anuncio | — | `short_code`=XK4T2 | https://geopropiedadesecuador.com/p/XK4T2 |
-| El código corto aparece también como texto legible | — | `short_code`=XK4T2 | presente |
+| El código corto no aparece como texto en la lámina | — | `short_code`=XK4T2 | ausente |
 | Un anuncio sin código cae en la dirección larga | — | `short_code`=— | https://geopropiedadesecuador.com/propiedad/8228 |
 
 **Cobertura exigida:** unit
@@ -99,9 +100,9 @@ Se asigna en save() y no en el serializador porque todos los caminos de escritur
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
 - `backend/real_estate/services/short_codes.py:19` (`ALPHABET`) — Sin 0, O, 1, I ni L.
-- `backend/real_estate/models.py:218-222` (`short_code`) — Solo se asigna cuando está vacío, que es lo que lo hace estable frente a cualquier edición posterior.
-- `backend/real_estate/views.py:696-698` (`by_code`) — Resolución pública, sin distinguir mayúsculas y excluyendo inactivas.
-- `backend/real_estate/serializers.py:170` (`short_code`) — Read-only bajo fields='__all__'. Sin esto un cliente podría fijarse su propio código y ocupar el de otro, porque la columna es única.
+- `backend/real_estate/models.py:271-274` (`short_code`) — Solo se asigna cuando está vacío, que es lo que lo hace estable frente a cualquier edición posterior.
+- `backend/real_estate/views.py:747-749` (`by_code`) — Resolución pública, sin distinguir mayúsculas y excluyendo inactivas.
+- `backend/real_estate/serializers.py:193-195` (`short_code`) — Read-only bajo fields='__all__'. Sin esto un cliente podría fijarse su propio código y ocupar el de otro, porque la columna es única.
 
 **Casos**
 
@@ -112,7 +113,8 @@ Se asigna en save() y no en el serializador porque todos los caminos de escritur
 | Resolver un código existente devuelve la propiedad | anonymous | — | allowed |
 | Resolver un código inexistente responde 404 | — | — | denied (HTTP 404) |
 | El código se resuelve sin distinguir mayúsculas | — | `code`=xk4t2 | allowed |
-| Un anuncio inactivo no se resuelve por su código | — | `status`=inactive | denied (HTTP 404) |
+| Un anuncio inactivo no se resuelve por su código | — | `status`=inactive, `closed_reason`= | denied (HTTP 404) |
+| Un anuncio vendido sí se resuelve por su código | — | `closed_reason`=sold | allowed |
 | Un cliente no puede fijar su propio código | — | — | denied |
 | Un anuncio creado antes de la migración también tiene código | — | — | presente |
 
@@ -132,7 +134,7 @@ El mismo camino cubre un fallo temporal del almacén de imágenes: una lámina c
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `frontend/app/api/social/[id]/[format]/route.tsx:208-210` (`PhotoLayer`) — Degradado de marca cuando no hay foto utilizable.
+- `frontend/app/api/social/[id]/[format]/route.tsx:465-467` (`PhotoLayer`) — Degradado de marca cuando no hay foto utilizable.
 
 **Casos**
 
@@ -153,8 +155,8 @@ Se cumple reusando el formateador compartido en lugar de escribir otro: esa func
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `frontend/lib/social-kit.ts:279-281` (`buildPriceLine`) — Cuando el anuncio es venta y alquiler a la vez muestra los dos importes con su etiqueta, igual que la ficha.
-- `frontend/lib/property-labels.ts:82-85` (`formatPrice`) — Fuente única del texto «Precio a consultar».
+- `frontend/lib/social-kit.ts:562-564` (`buildPriceLine`) — Cuando el anuncio es venta y alquiler a la vez muestra los dos importes con su etiqueta, igual que la ficha.
+- `frontend/lib/property-labels.ts:171-173` (`formatPrice`) — Fuente única del texto «Precio a consultar».
 
 **Casos**
 
@@ -180,7 +182,7 @@ No es un adorno legal: es la condición bajo la que el portal puede usar esos ti
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
 - `frontend/lib/static-map.ts:25` (`ATTRIBUTION`)
-- `frontend/app/api/social/[id]/[format]/route.tsx:345` (`ATTRIBUTION`) — Impresa en la barra inferior de la lámina de mapa.
+- `frontend/app/api/social/[id]/[format]/route.tsx:725-727` (`ATTRIBUTION`) — Impresa en la barra inferior de la lámina de mapa.
 
 **Casos**
 
@@ -198,15 +200,16 @@ No es un adorno legal: es la condición bajo la que el portal puede usar esos ti
 
 **Estado:** ✅ Implementada
 
-El texto propuesto para cada red se compone a partir de los campos del anuncio con plantillas, y omite el atributo que falta en vez de rellenarlo.
+El texto propuesto para cada red se compone a partir de los campos del anuncio con plantillas, omite el atributo que falta en vez de rellenarlo y queda editable para que el propietario lo adapte antes de compartir.
 
 > **Por qué:** La tentación evidente es pedirle el texto a un modelo de lenguaje y quedar muy bien. El problema es que quien publica va a copiar y pegar ese texto sin leerlo entero, y un anuncio que promete un garaje que no existe es un problema del portal, no de la plantilla.
 Las plantillas son además instantáneas y gratis, que para algo que se genera en cada publicación no es poca cosa. Un campo vacío desaparece de la frase; no se escribe «0 habitaciones».
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `frontend/lib/social-kit.ts:317-319` (`buildCopy`) — Tres formas distintas y no un párrafo recortado: Facebook admite texto largo, Instagram va corto y con etiquetas, TikTok necesita un gancho.
-- `frontend/lib/social-kit.ts:246-248` (`buildFacts`) — Cada atributo se añade solo si el anuncio lo declara.
+- `frontend/lib/social-kit.ts:839-841` (`buildCopy`) — Tres formas distintas y no un párrafo recortado: Facebook admite texto largo, Instagram va corto y con etiquetas, TikTok necesita un gancho.
+- `frontend/lib/social-kit.ts:431-433` (`buildFacts`) — Cada atributo se añade solo si el anuncio lo declara.
+- `frontend/components/promote/PromotionKit.tsx:227-280` (`CopyBlock`) — El texto sugerido se puede editar, copiar y restaurar a su base.
 
 **Casos**
 
@@ -215,23 +218,25 @@ Las plantillas son además instantáneas y gratis, que para algo que se genera e
 | Un anuncio sin habitaciones no las menciona | — | `rooms`=0 | ausente |
 | Un anuncio sin área no la menciona | — | `area`=— | ausente |
 | Cada red recibe su propio formato de texto | — | `redes`=facebook, instagram, tiktok | tres textos distintos |
+| El propietario personaliza el texto sin perder la sugerencia | owner | — | allowed |
 
 **Cobertura exigida:** unit
 
 - `frontend/lib/social-kit.test.ts`
 
-### SOC-008 — Los enlaces del kit dicen de qué red vienen
+### SOC-008 — Los enlaces del kit dicen de qué red vienen, y el dueño ve el resultado
 
-**Estado:** 🟡 Parcial
+**Estado:** ✅ Implementada
 
-Cada enlace y cada QR del kit llevan los parámetros UTM de la red a la que corresponden. Lo que todavía no existe es la pantalla que le devuelve al dueño cuántas visitas trajo cada red.
+Cada enlace y cada QR del kit llevan los parámetros UTM de la red a la que corresponden, y el propietario puede consultar cuántas visitas reales trajo cada una.
 
-> **Por qué:** Sin la marca en el enlace el kit es un acto de fe: quien comparte no sabe si sirvió de algo y deja de hacerlo. Los UTM son la mitad barata y ya está puesta; la mitad que convence —«tus publicaciones trajeron 34 visitas reales»— exige agregar ActivityEvent por origen y todavía no está escrita, y por eso la regla queda como `partial` y no como implementada.
-«Reales» será literal cuando exista: el recuento debe excluir los bots por el mismo camino que ya usan las métricas del panel, porque un número inflado por crawlers es peor que no dar número.
+> **Por qué:** Sin la marca en el enlace el kit es un acto de fe: quien comparte no sabe si sirvió de algo y deja de hacerlo. Los UTM eran la mitad barata; la mitad que convence —«tus publicaciones trajeron 34 visitas reales»— exigía agregar ActivityEvent por origen, y eso es lo que hace ahora GET /api/properties/{id}/promotion-stats/. Por eso la regla deja de ser `partial`.
+«Reales» es literal: el recuento excluye los bots por el mismo camino que ya usan las métricas del panel, porque un número inflado por crawlers es peor que no dar número.
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `frontend/lib/social-kit.ts:151-153` (`trackedUrl`) — utm_source por red, utm_medium=social y utm_campaign=owner_kit, tanto en el texto como en el QR que se imprime.
+- `frontend/lib/social-kit.ts:193-195` (`trackedUrl`) — utm_source por red, utm_medium=social y utm_campaign=owner_kit, tanto en el texto como en el QR que se imprime.
+- `backend/real_estate/services/promotion_stats.py:79-105` (`def promotion_stats`) — El agregado por red que cierra la otra mitad de la regla.
 
 **Casos**
 
@@ -239,11 +244,60 @@ Cada enlace y cada QR del kit llevan los parámetros UTM de la red a la que corr
 | --- | --- | --- | --- |
 | El enlace de Instagram lleva su utm_source | — | `red`=instagram | utm_source=instagram |
 | El QR de la lámina de story lleva el utm de la red | — | `red`=instagram, `formato`=story | utm_source=instagram |
-| El dueño ve cuántas visitas trajo cada red | — | — | ausente |
+| El dueño ve cuántas visitas trajo cada red | — | — | presente |
 
-**Cobertura exigida:** unit
+**Cobertura exigida:** api, unit
 
 - `frontend/lib/social-kit.test.ts`
+
+### SOC-101 — El dueño ve cuántas visitas trajo cada red
+
+**Estado:** ✅ Implementada
+
+GET /api/properties/{id}/promotion-stats/ devuelve, por red, cuántos visitantes reales llegaron desde los enlaces del kit de ese anuncio. Solo responde al propietario y a staff.
+
+> **Por qué:** Es la mitad que faltaba de SOC-008. Los UTM ya viajaban en cada enlace y en cada QR, así que el dato se estaba recogiendo; lo que no existía era quien lo devolviera.
+Sin ella el kit se usa una vez. Con ella se usa cada mes, porque «tus publicaciones trajeron 34 visitas reales» es lo único que convence a alguien de volver a compartir.
+Tres decisiones que la regla fija a propósito:
+«Reales» es literal: el recuento excluye `is_bot=True`, decidido en el servidor desde el User-Agent. Un contador inflado por crawlers es peor que no dar contador, porque destruye la confianza en todo lo demás de esa pantalla.
+La ventana es de 90 días y nunca alcanza antes del 2026-08-03, que es cuando empezó a marcarse `is_bot`. Los eventos anteriores llevan el valor por defecto sin User-Agent que reevaluar, así que llamarlos «visitas reales» sería mentir.
+Y un visitante es un `session_id` distinto, no un evento: el navegador repite su sesión en cada beacon, así que contar filas convertiría a una sola persona curioseando en una docena de visitas.
+
+**Permisos exigidos:** `properties.read_promotion_stats`
+
+**Backend**
+
+- Endpoint: `GET /api/properties/{property_id}/promotion-stats/`
+- ¿Lo aplica el servidor?: sí
+- Al denegar: HTTP `403`
+
+**Evidencia en el código** (verificada por `tools/specs/validate.py`)
+
+- `backend/real_estate/services/promotion_stats.py:94-118` (`payload__attribution__campaign`) — Agrega en Postgres con lookups sobre JSONField; el filtro por propiedad y por is_bot va primero para que use el índice.
+- `backend/real_estate/services/promotion_stats.py:56-62` (`BOT_FLAGGING_SINCE`) — La ventana nunca alcanza los datos anteriores al marcado de bots.
+- `backend/real_estate/services/promotion_stats.py:64-70` (`STATE_NOT_SHARED`) — Los tres estados que permiten distinguir «nadie lo compartió» de «se compartió y no trajo a nadie».
+- `backend/real_estate/models.py:660-670` (`activity_prop_human_idx`) — (property, is_bot, created_at). Sin él la agregación recorre toda la tabla de eventos.
+- `backend/real_estate/views.py:665-680` (`def promotion_stats`)
+- `backend/real_estate/permissions.py:25-42` (`class IsPropertyOwnerOrStaff`) — Frontera de verdad, en el servidor. A diferencia de las láminas (SOC-009), este dato es del dueño.
+- `backend/real_estate/serializers.py:578-591` (`PROPERTY_PATH_RE`) — La visita a una ficha se atribuye a su anuncio leyendo el id de la ruta; el beacon genérico de page_view no manda property_id.
+
+**Casos**
+
+| Caso | Rol | Entrada | Esperado |
+| --- | --- | --- | --- |
+| Las visitas se agrupan por utm_source | owner | `utm_source`=instagram | allowed |
+| Las visitas de un bot no cuentan | — | `is_bot`=sí | ausente |
+| El tráfico que no viene del kit tampoco cuenta | — | `utm_campaign`=summer_ads | ausente |
+| Un anuncio que nadie compartió no muestra un cero desnudo | — | — | presente |
+| Solo el propietario ve el desglose | not_owner | — | denied (HTTP 403) |
+| Un anónimo no accede al desglose | anonymous | — | denied (HTTP 401) |
+| Staff también lo ve | staff | — | allowed |
+| Un anuncio vendido sigue devolviendo su informe | owner | — | allowed |
+
+**Cobertura exigida:** api
+
+- `backend/real_estate/tests/generated/test_spec_social_kit.py`
+- `backend/real_estate/tests/test_promotion_stats.py`
 
 ### SOC-009 — El kit lo abre el propietario, pero las láminas son públicas
 
@@ -258,15 +312,15 @@ Queda como `partial` porque la comprobación de propiedad vive en el cliente, le
 **Frontend**
 
 - Ruta: `/propiedad/{id}/promocionar`
-- Ruta: `/mis-propiedades`
+- Ruta: `/mis-propiedades/{id}`
 - Visible si se permite: sí
 - Oculto si se deniega: sí
 - `data-testid`: `promote-property-action`
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `frontend/components/promote/PromotionKit.tsx:227-229` (`isOwner`) — Cortesía de interfaz, no frontera; el comentario del código lo dice.
-- `frontend/app/my-properties/page.tsx:535` (`promote-property-action`) — El acceso al kit solo aparece en el inventario del propio dueño.
+- `frontend/components/promote/PromotionKit.tsx:356-358` (`isOwner`) — Cortesía de interfaz, no frontera; el comentario del código lo dice.
+- `frontend/app/mis-propiedades/[id]/page.tsx:238-244` (`promote-property-action`) — El acceso al kit aparece dentro de la ficha de gestión del propietario.
 
 **Casos**
 
@@ -309,7 +363,7 @@ Y caducarla al editar no es opcional: la lámina lleva el precio impreso. Si alg
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `frontend/app/api/social/[id]/[format]/route.tsx:570` (`Cache-Control`) — s-maxage=60 con stale-while-revalidate: absorbe la ráfaga de scrapers que llega al publicar un enlace sin congelar un precio corregido.
+- `frontend/app/api/social/[id]/[format]/route.tsx:1410-1412` (`Cache-Control`) — s-maxage=60 con stale-while-revalidate: absorbe la ráfaga de scrapers que llega al publicar un enlace sin congelar un precio corregido.
 - `frontend/lib/properties.ts:288-292` (`getProperty`) — Lectura etiquetada; /api/revalidate purga property-<id> cuando Django avisa de un cambio.
 
 **Casos**
@@ -345,3 +399,33 @@ El listado sigue estando a un clic, y el kit sigue accesible después desde cada
 | Tras publicar, la persona ve el kit de su anuncio | owner | — | allowed |
 | Editar un anuncio existente no lleva al kit | owner | — | denied |
 | Si la respuesta no trae id se vuelve al listado | owner | — | allowed |
+
+### SOC-013 — Las láminas priorizan una composición comercial
+
+**Estado:** ✅ Implementada
+
+Las piezas verticales combinan hasta tres fotografías del anuncio, usan la tipografía de marca con pesos reales y muestran un mensaje comercial adaptado al tipo de propiedad o a su modalidad de publicación.
+
+> **Por qué:** Una sola fotografía con muchos datos se percibe como una ficha técnica. La composición editorial permite enseñar más del inmueble, mientras una jerarquía breve de precio, propuesta y atributos ayuda a detener el desplazamiento y dirigir la atención hacia la ficha.
+
+**Evidencia en el código** (verificada por `tools/specs/validate.py`)
+
+- `frontend/app/api/social/[id]/[format]/route.tsx:150-160` (`promotionFonts`) — Se registran Plus Jakarta Sans Regular y ExtraBold en ImageResponse.
+- `frontend/app/api/social/[id]/[format]/route.tsx:205-207` (`marketingPhotos`) — La imagen principal se conserva primero y se preparan hasta tres fotos.
+- `frontend/app/api/social/[id]/[format]/route.tsx:350-377` (`SalesCallout`) — El argumento comercial cambia según venta, arriendo y tipo de inmueble.
+- `frontend/app/api/social/[id]/[format]/route.tsx:496-508` (`PhotoCollage`) — Las piezas verticales distribuyen una foto protagonista y dos de apoyo.
+- `frontend/app/api/social/[id]/[format]/route.tsx:1358-1358` (`customMessage`) — El mensaje opcional se normaliza y limita antes de dibujarlo.
+- `frontend/components/promote/PromotionKit.tsx:442-470` (`Mensaje dentro de la imagen`) — El editor permite cambiar el gancho o restaurar la propuesta base.
+
+**Casos**
+
+| Caso | Rol | Entrada | Esperado |
+| --- | --- | --- | --- |
+| Un terreno en venta comunica su potencial | — | `property_type`=land, `status`=for_sale | DESCUBRE EL POTENCIAL DE ESTE TERRENO |
+| Una propiedad en arriendo invita a conocer el espacio | — | `status`=for_rent | CONOCE TU PRÓXIMO ESPACIO |
+| Una pieza vertical con tres fotos usa composición editorial | — | `format`=portrait, `image_count`=3 | presente |
+| El propietario cambia el mensaje dentro de la imagen | owner | `mensaje`=AGENDA TU VISITA | presente |
+
+**Cobertura exigida:** unit
+
+- `frontend/lib/social-kit.test.ts`

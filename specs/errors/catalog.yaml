@@ -66,7 +66,7 @@ catalog:
         code: resume_token_invalid
       evidence:
         - file: backend/real_estate/views.py
-          lines: "1255-1266"
+          lines: "1312-1322"
           symbol: def invalid_resume_token_response
     - code: REQUEST_DATA_TOO_BIG
       http_status: 413
@@ -179,11 +179,11 @@ rules:
       ampliando lo que se persiste.
     evidence:
       - file: backend/real_estate/models.py
-        lines: "316-344"
+        lines: "374-401"
         symbol: "class SystemIncident"
         note: Los campos existentes son la lista completa de lo que se guarda.
       - file: backend/real_estate/models.py
-        lines: "325-327"
+        lines: "383-385"
         symbol: fingerprint
         note: Clave única por la que se agregan las ocurrencias.
       - file: backend/estate_map/observability.py

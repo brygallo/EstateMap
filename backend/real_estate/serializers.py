@@ -1,5 +1,6 @@
 import json
 import logging
+import re
 
 from rest_framework import serializers
 from rest_framework.validators import UniqueValidator
@@ -32,6 +33,20 @@ def ensure_polygon_center(data):
                 data['latitude'] = center[0]
             if data.get('longitude') is None:
                 data['longitude'] = center[1]
+
+
+def reopen_on_reactivation(validated_data):
+    """Putting a listing back on the market clears why it was closed.
+
+    `Property.save()` treats `closed_reason` as the authority: while it is set,
+    the row is forced back to `inactive`. Someone switching the status selector
+    from "Inactivo" to "En venta" means the listing is available again, so
+    without this the change would look accepted and silently undo itself.
+    """
+    new_status = validated_data.get('status')
+    if new_status and new_status != 'inactive' and 'closed_reason' not in validated_data:
+        validated_data['closed_reason'] = ''
+    return validated_data
 
 
 class CitySerializer(serializers.ModelSerializer):
@@ -155,6 +170,14 @@ class PropertySerializer(serializers.ModelSerializer):
         required=False,
         help_text="JSON array con IDs de imágenes a eliminar"
     )
+    # The two facts the promotion kit needs to offer a "price drop" image, and
+    # nothing more: the price this listing used to ask and when it changed. Both
+    # were public prices while they were current, and the whole timeline is
+    # already served by the (AllowAny) `intelligence` endpoint, so this exposes
+    # no fact the catalogue did not publish first — which is what SOC-001 and
+    # VIS-001 actually require.
+    previous_price = serializers.SerializerMethodField()
+    price_changed_at = serializers.SerializerMethodField()
 
     class Meta:
         model = Property
@@ -168,11 +191,45 @@ class PropertySerializer(serializers.ModelSerializer):
             # client pick its own — and squat the codes of listings it does not
             # own, since the column is unique.
             'short_code',
+            # When a listing closed is sealed by the server, like the code. The
+            # reason stays writable — that is the owner saying "it sold" — but
+            # the date of it is not theirs to backdate.
+            'closed_at',
             'source', 'source_agency', 'source_url', 'external_id',
             'is_imported', 'dedup_key', 'image_hash', 'is_duplicate',
             'duplicate_of', 'imported_at', 'source_published_at',
             'source_updated_at', 'last_seen_at',
         ]
+
+    def _price_change(self, obj):
+        """The price this listing asked before the current one, and when it changed.
+
+        `PropertyPriceHistory` is written by a post_save signal only when the
+        price actually moves, so consecutive rows are consecutive asking prices.
+        Reads `.all()` so a prefetch is used when the caller set one up.
+        """
+        history = list(obj.price_history.all())
+        if len(history) < 2 or obj.price is None:
+            return None, None
+        latest = history[-1]
+        # The newest row should be the price being asked right now. When it is
+        # not — a price written straight to the column without going through
+        # save() — there is no trustworthy "before", so say nothing rather than
+        # print a figure onto an image that outlives the correction.
+        if latest.price != obj.price:
+            return None, None
+        return history[-2].price, latest.recorded_at
+
+    def get_previous_price(self, obj):
+        price, _ = self._price_change(obj)
+        # str(): `price` itself is rendered as a string by DRF's decimal
+        # handling, and two price fields of different types in the same payload
+        # is a trap for whoever compares them.
+        return None if price is None else str(price)
+
+    def get_price_changed_at(self, obj):
+        _, changed_at = self._price_change(obj)
+        return changed_at
 
     def to_representation(self, instance):
         """Convert polygon from GeoJSON to simple array format for frontend"""
@@ -292,6 +349,7 @@ class PropertySerializer(serializers.ModelSerializer):
     def update(self, instance, validated_data):
         uploaded_images = validated_data.pop('uploaded_images', [])
         images_to_delete_str = validated_data.pop('images_to_delete', None)
+        reopen_on_reactivation(validated_data)
         if 'polygon' in validated_data and ('latitude' not in validated_data or 'longitude' not in validated_data):
             validated_data['latitude'] = None
             validated_data['longitude'] = None
@@ -520,6 +578,23 @@ class OwnerTransferSerializer(serializers.Serializer):
         return attrs
 
 
+# The ficha URL, which is where a shared link lands after /p/<code> redirects.
+PROPERTY_PATH_RE = re.compile(r'^/propiedad/(\d+)(?:[/?#]|$)')
+
+
+def _coerce_id(value):
+    """A primary key, or None. Never an exception: this runs on public input."""
+    try:
+        return int(value)
+    except (TypeError, ValueError):
+        return None
+
+
+def _property_id_from_path(path):
+    match = PROPERTY_PATH_RE.match(str(path))
+    return int(match.group(1)) if match else None
+
+
 class ActivityEventSerializer(serializers.ModelSerializer):
     user_label = serializers.SerializerMethodField()
     property_title = serializers.CharField(source='property.title', read_only=True)
@@ -553,11 +628,19 @@ class ActivityEventSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         request = self.context.get('request')
         payload = validated_data.get('payload') or {}
-        property_id = payload.get('property_id')
         validated_data['user'] = request.user if request and request.user.is_authenticated else None
         # Flag crawlers from the User-Agent, ignoring anything the client sent.
         # The event is still stored so bot traffic can be graphed on its own.
         validated_data['is_bot'] = is_bot_request(request)
+
+        property_id = _coerce_id(payload.get('property_id'))
+        if property_id is None:
+            # A page view of a ficha carries no property_id — it is fired by the
+            # generic page-view beacon, which only knows the URL. Reading the id
+            # off the path is what lets an arrival be attributed to the listing
+            # it arrived at, and an arrival is precisely what the promotion
+            # report of SOC-101 counts.
+            property_id = _property_id_from_path(validated_data.get('path') or '')
         if property_id is not None:
             validated_data['property'] = Property.objects.filter(pk=property_id).first()
         return super().create(validated_data)
@@ -856,6 +939,9 @@ class AdminPropertySerializer(serializers.ModelSerializer):
 
     def get_owner_email(self, obj):
         return obj.owner.email if obj.owner else None
+
+    def update(self, instance, validated_data):
+        return super().update(instance, reopen_on_reactivation(validated_data))
 
     def to_representation(self, instance):
         data = super().to_representation(instance)

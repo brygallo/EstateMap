@@ -519,8 +519,8 @@ function OwnerExecutive({ metrics }: { metrics: OwnerMetrics }) {
         </Card>
       </div>
 
-      <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(280px,0.8fr)]">
-        <Card className="rounded-card shadow-card">
+      <div className="grid min-w-0 gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(280px,0.8fr)]">
+        <Card className="min-w-0 overflow-hidden rounded-card shadow-card">
           <CardHeader className="pb-3">
             <CardTitle className="flex items-center gap-2 text-base"><MousePointerClick className="h-4 w-4" /> Contactos · 30 días</CardTitle>
           </CardHeader>
@@ -549,7 +549,7 @@ function OwnerExecutive({ metrics }: { metrics: OwnerMetrics }) {
           </CardContent>
         </Card>
 
-        <Card className="rounded-card shadow-card">
+        <Card className="min-w-0 overflow-hidden rounded-card shadow-card">
           <CardHeader className="pb-3"><CardTitle className="text-base">Propiedades más contactadas · 30 días</CardTitle></CardHeader>
           <CardContent className="space-y-2">
             {(metrics.top_contacted_properties || []).length === 0 ? (
@@ -561,11 +561,11 @@ function OwnerExecutive({ metrics }: { metrics: OwnerMetrics }) {
                 target="_blank"
                 className="flex items-center justify-between gap-3 rounded-card border border-line px-3 py-2 text-sm transition-colors hover:border-primary/30 hover:bg-primaryLight/30"
               >
-                <span className="min-w-0 flex-1 truncate">
+                <span className="min-w-0 flex-1 break-words">
                   <span className="font-medium text-textPrimary">{property.title || `Propiedad #${property.id}`}</span>
                   <span className="ml-1 text-textSecondary">· {property.city || '—'}</span>
                 </span>
-                <span className="font-geo font-semibold text-textPrimary">{property.count.toLocaleString('es-EC')}</span>
+                <span className="shrink-0 font-geo font-semibold text-textPrimary">{property.count.toLocaleString('es-EC')}</span>
               </Link>
             ))}
           </CardContent>

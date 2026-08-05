@@ -1,14 +1,15 @@
 'use client';
 
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Formik, Form, Field, ErrorMessage } from 'formik';
+import { Formik, Form } from 'formik';
 import * as Yup from 'yup';
 import { toast } from 'sonner';
-import { KeyRound, Lock, ShieldCheck, AlertTriangle, Loader2 } from 'lucide-react';
+import { Lock, ShieldCheck } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Card, CardContent } from '@/components/ui/card';
+import AuthCard from '@/components/auth/AuthCard';
+import AuthField from '@/components/auth/AuthField';
+import AuthNotice from '@/components/auth/AuthNotice';
+import AuthSubmit from '@/components/auth/AuthSubmit';
 import { fetchWithTimeout, requestErrorMessage, responseErrorMessage } from '@/lib/form-errors';
 import { getPublicApiUrl } from '@/lib/api-url';
 
@@ -61,133 +62,67 @@ const ResetPassword = () => {
 
   if (!token) {
     return (
-      <div className="space-y-6 text-center">
-        <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-error/10">
-          <AlertTriangle className="h-9 w-9 text-error" strokeWidth={1.75} />
-        </div>
-        <h1 className="text-3xl font-bold text-textPrimary">Token no válido</h1>
-        <p className="text-textSecondary">
-          El enlace de recuperación no es válido o ha expirado. Por favor, solicita uno nuevo.
-        </p>
+      <AuthNotice
+        tone="error"
+        title="Este enlace ya no sirve"
+        description="Los enlaces de recuperación caducan. Pide uno nuevo y te llega al correo en unos segundos."
+      >
         <Button
           onClick={() => router.push('/recuperar-contrasena')}
-          className="h-11 rounded-button bg-primary px-6 font-semibold text-primary-foreground shadow-card hover:bg-primaryHover"
+          className="h-11 px-6 text-sm font-semibold"
         >
-          Solicitar nuevo enlace
+          Pedir un enlace nuevo
         </Button>
-      </div>
+      </AuthNotice>
     );
   }
 
   return (
-    <div className="space-y-8">
-      {/* Logo y título */}
-      <div className="text-center">
-        <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-card bg-primary shadow-card">
-          <KeyRound className="h-8 w-8 text-primary-foreground" strokeWidth={1.75} />
-        </div>
-        <h1 className="text-3xl font-bold text-textPrimary">Restablecer contraseña</h1>
-        <p className="mt-2 text-sm text-textSecondary">Ingresa tu nueva contraseña</p>
-      </div>
+    <AuthCard
+      eyebrow="Recuperar acceso"
+      step={{ current: 2, total: 2 }}
+      title="Elige una contraseña nueva"
+      description="Con ella entrarás a partir de ahora."
+    >
+      <Formik
+        initialValues={{
+          new_password: '',
+          confirm_password: '',
+        }}
+        validationSchema={validationSchema}
+        onSubmit={handleSubmit}
+      >
+        {({ isSubmitting }: any) => (
+          <Form className="space-y-4">
+            <AuthField
+              id="new_password"
+              name="new_password"
+              label="Nueva contraseña"
+              type="password"
+              autoComplete="new-password"
+              placeholder="••••••••"
+              icon={Lock}
+              hint="Mínimo 8 caracteres. Evita algo obvio o solo números."
+            />
 
-      {/* Formulario */}
-      <Card className="rounded-card border-line bg-surface shadow-card">
-        <CardContent className="p-8">
-          <Formik
-            initialValues={{
-              new_password: '',
-              confirm_password: '',
-            }}
-            validationSchema={validationSchema}
-            onSubmit={handleSubmit}
-          >
-            {({ isSubmitting, errors, touched }: any) => (
-              <Form className="space-y-6">
-                {/* Nueva contraseña */}
-                <div className="space-y-2">
-                  <Label htmlFor="new_password">Nueva contraseña</Label>
-                  <div className="relative">
-                    <Lock className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                    <Field
-                      as={Input}
-                      id="new_password"
-                      name="new_password"
-                      type="password"
-                      autoComplete="new-password"
-                      placeholder="••••••••"
-                      aria-invalid={Boolean(errors.new_password && touched.new_password)}
-                      aria-describedby={errors.new_password && touched.new_password ? 'reset-new-password-error' : undefined}
-                      className={`h-11 rounded-input pl-10 ${
-                        errors.new_password && touched.new_password ? 'border-error focus-visible:ring-error' : ''
-                      }`}
-                    />
-                  </div>
-                  <ErrorMessage name="new_password" component="p" id="reset-new-password-error" className="text-sm text-error" />
-                </div>
+            <AuthField
+              id="confirm_password"
+              name="confirm_password"
+              label="Confirmar nueva contraseña"
+              type="password"
+              autoComplete="new-password"
+              placeholder="••••••••"
+              icon={ShieldCheck}
+            />
 
-                {/* Confirmar contraseña */}
-                <div className="space-y-2">
-                  <Label htmlFor="confirm_password">Confirmar nueva contraseña</Label>
-                  <div className="relative">
-                    <ShieldCheck className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                    <Field
-                      as={Input}
-                      id="confirm_password"
-                      name="confirm_password"
-                      type="password"
-                      autoComplete="new-password"
-                      placeholder="••••••••"
-                      aria-invalid={Boolean(errors.confirm_password && touched.confirm_password)}
-                      aria-describedby={errors.confirm_password && touched.confirm_password ? 'reset-confirm-password-error' : undefined}
-                      className={`h-11 rounded-input pl-10 ${
-                        errors.confirm_password && touched.confirm_password
-                          ? 'border-error focus-visible:ring-error'
-                          : ''
-                      }`}
-                    />
-                  </div>
-                  <ErrorMessage name="confirm_password" component="p" id="reset-confirm-password-error" className="text-sm text-error" />
-                </div>
-
-                {/* Requisitos de contraseña */}
-                <div className="rounded-input border border-primaryLight bg-primaryLight/50 p-3">
-                  <p className="mb-1 text-xs font-medium text-primary">La contraseña debe:</p>
-                  <ul className="ml-4 list-disc space-y-1 text-xs text-primary/80">
-                    <li>Tener al menos 8 caracteres</li>
-                    <li>Contener letras y números</li>
-                    <li>No ser una contraseña común</li>
-                  </ul>
-                </div>
-
-                {/* Submit Button */}
-                <Button
-                  type="submit"
-                  disabled={isSubmitting}
-                  className="h-11 w-full rounded-button bg-primary text-base font-semibold text-primary-foreground shadow-card transition-transform hover:bg-primaryHover active:scale-[0.98]"
-                >
-                  {isSubmitting ? (
-                    <>
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                      Actualizando...
-                    </>
-                  ) : (
-                    <>
-                      Restablecer contraseña
-                      <ShieldCheck className="h-4 w-4" />
-                    </>
-                  )}
-                </Button>
-              </Form>
-            )}
-          </Formik>
-        </CardContent>
-      </Card>
-
-      {/* Footer */}
-      <p className="text-center text-sm text-textSecondary">
-        © {new Date().getFullYear()} Geo Propiedades Ecuador. Todos los derechos reservados.
-      </p>
-    </div>
+            <AuthSubmit pending={isSubmitting} pendingLabel="Guardando…">
+              Guardar contraseña
+              <ShieldCheck className="h-4 w-4" aria-hidden />
+            </AuthSubmit>
+          </Form>
+        )}
+      </Formik>
+    </AuthCard>
   );
 };
 

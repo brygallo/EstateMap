@@ -1,19 +1,24 @@
 'use client';
 
 import Link from 'next/link';
-import Image from 'next/image';
 import { useRouter } from 'next/navigation';
-import { Formik, Form, Field, ErrorMessage } from 'formik';
+import { Formik, Form } from 'formik';
 import * as Yup from 'yup';
 import { toast } from 'sonner';
-import { User, Mail, Lock, ShieldCheck, ArrowRight, Loader2 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Card, CardContent } from '@/components/ui/card';
+import { User, Mail, Lock, ShieldCheck, ArrowRight, Check } from 'lucide-react';
 import GoogleSignInButton from '@/components/GoogleSignInButton';
+import AuthCard from '@/components/auth/AuthCard';
+import AuthDivider from '@/components/auth/AuthDivider';
+import AuthField from '@/components/auth/AuthField';
+import AuthSubmit from '@/components/auth/AuthSubmit';
 import { fetchWithTimeout, requestErrorMessage } from '@/lib/form-errors';
 import { getPublicApiUrl } from '@/lib/api-url';
+
+const BENEFITS = [
+  'Publicar no cuesta nada y no cobramos comisión.',
+  'Tu anuncio sale en el mapa con fotos, precio y ubicación.',
+  'Te contactan directo por teléfono o WhatsApp.',
+];
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -24,7 +29,11 @@ export default function RegisterPage() {
     first_name: Yup.string().required('Campo requerido'),
     last_name: Yup.string().required('Campo requerido'),
     email: Yup.string().email('Correo inválido').required('Campo requerido'),
-    password: Yup.string().required('Campo requerido'),
+    // Mirrors the server: register runs Django's default validators through
+    // validate_password (real_estate/serializers.py), whose minimum is 8.
+    password: Yup.string()
+      .min(8, 'La contraseña debe tener al menos 8 caracteres')
+      .required('Campo requerido'),
     confirm: Yup.string()
       .oneOf([Yup.ref('password')], 'Las contraseñas no coinciden')
       .required('Campo requerido'),
@@ -70,225 +79,113 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="space-y-8">
-      {/* Logo y título */}
-      <div className="text-center">
-        <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-card border border-primary/20 bg-white shadow-card">
-          <Image src="/aents/aents-symbol.png" alt="" width={48} height={48} className="h-12 w-12" priority />
-        </div>
-        <h1 className="text-3xl font-bold text-textPrimary">Publica tu propiedad gratis</h1>
-        <p className="mt-2 text-sm text-textSecondary">
-          Crea tu cuenta y empieza a recibir contactos directos por teléfono o WhatsApp.
-        </p>
-      </div>
+    <AuthCard
+      eyebrow="Crear cuenta"
+      step={{ current: 1, total: 2 }}
+      title="Publica tu propiedad gratis"
+      description="Crea tu cuenta y tu anuncio queda visible en el mapa."
+      footer={
+        <>
+          ¿Ya tienes cuenta?{' '}
+          <Link href="/iniciar-sesion" className="font-semibold text-primary transition-colors hover:text-secondary">
+            Inicia sesión
+          </Link>
+        </>
+      }
+    >
+      <ul className="mb-6 space-y-2">
+        {BENEFITS.map((benefit) => (
+          <li key={benefit} className="flex items-start gap-2 text-sm text-textSecondary">
+            <Check className="mt-0.5 h-4 w-4 shrink-0 text-primary" strokeWidth={2.5} aria-hidden />
+            {benefit}
+          </li>
+        ))}
+      </ul>
 
-      {/* Formulario */}
-      <Card className="rounded-card border-line bg-surface shadow-card">
-        <CardContent className="p-8">
-          <div className="mb-6 grid grid-cols-1 gap-2 text-sm">
-            <div className="rounded-input bg-success/10 px-4 py-3 font-medium text-success">
-              Publicación sin costo y sin comisiones.
+      <Formik
+        initialValues={{
+          username: '',
+          first_name: '',
+          last_name: '',
+          email: '',
+          password: '',
+          confirm: '',
+        }}
+        validationSchema={validationSchema}
+        onSubmit={handleSubmit}
+      >
+        {({ isSubmitting }) => (
+          <Form className="space-y-4">
+            <AuthField
+              id="username"
+              name="username"
+              label="Usuario"
+              type="text"
+              autoComplete="username"
+              placeholder="tu_usuario"
+              icon={User}
+            />
+
+            <div className="grid grid-cols-2 gap-3">
+              <AuthField
+                id="first_name"
+                name="first_name"
+                label="Nombre"
+                type="text"
+                autoComplete="given-name"
+                placeholder="Juan"
+              />
+              <AuthField
+                id="last_name"
+                name="last_name"
+                label="Apellido"
+                type="text"
+                autoComplete="family-name"
+                placeholder="Pérez"
+              />
             </div>
-            <div className="rounded-input bg-primaryLight px-4 py-3 font-medium text-primary">
-              Tu anuncio se muestra en el mapa con fotos, precio y ubicación.
-            </div>
-            <div className="rounded-input bg-warning/10 px-4 py-3 font-medium text-warning">
-              Si tienes dudas, te ayudamos a publicarlo por WhatsApp.
-            </div>
-          </div>
 
-          <Formik
-            initialValues={{
-              username: '',
-              first_name: '',
-              last_name: '',
-              email: '',
-              password: '',
-              confirm: '',
-            }}
-            validationSchema={validationSchema}
-            onSubmit={handleSubmit}
-          >
-            {({ isSubmitting, errors, touched }) => (
-              <Form className="space-y-5">
-                {/* Username */}
-                <div className="space-y-2">
-                  <Label htmlFor="username">Usuario</Label>
-                  <div className="relative">
-                    <User className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                    <Field
-                      as={Input}
-                      id="username"
-                      name="username"
-                      type="text"
-                      autoComplete="username"
-                      placeholder="tu_usuario"
-                      aria-invalid={Boolean(errors.username && touched.username)}
-                      aria-describedby={errors.username && touched.username ? 'register-username-error' : undefined}
-                      className={`h-11 rounded-input pl-10 ${
-                        errors.username && touched.username ? 'border-error focus-visible:ring-error' : ''
-                      }`}
-                    />
-                  </div>
-                  <ErrorMessage name="username" component="p" id="register-username-error" className="text-sm text-error" />
-                </div>
+            <AuthField
+              id="email"
+              name="email"
+              label="Correo electrónico"
+              type="email"
+              autoComplete="email"
+              placeholder="tu@email.com"
+              icon={Mail}
+            />
 
-                {/* First Name & Last Name */}
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="first_name">Nombre</Label>
-                    <Field
-                      as={Input}
-                      id="first_name"
-                      name="first_name"
-                      type="text"
-                      autoComplete="given-name"
-                      placeholder="Juan"
-                      aria-invalid={Boolean(errors.first_name && touched.first_name)}
-                      aria-describedby={errors.first_name && touched.first_name ? 'register-first-name-error' : undefined}
-                      className={`h-11 rounded-input ${
-                        errors.first_name && touched.first_name ? 'border-error focus-visible:ring-error' : ''
-                      }`}
-                    />
-                    <ErrorMessage name="first_name" component="p" id="register-first-name-error" className="text-sm text-error" />
-                  </div>
+            <AuthField
+              id="password"
+              name="password"
+              label="Contraseña"
+              type="password"
+              autoComplete="new-password"
+              placeholder="••••••••"
+              icon={Lock}
+              hint="Mínimo 8 caracteres. Evita algo obvio o solo números."
+            />
 
-                  <div className="space-y-2">
-                    <Label htmlFor="last_name">Apellido</Label>
-                    <Field
-                      as={Input}
-                      id="last_name"
-                      name="last_name"
-                      type="text"
-                      autoComplete="family-name"
-                      placeholder="Pérez"
-                      aria-invalid={Boolean(errors.last_name && touched.last_name)}
-                      aria-describedby={errors.last_name && touched.last_name ? 'register-last-name-error' : undefined}
-                      className={`h-11 rounded-input ${
-                        errors.last_name && touched.last_name ? 'border-error focus-visible:ring-error' : ''
-                      }`}
-                    />
-                    <ErrorMessage name="last_name" component="p" id="register-last-name-error" className="text-sm text-error" />
-                  </div>
-                </div>
+            <AuthField
+              id="confirm"
+              name="confirm"
+              label="Confirmar contraseña"
+              type="password"
+              autoComplete="new-password"
+              placeholder="••••••••"
+              icon={ShieldCheck}
+            />
 
-                {/* Email */}
-                <div className="space-y-2">
-                  <Label htmlFor="email">Correo electrónico</Label>
-                  <div className="relative">
-                    <Mail className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                    <Field
-                      as={Input}
-                      id="email"
-                      name="email"
-                      type="email"
-                      autoComplete="email"
-                      placeholder="tu@email.com"
-                      aria-invalid={Boolean(errors.email && touched.email)}
-                      aria-describedby={errors.email && touched.email ? 'register-email-error' : undefined}
-                      className={`h-11 rounded-input pl-10 ${
-                        errors.email && touched.email ? 'border-error focus-visible:ring-error' : ''
-                      }`}
-                    />
-                  </div>
-                  <ErrorMessage name="email" component="p" id="register-email-error" className="text-sm text-error" />
-                </div>
+            <AuthSubmit pending={isSubmitting} pendingLabel="Creando cuenta…">
+              Crear cuenta
+              <ArrowRight className="h-4 w-4" aria-hidden />
+            </AuthSubmit>
+          </Form>
+        )}
+      </Formik>
 
-                {/* Password */}
-                <div className="space-y-2">
-                  <Label htmlFor="password">Contraseña</Label>
-                  <div className="relative">
-                    <Lock className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                    <Field
-                      as={Input}
-                      id="password"
-                      name="password"
-                      type="password"
-                      autoComplete="new-password"
-                      placeholder="••••••••"
-                      aria-invalid={Boolean(errors.password && touched.password)}
-                      aria-describedby={errors.password && touched.password ? 'register-password-error' : undefined}
-                      className={`h-11 rounded-input pl-10 ${
-                        errors.password && touched.password ? 'border-error focus-visible:ring-error' : ''
-                      }`}
-                    />
-                  </div>
-                  <ErrorMessage name="password" component="p" id="register-password-error" className="text-sm text-error" />
-                </div>
-
-                {/* Confirm Password */}
-                <div className="space-y-2">
-                  <Label htmlFor="confirm">Confirmar contraseña</Label>
-                  <div className="relative">
-                    <ShieldCheck className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                    <Field
-                      as={Input}
-                      id="confirm"
-                      name="confirm"
-                      type="password"
-                      autoComplete="new-password"
-                      placeholder="••••••••"
-                      aria-invalid={Boolean(errors.confirm && touched.confirm)}
-                      aria-describedby={errors.confirm && touched.confirm ? 'register-confirm-error' : undefined}
-                      className={`h-11 rounded-input pl-10 ${
-                        errors.confirm && touched.confirm ? 'border-error focus-visible:ring-error' : ''
-                      }`}
-                    />
-                  </div>
-                  <ErrorMessage name="confirm" component="p" id="register-confirm-error" className="text-sm text-error" />
-                </div>
-
-                {/* Submit Button */}
-                <Button
-                  type="submit"
-                  disabled={isSubmitting}
-                  className="h-11 w-full rounded-button bg-primary text-base font-semibold text-primary-foreground shadow-card transition-transform hover:bg-primaryHover active:scale-[0.98]"
-                >
-                  {isSubmitting ? (
-                    <>
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                      Creando cuenta...
-                    </>
-                  ) : (
-                    <>
-                      Crear cuenta y publicar
-                      <ArrowRight className="h-4 w-4" />
-                    </>
-                  )}
-                </Button>
-              </Form>
-            )}
-          </Formik>
-
-          {/* Divider */}
-          <div className="relative my-6">
-            <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-line" />
-            </div>
-            <div className="relative flex justify-center text-sm">
-              <span className="bg-surface px-4 text-textSecondary">O regístrate con</span>
-            </div>
-          </div>
-
-          {/* Google Sign In Button */}
-          <div className="mb-6">
-            <GoogleSignInButton text="signup_with" />
-          </div>
-
-          {/* Login Link */}
-          <p className="text-center text-sm text-textSecondary">
-            ¿Ya tienes una cuenta?{' '}
-            <Link href="/iniciar-sesion" className="font-semibold text-primary transition-colors hover:text-secondary">
-              Inicia sesión aquí
-            </Link>
-          </p>
-        </CardContent>
-      </Card>
-
-      {/* Footer */}
-      <p className="text-center text-sm text-textSecondary">
-        © {new Date().getFullYear()} Geo Propiedades Ecuador. Todos los derechos reservados.
-      </p>
-    </div>
+      <AuthDivider label="o regístrate con" />
+      <GoogleSignInButton text="signup_with" />
+    </AuthCard>
   );
 }

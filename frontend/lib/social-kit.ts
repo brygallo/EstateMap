@@ -16,6 +16,7 @@
 import { SITE_URL } from './properties';
 import {
   formatArea,
+  formatDate,
   formatPrice,
   getPropertyTypeLabel,
   getStatusLabel,
@@ -24,7 +25,14 @@ import type { Property } from './types';
 
 export type SocialNetwork = 'facebook' | 'instagram' | 'tiktok' | 'whatsapp';
 
-export type SocialFormat = 'feed' | 'portrait' | 'story' | 'map' | 'og';
+export type SocialFormat =
+  | 'feed'
+  | 'portrait'
+  | 'story'
+  | 'map'
+  | 'og'
+  | 'price-drop'
+  | 'sold';
 
 export type CopyTone = 'cercano' | 'formal' | 'urgente';
 
@@ -74,7 +82,33 @@ export const SOCIAL_FORMATS: Record<SocialFormat, FormatSpec> = {
     label: 'Vista previa del enlace',
     hint: 'Lo que se ve al pegar el enlace en una publicación',
   },
+  // The two moment laminas. Both are 4:5 for the same reason the portrait is:
+  // they are made to be posted once, on the day the thing happened, and 4:5 is
+  // the tallest shape a feed shows without cropping.
+  'price-drop': {
+    width: 1080,
+    height: 1350,
+    label: 'Bajó de precio',
+    hint: 'Los dos precios, el de antes y el de ahora',
+  },
+  sold: {
+    width: 1080,
+    height: 1350,
+    label: 'Vendido',
+    hint: 'Para anunciar el cierre; es tu currículum, no el anuncio',
+  },
 };
+
+/**
+ * The laminas that only exist when something happened to the listing.
+ *
+ * Kept out of `NETWORK_FORMATS` on purpose: that table answers "what shapes
+ * does this network take", which is a fact about the network and true always.
+ * These two answer "does this listing have news", which is a fact about the
+ * listing and false most of the time. Merging them would make every kit screen
+ * offer a card that renders a 404 for the majority of listings.
+ */
+export const MOMENT_FORMATS = ['price-drop', 'sold'] as const satisfies readonly SocialFormat[];
 
 export const NETWORK_LABELS: Record<SocialNetwork, string> = {
   facebook: 'Facebook',
@@ -105,26 +139,34 @@ export const NETWORK_FORMATS: Record<SocialNetwork, SocialFormat[]> = {
  * Written because the honest answer to "can it post for me?" is no (SOC-010),
  * and the next best thing is not leaving someone staring at a downloaded PNG
  * wondering what to do with it.
+ *
+ * Each list ends with the one thing about that network that someone publishing
+ * a listing for the first time gets wrong: the link that is not clickable, the
+ * caption nobody reads past the third line, the status that crops the image.
  */
 export const NETWORK_STEPS: Record<SocialNetwork, string[]> = {
   facebook: [
     'Descarga la imagen o compártela directo desde tu celular.',
     'Copia el texto y pégalo al crear la publicación.',
     'Si prefieres, pega solo el enlace: Facebook arma la vista previa solo.',
+    'Compártela también en los grupos de compra y venta de tu ciudad; ahí es donde más se mueve.',
   ],
   instagram: [
-    'Descarga la imagen (la vertical rinde más que la cuadrada).',
+    'Descarga la imagen (la vertical 4:5 ocupa más pantalla que la cuadrada).',
     'Copia el texto y pégalo como descripción al publicar.',
-    'Instagram no deja enlaces en la descripción: pon el enlace en tu biografía. El QR de la imagen y el código funcionan igual.',
+    'En la descripción los enlaces no son clicables: pon el enlace en tu biografía. El QR de la imagen lleva directo al anuncio.',
+    'Si la subes como historia, ponle el sticker de enlace: ahí sí se puede tocar.',
   ],
   tiktok: [
-    'Usa la imagen 9:16 como portada, o súbela en modo foto.',
-    'Copia el gancho y pégalo como descripción.',
-    'Si grabas un video del recorrido, la lámina del mapa funciona bien como cierre.',
+    'Sube la imagen 9:16 en modo foto, o úsala como portada de tu video.',
+    'Copia el gancho y pégalo como descripción: solo se leen las dos primeras líneas.',
+    'Di el precio y el sector en voz alta en los primeros segundos; es lo que hace que no pasen de largo.',
+    'Si grabas el recorrido, la lámina del mapa funciona bien como cierre.',
   ],
   whatsapp: [
-    'Comparte la imagen desde tu celular y pega el texto como mensaje.',
-    'En estados de WhatsApp funciona mejor la imagen vertical.',
+    'Envía primero la imagen y luego pega el texto como mensaje.',
+    'Al pegar el enlace, WhatsApp arma la vista previa con la lámina.',
+    'Para tu estado usa la imagen vertical y acorta el texto: el estado corta a las pocas líneas.',
   ],
 };
 
@@ -170,9 +212,13 @@ export function trackedUrl(
 export function laminaPath(
   property: Pick<Property, 'id'>,
   format: SocialFormat,
-  network: SocialNetwork = 'facebook'
+  network: SocialNetwork = 'facebook',
+  artworkMessage?: string
 ): string {
-  return `/api/social/${property.id}/${format}?red=${network}`;
+  const params = new URLSearchParams({ red: network });
+  const message = artworkMessage?.trim();
+  if (message) params.set('mensaje', message.slice(0, 72));
+  return `/api/social/${property.id}/${format}?${params.toString()}`;
 }
 
 /**
@@ -199,17 +245,65 @@ export function laminaFilename(
 
 // --- Copy -----------------------------------------------------------------
 
-const TYPE_HASHTAGS: Record<string, string[]> = {
-  house: ['CasasEnVenta', 'CasaPropia'],
-  apartment: ['Departamentos', 'DepartamentoEnVenta'],
-  land: ['Terrenos', 'TerrenoEnVenta', 'Lotes'],
-  commercial: ['LocalComercial', 'Negocios'],
-  other: ['Inmuebles'],
+/**
+ * The character budget each network actually enforces.
+ *
+ * Not decoration: a caption that goes over is rejected on paste, and whoever is
+ * publishing has no way to tell which line to cut. These are the platforms' own
+ * limits — TikTok accepts 4.000 typed inside the app but only 2.200 through the
+ * schedulers people actually use, so the lower one governs.
+ *
+ * Instagram and TikTok also hide everything past the first ~125 characters
+ * behind a "más", which is why the price and the place go in the first line and
+ * never in the last. The WhatsApp text is built to land around 700 characters,
+ * which is where a status gets cut, but the ceiling here stays at the chat
+ * limit: clamping is the last resort and it trims from the end, and the end of
+ * that message is the link.
+ */
+export const NETWORK_LIMITS: Record<SocialNetwork, number> = {
+  facebook: 63206,
+  instagram: 2200,
+  tiktok: 2200,
+  whatsapp: 65536,
 };
+
+/**
+ * How many tags each network can carry before it reads as spam.
+ *
+ * Instagram allows 30 and TikTok 30, but the count that performs is nowhere
+ * near the ceiling: a listing is a local search, not a trend. Facebook barely
+ * uses hashtags for discovery at all, so three local ones are the whole point
+ * of putting any. WhatsApp is a message to one person: zero.
+ */
+const NETWORK_HASHTAG_COUNT: Record<SocialNetwork, number> = {
+  facebook: 3,
+  instagram: 10,
+  tiktok: 5,
+  whatsapp: 0,
+};
+
+/** Plural type word used to compose tags: "#CasasEnVentaMacas". */
+const TYPE_TAG_WORD: Record<string, string> = {
+  house: 'Casas',
+  apartment: 'Departamentos',
+  land: 'Terrenos',
+  commercial: 'Locales',
+  other: 'Inmuebles',
+};
+
+/**
+ * Words a Spanish place name drops when it becomes a hashtag.
+ *
+ * "Santo Domingo de los Tsáchilas" typed literally gives
+ * #SantoDomingoDeLosTsachilas, which nobody searches and nobody types. The tag
+ * people actually use is #SantoDomingoTsachilas. Only connectors in the middle
+ * are dropped: "El Oro" has to stay #ElOro, not #Oro.
+ */
+const TAG_STOPWORDS = new Set(['de', 'del', 'la', 'las', 'los', 'el', 'y', 'e']);
 
 /** Strip accents and spaces: a hashtag with a tilde breaks on some clients. */
 function toHashtag(value: string): string {
-  const clean = value
+  const words = value
     .normalize('NFD')
     // Same escaped range as `slugify`: written literally it is invisible in an
     // editor and one stray keystroke away from matching nothing.
@@ -217,20 +311,66 @@ function toHashtag(value: string): string {
     .replace(/[^a-zA-Z0-9\s]/g, '')
     .trim()
     .split(/\s+/)
+    .filter(Boolean);
+  const clean = words
+    .filter((word, index) => index === 0 || !TAG_STOPWORDS.has(word.toLowerCase()))
     .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
     .join('');
   return clean ? `#${clean}` : '';
 }
 
-export function buildHashtags(property: Property): string[] {
-  const typeTags = TYPE_HASHTAGS[property.property_type] ?? TYPE_HASHTAGS.other;
+/** Bare place name for composing tags, without the leading '#'. */
+function tagWord(value: string | undefined): string {
+  return toHashtag(value ?? '').slice(1);
+}
+
+/**
+ * Longest a composed tag may get before it stops being a tag.
+ *
+ * #CasasEnVentaMacas is something a person could plausibly type into a search
+ * box. #TerrenosEnArriendoSantoDomingoTsachilas is a wall of letters that nobody
+ * has ever searched for and that eats a fifth of a TikTok caption. When the city
+ * is long the composed forms are dropped and the plain #SantoDomingoTsachilas
+ * carries the location on its own.
+ */
+const MAX_COMPOSED_TAG = 26;
+
+function composedTag(...parts: string[]): string {
+  const tag = `#${parts.join('')}`;
+  return tag.length <= MAX_COMPOSED_TAG ? tag : '';
+}
+
+/**
+ * The tags for this listing, most specific first.
+ *
+ * Ordered by how much a tag can plausibly do for a single listing in Ecuador:
+ * the city ones are searched by people who are actually looking to buy in that
+ * city, while #BienesRaices returns a wall of agents from four countries. The
+ * composed ones follow patterns that are already in use here
+ * (#BienesRaicesQuito, #CasasEnVentaQuito, #ArriendosLoja), not invented
+ * combinations — a tag nobody uses is a tag nobody reads.
+ *
+ * Because it is ordered, every network takes its share with a slice from the
+ * front and keeps the local ones.
+ */
+function hashtagPool(property: Property): string[] {
+  const typeWord = TYPE_TAG_WORD[property.property_type] ?? TYPE_TAG_WORD.other;
+  const operation = property.status === 'for_rent' ? 'EnArriendo' : 'EnVenta';
+  const city = tagWord(property.city);
+  const province = tagWord(property.province);
+
   const tags = [
-    ...typeTags.map((tag) => `#${tag}`),
-    toHashtag(property.city ?? ''),
-    toHashtag(property.province ?? ''),
+    city ? composedTag(typeWord, operation, city) : '',
+    city ? `#${city}` : '',
+    city ? composedTag('BienesRaices', city) : '',
+    province ? `#${province}` : '',
+    `#${typeWord}${operation}`,
     '#BienesRaicesEcuador',
+    '#InmueblesEcuador',
+    '#InmobiliariaEcuador',
+    '#BienesRaices',
     '#Ecuador',
-    property.status === 'for_rent' ? '#Arriendo' : '#EnVenta',
+    '#GeoPropiedadesEcuador',
   ];
   // A tag built from an empty city comes back as '', and duplicates happen when
   // the city and the province share a name (Loja, Azogues, El Oro…).
@@ -238,15 +378,67 @@ export function buildHashtags(property: Property): string[] {
 }
 
 /**
+ * The tags to paste with the copy for a given network.
+ *
+ * Called without a network it returns the whole ordered pool, which is what the
+ * kit screen shows when someone wants to pick their own.
+ */
+export function buildHashtags(property: Property, network?: SocialNetwork): string[] {
+  const pool = hashtagPool(property);
+  if (!network) return pool;
+
+  // TikTok is not a search box, it is a feed: the local tag still matters, but
+  // what carries a video there is the broad discovery tag, so the mix is
+  // deliberately different from Instagram's rather than a shorter slice of it.
+  if (network === 'tiktok') {
+    const typeWord = TYPE_TAG_WORD[property.property_type] ?? TYPE_TAG_WORD.other;
+    const operation = property.status === 'for_rent' ? 'EnArriendo' : 'EnVenta';
+    const city = tagWord(property.city);
+    return Array.from(
+      new Set(
+        [
+          city ? `#${city}` : '',
+          `#${typeWord}${operation}`,
+          '#BienesRaicesEcuador',
+          '#Ecuador',
+          '#ParaTi',
+        ].filter(Boolean)
+      )
+    );
+  }
+
+  return pool.slice(0, NETWORK_HASHTAG_COUNT[network]);
+}
+
+/**
+ * How many phrases the facts line carries.
+ *
+ * The laminas print this joined on a single row at 30px inside a 700px column,
+ * so the cap is what keeps the image from wrapping into the QR. The copy has no
+ * such constraint and asks for more.
+ */
+const LAMINA_FACT_LIMIT = 4;
+
+/**
  * The listing's factual attributes, as phrases.
  *
  * Only what the listing actually declares: a missing field disappears from the
  * sentence instead of being written as "0 habitaciones". SOC-007.
+ *
+ * Ordered by what someone decides with — surface first, then what is built on
+ * it — because the callers that cannot print all of them take the first ones.
  */
-export function buildFacts(property: Property): string[] {
+export function buildFacts(
+  property: Property,
+  options: { limit?: number } = {}
+): string[] {
   const facts: string[] = [];
   const area = formatArea(property.area);
   if (area) facts.push(area);
+  const builtArea = formatArea(property.built_area);
+  // Imported listings routinely repeat the same number in both columns, and
+  // "250 m² · 250 m² construidos" reads like a bug rather than like a house.
+  if (builtArea && builtArea !== area) facts.push(`${builtArea} construidos`);
   if ((property.rooms ?? 0) > 0) {
     facts.push(`${property.rooms} ${property.rooms === 1 ? 'habitación' : 'habitaciones'}`);
   }
@@ -258,15 +450,106 @@ export function buildFacts(property: Property): string[] {
       `${property.parking_spaces} ${property.parking_spaces === 1 ? 'parqueadero' : 'parqueaderos'}`
     );
   }
-  return facts;
+  if ((property.floors ?? 0) > 0) {
+    facts.push(`${property.floors} ${property.floors === 1 ? 'piso' : 'pisos'}`);
+  }
+  return facts.slice(0, options.limit ?? LAMINA_FACT_LIMIT);
+}
+
+/** True when the listing carries a drawn shape and not just a pin. */
+function hasPolygon(property: Property): boolean {
+  const polygon = property.polygon;
+  if (!polygon) return false;
+  if (Array.isArray(polygon)) return polygon.length > 0;
+  return Array.isArray(polygon.coordinates) && polygon.coordinates.length > 0;
+}
+
+/**
+ * The declared attributes that belong in text but not on an image.
+ *
+ * Same rule as `buildFacts` and the same reason: every phrase here corresponds
+ * to a field the listing filled in. They are kept apart from the facts because
+ * a lamina has room for four short phrases and a Facebook post has room for a
+ * paragraph — and because "Amoblado" over a photo says nothing that the photo
+ * does not already say.
+ *
+ * The land shape is worth naming: the portal is the only place in Ecuador where
+ * the boundary of a lot is drawn on the map, and «Forma del terreno» is exactly
+ * what the interface calls it. When the owner asked for a reference figure
+ * instead of exact measurements (VIS-003), the phrase says so rather than
+ * implying a survey.
+ */
+export function buildDetails(property: Property): string[] {
+  const details: string[] = [];
+  if (property.furnished) details.push('Amoblado');
+  if (property.year_built) details.push(`Año de construcción: ${property.year_built}`);
+  // A price that does not exist cannot be negotiated: "Precio a consultar ·
+  // Precio negociable" is two ways of saying nothing.
+  if (property.is_negotiable && formatPrice(property.price) !== 'Precio a consultar') {
+    details.push('Precio negociable');
+  }
+  if (hasPolygon(property)) {
+    details.push(
+      property.show_measurements === false
+        ? 'Forma del terreno dibujada en el mapa (medidas referenciales)'
+        : 'Forma del terreno dibujada en el mapa'
+    );
+  }
+  return details;
+}
+
+/**
+ * How the operation is named inside a sentence.
+ *
+ * The shared label says «En alquiler» because that is what the badge on the
+ * ficha reads, but this text is written for someone in Ecuador scrolling
+ * Facebook, and here it is an arriendo. The fallback keeps the shared source of
+ * truth for any status this map does not cover.
+ */
+const STATUS_COPY: Record<string, string> = {
+  for_sale: 'en venta',
+  for_rent: 'en arriendo',
+};
+
+/** Two place names that are the same name, tildes and case aside. */
+function samePlace(a?: string, b?: string): boolean {
+  const fold = (value: string) =>
+    value
+      .normalize('NFD')
+      .replace(/[̀-ͯ]/g, '')
+      .toLowerCase()
+      .trim();
+  return Boolean(a && b && fold(a) === fold(b));
+}
+
+/** "Macas, Morona Santiago" — one name when the city names its own province. */
+export function buildPlace(property: Property): string {
+  const city = property.city?.trim() ?? '';
+  const province = property.province?.trim() ?? '';
+  // Santo Domingo, Loja, Azogues and a handful more repeat themselves, and
+  // "en Santo Domingo de los Tsáchilas, Santo Domingo de los Tsáchilas" is
+  // eighty characters of nothing on the one line Instagram shows by default.
+  if (samePlace(city, province)) return city;
+  return [city, province].filter(Boolean).join(', ');
 }
 
 /** "Casa en venta en Macas, Morona Santiago" — omitting whatever is missing. */
 export function buildHeadline(property: Property): string {
   const type = getPropertyTypeLabel(property.property_type);
-  const status = getStatusLabel(property.status).toLowerCase();
-  const place = [property.city, property.province].filter(Boolean).join(', ');
-  return place ? `${type} ${status} en ${place}` : `${type} ${status}`;
+  const status =
+    STATUS_COPY[property.status] ?? getStatusLabel(property.status).toLowerCase();
+  const place = buildPlace(property);
+  const subject = status ? `${type} ${status}` : type;
+  return place ? `${subject} en ${place}` : subject;
+}
+
+/** Short conversion message printed on the generated artwork. */
+export function buildArtworkHeadline(property: Property): string {
+  const type = String(property.property_type);
+  if (property.status === 'for_rent') return 'CONOCE TU PRÓXIMO ESPACIO';
+  if (type === 'land') return 'DESCUBRE EL POTENCIAL DE ESTE TERRENO';
+  if (type === 'commercial') return 'UNA UBICACIÓN PARA HACER CRECER TU NEGOCIO';
+  return 'DESCUBRE TU PRÓXIMO HOGAR';
 }
 
 /**
@@ -280,112 +563,382 @@ export function buildPriceLine(property: Property): string {
   const main = formatPrice(property.price);
   const rent = property.rent_price != null ? formatPrice(property.rent_price) : '';
   if (rent && rent !== 'Precio a consultar') {
-    return `${main} venta · ${rent}/mes alquiler`;
+    return `${main} venta · ${rent}/mes arriendo`;
   }
   return property.status === 'for_rent' && main !== 'Precio a consultar'
     ? `${main}/mes`
     : main;
 }
 
-const OPENERS: Record<CopyTone, (headline: string) => string> = {
-  cercano: (headline) => `🏡 ${headline}`,
-  formal: (headline) => `${headline}.`,
-  urgente: (headline) => `🔥 ¡No te lo pierdas! ${headline}`,
+// --- The moments ----------------------------------------------------------
+
+/**
+ * A listing is shared well once and then sits still. The moments that give
+ * someone an excuse to post it again are few and known: the price came down,
+ * and it sold. SOC-102.
+ *
+ * Everything below decides whether a moment is real, and it is deliberately
+ * strict about it. These two laminas do not describe a property, they assert an
+ * event — "this cost less than it did" and "this one is closed" — and an image
+ * asserting an event that did not happen is not a cosmetic bug. When the facts
+ * are not there the honest answer is no lamina, which is what the route turns
+ * into a 404.
+ */
+
+/** A figure that can be printed as money, or null. */
+function amount(value: number | string | null | undefined): number | null {
+  const parsed = Number.parseFloat(String(value ?? ''));
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : null;
+}
+
+export interface PriceDrop {
+  previous: number;
+  current: number;
+  /**
+   * Whole percent knocked off, or 0 when the cut rounds to nothing.
+   *
+   * Zero is printed as nothing rather than as "-0 %". A drop of eleven dollars
+   * on ninety thousand is still a drop and still says so; what it is not is a
+   * percentage worth a badge.
+   */
+  percent: number;
+  /** Both formatted by the shared formatter, so neither can read "$0". SOC-005. */
+  previousLabel: string;
+  currentLabel: string;
+  /** "4 de agosto de 2026" — the day the portal recorded the change. */
+  changedLabel: string;
+}
+
+/**
+ * The price cut this listing can announce, or null when there is none.
+ *
+ * `previous_price` and `price_changed_at` arrive null unless the newest row of
+ * the price history agrees with the price being asked right now, so a null here
+ * means "no trustworthy before", not "no history". A rise is not a drop and
+ * returns null too: a lamina that celebrates a higher number is a lamina nobody
+ * asked for, and reusing the drop layout for it would put "ANTES" over the
+ * cheaper figure — precisely the reading that turns an honest image into a lie.
+ */
+export function priceDrop(property: Property): PriceDrop | null {
+  const previous = amount(property.previous_price);
+  const current = amount(property.price);
+  const changedAt = property.price_changed_at;
+  if (previous === null || current === null || !changedAt) return null;
+  if (previous <= current) return null;
+
+  // A rental's `price` column holds the monthly figure, and the ficha writes it
+  // as "$450/mes". The lamina has to agree with it: "$450" next to "$520" reads
+  // as a house that lost 70 dollars of its sale price.
+  const monthly = property.status === 'for_rent' ? '/mes' : '';
+  return {
+    previous,
+    current,
+    percent: Math.round((1 - current / previous) * 100),
+    previousLabel: `${formatPrice(previous)}${monthly}`,
+    currentLabel: `${formatPrice(current)}${monthly}`,
+    changedLabel: formatDate(changedAt),
+  };
+}
+
+/** Why a listing closed, when the reason is one worth announcing. */
+export type ClosureKind = 'sold' | 'rented';
+
+/**
+ * The closure this listing can celebrate, or null.
+ *
+ * `withdrawn` is not a closure, and this is the whole point of the function:
+ * taking an ad off the air is not a sale, and an image that congratulates
+ * someone for it would be both false and, for whoever withdrew it, insulting.
+ * An empty reason means the listing is still open — a sold lamina for it would
+ * announce a sale that never happened.
+ */
+export function closureKind(property: Property): ClosureKind | null {
+  const reason = property.closed_reason;
+  return reason === 'sold' || reason === 'rented' ? reason : null;
+}
+
+/** The word stamped across the closure lamina, in Ecuadorian Spanish. */
+export const CLOSURE_STAMP: Record<ClosureKind, string> = {
+  sold: 'VENDIDO',
+  rented: 'ARRENDADO',
 };
 
-const CLOSERS: Record<CopyTone, string> = {
-  cercano: 'Mira las fotos y la ubicación exacta en el mapa 👇',
-  formal: 'Fotografías y ubicación exacta disponibles en el enlace:',
-  urgente: '¡Escríbeme hoy! Mira dónde queda exactamente 👇',
+/** "agosto de 2026" — a closure ages in months, not in days. */
+export function closureLabel(property: Property): string {
+  return formatDate(property.closed_at, { month: 'long', year: 'numeric' });
+}
+
+/**
+ * Which moment laminas this listing can actually produce, right now.
+ *
+ * What the kit screen asks before drawing a card. Asking here rather than
+ * letting the screen read the fields itself is what keeps the answer identical
+ * to the route's: one predicate, two callers, no chance of the interface
+ * offering an image the route refuses to render.
+ */
+export function momentFormats(property: Property): SocialFormat[] {
+  const formats: SocialFormat[] = [];
+  if (priceDrop(property)) formats.push('price-drop');
+  if (closureKind(property)) formats.push('sold');
+  return formats;
+}
+
+/**
+ * What each tone sounds like, everywhere and not only at the edges.
+ *
+ * The three tones used to differ in an opening emoji and a closing sentence,
+ * which meant that picking "formal" left an identical body underneath. A tone
+ * that only shows at the ends is a label, not a register.
+ *
+ * One table with three columns rather than three templates per network: the
+ * shapes belong to the networks and the voice belongs to the tone, and mixing
+ * them would give twelve texts to maintain and eleven chances to let one drift.
+ *
+ * `urgente` is the one that needs a rule. Urgency may only speak for the person
+ * publishing —"escríbeme hoy", "coordino visitas esta semana"— and never for
+ * the market: "se vende rápido" or "última oportunidad" are claims about demand
+ * that no field of the listing supports, and SOC-007 does not stop at
+ * adjectives about the house.
+ */
+interface Voice {
+  /** First line, which on Instagram and TikTok is often the only one read. */
+  open: (headline: string) => string;
+  /** Prefix for the address line: a pin, or a plain label when there is no emoji. */
+  pin: string;
+  /** Call to action right before the link, where the link is clickable. */
+  cta: string;
+  /** Instagram, where it is not. */
+  igCta: string;
+  /**
+   * TikTok: has to survive being read out loud in the first two seconds.
+   *
+   * `subject` already reads "Casa en Macas", which is what keeps the hook out of
+   * the gender trap — "este casa" is what happens when a template glues an
+   * article to a label. `price` is null when the listing has none, and then the
+   * hook says nothing about money rather than "por Precio a consultar".
+   */
+  hook: (subject: string, price: string | null) => string;
+  /** TikTok's second line, the one that promises the tour. */
+  tour: string;
+  /** WhatsApp opening: one person writing to another, not a broadcast. */
+  greeting: string;
+  /** WhatsApp closing. */
+  signoff: string;
+}
+
+const VOICES: Record<CopyTone, Voice> = {
+  cercano: {
+    open: (headline) => `🏡 ¿Buscas una propiedad como esta? ${headline}`,
+    pin: '📍 ',
+    cta: 'Revisa todas las fotos y la ubicación en el mapa. Si te interesa, escríbeme para coordinar una visita 👇',
+    igCta: '¿Quieres conocerla? Mira las fotos y la ubicación desde el enlace de la biografía o escanea el QR. Escríbeme para coordinar una visita 📲',
+    hook: (subject, price) =>
+      price ? `Mira esto 👀 ${subject} por ${price}` : `Mira esto 👀 ${subject}`,
+    tour: 'Mira el recorrido y comprueba dónde queda 📍',
+    greeting: '¡Hola! Te comparto este anuncio:',
+    signoff: 'Cualquier cosa me escribes y coordinamos la visita.',
+  },
+  formal: {
+    open: (headline) => `Conozca esta oportunidad: ${headline}.`,
+    pin: 'Dirección: ',
+    cta: 'Revise las fotografías y la ubicación en el enlace. Contácteme para ampliar la información o coordinar una visita:',
+    igCta: 'Revise las fotografías y la ubicación desde el enlace del perfil o el código QR. Contácteme para coordinar una visita.',
+    hook: (subject, price) => (price ? `${subject}. ${price}.` : `${subject}.`),
+    tour: 'Recorrido y ubicación exacta en el anuncio.',
+    greeting: 'Buen día. Comparto la información de esta propiedad:',
+    signoff: 'Quedo atento a sus consultas y a coordinar una visita.',
+  },
+  urgente: {
+    open: (headline) => `🔥 Disponible para visitas: ${headline}`,
+    pin: '📍 ',
+    cta: 'Estoy coordinando visitas esta semana. Revisa las fotos y la ubicación, y escríbeme hoy para elegir horario 👇',
+    igCta: 'Estoy coordinando visitas esta semana 📲 Revisa el enlace de la biografía o escanea el QR y escríbeme hoy para elegir horario.',
+    hook: (subject, price) =>
+      price ? `Disponible ahora 🔥 ${subject} por ${price}` : `Disponible ahora 🔥 ${subject}`,
+    tour: 'Estoy coordinando visitas esta semana 📍',
+    greeting: '¡Hola! Te paso este anuncio, estoy coordinando visitas esta semana:',
+    signoff: 'Escríbeme hoy y separamos el horario.',
+  },
 };
 
 function excerpt(text: string | undefined, max: number): string {
   if (!text) return '';
   const clean = text.replace(/\s+/g, ' ').trim();
   if (clean.length <= max) return clean;
-  // Cut on a word boundary; a description sliced mid-word reads like a bug.
-  return `${clean.slice(0, clean.lastIndexOf(' ', max))}…`;
+  // Cut on a word boundary; a description sliced mid-word reads like a bug. A
+  // description with no space in its first `max` characters has no boundary to
+  // cut on, and `lastIndexOf` answering -1 would return the whole text minus
+  // one character, which is the opposite of trimming it.
+  const boundary = clean.lastIndexOf(' ', max);
+  return `${clean.slice(0, boundary > 0 ? boundary : max)}…`;
+}
+
+/**
+ * A sales angle grounded only in fields the owner declared.
+ *
+ * This is the bridge between a headline and a list of specifications. It gives
+ * the reader a reason to keep reading without claiming views, demand, return,
+ * safety or development potential that the listing cannot prove. SOC-007.
+ */
+export function buildSalesAngle(property: Property): string {
+  const area = formatArea(property.area);
+  const rooms = property.rooms ?? 0;
+  const parking = property.parking_spaces ?? 0;
+
+  if (property.property_type === 'land') {
+    return area
+      ? `Conoce sus ${area}, revisa la ubicación y evalúa si encaja con tu proyecto.`
+      : 'Revisa la ubicación, las fotografías y la información del terreno para evaluar tu proyecto.';
+  }
+  if (property.property_type === 'commercial') {
+    return area
+      ? `Evalúa sus ${area} y su ubicación para tu actividad o próximo proyecto comercial.`
+      : 'Evalúa la ubicación y las características del espacio para tu actividad comercial.';
+  }
+  if (rooms > 0) {
+    const roomLabel = `${rooms} ${rooms === 1 ? 'habitación' : 'habitaciones'}`;
+    const parkingLabel = parking > 0
+      ? ` y ${parking} ${parking === 1 ? 'parqueadero' : 'parqueaderos'}`
+      : '';
+    return `Conoce la distribución de ${roomLabel}${parkingLabel} y mira si es el espacio que estás buscando.`;
+  }
+  return 'Mira las fotografías, revisa la ubicación y descubre si esta propiedad encaja contigo.';
+}
+
+/**
+ * Join lines, collapse the blank runs left by the parts that were missing, and
+ * make sure the result still fits the network.
+ *
+ * The clamp should never fire: every unbounded input is excerpted before it
+ * gets here. It exists because the one input this file does not control is the
+ * description, and a caption Instagram refuses to accept is worse than a
+ * caption missing its last tag.
+ */
+function assemble(lines: string[], limit: number): string {
+  const text = lines
+    .filter((line) => line !== undefined && line !== null)
+    .join('\n')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
+  if (text.length <= limit) return text;
+  const cut = text.lastIndexOf('\n', limit - 1);
+  return text.slice(0, cut > 0 ? cut : limit - 1).trim();
 }
 
 /**
  * Finished text for one network.
  *
- * The three networks get genuinely different shapes, not the same paragraph
- * truncated: Facebook rewards a full description, Instagram a short block with
- * tags, and TikTok a two-line hook that has to work as a spoken caption.
+ * The four networks get genuinely different shapes, not the same paragraph
+ * truncated: Facebook rewards a full description, Instagram a short block whose
+ * link nobody can click, TikTok a two-line hook that has to work spoken, and
+ * WhatsApp a message addressed to one person.
+ *
+ * Everything below is composed from declared fields; nothing here describes the
+ * property in words the listing did not provide. SOC-007.
  */
 export function buildCopy(
   property: Property,
   network: SocialNetwork,
   tone: CopyTone = 'cercano'
 ): string {
+  const voice = VOICES[tone];
   const headline = buildHeadline(property);
   const price = buildPriceLine(property);
-  const facts = buildFacts(property);
-  const code = property.short_code ?? '';
+  const factLine = buildFacts(property, { limit: 6 }).join(' · ');
+  const detailLine = buildDetails(property).join(' · ');
+  const salesAngle = buildSalesAngle(property);
   const url = trackedUrl(property, network);
-  const factLine = facts.join(' · ');
-  const codeLine = code ? `Código del anuncio: ${code}` : '';
+  const addressLine = property.address ? `${voice.pin}${property.address}` : '';
+  const limit = NETWORK_LIMITS[network];
 
   if (network === 'facebook') {
-    return [
-      OPENERS[tone](headline),
-      '',
-      [price, factLine].filter(Boolean).join(' · '),
-      excerpt(property.description, 320),
-      '',
-      CLOSERS[tone],
-      url,
-      '',
-      codeLine,
-      buildHashtags(property).slice(0, 6).join(' '),
-    ]
-      .filter((line) => line !== undefined)
-      .join('\n')
-      .replace(/\n{3,}/g, '\n\n')
-      .trim();
+    // The only network with room for the description, and the only one where
+    // the link is both clickable and previewed. What has to land above the
+    // "Ver más" fold —price, place, attributes— goes in the first three lines.
+    return assemble(
+      [
+        voice.open(headline),
+        price,
+        salesAngle,
+        factLine,
+        detailLine,
+        addressLine,
+        '',
+        excerpt(property.description, 500),
+        '',
+        voice.cta,
+        url,
+        '',
+        buildHashtags(property, 'facebook').join(' '),
+      ],
+      limit
+    );
   }
 
   if (network === 'instagram') {
-    return [
-      OPENERS[tone](headline),
-      [price, factLine].filter(Boolean).join(' · '),
-      '',
-      'Ubicación exacta en el mapa 📍 Enlace en la biografía o escanea el QR.',
-      codeLine,
-      '',
-      buildHashtags(property).join(' '),
-    ]
-      .join('\n')
-      .replace(/\n{3,}/g, '\n\n')
-      .trim();
+    // No clickable link anywhere in a caption, so the QR and the short code are
+    // the way back to the listing and have to be said out loud.
+    return assemble(
+      [
+        voice.open(headline),
+        price,
+        salesAngle,
+        factLine,
+        detailLine,
+        '',
+        excerpt(property.description, 220),
+        '',
+        voice.igCta,
+        '',
+        buildHashtags(property, 'instagram').join(' '),
+      ],
+      limit
+    );
   }
 
   if (network === 'tiktok') {
+    // The subject is assembled here instead of reusing the headline because a
+    // hook is spoken: "Casa en Macas" is what someone says out loud, while
+    // "Casa en venta en Macas, Morona Santiago" is what someone reads off a
+    // contract. Same reason the province is dropped.
     const place = property.city || property.province || 'Ecuador';
-    const hook =
-      tone === 'urgente'
-        ? `Se va rápido: ${getPropertyTypeLabel(property.property_type).toLowerCase()} en ${place} por ${price} 👀`
-        : `Esto en ${place} cuesta ${price} 👀`;
-    return [
-      hook,
-      factLine ? `${factLine}. Te muestro dónde queda exactamente 📍` : 'Te muestro dónde queda exactamente 📍',
-      '',
-      codeLine ? `${codeLine} · geopropiedadesecuador.com` : 'geopropiedadesecuador.com',
-      buildHashtags(property).slice(0, 5).join(' ').toLowerCase(),
-    ]
-      .join('\n')
-      .trim();
+    const subject = `${getPropertyTypeLabel(property.property_type)} en ${place}`;
+    // Three attributes, not six: past the second line TikTok has already
+    // scrolled, and the rest of the listing is one tap away in the profile.
+    const shortFacts = buildFacts(property, { limit: 3 }).join(' · ');
+    return assemble(
+      [
+        voice.hook(subject, price === 'Precio a consultar' ? null : price),
+        salesAngle,
+        shortFacts ? `${shortFacts}. ${voice.tour}` : voice.tour,
+        '',
+        'geopropiedadesecuador.com',
+        buildHashtags(property, 'tiktok').join(' ').toLowerCase(),
+      ],
+      limit
+    );
   }
 
-  // WhatsApp: no hashtags, no emoji wall — it is a message to one person.
-  return [
-    headline,
-    [price, factLine].filter(Boolean).join(' · '),
-    '',
-    'Fotos y ubicación exacta:',
-    url,
-  ]
-    .join('\n')
-    .trim();
+  // WhatsApp: no hashtags and no emoji wall — it is a message to one person,
+  // and it gets forwarded as-is, so every line has to make sense out of context.
+  return assemble(
+    [
+      voice.greeting,
+      '',
+      headline,
+      price,
+      salesAngle,
+      factLine,
+      detailLine,
+      addressLine,
+      '',
+      excerpt(property.description, 160),
+      '',
+      'Fotos y ubicación exacta:',
+      url,
+      '',
+      voice.signoff,
+    ],
+    limit
+  );
 }

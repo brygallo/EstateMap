@@ -45,7 +45,7 @@ El formulario intercepta el submit antes de llamar a `POST /api/properties/`: si
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
 - `frontend/app/add-property/page.tsx:901-914` (`if (!token && !isEditMode && !resumeToken) {`) — Guarda el borrador, envía la solicitud pendiente y abre el modal, sin llamar a /properties/.
-- `backend/real_estate/models.py:466-468` (`class PendingPublication(models.Model)`) — Docstring: no se muestra en el mapa; sirve para seguimiento comercial.
+- `backend/real_estate/models.py:524-526` (`class PendingPublication(models.Model)`) — Docstring: no se muestra en el mapa; sirve para seguimiento comercial.
 - `backend/real_estate/views.py:308-310` (`permission_classes = [IsAuthenticatedOrReadOnly, IsOwnerOrReadOnly]`) — Respaldo del servidor si la petición llega sin pasar por el frontend.
 
 **Casos**
@@ -89,7 +89,7 @@ Crear una propiedad sigue siempre el mismo orden: validar el payload, crear la f
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/real_estate/serializers.py:276-283` (`def create(self, validated_data):`) — Crea Property y luego llama a stage_property_image por cada archivo.
+- `backend/real_estate/serializers.py:338-344` (`def create(self, validated_data):`) — Crea Property y luego llama a stage_property_image por cada archivo.
 - `backend/real_estate/serializers.py:61-95` (`def stage_property_image`) — Escribe el original en disco (stash_upload), crea la fila PENDING y llama a enqueue_optimization.
 - `backend/real_estate/tasks.py:44-109` (`def optimize_property_image`) — Único punto que sube imagen y miniatura a MinIO y marca READY.
 
@@ -113,7 +113,7 @@ La fase de validación exige al menos 3 vértices realmente distintos, todas las
 - `backend/real_estate/geo.py:15-18` (`ECUADOR_MAINLAND_LAT_MIN`) — Límites exactos del bounding box continental.
 - `backend/real_estate/geo.py:28-29` (`MIN_POLYGON_AREA_M2`) — 10.0 y 5_000_000.0 metros cuadrados.
 - `backend/real_estate/geo.py:176-222` (`def validate_and_normalize_polygon`) — Orden interno -- vértices distintos, límites geográficos, autointersección, área.
-- `backend/real_estate/serializers.py:250-267` (`def validate_polygon`) — Punto de entrada desde el serializer, antes de que create() se ejecute.
+- `backend/real_estate/serializers.py:312-328` (`def validate_polygon`) — Punto de entrada desde el serializer, antes de que create() se ejecute.
 
 **Casos**
 
@@ -136,7 +136,7 @@ Antes de crear la propiedad, cada lote de imágenes se valida completo: máximo 
 
 - `backend/estate_map/settings.py:375-377` (`MAX_PROPERTY_UPLOAD_MB`) — MAX_IMAGES_PER_PROPERTY=10, MAX_IMAGE_SIZE_MB=10, MAX_PROPERTY_UPLOAD_MB=50.
 - `backend/estate_map/settings.py:358-360` (`ALLOWED_IMAGE_TYPES`)
-- `backend/real_estate/serializers.py:191-247` (`def validate_uploaded_images`) — Cuenta existentes menos images_to_delete, valida suma del lote y cada imagen, antes de llegar a create/update.
+- `backend/real_estate/serializers.py:253-308` (`def validate_uploaded_images`) — Cuenta existentes menos images_to_delete, valida suma del lote y cada imagen, antes de llegar a create/update.
 
 **Casos**
 
@@ -157,9 +157,9 @@ Si `POST /api/properties/` llega con cabecera `Idempotency-Key` y ya existe un r
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/real_estate/views.py:504-511` (`idempotency_key = (request.headers.get('Idempotency-Key')`) — Sin cabecera, se comporta como un create normal.
-- `backend/real_estate/views.py:518-523` (`response['X-Idempotent-Replay'] = 'true'`)
-- `backend/real_estate/views.py:530-532` (`cache.set(result_key, response.data['id'], 60 * 60 * 24)`)
+- `backend/real_estate/views.py:529-535` (`idempotency_key = (request.headers.get('Idempotency-Key')`) — Sin cabecera, se comporta como un create normal.
+- `backend/real_estate/views.py:543-547` (`response['X-Idempotent-Replay'] = 'true'`)
+- `backend/real_estate/views.py:555-557` (`cache.set(result_key, response.data['id'], 60 * 60 * 24)`)
 - `frontend/app/add-property/page.tsx:983-985` (`Idempotency-Key`) — No se manda en la edición (PUT), solo en la creación.
 
 **Casos**
@@ -178,8 +178,8 @@ Antes de procesar, `create` toma un candado en caché de 60 s por el mismo diges
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/real_estate/views.py:521-525` (`lock_acquired = cache.add(lock_key, '1', 60)`)
-- `backend/real_estate/views.py:535-539` (`if lock_acquired:`) — cache.delete(lock_key) en el finally, se ejecute o no la creación.
+- `backend/real_estate/views.py:546-549` (`lock_acquired = cache.add(lock_key, '1', 60)`)
+- `backend/real_estate/views.py:560-563` (`if lock_acquired:`) — cache.delete(lock_key) en el finally, se ejecute o no la creación.
 
 **Casos**
 
@@ -262,10 +262,10 @@ Cada `post_save`/`post_delete` de `Property` encadena, por señal: una fila de `
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/real_estate/views.py:382-384` (`exclude(status='inactive')`) — Único filtro que saca inactive del catálogo público; no toca la fila.
-- `backend/real_estate/views.py:919-922` (`def my_properties`) — including inactive: el dueño ve su propiedad inactiva, el público no.
-- `backend/real_estate/models.py:250-252` (`on_delete=models.CASCADE`) — PropertyImage.property cae en cascada con la Property.
-- `frontend/app/my-properties/page.tsx:218-240` (`const handleDelete`) — DELETE /properties/<id>/ tras window.confirm; PropertyViewSet no sobrescribe destroy.
+- `backend/real_estate/views.py:407-409` (`exclude(status='inactive')`) — Único filtro que saca inactive del catálogo público; no toca la fila.
+- `backend/real_estate/views.py:973-975` (`def my_properties`) — including inactive: el dueño ve su propiedad inactiva, el público no.
+- `backend/real_estate/models.py:308-310` (`on_delete=models.CASCADE`) — PropertyImage.property cae en cascada con la Property.
+- `frontend/app/my-properties/page.tsx:250-270` (`const handleDelete`) — DELETE /properties/<id>/ tras window.confirm; PropertyViewSet no sobrescribe destroy.
 
 **Casos**
 
@@ -313,8 +313,8 @@ El caso de API se conserva a propósito como guardia de regresión: si alguien v
 
 `Property.STATUS_CHOICES` podría recuperar `sold` y `rented` para diferenciar un anuncio que se cerró con éxito de uno que se retiró sin más.
 
-> **Por qué:** Ya no es la corrección de un defecto -- WFP-012 se cerró alineando el formulario con el modelo -- sino una decisión de producto pendiente. Hoy "vendido", "alquilado" y "retirado" comparten el estado `inactive`, así que el sistema no puede responder cuántas propiedades se vendieron, que es justo el dato con el que se demuestra que el portal funciona.
-Implementarlo exige más que una migración: `get_queryset` solo excluye `inactive`, de modo que un `sold` seguiría apareciendo en el mapa mientras no se ajuste ese filtro. Y habría que decidir si un anuncio vendido se oculta o se muestra marcado, que para el posicionamiento no es lo mismo.
+> **Por qué:** La necesidad que describía está cubierta desde 2026-08-05, pero por otro camino: PROP-033 añadió una columna `closed_reason` en lugar de dos estados nuevos. El sistema ya puede responder cuántas propiedades se vendieron sin que ninguno de los filtros construidos sobre `exclude(status='inactive')` tenga que aprender una palabra nueva.
+Se conserva como propuesta porque la alternativa sigue sobre la mesa para el día en que un anuncio vendido deba MOSTRARSE marcado en el mapa en vez de ocultarse — que es la única cosa que una columna aparte no resuelve, y que para el posicionamiento no es lo mismo. Mientras esa decisión de producto no se tome, rige PROP-033.
 
 **Evidencia en el código:** ninguna, y es lo esperado: no hay código que la implemente.
 

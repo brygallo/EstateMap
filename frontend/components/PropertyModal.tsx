@@ -22,6 +22,8 @@ import {
   MessageCircle,
   Mail,
   Loader2,
+  CheckCircle2,
+  Archive,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { trackEvent } from '@/lib/analytics';
@@ -35,12 +37,24 @@ import ShareModal from './ShareModal';
 import {
   getPropertyTypeLabel,
   getStatusLabel,
-  getStatusBadgeClass,
+  getListingStatusLabel,
+  getListingStatusBadgeClass,
+  getClosedReason,
+  isSuccessfulClosure,
   formatArea,
   formatAreaValue,
   formatDate,
   formatPrice,
+  type ClosedReason,
 } from '@/lib/property-labels';
+
+// Same copy as the listing page: a closed listing still opens (its printed code
+// resolves), so the panel has to say so and stop offering contact.
+const CLOSURE_HEADLINE: Record<ClosedReason, string> = {
+  sold: 'Esta propiedad ya se vendió',
+  rented: 'Esta propiedad ya se arrendó',
+  withdrawn: 'Este anuncio ya no está disponible',
+};
 
 const getValidImages = (images: any[] | undefined) => {
   if (!Array.isArray(images)) return [];
@@ -241,11 +255,22 @@ const PropertyModal = ({ property: initialProperty, isOpen, onClose, onViewOnMap
   const safeImageIndex = clampImageIndex(currentImageIndex, images.length);
   const activeImage = hasImages ? images[safeImageIndex] : null;
   const isImported = Boolean(property.is_imported || property.source_url || property.external_id || property.source);
-  const contactPhone = typeof property.contact_phone === 'string' ? property.contact_phone.trim() : '';
-  const contactEmail = typeof property.contact_email === 'string' ? property.contact_email.trim() : '';
+  // `status` alone says `inactive` for both a sold listing and a withdrawn one;
+  // only `closed_reason` separates them.
+  const closedReason = getClosedReason(property);
+  const isClosed = closedReason !== '';
+  const closedSuccessfully = isSuccessfulClosure(property);
+  const closedDate = formatDate(property.closed_at);
+  // A closed listing takes no enquiries: blanking the contact data here removes
+  // the phone block, the contact box and the mobile call/WhatsApp bar at once.
+  const contactPhone =
+    !isClosed && typeof property.contact_phone === 'string' ? property.contact_phone.trim() : '';
+  const contactEmail =
+    !isClosed && typeof property.contact_email === 'string' ? property.contact_email.trim() : '';
   const whatsappPhone = normalizeEcuadorPhone(contactPhone);
   const callablePhone = ecuadorPhoneHref(contactPhone);
-  const sourceUrl = typeof property.source_url === 'string' ? property.source_url.trim() : '';
+  const sourceUrl =
+    !isClosed && typeof property.source_url === 'string' ? property.source_url.trim() : '';
   const sourceAgency = typeof property.source_agency === 'string' ? property.source_agency.trim() : '';
   const publishedDate = formatDate(property.created_at);
   // Mensaje prellenado: el vendedor sabe que el contacto viene de la plataforma, con la URL del anuncio.
@@ -409,6 +434,9 @@ const PropertyModal = ({ property: initialProperty, isOpen, onClose, onViewOnMap
   // Build professional title for social sharing
   const getShareTitle = () => {
     const propertyTypeLabel = getPropertyTypeLabel(property.property_type);
+    // "Casa Vendido" does not agree in Spanish, so a closed listing announces
+    // the closure as a prefix instead of as an adjective.
+    if (isClosed) return `${getListingStatusLabel(property)}: ${property.title}`;
     const statusLabel = getStatusLabel(property.status);
     return `${propertyTypeLabel} ${statusLabel} - ${property.title}`;
   };
@@ -634,14 +662,43 @@ const PropertyModal = ({ property: initialProperty, isOpen, onClose, onViewOnMap
 
             {/* Content Section */}
             <div className="space-y-2.5 p-3">
+              {/* Anuncio cerrado: se anuncia antes que cualquier otro dato. */}
+              {isClosed && (
+                <div
+                  className={cn(
+                    'flex items-start gap-2.5 rounded-card border p-3',
+                    closedSuccessfully ? 'border-primary/25 bg-primaryLight' : 'border-line bg-muted'
+                  )}
+                >
+                  <span
+                    className={cn(
+                      'flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full',
+                      closedSuccessfully ? 'bg-primary text-white' : 'bg-textSecondary/15 text-textSecondary'
+                    )}
+                  >
+                    {closedSuccessfully ? (
+                      <CheckCircle2 className="h-4 w-4" strokeWidth={2} aria-hidden />
+                    ) : (
+                      <Archive className="h-4 w-4" strokeWidth={2} aria-hidden />
+                    )}
+                  </span>
+                  <div className="min-w-0">
+                    <p className="text-sm font-bold text-textPrimary">{CLOSURE_HEADLINE[closedReason]}</p>
+                    <p className="mt-0.5 text-xs text-textSecondary">
+                      {closedDate ? `Cerrado el ${closedDate}. ` : ''}Ya no recibe contactos.
+                    </p>
+                  </div>
+                </div>
+              )}
+
               {/* Header */}
               <div className="rounded-card border border-line bg-white p-3 shadow-card">
                 <div className="mb-2 flex items-start justify-between gap-2">
                   <h2 className="flex-1 text-lg font-bold leading-snug text-textPrimary">
                     {property.title || 'Propiedad'}
                   </h2>
-                  <span className={cn('badge flex-shrink-0', getStatusBadgeClass(property.status))}>
-                    {getStatusLabel(property.status)}
+                  <span className={cn('badge flex-shrink-0', getListingStatusBadgeClass(property))}>
+                    {getListingStatusLabel(property)}
                   </span>
                 </div>
 
@@ -655,7 +712,7 @@ const PropertyModal = ({ property: initialProperty, isOpen, onClose, onViewOnMap
                       · Alquiler {formatPrice(property.rent_price)}/mes
                     </span>
                   )}
-                  {property.is_negotiable && (
+                  {property.is_negotiable && !isClosed && (
                     <span className="rounded-md bg-secondary/10 px-2 py-0.5 text-xs font-medium text-secondary">
                       Negociable
                     </span>
@@ -824,38 +881,27 @@ const PropertyModal = ({ property: initialProperty, isOpen, onClose, onViewOnMap
                           </div>
                         </div>
                         <div className="p-4">
-                          <PhoneReveal
-                            phone={callablePhone}
-                            source="modal_contact_box"
-                            propertyId={property.id}
-                            city={property.city}
-                            province={property.province}
-                            propertyType={property.property_type}
-                            status={property.status}
-                            imported={isImported}
-                            className="mb-3 block w-full rounded-button bg-background px-3 py-2.5 text-center font-geo text-base font-bold tabular-nums text-primary transition-colors hover:bg-primaryLight hover:underline"
-                          />
                           <div className="grid grid-cols-2 gap-2">
-                          <a
-                            href={`tel:${callablePhone}`}
-                            onClick={() => trackContact('call', 'modal_contact_box')}
-                            className="flex min-h-11 items-center justify-center gap-2 rounded-button border border-line bg-white px-3 py-2.5 text-sm font-semibold text-textPrimary transition-colors hover:border-primary hover:bg-primaryLight hover:text-primary"
-                          >
-                            <Phone className="h-4 w-4" strokeWidth={2} aria-hidden />
-                            <span>Llamar</span>
-                          </a>
+                            <a
+                              href={`tel:${callablePhone}`}
+                              onClick={() => trackContact('call', 'modal_contact_box')}
+                              className="flex min-h-11 items-center justify-center gap-2 rounded-button border border-line bg-white px-3 py-2.5 text-sm font-semibold text-textPrimary transition-colors hover:border-primary hover:bg-primaryLight hover:text-primary"
+                            >
+                              <Phone className="h-4 w-4" strokeWidth={2} aria-hidden />
+                              <span>Llamar</span>
+                            </a>
 
-                          <a
-                            href={whatsappUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            onClick={() => trackContact('whatsapp', 'modal_contact_box')}
-                            className="wa-bounce flex min-h-11 items-center justify-center gap-2 rounded-button bg-secondary px-3 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-secondaryHover"
-                          >
-                            <MessageCircle className="h-4 w-4" strokeWidth={2} aria-hidden />
-                            <span>WhatsApp</span>
-                          </a>
-                        </div>
+                            <a
+                              href={whatsappUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              onClick={() => trackContact('whatsapp', 'modal_contact_box')}
+                              className="wa-bounce flex min-h-11 items-center justify-center gap-2 rounded-button bg-secondary px-3 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-secondaryHover"
+                            >
+                              <MessageCircle className="h-4 w-4" strokeWidth={2} aria-hidden />
+                              <span>WhatsApp</span>
+                            </a>
+                          </div>
                         </div>
                       </div>
                 ) : sourceUrl ? (
@@ -884,7 +930,9 @@ const PropertyModal = ({ property: initialProperty, isOpen, onClose, onViewOnMap
                   </div>
                 ) : (
                   <div className="rounded-card border border-line bg-background p-3 text-sm text-textSecondary">
-                    Información del anunciante no disponible.
+                    {isClosed
+                      ? 'Este anuncio ya se cerró y no recibe contactos.'
+                      : 'Información del anunciante no disponible.'}
                   </div>
                 )}
               </div>

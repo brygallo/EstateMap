@@ -57,6 +57,26 @@ export interface Property {
   /** Precio de alquiler cuando el anuncio es venta y alquiler a la vez. `null`/ausente = solo venta (o solo alquiler, según `status`). */
   rent_price?: number | string | null;
   is_negotiable?: boolean;
+  /**
+   * Why the listing left the catalogue. Empty/absent means it is still open.
+   *
+   * A closure is a different fact from a status: `status` says what the listing
+   * offered, this says why it stopped. Keeping them apart is what lets every
+   * `exclude(status='inactive')` in the project stay as it is — a sold listing
+   * is inactive like any other, it just knows it was sold.
+   */
+  closed_reason?: 'sold' | 'rented' | 'withdrawn' | '' | null;
+  /** Server-stamped when `closed_reason` is set; the owner never writes it. */
+  closed_at?: string | null;
+  /**
+   * The price before the last change, and when it moved.
+   *
+   * Both are null unless the most recent price-history row agrees with the
+   * current price: a doubtful "before" baked into an image that outlives the
+   * correction is worse than offering no price-drop lamina at all.
+   */
+  previous_price?: number | string | null;
+  price_changed_at?: string | null;
   images?: PropertyImage[];
   owner?: number | null;
   owner_username?: string;

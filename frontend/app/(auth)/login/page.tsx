@@ -1,19 +1,20 @@
 'use client';
 
 import Link from 'next/link';
-import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 import { useAuth } from '@/lib/auth-context';
-import { Formik, Form, Field, ErrorMessage } from 'formik';
+import { Formik, Form } from 'formik';
 import * as Yup from 'yup';
 import { toast } from 'sonner';
-import { Mail, Lock, ArrowRight, Loader2 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import { Mail, Lock, ArrowRight } from 'lucide-react';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
-import { Card, CardContent } from '@/components/ui/card';
 import GoogleSignInButton from '@/components/GoogleSignInButton';
+import AuthCard from '@/components/auth/AuthCard';
+import AuthDivider from '@/components/auth/AuthDivider';
+import AuthField from '@/components/auth/AuthField';
+import AuthSubmit from '@/components/auth/AuthSubmit';
 import { fetchWithTimeout, requestErrorMessage } from '@/lib/form-errors';
 import { getPublicApiUrl } from '@/lib/api-url';
 
@@ -103,144 +104,79 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="space-y-8">
-      {/* Logo y título */}
-      <div className="text-center">
-        <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-card border border-primary/20 bg-white shadow-card">
-          <Image src="/aents/aents-symbol.png" alt="" width={48} height={48} className="h-12 w-12" priority />
-        </div>
-        <h1 className="text-3xl font-bold text-textPrimary">Geo Propiedades Ecuador</h1>
-        <p className="mt-2 text-sm text-textSecondary">
-          Entra para publicar o gestionar tus propiedades.
-        </p>
-      </div>
+    <AuthCard
+      eyebrow="Acceso"
+      title="Entra a tu cuenta"
+      description="Publica y gestiona tus propiedades."
+      footer={
+        <>
+          ¿Todavía no tienes cuenta?{' '}
+          <Link href="/registro" className="font-semibold text-primary transition-colors hover:text-secondary">
+            Publica gratis
+          </Link>
+        </>
+      }
+    >
+      <Formik
+        initialValues={{ email: '', password: '', remember: false }}
+        validationSchema={validationSchema}
+        onSubmit={handleSubmit}
+      >
+        {({ isSubmitting, values, setFieldValue }) => (
+          <Form className="space-y-4">
+            <AuthField
+              id="email"
+              name="email"
+              label="Correo electrónico"
+              type="email"
+              autoComplete="email"
+              placeholder="tu@email.com"
+              icon={Mail}
+            />
 
-      {/* Formulario */}
-      <Card className="rounded-card border-line bg-surface shadow-card">
-        <CardContent className="p-8">
-          <Formik
-            initialValues={{ email: '', password: '', remember: false }}
-            validationSchema={validationSchema}
-            onSubmit={handleSubmit}
-          >
-            {({ isSubmitting, errors, touched }) => (
-              <Form className="space-y-6">
-                {/* Email */}
-                <div className="space-y-2">
-                  <Label htmlFor="email">Correo electrónico</Label>
-                  <div className="relative">
-                    <Mail className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                    <Field
-                      as={Input}
-                      id="email"
-                      name="email"
-                      type="email"
-                      autoComplete="email"
-                      placeholder="tu@email.com"
-                      aria-invalid={Boolean(errors.email && touched.email)}
-                      aria-describedby={errors.email && touched.email ? 'login-email-error' : undefined}
-                      className={`h-11 rounded-input pl-10 ${
-                        errors.email && touched.email ? 'border-error focus-visible:ring-error' : ''
-                      }`}
-                    />
-                  </div>
-                  <ErrorMessage name="email" component="p" id="login-email-error" className="text-sm text-error" />
-                </div>
+            <AuthField
+              id="password"
+              name="password"
+              label="Contraseña"
+              type="password"
+              autoComplete="current-password"
+              placeholder="••••••••"
+              icon={Lock}
+            />
 
-                {/* Password */}
-                <div className="space-y-2">
-                  <Label htmlFor="password">Contraseña</Label>
-                  <div className="relative">
-                    <Lock className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                    <Field
-                      as={Input}
-                      id="password"
-                      name="password"
-                      type="password"
-                      autoComplete="current-password"
-                      placeholder="••••••••"
-                      aria-invalid={Boolean(errors.password && touched.password)}
-                      aria-describedby={errors.password && touched.password ? 'login-password-error' : undefined}
-                      className={`h-11 rounded-input pl-10 ${
-                        errors.password && touched.password ? 'border-error focus-visible:ring-error' : ''
-                      }`}
-                    />
-                  </div>
-                  <ErrorMessage name="password" component="p" id="login-password-error" className="text-sm text-error" />
-                </div>
-
-                {/* Remember me */}
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <Field
-                      id="remember"
-                      name="remember"
-                      type="checkbox"
-                      className="h-4 w-4 rounded border-line text-primary focus:ring-primary"
-                    />
-                    <Label htmlFor="remember" className="font-normal text-textSecondary">
-                      Recordar sesión
-                    </Label>
-                  </div>
-                  <Link
-                    href="/recuperar-contrasena"
-                    className="text-sm font-medium text-primary transition-colors hover:text-secondary"
-                  >
-                    ¿Olvidaste tu contraseña?
-                  </Link>
-                </div>
-
-                {/* Submit Button */}
-                <Button
-                  type="submit"
-                  disabled={isSubmitting}
-                  className="h-11 w-full rounded-button bg-primary text-base font-semibold text-primary-foreground shadow-card transition-transform hover:bg-primaryHover active:scale-[0.98]"
-                >
-                  {isSubmitting ? (
-                    <>
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                      Iniciando sesión...
-                    </>
-                  ) : (
-                    <>
-                      Iniciar Sesión
-                      <ArrowRight className="h-4 w-4" />
-                    </>
-                  )}
-                </Button>
-              </Form>
-            )}
-          </Formik>
-
-          {/* Divider */}
-          <div className="relative my-6">
-            <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-line" />
+            {/*
+              The recovery link is deliberately not green. Green is the colour
+              of the one action this screen wants, and it sits directly below.
+            */}
+            <div className="flex items-center justify-between pt-1">
+              <div className="flex items-center gap-2">
+                <Checkbox
+                  id="remember"
+                  checked={values.remember}
+                  onCheckedChange={(checked) => setFieldValue('remember', checked === true)}
+                />
+                <Label htmlFor="remember" className="font-normal text-textSecondary">
+                  Recordar sesión
+                </Label>
+              </div>
+              <Link
+                href="/recuperar-contrasena"
+                className="text-sm text-textSecondary underline-offset-4 transition-colors hover:text-primary hover:underline"
+              >
+                Olvidé mi contraseña
+              </Link>
             </div>
-            <div className="relative flex justify-center text-sm">
-              <span className="bg-surface px-4 text-textSecondary">O continúa con</span>
-            </div>
-          </div>
 
-          {/* Google Sign In Button */}
-          <div className="mb-6">
-            <GoogleSignInButton text="signin_with" />
-          </div>
+            <AuthSubmit pending={isSubmitting} pendingLabel="Iniciando sesión…">
+              Iniciar sesión
+              <ArrowRight className="h-4 w-4" aria-hidden />
+            </AuthSubmit>
+          </Form>
+        )}
+      </Formik>
 
-          {/* Registro */}
-          <p className="text-center text-sm text-textSecondary">
-            ¿Quieres publicar una propiedad gratis?{' '}
-            <Link href="/registro" className="font-semibold text-primary transition-colors hover:text-secondary">
-              Crea tu cuenta
-            </Link>
-          </p>
-        </CardContent>
-      </Card>
-
-      {/* Footer */}
-      <p className="text-center text-sm text-textSecondary">
-        © {new Date().getFullYear()} Geo Propiedades Ecuador. Todos los derechos reservados.
-      </p>
-    </div>
+      <AuthDivider label="o continúa con" />
+      <GoogleSignInButton text="signin_with" />
+    </AuthCard>
   );
 }

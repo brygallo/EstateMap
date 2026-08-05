@@ -1,15 +1,15 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Formik, Form, Field, ErrorMessage } from 'formik';
+import { Formik, Form } from 'formik';
 import * as Yup from 'yup';
 import { toast } from 'sonner';
-import { MailCheck, Mail, KeyRound, ShieldCheck, Loader2 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Card, CardContent } from '@/components/ui/card';
+import { Mail, ShieldCheck } from 'lucide-react';
+import AuthCard from '@/components/auth/AuthCard';
+import AuthField from '@/components/auth/AuthField';
+import AuthSubmit from '@/components/auth/AuthSubmit';
 import { fetchWithTimeout, requestErrorMessage } from '@/lib/form-errors';
 import { getPublicApiUrl } from '@/lib/api-url';
 
@@ -82,119 +82,72 @@ const VerifyEmail = () => {
   };
 
   return (
-    <div className="space-y-8">
-      {/* Logo y título */}
-      <div className="text-center">
-        <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-card bg-primary shadow-card">
-          <MailCheck className="h-8 w-8 text-primary-foreground" strokeWidth={1.75} />
-        </div>
-        <h1 className="text-3xl font-bold text-textPrimary">Verifica tu correo</h1>
-        <p className="mt-2 text-sm text-textSecondary">
-          Ingresa el código de 6 dígitos que te enviamos por correo
-        </p>
-      </div>
+    <AuthCard
+      eyebrow="Crear cuenta"
+      step={{ current: 2, total: 2 }}
+      title="Verifica tu correo"
+      description="Escribe el código de 6 dígitos que te enviamos."
+      footer={
+        <>
+          ¿Ya verificaste tu cuenta?{' '}
+          <Link href="/iniciar-sesion" className="font-semibold text-primary transition-colors hover:text-secondary">
+            Inicia sesión
+          </Link>
+        </>
+      }
+    >
+      <Formik
+        initialValues={{
+          email: emailFromUrl,
+          code: '',
+        }}
+        validationSchema={validationSchema}
+        onSubmit={handleSubmit}
+      >
+        {({ isSubmitting, values }: any) => (
+          <Form className="space-y-4">
+            <AuthField
+              id="email"
+              name="email"
+              label="Correo electrónico"
+              type="email"
+              autoComplete="email"
+              placeholder="tu@email.com"
+              icon={Mail}
+            />
 
-      {/* Formulario */}
-      <Card className="rounded-card border-line bg-surface shadow-card">
-        <CardContent className="p-8">
-          <Formik
-            initialValues={{
-              email: emailFromUrl,
-              code: '',
-            }}
-            validationSchema={validationSchema}
-            onSubmit={handleSubmit}
-          >
-            {({ isSubmitting, errors, touched, values }: any) => (
-              <Form className="space-y-6">
-                {/* Email */}
-                <div className="space-y-2">
-                  <Label htmlFor="email">Correo electrónico</Label>
-                  <div className="relative">
-                    <Mail className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                    <Field
-                      as={Input}
-                      id="email"
-                      name="email"
-                      type="email"
-                      autoComplete="email"
-                      placeholder="tu@email.com"
-                      aria-invalid={Boolean(errors.email && touched.email)}
-                      aria-describedby={errors.email && touched.email ? 'verify-email-error' : undefined}
-                      className={`h-11 rounded-input pl-10 ${
-                        errors.email && touched.email ? 'border-error focus-visible:ring-error' : ''
-                      }`}
-                    />
-                  </div>
-                  <ErrorMessage name="email" component="p" id="verify-email-error" className="text-sm text-error" />
-                </div>
+            <AuthField
+              id="code"
+              name="code"
+              label="Código de verificación"
+              type="text"
+              inputMode="numeric"
+              pattern="[0-9]*"
+              autoComplete="one-time-code"
+              placeholder="000000"
+              maxLength={6}
+              className="h-14 text-center font-geo text-2xl tracking-[0.4em]"
+            />
 
-                {/* Código de verificación */}
-                <div className="space-y-2">
-                  <Label htmlFor="code">Código de verificación</Label>
-                  <div className="relative">
-                    <KeyRound className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                    <Field
-                      as={Input}
-                      id="code"
-                      name="code"
-                      type="text"
-                      inputMode="numeric"
-                      pattern="[0-9]*"
-                      autoComplete="one-time-code"
-                      placeholder="123456"
-                      maxLength={6}
-                      aria-invalid={Boolean(errors.code && touched.code)}
-                      aria-describedby={errors.code && touched.code ? 'verify-code-error' : undefined}
-                      className={`h-12 rounded-input pl-10 text-center font-geo text-2xl tracking-widest ${
-                        errors.code && touched.code ? 'border-error focus-visible:ring-error' : ''
-                      }`}
-                    />
-                  </div>
-                  <ErrorMessage name="code" component="p" id="verify-code-error" className="text-sm text-error" />
-                </div>
+            <AuthSubmit pending={isSubmitting} pendingLabel="Verificando…">
+              Verificar correo
+              <ShieldCheck className="h-4 w-4" aria-hidden />
+            </AuthSubmit>
 
-                {/* Botón reenviar código */}
-                <div className="text-center">
-                  <button
-                    type="button"
-                    onClick={() => handleResend(values.email)}
-                    disabled={resending || !values.email}
-                    className="text-sm font-medium text-primary transition-colors hover:text-secondary disabled:cursor-not-allowed disabled:opacity-50"
-                  >
-                    {resending ? 'Reenviando...' : '¿No recibiste el código? Reenviar'}
-                  </button>
-                </div>
-
-                {/* Submit Button */}
-                <Button
-                  type="submit"
-                  disabled={isSubmitting}
-                  className="h-11 w-full rounded-button bg-primary text-base font-semibold text-primary-foreground shadow-card transition-transform hover:bg-primaryHover active:scale-[0.98]"
-                >
-                  {isSubmitting ? (
-                    <>
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                      Verificando...
-                    </>
-                  ) : (
-                    <>
-                      Verificar correo
-                      <ShieldCheck className="h-4 w-4" />
-                    </>
-                  )}
-                </Button>
-              </Form>
-            )}
-          </Formik>
-        </CardContent>
-      </Card>
-
-      {/* Footer */}
-      <p className="text-center text-sm text-textSecondary">
-        © {new Date().getFullYear()} Geo Propiedades Ecuador. Todos los derechos reservados.
-      </p>
-    </div>
+            <div className="text-center">
+              <button
+                type="button"
+                onClick={() => handleResend(values.email)}
+                disabled={resending || !values.email}
+                className="text-sm text-textSecondary underline-offset-4 transition-colors hover:text-primary hover:underline disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:text-textSecondary disabled:hover:no-underline"
+              >
+                {resending ? 'Reenviando…' : 'Enviar el código otra vez'}
+              </button>
+            </div>
+          </Form>
+        )}
+      </Formik>
+    </AuthCard>
   );
 };
 
