@@ -30,6 +30,7 @@ import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useAuth } from '@/lib/auth-context';
 import { requestErrorMessage, responseErrorMessage } from '@/lib/form-errors';
+import { sameIdentifier } from '@/lib/identifiers';
 import {
   formatArea,
   formatDate,
@@ -84,7 +85,7 @@ export default function OwnerPropertyDetailPage() {
           throw new Error('Property request failed');
         }
         const nextProperty = await propertyResponse.json();
-        if (!user?.is_staff && nextProperty.owner !== user?.id) {
+        if (!user?.is_staff && !sameIdentifier(nextProperty.owner, user?.id)) {
           throw new Error('Property is outside the current owner scope');
         }
         const leadData = leadsResponse.ok ? await leadsResponse.json() : [];

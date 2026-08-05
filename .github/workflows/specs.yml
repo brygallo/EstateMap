@@ -59,6 +59,9 @@ jobs:
       - name: Bring the stack up
         run: docker compose up -d --wait || docker compose up -d
 
+      - name: Verify backend framework compatibility
+        run: docker compose run --rm --no-deps backend python manage.py check
+
       - name: Wait for the backend
         # `--wait` only knows about the containers that declare a healthcheck,
         # and the Django one does not: it still has to run `migrate` before it

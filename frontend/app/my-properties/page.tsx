@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { useAuth } from '@/lib/auth-context';
+import { sameIdentifier } from '@/lib/identifiers';
 import { buildWhatsAppUrl } from '@/lib/constants';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
@@ -691,7 +692,7 @@ const MyPropertiesPage = () => {
                       Importada{actionProperty.source_agency ? ` · ${actionProperty.source_agency}` : ''}
                     </Badge>
                   )}
-                  {isAdminScope && !actionProperty.is_imported && actionProperty.owner !== user?.id && (
+                  {isAdminScope && !actionProperty.is_imported && !sameIdentifier(actionProperty.owner, user?.id) && (
                     <Badge variant="secondary">
                       De {actionProperty.owner_username || `cuenta #${actionProperty.owner}`}
                     </Badge>
