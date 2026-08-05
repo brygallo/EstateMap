@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 import { useAuth } from '@/lib/auth-context';
-import { Formik, Form } from 'formik';
+import { Formik, Form, type FormikHelpers } from 'formik';
 import * as Yup from 'yup';
 import { toast } from 'sonner';
 import { Mail, Lock, ArrowRight } from 'lucide-react';
@@ -38,40 +38,45 @@ export default function LoginPage() {
     password: Yup.string().required('Campo requerido'),
   });
 
-  const normalizeErrorMessage = (value: any): string => {
+  type LoginValues = { email: string; password: string; remember: boolean };
+  type ErrorPayload = Record<string, unknown>;
+
+  const normalizeErrorMessage = (value: unknown): string => {
     if (!value) return '';
     if (typeof value === 'string') return value;
     if (Array.isArray(value)) return value.map(normalizeErrorMessage).join(' ');
-    if (typeof value === 'object') {
+    if (value && typeof value === 'object') {
+      const payload = value as ErrorPayload;
       return (
-        normalizeErrorMessage(value.detail) ||
-        normalizeErrorMessage(value.message) ||
-        normalizeErrorMessage(Object.values(value)[0])
+        normalizeErrorMessage(payload.detail) ||
+        normalizeErrorMessage(payload.message) ||
+        normalizeErrorMessage(Object.values(payload)[0])
       );
     }
     return '';
   };
 
-  const handleSubmit = async (values: any, { setSubmitting }: any) => {
+  const handleSubmit = async (values: LoginValues, { setSubmitting }: FormikHelpers<LoginValues>) => {
     try {
       const res = await fetchWithTimeout(`${API_URL}/login/`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: values.email, password: values.password }),
       });
-      const data = await res.json().catch(() => ({}));
+      const data = await res.json().catch(() => ({})) as ErrorPayload;
       if (!res.ok) {
         const errorDetail = normalizeErrorMessage(data.detail || data.error);
         const errorCode =
-          data.code ||
-          (typeof data.detail === 'object' && data.detail?.code) ||
+          (typeof data.code === 'string' && data.code) ||
+          (data.detail && typeof data.detail === 'object' && 'code' in data.detail &&
+            typeof data.detail.code === 'string' && data.detail.code) ||
           '';
         const isUnverified =
           errorCode === 'email_not_verified' ||
           (typeof errorDetail === 'string' && errorDetail.toLowerCase().includes('no ha sido verificada'));
 
         if (isUnverified) {
-          const emailToVerify = data.email || values.email;
+          const emailToVerify = typeof data.email === 'string' ? data.email : values.email;
           const params = new URLSearchParams();
           if (emailToVerify) params.set('email', emailToVerify);
 
@@ -82,13 +87,17 @@ export default function LoginPage() {
 
         let errorMessage = 'Credenciales incorrectas';
         if (data.detail) {
-          errorMessage = Array.isArray(data.detail) ? data.detail[0] : data.detail;
+          errorMessage = normalizeErrorMessage(data.detail) || errorMessage;
         } else if (data.email) {
-          errorMessage = Array.isArray(data.email) ? data.email[0] : data.email;
+          errorMessage = normalizeErrorMessage(data.email) || errorMessage;
         } else if (data.password) {
-          errorMessage = Array.isArray(data.password) ? data.password[0] : data.password;
+          errorMessage = normalizeErrorMessage(data.password) || errorMessage;
         }
         toast.error(errorMessage);
+        return;
+      }
+      if (typeof data.access !== 'string' || typeof data.refresh !== 'string') {
+        toast.error('El servidor no devolvió una sesión válida');
         return;
       }
       login(data.access, data.refresh, values.remember);

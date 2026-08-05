@@ -226,7 +226,7 @@ rules:
         symbol: Enlace al anuncio original (contacto fallback)
         note: El modelo declara `source_url` como contacto de último recurso.
       - file: frontend/app/property/[id]/page.tsx
-        lines: "449-450"
+        lines: "451-453"
         symbol: "typeof property.source_url === 'string' ? property.source_url.trim()"
         note: >-
           El escalón de último recurso de la cascada. Desde el rediseño de la

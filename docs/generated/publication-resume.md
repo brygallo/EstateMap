@@ -49,8 +49,8 @@ Un usuario staff genera, para un PendingPublication concreto, un enlace de conti
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/real_estate/views.py:1157-1185` (`def resume_link`)
-- `backend/real_estate/views.py:1116-1118` (`return [IsAuthenticated(), IsAdminUser()]`) — Toda acción del viewset que no sea `create` exige staff.
+- `backend/real_estate/views.py:1189-1216` (`def resume_link`)
+- `backend/real_estate/views.py:1148-1150` (`return [IsAuthenticated(), IsAdminUser()]`) — Toda acción del viewset que no sea `create` exige staff.
 - `backend/real_estate/email_utils.py:381-404` (`def create_publication_resume_token`)
 
 **Casos**
@@ -86,7 +86,7 @@ Un token de continuación deja de servir 14 días después de emitirse, y a part
 
 - `backend/estate_map/settings.py:504` (`PUBLICATION_RESUME_TOKEN_EXPIRY_DAYS`)
 - `backend/real_estate/models.py:616-623` (`def is_valid`)
-- `backend/real_estate/views.py:1312-1322` (`def invalid_resume_token_response`)
+- `backend/real_estate/views.py:1344-1353` (`def invalid_resume_token_response`)
 
 **Casos**
 
@@ -118,7 +118,7 @@ Canjear un token crea la propiedad y marca el token como consumido; un segundo c
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/real_estate/views.py:1195-1204` (`redeemed_at__isnull=True`) — UPDATE condicional dentro de la transacción que crea la propiedad.
+- `backend/real_estate/views.py:1227-1235` (`redeemed_at__isnull=True`) — UPDATE condicional dentro de la transacción que crea la propiedad.
 - `backend/real_estate/email_utils.py:388-396` (`revoked_at__isnull=True`) — Emitir un enlace nuevo retira el anterior, para que nunca haya dos vivos.
 
 **Casos**
@@ -150,7 +150,7 @@ Un usuario staff invalida los tokens vigentes de una solicitud en cualquier mome
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/real_estate/views.py:1189-1201` (`def revoke_resume_link`)
+- `backend/real_estate/views.py:1221-1232` (`def revoke_resume_link`)
 
 **Casos**
 
@@ -183,7 +183,7 @@ La respuesta del token contiene el JSON del borrador y los datos de contacto que
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
 - `backend/real_estate/serializers.py:549-563` (`class PublicationDraftSerializer`)
-- `backend/real_estate/views.py:1205-1224` (`class PublicationDraftView`)
+- `backend/real_estate/views.py:1237-1255` (`class PublicationDraftView`)
 
 **Casos**
 
@@ -303,8 +303,8 @@ Al completarse el canje, el PendingPublication pasa a converted y guarda una ref
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
 - `backend/real_estate/models.py:561-568` (`related_name="pending_publications"`)
-- `backend/real_estate/views.py:1275-1277` (`pending.status = 'converted'`)
-- `backend/real_estate/views.py:1170-1173` (`'Esta solicitud ya se convirtió en un anuncio.'`)
+- `backend/real_estate/views.py:1307-1309` (`pending.status = 'converted'`)
+- `backend/real_estate/views.py:1202-1204` (`'Esta solicitud ya se convirtió en un anuncio.'`)
 
 **Casos**
 

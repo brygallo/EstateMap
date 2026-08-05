@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Formik, Form } from 'formik';
+import { Formik, Form, type FormikErrors, type FormikHelpers } from 'formik';
 import * as Yup from 'yup';
 import { toast } from 'sonner';
 import { User, Mail, Lock, ShieldCheck, ArrowRight, Check } from 'lucide-react';
@@ -19,6 +19,21 @@ const BENEFITS = [
   'Tu anuncio sale en el mapa con fotos, precio y ubicación.',
   'Te contactan directo por teléfono o WhatsApp.',
 ];
+
+type RegisterValues = {
+  username: string;
+  first_name: string;
+  last_name: string;
+  email: string;
+  password: string;
+  confirm: string;
+};
+
+function fieldMessage(value: unknown): string {
+  if (typeof value === 'string') return value;
+  if (Array.isArray(value)) return value.filter((item): item is string => typeof item === 'string').join(' ');
+  return '';
+}
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -39,7 +54,10 @@ export default function RegisterPage() {
       .required('Campo requerido'),
   });
 
-  const handleSubmit = async (values: any, { setSubmitting, setErrors }: any) => {
+  const handleSubmit = async (
+    values: RegisterValues,
+    { setSubmitting, setErrors }: FormikHelpers<RegisterValues>
+  ) => {
     try {
       const res = await fetchWithTimeout(`${API_URL}/register/`, {
         method: 'POST',
@@ -52,16 +70,15 @@ export default function RegisterPage() {
           password: values.password,
         }),
       });
-      const data = await res.json().catch(() => ({}));
+      const data = await res.json().catch(() => ({})) as Record<string, unknown>;
       if (!res.ok) {
-        const formErrors: any = {};
-        let errorMessage = data.detail;
-        Object.keys(data).forEach((field) => {
-          const messages = Array.isArray(data[field]) ? data[field] : [data[field]];
-          formErrors[field] = messages.join(' ');
-        });
+        const formErrors: FormikErrors<RegisterValues> = {};
+        let errorMessage = fieldMessage(data.detail);
+        for (const [field, value] of Object.entries(data)) {
+          if (field in values) formErrors[field as keyof RegisterValues] = fieldMessage(value);
+        }
         if (!errorMessage) {
-          errorMessage = Object.values(formErrors).join(' ');
+          errorMessage = Object.values(formErrors).filter(Boolean).join(' ');
         }
         setErrors(formErrors);
         toast.error(errorMessage || 'Error al registrar');

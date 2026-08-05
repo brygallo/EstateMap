@@ -48,6 +48,7 @@ import PropertyNearbyMap from '@/components/maps/PropertyNearbyMap';
 import AdminRefreshProperty from '@/components/AdminRefreshProperty';
 import PropertyIntelligence from '@/components/PropertyIntelligence';
 import PropertyCard from '@/components/PropertyCard';
+import PropertyTitle from '@/components/PropertyTitle';
 import BrandAtmosphere from '@/components/aents/BrandAtmosphere';
 import RevealableDescription from '@/components/RevealableDescription';
 import { normalizeEcuadorPhone } from '@/lib/phone';
@@ -610,9 +611,9 @@ export default async function PropertyPage({ params }: PropertyPageProps) {
                   )}
                   {isImported && <AdminRefreshProperty propertyId={property.id} />}
                 </div>
-                <h1 className="mt-3 text-2xl font-bold leading-tight text-textPrimary sm:text-3xl">
+                <PropertyTitle className="mt-3">
                   {property.title}
-                </h1>
+                </PropertyTitle>
                 {(property.city || property.address) && (
                   <div className="mt-2 flex items-start gap-2 text-sm text-textSecondary">
                     <MapPin className="mt-0.5 h-4 w-4 flex-shrink-0 text-primary" strokeWidth={1.75} aria-hidden />
@@ -692,7 +693,12 @@ export default async function PropertyPage({ params }: PropertyPageProps) {
             </div>
           </section>
 
-          <PropertyIntelligence propertyId={property.id} />
+          {/* The intelligence endpoint compares a listing against the active
+              inventory of its zone and answers 404 once the listing leaves it.
+              Mounted unconditionally, a closed ficha paints the full skeleton,
+              throws the 404 into the console and then collapses it again —
+              a block of the page appearing and vanishing for nothing. */}
+          {!isClosed && <PropertyIntelligence propertyId={property.id} />}
 
           {/* Cuerpo: contenido + tarjeta de contacto */}
           <div className="mt-8 grid grid-cols-1 gap-8 lg:grid-cols-3">

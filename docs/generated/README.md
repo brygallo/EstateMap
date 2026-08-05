@@ -8,10 +8,10 @@ Vista legible de `specs/`. Cada regla marcada como implementada apunta a las lí
 
 | Estado | Reglas |
 | --- | --- |
-| ✅ Implementada | 215 |
+| ✅ Implementada | 216 |
 | ⛔ No implementada | 13 |
 | 🟡 Parcial | 9 |
-| 📝 Propuesta (sin código) | 16 |
+| 📝 Propuesta (sin código) | 15 |
 
 | Dominio | Archivo | Reglas | Documento |
 | --- | --- | --- | --- |

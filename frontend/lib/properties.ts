@@ -207,6 +207,21 @@ function distanceInKm(latA: number, lngA: number, latB: number, lngB: number): n
  * them directly made this return nothing at all, and the ficha lost its
  * neighbours entirely. The polygon centroid is the same point the maps plot.
  */
+/**
+ * A coordinate as it should appear in a URL.
+ *
+ * Six decimals is about 11 cm — far past what a listing's position means, and
+ * far short of what a float prints. A centroid derived from a polygon comes out
+ * as `-2.3259999999999996`, and handing that to the querystring costs twice:
+ * the URL is the cache key, so two callers asking about the same spot through
+ * different arithmetic miss each other's entry, and the tail of noise digits is
+ * not information anyone can act on. `Number` drops the trailing zeros that
+ * `toFixed` leaves behind, so `-2.326` stays `-2.326`.
+ */
+function coordinate(value: number): string {
+  return String(Number(value.toFixed(6)));
+}
+
 export async function getNearbyProperties(
   property: Property,
   limit = 4
@@ -220,7 +235,14 @@ export async function getNearbyProperties(
     const latitudeDelta = 0.45;
     const longitudeDelta = 0.45 / Math.max(Math.cos((latitude * Math.PI) / 180), 0.2);
     const params = new URLSearchParams({
-      bbox: [longitude - longitudeDelta, latitude - latitudeDelta, longitude + longitudeDelta, latitude + latitudeDelta].join(','),
+      bbox: [
+        coordinate(longitude - longitudeDelta),
+        coordinate(latitude - latitudeDelta),
+        coordinate(longitude + longitudeDelta),
+        coordinate(latitude + latitudeDelta),
+      ].join(','),
+      origin_lat: coordinate(latitude),
+      origin_lng: coordinate(longitude),
       page_size: '60',
       include_images: '1',
     });

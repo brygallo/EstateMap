@@ -52,6 +52,20 @@ describe('getNearbyProperties', () => {
     expect(nearby[0].distanceKm * 1000).toBeLessThan(50);
   });
 
+  it('asks the API to rank the candidate window by distance', async () => {
+    /** SPEC:PROP-029 — pagination cannot discard the nearest neighbour. */
+    const fetchSpy = vi.fn(async (_input: RequestInfo | URL) =>
+      new Response(JSON.stringify({ results: [neighbour] }), { status: 200 })
+    );
+    vi.stubGlobal('fetch', fetchSpy);
+
+    await getNearbyProperties(subject, 4);
+
+    const url = new URL(String(fetchSpy.mock.calls[0][0]));
+    expect(Number(url.searchParams.get('origin_lat'))).toBeCloseTo(-2.326, 6);
+    expect(Number(url.searchParams.get('origin_lng'))).toBeCloseTo(-78.1314, 6);
+  });
+
   it('excludes the property whose ficha is being rendered', async () => {
     respondWith([subject, neighbour]);
 

@@ -26,6 +26,7 @@ import {
   Archive,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import PropertyTitle from '@/components/PropertyTitle';
 import { trackEvent } from '@/lib/analytics';
 import { haptic } from '@/lib/haptics';
 import { useShareAction } from '@/hooks/useShareAction';
@@ -694,9 +695,9 @@ const PropertyModal = ({ property: initialProperty, isOpen, onClose, onViewOnMap
               {/* Header */}
               <div className="rounded-card border border-line bg-white p-3 shadow-card">
                 <div className="mb-2 flex items-start justify-between gap-2">
-                  <h2 className="flex-1 text-lg font-bold leading-snug text-textPrimary">
+                  <PropertyTitle as="h2" compact className="flex-1">
                     {property.title || 'Propiedad'}
-                  </h2>
+                  </PropertyTitle>
                   <span className={cn('badge flex-shrink-0', getListingStatusBadgeClass(property))}>
                     {getListingStatusLabel(property)}
                   </span>

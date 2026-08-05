@@ -18,7 +18,7 @@ La frontera está en SOC-010, que es la única regla de este dominio sin constru
 | Id | Regla | Estado |
 | --- | --- | --- |
 | [`SOC-001`](#soc-001--las-láminas-no-muestran-nada-que-la-ficha-pública-no-muestre) | Las láminas no muestran nada que la ficha pública no muestre | ✅ Implementada |
-| [`SOC-002`](#soc-002--cada-lámina-lleva-marca-y-qr-al-anuncio) | Cada lámina lleva marca y QR al anuncio | ✅ Implementada |
+| [`SOC-002`](#soc-002--cada-lámina-lleva-marca-qr-y-una-dirección-que-se-puede-teclear) | Cada lámina lleva marca, QR y una dirección que se puede teclear | ✅ Implementada |
 | [`SOC-003`](#soc-003--el-código-corto-es-estable-único-y-no-se-puede-transcribir-mal) | El código corto es estable, único y no se puede transcribir mal | ✅ Implementada |
 | [`SOC-004`](#soc-004--un-anuncio-sin-fotos-también-produce-kit) | Un anuncio sin fotos también produce kit | ✅ Implementada |
 | [`SOC-005`](#soc-005--el-precio-de-la-lámina-respeta-el-a-consultar) | El precio de la lámina respeta el «a consultar» | ✅ Implementada |
@@ -45,7 +45,7 @@ La garantía es por construcción y no por lista blanca, que es más débil de l
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `frontend/app/api/social/[id]/[format]/route.tsx:773-775` (`photoLamina`) — Toma el título, la ciudad, el precio y los hechos declarados. Ni views_count ni contact_phone ni contact_email entran en la lámina.
+- `frontend/app/api/social/[id]/[format]/route.tsx:792-794` (`photoLamina`) — Toma el título, la ciudad, el precio y los hechos declarados. Ni views_count ni contact_phone ni contact_email entran en la lámina.
 - `frontend/lib/social-kit.ts:431-433` (`buildFacts`) — Enumera solo atributos físicos declarados en el anuncio.
 
 **Casos**
@@ -57,18 +57,20 @@ La garantía es por construcción y no por lista blanca, que es más débil de l
 | El polígono sí se dibuja | — | `polygon`=presente | — | presente |
 | Un anuncio con show_measurements desactivado no gana precisión | — | `show_measurements`=no | — | presente |
 
-### SOC-002 — Cada lámina lleva marca y QR al anuncio
+### SOC-002 — Cada lámina lleva marca, QR y una dirección que se puede teclear
 
 **Estado:** ✅ Implementada
 
-Toda lámina generada incluye el logotipo del portal y un QR que apunta a esa misma ficha. El código corto sigue formando parte del enlace interno, pero no se muestra como dato visible en la pieza.
+Toda lámina incluye el logotipo del portal, un QR que apunta a esa ficha y la dirección escrita con la ruta del código. El código no se imprime nunca como dato suelto.
 
-> **Por qué:** El QR permite llegar a la ficha sin llenar el arte con identificadores que no ayudan a vender. La dirección principal del portal queda escrita como alternativa legible si la imagen fue recomprimida o impresa.
+> **Por qué:** El QR sirve a quien puede escanear la pantalla que tiene delante. Para todos los demás —quien recibe la imagen reenviada y recomprimida por WhatsApp hasta que los módulos dejan de resolver, quien la ve impresa, y quien sencillamente no escanea un código que le llegó de un desconocido— hace falta algo que se pueda teclear.
+Eso es la dirección completa, no el código a secas. Cinco caracteres sueltos bajo el QR no llevan a ninguna parte: quien los lee en una foto no sabe dónde escribirlos, así que ocupaban arte sin resolver el problema que decían resolver. Escribir `geopropiedadesecuador.com/p/XK4T2` sí lo resuelve, y de paso enseña el dominio.
+Llevar el par —QR y dirección— es lo que convierte la lámina en una promesa comprobable («esto está publicado aquí y lo puedes verificar») en vez de una imagen suelta que cualquiera podría haber fabricado.
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `frontend/app/api/social/[id]/[format]/route.tsx:318-331` (`VerifyLine`) — La dirección principal queda visible sin exponer el identificador corto.
-- `frontend/app/api/social/[id]/[format]/route.tsx:276-292` (`QrCard`) — El QR se muestra en una tarjeta de alto contraste, sin imprimir el código corto.
+- `frontend/app/api/social/[id]/[format]/route.tsx:302-314` (`VerifyLine`) — La dirección con la ruta del código, partida en dos filas para que no se corte a mitad de URL.
+- `frontend/app/api/social/[id]/[format]/route.tsx:276-292` (`QrCard`) — Solo el QR; el código suelto que llevaba debajo se retiró.
 - `frontend/lib/qr.ts:21-23` (`errorCorrectionLevel`) — Nivel H: el código sobrevive a la recompresión de las redes, que es lo que decide si sigue escaneando tras un reenvío.
 
 **Casos**
@@ -76,7 +78,8 @@ Toda lámina generada incluye el logotipo del portal y un QR que apunta a esa mi
 | Caso | Rol | Estado previo | Cuerpo | Esperado |
 | --- | --- | --- | --- | --- |
 | El QR codifica la URL corta del anuncio | — | `short_code`=XK4T2 | — | https://geopropiedadesecuador.com/p/XK4T2 |
-| El código corto no aparece como texto en la lámina | — | `short_code`=XK4T2 | — | ausente |
+| El código no aparece suelto bajo el QR | — | `short_code`=XK4T2 | — | ausente |
+| La dirección escrita sí lleva la ruta del código | — | `short_code`=XK4T2 | — | geopropiedadesecuador.com/p/XK4T2 |
 | Un anuncio sin código cae en la dirección larga | — | `short_code`=— | — | https://geopropiedadesecuador.com/propiedad/8228 |
 
 **Cobertura exigida:** unit
@@ -102,7 +105,7 @@ Se asigna en save() y no en el serializador porque todos los caminos de escritur
 
 - `backend/real_estate/services/short_codes.py:19` (`ALPHABET`) — Sin 0, O, 1, I ni L.
 - `backend/real_estate/models.py:271-274` (`short_code`) — Solo se asigna cuando está vacío, que es lo que lo hace estable frente a cualquier edición posterior.
-- `backend/real_estate/views.py:747-749` (`by_code`) — Resolución pública, sin distinguir mayúsculas y excluyendo inactivas.
+- `backend/real_estate/views.py:776-778` (`by_code`) — Resolución pública, sin distinguir mayúsculas y excluyendo inactivas.
 - `backend/real_estate/serializers.py:193-195` (`short_code`) — Read-only bajo fields='__all__'. Sin esto un cliente podría fijarse su propio código y ocupar el de otro, porque la columna es única.
 
 **Casos**
@@ -135,7 +138,7 @@ El mismo camino cubre un fallo temporal del almacén de imágenes: una lámina c
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `frontend/app/api/social/[id]/[format]/route.tsx:473-475` (`PhotoLayer`) — Degradado de marca cuando no hay foto utilizable.
+- `frontend/app/api/social/[id]/[format]/route.tsx:510-512` (`PhotoLayer`) — Degradado de marca cuando no hay foto utilizable.
 
 **Casos**
 
@@ -156,7 +159,7 @@ Se cumple reusando el formateador compartido en lugar de escribir otro: esa func
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `frontend/lib/social-kit.ts:562-564` (`buildPriceLine`) — Cuando el anuncio es venta y alquiler a la vez muestra los dos importes con su etiqueta, igual que la ficha.
+- `frontend/lib/social-kit.ts:569-571` (`buildPriceLine`) — Cuando el anuncio es venta y alquiler a la vez muestra los dos importes con su etiqueta, igual que la ficha.
 - `frontend/lib/property-labels.ts:171-173` (`formatPrice`) — Fuente única del texto «Precio a consultar».
 
 **Casos**
@@ -183,7 +186,7 @@ No es un adorno legal: es la condición bajo la que el portal puede usar esos ti
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
 - `frontend/lib/static-map.ts:25` (`ATTRIBUTION`)
-- `frontend/app/api/social/[id]/[format]/route.tsx:744-746` (`ATTRIBUTION`) — Impresa en la barra inferior de la lámina de mapa.
+- `frontend/app/api/social/[id]/[format]/route.tsx:764-766` (`ATTRIBUTION`) — Impresa en la barra inferior de la lámina de mapa.
 
 **Casos**
 
@@ -208,7 +211,7 @@ Las plantillas son además instantáneas y gratis, que para algo que se genera e
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `frontend/lib/social-kit.ts:839-841` (`buildCopy`) — Tres formas distintas y no un párrafo recortado: Facebook admite texto largo, Instagram va corto y con etiquetas, TikTok necesita un gancho.
+- `frontend/lib/social-kit.ts:854-856` (`buildCopy`) — Tres formas distintas y no un párrafo recortado: Facebook admite texto largo, Instagram va corto y con etiquetas, TikTok necesita un gancho.
 - `frontend/lib/social-kit.ts:431-433` (`buildFacts`) — Cada atributo se añade solo si el anuncio lo declara.
 - `frontend/components/promote/PromotionKit.tsx:227-280` (`CopyBlock`) — El texto sugerido se puede editar, copiar y restaurar a su base.
 
@@ -278,7 +281,7 @@ Y un visitante es un `session_id` distinto, no un evento: el navegador repite su
 - `backend/real_estate/services/promotion_stats.py:56-62` (`BOT_FLAGGING_SINCE`) — La ventana nunca alcanza los datos anteriores al marcado de bots.
 - `backend/real_estate/services/promotion_stats.py:64-70` (`STATE_NOT_SHARED`) — Los tres estados que permiten distinguir «nadie lo compartió» de «se compartió y no trajo a nadie».
 - `backend/real_estate/models.py:660-670` (`activity_prop_human_idx`) — (property, is_bot, created_at). Sin él la agregación recorre toda la tabla de eventos.
-- `backend/real_estate/views.py:665-680` (`def promotion_stats`)
+- `backend/real_estate/views.py:699-713` (`def promotion_stats`)
 - `backend/real_estate/permissions.py:25-42` (`class IsPropertyOwnerOrStaff`) — Frontera de verdad, en el servidor. A diferencia de las láminas (SOC-009), este dato es del dueño.
 - `backend/real_estate/serializers.py:578-591` (`PROPERTY_PATH_RE`) — La visita a una ficha se atribuye a su anuncio leyendo el id de la ruta; el beacon genérico de page_view no manda property_id.
 
@@ -317,12 +320,12 @@ Descansa sobre lo que el servidor ya distingue: un anuncio vendido de uno retira
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `frontend/lib/social-kit.ts:679-684` (`momentFormats`) — El predicado único. Dos llamadas —la ruta y la pantalla del kit— para que la interfaz no pueda ofrecer lo que el servidor niega.
-- `frontend/lib/social-kit.ts:622-624` (`priceDrop`) — Solo hay bajada si el precio anterior es fiable y además bajó; una subida no es una bajada y no reutiliza la lámina.
-- `frontend/lib/social-kit.ts:655-658` (`closureKind`) — Vendido y arrendado sí; retirado no.
-- `frontend/app/api/social/[id]/[format]/route.tsx:1064-1066` (`priceDropLamina`)
-- `frontend/app/api/social/[id]/[format]/route.tsx:1235-1237` (`soldLamina`)
-- `frontend/components/promote/PromotionKit.tsx:302` (`momentFormats`) — La sección «Novedades de este anuncio», delante del material fijo y ausente mientras no haya noticia.
+- `frontend/lib/social-kit.ts:686-690` (`momentFormats`) — El predicado único. Dos llamadas —la ruta y la pantalla del kit— para que la interfaz no pueda ofrecer lo que el servidor niega.
+- `frontend/lib/social-kit.ts:629-631` (`priceDrop`) — Solo hay bajada si el precio anterior es fiable y además bajó; una subida no es una bajada y no reutiliza la lámina.
+- `frontend/lib/social-kit.ts:662-664` (`closureKind`) — Vendido y arrendado sí; retirado no.
+- `frontend/app/api/social/[id]/[format]/route.tsx:1075-1077` (`priceDropLamina`)
+- `frontend/app/api/social/[id]/[format]/route.tsx:1246-1248` (`soldLamina`)
+- `frontend/components/promote/PromotionKit.tsx:323-325` (`momentFormats`) — La sección «Novedades de este anuncio», delante del material fijo y ausente mientras no haya noticia.
 
 **Casos**
 
@@ -335,6 +338,7 @@ Descansa sobre lo que el servidor ya distingue: un anuncio vendido de uno retira
 | La lámina de vendido no imprime el precio | — | `closed_reason`=sold | — | ausente |
 | Un anuncio inactivo no es lo mismo que uno vendido | — | `status`=inactive, `closed_reason`= | — | ausente |
 | Un anuncio retirado tampoco produce lámina de cierre | — | `closed_reason`=withdrawn | — | ausente |
+| Un anuncio ya cerrado deja de ofrecer la lámina de bajada | — | `closed_reason`=rented, `previous_price`=520, `price`=450 | — | ausente |
 | Pedir una lámina de un momento que no ocurrió responde 404 | — | — | — | ausente |
 
 **Cobertura exigida:** unit
@@ -361,7 +365,7 @@ Queda como `partial` porque la comprobación de propiedad vive en el cliente, le
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `frontend/components/promote/PromotionKit.tsx:363-365` (`isOwner`) — Cortesía de interfaz, no frontera; el comentario del código lo dice.
+- `frontend/components/promote/PromotionKit.tsx:393-395` (`isOwner`) — Cortesía de interfaz, no frontera; el comentario del código lo dice.
 - `frontend/app/mis-propiedades/[id]/page.tsx:238-244` (`promote-property-action`) — El acceso al kit aparece dentro de la ficha de gestión del propietario.
 
 **Casos**
@@ -405,8 +409,8 @@ Y caducarla al editar no es opcional: la lámina lleva el precio impreso. Si alg
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `frontend/app/api/social/[id]/[format]/route.tsx:1436-1438` (`Cache-Control`) — s-maxage=60 con stale-while-revalidate: absorbe la ráfaga de scrapers que llega al publicar un enlace sin congelar un precio corregido.
-- `frontend/lib/properties.ts:288-292` (`getProperty`) — Lectura etiquetada; /api/revalidate purga property-<id> cuando Django avisa de un cambio.
+- `frontend/app/api/social/[id]/[format]/route.tsx:1447-1449` (`Cache-Control`) — s-maxage=60 con stale-while-revalidate: absorbe la ráfaga de scrapers que llega al publicar un enlace sin congelar un precio corregido.
+- `frontend/lib/properties.ts:310-313` (`getProperty`) — Lectura etiquetada; /api/revalidate purga property-<id> cuando Django avisa de un cambio.
 
 **Casos**
 
@@ -446,18 +450,19 @@ El listado sigue estando a un clic, y el kit sigue accesible después desde cada
 
 **Estado:** ✅ Implementada
 
-Las piezas verticales combinan hasta tres fotografías del anuncio, usan la tipografía de marca con pesos reales y muestran un mensaje comercial adaptado al tipo de propiedad o a su modalidad de publicación.
+Las portadas usan una fotografía protagonista, la tipografía de marca con pesos reales y un mensaje comercial adaptado al tipo de propiedad o a su modalidad de publicación. Precio, argumento y llamada a la acción forman una única ruta de lectura y los atributos quedan como prueba secundaria.
 
-> **Por qué:** Una sola fotografía con muchos datos se percibe como una ficha técnica. La composición editorial permite enseñar más del inmueble, mientras una jerarquía breve de precio, propuesta y atributos ayuda a detener el desplazamiento y dirigir la atención hacia la ficha.
+> **Por qué:** Una portada no es la ficha completa. Varias fotografías, tarjetas, marcos, chips y llamadas con el mismo peso obligaban a descifrar la pieza antes de entender la oferta. Una fotografía decisiva detiene el desplazamiento; el precio ancla la decisión, un solo argumento construye interés y el QR resuelve la acción. Las fotografías restantes conservan su lugar en la ficha y en futuros carruseles, donde pueden respirar sin competir entre sí.
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
 - `frontend/app/api/social/[id]/[format]/route.tsx:150-160` (`promotionFonts`) — Se registran Plus Jakarta Sans Regular y ExtraBold en ImageResponse.
 - `frontend/app/api/social/[id]/[format]/route.tsx:210-212` (`marketingPhotos`) — La imagen principal se conserva primero y se preparan hasta tres fotos.
 - `frontend/app/api/social/[id]/[format]/route.tsx:350-377` (`SalesCallout`) — El argumento comercial cambia según venta, arriendo y tipo de inmueble.
-- `frontend/app/api/social/[id]/[format]/route.tsx:496-508` (`PhotoCollage`) — Las piezas verticales distribuyen una foto protagonista y dos de apoyo.
-- `frontend/app/api/social/[id]/[format]/route.tsx:1384-1386` (`customMessage`) — El mensaje opcional se normaliza y limita antes de dibujarlo.
-- `frontend/components/promote/PromotionKit.tsx:442-470` (`Mensaje dentro de la imagen`) — El editor permite cambiar el gancho o restaurar la propuesta base.
+- `frontend/app/api/social/[id]/[format]/route.tsx:376-409` (`SurveyLine`) — La línea inspirada en un plano topográfico conecta fotografía, argumento y acción como firma propia del portal.
+- `frontend/app/api/social/[id]/[format]/route.tsx:411-430` (`EditorialFacts`) — La portada limita la prueba secundaria a dos atributos declarados.
+- `frontend/app/api/social/[id]/[format]/route.tsx:1395-1397` (`customMessage`) — El mensaje opcional se normaliza y limita antes de dibujarlo.
+- `frontend/components/promote/PromotionKit.tsx:479-506` (`Mensaje dentro de la imagen`) — El editor permite cambiar el gancho o restaurar la propuesta base.
 
 **Casos**
 
@@ -465,7 +470,7 @@ Las piezas verticales combinan hasta tres fotografías del anuncio, usan la tipo
 | --- | --- | --- | --- | --- |
 | Un terreno en venta comunica su potencial | — | `property_type`=land, `status`=for_sale | — | DESCUBRE EL POTENCIAL DE ESTE TERRENO |
 | Una propiedad en arriendo invita a conocer el espacio | — | `status`=for_rent | — | CONOCE TU PRÓXIMO ESPACIO |
-| Una pieza vertical con tres fotos usa composición editorial | — | `format`=portrait, `image_count`=3 | — | presente |
+| Una pieza vertical conserva una sola fotografía protagonista | — | `format`=portrait, `image_count`=3 | — | presente |
 | El propietario cambia el mensaje dentro de la imagen | owner | `mensaje`=AGENDA TU VISITA | — | presente |
 
 **Cobertura exigida:** unit

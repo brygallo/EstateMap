@@ -48,7 +48,7 @@ rules:
       cierto, esta regla necesita una tupla cerrada como la de VIS-001.
     evidence:
       - file: frontend/app/api/social/[id]/[format]/route.tsx
-        lines: "773-775"
+        lines: "792-794"
         symbol: photoLamina
         note: >-
           Toma el título, la ciudad, el precio y los hechos declarados. Ni
@@ -78,25 +78,39 @@ rules:
         note: Rige VIS-003; la lámina dibuja exactamente lo que dibuja el mapa.
 
   - id: SOC-002
-    name: Cada lámina lleva marca y QR al anuncio
+    name: Cada lámina lleva marca, QR y una dirección que se puede teclear
     status: implemented
     summary: >-
-      Toda lámina generada incluye el logotipo del portal y un QR que apunta a
-      esa misma ficha. El código corto sigue formando parte del enlace interno,
-      pero no se muestra como dato visible en la pieza.
+      Toda lámina incluye el logotipo del portal, un QR que apunta a esa ficha y
+      la dirección escrita con la ruta del código. El código no se imprime nunca
+      como dato suelto.
     rationale: >-
-      El QR permite llegar a la ficha sin llenar el arte con identificadores que
-      no ayudan a vender. La dirección principal del portal queda escrita como
-      alternativa legible si la imagen fue recomprimida o impresa.
+      El QR sirve a quien puede escanear la pantalla que tiene delante. Para
+      todos los demás —quien recibe la imagen reenviada y recomprimida por
+      WhatsApp hasta que los módulos dejan de resolver, quien la ve impresa, y
+      quien sencillamente no escanea un código que le llegó de un desconocido—
+      hace falta algo que se pueda teclear.
+
+      Eso es la dirección completa, no el código a secas. Cinco caracteres
+      sueltos bajo el QR no llevan a ninguna parte: quien los lee en una foto no
+      sabe dónde escribirlos, así que ocupaban arte sin resolver el problema que
+      decían resolver. Escribir `geopropiedadesecuador.com/p/XK4T2` sí lo
+      resuelve, y de paso enseña el dominio.
+
+      Llevar el par —QR y dirección— es lo que convierte la lámina en una
+      promesa comprobable («esto está publicado aquí y lo puedes verificar») en
+      vez de una imagen suelta que cualquiera podría haber fabricado.
     evidence:
       - file: frontend/app/api/social/[id]/[format]/route.tsx
-        lines: "318-331"
+        lines: "302-314"
         symbol: VerifyLine
-        note: La dirección principal queda visible sin exponer el identificador corto.
+        note: >-
+          La dirección con la ruta del código, partida en dos filas para que no
+          se corte a mitad de URL.
       - file: frontend/app/api/social/[id]/[format]/route.tsx
         lines: "276-292"
         symbol: QrCard
-        note: El QR se muestra en una tarjeta de alto contraste, sin imprimir el código corto.
+        note: Solo el QR; el código suelto que llevaba debajo se retiró.
       - file: frontend/lib/qr.ts
         lines: "21-23"
         symbol: errorCorrectionLevel
@@ -112,9 +126,15 @@ rules:
         note: >-
           Con los parámetros UTM de la red añadidos detrás, según SOC-008. La
           parte que una persona lee y teclea es la de arriba.
-      - name: El código corto no aparece como texto en la lámina
+      - name: El código no aparece suelto bajo el QR
         given: {short_code: "XK4T2"}
         expected: ausente
+      - name: La dirección escrita sí lleva la ruta del código
+        given: {short_code: "XK4T2"}
+        expected: "geopropiedadesecuador.com/p/XK4T2"
+        note: >-
+          Es la parte que alguien puede teclear cuando el QR ya no escanea, y la
+          razón de que retirar el código suelto no deje la lámina sin salida.
       - name: Un anuncio sin código cae en la dirección larga
         given: {short_code: null}
         expected: "https://geopropiedadesecuador.com/propiedad/8228"
@@ -152,7 +172,7 @@ rules:
           Solo se asigna cuando está vacío, que es lo que lo hace estable frente
           a cualquier edición posterior.
       - file: backend/real_estate/views.py
-        lines: "747-749"
+        lines: "776-778"
         symbol: by_code
         note: Resolución pública, sin distinguir mayúsculas y excluyendo inactivas.
       - file: backend/real_estate/serializers.py
@@ -226,7 +246,7 @@ rules:
       kit no tiene forma de saber que MinIO no contestó.
     evidence:
       - file: frontend/app/api/social/[id]/[format]/route.tsx
-        lines: "473-475"
+        lines: "510-512"
         symbol: PhotoLayer
         note: Degradado de marca cuando no hay foto utilizable.
     tests: {}
@@ -259,7 +279,7 @@ rules:
       pantallas distintas.
     evidence:
       - file: frontend/lib/social-kit.ts
-        lines: "562-564"
+        lines: "569-571"
         symbol: buildPriceLine
         note: >-
           Cuando el anuncio es venta y alquiler a la vez muestra los dos importes
@@ -301,7 +321,7 @@ rules:
         lines: "25"
         symbol: ATTRIBUTION
       - file: frontend/app/api/social/[id]/[format]/route.tsx
-        lines: "744-746"
+        lines: "764-766"
         symbol: ATTRIBUTION
         note: Impresa en la barra inferior de la lámina de mapa.
     tests:
@@ -333,7 +353,7 @@ rules:
       frase; no se escribe «0 habitaciones».
     evidence:
       - file: frontend/lib/social-kit.ts
-        lines: "839-841"
+        lines: "854-856"
         symbol: buildCopy
         note: >-
           Tres formas distintas y no un párrafo recortado: Facebook admite texto
@@ -460,7 +480,7 @@ rules:
           (property, is_bot, created_at). Sin él la agregación recorre toda la
           tabla de eventos.
       - file: backend/real_estate/views.py
-        lines: "665-680"
+        lines: "699-713"
         symbol: def promotion_stats
       - file: backend/real_estate/permissions.py
         lines: "25-42"
@@ -557,29 +577,29 @@ rules:
       routes: ["/propiedad/{id}/promocionar"]
     evidence:
       - file: frontend/lib/social-kit.ts
-        lines: "679-684"
+        lines: "686-690"
         symbol: momentFormats
         note: >-
           El predicado único. Dos llamadas —la ruta y la pantalla del kit— para
           que la interfaz no pueda ofrecer lo que el servidor niega.
       - file: frontend/lib/social-kit.ts
-        lines: "622-624"
+        lines: "629-631"
         symbol: priceDrop
         note: >-
           Solo hay bajada si el precio anterior es fiable y además bajó; una
           subida no es una bajada y no reutiliza la lámina.
       - file: frontend/lib/social-kit.ts
-        lines: "655-658"
+        lines: "662-664"
         symbol: closureKind
         note: Vendido y arrendado sí; retirado no.
       - file: frontend/app/api/social/[id]/[format]/route.tsx
-        lines: "1064-1066"
+        lines: "1075-1077"
         symbol: priceDropLamina
       - file: frontend/app/api/social/[id]/[format]/route.tsx
-        lines: "1235-1237"
+        lines: "1246-1248"
         symbol: soldLamina
       - file: frontend/components/promote/PromotionKit.tsx
-        lines: "302"
+        lines: "323-325"
         symbol: momentFormats
         note: >-
           La sección «Novedades de este anuncio», delante del material fijo y
@@ -611,6 +631,15 @@ rules:
       - name: Un anuncio retirado tampoco produce lámina de cierre
         given: {closed_reason: withdrawn}
         expected: ausente
+      - name: Un anuncio ya cerrado deja de ofrecer la lámina de bajada
+        given: {closed_reason: rented, previous_price: 520, price: 450}
+        expected: ausente
+        note: >-
+          Una rebaja sobre algo que ya cambió de manos invita a ofertas que
+          nadie puede atender. Y quita de paso el caso en que las cifras
+          mentían: cerrar pone `status` en `inactive`, así que un arriendo
+          perdía su «/mes» y «$450» junto a «ANTES $520» se leía como una casa
+          que bajó setenta dólares.
       - name: Pedir una lámina de un momento que no ocurrió responde 404
         expected: ausente
         note: >-
@@ -646,7 +675,7 @@ rules:
       test_id: promote-property-action
     evidence:
       - file: frontend/components/promote/PromotionKit.tsx
-        lines: "363-365"
+        lines: "393-395"
         symbol: isOwner
         note: Cortesía de interfaz, no frontera; el comentario del código lo dice.
       - file: frontend/app/mis-propiedades/[id]/page.tsx
@@ -725,13 +754,13 @@ rules:
       un minuto.
     evidence:
       - file: frontend/app/api/social/[id]/[format]/route.tsx
-        lines: "1436-1438"
+        lines: "1447-1449"
         symbol: Cache-Control
         note: >-
           s-maxage=60 con stale-while-revalidate: absorbe la ráfaga de scrapers
           que llega al publicar un enlace sin congelar un precio corregido.
       - file: frontend/lib/properties.ts
-        lines: "288-292"
+        lines: "310-313"
         symbol: getProperty
         note: >-
           Lectura etiquetada; /api/revalidate purga property-<id> cuando Django
@@ -787,14 +816,17 @@ rules:
     name: Las láminas priorizan una composición comercial
     status: implemented
     summary: >-
-      Las piezas verticales combinan hasta tres fotografías del anuncio, usan
-      la tipografía de marca con pesos reales y muestran un mensaje comercial
-      adaptado al tipo de propiedad o a su modalidad de publicación.
+      Las portadas usan una fotografía protagonista, la tipografía de marca con
+      pesos reales y un mensaje comercial adaptado al tipo de propiedad o a su
+      modalidad de publicación. Precio, argumento y llamada a la acción forman
+      una única ruta de lectura y los atributos quedan como prueba secundaria.
     rationale: >-
-      Una sola fotografía con muchos datos se percibe como una ficha técnica.
-      La composición editorial permite enseñar más del inmueble, mientras una
-      jerarquía breve de precio, propuesta y atributos ayuda a detener el
-      desplazamiento y dirigir la atención hacia la ficha.
+      Una portada no es la ficha completa. Varias fotografías, tarjetas, marcos,
+      chips y llamadas con el mismo peso obligaban a descifrar la pieza antes de
+      entender la oferta. Una fotografía decisiva detiene el desplazamiento; el
+      precio ancla la decisión, un solo argumento construye interés y el QR
+      resuelve la acción. Las fotografías restantes conservan su lugar en la
+      ficha y en futuros carruseles, donde pueden respirar sin competir entre sí.
     evidence:
       - file: frontend/app/api/social/[id]/[format]/route.tsx
         lines: "150-160"
@@ -809,15 +841,21 @@ rules:
         symbol: SalesCallout
         note: El argumento comercial cambia según venta, arriendo y tipo de inmueble.
       - file: frontend/app/api/social/[id]/[format]/route.tsx
-        lines: "496-508"
-        symbol: PhotoCollage
-        note: Las piezas verticales distribuyen una foto protagonista y dos de apoyo.
+        lines: "376-409"
+        symbol: SurveyLine
+        note: >-
+          La línea inspirada en un plano topográfico conecta fotografía,
+          argumento y acción como firma propia del portal.
       - file: frontend/app/api/social/[id]/[format]/route.tsx
-        lines: "1384-1386"
+        lines: "411-430"
+        symbol: EditorialFacts
+        note: La portada limita la prueba secundaria a dos atributos declarados.
+      - file: frontend/app/api/social/[id]/[format]/route.tsx
+        lines: "1395-1397"
         symbol: customMessage
         note: El mensaje opcional se normaliza y limita antes de dibujarlo.
       - file: frontend/components/promote/PromotionKit.tsx
-        lines: "442-470"
+        lines: "479-506"
         symbol: Mensaje dentro de la imagen
         note: El editor permite cambiar el gancho o restaurar la propuesta base.
     tests:
@@ -829,9 +867,10 @@ rules:
       - name: Una propiedad en arriendo invita a conocer el espacio
         given: {status: for_rent}
         expected: CONOCE TU PRÓXIMO ESPACIO
-      - name: Una pieza vertical con tres fotos usa composición editorial
+      - name: Una pieza vertical conserva una sola fotografía protagonista
         given: {format: portrait, image_count: 3}
         expected: presente
+        note: Las fotografías restantes permanecen disponibles en la ficha.
       - name: El propietario cambia el mensaje dentro de la imagen
         role: owner
         given: {mensaje: "AGENDA TU VISITA"}

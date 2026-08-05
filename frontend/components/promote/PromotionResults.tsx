@@ -174,7 +174,11 @@ export default function PromotionResults({
   if (status.kind === 'loading') {
     return (
       <Frame>
-        <div className="flex items-center gap-2 text-sm text-textSecondary">
+        {/* Roughly the height of the shortest answer this can turn into. The
+            panel sits above the whole kit, so a frame that grows on arrival
+            drags every lamina down with it — enough to move a card out from
+            under a finger already on its way to tapping it. */}
+        <div className="flex min-h-[4.5rem] items-center gap-2 text-sm text-textSecondary">
           <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
           Cargando las visitas…
         </div>

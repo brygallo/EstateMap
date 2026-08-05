@@ -32,10 +32,10 @@ rules:
       sobre lo que ya se gestionó.
     evidence:
       - file: backend/real_estate/views.py
-        lines: "1157-1185"
+        lines: "1189-1216"
         symbol: def resume_link
       - file: backend/real_estate/views.py
-        lines: "1116-1118"
+        lines: "1148-1150"
         symbol: "return [IsAuthenticated(), IsAdminUser()]"
         note: Toda acción del viewset que no sea `create` exige staff.
       - file: backend/real_estate/email_utils.py
@@ -91,7 +91,7 @@ rules:
         lines: "616-623"
         symbol: def is_valid
       - file: backend/real_estate/views.py
-        lines: "1312-1322"
+        lines: "1344-1353"
         symbol: def invalid_resume_token_response
     backend:
       enforce: true
@@ -126,7 +126,7 @@ rules:
       guardado fallido deja el enlace gastado.
     evidence:
       - file: backend/real_estate/views.py
-        lines: "1195-1204"
+        lines: "1227-1235"
         symbol: redeemed_at__isnull=True
         note: UPDATE condicional dentro de la transacción que crea la propiedad.
       - file: backend/real_estate/email_utils.py
@@ -161,7 +161,7 @@ rules:
       datos o el mensaje acabó en el chat equivocado.
     evidence:
       - file: backend/real_estate/views.py
-        lines: "1189-1201"
+        lines: "1221-1232"
         symbol: def revoke_resume_link
     permissions:
       required: [pending_publications.revoke_resume_link]
@@ -199,7 +199,7 @@ rules:
         lines: "549-563"
         symbol: class PublicationDraftSerializer
       - file: backend/real_estate/views.py
-        lines: "1205-1224"
+        lines: "1237-1255"
         symbol: class PublicationDraftView
     permissions:
       required: [publication_drafts.read_by_token]
@@ -349,10 +349,10 @@ rules:
         lines: "561-568"
         symbol: related_name="pending_publications"
       - file: backend/real_estate/views.py
-        lines: "1275-1277"
+        lines: "1307-1309"
         symbol: pending.status = 'converted'
       - file: backend/real_estate/views.py
-        lines: "1170-1173"
+        lines: "1202-1204"
         symbol: "'Esta solicitud ya se convirtió en un anuncio.'"
     tests:
       api: true

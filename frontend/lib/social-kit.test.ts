@@ -582,6 +582,27 @@ describe('closureKind', () => {
     expect(momentFormats(base())).toEqual([]);
   });
 
+  it('drops the price-drop lamina once the listing has closed', () => {
+    // SPEC:SOC-102 — a cut on something already sold invites offers nobody can
+    // act on. It also removes the case where the figures lied: closing sets
+    // `status` to `inactive`, so a rental lost its "/mes" and "$450" beside
+    // "ANTES $520" read as a house that shed seventy dollars.
+    const closedWithDrop = {
+      previous_price: 520,
+      price: 450,
+      price_changed_at: '2026-07-20T10:00:00Z',
+      closed_at: '2026-08-01T10:00:00Z',
+    };
+
+    expect(momentFormats(base({ status: 'for_rent', ...closedWithDrop }))).toContain('price-drop');
+    expect(
+      momentFormats(base({ status: 'inactive', closed_reason: 'rented', ...closedWithDrop }))
+    ).toEqual(['sold']);
+    expect(
+      momentFormats(base({ status: 'inactive', closed_reason: 'withdrawn', ...closedWithDrop }))
+    ).toEqual([]);
+  });
+
   it('dates a closure by month, because a closure ages in months', () => {
     // SPEC:SOC-102 — and an absent date says nothing rather than "Invalid Date".
     expect(closureLabel(base({ closed_at: '2026-08-01T12:00:00Z' }))).toContain('2026');

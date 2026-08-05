@@ -80,6 +80,8 @@ const AQUA = tokens['--teal'];
 
 /** The one hue in the system that reads as "tag", for the price-drop badge. */
 const AMBER = tokens['--amber'];
+/** Warm paper used as a quiet editorial counterpoint to the brand navy. */
+const PAPER = '#F3F0E8';
 
 /** `NAVY` as channels, so a gradient can fade to exactly the panel colour. */
 const NAVY_RGB = '15,16,32';
@@ -95,9 +97,9 @@ const NETWORKS = new Set<SocialNetwork>(['facebook', 'instagram', 'tiktok', 'wha
  * spending it before the image even leaves the server is a waste.
  */
 const QR_TARGET: Record<SocialFormat, number> = {
-  feed: 152,
-  portrait: 164,
-  story: 224,
+  feed: 138,
+  portrait: 150,
+  story: 180,
   map: 152,
   og: 112,
   'price-drop': 164,
@@ -265,22 +267,22 @@ function fitSize(text: string, base: number, comfortable: number, min: number): 
 // --- Shared pieces --------------------------------------------------------
 
 /**
- * High-contrast card holding the QR and the code typed underneath it.
+ * High-contrast card holding the QR, and nothing else.
  *
- * The two are not redundant, which is why SOC-002 asks for both. The QR serves
- * whoever can scan the screen in front of them; the code in clear serves
- * everyone else — whoever got the image forwarded and recompressed by WhatsApp
- * until the modules stopped resolving, whoever is looking at it printed, and
- * whoever simply will not scan a code sent by a stranger.
+ * The bare code used to sit under it. It came out because an identifier
+ * stranded in the artwork sells nothing on its own: read off a photo it is five
+ * characters with nowhere to type them. What the fallback actually needs is the
+ * address, and that is where it lives now — `VerifyLine` prints the full
+ * `/p/<code>` path, so whoever gets an image WhatsApp recompressed until the
+ * modules stopped resolving still has something they can type. SOC-002.
  */
-function QrCard({ qr, code, size }: { qr: string; code: string; size: number }) {
+function QrCard({ qr, size }: { qr: string; size: number }) {
   return (
     <div
       style={{
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
-        gap: 6,
         padding: 14,
         borderRadius: 22,
         backgroundColor: '#FFFFFF',
@@ -288,22 +290,6 @@ function QrCard({ qr, code, size }: { qr: string; code: string; size: number }) 
     >
       {/* Drawn at the width it was encoded at; see QR_TARGET. */}
       <img src={qr} width={size} height={size} alt="" />
-      {code ? (
-        <div
-          style={{
-            display: 'flex',
-            fontSize: Math.round(size * 0.2),
-            fontWeight: 800,
-            letterSpacing: Math.round(size * 0.04),
-            // Nudged right by the trailing letterspace so the code stays
-            // optically centred under the code block.
-            paddingLeft: Math.round(size * 0.04),
-            color: NAVY,
-          }}
-        >
-          {code}
-        </div>
-      ) : null}
     </div>
   );
 }
@@ -388,6 +374,57 @@ function SalesCallout({ property, fontSize, message }: { property: Property; fon
       <div style={{ display: 'flex', fontSize: Math.round(fontSize * 0.68), color: 'rgba(15,16,32,0.68)' }}>
         FOTOS · UBICACIÓN · CONTACTO DIRECTO
       </div>
+    </div>
+  );
+}
+
+/**
+ * The kit's signature: a survey line that visually connects the listing photo
+ * with its commercial argument. It borrows from site plans rather than generic
+ * social-media cards, so the artwork belongs to a property portal at a glance.
+ */
+function SurveyLine({ property, height }: { property: Property; height: number }) {
+  return (
+    <div
+      style={{
+        display: 'flex',
+        position: 'relative',
+        width: 4,
+        height,
+        backgroundColor: accentColor(property),
+      }}
+    >
+      <div
+        style={{
+          position: 'absolute',
+          left: -7,
+          top: 0,
+          display: 'flex',
+          width: 18,
+          height: 18,
+          borderRadius: 999,
+          border: `4px solid ${accentColor(property)}`,
+          backgroundColor: NAVY,
+        }}
+      />
+    </div>
+  );
+}
+
+/** One restrained proof line; the artwork is an ad, not the full listing. */
+function EditorialFacts({ facts, fontSize }: { facts: string[]; fontSize: number }) {
+  const visible = facts.slice(0, 2).map((fact) => clamp(fact, 24));
+  if (visible.length === 0) return null;
+  return (
+    <div
+      style={{
+        display: 'flex',
+        fontSize,
+        letterSpacing: 0.5,
+        color: 'rgba(255,255,255,0.72)',
+      }}
+    >
+      {visible.join('  ·  ')}
     </div>
   );
 }
@@ -497,23 +534,6 @@ function PhotoLayer({
       }}
     >
       {tile ? <img src={tile} width={520} height={520} style={{ opacity: 0.14 }} alt="" /> : null}
-    </div>
-  );
-}
-
-function PhotoCollage({ photos, width, height }: { photos: string[]; width: number; height: number }) {
-  if (photos.length < 2) {
-    return <PhotoLayer photo={photos[0] ?? null} width={width} height={height} />;
-  }
-  const mainWidth = Math.round(width * 0.68);
-  const sideWidth = width - mainWidth;
-  return (
-    <div style={{ display: 'flex', width, height, gap: 6, backgroundColor: NAVY }}>
-      <img src={photos[0]} width={mainWidth} height={height} style={{ objectFit: 'cover' }} alt="" />
-      <div style={{ display: 'flex', flexDirection: 'column', width: sideWidth, height, gap: 6 }}>
-        <img src={photos[1]} width={sideWidth} height={photos[2] ? Math.round(height / 2) : height} style={{ objectFit: 'cover' }} alt="" />
-        {photos[2] ? <img src={photos[2]} width={sideWidth} height={Math.round(height / 2)} style={{ objectFit: 'cover' }} alt="" /> : null}
-      </div>
     </div>
   );
 }
@@ -652,7 +672,7 @@ async function mapLamina(
               </div>
               <VerifyLine code={code} fontSize={23} />
             </div>
-            <QrCard qr={qr} code={code} size={qrSize} />
+            <QrCard qr={qr} size={qrSize} />
           </div>
         </div>
       </div>
@@ -749,7 +769,7 @@ async function mapLamina(
       {/* Deliberately outside the panel: letting the card break the panel's top
           edge buys back ~80px of map that a taller bar would have eaten. */}
       <div style={{ position: 'absolute', right: 44, bottom: 30, display: 'flex' }}>
-        <QrCard qr={qr} code={code} size={qrSize} />
+        <QrCard qr={qr} size={qrSize} />
       </div>
     </div>
   );
@@ -758,17 +778,16 @@ async function mapLamina(
 // --- The photo laminas ----------------------------------------------------
 
 /**
- * Square and 4:5: one photo, the facts on a solid panel under it.
+ * Square and 4:5: one decisive photograph and one commercial reading path.
  *
  * The panel is opaque, not a gradient. It costs a third of the photo and buys
  * type that is still readable after the image has been through a chat app twice,
  * which is the trade this whole kit exists to make.
  *
- * The listing title only appears on the 4:5. On the square there is no room for
- * it that does not come out of the price or the photo, and the square is the one
- * format that always travels with a caption — Facebook and WhatsApp both put the
- * text right underneath. The 4:5 is 270px taller and Instagram truncates its
- * caption after two lines, so there the title has to be in the picture.
+ * The former collage, decorative frame, floating card and fact pills all asked
+ * for attention at once. This version follows the order a buyer actually needs:
+ * property, price, reason to care, action. Secondary photographs belong in the
+ * listing and future carousel frames, not in the cover.
  */
 async function photoLamina(
   property: Property,
@@ -780,28 +799,16 @@ async function photoLamina(
   message?: string
 ) {
   const withTitle = height >= 1200;
-  const [tile, photos] = await Promise.all([brandTile(), marketingPhotos(property, withTitle ? 3 : 1)]);
-  const photo = photos[0] ?? null;
+  const [tile, photo] = await Promise.all([brandTile(), mainPhoto(property)]);
   const facts = buildFacts(property);
   const price = buildPriceLine(property);
   const title = withTitle ? clamp(property.title ?? '', 62) : '';
-  const textWidth = width - 96 - qrSize - 60;
+  const panelHeight = withTitle ? 470 : 410;
+  const textWidth = width - 112 - qrSize - 58;
 
   return (
     <div style={{ display: 'flex', position: 'relative', width: '100%', height: '100%', backgroundColor: NAVY, fontFamily: 'Plus Jakarta Sans' }}>
-      {withTitle && photos.length > 1
-        ? <PhotoCollage photos={photos} width={width} height={height} />
-        : <PhotoLayer photo={photo} width="100%" height={height} tile={tile} />}
-
-      <div
-        style={{
-          position: 'absolute',
-          inset: 20,
-          display: 'flex',
-          border: '2px solid rgba(255,255,255,0.32)',
-          borderRadius: 28,
-        }}
-      />
+      <PhotoLayer photo={photo} width="100%" height={height} tile={tile} />
 
       <div
         style={{
@@ -812,18 +819,14 @@ async function photoLamina(
           display: 'flex',
           alignItems: 'flex-start',
           justifyContent: 'space-between',
-          padding: 44,
+          padding: '38px 44px 100px',
           backgroundImage:
             `linear-gradient(180deg, rgba(${NAVY_RGB},0.82) 0%, rgba(${NAVY_RGB},0.42) 58%,` +
             ` rgba(${NAVY_RGB},0) 100%)`,
         }}
       >
-        <StatusChip property={property} fontSize={26} />
-        <BrandRow tile={tile} fontSize={26} />
-      </div>
-
-      <div style={{ position: 'absolute', left: 44, top: 150, display: 'flex' }}>
-        <SalesCallout property={property} fontSize={withTitle ? 26 : 23} message={message} />
+        <StatusChip property={property} fontSize={23} />
+        <BrandRow tile={tile} fontSize={23} />
       </div>
 
       <div
@@ -836,51 +839,57 @@ async function photoLamina(
           flexDirection: 'column',
         }}
       >
-        <PanelRamp height={90} />
+        <PanelRamp height={120} />
         <div
           style={{
             display: 'flex',
-            alignItems: 'flex-end',
+            position: 'relative',
+            height: panelHeight,
+            alignItems: 'center',
             justifyContent: 'space-between',
-            gap: 28,
-            padding: '4px 48px 42px',
+            gap: 34,
+            padding: '34px 48px 38px 70px',
             backgroundColor: NAVY,
           }}
         >
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 12, maxWidth: textWidth }}>
-            <Eyebrow property={property} fontSize={25} maxChars={30} />
+          <div style={{ position: 'absolute', left: 48, top: 46, display: 'flex' }}>
+            <SurveyLine property={property} height={panelHeight - 92} />
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 11, maxWidth: textWidth }}>
+            <Eyebrow property={property} fontSize={22} maxChars={34} />
             <div
               style={{
                 display: 'flex',
-                fontSize: fitSize(price, 78, 13, 34),
+                fontSize: fitSize(price, withTitle ? 86 : 76, 13, 36),
                 fontWeight: 800,
-                lineHeight: 1.02,
-                color: '#FFFFFF',
+                lineHeight: 0.98,
+                letterSpacing: -2,
+                color: PAPER,
               }}
             >
               {price}
             </div>
-            {title ? (
-              <div style={{ display: 'flex', fontSize: 29, lineHeight: 1.25, color: 'rgba(255,255,255,0.80)' }}>
+            <div style={{ display: 'flex', fontSize: withTitle ? 27 : 24, fontWeight: 800, lineHeight: 1.16, color: '#FFFFFF' }}>
+              {clamp(message || buildArtworkHeadline(property), withTitle ? 52 : 44)}
+            </div>
+            <EditorialFacts facts={facts} fontSize={20} />
+            {title && withTitle ? (
+              <div style={{ display: 'flex', fontSize: 20, lineHeight: 1.2, color: 'rgba(255,255,255,0.56)' }}>
                 {title}
               </div>
             ) : null}
-            {/* Smaller on the square, where four chips at the 4:5 size wrap and
-                leave the last one orphaned on a row of its own. */}
-            <FactChips facts={facts} fontSize={withTitle ? 25 : 22} />
-            <VerifyLine code={code} fontSize={23} />
+            <VerifyLine code={code} fontSize={19} />
           </div>
-          <QrCard qr={qr} code={code} size={qrSize} />
+          <QrCard qr={qr} size={qrSize} />
         </div>
       </div>
     </div>
   );
 }
 
-/** 9:16: photo on top, a solid brand panel below where the text can breathe. */
+/** 9:16: an editorial cover kept clear of the platform's top and bottom chrome. */
 async function storyLamina(property: Property, qr: string, code: string, qrSize: number, message?: string) {
-  const [tile, photos] = await Promise.all([brandTile(), marketingPhotos(property, 3)]);
-  const photo = photos[0] ?? null;
+  const [tile, photo] = await Promise.all([brandTile(), mainPhoto(property)]);
   const facts = buildFacts(property);
   const price = buildPriceLine(property);
   const title = clamp(property.title ?? '', 68);
@@ -891,23 +900,12 @@ async function storyLamina(property: Property, qr: string, code: string, qrSize:
   // budget assumes the worst case the panel can produce — a title that wraps to
   // two lines above four chips that wrap to two rows — because that is the case
   // that pushes the verifiable URL under the reply bar.
-  const PHOTO = 1120;
+  const PHOTO = 1290;
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', width: '100%', height: '100%', backgroundColor: NAVY, fontFamily: 'Plus Jakarta Sans' }}>
       <div style={{ display: 'flex', position: 'relative', width: '100%', height: PHOTO }}>
-        {photos.length > 1
-          ? <PhotoCollage photos={photos} width={1080} height={PHOTO} />
-          : <PhotoLayer photo={photo} width="100%" height={PHOTO} tile={tile} />}
-        <div
-          style={{
-            position: 'absolute',
-            inset: 24,
-            display: 'flex',
-            border: '2px solid rgba(255,255,255,0.32)',
-            borderRadius: 30,
-          }}
-        />
+        <PhotoLayer photo={photo} width="100%" height={PHOTO} tile={tile} />
         <div
           style={{
             position: 'absolute',
@@ -917,17 +915,33 @@ async function storyLamina(property: Property, qr: string, code: string, qrSize:
             display: 'flex',
             alignItems: 'flex-start',
             justifyContent: 'space-between',
-            padding: 52,
+            padding: '64px 56px 150px',
             backgroundImage:
               `linear-gradient(180deg, rgba(${NAVY_RGB},0.82) 0%, rgba(${NAVY_RGB},0.42) 58%,` +
               ` rgba(${NAVY_RGB},0) 100%)`,
           }}
         >
-          <StatusChip property={property} fontSize={30} />
-          <BrandRow tile={tile} fontSize={28} />
+          <StatusChip property={property} fontSize={26} />
+          <BrandRow tile={tile} fontSize={25} />
         </div>
-        <div style={{ position: 'absolute', left: 52, bottom: 52, display: 'flex' }}>
-          <SalesCallout property={property} fontSize={28} message={message} />
+        <div
+          style={{
+            position: 'absolute',
+            left: 0,
+            right: 0,
+            bottom: 0,
+            display: 'flex',
+            height: 310,
+            padding: '92px 60px 44px',
+            backgroundImage: `linear-gradient(180deg, rgba(${NAVY_RGB},0) 0%, rgba(${NAVY_RGB},0.88) 64%, ${NAVY} 100%)`,
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'flex-start', gap: 22 }}>
+            <SurveyLine property={property} height={140} />
+            <div style={{ display: 'flex', maxWidth: 870, fontSize: 48, fontWeight: 800, lineHeight: 1.05, color: '#FFFFFF' }}>
+              {clamp(message || buildArtworkHeadline(property), 52)}
+            </div>
+          </div>
         </div>
       </div>
 
@@ -937,33 +951,30 @@ async function storyLamina(property: Property, qr: string, code: string, qrSize:
           flex: 1,
           alignItems: 'flex-start',
           justifyContent: 'space-between',
-          gap: 36,
-          padding: '58px 60px 0',
-          backgroundImage: `linear-gradient(160deg, ${NAVY} 0%, #10222C 62%, ${TEAL} 190%)`,
+          gap: 32,
+          padding: '42px 58px 0',
+          backgroundColor: NAVY,
         }}
       >
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 16, maxWidth: 1080 - 120 - 36 - qrSize - 28 }}>
-          <Eyebrow property={property} fontSize={30} maxChars={26} />
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 12, maxWidth: 1080 - 116 - 32 - 180 - 28 }}>
+          <Eyebrow property={property} fontSize={25} maxChars={30} />
           <div
             style={{
               display: 'flex',
-              fontSize: fitSize(price, 94, 13, 40),
+              fontSize: fitSize(price, 90, 13, 42),
               fontWeight: 800,
               lineHeight: 1.02,
-              color: '#FFFFFF',
+              letterSpacing: -2,
+              color: PAPER,
             }}
           >
             {price}
           </div>
-          {title ? (
-            <div style={{ display: 'flex', fontSize: 33, lineHeight: 1.25, color: 'rgba(255,255,255,0.82)' }}>
-              {title}
-            </div>
-          ) : null}
-          <FactChips facts={facts} fontSize={29} />
-          <VerifyLine code={code} fontSize={27} />
+          <EditorialFacts facts={facts} fontSize={22} />
+          {title ? <div style={{ display: 'flex', fontSize: 20, color: 'rgba(255,255,255,0.52)' }}>{title}</div> : null}
+          <VerifyLine code={code} fontSize={20} />
         </div>
-        <QrCard qr={qr} code={code} size={qrSize} />
+        <QrCard qr={qr} size={qrSize} />
       </div>
     </div>
   );
@@ -1035,7 +1046,7 @@ async function ogLamina(property: Property, qr: string, code: string, qrSize: nu
 
         <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between' }}>
           <VerifyLine code={code} fontSize={19} />
-          <QrCard qr={qr} code={code} size={qrSize} />
+          <QrCard qr={qr} size={qrSize} />
         </div>
       </div>
     </div>
@@ -1207,7 +1218,7 @@ async function priceDropLamina(
           <VerifyLine code={code} fontSize={23} />
         </div>
 
-        <QrCard qr={qr} code={code} size={qrSize} />
+        <QrCard qr={qr} size={qrSize} />
       </div>
     </div>
   );
@@ -1355,7 +1366,7 @@ async function soldLamina(
             <BrandRow tile={tile} fontSize={36} />
             <VerifyLine code={code} fontSize={24} />
           </div>
-          <QrCard qr={qr} code={code} size={qrSize} />
+          <QrCard qr={qr} size={qrSize} />
         </div>
       </div>
     </div>

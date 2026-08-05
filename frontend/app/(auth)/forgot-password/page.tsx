@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { Formik, Form } from 'formik';
+import { Formik, Form, type FormikHelpers } from 'formik';
 import * as Yup from 'yup';
 import { toast } from 'sonner';
 import { Mail, ArrowLeft, ArrowRight } from 'lucide-react';
@@ -22,22 +22,28 @@ const ForgotPassword = () => {
     email: Yup.string().email('Correo inválido').required('Campo requerido'),
   });
 
-  const handleSubmit = async (values: any, { setSubmitting }: any) => {
+  const handleSubmit = async (
+    values: { email: string },
+    { setSubmitting }: FormikHelpers<{ email: string }>
+  ) => {
     try {
       const res = await fetchWithTimeout(`${API_URL}/request-password-reset/`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(values),
       });
-      const data = await res.json().catch(() => ({}));
+      const data = await res.json().catch(() => ({})) as Record<string, unknown>;
 
       if (!res.ok) {
-        toast.error(data.error || await responseErrorMessage(res, 'No se pudo enviar el correo.'));
+        toast.error(
+          (typeof data.error === 'string' && data.error) ||
+          await responseErrorMessage(res, 'No se pudo enviar el correo.')
+        );
         return;
       }
 
       setEmailSent(true);
-      toast.success(data.message || 'Correo enviado exitosamente');
+      toast.success(typeof data.message === 'string' ? data.message : 'Correo enviado exitosamente');
     } catch (err) {
       toast.error(requestErrorMessage(err, 'solicitar la recuperación de contraseña'));
     } finally {
@@ -80,7 +86,7 @@ const ForgotPassword = () => {
         validationSchema={validationSchema}
         onSubmit={handleSubmit}
       >
-        {({ isSubmitting }: any) => (
+        {({ isSubmitting }) => (
           <Form className="space-y-4">
             <AuthField
               id="email"

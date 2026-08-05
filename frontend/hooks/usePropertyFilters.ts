@@ -99,7 +99,12 @@ function filtersToUrlParams(f: PropertyFilters): URLSearchParams {
 function filtersToApiParams(
   f: PropertyFilters,
   bounds: MapBounds | null,
-  options: { pageSize?: number; includeImages?: boolean; page?: number } = {}
+  options: {
+    pageSize?: number;
+    includeImages?: boolean;
+    page?: number;
+    distanceOrigin?: { lat: number; lng: number };
+  } = {}
 ): URLSearchParams {
   const params = new URLSearchParams();
   if (f.search) params.set('search', f.search);
@@ -120,6 +125,10 @@ function filtersToApiParams(
   if (options.pageSize) params.set('page_size', String(options.pageSize));
   if (options.page) params.set('page', String(options.page));
   if (options.includeImages != null) params.set('include_images', options.includeImages ? '1' : '0');
+  if (options.distanceOrigin) {
+    params.set('origin_lat', String(options.distanceOrigin.lat));
+    params.set('origin_lng', String(options.distanceOrigin.lng));
+  }
   return params;
 }
 
@@ -433,10 +442,14 @@ export function usePropertyFilters({ token, bounds, zoom = 7 }: UsePropertyFilte
       else setCardsLoading(true);
 
       try {
-        const params = filtersToApiParams(filters, bounds, {
+        const params = filtersToApiParams(filters, null, {
           page,
           pageSize: cardsPageSize,
           includeImages: true,
+          distanceOrigin: {
+            lat: (bounds.south + bounds.north) / 2,
+            lng: (bounds.west + bounds.east) / 2,
+          },
         });
         const res = await apiFetch(`/properties/?${params.toString()}`, {
           skipAuth: !token,

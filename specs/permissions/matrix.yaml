@@ -279,12 +279,15 @@ rules:
       - name: un visitante anónimo lista el catálogo
         role: anonymous
         expected: allowed
+        expected_http_status: 200
       - name: un usuario autenticado lista el catálogo
         role: authenticated
         expected: allowed
+        expected_http_status: 200
       - name: el renderizado en servidor de Next.js lista el catálogo
         role: internal
         expected: allowed
+        expected_http_status: 200
         note: Sin X-Forwarded-For y desde una IP privada queda exento del throttle.
 
   - id: PERM-002
@@ -298,7 +301,7 @@ rules:
       afecta a la métrica, nunca al acceso.
     evidence:
       - file: backend/real_estate/views.py
-        lines: "563-570"
+        lines: "592-598"
         symbol: def retrieve
       - file: backend/real_estate/permissions.py
         lines: "4-9"
@@ -315,12 +318,15 @@ rules:
       - name: un visitante anónimo abre la ficha
         role: anonymous
         expected: allowed
+        expected_http_status: 200
       - name: un tercero autenticado abre la ficha
         role: not_owner
         expected: allowed
+        expected_http_status: 200
       - name: el propietario abre su propia ficha
         role: owner
         expected: allowed
+        expected_http_status: 200
 
   - id: PERM-003
     name: Publicar una propiedad exige haber iniciado sesión
@@ -333,7 +339,7 @@ rules:
       request.user, así que no es posible publicar a nombre de otra persona.
     evidence:
       - file: backend/real_estate/views.py
-        lines: "524-526"
+        lines: "553-555"
         symbol: def perform_create
       - file: backend/real_estate/serializers.py
         lines: "187-193"
@@ -352,12 +358,25 @@ rules:
       - name: un anónimo no puede publicar
         role: anonymous
         expected: denied
-      - name: un usuario autenticado supera la barrera de permisos
+      - name: un usuario autenticado publica una propiedad
         role: authenticated
         expected: allowed
+        expected_http_status: 201
+        body:
+          title: Propiedad creada por spec
+          description: Anuncio mínimo válido para el caso permitido.
+          property_type: land
+          status: for_sale
+          city: Macas
+          province: Morona Santiago
+          latitude: -2.308
+          longitude: -78.118
+          area: 500
+          price: 25000
         note: >-
-          Sin cuerpo válido la respuesta es 400 de validación, que es
-          precisamente la prueba de que el permiso dejó pasar la petición.
+          Con cuerpo válido responde 201 y el anuncio queda a nombre del usuario
+          del token. Antes el caso iba sin cuerpo y se conformaba con el 400 de
+          validación, que no distinguía un permiso abierto de un endpoint roto.
 
   - id: PERM-004
     name: La propiedad la edita su dueño o un administrador
@@ -397,6 +416,7 @@ rules:
       - name: el propietario edita su propiedad
         role: owner
         expected: allowed
+        expected_http_status: 200
         body:
           title: Propiedad de spec editada
       - name: un tercero autenticado no puede editarla
@@ -443,6 +463,7 @@ rules:
       - name: el propietario elimina su propiedad
         role: owner
         expected: allowed
+        expected_http_status: 204
       - name: un tercero autenticado no puede eliminarla
         role: not_owner
         expected: denied
@@ -470,7 +491,7 @@ rules:
       no hay forma de pedir el inventario ajeno sin ser administrador.
     evidence:
       - file: backend/real_estate/views.py
-        lines: "973-975"
+        lines: "1005-1007"
         symbol: def my_properties
         note: >-
           El alcance sale de request.user.is_staff; para el resto es
@@ -490,9 +511,11 @@ rules:
       - name: el propietario ve su inventario
         role: owner
         expected: allowed
+        expected_http_status: 200
       - name: otro usuario recibe su propia lista, no la ajena
         role: not_owner
         expected: allowed
+        expected_http_status: 200
         note: Responde 200 con página vacía; el filtro es por owner, no por parámetro.
       - name: un administrador recibe el catálogo entero
         role: staff
@@ -533,12 +556,25 @@ rules:
     tests:
       api: true
     cases:
-      - name: una cuenta sin verificar supera la barrera de permisos al publicar
+      - name: una cuenta sin verificar publica una propiedad
         role: unverified
         expected: allowed
+        expected_http_status: 201
+        body:
+          title: Propiedad de cuenta sin verificar
+          description: Anuncio mínimo válido para el caso permitido.
+          property_type: land
+          status: for_sale
+          city: Macas
+          province: Morona Santiago
+          latitude: -2.308
+          longitude: -78.118
+          area: 500
+          price: 25000
         note: >-
-          400 de validación por falta de cuerpo. Lo relevante es que no es 403,
-          es decir que la verificación de correo no interviene.
+          201, no 403: con cuerpo válido el anuncio se crea de verdad, así que
+          el defecto no es solo que la capa de permisos deje pasar, sino que la
+          publicación se completa sin haber verificado el correo.
 
   - id: PERM-008
     name: Publicar debería exigir el correo verificado
@@ -565,6 +601,18 @@ rules:
       - name: una cuenta verificada sí debería poder publicar
         role: authenticated
         expected: allowed
+        expected_http_status: 201
+        body:
+          title: Propiedad de cuenta verificada
+          description: Anuncio mínimo válido para el caso permitido.
+          property_type: land
+          status: for_sale
+          city: Macas
+          province: Morona Santiago
+          latitude: -2.308
+          longitude: -78.118
+          area: 500
+          price: 25000
 
   - id: PERM-009
     name: delete_image no comprueba la propiedad (comportamiento actual)
@@ -583,7 +631,7 @@ rules:
       para que la suite quede verde; PERM-010 enuncia el comportamiento correcto.
     evidence:
       - file: backend/real_estate/views.py
-        lines: "1041-1061"
+        lines: "1073-1092"
         symbol: def delete_image
         note: "@action(detail=True, methods=['delete'], permission_classes=[IsAuthenticated])"
       - file: backend/real_estate/permissions.py
@@ -596,6 +644,10 @@ rules:
       enforce: false
       endpoint: DELETE /api/properties/{property_id}/delete_image/
       denied_http_status: 401
+      note: >-
+        La acción exige image_id en el cuerpo de un DELETE, un método que no
+        transporta cuerpo. Por eso ningún caso de esta regla puede declarar el
+        código de una llamada correcta: solo se puede observar el 400.
     tests:
       api: true
     cases:
@@ -607,10 +659,17 @@ rules:
         expected: allowed
         note: >-
           400 por falta de image_id. No es 403, y ahí está el hueco: la capa de
-          permisos deja pasar a quien no es propietario.
+          permisos deja pasar a quien no es propietario. Sin
+          expected_http_status a propósito: la acción lee image_id del cuerpo de
+          un DELETE, y un caso no puede enviar cuerpo en un método que no lo
+          lleva, así que la petición válida (204) no es expresable aquí. Ver la
+          nota de backend.
       - name: el propietario supera la barrera
         role: owner
         expected: allowed
+        note: >-
+          Mismo motivo: sin image_id la respuesta es 400 y el cuerpo que haría
+          falta para llegar al 204 no cabe en un DELETE.
 
   - id: PERM-010
     name: delete_image debería exigir ser propietario
@@ -637,6 +696,10 @@ rules:
       - name: el propietario sí debería poder
         role: owner
         expected: allowed
+        note: >-
+          Sin expected_http_status: la corrección de PERM-009 pasa por decidir
+          también cómo se indica la imagen. Mientras image_id viaje en el cuerpo
+          de un DELETE, el caso permitido no es expresable.
 
   - id: PERM-011
     name: El informe comercial es público (comportamiento actual)
@@ -653,11 +716,11 @@ rules:
       ciudad) y no declara throttle. PERM-012 enuncia la corrección.
     evidence:
       - file: backend/real_estate/views.py
-        lines: "575-585"
+        lines: "604-613"
         symbol: def intelligence
         note: "@action(detail=True, methods=['get'], permission_classes=[AllowAny])"
       - file: backend/real_estate/views.py
-        lines: "656-658"
+        lines: "685-687"
         symbol: "'demand': {'level': demand_level, 'views': instance.views_count, 'contacts': contacts,"
     permissions:
       required: [properties.read_intelligence]
@@ -671,9 +734,11 @@ rules:
       - name: un visitante anónimo obtiene el informe completo
         role: anonymous
         expected: allowed
+        expected_http_status: 200
       - name: un tercero autenticado también
         role: not_owner
         expected: allowed
+        expected_http_status: 200
 
   - id: PERM-012
     name: Las métricas de demanda no deberían ser públicas
@@ -722,7 +787,7 @@ rules:
       páginas renderizadas en servidor no compartan un único cubo.
     evidence:
       - file: backend/real_estate/views.py
-        lines: "690-707"
+        lines: "719-735"
         symbol: def map_points
       - file: backend/real_estate/throttling.py
         lines: 24-39
@@ -742,12 +807,15 @@ rules:
       - name: un visitante anónimo carga el mapa
         role: anonymous
         expected: allowed
+        expected_http_status: 200
       - name: el renderizado en servidor carga el mapa sin consumir cuota
         role: internal
         expected: allowed
+        expected_http_status: 200
       - name: un usuario staff carga el mapa
         role: staff
         expected: allowed
+        expected_http_status: 200
 
   - id: PERM-014
     name: Los contadores agregados del catálogo son públicos
@@ -761,7 +829,7 @@ rules:
       por eso puede cachearse y marcarse como pública.
     evidence:
       - file: backend/real_estate/views.py
-        lines: "887-901"
+        lines: "919-932"
         symbol: def summary
       - file: backend/real_estate/views.py
         lines: "109-118"
@@ -778,6 +846,7 @@ rules:
       - name: un visitante anónimo obtiene los totales
         role: anonymous
         expected: allowed
+        expected_http_status: 200
 
   - id: PERM-015
     name: Las ubicaciones con inventario son públicas
@@ -790,7 +859,7 @@ rules:
       en cada propiedad, con independencia de lo que haya cargado el viewport.
     evidence:
       - file: backend/real_estate/views.py
-        lines: "803-812"
+        lines: "835-843"
         symbol: def locations
     permissions:
       required: [map.read_locations]
@@ -803,6 +872,7 @@ rules:
       - name: un visitante anónimo obtiene las ubicaciones
         role: anonymous
         expected: allowed
+        expected_http_status: 200
 
   - id: PERM-016
     name: El catálogo estable de cantones es público
@@ -816,7 +886,7 @@ rules:
       saque del índice.
     evidence:
       - file: backend/real_estate/views.py
-        lines: "839-852"
+        lines: "871-883"
         symbol: def catalog
     permissions:
       required: [map.read_catalog]
@@ -829,6 +899,7 @@ rules:
       - name: un visitante anónimo obtiene el catálogo de cantones
         role: anonymous
         expected: allowed
+        expected_http_status: 200
 
   - id: PERM-017
     name: La lista de propietarios con inventario es pública
@@ -841,7 +912,7 @@ rules:
       correo ni teléfono.
     evidence:
       - file: backend/real_estate/views.py
-        lines: "778-798"
+        lines: "810-829"
         symbol: def owners
     permissions:
       required: [map.read_owners]
@@ -854,6 +925,7 @@ rules:
       - name: un visitante anónimo obtiene la lista de propietarios
         role: anonymous
         expected: allowed
+        expected_http_status: 200
 
   - id: PERM-018
     name: Los indicadores de mercado son públicos
@@ -867,7 +939,7 @@ rules:
       con el método IQR; no expone datos de ninguna cuenta.
     evidence:
       - file: backend/real_estate/views.py
-        lines: "1856-1870"
+        lines: "1888-1901"
         symbol: class MarketStatsView
     permissions:
       required: [properties.read_market_stats]
@@ -881,9 +953,11 @@ rules:
       - name: un visitante anónimo obtiene los indicadores
         role: anonymous
         expected: allowed
+        expected_http_status: 200
       - name: el renderizado en servidor obtiene los indicadores
         role: internal
         expected: allowed
+        expected_http_status: 200
 
   - id: PERM-019
     name: Las tablas de provincias y cantones se leen sin cuenta
@@ -912,6 +986,7 @@ rules:
       - name: un visitante anónimo consulta las provincias
         role: anonymous
         expected: allowed
+        expected_http_status: 200
 
   - id: PERM-020
     name: La geografía no se puede escribir desde la API
@@ -964,7 +1039,7 @@ rules:
       año. PERM-022 enuncia la corrección.
     evidence:
       - file: backend/real_estate/views.py
-        lines: "1440-1448"
+        lines: "1472-1479"
         symbol: class ImageProxyView
       - file: backend/real_estate/urls.py
         lines: "72-74"
@@ -981,9 +1056,13 @@ rules:
       - name: un anónimo alcanza el proxy sin credenciales
         role: anonymous
         expected: allowed
+        expected_http_status: 404
         note: >-
-          404 porque el objeto no existe. Lo que demuestra el caso es que no hay
-          ninguna capa de autenticación delante.
+          El 404 es el resultado exacto que se afirma: el objeto no existe en el
+          bucket y la vista lo dice sin pedir credenciales. No hay petición
+          "válida" que declarar en su lugar porque no hay ningún objeto de
+          fixture en MinIO; lo que fija el código es que un ausente responde 404
+          y no 401, 403 ni 500.
 
   - id: PERM-022
     name: El proxy de imágenes debería servir solo objetos referenciados
@@ -1023,10 +1102,10 @@ rules:
       y la respuesta se marca no-store.
     evidence:
       - file: backend/real_estate/views.py
-        lines: "1482-1508"
+        lines: "1514-1539"
         symbol: class PendingImageView
       - file: backend/real_estate/views.py
-        lines: "1504-1506"
+        lines: "1536-1538"
         symbol: path.parent != Path(settings.IMAGE_UPLOAD_TEMP_DIR)
     permissions:
       required: [images.read_public]
@@ -1040,7 +1119,12 @@ rules:
       - name: un anónimo alcanza la vista sin credenciales
         role: anonymous
         expected: allowed
-        note: 404 porque no hay ninguna PropertyImage de fixture; no hay capa de autenticación.
+        expected_http_status: 404
+        note: >-
+          404 porque no hay ninguna PropertyImage de fixture, y esa es la
+          afirmación que se fija: una fila inexistente responde 404 sin pedir
+          credenciales. El caso permitido con fichero real exigiría dejar una
+          imagen en IMAGE_UPLOAD_TEMP_DIR, que el mundo de prueba no construye.
 
   # =====================================================================
   # D. LEADS
@@ -1058,7 +1142,7 @@ rules:
       alta un lead ya marcado como gestionado.
     evidence:
       - file: backend/real_estate/views.py
-        lines: "1080-1082"
+        lines: "1112-1114"
         symbol: "if self.action == 'create':"
       - file: backend/real_estate/serializers.py
         lines: "475-480"
@@ -1076,9 +1160,31 @@ rules:
       - name: un anónimo envía el formulario de contacto
         role: anonymous
         expected: allowed
+        expected_http_status: 201
+        body:
+          property: "{property_id}"
+          name: Interesado de spec
+          phone: "0991234567"
+          email: interesado-spec@example.com
+          message: Me interesa esta propiedad.
+          source: property_page
+          status: contacted
+        note: >-
+          El cuerpo manda status a propósito: al ser de solo lectura en la
+          creación, la petición se acepta igual (201) y el valor se descarta. El
+          201 por sí solo no demuestra el descarte; eso lo sostiene
+          read_only_fields en LeadSerializer, que es la evidencia citada.
       - name: un usuario autenticado también puede enviarlo
         role: authenticated
         expected: allowed
+        expected_http_status: 201
+        body:
+          property: "{property_id}"
+          name: Interesado con cuenta
+          phone: "0991234567"
+          email: interesado-auth@example.com
+          message: Me interesa esta propiedad.
+          source: property_page
 
   - id: PERM-025
     name: La creación de leads debería estar limitada por tasa
@@ -1120,7 +1226,7 @@ rules:
       pertenece.
     evidence:
       - file: backend/real_estate/views.py
-        lines: "1096-1100"
+        lines: "1128-1130"
         symbol: return qs.filter(property__owner=user)
     permissions:
       required: [leads.read_own, leads.read_all]
@@ -1137,12 +1243,15 @@ rules:
       - name: el propietario lista los leads de sus propiedades
         role: owner
         expected: allowed
+        expected_http_status: 200
       - name: otro usuario recibe una lista vacía, no la ajena
         role: not_owner
         expected: allowed
+        expected_http_status: 200
       - name: staff lista todos los leads
         role: staff
         expected: allowed
+        expected_http_status: 200
 
   - id: PERM-027
     name: Un lead concreto solo es accesible para el dueño de su propiedad
@@ -1158,7 +1267,7 @@ rules:
       status.
     evidence:
       - file: backend/real_estate/views.py
-        lines: "1086-1095"
+        lines: "1118-1126"
         symbol: LeadStatusSerializer
       - file: backend/real_estate/serializers.py
         lines: "503-507"
@@ -1201,7 +1310,7 @@ rules:
       status es read_only en la creación.
     evidence:
       - file: backend/real_estate/views.py
-        lines: "1121-1128"
+        lines: "1153-1159"
         symbol: "self.throttle_scope = 'pending_create'"
       - file: backend/estate_map/settings.py
         lines: 172-183
@@ -1218,6 +1327,21 @@ rules:
       - name: un anónimo registra una solicitud
         role: anonymous
         expected: allowed
+        expected_http_status: 201
+        body:
+          title: Solicitud de spec
+          contact_phone: "0991234567"
+          contact_email: solicitud-spec@example.com
+          city: Macas
+          province: Morona Santiago
+          property_type: land
+          operation: for_sale
+          price: "32000"
+          source: account_required
+          status: converted
+        note: >-
+          Igual que en los leads: status viaja en el cuerpo y la creación lo
+          ignora por ser de solo lectura, así que la respuesta sigue siendo 201.
 
   - id: PERM-029
     name: La bandeja de publicación asistida es solo para staff
@@ -1231,10 +1355,10 @@ rules:
       filtraría datos de contacto.
     evidence:
       - file: backend/real_estate/views.py
-        lines: "1116-1118"
+        lines: "1148-1150"
         symbol: "return [IsAuthenticated(), IsAdminUser()]"
       - file: backend/real_estate/views.py
-        lines: "1128-1130"
+        lines: "1160-1162"
         symbol: return PendingPublication.objects.none()
     permissions:
       required: [pending_publications.read_all, pending_publications.update_status]
@@ -1258,6 +1382,7 @@ rules:
       - name: staff accede a la bandeja
         role: staff
         expected: allowed
+        expected_http_status: 200
 
   # =====================================================================
   # F. ACTIVIDAD
@@ -1276,7 +1401,7 @@ rules:
       cliente.
     evidence:
       - file: backend/real_estate/views.py
-        lines: "1351-1358"
+        lines: "1383-1389"
         symbol: "self.throttle_scope = 'activity_create'"
       - file: backend/real_estate/serializers.py
         lines: "634-642"
@@ -1293,12 +1418,14 @@ rules:
       - name: un anónimo emite un evento
         role: anonymous
         expected: allowed
+        expected_http_status: 201
         body:
           event_name: spec_probe
           path: /spec
       - name: un usuario autenticado emite un evento
         role: authenticated
         expected: allowed
+        expected_http_status: 201
         body:
           event_name: spec_probe
           path: /spec
@@ -1315,10 +1442,10 @@ rules:
       puede alterar un evento desde la API.
     evidence:
       - file: backend/real_estate/views.py
-        lines: "1116-1118"
+        lines: "1148-1150"
         symbol: "return [IsAuthenticated(), IsAdminUser()]"
       - file: backend/real_estate/views.py
-        lines: "1336-1338"
+        lines: "1368-1370"
         symbol: "http_method_names = ['get', 'post', 'head', 'options']"
     permissions:
       required: [activity.read_all]
@@ -1339,6 +1466,7 @@ rules:
       - name: staff consulta el registro
         role: staff
         expected: allowed
+        expected_http_status: 200
 
   # =====================================================================
   # G. AUTENTICACIÓN Y CUENTA
@@ -1356,7 +1484,7 @@ rules:
       code email_not_verified en lugar de un fallo genérico.
     evidence:
       - file: backend/real_estate/views.py
-        lines: "1377-1379"
+        lines: "1409-1411"
         symbol: class CustomTokenObtainPairView
       - file: backend/estate_map/settings.py
         lines: 192-212
@@ -1373,10 +1501,17 @@ rules:
     tests:
       api: true
     cases:
-      - name: un anónimo alcanza el endpoint de login
+      - name: un anónimo inicia sesión con credenciales válidas
         role: anonymous
         expected: allowed
-        note: 400 por falta de credenciales; no hay barrera de permisos.
+        expected_http_status: 200
+        body:
+          email: "{owner_email}"
+          password: "{password}"
+        note: >-
+          200 con el par de tokens. Antes el caso iba sin cuerpo y se conformaba
+          con el 400 de "campo requerido", que no distinguía un login que
+          funciona de uno roto.
 
   - id: PERM-033
     name: Los endpoints de autenticación deberían limitar los intentos
@@ -1415,7 +1550,7 @@ rules:
       a la vez. Ver PERM-007.
     evidence:
       - file: backend/real_estate/views.py
-        lines: "1381-1383"
+        lines: "1413-1415"
         symbol: class RegisterView
       - file: backend/real_estate/serializers.py
         lines: "716-725"
@@ -1430,9 +1565,16 @@ rules:
     tests:
       api: true
     cases:
-      - name: un anónimo alcanza el registro
+      - name: un anónimo se registra
         role: anonymous
         expected: allowed
+        expected_http_status: 201
+        body:
+          username: spec_registro
+          email: spec-registro@example.com
+          first_name: Spec
+          last_name: Registro
+          password: ClaveMuySegura789!
 
   - id: PERM-035
     name: El inicio de sesión con Google exige un correo verificado por Google
@@ -1451,7 +1593,7 @@ rules:
         lines: 27-39
         symbol: claims.get("email_verified") is not True
       - file: backend/real_estate/views.py
-        lines: "1387-1389"
+        lines: "1419-1421"
         symbol: class GoogleLoginView
     permissions:
       required: [auth.google_login]
@@ -1465,7 +1607,12 @@ rules:
       - name: un anónimo alcanza el endpoint de Google
         role: anonymous
         expected: allowed
-        note: 400 por token ausente; el permiso es AllowAny.
+        note: >-
+          400 por token ausente; el permiso es AllowAny. Sin
+          expected_http_status: la petición válida exige un id_token firmado por
+          Google, que no se puede construir en la suite sin sustituir el
+          verificador. La ruta feliz está cubierta a mano en
+          real_estate/tests/test_services.py.
 
   - id: PERM-036
     name: El refresco de token es público
@@ -1494,6 +1641,12 @@ rules:
       - name: un anónimo alcanza el refresco de token
         role: anonymous
         expected: allowed
+        note: >-
+          400 por falta del campo refresh; la credencial es el propio token, así
+          que la petición válida exige emitir uno antes y el mundo de prueba no
+          sabe entregarlo a un caso. La rotación y la lista negra se prueban a
+          mano en real_estate/tests/test_authentication.py
+          (test_refresh_token_renews_session).
 
   - id: PERM-037
     name: La verificación de correo es pública
@@ -1506,10 +1659,10 @@ rules:
       caducidad. Al canjearlo se activan is_active e is_email_verified a la vez.
     evidence:
       - file: backend/real_estate/views.py
-        lines: "1514-1516"
+        lines: "1546-1548"
         symbol: class VerifyEmailView
       - file: backend/real_estate/views.py
-        lines: "1563-1565"
+        lines: "1595-1597"
         symbol: user.is_email_verified = True
     permissions:
       required: [auth.verify_email]
@@ -1522,6 +1675,11 @@ rules:
       - name: un anónimo alcanza la verificación
         role: anonymous
         expected: allowed
+        note: >-
+          400 porque faltan email y code; la petición válida exige un código de
+          seis dígitos vivo, que solo existe tras un registro. La ruta feliz
+          está cubierta a mano en real_estate/tests/test_registration.py
+          (test_verify_email_success).
 
   - id: PERM-038
     name: La recuperación de contraseña no revela si el correo existe
@@ -1534,7 +1692,7 @@ rules:
       referencia para PERM-039, donde el patrón no se siguió.
     evidence:
       - file: backend/real_estate/views.py
-        lines: "1651-1653"
+        lines: "1683-1685"
         symbol: "# Por seguridad, no revelar si el email existe o no"
     permissions:
       required: [auth.request_password_reset]
@@ -1547,6 +1705,7 @@ rules:
       - name: un correo inexistente recibe la misma respuesta afirmativa
         role: anonymous
         expected: allowed
+        expected_http_status: 200
         body:
           email: nadie-spec@example.com
 
@@ -1563,7 +1722,7 @@ rules:
       regla congela la conducta actual para que un cambio la haga saltar.
     evidence:
       - file: backend/real_estate/views.py
-        lines: "1532-1535"
+        lines: "1564-1566"
         symbol: "{'error': 'Usuario no encontrado'}"
     permissions:
       required: [auth.resend_verification]
@@ -1600,6 +1759,7 @@ rules:
       - name: un correo inexistente debería recibir 200 genérico
         role: anonymous
         expected: allowed
+        expected_http_status: 200
         body:
           email: nadie-spec@example.com
 
@@ -1614,7 +1774,7 @@ rules:
       endpoint no necesita comprobación de objeto.
     evidence:
       - file: backend/real_estate/views.py
-        lines: "1835-1839"
+        lines: "1867-1869"
         symbol: return self.request.user
     permissions:
       required: [account.read_own_profile]
@@ -1631,9 +1791,11 @@ rules:
       - name: un usuario autenticado lee su perfil
         role: authenticated
         expected: allowed
+        expected_http_status: 200
       - name: staff lee su propio perfil
         role: staff
         expected: allowed
+        expected_http_status: 200
 
   - id: PERM-042
     name: Un usuario no puede concederse is_staff editando su perfil
@@ -1666,6 +1828,7 @@ rules:
       - name: un usuario autenticado edita su nombre e is_staff se ignora
         role: authenticated
         expected: allowed
+        expected_http_status: 200
         body:
           first_name: Spec
           is_staff: true
@@ -1682,7 +1845,7 @@ rules:
       sin conocer la contraseña.
     evidence:
       - file: backend/real_estate/views.py
-        lines: "1838-1840"
+        lines: "1870-1872"
         symbol: class ChangePasswordView
       - file: backend/real_estate/serializers.py
         lines: "840-842"
@@ -1699,10 +1862,17 @@ rules:
       - name: un anónimo no puede cambiar contraseñas
         role: anonymous
         expected: denied
-      - name: un usuario autenticado supera la barrera de permisos
+      - name: un usuario autenticado cambia su contraseña
         role: authenticated
         expected: allowed
-        note: 400 porque no se aporta la contraseña actual.
+        expected_http_status: 200
+        body:
+          old_password: "{password}"
+          new_password: OtraClaveSegura456!
+        note: >-
+          200 aportando la contraseña vigente. El caso iba antes sin cuerpo y se
+          detenía en el 400 de "falta old_password", que no probaba que el
+          cambio llegue a aplicarse.
 
   - id: PERM-044
     name: Cambiar el correo de la cuenta exige sesión
@@ -1715,10 +1885,10 @@ rules:
       puede completar el cambio aunque haya iniciado la solicitud.
     evidence:
       - file: backend/real_estate/views.py
-        lines: "1705-1707"
+        lines: "1737-1739"
         symbol: class RequestEmailChangeView
       - file: backend/real_estate/views.py
-        lines: "1723-1725"
+        lines: "1755-1757"
         symbol: EmailChangeToken.objects.filter(user=user, is_used=False).update(is_used=True)
     permissions:
       required: [account.request_email_change, account.verify_email_change]
@@ -1732,10 +1902,12 @@ rules:
       - name: un anónimo no puede pedir el cambio de correo
         role: anonymous
         expected: denied
-      - name: un usuario autenticado supera la barrera de permisos
+      - name: un usuario autenticado pide el cambio de correo
         role: authenticated
         expected: allowed
-        note: 400 porque no se aporta new_email.
+        expected_http_status: 200
+        body:
+          new_email: spec-nuevo@example.com
 
   # =====================================================================
   # H. PANEL DE ADMINISTRACIÓN Y MÉTRICAS
@@ -1753,10 +1925,10 @@ rules:
       recibe 403.
     evidence:
       - file: backend/real_estate/views.py
-        lines: "1998-2000"
+        lines: "2030-2032"
         symbol: class AdminDashboardView
       - file: backend/real_estate/views.py
-        lines: "2087-2089"
+        lines: "2119-2121"
         symbol: AdminMetricsService(now=now).build()
       - file: backend/real_estate/permissions.py
         lines: "46-50"
@@ -1780,9 +1952,11 @@ rules:
       - name: staff accede al dashboard
         role: staff
         expected: allowed
+        expected_http_status: 200
       - name: un superusuario accede al dashboard
         role: superuser
         expected: allowed
+        expected_http_status: 200
 
   - id: PERM-046
     name: El estado del sistema es solo para staff
@@ -1796,10 +1970,10 @@ rules:
       queda registrada en el log de auditoría con el actor.
     evidence:
       - file: backend/real_estate/views.py
-        lines: "2106-2108"
+        lines: "2138-2140"
         symbol: class AdminSystemStatusView
       - file: backend/real_estate/views.py
-        lines: "2216-2218"
+        lines: "2248-2250"
         symbol: admin_audit action=incident.resolve
     permissions:
       required: [admin.system_status_read, admin.system_status_write]
@@ -1820,6 +1994,7 @@ rules:
       - name: staff accede al estado del sistema
         role: staff
         expected: allowed
+        expected_http_status: 200
 
   - id: PERM-047
     name: Resolver una incidencia del sistema exige staff
@@ -1832,10 +2007,10 @@ rules:
       la misma vista y podría haberse quedado sin cubrir.
     evidence:
       - file: backend/real_estate/views.py
-        lines: "2214-2222"
+        lines: "2246-2253"
         symbol: incident.save(update_fields=["resolved", "last_seen_at"])
       - file: backend/real_estate/views.py
-        lines: "2000-2002"
+        lines: "2032-2034"
         symbol: "permission_classes = [IsAuthenticated, IsAdminUser]"
     permissions:
       required: [admin.system_status_write]
@@ -1856,7 +2031,12 @@ rules:
       - name: staff supera la barrera de permisos
         role: staff
         expected: allowed
-        note: 404 porque no se indica una incidencia existente.
+        note: >-
+          404 porque no se indica una incidencia existente. Sin
+          expected_http_status: resolver de verdad exige un SystemIncident en la
+          base, y las incidencias las escribe el middleware de observabilidad al
+          fallar una petición, no un fixture que el mundo de prueba pueda
+          construir.
 
   - id: PERM-048
     name: La gestión de usuarios del panel es solo para staff
@@ -1869,7 +2049,7 @@ rules:
       actividad de cada cuenta.
     evidence:
       - file: backend/real_estate/views.py
-        lines: "2222-2227"
+        lines: "2254-2257"
         symbol: class AdminUserViewSet
     permissions:
       required: [admin.users_read]
@@ -1890,6 +2070,7 @@ rules:
       - name: staff lista usuarios
         role: staff
         expected: allowed
+        expected_http_status: 200
 
   - id: PERM-049
     name: Cualquier staff puede conceder is_staff a otra cuenta
@@ -1905,7 +2086,7 @@ rules:
       la corrección.
     evidence:
       - file: backend/real_estate/views.py
-        lines: "2282-2300"
+        lines: "2314-2331"
         symbol: "allowed_fields = {'is_active', 'is_staff'}"
       - file: backend/real_estate/permissions.py
         lines: "52"
@@ -1934,6 +2115,7 @@ rules:
       - name: un staff promueve a otra cuenta a staff sin ser superusuario
         role: staff
         expected: allowed
+        expected_http_status: 200
         body:
           is_staff: true
 
@@ -1964,6 +2146,7 @@ rules:
       - name: un superusuario sí debería poder
         role: superuser
         expected: allowed
+        expected_http_status: 200
         body:
           is_staff: true
 
@@ -1979,7 +2162,7 @@ rules:
       auditoría con el actor y el objetivo. PERM-052 enuncia la corrección.
     evidence:
       - file: backend/real_estate/views.py
-        lines: "2325-2335"
+        lines: "2357-2366"
         symbol: admin_audit action=user.delete
     permissions:
       required: [admin.users_delete]
@@ -2000,6 +2183,7 @@ rules:
       - name: un staff borra una cuenta ajena sin ser superusuario
         role: staff
         expected: allowed
+        expected_http_status: 204
 
   - id: PERM-052
     name: Eliminar cuentas debería exigir is_superuser
@@ -2025,6 +2209,7 @@ rules:
       - name: un superusuario sí debería poder
         role: superuser
         expected: allowed
+        expected_http_status: 204
 
   - id: PERM-053
     name: El listado de propiedades del panel es solo para staff
@@ -2038,10 +2223,10 @@ rules:
       incluido su propietario.
     evidence:
       - file: backend/real_estate/views.py
-        lines: "2331-2338"
+        lines: "2363-2369"
         symbol: class AdminPropertyViewSet
       - file: backend/real_estate/views.py
-        lines: "2348-2351"
+        lines: "2380-2382"
         symbol: "Property.objects.select_related('owner', 'source')"
     permissions:
       required: [admin.properties_read]
@@ -2065,6 +2250,7 @@ rules:
       - name: staff lista el inventario completo
         role: staff
         expected: allowed
+        expected_http_status: 200
 
   - id: PERM-054
     name: Los contadores de propiedades del panel son solo para staff
@@ -2076,7 +2262,7 @@ rules:
       conviene verificar que hereda el permission_classes de la clase.
     evidence:
       - file: backend/real_estate/views.py
-        lines: "2543-2546"
+        lines: "2575-2577"
         symbol: def stats
       - file: backend/real_estate/urls.py
         lines: "80-82"
@@ -2096,6 +2282,7 @@ rules:
       - name: staff ve los contadores
         role: staff
         expected: allowed
+        expected_http_status: 200
 
   - id: PERM-055
     name: La edición administrativa de propiedades está acotada a cinco campos
@@ -2110,10 +2297,10 @@ rules:
       serializer.
     evidence:
       - file: backend/real_estate/views.py
-        lines: "2344-2346"
+        lines: "2376-2378"
         symbol: "PATCH_ALLOWED_FIELDS = {'status', 'title', 'price', 'city', 'description'}"
       - file: backend/real_estate/views.py
-        lines: "2400-2416"
+        lines: "2432-2447"
         symbol: admin_audit action=property.update
     permissions:
       required: [admin.properties_update]
@@ -2138,6 +2325,7 @@ rules:
       - name: staff modera una propiedad ajena
         role: staff
         expected: allowed
+        expected_http_status: 200
         body:
           status: inactive
 
@@ -2152,7 +2340,7 @@ rules:
       única ruta por la que se puede borrar la propiedad de otra persona.
     evidence:
       - file: backend/real_estate/views.py
-        lines: "2488-2493"
+        lines: "2520-2523"
         symbol: admin_audit action=property.delete
     permissions:
       required: [admin.properties_delete]
@@ -2169,6 +2357,7 @@ rules:
       - name: staff borra una propiedad ajena
         role: staff
         expected: allowed
+        expected_http_status: 204
 
   - id: PERM-057
     name: El cambio masivo de estado es solo para staff y está acotado
@@ -2182,10 +2371,10 @@ rules:
       auditada con los identificadores afectados.
     evidence:
       - file: backend/real_estate/views.py
-        lines: "2494-2512"
+        lines: "2526-2543"
         symbol: def bulk_status
       - file: backend/real_estate/views.py
-        lines: "2537-2539"
+        lines: "2569-2571"
         symbol: admin_audit action=property.bulk_status
     permissions:
       required: [admin.properties_bulk_status]
@@ -2203,10 +2392,17 @@ rules:
       - name: un usuario autenticado normal no puede cambiar estados en masa
         role: authenticated
         expected: denied
-      - name: staff supera la barrera de permisos
+      - name: staff cambia el estado de un lote válido
         role: staff
         expected: allowed
-        note: 400 porque no se envía la lista de identificadores.
+        expected_http_status: 200
+        body:
+          ids: ["{property_id}"]
+          status: inactive
+        note: >-
+          200 con matched y updated a 1. El caso iba antes sin cuerpo y moría en
+          el 400 de "selecciona al menos una propiedad", que no probaba que la
+          operación llegue a cambiar nada.
 
   # =====================================================================
   # I. INGESTA (AGREGADOR)
@@ -2248,6 +2444,7 @@ rules:
       - name: staff consulta las fuentes
         role: staff
         expected: allowed
+        expected_http_status: 200
 
   - id: PERM-059
     name: Las ejecuciones de ingesta solo las consulta staff
@@ -2281,6 +2478,7 @@ rules:
       - name: staff consulta las ejecuciones
         role: staff
         expected: allowed
+        expected_http_status: 200
 
   - id: PERM-060
     name: Los anuncios importados solo los revisa staff
@@ -2314,7 +2512,12 @@ rules:
       - name: staff supera la barrera de permisos
         role: staff
         expected: allowed
-        note: 404 porque no se indica una fuente existente.
+        note: >-
+          404 porque no se indica una fuente existente. Sin
+          expected_http_status: el parámetro source es obligatorio y las filas
+          Fuente no las crea ninguna migración, sino _ensure_sources() la
+          primera vez que se pide /sources/, así que en una base de prueba
+          limpia no hay slug válido que citar.
 
   - id: PERM-061
     name: Lanzar una ingesta exige staff
@@ -2386,7 +2589,11 @@ rules:
       - name: staff supera la barrera de permisos
         role: staff
         expected: allowed
-        note: 404 porque no hay ninguna ejecución que cancelar.
+        note: >-
+          404 porque no hay ninguna ejecución que cancelar. Sin
+          expected_http_status: la petición válida exige un IngestaRun en
+          estado pending o running, y crearlo desde un caso significaría montar
+          media pipeline de ingesta en el mundo de prueba.
 
   - id: PERM-063
     name: Re-scrapear un anuncio exige staff
@@ -2451,6 +2658,7 @@ rules:
       - name: staff previsualiza los candidatos
         role: staff
         expected: allowed
+        expected_http_status: 200
 
   - id: PERM-065
     name: La limpieza de importados exige staff, confirmación literal y lote acotado
@@ -2525,6 +2733,10 @@ rules:
       - name: un anónimo consulta la salud del sistema
         role: anonymous
         expected: allowed
+        expected_http_status: 200
+        note: >-
+          200 también cuando el estado global es 'degraded': la sonda solo
+          responde 503 si la base de datos o la caché fallan.
 
   # =====================================================================
   # K. REGLAS TRANSVERSALES
@@ -2670,7 +2882,7 @@ rules:
         lines: "25-42"
         symbol: class IsPropertyOwnerOrStaff
       - file: backend/real_estate/views.py
-        lines: "665-670"
+        lines: "697-700"
         symbol: "permission_classes=[IsAuthenticated, IsPropertyOwnerOrStaff]"
     permissions:
       required: [properties.read_promotion_stats]

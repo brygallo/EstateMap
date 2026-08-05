@@ -33,7 +33,7 @@ def test_perm_001_un_visitante_anonimo_lista_el_catalogo(spec_request):
         denied_status=None,
         rule_id='PERM-001',
         case_name='un visitante anónimo lista el catálogo',
-        expected_status=None,
+        expected_status=200,
     )
 
 def test_perm_001_un_usuario_autenticado_lista_el_catalogo(spec_request):
@@ -54,7 +54,7 @@ def test_perm_001_un_usuario_autenticado_lista_el_catalogo(spec_request):
         denied_status=None,
         rule_id='PERM-001',
         case_name='un usuario autenticado lista el catálogo',
-        expected_status=None,
+        expected_status=200,
     )
 
 def test_perm_001_el_renderizado_en_servidor_de_next_js_lista_el_catalogo(spec_request):
@@ -75,7 +75,7 @@ def test_perm_001_el_renderizado_en_servidor_de_next_js_lista_el_catalogo(spec_r
         denied_status=None,
         rule_id='PERM-001',
         case_name='el renderizado en servidor de Next.js lista el catálogo',
-        expected_status=None,
+        expected_status=200,
     )
 
 
@@ -99,7 +99,7 @@ def test_perm_002_un_visitante_anonimo_abre_la_ficha(spec_request):
         denied_status=None,
         rule_id='PERM-002',
         case_name='un visitante anónimo abre la ficha',
-        expected_status=None,
+        expected_status=200,
     )
 
 def test_perm_002_un_tercero_autenticado_abre_la_ficha(spec_request):
@@ -120,7 +120,7 @@ def test_perm_002_un_tercero_autenticado_abre_la_ficha(spec_request):
         denied_status=None,
         rule_id='PERM-002',
         case_name='un tercero autenticado abre la ficha',
-        expected_status=None,
+        expected_status=200,
     )
 
 def test_perm_002_el_propietario_abre_su_propia_ficha(spec_request):
@@ -141,7 +141,7 @@ def test_perm_002_el_propietario_abre_su_propia_ficha(spec_request):
         denied_status=None,
         rule_id='PERM-002',
         case_name='el propietario abre su propia ficha',
-        expected_status=None,
+        expected_status=200,
     )
 
 
@@ -168,25 +168,25 @@ def test_perm_003_un_anonimo_no_puede_publicar(spec_request):
         expected_status=None,
     )
 
-def test_perm_003_un_usuario_autenticado_supera_la_barrera_de_permisos(spec_request):
+def test_perm_003_un_usuario_autenticado_publica_una_propiedad(spec_request):
     """
     SPEC:PERM-003 — Publicar una propiedad exige haber iniciado sesión
-    Case: un usuario autenticado supera la barrera de permisos
+    Case: un usuario autenticado publica una propiedad
     """
     response = spec_request(
         method='POST',
         path='/api/properties/',
         role='authenticated',
         given=None,
-        body=None,
+        body={'title': 'Propiedad creada por spec', 'description': 'Anuncio mínimo válido para el caso permitido.', 'property_type': 'land', 'status': 'for_sale', 'city': 'Macas', 'province': 'Morona Santiago', 'latitude': -2.308, 'longitude': -78.118, 'area': 500, 'price': 25000},
     )
     assert_outcome(
         response,
         expected='allowed',
         denied_status=401,
         rule_id='PERM-003',
-        case_name='un usuario autenticado supera la barrera de permisos',
-        expected_status=None,
+        case_name='un usuario autenticado publica una propiedad',
+        expected_status=201,
     )
 
 
@@ -210,7 +210,7 @@ def test_perm_004_el_propietario_edita_su_propiedad(spec_request):
         denied_status=403,
         rule_id='PERM-004',
         case_name='el propietario edita su propiedad',
-        expected_status=None,
+        expected_status=200,
     )
 
 def test_perm_004_un_tercero_autenticado_no_puede_editarla(spec_request):
@@ -297,7 +297,7 @@ def test_perm_005_el_propietario_elimina_su_propiedad(spec_request):
         denied_status=403,
         rule_id='PERM-005',
         case_name='el propietario elimina su propiedad',
-        expected_status=None,
+        expected_status=204,
     )
 
 def test_perm_005_un_tercero_autenticado_no_puede_eliminarla(spec_request):
@@ -405,7 +405,7 @@ def test_perm_006_el_propietario_ve_su_inventario(spec_request):
         denied_status=401,
         rule_id='PERM-006',
         case_name='el propietario ve su inventario',
-        expected_status=None,
+        expected_status=200,
     )
 
 def test_perm_006_otro_usuario_recibe_su_propia_lista_no_la_ajena(spec_request):
@@ -426,7 +426,7 @@ def test_perm_006_otro_usuario_recibe_su_propia_lista_no_la_ajena(spec_request):
         denied_status=401,
         rule_id='PERM-006',
         case_name='otro usuario recibe su propia lista, no la ajena',
-        expected_status=None,
+        expected_status=200,
     )
 
 def test_perm_006_un_administrador_recibe_el_catalogo_entero(spec_request):
@@ -453,25 +453,25 @@ def test_perm_006_un_administrador_recibe_el_catalogo_entero(spec_request):
 
 # --- PERM-007: Una cuenta con el correo sin verificar puede publicar ---
 
-def test_perm_007_una_cuenta_sin_verificar_supera_la_barrera_de_permisos_al_publicar(spec_request):
+def test_perm_007_una_cuenta_sin_verificar_publica_una_propiedad(spec_request):
     """
     SPEC:PERM-007 — Una cuenta con el correo sin verificar puede publicar
-    Case: una cuenta sin verificar supera la barrera de permisos al publicar
+    Case: una cuenta sin verificar publica una propiedad
     """
     response = spec_request(
         method='POST',
         path='/api/properties/',
         role='unverified',
         given=None,
-        body=None,
+        body={'title': 'Propiedad de cuenta sin verificar', 'description': 'Anuncio mínimo válido para el caso permitido.', 'property_type': 'land', 'status': 'for_sale', 'city': 'Macas', 'province': 'Morona Santiago', 'latitude': -2.308, 'longitude': -78.118, 'area': 500, 'price': 25000},
     )
     assert_outcome(
         response,
         expected='allowed',
         denied_status=None,
         rule_id='PERM-007',
-        case_name='una cuenta sin verificar supera la barrera de permisos al publicar',
-        expected_status=None,
+        case_name='una cuenta sin verificar publica una propiedad',
+        expected_status=201,
     )
 
 
@@ -510,7 +510,7 @@ def test_perm_008_una_cuenta_verificada_si_deberia_poder_publicar(spec_request):
         path='/api/properties/',
         role='authenticated',
         given=None,
-        body=None,
+        body={'title': 'Propiedad de cuenta verificada', 'description': 'Anuncio mínimo válido para el caso permitido.', 'property_type': 'land', 'status': 'for_sale', 'city': 'Macas', 'province': 'Morona Santiago', 'latitude': -2.308, 'longitude': -78.118, 'area': 500, 'price': 25000},
     )
     assert_outcome(
         response,
@@ -518,7 +518,7 @@ def test_perm_008_una_cuenta_verificada_si_deberia_poder_publicar(spec_request):
         denied_status=403,
         rule_id='PERM-008',
         case_name='una cuenta verificada sí debería poder publicar',
-        expected_status=None,
+        expected_status=201,
     )
 
 
@@ -655,7 +655,7 @@ def test_perm_011_un_visitante_anonimo_obtiene_el_informe_completo(spec_request)
         denied_status=None,
         rule_id='PERM-011',
         case_name='un visitante anónimo obtiene el informe completo',
-        expected_status=None,
+        expected_status=200,
     )
 
 def test_perm_011_un_tercero_autenticado_tambien(spec_request):
@@ -676,7 +676,7 @@ def test_perm_011_un_tercero_autenticado_tambien(spec_request):
         denied_status=None,
         rule_id='PERM-011',
         case_name='un tercero autenticado también',
-        expected_status=None,
+        expected_status=200,
     )
 
 
@@ -700,7 +700,7 @@ def test_perm_013_un_visitante_anonimo_carga_el_mapa(spec_request):
         denied_status=None,
         rule_id='PERM-013',
         case_name='un visitante anónimo carga el mapa',
-        expected_status=None,
+        expected_status=200,
     )
 
 def test_perm_013_el_renderizado_en_servidor_carga_el_mapa_sin_consumir_cuota(spec_request):
@@ -721,7 +721,7 @@ def test_perm_013_el_renderizado_en_servidor_carga_el_mapa_sin_consumir_cuota(sp
         denied_status=None,
         rule_id='PERM-013',
         case_name='el renderizado en servidor carga el mapa sin consumir cuota',
-        expected_status=None,
+        expected_status=200,
     )
 
 def test_perm_013_un_usuario_staff_carga_el_mapa(spec_request):
@@ -742,7 +742,7 @@ def test_perm_013_un_usuario_staff_carga_el_mapa(spec_request):
         denied_status=None,
         rule_id='PERM-013',
         case_name='un usuario staff carga el mapa',
-        expected_status=None,
+        expected_status=200,
     )
 
 
@@ -766,7 +766,7 @@ def test_perm_014_un_visitante_anonimo_obtiene_los_totales(spec_request):
         denied_status=None,
         rule_id='PERM-014',
         case_name='un visitante anónimo obtiene los totales',
-        expected_status=None,
+        expected_status=200,
     )
 
 
@@ -790,7 +790,7 @@ def test_perm_015_un_visitante_anonimo_obtiene_las_ubicaciones(spec_request):
         denied_status=None,
         rule_id='PERM-015',
         case_name='un visitante anónimo obtiene las ubicaciones',
-        expected_status=None,
+        expected_status=200,
     )
 
 
@@ -814,7 +814,7 @@ def test_perm_016_un_visitante_anonimo_obtiene_el_catalogo_de_cantones(spec_requ
         denied_status=None,
         rule_id='PERM-016',
         case_name='un visitante anónimo obtiene el catálogo de cantones',
-        expected_status=None,
+        expected_status=200,
     )
 
 
@@ -838,7 +838,7 @@ def test_perm_017_un_visitante_anonimo_obtiene_la_lista_de_propietarios(spec_req
         denied_status=None,
         rule_id='PERM-017',
         case_name='un visitante anónimo obtiene la lista de propietarios',
-        expected_status=None,
+        expected_status=200,
     )
 
 
@@ -862,7 +862,7 @@ def test_perm_018_un_visitante_anonimo_obtiene_los_indicadores(spec_request):
         denied_status=None,
         rule_id='PERM-018',
         case_name='un visitante anónimo obtiene los indicadores',
-        expected_status=None,
+        expected_status=200,
     )
 
 def test_perm_018_el_renderizado_en_servidor_obtiene_los_indicadores(spec_request):
@@ -883,7 +883,7 @@ def test_perm_018_el_renderizado_en_servidor_obtiene_los_indicadores(spec_reques
         denied_status=None,
         rule_id='PERM-018',
         case_name='el renderizado en servidor obtiene los indicadores',
-        expected_status=None,
+        expected_status=200,
     )
 
 
@@ -907,7 +907,7 @@ def test_perm_019_un_visitante_anonimo_consulta_las_provincias(spec_request):
         denied_status=None,
         rule_id='PERM-019',
         case_name='un visitante anónimo consulta las provincias',
-        expected_status=None,
+        expected_status=200,
     )
 
 
@@ -976,7 +976,7 @@ def test_perm_021_un_anonimo_alcanza_el_proxy_sin_credenciales(spec_request):
         denied_status=None,
         rule_id='PERM-021',
         case_name='un anónimo alcanza el proxy sin credenciales',
-        expected_status=None,
+        expected_status=404,
     )
 
 
@@ -1000,7 +1000,7 @@ def test_perm_023_un_anonimo_alcanza_la_vista_sin_credenciales(spec_request):
         denied_status=None,
         rule_id='PERM-023',
         case_name='un anónimo alcanza la vista sin credenciales',
-        expected_status=None,
+        expected_status=404,
     )
 
 
@@ -1016,7 +1016,7 @@ def test_perm_024_un_anonimo_envia_el_formulario_de_contacto(spec_request):
         path='/api/leads/',
         role='anonymous',
         given=None,
-        body=None,
+        body={'property': '{property_id}', 'name': 'Interesado de spec', 'phone': '0991234567', 'email': 'interesado-spec@example.com', 'message': 'Me interesa esta propiedad.', 'source': 'property_page', 'status': 'contacted'},
     )
     assert_outcome(
         response,
@@ -1024,7 +1024,7 @@ def test_perm_024_un_anonimo_envia_el_formulario_de_contacto(spec_request):
         denied_status=None,
         rule_id='PERM-024',
         case_name='un anónimo envía el formulario de contacto',
-        expected_status=None,
+        expected_status=201,
     )
 
 def test_perm_024_un_usuario_autenticado_tambien_puede_enviarlo(spec_request):
@@ -1037,7 +1037,7 @@ def test_perm_024_un_usuario_autenticado_tambien_puede_enviarlo(spec_request):
         path='/api/leads/',
         role='authenticated',
         given=None,
-        body=None,
+        body={'property': '{property_id}', 'name': 'Interesado con cuenta', 'phone': '0991234567', 'email': 'interesado-auth@example.com', 'message': 'Me interesa esta propiedad.', 'source': 'property_page'},
     )
     assert_outcome(
         response,
@@ -1045,7 +1045,7 @@ def test_perm_024_un_usuario_autenticado_tambien_puede_enviarlo(spec_request):
         denied_status=None,
         rule_id='PERM-024',
         case_name='un usuario autenticado también puede enviarlo',
-        expected_status=None,
+        expected_status=201,
     )
 
 
@@ -1090,7 +1090,7 @@ def test_perm_026_el_propietario_lista_los_leads_de_sus_propiedades(spec_request
         denied_status=401,
         rule_id='PERM-026',
         case_name='el propietario lista los leads de sus propiedades',
-        expected_status=None,
+        expected_status=200,
     )
 
 def test_perm_026_otro_usuario_recibe_una_lista_vacia_no_la_ajena(spec_request):
@@ -1111,7 +1111,7 @@ def test_perm_026_otro_usuario_recibe_una_lista_vacia_no_la_ajena(spec_request):
         denied_status=401,
         rule_id='PERM-026',
         case_name='otro usuario recibe una lista vacía, no la ajena',
-        expected_status=None,
+        expected_status=200,
     )
 
 def test_perm_026_staff_lista_todos_los_leads(spec_request):
@@ -1132,7 +1132,7 @@ def test_perm_026_staff_lista_todos_los_leads(spec_request):
         denied_status=401,
         rule_id='PERM-026',
         case_name='staff lista todos los leads',
-        expected_status=None,
+        expected_status=200,
     )
 
 
@@ -1148,7 +1148,7 @@ def test_perm_028_un_anonimo_registra_una_solicitud(spec_request):
         path='/api/pending-publications/',
         role='anonymous',
         given=None,
-        body=None,
+        body={'title': 'Solicitud de spec', 'contact_phone': '0991234567', 'contact_email': 'solicitud-spec@example.com', 'city': 'Macas', 'province': 'Morona Santiago', 'property_type': 'land', 'operation': 'for_sale', 'price': '32000', 'source': 'account_required', 'status': 'converted'},
     )
     assert_outcome(
         response,
@@ -1156,7 +1156,7 @@ def test_perm_028_un_anonimo_registra_una_solicitud(spec_request):
         denied_status=None,
         rule_id='PERM-028',
         case_name='un anónimo registra una solicitud',
-        expected_status=None,
+        expected_status=201,
     )
 
 
@@ -1243,7 +1243,7 @@ def test_perm_029_staff_accede_a_la_bandeja(spec_request):
         denied_status=403,
         rule_id='PERM-029',
         case_name='staff accede a la bandeja',
-        expected_status=None,
+        expected_status=200,
     )
 
 
@@ -1267,7 +1267,7 @@ def test_perm_030_un_anonimo_emite_un_evento(spec_request):
         denied_status=None,
         rule_id='PERM-030',
         case_name='un anónimo emite un evento',
-        expected_status=None,
+        expected_status=201,
     )
 
 def test_perm_030_un_usuario_autenticado_emite_un_evento(spec_request):
@@ -1288,7 +1288,7 @@ def test_perm_030_un_usuario_autenticado_emite_un_evento(spec_request):
         denied_status=None,
         rule_id='PERM-030',
         case_name='un usuario autenticado emite un evento',
-        expected_status=None,
+        expected_status=201,
     )
 
 
@@ -1354,55 +1354,55 @@ def test_perm_031_staff_consulta_el_registro(spec_request):
         denied_status=403,
         rule_id='PERM-031',
         case_name='staff consulta el registro',
-        expected_status=None,
+        expected_status=200,
     )
 
 
 # --- PERM-032: El inicio de sesión es público ---
 
-def test_perm_032_un_anonimo_alcanza_el_endpoint_de_login(spec_request):
+def test_perm_032_un_anonimo_inicia_sesion_con_credenciales_validas(spec_request):
     """
     SPEC:PERM-032 — El inicio de sesión es público
-    Case: un anónimo alcanza el endpoint de login
+    Case: un anónimo inicia sesión con credenciales válidas
     """
     response = spec_request(
         method='POST',
         path='/api/login/',
         role='anonymous',
         given=None,
-        body=None,
+        body={'email': '{owner_email}', 'password': '{password}'},
     )
     assert_outcome(
         response,
         expected='allowed',
         denied_status=None,
         rule_id='PERM-032',
-        case_name='un anónimo alcanza el endpoint de login',
-        expected_status=None,
+        case_name='un anónimo inicia sesión con credenciales válidas',
+        expected_status=200,
     )
 
 
 # --- PERM-034: El registro es público y la cuenta nace inactiva ---
 
-def test_perm_034_un_anonimo_alcanza_el_registro(spec_request):
+def test_perm_034_un_anonimo_se_registra(spec_request):
     """
     SPEC:PERM-034 — El registro es público y la cuenta nace inactiva
-    Case: un anónimo alcanza el registro
+    Case: un anónimo se registra
     """
     response = spec_request(
         method='POST',
         path='/api/register/',
         role='anonymous',
         given=None,
-        body=None,
+        body={'username': 'spec_registro', 'email': 'spec-registro@example.com', 'first_name': 'Spec', 'last_name': 'Registro', 'password': 'ClaveMuySegura789!'},
     )
     assert_outcome(
         response,
         expected='allowed',
         denied_status=None,
         rule_id='PERM-034',
-        case_name='un anónimo alcanza el registro',
-        expected_status=None,
+        case_name='un anónimo se registra',
+        expected_status=201,
     )
 
 
@@ -1498,7 +1498,7 @@ def test_perm_038_un_correo_inexistente_recibe_la_misma_respuesta_afirmativa(spe
         denied_status=None,
         rule_id='PERM-038',
         case_name='un correo inexistente recibe la misma respuesta afirmativa',
-        expected_status=None,
+        expected_status=200,
     )
 
 
@@ -1547,7 +1547,7 @@ def test_perm_040_un_correo_inexistente_deberia_recibir_200_generico(spec_reques
         denied_status=None,
         rule_id='PERM-040',
         case_name='un correo inexistente debería recibir 200 genérico',
-        expected_status=None,
+        expected_status=200,
     )
 
 
@@ -1592,7 +1592,7 @@ def test_perm_041_un_usuario_autenticado_lee_su_perfil(spec_request):
         denied_status=401,
         rule_id='PERM-041',
         case_name='un usuario autenticado lee su perfil',
-        expected_status=None,
+        expected_status=200,
     )
 
 def test_perm_041_staff_lee_su_propio_perfil(spec_request):
@@ -1613,7 +1613,7 @@ def test_perm_041_staff_lee_su_propio_perfil(spec_request):
         denied_status=401,
         rule_id='PERM-041',
         case_name='staff lee su propio perfil',
-        expected_status=None,
+        expected_status=200,
     )
 
 
@@ -1658,7 +1658,7 @@ def test_perm_042_un_usuario_autenticado_edita_su_nombre_e_is_staff_se_ignora(sp
         denied_status=401,
         rule_id='PERM-042',
         case_name='un usuario autenticado edita su nombre e is_staff se ignora',
-        expected_status=None,
+        expected_status=200,
     )
 
 
@@ -1685,25 +1685,25 @@ def test_perm_043_un_anonimo_no_puede_cambiar_contrasenas(spec_request):
         expected_status=None,
     )
 
-def test_perm_043_un_usuario_autenticado_supera_la_barrera_de_permisos(spec_request):
+def test_perm_043_un_usuario_autenticado_cambia_su_contrasena(spec_request):
     """
     SPEC:PERM-043 — Cambiar la contraseña exige sesión y la contraseña actual
-    Case: un usuario autenticado supera la barrera de permisos
+    Case: un usuario autenticado cambia su contraseña
     """
     response = spec_request(
         method='POST',
         path='/api/change-password/',
         role='authenticated',
         given=None,
-        body=None,
+        body={'old_password': '{password}', 'new_password': 'OtraClaveSegura456!'},
     )
     assert_outcome(
         response,
         expected='allowed',
         denied_status=401,
         rule_id='PERM-043',
-        case_name='un usuario autenticado supera la barrera de permisos',
-        expected_status=None,
+        case_name='un usuario autenticado cambia su contraseña',
+        expected_status=200,
     )
 
 
@@ -1730,25 +1730,25 @@ def test_perm_044_un_anonimo_no_puede_pedir_el_cambio_de_correo(spec_request):
         expected_status=None,
     )
 
-def test_perm_044_un_usuario_autenticado_supera_la_barrera_de_permisos(spec_request):
+def test_perm_044_un_usuario_autenticado_pide_el_cambio_de_correo(spec_request):
     """
     SPEC:PERM-044 — Cambiar el correo de la cuenta exige sesión
-    Case: un usuario autenticado supera la barrera de permisos
+    Case: un usuario autenticado pide el cambio de correo
     """
     response = spec_request(
         method='POST',
         path='/api/request-email-change/',
         role='authenticated',
         given=None,
-        body=None,
+        body={'new_email': 'spec-nuevo@example.com'},
     )
     assert_outcome(
         response,
         expected='allowed',
         denied_status=401,
         rule_id='PERM-044',
-        case_name='un usuario autenticado supera la barrera de permisos',
-        expected_status=None,
+        case_name='un usuario autenticado pide el cambio de correo',
+        expected_status=200,
     )
 
 
@@ -1814,7 +1814,7 @@ def test_perm_045_staff_accede_al_dashboard(spec_request):
         denied_status=403,
         rule_id='PERM-045',
         case_name='staff accede al dashboard',
-        expected_status=None,
+        expected_status=200,
     )
 
 def test_perm_045_un_superusuario_accede_al_dashboard(spec_request):
@@ -1835,7 +1835,7 @@ def test_perm_045_un_superusuario_accede_al_dashboard(spec_request):
         denied_status=403,
         rule_id='PERM-045',
         case_name='un superusuario accede al dashboard',
-        expected_status=None,
+        expected_status=200,
     )
 
 
@@ -1901,7 +1901,7 @@ def test_perm_046_staff_accede_al_estado_del_sistema(spec_request):
         denied_status=403,
         rule_id='PERM-046',
         case_name='staff accede al estado del sistema',
-        expected_status=None,
+        expected_status=200,
     )
 
 
@@ -2033,7 +2033,7 @@ def test_perm_048_staff_lista_usuarios(spec_request):
         denied_status=403,
         rule_id='PERM-048',
         case_name='staff lista usuarios',
-        expected_status=None,
+        expected_status=200,
     )
 
 
@@ -2099,7 +2099,7 @@ def test_perm_049_un_staff_promueve_a_otra_cuenta_a_staff_sin_ser_superusuario(s
         denied_status=403,
         rule_id='PERM-049',
         case_name='un staff promueve a otra cuenta a staff sin ser superusuario',
-        expected_status=None,
+        expected_status=200,
     )
 
 
@@ -2146,7 +2146,7 @@ def test_perm_050_un_superusuario_si_deberia_poder(spec_request):
         denied_status=403,
         rule_id='PERM-050',
         case_name='un superusuario sí debería poder',
-        expected_status=None,
+        expected_status=200,
     )
 
 
@@ -2212,7 +2212,7 @@ def test_perm_051_un_staff_borra_una_cuenta_ajena_sin_ser_superusuario(spec_requ
         denied_status=403,
         rule_id='PERM-051',
         case_name='un staff borra una cuenta ajena sin ser superusuario',
-        expected_status=None,
+        expected_status=204,
     )
 
 
@@ -2259,7 +2259,7 @@ def test_perm_052_un_superusuario_si_deberia_poder(spec_request):
         denied_status=403,
         rule_id='PERM-052',
         case_name='un superusuario sí debería poder',
-        expected_status=None,
+        expected_status=204,
     )
 
 
@@ -2346,7 +2346,7 @@ def test_perm_053_staff_lista_el_inventario_completo(spec_request):
         denied_status=403,
         rule_id='PERM-053',
         case_name='staff lista el inventario completo',
-        expected_status=None,
+        expected_status=200,
     )
 
 
@@ -2391,7 +2391,7 @@ def test_perm_054_staff_ve_los_contadores(spec_request):
         denied_status=403,
         rule_id='PERM-054',
         case_name='staff ve los contadores',
-        expected_status=None,
+        expected_status=200,
     )
 
 
@@ -2457,7 +2457,7 @@ def test_perm_055_staff_modera_una_propiedad_ajena(spec_request):
         denied_status=403,
         rule_id='PERM-055',
         case_name='staff modera una propiedad ajena',
-        expected_status=None,
+        expected_status=200,
     )
 
 
@@ -2502,7 +2502,7 @@ def test_perm_056_staff_borra_una_propiedad_ajena(spec_request):
         denied_status=403,
         rule_id='PERM-056',
         case_name='staff borra una propiedad ajena',
-        expected_status=None,
+        expected_status=204,
     )
 
 
@@ -2550,25 +2550,25 @@ def test_perm_057_un_usuario_autenticado_normal_no_puede_cambiar_estados_en_masa
         expected_status=None,
     )
 
-def test_perm_057_staff_supera_la_barrera_de_permisos(spec_request):
+def test_perm_057_staff_cambia_el_estado_de_un_lote_valido(spec_request):
     """
     SPEC:PERM-057 — El cambio masivo de estado es solo para staff y está acotado
-    Case: staff supera la barrera de permisos
+    Case: staff cambia el estado de un lote válido
     """
     response = spec_request(
         method='POST',
         path='/api/admin/properties/bulk-status/',
         role='staff',
         given=None,
-        body=None,
+        body={'ids': ['{property_id}'], 'status': 'inactive'},
     )
     assert_outcome(
         response,
         expected='allowed',
         denied_status=403,
         rule_id='PERM-057',
-        case_name='staff supera la barrera de permisos',
-        expected_status=None,
+        case_name='staff cambia el estado de un lote válido',
+        expected_status=200,
     )
 
 
@@ -2634,7 +2634,7 @@ def test_perm_058_staff_consulta_las_fuentes(spec_request):
         denied_status=403,
         rule_id='PERM-058',
         case_name='staff consulta las fuentes',
-        expected_status=None,
+        expected_status=200,
     )
 
 
@@ -2700,7 +2700,7 @@ def test_perm_059_staff_consulta_las_ejecuciones(spec_request):
         denied_status=403,
         rule_id='PERM-059',
         case_name='staff consulta las ejecuciones',
-        expected_status=None,
+        expected_status=200,
     )
 
 
@@ -3009,7 +3009,7 @@ def test_perm_064_staff_previsualiza_los_candidatos(spec_request):
         denied_status=403,
         rule_id='PERM-064',
         case_name='staff previsualiza los candidatos',
-        expected_status=None,
+        expected_status=200,
     )
 
 
@@ -3099,7 +3099,7 @@ def test_perm_066_un_anonimo_consulta_la_salud_del_sistema(spec_request):
         denied_status=None,
         rule_id='PERM-066',
         case_name='un anónimo consulta la salud del sistema',
-        expected_status=None,
+        expected_status=200,
     )
 
 

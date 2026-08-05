@@ -44,8 +44,8 @@ Reglas de negocio del inventario: qué es una propiedad publicable, cómo se int
 | [`PROP-026`](#prop-026--límites-de-las-imágenes-de-una-propiedad) | Límites de las imágenes de una propiedad | ✅ Implementada |
 | [`PROP-027`](#prop-027--ubicación-efectiva-de-una-propiedad) | Ubicación efectiva de una propiedad | ✅ Implementada |
 | [`PROP-028`](#prop-028--propiedades-cercanas-de-una-ficha) | Propiedades cercanas de una ficha | ✅ Implementada |
-| [`PROP-029`](#prop-029--la-ventana-de-búsqueda-de-cercanas-no-garantiza-al-vecino) | La ventana de búsqueda de cercanas no garantiza al vecino | 📝 Propuesta (sin código) |
-| [`PROP-031`](#prop-031--las-tarjetas-del-mapa-conservan-el-contexto-visible-y-cercano) | Las tarjetas del mapa conservan el contexto visible y cercano | ✅ Implementada |
+| [`PROP-029`](#prop-029--la-ventana-de-búsqueda-de-cercanas-prioriza-al-vecino-real) | La ventana de búsqueda de cercanas prioriza al vecino real | ✅ Implementada |
+| [`PROP-031`](#prop-031--las-tarjetas-continúan-por-cercanía-más-allá-del-mapa-visible) | Las tarjetas continúan por cercanía más allá del mapa visible | ✅ Implementada |
 | [`PROP-032`](#prop-032--una-ubicación-fuera-de-ecuador-conserva-el-catálogo-visible) | Una ubicación fuera de Ecuador conserva el catálogo visible | ✅ Implementada |
 | [`PROP-033`](#prop-033--un-anuncio-cerrado-dice-por-qué-salió-del-catálogo) | Un anuncio cerrado dice por qué salió del catálogo | ✅ Implementada |
 | [`PROP-034`](#prop-034--un-anuncio-cerrado-conserva-su-ficha-y-su-código-corto) | Un anuncio cerrado conserva su ficha y su código corto | ✅ Implementada |
@@ -88,7 +88,7 @@ Una propiedad con status='inactive' desaparece del listado, del mapa y de todos 
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/real_estate/views.py:407-409` (`exclude(status='inactive')`) — Base de get_queryset en PropertyViewSet; de aquí derivan list, map_points y summary.
+- `backend/real_estate/views.py:411-413` (`exclude(status='inactive')`) — Base de get_queryset en PropertyViewSet; de aquí derivan list, map_points y summary.
 - `backend/real_estate/models.py:69-73` (`STATUS_CHOICES`) — Los tres estados posibles son for_sale, for_rent e inactive.
 
 **Casos**
@@ -114,7 +114,7 @@ Una propiedad con status='inactive' desaparece del listado, del mapa y de todos 
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/real_estate/views.py:973-976` (`my_properties`) — La acción declara permission_classes=[IsAuthenticated] y elige entre Property.objects.all() y filter(owner=request.user) sin tocar status.
+- `backend/real_estate/views.py:1005-1007` (`my_properties`) — La acción declara permission_classes=[IsAuthenticated] y elige entre Property.objects.all() y filter(owner=request.user) sin tocar status.
 
 **Casos**
 
@@ -143,7 +143,7 @@ my_properties responde con el sobre paginado de DRF (count, next, previous, resu
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
 - `backend/real_estate/views.py:257-266` (`class InventoryPagination`) — page_size 24, page_size_query_param 'page_size', máximo 100.
-- `backend/real_estate/views.py:973-976` (`def my_properties`) — stats se calcula con queryset.aggregate antes de paginar.
+- `backend/real_estate/views.py:1005-1007` (`def my_properties`) — stats se calcula con queryset.aggregate antes de paginar.
 - `frontend/app/my-properties/page.tsx:194-219` (`const fetchInventory`) — El cliente manda search, status y ordering y acumula páginas.
 
 **Casos**
@@ -373,7 +373,7 @@ owner se toma siempre de request.user al crear desde el API, y las propiedades q
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/real_estate/views.py:524-526` (`perform_create`) — serializer.save(owner=self.request.user), ignorando cualquier owner del payload.
+- `backend/real_estate/views.py:553-555` (`perform_create`) — serializer.save(owner=self.request.user), ignorando cualquier owner del payload.
 - `backend/real_estate/serializers.py:155-157` (`owner = serializers.PrimaryKeyRelatedField(read_only=True)`)
 - `backend/real_estate/models.py:152-157` (`owner = models.ForeignKey`) — on_delete=SET_NULL, null=True - borrar la cuenta no borra el anuncio.
 - `backend/ingesta/pipeline/upsert.py:23-53` (`_apply_fields`) — Escribe todos los campos del anuncio importado y no toca owner en ningún momento.
@@ -402,7 +402,7 @@ La escritura sobre una propiedad existente exige ser su owner; cualquier otro us
 
 - `backend/real_estate/permissions.py:4-15` (`IsOwnerOrReadOnly`) — Permite cualquier método seguro y compara obj.owner == request.user para el resto.
 - `backend/real_estate/views.py:308-310` (`IsOwnerOrReadOnly`) — permission_classes = [IsAuthenticatedOrReadOnly, IsOwnerOrReadOnly] en PropertyViewSet.
-- `backend/real_estate/views.py:2344-2346` (`PATCH_ALLOWED_FIELDS`) — El panel admin puede tocar propiedades ajenas, pero solo status, title, price, city y description.
+- `backend/real_estate/views.py:2376-2378` (`PATCH_ALLOWED_FIELDS`) — El panel admin puede tocar propiedades ajenas, pero solo status, title, price, city y description.
 
 **Casos**
 
@@ -593,7 +593,7 @@ views_count se incrementa al consultar el detalle únicamente cuando el request 
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/real_estate/views.py:568-575` (`is_bot_request`) — Property.objects.filter(pk=...).update(views_count=F('views_count') + 1) solo si no es bot.
+- `backend/real_estate/views.py:597-603` (`is_bot_request`) — Property.objects.filter(pk=...).update(views_count=F('views_count') + 1) solo si no es bot.
 - `backend/real_estate/models.py:208-210` (`views_count`) — PositiveIntegerField con default 0.
 - `backend/real_estate/serializers.py:188-192` (`views_count`) — Está en read_only_fields, así que un cliente no puede inflarlo desde el payload.
 
@@ -668,7 +668,7 @@ La posición de una propiedad es su par latitude/longitude cuando existe y cae d
 - `backend/real_estate/models.py:235-259` (`save`) — Rellena el centro al guardar cualquier propiedad con polígono y sin coordenadas, y añade los dos campos a update_fields para que se persistan.
 - `backend/real_estate/migrations/0027_backfill_polygon_centers.py:6-29` (`backfill_centers`) — Backfill de las filas anteriores a la garantía; corre solo en el deploy.
 - `frontend/lib/geo.ts:29-61` (`getPropertyPoint`) — Mismo criterio en el cliente, que además valida el punto contra los límites de Ecuador antes de aceptarlo.
-- `backend/real_estate/views.py:463-470` (`bbox`) — El filtro por bbox aún deja pasar incondicionalmente las propiedades con lat/lng nulas y polígono; tras la migración esa rama no empareja ninguna fila y queda como red de seguridad.
+- `backend/real_estate/views.py:492-498` (`bbox`) — El filtro por bbox aún deja pasar incondicionalmente las propiedades con lat/lng nulas y polígono; tras la migración esa rama no empareja ninguna fila y queda como red de seguridad.
 
 **Casos**
 
@@ -698,15 +698,18 @@ La sección "Publicaciones cercanas" de una ficha lista las propiedades ordenada
 | Vecino inmediato dibujado como polígono | — | `ficha`=propiedad 13, `candidato`=propiedad 12 a 23 m, sin lat/lng, con polígono | — | aparece primero |
 | Propiedad sin ubicación efectiva | — | `ficha`=sin lat/lng y sin polígono | — | sección vacía |
 
-### PROP-029 — La ventana de búsqueda de cercanas no garantiza al vecino
+### PROP-029 — La ventana de búsqueda de cercanas prioriza al vecino real
 
-**Estado:** 📝 Propuesta (sin código)
+**Estado:** ✅ Implementada
 
-La selección de propiedades cercanas debería consultar por proximidad, no recortar por antigüedad: hoy el vecino inmediato puede quedar fuera de la página antes de que se calcule ninguna distancia.
+La ficha envía su centro como origen y el backend ordena por proximidad antes de aplicar page_size. Así el vecino inmediato no queda fuera de la ventana por ser más antiguo que otros anuncios de la zona.
 
-> **Por qué:** PROP-028 ordena por distancia, pero solo entre lo que llega: un bbox de ~50 km con page_size=60 sobre un listado ordenado por -created_at. En una ciudad con más de 60 anuncios en esa ventana, los 60 más recientes son un recorte arbitrario respecto de la distancia, y el terreno de al lado puede no estar entre ellos. En Morona Santiago no ocurre todavía (11 anuncios en la ventana), así que el defecto está latente, no activo. Arreglarlo pide ordenar por distancia en el servidor —el modelo guarda lat/lng como FloatField, sin PostGIS, así que basta una expresión sobre el cuadrado de las diferencias corregido por cos(lat)— o estrechar la ventana antes de ensancharla.
+> **Por qué:** Ordenar en el cliente solo puede reorganizar lo que la API entregó. El orden geográfico debe aplicarse antes de paginar para que una zona con más de 60 anuncios no descarte arbitrariamente el terreno de al lado.
 
-**Evidencia en el código:** ninguna, y es lo esperado: no hay código que la implemente.
+**Evidencia en el código** (verificada por `tools/specs/validate.py`)
+
+- `backend/real_estate/views.py:467-493` (`distance_score`) — La expresión de distancia se aplica al queryset antes de que DRF lo pagine.
+- `frontend/lib/properties.ts:244-253` (`origin_lat`) — La ficha envía el centro efectivo de la propiedad junto con su ventana bbox.
 
 **Casos**
 
@@ -714,26 +717,39 @@ La selección de propiedades cercanas debería consultar por proximidad, no reco
 | --- | --- | --- | --- | --- |
 | Ciudad con más de 60 anuncios en la ventana | — | `anuncios_en_ventana`=200, `vecino_a`=30 m, `antiguedad_vecino`=fuera de los 60 más recientes | — | el vecino aparece primero |
 
-### PROP-031 — Las tarjetas del mapa conservan el contexto visible y cercano
+**Cobertura exigida:** unit
+
+- `frontend/lib/properties.test.ts`
+
+### PROP-031 — Las tarjetas continúan por cercanía más allá del mapa visible
 
 **Estado:** ✅ Implementada
 
-El listado lateral contiene únicamente las propiedades del área visible del mapa. Cuando hay una propiedad seleccionada, esas mismas tarjetas se ordenan por distancia a ella; la selección no incorpora propiedades que estén fuera de la vista actual.
+El listado lateral es un feed paginado del catálogo filtrado completo, ordenado desde el centro del mapa hacia afuera. Al llegar al final de las propiedades visibles sigue cargando las siguientes más cercanas, aunque estén fuera del viewport; el mapa conserva su consulta espacial propia.
 
-> **Por qué:** La persona debe poder comparar lo que está mirando sin que el listado salte a otro sector. La selección cambia el orden para poner primero la propiedad elegida y sus vecinas, pero el límite espacial sigue siendo el viewport del mapa.
+> **Por qué:** En ciudades con poca oferta, como Macas, limitar las tarjetas al bbox detenía el scroll aunque existieran anuncios en otras zonas. Separar el feed del viewport permite continuar explorando sin descargar el catálogo entero y mantiene primero los resultados geográficamente relevantes.
+
+**Backend**
+
+- Endpoint: `GET /api/properties/`
+- ¿Lo aplica el servidor?: sí
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `frontend/hooks/usePropertyFilters.ts:418-472` (`fetchCardsPage`) — Las tarjetas se consultan con el bbox vigente del mapa.
-- `frontend/components/map/PropertySidebar.tsx:96-138` (`distanceOrigin`) — La selección se usa como origen de distancia sin reemplazar visibleProperties.
+- `backend/real_estate/views.py:467-493` (`distance_score`) — El listado ordena el catálogo filtrado por distancia aproximada y deja coordenadas ausentes al final.
+- `frontend/hooks/usePropertyFilters.ts:427-473` (`fetchCardsPage`) — Las tarjetas omiten bbox, envían el centro del mapa y anexan cada página sin duplicados.
+- `frontend/components/map/PropertySidebar.tsx:166-193` (`IntersectionObserver`) — El sentinel solicita automáticamente la página siguiente al acercarse al final del scroll.
 
 **Casos**
 
 | Caso | Rol | Estado previo | Cuerpo | Esperado |
 | --- | --- | --- | --- | --- |
-| Hay una propiedad seleccionada dentro de la vista | — | `seleccionada_visible`=sí | — | la seleccionada aparece primero y después sus vecinas visibles |
-| Existe una propiedad cercana fuera del viewport | — | `cercana_visible`=no | — | no aparece en las tarjetas |
-| No hay selección ni ubicación de la persona | — | — | — | las tarjetas siguen representando la vista actual del mapa |
+| Macas tiene menos anuncios que una página | — | `origen`=Macas, `anuncios_cercanos`=2, `anuncios_en_otras_ciudades`=2, `page_size`=2 | — | la primera página contiene Macas y la siguiente continúa con otras ciudades |
+| El catálogo contiene propiedades sin coordenadas | — | `origen`=Macas, `propiedad_sin_coordenadas`=sí | — | la propiedad sin coordenadas queda después de las ubicables |
+
+**Cobertura exigida:** api
+
+- `backend/real_estate/tests/test_property_distance_feed.py`
 
 ### PROP-032 — Una ubicación fuera de Ecuador conserva el catálogo visible
 
@@ -777,7 +793,7 @@ La normalización vive en `save()` porque todos los caminos de escritura pasan p
 - `backend/real_estate/models.py:140-150` (`closed_reason = models`)
 - `backend/real_estate/models.py:255-270` (`if self.closed_reason:`) — Cerrar pone inactive y sella la fecha; abrir la borra.
 - `backend/real_estate/serializers.py:38-50` (`def reopen_on_reactivation`) — Volver a poner el anuncio en venta lo reabre; si no, el cambio parece aceptado y se deshace solo.
-- `backend/real_estate/views.py:2528-2537` (`changes['closed_reason'] = ''`) — El cambio de estado en lote escribe con .update(), que nunca llega a save(), así que reabre a mano.
+- `backend/real_estate/views.py:2565-2572` (`changes['closed_reason'] = ''`) — El cambio de estado en lote escribe con .update(), que nunca llega a save(), así que reabre a mano.
 
 **Casos**
 
@@ -800,7 +816,8 @@ La normalización vive en `save()` porque todos los caminos de escritura pasan p
 Un anuncio con `closed_reason` sigue resolviéndose por su id y por su código corto, aunque ya no aparezca en el listado ni en el mapa. Uno simplemente `inactive` responde 404 como siempre.
 
 > **Por qué:** La lámina de «vendido» existe para que se reenvíe, y lleva impresos el código corto y el QR de ese anuncio. Si la ficha respondiera 404, el portal estaría repartiendo imágenes que apuntan a un anuncio que él mismo niega — justo lo contrario de la promesa comprobable de SOC-002.
-Retirar un anuncio sigue siendo retirarlo: sin motivo de cierre, la ficha desaparece igual que antes. La diferencia no es de estado sino de intención, y por eso la decide `closed_reason` y no `status`.
+Lo que abre la ficha es que haya cierre, no de qué tipo sea. Un anuncio retirado no tiene lámina que reenviar, así que el argumento de SOC-002 no le aplica; se le conserva la ficha por la otra mitad del mismo motivo, que quien abre un enlace viejo se lleva «ya no está disponible» en vez de un 404 seco, y el crawler que lo lee también. Perseguir esa distinción obligaría a preguntar por el tipo de cierre en cada consulta para ahorrar exactamente nada.
+Un anuncio simplemente `inactive`, sin cierre registrado, sí desaparece igual que antes: es un anuncio apagado, no uno que terminó. La diferencia no es de estado sino de intención, y por eso la decide `closed_reason` y no `status`.
 El dueño, además, alcanza siempre su propio anuncio esté como esté. Hasta ahora no podía: `get_queryset` excluía `inactive` para todo el que no fuera staff, así que quien desactivaba un anuncio se quedaba sin poder abrirlo, editarlo ni reactivarlo por la API.
 Ese privilegio es de la ficha por id y solo de ella. La ruta por código corto no mira quién pregunta a propósito: su respuesta se cachea con `s-maxage` para que la sirva el borde cuando llega desde un QR impreso, y una respuesta que dependiera de la sesión ensuciaría esa caché compartida. Por eso el dueño de un anuncio simplemente inactivo recibe 404 por el código y 200 por la ficha, y por eso cada caso de abajo dice contra qué ruta se comprueba.
 
@@ -812,7 +829,7 @@ Ese privilegio es de la ficha por id y solo de ella. La ruta por código corto n
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
 - `backend/real_estate/views.py:385-405` (`visible |= Q(is_duplicate=False) & ~Q(closed_reason='')`) — Las acciones de detalle resuelven la fila por id, no por el catálogo público; el dueño entra siempre.
-- `backend/real_estate/views.py:760-772` (`exclude(status='inactive', closed_reason='')`) — El código corto de un anuncio vendido sigue resolviendo.
+- `backend/real_estate/views.py:801-811` (`exclude(status='inactive', closed_reason='')`) — El código corto de un anuncio vendido sigue resolviendo.
 
 **Casos**
 
@@ -820,6 +837,7 @@ Ese privilegio es de la ficha por id y solo de ella. La ruta por código corto n
 | --- | --- | --- | --- | --- |
 | La ficha de un anuncio vendido responde a un anónimo — `GET /api/properties/{property_id}/` | anonymous | `closed_reason`=sold | — | allowed |
 | El código corto de un anuncio vendido resuelve | anonymous | `closed_reason`=sold | — | allowed |
+| El código corto de un anuncio retirado también resuelve | anonymous | `closed_reason`=withdrawn | — | allowed |
 | Un anuncio solo inactivo no resuelve | anonymous | `status`=inactive | — | denied (HTTP 404) |
 | El dueño alcanza su anuncio inactivo — `GET /api/properties/{property_id}/` | owner | `status`=inactive | — | allowed |
 | El dueño tampoco alcanza su anuncio inactivo por el código corto | owner | `status`=inactive | — | denied (HTTP 404) |

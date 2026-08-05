@@ -18,8 +18,10 @@ import {
   formatArea,
   formatDate,
   formatPrice,
+  getClosureLabel,
   getPropertyTypeLabel,
   getStatusLabel,
+  isClosedListing,
 } from './property-labels';
 import type { Property } from './types';
 
@@ -536,8 +538,13 @@ export function buildPlace(property: Property): string {
 /** "Casa en venta en Macas, Morona Santiago" — omitting whatever is missing. */
 export function buildHeadline(property: Property): string {
   const type = getPropertyTypeLabel(property.property_type);
-  const status =
-    STATUS_COPY[property.status] ?? getStatusLabel(property.status).toLowerCase();
+  // A closed listing has to say how it ended, not what it is now. Closing sets
+  // `status` to `inactive`, and reading the operation straight off it produced
+  // "Casa inactiva en Cuenca" on every lamina and every caption of a listing
+  // that had actually been sold.
+  const status = isClosedListing(property)
+    ? getClosureLabel(property).toLowerCase()
+    : (STATUS_COPY[property.status] ?? getStatusLabel(property.status).toLowerCase());
   const place = buildPlace(property);
   const subject = status ? `${type} ${status}` : type;
   return place ? `${subject} en ${place}` : subject;
@@ -678,8 +685,16 @@ export function closureLabel(property: Property): string {
  */
 export function momentFormats(property: Property): SocialFormat[] {
   const formats: SocialFormat[] = [];
-  if (priceDrop(property)) formats.push('price-drop');
-  if (closureKind(property)) formats.push('sold');
+  const closure = closureKind(property);
+  // A price cut on a listing that already changed hands is not news, it is a
+  // contradiction: the lamina would invite offers on something nobody can buy.
+  // It also removes the case that made the figures lie — closing sets `status`
+  // to `inactive`, so a rental's monthly suffix disappeared and "$450" next to
+  // "ANTES $520" read as a house that lost seventy dollars.
+  if (!closure && !isClosedListing(property) && priceDrop(property)) {
+    formats.push('price-drop');
+  }
+  if (closure) formats.push('sold');
   return formats;
 }
 

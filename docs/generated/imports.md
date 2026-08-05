@@ -165,7 +165,7 @@ Una propiedad importada ofrece WhatsApp si hay teléfono y, si no, un enlace al 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
 - `backend/real_estate/models.py:176-178` (`Enlace al anuncio original (contacto fallback)`) — El modelo declara `source_url` como contacto de último recurso.
-- `frontend/app/property/[id]/page.tsx:449-450` (`typeof property.source_url === 'string' ? property.source_url.trim()`) — El escalón de último recurso de la cascada. Desde el rediseño de la ficha de anuncio cerrado va además condicionado a `!isClosed`: un anuncio ya vendido no ofrece contacto.
+- `frontend/app/property/[id]/page.tsx:451-453` (`typeof property.source_url === 'string' ? property.source_url.trim()`) — El escalón de último recurso de la cascada. Desde el rediseño de la ficha de anuncio cerrado va además condicionado a `!isClosed`: un anuncio ya vendido no ofrece contacto.
 - `frontend/app/property/[id]/page.tsx:669-693` (`method="source_url"`) — Cascada real renderizada: contactPhone -> sourceUrl. No hay rama de email.
 
 **Casos**

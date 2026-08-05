@@ -168,6 +168,27 @@ def test_prop_034_el_codigo_corto_de_un_anuncio_vendido_resuelve(spec_request):
         expected_status=200,
     )
 
+def test_prop_034_el_codigo_corto_de_un_anuncio_retirado_tambien_resuelve(spec_request):
+    """
+    SPEC:PROP-034 — Un anuncio cerrado conserva su ficha y su código corto
+    Case: El código corto de un anuncio retirado también resuelve
+    """
+    response = spec_request(
+        method='GET',
+        path='/api/properties/code/{code}/',
+        role='anonymous',
+        given={'closed_reason': 'withdrawn'},
+        body=None,
+    )
+    assert_outcome(
+        response,
+        expected='allowed',
+        denied_status=None,
+        rule_id='PROP-034',
+        case_name='El código corto de un anuncio retirado también resuelve',
+        expected_status=200,
+    )
+
 def test_prop_034_un_anuncio_solo_inactivo_no_resuelve(spec_request):
     """
     SPEC:PROP-034 — Un anuncio cerrado conserva su ficha y su código corto

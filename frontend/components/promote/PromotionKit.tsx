@@ -34,10 +34,12 @@ import {
   buildArtworkHeadline,
   buildCopy,
   buildHeadline,
+  closureKind,
   laminaFilename,
   laminaPath,
   momentFormats,
   shortUrl,
+  type ClosureKind,
   type CopyTone,
   type SocialFormat,
   type SocialNetwork,
@@ -50,6 +52,18 @@ import {
 import type { Property } from '@/lib/types';
 
 const NETWORKS: SocialNetwork[] = ['facebook', 'instagram', 'tiktok', 'whatsapp'];
+
+/**
+ * What the closure card is called, in the words the lamina itself uses.
+ *
+ * Sentence case rather than the stamp's shouting capitals: this is the name of
+ * a card in a list, next to "Cuadrada 1:1" and "Vendido", not the word printed
+ * across the image.
+ */
+const CLOSURE_MOMENT_LABELS: Record<ClosureKind, string> = {
+  sold: 'Vendido',
+  rented: 'Arrendado',
+};
 
 /**
  * What the kit reports about itself.
@@ -106,6 +120,7 @@ function LaminaCard({
   network,
   caption,
   artworkMessage,
+  label,
   onEvent,
 }: {
   property: Property;
@@ -113,9 +128,15 @@ function LaminaCard({
   network: SocialNetwork;
   caption: string;
   artworkMessage: string;
+  /**
+   * Overrides the format's own name. Only the closure lamina needs it: one
+   * format draws two different stamps, so its fixed label cannot describe both.
+   */
+  label?: string;
   onEvent: KitEventHandler;
 }) {
   const spec = SOCIAL_FORMATS[format];
+  const title = label ?? spec.label;
   const path = laminaPath(property, format, network, artworkMessage);
   const filename = laminaFilename(property, format);
 
@@ -172,12 +193,12 @@ function LaminaCard({
         type="button"
         onClick={() => setPreviewOpen(true)}
         className="flex h-64 items-center justify-center bg-muted p-3 focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary"
-        aria-label={`Ampliar lámina ${spec.label}`}
+        aria-label={`Ampliar lámina ${title}`}
       >
         {/* eslint-disable-next-line @next/next/no-img-element -- generated PNG, not a project asset */}
         <img
           src={path}
-          alt={`Lámina ${spec.label} de la propiedad`}
+          alt={`Lámina ${title} de la propiedad`}
           width={spec.width}
           height={spec.height}
           className="max-h-full w-auto rounded-input object-contain shadow-card"
@@ -185,7 +206,7 @@ function LaminaCard({
       </button>
       <div className="flex flex-1 flex-col gap-3 p-4">
         <div>
-          <p className="text-sm font-semibold text-textPrimary">{spec.label}</p>
+          <p className="text-sm font-semibold text-textPrimary">{title}</p>
           <p className="text-xs text-textSecondary">{spec.hint}</p>
         </div>
         <div className="mt-auto flex gap-2">
@@ -218,7 +239,7 @@ function LaminaCard({
           index={0}
           onIndexChange={() => undefined}
           onClose={() => setPreviewOpen(false)}
-          title={`Lámina ${spec.label}`}
+          title={`Lámina ${title}`}
         />
       )}
     </>
@@ -300,6 +321,15 @@ export default function PromotionKit({ property }: { property: Property }) {
   // one shared predicate is what stops this screen from ever drawing a card for
   // an image the route refuses to render.
   const moments = useMemo(() => momentFormats(property), [property]);
+
+  // The closure format draws "VENDIDO" or "ARRENDADO" depending on
+  // `closed_reason`, but its entry in SOCIAL_FORMATS carries a single fixed
+  // name. Left alone, a rented listing gets a card headed "Vendido" sitting
+  // directly above an image that reads ARRENDADO.
+  const closure = closureKind(property);
+  const momentLabels: Partial<Record<SocialFormat, string>> = closure
+    ? { sold: CLOSURE_MOMENT_LABELS[closure] }
+    : {};
 
   // Bumped by every kit action so the results panel re-reads itself: after the
   // first share the panel has something different to say, and asking someone to
@@ -490,6 +520,7 @@ export default function PromotionKit({ property }: { property: Property }) {
                       network={item}
                       caption={caption}
                       artworkMessage={artworkMessage}
+                      label={momentLabels[format]}
                       onEvent={trackKitEvent}
                     />
                   ))}

@@ -4,7 +4,7 @@ import hashlib
 from rest_framework import viewsets, generics, status, filters
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.throttling import ScopedRateThrottle
-from django.db.models import Q, F, Count, Sum, Avg, Min, Max, FloatField, ExpressionWrapper, Prefetch
+from django.db.models import Q, F, Count, Sum, Avg, Min, Max, Value, FloatField, ExpressionWrapper, Prefetch
 from rest_framework_simplejwt.views import TokenObtainPairView
 from rest_framework.permissions import IsAuthenticated, AllowAny, IsAuthenticatedOrReadOnly
 from rest_framework.decorators import action
@@ -391,11 +391,15 @@ class PropertyViewSet(viewsets.ModelViewSet):
             # mind, and a stray parameter turning it into a 404 is impossible to
             # diagnose from the other end. Same argument as `by_code`.
             visible = Q(is_duplicate=False) & ~Q(status='inactive')
-            # A listing closed as sold or rented keeps an individually
-            # resolvable ficha even though it left the catalogue. The whole
-            # point of the "vendido" image is that it gets forwarded, and
-            # SOC-002 promises its printed code and QR resolve; a 404 would make
-            # the portal look like it invented the listing.
+            # A closed listing keeps an individually resolvable ficha even
+            # though it left the catalogue — any closure, withdrawn included.
+            # For a sale the reason is SOC-002: the "vendido" image exists to be
+            # forwarded and promises its printed code and QR resolve, so a 404
+            # would make the portal look like it invented the listing.
+            # A withdrawal has no image, and is kept for the other half of the
+            # same argument: someone opening an old link is better served by
+            # "this is no longer available" than by a bare 404, and so is the
+            # crawler reading it. What decides it is the closure, not its kind.
             visible |= Q(is_duplicate=False) & ~Q(closed_reason='')
             if user.is_authenticated:
                 # An owner reaches their own listing whatever its state.
@@ -457,6 +461,31 @@ class PropertyViewSet(viewsets.ModelViewSet):
         owner = params.get('owner') or params.get('user')
         if owner and owner != 'all' and str(owner).isdigit():
             queryset = queryset.filter(owner_id=int(owner))
+
+        # The card feed is independent from the map viewport. When it supplies
+        # an origin, paginate the complete filtered catalogue from nearest to
+        # farthest so scrolling can continue after the visible area runs out.
+        # Ecuador sits close to the equator, so weighting longitude by
+        # cos(latitude) gives a stable local-distance ordering without PostGIS.
+        origin_lat = _parse_float(params.get('origin_lat'))
+        origin_lng = _parse_float(params.get('origin_lng'))
+        if (
+            getattr(self, 'action', None) == 'list'
+            and origin_lat is not None
+            and origin_lng is not None
+            and -90 <= origin_lat <= 90
+            and -180 <= origin_lng <= 180
+        ):
+            longitude_weight = math.cos(math.radians(origin_lat)) ** 2
+            latitude_delta = F('latitude') - Value(origin_lat)
+            longitude_delta = F('longitude') - Value(origin_lng)
+            queryset = queryset.annotate(
+                distance_score=ExpressionWrapper(
+                    latitude_delta * latitude_delta
+                    + longitude_delta * longitude_delta * Value(longitude_weight),
+                    output_field=FloatField(),
+                )
+            ).order_by(F('distance_score').asc(nulls_last=True), '-id')
 
         # `map_points` snaps the viewport to a coarse grid before querying so its
         # cache key describes exactly the payload that was computed.
@@ -758,10 +787,13 @@ class PropertyViewSet(viewsets.ModelViewSet):
         into a 404 would be impossible to diagnose from the other end. The only
         filter kept is the one that decides whether a listing is public at all.
 
-        A listing closed as sold or rented still resolves: the "vendido" image
-        is meant to be forwarded and carries this very code, so answering 404
-        would break the one promise SOC-002 makes. A listing merely deactivated
-        does not — withdrawing an ad means taking it off the air.
+        A closed listing still resolves, whatever the reason. For a sale that is
+        SOC-002: the "vendido" image is meant to be forwarded and carries this
+        very code, so answering 404 would break the one promise it makes. A
+        withdrawal carries no image, and resolves for the other half of the same
+        argument: an old printed code is better answered with "no longer
+        available" than with a 404. A listing merely deactivated, with no
+        closure recorded at all, still does not resolve.
         """
         normalized = normalize_code(code or '')
         prop = (

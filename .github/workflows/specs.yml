@@ -13,9 +13,9 @@ jobs:
     name: Specs vs code
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: '3.11'
 
@@ -44,14 +44,12 @@ jobs:
   e2e:
     name: Playwright
     runs-on: ubuntu-latest
-    # Bringing the whole stack up (Postgres, Redis, MinIO, Django and Next)
-    # for every PR is slow and brittle. It runs only when asked for with the
-    # `e2e` label, or on main, where it matters that the real flow still works.
-    if: github.ref == 'refs/heads/main' || contains(github.event.pull_request.labels.*.name, 'e2e')
+    # Business-rule changes can cross the API/UI boundary, so the complete
+    # browser suite is a required check on every pull request and on main.
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v5
         with:
           node-version-file: .nvmrc
 

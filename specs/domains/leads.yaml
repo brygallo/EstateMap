@@ -36,7 +36,7 @@ rules:
       petición HTTP.
     evidence:
       - file: backend/real_estate/views.py
-        lines: "1079-1081"
+        lines: "1111-1113"
         symbol: "def get_permissions"
         note: >
           get_permissions devuelve AllowAny() para create y no existe ningún
@@ -60,6 +60,14 @@ rules:
       - name: Visitante anónimo crea un lead
         role: anonymous
         expected: allowed
+        expected_http_status: 201
+        body:
+          property: "{property_id}"
+          name: Interesado de spec
+          phone: "0991234567"
+          email: interesado-spec@example.com
+          message: Me interesa esta propiedad.
+          source: property_page
       - name: Undécima petición en el mismo minuto desde el mismo cliente
         given: {requests_in_one_minute: 11}
         expected: allowed
@@ -166,7 +174,7 @@ rules:
       que ve todos los leads sin filtrar.
     evidence:
       - file: backend/real_estate/views.py
-        lines: "1089-1093"
+        lines: "1121-1123"
         symbol: "def get_queryset"
         note: >
           Devuelve Lead.objects.none() si no hay usuario autenticado, el
@@ -187,6 +195,7 @@ rules:
       - name: Dueño de la propiedad ve solo sus propios leads
         role: owner
         expected: allowed
+        expected_http_status: 200
       - name: Usuario autenticado no ve leads de propiedades ajenas
         given: {role: not_owner}
         expected: lista vacía, no un 401/403
@@ -196,6 +205,7 @@ rules:
       - name: Staff ve leads de cualquier propiedad
         role: staff
         expected: allowed
+        expected_http_status: 200
 
   - id: LEAD-006
     name: Crear un lead notifica por correo, en el mismo request
@@ -206,7 +216,7 @@ rules:
       a su contact_email antes de responder al cliente.
     evidence:
       - file: backend/real_estate/views.py
-        lines: "1098-1100"
+        lines: "1130-1132"
         symbol: "def perform_create"
         note: "serializer.save() seguido de LeadNotificationService().notify_created(lead), dentro del mismo ciclo request/response."
       - file: backend/real_estate/services/notifications.py
@@ -344,11 +354,11 @@ rules:
       hay cuenta que la posea).
     evidence:
       - file: backend/real_estate/views.py
-        lines: "1079-1081"
+        lines: "1111-1113"
         symbol: "def get_permissions"
         note: "return [IsAuthenticated(), IsAdminUser()] para toda acción salvo create."
       - file: backend/real_estate/views.py
-        lines: "1089-1091"
+        lines: "1121-1123"
         symbol: "def get_queryset"
         note: "PendingPublication.objects.none() salvo que user.is_staff sea verdadero."
     backend:
@@ -371,6 +381,7 @@ rules:
       - name: Staff consulta la bandeja completa
         role: staff
         expected: allowed
+        expected_http_status: 200
 
   - id: LEAD-012
     name: Crear una solicitud pendiente está limitado a 10 por minuto
@@ -381,7 +392,7 @@ rules:
       DEFAULT_THROTTLE_RATES fija ese scope en 10/min.
     evidence:
       - file: backend/real_estate/views.py
-        lines: "1121-1123"
+        lines: "1153-1155"
         symbol: "throttle_scope = 'pending_create'"
         note: Solo el POST público se limita; el resto de acciones ya exige staff y no lleva throttle.
       - file: backend/estate_map/settings.py
@@ -416,7 +427,7 @@ rules:
       pero para el equipo interno en vez del dueño de una propiedad.
     evidence:
       - file: backend/real_estate/views.py
-        lines: "1098-1100"
+        lines: "1130-1132"
         symbol: "def perform_create"
         note: PendingPublicationNotificationService().notify_created(pending) en el mismo request.
       - file: backend/real_estate/email_utils.py
@@ -511,7 +522,7 @@ rules:
       DEFAULT_THROTTLE_RATES fija ese scope en 30/min.
     evidence:
       - file: backend/real_estate/views.py
-        lines: "1351-1353"
+        lines: "1383-1385"
         symbol: "throttle_scope = 'activity_create'"
       - file: backend/estate_map/settings.py
         lines: "172-173"

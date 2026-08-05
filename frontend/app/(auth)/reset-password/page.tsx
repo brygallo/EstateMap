@@ -1,7 +1,7 @@
 'use client';
 
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Formik, Form } from 'formik';
+import { Formik, Form, type FormikHelpers } from 'formik';
 import * as Yup from 'yup';
 import { toast } from 'sonner';
 import { Lock, ShieldCheck } from 'lucide-react';
@@ -29,7 +29,12 @@ const ResetPassword = () => {
       .required('Campo requerido'),
   });
 
-  const handleSubmit = async (values: any, { setSubmitting }: any) => {
+  type ResetPasswordValues = { new_password: string; confirm_password: string };
+
+  const handleSubmit = async (
+    values: ResetPasswordValues,
+    { setSubmitting }: FormikHelpers<ResetPasswordValues>
+  ) => {
     if (!token) {
       toast.error('Token de recuperación no válido');
       return;
@@ -44,14 +49,19 @@ const ResetPassword = () => {
           new_password: values.new_password,
         }),
       });
-      const data = await res.json().catch(() => ({}));
+      const data = await res.json().catch(() => ({})) as Record<string, unknown>;
 
       if (!res.ok) {
-        toast.error(data.error || await responseErrorMessage(res, 'No se pudo restablecer la contraseña.'));
+        toast.error(
+          (typeof data.error === 'string' && data.error) ||
+          await responseErrorMessage(res, 'No se pudo restablecer la contraseña.')
+        );
         return;
       }
 
-      toast.success(data.message || 'Contraseña actualizada exitosamente');
+      toast.success(
+        typeof data.message === 'string' ? data.message : 'Contraseña actualizada exitosamente'
+      );
       setTimeout(() => router.push('/iniciar-sesion'), 1500);
     } catch (err) {
       toast.error(requestErrorMessage(err, 'restablecer la contraseña'));
@@ -92,7 +102,7 @@ const ResetPassword = () => {
         validationSchema={validationSchema}
         onSubmit={handleSubmit}
       >
-        {({ isSubmitting }: any) => (
+        {({ isSubmitting }) => (
           <Form className="space-y-4">
             <AuthField
               id="new_password"
