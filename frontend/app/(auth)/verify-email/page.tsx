@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Formik, Form } from 'formik';
+import { Formik, Form, type FormikHelpers } from 'formik';
 import * as Yup from 'yup';
 import { toast } from 'sonner';
 import { Mail, ShieldCheck } from 'lucide-react';
@@ -19,7 +19,9 @@ const VerifyEmail = () => {
   const [resending, setResending] = useState(false);
   const API_URL = getPublicApiUrl();
 
-  // Obtener email de la URL si existe
+  type VerifyEmailValues = { email: string; code: string };
+
+  // Use the address from the registration redirect when available.
   const emailFromUrl = searchParams.get('email') || '';
 
   const validationSchema = Yup.object({
@@ -30,21 +32,24 @@ const VerifyEmail = () => {
       .matches(/^\d+$/, 'El código solo debe contener números'),
   });
 
-  const handleSubmit = async (values: any, { setSubmitting }: any) => {
+  const handleSubmit = async (
+    values: VerifyEmailValues,
+    { setSubmitting }: FormikHelpers<VerifyEmailValues>
+  ) => {
     try {
       const res = await fetchWithTimeout(`${API_URL}/verify-email/`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(values),
       });
-      const data = await res.json().catch(() => ({}));
+      const data = await res.json().catch(() => ({})) as Record<string, unknown>;
 
       if (!res.ok) {
-        toast.error(data.error || 'Error al verificar el código');
+        toast.error(typeof data.error === 'string' ? data.error : 'Error al verificar el código');
         return;
       }
 
-      toast.success(data.message || 'Correo verificado exitosamente');
+      toast.success(typeof data.message === 'string' ? data.message : 'Correo verificado exitosamente');
       setTimeout(() => router.push('/iniciar-sesion'), 1500);
     } catch (err) {
       toast.error(requestErrorMessage(err, 'verificar el correo'));
@@ -66,14 +71,14 @@ const VerifyEmail = () => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email }),
       });
-      const data = await res.json().catch(() => ({}));
+      const data = await res.json().catch(() => ({})) as Record<string, unknown>;
 
       if (!res.ok) {
-        toast.error(data.error || 'Error al reenviar el código');
+        toast.error(typeof data.error === 'string' ? data.error : 'Error al reenviar el código');
         return;
       }
 
-      toast.success(data.message || 'Código reenviado exitosamente');
+      toast.success(typeof data.message === 'string' ? data.message : 'Código reenviado exitosamente');
     } catch (err) {
       toast.error(requestErrorMessage(err, 'reenviar el código'));
     } finally {
@@ -104,7 +109,7 @@ const VerifyEmail = () => {
         validationSchema={validationSchema}
         onSubmit={handleSubmit}
       >
-        {({ isSubmitting, values }: any) => (
+        {({ isSubmitting, values }) => (
           <Form className="space-y-4">
             <AuthField
               id="email"
