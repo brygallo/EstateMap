@@ -1105,7 +1105,7 @@ rules:
         lines: "1540-1564"
         symbol: class PendingImageView
       - file: backend/real_estate/views.py
-        lines: "1565-1567"
+        lines: "1564-1566"
         symbol: path.parent != Path(settings.IMAGE_UPLOAD_TEMP_DIR)
     permissions:
       required: [images.read_public]
@@ -1445,7 +1445,7 @@ rules:
         lines: "1148-1150"
         symbol: "return [IsAuthenticated(), IsAdminUser()]"
       - file: backend/real_estate/views.py
-        lines: "1397-1399"
+        lines: "1396-1398"
         symbol: "http_method_names = ['get', 'post', 'head', 'options']"
     permissions:
       required: [activity.read_all]
@@ -1484,7 +1484,7 @@ rules:
       code email_not_verified en lugar de un fallo genérico.
     evidence:
       - file: backend/real_estate/views.py
-        lines: "1438-1440"
+        lines: "1437-1439"
         symbol: class CustomTokenObtainPairView
       - file: backend/estate_map/settings.py
         lines: 192-212
@@ -1550,7 +1550,7 @@ rules:
       a la vez. Ver PERM-007.
     evidence:
       - file: backend/real_estate/views.py
-        lines: "1442-1444"
+        lines: "1441-1443"
         symbol: class RegisterView
       - file: backend/real_estate/serializers.py
         lines: "768-776"
@@ -1593,7 +1593,7 @@ rules:
         lines: 27-39
         symbol: claims.get("email_verified") is not True
       - file: backend/real_estate/views.py
-        lines: "1448-1450"
+        lines: "1447-1449"
         symbol: class GoogleLoginView
     permissions:
       required: [auth.google_login]
@@ -1659,10 +1659,10 @@ rules:
       caducidad. Al canjearlo se activan is_active e is_email_verified a la vez.
     evidence:
       - file: backend/real_estate/views.py
-        lines: "1575-1577"
+        lines: "1574-1576"
         symbol: class VerifyEmailView
       - file: backend/real_estate/views.py
-        lines: "1624-1626"
+        lines: "1623-1625"
         symbol: user.is_email_verified = True
     permissions:
       required: [auth.verify_email]
@@ -1692,7 +1692,7 @@ rules:
       referencia para PERM-039, donde el patrón no se siguió.
     evidence:
       - file: backend/real_estate/views.py
-        lines: "1712-1714"
+        lines: "1711-1713"
         symbol: "# Por seguridad, no revelar si el email existe o no"
     permissions:
       required: [auth.request_password_reset]
@@ -1722,7 +1722,7 @@ rules:
       regla congela la conducta actual para que un cambio la haga saltar.
     evidence:
       - file: backend/real_estate/views.py
-        lines: "1593-1595"
+        lines: "1592-1594"
         symbol: "{'error': 'Usuario no encontrado'}"
     permissions:
       required: [auth.resend_verification]
@@ -1774,7 +1774,7 @@ rules:
       endpoint no necesita comprobación de objeto.
     evidence:
       - file: backend/real_estate/views.py
-        lines: "1896-1898"
+        lines: "1895-1897"
         symbol: return self.request.user
     permissions:
       required: [account.read_own_profile]
@@ -1845,7 +1845,7 @@ rules:
       sin conocer la contraseña.
     evidence:
       - file: backend/real_estate/views.py
-        lines: "1899-1901"
+        lines: "1898-1900"
         symbol: class ChangePasswordView
       - file: backend/real_estate/serializers.py
         lines: "895-897"
@@ -1885,10 +1885,10 @@ rules:
       puede completar el cambio aunque haya iniciado la solicitud.
     evidence:
       - file: backend/real_estate/views.py
-        lines: "1766-1768"
+        lines: "1765-1767"
         symbol: class RequestEmailChangeView
       - file: backend/real_estate/views.py
-        lines: "1784-1786"
+        lines: "1783-1785"
         symbol: EmailChangeToken.objects.filter(user=user, is_used=False).update(is_used=True)
     permissions:
       required: [account.request_email_change, account.verify_email_change]

@@ -1223,7 +1223,7 @@ rules:
       la persona continúe explorando el catálogo.
     evidence:
       - file: frontend/hooks/useGeolocation.ts
-        lines: "78-85"
+        lines: "77-83"
         symbol: notifyOutsideCoverage
         note: Muestra el mensaje de cobertura sin tratar la ubicación como un error de permisos.
       - file: frontend/hooks/useGeolocation.ts

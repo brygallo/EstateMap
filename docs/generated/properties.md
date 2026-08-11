@@ -762,7 +762,7 @@ Si la geolocalización de la persona cae fuera de Ecuador continental y Galápag
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `frontend/hooks/useGeolocation.ts:78-85` (`notifyOutsideCoverage`) — Muestra el mensaje de cobertura sin tratar la ubicación como un error de permisos.
+- `frontend/hooks/useGeolocation.ts:77-83` (`notifyOutsideCoverage`) — Muestra el mensaje de cobertura sin tratar la ubicación como un error de permisos.
 - `frontend/hooks/useGeolocation.ts:164-178` (`isPointInEcuadorBounds`) — La aceptación inicial descarta una ubicación exterior antes de centrar el mapa o guardarla.
 - `frontend/hooks/useGeolocation.ts:263-277` (`isPointInEcuadorBounds`) — El botón de ubicación aplica la misma validación.
 

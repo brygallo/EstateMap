@@ -860,7 +860,7 @@ El proxy debe resolver únicamente rutas que correspondan a una PropertyImage ex
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
 - `backend/real_estate/views.py:1540-1564` (`class PendingImageView`)
-- `backend/real_estate/views.py:1565-1567` (`path.parent != Path(settings.IMAGE_UPLOAD_TEMP_DIR)`)
+- `backend/real_estate/views.py:1564-1566` (`path.parent != Path(settings.IMAGE_UPLOAD_TEMP_DIR)`)
 
 **Casos**
 
@@ -1108,7 +1108,7 @@ Listar o consultar eventos de actividad exige is_staff; un usuario autenticado n
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
 - `backend/real_estate/views.py:1148-1150` (`return [IsAuthenticated(), IsAdminUser()]`)
-- `backend/real_estate/views.py:1397-1399` (`http_method_names = ['get', 'post', 'head', 'options']`)
+- `backend/real_estate/views.py:1396-1398` (`http_method_names = ['get', 'post', 'head', 'options']`)
 
 **Casos**
 
@@ -1140,7 +1140,7 @@ Listar o consultar eventos de actividad exige is_staff; un usuario autenticado n
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/real_estate/views.py:1438-1440` (`class CustomTokenObtainPairView`)
+- `backend/real_estate/views.py:1437-1439` (`class CustomTokenObtainPairView`)
 - `backend/estate_map/settings.py:192-212` (`SIMPLE_JWT`)
 - `backend/real_estate/serializers.py:717-720` (`token["is_staff"] = user.is_staff`)
 
@@ -1197,7 +1197,7 @@ Cualquiera puede registrarse sin autenticación, y la cuenta se crea con is_acti
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/real_estate/views.py:1442-1444` (`class RegisterView`)
+- `backend/real_estate/views.py:1441-1443` (`class RegisterView`)
 - `backend/real_estate/serializers.py:768-776` (`class RegisterSerializer`) — create() pasa is_active=False y emite el token de verificación.
 
 **Casos**
@@ -1229,7 +1229,7 @@ Cualquiera puede registrarse sin autenticación, y la cuenta se crea con is_acti
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
 - `backend/real_estate/services/authentication.py:27-39` (`claims.get("email_verified") is not True`)
-- `backend/real_estate/views.py:1448-1450` (`class GoogleLoginView`)
+- `backend/real_estate/views.py:1447-1449` (`class GoogleLoginView`)
 
 **Casos**
 
@@ -1288,8 +1288,8 @@ Canjear el código de verificación no exige sesión, porque quien lo usa todav�
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/real_estate/views.py:1575-1577` (`class VerifyEmailView`)
-- `backend/real_estate/views.py:1624-1626` (`user.is_email_verified = True`)
+- `backend/real_estate/views.py:1574-1576` (`class VerifyEmailView`)
+- `backend/real_estate/views.py:1623-1625` (`user.is_email_verified = True`)
 
 **Casos**
 
@@ -1318,7 +1318,7 @@ Canjear el código de verificación no exige sesión, porque quien lo usa todav�
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/real_estate/views.py:1712-1714` (`# Por seguridad, no revelar si el email existe o no`)
+- `backend/real_estate/views.py:1711-1713` (`# Por seguridad, no revelar si el email existe o no`)
 
 **Casos**
 
@@ -1348,7 +1348,7 @@ Canjear el código de verificación no exige sesión, porque quien lo usa todav�
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/real_estate/views.py:1593-1595` (`{'error': 'Usuario no encontrado'}`)
+- `backend/real_estate/views.py:1592-1594` (`{'error': 'Usuario no encontrado'}`)
 
 **Casos**
 
@@ -1405,7 +1405,7 @@ Canjear el código de verificación no exige sesión, porque quien lo usa todav�
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/real_estate/views.py:1896-1898` (`return self.request.user`)
+- `backend/real_estate/views.py:1895-1897` (`return self.request.user`)
 
 **Casos**
 
@@ -1468,7 +1468,7 @@ La actualización del perfil propio solo admite username, nombre y apellidos; co
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/real_estate/views.py:1899-1901` (`class ChangePasswordView`)
+- `backend/real_estate/views.py:1898-1900` (`class ChangePasswordView`)
 - `backend/real_estate/serializers.py:895-897` (`La contraseña actual no es correcta`)
 
 **Casos**
@@ -1500,8 +1500,8 @@ Solicitar el cambio de correo requiere autenticación, invalida las solicitudes 
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/real_estate/views.py:1766-1768` (`class RequestEmailChangeView`)
-- `backend/real_estate/views.py:1784-1786` (`EmailChangeToken.objects.filter(user=user, is_used=False).update(is_used=True)`)
+- `backend/real_estate/views.py:1765-1767` (`class RequestEmailChangeView`)
+- `backend/real_estate/views.py:1783-1785` (`EmailChangeToken.objects.filter(user=user, is_used=False).update(is_used=True)`)
 
 **Casos**
 

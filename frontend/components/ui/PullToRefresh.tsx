@@ -34,6 +34,7 @@ export default function PullToRefresh({ onRefresh, disabled = false, children }:
   const startYRef = useRef<number | null>(null);
   const armedRef = useRef(false);
   const [pull, setPull] = useState(0);
+  const [dragging, setDragging] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
 
   const ready = pull >= THRESHOLD;
@@ -44,6 +45,7 @@ export default function PullToRefresh({ onRefresh, disabled = false, children }:
     if (window.scrollY > 0) return;
     startYRef.current = event.touches[0]?.clientY ?? null;
     armedRef.current = false;
+    setDragging(true);
   };
 
   const handleTouchMove = (event: React.TouchEvent) => {
@@ -75,6 +77,7 @@ export default function PullToRefresh({ onRefresh, disabled = false, children }:
     const shouldRefresh = armedRef.current;
     startYRef.current = null;
     armedRef.current = false;
+    setDragging(false);
 
     if (!shouldRefresh) {
       setPull(0);
@@ -103,7 +106,7 @@ export default function PullToRefresh({ onRefresh, disabled = false, children }:
         style={{
           height: pull,
           // Only animate on the way back; following the finger must not lag.
-          transition: startYRef.current == null ? 'height 220ms cubic-bezier(0.2, 0, 0, 1)' : 'none',
+          transition: dragging ? 'none' : 'height 220ms cubic-bezier(0.2, 0, 0, 1)',
         }}
         aria-hidden={!refreshing}
       >

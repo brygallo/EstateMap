@@ -100,8 +100,7 @@ sobre `backend/` y `frontend/` devolvió únicamente falsos positivos:
   (`frontend/lib/properties.ts:246`, `frontend/components/SeoLanding.tsx:18`).
 - `payment` — la directiva `Permissions-Policy` que **desactiva** la API de pagos del
   navegador: `frontend/next.config.js:72` → `payment=()`.
-- `premium` — la palabra dentro de una descripción de propiedad de ejemplo en el script
-  de datos de prueba: `backend/populate_200_properties.py:109`.
+- `premium` — descripciones históricas de ejemplo, sin integración con pagos.
 - `subscri` — `subscribe` / `unsubscribe` de hooks de React:
   `frontend/hooks/useMediaQuery.ts:19`, `frontend/hooks/useGeolocation.ts:214`,
   `frontend/app/add-property/page.tsx:492`.

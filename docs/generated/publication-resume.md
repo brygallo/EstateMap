@@ -300,7 +300,7 @@ Al completarse el canje, el PendingPublication pasa a converted y guarda una ref
 
 - `backend/real_estate/models.py:593-597` (`related_name="pending_publications"`)
 - `backend/real_estate/views.py:1327-1329` (`pending.status = 'converted'`)
-- `backend/real_estate/views.py:1205-1207` (`'Esta solicitud ya se convirtió en un anuncio.'`)
+- `backend/real_estate/views.py:1204-1206` (`'Esta solicitud ya se convirtió en un anuncio.'`)
 
 **Casos**
 
@@ -329,7 +329,7 @@ Desde la bandeja, staff abre el mismo formulario recuperado, corrige los campos 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
 - `frontend/app/admin/pending-publications/page.tsx:224-243` (`resolveAndPublish`) — Prepara el enlace si hace falta y abre el borrador recuperado para corregirlo.
-- `backend/real_estate/views.py:1327-1344` (`serializer.save(owner=owner)`) — La propiedad queda a nombre del correo del pendiente y se notifica tanto a cuentas nuevas como existentes.
+- `backend/real_estate/views.py:1326-1342` (`serializer.save(owner=owner)`) — La propiedad queda a nombre del correo del pendiente y se notifica tanto a cuentas nuevas como existentes.
 - `backend/real_estate/email_utils.py:406-450` (`send_account_claim_email`) — La cuenta nueva recibe el enlace de definición de contraseña y el enlace público del anuncio.
 
 **Casos**

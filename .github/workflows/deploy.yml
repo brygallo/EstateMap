@@ -95,6 +95,13 @@ jobs:
             echo "SECURE_SSL_REDIRECT=True" >> .env.prod
             echo "ENVIRONMENT=production" >> .env.prod
             echo "RELEASE_SHA=${{ github.sha }}" >> .env.prod
+            echo "OBSERVABILITY_LOG_LEVEL=INFO" >> .env.prod
+            echo "SLOW_ENDPOINT_MS=1000" >> .env.prod
+            echo "THROTTLE_EXEMPT_IPS=" >> .env.prod
+            echo "IMAGE_UPLOAD_TEMP_MAX_AGE_HOURS=48" >> .env.prod
+            echo "INDEXNOW_ENABLED=True" >> .env.prod
+            echo "INDEXNOW_KEY=8bb1b475c99e1f1d1aec6d62d889ac42" >> .env.prod
+            echo "BACKUP_VERIFICATION_FILE=/tmp/estate-backup-verified.json" >> .env.prod
 
             # Database Configuration (pre-installed on server)
             echo "DB_HOST=${{ secrets.DB_HOST }}" >> .env.prod

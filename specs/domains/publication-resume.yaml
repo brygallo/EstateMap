@@ -346,7 +346,7 @@ rules:
         lines: "1327-1329"
         symbol: pending.status = 'converted'
       - file: backend/real_estate/views.py
-        lines: "1205-1207"
+        lines: "1204-1206"
         symbol: "'Esta solicitud ya se convirtió en un anuncio.'"
     tests:
       api: true
@@ -376,7 +376,7 @@ rules:
         symbol: "resolveAndPublish"
         note: Prepara el enlace si hace falta y abre el borrador recuperado para corregirlo.
       - file: backend/real_estate/views.py
-        lines: "1327-1344"
+        lines: "1326-1342"
         symbol: "serializer.save(owner=owner)"
         note: La propiedad queda a nombre del correo del pendiente y se notifica tanto a cuentas nuevas como existentes.
       - file: backend/real_estate/email_utils.py

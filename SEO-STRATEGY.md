@@ -44,8 +44,8 @@ Ningún portal ecuatoriano publica un **índice de precios m² abierto, con meto
    que hasta ahora enlazaban a las portadas genéricas de Facebook e Instagram
    (regla `SEO-003`).
 6. Verificación en buscadores. Google **ya está verificado** como propiedad de
-   dominio (`sc-domain:geopropiedadesecuador.com`, cuenta bryan13gallo@gmail.com,
-   por DNS), así que no necesita etiqueta. Bing sigue **sin verificar**: el código
+   dominio (`sc-domain:geopropiedadesecuador.com`, por DNS), así que no necesita
+   etiqueta. Bing sigue **sin verificar**: el código
    se lee de `NEXT_PUBLIC_BING_SITE_VERIFICATION` y solo falta dar de alta la
    cuenta en Bing Webmaster Tools (regla `SEO-004`). Bing alimenta a ChatGPT y
    Copilot, e IndexNow solo rinde medible con Bing verificado.

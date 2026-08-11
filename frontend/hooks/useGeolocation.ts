@@ -22,6 +22,10 @@ type PendingAdaptiveLocation = { location: LatLngPoint; readyAt: number };
 
 const LOCATION_DISCOVERY_ZOOM = 10;
 const ADAPTIVE_ZOOM_DELAY_MS = 1200;
+const LOCATION_TOAST_OPTIONS: ExternalToast = {
+  duration: 2800,
+  position: 'top-center',
+};
 
 /**
  * Encapsula toda la lógica de geolocalización del mapa: el modal de permiso en
@@ -43,11 +47,6 @@ export function useGeolocation(
   const locationToastIdRef = useRef<string | number | null>(null);
   const pendingAdaptiveLocationRef = useRef<PendingAdaptiveLocation | null>(null);
 
-  const toastOptions: ExternalToast = {
-    duration: 2800,
-    position: 'top-center',
-  };
-
   const notifyLocationLoading = useCallback((message = 'Buscando tu ubicación…') => {
     if (locationToastIdRef.current) toast.dismiss(locationToastIdRef.current);
     locationToastIdRef.current = toast.loading(message, {
@@ -58,9 +57,9 @@ export function useGeolocation(
   const notifyLocationSuccess = useCallback((message: string) => {
     const id = locationToastIdRef.current;
     if (id) {
-      toast.success(message, { ...toastOptions, id });
+      toast.success(message, { ...LOCATION_TOAST_OPTIONS, id });
     } else {
-      toast.success(message, toastOptions);
+      toast.success(message, LOCATION_TOAST_OPTIONS);
     }
     locationToastIdRef.current = null;
   }, []);
@@ -68,9 +67,9 @@ export function useGeolocation(
   const notifyLocationError = useCallback((message: string) => {
     const id = locationToastIdRef.current;
     if (id) {
-      toast.error(message, { ...toastOptions, duration: 6000, id });
+      toast.error(message, { ...LOCATION_TOAST_OPTIONS, duration: 6000, id });
     } else {
-      toast.error(message, { ...toastOptions, duration: 6000 });
+      toast.error(message, { ...LOCATION_TOAST_OPTIONS, duration: 6000 });
     }
     locationToastIdRef.current = null;
   }, []);
@@ -79,7 +78,7 @@ export function useGeolocation(
     const id = locationToastIdRef.current;
     toast.info(
       'Todavía no tenemos propiedades en tu zona. Navega por el mapa para ver propiedades disponibles en Ecuador.',
-      { ...toastOptions, duration: 6500, ...(id ? { id } : {}) }
+      { ...LOCATION_TOAST_OPTIONS, duration: 6500, ...(id ? { id } : {}) }
     );
     locationToastIdRef.current = null;
   }, []);
@@ -138,7 +137,7 @@ export function useGeolocation(
     if (decision.count > 0) {
       toast.success(
         `${decision.count} ${decision.count === 1 ? 'propiedad encontrada' : 'propiedades encontradas'} cerca de ti`,
-        toastOptions
+        LOCATION_TOAST_OPTIONS
       );
     }
   }, [adaptiveZoomTick, flyTo, mapRef, properties, propertiesLoading]);

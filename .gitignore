@@ -1,5 +1,6 @@
 # Node
 node_modules
+.next/
 frontend/dist
 frontend/.next
 frontend/.next-host
@@ -34,7 +35,21 @@ backend/paquetes/
 geopropiedadesecuador.com-audit/
 
 # Metadatos locales del IDE
+.idea/
+.vscode/
+.DS_Store
+**/.DS_Store
 .idea/jsLibraryMappings.xml
+
+# Test and diagnostic artifacts
+test-results/
+playwright-report/
+coverage/
+htmlcov/
+detail_state.png
+
+# Local property/media samples
+backend/properties/
 
 # Spec tooling virtualenv (see scripts/specs.sh)
 .venv-specs/

@@ -38,7 +38,7 @@ markers =
 | Clave | Valor | Qué implica |
 |---|---|---|
 | `DJANGO_SETTINGS_MODULE` (`backend/pytest.ini:2`) | `estate_map.settings` | No existe un módulo de settings específico de test. La suite corre con los **mismos settings de producción/desarrollo**; las diferencias de entorno de test se aplican desde fixtures `autouse` del `conftest.py` (ver sección 3). |
-| `python_files` (`backend/pytest.ini:3`) | `tests.py test_*.py *_tests.py` | Solo se recolectan ficheros con esos nombres. Consecuencia práctica: **`backend/e2e_test.py` NO es recolectado** — termina en `_test.py`, que no coincide con ningún patrón (ver `docs/testing/playwright.md`). |
+| `python_files` (`backend/pytest.ini:3`) | `tests.py test_*.py *_tests.py` | Solo se recolectan ficheros con esos nombres. Los flujos de navegador viven en la suite separada de Playwright. |
 | `python_classes` (`backend/pytest.ini:4`) | `Test*` | Las clases de agrupación se llaman `TestLogin`, `TestPasswordReset`, etc. Las clases auxiliares que no deben recolectarse usan prefijo `_` o nombre distinto (`FakeQuerySet` en `backend/real_estate/tests/test_map_payload.py:21`, `_FakeClient` en `backend/ingesta/tests/test_plusvalia.py:233`). |
 
 ### Efecto práctico de los `addopts` (`backend/pytest.ini:6-11`)

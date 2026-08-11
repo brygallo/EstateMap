@@ -74,7 +74,6 @@ from .services.notifications import (
     LeadNotificationService,
     OwnershipTransferNotificationService,
     PendingPublicationNotificationService,
-    OwnershipTransferNotificationService,
 )
 import requests
 from google.oauth2 import id_token

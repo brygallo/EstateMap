@@ -39,7 +39,7 @@ rules:
       es exactamente lo que se quiere: un anuncio sin precio no vota.
     evidence:
       - file: backend/real_estate/views.py
-        lines: "1936-1938"
+        lines: "1935-1937"
         symbol: "all_base = Property.objects.exclude(status='inactive')"
         note: >
           Queryset base de MarketStatsView. Los cuatro filtros (no inactive,
@@ -81,7 +81,7 @@ rules:
       ambas existen y difieren.
     evidence:
       - file: backend/real_estate/views.py
-        lines: "1941-1943"
+        lines: "1940-1942"
         symbol: "price_per_m2=ExpressionWrapper(F('price') / F('area'), output_field=FloatField())"
         note: Anotación de MarketStatsView, evaluada en SQL como FloatField.
       - file: backend/real_estate/views.py
@@ -117,7 +117,7 @@ rules:
       es siempre menor que los anuncios realmente descartados.
     evidence:
       - file: backend/real_estate/views.py
-        lines: "1942-1944"
+        lines: "1941-1943"
         symbol: "price_per_m2__gt=1, price_per_m2__lt=10000"
         note: Filtro aplicado sobre all_base, es decir sobre venta y alquiler.
       - file: backend/real_estate/views.py
@@ -159,7 +159,7 @@ rules:
       for_sale justo después del filtro de ciudad.
     evidence:
       - file: backend/real_estate/views.py
-        lines: "1950-1952"
+        lines: "1949-1951"
         symbol: "base = all_base.filter(status='for_sale')"
         note: >
           Las dos líneas anteriores son el comentario que justifica la
@@ -197,7 +197,7 @@ rules:
           Cálculo de la muestra ordenada, los percentiles, los límites y el
           recorte final del queryset.
       - file: backend/real_estate/views.py
-        lines: "1953-1955"
+        lines: "1952-1954"
         symbol: "def percentile(values, ratio):"
         note: >
           Percentil con interpolación lineal. Devuelve 0 cuando la lista está
@@ -239,7 +239,7 @@ rules:
       para que nadie lo descubra comparando cifras que no deberían coincidir.
     evidence:
       - file: backend/real_estate/views.py
-        lines: "1968-1970"
+        lines: "1967-1969"
         symbol: "avg_price_m2=Avg('price_per_m2')"
         note: >
           Agregado overall: count, media de $/m², media de precio, media de área,
@@ -281,7 +281,7 @@ rules:
       "$0/m²" es el umbral de indexación de PRC-020, no el cálculo.
     evidence:
       - file: backend/real_estate/views.py
-        lines: "1967-1969"
+        lines: "1966-1968"
         symbol: "count=Count('id'),"
         note: >
           El único campo garantizado como número es count; el resto son
@@ -353,7 +353,7 @@ rules:
           Extracción del sector, clave insensible a mayúsculas y recuento de las
           grafías vistas.
       - file: backend/real_estate/views.py
-        lines: "2025-2027"
+        lines: "2024-2026"
         symbol: "by_sector = ["
         note: >
           Construcción de la tabla: grafía más común, conteo, media aritmética de
@@ -581,7 +581,7 @@ rules:
       pierde anuncios por ser cara respecto al país.
     evidence:
       - file: backend/real_estate/views.py
-        lines: "1945-1947"
+        lines: "1944-1946"
         symbol: "city_scope = (request.query_params.get('city') or '').strip()"
         note: Filtro city__iexact aplicado sobre all_base.
     backend:
