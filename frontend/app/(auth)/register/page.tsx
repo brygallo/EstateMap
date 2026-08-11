@@ -2,8 +2,9 @@
 
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Formik, Form, type FormikErrors, type FormikHelpers } from 'formik';
-import * as Yup from 'yup';
+import { FormProvider, useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
 import { toast } from 'sonner';
 import { User, Mail, Lock, ShieldCheck, ArrowRight, Check } from 'lucide-react';
 import GoogleSignInButton from '@/components/GoogleSignInButton';
@@ -11,7 +12,7 @@ import AuthCard from '@/components/auth/AuthCard';
 import AuthDivider from '@/components/auth/AuthDivider';
 import AuthField from '@/components/auth/AuthField';
 import AuthSubmit from '@/components/auth/AuthSubmit';
-import { fetchWithTimeout, requestErrorMessage } from '@/lib/form-errors';
+import { fetchWithTimeout, requestErrorMessage, responseErrorMessage } from '@/lib/form-errors';
 import { getPublicApiUrl } from '@/lib/api-url';
 
 const BENEFITS = [
@@ -39,24 +40,25 @@ export default function RegisterPage() {
   const router = useRouter();
   const API_URL = getPublicApiUrl();
 
-  const validationSchema = Yup.object({
-    username: Yup.string().required('Campo requerido'),
-    first_name: Yup.string().required('Campo requerido'),
-    last_name: Yup.string().required('Campo requerido'),
-    email: Yup.string().email('Correo inválido').required('Campo requerido'),
+  const validationSchema = z.object({
+    username: z.string().min(1, 'Campo requerido'),
+    first_name: z.string().min(1, 'Campo requerido'),
+    last_name: z.string().min(1, 'Campo requerido'),
+    email: z.email('Correo inválido'),
     // Mirrors the server: register runs Django's default validators through
     // validate_password (real_estate/serializers.py), whose minimum is 8.
-    password: Yup.string()
-      .min(8, 'La contraseña debe tener al menos 8 caracteres')
-      .required('Campo requerido'),
-    confirm: Yup.string()
-      .oneOf([Yup.ref('password')], 'Las contraseñas no coinciden')
-      .required('Campo requerido'),
+    password: z.string().min(8, 'La contraseña debe tener al menos 8 caracteres'),
+    confirm: z.string().min(1, 'Campo requerido'),
+  }).refine((values) => values.password === values.confirm, {
+    message: 'Las contraseñas no coinciden', path: ['confirm'],
+  });
+  const form = useForm<RegisterValues>({
+    resolver: zodResolver(validationSchema),
+    defaultValues: { username: '', first_name: '', last_name: '', email: '', password: '', confirm: '' },
   });
 
   const handleSubmit = async (
-    values: RegisterValues,
-    { setSubmitting, setErrors }: FormikHelpers<RegisterValues>
+    values: RegisterValues
   ) => {
     try {
       const res = await fetchWithTimeout(`${API_URL}/register/`, {
@@ -72,7 +74,7 @@ export default function RegisterPage() {
       });
       const data = await res.json().catch(() => ({})) as Record<string, unknown>;
       if (!res.ok) {
-        const formErrors: FormikErrors<RegisterValues> = {};
+        const formErrors: Partial<Record<keyof RegisterValues, string>> = {};
         let errorMessage = fieldMessage(data.detail);
         for (const [field, value] of Object.entries(data)) {
           if (field in values) formErrors[field as keyof RegisterValues] = fieldMessage(value);
@@ -80,9 +82,10 @@ export default function RegisterPage() {
         if (!errorMessage) {
           errorMessage = Object.values(formErrors).filter(Boolean).join(' ');
         }
-        setErrors(formErrors);
-        toast.error(errorMessage || 'Error al registrar');
-        setSubmitting(false);
+        for (const [field, message] of Object.entries(formErrors)) {
+          if (message) form.setError(field as keyof RegisterValues, { message });
+        }
+        toast.error(errorMessage || await responseErrorMessage(res, 'Error al registrar'));
         return;
       }
 
@@ -90,8 +93,6 @@ export default function RegisterPage() {
       router.push(`/verificar-correo?email=${encodeURIComponent(values.email)}`);
     } catch (err) {
       toast.error(requestErrorMessage(err, 'crear la cuenta'));
-    } finally {
-      setSubmitting(false);
     }
   };
 
@@ -119,20 +120,8 @@ export default function RegisterPage() {
         ))}
       </ul>
 
-      <Formik
-        initialValues={{
-          username: '',
-          first_name: '',
-          last_name: '',
-          email: '',
-          password: '',
-          confirm: '',
-        }}
-        validationSchema={validationSchema}
-        onSubmit={handleSubmit}
-      >
-        {({ isSubmitting }) => (
-          <Form className="space-y-4">
+      <FormProvider {...form}>
+          <form className="space-y-4" onSubmit={form.handleSubmit(handleSubmit)}>
             <AuthField
               id="username"
               name="username"
@@ -193,13 +182,12 @@ export default function RegisterPage() {
               icon={ShieldCheck}
             />
 
-            <AuthSubmit pending={isSubmitting} pendingLabel="Creando cuenta…">
+            <AuthSubmit pending={form.formState.isSubmitting} pendingLabel="Creando cuenta…">
               Crear cuenta
               <ArrowRight className="h-4 w-4" aria-hidden />
             </AuthSubmit>
-          </Form>
-        )}
-      </Formik>
+          </form>
+      </FormProvider>
 
       <AuthDivider label="o regístrate con" />
       <GoogleSignInButton text="signup_with" />

@@ -3,14 +3,15 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Formik, Form, type FormikHelpers } from 'formik';
-import * as Yup from 'yup';
+import { FormProvider, useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
 import { toast } from 'sonner';
 import { Mail, ShieldCheck } from 'lucide-react';
 import AuthCard from '@/components/auth/AuthCard';
 import AuthField from '@/components/auth/AuthField';
 import AuthSubmit from '@/components/auth/AuthSubmit';
-import { fetchWithTimeout, requestErrorMessage } from '@/lib/form-errors';
+import { fetchWithTimeout, requestErrorMessage, responseErrorMessage } from '@/lib/form-errors';
 import { getPublicApiUrl } from '@/lib/api-url';
 
 const VerifyEmail = () => {
@@ -24,17 +25,19 @@ const VerifyEmail = () => {
   // Use the address from the registration redirect when available.
   const emailFromUrl = searchParams.get('email') || '';
 
-  const validationSchema = Yup.object({
-    email: Yup.string().email('Correo inválido').required('Campo requerido'),
-    code: Yup.string()
-      .required('Campo requerido')
+  const validationSchema = z.object({
+    email: z.email('Correo inválido'),
+    code: z.string()
       .length(6, 'El código debe tener 6 dígitos')
-      .matches(/^\d+$/, 'El código solo debe contener números'),
+      .regex(/^\d+$/, 'El código solo debe contener números'),
+  });
+  const form = useForm<VerifyEmailValues>({
+    resolver: zodResolver(validationSchema),
+    defaultValues: { email: emailFromUrl, code: '' },
   });
 
   const handleSubmit = async (
-    values: VerifyEmailValues,
-    { setSubmitting }: FormikHelpers<VerifyEmailValues>
+    values: VerifyEmailValues
   ) => {
     try {
       const res = await fetchWithTimeout(`${API_URL}/verify-email/`, {
@@ -45,7 +48,10 @@ const VerifyEmail = () => {
       const data = await res.json().catch(() => ({})) as Record<string, unknown>;
 
       if (!res.ok) {
-        toast.error(typeof data.error === 'string' ? data.error : 'Error al verificar el código');
+        toast.error(
+          (typeof data.error === 'string' && data.error) ||
+          await responseErrorMessage(res, 'Error al verificar el código')
+        );
         return;
       }
 
@@ -53,8 +59,6 @@ const VerifyEmail = () => {
       setTimeout(() => router.push('/iniciar-sesion'), 1500);
     } catch (err) {
       toast.error(requestErrorMessage(err, 'verificar el correo'));
-    } finally {
-      setSubmitting(false);
     }
   };
 
@@ -74,7 +78,10 @@ const VerifyEmail = () => {
       const data = await res.json().catch(() => ({})) as Record<string, unknown>;
 
       if (!res.ok) {
-        toast.error(typeof data.error === 'string' ? data.error : 'Error al reenviar el código');
+        toast.error(
+          (typeof data.error === 'string' && data.error) ||
+          await responseErrorMessage(res, 'Error al reenviar el código')
+        );
         return;
       }
 
@@ -101,16 +108,8 @@ const VerifyEmail = () => {
         </>
       }
     >
-      <Formik
-        initialValues={{
-          email: emailFromUrl,
-          code: '',
-        }}
-        validationSchema={validationSchema}
-        onSubmit={handleSubmit}
-      >
-        {({ isSubmitting, values }) => (
-          <Form className="space-y-4">
+      <FormProvider {...form}>
+          <form className="space-y-4" onSubmit={form.handleSubmit(handleSubmit)}>
             <AuthField
               id="email"
               name="email"
@@ -134,7 +133,7 @@ const VerifyEmail = () => {
               className="h-14 text-center font-geo text-2xl tracking-[0.4em]"
             />
 
-            <AuthSubmit pending={isSubmitting} pendingLabel="Verificando…">
+            <AuthSubmit pending={form.formState.isSubmitting} pendingLabel="Verificando…">
               Verificar correo
               <ShieldCheck className="h-4 w-4" aria-hidden />
             </AuthSubmit>
@@ -142,16 +141,15 @@ const VerifyEmail = () => {
             <div className="text-center">
               <button
                 type="button"
-                onClick={() => handleResend(values.email)}
-                disabled={resending || !values.email}
+                onClick={() => handleResend(form.getValues('email'))}
+                disabled={resending || !form.watch('email')}
                 className="text-sm text-textSecondary underline-offset-4 transition-colors hover:text-primary hover:underline disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:text-textSecondary disabled:hover:no-underline"
               >
                 {resending ? 'Reenviando…' : 'Enviar el código otra vez'}
               </button>
             </div>
-          </Form>
-        )}
-      </Formik>
+          </form>
+      </FormProvider>
     </AuthCard>
   );
 };

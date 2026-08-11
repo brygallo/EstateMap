@@ -1,5 +1,5 @@
 import { ImageResponse } from 'next/og';
-import { getProperties, getCities, slugify, formatPrice } from '@/lib/properties';
+import { getAllProperties, getCities, slugify, formatPrice } from '@/lib/properties';
 import { OgCard, OG_SIZE } from '@/lib/og-card';
 
 // Imagen OG dinámica por ciudad: al compartir la landing en WhatsApp/Facebook
@@ -12,7 +12,7 @@ export const revalidate = 3600;
 
 export default async function Image({ params }: { params: Promise<{ ciudad: string }> }) {
   const { ciudad } = await params;
-  const properties = await getProperties();
+  const properties = await getAllProperties();
   const city = getCities(properties).find((c) => c.slug === ciudad);
   const cityProperties = properties.filter((p) => slugify(p.city || '') === ciudad);
   const prices = cityProperties

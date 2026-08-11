@@ -66,7 +66,7 @@ catalog:
         code: resume_token_invalid
       evidence:
         - file: backend/real_estate/views.py
-          lines: "1370-1378"
+          lines: "1395-1402"
           symbol: def invalid_resume_token_response
     - code: REQUEST_DATA_TOO_BIG
       http_status: 413
@@ -110,7 +110,7 @@ rules:
         symbol: "response[\"X-Request-ID\"] = request_id"
         note: Generación o propagación del identificador y escritura de las tres cabeceras.
       - file: backend/estate_map/settings.py
-        lines: "239-241"
+        lines: "245-247"
         symbol: CORS_EXPOSE_HEADERS
         note: >
           Sin exponerlas por CORS el navegador no puede leerlas, así que la
@@ -179,11 +179,11 @@ rules:
       ampliando lo que se persiste.
     evidence:
       - file: backend/real_estate/models.py
-        lines: "405-431"
+        lines: "395-420"
         symbol: "class SystemIncident"
         note: Los campos existentes son la lista completa de lo que se guarda.
       - file: backend/real_estate/models.py
-        lines: "414-416"
+        lines: "419-421"
         symbol: fingerprint
         note: Clave única por la que se agregan las ocurrencias.
       - file: backend/estate_map/observability.py
@@ -232,18 +232,20 @@ rules:
     tests: {}
 
   - id: ERR-006
-    name: El 413 de nginx no cumple el contrato de la API
-    status: not_implemented
+    name: El contrato JSON para errores de nginx está versionado pero requiere despliegue
+    status: partial
     summary: >
-      No existe ninguna directiva client_max_body_size versionada en el
-      repositorio. El nginx de producción es nativo del host y su configuración
-      no está aquí, así que una subida grande puede cortarse antes de llegar a
-      Django y devolver HTML sin X-Request-ID y sin dejar rastro en los logs de la
-      aplicación.
+      El ejemplo de nginx fija client_max_body_size en 50 MB y convierte 413 y
+      429 en JSON con X-Request-ID, pero el nginx de producción es nativo y el
+      repositorio no puede demostrar que el fragmento esté desplegado.
     rationale: >
       Es el error más confuso de diagnosticar del sistema: mismo síntoma, dos
       orígenes, y solo uno de ellos deja huella. Queda registrado hasta que la
       configuración de nginx se versione junto al resto del despliegue.
+    evidence:
+      - file: deploy/nginx-rate-limit.conf.example
+        lines: "35-75"
+        symbol: "client_max_body_size 50m"
     cases:
       - name: Subida que supera el límite de nginx
         given: {origen: nginx}
@@ -282,7 +284,7 @@ rules:
         symbol: 'getattr(user, "is_staff", False)'
         note: La exención de staff, sin tope y evaluada antes que la IP.
       - file: backend/estate_map/settings.py
-        lines: "198-200"
+        lines: "204-206"
         symbol: THROTTLE_EXEMPT_IPS
         note: Lista adicional de direcciones nunca limitadas.
     cases:
@@ -310,11 +312,11 @@ rules:
       throttling de DRF deja de ser compartido entre procesos.
     evidence:
       - file: backend/estate_map/settings.py
-        lines: "461-463"
+        lines: "474-476"
         symbol: IGNORE_EXCEPTIONS
         note: Los errores del cliente de caché no se propagan.
       - file: backend/estate_map/settings.py
-        lines: "482-484"
+        lines: "495-497"
         symbol: DJANGO_REDIS_LOG_IGNORED_EXCEPTIONS
         note: Pero sí se registran, para que la caída no pase inadvertida.
     cases:

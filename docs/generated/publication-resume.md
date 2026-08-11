@@ -25,6 +25,8 @@ Quien empieza a publicar y abandona deja un PendingPublication con su borrador c
 | [`RSM-008`](#rsm-008--la-cuenta-creada-por-canje-no-puede-iniciar-sesión-hasta-definir-contraseña) | La cuenta creada por canje no puede iniciar sesión hasta definir contraseña | ✅ Implementada |
 | [`RSM-009`](#rsm-009--un-canje-cerrado-deja-la-solicitud-como-convertida-y-enlazada) | Un canje cerrado deja la solicitud como convertida y enlazada | ✅ Implementada |
 | [`RSM-010`](#rsm-010--staff-puede-corregir-y-publicar-el-borrador-a-nombre-de-la-persona) | Staff puede corregir y publicar el borrador a nombre de la persona | ✅ Implementada |
+| [`RSM-011`](#rsm-011--las-fotos-de-un-borrador-anónimo-pasan-las-mismas-validaciones-que-las-autenticadas) | Las fotos de un borrador anónimo pasan las mismas validaciones que las autenticadas | ✅ Implementada |
+| [`RSM-012`](#rsm-012--las-fotos-de-borradores-abandonados-se-barren) | Las fotos de borradores abandonados se barren | ✅ Implementada |
 
 ### RSM-001 — Staff emite el enlace desde la bandeja de pendientes
 
@@ -51,7 +53,7 @@ Un usuario staff genera, para un PendingPublication concreto, un enlace de conti
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
 - `backend/real_estate/views.py:1189-1216` (`def resume_link`)
-- `backend/real_estate/views.py:1148-1150` (`return [IsAuthenticated(), IsAdminUser()]`) — Toda acción del viewset que no sea `create` exige staff.
+- `backend/real_estate/views.py:1172-1174` (`return [IsAuthenticated(), IsAdminUser()]`) — Toda acción del viewset que no sea `create` exige staff.
 - `backend/real_estate/email_utils.py:381-404` (`def create_publication_resume_token`)
 
 **Casos**
@@ -85,9 +87,9 @@ Un token de continuación deja de servir 14 días después de emitirse, y a part
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/estate_map/settings.py:516-518` (`PUBLICATION_RESUME_TOKEN_EXPIRY_DAYS`)
-- `backend/real_estate/models.py:665-668` (`def is_valid`)
-- `backend/real_estate/views.py:1370-1378` (`def invalid_resume_token_response`)
+- `backend/estate_map/settings.py:529-531` (`PUBLICATION_RESUME_TOKEN_EXPIRY_DAYS`)
+- `backend/real_estate/models.py:670-672` (`def is_valid`)
+- `backend/real_estate/views.py:1395-1402` (`def invalid_resume_token_response`)
 
 **Casos**
 
@@ -119,7 +121,7 @@ Canjear un token crea la propiedad y marca el token como consumido; un segundo c
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/real_estate/views.py:1227-1235` (`redeemed_at__isnull=True`) — UPDATE condicional dentro de la transacción que crea la propiedad.
+- `backend/real_estate/views.py:1252-1259` (`redeemed_at__isnull=True`) — UPDATE condicional dentro de la transacción que crea la propiedad.
 - `backend/real_estate/email_utils.py:388-396` (`revoked_at__isnull=True`) — Emitir un enlace nuevo retira el anterior, para que nunca haya dos vivos.
 
 **Casos**
@@ -151,7 +153,7 @@ Un usuario staff invalida los tokens vigentes de una solicitud en cualquier mome
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/real_estate/views.py:1221-1232` (`def revoke_resume_link`)
+- `backend/real_estate/views.py:1246-1256` (`def revoke_resume_link`)
 
 **Casos**
 
@@ -184,7 +186,7 @@ La respuesta del token contiene el JSON del borrador y los datos de contacto que
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
 - `backend/real_estate/serializers.py:589-602` (`class PublicationDraftSerializer`)
-- `backend/real_estate/views.py:1237-1255` (`class PublicationDraftView`)
+- `backend/real_estate/views.py:1262-1279` (`class PublicationDraftView`)
 
 **Casos**
 
@@ -208,8 +210,8 @@ Retomar restaura título, descripción, tipo, operación, precio, dirección, ci
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/real_estate/models.py:600-613` (`class PendingPublicationImage`) — Archivos temporales ordenados y ligados al borrador pendiente.
-- `backend/real_estate/serializers.py:607-616` (`get_temporary_images`) — El enlace devuelve las fotos que debe reconstruir el formulario.
+- `backend/real_estate/models.py:615-627` (`class PendingPublicationImage`) — Archivos temporales ordenados y ligados al borrador pendiente.
+- `backend/real_estate/serializers.py:618-626` (`get_temporary_images`) — El enlace devuelve las fotos que debe reconstruir el formulario.
 - `frontend/app/continuar-publicacion/[token]/page.tsx:40-51` (`PROPERTY_DRAFT_STORAGE_KEY`) — El borrador y las URLs temporales se dejan donde el formulario ya los busca.
 
 **Casos**
@@ -298,9 +300,9 @@ Al completarse el canje, el PendingPublication pasa a converted y guarda una ref
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/real_estate/models.py:593-597` (`related_name="pending_publications"`)
-- `backend/real_estate/views.py:1327-1329` (`pending.status = 'converted'`)
-- `backend/real_estate/views.py:1204-1206` (`'Esta solicitud ya se convirtió en un anuncio.'`)
+- `backend/real_estate/models.py:598-600` (`related_name="pending_publications"`)
+- `backend/real_estate/views.py:1350-1352` (`pending.status = 'converted'`)
+- `backend/real_estate/views.py:1227-1229` (`'Esta solicitud ya se convirtió en un anuncio.'`)
 
 **Casos**
 
@@ -329,7 +331,7 @@ Desde la bandeja, staff abre el mismo formulario recuperado, corrige los campos 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
 - `frontend/app/admin/pending-publications/page.tsx:224-243` (`resolveAndPublish`) — Prepara el enlace si hace falta y abre el borrador recuperado para corregirlo.
-- `backend/real_estate/views.py:1326-1342` (`serializer.save(owner=owner)`) — La propiedad queda a nombre del correo del pendiente y se notifica tanto a cuentas nuevas como existentes.
+- `backend/real_estate/views.py:1349-1364` (`serializer.save(owner=owner)`) — La propiedad queda a nombre del correo del pendiente y se notifica tanto a cuentas nuevas como existentes.
 - `backend/real_estate/email_utils.py:406-450` (`send_account_claim_email`) — La cuenta nueva recibe el enlace de definición de contraseña y el enlace público del anuncio.
 
 **Casos**
@@ -339,3 +341,56 @@ Desde la bandeja, staff abre el mismo formulario recuperado, corrige los campos 
 | Staff corrige un borrador y lo publica | staff | — | — | allowed |
 | La persona ya tenía cuenta | — | — | — | la propiedad queda en esa cuenta y recibe el enlace público |
 | La persona todavía no tenía cuenta | — | — | — | se crea una cuenta sin contraseña, recibe el enlace público y el enlace para definir contraseña |
+
+### RSM-011 — Las fotos de un borrador anónimo pasan las mismas validaciones que las autenticadas
+
+**Estado:** ✅ Implementada
+
+POST /api/pending-publications/ valida uploaded_images con el mismo lote de comprobaciones que el flujo autenticado de PROP-026: tope por imagen, tope por lote, formatos permitidos y dimensiones.
+
+> **Por qué:** El endpoint es AllowAny y escribe directo al almacén de objetos, así que era la única puerta por la que un anónimo subía ficheros sin ningún límite de tamaño ni formato. Nada de ser un borrador relaja los límites: la validación vive en validate_image_batch, compartida por ambos serializers, para que no puedan volver a divergir.
+
+**Backend**
+
+- Endpoint: `POST /api/pending-publications/`
+- ¿Lo aplica el servidor?: sí
+- Al denegar: HTTP `400`
+
+**Evidencia en el código** (verificada por `tools/specs/validate.py`)
+
+- `backend/real_estate/serializers.py:114-152` (`def validate_image_batch`)
+- `backend/real_estate/serializers.py:541-543` (`def validate_uploaded_images(self, value):`) — PendingPublicationSerializer delega en el validador compartido.
+
+**Casos**
+
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| una foto fuera de límites se rechaza con 400 sin crear la fila | — | — | — | mismo veredicto que daría el flujo autenticado; lo ejecuta test_pending_publication_drafts.py |
+
+**Cobertura exigida:** api
+
+- `backend/real_estate/tests/test_pending_publication_drafts.py`
+
+### RSM-012 — Las fotos de borradores abandonados se barren
+
+**Estado:** ✅ Implementada
+
+Una tarea periódica elimina del almacén las imágenes temporales de borradores con más de 30 días que ya no tienen ningún enlace de continuación vigente. Las filas de la bandeja se conservan.
+
+> **Por qué:** Las fotos de un borrador que nadie canjeó son subidas anónimas aparcadas en MinIO para siempre: el canje borra las suyas, pero los borradores descartados o abandonados no tenían ningún recolector. La fila de PendingPublication se conserva porque es el registro de seguimiento comercial; lo que se recoge es solo el peso.
+
+**Evidencia en el código** (verificada por `tools/specs/validate.py`)
+
+- `backend/real_estate/tasks.py:150-190` (`def sweep_stale_draft_images`)
+- `backend/estate_map/settings.py:455-461` (`"sweep-stale-draft-images": {`)
+
+**Casos**
+
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| las fotos viejas sin enlace vigente se borran y la fila queda | — | — | — | lo ejecuta test_pending_publication_drafts.py |
+| un borrador con enlace de continuación vivo conserva sus fotos | — | — | — | el token válido lo protege del barrido |
+
+**Cobertura exigida:** api
+
+- `backend/real_estate/tests/test_pending_publication_drafts.py`

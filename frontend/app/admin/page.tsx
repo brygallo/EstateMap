@@ -272,7 +272,7 @@ const AdminDashboard = () => {
                 <div className="mb-8 grid grid-cols-1 gap-4 md:grid-cols-3">
                   <QuickLink href="/admin/users" title="Gestionar Usuarios" desc="Activar, moderar y administrar" icon={Users} tone="blue" />
                   <QuickLink href="/admin/properties" title="Gestionar Propiedades" desc="Ver y moderar contenido" icon={Building2} tone="indigo" />
-                  <QuickLink href="/admin/pending-publications" title="Publicaciones Pendientes" desc="Contactar interesados" icon={Clock} tone="fuchsia" />
+                  <QuickLink href="/admin/pending-publications" title="Arreglar publicaciones" desc="Ver errores, corregir y asignar al usuario" icon={Clock} tone="fuchsia" />
                 </div>
 
                 {/* Recent users */}
@@ -402,6 +402,7 @@ const SOURCE_STATUS = {
 } satisfies Record<SourceHealth['status'], { label: string; className: string }>;
 
 function OwnerExecutive({ metrics }: { metrics: OwnerMetrics }) {
+  const [selectedTrendDate, setSelectedTrendDate] = useState<string | null>(null);
   const contactMethodLabels: Record<string, string> = {
     phone_reveal: 'Vieron el número',
     whatsapp: 'Abrieron WhatsApp',
@@ -417,6 +418,9 @@ function OwnerExecutive({ metrics }: { metrics: OwnerMetrics }) {
     { key: 'publications', label: 'Publicaciones', icon: Building2 },
   ] as const;
   const maxEvents = Math.max(1, ...metrics.trends.map((item) => item.events));
+  const selectedTrend = metrics.trends.find((item) => item.date === selectedTrendDate)
+    ?? metrics.trends.at(-1);
+  const formatTrendDate = (date: string, options: Intl.DateTimeFormatOptions) => new Date(`${date}T12:00:00`).toLocaleDateString('es-EC', options);
 
   return (
     <section className="mb-8 space-y-4" aria-labelledby="executive-title">
@@ -451,23 +455,66 @@ function OwnerExecutive({ metrics }: { metrics: OwnerMetrics }) {
         <Card className="rounded-card shadow-card">
           <CardHeader className="pb-2">
             <CardTitle className="flex items-center gap-2 text-base"><BarChart3 className="h-4 w-4" /> Actividad de los últimos 14 días</CardTitle>
+            <p className="text-xs text-textSecondary">Acciones reales de visitantes, como abrir propiedades, contactar o intentar publicar. No incluye bots.</p>
           </CardHeader>
           <CardContent>
-            <div className="flex h-40 items-end gap-1.5 border-b border-line pb-1 sm:gap-2">
-              {metrics.trends.map((item) => (
-                <div key={item.date} className="group flex h-full min-w-0 flex-1 items-end" title={`${item.date}: ${item.events} eventos`}>
-                  <div
-                    className="w-full rounded-t-sm bg-primary/75 transition-colors group-hover:bg-primary"
-                    style={{ height: `${Math.max(3, (item.events / maxEvents) * 100)}%` }}
-                  />
+            {selectedTrend && (
+              <div className="mb-4 rounded-lg border border-primary/15 bg-primary/5 px-3 py-2.5" aria-live="polite">
+                <div className="flex flex-wrap items-baseline justify-between gap-2">
+                  <p className="text-sm font-semibold capitalize text-textPrimary">
+                    {formatTrendDate(selectedTrend.date, { weekday: 'long', day: 'numeric', month: 'long' })}
+                  </p>
+                  <p className="font-geo text-xl font-bold text-primary">
+                    {selectedTrend.events.toLocaleString('es-EC')} <span className="font-sans text-xs font-semibold">acciones en el portal</span>
+                  </p>
                 </div>
-              ))}
+                <div className="mt-2 grid grid-cols-3 divide-x divide-primary/10 border-t border-primary/10 pt-2 text-center">
+                  <p className="text-xs text-textSecondary"><strong className="block text-sm text-textPrimary">{selectedTrend.users.toLocaleString('es-EC')}</strong> usuarios nuevos</p>
+                  <p className="text-xs text-textSecondary"><strong className="block text-sm text-textPrimary">{selectedTrend.properties.toLocaleString('es-EC')}</strong> propiedades nuevas</p>
+                  <p className="text-xs text-textSecondary"><strong className="block text-sm text-textPrimary">{selectedTrend.leads.toLocaleString('es-EC')}</strong> contactos</p>
+                </div>
+              </div>
+            )}
+            <div className="overflow-x-auto pb-1">
+              <div className="flex h-36 min-w-[680px] items-end gap-2 border-b border-line" aria-label="Acciones registradas por día">
+                {metrics.trends.map((item) => {
+                  const height = Math.max(5, (item.events / maxEvents) * 100);
+                  return (
+                    <button
+                      key={item.date}
+                      type="button"
+                      className="group flex h-full min-w-0 flex-1 flex-col justify-end rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+                      aria-label={`${formatTrendDate(item.date, { day: 'numeric', month: 'long' })}: ${item.events} ${item.events === 1 ? 'acción' : 'acciones'}`}
+                      aria-pressed={selectedTrend?.date === item.date}
+                      onClick={() => setSelectedTrendDate(item.date)}
+                    >
+                      <span className="relative flex min-h-0 w-full flex-1 items-end justify-center">
+                        <span
+                          className={cn(
+                            'w-full rounded-t-md bg-primary/55 transition-colors group-hover:bg-primary/80',
+                            selectedTrend?.date === item.date && 'bg-primary shadow-[0_0_0_2px_hsl(var(--primary)/0.15)]',
+                          )}
+                          style={{ height: `${height}%` }}
+                        />
+                        <strong
+                          className={cn(
+                            'pointer-events-none absolute left-1/2 -translate-x-1/2 text-[11px] font-bold text-textSecondary',
+                            selectedTrend?.date === item.date && 'text-primary',
+                          )}
+                          style={{ bottom: `calc(${height}% + 3px)` }}
+                        >
+                          {item.events.toLocaleString('es-EC')}
+                        </strong>
+                      </span>
+                      <span className={cn('mt-1 h-6 text-[10px] leading-3 text-textSecondary', selectedTrend?.date === item.date && 'font-bold text-primary')}>
+                        {formatTrendDate(item.date, { day: '2-digit', month: 'short' })}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
             </div>
-            <div className="mt-2 flex justify-between text-[11px] text-textSecondary">
-              <span>{new Date(metrics.trends[0]?.date).toLocaleDateString('es-EC', { day: '2-digit', month: 'short' })}</span>
-              <span>Eventos funcionales registrados</span>
-              <span>{new Date(metrics.trends.at(-1)?.date || '').toLocaleDateString('es-EC', { day: '2-digit', month: 'short' })}</span>
-            </div>
+            <p className="mt-2 text-center text-[11px] text-textSecondary">Cantidad de acciones por día · selecciona una barra para ver sus indicadores</p>
           </CardContent>
         </Card>
 

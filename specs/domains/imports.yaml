@@ -10,7 +10,7 @@ summary: >-
 see_also:
   - docs/workflows/import-properties.md
   - specs/workflows/import-properties.yaml
-  - PLUSVALIA_IMPORT_RUNBOOK.md
+  - docs/workflows/plusvalia-import.md
 
 rules:
   - id: IMP-001
@@ -62,15 +62,15 @@ rules:
       duplicaría el catálogo público.
     evidence:
       - file: backend/ingesta/pipeline/upsert.py
-        lines: "114-116"
+        lines: "113-115"
         symbol: Property.objects.filter(source=fuente, external_id=external_id)
         note: Búsqueda previa; si existe, la operación se convierte en UPDATE.
       - file: backend/real_estate/models.py
-        lines: "259-261"
+        lines: "264-266"
         symbol: uniq_source_external_when_imported
         note: UniqueConstraint condicionada a is_imported=True.
       - file: backend/ingesta/pipeline/upsert.py
-        lines: "152-164"
+        lines: "151-162"
         symbol: "except IntegrityError:"
         note: Una carrera perdida se recupera y se reescribe como actualización.
     cases:
@@ -107,7 +107,7 @@ rules:
         symbol: _SALE_PRICE_MIN
         note: Cotas de sanidad para el mercado ecuatoriano, en USD.
       - file: backend/ingesta/pipeline/upsert.py
-        lines: "100-104"
+        lines: "99-102"
         symbol: clean, motivo = sanitize_price
         note: Se aplica en el punto único de escritura, así cubre todos los flujos.
     cases:
@@ -274,7 +274,7 @@ rules:
         symbol: canon.filter(image_hash=image_hash)
         note: Igualdad exacta, no distancia de Hamming.
       - file: backend/ingesta/pipeline/upsert.py
-        lines: "110-112"
+        lines: "109-111"
         symbol: image_dhash_from_url(image_urls[0])
         note: Solo se calcula en el flujo directo, sobre la primera imagen.
     cases:
@@ -372,7 +372,7 @@ rules:
         lines: "57-62"
         symbol: NO usamos el teléfono como señal
       - file: backend/ingesta/pipeline/upsert.py
-        lines: "121-128"
+        lines: "120-126"
         symbol: "el teléfono NO se usa: un anunciante tiene muchas propiedades con el mismo"
     cases:
       - name: Dos lotes distintos de la misma inmobiliaria
@@ -394,10 +394,10 @@ rules:
       quede completo con sus imágenes, para no dejar un hueco si la creación falla.
     evidence:
       - file: backend/ingesta/pipeline/upsert.py
-        lines: "135-143"
+        lines: "134-141"
         symbol: demote = dup
       - file: backend/ingesta/pipeline/upsert.py
-        lines: "196-200"
+        lines: "195-198"
         symbol: delete_property_images(demote)
         note: Borrado diferido al final del upsert, nunca antes.
     cases:
@@ -433,7 +433,7 @@ rules:
         lines: "74-77"
         symbol: canon.exclude(source_id=exclude_source_id)
       - file: backend/ingesta/pipeline/upsert.py
-        lines: "127-132"
+        lines: "126-130"
         symbol: exclude_source_id=fuente.id
     cases:
       - name: Dos anuncios de Plusvalía a 5 m con la misma área
@@ -574,7 +574,7 @@ rules:
       dejar huecos permanentes.
     evidence:
       - file: backend/ingesta/pipeline/upsert.py
-        lines: "63-65"
+        lines: "62-64"
         symbol: prop.last_seen_at = timezone.now()
       - file: backend/ingesta/runner.py
         lines: "379-383"
@@ -710,19 +710,18 @@ rules:
         expected: "se adjuntan como máximo 10"
 
   - id: IMP-019
-    name: is_duplicate y duplicate_of los escribe el pipeline
+    name: is_duplicate no se escribe durante la ingesta
     status: not_implemented
     summary: >-
-      Ningún camino de la ingesta marca una propiedad como duplicada ni la enlaza
-      con su canónica; los campos existen y se leen, pero nadie los rellena.
+      Ningún camino de la ingesta marca una propiedad como duplicada; el campo
+      histórico is_duplicate se lee para limpieza, pero nunca se pone a true.
     rationale: >-
-      Deriva detectada el 2026-08-04. `Property.is_duplicate` y
-      `Property.duplicate_of` (backend/real_estate/models.py:145-153) se usan para
-      filtrar el mapa, contar "duplicados" en el panel y como categoría de
+      Deriva detectada el 2026-08-04. `Property.is_duplicate` se usa para filtrar
+      el mapa, contar "duplicados" históricos en el panel y como categoría de
       limpieza, pero el upsert resuelve los duplicados omitiendo
       (`skipped_duplicate`) o borrando la copia perdedora, nunca marcando. El
       contador `duplicados` del panel de ingesta solo puede reflejar datos
-      históricos. Decidir: o el pipeline los escribe, o los campos se retiran.
+      históricos. El FK duplicate_of, que tampoco se escribía, ya fue retirado.
     cases:
       - name: Duplicado detectado entre fuentes
         given:
@@ -733,7 +732,7 @@ rules:
           resultado_upsert: skipped_duplicate
         expected:
           is_duplicate: true
-          duplicate_of: "id de la canónica"
+          canonical_reference: "no existe porque la copia se descarta"
 
   - id: IMP-020
     name: Fuente.activa decide qué fuentes se recorren

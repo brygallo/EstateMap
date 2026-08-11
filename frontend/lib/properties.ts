@@ -68,6 +68,48 @@ export async function getProperties({
   }
 }
 
+// A run of empty/broken pages should not spin forever: 50 pages at the
+// default 2000-row page size covers 100k listings, well past anything the
+// catalogue is expected to reach.
+const MAX_PROPERTY_PAGES = 50;
+
+/**
+ * Fetch the entire property catalogue, walking pages until the API stops
+ * reporting a `next` link. `getProperties` caps out at one page (2000 rows
+ * max), which silently truncates SEO surfaces — sitemap, location landings,
+ * combo generation — once the catalogue grows past that. Those callers need
+ * every listing, not just the first page.
+ */
+export async function getAllProperties({
+  includeImages = false,
+  pageSize = 2000,
+  revalidate = 3600,
+}: GetPropertiesOptions = {}): Promise<Property[]> {
+  const all: Property[] = [];
+  try {
+    for (let page = 1; page <= MAX_PROPERTY_PAGES; page++) {
+      const params = new URLSearchParams({
+        page: String(page),
+        page_size: String(pageSize),
+        include_images: includeImages ? '1' : '0',
+      });
+      const res = await fetch(`${API_URL}/properties/?${params.toString()}`, {
+        next: { revalidate, tags: ['properties'] },
+      });
+      if (!res.ok) break;
+      const data = await res.json();
+      all.push(...normalizeList(data));
+      // A plain array response (no pagination) has no `next` to follow, so a
+      // single page is the whole answer.
+      const hasNext = Boolean(data && typeof data === 'object' && (data as any).next);
+      if (!hasNext) break;
+    }
+  } catch (error) {
+    console.error('Error fetching all properties:', error);
+  }
+  return all;
+}
+
 export type PropertyGroup = {
   city: string;
   province: string;

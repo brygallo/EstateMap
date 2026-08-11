@@ -15,6 +15,7 @@ import {
   DownloadCloud,
   MousePointerClick,
   ServerCog,
+  Newspaper,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -22,6 +23,7 @@ const navItems = [
   { href: '/admin', label: 'Dashboard', icon: LayoutDashboard },
   { href: '/admin/users', label: 'Usuarios', icon: Users },
   { href: '/admin/properties', label: 'Propiedades', icon: Building2 },
+  { href: '/admin/blog', label: 'Blog', icon: Newspaper },
   { href: '/admin/pending-publications', label: 'Pendientes', icon: Clock },
   { href: '/admin/activity', label: 'Actividad y clics', icon: MousePointerClick },
   { href: '/admin/ingesta', label: 'Importar', icon: DownloadCloud },

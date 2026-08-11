@@ -13,11 +13,11 @@ from real_estate.tests.spec_support import assert_outcome  # noqa: F401
 pytestmark = [pytest.mark.django_db, pytest.mark.api]
 
 
-# --- BLOG-003: El blog se escribe solo desde el admin ---
+# --- BLOG-003: La API pública del blog es de solo lectura ---
 
 def test_blog_003_un_anonimo_no_puede_crear_posts(spec_request):
     """
-    SPEC:BLOG-003 — El blog se escribe solo desde el admin
+    SPEC:BLOG-003 — La API pública del blog es de solo lectura
     Case: Un anónimo no puede crear posts
     """
     response = spec_request(
@@ -38,7 +38,7 @@ def test_blog_003_un_anonimo_no_puede_crear_posts(spec_request):
 
 def test_blog_003_un_usuario_autenticado_tampoco(spec_request):
     """
-    SPEC:BLOG-003 — El blog se escribe solo desde el admin
+    SPEC:BLOG-003 — La API pública del blog es de solo lectura
     Case: Un usuario autenticado tampoco
     """
     response = spec_request(
@@ -55,4 +55,49 @@ def test_blog_003_un_usuario_autenticado_tampoco(spec_request):
         rule_id='BLOG-003',
         case_name='Un usuario autenticado tampoco',
         expected_status=None,
+    )
+
+
+# --- BLOG-010: Solo administradores gestionan el blog desde el panel ---
+
+def test_blog_010_un_usuario_normal_no_puede_editar_un_articulo(spec_request):
+    """
+    SPEC:BLOG-010 — Solo administradores gestionan el blog desde el panel
+    Case: Un usuario normal no puede editar un artículo
+    """
+    response = spec_request(
+        method='POST',
+        path='/api/admin/blog/posts/',
+        role='authenticated',
+        given=None,
+        body=None,
+    )
+    assert_outcome(
+        response,
+        expected='denied',
+        denied_status=403,
+        rule_id='BLOG-010',
+        case_name='Un usuario normal no puede editar un artículo',
+        expected_status=None,
+    )
+
+def test_blog_010_un_administrador_puede_crear_un_borrador(spec_request):
+    """
+    SPEC:BLOG-010 — Solo administradores gestionan el blog desde el panel
+    Case: Un administrador puede crear un borrador
+    """
+    response = spec_request(
+        method='POST',
+        path='/api/admin/blog/posts/',
+        role='staff',
+        given=None,
+        body={'title': 'Cómo comprar una casa', 'slug': 'como-comprar-una-casa', 'excerpt': 'Una guía clara para preparar la compra.', 'body': '## Primer paso\n\nCompara las alternativas.', 'status': 'draft'},
+    )
+    assert_outcome(
+        response,
+        expected='allowed',
+        denied_status=403,
+        rule_id='BLOG-010',
+        case_name='Un administrador puede crear un borrador',
+        expected_status=201,
     )

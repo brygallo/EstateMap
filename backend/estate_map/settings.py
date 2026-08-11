@@ -168,15 +168,21 @@ REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'rest_framework_simplejwt.authentication.JWTAuthentication',
     ),
+    # Exactly one trusted proxy (the host nginx) sits in front of the app, and
+    # it appends the client address it observed to X-Forwarded-For. Without
+    # this, DRF keys anonymous throttles on the whole header — which the client
+    # controls, so rotating a fake entry per request would defeat every rate
+    # limit above. Internal SSR traffic carries no XFF header and keeps being
+    # identified by REMOTE_ADDR.
+    'NUM_PROXIES': 1,
     # NO se define DEFAULT_PAGINATION_CLASS: los endpoints públicos devuelven
     # arrays planos y la paginación se aplica por viewset admin (AdminPagination).
-    # Rate limiting SOLO para los POST públicos (AllowAny). Se aplica mediante
-    # ScopedRateThrottle en el create de ActivityEventViewSet y
-    # PendingPublicationViewSet; el resto de endpoints no se ve afectado porque
-    # solo se limitan las vistas que declaran throttle_scope.
+    # Rate limiting for public POST endpoints is applied explicitly with
+    # ScopedRateThrottle. Other endpoints are unaffected unless they opt into a scope.
     'DEFAULT_THROTTLE_RATES': {
         'activity_create': '30/min',
         'pending_create': '10/min',
+        'lead_create': '10/min',
         # Resume links are unauthenticated by design, so the token itself is the
         # only thing standing between the endpoint and a guessing loop. Reading
         # is cheap and a person retries; redeeming creates a listing.
@@ -444,6 +450,13 @@ CELERY_BEAT_SCHEDULE = {
     "sweep-pending-images": {
         "task": "real_estate.tasks.sweep_pending_images",
         "schedule": 60 * 60,
+    },
+    # Anonymous draft photos have no owner to clean them up; without this they
+    # accumulate in the object store forever. Daily is enough — the cutoff is
+    # measured in days.
+    "sweep-stale-draft-images": {
+        "task": "real_estate.tasks.sweep_stale_draft_images",
+        "schedule": 60 * 60 * 24,
     },
     # Editorial calendar: hourly is enough because posts are scheduled by the
     # hour. A post is public from its date regardless (see blog/models.py); this

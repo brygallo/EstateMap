@@ -1,4 +1,5 @@
 import pytest
+from django.contrib.auth import get_user_model
 from django.core.cache import caches
 from django.test import override_settings
 from django.urls import reverse
@@ -94,6 +95,30 @@ def test_owner_metrics_count_humans_only_and_report_bot_volume():
     assert metrics["audience"]["bot_events_30d"] == 4
     assert metrics["audience"]["bot_sessions_30d"] == 4
     assert metrics["funnel"][0]["value"] == 1
+
+
+def test_staff_can_filter_all_publication_errors_as_one_group():
+    staff = get_user_model().objects.create_user(
+        username="activity-admin",
+        email="activity-admin@example.com",
+        password="test-password",
+        is_staff=True,
+    )
+    ActivityEvent.objects.create(event_name="publication_create_failed", session_id="failed-api")
+    ActivityEvent.objects.create(event_name="publication_validation_failed", session_id="failed-form")
+    ActivityEvent.objects.create(event_name="publication_created", session_id="success")
+    ActivityEvent.objects.create(event_name="property_contact_clicked", session_id="contact")
+    client = APIClient()
+    client.force_authenticate(user=staff)
+
+    response = client.get(reverse("activity-event-list"), {"event_group": "publication_errors"})
+
+    assert response.status_code == 200
+    assert response.data["count"] == 2
+    assert {item["event_name"] for item in response.data["results"]} == {
+        "publication_create_failed",
+        "publication_validation_failed",
+    }
 
 
 @override_settings(

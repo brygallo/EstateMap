@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import SeoLanding, { TYPE_LINKS, priceRangeText } from '@/components/SeoLanding';
 import { generatePageMetadata } from '@/lib/metadata';
-import { getCities, getLocationCatalog, getProperties, getProvinces, slugify } from '@/lib/properties';
+import { getAllProperties, getCities, getLocationCatalog, getProvinces, slugify } from '@/lib/properties';
 import {
   generateCombosWithCounts,
   MIN_LOCATION_PROPERTIES,
@@ -17,7 +17,7 @@ interface ProvincePageProps {
 }
 
 async function resolveProvince(slug: string) {
-  const properties = await getProperties();
+  const properties = await getAllProperties();
   const match = getProvinces(properties).find((province) => province.slug === slug);
   if (!match) {
     // No listings right now: fall back to the stable province catalogue so the
@@ -38,7 +38,7 @@ async function resolveProvince(slug: string) {
 }
 
 export async function generateStaticParams() {
-  const properties = await getProperties();
+  const properties = await getAllProperties();
   return getProvinces(properties).map((province) => ({ provincia: province.slug }));
 }
 

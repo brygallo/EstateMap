@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useMemo, useState } from 'react';
+import Image from 'next/image';
 import { Images } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import GalleryViewer from '@/components/ui/GalleryViewer';
@@ -64,14 +65,15 @@ export default function PropertyGallery({
               className="relative aspect-[16/10] w-full flex-none snap-center snap-always overflow-hidden sm:aspect-[16/8]"
               aria-label={`Ampliar imagen ${index + 1}`}
             >
-              <img
+              <Image
                 src={item.image}
                 alt={`${title} — imagen ${index + 1}`}
+                fill
+                sizes="100vw"
                 // The first photo is the LCP element on a listing page; the rest
                 // must not compete with it for bandwidth on a 3G connection.
-                loading={index === 0 ? 'eager' : 'lazy'}
-                fetchPriority={index === 0 ? 'high' : 'auto'}
-                className="h-full w-full object-cover"
+                priority={index === 0}
+                className="object-cover"
               />
             </button>
           ))}
@@ -90,7 +92,14 @@ export default function PropertyGallery({
             className="group relative block overflow-hidden text-left md:h-[32rem]"
             aria-label="Ampliar imagen principal"
           >
-            <img src={validImages[0].image} alt={`${title} — imagen 1`} className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.02]" />
+            <Image
+              src={validImages[0].image}
+              alt={`${title} — imagen 1`}
+              fill
+              sizes="(min-width: 768px) 50vw, 100vw"
+              priority
+              className="object-cover transition-transform duration-300 group-hover:scale-[1.02]"
+            />
           </button>
 
           {validImages.length > 1 && (
@@ -106,7 +115,13 @@ export default function PropertyGallery({
                     className="group relative min-h-0 overflow-hidden"
                     aria-label={`Ampliar imagen ${imageIndex + 1}`}
                   >
-                    <img src={item.image} alt={`${title} — imagen ${imageIndex + 1}`} loading="lazy" className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105" />
+                    <Image
+                      src={item.image}
+                      alt={`${title} — imagen ${imageIndex + 1}`}
+                      fill
+                      sizes="(min-width: 768px) 25vw, 50vw"
+                      className="object-cover transition-transform duration-300 group-hover:scale-105"
+                    />
                     {index === 3 && hiddenCount > 0 && (
                       <span className="absolute inset-0 flex items-center justify-center bg-black/55 text-lg font-bold text-white">+{hiddenCount} fotos</span>
                     )}

@@ -35,7 +35,7 @@ rules:
         lines: "1189-1216"
         symbol: def resume_link
       - file: backend/real_estate/views.py
-        lines: "1148-1150"
+        lines: "1172-1174"
         symbol: "return [IsAuthenticated(), IsAdminUser()]"
         note: Toda acción del viewset que no sea `create` exige staff.
       - file: backend/real_estate/email_utils.py
@@ -85,13 +85,13 @@ rules:
       remedio distinto del de pedir otro enlace.
     evidence:
       - file: backend/estate_map/settings.py
-        lines: "516-518"
+        lines: "529-531"
         symbol: PUBLICATION_RESUME_TOKEN_EXPIRY_DAYS
       - file: backend/real_estate/models.py
-        lines: "665-668"
+        lines: "670-672"
         symbol: def is_valid
       - file: backend/real_estate/views.py
-        lines: "1370-1378"
+        lines: "1395-1402"
         symbol: def invalid_resume_token_response
     backend:
       enforce: true
@@ -126,7 +126,7 @@ rules:
       guardado fallido deja el enlace gastado.
     evidence:
       - file: backend/real_estate/views.py
-        lines: "1227-1235"
+        lines: "1252-1259"
         symbol: redeemed_at__isnull=True
         note: UPDATE condicional dentro de la transacción que crea la propiedad.
       - file: backend/real_estate/email_utils.py
@@ -161,7 +161,7 @@ rules:
       datos o el mensaje acabó en el chat equivocado.
     evidence:
       - file: backend/real_estate/views.py
-        lines: "1221-1232"
+        lines: "1246-1256"
         symbol: def revoke_resume_link
     permissions:
       required: [pending_publications.revoke_resume_link]
@@ -199,7 +199,7 @@ rules:
         lines: "589-602"
         symbol: class PublicationDraftSerializer
       - file: backend/real_estate/views.py
-        lines: "1237-1255"
+        lines: "1262-1279"
         symbol: class PublicationDraftView
     permissions:
       required: [publication_drafts.read_by_token]
@@ -231,11 +231,11 @@ rules:
       enlace y se eliminan después de crear la propiedad definitiva.
     evidence:
       - file: backend/real_estate/models.py
-        lines: "600-613"
+        lines: "615-627"
         symbol: "class PendingPublicationImage"
         note: Archivos temporales ordenados y ligados al borrador pendiente.
       - file: backend/real_estate/serializers.py
-        lines: "607-616"
+        lines: "618-626"
         symbol: "get_temporary_images"
         note: El enlace devuelve las fotos que debe reconstruir el formulario.
       - file: frontend/app/continuar-publicacion/[token]/page.tsx
@@ -340,13 +340,13 @@ rules:
       nadie podía comprobar.
     evidence:
       - file: backend/real_estate/models.py
-        lines: "593-597"
+        lines: "598-600"
         symbol: related_name="pending_publications"
       - file: backend/real_estate/views.py
-        lines: "1327-1329"
+        lines: "1350-1352"
         symbol: pending.status = 'converted'
       - file: backend/real_estate/views.py
-        lines: "1204-1206"
+        lines: "1227-1229"
         symbol: "'Esta solicitud ya se convirtió en un anuncio.'"
     tests:
       api: true
@@ -376,7 +376,7 @@ rules:
         symbol: "resolveAndPublish"
         note: Prepara el enlace si hace falta y abre el borrador recuperado para corregirlo.
       - file: backend/real_estate/views.py
-        lines: "1326-1342"
+        lines: "1349-1364"
         symbol: "serializer.save(owner=owner)"
         note: La propiedad queda a nombre del correo del pendiente y se notifica tanto a cuentas nuevas como existentes.
       - file: backend/real_estate/email_utils.py
@@ -395,3 +395,62 @@ rules:
         expected: "la propiedad queda en esa cuenta y recibe el enlace público"
       - name: La persona todavía no tenía cuenta
         expected: "se crea una cuenta sin contraseña, recibe el enlace público y el enlace para definir contraseña"
+
+  - id: RSM-011
+    name: Las fotos de un borrador anónimo pasan las mismas validaciones que las autenticadas
+    status: implemented
+    summary: >-
+      POST /api/pending-publications/ valida uploaded_images con el mismo lote
+      de comprobaciones que el flujo autenticado de PROP-026: tope por imagen,
+      tope por lote, formatos permitidos y dimensiones.
+    rationale: >-
+      El endpoint es AllowAny y escribe directo al almacén de objetos, así que
+      era la única puerta por la que un anónimo subía ficheros sin ningún
+      límite de tamaño ni formato. Nada de ser un borrador relaja los límites:
+      la validación vive en validate_image_batch, compartida por ambos
+      serializers, para que no puedan volver a divergir.
+    evidence:
+      - file: backend/real_estate/serializers.py
+        lines: "114-152"
+        symbol: def validate_image_batch
+      - file: backend/real_estate/serializers.py
+        lines: "541-543"
+        symbol: "def validate_uploaded_images(self, value):"
+        note: PendingPublicationSerializer delega en el validador compartido.
+    backend:
+      enforce: true
+      endpoint: POST /api/pending-publications/
+      denied_http_status: 400
+    tests:
+      api: true
+    cases:
+      - name: una foto fuera de límites se rechaza con 400 sin crear la fila
+        expected: "mismo veredicto que daría el flujo autenticado; lo ejecuta test_pending_publication_drafts.py"
+
+  - id: RSM-012
+    name: Las fotos de borradores abandonados se barren
+    status: implemented
+    summary: >-
+      Una tarea periódica elimina del almacén las imágenes temporales de
+      borradores con más de 30 días que ya no tienen ningún enlace de
+      continuación vigente. Las filas de la bandeja se conservan.
+    rationale: >-
+      Las fotos de un borrador que nadie canjeó son subidas anónimas
+      aparcadas en MinIO para siempre: el canje borra las suyas, pero los
+      borradores descartados o abandonados no tenían ningún recolector. La
+      fila de PendingPublication se conserva porque es el registro de
+      seguimiento comercial; lo que se recoge es solo el peso.
+    evidence:
+      - file: backend/real_estate/tasks.py
+        lines: "150-190"
+        symbol: def sweep_stale_draft_images
+      - file: backend/estate_map/settings.py
+        lines: "455-461"
+        symbol: '"sweep-stale-draft-images": {'
+    tests:
+      api: true
+    cases:
+      - name: las fotos viejas sin enlace vigente se borran y la fila queda
+        expected: "lo ejecuta test_pending_publication_drafts.py"
+      - name: un borrador con enlace de continuación vivo conserva sus fotos
+        expected: "el token válido lo protege del barrido"

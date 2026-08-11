@@ -1,6 +1,6 @@
 from rest_framework.routers import DefaultRouter
 from django.urls import path, re_path
-from rest_framework_simplejwt.views import TokenRefreshView
+from rest_framework_simplejwt.views import TokenBlacklistView, TokenRefreshView
 from ingesta import api as ingesta_api
 from .views import (
     PropertyViewSet,
@@ -43,6 +43,9 @@ urlpatterns = [
     # Authentication
     path('login/', CustomTokenObtainPairView.as_view(), name='token_obtain_pair'),
     path('token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
+    # Logout is the client handing back its refresh token for blacklisting.
+    # Clearing localStorage alone leaves the token valid for its full 30 days.
+    path('logout/', TokenBlacklistView.as_view(), name='token_blacklist'),
     path('register/', RegisterView.as_view(), name='register'),
     path('auth/google/', GoogleLoginView.as_view(), name='google_login'),
 

@@ -1,3 +1,4 @@
+import json
 import logging
 import math
 import hashlib
@@ -545,6 +546,9 @@ class PropertyViewSet(viewsets.ModelViewSet):
                             'uploaded_at',
                             'file_size',
                             'original_filename',
+                            # The serializer reads `status` on every image; leaving
+                            # it deferred turns each row into one extra SELECT.
+                            'status',
                         ),
                     )
                 )
@@ -744,6 +748,7 @@ class PropertyViewSet(viewsets.ModelViewSet):
             f'n{max_items}',
             self._bbox_override or 'all',
             _filter_signature(request.query_params),
+            scope='map',
         )
         if _is_public_read(request):
             cached = cache.get(cache_key)
@@ -840,7 +845,7 @@ class PropertyViewSet(viewsets.ModelViewSet):
         exactamente con los guardados en cada propiedad (para el filtro iexact),
         independientemente de qué esté cargado en el bbox actual.
         """
-        cache_key = versioned_key('locations')
+        cache_key = versioned_key('locations', scope='locations')
         if _is_public_read(request):
             cached = cache.get(cache_key)
             if cached is not None:
@@ -880,7 +885,12 @@ class PropertyViewSet(viewsets.ModelViewSet):
         today, so they can answer 200 with an empty state instead of a 404 that
         drops an already ranked URL from the index.
         """
-        cache_key = versioned_key('catalog')
+        # The `catalog` version only moves on property create/delete (see
+        # signals.py), which is what lets CACHE_TTL_CATALOG actually run its
+        # 24 h: routine saves and image churn no longer recycle this entry. A
+        # city rename on an existing row waits for the TTL, which this payload
+        # tolerates by design (it keeps historic spellings anyway).
+        cache_key = versioned_key('catalog', scope='catalog')
         if _is_public_read(request):
             cached = cache.get(cache_key)
             if cached is not None:
@@ -929,6 +939,7 @@ class PropertyViewSet(viewsets.ModelViewSet):
         cache_key = versioned_key(
             'properties:summary',
             _filter_signature(request.query_params, extra=('bbox',)),
+            scope='summary',
         )
         if _is_public_read(request):
             cached = cache.get(cache_key)
@@ -1070,9 +1081,15 @@ class PropertyViewSet(viewsets.ModelViewSet):
         response.data['scope'] = 'catalog' if is_staff else 'own'
         return response
 
-    @action(detail=True, methods=['delete'], permission_classes=[IsAuthenticated])
+    @action(
+        detail=True,
+        methods=['delete'],
+        permission_classes=[IsAuthenticated, IsOwnerOrReadOnly],
+    )
     def delete_image(self, request, pk=None):
         """Delete a specific image from a property"""
+        # get_object() runs the object permission check, so a non-owner gets a
+        # 403 here before any input validation can turn it into a 400.
         property_instance = self.get_object()
         image_id = request.data.get('image_id')
 
@@ -1113,6 +1130,12 @@ class LeadViewSet(viewsets.ModelViewSet):
         if self.action == 'create':
             return [AllowAny()]
         return [IsAuthenticated()]
+
+    def get_throttles(self):
+        if self.action == 'create':
+            self.throttle_scope = 'lead_create'
+            return [ScopedRateThrottle()]
+        return []
 
     def get_serializer_class(self):
         if self.action == 'partial_update':
@@ -1417,12 +1440,23 @@ class ActivityEventViewSet(viewsets.ModelViewSet):
         user_id = self.request.query_params.get('user')
         property_id = self.request.query_params.get('property')
         event_name = self.request.query_params.get('event_name')
+        event_group = self.request.query_params.get('event_group')
         if user_id and str(user_id).isdigit():
             queryset = queryset.filter(user_id=user_id)
         if property_id and str(property_id).isdigit():
             queryset = queryset.filter(property_id=property_id)
         if event_name:
             queryset = queryset.filter(event_name=event_name)
+        elif event_group == 'publication_errors':
+            queryset = queryset.filter(event_name__in=[
+                'publication_create_failed',
+                'publication_update_failed',
+                'publication_validation_failed',
+                'publication_blocked',
+                'publication_pending_save_failed',
+                'publication_login_failed',
+                'publication_account_create_failed',
+            ])
         # Optional `is_bot` filter so the admin log can be narrowed to humans or
         # to crawlers. Without the parameter the listing keeps showing both.
         is_bot = self.request.query_params.get('is_bot')
@@ -1715,6 +1749,22 @@ class RequestPasswordResetView(generics.GenericAPIView):
             )
 
 
+def _revoke_refresh_tokens(user):
+    """Blacklist every outstanding refresh token of `user`.
+
+    Changing credentials must expel whoever else holds a session: refresh
+    tokens live 30 days in localStorage, so rotation alone would leave a stolen
+    token a month of access that its rightful owner has no way to cut short.
+    """
+    from rest_framework_simplejwt.token_blacklist.models import (
+        BlacklistedToken,
+        OutstandingToken,
+    )
+
+    for token in OutstandingToken.objects.filter(user=user):
+        BlacklistedToken.objects.get_or_create(token=token)
+
+
 class ResetPasswordView(generics.GenericAPIView):
     """Vista para resetear contraseña con token"""
     serializer_class = ResetPasswordSerializer
@@ -1749,6 +1799,7 @@ class ResetPasswordView(generics.GenericAPIView):
             user = token.user
             user.set_password(new_password)
             user.save()
+            _revoke_refresh_tokens(user)
 
             return Response(
                 {'message': 'Contraseña actualizada exitosamente'},
@@ -1860,6 +1911,9 @@ class VerifyEmailChangeView(generics.GenericAPIView):
             # Cambiar el email del usuario
             user.email = token.new_email
             user.save()
+            # The address is a credential (it receives the reset links), so
+            # changing it ends every other session the account had open.
+            _revoke_refresh_tokens(user)
 
             # Enviar notificación al email antiguo
             try:
@@ -1905,6 +1959,7 @@ class ChangePasswordView(generics.GenericAPIView):
         serializer = self.get_serializer(data=request.data, context={'request': request})
         serializer.is_valid(raise_exception=True)
         serializer.save()
+        _revoke_refresh_tokens(request.user)
         return Response({'message': 'Contraseña actualizada correctamente'}, status=status.HTTP_200_OK)
 
 
@@ -1926,7 +1981,11 @@ class MarketStatsView(generics.GenericAPIView):
         # This one pulls every active listing into Python to build the sector,
         # evolution and demand tables; the SEO stats pages are server-rendered
         # from it, so it runs on cold crawls too.
-        cache_key = versioned_key('market_stats', _query_signature(request.query_params))
+        cache_key = versioned_key(
+            'market_stats',
+            _query_signature(request.query_params),
+            scope='market_stats',
+        )
         if _is_public_read(request):
             cached = cache.get(cache_key)
             if cached is not None:

@@ -13,30 +13,6 @@ from real_estate.tests.spec_support import assert_outcome  # noqa: F401
 pytestmark = [pytest.mark.django_db, pytest.mark.api]
 
 
-# --- LEAD-001: Crear un lead es público y no tiene límite de ritmo ---
-
-def test_lead_001_visitante_anonimo_crea_un_lead(spec_request):
-    """
-    SPEC:LEAD-001 — Crear un lead es público y no tiene límite de ritmo
-    Case: Visitante anónimo crea un lead
-    """
-    response = spec_request(
-        method='POST',
-        path='/api/leads/',
-        role='anonymous',
-        given=None,
-        body={'property': '{property_id}', 'name': 'Interesado de spec', 'phone': '0991234567', 'email': 'interesado-spec@example.com', 'message': 'Me interesa esta propiedad.', 'source': 'property_page'},
-    )
-    assert_outcome(
-        response,
-        expected='allowed',
-        denied_status=None,
-        rule_id='LEAD-001',
-        case_name='Visitante anónimo crea un lead',
-        expected_status=201,
-    )
-
-
 # --- LEAD-005: Solo el dueño de la propiedad ve sus leads, staff los ve todos ---
 
 def test_lead_005_visitante_anonimo_consulta_la_bandeja_de_leads(spec_request):

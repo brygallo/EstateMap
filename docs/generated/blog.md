@@ -9,7 +9,7 @@
 
 El portal publica artículos escritos por el equipo desde el admin de Django y servidos por Next.js en `/blog`. Existe por una razón concreta: el inventario de anuncios posiciona consultas transaccionales («departamentos en venta en Cumbayá») pero no las informativas («cuánto cuesta la alcabala», «qué exige la Ley de Inquilinato»), que son las que la gente pregunta antes de comprar y las que los buscadores de IA citan.
 La pieza que da forma al dominio es la programación. Escribir treinta artículos en una tarde y soltarlos el mismo día se lee como lo que es; el calendario los reparte uno por día. Por eso la publicación se decide con una fecha, no con una cola: un post es público desde que `published_at` queda en el pasado, aunque el worker esté caído. Celery solo se encarga de los efectos (avisar a IndexNow, invalidar el caché de Next), que llegar tarde encarece pero no rompe.
-El blog no abre superficie de escritura nueva: se redacta en el admin y la API pública es de solo lectura. Las siete guías que vivían incrustadas en el frontend (`lib/guias.ts`) son sus primeros posts y conservan su slug, con `/guias/<slug>` redirigiendo de forma permanente a `/blog/<slug>`.
+La API pública es de solo lectura. La escritura se realiza desde el escritorio editorial protegido del panel de administración. Las siete guías que vivían incrustadas en el frontend (`lib/guias.ts`) son sus primeros posts y conservan su slug, con `/guias/<slug>` redirigiendo de forma permanente a `/blog/<slug>`.
 
 **Ver también:** `specs/ui/visibility-rules.yaml`, `specs/permissions/matrix.yaml`, `docs/technical/cache.md`, `docs/seo/editorial-y-backlinks.md`
 
@@ -19,7 +19,9 @@ El blog no abre superficie de escritura nueva: se redacta en el admin y la API p
 | --- | --- | --- |
 | [`BLOG-001`](#blog-001--un-post-es-público-desde-que-su-fecha-de-publicación-queda-en-el-pasado) | Un post es público desde que su fecha de publicación queda en el pasado | ✅ Implementada |
 | [`BLOG-002`](#blog-002--los-borradores-y-los-archivados-no-salen-nunca-al-público) | Los borradores y los archivados no salen nunca al público | ✅ Implementada |
-| [`BLOG-003`](#blog-003--el-blog-se-escribe-solo-desde-el-admin) | El blog se escribe solo desde el admin | ✅ Implementada |
+| [`BLOG-003`](#blog-003--la-api-pública-del-blog-es-de-solo-lectura) | La API pública del blog es de solo lectura | ✅ Implementada |
+| [`BLOG-010`](#blog-010--solo-administradores-gestionan-el-blog-desde-el-panel) | Solo administradores gestionan el blog desde el panel | ✅ Implementada |
+| [`BLOG-011`](#blog-011--el-editor-controla-el-ciclo-editorial-completo) | El editor controla el ciclo editorial completo | ✅ Implementada |
 | [`BLOG-004`](#blog-004--el-listado-público-entrega-como-mucho-60-posts-por-petición) | El listado público entrega como mucho 60 posts por petición | ✅ Implementada |
 | [`BLOG-005`](#blog-005--publicar-avisa-a-los-buscadores-e-invalida-el-caché-del-frontend) | Publicar avisa a los buscadores e invalida el caché del frontend | ✅ Implementada |
 | [`BLOG-006`](#blog-006--las-guías-migradas-conservan-su-url-mediante-redirección-permanente) | Las guías migradas conservan su URL mediante redirección permanente | ✅ Implementada |
@@ -84,11 +86,11 @@ Un post en estado `draft` o `archived` queda fuera del listado y devuelve 404 en
 
 - `backend/blog/tests/test_blog_api.py`
 
-### BLOG-003 — El blog se escribe solo desde el admin
+### BLOG-003 — La API pública del blog es de solo lectura
 
 **Estado:** ✅ Implementada
 
-La API del blog es de solo lectura: no expone crear, editar ni borrar a nadie, ni siquiera autenticado.
+La API pública del blog no expone crear, editar ni borrar a nadie. La escritura usa endpoints administrativos separados y protegidos.
 
 > **Por qué:** Es contenido que edita un puñado de personas unas veces por semana. Abrir un endpoint de escritura para eso añade superficie de ataque, validación y permisos a cambio de comodidad que el admin de Django ya da. La regla se sostiene por el tipo de viewset, no por una comprobación que alguien pueda olvidar: `ReadOnlyModelViewSet` sencillamente no enruta POST ni PUT.
 
@@ -113,6 +115,67 @@ La API del blog es de solo lectura: no expone crear, editar ni borrar a nadie, n
 
 - `backend/blog/tests/test_blog_api.py`
 - `backend/real_estate/tests/generated/test_spec_blog.py`
+
+### BLOG-010 — Solo administradores gestionan el blog desde el panel
+
+**Estado:** ✅ Implementada
+
+Los endpoints editoriales permiten listar, crear, editar, publicar, programar y eliminar contenido únicamente a cuentas con `is_staff`.
+
+> **Por qué:** El JWT que lee el frontend sirve para adaptar la interfaz, pero la frontera de seguridad está en Django y comprueba el usuario autenticado.
+
+**Backend**
+
+- Endpoint: `POST /api/admin/blog/posts/`
+- Al denegar: HTTP `403`
+
+**Frontend**
+
+- Ruta: `/admin/blog`
+
+**Evidencia en el código** (verificada por `tools/specs/validate.py`)
+
+- `backend/blog/admin_api.py` (`class AdminBlogPostViewSet`) — El viewset exige autenticación y el permiso de administrador.
+- `frontend/app/admin/blog/page.tsx` (`export default function BlogAdminPage`) — El escritorio editorial vive dentro del panel principal.
+
+**Casos**
+
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| Un usuario normal no puede editar un artículo | authenticated | — | — | denied (HTTP 403) |
+| Un administrador puede crear un borrador | staff | — | `title`=Cómo comprar una casa, `slug`=como-comprar-una-casa, `excerpt`=Una guía clara para preparar la compra., `body`=## Primer paso
+
+Compara las alternativas., `status`=draft | allowed |
+
+**Cobertura exigida:** api
+
+- `backend/blog/tests/test_admin_api.py`
+- `backend/real_estate/tests/generated/test_spec_blog.py`
+
+### BLOG-011 — El editor controla el ciclo editorial completo
+
+**Estado:** ✅ Implementada
+
+Un artículo puede guardarse como borrador, programarse con fecha futura, publicarse inmediatamente o retirarse del sitio desde el panel integrado.
+
+> **Por qué:** El panel expone el calendario y los estados existentes sin crear una segunda definición de cuándo el contenido es público.
+
+**Evidencia en el código** (verificada por `tools/specs/validate.py`)
+
+- `backend/blog/admin_api.py` (`def publish`) — Publicar ahora establece estado y fecha de publicación.
+- `backend/blog/admin_api.py` (`def draft`) — Volver a borrador retira el artículo del sitio público.
+- `backend/blog/admin_api.py` (`def schedule_daily`) — La selección se distribuye un artículo por día sin solaparse.
+
+**Casos**
+
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| Publicar ahora fija una fecha pública | staff | — | — | published |
+| Pasar a borrador retira el artículo | staff | — | — | draft |
+
+**Cobertura exigida:** api
+
+- `backend/blog/tests/test_admin_api.py`
 
 ### BLOG-004 — El listado público entrega como mucho 60 posts por petición
 

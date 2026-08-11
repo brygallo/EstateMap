@@ -8,6 +8,7 @@ import {
   millisUntilExpiry,
   onTokenChange,
   refreshAccessToken,
+  revokeRefreshToken,
   storeTokens,
 } from '@/lib/auth-tokens';
 
@@ -54,6 +55,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   const logout = useCallback(() => {
+    revokeRefreshToken();
     clearTokens();
     if (refreshTimerRef.current) {
       clearTimeout(refreshTimerRef.current);

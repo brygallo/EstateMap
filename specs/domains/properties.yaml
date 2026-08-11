@@ -27,7 +27,7 @@ rules:
       guarda su precio en price y deja rent_price en NULL.
     evidence:
       - file: backend/real_estate/models.py
-        lines: "152-157"
+        lines: "158-162"
         symbol: rent_price
         note: La semántica está escrita como comentario junto a la definición de ambos campos.
       - file: backend/ingesta/pipeline/upsert.py
@@ -109,7 +109,7 @@ rules:
       ver también lo que no es suyo.
     evidence:
       - file: backend/real_estate/views.py
-        lines: "1005-1007"
+        lines: "1017-1019"
         symbol: my_properties
         note: >-
           La acción declara permission_classes=[IsAuthenticated] y elige entre
@@ -150,7 +150,7 @@ rules:
         symbol: class InventoryPagination
         note: page_size 24, page_size_query_param 'page_size', máximo 100.
       - file: backend/real_estate/views.py
-        lines: "1005-1007"
+        lines: "1017-1019"
         symbol: def my_properties
         note: stats se calcula con queryset.aggregate antes de paginar.
       - file: frontend/app/my-properties/page.tsx
@@ -227,7 +227,7 @@ rules:
       decisión documentada en el código.
     evidence:
       - file: backend/real_estate/serializers.py
-        lines: "184-193"
+        lines: "224-232"
         symbol: fields = '__all__'
         note: >-
           Verificado por introspección del serializer en el contenedor: la lista de
@@ -473,7 +473,7 @@ rules:
         symbol: validate_polygon
         note: Acepta objeto GeoJSON, anillo simple o cualquiera de los dos codificado como texto JSON.
       - file: backend/real_estate/serializers.py
-        lines: "234-242"
+        lines: "274-281"
         symbol: to_representation
         note: A la salida se reconvierte a [[lat, lng], ...] para el frontend.
     cases:
@@ -514,7 +514,7 @@ rules:
         symbol: ensure_polygon_center
         note: Solo rellena los huecos, nunca pisa unas coordenadas enviadas explícitamente.
       - file: backend/real_estate/serializers.py
-        lines: "340-342"
+        lines: "345-347"
         symbol: ensure_polygon_center
         note: En update, un polígono nuevo sin coordenadas nuevas anula las anteriores y las recalcula.
     cases:
@@ -548,11 +548,11 @@ rules:
       que hace que una importada no tenga dueño al que atribuirla.
     evidence:
       - file: backend/real_estate/views.py
-        lines: "553-555"
+        lines: "558-560"
         symbol: perform_create
         note: serializer.save(owner=self.request.user), ignorando cualquier owner del payload.
       - file: backend/real_estate/serializers.py
-        lines: "155-157"
+        lines: "195-197"
         symbol: owner = serializers.PrimaryKeyRelatedField(read_only=True)
       - file: backend/real_estate/models.py
         lines: "183-185"
@@ -595,7 +595,7 @@ rules:
         symbol: IsOwnerOrReadOnly
         note: permission_classes = [IsAuthenticatedOrReadOnly, IsOwnerOrReadOnly] en PropertyViewSet.
       - file: backend/real_estate/views.py
-        lines: "2405-2407"
+        lines: "2464-2466"
         symbol: PATCH_ALLOWED_FIELDS
         note: El panel admin puede tocar propiedades ajenas, pero solo status, title, price, city y description.
     backend:
@@ -724,11 +724,11 @@ rules:
       se degrada a actualización.
     evidence:
       - file: backend/real_estate/models.py
-        lines: "259-261"
+        lines: "264-266"
         symbol: uniq_source_external_when_imported
         note: UniqueConstraint con condition=Q(is_imported=True).
       - file: backend/ingesta/pipeline/upsert.py
-        lines: "152-170"
+        lines: "151-168"
         symbol: IntegrityError
         note: Savepoint alrededor del save para que el choque de una carrera no envenene la transacción exterior.
     cases:
@@ -768,7 +768,7 @@ rules:
         symbol: demote
         note: Si el nuevo trae teléfono y el existente no, el existente se marca para eliminarse; si no, se devuelve skipped_duplicate.
       - file: backend/ingesta/pipeline/upsert.py
-        lines: "196-200"
+        lines: "195-198"
         symbol: delete_property_images
         note: La copia anterior se borra al final, cuando el reemplazo ya tiene sus imágenes.
     cases:
@@ -795,17 +795,24 @@ rules:
         note: El teléfono queda fuera de las señales justamente para esto.
 
   - id: PROP-020
-    name: duplicate_of nunca se rellena
-    status: not_implemented
+    name: El modelo no conserva enlaces a duplicados descartados
+    status: implemented
     summary: >-
-      Ninguna propiedad queda enlazada a su versión canónica: el campo duplicate_of
-      existe en el modelo pero ningún código del backend lo asigna.
+      Property no tiene un campo duplicate_of: el pipeline conserva una sola fila
+      y no mantiene una relación hacia anuncios descartados.
     rationale: >-
       Hoy el pipeline resuelve el duplicado de forma destructiva - o descarta el
       anuncio nuevo (skipped_duplicate) o elimina el anterior tras crear el
       reemplazo - así que nunca quedan las dos filas vivas que el FK enlazaría. El
-      campo solo aparece en la definición del modelo, en la lista de campos de solo
-      lectura del serializer y en los scripts de réplica entre entornos.
+      campo se retiró porque nunca podía representar el comportamiento real.
+    evidence:
+      - file: backend/real_estate/models.py
+        lines: "200-230"
+        symbol: "is_duplicate = models.BooleanField"
+        note: Los campos de ingesta saltan de is_duplicate a imported_at, sin duplicate_of.
+      - file: backend/real_estate/migrations/0033_remove_obsolete_dedup_fields.py
+        lines: "1-12"
+        symbol: 'name="duplicate_of"'
     cases:
       - name: Se detecta un duplicado entre dos portales
         given:
@@ -837,24 +844,30 @@ rules:
         note: Comportamiento de lectura, cubierto por PROP-002.
 
   - id: PROP-022
-    name: dedup_key se calcula pero nadie lo consulta
-    status: not_implemented
+    name: La deduplicación no persiste una rejilla geográfica sin lector
+    status: implemented
     summary: >-
-      Cada upsert escribe dedup_key con una huella de rejilla geográfica de unos
-      11 metros, pero ninguna consulta del sistema la lee.
+      Property no guarda dedup_key; la deduplicación geográfica usa directamente
+      un bounding box indexado y confirma la distancia con haversine.
     rationale: >-
       La deduplicación real se resuelve con un bounding box sobre latitude y
       longitude más haversine en Python, y con la huella perceptual de la imagen
-      principal; la rejilla quedó como un índice sin lector. Buscar dedup_key en
-      backend/ solo encuentra la escritura, la definición del modelo, la lista de
-      campos de solo lectura del serializer y los scripts de réplica.
+      principal; persistir una segunda aproximación geográfica sin consumidores
+      añadía escritura e índice sin mejorar la búsqueda.
+    evidence:
+      - file: backend/ingesta/pipeline/dedup.py
+        lines: "70-105"
+        symbol: "latitude__range"
+      - file: backend/real_estate/migrations/0033_remove_obsolete_dedup_fields.py
+        lines: "1-12"
+        symbol: 'name="dedup_key"'
     cases:
       - name: Alta de un anuncio importado con coordenadas
         given:
           latitude: -0.18
           longitude: -78.48
-        expected: "-0.18,-78.48"
-        note: El valor se guarda, pero la búsqueda de duplicados no lo usa.
+        expected: "no se persiste una clave adicional"
+        note: La latitud y longitud alimentan directamente la búsqueda por rango.
 
   # ---------------------------------------------------------------------------
   # Historial, métricas e imágenes
@@ -875,7 +888,7 @@ rules:
         symbol: PropertyPriceHistory.objects.create
         note: Compara con la última fila por recorded_at y solo escribe si el precio cambió.
       - file: backend/real_estate/models.py
-        lines: "336-339"
+        lines: "341-343"
         symbol: class PropertyPriceHistory
         note: FK en cascada, precio, recorded_at e índice por (property, recorded_at).
     cases:
@@ -916,11 +929,11 @@ rules:
         symbol: is_bot_request
         note: Property.objects.filter(pk=...).update(views_count=F('views_count') + 1) solo si no es bot.
       - file: backend/real_estate/models.py
-        lines: "239-241"
+        lines: "243-245"
         symbol: views_count
         note: PositiveIntegerField con default 0.
       - file: backend/real_estate/serializers.py
-        lines: "188-192"
+        lines: "228-231"
         symbol: 'views_count'
         note: Está en read_only_fields, así que un cliente no puede inflarlo desde el payload.
     backend:
@@ -960,7 +973,7 @@ rules:
       pending, la API sirve la foto desde el staging local para que no se vea rota.
     evidence:
       - file: backend/real_estate/models.py
-        lines: "354-356"
+        lines: "359-361"
         symbol: FAILED = "failed"
         note: TextChoices con pending, ready y failed; el default del campo es ready.
       - file: backend/real_estate/serializers.py
@@ -972,7 +985,7 @@ rules:
         symbol: optimize_property_image
         note: Publica imagen y miniatura, pasa a ready y limpia el temporal; ante ValueError deja failed con optimization_error.
       - file: backend/real_estate/serializers.py
-        lines: "127-146"
+        lines: "173-191"
         symbol: _pending_url
         note: Una fila pending devuelve una URL servida desde el staging local.
     cases:
@@ -1007,11 +1020,11 @@ rules:
       imposible.
     evidence:
       - file: backend/estate_map/settings.py
-        lines: "380-382"
+        lines: "386-388"
         symbol: MAX_PROPERTY_UPLOAD_MB
         note: MAX_IMAGES_PER_PROPERTY = 10, MAX_IMAGE_SIZE_MB = 10, MAX_PROPERTY_UPLOAD_MB = 50.
       - file: backend/estate_map/settings.py
-        lines: "363-365"
+        lines: "369-371"
         symbol: ALLOWED_IMAGE_TYPES
         note: image/jpeg, image/jpg, image/png y image/webp.
       - file: backend/real_estate/serializers.py
@@ -1122,7 +1135,7 @@ rules:
       2,6 y 4,9 km.
     evidence:
       - file: frontend/lib/properties.ts
-        lines: "210-245"
+        lines: "267-301"
         symbol: getNearbyProperties
         note: Punto de referencia vía getPropertyPoint, candidatos sin ubicación descartados, orden ascendente por distanceKm y recorte a limit.
       - file: frontend/app/property/[id]/page.tsx
@@ -1157,7 +1170,7 @@ rules:
         symbol: distance_score
         note: La expresión de distancia se aplica al queryset antes de que DRF lo pagine.
       - file: frontend/lib/properties.ts
-        lines: "244-253"
+        lines: "286-294"
         symbol: origin_lat
         note: La ficha envía el centro efectivo de la propiedad junto con su ventana bbox.
     tests:
@@ -1278,7 +1291,7 @@ rules:
         lines: "173-181"
         symbol: closed_reason = models
       - file: backend/real_estate/models.py
-        lines: "279-293"
+        lines: "294-307"
         symbol: "if self.closed_reason:"
         note: Cerrar pone inactive y sella la fecha; abrir la borra.
       - file: backend/real_estate/serializers.py
@@ -1288,7 +1301,7 @@ rules:
           Volver a poner el anuncio en venta lo reabre; si no, el cambio parece
           aceptado y se deshace solo.
       - file: backend/real_estate/views.py
-        lines: "2591-2597"
+        lines: "2653-2655"
         symbol: "changes['closed_reason'] = ''"
         note: >-
           El cambio de estado en lote escribe con .update(), que nunca llega a
@@ -1438,7 +1451,7 @@ rules:
       peor que no ofrecer la lámina.
     evidence:
       - file: backend/real_estate/serializers.py
-        lines: "196-226"
+        lines: "244-273"
         symbol: def _price_change
       - file: backend/real_estate/signals.py
         lines: "48-54"

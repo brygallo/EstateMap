@@ -1,5 +1,5 @@
 import { ImageResponse } from 'next/og';
-import { getProperties, getProvinces, slugify, formatPrice } from '@/lib/properties';
+import { getAllProperties, getProvinces, slugify, formatPrice } from '@/lib/properties';
 import { OgCard, OG_SIZE } from '@/lib/og-card';
 
 // Imagen OG dinámica por provincia (misma tarjeta que las landings de ciudad).
@@ -10,7 +10,7 @@ export const revalidate = 3600;
 
 export default async function Image({ params }: { params: Promise<{ provincia: string }> }) {
   const { provincia } = await params;
-  const properties = await getProperties();
+  const properties = await getAllProperties();
   const province = getProvinces(properties).find((p) => p.slug === provincia);
   const provinceProperties = properties.filter(
     (p) => slugify(p.province || '') === provincia

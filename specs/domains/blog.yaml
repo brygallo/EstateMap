@@ -18,8 +18,8 @@ summary: >-
   (avisar a IndexNow, invalidar el caché de Next), que llegar tarde encarece
   pero no rompe.
 
-  El blog no abre superficie de escritura nueva: se redacta en el admin y la API
-  pública es de solo lectura. Las siete guías que vivían incrustadas en el
+  La API pública es de solo lectura. La escritura se realiza desde el escritorio
+  editorial protegido del panel de administración. Las siete guías que vivían incrustadas en el
   frontend (`lib/guias.ts`) son sus primeros posts y conservan su slug, con
   `/guias/<slug>` redirigiendo de forma permanente a `/blog/<slug>`.
 see_also:
@@ -99,11 +99,11 @@ rules:
         http_status: 404
 
   - id: BLOG-003
-    name: El blog se escribe solo desde el admin
+    name: La API pública del blog es de solo lectura
     status: implemented
     summary: >-
-      La API del blog es de solo lectura: no expone crear, editar ni borrar a
-      nadie, ni siquiera autenticado.
+      La API pública del blog no expone crear, editar ni borrar a nadie. La
+      escritura usa endpoints administrativos separados y protegidos.
     rationale: >-
       Es contenido que edita un puñado de personas unas veces por semana. Abrir
       un endpoint de escritura para eso añade superficie de ataque, validación y
@@ -130,6 +130,72 @@ rules:
         role: authenticated
         expected: denied
         http_status: 405
+
+  - id: BLOG-010
+    name: Solo administradores gestionan el blog desde el panel
+    status: implemented
+    summary: >-
+      Los endpoints editoriales permiten listar, crear, editar, publicar,
+      programar y eliminar contenido únicamente a cuentas con `is_staff`.
+    rationale: >-
+      El JWT que lee el frontend sirve para adaptar la interfaz, pero la frontera
+      de seguridad está en Django y comprueba el usuario autenticado.
+    evidence:
+      - file: backend/blog/admin_api.py
+        symbol: class AdminBlogPostViewSet
+        note: El viewset exige autenticación y el permiso de administrador.
+      - file: frontend/app/admin/blog/page.tsx
+        symbol: export default function BlogAdminPage
+        note: El escritorio editorial vive dentro del panel principal.
+    backend:
+      endpoint: POST /api/admin/blog/posts/
+      denied_http_status: 403
+    frontend:
+      routes: [/admin/blog]
+    tests: {api: true}
+    cases:
+      - name: Un usuario normal no puede editar un artículo
+        role: authenticated
+        expected: denied
+        http_status: 403
+      - name: Un administrador puede crear un borrador
+        role: staff
+        expected: allowed
+        expected_http_status: 201
+        body:
+          title: Cómo comprar una casa
+          slug: como-comprar-una-casa
+          excerpt: Una guía clara para preparar la compra.
+          body: "## Primer paso\n\nCompara las alternativas."
+          status: draft
+
+  - id: BLOG-011
+    name: El editor controla el ciclo editorial completo
+    status: implemented
+    summary: >-
+      Un artículo puede guardarse como borrador, programarse con fecha futura,
+      publicarse inmediatamente o retirarse del sitio desde el panel integrado.
+    rationale: >-
+      El panel expone el calendario y los estados existentes sin crear una
+      segunda definición de cuándo el contenido es público.
+    evidence:
+      - file: backend/blog/admin_api.py
+        symbol: def publish
+        note: Publicar ahora establece estado y fecha de publicación.
+      - file: backend/blog/admin_api.py
+        symbol: def draft
+        note: Volver a borrador retira el artículo del sitio público.
+      - file: backend/blog/admin_api.py
+        symbol: def schedule_daily
+        note: La selección se distribuye un artículo por día sin solaparse.
+    tests: {api: true}
+    cases:
+      - name: Publicar ahora fija una fecha pública
+        role: staff
+        expected: published
+      - name: Pasar a borrador retira el artículo
+        role: staff
+        expected: draft
 
   - id: BLOG-004
     name: El listado público entrega como mucho 60 posts por petición

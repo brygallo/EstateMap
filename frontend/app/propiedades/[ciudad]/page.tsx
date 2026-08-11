@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import SeoLanding, { TYPE_LINKS, priceRangeText } from '@/components/SeoLanding';
-import { getProperties, getCities, getLocationCatalog, slugify } from '@/lib/properties';
+import { getAllProperties, getCities, getLocationCatalog, slugify } from '@/lib/properties';
 import {
   generateCombosWithCounts,
   MIN_LOCATION_PROPERTIES,
@@ -19,7 +19,7 @@ interface CityPageProps {
 }
 
 async function resolveCity(slug: string) {
-  const properties = await getProperties();
+  const properties = await getAllProperties();
   const match = getCities(properties).find((c) => c.slug === slug);
   if (match) {
     const cityProperties = properties.filter((p) => slugify(p.city || '') === slug);
@@ -35,7 +35,7 @@ async function resolveCity(slug: string) {
 }
 
 export async function generateStaticParams() {
-  const properties = await getProperties();
+  const properties = await getAllProperties();
   return getCities(properties).map((city) => ({ ciudad: city.slug }));
 }
 

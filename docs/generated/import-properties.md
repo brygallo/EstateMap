@@ -108,7 +108,7 @@ Ubicación antes de escribir, saneamiento de precio y huella de imagen antes de 
 
 - `backend/ingesta/pipeline/upsert.py:76-95` (`ok, lat, lng, _motivo = validate_location`) — Ubicación, precio y dHash, en ese orden, antes de buscar duplicados.
 - `backend/ingesta/pipeline/upsert.py:97-129` (`dup = find_duplicate`)
-- `backend/ingesta/pipeline/upsert.py:173-178` (`attached = attach_images_from_urls`) — Las imágenes se adjuntan después del save().
+- `backend/ingesta/pipeline/upsert.py:172-176` (`attached = attach_images_from_urls`) — Las imágenes se adjuntan después del save().
 
 **Casos**
 

@@ -2,8 +2,9 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { Formik, Form, type FormikHelpers } from 'formik';
-import * as Yup from 'yup';
+import { FormProvider, useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
 import { toast } from 'sonner';
 import { Mail, ArrowLeft, ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -18,13 +19,15 @@ const ForgotPassword = () => {
   const [emailSent, setEmailSent] = useState(false);
   const API_URL = getPublicApiUrl();
 
-  const validationSchema = Yup.object({
-    email: Yup.string().email('Correo inválido').required('Campo requerido'),
+  const validationSchema = z.object({ email: z.email('Correo inválido') });
+  type ForgotPasswordValues = z.infer<typeof validationSchema>;
+  const form = useForm<ForgotPasswordValues>({
+    resolver: zodResolver(validationSchema),
+    defaultValues: { email: '' },
   });
 
   const handleSubmit = async (
-    values: { email: string },
-    { setSubmitting }: FormikHelpers<{ email: string }>
+    values: ForgotPasswordValues
   ) => {
     try {
       const res = await fetchWithTimeout(`${API_URL}/request-password-reset/`, {
@@ -46,8 +49,6 @@ const ForgotPassword = () => {
       toast.success(typeof data.message === 'string' ? data.message : 'Correo enviado exitosamente');
     } catch (err) {
       toast.error(requestErrorMessage(err, 'solicitar la recuperación de contraseña'));
-    } finally {
-      setSubmitting(false);
     }
   };
 
@@ -81,13 +82,8 @@ const ForgotPassword = () => {
         </Link>
       }
     >
-      <Formik
-        initialValues={{ email: '' }}
-        validationSchema={validationSchema}
-        onSubmit={handleSubmit}
-      >
-        {({ isSubmitting }) => (
-          <Form className="space-y-4">
+      <FormProvider {...form}>
+          <form className="space-y-4" onSubmit={form.handleSubmit(handleSubmit)}>
             <AuthField
               id="email"
               name="email"
@@ -98,13 +94,12 @@ const ForgotPassword = () => {
               icon={Mail}
             />
 
-            <AuthSubmit pending={isSubmitting} pendingLabel="Enviando…">
+            <AuthSubmit pending={form.formState.isSubmitting} pendingLabel="Enviando…">
               Enviar enlace
               <ArrowRight className="h-4 w-4" aria-hidden />
             </AuthSubmit>
-          </Form>
-        )}
-      </Formik>
+          </form>
+      </FormProvider>
     </AuthCard>
   );
 };

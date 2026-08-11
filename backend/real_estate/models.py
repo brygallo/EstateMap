@@ -1,6 +1,7 @@
 from django.contrib.auth.models import AbstractUser
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
+from django.db.models.functions import Upper
 from django.conf import settings
 from django.utils import timezone
 from pathlib import Path
@@ -209,20 +210,10 @@ class Property(models.Model):
                                    help_text="ID del anuncio en el portal de origen")
     is_imported = models.BooleanField(default=False, db_index=True,
                                       help_text="True si fue recopilada por el agregador")
-    dedup_key = models.CharField(max_length=64, blank=True, default="", db_index=True,
-                                 help_text="Huella de rejilla geográfica para deduplicar")
     image_hash = models.CharField(max_length=32, blank=True, default="", db_index=True,
                                   help_text="Huella perceptual (dHash) de la imagen principal, para detectar la misma propiedad entre portales")
     is_duplicate = models.BooleanField(default=False, db_index=True,
                                        help_text="Oculto del mapa: es duplicado de otra fuente (perdió la preferencia)")
-    duplicate_of = models.ForeignKey(
-        "self",
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
-        related_name="duplicates",
-        help_text="Propiedad canónica (la que sí se muestra) de la que este anuncio es duplicado",
-    )
     imported_at = models.DateTimeField(null=True, blank=True)
     source_published_at = models.DateTimeField(
         null=True, blank=True,
@@ -251,6 +242,20 @@ class Property(models.Model):
             models.Index(fields=["owner", "status"], name="prop_owner_status_idx"),
             models.Index(fields=["source", "is_imported", "status"], name="prop_source_status_idx"),
             models.Index(fields=["-views_count"], name="prop_views_desc_idx"),
+            # The public filters use city__iexact / province__iexact, which
+            # Postgres runs as UPPER(col) = UPPER(value): only a functional
+            # index over the same expression can serve them.
+            models.Index(Upper("city"), name="prop_city_upper_idx"),
+            models.Index(Upper("province"), name="prop_province_upper_idx"),
+            # Import dedup scans lat/lng ranges over the imported canon only.
+            # prop_map_bbox_idx cannot serve that filter (its leading column is
+            # `status`, absent there), so without this every new listing costs
+            # a sequential scan during ingestion.
+            models.Index(
+                fields=["latitude", "longitude"],
+                condition=models.Q(is_imported=True, is_duplicate=False),
+                name="prop_dedup_bbox_idx",
+            ),
         ]
         constraints = [
             models.UniqueConstraint(

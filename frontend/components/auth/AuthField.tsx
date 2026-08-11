@@ -2,7 +2,7 @@
 
 import type { ComponentProps } from 'react';
 import type { LucideIcon } from 'lucide-react';
-import { useField } from 'formik';
+import { useFormContext } from 'react-hook-form';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { cn } from '@/lib/utils';
@@ -30,8 +30,9 @@ export default function AuthField({
   className,
   ...inputProps
 }: AuthFieldProps) {
-  const [field, meta] = useField(name);
-  const invalid = Boolean(meta.touched && meta.error);
+  const { register, formState: { errors } } = useFormContext();
+  const error = errors[name]?.message;
+  const invalid = typeof error === 'string';
   const errorId = `${id}-error`;
   const hintId = `${id}-hint`;
 
@@ -49,7 +50,7 @@ export default function AuthField({
         ) : null}
         <Input
           id={id}
-          {...field}
+          {...register(name)}
           {...inputProps}
           aria-invalid={invalid}
           aria-describedby={invalid ? errorId : hint ? hintId : undefined}
@@ -63,7 +64,7 @@ export default function AuthField({
       </div>
       {invalid ? (
         <p id={errorId} className="text-xs text-error">
-          {meta.error}
+          {error as string}
         </p>
       ) : hint ? (
         <p id={hintId} className="text-xs text-muted-foreground">

@@ -111,6 +111,46 @@ def stage_property_image(property_instance, uploaded_file, idx, is_main):
     return image
 
 
+def validate_image_batch(images):
+    """Per-image and whole-batch upload checks (PROP-026), shared by every
+    entry point that stores photos — including the anonymous draft flow, which
+    writes straight to storage and must enforce exactly what the authenticated
+    flow enforces."""
+    max_total_mb = getattr(settings, 'MAX_PROPERTY_UPLOAD_MB', 50)
+    total_bytes = sum(image.size for image in images)
+    if total_bytes > max_total_mb * 1024 * 1024:
+        raise serializers.ValidationError(
+            f"El conjunto de imágenes supera {max_total_mb}MB."
+        )
+
+    for idx, image in enumerate(images):
+        max_size_mb = getattr(settings, 'MAX_IMAGE_SIZE_MB', 10)
+        if image.size > max_size_mb * 1024 * 1024:
+            size_mb = round(image.size / (1024 * 1024), 2)
+            raise serializers.ValidationError(
+                f"La imagen {idx + 1} es demasiado grande ({size_mb}MB). "
+                f"El tamaño máximo permitido es {max_size_mb}MB"
+            )
+
+        allowed_types = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp']
+        if hasattr(image, 'content_type') and image.content_type not in allowed_types:
+            raise serializers.ValidationError(
+                f"Formato de imagen {idx + 1} no permitido. "
+                f"Use JPEG, PNG o WebP"
+            )
+
+        try:
+            validate_image_size(image)
+            validate_image_dimensions(image)
+            validate_image_format(image)
+            image.seek(0)
+        except DjangoValidationError as exc:
+            message = exc.messages[0] if exc.messages else str(exc)
+            raise serializers.ValidationError(f"Imagen {idx + 1}: {message}")
+
+    return images
+
+
 class PropertyImageSerializer(serializers.ModelSerializer):
     image = serializers.SerializerMethodField()
     thumbnail = serializers.SerializerMethodField()
@@ -196,8 +236,8 @@ class PropertySerializer(serializers.ModelSerializer):
             # the date of it is not theirs to backdate.
             'closed_at',
             'source', 'source_agency', 'source_url', 'external_id',
-            'is_imported', 'dedup_key', 'image_hash', 'is_duplicate',
-            'duplicate_of', 'imported_at', 'source_published_at',
+            'is_imported', 'image_hash', 'is_duplicate',
+            'imported_at', 'source_published_at',
             'source_updated_at', 'last_seen_at',
         ]
 
@@ -272,42 +312,7 @@ class PropertySerializer(serializers.ModelSerializer):
                 f"Actualmente tiene {existing_count} y se intentan agregar {len(value)}."
             )
 
-        max_total_bytes = getattr(settings, 'MAX_PROPERTY_UPLOAD_MB', 50) * 1024 * 1024
-        total_bytes = sum(image.size for image in value)
-        if total_bytes > max_total_bytes:
-            raise serializers.ValidationError(
-                f"El conjunto de imágenes supera {getattr(settings, 'MAX_PROPERTY_UPLOAD_MB', 50)}MB."
-            )
-
-        # Validar cada imagen
-        for idx, image in enumerate(value):
-            # Validar tamaño (10MB máximo)
-            max_size_mb = getattr(settings, 'MAX_IMAGE_SIZE_MB', 10)
-            if image.size > max_size_mb * 1024 * 1024:
-                size_mb = round(image.size / (1024 * 1024), 2)
-                raise serializers.ValidationError(
-                    f"La imagen {idx + 1} es demasiado grande ({size_mb}MB). "
-                    f"El tamaño máximo permitido es {max_size_mb}MB"
-                )
-
-            # Validar formato
-            allowed_types = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp']
-            if hasattr(image, 'content_type') and image.content_type not in allowed_types:
-                raise serializers.ValidationError(
-                    f"Formato de imagen {idx + 1} no permitido. "
-                    f"Use JPEG, PNG o WebP"
-                )
-
-            try:
-                validate_image_size(image)
-                validate_image_dimensions(image)
-                validate_image_format(image)
-                image.seek(0)
-            except DjangoValidationError as exc:
-                message = exc.messages[0] if exc.messages else str(exc)
-                raise serializers.ValidationError(f"Imagen {idx + 1}: {message}")
-
-        return value
+        return validate_image_batch(value)
 
     def validate_polygon(self, value):
         """
@@ -532,6 +537,9 @@ class PendingPublicationSerializer(serializers.ModelSerializer):
     def validate_source(self, value):
         valid_sources = {choice[0] for choice in PendingPublication.SOURCE_CHOICES}
         return value if value in valid_sources else "other"
+
+    def validate_uploaded_images(self, value):
+        return validate_image_batch(value)
 
     def get_resume_link(self, obj):
         """The live link for this request, so the tray shows what was sent."""

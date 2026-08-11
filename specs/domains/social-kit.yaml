@@ -166,17 +166,17 @@ rules:
         symbol: ALPHABET
         note: Sin 0, O, 1, I ni L.
       - file: backend/real_estate/models.py
-        lines: "302-304"
+        lines: "307-309"
         symbol: short_code
         note: >-
           Solo se asigna cuando está vacío, que es lo que lo hace estable frente
           a cualquier edición posterior.
       - file: backend/real_estate/views.py
-        lines: "776-778"
+        lines: "782-784"
         symbol: by_code
         note: Resolución pública, sin distinguir mayúsculas y excluyendo inactivas.
       - file: backend/real_estate/serializers.py
-        lines: "193-195"
+        lines: "233-235"
         symbol: short_code
         note: >-
           Read-only bajo fields='__all__'. Sin esto un cliente podría fijarse su
@@ -474,7 +474,7 @@ rules:
           Los tres estados que permiten distinguir «nadie lo compartió» de «se
           compartió y no trajo a nadie».
       - file: backend/real_estate/models.py
-        lines: "717-719"
+        lines: "722-724"
         symbol: activity_prop_human_idx
         note: >-
           (property, is_bot, created_at). Sin él la agregación recorre toda la
@@ -760,7 +760,7 @@ rules:
           s-maxage=60 con stale-while-revalidate: absorbe la ráfaga de scrapers
           que llega al publicar un enlace sin congelar un precio corregido.
       - file: frontend/lib/properties.ts
-        lines: "310-313"
+        lines: "302-304"
         symbol: getProperty
         note: >-
           Lectura etiquetada; /api/revalidate purga property-<id> cuando Django

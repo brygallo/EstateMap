@@ -1,5 +1,5 @@
 import SeoLanding, { TYPE_LINKS, priceRangeText } from '@/components/SeoLanding';
-import { getProperties } from '@/lib/properties';
+import { getAllProperties } from '@/lib/properties';
 import { topCityCombos } from '@/lib/seo-combos';
 import { generatePageMetadata } from '@/lib/metadata';
 
@@ -14,7 +14,7 @@ export const metadata = generatePageMetadata(
 );
 
 export default async function TerrenosEnVentaPage() {
-  const all = await getProperties();
+  const all = await getAllProperties();
   const properties = all.filter(
     (p) => p.property_type === 'land' && p.status === 'for_sale'
   );

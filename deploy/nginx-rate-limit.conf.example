@@ -41,6 +41,8 @@ map $limit $limit_key {
 # Example location blocks to add to your server config:
 #
 # location /api/ {
+#     client_max_body_size 50m;
+#     add_header X-Request-ID $request_id always;
 #     # General API rate limit: 10 req/s, burst 30, no delay
 #     limit_req zone=api_general burst=30 nodelay;
 #     limit_req_status 429;
@@ -51,6 +53,14 @@ map $limit $limit_key {
 #     proxy_set_header X-Real-IP $remote_addr;
 #     proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
 #     proxy_set_header X-Forwarded-Proto $scheme;
+# }
+
+# Keep proxy-generated errors inside the same JSON contract as Django.
+# error_page 413 =413 @payload_too_large;
+# location @payload_too_large {
+#     default_type application/json;
+#     add_header X-Request-ID $request_id always;
+#     return 413 '{"detail":"La carga completa supera el tamaño máximo permitido de 50MB.","request_id":"$request_id"}';
 # }
 #
 # location /api/properties/map_points/ {
@@ -88,7 +98,8 @@ map $limit $limit_key {
 # error_page 429 =429 @rate_limit_reached;
 # location @rate_limit_reached {
 #     default_type application/json;
-#     return 429 '{"error": "Too many requests. Please try again later."}';
+#     add_header X-Request-ID $request_id always;
+#     return 429 '{"detail":"Se realizaron demasiados intentos. Espera un momento y vuelve a intentar.","request_id":"$request_id"}';
 # }
 
 # ============================================================

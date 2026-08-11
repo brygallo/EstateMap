@@ -8,7 +8,7 @@ summary: >
   de alguien que todavía no tiene cuenta (PendingPublication), y el registro
   funcional de eventos de uso (ActivityEvent), cuyo campo is_bot decide qué
   entra en las métricas que ve el negocio. Los tres endpoints de creación son
-  públicos por diseño; solo dos de los tres llevan límite de ritmo.
+  públicos por diseño y los tres llevan un límite de ritmo propio.
 see_also:
   - backend/real_estate/models.py
   - backend/real_estate/views.py
@@ -19,12 +19,11 @@ see_also:
 
 rules:
   - id: LEAD-001
-    name: Crear un lead es público y no tiene límite de ritmo
-    status: implemented
+    name: Crear un lead era público y no tenía límite de ritmo
+    status: deprecated
     summary: >
-      POST /api/leads/ usa AllowAny y no declara get_throttles, así que
-      cualquiera puede enviar el formulario de contacto de una propiedad sin
-      autenticarse y sin tope de peticiones por minuto.
+      Hasta 2026-08-11, POST /api/leads/ aceptaba peticiones públicas sin tope;
+      LEAD-002 reemplazó este comportamiento con un límite por cliente.
     rationale: >
       Es la excepción entre los tres endpoints públicos de este dominio:
       PendingPublicationViewSet y ActivityEventViewSet sí definen
@@ -34,28 +33,10 @@ rules:
       (ver LEAD-006), así que un abuso aquí no solo satura la base de datos:
       satura también el servidor de correo saliente en el mismo hilo de la
       petición HTTP.
-    evidence:
-      - file: backend/real_estate/views.py
-        lines: "1111-1113"
-        symbol: "def get_permissions"
-        note: >
-          get_permissions devuelve AllowAny() para create y no existe ningún
-          get_throttles en LeadViewSet (870-905): sin ese método, DRF aplica
-          solo los throttles globales de DEFAULT_THROTTLE_CLASSES, que aquí
-          no están definidos.
-      - file: backend/estate_map/settings.py
-        lines: "177-184"
-        symbol: DEFAULT_THROTTLE_RATES
-        note: >
-          El comentario dice explícitamente que el rate limiting se aplica
-          "mediante ScopedRateThrottle en el create de ActivityEventViewSet y
-          PendingPublicationViewSet"; LeadViewSet no se menciona porque no lo
-          usa.
     backend:
       enforce: false
       endpoint: POST /api/leads/
-    tests:
-      api: true
+    tests: {}
     cases:
       - name: Visitante anónimo crea un lead
         role: anonymous
@@ -76,20 +57,22 @@ rules:
           aquí no existe ningún techo que la corte.
 
   - id: LEAD-002
-    name: "Propuesta: limitar el ritmo de creación de leads"
-    status: proposed
+    name: Limitar el ritmo de creación de leads
+    status: implemented
     summary: >
-      POST /api/leads/ debería llevar un throttle_scope propio (p. ej.
-      lead_create) con un ritmo comparable al de pending_create, para que un
+      POST /api/leads/ lleva el throttle_scope lead_create a 10/min, para que un
       script no pueda generar leads en bucle ni disparar el envío síncrono de
       correo en bucle.
     rationale: >
-      Es el defecto que registra LEAD-001: mismo endpoint, comportamiento
-      correcto. Se separa en una regla proposed en vez de "arreglar" LEAD-001
-      para que la suite siga describiendo la realidad de hoy mientras deja
-      constancia del hueco. El envío síncrono de correo (LEAD-006) es lo que
-      hace que este límite sea más urgente que en un endpoint que solo
-      escribe en base de datos.
+      Sustituye el defecto histórico registrado en LEAD-001. El envío síncrono
+      de correo (LEAD-006) hace que el límite también proteja el servidor SMTP.
+    evidence:
+      - file: backend/real_estate/views.py
+        lines: "1110-1145"
+        symbol: "def get_throttles"
+      - file: backend/estate_map/settings.py
+        lines: "170-190"
+        symbol: "'lead_create': '10/min'"
     conditions:
       throttle_scope: lead_create
       suggested_rate: 10/min
@@ -100,8 +83,7 @@ rules:
       denied_http_status: 429
       denied_error_code: THROTTLED
     tests:
-      unit: false
-      api: false
+      api: true
     cases:
       - name: Undécima petición en el mismo minuto desde el mismo cliente
         given: {requests_in_one_minute: 11}
@@ -119,11 +101,11 @@ rules:
       interesado.
     evidence:
       - file: backend/real_estate/models.py
-        lines: "523-525"
+        lines: "528-530"
         symbol: "STATUS_CHOICES = ["
         note: Los tres estados del ciclo de gestión de un lead.
       - file: backend/real_estate/serializers.py
-        lines: "503-507"
+        lines: "508-511"
         symbol: "class LeadStatusSerializer"
         note: "fields = ['id', 'status'], sin acceso a name, phone, email ni message."
     backend:
@@ -154,7 +136,7 @@ rules:
       lo envía.
     evidence:
       - file: backend/real_estate/models.py
-        lines: "515-517"
+        lines: "520-522"
         symbol: "SOURCE_CHOICES = ["
         note: Los cinco orígenes válidos de un lead.
     cases:
@@ -174,7 +156,7 @@ rules:
       que ve todos los leads sin filtrar.
     evidence:
       - file: backend/real_estate/views.py
-        lines: "1121-1123"
+        lines: "1145-1147"
         symbol: "def get_queryset"
         note: >
           Devuelve Lead.objects.none() si no hay usuario autenticado, el
@@ -216,7 +198,7 @@ rules:
       a su contact_email antes de responder al cliente.
     evidence:
       - file: backend/real_estate/views.py
-        lines: "1130-1132"
+        lines: "1154-1156"
         symbol: "def perform_create"
         note: "serializer.save() seguido de LeadNotificationService().notify_created(lead), dentro del mismo ciclo request/response."
       - file: backend/real_estate/services/notifications.py
@@ -282,7 +264,7 @@ rules:
       leads por canal de captación.
     evidence:
       - file: backend/real_estate/models.py
-        lines: "546-548"
+        lines: "551-553"
         symbol: lead_property_status_idx
         note: Los tres índices y las consultas que cubren.
     cases:
@@ -309,7 +291,7 @@ rules:
       consumir.
     evidence:
       - file: backend/real_estate/models.py
-        lines: "555-557"
+        lines: "560-562"
         symbol: "class PendingPublication(models.Model)"
         note: >
           Docstring: "Solicitud de publicación capturada antes de que el
@@ -329,11 +311,11 @@ rules:
       (abandonó el formulario), además de other como comodín.
     evidence:
       - file: backend/real_estate/models.py
-        lines: "515-517"
+        lines: "520-522"
         symbol: "SOURCE_CHOICES = ["
         note: Los cuatro orígenes de una solicitud pendiente.
       - file: backend/real_estate/serializers.py
-        lines: "531-533"
+        lines: "537-539"
         symbol: "def validate_source"
         note: Cualquier valor fuera del catálogo se normaliza silenciosamente a "other" en vez de rechazar la petición.
     cases:
@@ -354,11 +336,11 @@ rules:
       hay cuenta que la posea).
     evidence:
       - file: backend/real_estate/views.py
-        lines: "1111-1113"
+        lines: "1129-1131"
         symbol: "def get_permissions"
         note: "return [IsAuthenticated(), IsAdminUser()] para toda acción salvo create."
       - file: backend/real_estate/views.py
-        lines: "1121-1123"
+        lines: "1145-1147"
         symbol: "def get_queryset"
         note: "PendingPublication.objects.none() salvo que user.is_staff sea verdadero."
     backend:
@@ -392,11 +374,11 @@ rules:
       DEFAULT_THROTTLE_RATES fija ese scope en 10/min.
     evidence:
       - file: backend/real_estate/views.py
-        lines: "1153-1155"
+        lines: "1177-1179"
         symbol: "throttle_scope = 'pending_create'"
         note: Solo el POST público se limita; el resto de acciones ya exige staff y no lleva throttle.
       - file: backend/estate_map/settings.py
-        lines: "179-181"
+        lines: "184-186"
         symbol: "'pending_create': '10/min'"
     backend:
       enforce: true
@@ -427,7 +409,7 @@ rules:
       pero para el equipo interno en vez del dueño de una propiedad.
     evidence:
       - file: backend/real_estate/views.py
-        lines: "1130-1132"
+        lines: "1154-1156"
         symbol: "def perform_create"
         note: PendingPublicationNotificationService().notify_created(pending) en el mismo request.
       - file: backend/real_estate/email_utils.py
@@ -458,11 +440,11 @@ rules:
       partir de la cabecera User-Agent real de la conexión.
     evidence:
       - file: backend/real_estate/serializers.py
-        lines: "686-690"
+        lines: "697-700"
         symbol: "validated_data['is_bot'] = is_bot_request(request)"
         note: Sobrescribe el valor ya validado del payload, si lo había.
       - file: backend/real_estate/serializers.py
-        lines: "665-667"
+        lines: "673-675"
         symbol: "read_only_fields = ['id', 'user', 'property', 'property_title', 'is_bot', 'created_at']"
         note: is_bot es de solo lectura en el serializer expuesto, además de recalcularse en create.
     backend:
@@ -522,10 +504,10 @@ rules:
       DEFAULT_THROTTLE_RATES fija ese scope en 30/min.
     evidence:
       - file: backend/real_estate/views.py
-        lines: "1411-1413"
+        lines: "1434-1436"
         symbol: "throttle_scope = 'activity_create'"
       - file: backend/estate_map/settings.py
-        lines: "178-180"
+        lines: "183-185"
         symbol: "'activity_create': '30/min'"
     backend:
       enforce: true
@@ -589,11 +571,11 @@ rules:
       propiedad reales.
     evidence:
       - file: backend/real_estate/models.py
-        lines: "523-525"
+        lines: "528-530"
         symbol: "STATUS_CHOICES = ["
         note: Los cuatro estados de una solicitud pendiente.
       - file: backend/real_estate/serializers.py
-        lines: "585-587"
+        lines: "593-595"
         symbol: "class PendingPublicationStatusSerializer"
         note: "fields = ['id', 'status'], igual patrón restrictivo que LeadStatusSerializer."
     backend:
@@ -635,7 +617,7 @@ rules:
         symbol: "def create(self, validated_data)"
         note: Busca por draft_key y actualiza la solicitud no convertida.
       - file: backend/real_estate/models.py
-        lines: "582-584"
+        lines: "587-589"
         symbol: draft_key
         note: La unicidad también protege frente a duplicados en la base de datos.
     tests:

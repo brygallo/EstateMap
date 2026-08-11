@@ -218,6 +218,22 @@ async function doRefresh(): Promise<string | null> {
 }
 
 /**
+ * Hand the stored refresh token back to the server for blacklisting.
+ *
+ * Fire-and-forget: logging out must always succeed locally, so a network
+ * failure only means the token dies by expiry instead of immediately.
+ */
+export function revokeRefreshToken(): void {
+  const refresh = getRefreshToken();
+  if (!refresh) return;
+  void fetchWithTimeout(`${API_URL}/logout/`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ refresh }),
+  }).catch(() => undefined);
+}
+
+/**
  * Exchange the stored refresh token for a fresh access token.
  *
  * Concurrent callers share a single request. Returns null when the session is

@@ -140,7 +140,7 @@ rules:
         lines: "97-129"
         symbol: dup = find_duplicate
       - file: backend/ingesta/pipeline/upsert.py
-        lines: "173-178"
+        lines: "172-176"
         symbol: attached = attach_images_from_urls
         note: Las imágenes se adjuntan después del save().
     cases:

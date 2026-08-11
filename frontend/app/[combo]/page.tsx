@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import SeoLanding, { priceRangeText, RelatedLink } from '@/components/SeoLanding';
-import { getCities, getProperties, getProvinces } from '@/lib/properties';
+import { getAllProperties, getCities, getProvinces } from '@/lib/properties';
 import {
   TYPE_DEFS,
   OP_DEFS,
@@ -27,7 +27,7 @@ export const dynamicParams = true;
 type Params = { combo: string };
 
 export async function generateStaticParams(): Promise<Params[]> {
-  const properties = await getProperties();
+  const properties = await getAllProperties();
   return generateCombos(properties);
 }
 
@@ -43,7 +43,7 @@ export async function generateMetadata({ params }: { params: Promise<Params> }):
   const parsed = parseComboSlug(resolvedParams.combo);
   if (!parsed) return {};
 
-  const properties = await getProperties();
+  const properties = await getAllProperties();
   const { matched, locationName: matchedLocation } = filterByCombo(properties, parsed);
   if (matched.length < MIN_COMBO_PROPERTIES) {
     // Out of stock, not gone: kept crawlable so it recovers its ranking when
@@ -71,7 +71,7 @@ export default async function ComboPage({ params }: { params: Promise<Params> })
   const parsed = parseComboSlug(resolvedParams.combo);
   if (!parsed) notFound();
 
-  const properties = await getProperties();
+  const properties = await getAllProperties();
   const { matched, locationName: matchedLocation } = filterByCombo(properties, parsed);
 
   // Inventory churns daily, so a landing that runs out of listings is normal —

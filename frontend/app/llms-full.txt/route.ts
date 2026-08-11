@@ -1,5 +1,5 @@
 import {
-  getProperties,
+  getAllProperties,
   getCities,
   getProvinces,
   formatPrice,
@@ -22,7 +22,7 @@ import {
 export const revalidate = 3600;
 
 export async function GET() {
-  const [properties, stats] = await Promise.all([getProperties(), getMarketStats()]);
+  const [properties, stats] = await Promise.all([getAllProperties(), getMarketStats()]);
   const cities = getCities(properties).sort(
     (a, b) => b.count - a.count || a.name.localeCompare(b.name)
   );

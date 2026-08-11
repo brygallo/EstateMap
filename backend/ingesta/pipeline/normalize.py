@@ -138,16 +138,6 @@ def parse_int(raw):
     return int(m.group()) if m else 0
 
 
-def build_dedup_key(latitude, longitude):
-    """
-    Huella de rejilla geográfica (~11 m) para acelerar el dedup por cercanía.
-    Dos anuncios en la misma celda son candidatos a ser la misma propiedad.
-    """
-    if latitude is None or longitude is None:
-        return ""
-    return f"{round(float(latitude), 4)},{round(float(longitude), 4)}"
-
-
 def fix_mojibake(text):
     """
     Repara una corrupción sistemática de Properati: la "ñ" aparece como "ð"

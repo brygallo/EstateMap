@@ -29,6 +29,7 @@ import { apiGet } from '@/lib/api';
 
 const PAGE_SIZE = 50;
 const CONTACT_EVENT = 'property_contact_clicked';
+const PUBLICATION_ERRORS = 'publication_errors';
 
 type EventItem = {
   id: number;
@@ -86,6 +87,7 @@ const BLOCK_REASON_LABELS: Record<string, string> = {
 
 const EVENT_OPTIONS = [
   { value: '', label: 'Todos los eventos' },
+  { value: PUBLICATION_ERRORS, label: 'Todos los errores de publicación' },
   { value: CONTACT_EVENT, label: EVENT_LABELS[CONTACT_EVENT] },
   { value: 'property_pin_clicked', label: EVENT_LABELS.property_pin_clicked },
   { value: 'property_card_details_opened', label: EVENT_LABELS.property_card_details_opened },
@@ -133,6 +135,12 @@ export default function AdminActivityPage() {
   const contactsOnly = eventName === CONTACT_EVENT;
   const totalPages = Math.max(1, Math.ceil(count / PAGE_SIZE));
 
+  useEffect(() => {
+    if (new URLSearchParams(window.location.search).get('view') === 'publication-errors') {
+      setEventName(PUBLICATION_ERRORS);
+    }
+  }, []);
+
   const load = useCallback(async () => {
     if (!token) return;
     setLoading(true);
@@ -140,7 +148,11 @@ export default function AdminActivityPage() {
       const params = new URLSearchParams();
       params.set('page', String(page));
       params.set('page_size', String(PAGE_SIZE));
-      if (eventName) params.set('event_name', eventName);
+      if (eventName === PUBLICATION_ERRORS) {
+        params.set('event_group', PUBLICATION_ERRORS);
+      } else if (eventName) {
+        params.set('event_name', eventName);
+      }
       if (traffic !== 'all') params.set('is_bot', traffic === 'bot' ? 'true' : 'false');
 
       const response = await apiGet(`/activity-events/?${params.toString()}`);
@@ -169,6 +181,7 @@ export default function AdminActivityPage() {
 
   const statLabel = useMemo(() => {
     if (contactsOnly) return 'Clics de contacto registrados';
+    if (eventName === PUBLICATION_ERRORS) return 'Errores de publicación registrados';
     if (eventName) return `Eventos de "${eventLabel(eventName)}" registrados`;
     return 'Eventos registrados';
   }, [contactsOnly, eventName]);

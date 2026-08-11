@@ -1,5 +1,5 @@
 import { ImageResponse } from 'next/og';
-import { getProperties, formatPrice } from '@/lib/properties';
+import { getAllProperties, formatPrice } from '@/lib/properties';
 import { parseComboSlug, filterByCombo } from '@/lib/seo-combos';
 import { OgCard, OG_SIZE } from '@/lib/og-card';
 
@@ -17,7 +17,7 @@ export default async function Image({ params }: { params: Promise<{ combo: strin
   let subtitle = 'Casas, terrenos, departamentos y locales con mapa y contacto directo';
 
   if (parsed) {
-    const properties = await getProperties();
+    const properties = await getAllProperties();
     const { matched, locationName } = filterByCombo(properties, parsed);
     const op = parsed.opDef ? ` ${parsed.opDef.label}` : '';
     const loc = locationName ? ` en ${locationName}` : '';

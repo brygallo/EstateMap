@@ -65,7 +65,6 @@ def test_public_property_serializer_ignores_internal_fields(authenticated_client
             "is_imported": True,
             "is_duplicate": True,
             "external_id": "forged-id",
-            "dedup_key": "forged-key",
         },
         format="json",
     )
@@ -77,7 +76,6 @@ def test_public_property_serializer_ignores_internal_fields(authenticated_client
     assert property_obj.is_imported is False
     assert property_obj.is_duplicate is False
     assert property_obj.external_id == ""
-    assert property_obj.dedup_key == ""
 
 
 @pytest.mark.django_db
@@ -93,4 +91,3 @@ def test_lead_notification_service_logs_delivery_failure(caplog):
 
     assert delivered is False
     assert "lead_notification_failed lead_id=42" in caplog.text
-

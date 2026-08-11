@@ -42,7 +42,7 @@ rules:
         symbol: "if (!token && !isEditMode && !resumeToken) {"
         note: Guarda el borrador, envía la solicitud pendiente y abre el modal, sin llamar a /properties/.
       - file: backend/real_estate/models.py
-        lines: "555-557"
+        lines: "560-562"
         symbol: "class PendingPublication(models.Model)"
         note: "Docstring: no se muestra en el mapa; sirve para seguimiento comercial."
       - file: backend/real_estate/views.py
@@ -198,11 +198,11 @@ rules:
       y máximas por imagen, vive en specs/domains/properties.yaml (PROP-026).
     evidence:
       - file: backend/estate_map/settings.py
-        lines: "380-382"
+        lines: "386-388"
         symbol: MAX_PROPERTY_UPLOAD_MB
         note: MAX_IMAGES_PER_PROPERTY=10, MAX_IMAGE_SIZE_MB=10, MAX_PROPERTY_UPLOAD_MB=50.
       - file: backend/estate_map/settings.py
-        lines: "363-365"
+        lines: "369-371"
         symbol: ALLOWED_IMAGE_TYPES
       - file: backend/real_estate/serializers.py
         lines: "253-308"
@@ -246,10 +246,10 @@ rules:
         symbol: "idempotency_key = (request.headers.get('Idempotency-Key')"
         note: Sin cabecera, se comporta como un create normal.
       - file: backend/real_estate/views.py
-        lines: "572-575"
+        lines: "577-579"
         symbol: "response['X-Idempotent-Replay'] = 'true'"
       - file: backend/real_estate/views.py
-        lines: "584-586"
+        lines: "589-591"
         symbol: "cache.set(result_key, response.data['id'], 60 * 60 * 24)"
       - file: frontend/app/add-property/page.tsx
         lines: "1158-1160"
@@ -278,10 +278,10 @@ rules:
       la petición falla, para no dejar la clave bloqueada 60 s de más.
     evidence:
       - file: backend/real_estate/views.py
-        lines: "575-577"
+        lines: "580-582"
         symbol: "lock_acquired = cache.add(lock_key, '1', 60)"
       - file: backend/real_estate/views.py
-        lines: "589-591"
+        lines: "594-596"
         symbol: "if lock_acquired:"
         note: cache.delete(lock_key) en el finally, se ejecute o no la creación.
     cases:
@@ -318,7 +318,7 @@ rules:
         symbol: "class AntiScraperScopedThrottle(ScopedRateThrottle)"
         note: Exime staff e IPs internas; solo se usa en map_points y list.
       - file: backend/estate_map/settings.py
-        lines: "192-194"
+        lines: "198-200"
         symbol: "'property_write': '30/hour'"
     cases:
       - name: Staff publica más de 30 veces en una hora
@@ -346,11 +346,11 @@ rules:
       en disco para que la barrida horaria la reintente.
     evidence:
       - file: backend/real_estate/tasks.py
-        lines: "205-224"
+        lines: "250-268"
         symbol: def enqueue_optimization
         note: transaction.on_commit envuelve el intento asíncrono con fallback síncrono.
       - file: backend/real_estate/tasks.py
-        lines: "225-238"
+        lines: "279-285"
         symbol: "optimize_property_image(image_id)"
         note: Llamada directa (no .delay) como fallback cuando el broker no responde.
       - file: backend/real_estate/tasks.py
@@ -441,11 +441,11 @@ rules:
         symbol: "exclude(status='inactive')"
         note: Único filtro que saca inactive del catálogo público; no toca la fila.
       - file: backend/real_estate/views.py
-        lines: "1005-1007"
+        lines: "1017-1019"
         symbol: def my_properties
         note: "including inactive: el dueño ve su propiedad inactiva, el público no."
       - file: backend/real_estate/models.py
-        lines: "339-341"
+        lines: "344-346"
         symbol: "on_delete=models.CASCADE"
         note: PropertyImage.property cae en cascada con la Property.
       - file: frontend/app/my-properties/page.tsx
@@ -723,7 +723,7 @@ rules:
         symbol: "errorSummary"
         note: Resuelve el motivo legible del evento a partir de reason, error_message o error_detail.
       - file: frontend/app/admin/activity/page.tsx
-        lines: "424-432"
+        lines: "438-445"
         symbol: "'Mensaje mostrado al usuario'"
         note: El detalle del evento expone los campos del error, no solo el estado HTTP.
       - file: frontend/app/admin/users/page.tsx

@@ -1,8 +1,9 @@
 'use client';
 
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Formik, Form, type FormikHelpers } from 'formik';
-import * as Yup from 'yup';
+import { FormProvider, useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
 import { toast } from 'sonner';
 import { Lock, ShieldCheck } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -20,20 +21,20 @@ const ResetPassword = () => {
 
   const API_URL = getPublicApiUrl();
 
-  const validationSchema = Yup.object({
-    new_password: Yup.string()
-      .min(8, 'La contraseña debe tener al menos 8 caracteres')
-      .required('Campo requerido'),
-    confirm_password: Yup.string()
-      .oneOf([Yup.ref('new_password')], 'Las contraseñas no coinciden')
-      .required('Campo requerido'),
+  const validationSchema = z.object({
+    new_password: z.string().min(8, 'La contraseña debe tener al menos 8 caracteres'),
+    confirm_password: z.string().min(1, 'Campo requerido'),
+  }).refine((values) => values.new_password === values.confirm_password, {
+    message: 'Las contraseñas no coinciden', path: ['confirm_password'],
+  });
+  type ResetPasswordValues = z.infer<typeof validationSchema>;
+  const form = useForm<ResetPasswordValues>({
+    resolver: zodResolver(validationSchema),
+    defaultValues: { new_password: '', confirm_password: '' },
   });
 
-  type ResetPasswordValues = { new_password: string; confirm_password: string };
-
   const handleSubmit = async (
-    values: ResetPasswordValues,
-    { setSubmitting }: FormikHelpers<ResetPasswordValues>
+    values: ResetPasswordValues
   ) => {
     if (!token) {
       toast.error('Token de recuperación no válido');
@@ -65,8 +66,6 @@ const ResetPassword = () => {
       setTimeout(() => router.push('/iniciar-sesion'), 1500);
     } catch (err) {
       toast.error(requestErrorMessage(err, 'restablecer la contraseña'));
-    } finally {
-      setSubmitting(false);
     }
   };
 
@@ -94,16 +93,8 @@ const ResetPassword = () => {
       title="Elige una contraseña nueva"
       description="Con ella entrarás a partir de ahora."
     >
-      <Formik
-        initialValues={{
-          new_password: '',
-          confirm_password: '',
-        }}
-        validationSchema={validationSchema}
-        onSubmit={handleSubmit}
-      >
-        {({ isSubmitting }) => (
-          <Form className="space-y-4">
+      <FormProvider {...form}>
+          <form className="space-y-4" onSubmit={form.handleSubmit(handleSubmit)}>
             <AuthField
               id="new_password"
               name="new_password"
@@ -125,13 +116,12 @@ const ResetPassword = () => {
               icon={ShieldCheck}
             />
 
-            <AuthSubmit pending={isSubmitting} pendingLabel="Guardando…">
+            <AuthSubmit pending={form.formState.isSubmitting} pendingLabel="Guardando…">
               Guardar contraseña
               <ShieldCheck className="h-4 w-4" aria-hidden />
             </AuthSubmit>
-          </Form>
-        )}
-      </Formik>
+          </form>
+      </FormProvider>
     </AuthCard>
   );
 };

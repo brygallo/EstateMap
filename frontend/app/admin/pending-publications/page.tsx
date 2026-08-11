@@ -3,6 +3,7 @@
 import AdminRoute from '@/components/AdminRoute';
 import AdminSidebar from '@/components/AdminSidebar';
 import { useAuth } from '@/lib/auth-context';
+import Link from 'next/link';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import {
@@ -13,7 +14,7 @@ import {
   type ColumnDef,
   type SortingState,
 } from '@tanstack/react-table';
-import { AlertCircle, ArrowUpDown, Copy, Eye, Link2, RefreshCw, Search, Send, XCircle } from 'lucide-react';
+import { AlertCircle, ArrowUpDown, Copy, Eye, Link2, RefreshCw, Search, Send, TriangleAlert, XCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
@@ -327,10 +328,23 @@ export default function PendingPublicationsPage() {
           const hasPhone = Boolean(item.contact_phone);
           const validPhone = hasPhone && isValidPhone(item.contact_phone);
           return (
-            <div className="flex justify-end gap-2">
+            <div className="flex flex-wrap justify-end gap-2">
               <Button variant="outline" size="sm" className="rounded-button" onClick={() => setSelected(item)}>
                 <Eye className="h-4 w-4" /> Ver
               </Button>
+              {!item.property && (
+                <Button
+                  size="sm"
+                  className="rounded-button"
+                  disabled={!item.contact_email || linkBusy === item.id}
+                  title={item.contact_email
+                    ? `Corregir y publicar a nombre de ${item.contact_email}`
+                    : 'Falta el correo del usuario al que se asignará la propiedad'}
+                  onClick={() => resolveAndPublish(item)}
+                >
+                  <Send className="h-4 w-4" /> Arreglar y publicar
+                </Button>
+              )}
               {item.status !== 'converted' && (
                 <Button
                   variant="outline"
@@ -391,8 +405,23 @@ export default function PendingPublicationsPage() {
         <main className="min-w-0 flex-1">
           <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
             <div className="mb-6">
-              <h1 className="text-2xl font-bold text-textPrimary">Publicaciones Pendientes</h1>
-              <p className="mt-1 text-sm text-textSecondary">Contacta a quienes no terminaron de publicar.</p>
+              <h1 className="text-2xl font-bold text-textPrimary">Publicaciones pendientes</h1>
+              <p className="mt-1 text-sm text-textSecondary">Revisa lo que falló, corrige el borrador y publícalo a nombre de la persona que lo creó.</p>
+            </div>
+
+            <div className="mb-5 grid gap-3 sm:grid-cols-[1fr_auto]">
+              <div className="rounded-card border border-primary/20 bg-primary/5 p-4">
+                <p className="text-sm font-semibold text-textPrimary">Cómo resolver una publicación</p>
+                <p className="mt-1 text-sm text-textSecondary">
+                  Pulsa <strong>Arreglar y publicar</strong>, completa o corrige los campos marcados y publica.
+                  La propiedad se asignará automáticamente al correo guardado en la solicitud.
+                </p>
+              </div>
+              <Button asChild variant="outline" className="h-auto min-h-12 rounded-button border-error/30 text-error hover:bg-error/5 hover:text-error">
+                <Link href="/admin/activity?view=publication-errors">
+                  <TriangleAlert className="h-4 w-4" /> Ver errores de publicación
+                </Link>
+              </Button>
             </div>
 
             <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -572,10 +601,11 @@ export default function PendingPublicationsPage() {
 
               {!selected.property && selected.contact_email && (
                 <div className="rounded-card border border-primary/25 bg-primaryLight/30 p-4">
-                  <p className="text-sm font-semibold text-textPrimary">Resolver como administrador</p>
+                  <p className="text-sm font-semibold text-textPrimary">Arreglar y publicar</p>
                   <p className="mt-1 text-sm text-textSecondary">
-                    Abre el borrador, corrige los campos con error y publícalo. La propiedad quedará a nombre
-                    de {selected.contact_email} y esa persona recibirá el enlace para revisarla.
+                    Abre el borrador completo, corrige los campos con error y publícalo. La propiedad no quedará
+                    a nombre del administrador: se asignará a <strong>{selected.contact_email}</strong> y esa persona
+                    recibirá el enlace para revisarla.
                   </p>
                   <Button
                     size="sm"
@@ -583,8 +613,19 @@ export default function PendingPublicationsPage() {
                     disabled={linkBusy === selected.id}
                     onClick={() => resolveAndPublish(selected)}
                   >
-                    <Send className="h-4 w-4" /> Resolver y publicar
+                    <Send className="h-4 w-4" /> Arreglar y publicar
                   </Button>
+                </div>
+              )}
+
+              {!selected.property && !selected.contact_email && (
+                <div className="rounded-card border border-error/25 bg-error/5 p-4">
+                  <p className="flex items-center gap-2 text-sm font-semibold text-error">
+                    <TriangleAlert className="h-4 w-4" /> No se puede publicar todavía
+                  </p>
+                  <p className="mt-1 text-sm text-textSecondary">
+                    La solicitud no tiene el correo necesario para identificar al propietario. Confírmalo con la persona antes de continuar.
+                  </p>
                 </div>
               )}
 

@@ -2,11 +2,10 @@
 
 Verificado contra el código el 2026-08-04.
 
-> Nota: `backend/real_estate/cache_utils.py`, `views.py` y `signals.py` estaban
-> siendo modificados mientras se escribía este documento (refactor de la clave de
-> versión única a **claves de versión por ámbito**). Todo lo que sigue describe el
-> estado del árbol de trabajo en esa fecha, incluidas las partes del refactor que
-> aún no han aterrizado en el lado lector (§4).
+> Nota: el refactor de la clave de versión única a **claves de versión por
+> ámbito** se cerró del lado lector el 2026-08-11 (§4). Los números de línea de
+> `views.py` citados en este documento corresponden a la verificación de
+> 2026-08-04 y pueden haber derivado; los símbolos siguen siendo válidos.
 
 Este sistema tiene **dos capas de caché encadenadas** y un único disparador que
 las invalida a ambas:
@@ -186,12 +185,12 @@ una hora mientras refresca por detrás (`views.py:108`).
 | `ProvinceViewSet.cities` | `province:cities:v<N>:<pk>` | `geo` | 24 h | `views.py:189-196` |
 | `CityViewSet.list` | `cities:list:v<N>:<query_signature>` | `geo` | 24 h | `views.py:225-230` |
 | `PropertyViewSet.list` | `properties:list:v<N>:<query_signature>` | `properties` | 2 min | `views.py:288-304` |
-| `PropertyViewSet.intelligence` | `intelligence:v<N>:<pk>` | *(default `properties`)* | 10 min | `views.py:522-526`, `:601-602` |
-| `PropertyViewSet.map_points` | `map_points:v<N>:z<zoom>:n<limit>:<bbox\|all>:<filter_signature>` | *(default `properties`)* | 2 min | `views.py:626-636`, `:653-654` |
-| `PropertyViewSet.locations` | `locations:v<N>:` | *(default `properties`)* | 1 h | `views.py:689-693`, `:714-715` |
-| `PropertyViewSet.catalog` | `catalog:v<N>:` | *(default `properties`)* | 24 h | `views.py:729-733`, `:762-763` |
-| `PropertyViewSet.summary` | `properties:summary:v<N>:<filter_signature + bbox>` | *(default `properties`)* | 10 min | `views.py:775-782`, `:834-835` |
-| `MarketStatsView.get` | `market_stats:v<N>:<query_signature>` | *(default `properties`)* | 30 min | `views.py:1495-1499`, `:1620-1621` |
+| `PropertyViewSet.intelligence` | `intelligence:v<N>:<pk>` | *(default `properties`)* | 10 min | `views.py` (`def intelligence`) |
+| `PropertyViewSet.map_points` | `map_points:v<N>:z<zoom>:n<limit>:<bbox\|all>:<filter_signature>` | `map` | 2 min | `views.py` (`def map_points`) |
+| `PropertyViewSet.locations` | `locations:v<N>:` | `locations` | 1 h | `views.py` (`def locations`) |
+| `PropertyViewSet.catalog` | `catalog:v<N>:` | `catalog` | 24 h | `views.py` (`def catalog`) |
+| `PropertyViewSet.summary` | `properties:summary:v<N>:<filter_signature + bbox>` | `summary` | 10 min | `views.py` (`def summary`) |
+| `MarketStatsView.get` | `market_stats:v<N>:<query_signature>` | `market_stats` | 30 min | `views.py` (`class MarketStatsView`) |
 
 Notas por caso:
 
@@ -293,26 +292,31 @@ Receptores registrados:
   cacheadas; pero el worker toca **fila por fila** cada imagen de una subida, y
   cada una se convertiría en su propia petición de revalidación al frontend.
 
-### Estado del refactor de ámbitos (verificado)
+### Estado del refactor de ámbitos (verificado; lado lector cerrado el 2026-08-11)
 
-Del lado **escritor**, `signals.py` ya bumpea ámbitos concretos. Del lado
-**lector**, solo dos ámbitos se usan realmente al construir claves:
+Del lado **escritor**, `signals.py` bumpea ámbitos concretos. Del lado
+**lector**, desde el 2026-08-11 cada endpoint pasa su `scope=`:
 
-- `geo` → `provinces:list`, `province:cities`, `cities:list`
-  (`views.py:174`, `:189`, `:225`).
-- `properties` → `properties:list` (explícito, `views.py:296`) y **todos los
-  demás por omisión**: `intelligence`, `map_points`, `locations`, `catalog`,
-  `summary` y `market_stats` llaman a `versioned_key()` sin `scope=`, de modo que
-  caen en el default `"properties"` (`cache_utils.py:89`).
+- `geo` → `provinces:list`, `province:cities`, `cities:list`.
+- `map` → `map_points`; `locations` → `locations`; `catalog` → `catalog`;
+  `summary` → `properties:summary`; `market_stats` → `market_stats`.
+- `properties` → `properties:list` (explícito) e `intelligence` (por omisión:
+  es por propiedad y cualquier `save()` le afecta, así que un ámbito propio no
+  ganaría nada).
 
-Consecuencias reales hoy:
+Consecuencias reales:
 
-1. Los ámbitos `map`, `summary`, `detail`, `locations`, `catalog` y
-   `market_stats` **se incrementan pero nadie los lee**. No rompe nada: como
-   `_invalidate` bumpea también `properties`, esos payloads siguen invalidándose
-   correctamente — simplemente lo hacen de forma tan global como antes del
-   refactor, y el ahorro pretendido aún no se materializa.
-2. El ámbito **`geo` no lo bumpea nadie**. `bump_props_version()` sin argumentos
+1. El *churn* de imágenes ya no recicla los payloads que no embeben URLs de
+   imagen: `property_image_changed` bumpea solo `properties` y `detail`
+   (`signals.py:77-85`), así que `map_points`, `locations`, `summary` y
+   `market_stats` sobreviven a la optimización fila por fila de una subida o
+   una importación. `catalog` solo se mueve con altas y bajas, con lo que su
+   TTL de 24 h por fin corre entero; el caso raro de renombrar la ciudad de
+   una propiedad existente espera a ese TTL, y el payload lo tolera porque
+   conserva grafías históricas de todos modos.
+2. El ámbito **`detail` se bumpea y nadie lo lee**: el detalle de propiedad
+   sigue sin caché Redis. Es el hueco que queda del refactor.
+3. El ámbito **`geo` no lo bumpea nadie**. `bump_props_version()` sin argumentos
    —la única llamada que lo tocaría (`cache_utils.py:60-61`)— no aparece en
    ninguna parte del backend. Las provincias y cantones cacheados solo se
    refrescan cuando vence su TTL de 24 h (`CACHE_TTL_GEO`). Es asumible porque

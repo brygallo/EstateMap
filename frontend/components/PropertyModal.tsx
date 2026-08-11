@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useMemo, useRef } from 'react';
+import Image from 'next/image';
 import {
   X,
   Share2,
@@ -579,15 +580,20 @@ const PropertyModal = ({ property: initialProperty, isOpen, onClose, onViewOnMap
                   }}
                 >
                   {images.map((img: any, idx: number) => (
-                    <img
+                    <div
                       key={`${img.image}-${idx}`}
-                      src={img.image}
-                      alt={idx === 0 ? property.title : `${property.title} — imagen ${idx + 1}`}
-                      decoding="async"
-                      loading={idx === 0 ? 'eager' : 'lazy'}
-                      onClick={() => setGalleryOpen(true)}
-                      className="h-full w-full flex-none cursor-pointer snap-center snap-always object-cover"
-                    />
+                      className="relative h-full w-full flex-none snap-center snap-always"
+                    >
+                      <Image
+                        src={img.image}
+                        alt={idx === 0 ? property.title : `${property.title} — imagen ${idx + 1}`}
+                        fill
+                        sizes="(min-width: 1024px) 26rem, 100vw"
+                        priority={idx === 0}
+                        onClick={() => setGalleryOpen(true)}
+                        className="cursor-pointer object-cover"
+                      />
+                    </div>
                   ))}
                 </div>
                 <div className="pointer-events-none absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-black/70 to-transparent" aria-hidden />
@@ -633,11 +639,11 @@ const PropertyModal = ({ property: initialProperty, isOpen, onClose, onViewOnMap
                         onClick={(e) => { e.stopPropagation(); scrollCarouselTo(idx); }}
                         aria-label={`Ver imagen ${idx + 1}`}
                         className={cn(
-                          'h-12 w-12 flex-shrink-0 overflow-hidden rounded-md border transition-all',
+                          'relative h-12 w-12 flex-shrink-0 overflow-hidden rounded-md border transition-all',
                           idx === safeImageIndex ? 'border-white scale-110' : 'border-transparent opacity-60 hover:opacity-100'
                         )}
                       >
-                        <img src={img.image} alt="" loading="lazy" decoding="async" className="h-full w-full object-cover" />
+                        <Image src={img.image} alt="" fill sizes="48px" className="object-cover" />
                       </button>
                     ))}
                     {images.length > 5 && (

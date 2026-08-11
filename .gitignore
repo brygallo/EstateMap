@@ -50,6 +50,9 @@ detail_state.png
 
 # Local property/media samples
 backend/properties/
+# Runtime staging for pending uploads; these files belong to the local service,
+# never to a source deployment.
+backend/tmp/
 
 # Spec tooling virtualenv (see scripts/specs.sh)
 .venv-specs/

@@ -5,7 +5,7 @@ import { ArrowRight, TrendingUp } from 'lucide-react';
 import MarketStatsSections from '@/components/MarketStatsSections';
 import { generatePageMetadata } from '@/lib/metadata';
 import {
-  getProperties,
+  getAllProperties,
   getCities,
   getLocationCatalog,
   jsonLd,
@@ -28,7 +28,7 @@ interface CityStatsPageProps {
 }
 
 async function resolveCityName(slug: string): Promise<string | null> {
-  const properties = await getProperties();
+  const properties = await getAllProperties();
   const match = getCities(properties).find((c) => c.slug === slug);
   if (match) return match.name;
   // Same fallback as the city landing: a canton without listings answers 200
@@ -38,7 +38,7 @@ async function resolveCityName(slug: string): Promise<string | null> {
 }
 
 export async function generateStaticParams() {
-  const properties = await getProperties();
+  const properties = await getAllProperties();
   return getCities(properties)
     .filter((city) => city.count >= MIN_LISTINGS_FOR_PROMOTION)
     .map((city) => ({ ciudad: city.slug }));

@@ -1,4 +1,4 @@
-# Google OAuth configuration
+# Google OAuth Configuration
 
 EstateMap accepts Google ID tokens through the backend endpoint
 `POST /api/auth/google/`. The browser receives only the OAuth client ID; the

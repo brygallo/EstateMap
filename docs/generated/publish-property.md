@@ -53,7 +53,7 @@ El formulario intercepta el submit antes de llamar a `POST /api/properties/`: si
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
 - `frontend/app/add-property/page.tsx:1080-1089` (`if (!token && !isEditMode && !resumeToken) {`) — Guarda el borrador, envía la solicitud pendiente y abre el modal, sin llamar a /properties/.
-- `backend/real_estate/models.py:555-557` (`class PendingPublication(models.Model)`) — Docstring: no se muestra en el mapa; sirve para seguimiento comercial.
+- `backend/real_estate/models.py:560-562` (`class PendingPublication(models.Model)`) — Docstring: no se muestra en el mapa; sirve para seguimiento comercial.
 - `backend/real_estate/views.py:311-313` (`permission_classes = [IsAuthenticatedOrReadOnly, IsOwnerOrReadOnly]`) — Respaldo del servidor si la petición llega sin pasar por el frontend.
 
 **Casos**
@@ -142,8 +142,8 @@ Antes de crear la propiedad, cada lote de imágenes se valida completo: máximo 
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/estate_map/settings.py:380-382` (`MAX_PROPERTY_UPLOAD_MB`) — MAX_IMAGES_PER_PROPERTY=10, MAX_IMAGE_SIZE_MB=10, MAX_PROPERTY_UPLOAD_MB=50.
-- `backend/estate_map/settings.py:363-365` (`ALLOWED_IMAGE_TYPES`)
+- `backend/estate_map/settings.py:386-388` (`MAX_PROPERTY_UPLOAD_MB`) — MAX_IMAGES_PER_PROPERTY=10, MAX_IMAGE_SIZE_MB=10, MAX_PROPERTY_UPLOAD_MB=50.
+- `backend/estate_map/settings.py:369-371` (`ALLOWED_IMAGE_TYPES`)
 - `backend/real_estate/serializers.py:253-308` (`def validate_uploaded_images`) — Cuenta existentes menos images_to_delete, valida suma del lote y cada imagen, antes de llegar a create/update.
 
 **Casos**
@@ -166,8 +166,8 @@ Si `POST /api/properties/` llega con cabecera `Idempotency-Key` y ya existe un r
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
 - `backend/real_estate/views.py:558-563` (`idempotency_key = (request.headers.get('Idempotency-Key')`) — Sin cabecera, se comporta como un create normal.
-- `backend/real_estate/views.py:572-575` (`response['X-Idempotent-Replay'] = 'true'`)
-- `backend/real_estate/views.py:584-586` (`cache.set(result_key, response.data['id'], 60 * 60 * 24)`)
+- `backend/real_estate/views.py:577-579` (`response['X-Idempotent-Replay'] = 'true'`)
+- `backend/real_estate/views.py:589-591` (`cache.set(result_key, response.data['id'], 60 * 60 * 24)`)
 - `frontend/app/add-property/page.tsx:1158-1160` (`Idempotency-Key`) — No se manda en la edición (PUT), solo en la creación.
 
 **Casos**
@@ -186,8 +186,8 @@ Antes de procesar, `create` toma un candado en caché de 60 s por el mismo diges
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/real_estate/views.py:575-577` (`lock_acquired = cache.add(lock_key, '1', 60)`)
-- `backend/real_estate/views.py:589-591` (`if lock_acquired:`) — cache.delete(lock_key) en el finally, se ejecute o no la creación.
+- `backend/real_estate/views.py:580-582` (`lock_acquired = cache.add(lock_key, '1', 60)`)
+- `backend/real_estate/views.py:594-596` (`if lock_acquired:`) — cache.delete(lock_key) en el finally, se ejecute o no la creación.
 
 **Casos**
 
@@ -207,7 +207,7 @@ Antes de procesar, `create` toma un candado en caché de 60 s por el mismo diges
 
 - `backend/real_estate/views.py:349-362` (`self.throttle_scope = 'property_write'`) — ScopedRateThrottle, no AntiScraperScopedThrottle, para create/update/partial_update.
 - `backend/real_estate/throttling.py:42-51` (`class AntiScraperScopedThrottle(ScopedRateThrottle)`) — Exime staff e IPs internas; solo se usa en map_points y list.
-- `backend/estate_map/settings.py:192-194` (`'property_write': '30/hour'`)
+- `backend/estate_map/settings.py:198-200` (`'property_write': '30/hour'`)
 
 **Casos**
 
@@ -225,8 +225,8 @@ Antes de procesar, `create` toma un candado en caché de 60 s por el mismo diges
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/real_estate/tasks.py:205-224` (`def enqueue_optimization`) — transaction.on_commit envuelve el intento asíncrono con fallback síncrono.
-- `backend/real_estate/tasks.py:225-238` (`optimize_property_image(image_id)`) — Llamada directa (no .delay) como fallback cuando el broker no responde.
+- `backend/real_estate/tasks.py:250-268` (`def enqueue_optimization`) — transaction.on_commit envuelve el intento asíncrono con fallback síncrono.
+- `backend/real_estate/tasks.py:279-285` (`optimize_property_image(image_id)`) — Llamada directa (no .delay) como fallback cuando el broker no responde.
 - `backend/real_estate/tasks.py:113-126` (`def sweep_pending_images`) — Reintento horario si incluso el fallback síncrono falla.
 
 **Casos**
@@ -271,8 +271,8 @@ Cada `post_save`/`post_delete` de `Property` encadena, por señal: una fila de `
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
 - `backend/real_estate/views.py:411-413` (`exclude(status='inactive')`) — Único filtro que saca inactive del catálogo público; no toca la fila.
-- `backend/real_estate/views.py:1005-1007` (`def my_properties`) — including inactive: el dueño ve su propiedad inactiva, el público no.
-- `backend/real_estate/models.py:339-341` (`on_delete=models.CASCADE`) — PropertyImage.property cae en cascada con la Property.
+- `backend/real_estate/views.py:1017-1019` (`def my_properties`) — including inactive: el dueño ve su propiedad inactiva, el público no.
+- `backend/real_estate/models.py:344-346` (`on_delete=models.CASCADE`) — PropertyImage.property cae en cascada con la Property.
 - `frontend/app/my-properties/page.tsx:250-270` (`const handleDelete`) — DELETE /properties/<id>/ tras window.confirm; PropertyViewSet no sobrescribe destroy.
 
 **Casos**
@@ -417,7 +417,7 @@ En «Actividad y clics» y en la ficha del usuario, un evento de fallo se marca 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
 - `frontend/app/admin/activity/page.tsx:106-115` (`errorSummary`) — Resuelve el motivo legible del evento a partir de reason, error_message o error_detail.
-- `frontend/app/admin/activity/page.tsx:424-432` (`'Mensaje mostrado al usuario'`) — El detalle del evento expone los campos del error, no solo el estado HTTP.
+- `frontend/app/admin/activity/page.tsx:438-445` (`'Mensaje mostrado al usuario'`) — El detalle del evento expone los campos del error, no solo el estado HTTP.
 - `frontend/app/admin/users/page.tsx:752-784` (`function ActivityRow`) — La actividad reciente del usuario muestra el motivo del fallo en la propia fila.
 
 **Casos**

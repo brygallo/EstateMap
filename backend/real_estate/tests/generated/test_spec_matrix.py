@@ -522,12 +522,12 @@ def test_perm_008_una_cuenta_verificada_si_deberia_poder_publicar(spec_request):
     )
 
 
-# --- PERM-009: delete_image no comprueba la propiedad (comportamiento actual) ---
+# --- PERM-010: delete_image exige ser propietario ---
 
-def test_perm_009_un_anonimo_si_queda_fuera(spec_request):
+def test_perm_010_un_anonimo_queda_fuera(spec_request):
     """
-    SPEC:PERM-009 — delete_image no comprueba la propiedad (comportamiento actual)
-    Case: un anónimo sí queda fuera
+    SPEC:PERM-010 — delete_image exige ser propietario
+    Case: un anónimo queda fuera
     """
     response = spec_request(
         method='DELETE',
@@ -540,61 +540,15 @@ def test_perm_009_un_anonimo_si_queda_fuera(spec_request):
         response,
         expected='denied',
         denied_status=401,
-        rule_id='PERM-009',
-        case_name='un anónimo sí queda fuera',
+        rule_id='PERM-010',
+        case_name='un anónimo queda fuera',
         expected_status=None,
     )
 
-def test_perm_009_un_tercero_autenticado_no_es_rechazado_por_permisos(spec_request):
+def test_perm_010_un_tercero_autenticado_no_puede_borrar_imagenes_ajenas(spec_request):
     """
-    SPEC:PERM-009 — delete_image no comprueba la propiedad (comportamiento actual)
-    Case: un tercero autenticado NO es rechazado por permisos
-    """
-    response = spec_request(
-        method='DELETE',
-        path='/api/properties/{property_id}/delete_image/',
-        role='not_owner',
-        given=None,
-        body=None,
-    )
-    assert_outcome(
-        response,
-        expected='allowed',
-        denied_status=401,
-        rule_id='PERM-009',
-        case_name='un tercero autenticado NO es rechazado por permisos',
-        expected_status=None,
-    )
-
-def test_perm_009_el_propietario_supera_la_barrera(spec_request):
-    """
-    SPEC:PERM-009 — delete_image no comprueba la propiedad (comportamiento actual)
-    Case: el propietario supera la barrera
-    """
-    response = spec_request(
-        method='DELETE',
-        path='/api/properties/{property_id}/delete_image/',
-        role='owner',
-        given=None,
-        body=None,
-    )
-    assert_outcome(
-        response,
-        expected='allowed',
-        denied_status=401,
-        rule_id='PERM-009',
-        case_name='el propietario supera la barrera',
-        expected_status=None,
-    )
-
-
-# --- PERM-010: delete_image debería exigir ser propietario ---
-
-@pytest.mark.skip(reason="PERM-010 is 'proposed': no code implements it yet")
-def test_perm_010_un_tercero_autenticado_no_deberia_poder_borrar_imagenes_ajenas(spec_request):
-    """
-    SPEC:PERM-010 — delete_image debería exigir ser propietario
-    Case: un tercero autenticado no debería poder borrar imágenes ajenas
+    SPEC:PERM-010 — delete_image exige ser propietario
+    Case: un tercero autenticado no puede borrar imágenes ajenas
     """
     response = spec_request(
         method='DELETE',
@@ -608,15 +562,14 @@ def test_perm_010_un_tercero_autenticado_no_deberia_poder_borrar_imagenes_ajenas
         expected='denied',
         denied_status=403,
         rule_id='PERM-010',
-        case_name='un tercero autenticado no debería poder borrar imágenes ajenas',
+        case_name='un tercero autenticado no puede borrar imágenes ajenas',
         expected_status=None,
     )
 
-@pytest.mark.skip(reason="PERM-010 is 'proposed': no code implements it yet")
-def test_perm_010_el_propietario_si_deberia_poder(spec_request):
+def test_perm_010_el_propietario_supera_la_barrera(spec_request):
     """
-    SPEC:PERM-010 — delete_image debería exigir ser propietario
-    Case: el propietario sí debería poder
+    SPEC:PERM-010 — delete_image exige ser propietario
+    Case: el propietario supera la barrera
     """
     response = spec_request(
         method='DELETE',
@@ -630,7 +583,7 @@ def test_perm_010_el_propietario_si_deberia_poder(spec_request):
         expected='allowed',
         denied_status=403,
         rule_id='PERM-010',
-        case_name='el propietario sí debería poder',
+        case_name='el propietario supera la barrera',
         expected_status=None,
     )
 

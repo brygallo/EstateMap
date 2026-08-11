@@ -60,3 +60,49 @@ def test_resume_payload_contains_temporary_photos(api_client):
     assert response.status_code == 200
     assert response.data["temporary_images"][0]["name"] == "draft.jpg"
     assert response.data["temporary_images"][0]["url"]
+
+
+@pytest.mark.django_db
+def test_anonymous_draft_photos_get_the_same_validation(api_client):
+    """SPEC:RSM-011 — a draft upload obeys the PROP-026 limits like any other upload."""
+    tiny = io.BytesIO()
+    Image.new("RGB", (100, 100), (10, 10, 10)).save(tiny, format="JPEG")
+
+    response = api_client.post(reverse("pending-publication-list"), {
+        "draft_key": str(uuid.uuid4()),
+        "title": "Foto diminuta",
+        "uploaded_images": [
+            SimpleUploadedFile("tiny.jpg", tiny.getvalue(), content_type="image/jpeg")
+        ],
+    }, format="multipart")
+
+    assert response.status_code == 400
+    assert PendingPublication.objects.count() == 0
+
+
+@pytest.mark.django_db
+def test_sweep_drops_photos_of_abandoned_drafts_but_keeps_the_tray_row(db):
+    """SPEC:RSM-012 — old photos go; the commercial record and live drafts stay."""
+    from datetime import timedelta
+
+    from django.utils import timezone
+
+    from real_estate.email_utils import create_publication_resume_token
+    from real_estate.models import PendingPublicationImage
+    from real_estate.tasks import sweep_stale_draft_images
+
+    abandoned = PendingPublication.objects.create(title="Abandonado")
+    abandoned.temporary_images.create(image=photo("old.jpg"), original_filename="old.jpg")
+    with_live_link = PendingPublication.objects.create(
+        title="Con enlace vivo", contact_email="viva@example.com"
+    )
+    with_live_link.temporary_images.create(image=photo("kept.jpg"), original_filename="kept.jpg")
+    create_publication_resume_token(with_live_link)
+
+    PendingPublicationImage.objects.update(created_at=timezone.now() - timedelta(days=31))
+
+    sweep_stale_draft_images()
+
+    assert abandoned.temporary_images.count() == 0
+    assert with_live_link.temporary_images.count() == 1
+    assert PendingPublication.objects.filter(pk=abandoned.pk).exists()

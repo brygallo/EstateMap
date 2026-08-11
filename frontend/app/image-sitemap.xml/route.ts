@@ -1,4 +1,4 @@
-import { getProperties, SITE_URL } from '@/lib/properties';
+import { getAllProperties, SITE_URL } from '@/lib/properties';
 
 // Sitemap de imágenes (protocolo Google image-sitemap). Next 14 no soporta el
 // campo `images` en MetadataRoute.Sitemap, así que lo generamos a mano aquí y
@@ -27,7 +27,7 @@ function propertyImageUrls(property: { images?: { image?: string }[] }): string[
 }
 
 export async function GET() {
-  const properties = await getProperties({ includeImages: true, pageSize: 1000 });
+  const properties = await getAllProperties({ includeImages: true, pageSize: 1000 });
 
   const urlBlocks = properties
     .map((property) => {

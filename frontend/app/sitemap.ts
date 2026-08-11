@@ -1,5 +1,5 @@
 import { MetadataRoute } from 'next';
-import { getProperties, getCities, getProvinces, slugify, SITE_URL, Property } from '@/lib/properties';
+import { getAllProperties, getCities, getProvinces, slugify, SITE_URL, Property } from '@/lib/properties';
 import { generateCombos, MIN_LOCATION_PROPERTIES, parseComboSlug } from '@/lib/seo-combos';
 import { authorSlug, getBlogCategories, getBlogPosts, MIN_POSTS_FOR_INDEXING } from '@/lib/blog';
 import { MIN_LISTINGS_FOR_PROMOTION } from '@/lib/market-stats';
@@ -35,7 +35,7 @@ function latestDate(dates: (Date | null)[], fallback: Date): Date {
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const now = new Date();
   const [properties, blog, blogCategories] = await Promise.all([
-    getProperties(),
+    getAllProperties(),
     getBlogPosts({ limit: 60 }),
     getBlogCategories(),
   ]);

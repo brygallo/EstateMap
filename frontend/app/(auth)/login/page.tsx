@@ -4,8 +4,9 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 import { useAuth } from '@/lib/auth-context';
-import { Formik, Form, type FormikHelpers } from 'formik';
-import * as Yup from 'yup';
+import { FormProvider, useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
 import { toast } from 'sonner';
 import { Mail, Lock, ArrowRight } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -15,7 +16,7 @@ import AuthCard from '@/components/auth/AuthCard';
 import AuthDivider from '@/components/auth/AuthDivider';
 import AuthField from '@/components/auth/AuthField';
 import AuthSubmit from '@/components/auth/AuthSubmit';
-import { fetchWithTimeout, requestErrorMessage } from '@/lib/form-errors';
+import { fetchWithTimeout, requestErrorMessage, responseErrorMessage } from '@/lib/form-errors';
 import { getPublicApiUrl } from '@/lib/api-url';
 
 export default function LoginPage() {
@@ -29,16 +30,20 @@ export default function LoginPage() {
     }
   }, [loading, token, user, router]);
 
+  const validationSchema = z.object({
+    email: z.email('Correo inválido'),
+    password: z.string().min(1, 'Campo requerido'),
+    remember: z.boolean(),
+  });
+  type LoginValues = z.infer<typeof validationSchema>;
+  const form = useForm<LoginValues>({
+    resolver: zodResolver(validationSchema),
+    defaultValues: { email: '', password: '', remember: true },
+  });
+
   if (loading || (token && user)) {
     return null;
   }
-
-  const validationSchema = Yup.object({
-    email: Yup.string().email('Correo inválido').required('Campo requerido'),
-    password: Yup.string().required('Campo requerido'),
-  });
-
-  type LoginValues = { email: string; password: string; remember: boolean };
   type ErrorPayload = Record<string, unknown>;
 
   const normalizeErrorMessage = (value: unknown): string => {
@@ -56,7 +61,7 @@ export default function LoginPage() {
     return '';
   };
 
-  const handleSubmit = async (values: LoginValues, { setSubmitting }: FormikHelpers<LoginValues>) => {
+  const handleSubmit = async (values: LoginValues) => {
     try {
       const res = await fetchWithTimeout(`${API_URL}/login/`, {
         method: 'POST',
@@ -93,7 +98,7 @@ export default function LoginPage() {
         } else if (data.password) {
           errorMessage = normalizeErrorMessage(data.password) || errorMessage;
         }
-        toast.error(errorMessage);
+        toast.error(errorMessage || await responseErrorMessage(res, 'Credenciales incorrectas'));
         return;
       }
       if (typeof data.access !== 'string' || typeof data.refresh !== 'string') {
@@ -107,8 +112,6 @@ export default function LoginPage() {
       router.push(hasPropertyDraft ? '/publicar-propiedad' : '/');
     } catch (err) {
       toast.error(requestErrorMessage(err, 'iniciar sesión'));
-    } finally {
-      setSubmitting(false);
     }
   };
 
@@ -126,13 +129,8 @@ export default function LoginPage() {
         </>
       }
     >
-      <Formik
-        initialValues={{ email: '', password: '', remember: true }}
-        validationSchema={validationSchema}
-        onSubmit={handleSubmit}
-      >
-        {({ isSubmitting, values, setFieldValue }) => (
-          <Form className="space-y-4">
+      <FormProvider {...form}>
+          <form className="space-y-4" onSubmit={form.handleSubmit(handleSubmit)}>
             <AuthField
               id="email"
               name="email"
@@ -161,8 +159,8 @@ export default function LoginPage() {
               <div className="flex items-center gap-2">
                 <Checkbox
                   id="remember"
-                  checked={values.remember}
-                  onCheckedChange={(checked) => setFieldValue('remember', checked === true)}
+                  checked={form.watch('remember')}
+                  onCheckedChange={(checked) => form.setValue('remember', checked === true)}
                 />
                 <Label htmlFor="remember" className="font-normal text-textSecondary">
                   Recordar sesión
@@ -176,13 +174,12 @@ export default function LoginPage() {
               </Link>
             </div>
 
-            <AuthSubmit pending={isSubmitting} pendingLabel="Iniciando sesión…">
+            <AuthSubmit pending={form.formState.isSubmitting} pendingLabel="Iniciando sesión…">
               Iniciar sesión
               <ArrowRight className="h-4 w-4" aria-hidden />
             </AuthSubmit>
-          </Form>
-        )}
-      </Formik>
+          </form>
+      </FormProvider>
 
       <AuthDivider label="o continúa con" />
       <GoogleSignInButton text="signin_with" />

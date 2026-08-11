@@ -16,7 +16,7 @@ from django.utils import timezone
 from .dedup import find_duplicate
 from .images import attach_images_from_urls, delete_property_images, image_dhash_from_url, sync_property_images
 from .location import validate_location
-from .normalize import build_dedup_key, sanitize_price
+from .normalize import sanitize_price
 
 
 def _is_explicit_zero(value):
@@ -57,7 +57,6 @@ def _apply_fields(prop, data, fuente, lat, lng):
         prop.source_published_at = data["source_published_at"]
     if data.get("source_updated_at"):
         prop.source_updated_at = data["source_updated_at"]
-    prop.dedup_key = build_dedup_key(lat, lng)
     if data.get("image_hash"):
         prop.image_hash = data["image_hash"][:32]
     prop.last_seen_at = timezone.now()

@@ -82,7 +82,7 @@ El modelo de usuario es `real_estate.User` (`backend/real_estate/models.py:7-16`
   `oauth_id` y, si no, por `email__iexact` con `select_for_update`
   (`services/authentication.py:53-55`), y marca `is_email_verified=True` e `is_active=True`
   (`:62-63`, `:85-86`). La configuración vive en `settings.py:267-286`; el proceso de alta de
-  credenciales está en `GOOGLE_OAUTH.md`.
+  credenciales está en `docs/workflows/google-oauth.md`.
 - **allauth / dj-rest-auth**: ambos están en `INSTALLED_APPS` (`settings.py:37-42`) y
   `CustomSocialAccountAdapter` está configurado (`settings.py:289`,
   `backend/real_estate/adapters.py`), **pero sus URLs no están montadas en ningún sitio**:

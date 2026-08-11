@@ -46,7 +46,7 @@ Qué devuelve el sistema cuando algo falla, y qué garantías acompañan a esa r
 | [`ERR-003`](#err-003--toda-pantalla-de-error-debería-mostrar-el-identificador) | Toda pantalla de error debería mostrar el identificador | 📝 Propuesta (sin código) |
 | [`ERR-004`](#err-004--los-incidentes-se-agregan-por-huella-y-no-guardan-datos-de-la-petición) | Los incidentes se agregan por huella y no guardan datos de la petición | ✅ Implementada |
 | [`ERR-005`](#err-005--las-subidas-demasiado-grandes-responden-413-en-json) | Las subidas demasiado grandes responden 413 en JSON | 🟡 Parcial |
-| [`ERR-006`](#err-006--el-413-de-nginx-no-cumple-el-contrato-de-la-api) | El 413 de nginx no cumple el contrato de la API | ⛔ No implementada |
+| [`ERR-006`](#err-006--el-contrato-json-para-errores-de-nginx-está-versionado-pero-requiere-despliegue) | El contrato JSON para errores de nginx está versionado pero requiere despliegue | 🟡 Parcial |
 | [`ERR-007`](#err-007--el-límite-de-ritmo-responde-429-con-retry-after) | El límite de ritmo responde 429 con Retry-After | ✅ Implementada |
 | [`ERR-008`](#err-008--con-la-caché-caída-el-sistema-sirve-no-falla) | Con la caché caída el sistema sirve, no falla | ✅ Implementada |
 | [`ERR-009`](#err-009--el-mensaje-de-subida-excesiva-anuncia-un-límite-que-no-es-el-real) | El mensaje de subida excesiva anuncia un límite que no es el real | ✅ Implementada |
@@ -64,7 +64,7 @@ El middleware de observabilidad reutiliza la cabecera X-Request-ID que llegue de
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
 - `backend/estate_map/observability.py:59-82` (`response["X-Request-ID"] = request_id`) — Generación o propagación del identificador y escritura de las tres cabeceras.
-- `backend/estate_map/settings.py:239-241` (`CORS_EXPOSE_HEADERS`) — Sin exponerlas por CORS el navegador no puede leerlas, así que la cabecera existiría pero el frontend no la vería.
+- `backend/estate_map/settings.py:245-247` (`CORS_EXPOSE_HEADERS`) — Sin exponerlas por CORS el navegador no puede leerlas, así que la cabecera existiría pero el frontend no la vería.
 
 
 **Casos**
@@ -123,8 +123,8 @@ Un fallo no crea una fila por ocurrencia: se calcula una huella y se incrementa 
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/real_estate/models.py:405-431` (`class SystemIncident`) — Los campos existentes son la lista completa de lo que se guarda.
-- `backend/real_estate/models.py:414-416` (`fingerprint`) — Clave única por la que se agregan las ocurrencias.
+- `backend/real_estate/models.py:395-420` (`class SystemIncident`) — Los campos existentes son la lista completa de lo que se guarda.
+- `backend/real_estate/models.py:419-421` (`fingerprint`) — Clave única por la que se agregan las ocurrencias.
 - `backend/estate_map/observability.py:17` (`record_incident`) — Único punto de escritura.
 
 **Casos**
@@ -155,17 +155,19 @@ Un middleware propio traduce las excepciones de subida de Django a respuestas JS
 | Cuerpo por encima del máximo | — | `tamaño`=60 MB + 1 | — | 413 `REQUEST_DATA_TOO_BIG` |
 | Más ficheros de los permitidos | — | `ficheros`=11 | — | 400 `TOO_MANY_FILES` |
 
-### ERR-006 — El 413 de nginx no cumple el contrato de la API
+### ERR-006 — El contrato JSON para errores de nginx está versionado pero requiere despliegue
 
-**Estado:** ⛔ No implementada
+**Estado:** 🟡 Parcial
 
-No existe ninguna directiva client_max_body_size versionada en el repositorio. El nginx de producción es nativo del host y su configuración no está aquí, así que una subida grande puede cortarse antes de llegar a Django y devolver HTML sin X-Request-ID y sin dejar rastro en los logs de la aplicación.
+El ejemplo de nginx fija client_max_body_size en 50 MB y convierte 413 y 429 en JSON con X-Request-ID, pero el nginx de producción es nativo y el repositorio no puede demostrar que el fragmento esté desplegado.
 
 
 > **Por qué:** Es el error más confuso de diagnosticar del sistema: mismo síntoma, dos orígenes, y solo uno de ellos deja huella. Queda registrado hasta que la configuración de nginx se versione junto al resto del despliegue.
 
 
-**Evidencia en el código:** ninguna, y es lo esperado: no hay código que la implemente.
+**Evidencia en el código** (verificada por `tools/specs/validate.py`)
+
+- `deploy/nginx-rate-limit.conf.example:35-75` (`client_max_body_size 50m`)
 
 **Casos**
 
@@ -190,7 +192,7 @@ Los scopes de throttling devuelven 429 indicando cuántos segundos faltan. Los t
 - `backend/real_estate/throttling.py:42-51` (`class AntiScraperScopedThrottle`) — Las tres exenciones, en el orden en que se evalúan: is_staff primero, después el cliente interno, después la lista de IPs.
 
 - `backend/real_estate/throttling.py:45-48` (`getattr(user, "is_staff", False)`) — La exención de staff, sin tope y evaluada antes que la IP.
-- `backend/estate_map/settings.py:198-200` (`THROTTLE_EXEMPT_IPS`) — Lista adicional de direcciones nunca limitadas.
+- `backend/estate_map/settings.py:204-206` (`THROTTLE_EXEMPT_IPS`) — Lista adicional de direcciones nunca limitadas.
 
 **Casos**
 
@@ -212,8 +214,8 @@ El cliente de Redis ignora los errores de conexión, de modo que una caché inac
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/estate_map/settings.py:461-463` (`IGNORE_EXCEPTIONS`) — Los errores del cliente de caché no se propagan.
-- `backend/estate_map/settings.py:482-484` (`DJANGO_REDIS_LOG_IGNORED_EXCEPTIONS`) — Pero sí se registran, para que la caída no pase inadvertida.
+- `backend/estate_map/settings.py:474-476` (`IGNORE_EXCEPTIONS`) — Los errores del cliente de caché no se propagan.
+- `backend/estate_map/settings.py:495-497` (`DJANGO_REDIS_LOG_IGNORED_EXCEPTIONS`) — Pero sí se registran, para que la caída no pase inadvertida.
 
 **Casos**
 

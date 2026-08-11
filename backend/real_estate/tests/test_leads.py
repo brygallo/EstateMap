@@ -1,8 +1,16 @@
 import pytest
+from django.core.cache import cache
 from django.core import mail
 from django.urls import reverse
 
 from real_estate.models import Lead, Property
+
+
+@pytest.fixture(autouse=True)
+def clear_throttle_cache():
+    cache.clear()
+    yield
+    cache.clear()
 
 
 @pytest.mark.django_db
@@ -38,6 +46,24 @@ def test_public_lead_creation_notifies_property_owner(api_client, create_user, c
     assert mail.outbox[0].to == ['owner@example.com', 'contacto@example.com']
     assert 'Maria Interesada' in mail.outbox[0].body
     assert '0999999999' in mail.outbox[0].body
+
+
+@pytest.mark.django_db
+def test_public_lead_creation_is_rate_limited(api_client, create_user):
+    """SPEC:LEAD-002 — anonymous lead creation is limited to ten requests per minute."""
+    owner = create_user(email='owner@example.com', username='rate-owner')
+    property_obj = Property.objects.create(owner=owner, title='Casa', price=120000)
+    payload = {
+        'property': property_obj.id,
+        'name': 'Interesado',
+        'phone': '0999999999',
+        'source': 'property_page',
+    }
+
+    responses = [api_client.post(reverse('lead-list'), payload, format='json') for _ in range(11)]
+
+    assert [response.status_code for response in responses[:10]] == [201] * 10
+    assert responses[10].status_code == 429
 
 
 @pytest.mark.django_db

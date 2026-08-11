@@ -35,9 +35,9 @@ Reglas de negocio del inventario: qué es una propiedad publicable, cómo se int
 | [`PROP-017`](#prop-017--un-anuncio-importado-que-desaparece-del-portal-se-borra) | Un anuncio importado que desaparece del portal se borra | ✅ Implementada |
 | [`PROP-018`](#prop-018--un-anuncio-importado-es-único-por-fuente-y-external_id) | Un anuncio importado es único por fuente y external_id | ✅ Implementada |
 | [`PROP-019`](#prop-019--entre-portales-gana-el-anuncio-que-trae-teléfono) | Entre portales gana el anuncio que trae teléfono | ✅ Implementada |
-| [`PROP-020`](#prop-020--duplicate_of-nunca-se-rellena) | duplicate_of nunca se rellena | ⛔ No implementada |
+| [`PROP-020`](#prop-020--el-modelo-no-conserva-enlaces-a-duplicados-descartados) | El modelo no conserva enlaces a duplicados descartados | ✅ Implementada |
 | [`PROP-021`](#prop-021--is_duplicate-solo-se-lee-nunca-se-escribe) | is_duplicate solo se lee, nunca se escribe | ⛔ No implementada |
-| [`PROP-022`](#prop-022--dedup_key-se-calcula-pero-nadie-lo-consulta) | dedup_key se calcula pero nadie lo consulta | ⛔ No implementada |
+| [`PROP-022`](#prop-022--la-deduplicación-no-persiste-una-rejilla-geográfica-sin-lector) | La deduplicación no persiste una rejilla geográfica sin lector | ✅ Implementada |
 | [`PROP-023`](#prop-023--cada-cambio-de-precio-deja-una-fila-en-el-historial) | Cada cambio de precio deja una fila en el historial | ✅ Implementada |
 | [`PROP-024`](#prop-024--las-visitas-solo-las-cuentan-las-personas) | Las visitas solo las cuentan las personas | ✅ Implementada |
 | [`PROP-025`](#prop-025--las-fotos-se-publican-en-tres-estados-y-la-subida-nunca-cuesta-el-anuncio) | Las fotos se publican en tres estados y la subida nunca cuesta el anuncio | ✅ Implementada |
@@ -62,7 +62,7 @@ price es siempre el precio principal de la operación del anuncio, y rent_price 
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/real_estate/models.py:152-157` (`rent_price`) — La semántica está escrita como comentario junto a la definición de ambos campos.
+- `backend/real_estate/models.py:158-162` (`rent_price`) — La semántica está escrita como comentario junto a la definición de ambos campos.
 - `backend/ingesta/pipeline/upsert.py:48-50` (`prop.rent_price`) — La ingesta escribe ambos campos por separado desde el dict canónico del scraper.
 - `frontend/app/property/[id]/page.tsx:439-441` (`hasRentPrice`) — La ficha pública muestra el precio principal y, solo si hay rent_price > 0, la línea "Alquiler .../mes".
 
@@ -115,7 +115,7 @@ Una propiedad con status='inactive' desaparece del listado, del mapa y de todos 
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/real_estate/views.py:1005-1007` (`my_properties`) — La acción declara permission_classes=[IsAuthenticated] y elige entre Property.objects.all() y filter(owner=request.user) sin tocar status.
+- `backend/real_estate/views.py:1017-1019` (`my_properties`) — La acción declara permission_classes=[IsAuthenticated] y elige entre Property.objects.all() y filter(owner=request.user) sin tocar status.
 
 **Casos**
 
@@ -144,7 +144,7 @@ my_properties responde con el sobre paginado de DRF (count, next, previous, resu
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
 - `backend/real_estate/views.py:257-266` (`class InventoryPagination`) — page_size 24, page_size_query_param 'page_size', máximo 100.
-- `backend/real_estate/views.py:1005-1007` (`def my_properties`) — stats se calcula con queryset.aggregate antes de paginar.
+- `backend/real_estate/views.py:1017-1019` (`def my_properties`) — stats se calcula con queryset.aggregate antes de paginar.
 - `frontend/app/my-properties/page.tsx:194-219` (`const fetchInventory`) — El cliente manda search, status y ordering y acumula páginas.
 
 **Casos**
@@ -192,7 +192,7 @@ PropertySerializer no declara ningún campo obligatorio, así que un POST autent
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/real_estate/serializers.py:184-193` (`fields = '__all__'`) — Verificado por introspección del serializer en el contenedor: la lista de campos con required=True está vacía.
+- `backend/real_estate/serializers.py:224-232` (`fields = '__all__'`) — Verificado por introspección del serializer en el contenedor: la lista de campos con required=True está vacía.
 - `backend/real_estate/models.py:111-117` (`property_type = models.CharField`) — Defaults que rellenan el hueco - property_type='land', status='for_sale', city='Macas', province='Morona Santiago'.
 
 **Casos**
@@ -333,7 +333,7 @@ Sea cual sea el formato de entrada, el polígono se guarda como un GeoJSON Polyg
 
 - `backend/real_estate/geo.py:224-227` (`geojson_coords`) — Cierra el anillo y voltea cada par a [lng, lat].
 - `backend/real_estate/serializers.py:312-333` (`validate_polygon`) — Acepta objeto GeoJSON, anillo simple o cualquiera de los dos codificado como texto JSON.
-- `backend/real_estate/serializers.py:234-242` (`to_representation`) — A la salida se reconvierte a [[lat, lng], ...] para el frontend.
+- `backend/real_estate/serializers.py:274-281` (`to_representation`) — A la salida se reconvierte a [[lat, lng], ...] para el frontend.
 
 **Casos**
 
@@ -355,7 +355,7 @@ Si un anuncio trae polígono pero no trae latitude/longitude, se guardan las del
 
 - `backend/real_estate/serializers.py:22-57` (`polygon_center_lat_lng`) — Acepta tanto el GeoJSON normalizado como el anillo [lat, lng] y descarta el punto de cierre.
 - `backend/real_estate/serializers.py:27-33` (`ensure_polygon_center`) — Solo rellena los huecos, nunca pisa unas coordenadas enviadas explícitamente.
-- `backend/real_estate/serializers.py:340-342` (`ensure_polygon_center`) — En update, un polígono nuevo sin coordenadas nuevas anula las anteriores y las recalcula.
+- `backend/real_estate/serializers.py:345-347` (`ensure_polygon_center`) — En update, un polígono nuevo sin coordenadas nuevas anula las anteriores y las recalcula.
 
 **Casos**
 
@@ -374,8 +374,8 @@ owner se toma siempre de request.user al crear desde el API, y las propiedades q
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/real_estate/views.py:553-555` (`perform_create`) — serializer.save(owner=self.request.user), ignorando cualquier owner del payload.
-- `backend/real_estate/serializers.py:155-157` (`owner = serializers.PrimaryKeyRelatedField(read_only=True)`)
+- `backend/real_estate/views.py:558-560` (`perform_create`) — serializer.save(owner=self.request.user), ignorando cualquier owner del payload.
+- `backend/real_estate/serializers.py:195-197` (`owner = serializers.PrimaryKeyRelatedField(read_only=True)`)
 - `backend/real_estate/models.py:183-185` (`owner = models.ForeignKey`) — on_delete=SET_NULL, null=True - borrar la cuenta no borra el anuncio.
 - `backend/ingesta/pipeline/upsert.py:23-53` (`_apply_fields`) — Escribe todos los campos del anuncio importado y no toca owner en ningún momento.
 
@@ -403,7 +403,7 @@ La escritura sobre una propiedad existente exige ser su owner; cualquier otro us
 
 - `backend/real_estate/permissions.py:4-15` (`IsOwnerOrReadOnly`) — Permite cualquier método seguro y compara obj.owner == request.user para el resto.
 - `backend/real_estate/views.py:311-313` (`IsOwnerOrReadOnly`) — permission_classes = [IsAuthenticatedOrReadOnly, IsOwnerOrReadOnly] en PropertyViewSet.
-- `backend/real_estate/views.py:2405-2407` (`PATCH_ALLOWED_FIELDS`) — El panel admin puede tocar propiedades ajenas, pero solo status, title, price, city y description.
+- `backend/real_estate/views.py:2464-2466` (`PATCH_ALLOWED_FIELDS`) — El panel admin puede tocar propiedades ajenas, pero solo status, title, price, city y description.
 
 **Casos**
 
@@ -475,8 +475,8 @@ La pareja (source, external_id) es única, pero solo para las filas con is_impor
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/real_estate/models.py:259-261` (`uniq_source_external_when_imported`) — UniqueConstraint con condition=Q(is_imported=True).
-- `backend/ingesta/pipeline/upsert.py:152-170` (`IntegrityError`) — Savepoint alrededor del save para que el choque de una carrera no envenene la transacción exterior.
+- `backend/real_estate/models.py:264-266` (`uniq_source_external_when_imported`) — UniqueConstraint con condition=Q(is_imported=True).
+- `backend/ingesta/pipeline/upsert.py:151-168` (`IntegrityError`) — Savepoint alrededor del save para que el choque de una carrera no envenene la transacción exterior.
 
 **Casos**
 
@@ -497,7 +497,7 @@ Cuando la misma propiedad física aparece en dos portales, se conserva la que ti
 
 - `backend/ingesta/pipeline/dedup.py:55-106` (`find_duplicate`) — Señales, de más a menos confiable - misma huella de imagen; menos de 30 m con área compatible (±10%); menos de 500 m con área y precio dentro de ±3%. El teléfono no se usa como señal de identidad.
 - `backend/ingesta/pipeline/upsert.py:114-123` (`demote`) — Si el nuevo trae teléfono y el existente no, el existente se marca para eliminarse; si no, se devuelve skipped_duplicate.
-- `backend/ingesta/pipeline/upsert.py:196-200` (`delete_property_images`) — La copia anterior se borra al final, cuando el reemplazo ya tiene sus imágenes.
+- `backend/ingesta/pipeline/upsert.py:195-198` (`delete_property_images`) — La copia anterior se borra al final, cuando el reemplazo ya tiene sus imágenes.
 
 **Casos**
 
@@ -508,15 +508,18 @@ Cuando la misma propiedad física aparece en dos portales, se conserva la que ti
 | Ninguno tiene teléfono | — | `nuevo_contact_phone`=, `existente_contact_phone`= | — | skipped_duplicate |
 | Mismo anunciante con dos propiedades distintas | — | `mismo_telefono`=sí, `distancia_m`=4000 | — | no se consideran duplicadas |
 
-### PROP-020 — duplicate_of nunca se rellena
+### PROP-020 — El modelo no conserva enlaces a duplicados descartados
 
-**Estado:** ⛔ No implementada
+**Estado:** ✅ Implementada
 
-Ninguna propiedad queda enlazada a su versión canónica: el campo duplicate_of existe en el modelo pero ningún código del backend lo asigna.
+Property no tiene un campo duplicate_of: el pipeline conserva una sola fila y no mantiene una relación hacia anuncios descartados.
 
-> **Por qué:** Hoy el pipeline resuelve el duplicado de forma destructiva - o descarta el anuncio nuevo (skipped_duplicate) o elimina el anterior tras crear el reemplazo - así que nunca quedan las dos filas vivas que el FK enlazaría. El campo solo aparece en la definición del modelo, en la lista de campos de solo lectura del serializer y en los scripts de réplica entre entornos.
+> **Por qué:** Hoy el pipeline resuelve el duplicado de forma destructiva - o descarta el anuncio nuevo (skipped_duplicate) o elimina el anterior tras crear el reemplazo - así que nunca quedan las dos filas vivas que el FK enlazaría. El campo se retiró porque nunca podía representar el comportamiento real.
 
-**Evidencia en el código:** ninguna, y es lo esperado: no hay código que la implemente.
+**Evidencia en el código** (verificada por `tools/specs/validate.py`)
+
+- `backend/real_estate/models.py:200-230` (`is_duplicate = models.BooleanField`) — Los campos de ingesta saltan de is_duplicate a imported_at, sin duplicate_of.
+- `backend/real_estate/migrations/0033_remove_obsolete_dedup_fields.py:1-12` (`name="duplicate_of"`)
 
 **Casos**
 
@@ -541,21 +544,24 @@ El flag is_duplicate se consulta en el mapa, el panel de ingesta y las métricas
 | Se detecta un duplicado entre dos portales | — | `duplicado_detectado`=sí | — | no |
 | Fila heredada con el flag activo | — | `is_duplicate`=sí | — | oculta del catálogo público |
 
-### PROP-022 — dedup_key se calcula pero nadie lo consulta
+### PROP-022 — La deduplicación no persiste una rejilla geográfica sin lector
 
-**Estado:** ⛔ No implementada
+**Estado:** ✅ Implementada
 
-Cada upsert escribe dedup_key con una huella de rejilla geográfica de unos 11 metros, pero ninguna consulta del sistema la lee.
+Property no guarda dedup_key; la deduplicación geográfica usa directamente un bounding box indexado y confirma la distancia con haversine.
 
-> **Por qué:** La deduplicación real se resuelve con un bounding box sobre latitude y longitude más haversine en Python, y con la huella perceptual de la imagen principal; la rejilla quedó como un índice sin lector. Buscar dedup_key en backend/ solo encuentra la escritura, la definición del modelo, la lista de campos de solo lectura del serializer y los scripts de réplica.
+> **Por qué:** La deduplicación real se resuelve con un bounding box sobre latitude y longitude más haversine en Python, y con la huella perceptual de la imagen principal; persistir una segunda aproximación geográfica sin consumidores añadía escritura e índice sin mejorar la búsqueda.
 
-**Evidencia en el código:** ninguna, y es lo esperado: no hay código que la implemente.
+**Evidencia en el código** (verificada por `tools/specs/validate.py`)
+
+- `backend/ingesta/pipeline/dedup.py:70-105` (`latitude__range`)
+- `backend/real_estate/migrations/0033_remove_obsolete_dedup_fields.py:1-12` (`name="dedup_key"`)
 
 **Casos**
 
 | Caso | Rol | Estado previo | Cuerpo | Esperado |
 | --- | --- | --- | --- | --- |
-| Alta de un anuncio importado con coordenadas | — | `latitude`=-0.18, `longitude`=-78.48 | — | -0.18,-78.48 |
+| Alta de un anuncio importado con coordenadas | — | `latitude`=-0.18, `longitude`=-78.48 | — | no se persiste una clave adicional |
 
 ### PROP-023 — Cada cambio de precio deja una fila en el historial
 
@@ -568,7 +574,7 @@ Al guardar una propiedad con precio se crea una fila en PropertyPriceHistory si 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
 - `backend/real_estate/signals.py:48-54` (`PropertyPriceHistory.objects.create`) — Compara con la última fila por recorded_at y solo escribe si el precio cambió.
-- `backend/real_estate/models.py:336-339` (`class PropertyPriceHistory`) — FK en cascada, precio, recorded_at e índice por (property, recorded_at).
+- `backend/real_estate/models.py:341-343` (`class PropertyPriceHistory`) — FK en cascada, precio, recorded_at e índice por (property, recorded_at).
 
 **Casos**
 
@@ -595,8 +601,8 @@ views_count se incrementa al consultar el detalle únicamente cuando el request 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
 - `backend/real_estate/views.py:597-603` (`is_bot_request`) — Property.objects.filter(pk=...).update(views_count=F('views_count') + 1) solo si no es bot.
-- `backend/real_estate/models.py:239-241` (`views_count`) — PositiveIntegerField con default 0.
-- `backend/real_estate/serializers.py:188-192` (`views_count`) — Está en read_only_fields, así que un cliente no puede inflarlo desde el payload.
+- `backend/real_estate/models.py:243-245` (`views_count`) — PositiveIntegerField con default 0.
+- `backend/real_estate/serializers.py:228-231` (`views_count`) — Está en read_only_fields, así que un cliente no puede inflarlo desde el payload.
 
 **Casos**
 
@@ -616,10 +622,10 @@ Una PropertyImage nace en pending con el original en disco local, pasa a ready c
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/real_estate/models.py:354-356` (`FAILED = "failed"`) — TextChoices con pending, ready y failed; el default del campo es ready.
+- `backend/real_estate/models.py:359-361` (`FAILED = "failed"`) — TextChoices con pending, ready y failed; el default del campo es ready.
 - `backend/real_estate/serializers.py:61-95` (`stage_property_image`) — Crea la fila en pending con pending_path y encola la optimización; ante OSError devuelve None sin lanzar.
 - `backend/real_estate/tasks.py:44-109` (`optimize_property_image`) — Publica imagen y miniatura, pasa a ready y limpia el temporal; ante ValueError deja failed con optimization_error.
-- `backend/real_estate/serializers.py:127-146` (`_pending_url`) — Una fila pending devuelve una URL servida desde el staging local.
+- `backend/real_estate/serializers.py:173-191` (`_pending_url`) — Una fila pending devuelve una URL servida desde el staging local.
 
 **Casos**
 
@@ -640,8 +646,8 @@ Como máximo 10 imágenes por propiedad, cada una de hasta 10 MB y entre 200x200
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/estate_map/settings.py:380-382` (`MAX_PROPERTY_UPLOAD_MB`) — MAX_IMAGES_PER_PROPERTY = 10, MAX_IMAGE_SIZE_MB = 10, MAX_PROPERTY_UPLOAD_MB = 50.
-- `backend/estate_map/settings.py:363-365` (`ALLOWED_IMAGE_TYPES`) — image/jpeg, image/jpg, image/png y image/webp.
+- `backend/estate_map/settings.py:386-388` (`MAX_PROPERTY_UPLOAD_MB`) — MAX_IMAGES_PER_PROPERTY = 10, MAX_IMAGE_SIZE_MB = 10, MAX_PROPERTY_UPLOAD_MB = 50.
+- `backend/estate_map/settings.py:369-371` (`ALLOWED_IMAGE_TYPES`) — image/jpeg, image/jpg, image/png y image/webp.
 - `backend/real_estate/serializers.py:253-308` (`validate_uploaded_images`) — Aplica en orden el tope por propiedad, el tope combinado y los tres validadores por imagen.
 - `backend/real_estate/validators.py:8-44` (`validate_image_dimensions`) — Tamaño máximo, dimensiones mínimas y máximas, y extensión permitida.
 
@@ -689,7 +695,7 @@ La sección "Publicaciones cercanas" de una ficha lista las propiedades ordenada
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `frontend/lib/properties.ts:210-245` (`getNearbyProperties`) — Punto de referencia vía getPropertyPoint, candidatos sin ubicación descartados, orden ascendente por distanceKm y recorte a limit.
+- `frontend/lib/properties.ts:267-301` (`getNearbyProperties`) — Punto de referencia vía getPropertyPoint, candidatos sin ubicación descartados, orden ascendente por distanceKm y recorte a limit.
 - `frontend/app/property/[id]/page.tsx:280-282` (`getNearbyProperties`) — La ficha pide 4 y solo pinta la sección si hay al menos una.
 
 **Casos**
@@ -710,7 +716,7 @@ La ficha envía su centro como origen y el backend ordena por proximidad antes d
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
 - `backend/real_estate/views.py:467-493` (`distance_score`) — La expresión de distancia se aplica al queryset antes de que DRF lo pagine.
-- `frontend/lib/properties.ts:244-253` (`origin_lat`) — La ficha envía el centro efectivo de la propiedad junto con su ventana bbox.
+- `frontend/lib/properties.ts:286-294` (`origin_lat`) — La ficha envía el centro efectivo de la propiedad junto con su ventana bbox.
 
 **Casos**
 
@@ -792,9 +798,9 @@ La normalización vive en `save()` porque todos los caminos de escritura pasan p
 
 - `backend/real_estate/models.py:104-125` (`CLOSED_REASON_CHOICES`) — Por qué no son dos valores más de STATUS_CHOICES.
 - `backend/real_estate/models.py:173-181` (`closed_reason = models`)
-- `backend/real_estate/models.py:279-293` (`if self.closed_reason:`) — Cerrar pone inactive y sella la fecha; abrir la borra.
+- `backend/real_estate/models.py:294-307` (`if self.closed_reason:`) — Cerrar pone inactive y sella la fecha; abrir la borra.
 - `backend/real_estate/serializers.py:38-50` (`def reopen_on_reactivation`) — Volver a poner el anuncio en venta lo reabre; si no, el cambio parece aceptado y se deshace solo.
-- `backend/real_estate/views.py:2591-2597` (`changes['closed_reason'] = ''`) — El cambio de estado en lote escribe con .update(), que nunca llega a save(), así que reabre a mano.
+- `backend/real_estate/views.py:2653-2655` (`changes['closed_reason'] = ''`) — El cambio de estado en lote escribe con .update(), que nunca llega a save(), así que reabre a mano.
 
 **Casos**
 
@@ -864,7 +870,7 @@ Cuando la fila más reciente del historial no coincide con el precio actual —a
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/real_estate/serializers.py:196-226` (`def _price_change`)
+- `backend/real_estate/serializers.py:244-273` (`def _price_change`)
 - `backend/real_estate/signals.py:48-54` (`PropertyPriceHistory.objects.create`) — Solo escribe cuando el precio cambia; filas consecutivas = precios consecutivos.
 
 **Casos**

@@ -146,6 +146,51 @@ def sweep_pending_images():
     return {"requeued": requeued, "removed": removed}
 
 
+@shared_task
+def sweep_stale_draft_images():
+    """
+    Drop the stored photos of abandoned publication drafts.
+
+    The tray rows stay — they are the commercial follow-up record — but their
+    photos are anonymous uploads parked in the object store, and without this
+    sweep a draft nobody ever redeems keeps them forever. A draft is abandoned
+    once its images are old enough and no resume token that could still publish
+    it remains valid.
+    """
+    from datetime import timedelta
+
+    from django.utils import timezone
+
+    from .models import PendingPublicationImage
+
+    max_age_days = getattr(settings, "PENDING_DRAFT_IMAGE_MAX_AGE_DAYS", 30)
+    now = timezone.now()
+    stale = PendingPublicationImage.objects.filter(
+        created_at__lt=now - timedelta(days=max_age_days)
+    ).exclude(
+        # One JOIN condition: keep any image whose draft still has a live link.
+        pending__resume_tokens__redeemed_at__isnull=True,
+        pending__resume_tokens__revoked_at__isnull=True,
+        pending__resume_tokens__expires_at__gt=now,
+    )
+
+    removed = 0
+    for image in stale.iterator():
+        storage, name = image.image.storage, image.image.name
+        image.delete()
+        if name:
+            try:
+                storage.delete(name)
+            except Exception:
+                # The row is already gone; a dangling object is retried by the
+                # next sweep only if it still has a row, so log it loudly.
+                logger.warning("Could not delete draft image object %s", name, exc_info=True)
+        removed += 1
+
+    logger.info("sweep_stale_draft_images: %s stored photos removed", removed)
+    return {"removed": removed}
+
+
 @shared_task(
     bind=True,
     autoretry_for=(requests.RequestException,),

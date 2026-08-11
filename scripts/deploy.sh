@@ -47,7 +47,7 @@ if ! grep -q "GOOGLE_CLIENT_ID=your-google-client-id" .env.prod 2>/dev/null; the
 else
     echo "⚠️  WARNING: Google OAuth variables still have default values!"
     echo "   Update GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET in .env.prod"
-    echo "   See GOOGLE_OAUTH_SETUP.md for instructions"
+    echo "   See docs/workflows/google-oauth.md for instructions"
     echo ""
     read -p "   Continue anyway? (y/N) " -n 1 -r
     echo

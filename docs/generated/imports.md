@@ -9,7 +9,7 @@
 
 Reglas de negocio del agregador (app `ingesta`): cómo un anuncio de un portal externo se convierte en una `Property` del catálogo, qué se descarta, cómo se deduplica entre fuentes y cuándo se retira. Verificado contra el código el 2026-08-04. Plusvalía es hoy la única fuente activa.
 
-**Ver también:** `docs/workflows/import-properties.md`, `specs/workflows/import-properties.yaml`, `PLUSVALIA_IMPORT_RUNBOOK.md`
+**Ver también:** `docs/workflows/import-properties.md`, `specs/workflows/import-properties.yaml`, `docs/workflows/plusvalia-import.md`
 
 ## Reglas
 
@@ -33,7 +33,7 @@ Reglas de negocio del agregador (app `ingesta`): cómo un anuncio de un portal e
 | [`IMP-016`](#imp-016--una-retirada-caduca-a-los-30-días) | Una retirada caduca a los 30 días | ✅ Implementada |
 | [`IMP-017`](#imp-017--cloudflare-solo-acepta-el-fingerprint-chrome99_android-desde-el-servidor) | Cloudflare solo acepta el fingerprint chrome99_android desde el servidor | ✅ Implementada |
 | [`IMP-018`](#imp-018--una-propiedad-importada-sin-ninguna-imagen-no-se-publica) | Una propiedad importada sin ninguna imagen no se publica | ✅ Implementada |
-| [`IMP-019`](#imp-019--is_duplicate-y-duplicate_of-los-escribe-el-pipeline) | is_duplicate y duplicate_of los escribe el pipeline | ⛔ No implementada |
+| [`IMP-019`](#imp-019--is_duplicate-no-se-escribe-durante-la-ingesta) | is_duplicate no se escribe durante la ingesta | ⛔ No implementada |
 | [`IMP-020`](#imp-020--fuenteactiva-decide-qué-fuentes-se-recorren) | Fuente.activa decide qué fuentes se recorren | ⛔ No implementada |
 | [`IMP-021`](#imp-021--existe-una-importación-programada) | Existe una importación programada | ⛔ No implementada |
 | [`IMP-022`](#imp-022--el-scraper-de-remax-está-disponible-como-fuente) | El scraper de RE/MAX está disponible como fuente | ⛔ No implementada |
@@ -70,9 +70,9 @@ Reimportar el mismo anuncio actualiza la fila existente en vez de duplicarla, ga
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/ingesta/pipeline/upsert.py:114-116` (`Property.objects.filter(source=fuente, external_id=external_id)`) — Búsqueda previa; si existe, la operación se convierte en UPDATE.
-- `backend/real_estate/models.py:259-261` (`uniq_source_external_when_imported`) — UniqueConstraint condicionada a is_imported=True.
-- `backend/ingesta/pipeline/upsert.py:152-164` (`except IntegrityError:`) — Una carrera perdida se recupera y se reescribe como actualización.
+- `backend/ingesta/pipeline/upsert.py:113-115` (`Property.objects.filter(source=fuente, external_id=external_id)`) — Búsqueda previa; si existe, la operación se convierte en UPDATE.
+- `backend/real_estate/models.py:264-266` (`uniq_source_external_when_imported`) — UniqueConstraint condicionada a is_imported=True.
+- `backend/ingesta/pipeline/upsert.py:151-162` (`except IntegrityError:`) — Una carrera perdida se recupera y se reescribe como actualización.
 
 **Casos**
 
@@ -93,7 +93,7 @@ Un precio positivo de venta menor a 1.000 USD, un alquiler positivo menor a 20 U
 
 - `backend/ingesta/pipeline/normalize.py:100-122` (`sanitize_price`)
 - `backend/ingesta/pipeline/normalize.py:95-97` (`_SALE_PRICE_MIN`) — Cotas de sanidad para el mercado ecuatoriano, en USD.
-- `backend/ingesta/pipeline/upsert.py:100-104` (`clean, motivo = sanitize_price`) — Se aplica en el punto único de escritura, así cubre todos los flujos.
+- `backend/ingesta/pipeline/upsert.py:99-102` (`clean, motivo = sanitize_price`) — Se aplica en el punto único de escritura, así cubre todos los flujos.
 
 **Casos**
 
@@ -188,7 +188,7 @@ Si el dHash de la imagen principal coincide exactamente con el de una propiedad 
 
 - `backend/ingesta/pipeline/images.py:70-96` (`image_dhash_from_url`) — Devuelve 16 caracteres hex, o cadena vacía si falla la descarga.
 - `backend/ingesta/pipeline/dedup.py:80-83` (`canon.filter(image_hash=image_hash)`) — Igualdad exacta, no distancia de Hamming.
-- `backend/ingesta/pipeline/upsert.py:110-112` (`image_dhash_from_url(image_urls[0])`) — Solo se calcula en el flujo directo, sobre la primera imagen.
+- `backend/ingesta/pipeline/upsert.py:109-111` (`image_dhash_from_url(image_urls[0])`) — Solo se calcula en el flujo directo, sobre la primera imagen.
 
 **Casos**
 
@@ -234,7 +234,7 @@ Dos anuncios que comparten teléfono no se consideran la misma propiedad por ese
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
 - `backend/ingesta/pipeline/dedup.py:57-62` (`NO usamos el teléfono como señal`)
-- `backend/ingesta/pipeline/upsert.py:121-128` (`el teléfono NO se usa: un anunciante tiene muchas propiedades con el mismo`)
+- `backend/ingesta/pipeline/upsert.py:120-126` (`el teléfono NO se usa: un anunciante tiene muchas propiedades con el mismo`)
 
 **Casos**
 
@@ -252,8 +252,8 @@ Ante un duplicado entre fuentes, si el anuncio nuevo trae teléfono y el existen
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/ingesta/pipeline/upsert.py:135-143` (`demote = dup`)
-- `backend/ingesta/pipeline/upsert.py:196-200` (`delete_property_images(demote)`) — Borrado diferido al final del upsert, nunca antes.
+- `backend/ingesta/pipeline/upsert.py:134-141` (`demote = dup`)
+- `backend/ingesta/pipeline/upsert.py:195-198` (`delete_property_images(demote)`) — Borrado diferido al final del upsert, nunca antes.
 
 **Casos**
 
@@ -274,7 +274,7 @@ Ante un duplicado entre fuentes, si el anuncio nuevo trae teléfono y el existen
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
 - `backend/ingesta/pipeline/dedup.py:74-77` (`canon.exclude(source_id=exclude_source_id)`)
-- `backend/ingesta/pipeline/upsert.py:127-132` (`exclude_source_id=fuente.id`)
+- `backend/ingesta/pipeline/upsert.py:126-130` (`exclude_source_id=fuente.id`)
 
 **Casos**
 
@@ -369,7 +369,7 @@ Ninguna retirada ni limpieza de mantenimiento puede tocar una `Property` con `is
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/ingesta/pipeline/upsert.py:63-65` (`prop.last_seen_at = timezone.now()`)
+- `backend/ingesta/pipeline/upsert.py:62-64` (`prop.last_seen_at = timezone.now()`)
 - `backend/ingesta/runner.py:379-383` (`F("last_seen_at").asc(nulls_first=True)`)
 - `backend/ingesta/runner.py:423-425` (`update(last_seen_at=timezone.now())`) — Sellado por lote de las confirmadas vivas.
 
@@ -457,13 +457,13 @@ Se adjuntan hasta 10 imágenes por anuncio; si no se logra adjuntar ninguna, la 
 
 - `backend/ingesta/tests/test_upsert_images.py`
 
-### IMP-019 — is_duplicate y duplicate_of los escribe el pipeline
+### IMP-019 — is_duplicate no se escribe durante la ingesta
 
 **Estado:** ⛔ No implementada
 
-Ningún camino de la ingesta marca una propiedad como duplicada ni la enlaza con su canónica; los campos existen y se leen, pero nadie los rellena.
+Ningún camino de la ingesta marca una propiedad como duplicada; el campo histórico is_duplicate se lee para limpieza, pero nunca se pone a true.
 
-> **Por qué:** Deriva detectada el 2026-08-04. `Property.is_duplicate` y `Property.duplicate_of` (backend/real_estate/models.py:145-153) se usan para filtrar el mapa, contar "duplicados" en el panel y como categoría de limpieza, pero el upsert resuelve los duplicados omitiendo (`skipped_duplicate`) o borrando la copia perdedora, nunca marcando. El contador `duplicados` del panel de ingesta solo puede reflejar datos históricos. Decidir: o el pipeline los escribe, o los campos se retiran.
+> **Por qué:** Deriva detectada el 2026-08-04. `Property.is_duplicate` se usa para filtrar el mapa, contar "duplicados" históricos en el panel y como categoría de limpieza, pero el upsert resuelve los duplicados omitiendo (`skipped_duplicate`) o borrando la copia perdedora, nunca marcando. El contador `duplicados` del panel de ingesta solo puede reflejar datos históricos. El FK duplicate_of, que tampoco se escribía, ya fue retirado.
 
 **Evidencia en el código:** ninguna, y es lo esperado: no hay código que la implemente.
 
@@ -472,7 +472,7 @@ Ningún camino de la ingesta marca una propiedad como duplicada ni la enlaza con
 | Caso | Rol | Estado previo | Cuerpo | Esperado |
 | --- | --- | --- | --- | --- |
 | Duplicado detectado entre fuentes | — | `resultado_upsert`=skipped_duplicate | — | hoy no se crea ninguna fila marcada is_duplicate=True |
-| Comportamiento esperado si se implementa | — | `resultado_upsert`=skipped_duplicate | — | `is_duplicate`=sí, `duplicate_of`=id de la canónica |
+| Comportamiento esperado si se implementa | — | `resultado_upsert`=skipped_duplicate | — | `is_duplicate`=sí, `canonical_reference`=no existe porque la copia se descarta |
 
 ### IMP-020 — Fuente.activa decide qué fuentes se recorren
 

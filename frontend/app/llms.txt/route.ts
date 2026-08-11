@@ -1,5 +1,5 @@
 import {
-  getProperties,
+  getAllProperties,
   getCities,
   getProvinces,
   formatPrice,
@@ -23,7 +23,7 @@ export const revalidate = 3600;
 
 export async function GET() {
   const [properties, stats, blog] = await Promise.all([
-    getProperties(),
+    getAllProperties(),
     getMarketStats(),
     getBlogPosts({ limit: 40 }),
   ]);

@@ -58,9 +58,9 @@ que recibirá 403 desde el servidor.
 paquete, importar en prod". Producción puede correr `ingesta_load` (un solo paso)
 directamente contra Plusvalía.
 
-### Contradicción con `PLUSVALIA_IMPORT_RUNBOOK.md`
+### Contradicción con `docs/workflows/plusvalia-import.md`
 
-`PLUSVALIA_IMPORT_RUNBOOK.md` (raíz del repo, fechado 2026-07-08) dice en su
+`docs/workflows/plusvalia-import.md` (fechado 2026-07-08) dice en su
 contexto: *"Cloudflare bloquea la IP de produccion en Contabo … El servidor no
 debe llamar a Plusvalia"* y en sus notas finales *"No ejecutar la carga directa
 desde el admin de produccion para Plusvalia"*. **Eso ya no es cierto**: quedó
@@ -357,7 +357,7 @@ Decidido en `upsert.py:114-123`:
 
 `dedup_key` **no** es el mecanismo de deduplicación: es solo la huella de rejilla
 de ~11 m que se guarda para acelerar consultas. Que se repita entre filas no es
-un bug (lo confirma también `PLUSVALIA_IMPORT_RUNBOOK.md`, sección "Validacion de
+un bug (lo confirma también `docs/workflows/plusvalia-import.md`, sección "Validacion de
 no-duplicados").
 
 **Estado real hoy:** con Plusvalía como única fuente y `exclude_source_id`

@@ -369,3 +369,39 @@ def test_an_unknown_token_answers_exactly_like_a_spent_one(api_client, pending):
 
     assert unknown.status_code == burnt.status_code == 410
     assert unknown.data == burnt.data
+
+
+@pytest.mark.django_db
+def test_redeeming_with_retained_image_ids_transfers_the_photos(api_client, pending):
+    """SPEC:RSM-006 — the UI always sends pending_image_ids; redemption must honor it.
+
+    The add-property form posts the field even when nothing was discarded
+    (as "[]" or a full list), so this exercises the exact multipart request the
+    real client makes.
+    """
+    import io
+    import json
+
+    from django.core.files.uploadedfile import SimpleUploadedFile
+    from PIL import Image as PILImage
+
+    output = io.BytesIO()
+    PILImage.new('RGB', (300, 300), (90, 120, 150)).save(output, format='JPEG')
+    kept = pending.temporary_images.create(
+        image=SimpleUploadedFile('draft.jpg', output.getvalue(), content_type='image/jpeg'),
+        original_filename='draft.jpg',
+    )
+    token = create_publication_resume_token(pending)
+
+    payload = valid_property_payload()
+    payload['pending_image_ids'] = json.dumps([kept.pk])
+    response = api_client.post(
+        reverse('publication_draft_redeem', kwargs={'token': token.token}),
+        payload,
+        format='multipart',
+    )
+
+    assert response.status_code == 201
+    prop = Property.objects.get(pk=response.data['property']['id'])
+    assert prop.images.count() == 1
+    assert pending.temporary_images.count() == 0

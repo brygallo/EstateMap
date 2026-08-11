@@ -7,7 +7,7 @@
 
 **Estado del dominio:** ✅ Implementada
 
-Tres formas de capturar interés antes de que exista una transacción: el contacto sobre una propiedad publicada (Lead), la solicitud de publicación de alguien que todavía no tiene cuenta (PendingPublication), y el registro funcional de eventos de uso (ActivityEvent), cuyo campo is_bot decide qué entra en las métricas que ve el negocio. Los tres endpoints de creación son públicos por diseño; solo dos de los tres llevan límite de ritmo.
+Tres formas de capturar interés antes de que exista una transacción: el contacto sobre una propiedad publicada (Lead), la solicitud de publicación de alguien que todavía no tiene cuenta (PendingPublication), y el registro funcional de eventos de uso (ActivityEvent), cuyo campo is_bot decide qué entra en las métricas que ve el negocio. Los tres endpoints de creación son públicos por diseño y los tres llevan un límite de ritmo propio.
 
 
 **Ver también:** `backend/real_estate/models.py`, `backend/real_estate/views.py`, `backend/real_estate/services/notifications.py`, `backend/real_estate/email_utils.py`, `backend/real_estate/management/commands/backfill_activity_is_bot.py`, `specs/errors/catalog.yaml`
@@ -16,8 +16,8 @@ Tres formas de capturar interés antes de que exista una transacción: el contac
 
 | Id | Regla | Estado |
 | --- | --- | --- |
-| [`LEAD-001`](#lead-001--crear-un-lead-es-público-y-no-tiene-límite-de-ritmo) | Crear un lead es público y no tiene límite de ritmo | ✅ Implementada |
-| [`LEAD-002`](#lead-002--propuesta-limitar-el-ritmo-de-creación-de-leads) | Propuesta: limitar el ritmo de creación de leads | 📝 Propuesta (sin código) |
+| [`LEAD-001`](#lead-001--crear-un-lead-era-público-y-no-tenía-límite-de-ritmo) | Crear un lead era público y no tenía límite de ritmo | 🗑️ Obsoleta |
+| [`LEAD-002`](#lead-002--limitar-el-ritmo-de-creación-de-leads) | Limitar el ritmo de creación de leads | ✅ Implementada |
 | [`LEAD-003`](#lead-003--un-lead-solo-tiene-tres-estados-de-gestión) | Un lead solo tiene tres estados de gestión | ✅ Implementada |
 | [`LEAD-004`](#lead-004--el-origen-de-un-lead-se-declara-en-un-catálogo-cerrado) | El origen de un lead se declara en un catálogo cerrado | ✅ Implementada |
 | [`LEAD-005`](#lead-005--solo-el-dueño-de-la-propiedad-ve-sus-leads-staff-los-ve-todos) | Solo el dueño de la propiedad ve sus leads, staff los ve todos | ✅ Implementada |
@@ -36,11 +36,11 @@ Tres formas de capturar interés antes de que exista una transacción: el contac
 | [`LEAD-018`](#lead-018--pendingpublication-distingue-tres-estados-de-seguimiento-comercial-más-el-estado-inicial) | PendingPublication distingue tres estados de seguimiento comercial más el estado inicial | ✅ Implementada |
 | [`LEAD-019`](#lead-019--los-guardados-repetidos-de-un-borrador-actualizan-una-sola-solicitud-pendiente) | Los guardados repetidos de un borrador actualizan una sola solicitud pendiente | ✅ Implementada |
 
-### LEAD-001 — Crear un lead es público y no tiene límite de ritmo
+### LEAD-001 — Crear un lead era público y no tenía límite de ritmo
 
-**Estado:** ✅ Implementada
+**Estado:** 🗑️ Obsoleta
 
-POST /api/leads/ usa AllowAny y no declara get_throttles, así que cualquiera puede enviar el formulario de contacto de una propiedad sin autenticarse y sin tope de peticiones por minuto.
+Hasta 2026-08-11, POST /api/leads/ aceptaba peticiones públicas sin tope; LEAD-002 reemplazó este comportamiento con un límite por cliente.
 
 
 > **Por qué:** Es la excepción entre los tres endpoints públicos de este dominio: PendingPublicationViewSet y ActivityEventViewSet sí definen get_throttles para su create, y el propio comentario de settings.py nombra a esos dos como los únicos que se limitan. LeadViewSet no aparece en esa lista. Cada envío además dispara un correo síncrono (ver LEAD-006), así que un abuso aquí no solo satura la base de datos: satura también el servidor de correo saliente en el mismo hilo de la petición HTTP.
@@ -51,13 +51,6 @@ POST /api/leads/ usa AllowAny y no declara get_throttles, así que cualquiera pu
 - Endpoint: `POST /api/leads/`
 - ¿Lo aplica el servidor?: no
 
-**Evidencia en el código** (verificada por `tools/specs/validate.py`)
-
-- `backend/real_estate/views.py:1111-1113` (`def get_permissions`) — get_permissions devuelve AllowAny() para create y no existe ningún get_throttles en LeadViewSet (870-905): sin ese método, DRF aplica solo los throttles globales de DEFAULT_THROTTLE_CLASSES, que aquí no están definidos.
-
-- `backend/estate_map/settings.py:177-184` (`DEFAULT_THROTTLE_RATES`) — El comentario dice explícitamente que el rate limiting se aplica "mediante ScopedRateThrottle en el create de ActivityEventViewSet y PendingPublicationViewSet"; LeadViewSet no se menciona porque no lo usa.
-
-
 **Casos**
 
 | Caso | Rol | Estado previo | Cuerpo | Esperado |
@@ -65,18 +58,14 @@ POST /api/leads/ usa AllowAny y no declara get_throttles, así que cualquiera pu
 | Visitante anónimo crea un lead | anonymous | — | `property`={property_id}, `name`=Interesado de spec, `phone`=0991234567, `email`=interesado-spec@example.com, `message`=Me interesa esta propiedad., `source`=property_page | allowed |
 | Undécima petición en el mismo minuto desde el mismo cliente | — | `requests_in_one_minute`=11 | — | allowed |
 
-**Cobertura exigida:** api
+### LEAD-002 — Limitar el ritmo de creación de leads
 
-- `backend/real_estate/tests/generated/test_spec_leads.py`
+**Estado:** ✅ Implementada
 
-### LEAD-002 — Propuesta: limitar el ritmo de creación de leads
-
-**Estado:** 📝 Propuesta (sin código)
-
-POST /api/leads/ debería llevar un throttle_scope propio (p. ej. lead_create) con un ritmo comparable al de pending_create, para que un script no pueda generar leads en bucle ni disparar el envío síncrono de correo en bucle.
+POST /api/leads/ lleva el throttle_scope lead_create a 10/min, para que un script no pueda generar leads en bucle ni disparar el envío síncrono de correo en bucle.
 
 
-> **Por qué:** Es el defecto que registra LEAD-001: mismo endpoint, comportamiento correcto. Se separa en una regla proposed en vez de "arreglar" LEAD-001 para que la suite siga describiendo la realidad de hoy mientras deja constancia del hueco. El envío síncrono de correo (LEAD-006) es lo que hace que este límite sea más urgente que en un endpoint que solo escribe en base de datos.
+> **Por qué:** Sustituye el defecto histórico registrado en LEAD-001. El envío síncrono de correo (LEAD-006) hace que el límite también proteja el servidor SMTP.
 
 
 **Se aplica cuando:**
@@ -92,13 +81,20 @@ POST /api/leads/ debería llevar un throttle_scope propio (p. ej. lead_create) c
 - Código de error: `THROTTLED`
 - Throttle: `lead_create`
 
-**Evidencia en el código:** ninguna, y es lo esperado: no hay código que la implemente.
+**Evidencia en el código** (verificada por `tools/specs/validate.py`)
+
+- `backend/real_estate/views.py:1110-1145` (`def get_throttles`)
+- `backend/estate_map/settings.py:170-190` (`'lead_create': '10/min'`)
 
 **Casos**
 
 | Caso | Rol | Estado previo | Cuerpo | Esperado |
 | --- | --- | --- | --- | --- |
 | Undécima petición en el mismo minuto desde el mismo cliente | — | `requests_in_one_minute`=11 | — | denied (HTTP 429) `THROTTLED` |
+
+**Cobertura exigida:** api
+
+- `backend/real_estate/tests/test_leads.py`
 
 ### LEAD-003 — Un lead solo tiene tres estados de gestión
 
@@ -116,8 +112,8 @@ Lead.status recorre new, contacted y closed, y PATCH /api/leads/{id}/ usa LeadSt
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/real_estate/models.py:523-525` (`STATUS_CHOICES = [`) — Los tres estados del ciclo de gestión de un lead.
-- `backend/real_estate/serializers.py:503-507` (`class LeadStatusSerializer`) — fields = ['id', 'status'], sin acceso a name, phone, email ni message.
+- `backend/real_estate/models.py:528-530` (`STATUS_CHOICES = [`) — Los tres estados del ciclo de gestión de un lead.
+- `backend/real_estate/serializers.py:508-511` (`class LeadStatusSerializer`) — fields = ['id', 'status'], sin acceso a name, phone, email ni message.
 
 **Casos**
 
@@ -135,7 +131,7 @@ Lead.source solo admite property_modal, property_page, whatsapp, phone u other, 
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/real_estate/models.py:515-517` (`SOURCE_CHOICES = [`) — Los cinco orígenes válidos de un lead.
+- `backend/real_estate/models.py:520-522` (`SOURCE_CHOICES = [`) — Los cinco orígenes válidos de un lead.
 
 **Casos**
 
@@ -160,7 +156,7 @@ GET/PATCH/DELETE sobre /api/leads/ exigen autenticación; el queryset se filtra 
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/real_estate/views.py:1121-1123` (`def get_queryset`) — Devuelve Lead.objects.none() si no hay usuario autenticado, el queryset completo si is_staff, y filter(property__owner=user) en cualquier otro caso.
+- `backend/real_estate/views.py:1145-1147` (`def get_queryset`) — Devuelve Lead.objects.none() si no hay usuario autenticado, el queryset completo si is_staff, y filter(property__owner=user) en cualquier otro caso.
 
 
 **Casos**
@@ -192,7 +188,7 @@ LeadViewSet.perform_create guarda el lead y llama de forma síncrona a LeadNotif
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/real_estate/views.py:1130-1132` (`def perform_create`) — serializer.save() seguido de LeadNotificationService().notify_created(lead), dentro del mismo ciclo request/response.
+- `backend/real_estate/views.py:1154-1156` (`def perform_create`) — serializer.save() seguido de LeadNotificationService().notify_created(lead), dentro del mismo ciclo request/response.
 - `backend/real_estate/services/notifications.py:13-22` (`class LeadNotificationService`) — notify_created llama a send_lead_notification sin encolarla en Celery.
 - `backend/real_estate/email_utils.py:229-246` (`def send_lead_notification`) — Reúne owner.email y property.contact_email como destinatarios.
 
@@ -232,7 +228,7 @@ Lead declara tres índices compuestos: (property, status) para la bandeja de una
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/real_estate/models.py:546-548` (`lead_property_status_idx`) — Los tres índices y las consultas que cubren.
+- `backend/real_estate/models.py:551-553` (`lead_property_status_idx`) — Los tres índices y las consultas que cubren.
 
 **Casos**
 
@@ -253,7 +249,7 @@ Es la solicitud de publicar una propiedad que alguien deja sin haber creado o ve
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/real_estate/models.py:555-557` (`class PendingPublication(models.Model)`) — Docstring: "Solicitud de publicación capturada antes de que el usuario cree o verifique su cuenta. No se muestra en el mapa".
+- `backend/real_estate/models.py:560-562` (`class PendingPublication(models.Model)`) — Docstring: "Solicitud de publicación capturada antes de que el usuario cree o verifique su cuenta. No se muestra en el mapa".
 
 
 **Casos**
@@ -271,8 +267,8 @@ El campo source admite account_required (intento de publicar sin cuenta), whatsa
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/real_estate/models.py:515-517` (`SOURCE_CHOICES = [`) — Los cuatro orígenes de una solicitud pendiente.
-- `backend/real_estate/serializers.py:531-533` (`def validate_source`) — Cualquier valor fuera del catálogo se normaliza silenciosamente a "other" en vez de rechazar la petición.
+- `backend/real_estate/models.py:520-522` (`SOURCE_CHOICES = [`) — Los cuatro orígenes de una solicitud pendiente.
+- `backend/real_estate/serializers.py:537-539` (`def validate_source`) — Cualquier valor fuera del catálogo se normaliza silenciosamente a "other" en vez de rechazar la petición.
 
 **Casos**
 
@@ -297,8 +293,8 @@ GET/PATCH sobre /api/pending-publications/ exigen IsAuthenticated e IsAdminUser 
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/real_estate/views.py:1111-1113` (`def get_permissions`) — return [IsAuthenticated(), IsAdminUser()] para toda acción salvo create.
-- `backend/real_estate/views.py:1121-1123` (`def get_queryset`) — PendingPublication.objects.none() salvo que user.is_staff sea verdadero.
+- `backend/real_estate/views.py:1129-1131` (`def get_permissions`) — return [IsAuthenticated(), IsAdminUser()] para toda acción salvo create.
+- `backend/real_estate/views.py:1145-1147` (`def get_queryset`) — PendingPublication.objects.none() salvo que user.is_staff sea verdadero.
 
 **Casos**
 
@@ -329,8 +325,8 @@ PendingPublicationViewSet.get_throttles aplica ScopedRateThrottle con throttle_s
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/real_estate/views.py:1153-1155` (`throttle_scope = 'pending_create'`) — Solo el POST público se limita; el resto de acciones ya exige staff y no lleva throttle.
-- `backend/estate_map/settings.py:179-181` (`'pending_create': '10/min'`)
+- `backend/real_estate/views.py:1177-1179` (`throttle_scope = 'pending_create'`) — Solo el POST público se limita; el resto de acciones ya exige staff y no lleva throttle.
+- `backend/estate_map/settings.py:184-186` (`'pending_create': '10/min'`)
 
 **Casos**
 
@@ -352,7 +348,7 @@ PendingPublicationViewSet.perform_create llama a PendingPublicationNotificationS
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/real_estate/views.py:1130-1132` (`def perform_create`) — PendingPublicationNotificationService().notify_created(pending) en el mismo request.
+- `backend/real_estate/views.py:1154-1156` (`def perform_create`) — PendingPublicationNotificationService().notify_created(pending) en el mismo request.
 - `backend/real_estate/email_utils.py:194-203` (`def send_pending_publication_notification`) — recipients sale de settings.ADMINS más PENDING_PUBLICATION_NOTIFY_EMAIL; si queda vacío, la función retorna sin enviar nada.
 - `backend/real_estate/services/notifications.py:25-37` (`class PendingPublicationNotificationService`) — Mismo patrón try/except que LeadNotificationService.
 
@@ -378,8 +374,8 @@ ActivityEventSerializer.create ignora cualquier valor de is_bot que venga en el 
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/real_estate/serializers.py:686-690` (`validated_data['is_bot'] = is_bot_request(request)`) — Sobrescribe el valor ya validado del payload, si lo había.
-- `backend/real_estate/serializers.py:665-667` (`read_only_fields = ['id', 'user', 'property', 'property_title', 'is_bot', 'created_at']`) — is_bot es de solo lectura en el serializer expuesto, además de recalcularse en create.
+- `backend/real_estate/serializers.py:697-700` (`validated_data['is_bot'] = is_bot_request(request)`) — Sobrescribe el valor ya validado del payload, si lo había.
+- `backend/real_estate/serializers.py:673-675` (`read_only_fields = ['id', 'user', 'property', 'property_title', 'is_bot', 'created_at']`) — is_bot es de solo lectura en el serializer expuesto, además de recalcularse en create.
 
 **Casos**
 
@@ -426,8 +422,8 @@ ActivityEventViewSet.get_throttles aplica ScopedRateThrottle con throttle_scope=
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/real_estate/views.py:1411-1413` (`throttle_scope = 'activity_create'`)
-- `backend/estate_map/settings.py:178-180` (`'activity_create': '30/min'`)
+- `backend/real_estate/views.py:1434-1436` (`throttle_scope = 'activity_create'`)
+- `backend/estate_map/settings.py:183-185` (`'activity_create': '30/min'`)
 
 **Casos**
 
@@ -473,8 +469,8 @@ PendingPublication.status recorre new, contacted, converted y discarded: a difer
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/real_estate/models.py:523-525` (`STATUS_CHOICES = [`) — Los cuatro estados de una solicitud pendiente.
-- `backend/real_estate/serializers.py:585-587` (`class PendingPublicationStatusSerializer`) — fields = ['id', 'status'], igual patrón restrictivo que LeadStatusSerializer.
+- `backend/real_estate/models.py:528-530` (`STATUS_CHOICES = [`) — Los cuatro estados de una solicitud pendiente.
+- `backend/real_estate/serializers.py:593-595` (`class PendingPublicationStatusSerializer`) — fields = ['id', 'status'], igual patrón restrictivo que LeadStatusSerializer.
 
 **Casos**
 
@@ -495,7 +491,7 @@ El navegador conserva una clave UUID por borrador. Cada abandono, error de publi
 
 - `frontend/app/add-property/page.tsx:783-842` (`PENDING_PUBLICATION_KEY_STORAGE_KEY`) — La clave estable y las fotos se envían en cada guardado del borrador.
 - `backend/real_estate/serializers.py:548-579` (`def create(self, validated_data)`) — Busca por draft_key y actualiza la solicitud no convertida.
-- `backend/real_estate/models.py:582-584` (`draft_key`) — La unicidad también protege frente a duplicados en la base de datos.
+- `backend/real_estate/models.py:587-589` (`draft_key`) — La unicidad también protege frente a duplicados en la base de datos.
 
 **Casos**
 
