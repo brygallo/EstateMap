@@ -6,4 +6,4 @@
 #
 #   pip install -r requirements-scraping.txt
 #
-beautifulsoup4>=4.12   # opcional (parser alterno); el scraper actual usa regex
+beautifulsoup4>=4.15.0   # opcional (parser alterno); el scraper actual usa regex
