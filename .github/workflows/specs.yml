@@ -13,7 +13,7 @@ jobs:
     name: Specs vs code
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
 
       - uses: actions/setup-python@v6
         with:
@@ -47,7 +47,7 @@ jobs:
     # Business-rule changes can cross the API/UI boundary, so the complete
     # browser suite is a required check on every pull request and on main.
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
 
       - uses: actions/setup-node@v5
         with:
