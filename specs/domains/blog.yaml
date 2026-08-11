@@ -26,7 +26,7 @@ see_also:
   - specs/ui/visibility-rules.yaml
   - specs/permissions/matrix.yaml
   - docs/technical/cache.md
-  - SEO-STRATEGY.md
+  - docs/seo/editorial-y-backlinks.md
 
 rules:
   - id: BLOG-001

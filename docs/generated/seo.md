@@ -9,7 +9,7 @@
 
 Reglas que deciden qué páginas públicas merecen entrar en el índice y qué señales de actualización se entregan a buscadores y consumidores de datos.
 
-**Ver también:** `SEO-STRATEGY.md`, `specs/calculations/pricing.yaml`
+**Ver también:** `docs/seo/editorial-y-backlinks.md`, `specs/calculations/pricing.yaml`
 
 ## Reglas
 

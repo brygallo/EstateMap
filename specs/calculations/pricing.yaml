@@ -20,7 +20,7 @@ summary: >
 see_also:
   - specs/domains/properties.yaml
   - docs/technical/cache.md
-  - SEO-STRATEGY.md
+  - docs/seo/editorial-y-backlinks.md
 
 rules:
   - id: PRC-001

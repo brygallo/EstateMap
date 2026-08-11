@@ -1,5 +1,5 @@
 """
-Deduplicación en dos niveles (ver PLAN.md):
+Two-level deduplication (see ``docs/workflows/import-properties.md``):
 
 1. Misma fuente: clave ``(source, external_id)`` -> lo resuelve el upsert.
 2. Entre fuentes distintas: **cercanía geográfica**. Si ya existe una propiedad

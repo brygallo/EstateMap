@@ -6,7 +6,7 @@ summary: >-
   Reglas que deciden qué páginas públicas merecen entrar en el índice y qué
   señales de actualización se entregan a buscadores y consumidores de datos.
 see_also:
-  - SEO-STRATEGY.md
+  - docs/seo/editorial-y-backlinks.md
   - specs/calculations/pricing.yaml
 
 rules:

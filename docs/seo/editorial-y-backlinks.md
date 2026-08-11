@@ -1,6 +1,6 @@
 # Gestión editorial y backlinks
 
-Operativa de los puntos 7 y 11–14 de [`SEO-STRATEGY.md`](../../SEO-STRATEGY.md):
+Operativa editorial y de adquisición de enlaces del portal:
 quién escribe, con qué cadencia, y a quién se le pide el enlace.
 
 Estado del blog a 2026-08-11: el CMS está construido y **no desplegado**.
@@ -142,7 +142,7 @@ primer correo:
 
 En Search Console, no en la analítica interna: está inflada ~5x por bots.
 Dominios de referencia en el informe de enlaces de GSC, trimestralmente. La meta
-de `SEO-STRATEGY.md` es +5 a los 3 meses, +15 a los 6 (con prensa) y +40 al año.
+es +5 dominios a los 3 meses, +15 a los 6 (con prensa) y +40 al año.
 
 ## Bloqueo actual
 

@@ -10,7 +10,7 @@
 Existe un único cálculo de precio en todo el sistema: el precio por metro cuadrado, obtenido como price / area en SQL. Sobre él se construyen dos familias de indicadores con definiciones distintas de "precio típico": las estadísticas públicas de mercado (/api/market-stats/), que usan media aritmética tras excluir extremos por IQR, y el contexto comercial por anuncio (/api/properties/<id>/intelligence/), que usa percentiles P25/P50/P75. Ninguno de los dos mira rent_price, ninguno agrega el historial de precios y las métricas principales se limitan a la venta porque el alquiler está en otra escala. Este archivo describe lo que el código calcula hoy, incluidos los bordes incómodos.
 
 
-**Ver también:** `specs/domains/properties.yaml`, `docs/technical/cache.md`, `SEO-STRATEGY.md`
+**Ver también:** `specs/domains/properties.yaml`, `docs/technical/cache.md`, `docs/seo/editorial-y-backlinks.md`
 
 ## Reglas
 

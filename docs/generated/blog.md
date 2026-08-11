@@ -11,7 +11,7 @@ El portal publica artículos escritos por el equipo desde el admin de Django y s
 La pieza que da forma al dominio es la programación. Escribir treinta artículos en una tarde y soltarlos el mismo día se lee como lo que es; el calendario los reparte uno por día. Por eso la publicación se decide con una fecha, no con una cola: un post es público desde que `published_at` queda en el pasado, aunque el worker esté caído. Celery solo se encarga de los efectos (avisar a IndexNow, invalidar el caché de Next), que llegar tarde encarece pero no rompe.
 El blog no abre superficie de escritura nueva: se redacta en el admin y la API pública es de solo lectura. Las siete guías que vivían incrustadas en el frontend (`lib/guias.ts`) son sus primeros posts y conservan su slug, con `/guias/<slug>` redirigiendo de forma permanente a `/blog/<slug>`.
 
-**Ver también:** `specs/ui/visibility-rules.yaml`, `specs/permissions/matrix.yaml`, `docs/technical/cache.md`, `SEO-STRATEGY.md`
+**Ver también:** `specs/ui/visibility-rules.yaml`, `specs/permissions/matrix.yaml`, `docs/technical/cache.md`, `docs/seo/editorial-y-backlinks.md`
 
 ## Reglas
 

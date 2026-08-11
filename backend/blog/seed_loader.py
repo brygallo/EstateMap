@@ -22,6 +22,21 @@ SEED_FILE = Path(__file__).resolve().parent / "seed" / "guides.json"
 SPONSORS_FILE = Path(__file__).resolve().parent / "seed" / "sponsors.json"
 
 
+def fields_available_on(model, values: dict) -> dict:
+    """Keep only fields present on a live or historical Django model.
+
+    Data migrations pass models frozen at that migration's schema. The seed
+    file and this loader may gain fields later, but an installation starting
+    from an empty database must still be able to run every old migration.
+    """
+    field_names = {
+        field.name
+        for field in model._meta.get_fields()
+        if getattr(field, "concrete", False)
+    }
+    return {name: value for name, value in values.items() if name in field_names}
+
+
 def load_seed() -> dict:
     with SEED_FILE.open(encoding="utf-8") as handle:
         return json.load(handle)
@@ -125,6 +140,7 @@ def seed_blog(Category, Post, *, overwrite: bool = False) -> dict:
             "status": "published",
             "reading_minutes": max(1, round(len(entry["body"].split()) / 200) or 1),
         }
+        fields = fields_available_on(Post, fields)
 
         post = Post.objects.filter(slug=entry["slug"]).first()
         if post is None:

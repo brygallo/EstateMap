@@ -7,7 +7,8 @@ Modelos del proyecto de ingesta (agregador tipo buscador).
   durante el scraping; en producción normalmente no se usa.
 
 El scraping y toda la validación ocurren en LOCAL y producen un *paquete* de
-datos; producción solo importa ese paquete. Ver ``PLAN.md``.
+datos; producción solo importa ese paquete. Ver
+``docs/workflows/import-properties.md``.
 """
 from django.db import models
 

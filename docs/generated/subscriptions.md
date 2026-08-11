@@ -10,7 +10,7 @@
 El sistema no tiene suscripciones. No existe modelo de plan, ni campo de plan en User, ni pasarela de pago, ni tope de propiedades por usuario. Lo que sí existe es una tabla de precios estática en la página de inmobiliarias cuyos botones abren WhatsApp, y unos límites técnicos globales iguales para todo el mundo. Este archivo deja constancia de esa diferencia para que nadie vuelva a darla por implementada.
 
 
-**Ver también:** `docs/business-rules/subscriptions.md`, `docs/business-rules/payments.md`, `docs/workflows/buy-premium.md`, `specs/permissions/matrix.yaml`
+**Ver también:** `docs/business-rules/subscriptions.md`, `docs/business-rules/payments.md`, `docs/business-rules/payments.md`, `specs/permissions/matrix.yaml`
 
 ## Reglas
 
@@ -63,7 +63,7 @@ No existe ninguna restricción de importación por plan de suscripción, porque 
 | Usuario premium activo | — | `plan`=premium, `subscription_status`=active | — | allowed |
 | Premium vencido | — | `plan`=premium, `subscription_status`=expired | — | denied |
 
-**Ver también:** `docs/workflows/buy-premium.md`
+**Ver también:** `docs/business-rules/payments.md`
 
 ### SUB-002 — Las cuentas no tienen plan ni estado de suscripción
 

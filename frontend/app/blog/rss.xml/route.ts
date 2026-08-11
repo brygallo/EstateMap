@@ -4,7 +4,7 @@
  * Worth the file for two reasons beyond readers: aggregators and press sites
  * discover new articles through it without waiting for a crawl, and it is the
  * cheapest way to let anyone syndicate the price-index posts with a link back
- * — which is the backlink strategy in SEO-STRATEGY.md.
+ * — which supports the editorial strategy in docs/seo/editorial-y-backlinks.md.
  */
 
 import { getBlogPosts } from '@/lib/blog';

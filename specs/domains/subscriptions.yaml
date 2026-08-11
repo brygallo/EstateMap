@@ -16,7 +16,7 @@ summary: >
 see_also:
   - docs/business-rules/subscriptions.md
   - docs/business-rules/payments.md
-  - docs/workflows/buy-premium.md
+  - docs/business-rules/payments.md
   - specs/permissions/matrix.yaml
 
 rules:
@@ -65,7 +65,7 @@ rules:
         given: {plan: premium, subscription_status: expired}
         expected: denied
     see_also:
-      - docs/workflows/buy-premium.md
+      - docs/business-rules/payments.md
 
   - id: SUB-002
     name: Las cuentas no tienen plan ni estado de suscripción

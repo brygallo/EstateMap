@@ -2,7 +2,8 @@
 
 Recopila propiedades de otros portales de Ecuador (por scraping HTML) y las
 carga en el mapa. **El scraping y la validación se hacen en LOCAL; producción
-solo importa.** Diseño completo en [`PLAN.md`](./PLAN.md).
+solo importa.** El flujo vigente se documenta en
+[`../../docs/workflows/import-properties.md`](../../docs/workflows/import-properties.md).
 
 ## Estado
 - ✅ **Fase 0 — Fundaciones**: app, modelos, migración de `Property`, pipeline,
