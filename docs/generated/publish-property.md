@@ -28,6 +28,14 @@ Invariantes del recorrido completo desde que alguien envía el formulario de pub
 | [`WFP-011`](#wfp-011--ocultar-una-propiedad-es-reversible-borrarla-desde-el-panel-es-físico-y-arrastra-las-fotos) | Ocultar una propiedad es reversible; borrarla desde el panel es físico y arrastra las fotos | ✅ Implementada |
 | [`WFP-012`](#wfp-012--el-selector-de-estado-ofrece-exactamente-los-estados-que-el-modelo-admite) | El selector de estado ofrece exactamente los estados que el modelo admite | ✅ Implementada |
 | [`WFP-013`](#wfp-013--distinguir-vendido-y-alquilado-de-inactivo) | Distinguir "vendido" y "alquilado" de "inactivo" | 📝 Propuesta (sin código) |
+| [`WFP-014`](#wfp-014--un-error-de-publicación-identifica-el-problema-y-abre-su-paso) | Un error de publicación identifica el problema y abre su paso | ✅ Implementada |
+| [`WFP-015`](#wfp-015--el-formulario-avanza-en-orden-y-muestra-el-error-dentro-del-paso) | El formulario avanza en orden y muestra el error dentro del paso | ✅ Implementada |
+| [`WFP-016`](#wfp-016--todo-intento-de-publicación-fallido-queda-registrado-con-su-motivo) | Todo intento de publicación fallido queda registrado con su motivo | ✅ Implementada |
+| [`WFP-017`](#wfp-017--el-panel-de-administración-muestra-por-qué-falló-una-publicación) | El panel de administración muestra por qué falló una publicación | ✅ Implementada |
+| [`WFP-018`](#wfp-018--el-mapa-de-publicación-abre-sobre-la-ubicación-que-ya-está-puesta) | El mapa de publicación abre sobre la ubicación que ya está puesta | ✅ Implementada |
+| [`WFP-019`](#wfp-019--sin-nada-marcado-el-mapa-se-sitúa-sobre-la-ciudad-elegida) | Sin nada marcado, el mapa se sitúa sobre la ciudad elegida | ✅ Implementada |
+| [`WFP-020`](#wfp-020--la-forma-dibujada-calcula-el-área-y-el-área-sigue-siendo-corregible) | La forma dibujada calcula el área, y el área sigue siendo corregible | ✅ Implementada |
+| [`WFP-021`](#wfp-021--subir-fotos-lentas-no-cancela-la-publicación) | Subir fotos lentas no cancela la publicación | ✅ Implementada |
 
 ### WFP-001 — Sin sesión, el envío nunca llega a crear la propiedad
 
@@ -44,9 +52,9 @@ El formulario intercepta el submit antes de llamar a `POST /api/properties/`: si
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `frontend/app/add-property/page.tsx:901-914` (`if (!token && !isEditMode && !resumeToken) {`) — Guarda el borrador, envía la solicitud pendiente y abre el modal, sin llamar a /properties/.
-- `backend/real_estate/models.py:524-526` (`class PendingPublication(models.Model)`) — Docstring: no se muestra en el mapa; sirve para seguimiento comercial.
-- `backend/real_estate/views.py:308-310` (`permission_classes = [IsAuthenticatedOrReadOnly, IsOwnerOrReadOnly]`) — Respaldo del servidor si la petición llega sin pasar por el frontend.
+- `frontend/app/add-property/page.tsx:1080-1089` (`if (!token && !isEditMode && !resumeToken) {`) — Guarda el borrador, envía la solicitud pendiente y abre el modal, sin llamar a /properties/.
+- `backend/real_estate/models.py:555-557` (`class PendingPublication(models.Model)`) — Docstring: no se muestra en el mapa; sirve para seguimiento comercial.
+- `backend/real_estate/views.py:311-313` (`permission_classes = [IsAuthenticatedOrReadOnly, IsOwnerOrReadOnly]`) — Respaldo del servidor si la petición llega sin pasar por el frontend.
 
 **Casos**
 
@@ -69,8 +77,8 @@ Si el usuario inicia sesión desde el modal de cuenta, el formulario marca `pend
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `frontend/app/add-property/page.tsx:807-812` (`setPendingPublish(true)`) — Se marca tras un login exitoso desde el modal.
-- `frontend/app/add-property/page.tsx:819-822` (`if (!pendingPublish || !token) return;`) — Efecto que dispara form.handleSubmit(onSubmit) en cuanto ambos están listos.
+- `frontend/app/add-property/page.tsx:953-955` (`setPendingPublish(true)`) — Se marca tras un login exitoso desde el modal.
+- `frontend/app/add-property/page.tsx:965-967` (`if (!pendingPublish || !token) return;`) — Efecto que dispara form.handleSubmit(onSubmit) en cuanto ambos están listos.
 
 **Casos**
 
@@ -134,8 +142,8 @@ Antes de crear la propiedad, cada lote de imágenes se valida completo: máximo 
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/estate_map/settings.py:375-377` (`MAX_PROPERTY_UPLOAD_MB`) — MAX_IMAGES_PER_PROPERTY=10, MAX_IMAGE_SIZE_MB=10, MAX_PROPERTY_UPLOAD_MB=50.
-- `backend/estate_map/settings.py:358-360` (`ALLOWED_IMAGE_TYPES`)
+- `backend/estate_map/settings.py:380-382` (`MAX_PROPERTY_UPLOAD_MB`) — MAX_IMAGES_PER_PROPERTY=10, MAX_IMAGE_SIZE_MB=10, MAX_PROPERTY_UPLOAD_MB=50.
+- `backend/estate_map/settings.py:363-365` (`ALLOWED_IMAGE_TYPES`)
 - `backend/real_estate/serializers.py:253-308` (`def validate_uploaded_images`) — Cuenta existentes menos images_to_delete, valida suma del lote y cada imagen, antes de llegar a create/update.
 
 **Casos**
@@ -160,7 +168,7 @@ Si `POST /api/properties/` llega con cabecera `Idempotency-Key` y ya existe un r
 - `backend/real_estate/views.py:558-563` (`idempotency_key = (request.headers.get('Idempotency-Key')`) — Sin cabecera, se comporta como un create normal.
 - `backend/real_estate/views.py:572-575` (`response['X-Idempotent-Replay'] = 'true'`)
 - `backend/real_estate/views.py:584-586` (`cache.set(result_key, response.data['id'], 60 * 60 * 24)`)
-- `frontend/app/add-property/page.tsx:983-985` (`Idempotency-Key`) — No se manda en la edición (PUT), solo en la creación.
+- `frontend/app/add-property/page.tsx:1158-1160` (`Idempotency-Key`) — No se manda en la edición (PUT), solo en la creación.
 
 **Casos**
 
@@ -199,7 +207,7 @@ Antes de procesar, `create` toma un candado en caché de 60 s por el mismo diges
 
 - `backend/real_estate/views.py:349-362` (`self.throttle_scope = 'property_write'`) — ScopedRateThrottle, no AntiScraperScopedThrottle, para create/update/partial_update.
 - `backend/real_estate/throttling.py:42-51` (`class AntiScraperScopedThrottle(ScopedRateThrottle)`) — Exime staff e IPs internas; solo se usa en map_points y list.
-- `backend/estate_map/settings.py:187-189` (`'property_write': '30/hour'`)
+- `backend/estate_map/settings.py:192-194` (`'property_write': '30/hour'`)
 
 **Casos**
 
@@ -264,7 +272,7 @@ Cada `post_save`/`post_delete` de `Property` encadena, por señal: una fila de `
 
 - `backend/real_estate/views.py:411-413` (`exclude(status='inactive')`) — Único filtro que saca inactive del catálogo público; no toca la fila.
 - `backend/real_estate/views.py:1005-1007` (`def my_properties`) — including inactive: el dueño ve su propiedad inactiva, el público no.
-- `backend/real_estate/models.py:308-310` (`on_delete=models.CASCADE`) — PropertyImage.property cae en cascada con la Property.
+- `backend/real_estate/models.py:339-341` (`on_delete=models.CASCADE`) — PropertyImage.property cae en cascada con la Property.
 - `frontend/app/my-properties/page.tsx:250-270` (`const handleDelete`) — DELETE /properties/<id>/ tras window.confirm; PropertyViewSet no sobrescribe destroy.
 
 **Casos**
@@ -300,7 +308,8 @@ El caso de API se conserva a propósito como guardia de regresión: si alguien v
 | Caso | Rol | Estado previo | Cuerpo | Esperado |
 | --- | --- | --- | --- | --- |
 | Publicar con un estado que el modelo no conoce | authenticated | — | `status`=sold, `title`=Propiedad vendida | denied (HTTP 400) |
-| Estados que el selector ofrece | — | `selector`=add-property | — | for_sale, for_rent, inactive |
+| Estados que el selector ofrece al editar | — | `selector`=add-property, `modo`=edicion | — | for_sale, for_rent, inactive |
+| Estados que el selector ofrece al publicar | — | `selector`=add-property, `modo`=creacion | — | for_sale, for_rent |
 | Un anuncio que ya se vendió | — | `situacion`=vendido | — | inactive |
 
 **Cobertura exigida:** api
@@ -324,3 +333,189 @@ Se conserva como propuesta porque la alternativa sigue sobre la mesa para el dí
 | --- | --- | --- | --- | --- |
 | Marcar una propiedad como vendida debería aceptarse | — | `status`=sold | — | allowed |
 | Una propiedad vendida debería salir del catálogo de "en venta" | — | `status`=sold | — | excluida de los listados filtrados por for_sale |
+
+### WFP-014 — Un error de publicación identifica el problema y abre su paso
+
+**Estado:** ✅ Implementada
+
+Cuando el formulario no puede publicar por un dato inválido, muestra en el toast el primer mensaje concreto disponible y abre el paso que contiene ese dato. La misma navegación se aplica a los errores por campo devueltos por la API, incluidos sus nombres en snake_case.
+
+> **Por qué:** El botón de publicación está en el quinto paso. Cancelar silenciosamente el envío por un campo oculto en un paso anterior deja a la persona sin una acción posible y hace que un error corregible parezca una falla del sistema.
+
+**Evidencia en el código** (verificada por `tools/specs/validate.py`)
+
+- `frontend/app/add-property/page.tsx:1281-1285` (`handleInvalidSubmit`) — Abre el paso del primer error de validación y muestra su mensaje.
+- `frontend/app/add-property/page.tsx:1247-1250` (`publicationApiErrorStep`) — Usa el cuerpo de error de la API para abrir el paso correspondiente.
+- `frontend/lib/publication-form-errors.ts:1-67` (`FIELD_STEPS`) — Relaciona los nombres de campos del formulario y de la API con los cinco pasos.
+
+**Casos**
+
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| Falta un dato obligatorio de un paso anterior | — | — | — | se abre ese paso y el toast nombra el dato faltante |
+| La API rechaza un campo del anuncio | — | — | — | se abre el paso del campo y el toast muestra el detalle de la API |
+
+### WFP-015 — El formulario avanza en orden y muestra el error dentro del paso
+
+**Estado:** ✅ Implementada
+
+Al publicar, solo se puede abrir el paso siguiente después de validar el actual: los indicadores permiten volver atrás pero no saltar pasos intermedios, y la tecla Enter avanza al paso siguiente en vez de enviar el formulario. Si falta un dato, el mismo mensaje aparece como toast y como alerta visible dentro del formulario. Al editar un anuncio que ya existe no rige ninguna secuencia: se puede abrir cualquier paso y guardar desde cualquiera.
+
+> **Por qué:** Permitir saltar desde Datos hasta Fotos pospone varios errores y hace que parezcan un fallo final de publicación. La secuencia convierte cada paso en una lista corta y resoluble antes de presentar el siguiente.
+Enter entra aquí porque durante meses fue el agujero de esa secuencia. Un paso con un único campo de texto y sin botón de envío es exactamente la forma sobre la que HTML dispara el envío implícito, así que pulsar Enter tras escribir el título publicaba desde el paso 1: la persona aterrizaba en «Precio» —sin haber pasado por Ubicación— y leía que faltaba un dato que nadie le había pedido todavía. La regla decía una cosa y el formulario hacía otra.
+La excepción de la edición es del 2026-08-11 y va en dirección contraria a propósito. Editar es corregir un campo de algo que ya existe y ya pasó por la validación entera; obligar a recorrer cinco pantallas para cambiar un precio es peaje, y en un anuncio cuyos datos guardados no satisfacen algún paso —un polígono con `area` nula, que la ingesta permite— ese peaje encerraba al dueño antes del botón de guardar.
+
+**Evidencia en el código** (verificada por `tools/specs/validate.py`)
+
+- `frontend/app/add-property/page.tsx` (`validateStep`) — Cada sección valida sus requisitos y conserva el mensaje visible.
+- `frontend/app/add-property/page.tsx` (`const handleFormKeyDown`) — Enter avanza de paso salvo en textarea, en botón o en el último paso.
+- `frontend/app/add-property/page.tsx` (`if (isEditMode || index <= currentStep)`) — Publicando solo se abre el paso anterior o el siguiente validado; editando, cualquiera.
+- `frontend/app/add-property/page.tsx` (`role="alert"`) — El error del paso permanece visible además del toast.
+
+**Casos**
+
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| Desde el primer paso se intenta abrir Fotos | — | — | — | permanece en Datos |
+| Se intenta continuar sin título | — | — | — | permanece en Datos y muestra Ingresa un título para la propiedad |
+| Se completa el paso actual | — | — | — | permite abrir únicamente el paso siguiente |
+| Se pulsa Enter en el título del primer paso | — | — | — | avanza a Ubicación; no se envía el formulario ni se salta ningún paso |
+| Se pulsa Enter dentro de la descripción | — | — | — | inserta un salto de línea; el formulario no avanza ni se envía |
+| Editando un anuncio se pulsa el indicador de Precio | — | `modo`=edicion | — | abre Precio directamente y ofrece guardar desde ahí |
+
+### WFP-016 — Todo intento de publicación fallido queda registrado con su motivo
+
+**Estado:** ✅ Implementada
+
+Cuando una publicación no sale adelante se guarda un ActivityEvent que lleva el motivo, no solo el código de estado: el mensaje que vio la persona, los campos que la API rechazó con su detalle, el código de error y el paso del formulario afectado. Cubre las cuatro maneras de fallar: la API rechaza el anuncio (`publication_create_failed` / `publication_update_failed`), la petición no llega (`status_code: network`, con el nombre de la excepción), la validación del formulario lo detiene (`publication_validation_failed`) y las comprobaciones de ubicación y área lo detienen antes de enviarlo (`publication_blocked`, con `reason`).
+
+> **Por qué:** El registro anterior solo guardaba el estado HTTP, el tipo de propiedad y si había polígono. Con eso, un 400 por precio inválido, una sesión caducada y una caída del servidor eran la misma fila en el panel, y las tres formas de fallar sin llegar a la API no dejaban ninguna. Sin el motivo, quien administra no puede responder por qué esa persona no pudo publicar.
+
+**Evidencia en el código** (verificada por `tools/specs/validate.py`)
+
+- `frontend/lib/publication-form-errors.ts:92-125` (`publicationErrorReport`) — Aplana el cuerpo de error de la API en escalares que el payload puede llevar, truncados.
+- `frontend/app/add-property/page.tsx:1035-1046` (`blockPublication`) — Las comprobaciones previas al envío emiten publication_blocked con su reason.
+- `frontend/app/add-property/page.tsx:1259-1266` (`publicationErrorReport(errorBody, message)`) — El fallo de la API viaja con mensaje, campos, detalle y código.
+- `frontend/app/add-property/page.tsx:1284-1291` (`publication_validation_failed`) — La validación del cliente también deja rastro con sus campos.
+
+**Casos**
+
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| La API rechaza el precio del anuncio | — | — | — | el evento guarda error_fields=price y el mensaje de la API |
+| La petición no llega al servidor | — | — | — | el evento guarda status_code=network y el nombre de la excepción |
+| Falta marcar la ubicación en el mapa | — | — | — | se registra publication_blocked con reason=missing_location |
+
+### WFP-017 — El panel de administración muestra por qué falló una publicación
+
+**Estado:** ✅ Implementada
+
+En «Actividad y clics» y en la ficha del usuario, un evento de fallo se marca en rojo y muestra el motivo junto al nombre del evento, sin abrir nada. Al desplegarlo se ven el mensaje mostrado a la persona, los campos rechazados, el detalle por campo, el código de error, el paso del formulario y el código de seguimiento. Los eventos anteriores a esta regla no tienen motivo guardado y lo dicen explícitamente.
+
+> **Por qué:** Guardar el motivo no sirve si el panel sigue enseñando solo «Error al publicar». La ficha del usuario es donde se atiende a quien llama para preguntar por qué no puede publicar, así que el motivo tiene que verse allí sin abrir el payload técnico.
+
+**Evidencia en el código** (verificada por `tools/specs/validate.py`)
+
+- `frontend/app/admin/activity/page.tsx:106-115` (`errorSummary`) — Resuelve el motivo legible del evento a partir de reason, error_message o error_detail.
+- `frontend/app/admin/activity/page.tsx:424-432` (`'Mensaje mostrado al usuario'`) — El detalle del evento expone los campos del error, no solo el estado HTTP.
+- `frontend/app/admin/users/page.tsx:752-784` (`function ActivityRow`) — La actividad reciente del usuario muestra el motivo del fallo en la propia fila.
+
+**Casos**
+
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| Un evento de fallo con motivo guardado | — | — | — | la fila se marca en rojo y muestra el motivo sin desplegar |
+| Un evento de fallo anterior a esta regla | — | — | — | la fila indica que no se registró el motivo |
+| Filtrar el panel por errores de publicación | — | — | — | el selector de eventos ofrece los fallos de publicación |
+
+### WFP-018 — El mapa de publicación abre sobre la ubicación que ya está puesta
+
+**Estado:** ✅ Implementada
+
+Si la propiedad ya tiene un punto marcado —al editar un anuncio o al recuperar un borrador— el mapa abre centrado en ese punto a escala de predio. La ubicación de quien publica solo manda la cámara cuando no hay nada marcado todavía, y marcar un punto a mano nunca reencuadra el mapa.
+
+> **Por qué:** Al editar, lo único que importa es el punto guardado: abrir sobre el país entero o viajar a donde está la persona esconde justo lo que se va a corregir y sugiere que el anuncio perdió su ubicación. La forma del terreno ya se comportaba así; el punto no.
+
+**Evidencia en el código** (verificada por `tools/specs/validate.py`)
+
+- `frontend/components/maps/DrawLocationMap.tsx:807-816` (`initialPointCenteredRef.current = true`) — Encuadra una sola vez el punto que llega por props, no el que la persona acaba de marcar.
+- `frontend/components/maps/DrawLocationMap.tsx:855-859` (`verticesRef.current.length > 0 || hasSavedPointRef.current`) — Una forma o un punto ya cargados le ganan la cámara a la ubicación de quien publica.
+- `frontend/components/maps/DrawLocationMap.tsx:771-777` (`fitToShape(false)`) — La forma del terreno restaurada encuadra sus vértices al abrir.
+
+**Casos**
+
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| Editar un anuncio guardado como punto | — | — | — | el mapa abre centrado en el punto del anuncio a escala de predio |
+| Editar un anuncio guardado como forma del terreno | — | — | — | el mapa encuadra la forma guardada |
+| Publicar desde cero con la ubicación del navegador concedida | — | — | — | el mapa viaja a la ubicación de quien publica porque no hay nada marcado |
+| Marcar un punto a mano tras mover el mapa | — | — | — | el mapa conserva el encuadre elegido |
+
+### WFP-019 — Sin nada marcado, el mapa se sitúa sobre la ciudad elegida
+
+**Estado:** ✅ Implementada
+
+Al abrir el paso de ubicación de un anuncio nuevo, y cada vez que cambia la ciudad, el mapa viaja al centro de esa ciudad. La precedencia de WFP-018 se mantiene intacta: un punto o una forma ya puestos, y la ubicación del navegador cuando se concedió, siguen mandando sobre la cámara.
+
+> **Por qué:** El paso abría sobre el país entero —Quito y Guayaquil en pantalla, escala de 100 km— y lo único que movía la cámara era la geolocalización. Quien la rechazaba, o publicaba desde una computadora, tenía que encontrar su predio arrastrando el mapa desde escala país mientras el selector de ciudad, justo debajo, decía «Macas» desde el principio. El dato para ayudarle ya estaba en el formulario.
+Se resuelve con el mismo Nominatim que el formulario ya usa para la operación inversa (deducir ciudad y provincia de un punto), en vez de con una tabla de centroides escrita a mano: son datos que nadie tendría que mantener y que se inventan con facilidad. La respuesta se cachea por sesión para respetar el límite de una petición por segundo, y si el servicio no responde el mapa simplemente no se mueve.
+
+**Evidencia en el código** (verificada por `tools/specs/validate.py`)
+
+- `frontend/app/add-property/page.tsx` (`const centerMapOnCity`) — Geocodifica ciudad y provincia y hace flyTo a escala 13; cachea por sesión.
+- `frontend/app/add-property/page.tsx` (`if (polygonCoords.length >= 3) return;`) — No se mueve si ya hay punto, forma o ubicación del navegador.
+
+**Casos**
+
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| Publicar desde cero sin conceder la ubicación | — | — | — | el mapa abre sobre la ciudad seleccionada, no sobre todo Ecuador |
+| Cambiar la ciudad en el selector | — | — | — | el mapa viaja a la ciudad nueva |
+| Cambiar la ciudad con un punto ya marcado | — | — | — | el mapa no se mueve |
+| Nominatim no responde | — | — | — | el mapa se queda donde está; la ubicación se marca a mano |
+
+### WFP-020 — La forma dibujada calcula el área, y el área sigue siendo corregible
+
+**Estado:** ✅ Implementada
+
+Cerrar el contorno del predio rellena «Área Total» con la superficie medida sobre esa forma, redondeada a metros cuadrados enteros, e indica de dónde salió el número. Borrar la forma vacía el campo. Escribirlo a mano después es válido y desactiva el aviso.
+
+> **Por qué:** El mapa ya medía cada lado del predio, pero la superficie no volvía al formulario: quien acababa de trazar su terreno vértice a vértice tenía que estimar a ojo cuántos metros cuadrados había encerrado, y nada comparaba lo escrito con lo dibujado. Ese número no es decorativo — alimenta el precio por m², los filtros de área y las páginas de estadísticas por ciudad—, así que una estimación a ojo contamina agregados que nadie vuelve a revisar.
+Se conserva editable porque el polígono suele ser aproximado y la escritura puede venir de una escritura de propiedad, que es más fiable que el trazo. Lo que se elimina es la obligación de adivinar.
+
+**Evidencia en el código** (verificada por `tools/specs/validate.py`)
+
+- `frontend/components/maps/DrawLocationMap.tsx` (`onAreaChangeRef.current?.(turf.area(`) — Mide el anillo cerrado con turf, que ya estaba importado para validar la forma.
+- `frontend/components/maps/DrawLocationMap.tsx` (`onAreaChangeRef.current?.(0)`) — Borrar la forma vacía el área que esa forma había medido.
+- `frontend/app/add-property/page.tsx` (`const handleDrawnAreaChange`) — Escribe el campo y marca que el número viene del dibujo.
+
+**Casos**
+
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| Cerrar un contorno de tres vértices | — | — | — | el área se rellena con la superficie medida y el campo dice que se calculó del dibujo |
+| Borrar la forma dibujada | — | — | — | el área vuelve a quedar vacía |
+| Escribir el área a mano después de dibujar | — | — | — | se respeta lo escrito |
+
+### WFP-021 — Subir fotos lentas no cancela la publicación
+
+**Estado:** ✅ Implementada
+
+La petición que crea o actualiza un anuncio no tiene fecha límite: se corta solo tras 120 s sin que se mueva un solo byte. Mientras el cuerpo viaja, el botón muestra el porcentaje subido.
+
+> **Por qué:** Todas las peticiones del portal pasaban por un aborto único de 30 s. Para una lectura es correcto; para la subida de un anuncio era una condena: el tope documentado del lote son 50 MB y, en la subida móvil desde la que publica la mayoría, ese traslado se mide en minutos. Cada una de esas publicaciones se cortaba a mitad del cuerpo, decía «tardó demasiado» y fallaba igual al reintentar — la clave de idempotencia no puede reproducir una petición que el servidor nunca terminó de leer.
+El reloj mide inactividad y no duración total porque una subida lenta que sigue avanzando está funcionando. Y el porcentaje existe porque una espera muda de varios minutos es indistinguible de un cuelgue: sin él, la persona recarga la página y pierde el anuncio por su propia mano.
+
+**Evidencia en el código** (verificada por `tools/specs/validate.py`)
+
+- `frontend/lib/upload-with-progress.ts` (`const DEFAULT_IDLE_TIMEOUT_MS`) — 120 s sin actividad, rearmado en cada evento de progreso.
+- `frontend/lib/api.ts` (`onUploadProgress && fetchOptions.body instanceof FormData`) — Pedir progreso conmuta la petición a XHR, con la misma gestión de token.
+- `frontend/app/add-property/page.tsx` (``Subiendo fotos ${uploadProgress}%``) — El botón informa el avance real de la subida.
+
+**Casos**
+
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| Publicar seis fotos con subida lenta | — | — | — | la petición continúa más allá de 30 s y el botón muestra el avance |
+| La conexión se corta a mitad de la subida | — | — | — | se informa el fallo de red; el borrador local sigue guardado |
+| Reintentar tras un fallo con la misma Idempotency-Key | — | — | — | si el primer intento llegó a crear el anuncio, se devuelve ese mismo (WFP-006) |

@@ -64,7 +64,7 @@ El middleware de observabilidad reutiliza la cabecera X-Request-ID que llegue de
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
 - `backend/estate_map/observability.py:59-82` (`response["X-Request-ID"] = request_id`) — Generación o propagación del identificador y escritura de las tres cabeceras.
-- `backend/estate_map/settings.py:234-236` (`CORS_EXPOSE_HEADERS`) — Sin exponerlas por CORS el navegador no puede leerlas, así que la cabecera existiría pero el frontend no la vería.
+- `backend/estate_map/settings.py:239-241` (`CORS_EXPOSE_HEADERS`) — Sin exponerlas por CORS el navegador no puede leerlas, así que la cabecera existiría pero el frontend no la vería.
 
 
 **Casos**
@@ -87,7 +87,7 @@ El frontend sabe mostrar el identificador como "Código de seguimiento" al const
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `frontend/lib/form-errors.ts:37` (`Código de seguimiento`) — Construcción del sufijo con la referencia de soporte.
+- `frontend/lib/form-errors.ts:76-78` (`Código de seguimiento`) — Construcción del sufijo con la referencia de soporte.
 
 **Casos**
 
@@ -123,8 +123,8 @@ Un fallo no crea una fila por ocurrencia: se calcula una huella y se incrementa 
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/real_estate/models.py:374-401` (`class SystemIncident`) — Los campos existentes son la lista completa de lo que se guarda.
-- `backend/real_estate/models.py:383-385` (`fingerprint`) — Clave única por la que se agregan las ocurrencias.
+- `backend/real_estate/models.py:405-431` (`class SystemIncident`) — Los campos existentes son la lista completa de lo que se guarda.
+- `backend/real_estate/models.py:414-416` (`fingerprint`) — Clave única por la que se agregan las ocurrencias.
 - `backend/estate_map/observability.py:17` (`record_incident`) — Único punto de escritura.
 
 **Casos**
@@ -190,7 +190,7 @@ Los scopes de throttling devuelven 429 indicando cuántos segundos faltan. Los t
 - `backend/real_estate/throttling.py:42-51` (`class AntiScraperScopedThrottle`) — Las tres exenciones, en el orden en que se evalúan: is_staff primero, después el cliente interno, después la lista de IPs.
 
 - `backend/real_estate/throttling.py:45-48` (`getattr(user, "is_staff", False)`) — La exención de staff, sin tope y evaluada antes que la IP.
-- `backend/estate_map/settings.py:193-195` (`THROTTLE_EXEMPT_IPS`) — Lista adicional de direcciones nunca limitadas.
+- `backend/estate_map/settings.py:198-200` (`THROTTLE_EXEMPT_IPS`) — Lista adicional de direcciones nunca limitadas.
 
 **Casos**
 
@@ -212,8 +212,8 @@ El cliente de Redis ignora los errores de conexión, de modo que una caché inac
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/estate_map/settings.py:460-462` (`IGNORE_EXCEPTIONS`) — Los errores del cliente de caché no se propagan.
-- `backend/estate_map/settings.py:470-472` (`DJANGO_REDIS_LOG_IGNORED_EXCEPTIONS`) — Pero sí se registran, para que la caída no pase inadvertida.
+- `backend/estate_map/settings.py:461-463` (`IGNORE_EXCEPTIONS`) — Los errores del cliente de caché no se propagan.
+- `backend/estate_map/settings.py:482-484` (`DJANGO_REDIS_LOG_IGNORED_EXCEPTIONS`) — Pero sí se registran, para que la caída no pase inadvertida.
 
 **Casos**
 

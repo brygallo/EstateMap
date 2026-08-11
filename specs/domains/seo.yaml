@@ -1,0 +1,140 @@
+version: 1
+domain: seo
+title: Descubrimiento orgánico
+status: implemented
+summary: >-
+  Reglas que deciden qué páginas públicas merecen entrar en el índice y qué
+  señales de actualización se entregan a buscadores y consumidores de datos.
+see_also:
+  - SEO-STRATEGY.md
+  - specs/calculations/pricing.yaml
+
+rules:
+  - id: SEO-001
+    name: Las landings locales necesitan cinco anuncios para entrar al índice
+    status: implemented
+    summary: >-
+      Las páginas por ciudad, provincia y combinación de tipo, operación y
+      ubicación solo se indexan y aparecen en el sitemap desde cinco anuncios.
+      Con menos inventario siguen respondiendo 200 con robots noindex, follow.
+    rationale: >-
+      Una sola ficha ya responde por sí misma la búsqueda. Indexar además una
+      landing con uno o dos resultados multiplica contenido fino y consume
+      rastreo sin aportar una comparación útil. Mantener la URL crawlable
+      permite que vuelva al índice cuando recupere inventario.
+    evidence:
+      - file: frontend/lib/seo-combos.ts
+        symbol: "export const MIN_COMBO_PROPERTIES = 5;"
+      - file: frontend/lib/seo-combos.ts
+        symbol: "export const MIN_LOCATION_PROPERTIES = 5;"
+      - file: frontend/app/sitemap.ts
+        symbol: "city.count >= MIN_LOCATION_PROPERTIES"
+      - file: frontend/app/propiedades/[ciudad]/page.tsx
+        symbol: "city.properties.length < MIN_LOCATION_PROPERTIES"
+      - file: frontend/app/provincias/[provincia]/page.tsx
+        symbol: "province.properties.length < MIN_LOCATION_PROPERTIES"
+    frontend:
+      routes:
+        - "/[combo]"
+        - "/propiedades/[ciudad]"
+        - "/provincias/[provincia]"
+    tests: {}
+    cases:
+      - name: Landing con cuatro anuncios
+        given: {count: 4}
+        expected: noindex y fuera del sitemap
+      - name: Landing con cinco anuncios
+        given: {count: 5}
+        expected: indexable y presente en el sitemap
+
+  - id: SEO-002
+    name: La fecha del dataset refleja el inventario que lo compone
+    status: implemented
+    summary: >-
+      El endpoint de estadísticas entrega como updated_at la fecha más reciente
+      de las propiedades comparables y las páginas la usan como dateModified.
+      Si no existe una fecha real, el campo estructurado se omite.
+    rationale: >-
+      Publicar la hora de cada render como fecha de modificación aparenta una
+      actualización que no ocurrió y vuelve inútil la señal de frescura.
+    evidence:
+      - file: backend/real_estate/views.py
+        symbol: "updated_at=Max('updated_at')"
+      - file: frontend/app/estadisticas-inmobiliarias/page.tsx
+        symbol: "datasetUpdatedAt.toISOString()"
+      - file: frontend/app/estadisticas-inmobiliarias/[ciudad]/page.tsx
+        symbol: "datasetUpdatedAt.toISOString()"
+    backend:
+      endpoint: GET /api/market-stats/
+    tests: {}
+    cases:
+      - name: Dataset con inventario actualizado
+        expected: dateModified igual a la última modificación del inventario comparable
+
+  - id: SEO-003
+    name: Solo se declaran como perfiles oficiales las cuentas que existen
+    status: implemented
+    summary: >-
+      El `sameAs` del Organization y los iconos sociales del footer se leen de
+      la misma lista, `SOCIAL_PROFILES`. Solo contiene perfiles reales de la
+      marca (Facebook y TikTok); una red sin cuenta no aparece en ninguno de los
+      dos sitios.
+    rationale: >-
+      El footer enlazaba a `facebook.com` e `instagram.com` a secas, que son
+      portadas genéricas, no perfiles: sacaban al visitante del sitio y no
+      consolidaban nada. Un `sameAs` apuntando a una cuenta inexistente es peor
+      que su ausencia, porque contradice la identidad que declara el resto del
+      grafo. Compartir la lista evita que footer y datos estructurados vuelvan a
+      divergir.
+    evidence:
+      - file: frontend/lib/constants.ts
+        symbol: "export const SOCIAL_PROFILES"
+      - file: frontend/lib/constants.ts
+        symbol: "export const SOCIAL_PROFILE_URLS"
+      - file: frontend/app/layout.tsx
+        symbol: "sameAs: SOCIAL_PROFILE_URLS,"
+      - file: frontend/components/Footer.tsx
+        symbol: "const SOCIAL_ICONS"
+    frontend:
+      routes:
+        - "*"
+    tests: {}
+    cases:
+      - name: Red sin cuenta de la marca
+        given: {network: instagram}
+        expected: ausente del footer y del sameAs
+      - name: Red con perfil publicando
+        given: {network: tiktok}
+        expected: presente en el footer y en el sameAs
+
+  - id: SEO-004
+    name: La verificación en buscadores se configura por entorno
+    status: implemented
+    summary: >-
+      Las etiquetas de verificación de Google y Bing salen de
+      `NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION` y
+      `NEXT_PUBLIC_BING_SITE_VERIFICATION`. Si la variable está vacía no se
+      emite etiqueta.
+    rationale: >-
+      Google está verificado como propiedad de dominio por DNS y no necesita
+      etiqueta, pero un registro TXT se pierde en cualquier migración. Dejar el
+      valor en el entorno convierte una reverificación en un despliegue en vez
+      de un cambio de código. Emitir la etiqueta con `content` vacío la
+      invalidaría en ambos buscadores, así que la ausencia de valor significa
+      ausencia de etiqueta.
+    evidence:
+      - file: frontend/app/layout.tsx
+        symbol: "const bingSiteVerification"
+      - file: frontend/app/layout.tsx
+        symbol: "'msvalidate.01': bingSiteVerification"
+    frontend:
+      routes:
+        - "*"
+    tests: {}
+    cases:
+      - name: Variable sin definir
+        given: {NEXT_PUBLIC_BING_SITE_VERIFICATION: ""}
+        expected: no se emite la meta msvalidate.01
+      - name: Variable con código
+        given: {NEXT_PUBLIC_BING_SITE_VERIFICATION: "ABC123"}
+        expected: se emite la meta msvalidate.01 con ese valor

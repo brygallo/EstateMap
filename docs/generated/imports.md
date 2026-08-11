@@ -51,7 +51,7 @@ Toda propiedad creada por la ingesta queda con `owner` NULL e `is_imported=True`
 
 - `backend/ingesta/pipeline/upsert.py:23-53` (`_apply_fields`) — Punto único de escritura de campos; nunca toca `owner`.
 - `backend/ingesta/pipeline/upsert.py:55-57` (`prop.is_imported = True`)
-- `backend/real_estate/models.py:152-154` (`owner = models.ForeignKey`) — FK nullable; el comentario del bloque de origen documenta la regla.
+- `backend/real_estate/models.py:183-185` (`owner = models.ForeignKey`) — FK nullable; el comentario del bloque de origen documenta la regla.
 
 **Casos**
 
@@ -71,7 +71,7 @@ Reimportar el mismo anuncio actualiza la fila existente en vez de duplicarla, ga
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
 - `backend/ingesta/pipeline/upsert.py:114-116` (`Property.objects.filter(source=fuente, external_id=external_id)`) — Búsqueda previa; si existe, la operación se convierte en UPDATE.
-- `backend/real_estate/models.py:228-231` (`uniq_source_external_when_imported`) — UniqueConstraint condicionada a is_imported=True.
+- `backend/real_estate/models.py:259-261` (`uniq_source_external_when_imported`) — UniqueConstraint condicionada a is_imported=True.
 - `backend/ingesta/pipeline/upsert.py:152-164` (`except IntegrityError:`) — Una carrera perdida se recupera y se reescribe como actualización.
 
 **Casos**
@@ -164,7 +164,7 @@ Una propiedad importada ofrece WhatsApp si hay teléfono y, si no, un enlace al 
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/real_estate/models.py:176-178` (`Enlace al anuncio original (contacto fallback)`) — El modelo declara `source_url` como contacto de último recurso.
+- `backend/real_estate/models.py:207-209` (`Enlace al anuncio original (contacto fallback)`) — El modelo declara `source_url` como contacto de último recurso.
 - `frontend/app/property/[id]/page.tsx:451-453` (`typeof property.source_url === 'string' ? property.source_url.trim()`) — El escalón de último recurso de la cascada. Desde el rediseño de la ficha de anuncio cerrado va además condicionado a `!isClosed`: un anuncio ya vendido no ofrece contacto.
 - `frontend/app/property/[id]/page.tsx:669-693` (`method="source_url"`) — Cascada real renderizada: contactPhone -> sourceUrl. No hay rama de email.
 

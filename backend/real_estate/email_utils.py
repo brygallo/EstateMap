@@ -403,7 +403,7 @@ def create_publication_resume_token(pending, created_by=None):
     )
 
 
-def send_account_claim_email(user, reset_token, property_title=''):
+def send_account_claim_email(user, reset_token, prop=None):
     """
     Invita a definir contraseña a una cuenta creada sin que su dueño estuviera.
 
@@ -414,7 +414,8 @@ def send_account_claim_email(user, reset_token, property_title=''):
     """
     claim_link = f"{frontend_url()}/reset-password?token={reset_token}"
     subject = 'Tu anuncio está publicado - Geo Propiedades Ecuador'
-    listing = property_title or 'tu propiedad'
+    listing = getattr(prop, 'title', prop) or 'tu propiedad'
+    detail_link = f"{frontend_url()}/propiedad/{prop.pk}" if getattr(prop, 'pk', None) else frontend_url()
 
     body = f"""
 Hola,
@@ -425,6 +426,10 @@ nombre para que puedas administrarla.
 Define tu contraseña aquí para entrar:
 
 {claim_link}
+
+Tu anuncio ya se puede revisar aquí:
+
+{detail_link}
 
 Con tu cuenta podrás editar el anuncio, subir más fotos y ver quién pregunta por
 tu propiedad.

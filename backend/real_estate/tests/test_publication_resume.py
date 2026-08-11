@@ -236,6 +236,7 @@ def test_redeeming_publishes_and_creates_the_account(api_client, pending, clear_
     assert prop.owner == owner
     assert len(mail.outbox) == 1
     assert '/reset-password?token=' in mail.outbox[0].body
+    assert f'/propiedad/{prop.pk}' in mail.outbox[0].body
 
 
 @pytest.mark.django_db

@@ -42,7 +42,11 @@ export default function ResumePublicationPage() {
         sessionStorage.setItem(PUBLICATION_RESUME_TOKEN_KEY, token);
         localStorage.setItem(
           PROPERTY_DRAFT_STORAGE_KEY,
-          JSON.stringify({ ...(payload.draft || {}), draft_status: 'resumed' })
+          JSON.stringify({
+            ...(payload.draft || {}),
+            temporary_images: payload.temporary_images || [],
+            draft_status: 'resumed',
+          })
         );
         router.replace('/publicar-propiedad');
       } catch {

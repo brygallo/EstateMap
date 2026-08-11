@@ -6,7 +6,7 @@ import {
   slugify,
   SITE_URL,
 } from '@/lib/properties';
-import { GUIDES } from '@/lib/guias';
+import { getBlogPosts } from '@/lib/blog';
 import {
   getMarketStats,
   MIN_LISTINGS_FOR_PROMOTION,
@@ -22,7 +22,20 @@ import {
 export const revalidate = 3600;
 
 export async function GET() {
-  const [properties, stats] = await Promise.all([getProperties(), getMarketStats()]);
+  const [properties, stats, blog] = await Promise.all([
+    getProperties(),
+    getMarketStats(),
+    getBlogPosts({ limit: 40 }),
+  ]);
+
+  // AI crawlers do not execute JS, so this index is the site map as far as
+  // they are concerned. Each article ships with its description so they can
+  // pick which one to open without crawling all forty.
+  const blogLines = blog.results.length
+    ? blog.results
+        .map((post) => `- [${post.title}](${SITE_URL}/blog/${post.slug}): ${post.excerpt}`)
+        .join('\n')
+    : '- Todavía no hay artículos publicados.';
   const cities = getCities(properties)
     .sort((a, b) => b.count - a.count || a.name.localeCompare(b.name))
     .slice(0, 25);
@@ -101,9 +114,9 @@ ${provinceLines}
 
 ${statsSection}
 
-## Guías inmobiliarias
+## Blog inmobiliario
 
-${GUIDES.map((g) => `- [${g.title}](${SITE_URL}/guias/${g.slug}): ${g.description}`).join('\n')}
+${blogLines}
 
 ## Cómo interpretar páginas de categoría
 

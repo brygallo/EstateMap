@@ -17,6 +17,7 @@ export type StatRow = {
   avg_price_m2: number;
   avg_price: number;
   avg_area: number;
+  updated_at?: string | null;
 };
 
 export type MarketStats = {

@@ -10,7 +10,7 @@ import {
   integer,
   money,
 } from '@/lib/market-stats';
-import { GUIDES } from '@/lib/guias';
+import { getBlogPosts } from '@/lib/blog';
 
 export const revalidate = 1800;
 
@@ -28,9 +28,13 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function MarketStatsPage() {
-  const stats = await getMarketStats();
+  const [stats, blog] = await Promise.all([getMarketStats(), getBlogPosts({ limit: 4 })]);
+  const blogPosts = blog.results;
   const year = new Date().getFullYear();
-  const updatedLabel = new Date().toLocaleDateString('es-EC', {
+  const datasetUpdatedAt = stats?.overall.updated_at
+    ? new Date(stats.overall.updated_at)
+    : null;
+  const updatedLabel = (datasetUpdatedAt || new Date()).toLocaleDateString('es-EC', {
     day: 'numeric',
     month: 'long',
     year: 'numeric',
@@ -86,7 +90,7 @@ export default async function MarketStatsPage() {
             },
             spatialCoverage: 'Ecuador',
             temporalCoverage: String(year),
-            dateModified: new Date().toISOString(),
+            ...(datasetUpdatedAt ? { dateModified: datasetUpdatedAt.toISOString() } : {}),
             isAccessibleForFree: true,
             variableMeasured: [
               {
@@ -205,12 +209,12 @@ export default async function MarketStatsPage() {
               </section>
             )}
             <section className="mt-10 rounded-card bg-primaryLight p-5 sm:p-7">
-              <h2 className="text-lg font-bold text-textPrimary">Guías para decidir mejor</h2>
+              <h2 className="text-lg font-bold text-textPrimary">Del blog, para decidir mejor</h2>
               <ul className="mt-3 space-y-2 text-sm">
-                {GUIDES.slice(0, 4).map((guide) => (
-                  <li key={guide.slug}>
-                    <Link href={`/guias/${guide.slug}`} className="font-semibold text-primary hover:underline">
-                      {guide.title}
+                {blogPosts.map((post) => (
+                  <li key={post.slug}>
+                    <Link href={`/blog/${post.slug}`} className="font-semibold text-primary hover:underline">
+                      {post.title}
                     </Link>
                   </li>
                 ))}

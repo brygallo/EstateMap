@@ -17,6 +17,7 @@ import PropertySidebar from '@/components/map/PropertySidebar';
 import PropertyModal from '@/components/PropertyModal';
 import LocationPermissionModal from '@/components/LocationPermissionModal';
 import MapPropertyCard from '@/components/map/MapPropertyCard';
+import MapActiveFilters from '@/components/map/MapActiveFilters';
 import type { MapBounds, Property } from '@/lib/types';
 
 // Cargar el mapa MapLibre solo en cliente (sin SSR).
@@ -691,6 +692,15 @@ const MapPage = () => {
           center={DEFAULT_CENTER}
         />
 
+        {/* On mobile the filters live inside the drawer: once it is down, the
+            map stays filtered with nothing on screen saying so. These chips make
+            that visible and remove a filter without reopening the panel. */}
+        <MapActiveFilters
+          filters={filters}
+          owners={owners}
+          onChange={handleFilterChange}
+          onClear={clearFilters}
+        />
       </div>
 
       {selectedProperty && !isModalOpen && !sidebarOpen && (

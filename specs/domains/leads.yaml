@@ -44,7 +44,7 @@ rules:
           solo los throttles globales de DEFAULT_THROTTLE_CLASSES, que aquí
           no están definidos.
       - file: backend/estate_map/settings.py
-        lines: "166-174"
+        lines: "177-184"
         symbol: DEFAULT_THROTTLE_RATES
         note: >
           El comentario dice explícitamente que el rate limiting se aplica
@@ -119,7 +119,7 @@ rules:
       interesado.
     evidence:
       - file: backend/real_estate/models.py
-        lines: "492-494"
+        lines: "523-525"
         symbol: "STATUS_CHOICES = ["
         note: Los tres estados del ciclo de gestión de un lead.
       - file: backend/real_estate/serializers.py
@@ -154,7 +154,7 @@ rules:
       lo envía.
     evidence:
       - file: backend/real_estate/models.py
-        lines: "484-487"
+        lines: "515-517"
         symbol: "SOURCE_CHOICES = ["
         note: Los cinco orígenes válidos de un lead.
     cases:
@@ -282,7 +282,7 @@ rules:
       leads por canal de captación.
     evidence:
       - file: backend/real_estate/models.py
-        lines: "515-517"
+        lines: "546-548"
         symbol: lead_property_status_idx
         note: Los tres índices y las consultas que cubren.
     cases:
@@ -309,7 +309,7 @@ rules:
       consumir.
     evidence:
       - file: backend/real_estate/models.py
-        lines: "524-526"
+        lines: "555-557"
         symbol: "class PendingPublication(models.Model)"
         note: >
           Docstring: "Solicitud de publicación capturada antes de que el
@@ -329,11 +329,11 @@ rules:
       (abandonó el formulario), además de other como comodín.
     evidence:
       - file: backend/real_estate/models.py
-        lines: "484-486"
+        lines: "515-517"
         symbol: "SOURCE_CHOICES = ["
         note: Los cuatro orígenes de una solicitud pendiente.
       - file: backend/real_estate/serializers.py
-        lines: "524-526"
+        lines: "531-533"
         symbol: "def validate_source"
         note: Cualquier valor fuera del catálogo se normaliza silenciosamente a "other" en vez de rechazar la petición.
     cases:
@@ -396,7 +396,7 @@ rules:
         symbol: "throttle_scope = 'pending_create'"
         note: Solo el POST público se limita; el resto de acciones ya exige staff y no lleva throttle.
       - file: backend/estate_map/settings.py
-        lines: "172-174"
+        lines: "179-181"
         symbol: "'pending_create': '10/min'"
     backend:
       enforce: true
@@ -458,11 +458,11 @@ rules:
       partir de la cabecera User-Agent real de la conexión.
     evidence:
       - file: backend/real_estate/serializers.py
-        lines: "634-639"
+        lines: "686-690"
         symbol: "validated_data['is_bot'] = is_bot_request(request)"
         note: Sobrescribe el valor ya validado del payload, si lo había.
       - file: backend/real_estate/serializers.py
-        lines: "610-612"
+        lines: "665-667"
         symbol: "read_only_fields = ['id', 'user', 'property', 'property_title', 'is_bot', 'created_at']"
         note: is_bot es de solo lectura en el serializer expuesto, además de recalcularse en create.
     backend:
@@ -522,10 +522,10 @@ rules:
       DEFAULT_THROTTLE_RATES fija ese scope en 30/min.
     evidence:
       - file: backend/real_estate/views.py
-        lines: "1383-1385"
+        lines: "1412-1414"
         symbol: "throttle_scope = 'activity_create'"
       - file: backend/estate_map/settings.py
-        lines: "172-173"
+        lines: "178-180"
         symbol: "'activity_create': '30/min'"
     backend:
       enforce: true
@@ -589,11 +589,11 @@ rules:
       propiedad reales.
     evidence:
       - file: backend/real_estate/models.py
-        lines: "492-494"
+        lines: "523-525"
         symbol: "STATUS_CHOICES = ["
         note: Los cuatro estados de una solicitud pendiente.
       - file: backend/real_estate/serializers.py
-        lines: "542-544"
+        lines: "585-587"
         symbol: "class PendingPublicationStatusSerializer"
         note: "fields = ['id', 'status'], igual patrón restrictivo que LeadStatusSerializer."
     backend:
@@ -611,3 +611,39 @@ rules:
       - name: Usuario autenticado sin is_staff intenta cambiar el estado
         role: authenticated
         expected: denied
+
+  - id: LEAD-019
+    name: Los guardados repetidos de un borrador actualizan una sola solicitud pendiente
+    status: implemented
+    summary: >-
+      El navegador conserva una clave UUID por borrador. Cada abandono, error de
+      publicación o solicitud de ayuda envía esa misma clave; el servidor
+      actualiza la PendingPublication abierta en vez de insertar otra fila y
+      conserva sus fotografías temporales cuando el nuevo guardado no las repite.
+    rationale: >-
+      Una misma persona puede activar varios puntos de guardado durante el mismo
+      intento. Mostrar cada evento como una publicación distinta infla la
+      bandeja, divide el borrador entre filas y hace que soporte contacte varias
+      veces por el mismo anuncio.
+    evidence:
+      - file: frontend/app/add-property/page.tsx
+        lines: "783-842"
+        symbol: PENDING_PUBLICATION_KEY_STORAGE_KEY
+        note: La clave estable y las fotos se envían en cada guardado del borrador.
+      - file: backend/real_estate/serializers.py
+        lines: "548-579"
+        symbol: "def create(self, validated_data)"
+        note: Busca por draft_key y actualiza la solicitud no convertida.
+      - file: backend/real_estate/models.py
+        lines: "582-584"
+        symbol: draft_key
+        note: La unicidad también protege frente a duplicados en la base de datos.
+    tests:
+      api: true
+    cases:
+      - name: El mismo borrador se guarda varias veces después de errores
+        expected: allowed
+        note: Hay una sola fila con los datos más recientes.
+      - name: Un guardado posterior no vuelve a enviar las fotos
+        expected: allowed
+        note: Las fotos temporales ya guardadas se conservan.

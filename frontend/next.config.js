@@ -110,6 +110,12 @@ const nextConfig = {
       { source: '/forgot-password', destination: '/recuperar-contrasena', permanent: true },
       { source: '/reset-password', destination: '/restablecer-contrasena', permanent: true },
       { source: '/verify-email', destination: '/verificar-correo', permanent: true },
+      // The guides no longer live hardcoded in the frontend: they are the
+      // blog's first posts, under the same slugs. A permanent redirect hands
+      // over the history of `/guias/<slug>` instead of leaving seven 404s, and
+      // keeps the same text from being published at two competing URLs.
+      { source: '/guias', destination: '/blog', permanent: true },
+      { source: '/guias/:slug', destination: '/blog/:slug', permanent: true },
     ];
   },
 };

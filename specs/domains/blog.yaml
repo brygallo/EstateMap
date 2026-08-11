@@ -1,0 +1,338 @@
+version: 1
+domain: blog
+title: Blog editorial
+status: implemented
+summary: >-
+  El portal publica artículos escritos por el equipo desde el admin de Django y
+  servidos por Next.js en `/blog`. Existe por una razón concreta: el inventario
+  de anuncios posiciona consultas transaccionales («departamentos en venta en
+  Cumbayá») pero no las informativas («cuánto cuesta la alcabala», «qué exige la
+  Ley de Inquilinato»), que son las que la gente pregunta antes de comprar y las
+  que los buscadores de IA citan.
+
+  La pieza que da forma al dominio es la programación. Escribir treinta
+  artículos en una tarde y soltarlos el mismo día se lee como lo que es; el
+  calendario los reparte uno por día. Por eso la publicación se decide con una
+  fecha, no con una cola: un post es público desde que `published_at` queda en
+  el pasado, aunque el worker esté caído. Celery solo se encarga de los efectos
+  (avisar a IndexNow, invalidar el caché de Next), que llegar tarde encarece
+  pero no rompe.
+
+  El blog no abre superficie de escritura nueva: se redacta en el admin y la API
+  pública es de solo lectura. Las siete guías que vivían incrustadas en el
+  frontend (`lib/guias.ts`) son sus primeros posts y conservan su slug, con
+  `/guias/<slug>` redirigiendo de forma permanente a `/blog/<slug>`.
+see_also:
+  - specs/ui/visibility-rules.yaml
+  - specs/permissions/matrix.yaml
+  - docs/technical/cache.md
+  - SEO-STRATEGY.md
+
+rules:
+  - id: BLOG-001
+    name: Un post es público desde que su fecha de publicación queda en el pasado
+    status: implemented
+    summary: >-
+      La API pública entrega un post cuando `published_at` es anterior al
+      instante actual, sin depender de que ninguna tarea lo haya marcado.
+    rationale: >-
+      La alternativa evidente —que una tarea de Celery cambie el estado a
+      `published` y solo entonces se vea— convierte al broker en autoridad sobre
+      el calendario editorial. Una caída del worker un sábado congelaría la
+      publicación hasta que alguien lo note, y lo notaría por el hueco en Search
+      Console, no por una alerta.
+
+      Aquí la fecha manda y el estado la acompaña: el filtro público acepta
+      `scheduled` y `published` por igual siempre que la fecha haya llegado. La
+      tarea horaria sigue existiendo, pero solo para lo que un reloj no puede
+      hacer: avisar a IndexNow y tirar el caché de Next. Si no corre, el post
+      sale igual y tarda un poco más en ser indexado.
+    evidence:
+      - file: backend/blog/models.py
+        lines: "62-77"
+        symbol: def public
+        note: >-
+          El filtro público acepta SCHEDULED y PUBLISHED; lo que decide es
+          `published_at__lte=timezone.now()`.
+      - file: backend/blog/views.py
+        lines: "49-51"
+        symbol: Post.objects.public()
+        note: Es el único queryset del que sale cualquier respuesta pública.
+    backend:
+      endpoint: GET /api/blog/posts/
+    tests: {api: true}
+    cases:
+      - name: Un post programado para ayer ya se lee
+        given: {blog_post_published_days_ago: 1}
+        expected: visible
+      - name: Un post programado para mañana todavía no se lee
+        given: {blog_post_published_in_days: 1}
+        expected: ausente
+
+  - id: BLOG-002
+    name: Los borradores y los archivados no salen nunca al público
+    status: implemented
+    summary: >-
+      Un post en estado `draft` o `archived` queda fuera del listado y devuelve
+      404 en su detalle, tenga la fecha que tenga.
+    rationale: >-
+      El estado es la única forma de retirar del sitio algo ya publicado sin
+      borrarlo ni inventar una fecha futura, que es lo que haría un editor
+      apurado si no existiera. Se comprueba en el mismo queryset que BLOG-001
+      para que no haya dos definiciones de «público» que puedan divergir.
+    evidence:
+      - file: backend/blog/models.py
+        lines: "62-77"
+        symbol: status__in=(Post.Status.SCHEDULED, Post.Status.PUBLISHED)
+        note: DRAFT y ARCHIVED quedan fuera por construcción.
+    backend:
+      endpoint: GET /api/blog/posts/
+      denied_http_status: 404
+    tests: {api: true}
+    cases:
+      - name: Un borrador con fecha pasada sigue sin verse
+        given: {blog_post_draft: true}
+        expected: ausente
+      - name: El detalle de un borrador devuelve 404
+        given: {blog_post_draft: true}
+        expected: denied
+        http_status: 404
+
+  - id: BLOG-003
+    name: El blog se escribe solo desde el admin
+    status: implemented
+    summary: >-
+      La API del blog es de solo lectura: no expone crear, editar ni borrar a
+      nadie, ni siquiera autenticado.
+    rationale: >-
+      Es contenido que edita un puñado de personas unas veces por semana. Abrir
+      un endpoint de escritura para eso añade superficie de ataque, validación y
+      permisos a cambio de comodidad que el admin de Django ya da. La regla se
+      sostiene por el tipo de viewset, no por una comprobación que alguien pueda
+      olvidar: `ReadOnlyModelViewSet` sencillamente no enruta POST ni PUT.
+    evidence:
+      - file: backend/blog/views.py
+        lines: "40-44"
+        symbol: class BlogPostViewSet(viewsets.ReadOnlyModelViewSet)
+      - file: backend/blog/views.py
+        lines: "113-120"
+        symbol: class BlogCategoryViewSet(viewsets.ReadOnlyModelViewSet)
+    backend:
+      endpoint: POST /api/blog/posts/
+      denied_http_status: 405
+    tests: {api: true}
+    cases:
+      - name: Un anónimo no puede crear posts
+        role: anonymous
+        expected: denied
+        http_status: 405
+      - name: Un usuario autenticado tampoco
+        role: authenticated
+        expected: denied
+        http_status: 405
+
+  - id: BLOG-004
+    name: El listado público entrega como mucho 60 posts por petición
+    status: implemented
+    summary: >-
+      `?limit=` se recorta a 60 y cualquier valor inválido cae al valor por
+      defecto de 24.
+    rationale: >-
+      El endpoint es anónimo y cacheado por combinación de parámetros. Sin techo,
+      un `?limit=100000` serializa el archivo entero y además ensucia Redis con
+      una entrada enorme por cada valor que alguien pruebe. El recorte es
+      silencioso a propósito: quien pide de más recibe una página válida, no un
+      400 que obligue a manejar el error en el frontend.
+    evidence:
+      - file: backend/blog/views.py
+        lines: "36-37"
+        symbol: MAX_LIMIT
+      - file: backend/blog/views.py
+        lines: "62-63"
+        symbol: limit = max(1, min(limit, MAX_LIMIT))
+    backend:
+      endpoint: GET /api/blog/posts/
+    tests: {api: true}
+    cases:
+      - name: Un limit desmedido se recorta al máximo
+        given: {blog_posts: 3}
+        expected: {max_results: 60}
+      - name: Un limit no numérico no rompe la respuesta
+        given: {blog_posts: 3}
+        expected: {http_status: 200}
+
+  - id: BLOG-005
+    name: Publicar avisa a los buscadores e invalida el caché del frontend
+    status: implemented
+    summary: >-
+      Cuando un post pasa a ser público, se encola un ping de IndexNow con su URL
+      y una revalidación de las etiquetas `blog` y `blog-<slug>` en Next.js.
+    rationale: >-
+      Un artículo que nadie recrawlea durante días no posiciona: la ventaja de
+      IndexNow es que Bing —y con él ChatGPT y Copilot— lo ve el mismo minuto.
+      Y sin invalidar las etiquetas, `/blog` seguiría sirviendo la lista vieja
+      hasta agotar su ventana de ISR, así que el post existiría pero no habría
+      forma de llegar a él navegando.
+
+      Programar para dentro de un mes no dispara nada: la señal comprueba
+      `is_public` antes, porque avisar a un buscador de una URL que aún devuelve
+      404 gasta presupuesto de rastreo y enseña un error.
+    evidence:
+      - file: backend/blog/signals.py
+        lines: "39-50"
+        symbol: def post_saved
+      - file: backend/blog/tasks.py
+        lines: "24-52"
+        symbol: def publish_scheduled_posts
+    tests: {unit: true}
+    cases:
+      - name: Guardar un post ya público avisa a IndexNow
+        given: {blog_post_published_days_ago: 1}
+        expected: notificado
+      - name: Guardar un post programado a futuro no avisa a nadie
+        given: {blog_post_published_in_days: 30}
+        expected: silencio
+
+  - id: BLOG-006
+    name: Las guías migradas conservan su URL mediante redirección permanente
+    status: implemented
+    summary: >-
+      `/guias` y `/guias/<slug>` responden con un 308 hacia `/blog` y
+      `/blog/<slug>`, y los slugs de las siete guías no cambiaron.
+    rationale: >-
+      Las guías llevaban meses indexadas. Moverlas sin redirección tira a la
+      basura el poco historial que tiene un dominio joven y deja siete 404 en
+      Search Console; duplicar el contenido en las dos rutas es peor todavía,
+      porque obliga a Google a elegir canónica y reparte las señales entre dos
+      URLs.
+
+      La redirección es permanente (308 en Next.js, equivalente a un 301 que
+      además preserva el método) para que el traspaso de autoridad sea
+      inequívoco, y el contenido vive en un solo sitio.
+    evidence:
+      - file: frontend/next.config.js
+        symbol: async redirects
+        note: Redirige la sección entera y cada guía a su post equivalente.
+      - file: backend/blog/seed/guides.json
+        symbol: como-comprar-una-propiedad-en-ecuador
+        note: >-
+          El seed conserva los slugs originales; el texto se exportó de
+          `lib/guias.ts` sin reescribirlo.
+    frontend:
+      routes:
+        - /guias
+        - /guias/[slug]
+        - /blog
+        - /blog/[slug]
+    tests: {}
+    cases:
+      - name: La guía de compra responde en su nueva URL
+        expected: /blog/como-comprar-una-propiedad-en-ecuador
+      - name: La URL antigua redirige de forma permanente
+        expected: 308
+
+  - id: BLOG-007
+    name: Programar un lote no pisa lo que ya está en el calendario
+    status: implemented
+    summary: >-
+      La acción «uno por día» arranca al día siguiente del último post ya
+      programado, de modo que dos lotes seguidos se encolan en vez de solaparse.
+    rationale: >-
+      El caso real es escribir por tandas: veinte posts un lunes, quince el
+      viernes. Si la acción empezara siempre mañana, la segunda tanda caería
+      encima de la primera y saldrían dos artículos al día durante dos semanas
+      —exactamente el patrón que la programación existe para evitar.
+    evidence:
+      - file: backend/blog/admin.py
+        lines: "155-184"
+        symbol: def schedule_daily
+    tests: {unit: true}
+    cases:
+      - name: Un segundo lote continúa donde terminó el primero
+        given: {blog_scheduled_posts: 3}
+        expected: sin solapamiento
+      - name: Los posts del lote quedan a un día de distancia entre sí
+        expected: 1 día
+
+  - id: BLOG-008
+    name: Cada autor con nombre público tiene una página enlazable
+    status: implemented
+    summary: >-
+      Los artículos firmados enlazan a `/blog/autor/<autor>`, donde se muestran
+      la credencial pública y todos sus artículos. El schema Article usa esa
+      misma URL para identificar a la persona y la página publica ProfilePage.
+    rationale: >-
+      Un nombre y un cargo sueltos no permiten comprobar quién responde por el
+      contenido. Una URL estable reúne la firma, la credencial y el historial
+      editorial para personas y buscadores, sin inventar perfiles externos.
+    evidence:
+      - file: backend/blog/models.py
+        symbol: "self.author_slug = slugify(self.public_author_name)[:140]"
+        note: >-
+          El slug se deriva al guardar, así que renombrar al autor mueve su
+          página en vez de dejar la firma y la URL en desacuerdo.
+      - file: backend/blog/views.py
+        symbol: "queryset.filter(author_slug=author)"
+        note: El listado público filtra por autor; la página no re-deriva nada.
+      - file: frontend/app/blog/[slug]/page.tsx
+        symbol: "const authorPath = post.author_name"
+        note: La firma del artículo y el `author.url` del schema salen del mismo valor.
+      - file: frontend/app/blog/autor/[autor]/page.tsx
+        symbol: "export default async function AuthorPage"
+      - file: frontend/app/sitemap.ts
+        symbol: "`${SITE_URL}/blog/autor/${slug}`"
+        note: >-
+          Si el schema afirma la entidad, el sitemap tiene que ofrecerla a
+          rastreo.
+    frontend:
+      routes: ["/blog/autor/[autor]"]
+    tests: {api: true, unit: true}
+    cases:
+      - name: Un artículo firmado enlaza a su autor
+        expected: página de autor con sus artículos
+      - name: Renombrar al autor mueve su página
+        expected: el slug se recalcula al guardar
+      - name: Un autor inexistente no cae al listado completo
+        expected: cero resultados
+
+  - id: BLOG-009
+    name: Un artículo de ciudad entrega el precio del m² y el inventario de esa ciudad
+    status: implemented
+    summary: >-
+      Un post con `city` publica, dentro del HTML servido, el precio medio del
+      m² de esa ciudad calculado sobre los anuncios del portal, y enlaza a su
+      catálogo y a su índice de precios. Si la muestra no llega al umbral de
+      promoción, se omiten las cifras y queda solo el enlace al catálogo.
+    rationale: >-
+      El blog captura la consulta informativa («cuánto cuesta la alcabala en
+      Quito»); sin un puente al inventario esa visita se va sin ver una sola
+      propiedad. Y lo que hace citable al artículo no es el consejo, que
+      cualquiera repite, sino el dato que solo tiene este portal: por eso la
+      cifra va en el HTML —los rastreadores de IA no ejecutan JavaScript— y se
+      declara como Dataset junto al artículo.
+
+      El umbral es la otra mitad de la regla. Publicar un promedio calculado
+      sobre tres anuncios como si fuera el precio de una ciudad es la forma más
+      rápida de que te citen una vez y no te vuelvan a creer.
+    evidence:
+      - file: frontend/components/blog/CityPriceBlock.tsx
+        symbol: "if (listings < MIN_LISTINGS_FOR_PROMOTION || pricePerM2 <= 0) return null"
+        note: Por debajo del umbral no se publica cifra, solo el enlace al catálogo.
+      - file: frontend/app/blog/[slug]/page.tsx
+        symbol: "const cityFacts = post.city ? await getCityPriceFacts(post.city) : null"
+        note: >-
+          El bloque visible y el JSON-LD leen el mismo resultado, así que el
+          schema no puede afirmar una cifra que la página no muestra.
+      - file: backend/blog/models.py
+        symbol: "city = models.CharField("
+        note: La ciudad del artículo se elige en el admin; vacía significa alcance nacional.
+    frontend:
+      routes: ["/blog/[slug]"]
+    tests: {api: true}
+    cases:
+      - name: Un artículo con ciudad y muestra suficiente
+        expected: precio del m², enlace al catálogo y al índice de precios
+      - name: Un artículo con ciudad y muestra insuficiente
+        expected: sin cifras, solo el enlace al catálogo
+      - name: Un artículo sin ciudad
+        expected: no se añade bloque de ciudad

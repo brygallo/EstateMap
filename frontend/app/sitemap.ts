@@ -1,7 +1,7 @@
 import { MetadataRoute } from 'next';
 import { getProperties, getCities, getProvinces, slugify, SITE_URL, Property } from '@/lib/properties';
-import { generateCombos, parseComboSlug } from '@/lib/seo-combos';
-import { GUIDES } from '@/lib/guias';
+import { generateCombos, MIN_LOCATION_PROPERTIES, parseComboSlug } from '@/lib/seo-combos';
+import { authorSlug, getBlogCategories, getBlogPosts, MIN_POSTS_FOR_INDEXING } from '@/lib/blog';
 import { MIN_LISTINGS_FOR_PROMOTION } from '@/lib/market-stats';
 
 // Nota: las imágenes por propiedad se publican en un sitemap de imágenes aparte
@@ -34,7 +34,11 @@ function latestDate(dates: (Date | null)[], fallback: Date): Date {
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const now = new Date();
-  const properties = await getProperties();
+  const [properties, blog, blogCategories] = await Promise.all([
+    getProperties(),
+    getBlogPosts({ limit: 60 }),
+    getBlogCategories(),
+  ]);
 
   // `lastmod` honesto: la última vez que cambió el inventario, global y por
   // ubicación. Declarar "ahora" en cada request hace que Google ignore el
@@ -66,14 +70,59 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       changeFrequency: 'daily' as const,
       priority: 0.8,
     })),
-    { url: `${SITE_URL}/guias`, lastModified: new Date(GUIDES[0].updated), changeFrequency: 'monthly', priority: 0.7 },
-    ...GUIDES.map((guide) => ({
-      url: `${SITE_URL}/guias/${guide.slug}`,
-      lastModified: new Date(guide.updated),
-      changeFrequency: 'monthly' as const,
-      priority: 0.65,
-    })),
   ];
+
+  // The blog moves on its own schedule — posts publish themselves — so its
+  // `lastmod` comes from the articles' own dates, not from the inventory.
+  // Categories below MIN_POSTS_FOR_INDEXING are left out for the same reason
+  // sector landings are: a page holding one article competes with it.
+  const blogLatest = latestDate(
+    blog.results.map((post) => new Date(post.updated_at || post.published_at)),
+    now
+  );
+  const blogRoutes: MetadataRoute.Sitemap = blog.results.length
+    ? [
+        { url: `${SITE_URL}/blog`, lastModified: blogLatest, changeFrequency: 'daily', priority: 0.75 },
+        ...blog.results.map((post) => ({
+          url: `${SITE_URL}/blog/${post.slug}`,
+          lastModified: new Date(post.updated_at || post.published_at),
+          changeFrequency: 'monthly' as const,
+          priority: 0.65,
+        })),
+        ...blogCategories
+          .filter((category) => (category.post_count ?? 0) >= MIN_POSTS_FOR_INDEXING)
+          .map((category) => ({
+            url: `${SITE_URL}/blog/categoria/${category.slug}`,
+            lastModified: blogLatest,
+            changeFrequency: 'weekly' as const,
+            priority: 0.6,
+          })),
+        // Author pages: every Article schema points at one, so leaving them out
+        // of the sitemap would mean asserting an entity we never offer to be
+        // crawled. Derived from the bylines because there is no author endpoint.
+        ...Array.from(
+          new Set(blog.results.map((post) => post.author_slug).filter(Boolean))
+        ).map((slug) => ({
+          url: `${SITE_URL}/blog/autor/${slug}`,
+          lastModified: blogLatest,
+          changeFrequency: 'weekly' as const,
+          priority: 0.5,
+        })),
+      ]
+    : [];
+
+  const authorRoutes: MetadataRoute.Sitemap = Array.from(
+    new Map(
+      blog.results
+        .filter((post) => post.author_name)
+        .map((post) => [authorSlug(post.author_name), post] as const)
+    ).values()
+  ).map((post) => ({
+    url: `${SITE_URL}/blog/autor/${authorSlug(post.author_name)}`,
+    lastModified: new Date(post.updated_at || post.published_at),
+    changeFrequency: 'monthly' as const,
+    priority: 0.5,
+  }));
 
   const propertyRoutes: MetadataRoute.Sitemap = properties.map((property) => ({
     url: `${SITE_URL}/propiedad/${property.id}`,
@@ -82,12 +131,14 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.7,
   }));
 
-  const cityRoutes: MetadataRoute.Sitemap = getCities(properties).map((city) => ({
+  const cityRoutes: MetadataRoute.Sitemap = getCities(properties)
+    .filter((city) => city.count >= MIN_LOCATION_PROPERTIES)
+    .map((city) => ({
     url: `${SITE_URL}/propiedades/${city.slug}`,
     lastModified: locationLatest.get(city.slug) || globalLatest,
     changeFrequency: 'daily',
     priority: 0.7,
-  }));
+    }));
 
   // Per-city m² price pages. Counted over comparable sale inventory (the same
   // population the stats API uses) and gated stricter than the page's own
@@ -105,12 +156,14 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 0.75,
     }));
 
-  const provinceRoutes: MetadataRoute.Sitemap = getProvinces(properties).map((province) => ({
+  const provinceRoutes: MetadataRoute.Sitemap = getProvinces(properties)
+    .filter((province) => province.count >= MIN_LOCATION_PROPERTIES)
+    .map((province) => ({
     url: `${SITE_URL}/provincias/${province.slug}`,
     lastModified: locationLatest.get(province.slug) || globalLatest,
     changeFrequency: 'daily',
     priority: 0.72,
-  }));
+    }));
 
   // Landings por combinación tipo + operación + ubicación (SEO local).
   const comboRoutes: MetadataRoute.Sitemap = generateCombos(properties).map(({ combo }) => {
@@ -124,5 +177,5 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     };
   });
 
-  return [...staticRoutes, ...propertyRoutes, ...cityRoutes, ...statsCityRoutes, ...provinceRoutes, ...comboRoutes];
+  return [...staticRoutes, ...blogRoutes, ...authorRoutes, ...propertyRoutes, ...cityRoutes, ...statsCityRoutes, ...provinceRoutes, ...comboRoutes];
 }

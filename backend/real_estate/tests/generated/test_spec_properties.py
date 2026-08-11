@@ -251,3 +251,48 @@ def test_prop_034_el_dueno_tampoco_alcanza_su_anuncio_inactivo_por_el_codigo_cor
         case_name='El dueño tampoco alcanza su anuncio inactivo por el código corto',
         expected_status=None,
     )
+
+
+# --- PROP-036: Un precio o una superficie negativos no se guardan ---
+
+def test_prop_036_publicar_con_precio_negativo(spec_request):
+    """
+    SPEC:PROP-036 — Un precio o una superficie negativos no se guardan
+    Case: Publicar con precio negativo
+    """
+    response = spec_request(
+        method='POST',
+        path='/api/properties/',
+        role='authenticated',
+        given=None,
+        body={'title': 'Precio imposible', 'price': '-150000'},
+    )
+    assert_outcome(
+        response,
+        expected='denied',
+        denied_status=400,
+        rule_id='PROP-036',
+        case_name='Publicar con precio negativo',
+        expected_status=None,
+    )
+
+def test_prop_036_publicar_con_area_negativa(spec_request):
+    """
+    SPEC:PROP-036 — Un precio o una superficie negativos no se guardan
+    Case: Publicar con área negativa
+    """
+    response = spec_request(
+        method='POST',
+        path='/api/properties/',
+        role='authenticated',
+        given=None,
+        body={'title': 'Área imposible', 'price': '1000', 'area': -999},
+    )
+    assert_outcome(
+        response,
+        expected='denied',
+        denied_status=400,
+        rule_id='PROP-036',
+        case_name='Publicar con área negativa',
+        expected_status=None,
+    )

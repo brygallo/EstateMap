@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import Script from 'next/script';
 import { useAuth } from '@/lib/auth-context';
 import { toast } from 'sonner';
 import { requestErrorMessage } from '@/lib/form-errors';
@@ -132,6 +133,7 @@ export default function GoogleSignInButton({
 
   return (
     <div className="w-full">
+      <Script src="https://accounts.google.com/gsi/client" strategy="afterInteractive" />
       {/* Reservamos la altura del botón (min-h) para evitar salto de layout (CLS);
           el skeleton se superpone mientras carga y desaparece al renderizar. */}
       <div className="relative min-h-[44px] w-full">

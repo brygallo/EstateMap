@@ -1,7 +1,15 @@
 'use client';
 
 import { createContext, useContext, useState, useEffect, ReactNode, useCallback, useRef } from 'react';
-import { getPublicApiUrl } from '@/lib/api-url';
+import {
+  clearTokens,
+  decodeJWT,
+  getAccessToken,
+  millisUntilExpiry,
+  onTokenChange,
+  refreshAccessToken,
+  storeTokens,
+} from '@/lib/auth-tokens';
 
 interface AuthUserInfo {
   id?: string;
@@ -21,7 +29,8 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-const API_URL = getPublicApiUrl();
+/** Renovar cinco minutos antes de que caduque el access token. */
+const REFRESH_MARGIN_MS = 5 * 60 * 1000;
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [token, setToken] = useState<string | null>(null);
@@ -29,26 +38,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [loading, setLoading] = useState(true);
   const refreshTimerRef = useRef<NodeJS.Timeout | null>(null);
 
-  const decodeJWT = useCallback((t: string): any | null => {
-    try {
-      const base64Url = t.split('.')[1];
-      const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-      const jsonPayload = decodeURIComponent(
-        atob(base64)
-          .split('')
-          .map((c) => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
-          .join('')
-      );
-      return JSON.parse(jsonPayload);
-    } catch {
-      return null;
-    }
-  }, []);
-
   const setSessionToken = useCallback((newToken: string | null) => {
     setToken(newToken);
     if (newToken) {
-      const payload = decodeJWT(newToken);
+      const payload = decodeJWT(newToken) as Record<string, any> | null;
       setUser({
         id: payload?.user_id || payload?.userId || payload?.id,
         username: payload?.username,
@@ -58,95 +51,43 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     } else {
       setUser(null);
     }
-  }, [decodeJWT]);
+  }, []);
 
   const logout = useCallback(() => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('refreshToken');
-    sessionStorage.removeItem('token');
-    sessionStorage.removeItem('refreshToken');
-    setSessionToken(null);
-
+    clearTokens();
     if (refreshTimerRef.current) {
       clearTimeout(refreshTimerRef.current);
       refreshTimerRef.current = null;
     }
+  }, []);
+
+  const refreshToken = useCallback(async (): Promise<boolean> => {
+    return (await refreshAccessToken()) !== null;
+  }, []);
+
+  const login = useCallback(
+    (accessToken: string, refresh: string, remember: boolean) => {
+      storeTokens(accessToken, refresh, remember);
+    },
+    []
+  );
+
+  // El estado de React sigue a lo que haya en el almacenamiento, venga de un
+  // login, de un refresco o de otra pestaña.
+  useEffect(() => {
+    setSessionToken(getAccessToken());
+    setLoading(false);
+    return onTokenChange(setSessionToken);
   }, [setSessionToken]);
 
-  // Función para renovar el token
-  const refreshToken = useCallback(async (): Promise<boolean> => {
-    const refresh = localStorage.getItem('refreshToken') || sessionStorage.getItem('refreshToken');
-
-    if (!refresh) {
-      logout();
-      return false;
-    }
-
-    try {
-      const response = await fetch(`${API_URL}/token/refresh/`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ refresh }),
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        const newAccessToken = data.access;
-        const newRefreshToken = data.refresh || refresh; // SimpleJWT puede rotar el refresh token
-
-        // Guardar los nuevos tokens en el mismo storage que se usó originalmente
-        const useLocalStorage = localStorage.getItem('refreshToken') !== null;
-
-        if (useLocalStorage) {
-          localStorage.setItem('token', newAccessToken);
-          if (newRefreshToken !== refresh) {
-            localStorage.setItem('refreshToken', newRefreshToken);
-          }
-        } else {
-          sessionStorage.setItem('token', newAccessToken);
-          if (newRefreshToken !== refresh) {
-            sessionStorage.setItem('refreshToken', newRefreshToken);
-          }
-        }
-
-        setSessionToken(newAccessToken);
-        return true;
-      } else {
-        // Si el refresh token expiró, cerrar sesión
-        logout();
-        return false;
-      }
-    } catch (error) {
-      console.error('Error al renovar token:', error);
-      return false;
-    }
-  }, [logout, setSessionToken]);
-
-  const login = (accessToken: string, refreshToken: string, remember: boolean) => {
-    // Evitar mezclar una sesión persistente anterior con la nueva.
-    localStorage.removeItem('token');
-    localStorage.removeItem('refreshToken');
-    sessionStorage.removeItem('token');
-    sessionStorage.removeItem('refreshToken');
-
-    if (remember) {
-      localStorage.setItem('token', accessToken);
-      localStorage.setItem('refreshToken', refreshToken);
-    } else {
-      sessionStorage.setItem('token', accessToken);
-      sessionStorage.setItem('refreshToken', refreshToken);
-    }
-    setSessionToken(accessToken);
-  };
-
+  // Otra pestaña que renueva o cierra sesión debe reflejarse aquí.
   useEffect(() => {
-    const stored = localStorage.getItem('token') || sessionStorage.getItem('token');
-    if (stored) {
-      setSessionToken(stored);
-    }
-    setLoading(false);
+    const onStorage = (event: StorageEvent) => {
+      if (event.key !== null && event.key !== 'token') return;
+      setSessionToken(getAccessToken());
+    };
+    window.addEventListener('storage', onStorage);
+    return () => window.removeEventListener('storage', onStorage);
   }, [setSessionToken]);
 
   useEffect(() => {
@@ -157,16 +98,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
     if (!token) return;
 
-    const payload = decodeJWT(token);
-    const expiresAt = Number(payload?.exp) * 1000;
-    // Renovar cinco minutos antes de la expiración real. Un token ya vencido
-    // o cercano a vencer se renueva inmediatamente al restaurar la sesión.
-    const refreshIn = Number.isFinite(expiresAt)
-      ? Math.max(expiresAt - Date.now() - 5 * 60 * 1000, 0)
-      : 0;
+    // Un token ya vencido o cercano a vencer se renueva de inmediato al
+    // restaurar la sesión.
+    const refreshIn = Math.max(millisUntilExpiry(token) - REFRESH_MARGIN_MS, 0);
 
     refreshTimerRef.current = setTimeout(() => {
-      void refreshToken();
+      void refreshAccessToken();
     }, refreshIn);
 
     return () => {
@@ -175,15 +112,17 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         refreshTimerRef.current = null;
       }
     };
-  }, [token, decodeJWT, refreshToken]);
+  }, [token]);
 
+  // Un portátil que despierta tiene el timer atrasado: al volver a la pestaña
+  // comprobamos si el token ya caducó mientras el equipo dormía.
   useEffect(() => {
     const refreshIfNeeded = () => {
-      if (document.visibilityState !== 'visible' || !token) return;
-      const payload = decodeJWT(token);
-      const expiresAt = Number(payload?.exp) * 1000;
-      if (!Number.isFinite(expiresAt) || expiresAt - Date.now() < 5 * 60 * 1000) {
-        void refreshToken();
+      if (document.visibilityState !== 'visible') return;
+      const stored = getAccessToken();
+      if (!stored) return;
+      if (millisUntilExpiry(stored) < REFRESH_MARGIN_MS) {
+        void refreshAccessToken();
       }
     };
 
@@ -193,7 +132,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       document.removeEventListener('visibilitychange', refreshIfNeeded);
       window.removeEventListener('focus', refreshIfNeeded);
     };
-  }, [token, decodeJWT, refreshToken]);
+  }, []);
 
   return (
     <AuthContext.Provider value={{ token, user, login, logout, loading, refreshToken }}>

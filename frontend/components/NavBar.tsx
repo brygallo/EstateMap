@@ -116,9 +116,9 @@ const NavBar = () => {
                   <BarChart3 className="h-4 w-4" />
                   Estadísticas
                 </Link>
-                <Link href="/guias" className={navLinkClass('/guias')}>
+                <Link href="/blog" className={navLinkClass('/blog')}>
                   <BookOpen className="h-4 w-4" />
-                  Guías
+                  Blog
                 </Link>
               </div>
               <Link href="/ayuda" className={navLinkClass('/ayuda')}>
@@ -188,9 +188,9 @@ const NavBar = () => {
                   <BarChart3 className="h-4 w-4" />
                   Estadísticas
                 </Link>
-                <Link href="/guias" className={navLinkClass('/guias')}>
+                <Link href="/blog" className={navLinkClass('/blog')}>
                   <BookOpen className="h-4 w-4" />
-                  Guías
+                  Blog
                 </Link>
               </div>
               <Link href="/ayuda" className={navLinkClass('/ayuda')}>
@@ -294,10 +294,10 @@ const NavBar = () => {
                       Estadísticas
                     </Link>
                   </Button>
-                  <Button asChild variant="ghost" className={mobileNavClass('/guias')} onClick={closeMobileMenu}>
-                    <Link href="/guias" aria-current={mobileAriaCurrent('/guias')}>
+                  <Button asChild variant="ghost" className={mobileNavClass('/blog')} onClick={closeMobileMenu}>
+                    <Link href="/blog" aria-current={mobileAriaCurrent('/blog')}>
                       <BookOpen className="h-4 w-4" />
-                      Guías
+                      Blog
                     </Link>
                   </Button>
                   <Button asChild variant="ghost" className={mobileNavClass('/publicar-propiedad')} onClick={closeMobileMenu}>
@@ -369,10 +369,10 @@ const NavBar = () => {
                       Estadísticas
                     </Link>
                   </Button>
-                  <Button asChild variant="ghost" className={mobileNavClass('/guias')} onClick={closeMobileMenu}>
-                    <Link href="/guias" aria-current={mobileAriaCurrent('/guias')}>
+                  <Button asChild variant="ghost" className={mobileNavClass('/blog')} onClick={closeMobileMenu}>
+                    <Link href="/blog" aria-current={mobileAriaCurrent('/blog')}>
                       <BookOpen className="h-4 w-4" />
-                      Guías
+                      Blog
                     </Link>
                   </Button>
                   <Button asChild variant="ghost" className={mobileNavClass('/iniciar-sesion')} onClick={closeMobileMenu}>

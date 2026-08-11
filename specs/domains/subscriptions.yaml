@@ -77,7 +77,7 @@ rules:
       de una cuenta.
     evidence:
       - file: backend/real_estate/models.py
-        lines: "7-16"
+        lines: "17-25"
         symbol: "class User(AbstractUser)"
         note: >
           Definición completa del usuario. Los únicos campos propios son email,
@@ -101,7 +101,7 @@ rules:
       es la única señal en todo el código de que alguna vez se pensó en ello.
     evidence:
       - file: backend/estate_map/settings.py
-        lines: "373-375"
+        lines: "378-380"
         symbol: MAX_IMAGES_PER_PROPERTY
         note: >
           La línea 367 es el comentario "User-specific limits can be introduced

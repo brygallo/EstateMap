@@ -6,6 +6,7 @@ import { useEffect, useState, useRef } from 'react';
 import aentsTokens from '@/lib/aents-tokens.json';
 import {
   PROPERTY_DRAFT_STORAGE_KEY,
+  PENDING_PUBLICATION_KEY_STORAGE_KEY,
   PUBLICATION_RESUME_TOKEN_KEY,
 } from '@/lib/publication-draft';
 import { useParams, useRouter } from 'next/navigation';
@@ -42,6 +43,12 @@ import { getPropertyTypeLabel, getStatusLabel, formatPrice } from '@/lib/propert
 import { buildWhatsAppUrl } from '@/lib/constants';
 import { trackEvent } from '@/lib/analytics';
 import { fetchWithTimeout, requestErrorMessage, responseErrorMessage } from '@/lib/form-errors';
+import {
+  publicationApiErrorStep,
+  publicationErrorReport,
+  publicationFormError,
+  publicationFormErrorFields,
+} from '@/lib/publication-form-errors';
 import { getPublicApiUrl } from '@/lib/api-url';
 import {
   LOCATION_STORAGE_KEYS,
@@ -100,32 +107,77 @@ const DrawLocationMap = dynamic(() => import('@/components/maps/DrawLocationMap'
   ),
 });
 
+// The form opens on these, so they are not evidence that anybody typed
+// anything. Treating them as content made an untouched form look like a draft
+// worth saving — and worth reporting to the sales tray.
+const DEFAULT_CITY = 'Macas';
+const DEFAULT_PROVINCE = 'Morona Santiago';
+
 const createPublicationRequestId = () => {
   if (typeof crypto !== 'undefined' && 'randomUUID' in crypto) return crypto.randomUUID();
   return `publication-${Date.now()}-${Math.random().toString(36).slice(2)}`;
 };
 
+// Mirrors Property.title's max_length: the model truncating at 150 used to be
+// discovered only after pressing Publish, five steps away from the field.
+const MAX_TITLE_LENGTH = 150;
+
+/** Mirrors MAX_LISTING_AREA_M2 in the model: 10 000 ha. */
+const MAX_AREA_M2 = 100_000_000;
+
+/**
+ * An optional numeric field that may be left blank but, once filled, has to be a
+ * number the server would also accept. Without this the browser lets a minus
+ * sign through and the rejection arrives from the API, in the API's words.
+ */
+const optionalNumber = (message: string, { max = MAX_AREA_M2 } = {}) =>
+  z
+    .string()
+    .optional()
+    .refine((value) => {
+      if (!value?.trim()) return true;
+      const parsed = Number(value);
+      return Number.isFinite(parsed) && parsed >= 0 && parsed <= max;
+    }, message);
+
 // Solo título y precio son obligatorios a nivel de esquema. El resto de los
 // detalles físicos (área construida, habitaciones, baños, pisos) son opcionales
 // para que publicar sea lo más rápido posible; se pueden completar después.
 const propertySchema = z.object({
-  title: z.string().trim().min(1, 'El título es obligatorio'),
+  title: z
+    .string()
+    .trim()
+    .min(1, 'El título es obligatorio')
+    .max(MAX_TITLE_LENGTH, `El título no puede pasar de ${MAX_TITLE_LENGTH} caracteres`),
   description: z.string().optional(),
   propertyType: z.enum(['land', 'house', 'apartment', 'commercial', 'other']),
   // Mirrors Property.STATUS_CHOICES. Migration 0005 narrowed the model to these
   // three; offering more here only produced a 400 from the serializer.
   status: z.enum(['for_sale', 'for_rent', 'inactive']),
   address: z.string().optional(),
-  price: z.string().trim().min(1, 'El precio es obligatorio'),
+  price: z
+    .string()
+    .trim()
+    .min(1, 'El precio es obligatorio')
+    // A negative price is never a cheaper listing, and the public card hides it
+    // behind "Precio a consultar", so nothing downstream would ever say it.
+    .refine((value) => Number(value) > 0, 'El precio debe ser mayor que cero'),
   isNegotiable: z.boolean(),
   contactPhone: z.string().optional(),
-  builtArea: z.string().optional(),
-  rooms: z.string().optional(),
-  bathrooms: z.string().optional(),
-  parkingSpaces: z.string().optional(),
-  floors: z.string().optional(),
+  builtArea: optionalNumber('El área construida debe ser un número positivo'),
+  rooms: optionalNumber('Las habitaciones deben ser un número positivo', { max: 200 }),
+  bathrooms: optionalNumber('Los baños deben ser un número positivo', { max: 200 }),
+  parkingSpaces: optionalNumber('Los estacionamientos deben ser un número positivo', { max: 200 }),
+  floors: optionalNumber('Los pisos deben ser un número positivo', { max: 200 }),
   furnished: z.boolean(),
-  yearBuilt: z.string().optional(),
+  yearBuilt: z
+    .string()
+    .optional()
+    .refine((value) => {
+      if (!value?.trim()) return true;
+      const parsed = Number(value);
+      return Number.isInteger(parsed) && parsed >= 1800 && parsed <= new Date().getFullYear();
+    }, 'Escribe un año de construcción válido'),
 });
 
 type PropertyValues = z.infer<typeof propertySchema>;
@@ -182,19 +234,29 @@ const AddPropertyPage = () => {
   const [loadingProperty, setLoadingProperty] = useState(Boolean(propertyId));
   const [polygonCoords, setPolygonCoords] = useState<any[]>([]);
   const [locationMode, setLocationMode] = useState<'point' | 'polygon'>('point');
-  const [area, setArea] = useState(0);
+  // The surface is held as the text that was typed, not as a number: a numeric
+  // state rendered as `area || ''` swallows the first keystroke of "0.5".
+  const [areaInput, setAreaInput] = useState('');
+  const area = Number.parseFloat(areaInput) || 0;
+  const setArea = (value: number) => setAreaInput(value ? String(value) : '');
+  // True once the drawn parcel filled the field, so the hint can say where the
+  // number came from and that correcting it is allowed.
+  const [areaFromPolygon, setAreaFromPolygon] = useState(false);
   const [showMeasurements, setShowMeasurements] = useState(true);
   const [referenceProperties, setReferenceProperties] = useState<any[]>([]);
 
   // Location (managed by LocationSelect + map, kept as local state)
-  const [city, setCity] = useState('Macas');
-  const [province, setProvince] = useState('Morona Santiago');
+  const [city, setCity] = useState(DEFAULT_CITY);
+  const [province, setProvince] = useState(DEFAULT_PROVINCE);
   const [latitude, setLatitude] = useState('');
   const [longitude, setLongitude] = useState('');
 
   // Images
   const [images, setImages] = useState<any[]>([]);
-  const [imageFiles, setImageFiles] = useState<File[]>([]);
+  // Derived, never stored in parallel: a second array indexed by position broke
+  // as soon as `images` also held photos recovered from a resume link, which
+  // carry no File. Removing or reordering one then hit the wrong file.
+  const imageFiles: File[] = images.flatMap((image) => (image.file ? [image.file] : []));
   const [existingImages, setExistingImages] = useState<any[]>([]);
   const [imagesToDelete, setImagesToDelete] = useState<number[]>([]);
 
@@ -207,12 +269,15 @@ const AddPropertyPage = () => {
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [showLocationToast, setShowLocationToast] = useState(false);
   const [draftLoaded, setDraftLoaded] = useState(false);
+  // How many photos the restored draft had and this browser could not keep.
+  const [missingDraftImages, setMissingDraftImages] = useState(0);
   const [draftSavedAt, setDraftSavedAt] = useState<Date | null>(null);
   const [resumeToken, setResumeToken] = useState<string | null>(null);
   const [publicationRequestId, setPublicationRequestId] = useState(createPublicationRequestId);
   const [showExitModal, setShowExitModal] = useState(false);
   const [showAccountModal, setShowAccountModal] = useState(false);
   const [currentStep, setCurrentStep] = useState(0);
+  const [stepError, setStepError] = useState('');
   const [accountFirstName, setAccountFirstName] = useState('');
   const [accountLastName, setAccountLastName] = useState('');
   const [accountEmail, setAccountEmail] = useState('');
@@ -225,12 +290,19 @@ const AddPropertyPage = () => {
   // Cuando el login desde el gate tiene éxito, esperamos a que el token entre en
   // contexto para disparar la publicación automáticamente.
   const [pendingPublish, setPendingPublish] = useState(false);
+  // Whether the server confirmed it holds a copy of this draft. Null until we
+  // have tried; the account modal only promises what this says is true.
+  const [draftStoredOnServer, setDraftStoredOnServer] = useState<boolean | null>(null);
+  // Upload progress of the publication request, 0-100, null when not uploading.
+  const [uploadProgress, setUploadProgress] = useState<number | null>(null);
   const formStartedRef = useRef(false);
   const polygonTrackedRef = useRef(false);
   const locationInitRef = useRef(false);
   const reverseGeocodeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // Nominatim asks for one request per second; a city is geocoded once per session.
+  const cityCenterCacheRef = useRef(new Map<string, { lat: number; lng: number }>());
 
-  const { token, logout, login } = useAuth();
+  const { token, user, logout, login } = useAuth();
   const router = useRouter();
   const API_URL = getPublicApiUrl();
 
@@ -275,8 +347,9 @@ const AddPropertyPage = () => {
       v.title.trim() ||
         v.description?.trim() ||
         v.address?.trim() ||
-        city.trim() ||
-        province.trim() ||
+        // Only a city the person chose counts; the preloaded one is ours.
+        (city.trim() && city.trim() !== DEFAULT_CITY) ||
+        (province.trim() && province.trim() !== DEFAULT_PROVINCE) ||
         v.price.trim() ||
         v.contactPhone?.trim() ||
         latitude ||
@@ -284,6 +357,16 @@ const AddPropertyPage = () => {
         polygonCoords.length >= 3 ||
         images.length > 0
     );
+  };
+
+  /** The drawn parcel measures its own surface; the field stays editable after. */
+  const handleDrawnAreaChange = (areaM2: number) => {
+    if (!areaM2) {
+      setAreaFromPolygon(false);
+      return;
+    }
+    setAreaInput(String(Math.round(areaM2)));
+    setAreaFromPolygon(true);
   };
 
   const handlePolygonChange = (coords: any[]) => {
@@ -367,7 +450,6 @@ const AddPropertyPage = () => {
         setExistingImages(Array.isArray(property.images) ? property.images : []);
         setImagesToDelete([]);
         setImages([]);
-        setImageFiles([]);
       } catch (error) {
         console.error('Error loading property:', error);
         toast.error(requestErrorMessage(error, 'cargar la propiedad'));
@@ -401,11 +483,29 @@ const AddPropertyPage = () => {
     if (isEditMode) return;
     if (typeof window === 'undefined') return;
 
-    // Set by /continuar-publicacion/[token]: this session is somebody coming
-    // back to a draft they abandoned, and they still have no account.
-    setResumeToken(sessionStorage.getItem(PUBLICATION_RESUME_TOKEN_KEY));
-
     const storedDraft = localStorage.getItem(PROPERTY_DRAFT_STORAGE_KEY);
+    // Set by /continuar-publicacion/[token]: this session is somebody coming
+    // back to a draft they abandoned, and they still have no account. The token
+    // only applies to the draft that link brought in — it publishes into the
+    // pending request's account, so letting it survive into a listing somebody
+    // started afterwards would file that listing under a stranger's email.
+    const storedResumeToken = sessionStorage.getItem(PUBLICATION_RESUME_TOKEN_KEY);
+    const resumedDraft = (() => {
+      if (!storedDraft) return null;
+      try {
+        const parsed = JSON.parse(storedDraft);
+        return parsed?.draft_status === 'resumed' ? parsed : null;
+      } catch {
+        return null;
+      }
+    })();
+
+    if (storedResumeToken && resumedDraft) {
+      setResumeToken(storedResumeToken);
+    } else if (storedResumeToken) {
+      sessionStorage.removeItem(PUBLICATION_RESUME_TOKEN_KEY);
+    }
+
     if (!storedDraft) return;
 
     try {
@@ -440,6 +540,18 @@ const AddPropertyPage = () => {
       }
       if (draft.area) setArea(Number(draft.area));
       if (draft.show_measurements !== undefined) setShowMeasurements(Boolean(draft.show_measurements));
+      if (Array.isArray(draft.temporary_images) && draft.temporary_images.length > 0) {
+        setImages(draft.temporary_images.map((image: { id: number; url: string; name?: string }) => ({
+          pendingId: image.id,
+          preview: image.url,
+          size: 'temporal',
+          name: image.name || 'Foto guardada',
+        })));
+      } else if (Number(draft.images_count) > 0) {
+        // The draft remembers everything except the files themselves. Saying so
+        // is the difference between "ya estaba" and finding out at the end.
+        setMissingDraftImages(Number(draft.images_count));
+      }
       setDraftLoaded(true);
     } catch (error) {
       console.error('Error loading property draft:', error);
@@ -604,6 +716,9 @@ const AddPropertyPage = () => {
       price: v.price,
       is_negotiable: v.isNegotiable,
       contact_phone: v.contactPhone,
+      // Files cannot be serialised here, so the count is what lets the restored
+      // form say the photos are missing instead of quietly showing none.
+      images_count: images.length,
       created_at: new Date().toISOString(),
     };
 
@@ -648,79 +763,108 @@ const AddPropertyPage = () => {
     return `${base}_${Date.now().toString().slice(-5)}`.toLowerCase();
   };
 
-  const savePendingPublication = async (source: 'account_required' | 'whatsapp_help' | 'exit_prompt') => {
-    if (!hasDraftContent()) return;
+  /**
+   * Mirror the work in progress on the server, photos included.
+   *
+   * Returns whether the copy actually landed. It is the only place the images
+   * survive leaving this device, so a caller that promises the person their
+   * draft is safe has to know the answer rather than assume it — this endpoint
+   * has gone down before (a missing migration) with the form carrying on as if
+   * everything had been stored.
+   */
+  const savePendingPublication = async (
+    source: 'account_required' | 'whatsapp_help' | 'exit_prompt' | 'other'
+  ): Promise<boolean> => {
+    if (!hasDraftContent()) return false;
 
     const v = form.getValues();
     try {
       const { apiFetch } = await import('@/lib/api');
+      let draftKey = localStorage.getItem(PENDING_PUBLICATION_KEY_STORAGE_KEY);
+      if (!draftKey) {
+        draftKey = crypto.randomUUID();
+        localStorage.setItem(PENDING_PUBLICATION_KEY_STORAGE_KEY, draftKey);
+      }
+      const payload = {
+        title: v.title,
+        contact_phone: v.contactPhone,
+        contact_email: accountEmail || user?.email || '',
+        city,
+        province,
+        property_type: v.propertyType,
+        operation: v.status,
+        price: v.price,
+        draft_key: draftKey,
+        source,
+        draft: {
+          title: v.title,
+          description: v.description,
+          property_type: v.propertyType,
+          status: v.status,
+          address: v.address,
+          city,
+          province,
+          latitude,
+          longitude,
+          location_mode: locationMode,
+          polygon: polygonCoords,
+          show_measurements: showMeasurements,
+          area,
+          built_area: v.builtArea,
+          rooms: v.rooms,
+          bathrooms: v.bathrooms,
+          parking_spaces: v.parkingSpaces,
+          floors: v.floors,
+          furnished: v.furnished,
+          year_built: v.yearBuilt,
+          price: v.price,
+          is_negotiable: v.isNegotiable,
+          contact_phone: v.contactPhone,
+          images_count: images.length,
+        },
+      };
+      const formData = new FormData();
+      for (const [field, value] of Object.entries(payload)) {
+        formData.append(field, field === 'draft' ? JSON.stringify(value) : String(value));
+      }
+      imageFiles.forEach((file) => formData.append('uploaded_images', file));
+
       const res = await apiFetch('/pending-publications/', {
         method: 'POST',
         skipAuth: true,
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          title: v.title,
-          contact_phone: v.contactPhone,
-          contact_email: accountEmail,
-          city,
-          province,
-          property_type: v.propertyType,
-          operation: v.status,
-          price: v.price,
-          source,
-          draft: {
-            title: v.title,
-            description: v.description,
-            property_type: v.propertyType,
-            status: v.status,
-            address: v.address,
-            city,
-            province,
-            latitude,
-            longitude,
-            location_mode: locationMode,
-            polygon: polygonCoords,
-            show_measurements: showMeasurements,
-            area,
-            built_area: v.builtArea,
-            rooms: v.rooms,
-            bathrooms: v.bathrooms,
-            parking_spaces: v.parkingSpaces,
-            floors: v.floors,
-            furnished: v.furnished,
-            year_built: v.yearBuilt,
-            price: v.price,
-            is_negotiable: v.isNegotiable,
-            contact_phone: v.contactPhone,
-            images_count: images.length,
-          },
-        }),
+        body: formData,
       });
 
       trackEvent(res.ok ? 'publication_pending_saved' : 'publication_pending_save_failed', {
         source,
         status_code: res.status,
       });
+      setDraftStoredOnServer(res.ok);
+      return res.ok;
     } catch (error) {
       console.error('Error saving pending publication:', error);
       trackEvent('publication_pending_save_failed', {
         source,
         status_code: 'network',
       });
+      setDraftStoredOnServer(false);
+      return false;
     }
   };
 
-  const handleWhatsAppHelp = async () => {
+  const handleWhatsAppHelp = () => {
     if (isEditMode) return;
     savePublicationDraft();
-    await savePendingPublication('whatsapp_help');
+    // Opened first and synchronously: a tab opened after awaiting a POST has
+    // lost the click that authorised it, and Safari swallows it without a word.
+    window.open(buildWhatsAppDraftUrl(), '_blank', 'noopener,noreferrer');
     trackEvent('publication_whatsapp_help_clicked', {
       has_session: Boolean(token),
       has_polygon: polygonCoords.length >= 3,
       has_images: images.length > 0,
       property_type: form.getValues('propertyType'),
     });
-    window.open(buildWhatsAppDraftUrl(), '_blank', 'noopener,noreferrer');
+    void savePendingPublication('whatsapp_help');
   };
 
   const handleCreateAccount = async (event: React.FormEvent<HTMLFormElement>) => {
@@ -820,7 +964,7 @@ const AddPropertyPage = () => {
   useEffect(() => {
     if (!pendingPublish || !token) return;
     setPendingPublish(false);
-    void form.handleSubmit(onSubmit)();
+    void form.handleSubmit(onSubmit, handleInvalidSubmit)();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pendingPublish, token]);
 
@@ -885,17 +1029,40 @@ const AddPropertyPage = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [draftSignature, isEditMode]);
 
+  // Every path that stops a publication reports why. These three checks live
+  // outside the form schema, so without their own event the activity log shows
+  // an attempt that simply stops, with nothing to explain it.
+  const blockPublication = (reason: string, message: string, step: number) => {
+    setCurrentStep(step);
+    // Same treatment as a schema error: the step alert keeps the reason on
+    // screen after the toast goes, and the scroll puts the step header back in
+    // view — being dropped halfway down the map explains nothing.
+    setStepError(message);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    toast.error(message);
+    trackEvent('publication_blocked', {
+      reason,
+      error_message: message,
+      error_step: step,
+      location_mode: locationMode,
+    });
+  };
+
   const onSubmit = async (v: PropertyValues) => {
     if (locationMode === 'polygon' && !area) {
-      toast.error('Ingresa el área total del predio');
+      blockPublication('missing_area', 'Ingresa el área total del predio', 2);
       return;
     }
     if (locationMode === 'polygon' && polygonCoords.length < 3) {
-      toast.error('Dibuja la forma del terreno o cambia el modo a ubicación puntual.');
+      blockPublication(
+        'incomplete_polygon',
+        'Dibuja la forma del terreno o cambia el modo a ubicación puntual.',
+        1
+      );
       return;
     }
     if (locationMode === 'point' && (!latitude || !longitude)) {
-      toast.error('Marca la ubicación en el mapa o busca una referencia.');
+      blockPublication('missing_location', 'Marca la ubicación en el mapa o busca una referencia.', 1);
       return;
     }
 
@@ -968,6 +1135,12 @@ const AddPropertyPage = () => {
       imageFiles.forEach((file) => {
         formData.append('uploaded_images', file);
       });
+      if (resumeToken) {
+        formData.append(
+          'pending_image_ids',
+          JSON.stringify(images.flatMap((image) => image.pendingId == null ? [] : [image.pendingId]))
+        );
+      }
 
       const { apiFetch } = await import('@/lib/api');
       const endpoint = resumeToken
@@ -983,11 +1156,15 @@ const AddPropertyPage = () => {
         // stronger guard than the idempotency key and does not need it.
         skipAuth: Boolean(resumeToken),
         headers: isEditMode || resumeToken ? undefined : { 'Idempotency-Key': publicationRequestId },
-      });
+        // Asking for progress also lifts the 30 s abort that used to kill every
+        // upload of more than a couple of photos over mobile data.
+        onUploadProgress: ({ percent }) => setUploadProgress(percent),
+      }).finally(() => setUploadProgress(null));
 
       if (res.ok && resumeToken) {
         const body = await res.json().catch(() => ({}));
         localStorage.removeItem(PROPERTY_DRAFT_STORAGE_KEY);
+        localStorage.removeItem(PENDING_PUBLICATION_KEY_STORAGE_KEY);
         sessionStorage.removeItem(PUBLICATION_RESUME_TOKEN_KEY);
         setResumeToken(null);
         trackEvent('publication_resume_redeemed', {
@@ -1008,6 +1185,7 @@ const AddPropertyPage = () => {
       if (res.ok) {
         if (!isEditMode && typeof window !== 'undefined') {
           localStorage.removeItem(PROPERTY_DRAFT_STORAGE_KEY);
+          localStorage.removeItem(PENDING_PUBLICATION_KEY_STORAGE_KEY);
           setPublicationRequestId(createPublicationRequestId());
         }
         trackEvent(isEditMode ? 'publication_updated' : 'publication_created', {
@@ -1064,24 +1242,58 @@ const AddPropertyPage = () => {
         logout();
         router.push('/iniciar-sesion');
       } else {
+        const errorBody = await res.clone().json().catch(() => null);
         const message = await responseErrorMessage(res, 'No se pudo guardar la propiedad. Revisa los datos e inténtalo nuevamente.');
+        const errorStep = publicationApiErrorStep(errorBody);
+        if (errorStep !== null) {
+          setCurrentStep(errorStep);
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
         console.error('Error al guardar la propiedad:', res.status, message);
         trackEvent(isEditMode ? 'publication_update_failed' : 'publication_create_failed', {
           status_code: res.status,
           property_type: v.propertyType,
           has_polygon: polygonCoords.length >= 3,
+          error_step: errorStep,
+          request_id: res.headers.get('x-request-id') || '',
+          ...publicationErrorReport(errorBody, message),
         });
         toast.error(message);
+        if (!isEditMode) void savePendingPublication('other');
       }
     } catch (error) {
       console.error('Error:', error);
+      const message = requestErrorMessage(error, isEditMode ? 'actualizar la propiedad' : 'publicar la propiedad');
       trackEvent(isEditMode ? 'publication_update_failed' : 'publication_create_failed', {
         status_code: 'network',
         property_type: v.propertyType,
         has_polygon: polygonCoords.length >= 3,
+        error_message: message,
+        // The exception name separates a timeout from a dropped connection, and
+        // its message is the only thing the browser tells us about either.
+        error_code: error instanceof Error ? error.name : 'unknown',
+        error_detail: error instanceof Error ? error.message : String(error),
       });
-      toast.error(requestErrorMessage(error, isEditMode ? 'actualizar la propiedad' : 'publicar la propiedad'));
+      toast.error(message);
     }
+  };
+
+  const handleInvalidSubmit = (errors: unknown) => {
+    const error = publicationFormError(errors);
+    const message = error?.message || 'Revisa los datos del anuncio e inténtalo nuevamente.';
+    trackEvent('publication_validation_failed', {
+      error_message: message,
+      error_fields: publicationFormErrorFields(errors),
+      error_step: error?.step ?? null,
+    });
+    if (!error) {
+      toast.error(message);
+      return;
+    }
+    setCurrentStep(error.step);
+    setStepError(message);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    toast.error(message);
   };
 
   const handleClear = () => {
@@ -1156,6 +1368,66 @@ const AddPropertyPage = () => {
       }
     }, 600);
   };
+
+  /**
+   * Put the map where the person already said the property is.
+   *
+   * The step used to open on the whole country — Quito and Guayaquil on screen,
+   * a 100 km scale bar — and only browser geolocation ever moved it. Anyone who
+   * declined the permission, or published from a desktop, had to find their lot
+   * by dragging from country scale, while the city selector right below the map
+   * said "Macas" the whole time. The same Nominatim the form already uses for
+   * reverse geocoding answers the opposite question just as well.
+   */
+  const centerMapOnCity = async (targetCity: string, targetProvince: string) => {
+    const key = `${targetCity}|${targetProvince}`.toLowerCase();
+    if (!targetCity.trim() || cityCenterCacheRef.current.has(key)) {
+      const cached = cityCenterCacheRef.current.get(key);
+      if (cached) mapRef.current?.flyTo([cached.lat, cached.lng], 13, { duration: 1.2 });
+      return Boolean(cached);
+    }
+
+    try {
+      const params = new URLSearchParams({
+        format: 'json',
+        limit: '1',
+        country: 'Ecuador',
+        city: targetCity,
+        ...(targetProvince ? { state: targetProvince } : {}),
+        'accept-language': 'es',
+      });
+      const res = await fetch(`https://nominatim.openstreetmap.org/search?${params.toString()}`, {
+        headers: { 'Accept-Language': 'es' },
+      });
+      if (!res.ok) return false;
+      const [match] = await res.json();
+      if (!match?.lat || !match?.lon) return false;
+
+      const center = { lat: Number(match.lat), lng: Number(match.lon) };
+      cityCenterCacheRef.current.set(key, center);
+      mapRef.current?.flyTo([center.lat, center.lng], 13, { duration: 1.2 });
+      return true;
+    } catch {
+      // The map still works by hand; this only saves the panning.
+      return false;
+    }
+  };
+
+  // Center on the city when the location step opens, and again whenever the
+  // city changes — unless the person already placed the property, in which case
+  // moving the camera away from their own mark would be worse than not helping.
+  useEffect(() => {
+    if (currentStep !== 1) return;
+    if (userLocation) return;
+    if (latitude && longitude) return;
+    if (polygonCoords.length >= 3) return;
+
+    const timeout = setTimeout(() => {
+      void centerMapOnCity(city, province);
+    }, 400);
+    return () => clearTimeout(timeout);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentStep, city, province, userLocation]);
 
   const handlePointLocationChange = ({ lat, lng }: { lat: number; lng: number }) => {
     setLatitude(lat.toString());
@@ -1291,7 +1563,8 @@ const AddPropertyPage = () => {
         );
       }
 
-      setImageFiles([...imageFiles, ...validFiles]);
+      // Whatever the restored draft was missing, it is not missing any more.
+      setMissingDraftImages(0);
 
       const newImages = validFiles.map((file) => {
         const sizeMB = (file.size / (1024 * 1024)).toFixed(2);
@@ -1309,10 +1582,7 @@ const AddPropertyPage = () => {
   };
 
   const handleRemoveNewImage = (index: number) => {
-    const newImages = images.filter((_, i) => i !== index);
-    const newFiles = imageFiles.filter((_, i) => i !== index);
-    setImages(newImages);
-    setImageFiles(newFiles);
+    setImages((current) => current.filter((_, i) => i !== index));
   };
 
   const handleToggleExistingImageDelete = (imageId: number) => {
@@ -1322,7 +1592,8 @@ const AddPropertyPage = () => {
     );
   };
 
-  // Reordena imagen (y su File paralelo). La primera imagen es la principal.
+  // Reordena las imágenes; la primera es la principal. Los File se derivan de
+  // este mismo orden, así que no hay una segunda lista que pueda desincronizarse.
   function reorderArray<T>(arr: T[], from: number, to: number): T[] {
     const next = [...arr];
     const [item] = next.splice(from, 1);
@@ -1332,7 +1603,6 @@ const AddPropertyPage = () => {
   const moveImage = (from: number, to: number) => {
     if (to < 0 || to >= images.length || from === to) return;
     setImages((prev) => reorderArray(prev, from, to));
-    setImageFiles((prev) => reorderArray(prev, from, to));
   };
 
   const wizardSteps = [
@@ -1352,13 +1622,15 @@ const AddPropertyPage = () => {
       label: 'Características',
       title: 'Características',
       description: 'Área, medidas y datos físicos.',
-      done: locationMode === 'polygon' ? Boolean(area) : true,
+      // Nothing here is required in point mode, but a tick before the step has
+      // ever been opened claims the person completed something they never saw.
+      done: locationMode === 'polygon' ? Boolean(area) : currentStep > 2,
     },
     {
       label: 'Precio',
       title: 'Precio y contacto',
       description: 'Precio, negociación y teléfono.',
-      done: Boolean(values.price?.trim()),
+      done: Number(values.price) > 0,
     },
     {
       label: 'Fotos',
@@ -1370,40 +1642,52 @@ const AddPropertyPage = () => {
   const isLastStep = currentStep === wizardSteps.length - 1;
 
   const validateStep = async (step = currentStep) => {
+    const rejectStep = (message: string) => {
+      setStepError(message);
+      toast.error(message);
+      return false;
+    };
     if (step === 0) {
       if (!form.getValues('title')?.trim()) {
-        toast.error('Ingresa un título para la propiedad.');
-        return false;
+        return rejectStep('Ingresa un título para la propiedad.');
       }
+      setStepError('');
       return true;
     }
     if (step === 1) {
       if (locationMode === 'polygon' && polygonCoords.length < 3) {
-        toast.error('Dibuja la forma del terreno o cambia a ubicación puntual.');
-        return false;
+        return rejectStep('Dibuja la forma del terreno o cambia a ubicación puntual.');
       }
       if (locationMode === 'point' && (!latitude || !longitude)) {
-        toast.error('Marca un punto en el mapa, usa el buscador o presiona “Mi ubicación”.');
-        return false;
+        return rejectStep('Marca un punto en el mapa, usa el buscador o presiona “Mi ubicación”.');
       }
+      setStepError('');
       return true;
     }
     if (step === 2) {
       // El área total solo es obligatoria cuando se dibuja el predio (polígono).
       // En modo punto y para el resto de detalles físicos todo es opcional.
       if (locationMode === 'polygon' && !area) {
-        toast.error('Ingresa el área total del predio.');
-        return false;
+        return rejectStep('Ingresa el área total del predio.');
       }
+      if (areaInput.trim() && !(area > 0 && area <= MAX_AREA_M2)) {
+        return rejectStep('El área total debe ser un número positivo y realista en m².');
+      }
+      setStepError('');
       return true;
     }
     if (step === 3) {
-      if (!form.getValues('price')?.trim()) {
-        toast.error('Ingresa el precio.');
-        return false;
+      const price = form.getValues('price')?.trim();
+      if (!price) {
+        return rejectStep('Ingresa el precio.');
       }
+      if (!(Number(price) > 0)) {
+        return rejectStep('El precio debe ser mayor que cero.');
+      }
+      setStepError('');
       return true;
     }
+    setStepError('');
     return true;
   };
 
@@ -1414,8 +1698,28 @@ const AddPropertyPage = () => {
   };
 
   const goPreviousStep = () => {
+    setStepError('');
     setCurrentStep((step) => Math.max(step - 1, 0));
     window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  /**
+   * Enter advances the wizard instead of submitting it.
+   *
+   * A step with a single text field and no submit button is the exact shape
+   * HTML implicit submission fires on, so pressing Enter after typing the title
+   * used to publish straight from step 1: the person was thrown to "Precio" —
+   * skipping Ubicación entirely — and told a price they had never been asked
+   * for was missing. Enter now means what everyone assumes it means.
+   */
+  const handleFormKeyDown = (event: React.KeyboardEvent<HTMLFormElement>) => {
+    if (event.key !== 'Enter' || event.shiftKey) return;
+    const target = event.target as HTMLElement | null;
+    // A textarea keeps its newlines, and an explicit button keeps its click.
+    if (target?.tagName === 'TEXTAREA' || target?.tagName === 'BUTTON') return;
+    if (isLastStep) return;
+    event.preventDefault();
+    void goNextStep();
   };
 
   const showBuiltGroup = ['house', 'apartment', 'commercial'].includes(propertyType);
@@ -1472,9 +1776,9 @@ const AddPropertyPage = () => {
           >
             <p className="text-sm font-semibold text-textPrimary">Retomamos tu publicación</p>
             <p className="mt-1 text-sm text-textSecondary">
-              Recuperamos todo lo que habías escrito. Solo tendrás que volver a subir las fotos, porque
-              esas nunca llegaron a guardarse. Al publicar creamos tu cuenta y te enviamos un correo para
-              que definas tu contraseña.
+              Recuperamos lo que habías escrito y las fotos guardadas temporalmente. Al publicar creamos
+              tu cuenta, trasladamos las fotos al anuncio y te enviamos un correo para que definas tu
+              contraseña.
             </p>
           </div>
         )}
@@ -1496,8 +1800,9 @@ const AddPropertyPage = () => {
         <div className="space-y-4 lg:space-y-6">
           <Form {...form}>
             <form
-              onSubmit={form.handleSubmit(onSubmit)}
+              onSubmit={form.handleSubmit(onSubmit, handleInvalidSubmit)}
               onChange={trackFormStarted}
+              onKeyDown={handleFormKeyDown}
               className="space-y-4 lg:space-y-6"
             >
               {/* Progress + autosave */}
@@ -1538,7 +1843,13 @@ const AddPropertyPage = () => {
                         type="button"
                         key={step.label}
                         onClick={async () => {
-                          if (index <= currentStep || (await validateStep())) {
+                          // Editing is correcting one field of something that
+                          // already exists and already passed validation, so
+                          // walking five steps to reach a price is pure toll.
+                          if (isEditMode || index <= currentStep) {
+                            setStepError('');
+                            setCurrentStep(index);
+                          } else if (index === currentStep + 1 && (await validateStep())) {
                             setCurrentStep(index);
                           }
                         }}
@@ -1560,11 +1871,19 @@ const AddPropertyPage = () => {
                 </div>
               </div>
 
+              {stepError && (
+                <div role="alert" className="rounded-card border border-error/30 bg-error/5 px-4 py-3 text-sm font-medium text-error">
+                  {stepError}
+                </div>
+              )}
+
               {draftLoaded && (
                 <div className="rounded-card border border-success/30 bg-successBg p-5 text-success shadow-card">
                   <p className="font-bold">Cargamos tu borrador.</p>
                   <p className="mt-1 text-sm">
-                    Revisa los datos, completa el mapa, agrega fotos si tienes y guarda la propiedad.
+                    {missingDraftImages > 0
+                      ? `Recuperamos todo lo que habías escrito. ${missingDraftImages === 1 ? 'La foto que habías agregado' : `Las ${missingDraftImages} fotos que habías agregado`} no ${missingDraftImages === 1 ? 'se guarda' : 'se guardan'} en el navegador: vuelve a subirlas en el paso de fotos.`
+                      : 'Revisa los datos, completa el mapa, agrega fotos si tienes y guarda la propiedad.'}
                   </p>
                 </div>
               )}
@@ -1597,9 +1916,23 @@ const AddPropertyPage = () => {
                       <FormItem className="md:col-span-2">
                         <FormLabel className="font-semibold">Título *</FormLabel>
                         <FormControl>
-                          <Input placeholder="Ej: Casa moderna en zona residencial" className="h-12 rounded-input" {...field} />
+                          <Input
+                            placeholder="Ej: Casa moderna en zona residencial"
+                            className="h-12 rounded-input"
+                            // The model stops at 150. Saying so here beats a
+                            // rejection from the API four steps later.
+                            maxLength={MAX_TITLE_LENGTH}
+                            {...field}
+                          />
                         </FormControl>
-                        <FormMessage />
+                        <div className="flex items-start justify-between gap-3">
+                          <FormMessage />
+                          {(field.value?.length ?? 0) > MAX_TITLE_LENGTH - 30 && (
+                            <span className="shrink-0 font-geo text-xs tabular-nums text-textSecondary">
+                              {field.value?.length ?? 0}/{MAX_TITLE_LENGTH}
+                            </span>
+                          )}
+                        </div>
                       </FormItem>
                     )}
                   />
@@ -1642,7 +1975,13 @@ const AddPropertyPage = () => {
                           <SelectContent>
                             <SelectItem value="for_sale">En venta</SelectItem>
                             <SelectItem value="for_rent">En alquiler</SelectItem>
-                            <SelectItem value="inactive">Inactivo (vendido o alquilado)</SelectItem>
+                            {/* Publishing something nobody can see is not one of
+                                three equal options. It stays available while
+                                editing, which is where retiring a listing
+                                actually happens. */}
+                            {(isEditMode || field.value === 'inactive') && (
+                              <SelectItem value="inactive">Inactivo (vendido o alquilado)</SelectItem>
+                            )}
                           </SelectContent>
                         </Select>
                         <FormMessage />
@@ -1677,12 +2016,16 @@ const AddPropertyPage = () => {
               <div className="space-y-4">
                 <div className="rounded-card border border-line bg-white p-4 shadow-card">
                   <h3 className="text-sm font-semibold text-textPrimary">Modo de ubicación</h3>
+                  <p className="mt-1 text-xs text-textSecondary">
+                    Así verá tu propiedad quien la busque en el mapa.
+                  </p>
                   <div className="mt-3 grid gap-2 sm:grid-cols-2">
                     {[
                       {
                         key: 'point',
                         title: 'Solo ubicación',
-                        description: 'Un punto rápido en el mapa.',
+                        description: 'Un pin exacto en el mapa: de un vistazo se ve dónde está.',
+                        badge: null,
                         icon: MapPin,
                         active: locationMode === 'point',
                         onClick: () => handleLocationModeChange('point'),
@@ -1690,7 +2033,8 @@ const AddPropertyPage = () => {
                       {
                         key: 'polygon',
                         title: 'Forma del terreno',
-                        description: 'Dibuja el contorno del predio en el mapa.',
+                        description: 'Dibuja los límites y la gente ve el terreno tal cual es: forma, tamaño y por dónde llega.',
+                        badge: 'Destaca más',
                         icon: Pentagon,
                         active: locationMode === 'polygon',
                         onClick: () => handleLocationModeChange('polygon', false),
@@ -1714,7 +2058,14 @@ const AddPropertyPage = () => {
                           <option.icon className="h-4 w-4" strokeWidth={2} aria-hidden />
                         </span>
                         <span className="min-w-0">
-                          <span className="block text-sm font-semibold">{option.title}</span>
+                          <span className="flex flex-wrap items-center gap-1.5">
+                            <span className="text-sm font-semibold">{option.title}</span>
+                            {option.badge && (
+                              <span className="rounded-full bg-primary px-1.5 py-0.5 text-[0.65rem] font-bold uppercase tracking-wide text-white">
+                                {option.badge}
+                              </span>
+                            )}
+                          </span>
                           <span className="mt-0.5 block text-xs text-textSecondary">{option.description}</span>
                         </span>
                       </button>
@@ -1787,6 +2138,7 @@ const AddPropertyPage = () => {
                     <DrawLocationMap
                       onMapReady={bindMapRef}
                       onPolygonChange={handlePolygonChange}
+                      onAreaChange={handleDrawnAreaChange}
                       onLocationChange={locationMode === 'point' ? handlePointLocationChange : undefined}
                       initialPolygon={polygonCoords}
                       selectedLocation={latitude && longitude ? { lat: Number(latitude), lng: Number(longitude) } : null}
@@ -1870,11 +2222,23 @@ const AddPropertyPage = () => {
                       type="number"
                       step="0.01"
                       min="0"
-                      value={area || ''}
-                      onChange={(e) => setArea(Number(e.target.value || 0))}
+                      max={MAX_AREA_M2}
+                      value={areaInput}
+                      onChange={(e) => {
+                        setAreaInput(e.target.value);
+                        setAreaFromPolygon(false);
+                      }}
                       placeholder="500"
                       className="h-12 rounded-input"
+                      aria-describedby="property-total-area-hint"
                     />
+                    <p id="property-total-area-hint" className="text-xs text-textSecondary">
+                      {areaFromPolygon
+                        ? 'Calculada con la forma que dibujaste. Puedes corregirla.'
+                        : locationMode === 'polygon'
+                          ? 'Dibuja el predio en el mapa y la calculamos por ti.'
+                          : 'Superficie total del terreno en metros cuadrados.'}
+                    </p>
                   </div>
                   <div className="md:col-span-2 rounded-input border border-line bg-muted/40 px-4 py-3">
                     <p className="text-sm font-semibold text-textPrimary">{locationMapLabel}</p>
@@ -2259,8 +2623,10 @@ const AddPropertyPage = () => {
                     <div className="mt-3 flex flex-wrap items-center gap-1.5 border-t border-line pt-3 text-[11px] text-textSecondary">
                       <span className="rounded-md bg-background px-2 py-0.5 font-medium">{summaryTypeLabel}</span>
                       {area ? <span className="rounded-md bg-background px-2 py-0.5 font-medium">{area} m²</span> : null}
-                      {values.rooms ? <span className="rounded-md bg-background px-2 py-0.5 font-medium">{values.rooms} hab.</span> : null}
-                      {values.bathrooms ? <span className="rounded-md bg-background px-2 py-0.5 font-medium">{values.bathrooms} baños</span> : null}
+                      {/* The defaults are the string "0", which is truthy: a
+                          plot of land used to advertise "0 hab. · 0 baños". */}
+                      {Number(values.rooms) > 0 ? <span className="rounded-md bg-background px-2 py-0.5 font-medium">{values.rooms} hab.</span> : null}
+                      {Number(values.bathrooms) > 0 ? <span className="rounded-md bg-background px-2 py-0.5 font-medium">{values.bathrooms} baños</span> : null}
                     </div>
                   </div>
                 </div>
@@ -2296,7 +2662,7 @@ const AddPropertyPage = () => {
               </div>
 
               {/* Action Buttons */}
-              {isLastStep && (
+              {(isLastStep || isEditMode) && (
               <div className="rounded-card bg-surface p-6 shadow-card">
                 <div className="flex flex-col items-center gap-4 sm:flex-row">
                   <Button
@@ -2308,7 +2674,14 @@ const AddPropertyPage = () => {
                     {form.formState.isSubmitting ? (
                       <>
                         <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                        {isEditMode ? 'Actualizando...' : 'Guardando...'}
+                        {/* A silent wait with photos in flight reads as a hang.
+                            The percentage is the difference between "esto se
+                            colgó" and "esto está trabajando". */}
+                        {uploadProgress !== null && uploadProgress < 100
+                          ? `Subiendo fotos ${uploadProgress}%`
+                          : isEditMode
+                            ? 'Actualizando...'
+                            : 'Guardando...'}
                       </>
                     ) : (
                       <>
@@ -2506,8 +2879,13 @@ const AddPropertyPage = () => {
               <DialogTitle>Tu anuncio está listo</DialogTitle>
               <DialogDescription className="mt-2">
                 {gateMode === 'login'
-                  ? 'Inicia sesión con tu cuenta para publicar este anuncio. El borrador ya está guardado.'
-                  : 'Crea una cuenta para publicar este anuncio. El borrador ya está guardado.'}
+                  ? 'Inicia sesión con tu cuenta para publicar este anuncio.'
+                  : 'Crea una cuenta para publicar este anuncio.'}{' '}
+                {/* Only promise what the server confirmed. This copy used to say
+                    the draft was saved even when that request had failed. */}
+                {draftStoredOnServer
+                  ? 'Guardamos tu borrador y tus fotos, no vas a perder nada.'
+                  : 'Guardamos tu borrador en este navegador; las fotos hay que volver a subirlas si lo abres en otro dispositivo.'}
               </DialogDescription>
             </div>
           </DialogHeader>
@@ -2519,7 +2897,10 @@ const AddPropertyPage = () => {
                 savePublicationDraft();
                 setShowAccountModal(false);
                 trackEvent('publication_google_account_connected');
-                toast.success('Cuenta conectada. Revisa el anuncio y publícalo.');
+                // Same contract as signing in with an email: the person pressed
+                // Publish, so publishing is what happens once there is a token.
+                setPendingPublish(true);
+                toast.success('Cuenta conectada. Publicando tu anuncio…');
               }}
             />
           </div>

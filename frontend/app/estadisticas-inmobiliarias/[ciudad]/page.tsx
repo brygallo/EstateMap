@@ -18,7 +18,7 @@ import {
   integer,
   money,
 } from '@/lib/market-stats';
-import { GUIDES } from '@/lib/guias';
+import { getBlogPosts } from '@/lib/blog';
 
 export const revalidate = 1800;
 export const dynamicParams = true;
@@ -53,6 +53,9 @@ export async function generateMetadata({ params }: CityStatsPageProps): Promise<
 
   const stats = await getMarketStats(cityName);
   const year = new Date().getFullYear();
+  const datasetUpdatedAt = stats?.overall.updated_at
+    ? new Date(stats.overall.updated_at)
+    : null;
   const hasData = Boolean(stats && stats.overall.count >= MIN_LISTINGS_FOR_INDEX);
   const description = hasData
     ? `El metro cuadrado en ${cityName} cuesta en promedio ${money(stats!.overall.avg_price_m2)}, calculado sobre ${integer(stats!.overall.count)} propiedades en venta activas. Precios por sector, tipo de propiedad y evolución del mercado.`
@@ -83,13 +86,24 @@ export default async function CityStatsPage({ params }: CityStatsPageProps) {
     year: 'numeric',
   });
   const hasData = Boolean(stats && stats.overall.count >= MIN_LISTINGS_FOR_INDEX);
+  // `dateModified` on the Dataset is what makes the figures citable: without a
+  // real timestamp the schema claims freshness it cannot back.
+  const datasetUpdatedAt = stats?.overall.updated_at
+    ? new Date(stats.overall.updated_at)
+    : null;
   const topSector = stats?.by_sector.length
     ? stats.by_sector.reduce((best, row) =>
         Number(row.avg_price_m2) > Number(best.avg_price_m2) ? row : best
       )
     : null;
-  const cityGuides = GUIDES.filter((guide) =>
-    guide.title.toLowerCase().includes(cityName.toLowerCase())
+  // Articles about this city. The server filters by tag and we keep only the
+  // ones that also name the city, so a national post never gets linked from a
+  // city page as if it were local.
+  const { results: cityPosts } = await getBlogPosts({ tag: cityName, limit: 4 });
+  const cityGuides = cityPosts.filter(
+    (post) =>
+      post.title.toLowerCase().includes(cityName.toLowerCase()) ||
+      post.tags.some((tag) => tag.toLowerCase() === cityName.toLowerCase())
   );
 
   const faqs = hasData
@@ -129,7 +143,7 @@ export default async function CityStatsPage({ params }: CityStatsPageProps) {
             },
             spatialCoverage: `${cityName}, Ecuador`,
             temporalCoverage: String(year),
-            dateModified: new Date().toISOString(),
+            ...(datasetUpdatedAt ? { dateModified: datasetUpdatedAt.toISOString() } : {}),
             isAccessibleForFree: true,
             variableMeasured: [
               {
@@ -264,10 +278,10 @@ export default async function CityStatsPage({ params }: CityStatsPageProps) {
                     Precio del metro cuadrado en Ecuador
                   </Link>
                 </li>
-                {cityGuides.map((guide) => (
-                  <li key={guide.slug}>
-                    <Link href={`/guias/${guide.slug}`} className="font-semibold text-primary hover:underline">
-                      {guide.title}
+                {cityGuides.map((post) => (
+                  <li key={post.slug}>
+                    <Link href={`/blog/${post.slug}`} className="font-semibold text-primary hover:underline">
+                      {post.title}
                     </Link>
                   </li>
                 ))}

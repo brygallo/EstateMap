@@ -13,7 +13,7 @@ import {
   type ColumnDef,
   type SortingState,
 } from '@tanstack/react-table';
-import { AlertCircle, ArrowUpDown, Copy, Eye, Link2, RefreshCw, Search, XCircle } from 'lucide-react';
+import { AlertCircle, ArrowUpDown, Copy, Eye, Link2, RefreshCw, Search, Send, XCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
@@ -216,6 +216,34 @@ export default function PendingPublicationsPage() {
       }
     } catch (error: any) {
       toast.error(error.message || 'No se pudo generar el enlace');
+    } finally {
+      setLinkBusy(null);
+    }
+  };
+
+  const resolveAndPublish = async (item: PendingPublication) => {
+    setLinkBusy(item.id);
+    const publicationTab = window.open('', '_blank');
+    try {
+      let url = item.resume_link?.url;
+      if (!url) {
+        const res = await apiPost(`/pending-publications/${item.id}/resume-link/`);
+        if (!res.ok) {
+          const body = await res.json().catch(() => ({}));
+          throw new Error(body.error || 'No se pudo preparar la publicación');
+        }
+        url = (await res.json() as ResumeLink).url;
+      }
+      if (publicationTab) {
+        publicationTab.opener = null;
+        publicationTab.location.href = url;
+      } else {
+        throw new Error('El navegador bloqueó la pestaña. Permite ventanas emergentes e inténtalo otra vez.');
+      }
+      toast.info('Corrige el borrador y publícalo. Quedará a nombre del correo registrado.');
+    } catch (error: any) {
+      publicationTab?.close();
+      toast.error(error.message || 'No se pudo abrir la publicación');
     } finally {
       setLinkBusy(null);
     }
@@ -528,8 +556,7 @@ export default function PendingPublicationsPage() {
                 ) : (
                   <>
                     <p className="mt-1 text-sm text-textSecondary">
-                      Devuelve a esta persona su formulario con todo lo que ya escribió. Solo tendrá que
-                      volver a subir las fotos.
+                      Devuelve el formulario con los datos y las fotos temporales que ya estaban guardados.
                     </p>
                     <Button
                       size="sm"
@@ -542,6 +569,24 @@ export default function PendingPublicationsPage() {
                   </>
                 )}
               </div>
+
+              {!selected.property && selected.contact_email && (
+                <div className="rounded-card border border-primary/25 bg-primaryLight/30 p-4">
+                  <p className="text-sm font-semibold text-textPrimary">Resolver como administrador</p>
+                  <p className="mt-1 text-sm text-textSecondary">
+                    Abre el borrador, corrige los campos con error y publícalo. La propiedad quedará a nombre
+                    de {selected.contact_email} y esa persona recibirá el enlace para revisarla.
+                  </p>
+                  <Button
+                    size="sm"
+                    className="mt-3 rounded-button"
+                    disabled={linkBusy === selected.id}
+                    onClick={() => resolveAndPublish(selected)}
+                  >
+                    <Send className="h-4 w-4" /> Resolver y publicar
+                  </Button>
+                </div>
+              )}
 
               <div>
                 <p className="mb-2 text-sm font-semibold text-textPrimary">Borrador</p>

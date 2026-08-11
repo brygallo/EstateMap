@@ -37,9 +37,23 @@ Ningún portal ecuatoriano publica un **índice de precios m² abierto, con meto
 4. ✅ Enlazado interno: landing de ciudad → página de precios → guías, y viceversa. Backend acepta `?city=` en `/api/market-stats/` (con test).
 
 ### P1 — E-E-A-T y máquina de contenido (semanas 2–6)
-5. `sameAs` en Organization (requiere URLs de redes sociales — dato pendiente del usuario).
-6. Confirmar/crear verificación en Google Search Console y Bing Webmaster (Bing alimenta a ChatGPT y Copilot; IndexNow solo rinde con Bing verificado).
-7. Guías: página de autor con credenciales, `Article` schema con `author`/`datePublished`/`dateModified`, y calendario editorial de 2–4 guías/mes orientadas a long-tail transaccional: crédito VIP/VIS, plusvalía municipal, ley de inquilinato, trámites en Registro de la Propiedad, costos de notaría, mejores zonas (Guayaquil, Ambato, Manta, Loja…).
+5. ✅ `sameAs` en Organization (2026-08-11). Perfiles reales localizados: Facebook
+   (`GEO-Propiedades-Ecuador/61584860667586`) y TikTok (`@geopropiedadesecuador`).
+   No hay Instagram, LinkedIn ni YouTube, así que no se declaran. La lista vive en
+   `frontend/lib/constants.ts` y alimenta a la vez el grafo y los iconos del footer,
+   que hasta ahora enlazaban a las portadas genéricas de Facebook e Instagram
+   (regla `SEO-003`).
+6. Verificación en buscadores. Google **ya está verificado** como propiedad de
+   dominio (`sc-domain:geopropiedadesecuador.com`, cuenta bryan13gallo@gmail.com,
+   por DNS), así que no necesita etiqueta. Bing sigue **sin verificar**: el código
+   se lee de `NEXT_PUBLIC_BING_SITE_VERIFICATION` y solo falta dar de alta la
+   cuenta en Bing Webmaster Tools (regla `SEO-004`). Bing alimenta a ChatGPT y
+   Copilot, e IndexNow solo rinde medible con Bing verificado.
+7. ✅ Infraestructura editorial construida: el blog reemplaza a `/guias` con autor,
+   cargo, página de autor indexable, fechas reales, FAQ por artículo y revalidación
+   al publicar. **Pendiente de despliegue**: producción sigue sirviendo `/guias`.
+   La operativa — cadencia, brief mínimo y cola de temas — está en
+   [`docs/seo/editorial-y-backlinks.md`](docs/seo/editorial-y-backlinks.md).
 8. `BreadcrumbList` schema en fichas y landings si aún falta.
 
 ### P2 — Escala programática con control de calidad (semanas 4–8)
@@ -62,6 +76,11 @@ Ningún portal ecuatoriano publica un **índice de precios m² abierto, con meto
 | Dominios de referencia | medir | +5 | +15 (prensa) | +40 |
 
 ## Dependencias del usuario
-- URLs de redes sociales para `sameAs`.
-- Acceso/confirmación de Google Search Console y Bing Webmaster.
+- ~~URLs de redes sociales para `sameAs`.~~ Resueltas 2026-08-11 desde los
+  perfiles públicos de la marca.
+- ~~Acceso/confirmación de Google Search Console.~~ Verificado por DNS.
+- **Alta en Bing Webmaster Tools** (crear la cuenta y copiar el código a
+  `NEXT_PUBLIC_BING_SITE_VERIFICATION`). Único bloqueo que queda de este bloque.
+- Despliegue del blog: sin él, `/guias` sigue en producción y la máquina
+  editorial no existe de cara a Google.
 - Decisión sobre umbral mínimo de listados para landings de sector.

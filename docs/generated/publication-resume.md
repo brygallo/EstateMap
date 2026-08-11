@@ -20,10 +20,11 @@ Quien empieza a publicar y abandona deja un PendingPublication con su borrador c
 | [`RSM-003`](#rsm-003--el-enlace-se-consume-al-publicar) | El enlace se consume al publicar | ✅ Implementada |
 | [`RSM-004`](#rsm-004--staff-puede-revocar-un-enlace-ya-enviado) | Staff puede revocar un enlace ya enviado | ✅ Implementada |
 | [`RSM-005`](#rsm-005--el-token-solo-abre-el-borrador-nunca-la-cuenta) | El token solo abre el borrador, nunca la cuenta | ✅ Implementada |
-| [`RSM-006`](#rsm-006--el-borrador-se-recupera-entero-salvo-las-fotografías) | El borrador se recupera entero salvo las fotografías | ✅ Implementada |
+| [`RSM-006`](#rsm-006--el-borrador-recupera-también-las-fotografías-temporales) | El borrador recupera también las fotografías temporales | ✅ Implementada |
 | [`RSM-007`](#rsm-007--publicar-desde-el-enlace-no-exige-cuenta-previa) | Publicar desde el enlace no exige cuenta previa | ✅ Implementada |
 | [`RSM-008`](#rsm-008--la-cuenta-creada-por-canje-no-puede-iniciar-sesión-hasta-definir-contraseña) | La cuenta creada por canje no puede iniciar sesión hasta definir contraseña | ✅ Implementada |
 | [`RSM-009`](#rsm-009--un-canje-cerrado-deja-la-solicitud-como-convertida-y-enlazada) | Un canje cerrado deja la solicitud como convertida y enlazada | ✅ Implementada |
+| [`RSM-010`](#rsm-010--staff-puede-corregir-y-publicar-el-borrador-a-nombre-de-la-persona) | Staff puede corregir y publicar el borrador a nombre de la persona | ✅ Implementada |
 
 ### RSM-001 — Staff emite el enlace desde la bandeja de pendientes
 
@@ -84,9 +85,9 @@ Un token de continuación deja de servir 14 días después de emitirse, y a part
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/estate_map/settings.py:504` (`PUBLICATION_RESUME_TOKEN_EXPIRY_DAYS`)
-- `backend/real_estate/models.py:616-623` (`def is_valid`)
-- `backend/real_estate/views.py:1344-1353` (`def invalid_resume_token_response`)
+- `backend/estate_map/settings.py:516-518` (`PUBLICATION_RESUME_TOKEN_EXPIRY_DAYS`)
+- `backend/real_estate/models.py:665-668` (`def is_valid`)
+- `backend/real_estate/views.py:1370-1378` (`def invalid_resume_token_response`)
 
 **Casos**
 
@@ -182,7 +183,7 @@ La respuesta del token contiene el JSON del borrador y los datos de contacto que
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/real_estate/serializers.py:549-563` (`class PublicationDraftSerializer`)
+- `backend/real_estate/serializers.py:589-602` (`class PublicationDraftSerializer`)
 - `backend/real_estate/views.py:1237-1255` (`class PublicationDraftView`)
 
 **Casos**
@@ -197,35 +198,30 @@ La respuesta del token contiene el JSON del borrador y los datos de contacto que
 - `backend/real_estate/tests/generated/test_spec_publication_resume.py`
 - `backend/real_estate/tests/test_publication_resume.py`
 
-### RSM-006 — El borrador se recupera entero salvo las fotografías
+### RSM-006 — El borrador recupera también las fotografías temporales
 
 **Estado:** ✅ Implementada
 
-Retomar restaura título, descripción, tipo, operación, precio, dirección, ciudad, provincia, coordenadas, polígono, área y características, pero no las imágenes, que nunca llegaron al servidor.
+Retomar restaura título, descripción, tipo, operación, precio, dirección, ciudad, provincia, coordenadas, polígono, área, características y las fotografías que se guardaron temporalmente con la solicitud pendiente.
 
-> **Por qué:** El formulario envía en el borrador solo el número de imágenes que había seleccionadas, no los archivos. Prometer "no pierdes nada" y pedir después las fotos otra vez quema la confianza justo en el paso que ya se abandonó una vez, así que la interfaz lo dice al entrar, no al publicar.
-
-**Frontend**
-
-- Ruta: `/continuar-publicacion/[token]`
-- Mensaje: «Recuperamos todo lo que habías escrito. Solo tendrás que volver a subir las fotos.»
-- `data-testid`: `resume-photos-notice`
-- Nota: La cobertura es de API y no de navegador porque el generador no puede inventarse un token válido para la ruta, y un Playwright que navegue al literal "[token]" solo probaría la pantalla de enlace caducado. El aviso vive en el formulario, que ya se abre con el borrador cargado.
+> **Por qué:** Pedir que se vuelvan a seleccionar las fotos rompe la promesa de retomar desde donde se quedó. Los archivos temporales se reutilizan al canjear el enlace y se eliminan después de crear la propiedad definitiva.
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `frontend/app/add-property/page.tsx:695-697` (`images_count: images.length`) — Lo único que el borrador guarda de las fotos es cuántas había.
-- `frontend/app/continuar-publicacion/[token]/page.tsx:40-47` (`PROPERTY_DRAFT_STORAGE_KEY`) — El borrador del servidor se deja donde el formulario ya lo busca.
+- `backend/real_estate/models.py:600-613` (`class PendingPublicationImage`) — Archivos temporales ordenados y ligados al borrador pendiente.
+- `backend/real_estate/serializers.py:607-616` (`get_temporary_images`) — El enlace devuelve las fotos que debe reconstruir el formulario.
+- `frontend/app/continuar-publicacion/[token]/page.tsx:40-51` (`PROPERTY_DRAFT_STORAGE_KEY`) — El borrador y las URLs temporales se dejan donde el formulario ya los busca.
 
 **Casos**
 
 | Caso | Rol | Estado previo | Cuerpo | Esperado |
 | --- | --- | --- | --- | --- |
-| el borrador devuelve todo lo escrito y ninguna imagen | — | — | — | allowed |
-| solo viaja el número de fotos que había seleccionadas | — | — | — | allowed |
+| el borrador devuelve todo lo escrito y las imágenes guardadas | — | — | — | allowed |
+| al publicar las imágenes temporales pasan a la propiedad | — | — | — | allowed |
 
 **Cobertura exigida:** api
 
+- `backend/real_estate/tests/test_pending_publication_drafts.py`
 - `backend/real_estate/tests/test_publication_resume.py`
 
 ### RSM-007 — Publicar desde el enlace no exige cuenta previa
@@ -248,7 +244,7 @@ El canje crea la propiedad y, a partir del correo del borrador, una cuenta a la 
 
 - `backend/real_estate/views.py:1228-1295` (`class PublicationDraftRedeemView`)
 - `backend/real_estate/services/accounts.py:19-40` (`def get_or_create_by_email`)
-- `frontend/app/add-property/page.tsx:913-916` (`!resumeToken`) — El enlace hace de sesión, así que el formulario no abre el modal de cuenta.
+- `frontend/app/add-property/page.tsx:1080-1082` (`!resumeToken`) — El enlace hace de sesión, así que el formulario no abre el modal de cuenta.
 
 **Casos**
 
@@ -302,9 +298,9 @@ Al completarse el canje, el PendingPublication pasa a converted y guarda una ref
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/real_estate/models.py:561-568` (`related_name="pending_publications"`)
-- `backend/real_estate/views.py:1307-1309` (`pending.status = 'converted'`)
-- `backend/real_estate/views.py:1202-1204` (`'Esta solicitud ya se convirtió en un anuncio.'`)
+- `backend/real_estate/models.py:593-597` (`related_name="pending_publications"`)
+- `backend/real_estate/views.py:1327-1329` (`pending.status = 'converted'`)
+- `backend/real_estate/views.py:1205-1207` (`'Esta solicitud ya se convirtió en un anuncio.'`)
 
 **Casos**
 
@@ -316,3 +312,30 @@ Al completarse el canje, el PendingPublication pasa a converted y guarda una ref
 **Cobertura exigida:** api
 
 - `backend/real_estate/tests/test_publication_resume.py`
+
+### RSM-010 — Staff puede corregir y publicar el borrador a nombre de la persona
+
+**Estado:** ✅ Implementada
+
+Desde la bandeja, staff abre el mismo formulario recuperado, corrige los campos que impiden publicar y lo canjea. La propiedad se asigna a la cuenta identificada por contact_email, la solicitud queda convertida y se envía a esa dirección un correo con el enlace público para revisar el anuncio.
+
+> **Por qué:** Resolver una incidencia no debe significar copiar el anuncio a mano ni publicarlo a nombre del administrador. La solicitud pendiente ya contiene el trabajo y la identidad de destino; reutilizar su canje conserva ambos y deja trazabilidad entre la fila atendida y la propiedad creada.
+
+**Frontend**
+
+- Ruta: `/admin/pending-publications`
+- Visible si se permite: sí
+
+**Evidencia en el código** (verificada por `tools/specs/validate.py`)
+
+- `frontend/app/admin/pending-publications/page.tsx:224-243` (`resolveAndPublish`) — Prepara el enlace si hace falta y abre el borrador recuperado para corregirlo.
+- `backend/real_estate/views.py:1327-1344` (`serializer.save(owner=owner)`) — La propiedad queda a nombre del correo del pendiente y se notifica tanto a cuentas nuevas como existentes.
+- `backend/real_estate/email_utils.py:406-450` (`send_account_claim_email`) — La cuenta nueva recibe el enlace de definición de contraseña y el enlace público del anuncio.
+
+**Casos**
+
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| Staff corrige un borrador y lo publica | staff | — | — | allowed |
+| La persona ya tenía cuenta | — | — | — | la propiedad queda en esa cuenta y recibe el enlace público |
+| La persona todavía no tenía cuenta | — | — | — | se crea una cuenta sin contraseña, recibe el enlace público y el enlace para definir contraseña |

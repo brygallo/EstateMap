@@ -133,11 +133,47 @@ const EVENT_LABELS: Record<string, string> = {
   publication_submit_attempted: 'Intentó publicar',
   publication_created: 'Publicación completada',
   publication_create_failed: 'Error al publicar',
+  publication_update_failed: 'Error al actualizar el anuncio',
+  publication_validation_failed: 'Datos del formulario incompletos',
+  publication_blocked: 'Publicación detenida antes de enviarse',
+  publication_account_required: 'Necesitó cuenta para publicar',
+  publication_pending_save_failed: 'Error al guardar el borrador',
+  publication_login_failed: 'Error al iniciar sesión desde el formulario',
+  publication_account_create_failed: 'Error al crear la cuenta desde el formulario',
   publication_exit_confirmed: 'Abandonó el formulario',
   publication_pending_saved: 'Borrador pendiente guardado',
   property_contact_clicked: 'Hizo clic en contactar',
   property_pin_clicked: 'Abrió una propiedad desde el mapa',
   property_card_details_opened: 'Abrió el detalle de una propiedad',
+};
+
+const BLOCK_REASON_LABELS: Record<string, string> = {
+  missing_area: 'Falta el área total del predio',
+  incomplete_polygon: 'La forma del terreno tiene menos de tres puntos',
+  missing_location: 'Falta marcar la ubicación en el mapa',
+};
+
+const isFailureEvent = (eventName: string) =>
+  eventName.endsWith('_failed') || eventName === 'publication_blocked';
+
+// The reason a publication did not go through, read off the event payload. An
+// event recorded before the payload carried it leaves every field empty, and
+// the timeline says so instead of showing an empty box.
+const failureReason = (payload: Record<string, unknown> = {}) => {
+  const reason = String(payload.reason || '');
+  const message = String(payload.error_message || '');
+  const detail = String(payload.error_detail || '');
+  const fields = String(payload.error_fields || '');
+  const code = String(payload.error_code || '');
+  const status = payload.status_code === undefined || payload.status_code === null
+    ? ''
+    : String(payload.status_code);
+  return {
+    headline: BLOCK_REASON_LABELS[reason] || message || detail || '',
+    detail: detail && detail !== message ? detail : '',
+    fields,
+    technical: [status && `Respuesta ${status}`, code && `Código ${code}`].filter(Boolean).join(' · '),
+  };
 };
 
 const hasUnfinishedPublication = (events: ActivityEvent[] = []) => {
@@ -676,20 +712,7 @@ const AdminUsersPage = () => {
                 ) : selectedUser.recent_activity?.length ? (
                   <div className="space-y-2">
                     {selectedUser.recent_activity.map((event) => (
-                      <div key={event.id} className="rounded-card border border-line bg-white p-3">
-                        <div className="flex items-start justify-between gap-3">
-                          <div className="min-w-0">
-                            <p className="text-sm font-medium text-textPrimary">{EVENT_LABELS[event.event_name] || event.event_name}</p>
-                            {event.property && (
-                              <p className="mt-0.5 truncate text-xs text-primary">
-                                Propiedad #{event.property}{event.property_title ? ` · ${event.property_title}` : ''}
-                              </p>
-                            )}
-                            {event.path && <p className="mt-0.5 truncate text-xs text-textSecondary">{event.path}</p>}
-                          </div>
-                          <span className="shrink-0 text-[11px] text-textSecondary">{formatDateTime(event.created_at)}</span>
-                        </div>
-                      </div>
+                      <ActivityRow key={event.id} event={event} />
                     ))}
                   </div>
                 ) : (
@@ -722,6 +745,41 @@ function Metric({ label, value, icon: Icon }: { label: string; value: string; ic
       <Icon className="mb-2 h-4 w-4 text-primary" aria-hidden />
       <p className="text-[11px] font-medium uppercase tracking-wide text-textSecondary">{label}</p>
       <p className="mt-1 text-sm font-semibold text-textPrimary">{value}</p>
+    </div>
+  );
+}
+
+function ActivityRow({ event }: { event: ActivityEvent }) {
+  const failed = isFailureEvent(event.event_name);
+  const reason = failed ? failureReason(event.payload) : null;
+
+  return (
+    <div className={cn('rounded-card border bg-white p-3', failed ? 'border-error/40 bg-error/5' : 'border-line')}>
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <p className={cn('text-sm font-medium', failed ? 'text-error' : 'text-textPrimary')}>
+            {EVENT_LABELS[event.event_name] || event.event_name}
+          </p>
+          {event.property && (
+            <p className="mt-0.5 truncate text-xs text-primary">
+              Propiedad #{event.property}{event.property_title ? ` · ${event.property_title}` : ''}
+            </p>
+          )}
+          {event.path && <p className="mt-0.5 truncate text-xs text-textSecondary">{event.path}</p>}
+        </div>
+        <span className="shrink-0 text-[11px] text-textSecondary">{formatDateTime(event.created_at)}</span>
+      </div>
+
+      {reason && (
+        <div className="mt-2 space-y-1 border-t border-error/20 pt-2 text-xs">
+          <p className="break-words font-medium text-error">
+            {reason.headline || 'No se registró el motivo: el evento es anterior al detalle de errores.'}
+          </p>
+          {reason.detail && <p className="break-words text-textSecondary">{reason.detail}</p>}
+          {reason.fields && <p className="break-words text-textSecondary">Campos rechazados: {reason.fields}</p>}
+          {reason.technical && <p className="text-[11px] text-textSecondary">{reason.technical}</p>}
+        </div>
+      )}
     </div>
   );
 }

@@ -50,12 +50,38 @@ const EVENT_LABELS: Record<string, string> = {
   property_card_details_opened: 'Abrió detalle de propiedad',
   publication_form_started: 'Empezó a publicar',
   publication_form_viewed: 'Vio el formulario de publicación',
+  publication_submit_attempted: 'Intentó publicar',
   publication_created: 'Publicación completada',
   publication_create_failed: 'Error al publicar',
+  publication_update_failed: 'Error al actualizar el anuncio',
+  publication_validation_failed: 'Datos del formulario incompletos',
+  publication_blocked: 'Publicación detenida antes de enviarse',
+  publication_account_required: 'Necesitó cuenta para publicar',
+  publication_pending_save_failed: 'Error al guardar el borrador',
+  publication_login_failed: 'Error al iniciar sesión desde el formulario',
+  publication_account_create_failed: 'Error al crear la cuenta desde el formulario',
   publication_exit_confirmed: 'Abandonó el formulario',
   publication_pending_saved: 'Borrador pendiente guardado',
   publish_cta_clicked: 'Clic en "Publicar"',
   map_filter_changed: 'Cambió filtros del mapa',
+};
+
+// Anything the owner could not finish. Grouped so the panel can be filtered
+// down to "what is stopping people from publishing" in one click.
+const FAILURE_EVENTS = [
+  'publication_create_failed',
+  'publication_update_failed',
+  'publication_validation_failed',
+  'publication_blocked',
+  'publication_pending_save_failed',
+  'publication_login_failed',
+  'publication_account_create_failed',
+];
+
+const BLOCK_REASON_LABELS: Record<string, string> = {
+  missing_area: 'Falta el área total del predio',
+  incomplete_polygon: 'La forma del terreno tiene menos de tres puntos',
+  missing_location: 'Falta marcar la ubicación en el mapa',
 };
 
 const EVENT_OPTIONS = [
@@ -64,13 +90,28 @@ const EVENT_OPTIONS = [
   { value: 'property_pin_clicked', label: EVENT_LABELS.property_pin_clicked },
   { value: 'property_card_details_opened', label: EVENT_LABELS.property_card_details_opened },
   { value: 'publication_form_started', label: EVENT_LABELS.publication_form_started },
+  { value: 'publication_submit_attempted', label: EVENT_LABELS.publication_submit_attempted },
   { value: 'publication_created', label: EVENT_LABELS.publication_created },
+  { value: 'publication_create_failed', label: EVENT_LABELS.publication_create_failed },
+  { value: 'publication_update_failed', label: EVENT_LABELS.publication_update_failed },
+  { value: 'publication_validation_failed', label: EVENT_LABELS.publication_validation_failed },
+  { value: 'publication_blocked', label: EVENT_LABELS.publication_blocked },
   { value: 'publication_exit_confirmed', label: EVENT_LABELS.publication_exit_confirmed },
   { value: 'publish_cta_clicked', label: EVENT_LABELS.publish_cta_clicked },
   { value: 'map_filter_changed', label: EVENT_LABELS.map_filter_changed },
 ];
 
 const eventLabel = (eventName: string) => EVENT_LABELS[eventName] || eventName;
+
+const isFailureEvent = (eventName: string) =>
+  FAILURE_EVENTS.includes(eventName) || eventName.endsWith('_failed');
+
+const errorSummary = (payload: Record<string, unknown>) => {
+  const reason = String(payload.reason || '');
+  const message = String(payload.error_message || '');
+  const detail = String(payload.error_detail || '');
+  return BLOCK_REASON_LABELS[reason] || message || detail || '';
+};
 
 const CONTACT_METHOD_LABELS: Record<string, string> = {
   whatsapp: 'Abrió WhatsApp',
@@ -289,6 +330,8 @@ function EventRow({ event }: { event: EventItem }) {
   const title = event.event_name === CONTACT_EVENT
     ? `Contacto · ${CONTACT_METHOD_LABELS[method] || method}`
     : eventLabel(event.event_name);
+  const failed = isFailureEvent(event.event_name);
+  const reason = failed ? errorSummary(event.payload) : '';
   const subtitle = String(event.payload.source || event.path || '');
 
   const details = eventDetails(event);
@@ -297,7 +340,12 @@ function EventRow({ event }: { event: EventItem }) {
     <div className="border-b border-line last:border-0">
       <div className="grid grid-cols-[1fr_auto] items-center gap-3 px-4 py-3 transition-colors hover:bg-muted/30 sm:grid-cols-[1.1fr_1.2fr_0.8fr_auto]">
         <div className="min-w-0">
-          <p className="truncate text-sm font-medium text-textPrimary">{title}</p>
+          <p className={cn('truncate text-sm font-medium', failed ? 'text-error' : 'text-textPrimary')}>{title}</p>
+          {failed && (
+            <p className="mt-0.5 text-xs font-medium text-error">
+              {reason || 'Sin motivo registrado (evento anterior al detalle de errores).'}
+            </p>
+          )}
           <p className="truncate text-xs text-textSecondary">{subtitle}</p>
           <button
             type="button"
@@ -373,6 +421,15 @@ function eventDetails(event: EventItem) {
     ['Provincia', payload.province],
     ['Tipo de propiedad', payload.property_type],
     ['Estado HTTP', payload.status_code],
+    ['Motivo del fallo', BLOCK_REASON_LABELS[String(payload.reason || '')] || payload.reason],
+    ['Mensaje mostrado al usuario', payload.error_message],
+    ['Campos rechazados', payload.error_fields],
+    ['Detalle por campo', payload.error_detail],
+    ['Código de error', payload.error_code],
+    ['Paso del formulario', payload.error_step === null || payload.error_step === undefined
+      ? null
+      : `Paso ${Number(payload.error_step) + 1}`],
+    ['Código de seguimiento', payload.request_id],
     ['Canal', attribution.channel],
     ['Campaña', attribution.campaign],
     ['Fecha exacta', new Date(event.created_at).toLocaleString('es-EC', { dateStyle: 'full', timeStyle: 'medium' })],

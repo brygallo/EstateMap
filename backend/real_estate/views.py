@@ -17,6 +17,7 @@ from django.shortcuts import get_object_or_404
 from django.views import View
 from django.conf import settings
 from django.core.cache import cache
+from django.core.files import File
 from django.db import transaction
 from django.utils import timezone
 from django.utils.cache import patch_cache_control
@@ -73,6 +74,7 @@ from .services.notifications import (
     LeadNotificationService,
     OwnershipTransferNotificationService,
     PendingPublicationNotificationService,
+    OwnershipTransferNotificationService,
 )
 import requests
 from google.oauth2 import id_token
@@ -1183,7 +1185,8 @@ class PendingPublicationViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         pending = serializer.save()
-        PendingPublicationNotificationService().notify_created(pending)
+        if serializer.created_new:
+            PendingPublicationNotificationService().notify_created(pending)
 
     @action(detail=True, methods=['post'], url_path='resume-link')
     def resume_link(self, request, pk=None):
@@ -1285,7 +1288,25 @@ class PublicationDraftRedeemView(generics.GenericAPIView):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        serializer = self.get_serializer(data=request.data)
+        property_data = request.data.copy()
+        retained_ids = request.data.get('pending_image_ids')
+        try:
+            retained_ids = json.loads(retained_ids) if retained_ids else None
+        except (TypeError, ValueError, json.JSONDecodeError):
+            retained_ids = None
+        property_data.pop('pending_image_ids', None)
+        stored_queryset = pending.temporary_images.all()
+        if isinstance(retained_ids, list):
+            stored_queryset = stored_queryset.filter(pk__in=retained_ids)
+        stored_rows = list(stored_queryset)
+        stored_images = []
+        for image in stored_rows:
+            image.image.open('rb')
+            stored_images.append(File(image.image, name=image.original_filename or image.image.name))
+        uploaded_images = request.FILES.getlist('uploaded_images')
+        if stored_images or uploaded_images:
+            property_data.setlist('uploaded_images', [*stored_images, *uploaded_images])
+        serializer = self.get_serializer(data=property_data)
         serializer.is_valid(raise_exception=True)
 
         try:
@@ -1308,11 +1329,19 @@ class PublicationDraftRedeemView(generics.GenericAPIView):
             pending.property = prop
             pending.save(update_fields=['status', 'property', 'updated_at'])
 
+            temporary_files = [(row.image.storage, row.image.name) for row in pending.temporary_images.all()]
+            pending.temporary_images.all().delete()
+            transaction.on_commit(
+                lambda files=temporary_files: [storage.delete(name) for storage, name in files]
+            )
+
         if created:
             reset_token = create_password_reset_token(owner)
             AccountClaimNotificationService().notify_claim(
-                owner, reset_token.token, prop.title
+                owner, reset_token.token, prop
             )
+        else:
+            OwnershipTransferNotificationService().notify_transferred(owner, prop)
 
         logger.info(
             "resume_redeemed pending=%s property=%s owner=%s new_account=%s",
@@ -1941,6 +1970,7 @@ class MarketStatsView(generics.GenericAPIView):
             avg_area=Avg('area'),
             min_price_m2=Min('price_per_m2'),
             max_price_m2=Max('price_per_m2'),
+            updated_at=Max('updated_at'),
         )
 
         def grouped(*fields, limit=12):
@@ -2473,7 +2503,7 @@ class AdminPropertyViewSet(viewsets.ModelViewSet):
         if created:
             reset_token = create_password_reset_token(target)
             AccountClaimNotificationService().notify_claim(
-                target, reset_token.token, prop.title
+                target, reset_token.token, prop
             )
         else:
             OwnershipTransferNotificationService().notify_transferred(target, prop)

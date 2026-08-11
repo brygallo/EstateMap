@@ -42,6 +42,7 @@ INSTALLED_APPS = [
     'dj_rest_auth.registration',
     'real_estate',
     'ingesta',
+    'blog',
 ]
 
 SITE_ID = 1
@@ -147,7 +148,11 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
-LANGUAGE_CODE = 'en-us'
+# Every validation message DRF and Django generate reaches an Ecuadorian owner
+# publishing a listing, so they have to be in Spanish. Both ship the catalogue;
+# leaving this at 'en-us' surfaced strings like "Ensure this field has no more
+# than 150 characters." in the publication form's error toast.
+LANGUAGE_CODE = 'es'
 TIME_ZONE = 'UTC'
 USE_I18N = True
 USE_TZ = True
@@ -438,6 +443,13 @@ CELERY_BEAT_SCHEDULE = {
     },
     "sweep-pending-images": {
         "task": "real_estate.tasks.sweep_pending_images",
+        "schedule": 60 * 60,
+    },
+    # Editorial calendar: hourly is enough because posts are scheduled by the
+    # hour. A post is public from its date regardless (see blog/models.py); this
+    # only fires the IndexNow ping and the Next.js revalidation.
+    "publish-scheduled-posts": {
+        "task": "blog.tasks.publish_scheduled_posts",
         "schedule": 60 * 60,
     },
 }

@@ -12,6 +12,45 @@ const STATUS_MESSAGES: Record<number, string> = {
   504: 'El servidor tardó demasiado en responder.',
 };
 
+/**
+ * How each API field is named in the interface.
+ *
+ * The API answers with its own column names, so a rejected title used to reach
+ * the person as "title: …" — a word that appears nowhere on their screen. Any
+ * field missing here falls back to its own name with the underscores removed.
+ */
+const FIELD_LABELS: Record<string, string> = {
+  title: 'Título',
+  description: 'Descripción',
+  property_type: 'Tipo de propiedad',
+  status: 'Estado',
+  address: 'Dirección',
+  city: 'Ciudad',
+  province: 'Provincia',
+  latitude: 'Latitud',
+  longitude: 'Longitud',
+  polygon: 'Forma del terreno',
+  area: 'Área total',
+  built_area: 'Área construida',
+  rooms: 'Habitaciones',
+  bathrooms: 'Baños',
+  parking_spaces: 'Estacionamientos',
+  floors: 'Pisos',
+  year_built: 'Año de construcción',
+  price: 'Precio',
+  rent_price: 'Precio de alquiler',
+  contact_phone: 'Teléfono',
+  uploaded_images: 'Fotos',
+  images_to_delete: 'Fotos por eliminar',
+  email: 'Correo',
+  password: 'Contraseña',
+  username: 'Usuario',
+};
+
+function fieldLabel(field: string): string {
+  return FIELD_LABELS[field] || field.replaceAll('_', ' ');
+}
+
 function firstMessage(value: unknown): string | null {
   if (typeof value === 'string' && value.trim()) return value.trim();
   if (Array.isArray(value)) {
@@ -24,7 +63,7 @@ function firstMessage(value: unknown): string | null {
     for (const [field, detail] of Object.entries(value)) {
       const message = firstMessage(detail);
       if (message) {
-        const label = field === 'detail' || field === 'non_field_errors' ? '' : `${field.replaceAll('_', ' ')}: `;
+        const label = field === 'detail' || field === 'non_field_errors' ? '' : `${fieldLabel(field)}: `;
         return `${label}${message}`;
       }
     }

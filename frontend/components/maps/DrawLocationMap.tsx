@@ -30,6 +30,8 @@ export interface DrawMapHandle {
 interface DrawLocationMapProps {
   onMapReady: (map: DrawMapHandle) => void;
   onPolygonChange: (coords: [number, number][]) => void;
+  /** Surface of the closed ring in m², measured off the drawing itself. */
+  onAreaChange?: (areaM2: number) => void;
   onLocationChange?: (coords: LatLng) => void;
   initialPolygon?: [number, number][];
   selectedLocation?: LatLng | null;
@@ -46,6 +48,10 @@ const EMPTY_COLLECTION: GeoJSON.FeatureCollection = { type: 'FeatureCollection',
 // Screen distance from the first corner at which the touch crosshair snaps to
 // closing the ring. Roughly the vertex handle's own hit area.
 const SNAP_RADIUS_PX = 26;
+
+// Parcel scale, the same one the user's own position gets: opening on a saved
+// point at country zoom would leave the marker invisible.
+const SAVED_POINT_ZOOM = 17;
 
 const isInEcuador = ({ lat, lng }: LatLng) =>
   (lat >= -5.45 && lat <= 1.9 && lng >= -81.35 && lng <= -74.75) ||
@@ -153,6 +159,7 @@ const userLocationElement = () => {
 const DrawLocationMap = ({
   onMapReady,
   onPolygonChange,
+  onAreaChange,
   onLocationChange,
   initialPolygon,
   selectedLocation,
@@ -195,6 +202,12 @@ const DrawLocationMap = ({
   // like a new position.
   const flownToRef = useRef<string | null>(null);
   const initialLoadedRef = useRef(false);
+  // A point that arrives from the property being edited (or a restored draft)
+  // gets the camera once; one the user just marked does not, so marking never
+  // yanks the zoom they had chosen.
+  const initialPointCenteredRef = useRef(false);
+  const pointMarkedByUserRef = useRef(false);
+  const hasSavedPointRef = useRef(false);
 
   const modeRef = useRef(locationMode);
   modeRef.current = locationMode;
@@ -202,6 +215,8 @@ const DrawLocationMap = ({
   measurementsRef.current = showMeasurements;
   const onPolygonChangeRef = useRef(onPolygonChange);
   onPolygonChangeRef.current = onPolygonChange;
+  const onAreaChangeRef = useRef(onAreaChange);
+  onAreaChangeRef.current = onAreaChange;
   const onLocationChangeRef = useRef(onLocationChange);
   onLocationChangeRef.current = onLocationChange;
 
@@ -406,6 +421,13 @@ const DrawLocationMap = ({
         onPolygonChangeRef.current?.(
           closed ? vertices.map((v) => [v.lat, v.lng] as [number, number]) : []
         );
+        // The drawing IS the measurement. Reporting it spares the person from
+        // estimating by eye the surface of a parcel they just traced corner by
+        // corner — a number that ends up in the city's price per m².
+        if (closed) {
+          const ring = vertices.map(({ lng, lat }) => [lng, lat] as [number, number]);
+          onAreaChangeRef.current?.(turf.area(turf.polygon([[...ring, ring[0]]])));
+        }
       }
     }
   }, []);
@@ -463,6 +485,9 @@ const DrawLocationMap = ({
   const clearAll = useCallback(() => {
     verticesRef.current = [];
     closedRef.current = false;
+    // Erasing the shape erases the surface it measured; leaving the old number
+    // in the form would attach it to whatever gets drawn next.
+    onAreaChangeRef.current?.(0);
     refreshRef.current?.();
   }, []);
 
@@ -551,6 +576,7 @@ const DrawLocationMap = ({
     map.on('click', (event) => {
       const { lat, lng } = event.lngLat;
       if (modeRef.current === 'point') {
+        pointMarkedByUserRef.current = true;
         onLocationChangeRef.current?.({ lat, lng });
         return;
       }
@@ -750,15 +776,18 @@ const DrawLocationMap = ({
     const map = mapRef.current;
     if (!loaded || !map) return;
     if (locationMode !== 'point' || !selectedLocation) {
+      hasSavedPointRef.current = false;
       pointMarkerRef.current?.remove();
       pointMarkerRef.current = null;
       return;
     }
+    hasSavedPointRef.current = true;
     if (!pointMarkerRef.current) {
       const marker = new maplibregl.Marker({ color: BRAND_STROKE, draggable: true })
         .setLngLat([selectedLocation.lng, selectedLocation.lat])
         .addTo(map);
       marker.on('dragend', () => {
+        pointMarkedByUserRef.current = true;
         const at = marker.getLngLat();
         onLocationChangeRef.current?.({ lat: at.lat, lng: at.lng });
       });
@@ -766,6 +795,19 @@ const DrawLocationMap = ({
     } else {
       pointMarkerRef.current.setLngLat([selectedLocation.lng, selectedLocation.lat]);
     }
+  }, [loaded, locationMode, selectedLocation]);
+
+  /* ===== Open on the point already on file (edit mode / restored draft) ===== */
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!loaded || !map || initialPointCenteredRef.current) return;
+    if (locationMode !== 'point' || !selectedLocation) return;
+    if (pointMarkedByUserRef.current) return;
+    if (!Number.isFinite(selectedLocation.lat) || !Number.isFinite(selectedLocation.lng)) return;
+    initialPointCenteredRef.current = true;
+    // Jump rather than fly: this is where the map should have opened, not a
+    // journey across the country for the user to sit through.
+    map.jumpTo({ center: [selectedLocation.lng, selectedLocation.lat], zoom: SAVED_POINT_ZOOM });
   }, [loaded, locationMode, selectedLocation]);
 
   /* ===== Polygon mode leftovers cleanup when switching to point ===== */
@@ -808,9 +850,9 @@ const DrawLocationMap = ({
     // expires here. Otherwise clearing the shape later would re-run this effect
     // and yank the camera back, which read as "erasing zooms the map out".
     flownToRef.current = position;
-    // A restored/loaded shape owns the camera: flying away from it to the
-    // user's position would hide the very thing being edited.
-    if (verticesRef.current.length > 0) return;
+    // A restored/loaded shape or point owns the camera: flying away from it to
+    // the user's position would hide the very thing being edited.
+    if (verticesRef.current.length > 0 || hasSavedPointRef.current) return;
     map.flyTo({ center: [userCenter[1], userCenter[0]], zoom: userZoom, duration: 1500 });
   }, [loaded, userCenter, userZoom]);
 

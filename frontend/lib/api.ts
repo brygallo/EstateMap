@@ -4,119 +4,60 @@
 
 import { fetchWithTimeout } from '@/lib/form-errors';
 import { getPublicApiUrl } from '@/lib/api-url';
+import { uploadWithProgress, type UploadProgress } from '@/lib/upload-with-progress';
+import {
+  getAccessToken,
+  getRefreshToken,
+  isTokenExpiringSoon,
+  refreshAccessToken,
+} from '@/lib/auth-tokens';
 
 const API_URL = getPublicApiUrl();
 
+/** XHR sets headers one by one, so the three shapes HeadersInit allows collapse here. */
+function headersToRecord(headers?: HeadersInit): Record<string, string> {
+  if (!headers) return {};
+  if (headers instanceof Headers) return Object.fromEntries(headers.entries());
+  if (Array.isArray(headers)) return Object.fromEntries(headers);
+  return { ...headers } as Record<string, string>;
+}
+
 interface FetchOptions extends RequestInit {
   skipAuth?: boolean;
-}
-
-/**
- * Decodifica un JWT y devuelve el payload
- */
-function decodeJWT(token: string): any {
-  try {
-    const base64Url = token.split('.')[1];
-    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-    const jsonPayload = decodeURIComponent(
-      atob(base64)
-        .split('')
-        .map((c) => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
-        .join('')
-    );
-    return JSON.parse(jsonPayload);
-  } catch {
-    return null;
-  }
-}
-
-/**
- * Verifica si un token está expirado o está por expirar en los próximos 5 minutos
- */
-function isTokenExpiringSoon(token: string): boolean {
-  const payload = decodeJWT(token);
-  if (!payload || !payload.exp) return true;
-
-  const now = Math.floor(Date.now() / 1000);
-  const expiresIn = payload.exp - now;
-
-  // Si expira en menos de 5 minutos (300 segundos), renovar
-  return expiresIn < 300;
-}
-
-/**
- * Renueva el access token usando el refresh token
- */
-async function refreshAccessToken(): Promise<string | null> {
-  const refreshToken = localStorage.getItem('refreshToken') || sessionStorage.getItem('refreshToken');
-
-  if (!refreshToken) {
-    return null;
-  }
-
-  try {
-    const response = await fetchWithTimeout(`${API_URL}/token/refresh/`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ refresh: refreshToken }),
-    });
-
-    if (response.ok) {
-      const data = await response.json();
-      const newAccessToken = data.access;
-      const newRefreshToken = data.refresh || refreshToken;
-
-      // Guardar los nuevos tokens en el mismo storage que se usó originalmente
-      const useLocalStorage = localStorage.getItem('refreshToken') !== null;
-
-      if (useLocalStorage) {
-        localStorage.setItem('token', newAccessToken);
-        if (newRefreshToken !== refreshToken) {
-          localStorage.setItem('refreshToken', newRefreshToken);
-        }
-      } else {
-        sessionStorage.setItem('token', newAccessToken);
-        if (newRefreshToken !== refreshToken) {
-          sessionStorage.setItem('refreshToken', newRefreshToken);
-        }
-      }
-
-      return newAccessToken;
-    } else {
-      // Si el refresh token expiró, limpiar todo
-      localStorage.removeItem('token');
-      localStorage.removeItem('refreshToken');
-      sessionStorage.removeItem('token');
-      sessionStorage.removeItem('refreshToken');
-
-      // Redirigir al login si estamos en el navegador
-      if (typeof window !== 'undefined') {
-        window.location.href = '/iniciar-sesion';
-      }
-
-      return null;
-    }
-  } catch (error) {
-    console.error('Error al renovar token:', error);
-    return null;
-  }
+  /**
+   * Ask for upload progress. Passing this switches the request to XHR, which
+   * also replaces the blanket 30 s abort with an inactivity timeout — the only
+   * way a photo upload over mobile data can finish. Requires a FormData body.
+   */
+  onUploadProgress?: (progress: UploadProgress) => void;
 }
 
 /**
  * Cliente fetch mejorado con auto-renovación de tokens
  */
 export async function apiFetch(endpoint: string, options: FetchOptions = {}): Promise<Response> {
-  const { skipAuth = false, ...fetchOptions } = options;
+  const { skipAuth = false, onUploadProgress, ...fetchOptions } = options;
+  const url = `${API_URL}${endpoint}`;
+
+  // One place decides how the request actually travels, so the auth handling
+  // below is identical whether it goes out over fetch or over XHR.
+  const send = (headers?: HeadersInit) =>
+    onUploadProgress && fetchOptions.body instanceof FormData
+      ? uploadWithProgress(url, fetchOptions.body, {
+          method: fetchOptions.method || 'POST',
+          headers: headersToRecord(headers),
+          onProgress: onUploadProgress,
+          signal: fetchOptions.signal ?? undefined,
+        })
+      : fetchWithTimeout(url, { ...fetchOptions, headers });
 
   // Si no necesita autenticación, hacer la petición directamente
   if (skipAuth) {
-    return fetchWithTimeout(`${API_URL}${endpoint}`, fetchOptions);
+    return send(fetchOptions.headers);
   }
 
   // Obtener el token actual
-  let token = localStorage.getItem('token') || sessionStorage.getItem('token');
+  let token = getAccessToken();
 
   // Si el token está por expirar, renovarlo antes de hacer la petición
   if (token && isTokenExpiringSoon(token)) {
@@ -133,26 +74,24 @@ export async function apiFetch(endpoint: string, options: FetchOptions = {}): Pr
   };
 
   // Hacer la petición
-  const response = await fetchWithTimeout(`${API_URL}${endpoint}`, {
-    ...fetchOptions,
-    headers,
-  });
+  const response = await send(headers);
 
   // Si la respuesta es 401 (no autorizado), intentar renovar el token y reintentar
-  if (response.status === 401) {
+  if (response.status === 401 && token) {
     const newToken = await refreshAccessToken();
 
     if (newToken) {
       // Reintentar la petición con el nuevo token
-      const retryHeaders = {
+      return send({
         ...fetchOptions.headers,
         Authorization: `Bearer ${newToken}`,
-      };
-
-      return fetchWithTimeout(`${API_URL}${endpoint}`, {
-        ...fetchOptions,
-        headers: retryHeaders,
       });
+    }
+
+    // Solo mandamos al login cuando la sesión murió de verdad. Si el refresco
+    // falló por red, los tokens siguen guardados y el siguiente intento sirve.
+    if (typeof window !== 'undefined' && !getRefreshToken()) {
+      window.location.href = '/iniciar-sesion';
     }
   }
 

@@ -14,7 +14,7 @@ from django.conf import settings
 from .bot_detection import is_bot_request
 from .email_utils import build_resume_link
 from .geo import polygon_center_lat_lng
-from .models import ActivityEvent, Property, PropertyImage, Province, City, Lead, PendingPublication
+from .models import ActivityEvent, Property, PropertyImage, Province, City, Lead, PendingPublication, PendingPublicationImage
 from .validators import validate_image_dimensions, validate_image_format, validate_image_size
 
 logger = logging.getLogger(__name__)
@@ -511,15 +511,23 @@ class LeadStatusSerializer(serializers.ModelSerializer):
 
 class PendingPublicationSerializer(serializers.ModelSerializer):
     resume_link = serializers.SerializerMethodField()
+    draft_key = serializers.UUIDField(required=False, write_only=True)
+    uploaded_images = serializers.ListField(
+        child=serializers.ImageField(allow_empty_file=False, use_url=False),
+        write_only=True,
+        required=False,
+        max_length=10,
+    )
 
     class Meta:
         model = PendingPublication
         fields = [
             'id', 'title', 'contact_phone', 'contact_email', 'city', 'province',
-            'property_type', 'operation', 'price', 'draft', 'source', 'status',
+            'property_type', 'operation', 'price', 'draft_key', 'draft', 'uploaded_images', 'source', 'status',
             'property', 'resume_link', 'created_at',
         ]
         read_only_fields = ['id', 'status', 'property', 'resume_link', 'created_at']
+        extra_kwargs = {'draft_key': {'write_only': True}}
 
     def validate_source(self, value):
         valid_sources = {choice[0] for choice in PendingPublication.SOURCE_CHOICES}
@@ -538,6 +546,41 @@ class PendingPublicationSerializer(serializers.ModelSerializer):
             'expires_at': token.expires_at,
         }
 
+    @transaction.atomic
+    def create(self, validated_data):
+        images = validated_data.pop('uploaded_images', [])
+        draft_key = validated_data.get('draft_key')
+        pending = None
+        created = True
+        if draft_key:
+            pending = PendingPublication.objects.filter(
+                draft_key=draft_key,
+            ).exclude(status='converted').first()
+        if pending is None:
+            pending = PendingPublication.objects.create(**validated_data)
+        else:
+            created = False
+            for field, value in validated_data.items():
+                setattr(pending, field, value)
+            pending.save()
+
+        if images:
+            old_images = list(pending.temporary_images.all())
+            for position, image in enumerate(images):
+                PendingPublicationImage.objects.create(
+                    pending=pending,
+                    image=image,
+                    position=position,
+                    original_filename=image.name,
+                )
+            PendingPublicationImage.objects.filter(pk__in=[image.pk for image in old_images]).delete()
+            old_files = [(image.image.storage, image.image.name) for image in old_images]
+            transaction.on_commit(
+                lambda files=old_files: [storage.delete(name) for storage, name in files]
+            )
+        self.created_new = created
+        return pending
+
 
 class PendingPublicationStatusSerializer(serializers.ModelSerializer):
     class Meta:
@@ -554,14 +597,26 @@ class PublicationDraftSerializer(serializers.ModelSerializer):
     is served to an anonymous request holding a link that gets forwarded through
     chats, so its scope has to stay exactly the work that person already typed.
     """
+    temporary_images = serializers.SerializerMethodField()
 
     class Meta:
         model = PendingPublication
         fields = [
             'title', 'contact_phone', 'contact_email', 'city', 'province',
-            'property_type', 'operation', 'price', 'draft',
+            'property_type', 'operation', 'price', 'draft', 'temporary_images',
         ]
         read_only_fields = fields
+
+    def get_temporary_images(self, obj):
+        request = self.context.get('request')
+        return [
+            {
+                'id': image.pk,
+                'url': request.build_absolute_uri(image.image.url) if request else image.image.url,
+                'name': image.original_filename,
+            }
+            for image in obj.temporary_images.all()
+        ]
 
 
 class OwnerTransferSerializer(serializers.Serializer):

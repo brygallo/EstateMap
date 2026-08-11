@@ -84,6 +84,46 @@ export default function AssistedPublishPage() {
     return lines.join('\n');
   };
 
+  /**
+   * Keep the request even if the conversation never starts.
+   *
+   * This page used to hand everything to WhatsApp and remember nothing: if the
+   * person did not send the message — or their phone had no WhatsApp — the
+   * enquiry had never existed. Every other publishing path leaves a
+   * `PendingPublication` behind; this one is the shortest, so it is the one
+   * where losing the lead costs most.
+   */
+  const savePendingRequest = async (values: AssistedValues) => {
+    try {
+      const { apiFetch } = await import('@/lib/api');
+      // Lengths mirror the model's columns so a long free-text answer becomes a
+      // shorter record instead of a rejected one.
+      const payload: Record<string, string> = {
+        title: `${values.propertyType} en ${values.city || 'ciudad por confirmar'}`.slice(0, 150),
+        contact_phone: values.phone.slice(0, 30),
+        city: values.city.slice(0, 100),
+        property_type: values.propertyType.slice(0, 30),
+        operation: values.operation.slice(0, 30),
+        price: values.price.slice(0, 50),
+        source: 'whatsapp_help',
+        draft: JSON.stringify({ ...values, origin: 'publicar-asistido' }),
+      };
+      const formData = new FormData();
+      for (const [field, value] of Object.entries(payload)) formData.append(field, value);
+
+      const res = await apiFetch('/pending-publications/', {
+        method: 'POST',
+        skipAuth: true,
+        body: formData,
+      });
+      trackEvent(res.ok ? 'assisted_publication_saved' : 'assisted_publication_save_failed', {
+        status_code: res.status,
+      });
+    } catch {
+      trackEvent('assisted_publication_save_failed', { status_code: 'network' });
+    }
+  };
+
   const onSubmit = (values: AssistedValues) => {
     trackEvent('assisted_publication_whatsapp_started', {
       property_type: values.propertyType,
@@ -95,7 +135,10 @@ export default function AssistedPublishPage() {
     const whatsappUrl = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(
       buildMessage(values)
     )}`;
+    // Opened inside the click, before any await: a tab opened after a network
+    // round trip is a popup as far as Safari is concerned.
     window.open(whatsappUrl, '_blank', 'noopener,noreferrer');
+    void savePendingRequest(values);
   };
 
   return (

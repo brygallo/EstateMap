@@ -1,10 +1,23 @@
 from django.contrib.auth.models import AbstractUser
+from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 from django.conf import settings
 from django.utils import timezone
+from pathlib import Path
+from uuid import uuid4
 from .geo import polygon_center_lat_lng
 from .services.short_codes import unique_code
 from .validators import validate_image_size, validate_image_dimensions, validate_image_format
+
+
+# Ceiling for any surface a listing can claim: 10 000 ha. Above this the number
+# stopped describing a property and started describing a typo.
+MAX_LISTING_AREA_M2 = 100_000_000.0
+
+
+def pending_publication_image_path(instance, filename):
+    """Opaque object name for a temporary photo that must not reveal its original name."""
+    return f"pending-publications/{uuid4().hex}{Path(filename).suffix.lower()}"
 
 
 class User(AbstractUser):
@@ -117,8 +130,21 @@ class Property(models.Model):
     show_measurements = models.BooleanField(default=True, help_text="Show exact measurements on map or just reference figure")
 
     # --- Characteristics ---
-    area = models.FloatField(null=True, blank=True, help_text="Total area in square meters (opcional en anuncios importados)")
-    built_area = models.FloatField(null=True, blank=True, help_text="Built area in square meters (for houses)")
+    # A surface can be unknown (imports often are) but never negative, and never
+    # larger than any parcel that exists: the form asks for this number by hand
+    # instead of deriving it, so a slip typing it lands straight in the price per
+    # m² of the city. The ceiling is 10 000 ha, far above the largest listing and
+    # far below the 100 000 km² a stray keypress produces.
+    area = models.FloatField(
+        null=True, blank=True,
+        validators=[MinValueValidator(0), MaxValueValidator(MAX_LISTING_AREA_M2)],
+        help_text="Total area in square meters (opcional en anuncios importados)",
+    )
+    built_area = models.FloatField(
+        null=True, blank=True,
+        validators=[MinValueValidator(0), MaxValueValidator(MAX_LISTING_AREA_M2)],
+        help_text="Built area in square meters (for houses)",
+    )
     rooms = models.PositiveIntegerField(default=0)
     bathrooms = models.PositiveIntegerField(default=0)
     parking_spaces = models.PositiveIntegerField(default=0)
@@ -132,9 +158,14 @@ class Property(models.Model):
     # a la vez: guarda el precio de alquiler; ``price`` queda con el de venta
     # (operación prioritaria). Si es solo alquiler, el precio va en ``price`` y
     # ``rent_price`` queda ``None``.
+    # "No price" is spelled NULL and reads as "a consultar". A negative price is
+    # not a cheaper listing, it is a typo, and the public card hides it behind
+    # that same "a consultar" — so nobody would ever find out.
     price = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True,
+                                validators=[MinValueValidator(0)],
                                 help_text="Opcional: los anuncios importados pueden no traer precio ('a consultar')")
     rent_price = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True,
+                                     validators=[MinValueValidator(0)],
                                      help_text="Precio de alquiler cuando el anuncio es venta Y alquiler a la vez")
     is_negotiable = models.BooleanField(default=True)
 
@@ -548,6 +579,7 @@ class PendingPublication(models.Model):
     property_type = models.CharField(max_length=30, blank=True, default="")
     operation = models.CharField(max_length=30, blank=True, default="")
     price = models.CharField(max_length=50, blank=True, default="")
+    draft_key = models.UUIDField(unique=True, null=True, blank=True, editable=False)
     draft = models.JSONField(default=dict, blank=True)
     source = models.CharField(max_length=30, choices=SOURCE_CHOICES, default="account_required")
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="new")
@@ -573,6 +605,23 @@ class PendingPublication(models.Model):
 
     def __str__(self):
         return self.title or f"Solicitud pendiente {self.pk}"
+
+
+class PendingPublicationImage(models.Model):
+    """Temporary image attached to one resumable publication draft."""
+
+    pending = models.ForeignKey(
+        PendingPublication,
+        on_delete=models.CASCADE,
+        related_name="temporary_images",
+    )
+    image = models.ImageField(upload_to=pending_publication_image_path)
+    position = models.PositiveSmallIntegerField(default=0)
+    original_filename = models.CharField(max_length=255, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["position", "id"]
 
 
 class PublicationResumeToken(models.Model):

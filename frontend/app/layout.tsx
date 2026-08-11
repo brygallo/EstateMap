@@ -7,7 +7,7 @@ import NavBar from '@/components/NavBar';
 import MobileTabBar from '@/components/MobileTabBar';
 import Footer from '@/components/Footer';
 import { Toaster } from 'sonner';
-import { WHATSAPP_NUMBER } from '@/lib/constants';
+import { SOCIAL_PROFILE_URLS, WHATSAPP_NUMBER } from '@/lib/constants';
 import AnalyticsPageView from '@/components/AnalyticsPageView';
 
 // Aents typography. The families come from the Brand Book; next/font self-hosts
@@ -28,6 +28,17 @@ const jetbrainsMono = JetBrains_Mono({
 const siteUrl = (
   process.env.NEXT_PUBLIC_FRONTEND_URL || 'https://geopropiedadesecuador.com'
 ).replace(/\/+$/, '');
+
+// Search-engine ownership proofs. Google is verified as a domain property over
+// DNS, so it needs no tag here; the field stays available because a DNS record
+// can be lost in a migration and the meta tag is the cheapest second anchor.
+// Bing has no verification yet — until it does, IndexNow submissions are
+// accepted but their report is invisible, and Bing is what feeds ChatGPT and
+// Copilot. Both are read from the environment so pasting a code is a deploy,
+// not a code change. An empty value emits no tag at all: a verification meta
+// with a blank content attribute fails validation on both engines.
+const googleSiteVerification = process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION || undefined;
+const bingSiteVerification = process.env.NEXT_PUBLIC_BING_SITE_VERIFICATION || undefined;
 
 // Next's default viewport tag omits `viewport-fit`, which leaves every
 // `env(safe-area-inset-*)` in the app resolving to 0 — the map FAB, the detail
@@ -124,6 +135,10 @@ export const metadata: Metadata = {
     'geo.position': '-1.8312;-78.1834',
     ICBM: '-1.8312, -78.1834',
   },
+  verification: {
+    google: googleSiteVerification,
+    other: bingSiteVerification ? { 'msvalidate.01': bingSiteVerification } : {},
+  },
   robots: {
     index: true,
     follow: true,
@@ -158,7 +173,9 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   const gtmId = process.env.NEXT_PUBLIC_GTM_ID || 'GTM-5SV6BS59';
-  const gaMeasurementId = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID || 'G-EFL9GZT063';
+  // GTM is the production default. A direct GA tag is opt-in so the same page
+  // view is not sent twice when the GA configuration already lives in GTM.
+  const gaMeasurementId = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID;
   const structuredData = {
     '@context': 'https://schema.org',
     '@graph': [
@@ -174,6 +191,10 @@ export default function RootLayout({
           name: 'Ecuador',
         },
         logo: `${siteUrl}/icon-512.png`,
+        // Consolidates the entity: without sameAs, Google and the AI crawlers
+        // treat the site, the Facebook page and the TikTok account as three
+        // unrelated things instead of one publisher.
+        sameAs: SOCIAL_PROFILE_URLS,
         knowsAbout: [
           'propiedades en Ecuador',
           'casas en venta',
@@ -329,10 +350,6 @@ export default function RootLayout({
             />
           </noscript>
         )}
-        <Script
-          src="https://accounts.google.com/gsi/client"
-          strategy="afterInteractive"
-        />
         <AuthProvider>
           <div className="min-h-screen flex flex-col bg-background text-textPrimary">
             <a

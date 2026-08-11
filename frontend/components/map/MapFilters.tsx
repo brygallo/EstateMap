@@ -25,7 +25,8 @@ import {
   AREA_MAX,
 } from '@/hooks/usePropertyFilters';
 import type { Owner, PropertyFilters, PropertyLocationGroup } from '@/lib/types';
-import { getPropertyTypeLabel, getStatusLabel } from '@/lib/property-labels';
+import { getPropertyTypeLabel } from '@/lib/property-labels';
+import { buildFilterChips } from '@/lib/filter-chips';
 
 interface MapFiltersProps {
   filters: PropertyFilters;
@@ -92,76 +93,12 @@ export default function MapFilters({
     ? selectedProvince?.cities ?? []
     : Array.from(new Set(locations.flatMap((g) => g.cities))).sort((a, b) => a.localeCompare(b));
 
-  const priceChanged = filters.minPrice !== PRICE_MIN || filters.maxPrice !== PRICE_MAX;
-  const areaChanged = filters.minArea !== AREA_MIN || filters.maxArea !== AREA_MAX;
   // es-EC keeps SSR and client formatting identical (avoids hydration diffs).
   const money = (v: number) => `$${v.toLocaleString('es-EC')}`;
 
-  // Chips de filtros activos (sin la búsqueda, que ya tiene su propio campo).
-  const chips: { key: string; label: string; clear: () => void }[] = [];
-  if (filters.propertyType !== 'all') {
-    chips.push({
-      key: 'type',
-      label: getPropertyTypeLabel(filters.propertyType),
-      clear: () => update({ propertyType: 'all' }),
-    });
-  }
-  if (filters.status !== 'all') {
-    chips.push({
-      key: 'status',
-      label: getStatusLabel(filters.status),
-      clear: () => update({ status: 'all' }),
-    });
-  }
-  if (filters.province !== 'all') {
-    chips.push({
-      key: 'province',
-      label: filters.province,
-      // Al quitar la provincia también se limpia la ciudad (depende de ella).
-      clear: () => update({ province: 'all', city: 'all' }),
-    });
-  }
-  if (filters.city !== 'all') {
-    chips.push({
-      key: 'city',
-      label: filters.city,
-      clear: () => update({ city: 'all' }),
-    });
-  }
-  if (filters.userId !== 'all') {
-    const owner = owners.find((o) => String(o.id) === String(filters.userId));
-    chips.push({
-      key: 'user',
-      label: owner ? owner.username : 'Usuario',
-      clear: () => update({ userId: 'all' }),
-    });
-  }
-  if (priceChanged) {
-    const label =
-      filters.minPrice !== PRICE_MIN && filters.maxPrice !== PRICE_MAX
-        ? `${money(filters.minPrice)}–${money(filters.maxPrice)}`
-        : filters.minPrice !== PRICE_MIN
-          ? `Desde ${money(filters.minPrice)}`
-          : `Hasta ${money(filters.maxPrice)}`;
-    chips.push({
-      key: 'price',
-      label,
-      clear: () => update({ minPrice: PRICE_MIN, maxPrice: PRICE_MAX }),
-    });
-  }
-  if (areaChanged) {
-    const label =
-      filters.minArea !== AREA_MIN && filters.maxArea !== AREA_MAX
-        ? `${filters.minArea.toLocaleString('es-EC')}–${filters.maxArea.toLocaleString('es-EC')} m²`
-        : filters.minArea !== AREA_MIN
-          ? `Desde ${filters.minArea.toLocaleString('es-EC')} m²`
-          : `Hasta ${filters.maxArea.toLocaleString('es-EC')} m²`;
-    chips.push({
-      key: 'area',
-      label,
-      clear: () => update({ minArea: AREA_MIN, maxArea: AREA_MAX }),
-    });
-  }
+  // Active filter chips. The search term is dropped here: it already has its
+  // own input right above.
+  const chips = buildFilterChips(filters, owners).filter((chip) => chip.key !== 'search');
 
   return (
     <div className="sticky top-0 z-10 space-y-2.5 border-b border-line bg-white/95 px-3 py-2.5 backdrop-blur">
@@ -248,7 +185,7 @@ export default function MapFilters({
             <button
               key={chip.key}
               type="button"
-              onClick={chip.clear}
+              onClick={() => update(chip.patch, 'chip')}
               className="group flex items-center gap-1 rounded-full bg-primaryLight py-1 pl-2.5 pr-1.5 text-xs font-medium text-primary transition-colors hover:bg-primary hover:text-primary-foreground"
               aria-label={`Quitar filtro ${chip.label}`}
             >

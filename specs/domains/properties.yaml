@@ -27,7 +27,7 @@ rules:
       guarda su precio en price y deja rent_price en NULL.
     evidence:
       - file: backend/real_estate/models.py
-        lines: "131-138"
+        lines: "152-157"
         symbol: rent_price
         note: La semántica está escrita como comentario junto a la definición de ambos campos.
       - file: backend/ingesta/pipeline/upsert.py
@@ -75,7 +75,7 @@ rules:
         symbol: exclude(status='inactive')
         note: Base de get_queryset en PropertyViewSet; de aquí derivan list, map_points y summary.
       - file: backend/real_estate/models.py
-        lines: "69-73"
+        lines: "85-87"
         symbol: STATUS_CHOICES
         note: Los tres estados posibles son for_sale, for_rent e inactive.
     backend:
@@ -187,11 +187,11 @@ rules:
       price > 0 y area > 0 antes de dividir.
     evidence:
       - file: backend/real_estate/models.py
-        lines: "135-137"
+        lines: "164-166"
         symbol: price = models.DecimalField
         note: null=True con help_text que justifica el "a consultar" de los importados.
       - file: backend/real_estate/models.py
-        lines: "120-122"
+        lines: "138-140"
         symbol: area = models.FloatField
         note: null=True, "opcional en anuncios importados".
       - file: backend/ingesta/pipeline/normalize.py
@@ -233,7 +233,7 @@ rules:
           Verificado por introspección del serializer en el contenedor: la lista de
           campos con required=True está vacía.
       - file: backend/real_estate/models.py
-        lines: "103-110"
+        lines: "111-117"
         symbol: property_type = models.CharField
         note: Defaults que rellenan el hueco - property_type='land', status='for_sale', city='Macas', province='Morona Santiago'.
     backend:
@@ -555,7 +555,7 @@ rules:
         lines: "155-157"
         symbol: owner = serializers.PrimaryKeyRelatedField(read_only=True)
       - file: backend/real_estate/models.py
-        lines: "152-157"
+        lines: "183-185"
         symbol: owner = models.ForeignKey
         note: on_delete=SET_NULL, null=True - borrar la cuenta no borra el anuncio.
       - file: backend/ingesta/pipeline/upsert.py
@@ -591,11 +591,11 @@ rules:
         symbol: IsOwnerOrReadOnly
         note: Permite cualquier método seguro y compara obj.owner == request.user para el resto.
       - file: backend/real_estate/views.py
-        lines: "308-310"
+        lines: "311-313"
         symbol: IsOwnerOrReadOnly
         note: permission_classes = [IsAuthenticatedOrReadOnly, IsOwnerOrReadOnly] en PropertyViewSet.
       - file: backend/real_estate/views.py
-        lines: "2376-2378"
+        lines: "2405-2407"
         symbol: PATCH_ALLOWED_FIELDS
         note: El panel admin puede tocar propiedades ajenas, pero solo status, title, price, city y description.
     backend:
@@ -631,7 +631,7 @@ rules:
       que describe la misma cascada desde el lado de la ingesta.
     evidence:
       - file: backend/real_estate/models.py
-        lines: "164-177"
+        lines: "185-197"
         symbol: source_url
         note: El comentario del bloque de origen declara la cascada, y source_url la cierra como contacto de último recurso.
       - file: frontend/app/property/[id]/page.tsx
@@ -724,7 +724,7 @@ rules:
       se degrada a actualización.
     evidence:
       - file: backend/real_estate/models.py
-        lines: "228-232"
+        lines: "259-261"
         symbol: uniq_source_external_when_imported
         note: UniqueConstraint con condition=Q(is_imported=True).
       - file: backend/ingesta/pipeline/upsert.py
@@ -875,7 +875,7 @@ rules:
         symbol: PropertyPriceHistory.objects.create
         note: Compara con la última fila por recorded_at y solo escribe si el precio cambió.
       - file: backend/real_estate/models.py
-        lines: "305-311"
+        lines: "336-339"
         symbol: class PropertyPriceHistory
         note: FK en cascada, precio, recorded_at e índice por (property, recorded_at).
     cases:
@@ -916,7 +916,7 @@ rules:
         symbol: is_bot_request
         note: Property.objects.filter(pk=...).update(views_count=F('views_count') + 1) solo si no es bot.
       - file: backend/real_estate/models.py
-        lines: "208-210"
+        lines: "239-241"
         symbol: views_count
         note: PositiveIntegerField con default 0.
       - file: backend/real_estate/serializers.py
@@ -960,7 +960,7 @@ rules:
       pending, la API sirve la foto desde el staging local para que no se vea rota.
     evidence:
       - file: backend/real_estate/models.py
-        lines: "323-325"
+        lines: "354-356"
         symbol: FAILED = "failed"
         note: TextChoices con pending, ready y failed; el default del campo es ready.
       - file: backend/real_estate/serializers.py
@@ -1007,11 +1007,11 @@ rules:
       imposible.
     evidence:
       - file: backend/estate_map/settings.py
-        lines: "375-377"
+        lines: "380-382"
         symbol: MAX_PROPERTY_UPLOAD_MB
         note: MAX_IMAGES_PER_PROPERTY = 10, MAX_IMAGE_SIZE_MB = 10, MAX_PROPERTY_UPLOAD_MB = 50.
       - file: backend/estate_map/settings.py
-        lines: "358-360"
+        lines: "363-365"
         symbol: ALLOWED_IMAGE_TYPES
         note: image/jpeg, image/jpg, image/png y image/webp.
       - file: backend/real_estate/serializers.py
@@ -1071,7 +1071,7 @@ rules:
         symbol: polygon_center_lat_lng
         note: Centroide del anillo, aceptando GeoJSON o [[lat, lng], ...] y descartando el punto de cierre repetido.
       - file: backend/real_estate/models.py
-        lines: "235-259"
+        lines: "266-289"
         symbol: save
         note: Rellena el centro al guardar cualquier propiedad con polígono y sin coordenadas, y añade los dos campos a update_fields para que se persistan.
       - file: backend/real_estate/migrations/0027_backfill_polygon_centers.py
@@ -1271,14 +1271,14 @@ rules:
       la fila a `inactive`.
     evidence:
       - file: backend/real_estate/models.py
-        lines: "77-99"
+        lines: "104-125"
         symbol: CLOSED_REASON_CHOICES
         note: Por qué no son dos valores más de STATUS_CHOICES.
       - file: backend/real_estate/models.py
-        lines: "140-150"
+        lines: "173-181"
         symbol: closed_reason = models
       - file: backend/real_estate/models.py
-        lines: "255-270"
+        lines: "279-293"
         symbol: "if self.closed_reason:"
         note: Cerrar pone inactive y sella la fecha; abrir la borra.
       - file: backend/real_estate/serializers.py
@@ -1288,7 +1288,7 @@ rules:
           Volver a poner el anuncio en venta lo reabre; si no, el cambio parece
           aceptado y se deshace solo.
       - file: backend/real_estate/views.py
-        lines: "2565-2572"
+        lines: "2591-2597"
         symbol: "changes['closed_reason'] = ''"
         note: >-
           El cambio de estado en lote escribe con .update(), que nunca llega a
@@ -1456,3 +1456,69 @@ rules:
         expected: ausente
       - name: El precio anterior viaja como texto, igual que el precio
         expected: "\"90000.00\""
+
+  - id: PROP-036
+    name: Un precio o una superficie negativos no se guardan
+    status: implemented
+    summary: >-
+      `price`, `rent_price`, `area` y `built_area` rechazan valores negativos, y
+      las dos superficies rechazan además cualquier cifra por encima de
+      100 000 000 m² (10 000 ha). Un anuncio sigue pudiendo no tener precio ni
+      área: la ausencia se escribe `NULL`, no con un número imposible.
+    rationale: >-
+      Hasta el 2026-08-11 el serializer aceptaba `price = -150000` y lo guardaba
+      tal cual. La ficha pública no lo mostraba —`formatPrice` devuelve «Precio a
+      consultar» para todo valor menor o igual a cero—, así que quien se
+      equivocaba al teclear veía un texto que no había escrito, sin ninguna
+      explicación, y publicaba igual. El valor sobrevivía donde nadie lo mira:
+      en el precio medio por m² de la ciudad y en las páginas de estadísticas.
+
+      El techo de las superficies existe por lo mismo. El área se escribe a mano
+      —el polígono dibujado la calcula, pero es corregible—, así que una tecla
+      de más produce 100 000 km². El límite está muy por encima de cualquier
+      predio real y muy por debajo de lo que produce un resbalón.
+
+      Los validadores no reescriben nada: las filas ya guardadas fuera de rango
+      se quedan como están, y la regla empieza a aplicar en la siguiente
+      escritura, que es de donde salen los errores de tecleo. La ingesta llama a
+      `Property.objects.create` directamente y no los ejecuta.
+    evidence:
+      - file: backend/real_estate/models.py
+        symbol: MAX_LISTING_AREA_M2
+        note: 100_000_000.0 metros cuadrados, el techo de las dos superficies.
+      - file: backend/real_estate/models.py
+        symbol: "validators=[MinValueValidator(0)]"
+        note: price y rent_price no admiten negativos.
+      - file: backend/real_estate/migrations/0032_property_numeric_bounds.py
+        symbol: "class Migration"
+        note: Solo AlterField; no toca datos.
+      - file: frontend/app/add-property/page.tsx
+        symbol: "'El precio debe ser mayor que cero'"
+        note: El formulario lo dice antes de enviar, en el paso donde se escribe.
+    backend:
+      endpoint: POST /api/properties/
+      denied_http_status: 400
+    tests:
+      api: true
+    cases:
+      - name: Publicar con precio negativo
+        role: authenticated
+        body:
+          title: Precio imposible
+          price: "-150000"
+        expected: denied
+        http_status: 400
+      - name: Publicar con área negativa
+        role: authenticated
+        body:
+          title: Área imposible
+          price: "1000"
+          area: -999
+        expected: denied
+        http_status: 400
+      - name: Publicar sin precio
+        given: {price: null}
+        expected: "permitido: la ausencia de precio se escribe NULL"
+      - name: Un anuncio importado ya guardado fuera de rango
+        given: {origen: ingesta}
+        expected: "se conserva: los validadores solo corren en la siguiente escritura validada"

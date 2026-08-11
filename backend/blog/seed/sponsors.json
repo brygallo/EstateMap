@@ -1,0 +1,49 @@
+{
+  "advertisers": [
+    {
+      "slug": "aents",
+      "name": "Aents",
+      "website": "https://aents.net",
+      "tagline": "Software simple para personas reales. Privado por diseño.",
+      "logo_alt": "Aents"
+    }
+  ],
+  "slots": [
+    {
+      "advertiser": "aents",
+      "placement": "index_top",
+      "headline": "Software simple para personas reales",
+      "body": "Aents desarrolla webs, tiendas en línea, apps móviles y sistemas de gestión para empresas del Ecuador. Sin funciones de relleno y privado por diseño.",
+      "cta_label": "Conocer Aents",
+      "target_url": "https://aents.net/?utm_source=geopropiedadesecuador&utm_medium=blog&utm_campaign=index_top",
+      "weight": 20
+    },
+    {
+      "advertiser": "aents",
+      "placement": "post_inline",
+      "headline": "¿Tu inmobiliaria sigue funcionando a punta de WhatsApp y hojas de cálculo?",
+      "body": "Aents construye sistemas de gestión, automatiza procesos e integra los servicios que ya usas. Software a medida, hecho en Ecuador.",
+      "cta_label": "Escribir por WhatsApp",
+      "target_url": "https://wa.me/593983738151?text=Hola%20Aents%2C%20los%20vi%20en%20el%20blog%20de%20Geo%20Propiedades%20y%20quiero%20conversar%20sobre%20un%20proyecto",
+      "weight": 20
+    },
+    {
+      "advertiser": "aents",
+      "placement": "post_footer",
+      "headline": "Este portal lo construyó Aents",
+      "body": "Geo Propiedades Ecuador es uno de los productos de Aents, junto a Aents Shop y Aents BG. También desarrollan a medida: webs, e-commerce, apps iOS y Android, y sistemas empresariales.",
+      "cta_label": "Ver qué hacen",
+      "target_url": "https://aents.net/?utm_source=geopropiedadesecuador&utm_medium=blog&utm_campaign=post_footer",
+      "weight": 20
+    },
+    {
+      "advertiser": "aents",
+      "placement": "category_top",
+      "headline": "La tecnología debe adaptarse a tu vida",
+      "body": "Aents hace software minimalista y accesible: lo justo para resolver el problema, sin capas que estorben. Web, móvil y automatización.",
+      "cta_label": "Conocer Aents",
+      "target_url": "https://aents.net/?utm_source=geopropiedadesecuador&utm_medium=blog&utm_campaign=category_top",
+      "weight": 20
+    }
+  ]
+}

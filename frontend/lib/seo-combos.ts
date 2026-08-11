@@ -75,9 +75,11 @@ export function parseComboSlug(slug: string): ParsedCombo | null {
 export type ComboParam = { combo: string };
 export type ComboWithCount = ComboParam & { count: number };
 
-// Estrategia long-tail: competimos por ciudades/cantones olvidados, donde una
-// sola propiedad ya puede responder una búsqueda local real.
-export const MIN_COMBO_PROPERTIES = 1;
+// A landing with only one or two listings adds little beyond the listing pages
+// themselves and risks index bloat. Keep low-stock URLs crawlable, but only
+// promote/index combinations once they have a useful comparison set.
+export const MIN_COMBO_PROPERTIES = 5;
+export const MIN_LOCATION_PROPERTIES = 5;
 export const MAX_COMBO_PAGES = 2000;
 
 /**

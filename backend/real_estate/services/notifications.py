@@ -42,9 +42,9 @@ class PendingPublicationNotificationService:
 class AccountClaimNotificationService:
     """Invite someone to take over an account created on their behalf."""
 
-    def notify_claim(self, user, reset_token, property_title=''):
+    def notify_claim(self, user, reset_token, prop=None):
         try:
-            send_account_claim_email(user, reset_token, property_title)
+            send_account_claim_email(user, reset_token, prop)
             return True
         except Exception:
             logger.exception("account_claim_notification_failed user_id=%s", user.pk)

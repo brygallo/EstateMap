@@ -3,7 +3,11 @@ import { notFound } from 'next/navigation';
 import SeoLanding, { TYPE_LINKS, priceRangeText } from '@/components/SeoLanding';
 import { generatePageMetadata } from '@/lib/metadata';
 import { getCities, getLocationCatalog, getProperties, getProvinces, slugify } from '@/lib/properties';
-import { generateCombosWithCounts, parseComboSlug } from '@/lib/seo-combos';
+import {
+  generateCombosWithCounts,
+  MIN_LOCATION_PROPERTIES,
+  parseComboSlug,
+} from '@/lib/seo-combos';
 
 export const revalidate = 3600;
 export const dynamicParams = true;
@@ -56,7 +60,7 @@ export async function generateMetadata({
 
   // Out of stock, not gone: crawlable so it recovers on its own when listings
   // return, but out of the index while it has nothing to show.
-  if (province.properties.length === 0) {
+  if (province.properties.length < MIN_LOCATION_PROPERTIES) {
     return { ...metadata, robots: { index: false, follow: true } };
   }
   return metadata;

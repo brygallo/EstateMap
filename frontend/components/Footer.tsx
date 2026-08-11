@@ -1,7 +1,8 @@
+import type { ComponentType } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { ArrowUpRight, Mail, MapPin, MessageCircle } from 'lucide-react';
-import { buildWhatsAppUrl } from '@/lib/constants';
+import { SOCIAL_PROFILES, buildWhatsAppUrl } from '@/lib/constants';
 
 const whatsappHref = buildWhatsAppUrl('Hola necesito ayuda con Geo Propiedades');
 
@@ -13,11 +14,9 @@ const FacebookIcon = ({ className }: IconProps) => (
   </svg>
 );
 
-const InstagramIcon = ({ className }: IconProps) => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className} aria-hidden>
-    <rect x="2" y="2" width="20" height="20" rx="5" />
-    <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37Z" />
-    <line x1="17.5" y1="6.5" x2="17.51" y2="6.5" />
+const TiktokIcon = ({ className }: IconProps) => (
+  <svg viewBox="0 0 24 24" fill="currentColor" className={className} aria-hidden>
+    <path d="M16.6 5.82A4.28 4.28 0 0 1 15.54 3h-3.09v12.4a2.59 2.59 0 0 1-2.59 2.5 2.59 2.59 0 1 1 .77-5.06V9.69a5.68 5.68 0 0 0-.77-.05A5.68 5.68 0 1 0 15.54 15.4V9.01a7.35 7.35 0 0 0 4.3 1.38V7.3a4.29 4.29 0 0 1-3.24-1.48Z" />
   </svg>
 );
 
@@ -40,13 +39,26 @@ const PLATFORM_LINKS = [
   { href: '/estadisticas-inmobiliarias', label: 'Estadísticas del mercado' },
   { href: '/publicar-propiedad', label: 'Publicar propiedad' },
   { href: '/inmobiliarias', label: 'Inmobiliarias' },
-  { href: '/guias', label: 'Guías inmobiliarias' },
+  { href: '/blog', label: 'Blog inmobiliario' },
   { href: '/ayuda', label: 'Centro de ayuda' },
 ];
 
+// Icons keyed by network so the list of profiles lives in one place
+// (`SOCIAL_PROFILES`, which also feeds `sameAs`) and the footer only decides how
+// to draw it. Instagram is absent because the brand has no account: the previous
+// entry pointed at instagram.com's home page, which sent visitors away from the
+// site and gave search engines nothing to consolidate.
+const SOCIAL_ICONS: Record<string, ComponentType<IconProps>> = {
+  facebook: FacebookIcon,
+  tiktok: TiktokIcon,
+};
+
 const SOCIAL_LINKS = [
-  { href: 'https://www.facebook.com', label: 'Facebook', icon: FacebookIcon },
-  { href: 'https://www.instagram.com', label: 'Instagram', icon: InstagramIcon },
+  ...SOCIAL_PROFILES.map((profile) => ({
+    href: profile.url,
+    label: profile.label,
+    icon: SOCIAL_ICONS[profile.network],
+  })),
   { href: whatsappHref, label: 'WhatsApp', icon: WhatsappIcon },
 ];
 

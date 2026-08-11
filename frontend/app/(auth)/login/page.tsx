@@ -127,7 +127,7 @@ export default function LoginPage() {
       }
     >
       <Formik
-        initialValues={{ email: '', password: '', remember: false }}
+        initialValues={{ email: '', password: '', remember: true }}
         validationSchema={validationSchema}
         onSubmit={handleSubmit}
       >

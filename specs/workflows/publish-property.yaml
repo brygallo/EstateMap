@@ -38,15 +38,15 @@ rules:
       rechazando con 401 por si el frontend se salta o falla.
     evidence:
       - file: frontend/app/add-property/page.tsx
-        lines: "901-914"
+        lines: "1080-1089"
         symbol: "if (!token && !isEditMode && !resumeToken) {"
         note: Guarda el borrador, envía la solicitud pendiente y abre el modal, sin llamar a /properties/.
       - file: backend/real_estate/models.py
-        lines: "524-526"
+        lines: "555-557"
         symbol: "class PendingPublication(models.Model)"
         note: "Docstring: no se muestra en el mapa; sirve para seguimiento comercial."
       - file: backend/real_estate/views.py
-        lines: "308-310"
+        lines: "311-313"
         symbol: "permission_classes = [IsAuthenticatedOrReadOnly, IsOwnerOrReadOnly]"
         note: Respaldo del servidor si la petición llega sin pasar por el frontend.
     backend:
@@ -76,11 +76,11 @@ rules:
       token en vez de encadenarse directamente tras la llamada de login.
     evidence:
       - file: frontend/app/add-property/page.tsx
-        lines: "807-812"
+        lines: "953-955"
         symbol: setPendingPublish(true)
         note: Se marca tras un login exitoso desde el modal.
       - file: frontend/app/add-property/page.tsx
-        lines: "819-822"
+        lines: "965-967"
         symbol: "if (!pendingPublish || !token) return;"
         note: Efecto que dispara form.handleSubmit(onSubmit) en cuanto ambos están listos.
     cases:
@@ -198,11 +198,11 @@ rules:
       y máximas por imagen, vive en specs/domains/properties.yaml (PROP-026).
     evidence:
       - file: backend/estate_map/settings.py
-        lines: "375-377"
+        lines: "380-382"
         symbol: MAX_PROPERTY_UPLOAD_MB
         note: MAX_IMAGES_PER_PROPERTY=10, MAX_IMAGE_SIZE_MB=10, MAX_PROPERTY_UPLOAD_MB=50.
       - file: backend/estate_map/settings.py
-        lines: "358-360"
+        lines: "363-365"
         symbol: ALLOWED_IMAGE_TYPES
       - file: backend/real_estate/serializers.py
         lines: "253-308"
@@ -252,7 +252,7 @@ rules:
         lines: "584-586"
         symbol: "cache.set(result_key, response.data['id'], 60 * 60 * 24)"
       - file: frontend/app/add-property/page.tsx
-        lines: "983-985"
+        lines: "1158-1160"
         symbol: "Idempotency-Key"
         note: No se manda en la edición (PUT), solo en la creación.
     cases:
@@ -318,7 +318,7 @@ rules:
         symbol: "class AntiScraperScopedThrottle(ScopedRateThrottle)"
         note: Exime staff e IPs internas; solo se usa en map_points y list.
       - file: backend/estate_map/settings.py
-        lines: "187-189"
+        lines: "192-194"
         symbol: "'property_write': '30/hour'"
     cases:
       - name: Staff publica más de 30 veces en una hora
@@ -445,7 +445,7 @@ rules:
         symbol: def my_properties
         note: "including inactive: el dueño ve su propiedad inactiva, el público no."
       - file: backend/real_estate/models.py
-        lines: "308-310"
+        lines: "339-341"
         symbol: "on_delete=models.CASCADE"
         note: PropertyImage.property cae en cascada con la Property.
       - file: frontend/app/my-properties/page.tsx
@@ -512,10 +512,21 @@ rules:
         note: >-
           Guardia de regresión. El selector ya no lo ofrece; esto comprueba que
           el servidor sigue siendo la última palabra.
-      - name: Estados que el selector ofrece
+      - name: Estados que el selector ofrece al editar
         given:
           selector: add-property
+          modo: edicion
         expected: [for_sale, for_rent, inactive]
+      - name: Estados que el selector ofrece al publicar
+        given:
+          selector: add-property
+          modo: creacion
+        expected: [for_sale, for_rent]
+        note: >-
+          Desde el 2026-08-11. Publicar un anuncio inactivo es publicar algo que
+          nadie puede ver: no es una de tres opciones equivalentes. Retirar un
+          anuncio sigue siendo posible donde de verdad ocurre, al editarlo, y un
+          borrador que ya traía `inactive` conserva su opción visible.
       - name: Un anuncio que ya se vendió
         given:
           situacion: vendido
@@ -551,3 +562,333 @@ rules:
         given:
           status: sold
         expected: "excluida de los listados filtrados por for_sale"
+
+  - id: WFP-014
+    name: Un error de publicación identifica el problema y abre su paso
+    status: implemented
+    summary: >-
+      Cuando el formulario no puede publicar por un dato inválido, muestra en el
+      toast el primer mensaje concreto disponible y abre el paso que contiene ese
+      dato. La misma navegación se aplica a los errores por campo devueltos por
+      la API, incluidos sus nombres en snake_case.
+    rationale: >-
+      El botón de publicación está en el quinto paso. Cancelar silenciosamente el
+      envío por un campo oculto en un paso anterior deja a la persona sin una
+      acción posible y hace que un error corregible parezca una falla del sistema.
+    evidence:
+      - file: frontend/app/add-property/page.tsx
+        lines: "1281-1285"
+        symbol: "handleInvalidSubmit"
+        note: Abre el paso del primer error de validación y muestra su mensaje.
+      - file: frontend/app/add-property/page.tsx
+        lines: "1247-1250"
+        symbol: "publicationApiErrorStep"
+        note: Usa el cuerpo de error de la API para abrir el paso correspondiente.
+      - file: frontend/lib/publication-form-errors.ts
+        lines: "1-67"
+        symbol: "FIELD_STEPS"
+        note: Relaciona los nombres de campos del formulario y de la API con los cinco pasos.
+    tests: {}
+    cases:
+      - name: Falta un dato obligatorio de un paso anterior
+        expected: "se abre ese paso y el toast nombra el dato faltante"
+      - name: La API rechaza un campo del anuncio
+        expected: "se abre el paso del campo y el toast muestra el detalle de la API"
+
+  - id: WFP-015
+    name: El formulario avanza en orden y muestra el error dentro del paso
+    status: implemented
+    summary: >-
+      Al publicar, solo se puede abrir el paso siguiente después de validar el
+      actual: los indicadores permiten volver atrás pero no saltar pasos
+      intermedios, y la tecla Enter avanza al paso siguiente en vez de enviar el
+      formulario. Si falta un dato, el mismo mensaje aparece como toast y como
+      alerta visible dentro del formulario. Al editar un anuncio que ya existe
+      no rige ninguna secuencia: se puede abrir cualquier paso y guardar desde
+      cualquiera.
+    rationale: >-
+      Permitir saltar desde Datos hasta Fotos pospone varios errores y hace que
+      parezcan un fallo final de publicación. La secuencia convierte cada paso en
+      una lista corta y resoluble antes de presentar el siguiente.
+
+      Enter entra aquí porque durante meses fue el agujero de esa secuencia. Un
+      paso con un único campo de texto y sin botón de envío es exactamente la
+      forma sobre la que HTML dispara el envío implícito, así que pulsar Enter
+      tras escribir el título publicaba desde el paso 1: la persona aterrizaba
+      en «Precio» —sin haber pasado por Ubicación— y leía que faltaba un dato
+      que nadie le había pedido todavía. La regla decía una cosa y el formulario
+      hacía otra.
+
+      La excepción de la edición es del 2026-08-11 y va en dirección contraria a
+      propósito. Editar es corregir un campo de algo que ya existe y ya pasó por
+      la validación entera; obligar a recorrer cinco pantallas para cambiar un
+      precio es peaje, y en un anuncio cuyos datos guardados no satisfacen algún
+      paso —un polígono con `area` nula, que la ingesta permite— ese peaje
+      encerraba al dueño antes del botón de guardar.
+    evidence:
+      - file: frontend/app/add-property/page.tsx
+        symbol: "validateStep"
+        note: Cada sección valida sus requisitos y conserva el mensaje visible.
+      - file: frontend/app/add-property/page.tsx
+        symbol: "const handleFormKeyDown"
+        note: Enter avanza de paso salvo en textarea, en botón o en el último paso.
+      - file: frontend/app/add-property/page.tsx
+        symbol: "if (isEditMode || index <= currentStep)"
+        note: Publicando solo se abre el paso anterior o el siguiente validado; editando, cualquiera.
+      - file: frontend/app/add-property/page.tsx
+        symbol: "role=\"alert\""
+        note: El error del paso permanece visible además del toast.
+    tests: {}
+    cases:
+      - name: Desde el primer paso se intenta abrir Fotos
+        expected: "permanece en Datos"
+      - name: Se intenta continuar sin título
+        expected: "permanece en Datos y muestra Ingresa un título para la propiedad"
+      - name: Se completa el paso actual
+        expected: "permite abrir únicamente el paso siguiente"
+      - name: Se pulsa Enter en el título del primer paso
+        expected: "avanza a Ubicación; no se envía el formulario ni se salta ningún paso"
+      - name: Se pulsa Enter dentro de la descripción
+        expected: "inserta un salto de línea; el formulario no avanza ni se envía"
+      - name: Editando un anuncio se pulsa el indicador de Precio
+        given:
+          modo: edicion
+        expected: "abre Precio directamente y ofrece guardar desde ahí"
+
+  - id: WFP-016
+    name: Todo intento de publicación fallido queda registrado con su motivo
+    status: implemented
+    summary: >-
+      Cuando una publicación no sale adelante se guarda un ActivityEvent que
+      lleva el motivo, no solo el código de estado: el mensaje que vio la
+      persona, los campos que la API rechazó con su detalle, el código de error
+      y el paso del formulario afectado. Cubre las cuatro maneras de fallar: la
+      API rechaza el anuncio (`publication_create_failed` /
+      `publication_update_failed`), la petición no llega
+      (`status_code: network`, con el nombre de la excepción), la validación del
+      formulario lo detiene (`publication_validation_failed`) y las
+      comprobaciones de ubicación y área lo detienen antes de enviarlo
+      (`publication_blocked`, con `reason`).
+    rationale: >-
+      El registro anterior solo guardaba el estado HTTP, el tipo de propiedad y
+      si había polígono. Con eso, un 400 por precio inválido, una sesión
+      caducada y una caída del servidor eran la misma fila en el panel, y las
+      tres formas de fallar sin llegar a la API no dejaban ninguna. Sin el
+      motivo, quien administra no puede responder por qué esa persona no pudo
+      publicar.
+    evidence:
+      - file: frontend/lib/publication-form-errors.ts
+        lines: "92-125"
+        symbol: "publicationErrorReport"
+        note: Aplana el cuerpo de error de la API en escalares que el payload puede llevar, truncados.
+      - file: frontend/app/add-property/page.tsx
+        lines: "1035-1046"
+        symbol: "blockPublication"
+        note: Las comprobaciones previas al envío emiten publication_blocked con su reason.
+      - file: frontend/app/add-property/page.tsx
+        lines: "1259-1266"
+        symbol: "publicationErrorReport(errorBody, message)"
+        note: El fallo de la API viaja con mensaje, campos, detalle y código.
+      - file: frontend/app/add-property/page.tsx
+        lines: "1284-1291"
+        symbol: "publication_validation_failed"
+        note: La validación del cliente también deja rastro con sus campos.
+    tests: {}
+    cases:
+      - name: La API rechaza el precio del anuncio
+        expected: "el evento guarda error_fields=price y el mensaje de la API"
+      - name: La petición no llega al servidor
+        expected: "el evento guarda status_code=network y el nombre de la excepción"
+      - name: Falta marcar la ubicación en el mapa
+        expected: "se registra publication_blocked con reason=missing_location"
+
+  - id: WFP-017
+    name: El panel de administración muestra por qué falló una publicación
+    status: implemented
+    summary: >-
+      En «Actividad y clics» y en la ficha del usuario, un evento de fallo se
+      marca en rojo y muestra el motivo junto al nombre del evento, sin abrir
+      nada. Al desplegarlo se ven el mensaje mostrado a la persona, los campos
+      rechazados, el detalle por campo, el código de error, el paso del
+      formulario y el código de seguimiento. Los eventos anteriores a esta regla
+      no tienen motivo guardado y lo dicen explícitamente.
+    rationale: >-
+      Guardar el motivo no sirve si el panel sigue enseñando solo «Error al
+      publicar». La ficha del usuario es donde se atiende a quien llama para
+      preguntar por qué no puede publicar, así que el motivo tiene que verse
+      allí sin abrir el payload técnico.
+    evidence:
+      - file: frontend/app/admin/activity/page.tsx
+        lines: "106-115"
+        symbol: "errorSummary"
+        note: Resuelve el motivo legible del evento a partir de reason, error_message o error_detail.
+      - file: frontend/app/admin/activity/page.tsx
+        lines: "424-432"
+        symbol: "'Mensaje mostrado al usuario'"
+        note: El detalle del evento expone los campos del error, no solo el estado HTTP.
+      - file: frontend/app/admin/users/page.tsx
+        lines: "752-784"
+        symbol: "function ActivityRow"
+        note: La actividad reciente del usuario muestra el motivo del fallo en la propia fila.
+    tests: {}
+    cases:
+      - name: Un evento de fallo con motivo guardado
+        expected: "la fila se marca en rojo y muestra el motivo sin desplegar"
+      - name: Un evento de fallo anterior a esta regla
+        expected: "la fila indica que no se registró el motivo"
+      - name: Filtrar el panel por errores de publicación
+        expected: "el selector de eventos ofrece los fallos de publicación"
+
+  - id: WFP-018
+    name: El mapa de publicación abre sobre la ubicación que ya está puesta
+    status: implemented
+    summary: >-
+      Si la propiedad ya tiene un punto marcado —al editar un anuncio o al
+      recuperar un borrador— el mapa abre centrado en ese punto a escala de
+      predio. La ubicación de quien publica solo manda la cámara cuando no hay
+      nada marcado todavía, y marcar un punto a mano nunca reencuadra el mapa.
+    rationale: >-
+      Al editar, lo único que importa es el punto guardado: abrir sobre el país
+      entero o viajar a donde está la persona esconde justo lo que se va a
+      corregir y sugiere que el anuncio perdió su ubicación. La forma del terreno
+      ya se comportaba así; el punto no.
+    evidence:
+      - file: frontend/components/maps/DrawLocationMap.tsx
+        lines: "807-816"
+        symbol: "initialPointCenteredRef.current = true"
+        note: Encuadra una sola vez el punto que llega por props, no el que la persona acaba de marcar.
+      - file: frontend/components/maps/DrawLocationMap.tsx
+        lines: "855-859"
+        symbol: "verticesRef.current.length > 0 || hasSavedPointRef.current"
+        note: Una forma o un punto ya cargados le ganan la cámara a la ubicación de quien publica.
+      - file: frontend/components/maps/DrawLocationMap.tsx
+        lines: "771-777"
+        symbol: "fitToShape(false)"
+        note: La forma del terreno restaurada encuadra sus vértices al abrir.
+    tests: {}
+    cases:
+      - name: Editar un anuncio guardado como punto
+        expected: "el mapa abre centrado en el punto del anuncio a escala de predio"
+      - name: Editar un anuncio guardado como forma del terreno
+        expected: "el mapa encuadra la forma guardada"
+      - name: Publicar desde cero con la ubicación del navegador concedida
+        expected: "el mapa viaja a la ubicación de quien publica porque no hay nada marcado"
+      - name: Marcar un punto a mano tras mover el mapa
+        expected: "el mapa conserva el encuadre elegido"
+
+  - id: WFP-019
+    name: Sin nada marcado, el mapa se sitúa sobre la ciudad elegida
+    status: implemented
+    summary: >-
+      Al abrir el paso de ubicación de un anuncio nuevo, y cada vez que cambia la
+      ciudad, el mapa viaja al centro de esa ciudad. La precedencia de WFP-018 se
+      mantiene intacta: un punto o una forma ya puestos, y la ubicación del
+      navegador cuando se concedió, siguen mandando sobre la cámara.
+    rationale: >-
+      El paso abría sobre el país entero —Quito y Guayaquil en pantalla, escala
+      de 100 km— y lo único que movía la cámara era la geolocalización. Quien la
+      rechazaba, o publicaba desde una computadora, tenía que encontrar su
+      predio arrastrando el mapa desde escala país mientras el selector de
+      ciudad, justo debajo, decía «Macas» desde el principio. El dato para
+      ayudarle ya estaba en el formulario.
+
+      Se resuelve con el mismo Nominatim que el formulario ya usa para la
+      operación inversa (deducir ciudad y provincia de un punto), en vez de con
+      una tabla de centroides escrita a mano: son datos que nadie tendría que
+      mantener y que se inventan con facilidad. La respuesta se cachea por
+      sesión para respetar el límite de una petición por segundo, y si el
+      servicio no responde el mapa simplemente no se mueve.
+    evidence:
+      - file: frontend/app/add-property/page.tsx
+        symbol: "const centerMapOnCity"
+        note: Geocodifica ciudad y provincia y hace flyTo a escala 13; cachea por sesión.
+      - file: frontend/app/add-property/page.tsx
+        symbol: "if (polygonCoords.length >= 3) return;"
+        note: No se mueve si ya hay punto, forma o ubicación del navegador.
+    tests: {}
+    cases:
+      - name: Publicar desde cero sin conceder la ubicación
+        expected: "el mapa abre sobre la ciudad seleccionada, no sobre todo Ecuador"
+      - name: Cambiar la ciudad en el selector
+        expected: "el mapa viaja a la ciudad nueva"
+      - name: Cambiar la ciudad con un punto ya marcado
+        expected: "el mapa no se mueve"
+      - name: Nominatim no responde
+        expected: "el mapa se queda donde está; la ubicación se marca a mano"
+
+  - id: WFP-020
+    name: La forma dibujada calcula el área, y el área sigue siendo corregible
+    status: implemented
+    summary: >-
+      Cerrar el contorno del predio rellena «Área Total» con la superficie
+      medida sobre esa forma, redondeada a metros cuadrados enteros, e indica de
+      dónde salió el número. Borrar la forma vacía el campo. Escribirlo a mano
+      después es válido y desactiva el aviso.
+    rationale: >-
+      El mapa ya medía cada lado del predio, pero la superficie no volvía al
+      formulario: quien acababa de trazar su terreno vértice a vértice tenía que
+      estimar a ojo cuántos metros cuadrados había encerrado, y nada comparaba lo
+      escrito con lo dibujado. Ese número no es decorativo — alimenta el precio
+      por m², los filtros de área y las páginas de estadísticas por ciudad—, así
+      que una estimación a ojo contamina agregados que nadie vuelve a revisar.
+
+      Se conserva editable porque el polígono suele ser aproximado y la
+      escritura puede venir de una escritura de propiedad, que es más fiable que
+      el trazo. Lo que se elimina es la obligación de adivinar.
+    evidence:
+      - file: frontend/components/maps/DrawLocationMap.tsx
+        symbol: "onAreaChangeRef.current?.(turf.area("
+        note: Mide el anillo cerrado con turf, que ya estaba importado para validar la forma.
+      - file: frontend/components/maps/DrawLocationMap.tsx
+        symbol: "onAreaChangeRef.current?.(0)"
+        note: Borrar la forma vacía el área que esa forma había medido.
+      - file: frontend/app/add-property/page.tsx
+        symbol: "const handleDrawnAreaChange"
+        note: Escribe el campo y marca que el número viene del dibujo.
+    tests: {}
+    cases:
+      - name: Cerrar un contorno de tres vértices
+        expected: "el área se rellena con la superficie medida y el campo dice que se calculó del dibujo"
+      - name: Borrar la forma dibujada
+        expected: "el área vuelve a quedar vacía"
+      - name: Escribir el área a mano después de dibujar
+        expected: "se respeta lo escrito"
+
+  - id: WFP-021
+    name: Subir fotos lentas no cancela la publicación
+    status: implemented
+    summary: >-
+      La petición que crea o actualiza un anuncio no tiene fecha límite: se
+      corta solo tras 120 s sin que se mueva un solo byte. Mientras el cuerpo
+      viaja, el botón muestra el porcentaje subido.
+    rationale: >-
+      Todas las peticiones del portal pasaban por un aborto único de 30 s. Para
+      una lectura es correcto; para la subida de un anuncio era una condena: el
+      tope documentado del lote son 50 MB y, en la subida móvil desde la que
+      publica la mayoría, ese traslado se mide en minutos. Cada una de esas
+      publicaciones se cortaba a mitad del cuerpo, decía «tardó demasiado» y
+      fallaba igual al reintentar — la clave de idempotencia no puede reproducir
+      una petición que el servidor nunca terminó de leer.
+
+      El reloj mide inactividad y no duración total porque una subida lenta que
+      sigue avanzando está funcionando. Y el porcentaje existe porque una espera
+      muda de varios minutos es indistinguible de un cuelgue: sin él, la persona
+      recarga la página y pierde el anuncio por su propia mano.
+    evidence:
+      - file: frontend/lib/upload-with-progress.ts
+        symbol: "const DEFAULT_IDLE_TIMEOUT_MS"
+        note: 120 s sin actividad, rearmado en cada evento de progreso.
+      - file: frontend/lib/api.ts
+        symbol: "onUploadProgress && fetchOptions.body instanceof FormData"
+        note: Pedir progreso conmuta la petición a XHR, con la misma gestión de token.
+      - file: frontend/app/add-property/page.tsx
+        symbol: "`Subiendo fotos ${uploadProgress}%`"
+        note: El botón informa el avance real de la subida.
+    tests: {}
+    cases:
+      - name: Publicar seis fotos con subida lenta
+        expected: "la petición continúa más allá de 30 s y el botón muestra el avance"
+      - name: La conexión se corta a mitad de la subida
+        expected: "se informa el fallo de red; el borrador local sigue guardado"
+      - name: Reintentar tras un fallo con la misma Idempotency-Key
+        expected: "si el primer intento llegó a crear el anuncio, se devuelve ese mismo (WFP-006)"
