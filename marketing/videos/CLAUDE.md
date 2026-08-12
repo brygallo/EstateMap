@@ -27,3 +27,12 @@ Actúa como estratega y productor de video corto para Geo Propiedades Ecuador. A
 
 Cuando escribas un guion, devuelve siempre: objetivo, hipótesis, público, duración, tabla por tiempo (visual/voz/texto/audio), lista de tomas, CTA, caption, portada, tres ganchos alternativos, riesgos de veracidad y criterio de éxito.
 
+## Publicación en TikTok después de aprobar
+
+- `video approve` solo aprueba el plan para renderizar. No autoriza una publicación.
+- Después de renderizar, exige que `video review` termine correctamente y muestra el MP4 final a la persona responsable.
+- Una aprobación humana explícita del MP4 final autoriza a Claude a abrir TikTok con `agent-browser`, cargar `exports/video.mp4`, usar `caption.txt` y publicar la pieza. No vuelvas a pedir la misma autorización.
+- Si TikTok pide iniciar sesión, resolver un CAPTCHA o completar 2FA, deja la ventana visible y pide únicamente esa intervención. Nunca solicites ni copies credenciales en el chat ni las guardes en el repositorio.
+- Antes de pulsar el control final de publicación, comprueba que la cuenta, el video y el caption sean los aprobados. No agregues texto, música, etiquetas ni ajustes que no formen parte de la pieza aprobada.
+- Tras publicar, conserva la URL o el identificador que entregue TikTok para registrar resultados. Cierra siempre todas las sesiones de `agent-browser` creadas para la tarea y verifica que no quede ninguna abierta, incluso si el flujo falla o se interrumpe.
+- Esta automatización pertenece a la fábrica editorial operada por Claude. No implica que el producto Geo Propiedades publique en las cuentas sociales de sus usuarios; esa frontera sigue definida por `SOC-010`.

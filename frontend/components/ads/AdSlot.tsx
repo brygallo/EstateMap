@@ -19,9 +19,9 @@ import { HouseAd } from './HouseAd';
  * - The href points at the API redirect, never at the advertiser. That is what
  *   makes the click countable and keeps the referrer policy on the server.
  *
- * And one thing this never does: return null. A slot with nothing sold renders
- * the house sign instead, because an empty hole sells nothing and makes the
- * page jump in height the day a campaign does turn up.
+ * When the API has no active campaign, the slot does not render. House signs
+ * are campaigns too: staff creates one explicitly when a placement should be
+ * offered for sale.
  */
 
 type Variant = 'card' | 'banner' | 'aside' | 'strip';
@@ -62,7 +62,9 @@ export async function AdSlot({
   const slots = await getAdSlots(placement, city, province);
   const slot = pickAd(slots, `${placement}:${seed}`);
 
-  if (!slot || slot.kind === 'promo') {
+  if (!slot) return null;
+
+  if (slot.kind === 'promo') {
     return (
       <HouseAd
         placement={placement}

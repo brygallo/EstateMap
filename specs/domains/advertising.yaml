@@ -11,7 +11,7 @@ summary: >-
   La venta ocurre entera en WhatsApp —allí se acuerda el espacio, el tiempo y el
   precio— y el sistema se queda con la parte que una conversación hace mal:
   apagar la campaña el día que toca, repartir las impresiones entre varios
-  anunciantes y no dejar nunca un hueco vacío.
+  anunciantes y mostrar solo los espacios que tengan una campaña activa.
 
   Lo que el módulo deliberadamente no hace está escrito con el mismo detalle en
   ADS-040 y siguientes: no hay tarifario, ni pedido, ni control de aforo, ni
@@ -126,7 +126,7 @@ rules:
         lines: "93-135"
         symbol: def live
       - file: backend/advertising/selection.py
-        lines: "23-49"
+        lines: "20-45"
         symbol: def campaigns_for
       - file: frontend/app/admin/publicidad/page.tsx
         lines: "762-821"
@@ -212,7 +212,7 @@ rules:
       autoridad.
     evidence:
       - file: frontend/components/ads/AdSlot.tsx
-        lines: "100-106"
+        lines: "108-113"
         symbol: rel="sponsored nofollow noopener noreferrer"
     tests: {playwright: true}
     cases:
@@ -233,7 +233,7 @@ rules:
       distintivo y no el mismo.
     evidence:
       - file: frontend/components/ads/AdSlot.tsx
-        lines: "96-99"
+        lines: "100-102"
         symbol: Publicidad
       - file: frontend/components/ads/HouseAd.tsx
         lines: "64-67"
@@ -373,34 +373,33 @@ rules:
   # El hueco vacío
   # ─────────────────────────────────────────────────────────────────────
   - id: ADS-016
-    name: Un espacio sin campaña se vende a sí mismo
+    name: Un espacio sin campaña no se muestra
     status: implemented
     summary: >-
-      Cuando no hay nada que servir, la ubicación no devuelve `null`: renderiza
-      el reclamo propio —«¿Quieres aparecer en este espacio?»— con el mismo
-      aspecto que tendrá el anuncio del cliente. Funciona incluso con la base de
-      datos vacía, porque el texto por defecto vive en el componente.
+      Cuando no hay ninguna campaña activa, la ubicación devuelve `null` y no
+      ocupa espacio en la página. El reclamo —«¿Quieres aparecer en este
+      espacio?»— solo se muestra si staff crea una campaña `promo` desde el
+      panel de publicidad.
     rationale: >-
-      El inventario vacío es lo normal al principio, y es también el mejor sitio
-      donde anunciar que se vende: quien está mirando propiedades en Macas y ve
-      un hueco ofrecido en la ficha ya está, por definición, en el público que
-      un negocio local quiere alcanzar. Un hueco colapsado no vende nada y
-      además hace que la página salte de altura cuando sí haya campaña.
-
-      Y tiene un segundo efecto: la vista previa del producto es el producto. Al
-      anunciante no hay que explicarle cómo se verá su anuncio, lo está viendo.
+      La ausencia de contenido no debe convertirse por defecto en contenido
+      promocional. Crear el reclamo como campaña conserva el control editorial:
+      se eligen de forma explícita la ubicación, las fechas y la segmentación,
+      igual que con cualquier otra publicidad.
     evidence:
       - file: frontend/components/ads/AdSlot.tsx
-        lines: "63-75"
-        symbol: if (!slot || slot.kind === 'promo')
+        lines: "63-77"
+        symbol: if (!slot) return null
       - file: frontend/components/ads/HouseAd.tsx
-        lines: "43-62"
+        lines: "41-59"
         symbol: export function HouseAd
     tests: {unit: true, playwright: true}
     cases:
       - name: Ubicación sin campañas
+        expected: denied
+        note: No renderiza ningún bloque.
+      - name: Campaña promo creada desde el panel
         expected: allowed
-        note: Renderiza el reclamo, no un hueco.
+        note: Renderiza el reclamo configurado.
       - name: El reclamo aparece habiendo campaña pagada
         expected: denied
 
@@ -410,8 +409,9 @@ rules:
     summary: >-
       `kind` distingue `paid` (alguien pagó, con importe anotado), `partner`
       (marca del propio grupo, gratis) y `promo` (el reclamo). Si hay pagada,
-      gana la pagada; si no, la del grupo; si tampoco, el reclamo. Nunca se
-      mezclan clases en la misma ubicación.
+      gana la pagada; si no, la del grupo; si tampoco, una campaña `promo`
+      configurada. Sin campañas activas, no se sirve nada. Nunca se mezclan
+      clases en la misma ubicación.
     rationale: >-
       Las tres conviven desde el primer día por una razón práctica antes que
       comercial: es la única forma de saber si el mecanismo funciona. Con Aents
@@ -426,10 +426,10 @@ rules:
         lines: "125-141"
         symbol: class Kind(models.TextChoices)
       - file: backend/advertising/selection.py
-        lines: "20-21"
+        lines: "17-19"
         symbol: PRIORITY =
       - file: backend/advertising/selection.py
-        lines: "23-44"
+        lines: "20-40"
         symbol: def campaigns_for
     tests: {unit: true, api: true}
     cases:
@@ -440,7 +440,7 @@ rules:
         expected: allowed
       - name: Ninguna de las dos
         expected: allowed
-        note: Sale el reclamo.
+        note: Sale el reclamo solo si existe una campaña promo activa.
       - name: Campaña del grupo sumando en el total cobrado
         expected: denied
 
@@ -464,10 +464,10 @@ rules:
       dice qué vale la pena vender, y sale gratis porque la tubería ya existe.
     evidence:
       - file: frontend/components/ads/HouseAd.tsx
-        lines: "61-68"
+        lines: "59-65"
         symbol: buildWhatsAppUrl(message)
       - file: frontend/components/ads/HouseAd.tsx
-        lines: "73-76"
+        lines: "72-74"
         symbol: trackEvent('ad_slot_inquiry_clicked'
     tests: {playwright: true}
     cases:

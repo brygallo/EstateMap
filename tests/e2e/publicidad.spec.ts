@@ -30,16 +30,12 @@ async function openFirstProperty(page: import('@playwright/test').Page): Promise
   return true;
 }
 
-test('an empty slot offers itself instead of collapsing', async ({ page }) => {
-  // SPEC:ADS-016 — an empty hole is not a possible outcome.
-  // SPEC:ADS-011 — and it says «Espacio disponible», not «Publicidad»: this is
-  // a for-rent sign, not a third party's ad.
+test('an empty slot stays hidden', async ({ page }) => {
+  // SPEC:ADS-016 — selling a placement is explicit: staff creates a promo
+  // campaign when the house sign should be visible.
   await page.goto('/');
 
-  const sign = page.getByLabel('Espacio publicitario disponible').first();
-  await expect(sign).toBeVisible();
-  await expect(sign.getByText('Espacio disponible')).toBeVisible();
-  await expect(sign.getByText('¿Quieres aparecer en este espacio?')).toBeVisible();
+  await expect(page.getByLabel('Espacio publicitario disponible')).toHaveCount(0);
 });
 
 test('the house sign opens WhatsApp carrying the space and the city', async ({ page }) => {

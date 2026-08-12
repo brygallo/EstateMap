@@ -7,13 +7,11 @@ import { trackEvent } from '@/lib/analytics';
 import { PLACEMENT_LABELS, type Placement } from '@/lib/ads';
 
 /**
- * What a slot shows when nobody has bought it.
+ * A campaign created by staff to offer a placement for sale.
  *
- * Empty inventory is the normal state at the beginning, and the hole is also
- * the best place to advertise that it is for sale: whoever is looking at
- * properties in Macas is, by definition, in the audience a local business wants
- * to reach. A collapsed slot sells nothing and makes the page jump in height
- * the day a campaign does turn up.
+ * Empty inventory stays invisible. This component is rendered only for an
+ * active `promo` campaign, so the panel controls exactly where and when the
+ * offer appears.
  *
  * It carries its own marker — "Espacio disponible" — and not the "Publicidad"
  * label. This is a for-rent sign, not a third party's ad, and calling it

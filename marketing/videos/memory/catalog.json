@@ -1,5 +1,23 @@
 {
   "version": 1,
-  "updated_at": null,
-  "videos": []
+  "updated_at": "2026-08-12T14:36:42.287443-05:00",
+  "videos": [
+    {
+      "id": "video-001",
+      "number": 1,
+      "title": "Busca en el mapa, no a ciegas",
+      "state": "approved",
+      "directory": "library/video-001",
+      "audience": "comprador",
+      "funnel_stage": "descubrimiento",
+      "pillar": "Mapa primero",
+      "series": "Busca así, no así",
+      "concept": "Contraste directo entre una lista de anuncios sin contexto espacial y el mapa del portal con los pines de la zona. Primero se muestra la incomodidad real de mirar fotos y precios sin saber dónde queda la propiedad, y enseguida se corta al mapa acercándose sobre los pines para demostrar que la búsqueda puede empezar por la zona. Es la pieza fundacional de la serie: establece el mensaje rector con pantalla real, sin explicar funciones ni mezclar públicos.",
+      "hook": "Buscar casa así es buscar a ciegas.",
+      "cta": "Explora el mapa",
+      "target_duration_seconds": 18,
+      "created_at": "2026-08-12T14:36:36.512583-05:00",
+      "updated_at": "2026-08-12T14:36:42.287322-05:00"
+    }
+  ]
 }

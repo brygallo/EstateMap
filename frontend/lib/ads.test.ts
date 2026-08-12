@@ -76,7 +76,7 @@ describe('rotation', () => {
   });
 
   it('returns null when nothing was sold', () => {
-    // SPEC:ADS-016 — the caller renders the house sign instead of a hole.
+    // SPEC:ADS-016 — the caller renders nothing without an active campaign.
     expect(pickAd([], 'property:1', 1)).toBeNull();
   });
 });

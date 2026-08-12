@@ -1,0 +1,12 @@
+{
+  "version": 1,
+  "required": {
+    "human_plan_approval": true,
+    "human_prepublication_review": true,
+    "burned_captions": true,
+    "single_audience": true,
+    "single_cta": true,
+    "verified_claims": true,
+    "licensed_assets": true
+  }
+}

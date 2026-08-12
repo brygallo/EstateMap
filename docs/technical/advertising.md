@@ -21,7 +21,7 @@ ADS-040 a ADS-045.
 `blog/ads.py` ya resolvía la mitad difícil: `Advertiser`, `SponsorSlot`, cinco
 ubicaciones, rotación determinista ponderada, redirector con filtro de bots y
 caché versionada. El módulo no lo reescribió: lo mudó, lo generalizó a todo el
-portal y le añadió el relleno de los huecos.
+portal y añadió campañas explícitas para ofrecer espacios disponibles.
 
 ## Estructura
 
@@ -92,8 +92,9 @@ sirve en este orden:
 | `partner` | Marca del propio grupo, gratis. Aents ya está sembrada así en `blog/migrations/0006` | nulo | no |
 | `promo` | «¿Quieres aparecer en este espacio?» — la casa vendiéndose | nulo | no |
 
-Si hay pagada, gana la pagada. Si no, entra la del grupo. Si tampoco, el
-reclamo. **El hueco vacío no es un resultado posible** (ADS-016, ADS-017).
+Si hay pagada, gana la pagada. Si no, entra la del grupo. Si tampoco, entra una
+campaña `promo` cuando staff la haya creado. Sin ninguna campaña activa, el
+espacio no se renderiza (ADS-016, ADS-017).
 
 Que las tres convivan desde el primer día es lo que permite comprobar el
 recorrido completo —creativo, rotación, redirector, conteo sin bots,

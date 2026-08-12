@@ -1,12 +1,9 @@
 """
 Which campaigns a slot may serve, and in what order.
 
-One rule carries this module: **an empty hole is not a possible outcome**. If
-nobody paid, a house brand takes the space; if there is no house brand either,
-the slot offers itself for sale. Empty inventory is the normal state at the
-beginning, and it is also the best place to advertise that the space is on sale
-— whoever is looking at properties in Macas is, by definition, in the audience a
-local business wants to reach (ADS-016).
+If nobody paid, a house brand takes the space; if there is no house brand, an
+explicit promo campaign may offer it for sale. With no active campaign of any
+kind, the placement stays empty (ADS-016).
 
 The three kinds are served strictly in order and never mixed: showing a paid
 campaign next to a "this space is available" sign would be telling the customer

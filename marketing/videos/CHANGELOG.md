@@ -9,3 +9,5 @@
 - Se añade memoria persistente, registro automático de ejecuciones y comando de feedback.
 - Se sustituye la API obligatoria por la CLI de Claude ya autenticada.
 - Se añade voz local y base sonora sintetizada para un flujo sin costo por generación.
+- Se incorpora Remotion 4.0.509 como renderer React parametrizado.
+- Kokoro pasa a ser el proveedor TTS local predeterminado; ElevenLabs queda configurable.

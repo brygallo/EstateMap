@@ -106,8 +106,8 @@ def test_partner_campaign_fills_in_when_nobody_paid():
     assert [campaign.pk for campaign in served] == [partner.pk]
 
 
-def test_empty_placement_falls_back_to_the_house_sign():
-    """SPEC:ADS-016 — an empty hole is not a possible outcome."""
+def test_configured_promo_campaign_fills_the_placement():
+    """SPEC:ADS-016 — a house sign must be configured explicitly."""
     promo = make_campaign(
         kind=Campaign.Kind.PROMO,
         headline="¿Quieres aparecer en este espacio?",
@@ -117,6 +117,11 @@ def test_empty_placement_falls_back_to_the_house_sign():
     served = campaigns_for(Placement.PROPERTY_SIDEBAR)
 
     assert [campaign.pk for campaign in served] == [promo.pk]
+
+
+def test_empty_placement_stays_empty():
+    """SPEC:ADS-016 — no active campaign means no rendered placement."""
+    assert campaigns_for(Placement.PROPERTY_SIDEBAR) == []
 
 
 def test_expired_campaign_is_not_served():

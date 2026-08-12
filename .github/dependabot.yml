@@ -1,12 +1,20 @@
 version: 2
+
+# Grouped updates cover minor and patch bumps only. Majors are excluded on
+# purpose: a single group with `patterns: ["*"]` batched Tailwind 3->4,
+# TypeScript 5->7 and ESLint 9->10 into one PR that could not go green without
+# three separate migrations. Excluded majors arrive as one PR per dependency,
+# so each breaking change is reviewed and migrated on its own.
 updates:
   - package-ecosystem: npm
     directory: /frontend
     schedule:
       interval: weekly
+    open-pull-requests-limit: 10
     groups:
       frontend-dependencies:
         patterns: ["*"]
+        update-types: ["minor", "patch"]
   - package-ecosystem: npm
     directory: /tests
     schedule:
@@ -14,6 +22,7 @@ updates:
     groups:
       e2e-dependencies:
         patterns: ["*"]
+        update-types: ["minor", "patch"]
   - package-ecosystem: pip
     directory: /backend
     schedule:
@@ -21,6 +30,7 @@ updates:
     groups:
       backend-dependencies:
         patterns: ["*"]
+        update-types: ["minor", "patch"]
   - package-ecosystem: github-actions
     directory: /
     schedule:

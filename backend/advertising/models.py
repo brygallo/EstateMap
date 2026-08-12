@@ -130,8 +130,8 @@ class Campaign(models.Model):
 
         The order they are declared in is the order they are served in: if
         somebody paid, the paid one wins; failing that a house brand takes the
-        space; failing that the slot offers itself for sale. An empty hole is
-        not a possible outcome (ADS-016, ADS-017).
+        space; failing that an explicitly configured promo campaign may offer
+        it for sale (ADS-016, ADS-017).
         """
 
         PAID = "paid", "Pagada"

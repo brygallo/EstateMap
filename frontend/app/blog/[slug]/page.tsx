@@ -216,7 +216,7 @@ export default async function BlogPostPage({ params }: PostPageProps) {
     24 * 60 * 60 * 1000;
 
   return (
-    <main className="mx-auto max-w-3xl px-4 py-10 sm:px-6 sm:py-14">
+    <main className="mx-auto max-w-6xl px-4 py-10 sm:px-6 sm:py-14 lg:px-8">
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: jsonLd(structuredData) }}
@@ -293,7 +293,7 @@ export default async function BlogPostPage({ params }: PostPageProps) {
               alt={post.cover_image_alt || post.title}
               fill
               priority
-              sizes="(max-width: 768px) 100vw, 768px"
+              sizes="(max-width: 768px) 100vw, 1152px"
               className="object-cover"
             />
           </div>

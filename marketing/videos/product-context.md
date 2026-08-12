@@ -39,7 +39,7 @@ Geo Propiedades Ecuador es un portal inmobiliario ecuatoriano centrado en explor
 - Dominio: `geopropiedadesecuador.com`.
 - Tipografía: Plus Jakarta Sans.
 - Verde principal `#22C55E`, teal `#14B8A6`, violeta `#6B5CF6`, lavanda `#A78BFA`, navy `#0F1020`, blanco `#FFFFFF`.
-- Recursos de marca disponibles en `frontend/public/aents/` y `frontend/public/og-image.png`.
+- Recursos de marca propios de la fábrica disponibles en `marketing/videos/assets/brand/`.
 - El mapa es MapLibre. Nunca lo llames Leaflet.
 - Término de interfaz: “Forma del terreno”.
 
@@ -52,4 +52,3 @@ Mensajes secundarios comprobables:
 - “Busca por zona, no a ciegas.”
 - “Publica y recibe material listo para compartir.”
 - “Fotos, precio y ubicación en una sola ficha.”
-

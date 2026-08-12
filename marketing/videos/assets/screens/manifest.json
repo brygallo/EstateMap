@@ -1,0 +1,51 @@
+{
+  "version": 1,
+  "base_url": "https://geopropiedadesecuador.com",
+  "clips": [
+    {
+      "file": "casas-en-venta.mp4",
+      "description": "Listado público de casas en venta con precio, área y ubicación en cada ficha",
+      "proves": "Que el catálogo tiene fichas completas y públicas",
+      "seconds": 7,
+      "requires_authorization": false,
+      "captured_at": "2026-08-12T19:33:41.765Z",
+      "source": "https://geopropiedadesecuador.com"
+    },
+    {
+      "file": "estadisticas.mp4",
+      "description": "Página pública de estadísticas inmobiliarias del portal",
+      "proves": "Que el portal publica datos agregados de su propio catálogo",
+      "seconds": 7,
+      "requires_authorization": false,
+      "captured_at": "2026-08-12T19:34:12.611Z",
+      "source": "https://geopropiedadesecuador.com"
+    },
+    {
+      "file": "ficha-propiedad.mp4",
+      "description": "Apertura de una ficha pública desde el listado, con fotos, precio y ubicación",
+      "proves": "Que desde el listado se llega a la ficha en un clic",
+      "seconds": 8,
+      "requires_authorization": true,
+      "captured_at": "2026-08-12T19:33:53.013Z",
+      "source": "https://geopropiedadesecuador.com"
+    },
+    {
+      "file": "mapa-explorar.mp4",
+      "description": "Mapa del portal en la página principal, desplazándose y acercándose sobre los pines de propiedades",
+      "proves": "Que la búsqueda ocurre sobre un mapa real, no sobre una lista",
+      "seconds": 9,
+      "requires_authorization": false,
+      "captured_at": "2026-08-12T19:33:31.926Z",
+      "source": "https://geopropiedadesecuador.com"
+    },
+    {
+      "file": "publicar-inicio.mp4",
+      "description": "Primer paso público del formulario de publicación, antes de pedir cuenta",
+      "proves": "Que se puede empezar a publicar sin registrarse primero",
+      "seconds": 7,
+      "requires_authorization": false,
+      "captured_at": "2026-08-12T19:34:02.570Z",
+      "source": "https://geopropiedadesecuador.com"
+    }
+  ]
+}

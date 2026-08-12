@@ -89,22 +89,31 @@ export default async function BlogCategoryPage({ params }: CategoryPageProps) {
         dangerouslySetInnerHTML={{ __html: jsonLd(structuredData) }}
       />
 
-      <nav aria-label="Migas de pan" className="mb-6">
-        <ol className="flex flex-wrap items-center gap-1.5 text-sm text-textSecondary">
+      <nav aria-label="Migas de pan" className="mb-7">
+        <ol className="inline-flex max-w-full flex-wrap items-center gap-1 rounded-full border border-line bg-surface/80 p-1 text-sm shadow-sm">
           <li>
-            <Link href="/" className="inline-flex items-center gap-1 hover:text-primary">
-              <Home className="h-4 w-4" strokeWidth={1.75} aria-hidden />
-              Inicio
+            <Link
+              href="/"
+              className="inline-flex min-h-9 items-center gap-1.5 rounded-full px-3 font-medium text-textSecondary transition-colors hover:bg-background hover:text-textPrimary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+            >
+              <Home className="h-3.5 w-3.5" strokeWidth={1.8} aria-hidden />
+              <span className="sr-only sm:not-sr-only">Inicio</span>
             </Link>
           </li>
-          <ChevronRight className="h-4 w-4 text-line" aria-hidden />
+          <ChevronRight className="h-3.5 w-3.5 shrink-0 text-textSecondary/45" aria-hidden />
           <li>
-            <Link href="/blog" className="hover:text-primary">
+            <Link
+              href="/blog"
+              className="inline-flex min-h-9 items-center rounded-full px-3 font-medium text-textSecondary transition-colors hover:bg-background hover:text-textPrimary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+            >
               Blog
             </Link>
           </li>
-          <ChevronRight className="h-4 w-4 text-line" aria-hidden />
-          <li className="font-medium text-textPrimary" aria-current="page">
+          <ChevronRight className="h-3.5 w-3.5 shrink-0 text-textSecondary/45" aria-hidden />
+          <li
+            className="inline-flex min-h-9 items-center rounded-full bg-primary px-3.5 font-semibold text-white shadow-sm"
+            aria-current="page"
+          >
             {category.name}
           </li>
         </ol>

@@ -1,0 +1,18 @@
+#!/bin/sh
+set -eu
+
+SCRIPT_DIR=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
+
+if ! command -v espeak-ng >/dev/null 2>&1; then
+  echo "Missing espeak-ng. Install it with: brew install espeak-ng" >&2
+  exit 1
+fi
+
+python3 -m venv "$SCRIPT_DIR/.venv"
+"$SCRIPT_DIR/.venv/bin/pip" install -r "$SCRIPT_DIR/requirements-tts.txt"
+
+cd "$SCRIPT_DIR/remotion"
+npm install
+npm exec remotion -- browser ensure
+
+echo "Video factory environment is ready."

@@ -4,8 +4,11 @@ Cada video es una unidad autosuficiente, numerada y auditable. La máquina crea 
 
 ```text
 library/video-001/
-├── video-001.md          # ficha humana: estrategia, guion y escenas
+├── brief.json            # intención original y duración solicitada
+├── script.md             # estrategia y guion humano
+├── storyboard.md         # escena por escena
 ├── plan.json             # fuente estructurada para la máquina
+├── approval.json         # aprobación humana y hash del plan
 ├── caption.txt           # texto listo para la red
 ├── subtitles.srt         # subtítulos finales
 ├── assets/
@@ -15,9 +18,12 @@ library/video-001/
 │   ├── voice.mp3         # locución
 │   └── music.mp3         # base musical
 ├── scenes/
-│   └── scene-01.mp4      # escenas renderizadas por separado
+│   └── …                 # previsualizaciones opcionales por escena
 ├── exports/
 │   └── video.mp4         # máster vertical final
+├── production.json       # tiempos reales y configuración usada
+├── review.json           # controles automáticos y revisión humana
+├── learning.json         # evidencia usada por el ciclo de aprendizaje
 └── results.csv           # se añade al publicar y medir
 ```
 
@@ -83,4 +89,3 @@ Cada escena registra:
 ## Principio de continuidad
 
 `plan.json` es la fuente técnica de cada pieza; `video-NNN.md` es la vista humana. `memory/video-catalog.jsonl` resume todos los videos para que Claude pueda responder “qué falta” antes de crear el siguiente.
-

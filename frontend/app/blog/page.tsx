@@ -1,12 +1,11 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import Image from 'next/image';
-import { ArrowRight, BookOpen, Clock3, Compass, Map, Rss, ShieldCheck } from 'lucide-react';
+import { ArrowRight, BookOpen, CalendarDays, Clock3, Compass, Map, Rss, ShieldCheck } from 'lucide-react';
 
-import { getBlogCategories, getBlogPosts } from '@/lib/blog';
+import { formatPostDate, getBlogCategories, getBlogPosts } from '@/lib/blog';
 import { jsonLd, SITE_URL, SITE_NAME } from '@/lib/properties';
 import { generatePageMetadata } from '@/lib/metadata';
-import { PostCard, PostMeta } from '@/components/blog/PostCard';
+import { PostCard } from '@/components/blog/PostCard';
 import SponsorSlotBlock from '@/components/blog/SponsorSlot';
 import { CategoryNav } from '@/components/blog/CategoryNav';
 
@@ -112,30 +111,55 @@ export default async function BlogPage() {
       ) : (
         <>
           {featured && (
-            <article className="group mt-10 grid overflow-hidden rounded-card border border-line bg-white shadow-card lg:grid-cols-[1.05fr_.95fr]">
-              <div className="flex flex-col justify-center p-6 sm:p-8 lg:p-10">
-              <p className="text-xs font-bold uppercase tracking-[0.16em] text-primary">Lectura destacada</p>
-              <h2 className="mt-3 text-2xl font-bold leading-tight tracking-[-0.025em] text-textPrimary sm:text-3xl lg:text-4xl">
-                <Link href={`/blog/${featured.slug}`} className="hover:text-primary">
-                  {featured.title}
-                </Link>
-              </h2>
-              <p className="mt-4 max-w-2xl leading-7 text-textSecondary">{featured.excerpt}</p>
-              <div className="mt-4">
-                <PostMeta post={featured} />
+            <article className="group relative mt-10 overflow-hidden rounded-card border border-line bg-white shadow-card transition-[border-color,box-shadow] hover:border-primary/40 hover:shadow-cardHover">
+              <span className="absolute inset-y-0 left-0 w-1.5 bg-primary" aria-hidden />
+              <div className="p-5 pl-7 sm:p-7 sm:pl-9">
+                <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+                  <p className="text-xs font-bold uppercase tracking-[0.16em] text-primary">
+                    Lectura destacada
+                  </p>
+                  {featured.category && (
+                    <>
+                      <span className="h-1 w-1 rounded-full bg-line" aria-hidden />
+                      <Link
+                        href={`/blog/categoria/${featured.category.slug}`}
+                        className="text-xs font-semibold text-textSecondary hover:text-primary"
+                      >
+                        {featured.category.name}
+                      </Link>
+                    </>
+                  )}
+                </div>
+
+                <h2 className="mt-3 max-w-4xl text-2xl font-bold leading-tight tracking-[-0.025em] text-textPrimary sm:text-3xl">
+                  <Link href={`/blog/${featured.slug}`} className="transition-colors hover:text-primary">
+                    {featured.title}
+                  </Link>
+                </h2>
+                <p className="mt-3 max-w-3xl text-sm leading-6 text-textSecondary sm:text-base sm:leading-7">
+                  {featured.excerpt}
+                </p>
+
+                <div className="mt-5 flex flex-col gap-4 border-t border-line pt-4 sm:flex-row sm:items-center sm:justify-between">
+                  <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-sm text-textSecondary">
+                    <span className="inline-flex items-center gap-2">
+                      <CalendarDays className="h-4 w-4 text-primary" strokeWidth={1.75} aria-hidden />
+                      <time dateTime={featured.published_at}>{formatPostDate(featured.published_at)}</time>
+                    </span>
+                    <span className="inline-flex items-center gap-2">
+                      <Clock3 className="h-4 w-4 text-primary" strokeWidth={1.75} aria-hidden />
+                      {featured.reading_minutes} min de lectura
+                    </span>
+                  </div>
+                  <Link
+                    href={`/blog/${featured.slug}`}
+                    className="inline-flex w-fit items-center gap-2 text-sm font-bold text-primary underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-4"
+                  >
+                    Leer el artículo
+                    <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1 motion-reduce:transition-none" aria-hidden />
+                  </Link>
+                </div>
               </div>
-              <Link
-                href={`/blog/${featured.slug}`}
-                className="mt-6 inline-flex items-center gap-2 rounded-lg bg-primary px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-primaryHover"
-              >
-                Leer el artículo
-                <ArrowRight className="h-4 w-4" aria-hidden />
-              </Link>
-              </div>
-              <Link href={`/blog/${featured.slug}`} className="relative min-h-64 overflow-hidden bg-primary/10 lg:min-h-full" aria-label={`Leer ${featured.title}`}>
-                {featured.cover_image ? <Image src={featured.cover_image} alt={featured.cover_image_alt || featured.title} fill priority sizes="(max-width: 1024px) 100vw, 45vw" className="object-cover transition-transform duration-500 group-hover:scale-[1.025] motion-reduce:transition-none" /> : <span className="absolute inset-0 flex items-center justify-center"><Map className="h-20 w-20 text-primary/30" strokeWidth={1} aria-hidden /></span>}
-                <span className="absolute inset-0 bg-gradient-to-t from-textPrimary/25 to-transparent" aria-hidden />
-              </Link>
             </article>
           )}
 

@@ -1,0 +1,72 @@
+{
+  "baseUrl": "https://geopropiedadesecuador.com",
+  "viewport": "Coordenadas en el espacio del viewport de 360 x 640; el clip se graba a 1080 x 1920.",
+  "flows": [
+    {
+      "name": "mapa-explorar",
+      "description": "Mapa del portal en la página principal, desplazándose y acercándose sobre los pines de propiedades",
+      "proves": "Que la búsqueda ocurre sobre un mapa real, no sobre una lista",
+      "seconds": 9,
+      "steps": [
+        {"action": "goto", "path": "/"},
+        {"action": "settle", "ms": 5000},
+        {"action": "dismiss", "labels": ["Ahora no", "Cerrar", "Aceptar"]},
+        {"action": "settle", "ms": 600},
+        {"action": "move", "x": 180, "y": 320},
+        {"action": "drag", "from": [230, 380], "to": [140, 250], "steps": 40},
+        {"action": "settle", "ms": 1000},
+        {"action": "wheel", "x": 180, "y": 320, "deltaY": -320},
+        {"action": "settle", "ms": 1800}
+      ]
+    },
+    {
+      "name": "casas-en-venta",
+      "description": "Listado público de casas en venta con precio, área y ubicación en cada ficha",
+      "proves": "Que el catálogo tiene fichas completas y públicas",
+      "seconds": 7,
+      "steps": [
+        {"action": "goto", "path": "/casas-en-venta"},
+        {"action": "settle", "ms": 3000},
+        {"action": "scroll", "to": 700, "ms": 2400},
+        {"action": "settle", "ms": 1200}
+      ]
+    },
+    {
+      "name": "ficha-propiedad",
+      "description": "Apertura de una ficha pública desde el listado, con fotos, precio y ubicación",
+      "proves": "Que desde el listado se llega a la ficha en un clic",
+      "seconds": 8,
+      "requiresAuthorization": true,
+      "steps": [
+        {"action": "goto", "path": "/casas-en-venta"},
+        {"action": "settle", "ms": 3000},
+        {"action": "clickFirst", "selector": "a[href*='/propiedad/'], main article a, [data-testid='property-card'] a"},
+        {"action": "settle", "ms": 3500}
+      ]
+    },
+    {
+      "name": "publicar-inicio",
+      "description": "Primer paso público del formulario de publicación, antes de pedir cuenta",
+      "proves": "Que se puede empezar a publicar sin registrarse primero",
+      "seconds": 7,
+      "steps": [
+        {"action": "goto", "path": "/publicar-propiedad"},
+        {"action": "settle", "ms": 3000},
+        {"action": "scroll", "to": 420, "ms": 2000},
+        {"action": "settle", "ms": 1200}
+      ]
+    },
+    {
+      "name": "estadisticas",
+      "description": "Página pública de estadísticas inmobiliarias del portal",
+      "proves": "Que el portal publica datos agregados de su propio catálogo",
+      "seconds": 7,
+      "steps": [
+        {"action": "goto", "path": "/estadisticas-inmobiliarias"},
+        {"action": "settle", "ms": 3200},
+        {"action": "scroll", "to": 600, "ms": 2200},
+        {"action": "settle", "ms": 1000}
+      ]
+    }
+  ]
+}

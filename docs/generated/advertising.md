@@ -8,7 +8,7 @@
 **Estado del dominio:** ✅ Implementada
 
 El portal vende espacios en sus propias páginas y los sirve él mismo: nada de redes de terceros, nada de scripts ajenos. Una campaña lleva el creativo, la ubicación, la ventana de fechas y el importe que se cobró. Eso es todo lo comercial que hay en la base de datos.
-La venta ocurre entera en WhatsApp —allí se acuerda el espacio, el tiempo y el precio— y el sistema se queda con la parte que una conversación hace mal: apagar la campaña el día que toca, repartir las impresiones entre varios anunciantes y no dejar nunca un hueco vacío.
+La venta ocurre entera en WhatsApp —allí se acuerda el espacio, el tiempo y el precio— y el sistema se queda con la parte que una conversación hace mal: apagar la campaña el día que toca, repartir las impresiones entre varios anunciantes y mostrar solo los espacios que tengan una campaña activa.
 Lo que el módulo deliberadamente no hace está escrito con el mismo detalle en ADS-040 y siguientes: no hay tarifario, ni pedido, ni control de aforo, ni pasarela, ni conteo de impresiones. No son huecos, son decisiones.
 
 **Ver también:** `docs/decisions/0004-publicidad-propia-vendida-desde-el-panel.md`, `docs/technical/advertising.md`, `specs/domains/blog.yaml`, `specs/domains/subscriptions.yaml`, `specs/permissions/matrix.yaml`
@@ -28,7 +28,7 @@ Lo que el módulo deliberadamente no hace está escrito con el mismo detalle en 
 | [`ADS-013`](#ads-013--la-rotación-va-por-página-y-por-franja-de-media-hora) | La rotación va por página y por franja de media hora | ✅ Implementada |
 | [`ADS-014`](#ads-014--los-clics-excluyen-bots-y-no-se-muestran-en-público) | Los clics excluyen bots y no se muestran en público | ✅ Implementada |
 | [`ADS-015`](#ads-015--una-campaña-vencida-deja-de-servirse-pero-su-enlace-sigue-vivo) | Una campaña vencida deja de servirse pero su enlace sigue vivo | ✅ Implementada |
-| [`ADS-016`](#ads-016--un-espacio-sin-campaña-se-vende-a-sí-mismo) | Un espacio sin campaña se vende a sí mismo | ✅ Implementada |
+| [`ADS-016`](#ads-016--un-espacio-sin-campaña-no-se-muestra) | Un espacio sin campaña no se muestra | ✅ Implementada |
 | [`ADS-017`](#ads-017--una-campaña-es-de-una-de-tres-clases-y-se-sirven-en-ese-orden) | Una campaña es de una de tres clases, y se sirven en ese orden | ✅ Implementada |
 | [`ADS-018`](#ads-018--todo-desemboca-en-whatsapp-con-el-contexto-ya-escrito) | Todo desemboca en WhatsApp, con el contexto ya escrito | ✅ Implementada |
 | [`ADS-019`](#ads-019--si-un-espacio-tiene-más-campañas-de-las-que-caben-el-panel-lo-dice) | Si un espacio tiene más campañas de las que caben, el panel lo dice | ✅ Implementada |
@@ -109,7 +109,7 @@ Cada campaña cubre todo Ecuador, una o más provincias o una o más ciudades. D
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
 - `backend/advertising/models.py:93-135` (`def live`)
-- `backend/advertising/selection.py:23-49` (`def campaigns_for`)
+- `backend/advertising/selection.py:20-45` (`def campaigns_for`)
 - `frontend/app/admin/publicidad/page.tsx:762-821` (`Alcance geográfico`)
 
 **Casos**
@@ -185,7 +185,7 @@ El creativo enlaza siempre al redirector propio, y ese enlace lleva `rel="sponso
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `frontend/components/ads/AdSlot.tsx:100-106` (`rel="sponsored nofollow noopener noreferrer"`)
+- `frontend/components/ads/AdSlot.tsx:108-113` (`rel="sponsored nofollow noopener noreferrer"`)
 
 **Casos**
 
@@ -208,7 +208,7 @@ Cada campaña pagada renderiza la palabra «Publicidad» sobre el creativo. El r
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `frontend/components/ads/AdSlot.tsx:96-99` (`Publicidad`)
+- `frontend/components/ads/AdSlot.tsx:100-102` (`Publicidad`)
 - `frontend/components/ads/HouseAd.tsx:64-67` (`Espacio disponible`)
 
 **Casos**
@@ -324,25 +324,25 @@ Fuera de la ventana, la ubicación no renderiza ese creativo. El redirector sigu
 - `backend/advertising/tests/test_api.py`
 - `backend/advertising/tests/test_serving.py`
 
-### ADS-016 — Un espacio sin campaña se vende a sí mismo
+### ADS-016 — Un espacio sin campaña no se muestra
 
 **Estado:** ✅ Implementada
 
-Cuando no hay nada que servir, la ubicación no devuelve `null`: renderiza el reclamo propio —«¿Quieres aparecer en este espacio?»— con el mismo aspecto que tendrá el anuncio del cliente. Funciona incluso con la base de datos vacía, porque el texto por defecto vive en el componente.
+Cuando no hay ninguna campaña activa, la ubicación devuelve `null` y no ocupa espacio en la página. El reclamo —«¿Quieres aparecer en este espacio?»— solo se muestra si staff crea una campaña `promo` desde el panel de publicidad.
 
-> **Por qué:** El inventario vacío es lo normal al principio, y es también el mejor sitio donde anunciar que se vende: quien está mirando propiedades en Macas y ve un hueco ofrecido en la ficha ya está, por definición, en el público que un negocio local quiere alcanzar. Un hueco colapsado no vende nada y además hace que la página salte de altura cuando sí haya campaña.
-Y tiene un segundo efecto: la vista previa del producto es el producto. Al anunciante no hay que explicarle cómo se verá su anuncio, lo está viendo.
+> **Por qué:** La ausencia de contenido no debe convertirse por defecto en contenido promocional. Crear el reclamo como campaña conserva el control editorial: se eligen de forma explícita la ubicación, las fechas y la segmentación, igual que con cualquier otra publicidad.
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `frontend/components/ads/AdSlot.tsx:63-75` (`if (!slot || slot.kind === 'promo')`)
-- `frontend/components/ads/HouseAd.tsx:43-62` (`export function HouseAd`)
+- `frontend/components/ads/AdSlot.tsx:63-77` (`if (!slot) return null`)
+- `frontend/components/ads/HouseAd.tsx:41-59` (`export function HouseAd`)
 
 **Casos**
 
 | Caso | Rol | Estado previo | Cuerpo | Esperado |
 | --- | --- | --- | --- | --- |
-| Ubicación sin campañas | — | — | — | allowed |
+| Ubicación sin campañas | — | — | — | denied |
+| Campaña promo creada desde el panel | — | — | — | allowed |
 | El reclamo aparece habiendo campaña pagada | — | — | — | denied |
 
 **Cobertura exigida:** playwright, unit
@@ -356,7 +356,7 @@ Y tiene un segundo efecto: la vista previa del producto es el producto. Al anunc
 
 **Estado:** ✅ Implementada
 
-`kind` distingue `paid` (alguien pagó, con importe anotado), `partner` (marca del propio grupo, gratis) y `promo` (el reclamo). Si hay pagada, gana la pagada; si no, la del grupo; si tampoco, el reclamo. Nunca se mezclan clases en la misma ubicación.
+`kind` distingue `paid` (alguien pagó, con importe anotado), `partner` (marca del propio grupo, gratis) y `promo` (el reclamo). Si hay pagada, gana la pagada; si no, la del grupo; si tampoco, una campaña `promo` configurada. Sin campañas activas, no se sirve nada. Nunca se mezclan clases en la misma ubicación.
 
 > **Por qué:** Las tres conviven desde el primer día por una razón práctica antes que comercial: es la única forma de saber si el mecanismo funciona. Con Aents publicada gratis se comprueba el recorrido completo —creativo, rotación, redirector, conteo sin bots, invalidación de caché— antes de haberle cobrado un dólar a nadie.
 Y mezclar clases sería decirle a un cliente que su dinero compró medio espacio: si hay pagada, el reclamo no aparece.
@@ -364,8 +364,8 @@ Y mezclar clases sería decirle a un cliente que su dinero compró medio espacio
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
 - `backend/advertising/models.py:125-141` (`class Kind(models.TextChoices)`)
-- `backend/advertising/selection.py:20-21` (`PRIORITY =`)
-- `backend/advertising/selection.py:23-44` (`def campaigns_for`)
+- `backend/advertising/selection.py:17-19` (`PRIORITY =`)
+- `backend/advertising/selection.py:20-40` (`def campaigns_for`)
 
 **Casos**
 
@@ -392,8 +392,8 @@ Registrar el clic es lo que convierte el reclamo en información: saber qué ubi
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `frontend/components/ads/HouseAd.tsx:61-68` (`buildWhatsAppUrl(message)`)
-- `frontend/components/ads/HouseAd.tsx:73-76` (`trackEvent('ad_slot_inquiry_clicked'`)
+- `frontend/components/ads/HouseAd.tsx:59-65` (`buildWhatsAppUrl(message)`)
+- `frontend/components/ads/HouseAd.tsx:72-74` (`trackEvent('ad_slot_inquiry_clicked'`)
 
 **Casos**
 

@@ -20,7 +20,7 @@ test.describe('Publicidad', () => {
   // SPEC:ADS-012 - Ningún script de terceros
   // No 'frontend.routes' in the YAML: nothing to navigate to. Add the route or drop tests.playwright.
 
-  // SPEC:ADS-016 - Un espacio sin campaña se vende a sí mismo
+  // SPEC:ADS-016 - Un espacio sin campaña no se muestra
   // No 'frontend.routes' in the YAML: nothing to navigate to. Add the route or drop tests.playwright.
 
   // SPEC:ADS-018 - Todo desemboca en WhatsApp, con el contexto ya escrito
