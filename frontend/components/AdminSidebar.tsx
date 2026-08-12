@@ -25,7 +25,7 @@ const navItems = [
   { href: '/admin/users', label: 'Usuarios', icon: Users },
   { href: '/admin/properties', label: 'Propiedades', icon: Building2 },
   { href: '/admin/blog', label: 'Blog', icon: Newspaper },
-  { href: '/admin/publicidad', label: 'Publicidad', icon: Megaphone },
+  { href: '/admin/campanas', label: 'Publicidad', icon: Megaphone },
   { href: '/admin/pending-publications', label: 'Pendientes', icon: Clock },
   { href: '/admin/activity', label: 'Actividad y clics', icon: MousePointerClick },
   { href: '/admin/ingesta', label: 'Importar', icon: DownloadCloud },

@@ -128,7 +128,7 @@ rules:
       - file: backend/advertising/selection.py
         lines: "20-45"
         symbol: def campaigns_for
-      - file: frontend/app/admin/publicidad/page.tsx
+      - file: frontend/app/admin/campanas/page.tsx
         lines: "762-821"
         symbol: Alcance geográfico
     tests: {unit: true, api: true}
@@ -514,7 +514,7 @@ rules:
     name: La publicidad se gestiona desde el panel, en una sola pantalla
     status: implemented
     summary: >-
-      `/admin/publicidad` es la lista de campañas con su formulario, más el alta
+      `/admin/campanas` es la lista de campañas con su formulario, más el alta
       de anunciantes. La API detrás exige `is_staff`. El admin de Django sigue
       existiendo como herramienta de rescate.
     rationale: >-
@@ -578,7 +578,7 @@ rules:
       admin de Django. El panel operativo debe cubrir las tareas repetidas y
       reservar el admin de rescate para una emergencia.
     evidence:
-      - file: frontend/app/admin/publicidad/page.tsx
+      - file: frontend/app/admin/campanas/page.tsx
         lines: "168-897"
         symbol: export default function AdsAdminPage
     tests: {playwright: true}

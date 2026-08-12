@@ -171,7 +171,7 @@ test('advertising admin exposes the complete campaign workflow', async ({ page }
     overbooked: [], max_per_placement: 4,
   } }));
 
-  await page.goto('/admin/publicidad');
+  await page.goto('/admin/campanas');
   await page.getByRole('button', { name: 'Campaña', exact: true }).click();
   await expect(page.getByText('Alcance geográfico')).toBeVisible();
   await expect(page.getByText('Vista previa')).toBeVisible();

@@ -31,7 +31,7 @@ backend/advertising/
     placements.py   Placement (TextChoices) y MAX_PER_PLACEMENT
     selection.py    qué campaña sirve cada hueco, en orden de clase
     views.py        API pública: slots y redirector
-    admin_api.py    API de staff para /admin/publicidad
+    admin_api.py    API de staff para /admin/campanas
     serializers.py
     admin.py        admin de Django, herramienta de rescate
     signals.py      invalidación de caché al cambiar una campaña
@@ -47,7 +47,7 @@ frontend/
     lib/ads.ts                    fetch y rotación por página + franja
     components/ads/AdSlot.tsx     el hueco, servidor
     components/ads/HouseAd.tsx    el reclamo propio, cliente (necesita el clic)
-    app/admin/publicidad/page.tsx el panel
+    app/admin/campanas/page.tsx el panel
 ```
 
 `blog/ads.py` y `blog/views_ads.py` quedan como reexportaciones para que
@@ -220,9 +220,9 @@ De staff, `IsAuthenticated + IsAdminUser`, calcado de `blog/admin_api.py`:
 son `@action` con nombre y no un `PATCH` de `is_active`, para que quede en el log
 qué se hizo y no solo qué quedó.
 
-## Panel: `/admin/publicidad`
+## Panel: `/admin/campanas`
 
-Todo el panel de este proyecto es React. `/admin/publicidad` se construye con
+Todo el panel de este proyecto es React. `/admin/campanas` se construye con
 las mismas piezas que `frontend/app/admin/blog/page.tsx`, que es el precedente
 más cercano —lista, diálogo de edición, subida de imagen— y del que conviene no
 apartarse:

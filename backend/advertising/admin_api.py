@@ -1,4 +1,4 @@
-"""Staff-only API behind /admin/publicidad."""
+"""Staff-only API behind /admin/campanas."""
 
 from datetime import timedelta
 

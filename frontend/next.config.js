@@ -116,6 +116,17 @@ const nextConfig = {
       // keeps the same text from being published at two competing URLs.
       { source: '/guias', destination: '/blog', permanent: true },
       { source: '/guias/:slug', destination: '/blog/:slug', permanent: true },
+      // The advertising panel used to live at `/admin/publicidad`, and an ad
+      // blocker made it unusable: Next derives the route chunk's URL from the
+      // directory name, so the browser asked for
+      // `_next/static/chunks/app/admin/publicidad/page-<hash>.js`, and the
+      // Spanish filter lists block scripts under a path segment called
+      // `publicidad`. nginx answered 200, the extension cancelled the load and
+      // React never hydrated: a blank screen first, «Algo salió mal» on the
+      // retry. Renaming the directory renames the chunk, which is the part
+      // that mattered; this redirect is for the bookmarks. It runs on the
+      // server, so no chunk is involved and nothing blocks it.
+      { source: '/admin/publicidad', destination: '/admin/campanas', permanent: true },
     ];
   },
 };

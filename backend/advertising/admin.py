@@ -1,6 +1,6 @@
 """Django admin for advertising — the rescue tool, not the working interface.
 
-The work happens in /admin/publicidad, which is React like the rest of the
+The work happens in /admin/campanas, which is React like the rest of the
 panel. This stays for the things a purpose-built screen does badly: bulk edits,
 poking at a row that a bug left in a strange state, and looking at data without
 going through the API.

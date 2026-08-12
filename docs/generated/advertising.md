@@ -110,7 +110,7 @@ Cada campaña cubre todo Ecuador, una o más provincias o una o más ciudades. D
 
 - `backend/advertising/models.py:93-135` (`def live`)
 - `backend/advertising/selection.py:20-45` (`def campaigns_for`)
-- `frontend/app/admin/publicidad/page.tsx:762-821` (`Alcance geográfico`)
+- `frontend/app/admin/campanas/page.tsx:762-821` (`Alcance geográfico`)
 
 **Casos**
 
@@ -438,7 +438,7 @@ Sin control de aforo (ADS-042), este aviso es lo único que separa «vendí de m
 
 **Estado:** ✅ Implementada
 
-`/admin/publicidad` es la lista de campañas con su formulario, más el alta de anunciantes. La API detrás exige `is_staff`. El admin de Django sigue existiendo como herramienta de rescate.
+`/admin/campanas` es la lista de campañas con su formulario, más el alta de anunciantes. La API detrás exige `is_staff`. El admin de Django sigue existiendo como herramienta de rescate.
 
 > **Por qué:** Es la consecuencia directa de ADS-001: si lo único que el sistema guarda de una venta son tres datos, la interfaz que los captura es un formulario, no un flujo. Y el frontend no es una frontera de seguridad: quien decide es el servidor.
 
@@ -492,7 +492,7 @@ Desde la pantalla de publicidad se suben creativo y logotipo, se editan anuncian
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `frontend/app/admin/publicidad/page.tsx:168-897` (`export default function AdsAdminPage`)
+- `frontend/app/admin/campanas/page.tsx:168-897` (`export default function AdsAdminPage`)
 
 **Casos**
 
