@@ -47,6 +47,7 @@ import PropertyGallery from '@/components/PropertyGallery';
 import PropertyNearbyMap from '@/components/maps/PropertyNearbyMap';
 import AdminRefreshProperty from '@/components/AdminRefreshProperty';
 import PropertyIntelligence from '@/components/PropertyIntelligence';
+import AdSlot from '@/components/ads/AdSlot';
 import PropertyCard from '@/components/PropertyCard';
 import PropertyTitle from '@/components/PropertyTitle';
 import BrandAtmosphere from '@/components/aents/BrandAtmosphere';
@@ -916,6 +917,17 @@ export default async function PropertyPage({ params }: PropertyPageProps) {
                   </div>
                 )}
               </div>
+
+              {/* Below the contact card, never inside it: that click belongs to
+                  whoever published the property (ADS-004). */}
+              <AdSlot
+                placement="property_sidebar"
+                seed={String(property.id)}
+                city={property.city}
+                province={property.province}
+                variant="aside"
+                className="mt-6"
+              />
             </aside>
           </div>
 
@@ -940,6 +952,15 @@ export default async function PropertyPage({ params }: PropertyPageProps) {
             </div>
             <PropertyNearbyMap property={property} nearbyProperties={nearbyProperties} />
           </section>
+
+          <AdSlot
+            placement="property_footer"
+            seed={String(property.id)}
+            city={property.city}
+            province={property.province}
+            variant="banner"
+            className="mt-12"
+          />
 
           {nearbyProperties.length > 0 && (
             <section className="mt-12 border-t border-line pt-10" aria-labelledby="nearby-properties-title">

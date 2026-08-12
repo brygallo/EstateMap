@@ -45,7 +45,7 @@ Qué devuelve el sistema cuando algo falla, y qué garantías acompañan a esa r
 | [`ERR-002`](#err-002--el-identificador-de-petición-solo-llega-a-parte-de-la-interfaz) | El identificador de petición solo llega a parte de la interfaz | 🟡 Parcial |
 | [`ERR-003`](#err-003--toda-pantalla-de-error-debería-mostrar-el-identificador) | Toda pantalla de error debería mostrar el identificador | 📝 Propuesta (sin código) |
 | [`ERR-004`](#err-004--los-incidentes-se-agregan-por-huella-y-no-guardan-datos-de-la-petición) | Los incidentes se agregan por huella y no guardan datos de la petición | ✅ Implementada |
-| [`ERR-005`](#err-005--las-subidas-demasiado-grandes-responden-413-en-json) | Las subidas demasiado grandes responden 413 en JSON | 🟡 Parcial |
+| [`ERR-005`](#err-005--las-subidas-que-rompen-los-topes-del-parser-responden-json) | Las subidas que rompen los topes del parser responden JSON | ✅ Implementada |
 | [`ERR-006`](#err-006--el-contrato-json-para-errores-de-nginx-está-versionado-pero-requiere-despliegue) | El contrato JSON para errores de nginx está versionado pero requiere despliegue | 🟡 Parcial |
 | [`ERR-007`](#err-007--el-límite-de-ritmo-responde-429-con-retry-after) | El límite de ritmo responde 429 con Retry-After | ✅ Implementada |
 | [`ERR-008`](#err-008--con-la-caché-caída-el-sistema-sirve-no-falla) | Con la caché caída el sistema sirve, no falla | ✅ Implementada |
@@ -64,7 +64,7 @@ El middleware de observabilidad reutiliza la cabecera X-Request-ID que llegue de
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
 - `backend/estate_map/observability.py:59-82` (`response["X-Request-ID"] = request_id`) — Generación o propagación del identificador y escritura de las tres cabeceras.
-- `backend/estate_map/settings.py:245-247` (`CORS_EXPOSE_HEADERS`) — Sin exponerlas por CORS el navegador no puede leerlas, así que la cabecera existiría pero el frontend no la vería.
+- `backend/estate_map/settings.py:250-252` (`CORS_EXPOSE_HEADERS`) — Sin exponerlas por CORS el navegador no puede leerlas, así que la cabecera existiría pero el frontend no la vería.
 
 
 **Casos**
@@ -134,26 +134,36 @@ Un fallo no crea una fila por ocurrencia: se calcula una huella y se incrementa 
 | El mismo fallo ocurre 50 veces | — | `ocurrencias`=50 | — | 1 fila con occurrences=50 |
 | Cuerpo de la petición almacenado | — | `peticion`=POST con contraseña | — | nada |
 
-### ERR-005 — Las subidas demasiado grandes responden 413 en JSON
+### ERR-005 — Las subidas que rompen los topes del parser responden JSON
 
-**Estado:** 🟡 Parcial
+**Estado:** ✅ Implementada
 
-Un middleware propio traduce las excepciones de subida de Django a respuestas JSON, con 413 para cuerpo excesivo y 400 para exceso de ficheros o petición sospechosa.
+Un cuerpo con más ficheros de los permitidos responde 400 con el error sobre el campo `uploaded_images`, y un cuerpo de texto por encima del tope responde 413 con `detail`. Ambas respuestas son JSON.
 
 
-> **Por qué:** Se marca partial porque no está demostrado que el middleware llegue a ejecutarse: Django envuelve cada capa con convert_exception_to_response, que puede haber convertido ya la excepción en un 400 HTML antes de que suba hasta aquí. No hay ningún test que lo cubra. Hasta comprobarlo con una petición real, el contrato JSON no puede darse por firme.
+> **Por qué:** La duda que mantenía esta regla en partial está resuelta, y la respuesta era la mala: el middleware NO llega a ejecutarse. Django envuelve cada capa con convert_exception_to_response, así que una SuspiciousOperation lanzada dentro de la vista —que es donde ocurre, porque el cuerpo se parsea cuando DRF toca request.data— ya viene convertida en un 400 HTML antes de subir hasta el middleware. Comprobado con una petición real de 11 ficheros: la respuesta era una página HTML de Django.
+Eso no era un detalle cosmético. El formulario de publicación lee el cuerpo del error para decidir a qué paso volver; con HTML, `res.json()` falla, se queda sin campo y sin paso, y enseña un mensaje genérico. La persona no tiene nada que corregir y reintenta lo mismo. El fallo llegaba además a ActivityEvent con solo un código de estado, indistinguible de un precio rechazado o una sesión caducada.
+El contrato lo sostiene ahora un EXCEPTION_HANDLER de DRF, que sí corre dentro de la vista. El exceso de ficheros se nombra como error del campo de las fotos, que es lo que permite al formulario abrir el paso correcto; el exceso de texto conserva el 413 que ya documentaba el catálogo, porque no habla de las fotos y porque es el mismo estado con el que nginx responde a esa clase de fallo.
+El middleware sigue en su sitio como red para las capas que se parsean fuera de la vista, pero ya no es quien firma este contrato.
 
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/estate_map/upload_errors.py:5-27` (`class UploadErrorMiddleware`) — Traducción de RequestDataTooBig, TooManyFilesSent y SuspiciousOperation.
+- `backend/real_estate/exception_handlers.py` (`def api_exception_handler`) — Traduce TooManyFilesSent y RequestDataTooBig antes de delegar en DRF.
+- `backend/estate_map/settings.py` (`'EXCEPTION_HANDLER'`) — Registro del manejador; sin él DRF usa el suyo y vuelve el HTML.
+- `backend/estate_map/upload_errors.py` (`class UploadErrorMiddleware`) — Red para excepciones lanzadas fuera de la vista. No cubre la ruta de la API, que es la que importa aquí.
 
 **Casos**
 
 | Caso | Rol | Estado previo | Cuerpo | Esperado |
 | --- | --- | --- | --- | --- |
-| Cuerpo por encima del máximo | — | `tamaño`=60 MB + 1 | — | 413 `REQUEST_DATA_TOO_BIG` |
-| Más ficheros de los permitidos | — | `ficheros`=11 | — | 400 `TOO_MANY_FILES` |
+| Más ficheros de los permitidos | — | `ficheros`=11 | — | 400 `VALIDATION_ERROR` |
+| Cuerpo de texto por encima del máximo | — | `tamaño`=DATA_UPLOAD_MAX_MEMORY_SIZE + 1 | — | 413 `REQUEST_DATA_TOO_BIG` |
+| Ninguna de las dos culpa a las fotos de un texto largo | — | `tamaño`=cuerpo de texto excesivo, sin ficheros | — | 413 con detail, nunca un error sobre uploaded_images |
+
+**Cobertura exigida:** api
+
+- `backend/real_estate/tests/test_property_image_validation.py`
 
 ### ERR-006 — El contrato JSON para errores de nginx está versionado pero requiere despliegue
 
@@ -188,11 +198,11 @@ Los scopes de throttling devuelven 429 indicando cuántos segundos faltan. Los t
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/estate_map/settings.py:172-182` (`DEFAULT_THROTTLE_RATES`) — Los cinco scopes con sus tasas.
+- `backend/estate_map/settings.py:187-196` (`DEFAULT_THROTTLE_RATES`) — Los cinco scopes con sus tasas.
 - `backend/real_estate/throttling.py:42-51` (`class AntiScraperScopedThrottle`) — Las tres exenciones, en el orden en que se evalúan: is_staff primero, después el cliente interno, después la lista de IPs.
 
 - `backend/real_estate/throttling.py:45-48` (`getattr(user, "is_staff", False)`) — La exención de staff, sin tope y evaluada antes que la IP.
-- `backend/estate_map/settings.py:204-206` (`THROTTLE_EXEMPT_IPS`) — Lista adicional de direcciones nunca limitadas.
+- `backend/estate_map/settings.py:209-211` (`THROTTLE_EXEMPT_IPS`) — Lista adicional de direcciones nunca limitadas.
 
 **Casos**
 
@@ -214,8 +224,8 @@ El cliente de Redis ignora los errores de conexión, de modo que una caché inac
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/estate_map/settings.py:474-476` (`IGNORE_EXCEPTIONS`) — Los errores del cliente de caché no se propagan.
-- `backend/estate_map/settings.py:495-497` (`DJANGO_REDIS_LOG_IGNORED_EXCEPTIONS`) — Pero sí se registran, para que la caída no pase inadvertida.
+- `backend/estate_map/settings.py:485-487` (`IGNORE_EXCEPTIONS`) — Los errores del cliente de caché no se propagan.
+- `backend/estate_map/settings.py:506-508` (`DJANGO_REDIS_LOG_IGNORED_EXCEPTIONS`) — Pero sí se registran, para que la caída no pase inadvertida.
 
 **Casos**
 

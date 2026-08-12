@@ -38,7 +38,7 @@ rules:
       rechazando con 401 por si el frontend se salta o falla.
     evidence:
       - file: frontend/app/add-property/page.tsx
-        lines: "1080-1089"
+        lines: "1092-1100"
         symbol: "if (!token && !isEditMode && !resumeToken) {"
         note: Guarda el borrador, envía la solicitud pendiente y abre el modal, sin llamar a /properties/.
       - file: backend/real_estate/models.py
@@ -76,11 +76,11 @@ rules:
       token en vez de encadenarse directamente tras la llamada de login.
     evidence:
       - file: frontend/app/add-property/page.tsx
-        lines: "953-955"
+        lines: "965-967"
         symbol: setPendingPublish(true)
         note: Se marca tras un login exitoso desde el modal.
       - file: frontend/app/add-property/page.tsx
-        lines: "965-967"
+        lines: "977-979"
         symbol: "if (!pendingPublish || !token) return;"
         note: Efecto que dispara form.handleSubmit(onSubmit) en cuanto ambos están listos.
     cases:
@@ -110,7 +110,7 @@ rules:
       rápido con un id que ya se puede mostrar.
     evidence:
       - file: backend/real_estate/serializers.py
-        lines: "338-344"
+        lines: "362-367"
         symbol: "def create(self, validated_data):"
         note: Crea Property y luego llama a stage_property_image por cada archivo.
       - file: backend/real_estate/serializers.py
@@ -160,7 +160,7 @@ rules:
         symbol: def validate_and_normalize_polygon
         note: Orden interno -- vértices distintos, límites geográficos, autointersección, área.
       - file: backend/real_estate/serializers.py
-        lines: "312-328"
+        lines: "336-351"
         symbol: def validate_polygon
         note: Punto de entrada desde el serializer, antes de que create() se ejecute.
     cases:
@@ -198,11 +198,11 @@ rules:
       y máximas por imagen, vive en specs/domains/properties.yaml (PROP-026).
     evidence:
       - file: backend/estate_map/settings.py
-        lines: "386-388"
+        lines: "391-393"
         symbol: MAX_PROPERTY_UPLOAD_MB
         note: MAX_IMAGES_PER_PROPERTY=10, MAX_IMAGE_SIZE_MB=10, MAX_PROPERTY_UPLOAD_MB=50.
       - file: backend/estate_map/settings.py
-        lines: "369-371"
+        lines: "374-376"
         symbol: ALLOWED_IMAGE_TYPES
       - file: backend/real_estate/serializers.py
         lines: "253-308"
@@ -252,7 +252,7 @@ rules:
         lines: "589-591"
         symbol: "cache.set(result_key, response.data['id'], 60 * 60 * 24)"
       - file: frontend/app/add-property/page.tsx
-        lines: "1158-1160"
+        lines: "1170-1172"
         symbol: "Idempotency-Key"
         note: No se manda en la edición (PUT), solo en la creación.
     cases:
@@ -318,7 +318,7 @@ rules:
         symbol: "class AntiScraperScopedThrottle(ScopedRateThrottle)"
         note: Exime staff e IPs internas; solo se usa en map_points y list.
       - file: backend/estate_map/settings.py
-        lines: "198-200"
+        lines: "203-205"
         symbol: "'property_write': '30/hour'"
     cases:
       - name: Staff publica más de 30 veces en una hora
@@ -577,11 +577,11 @@ rules:
       acción posible y hace que un error corregible parezca una falla del sistema.
     evidence:
       - file: frontend/app/add-property/page.tsx
-        lines: "1281-1285"
+        lines: "1293-1296"
         symbol: "handleInvalidSubmit"
         note: Abre el paso del primer error de validación y muestra su mensaje.
       - file: frontend/app/add-property/page.tsx
-        lines: "1247-1250"
+        lines: "1259-1261"
         symbol: "publicationApiErrorStep"
         note: Usa el cuerpo de error de la API para abrir el paso correspondiente.
       - file: frontend/lib/publication-form-errors.ts
@@ -682,15 +682,15 @@ rules:
         symbol: "publicationErrorReport"
         note: Aplana el cuerpo de error de la API en escalares que el payload puede llevar, truncados.
       - file: frontend/app/add-property/page.tsx
-        lines: "1035-1046"
+        lines: "1047-1057"
         symbol: "blockPublication"
         note: Las comprobaciones previas al envío emiten publication_blocked con su reason.
       - file: frontend/app/add-property/page.tsx
-        lines: "1259-1266"
+        lines: "1271-1277"
         symbol: "publicationErrorReport(errorBody, message)"
         note: El fallo de la API viaja con mensaje, campos, detalle y código.
       - file: frontend/app/add-property/page.tsx
-        lines: "1284-1291"
+        lines: "1296-1302"
         symbol: "publication_validation_failed"
         note: La validación del cliente también deja rastro con sus campos.
     tests: {}

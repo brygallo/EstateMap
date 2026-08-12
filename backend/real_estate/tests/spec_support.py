@@ -175,6 +175,13 @@ class SpecWorld:
                 return self.user("owner").email
             if name == "password":
                 return SPEC_PASSWORD
+            if name == "description_over_limit":
+                # A ceiling can only be exercised by a value that breaks it, and
+                # eight thousand characters cannot be written into a YAML case.
+                from django.conf import settings
+
+                limit = getattr(settings, "MAX_DESCRIPTION_LENGTH", 8000)
+                return "x" * (limit + 1)
             raise AssertionError(
                 f"The spec endpoint uses the placeholder '{{{name}}}', which spec_support "
                 "cannot resolve. Add it to SpecWorld.resolve."

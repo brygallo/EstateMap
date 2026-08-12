@@ -19,6 +19,7 @@ import {
 import { Button } from '@/components/ui/button';
 import MapPageClient from '@/components/MapPageClient';
 import PropertyCard from '@/components/PropertyCard';
+import AdSlot from '@/components/ads/AdSlot';
 import {
   getProperties,
   getPropertySummary,
@@ -373,6 +374,9 @@ export default async function HomePage() {
                 />
               ))}
             </div>
+
+            {/* In the results list, never over the map canvas (ADS-003). */}
+            <AdSlot placement="home_feed" seed="home" variant="banner" className="mt-8" />
           </div>
         </section>
       )}

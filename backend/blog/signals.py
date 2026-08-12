@@ -16,7 +16,7 @@ from django.dispatch import receiver
 from real_estate.cache_utils import bump_props_version
 from real_estate.services.indexnow import submit_urls
 
-from .models import Advertiser, Category, Post, SponsorSlot
+from .models import Category, Post
 
 logger = logging.getLogger(__name__)
 
@@ -69,14 +69,6 @@ def category_changed(sender, instance, **kwargs):
     bump_props_version("blog")
 
 
-@receiver([post_save, post_delete], sender=SponsorSlot)
-@receiver([post_save, post_delete], sender=Advertiser)
-def sponsorship_changed(sender, instance, **kwargs):
-    """Campaigns are cached for half an hour; a change has to land sooner.
-
-    Only the Redis payloads move. The blog pages themselves are not revalidated:
-    a sponsor swap is not a content change, and forcing Next to rebuild every
-    article for it would be a lot of work for a slot that refreshes on its own
-    within the TTL.
-    """
-    bump_props_version("blog")
+# Sponsorships moved to `advertising/`, and so did the receiver that keeps their
+# payloads fresh — they are cached under their own version key now, so bumping
+# the blog's would not have reached them anyway. See `advertising/signals.py`.

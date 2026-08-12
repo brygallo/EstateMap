@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { BarChart3, Building2, MapPin, Ruler, TrendingUp } from 'lucide-react';
 import { slugify } from '@/lib/properties';
+import AdSlot from '@/components/ads/AdSlot';
 import {
   MarketStats,
   MIN_LISTINGS_FOR_PROMOTION,
@@ -49,6 +50,15 @@ export default function MarketStatsSections({
         <Kpi icon={TrendingUp} label="Tiempo estimado en mercado" value={`${integer(data.estimated_market_days)} días`} />
         <Kpi icon={BarChart3} label="Valores extremos excluidos" value={integer(data.outliers_excluded)} />
       </section>
+
+      <AdSlot
+        placement="stats_inline"
+        seed={cityName ?? 'ecuador'}
+        city={cityName}
+        variant="banner"
+        className="mt-10"
+      />
+
       <section className="mt-10 grid gap-6 lg:grid-cols-[1.4fr_0.6fr]">
         <div className="rounded-card border border-line bg-white p-5 shadow-card sm:p-7">
           <h2 className="text-xl font-bold text-textPrimary">

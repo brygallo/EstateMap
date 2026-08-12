@@ -383,7 +383,7 @@ Hoy is_email_verified no bloquea ningún endpoint, así que una cuenta activa co
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
 - `backend/real_estate/models.py:27-29` (`is_email_verified = models.BooleanField(default=False)`)
-- `backend/real_estate/serializers.py:747-749` (`not user.is_active and not user.is_email_verified`) — Única lectura del campo en un camino de login; ninguna permission class lo mira.
+- `backend/real_estate/serializers.py:766-768` (`not user.is_active and not user.is_email_verified`) — Única lectura del campo en un camino de login; ninguna permission class lo mira.
 
 **Casos**
 
@@ -556,7 +556,7 @@ El bloque demand de /intelligence/ debe servirse solo al propietario de la propi
 
 - `backend/real_estate/views.py:719-735` (`def map_points`)
 - `backend/real_estate/throttling.py:24-39` (`def _is_internal_client`)
-- `backend/estate_map/settings.py:172-183` (`DEFAULT_THROTTLE_RATES`)
+- `backend/estate_map/settings.py:187-197` (`DEFAULT_THROTTLE_RATES`)
 
 **Casos**
 
@@ -885,7 +885,7 @@ Cualquiera puede crear un lead sin cuenta, y el estado del lead no se puede fija
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
 - `backend/real_estate/views.py:1130-1132` (`if self.action == 'create':`)
-- `backend/real_estate/serializers.py:475-480` (`class LeadSerializer`) — read_only_fields incluye status.
+- `backend/real_estate/serializers.py:499-503` (`class LeadSerializer`) — read_only_fields incluye status.
 
 **Casos**
 
@@ -976,7 +976,7 @@ Consultar, cambiar el estado o eliminar un lead exige que la propiedad asociada 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
 - `backend/real_estate/views.py:1142-1149` (`LeadStatusSerializer`)
-- `backend/real_estate/serializers.py:508-511` (`class LeadStatusSerializer`)
+- `backend/real_estate/serializers.py:527-529` (`class LeadStatusSerializer`)
 
 **Casos**
 
@@ -1070,7 +1070,7 @@ Cualquier visitante puede emitir un evento de actividad, con un límite de 30 po
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
 - `backend/real_estate/views.py:1434-1437` (`self.throttle_scope = 'activity_create'`)
-- `backend/real_estate/serializers.py:697-703` (`validated_data['is_bot'] = is_bot_request(request)`)
+- `backend/real_estate/serializers.py:716-721` (`validated_data['is_bot'] = is_bot_request(request)`)
 
 **Casos**
 
@@ -1135,8 +1135,8 @@ Listar o consultar eventos de actividad exige is_staff; un usuario autenticado n
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
 - `backend/real_estate/views.py:1471-1473` (`class CustomTokenObtainPairView`)
-- `backend/estate_map/settings.py:192-212` (`SIMPLE_JWT`)
-- `backend/real_estate/serializers.py:728-730` (`token["is_staff"] = user.is_staff`)
+- `backend/estate_map/settings.py:213-232` (`SIMPLE_JWT`)
+- `backend/real_estate/serializers.py:747-749` (`token["is_staff"] = user.is_staff`)
 
 **Casos**
 
@@ -1192,7 +1192,7 @@ Cualquiera puede registrarse sin autenticación, y la cuenta se crea con is_acti
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
 - `backend/real_estate/views.py:1475-1477` (`class RegisterView`)
-- `backend/real_estate/serializers.py:779-786` (`class RegisterSerializer`) — create() pasa is_active=False y emite el token de verificación.
+- `backend/real_estate/serializers.py:798-804` (`class RegisterSerializer`) — create() pasa is_active=False y emite el token de verificación.
 
 **Casos**
 
@@ -1252,7 +1252,7 @@ Cualquiera puede registrarse sin autenticación, y la cuenta se crea con is_acti
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/estate_map/settings.py:212-214` (`'BLACKLIST_AFTER_ROTATION': True,`)
+- `backend/estate_map/settings.py:217-219` (`'BLACKLIST_AFTER_ROTATION': True,`)
 - `backend/real_estate/urls.py:45-47` (`name='token_refresh'`)
 
 **Casos**
@@ -1431,7 +1431,7 @@ La actualización del perfil propio solo admite username, nombre y apellidos; co
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/real_estate/serializers.py:876-893` (`read_only_fields = ["id", "email", "is_email_verified", "avatar_url", "is_staff"]`)
+- `backend/real_estate/serializers.py:906-922` (`read_only_fields = ["id", "email", "is_email_verified", "avatar_url", "is_staff"]`)
 
 **Casos**
 
@@ -1463,7 +1463,7 @@ La actualización del perfil propio solo admite username, nombre y apellidos; co
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
 - `backend/real_estate/views.py:1952-1954` (`class ChangePasswordView`)
-- `backend/real_estate/serializers.py:903-905` (`La contraseña actual no es correcta`)
+- `backend/real_estate/serializers.py:922-924` (`La contraseña actual no es correcta`)
 
 **Casos**
 
@@ -2284,7 +2284,7 @@ No hay DEFAULT_THROTTLE_CLASSES global, así que toda vista que no implemente ge
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/estate_map/settings.py:187-203` (`'property_write': '30/hour',`) — Se declaran las tasas, nunca las clases por defecto.
+- `backend/estate_map/settings.py:204-219` (`'property_write': '30/hour',`) — Se declaran las tasas, nunca las clases por defecto.
 - `backend/real_estate/views.py:337-350` (`def get_throttles`)
 
 **Casos**

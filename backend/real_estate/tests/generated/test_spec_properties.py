@@ -296,3 +296,27 @@ def test_prop_036_publicar_con_area_negativa(spec_request):
         case_name='Publicar con área negativa',
         expected_status=None,
     )
+
+
+# --- PROP-037: La descripción tiene un tope de caracteres ---
+
+def test_prop_037_publicar_con_una_descripcion_por_encima_del_tope(spec_request):
+    """
+    SPEC:PROP-037 — La descripción tiene un tope de caracteres
+    Case: Publicar con una descripción por encima del tope
+    """
+    response = spec_request(
+        method='POST',
+        path='/api/properties/',
+        role='authenticated',
+        given=None,
+        body={'title': 'Descripción interminable', 'price': '1000', 'description': '{description_over_limit}'},
+    )
+    assert_outcome(
+        response,
+        expected='denied',
+        denied_status=400,
+        rule_id='PROP-037',
+        case_name='Publicar con una descripción por encima del tope',
+        expected_status=None,
+    )

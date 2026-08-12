@@ -15,7 +15,6 @@ from django.utils.html import format_html
 
 from real_estate.cache_utils import bump_props_version
 
-from .ads import Advertiser, SponsorSlot
 from .models import Category, Post, PostImage
 
 # Posts go out mid-morning Ecuador time (UTC-5), when the audience is awake and
@@ -228,80 +227,6 @@ class PostAdmin(admin.ModelAdmin):
         super().save_model(request, obj, form, change)
 
 
-class SponsorSlotInline(admin.TabularInline):
-    model = SponsorSlot
-    extra = 0
-    fields = ["placement", "headline", "cta_label", "starts_at", "ends_at", "weight", "is_active"]
-    show_change_link = True
-
-
-@admin.register(Advertiser)
-class AdvertiserAdmin(admin.ModelAdmin):
-    list_display = ["name", "website", "live_slots", "total_clicks", "is_active"]
-    list_filter = ["is_active"]
-    search_fields = ["name", "tagline", "website"]
-    prepopulated_fields = {"slug": ("name",)}
-    inlines = [SponsorSlotInline]
-
-    @admin.display(description="Campañas en línea")
-    def live_slots(self, obj):
-        return obj.slots.live().count()
-
-    @admin.display(description="Clics (sin bots)")
-    def total_clicks(self, obj):
-        return sum(obj.slots.values_list("click_count", flat=True))
-
-
-@admin.register(SponsorSlot)
-class SponsorSlotAdmin(admin.ModelAdmin):
-    list_display = ["advertiser", "placement", "headline", "state_badge", "weight", "click_count"]
-    list_filter = ["placement", "is_active", "advertiser"]
-    search_fields = ["headline", "body", "advertiser__name"]
-    autocomplete_fields = ["advertiser"]
-    readonly_fields = ["click_count", "created_at", "updated_at"]
-    actions = ["activate", "deactivate"]
-
-    fieldsets = (
-        (None, {"fields": ("advertiser", "placement", "is_active", "weight")}),
-        ("Creatividad", {"fields": ("headline", "body", "cta_label", "target_url", "image", "image_alt")}),
-        ("Campaña", {"fields": ("starts_at", "ends_at")}),
-        (
-            "Rendimiento",
-            {
-                "fields": ("click_count", "created_at", "updated_at"),
-                "description": (
-                    "Los clics excluyen bots: se cuentan en el redirect "
-                    "/api/blog/sponsors/&lt;id&gt;/go/ y nunca se muestran en público."
-                ),
-            },
-        ),
-    )
-
-    @admin.display(description="Estado")
-    def state_badge(self, obj):
-        if obj.is_live:
-            return format_html('<span style="color:#15803d;font-weight:600">● En línea</span>')
-        if not obj.is_active or not obj.advertiser.is_active:
-            return format_html('<span style="color:#6b7280">Desactivada</span>')
-        now = timezone.now()
-        if obj.starts_at and obj.starts_at > now:
-            return format_html(
-                '<span style="color:#b45309;font-weight:600">◷ Empieza</span> {}',
-                obj.starts_at.strftime("%d/%m %H:%M"),
-            )
-        return format_html('<span style="color:#b91c1c">Terminada</span>')
-
-    # A bulk `update()` skips post_save, so these bump the cache by hand — the
-    # slot payloads would otherwise keep serving a campaign that was just
-    # switched off, for up to half an hour.
-    @admin.action(description="Activar")
-    def activate(self, request, queryset):
-        updated = queryset.update(is_active=True)
-        bump_props_version("blog")
-        self.message_user(request, f"{updated} campañas activadas.", messages.SUCCESS)
-
-    @admin.action(description="Desactivar")
-    def deactivate(self, request, queryset):
-        updated = queryset.update(is_active=False)
-        bump_props_version("blog")
-        self.message_user(request, f"{updated} campañas desactivadas.", messages.WARNING)
+# Advertisers and campaigns moved to `advertising/`, and so did their admin.
+# Registering them here too would raise AlreadyRegistered: `blog.ads` now
+# re-exports the very same model classes.

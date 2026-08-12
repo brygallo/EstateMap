@@ -8,6 +8,7 @@ import { jsonLd, SITE_URL } from '@/lib/properties';
 import { generatePageMetadata } from '@/lib/metadata';
 import { PostCard } from '@/components/blog/PostCard';
 import SponsorSlotBlock from '@/components/blog/SponsorSlot';
+import { CategoryNav } from '@/components/blog/CategoryNav';
 
 export const revalidate = 3600;
 
@@ -118,22 +119,7 @@ export default async function BlogCategoryPage({ params }: CategoryPageProps) {
         )}
       </header>
 
-      <nav aria-label="Otras categorías" className="mt-8 flex flex-wrap gap-2">
-        {categories.map((item) => (
-          <Link
-            key={item.slug}
-            href={`/blog/categoria/${item.slug}`}
-            aria-current={item.slug === category.slug ? 'page' : undefined}
-            className={
-              item.slug === category.slug
-                ? 'rounded-full border border-primary bg-primary/10 px-4 py-2 text-sm font-semibold text-primary'
-                : 'rounded-full border border-line px-4 py-2 text-sm font-medium text-textPrimary transition-colors hover:border-primary hover:text-primary'
-            }
-          >
-            {item.name}
-          </Link>
-        ))}
-      </nav>
+      <CategoryNav categories={categories} activeSlug={category.slug} label="Otras categorías" />
 
       <SponsorSlotBlock placement="category_top" seed={`categoria-${category.slug}`} />
 

@@ -469,7 +469,7 @@ rules:
         symbol: geojson_coords
         note: Cierra el anillo y voltea cada par a [lng, lat].
       - file: backend/real_estate/serializers.py
-        lines: "312-333"
+        lines: "336-356"
         symbol: validate_polygon
         note: Acepta objeto GeoJSON, anillo simple o cualquiera de los dos codificado como texto JSON.
       - file: backend/real_estate/serializers.py
@@ -514,7 +514,7 @@ rules:
         symbol: ensure_polygon_center
         note: Solo rellena los huecos, nunca pisa unas coordenadas enviadas explícitamente.
       - file: backend/real_estate/serializers.py
-        lines: "345-347"
+        lines: "364-366"
         symbol: ensure_polygon_center
         note: En update, un polígono nuevo sin coordenadas nuevas anula las anteriores y las recalcula.
     cases:
@@ -1020,11 +1020,11 @@ rules:
       imposible.
     evidence:
       - file: backend/estate_map/settings.py
-        lines: "386-388"
+        lines: "391-393"
         symbol: MAX_PROPERTY_UPLOAD_MB
         note: MAX_IMAGES_PER_PROPERTY = 10, MAX_IMAGE_SIZE_MB = 10, MAX_PROPERTY_UPLOAD_MB = 50.
       - file: backend/estate_map/settings.py
-        lines: "369-371"
+        lines: "374-376"
         symbol: ALLOWED_IMAGE_TYPES
         note: image/jpeg, image/jpg, image/png y image/webp.
       - file: backend/real_estate/serializers.py
@@ -1035,6 +1035,16 @@ rules:
         lines: "8-44"
         symbol: validate_image_dimensions
         note: Tamaño máximo, dimensiones mínimas y máximas, y extensión permitida.
+      - file: backend/real_estate/exception_handlers.py
+        lines: "59-64"
+        symbol: def api_exception_handler
+        note: >-
+          Cuando el cuerpo supera los topes del parser de Django, el rechazo
+          ocurre antes del serializador y Django respondería con una página
+          HTML. Este manejador lo devuelve como error de campo sobre
+          `uploaded_images`, que es lo que el formulario necesita para abrir el
+          paso de fotos y lo que deja rastro del campo en el registro de
+          actividad.
     cases:
       - name: Propiedad que ya tiene diez fotos
         given:
@@ -1535,3 +1545,58 @@ rules:
       - name: Un anuncio importado ya guardado fuera de rango
         given: {origen: ingesta}
         expected: "se conserva: los validadores solo corren en la siguiente escritura validada"
+
+  - id: PROP-037
+    name: La descripción tiene un tope de caracteres
+    status: implemented
+    summary: >-
+      La descripción de un anuncio no puede pasar de MAX_DESCRIPTION_LENGTH
+      (8.000 caracteres). El formulario lo impide al escribir y el serializador
+      lo rechaza con un 400 que dice cuántos caracteres tiene.
+    rationale: >-
+      La columna es un TextField y nada por encima ponía techo, así que el único
+      límite era el guardia de cuerpo de Django: 60 MB de datos que se rechazan
+      mientras se parsea la petición, es decir mucho después de que la persona
+      terminara de escribir y sin poder señalar el campo.
+
+      El número sale de los datos, no de una intuición: la descripción más larga
+      del catálogo tiene unos 6.400 caracteres y es de un anuncio importado, y
+      la más larga escrita por una persona no llega a 900. Un tope por debajo de
+      lo que ya existe convertiría un guardia contra el abuso en una trampa,
+      porque haría ineditables los anuncios largos que ya están publicados.
+
+      La ingesta escribe con `Property.objects.create` y no pasa por el
+      serializador, así que importar un anuncio largo sigue siendo posible.
+    evidence:
+      - file: backend/estate_map/settings.py
+        symbol: MAX_DESCRIPTION_LENGTH
+        note: 8000 caracteres, por encima de la descripción más larga que existe.
+      - file: backend/real_estate/serializers.py
+        symbol: def validate_description
+        note: Rechaza con 400 e incluye la longitud real en el mensaje.
+      - file: frontend/app/add-property/page.tsx
+        symbol: MAX_DESCRIPTION_LENGTH
+        note: >-
+          El mismo número en el esquema de validación y como `maxLength` del
+          textarea, más un contador que aparece al acercarse al tope para que
+          dejar de poder escribir no se lea como un campo roto.
+    backend:
+      endpoint: POST /api/properties/
+      denied_http_status: 400
+    tests:
+      api: true
+    cases:
+      - name: Publicar con una descripción dentro del tope
+        given: {caracteres: 900}
+        expected: "permitido"
+      - name: Publicar con una descripción por encima del tope
+        role: authenticated
+        body:
+          title: Descripción interminable
+          price: "1000"
+          description: "{description_over_limit}"
+        expected: denied
+        http_status: 400
+      - name: Editar un anuncio importado con descripción larga ya guardada
+        given: {caracteres: 6401}
+        expected: "permitido: el tope se eligió por encima de lo que ya existe"

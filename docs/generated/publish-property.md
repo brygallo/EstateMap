@@ -52,7 +52,7 @@ El formulario intercepta el submit antes de llamar a `POST /api/properties/`: si
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `frontend/app/add-property/page.tsx:1080-1089` (`if (!token && !isEditMode && !resumeToken) {`) — Guarda el borrador, envía la solicitud pendiente y abre el modal, sin llamar a /properties/.
+- `frontend/app/add-property/page.tsx:1092-1100` (`if (!token && !isEditMode && !resumeToken) {`) — Guarda el borrador, envía la solicitud pendiente y abre el modal, sin llamar a /properties/.
 - `backend/real_estate/models.py:560-562` (`class PendingPublication(models.Model)`) — Docstring: no se muestra en el mapa; sirve para seguimiento comercial.
 - `backend/real_estate/views.py:311-313` (`permission_classes = [IsAuthenticatedOrReadOnly, IsOwnerOrReadOnly]`) — Respaldo del servidor si la petición llega sin pasar por el frontend.
 
@@ -77,8 +77,8 @@ Si el usuario inicia sesión desde el modal de cuenta, el formulario marca `pend
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `frontend/app/add-property/page.tsx:953-955` (`setPendingPublish(true)`) — Se marca tras un login exitoso desde el modal.
-- `frontend/app/add-property/page.tsx:965-967` (`if (!pendingPublish || !token) return;`) — Efecto que dispara form.handleSubmit(onSubmit) en cuanto ambos están listos.
+- `frontend/app/add-property/page.tsx:965-967` (`setPendingPublish(true)`) — Se marca tras un login exitoso desde el modal.
+- `frontend/app/add-property/page.tsx:977-979` (`if (!pendingPublish || !token) return;`) — Efecto que dispara form.handleSubmit(onSubmit) en cuanto ambos están listos.
 
 **Casos**
 
@@ -97,7 +97,7 @@ Crear una propiedad sigue siempre el mismo orden: validar el payload, crear la f
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/real_estate/serializers.py:338-344` (`def create(self, validated_data):`) — Crea Property y luego llama a stage_property_image por cada archivo.
+- `backend/real_estate/serializers.py:362-367` (`def create(self, validated_data):`) — Crea Property y luego llama a stage_property_image por cada archivo.
 - `backend/real_estate/serializers.py:61-95` (`def stage_property_image`) — Escribe el original en disco (stash_upload), crea la fila PENDING y llama a enqueue_optimization.
 - `backend/real_estate/tasks.py:44-109` (`def optimize_property_image`) — Único punto que sube imagen y miniatura a MinIO y marca READY.
 
@@ -121,7 +121,7 @@ La fase de validación exige al menos 3 vértices realmente distintos, todas las
 - `backend/real_estate/geo.py:15-18` (`ECUADOR_MAINLAND_LAT_MIN`) — Límites exactos del bounding box continental.
 - `backend/real_estate/geo.py:28-29` (`MIN_POLYGON_AREA_M2`) — 10.0 y 5_000_000.0 metros cuadrados.
 - `backend/real_estate/geo.py:176-222` (`def validate_and_normalize_polygon`) — Orden interno -- vértices distintos, límites geográficos, autointersección, área.
-- `backend/real_estate/serializers.py:312-328` (`def validate_polygon`) — Punto de entrada desde el serializer, antes de que create() se ejecute.
+- `backend/real_estate/serializers.py:336-351` (`def validate_polygon`) — Punto de entrada desde el serializer, antes de que create() se ejecute.
 
 **Casos**
 
@@ -142,8 +142,8 @@ Antes de crear la propiedad, cada lote de imágenes se valida completo: máximo 
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/estate_map/settings.py:386-388` (`MAX_PROPERTY_UPLOAD_MB`) — MAX_IMAGES_PER_PROPERTY=10, MAX_IMAGE_SIZE_MB=10, MAX_PROPERTY_UPLOAD_MB=50.
-- `backend/estate_map/settings.py:369-371` (`ALLOWED_IMAGE_TYPES`)
+- `backend/estate_map/settings.py:391-393` (`MAX_PROPERTY_UPLOAD_MB`) — MAX_IMAGES_PER_PROPERTY=10, MAX_IMAGE_SIZE_MB=10, MAX_PROPERTY_UPLOAD_MB=50.
+- `backend/estate_map/settings.py:374-376` (`ALLOWED_IMAGE_TYPES`)
 - `backend/real_estate/serializers.py:253-308` (`def validate_uploaded_images`) — Cuenta existentes menos images_to_delete, valida suma del lote y cada imagen, antes de llegar a create/update.
 
 **Casos**
@@ -168,7 +168,7 @@ Si `POST /api/properties/` llega con cabecera `Idempotency-Key` y ya existe un r
 - `backend/real_estate/views.py:558-563` (`idempotency_key = (request.headers.get('Idempotency-Key')`) — Sin cabecera, se comporta como un create normal.
 - `backend/real_estate/views.py:577-579` (`response['X-Idempotent-Replay'] = 'true'`)
 - `backend/real_estate/views.py:589-591` (`cache.set(result_key, response.data['id'], 60 * 60 * 24)`)
-- `frontend/app/add-property/page.tsx:1158-1160` (`Idempotency-Key`) — No se manda en la edición (PUT), solo en la creación.
+- `frontend/app/add-property/page.tsx:1170-1172` (`Idempotency-Key`) — No se manda en la edición (PUT), solo en la creación.
 
 **Casos**
 
@@ -207,7 +207,7 @@ Antes de procesar, `create` toma un candado en caché de 60 s por el mismo diges
 
 - `backend/real_estate/views.py:349-362` (`self.throttle_scope = 'property_write'`) — ScopedRateThrottle, no AntiScraperScopedThrottle, para create/update/partial_update.
 - `backend/real_estate/throttling.py:42-51` (`class AntiScraperScopedThrottle(ScopedRateThrottle)`) — Exime staff e IPs internas; solo se usa en map_points y list.
-- `backend/estate_map/settings.py:198-200` (`'property_write': '30/hour'`)
+- `backend/estate_map/settings.py:203-205` (`'property_write': '30/hour'`)
 
 **Casos**
 
@@ -344,8 +344,8 @@ Cuando el formulario no puede publicar por un dato inválido, muestra en el toas
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `frontend/app/add-property/page.tsx:1281-1285` (`handleInvalidSubmit`) — Abre el paso del primer error de validación y muestra su mensaje.
-- `frontend/app/add-property/page.tsx:1247-1250` (`publicationApiErrorStep`) — Usa el cuerpo de error de la API para abrir el paso correspondiente.
+- `frontend/app/add-property/page.tsx:1293-1296` (`handleInvalidSubmit`) — Abre el paso del primer error de validación y muestra su mensaje.
+- `frontend/app/add-property/page.tsx:1259-1261` (`publicationApiErrorStep`) — Usa el cuerpo de error de la API para abrir el paso correspondiente.
 - `frontend/lib/publication-form-errors.ts:1-67` (`FIELD_STEPS`) — Relaciona los nombres de campos del formulario y de la API con los cinco pasos.
 
 **Casos**
@@ -394,9 +394,9 @@ Cuando una publicación no sale adelante se guarda un ActivityEvent que lleva el
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
 - `frontend/lib/publication-form-errors.ts:92-125` (`publicationErrorReport`) — Aplana el cuerpo de error de la API en escalares que el payload puede llevar, truncados.
-- `frontend/app/add-property/page.tsx:1035-1046` (`blockPublication`) — Las comprobaciones previas al envío emiten publication_blocked con su reason.
-- `frontend/app/add-property/page.tsx:1259-1266` (`publicationErrorReport(errorBody, message)`) — El fallo de la API viaja con mensaje, campos, detalle y código.
-- `frontend/app/add-property/page.tsx:1284-1291` (`publication_validation_failed`) — La validación del cliente también deja rastro con sus campos.
+- `frontend/app/add-property/page.tsx:1047-1057` (`blockPublication`) — Las comprobaciones previas al envío emiten publication_blocked con su reason.
+- `frontend/app/add-property/page.tsx:1271-1277` (`publicationErrorReport(errorBody, message)`) — El fallo de la API viaja con mensaje, campos, detalle y código.
+- `frontend/app/add-property/page.tsx:1296-1302` (`publication_validation_failed`) — La validación del cliente también deja rastro con sus campos.
 
 **Casos**
 

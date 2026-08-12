@@ -48,6 +48,21 @@ coverage/
 htmlcov/
 detail_state.png
 
+# Video factory: keep plans, scripts, reviews, catalogs and result data in Git;
+# exclude generated or supplied binary media from each local production.
+marketing/videos/library/**/*.mp4
+marketing/videos/library/**/*.mov
+marketing/videos/library/**/*.m4v
+marketing/videos/library/**/*.webm
+marketing/videos/library/**/*.mp3
+marketing/videos/library/**/*.wav
+marketing/videos/library/**/*.aiff
+marketing/videos/library/**/*.m4a
+marketing/videos/library/**/*.png
+marketing/videos/library/**/*.jpg
+marketing/videos/library/**/*.jpeg
+marketing/videos/library/**/*.webp
+
 # Local property/media samples
 backend/properties/
 # Runtime staging for pending uploads; these files belong to the local service,

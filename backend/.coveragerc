@@ -1,0 +1,12 @@
+[run]
+branch = True
+source = real_estate,ingesta,blog
+
+[report]
+fail_under = 45
+show_missing = True
+skip_covered = True
+omit =
+    */migrations/*
+    */tests/*
+    manage.py

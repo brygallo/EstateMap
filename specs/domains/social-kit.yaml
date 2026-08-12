@@ -489,7 +489,7 @@ rules:
           Frontera de verdad, en el servidor. A diferencia de las láminas
           (SOC-009), este dato es del dueño.
       - file: backend/real_estate/serializers.py
-        lines: "634-646"
+        lines: "664-675"
         symbol: PROPERTY_PATH_RE
         note: >-
           La visita a una ficha se atribuye a su anuncio leyendo el id de la
@@ -794,7 +794,7 @@ rules:
       test_id: promote-property-action
     evidence:
       - file: frontend/app/add-property/page.tsx
-        lines: "1232-1234"
+        lines: "1244-1246"
         symbol: promocionar
         note: Solo al crear, y solo con id; en cualquier otro caso, /mis-propiedades.
     tests: {}

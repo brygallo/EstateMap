@@ -122,6 +122,12 @@ const createPublicationRequestId = () => {
 // discovered only after pressing Publish, five steps away from the field.
 const MAX_TITLE_LENGTH = 150;
 
+// Mirrors MAX_DESCRIPTION_LENGTH in the backend (PROP-037). Without a ceiling
+// here the only limit was Django's request-body guard, which rejects while
+// parsing — so the person learned their description was too long after
+// pressing Publish, and the error never pointed at the field.
+const MAX_DESCRIPTION_LENGTH = 8000;
+
 /** Mirrors MAX_LISTING_AREA_M2 in the model: 10 000 ha. */
 const MAX_AREA_M2 = 100_000_000;
 
@@ -149,7 +155,13 @@ const propertySchema = z.object({
     .trim()
     .min(1, 'El título es obligatorio')
     .max(MAX_TITLE_LENGTH, `El título no puede pasar de ${MAX_TITLE_LENGTH} caracteres`),
-  description: z.string().optional(),
+  description: z
+    .string()
+    .max(
+      MAX_DESCRIPTION_LENGTH,
+      `La descripción no puede pasar de ${MAX_DESCRIPTION_LENGTH} caracteres`
+    )
+    .optional(),
   propertyType: z.enum(['land', 'house', 'apartment', 'commercial', 'other']),
   // Mirrors Property.STATUS_CHOICES. Migration 0005 narrowed the model to these
   // three; offering more here only produced a 400 from the serializer.
@@ -1997,11 +2009,20 @@ const AddPropertyPage = () => {
                         <FormControl>
                           <Textarea
                             rows={3}
+                            maxLength={MAX_DESCRIPTION_LENGTH}
                             placeholder="Describe las características principales de la propiedad..."
                             className="resize-none rounded-input"
                             {...field}
                           />
                         </FormControl>
+                        {/* The counter appears only near the ceiling: typing
+                            simply stops there, and a silent wall reads as a
+                            broken field. */}
+                        {(field.value?.length ?? 0) > MAX_DESCRIPTION_LENGTH * 0.9 && (
+                          <p className="text-right text-xs text-textSecondary">
+                            {field.value?.length ?? 0} de {MAX_DESCRIPTION_LENGTH} caracteres
+                          </p>
+                        )}
                         <FormMessage />
                       </FormItem>
                     )}

@@ -110,7 +110,7 @@ rules:
         symbol: "response[\"X-Request-ID\"] = request_id"
         note: Generación o propagación del identificador y escritura de las tres cabeceras.
       - file: backend/estate_map/settings.py
-        lines: "245-247"
+        lines: "250-252"
         symbol: CORS_EXPOSE_HEADERS
         note: >
           Sin exponerlas por CORS el navegador no puede leerlas, así que la
@@ -200,36 +200,68 @@ rules:
     tests: {}
 
   - id: ERR-005
-    name: Las subidas demasiado grandes responden 413 en JSON
-    status: partial
+    name: Las subidas que rompen los topes del parser responden JSON
+    status: implemented
     summary: >
-      Un middleware propio traduce las excepciones de subida de Django a
-      respuestas JSON, con 413 para cuerpo excesivo y 400 para exceso de ficheros
-      o petición sospechosa.
+      Un cuerpo con más ficheros de los permitidos responde 400 con el error
+      sobre el campo `uploaded_images`, y un cuerpo de texto por encima del tope
+      responde 413 con `detail`. Ambas respuestas son JSON.
     rationale: >
-      Se marca partial porque no está demostrado que el middleware llegue a
-      ejecutarse: Django envuelve cada capa con convert_exception_to_response, que
-      puede haber convertido ya la excepción en un 400 HTML antes de que suba
-      hasta aquí. No hay ningún test que lo cubra. Hasta comprobarlo con una
-      petición real, el contrato JSON no puede darse por firme.
+      La duda que mantenía esta regla en partial está resuelta, y la respuesta
+      era la mala: el middleware NO llega a ejecutarse. Django envuelve cada capa
+      con convert_exception_to_response, así que una SuspiciousOperation lanzada
+      dentro de la vista —que es donde ocurre, porque el cuerpo se parsea cuando
+      DRF toca request.data— ya viene convertida en un 400 HTML antes de subir
+      hasta el middleware. Comprobado con una petición real de 11 ficheros: la
+      respuesta era una página HTML de Django.
+
+      Eso no era un detalle cosmético. El formulario de publicación lee el
+      cuerpo del error para decidir a qué paso volver; con HTML, `res.json()`
+      falla, se queda sin campo y sin paso, y enseña un mensaje genérico. La
+      persona no tiene nada que corregir y reintenta lo mismo. El fallo llegaba
+      además a ActivityEvent con solo un código de estado, indistinguible de un
+      precio rechazado o una sesión caducada.
+
+      El contrato lo sostiene ahora un EXCEPTION_HANDLER de DRF, que sí corre
+      dentro de la vista. El exceso de ficheros se nombra como error del campo
+      de las fotos, que es lo que permite al formulario abrir el paso correcto;
+      el exceso de texto conserva el 413 que ya documentaba el catálogo, porque
+      no habla de las fotos y porque es el mismo estado con el que nginx
+      responde a esa clase de fallo.
+
+      El middleware sigue en su sitio como red para las capas que se parsean
+      fuera de la vista, pero ya no es quien firma este contrato.
     evidence:
+      - file: backend/real_estate/exception_handlers.py
+        symbol: def api_exception_handler
+        note: Traduce TooManyFilesSent y RequestDataTooBig antes de delegar en DRF.
+      - file: backend/estate_map/settings.py
+        symbol: "'EXCEPTION_HANDLER'"
+        note: Registro del manejador; sin él DRF usa el suyo y vuelve el HTML.
       - file: backend/estate_map/upload_errors.py
-        lines: "5-27"
         symbol: "class UploadErrorMiddleware"
-        note: Traducción de RequestDataTooBig, TooManyFilesSent y SuspiciousOperation.
+        note: >-
+          Red para excepciones lanzadas fuera de la vista. No cubre la ruta de la
+          API, que es la que importa aquí.
+    tests: {api: true}
     cases:
-      - name: Cuerpo por encima del máximo
-        given: {tamaño: "60 MB + 1"}
-        expected: 413
-        error_code: REQUEST_DATA_TOO_BIG
-        note: >
-          El umbral real es DATA_UPLOAD_MAX_MEMORY_SIZE (60 MB), pero el mensaje
-          devuelto dice 50MB, que está escrito a mano en el middleware. Ver ERR-009.
       - name: Más ficheros de los permitidos
         given: {ficheros: 11}
         expected: 400
-        error_code: TOO_MANY_FILES
-    tests: {}
+        error_code: VALIDATION_ERROR
+        note: >-
+          El cuerpo lleva el mensaje bajo la clave `uploaded_images`, que es el
+          nombre de campo con el que el formulario abre el paso de las fotos.
+      - name: Cuerpo de texto por encima del máximo
+        given: {tamaño: "DATA_UPLOAD_MAX_MEMORY_SIZE + 1"}
+        expected: 413
+        error_code: REQUEST_DATA_TOO_BIG
+        note: >
+          El mensaje calcula los MB desde DATA_UPLOAD_MAX_MEMORY_SIZE en vez de
+          llevar la cifra escrita a mano, que es lo que señalaba ERR-009.
+      - name: Ninguna de las dos culpa a las fotos de un texto largo
+        given: {tamaño: "cuerpo de texto excesivo, sin ficheros"}
+        expected: "413 con detail, nunca un error sobre uploaded_images"
 
   - id: ERR-006
     name: El contrato JSON para errores de nginx está versionado pero requiere despliegue
@@ -270,7 +302,7 @@ rules:
       exención menos visible de las tres y la de mayor alcance.
     evidence:
       - file: backend/estate_map/settings.py
-        lines: "172-182"
+        lines: "187-196"
         symbol: DEFAULT_THROTTLE_RATES
         note: Los cinco scopes con sus tasas.
       - file: backend/real_estate/throttling.py
@@ -284,7 +316,7 @@ rules:
         symbol: 'getattr(user, "is_staff", False)'
         note: La exención de staff, sin tope y evaluada antes que la IP.
       - file: backend/estate_map/settings.py
-        lines: "204-206"
+        lines: "209-211"
         symbol: THROTTLE_EXEMPT_IPS
         note: Lista adicional de direcciones nunca limitadas.
     cases:
@@ -312,11 +344,11 @@ rules:
       throttling de DRF deja de ser compartido entre procesos.
     evidence:
       - file: backend/estate_map/settings.py
-        lines: "474-476"
+        lines: "485-487"
         symbol: IGNORE_EXCEPTIONS
         note: Los errores del cliente de caché no se propagan.
       - file: backend/estate_map/settings.py
-        lines: "495-497"
+        lines: "506-508"
         symbol: DJANGO_REDIS_LOG_IGNORED_EXCEPTIONS
         note: Pero sí se registran, para que la caída no pase inadvertida.
     cases:

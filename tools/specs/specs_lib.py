@@ -54,6 +54,7 @@ TEST_SEARCH_DIRS = (
     REPO_ROOT / "backend" / "real_estate" / "tests",
     REPO_ROOT / "backend" / "ingesta" / "tests",
     REPO_ROOT / "backend" / "blog" / "tests",
+    REPO_ROOT / "backend" / "advertising" / "tests",
     REPO_ROOT / "tests",
     REPO_ROOT / "frontend" / "components",
     REPO_ROOT / "frontend" / "lib",

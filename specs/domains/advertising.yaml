@@ -1,0 +1,746 @@
+version: 1
+domain: advertising
+title: Publicidad
+status: implemented
+summary: >-
+  El portal vende espacios en sus propias páginas y los sirve él mismo: nada de
+  redes de terceros, nada de scripts ajenos. Una campaña lleva el creativo, la
+  ubicación, la ventana de fechas y el importe que se cobró. Eso es todo lo
+  comercial que hay en la base de datos.
+
+  La venta ocurre entera en WhatsApp —allí se acuerda el espacio, el tiempo y el
+  precio— y el sistema se queda con la parte que una conversación hace mal:
+  apagar la campaña el día que toca, repartir las impresiones entre varios
+  anunciantes y no dejar nunca un hueco vacío.
+
+  Lo que el módulo deliberadamente no hace está escrito con el mismo detalle en
+  ADS-040 y siguientes: no hay tarifario, ni pedido, ni control de aforo, ni
+  pasarela, ni conteo de impresiones. No son huecos, son decisiones.
+see_also:
+  - docs/decisions/0004-publicidad-propia-vendida-desde-el-panel.md
+  - docs/technical/advertising.md
+  - specs/domains/blog.yaml
+  - specs/domains/subscriptions.yaml
+  - specs/permissions/matrix.yaml
+
+rules:
+  # ─────────────────────────────────────────────────────────────────────
+  # El principio
+  # ─────────────────────────────────────────────────────────────────────
+  - id: ADS-001
+    name: Del negocio, el sistema guarda qué, hasta cuándo y cuánto
+    status: implemented
+    summary: >-
+      Una campaña lleva el creativo, la ubicación, la ventana de fechas y el
+      importe cobrado. No hay tarifa, ni pedido, ni cotización, ni estado de
+      pago, ni factura. Si la campaña es pagada, el importe es obligatorio; si
+      no lo es, tenerlo está prohibido.
+    rationale: >-
+      El sistema se lleva la parte que una conversación hace mal. Todo lo demás
+      —convencer, negociar, poner precio, cobrar— lo hace mejor una persona por
+      chat, que es como se vende ya todo lo que se vende en este portal.
+
+      Y hay un motivo más duro: cada campo comercial de más es un campo que
+      alguien tiene que rellenar bien cada vez, y que miente el día que no lo
+      rellena. Un importe que alguien anota siempre vale más que un sistema de
+      pedidos con cinco estados que se abandona a la tercera venta.
+    evidence:
+      - file: backend/advertising/models.py
+        lines: "250-276"
+        symbol: def clean
+        note: >-
+          Pagada sin importe y gratuita con importe fallan las dos. Lo comprueba
+          también el serializer, así que la API no puede escribir una fila que
+          el admin rechazaría.
+      - file: backend/advertising/serializers.py
+        lines: "144-149"
+        symbol: instance.full_clean
+    tests: {unit: true, api: true}
+    cases:
+      - name: Campaña pagada sin importe
+        expected: denied
+        expected_http_status: 400
+      - name: Campaña del grupo con importe
+        expected: denied
+      - name: Campaña pagada con creativo, fechas e importe
+        expected: allowed
+        expected_http_status: 201
+
+  # ─────────────────────────────────────────────────────────────────────
+  # Inventario
+  # ─────────────────────────────────────────────────────────────────────
+  - id: ADS-002
+    name: Las ubicaciones son un valor cerrado en el código
+    status: implemented
+    summary: >-
+      `Placement` es un `TextChoices` con doce espacios: los cinco del blog más
+      inicio, cabecera de ciudad, rejilla de listados, dos en la ficha,
+      estadísticas y pie. Una campaña puede además limitarse a ciudades
+      o provincias concretas; ambas listas vacías significan todo el país.
+    rationale: >-
+      Una ubicación existe si alguien escribió el componente que la pinta, así
+      que su lista vive donde vive ese componente. Convertirla en tabla solo
+      tendría sentido para colgarle un precio, y el precio no está en el sistema
+      (ADS-040).
+
+      La segmentación por ciudad es lo único que este portal puede vender de
+      verdad: quien mira casas en Macas es exactamente el público de una
+      ferretería, una notaría o un banco de Macas.
+    evidence:
+      - file: backend/advertising/placements.py
+        lines: "20-42"
+        symbol: class Placement(models.TextChoices)
+      - file: backend/advertising/models.py
+        lines: "93-135"
+        symbol: def live
+        note: >-
+          El filtro de ciudad acepta la lista vacía como «en todas partes», y
+          normaliza acentos y mayúsculas antes de comparar.
+    tests: {unit: true, api: true}
+    cases:
+      - name: Campaña de Macas servida en Macas
+        expected: allowed
+      - name: Campaña de Macas servida en Quito
+        expected: denied
+      - name: Campaña sin ciudades, servida en cualquier sitio
+        expected: allowed
+      - name: Ubicación que no existe en el enum
+        expected: denied
+
+  - id: ADS-020
+    name: La audiencia geográfica tiene tres niveles y gana la más cercana
+    status: implemented
+    summary: >-
+      Cada campaña cubre todo Ecuador, una o más provincias o una o más
+      ciudades. Dentro de la misma clase comercial, una campaña de ciudad gana
+      a una provincial y esta gana a la nacional. Provincias y ciudades no se
+      mezclan en una misma campaña.
+    rationale: >-
+      El producto tiene páginas nacionales, provinciales y cantonales. Ese es
+      también el inventario que se puede vender: una marca nacional compra
+      cobertura general, una constructora puede comprar una provincia y un
+      negocio local puede quedarse con su ciudad sin competir con mensajes de
+      menor relevancia geográfica.
+    evidence:
+      - file: backend/advertising/models.py
+        lines: "93-135"
+        symbol: def live
+      - file: backend/advertising/selection.py
+        lines: "23-49"
+        symbol: def campaigns_for
+      - file: frontend/app/admin/publicidad/page.tsx
+        lines: "762-821"
+        symbol: Alcance geográfico
+    tests: {unit: true, api: true}
+    cases:
+      - name: Campaña de ciudad frente a una nacional
+        expected: allowed
+        note: En esa ciudad gana la local.
+      - name: Campaña provincial sin campaña de ciudad
+        expected: allowed
+        note: En una ciudad de esa provincia gana la provincial.
+      - name: Página sin coincidencia local
+        expected: allowed
+        note: Usa la campaña nacional como respaldo.
+      - name: Una campaña mezcla provincias y ciudades
+        expected: denied
+
+  - id: ADS-003
+    name: Ninguna publicidad sobre el lienzo del mapa
+    status: implemented
+    summary: >-
+      No existe ninguna ubicación sobre el mapa. La de la pantalla de inicio
+      vive en la lista de resultados que lo acompaña.
+    rationale: >-
+      El mapa es el producto. Un anuncio sobre él tapa exactamente lo que la
+      persona vino a mirar, y en móvil compite con los propios marcadores por un
+      espacio que ya va justo. Un marcador patrocinado además falsearía el mapa,
+      que es la única cosa que aquí no se falsea.
+    evidence:
+      - file: backend/advertising/placements.py
+        lines: "20-42"
+        symbol: class Placement(models.TextChoices)
+        note: No hay código de ubicación para el lienzo. La regla se aplica por ausencia.
+      - file: frontend/app/page.tsx
+        lines: "379-383"
+        symbol: placement="home_feed"
+        note: Dentro de la rejilla de destacadas, después de `MapPageClient`.
+    tests: {playwright: true}
+    cases:
+      - name: Anuncio superpuesto al mapa
+        expected: denied
+      - name: Anuncio en la lista de resultados
+        expected: allowed
+
+  - id: ADS-004
+    name: El bloque de contacto de una propiedad no se vende
+    status: implemented
+    summary: >-
+      En la ficha, `property_sidebar` se renderiza fuera de la tarjeta de
+      contacto, por debajo. Nada se coloca entre el precio y el botón de
+      WhatsApp.
+    rationale: >-
+      El contacto es lo que el anuncio le debe a quien publicó su propiedad. Un
+      anuncio pagado que intercepte ese clic le está cobrando al anunciante por
+      robarle un lead al dueño, que es la manera más rápida de que los dueños
+      dejen de publicar.
+    evidence:
+      - file: frontend/app/property/[id]/page.tsx
+        lines: "919-929"
+        symbol: placement="property_sidebar"
+        note: Fuera del `div` de la tarjeta de contacto, dentro del `aside`.
+    tests: {playwright: true}
+    cases:
+      - name: Anuncio dentro de la tarjeta de contacto
+        expected: denied
+      - name: Anuncio bajo la tarjeta de contacto
+        expected: allowed
+
+  # ─────────────────────────────────────────────────────────────────────
+  # Entrega
+  # ─────────────────────────────────────────────────────────────────────
+  - id: ADS-010
+    name: Todo enlace pagado sale con rel="sponsored nofollow noopener"
+    status: implemented
+    summary: >-
+      El creativo enlaza siempre al redirector propio, y ese enlace lleva
+      `rel="sponsored nofollow noopener noreferrer"`. No hay forma de
+      configurarlo de otra manera desde el panel.
+    rationale: >-
+      Vender un enlace que transmite autoridad es la vía más corta a una
+      penalización manual, y el portal existe para construir precisamente esa
+      autoridad.
+    evidence:
+      - file: frontend/components/ads/AdSlot.tsx
+        lines: "100-106"
+        symbol: rel="sponsored nofollow noopener noreferrer"
+    tests: {playwright: true}
+    cases:
+      - name: Enlace de campaña sin rel
+        expected: denied
+
+  - id: ADS-011
+    name: La etiqueta «Publicidad» es visible y no se puede desactivar
+    status: implemented
+    summary: >-
+      Cada campaña pagada renderiza la palabra «Publicidad» sobre el creativo.
+      El reclamo de espacio libre lleva en su lugar «Espacio disponible», que es
+      lo que de verdad es.
+    rationale: >-
+      Es una obligación de transparencia, y también lo que mantiene el contenido
+      alrededor legible como editorial. Llamar «Publicidad» a un cartel de «se
+      alquila» sería menos honesto, no más: por eso el reclamo lleva otro
+      distintivo y no el mismo.
+    evidence:
+      - file: frontend/components/ads/AdSlot.tsx
+        lines: "96-99"
+        symbol: Publicidad
+      - file: frontend/components/ads/HouseAd.tsx
+        lines: "64-67"
+        symbol: Espacio disponible
+    tests: {playwright: true}
+    cases:
+      - name: Campaña pagada sin etiqueta
+        expected: denied
+      - name: Reclamo propio con el distintivo de espacio libre
+        expected: allowed
+
+  - id: ADS-012
+    name: Ningún script de terceros
+    status: implemented
+    summary: >-
+      Los creativos son imagen y texto servidos desde este dominio, y el clic
+      pasa por el redirector propio. No se carga AdSense ni ninguna otra red.
+    rationale: >-
+      Una red de terceros mete JavaScript de terceros en las páginas que se
+      quiere posicionar, destroza el LCP y el CLS, y a cambio paga por mil
+      impresiones lo que aquí se cobra por un patrocinio de ciudad al mes.
+      Además obligaría a un banner de consentimiento que hoy no hace falta.
+    evidence:
+      - file: frontend/components/ads/AdSlot.tsx
+        lines: "53-80"
+        symbol: export async function AdSlot
+        note: >-
+          El creativo entero sale del payload propio; no hay etiqueta `script`
+          ni iframe en ninguna rama del componente.
+    tests: {playwright: true}
+    cases:
+      - name: Script de una red publicitaria en la página
+        expected: denied
+
+  - id: ADS-013
+    name: La rotación va por página y por franja de media hora
+    status: implemented
+    summary: >-
+      El servidor elige un creativo con un hash de la identidad de la página más
+      la franja de media hora en curso, ponderado por `weight`. Dos fichas
+      distintas ven anunciantes distintos, y la misma ficha va rotando a lo
+      largo del día sin dejar de ser una página cacheada.
+    rationale: >-
+      Elegir al azar en el servidor haría incacheable cada página. Elegir en el
+      cliente provocaría un parpadeo tras la hidratación. Y elegir solo por
+      página reparte bien entre miles de fichas, pero deja que quien vuelve a la
+      misma propiedad vea siempre al mismo anunciante, que no es lo que se
+      vendió.
+
+      La franja de media hora es el mismo TTL que ya tienen la caché de la API y
+      la revalidación de las páginas, así que avanza justo cuando la página se
+      vuelve a generar: la rotación no cuesta ni una petición de más.
+
+      Lo que no cubre: quien recargue la misma ficha dos veces en la misma media
+      hora ve el mismo anuncio. Es el precio de servir páginas cacheadas.
+    evidence:
+      - file: frontend/lib/ads.ts
+        lines: "121-136"
+        symbol: export function pickAd
+      - file: frontend/lib/ads.ts
+        lines: "112-115"
+        symbol: export function rotationWindow
+      - file: backend/advertising/views.py
+        lines: "30-36"
+        symbol: CACHE_TTL_ADS
+        note: La franja del frontend y este TTL son el mismo número a propósito.
+    tests: {unit: true}
+    cases:
+      - name: La misma página en la misma franja elige lo mismo
+        expected: allowed
+      - name: La misma página en otra franja rota
+        expected: allowed
+      - name: Un peso mayor se lleva más impresiones
+        expected: allowed
+
+  - id: ADS-014
+    name: Los clics excluyen bots y no se muestran en público
+    status: implemented
+    summary: >-
+      El clic se cuenta en el redirector y descarta lo que `is_bot_request`
+      marca. Ni el contador ni el importe salen nunca en el payload público.
+    rationale: >-
+      El 78% de las sesiones que este proyecto contaba antes de filtrar eran
+      rastreadores ejecutando JavaScript. Un anunciante al que se le enseña un
+      número inflado cinco veces no está siendo halagado, está siendo
+      desinformado, y es la clase de error que se paga con el cliente.
+    evidence:
+      - file: backend/advertising/views.py
+        lines: "74-81"
+        symbol: if not is_bot_request(request)
+      - file: backend/advertising/serializers.py
+        lines: "16-34"
+        symbol: fields = [
+        note: >-
+          `target_url`, `click_count` y `amount_charged_usd` están ausentes a
+          propósito del serializer público.
+    tests: {api: true}
+    cases:
+      - name: Clic de un rastreador
+        expected: denied
+        note: Redirige igual; no suma.
+      - name: Clic de una persona
+        expected: allowed
+        expected_http_status: 302
+      - name: Contador en el payload público
+        expected: denied
+
+  - id: ADS-015
+    name: Una campaña vencida deja de servirse pero su enlace sigue vivo
+    status: implemented
+    summary: >-
+      Fuera de la ventana, la ubicación no renderiza ese creativo. El redirector
+      sigue enviando a destino aunque la campaña haya terminado.
+    rationale: >-
+      Que empiece y termine sola es media razón de ser del módulo: una campaña
+      es un rango de fechas, no un interruptor que alguien tiene que acordarse
+      de apagar. Y el enlace puede vivir en una página cacheada por el CDN o en
+      el historial de alguien; un 404 ahí es peor resultado que un clic de más
+      sobre una campaña que acabó.
+    evidence:
+      - file: backend/advertising/models.py
+        lines: "93-120"
+        symbol: def live
+      - file: backend/advertising/views.py
+        lines: "66-73"
+        symbol: def go
+        note: El redirector no filtra por fechas a propósito.
+    tests: {api: true}
+    cases:
+      - name: Ubicación con la campaña vencida
+        expected: denied
+      - name: Redirector de una campaña vencida
+        expected: allowed
+        expected_http_status: 302
+
+  # ─────────────────────────────────────────────────────────────────────
+  # El hueco vacío
+  # ─────────────────────────────────────────────────────────────────────
+  - id: ADS-016
+    name: Un espacio sin campaña se vende a sí mismo
+    status: implemented
+    summary: >-
+      Cuando no hay nada que servir, la ubicación no devuelve `null`: renderiza
+      el reclamo propio —«¿Quieres aparecer en este espacio?»— con el mismo
+      aspecto que tendrá el anuncio del cliente. Funciona incluso con la base de
+      datos vacía, porque el texto por defecto vive en el componente.
+    rationale: >-
+      El inventario vacío es lo normal al principio, y es también el mejor sitio
+      donde anunciar que se vende: quien está mirando propiedades en Macas y ve
+      un hueco ofrecido en la ficha ya está, por definición, en el público que
+      un negocio local quiere alcanzar. Un hueco colapsado no vende nada y
+      además hace que la página salte de altura cuando sí haya campaña.
+
+      Y tiene un segundo efecto: la vista previa del producto es el producto. Al
+      anunciante no hay que explicarle cómo se verá su anuncio, lo está viendo.
+    evidence:
+      - file: frontend/components/ads/AdSlot.tsx
+        lines: "63-75"
+        symbol: if (!slot || slot.kind === 'promo')
+      - file: frontend/components/ads/HouseAd.tsx
+        lines: "43-62"
+        symbol: export function HouseAd
+    tests: {unit: true, playwright: true}
+    cases:
+      - name: Ubicación sin campañas
+        expected: allowed
+        note: Renderiza el reclamo, no un hueco.
+      - name: El reclamo aparece habiendo campaña pagada
+        expected: denied
+
+  - id: ADS-017
+    name: Una campaña es de una de tres clases, y se sirven en ese orden
+    status: implemented
+    summary: >-
+      `kind` distingue `paid` (alguien pagó, con importe anotado), `partner`
+      (marca del propio grupo, gratis) y `promo` (el reclamo). Si hay pagada,
+      gana la pagada; si no, la del grupo; si tampoco, el reclamo. Nunca se
+      mezclan clases en la misma ubicación.
+    rationale: >-
+      Las tres conviven desde el primer día por una razón práctica antes que
+      comercial: es la única forma de saber si el mecanismo funciona. Con Aents
+      publicada gratis se comprueba el recorrido completo —creativo, rotación,
+      redirector, conteo sin bots, invalidación de caché— antes de haberle
+      cobrado un dólar a nadie.
+
+      Y mezclar clases sería decirle a un cliente que su dinero compró medio
+      espacio: si hay pagada, el reclamo no aparece.
+    evidence:
+      - file: backend/advertising/models.py
+        lines: "125-141"
+        symbol: class Kind(models.TextChoices)
+      - file: backend/advertising/selection.py
+        lines: "20-21"
+        symbol: PRIORITY =
+      - file: backend/advertising/selection.py
+        lines: "23-44"
+        symbol: def campaigns_for
+    tests: {unit: true, api: true}
+    cases:
+      - name: Pagada y del grupo compitiendo
+        expected: allowed
+        note: Gana la pagada.
+      - name: Solo del grupo
+        expected: allowed
+      - name: Ninguna de las dos
+        expected: allowed
+        note: Sale el reclamo.
+      - name: Campaña del grupo sumando en el total cobrado
+        expected: denied
+
+  - id: ADS-018
+    name: Todo desemboca en WhatsApp, con el contexto ya escrito
+    status: implemented
+    summary: >-
+      El botón del reclamo abre WhatsApp con el mensaje redactado, nombrando el
+      espacio y la ciudad de la página. El clic se registra con `trackEvent`,
+      la misma tubería que cuenta los contactos de una propiedad.
+    rationale: >-
+      Es por donde entra hoy todo el negocio de este portal, y nadie ha echado
+      de menos un formulario. Lo que hace que funcione es el contexto: un «hola,
+      quiero publicidad» obliga a preguntar tres cosas antes de poder responder;
+      un mensaje que ya trae el espacio y la ciudad se contesta con un precio.
+      Ese dato lo tiene la página en el momento del clic y se pierde para
+      siempre si no se escribe ahí.
+
+      Registrar el clic es lo que convierte el reclamo en información: saber qué
+      ubicaciones despiertan interés y en qué ciudades es exactamente lo que
+      dice qué vale la pena vender, y sale gratis porque la tubería ya existe.
+    evidence:
+      - file: frontend/components/ads/HouseAd.tsx
+        lines: "61-68"
+        symbol: buildWhatsAppUrl(message)
+      - file: frontend/components/ads/HouseAd.tsx
+        lines: "73-76"
+        symbol: trackEvent('ad_slot_inquiry_clicked'
+    tests: {playwright: true}
+    cases:
+      - name: El mensaje nombra el espacio y la ciudad
+        expected: allowed
+      - name: El mensaje llega sin contexto
+        expected: denied
+
+  - id: ADS-019
+    name: Si un espacio tiene más campañas de las que caben, el panel lo dice
+    status: implemented
+    summary: >-
+      La API entrega como mucho cuatro creativos por ubicación, ordenados por
+      peso. Cuando una ubicación tiene más campañas vivas que ese tope, el
+      resumen del panel lo señala con el número real y el que se sirve.
+    rationale: >-
+      Es el fallo más caro que puede tener este módulo, porque es silencioso:
+      vender cinco espacios donde caben cuatro deja al quinto sin aparecer
+      jamás, y nadie se entera hasta que el anunciante pregunta por qué nunca se
+      ha visto.
+
+      Sin control de aforo (ADS-042), este aviso es lo único que separa «vendí
+      de más» de «le cobré a alguien por nada».
+    evidence:
+      - file: backend/advertising/models.py
+        lines: "335-348"
+        symbol: def overbooked_placements
+      - file: backend/advertising/placements.py
+        lines: "63-71"
+        symbol: MAX_PER_PLACEMENT
+    tests: {unit: true, api: true}
+    cases:
+      - name: Ubicación con más campañas que el tope
+        expected: allowed
+        note: Se sirven las de más peso y el panel avisa.
+      - name: Ubicación dentro del aforo
+        expected: allowed
+        note: Sin aviso; una alarma falsa deja de leerse.
+
+  # ─────────────────────────────────────────────────────────────────────
+  # Panel
+  # ─────────────────────────────────────────────────────────────────────
+  - id: ADS-030
+    name: La publicidad se gestiona desde el panel, en una sola pantalla
+    status: implemented
+    summary: >-
+      `/admin/publicidad` es la lista de campañas con su formulario, más el alta
+      de anunciantes. La API detrás exige `is_staff`. El admin de Django sigue
+      existiendo como herramienta de rescate.
+    rationale: >-
+      Es la consecuencia directa de ADS-001: si lo único que el sistema guarda
+      de una venta son tres datos, la interfaz que los captura es un formulario,
+      no un flujo. Y el frontend no es una frontera de seguridad: quien decide
+      es el servidor.
+    evidence:
+      - file: backend/advertising/admin_api.py
+        lines: "27-35"
+        symbol: class AdminCampaignViewSet
+      - file: backend/advertising/admin_api.py
+        lines: "155-162"
+        symbol: class AdminAdvertiserViewSet
+    tests: {api: true}
+    cases:
+      - name: Anónimo entra al panel
+        expected: denied
+        expected_http_status: 403
+      - name: Usuario normal crea una campaña
+        expected: denied
+        expected_http_status: 403
+      - name: Staff crea una campaña
+        expected: allowed
+        expected_http_status: 201
+
+  - id: ADS-031
+    name: El panel avisa de lo que vence antes de que venza
+    status: implemented
+    summary: >-
+      El resumen devuelve las campañas que terminan en los próximos siete días,
+      ordenadas por fecha, y el total cobrado de las que están en línea.
+    rationale: >-
+      Una campaña que vence sin que nadie escriba al anunciante es una
+      renovación perdida, y renovar cuesta mucho menos que vender. Sin pedidos
+      ni recordatorios automáticos, ese aviso es lo único que evita perderla.
+    evidence:
+      - file: backend/advertising/admin_api.py
+        lines: "64-99"
+        symbol: def summary
+    tests: {api: true}
+    cases:
+      - name: Campaña que termina en cinco días
+        expected: allowed
+        note: Aparece en la lista de vencimientos.
+      - name: Campaña que termina en dos meses
+        expected: denied
+        note: No aparece.
+
+  - id: ADS-032
+    name: El panel permite terminar el trabajo sin recurrir al admin de rescate
+    status: implemented
+    summary: >-
+      Desde la pantalla de publicidad se suben creativo y logotipo, se editan
+      anunciantes, se duplican campañas, se filtra el inventario, se confirma
+      una eliminación y se abre una renovación por WhatsApp. Las fechas se
+      capturan como hora de Ecuador y la vista previa adopta la forma real de
+      la ubicación elegida.
+    rationale: >-
+      Una API capaz con un formulario incompleto sigue obligando a entrar al
+      admin de Django. El panel operativo debe cubrir las tareas repetidas y
+      reservar el admin de rescate para una emergencia.
+    evidence:
+      - file: frontend/app/admin/publicidad/page.tsx
+        lines: "168-897"
+        symbol: export default function AdsAdminPage
+    tests: {playwright: true}
+    cases:
+      - name: Staff crea una campaña con imagen
+        expected: allowed
+      - name: Staff edita un anunciante
+        expected: allowed
+      - name: Eliminar sin confirmar
+        expected: denied
+      - name: Renovar campaña próxima a vencer
+        expected: allowed
+
+  - id: ADS-033
+    name: Publicar o pausar una campaña invalida la caché de inmediato
+    status: implemented
+    summary: >-
+      Cualquier cambio sobre una campaña o un anunciante sube `ads:ver`. El clic
+      no invalida nada: se cuenta con `update()` y `F()`, nunca con `save()`.
+    rationale: >-
+      Con TTL de treinta minutos, pausar una campaña sin invalidar la deja media
+      hora en pantalla, que es exactamente el rato durante el cual un anunciante
+      enfadado sigue viéndose. Y contar el clic con `save()` tiraría la caché
+      del listado en cada visita.
+    evidence:
+      - file: backend/advertising/signals.py
+        lines: "20-23"
+        symbol: def advertising_changed
+      - file: backend/advertising/views.py
+        lines: "82-88"
+        symbol: Campaign.objects.filter(pk=campaign.pk).update
+    tests: {api: true}
+    cases:
+      - name: Pausar retira la campaña antes del siguiente TTL
+        expected: allowed
+      - name: Un clic invalida la caché
+        expected: denied
+
+  # ─────────────────────────────────────────────────────────────────────
+  # Lo que se decidió no construir
+  #
+  # `not_implemented` y no `proposed`: no son cosas pendientes, son cosas
+  # que el módulo deliberadamente no hace. Si algún día una se construye,
+  # que sea porque alguien leyó esto y decidió lo contrario.
+  # ─────────────────────────────────────────────────────────────────────
+  - id: ADS-040
+    name: No hay tarifario ni precios en el sistema
+    status: not_implemented
+    summary: >-
+      Ninguna tabla guarda cuánto cuesta una ubicación, y el reclamo de un
+      espacio libre no enseña cifra: dice que está disponible y manda a
+      WhatsApp.
+    rationale: >-
+      El precio se negocia caso por caso: no es el mismo trato el de una
+      ferretería de Macas por un mes que el de un banco por un año. Publicar una
+      tarifa fija cerraría esa puerta y obligaría a mantener actualizada una
+      página que nadie va a mantener. También evita la trampa clásica: un precio
+      en el sistema que no coincide con el que se cobró.
+    tests: {}
+    cases:
+      - name: Página pública con lista de tarifas
+        expected: denied
+      - name: El reclamo enseña «desde $45 al mes»
+        expected: denied
+
+  - id: ADS-041
+    name: No hay formulario de solicitud ni pedido
+    status: not_implemented
+    summary: >-
+      No existe `/publicidad` como página de contratación ni un modelo de pedido
+      con estados. La solicitud es un mensaje de WhatsApp y la constancia de la
+      venta es la campaña ya creada.
+    rationale: >-
+      Un pedido con estados solo se gana el sitio cuando hay tantos que la
+      cabeza no los sostiene. Con el volumen que este portal va a tener el
+      primer año sería una máquina de estados que alguien deja de actualizar a
+      la tercera venta, y entonces el sistema miente.
+    tests: {}
+    cases:
+      - name: Endpoint público que crea un pedido
+        expected: denied
+
+  - id: ADS-042
+    name: No hay control de aforo
+    status: not_implemented
+    summary: >-
+      El sistema no impide vender la misma ubicación a dos anunciantes para la
+      misma ventana. Si ocurre, ambos se sirven y `weight` reparte; pasado el
+      tope, el panel avisa (ADS-019).
+    rationale: >-
+      Quien vende sabe lo que ha vendido, porque lo vendió por chat. Construir
+      la comprobación exigiría aforo, segmentación consultable y un endpoint de
+      disponibilidad — tres piezas para un problema que hoy resuelve mirar la
+      lista de campañas.
+
+      El riesgo asumido está escrito: sobrevender no rompe nada visiblemente,
+      solo hace que todos reciban menos de lo que compraron. Si alguna vez pasa,
+      esta es la regla que hay que cambiar.
+    tests: {}
+    cases:
+      - name: Dos campañas pagadas en la misma ubicación y ventana
+        expected: allowed
+        note: Se sirven las dos, repartidas por peso. Es una decisión, no un fallo.
+
+  - id: ADS-043
+    name: No hay pasarela de pagos
+    status: not_implemented
+    summary: >-
+      El cobro ocurre fuera del portal por completo. La aplicación no genera
+      enlaces de pago, no recibe webhooks y no ve un dato de tarjeta.
+      `amount_charged_usd` es una anotación de lo que ya pasó.
+    rationale: >-
+      `specs/domains/subscriptions.yaml` existe precisamente porque alguien dio
+      por implementado un sistema de cobros que no estaba en ninguna parte. Aquí
+      queda escrito antes: no hay pasarela, y el día que la haya será porque el
+      volumen la pida, compartiendo el trabajo con las suscripciones — porque
+      son el mismo problema dos veces.
+    tests: {}
+    cases:
+      - name: Formulario de tarjeta en el portal
+        expected: denied
+      - name: Webhook de pasarela que activa una campaña
+        expected: denied
+
+  - id: ADS-044
+    name: No se cuentan impresiones ni se genera informe automático
+    status: not_implemented
+    summary: >-
+      Solo se cuenta el clic, que es lo que el redirector ya hace. No hay
+      contador de impresiones, ni estadística diaria, ni informe que se envíe
+      solo al anunciante.
+    rationale: >-
+      Contar impresiones significa una escritura por vista de página, y a cambio
+      da un número que solo sirve para enseñárselo a alguien. Con clic y fechas
+      se responde la única pregunta que un anunciante hace de verdad —«¿me llegó
+      gente?»— sin añadir carga a cada petición.
+
+      Si algún día alguien lo pide, se construye entonces, agregando por día y
+      filtrando bots como el resto de métricas. Contar mal sería peor que no
+      contar.
+    tests: {}
+    cases:
+      - name: Endpoint de impresiones
+        expected: denied
+      - name: Informe enviado automáticamente al terminar la campaña
+        expected: denied
+
+  - id: ADS-045
+    name: El informe al anunciante, si se pide, no lleva datos de nadie
+    status: not_implemented
+    summary: >-
+      Cuando alguien pida cifras, se le pasan a mano desde el panel: clics y
+      fechas. Nunca datos de las personas que hicieron clic, ni de las
+      propiedades que estaban viendo cuando lo hicieron.
+    rationale: >-
+      Es la regla que hay que tener escrita antes de que alguien la pregunte, no
+      después. Los datos de quien navega el portal no son mercancía, y la
+      agregación da al anunciante todo lo que necesita sin convertir el módulo
+      en un problema de privacidad.
+    tests: {}
+    cases:
+      - name: Informe con la lista de propiedades visitadas
+        expected: denied
+      - name: Clics y fechas
+        expected: allowed

@@ -283,7 +283,7 @@ Y un visitante es un `session_id` distinto, no un evento: el navegador repite su
 - `backend/real_estate/models.py:722-724` (`activity_prop_human_idx`) — (property, is_bot, created_at). Sin él la agregación recorre toda la tabla de eventos.
 - `backend/real_estate/views.py:699-713` (`def promotion_stats`)
 - `backend/real_estate/permissions.py:25-42` (`class IsPropertyOwnerOrStaff`) — Frontera de verdad, en el servidor. A diferencia de las láminas (SOC-009), este dato es del dueño.
-- `backend/real_estate/serializers.py:634-646` (`PROPERTY_PATH_RE`) — La visita a una ficha se atribuye a su anuncio leyendo el id de la ruta; el beacon genérico de page_view no manda property_id.
+- `backend/real_estate/serializers.py:664-675` (`PROPERTY_PATH_RE`) — La visita a una ficha se atribuye a su anuncio leyendo el id de la ruta; el beacon genérico de page_view no manda property_id.
 
 **Casos**
 
@@ -436,7 +436,7 @@ El listado sigue estando a un clic, y el kit sigue accesible después desde cada
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `frontend/app/add-property/page.tsx:1232-1234` (`promocionar`) — Solo al crear, y solo con id; en cualquier otro caso, /mis-propiedades.
+- `frontend/app/add-property/page.tsx:1244-1246` (`promocionar`) — Solo al crear, y solo con id; en cualquier otro caso, /mis-propiedades.
 
 **Casos**
 

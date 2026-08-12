@@ -310,7 +310,7 @@ rules:
       —exactamente el patrón que la programación existe para evitar.
     evidence:
       - file: backend/blog/admin.py
-        lines: "155-184"
+        lines: "154-182"
         symbol: def schedule_daily
     tests: {unit: true}
     cases:

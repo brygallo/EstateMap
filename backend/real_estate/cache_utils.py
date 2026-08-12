@@ -32,6 +32,7 @@ VERSION_KEYS = {
     "market_stats": "props:market-stats:ver",
     "geo": "geo:ver",
     "blog": "blog:ver",
+    "ads": "ads:ver",
 }
 
 # Parts longer than this are hashed instead of embedded verbatim, so a long

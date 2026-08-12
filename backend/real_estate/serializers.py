@@ -314,6 +314,25 @@ class PropertySerializer(serializers.ModelSerializer):
 
         return validate_image_batch(value)
 
+    def validate_description(self, value):
+        """Cap the free-text description (PROP-037).
+
+        The column is a TextField and nothing above it set a ceiling, so the
+        only limit was Django's 60 MB body guard — which rejects the request
+        while parsing it, long after the person finished writing. The bound is
+        set from the data: the longest description in the catalogue is ~6.400
+        characters and belongs to an imported listing, and the longest one a
+        person ever wrote is under 900, so no existing listing becomes
+        uneditable by this check.
+        """
+        limit = getattr(settings, 'MAX_DESCRIPTION_LENGTH', 8000)
+        if value and len(value) > limit:
+            raise serializers.ValidationError(
+                f"La descripción no puede pasar de {limit} caracteres "
+                f"(tiene {len(value)})."
+            )
+        return value
+
     def validate_polygon(self, value):
         """
         Validate and normalize the polygon to a canonical, closed GeoJSON

@@ -2,7 +2,8 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
-import maplibregl, { type GeoJSONSource, type Map as MapLibreInstance } from 'maplibre-gl';
+import * as maplibregl from 'maplibre-gl';
+import type { GeoJSONSource, Map as MapLibreInstance } from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import { buildMapStyle } from './maplibre-style';
 import { Loader2, LocateFixed, Minus, Plus } from 'lucide-react';

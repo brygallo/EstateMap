@@ -84,7 +84,7 @@ POST /api/leads/ lleva el throttle_scope lead_create a 10/min, para que un scrip
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
 - `backend/real_estate/views.py:1110-1145` (`def get_throttles`)
-- `backend/estate_map/settings.py:170-190` (`'lead_create': '10/min'`)
+- `backend/estate_map/settings.py:191-210` (`'lead_create': '10/min'`)
 
 **Casos**
 
@@ -113,7 +113,7 @@ Lead.status recorre new, contacted y closed, y PATCH /api/leads/{id}/ usa LeadSt
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
 - `backend/real_estate/models.py:528-530` (`STATUS_CHOICES = [`) — Los tres estados del ciclo de gestión de un lead.
-- `backend/real_estate/serializers.py:508-511` (`class LeadStatusSerializer`) — fields = ['id', 'status'], sin acceso a name, phone, email ni message.
+- `backend/real_estate/serializers.py:527-529` (`class LeadStatusSerializer`) — fields = ['id', 'status'], sin acceso a name, phone, email ni message.
 
 **Casos**
 
@@ -268,7 +268,7 @@ El campo source admite account_required (intento de publicar sin cuenta), whatsa
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
 - `backend/real_estate/models.py:520-522` (`SOURCE_CHOICES = [`) — Los cuatro orígenes de una solicitud pendiente.
-- `backend/real_estate/serializers.py:537-539` (`def validate_source`) — Cualquier valor fuera del catálogo se normaliza silenciosamente a "other" en vez de rechazar la petición.
+- `backend/real_estate/serializers.py:556-558` (`def validate_source`) — Cualquier valor fuera del catálogo se normaliza silenciosamente a "other" en vez de rechazar la petición.
 
 **Casos**
 
@@ -326,7 +326,7 @@ PendingPublicationViewSet.get_throttles aplica ScopedRateThrottle con throttle_s
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
 - `backend/real_estate/views.py:1177-1179` (`throttle_scope = 'pending_create'`) — Solo el POST público se limita; el resto de acciones ya exige staff y no lleva throttle.
-- `backend/estate_map/settings.py:184-186` (`'pending_create': '10/min'`)
+- `backend/estate_map/settings.py:189-191` (`'pending_create': '10/min'`)
 
 **Casos**
 
@@ -374,8 +374,8 @@ ActivityEventSerializer.create ignora cualquier valor de is_bot que venga en el 
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/real_estate/serializers.py:697-700` (`validated_data['is_bot'] = is_bot_request(request)`) — Sobrescribe el valor ya validado del payload, si lo había.
-- `backend/real_estate/serializers.py:673-675` (`read_only_fields = ['id', 'user', 'property', 'property_title', 'is_bot', 'created_at']`) — is_bot es de solo lectura en el serializer expuesto, además de recalcularse en create.
+- `backend/real_estate/serializers.py:716-718` (`validated_data['is_bot'] = is_bot_request(request)`) — Sobrescribe el valor ya validado del payload, si lo había.
+- `backend/real_estate/serializers.py:692-694` (`read_only_fields = ['id', 'user', 'property', 'property_title', 'is_bot', 'created_at']`) — is_bot es de solo lectura en el serializer expuesto, además de recalcularse en create.
 
 **Casos**
 
@@ -423,7 +423,7 @@ ActivityEventViewSet.get_throttles aplica ScopedRateThrottle con throttle_scope=
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
 - `backend/real_estate/views.py:1434-1436` (`throttle_scope = 'activity_create'`)
-- `backend/estate_map/settings.py:183-185` (`'activity_create': '30/min'`)
+- `backend/estate_map/settings.py:188-190` (`'activity_create': '30/min'`)
 
 **Casos**
 
@@ -470,7 +470,7 @@ PendingPublication.status recorre new, contacted, converted y discarded: a difer
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
 - `backend/real_estate/models.py:528-530` (`STATUS_CHOICES = [`) — Los cuatro estados de una solicitud pendiente.
-- `backend/real_estate/serializers.py:593-595` (`class PendingPublicationStatusSerializer`) — fields = ['id', 'status'], igual patrón restrictivo que LeadStatusSerializer.
+- `backend/real_estate/serializers.py:612-614` (`class PendingPublicationStatusSerializer`) — fields = ['id', 'status'], igual patrón restrictivo que LeadStatusSerializer.
 
 **Casos**
 

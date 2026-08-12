@@ -3,6 +3,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { ArrowUpRight, Mail, MapPin, MessageCircle } from 'lucide-react';
 import { SOCIAL_PROFILES, buildWhatsAppUrl } from '@/lib/constants';
+import AdSlot from '@/components/ads/AdSlot';
 
 const whatsappHref = buildWhatsAppUrl('Hola necesito ayuda con Geo Propiedades');
 
@@ -197,6 +198,12 @@ const Footer = () => (
             </ul>
           </div>
         </div>
+      </div>
+
+      {/* Partners. The cheapest strip in the inventory and the most seen one:
+          it is brand, not campaign, so it takes the narrow variant. */}
+      <div className="mt-12">
+        <AdSlot placement="site_footer" seed="footer" variant="strip" className="" />
       </div>
 
       {/* Barra inferior */}

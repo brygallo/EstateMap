@@ -860,7 +860,7 @@ rules:
           AggregateOffer: lowPrice y highPrice salen de la lista filtrada,
           offerCount de la lista sin filtrar.
       - file: frontend/components/SeoLanding.tsx
-        lines: "453-469"
+        lines: "470-485"
         symbol: "export function priceRangeText(properties: Property[]): string {"
         note: >
           Misma lógica, reutilizada por las landings de ciudad, provincia, tipo y

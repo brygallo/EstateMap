@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { ArrowRight, CheckCircle2, MapPin, PlusCircle, Search } from 'lucide-react';
 import SeoPropertyGrid from '@/components/SeoPropertyGrid';
+import AdSlot from '@/components/ads/AdSlot';
 import {
   Property,
   SITE_URL,
@@ -78,6 +79,7 @@ export default async function SeoLanding({
     province:
       featuredQuery?.province ?? parsedMapUrl.searchParams.get('province') ?? undefined,
   };
+  const advertisingProvince = featuredFilters.province ?? properties[0]?.province ?? undefined;
   const featuredWithImages = await getFeaturedProperties({
     ...featuredFilters,
     limit: 8,
@@ -335,6 +337,15 @@ export default async function SeoLanding({
         </aside>
       </header>
 
+      <AdSlot
+        placement="city_hero"
+        seed={pageHref ?? title}
+        city={featuredFilters.city}
+        province={advertisingProvince}
+        variant="banner"
+        className="mt-8"
+      />
+
       <section className="mt-8">
         <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
           <div>
@@ -363,6 +374,15 @@ export default async function SeoLanding({
           mapHref={mapHref}
           relatedLinks={relatedLinks.length > 0 ? relatedLinks : cityLinks}
           priorityCount={2}
+        />
+
+        <AdSlot
+          placement="listing_feed"
+          seed={pageHref ?? mapHref}
+          city={featuredFilters.city}
+          province={advertisingProvince}
+          variant="banner"
+          className="mt-8"
         />
       </section>
 

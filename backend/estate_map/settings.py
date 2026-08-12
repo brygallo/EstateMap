@@ -43,6 +43,7 @@ INSTALLED_APPS = [
     'real_estate',
     'ingesta',
     'blog',
+    'advertising',
 ]
 
 SITE_ID = 1
@@ -175,6 +176,11 @@ REST_FRAMEWORK = {
     # limit above. Internal SSR traffic carries no XFF header and keeps being
     # identified by REMOTE_ADDR.
     'NUM_PROXIES': 1,
+    # Django answers a body that breaks DATA_UPLOAD_MAX_NUMBER_FILES or
+    # DATA_UPLOAD_MAX_MEMORY_SIZE with an HTML 400, which no API client can
+    # read. This handler restores the {"campo": ["mensaje"]} contract for those
+    # two cases and delegates everything else to DRF untouched.
+    'EXCEPTION_HANDLER': 'real_estate.exception_handlers.api_exception_handler',
     # NO se define DEFAULT_PAGINATION_CLASS: los endpoints públicos devuelven
     # arrays planos y la paginación se aplica por viewset admin (AdminPagination).
     # Rate limiting for public POST endpoints is applied explicitly with
@@ -384,6 +390,11 @@ IMAGE_OPTIMIZATION = {
 MAX_IMAGES_PER_PROPERTY = 10
 MAX_IMAGE_SIZE_MB = 10
 MAX_PROPERTY_UPLOAD_MB = 50
+# Ceiling for the listing description. Chosen from the catalogue: the longest
+# description on record is ~6.400 characters (an imported listing) and the
+# longest a person has written is under 900, so this bounds abuse without
+# making any existing listing impossible to edit.
+MAX_DESCRIPTION_LENGTH = 8000
 
 # ========================================
 # CELERY / SHARED AENTS BROKER

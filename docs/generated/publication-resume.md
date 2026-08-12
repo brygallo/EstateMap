@@ -87,7 +87,7 @@ Un token de continuación deja de servir 14 días después de emitirse, y a part
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/estate_map/settings.py:529-531` (`PUBLICATION_RESUME_TOKEN_EXPIRY_DAYS`)
+- `backend/estate_map/settings.py:540-542` (`PUBLICATION_RESUME_TOKEN_EXPIRY_DAYS`)
 - `backend/real_estate/models.py:670-672` (`def is_valid`)
 - `backend/real_estate/views.py:1395-1402` (`def invalid_resume_token_response`)
 
@@ -185,7 +185,7 @@ La respuesta del token contiene el JSON del borrador y los datos de contacto que
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/real_estate/serializers.py:589-602` (`class PublicationDraftSerializer`)
+- `backend/real_estate/serializers.py:619-631` (`class PublicationDraftSerializer`)
 - `backend/real_estate/views.py:1262-1279` (`class PublicationDraftView`)
 
 **Casos**
@@ -211,7 +211,7 @@ Retomar restaura título, descripción, tipo, operación, precio, dirección, ci
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
 - `backend/real_estate/models.py:615-627` (`class PendingPublicationImage`) — Archivos temporales ordenados y ligados al borrador pendiente.
-- `backend/real_estate/serializers.py:618-626` (`get_temporary_images`) — El enlace devuelve las fotos que debe reconstruir el formulario.
+- `backend/real_estate/serializers.py:637-644` (`get_temporary_images`) — El enlace devuelve las fotos que debe reconstruir el formulario.
 - `frontend/app/continuar-publicacion/[token]/page.tsx:40-51` (`PROPERTY_DRAFT_STORAGE_KEY`) — El borrador y las URLs temporales se dejan donde el formulario ya los busca.
 
 **Casos**
@@ -246,7 +246,7 @@ El canje crea la propiedad y, a partir del correo del borrador, una cuenta a la 
 
 - `backend/real_estate/views.py:1228-1295` (`class PublicationDraftRedeemView`)
 - `backend/real_estate/services/accounts.py:19-40` (`def get_or_create_by_email`)
-- `frontend/app/add-property/page.tsx:1080-1082` (`!resumeToken`) — El enlace hace de sesión, así que el formulario no abre el modal de cuenta.
+- `frontend/app/add-property/page.tsx:1092-1094` (`!resumeToken`) — El enlace hace de sesión, así que el formulario no abre el modal de cuenta.
 
 **Casos**
 
@@ -359,7 +359,7 @@ POST /api/pending-publications/ valida uploaded_images con el mismo lote de comp
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
 - `backend/real_estate/serializers.py:114-152` (`def validate_image_batch`)
-- `backend/real_estate/serializers.py:541-543` (`def validate_uploaded_images(self, value):`) — PendingPublicationSerializer delega en el validador compartido.
+- `backend/real_estate/serializers.py:560-562` (`def validate_uploaded_images(self, value):`) — PendingPublicationSerializer delega en el validador compartido.
 
 **Casos**
 
@@ -382,7 +382,7 @@ Una tarea periódica elimina del almacén las imágenes temporales de borradores
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
 - `backend/real_estate/tasks.py:150-190` (`def sweep_stale_draft_images`)
-- `backend/estate_map/settings.py:455-461` (`"sweep-stale-draft-images": {`)
+- `backend/estate_map/settings.py:468-472` (`"sweep-stale-draft-images": {`)
 
 **Casos**
 

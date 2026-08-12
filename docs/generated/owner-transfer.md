@@ -83,7 +83,7 @@ La transferencia acepta el id de una cuenta activa o una dirección de correo; s
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
 - `backend/real_estate/views.py:2557-2578` (`def _resolve_transfer_target`)
-- `backend/real_estate/serializers.py:630-639` (`class OwnerTransferSerializer`)
+- `backend/real_estate/serializers.py:649-657` (`class OwnerTransferSerializer`)
 - `backend/real_estate/services/accounts.py:22-40` (`def get_or_create_by_email`)
 
 **Casos**

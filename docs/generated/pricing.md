@@ -607,7 +607,7 @@ El texto "precios desde X hasta Y" de las páginas de aterrizaje toma el mínimo
 
 - `frontend/components/SeoLanding.tsx:142-152` (`offerCount: priceValues.length,`) — AggregateOffer: lowPrice y highPrice salen de la lista filtrada, offerCount de la lista sin filtrar.
 
-- `frontend/components/SeoLanding.tsx:453-469` (`export function priceRangeText(properties: Property[]): string {`) — Misma lógica, reutilizada por las landings de ciudad, provincia, tipo y combinaciones.
+- `frontend/components/SeoLanding.tsx:470-485` (`export function priceRangeText(properties: Property[]): string {`) — Misma lógica, reutilizada por las landings de ciudad, provincia, tipo y combinaciones.
 
 
 **Casos**

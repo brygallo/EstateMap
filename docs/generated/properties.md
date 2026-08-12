@@ -51,6 +51,7 @@ Reglas de negocio del inventario: qué es una propiedad publicable, cómo se int
 | [`PROP-034`](#prop-034--un-anuncio-cerrado-conserva-su-ficha-y-su-código-corto) | Un anuncio cerrado conserva su ficha y su código corto | ✅ Implementada |
 | [`PROP-035`](#prop-035--la-ficha-publica-el-precio-anterior-y-cuándo-cambió) | La ficha publica el precio anterior y cuándo cambió | ✅ Implementada |
 | [`PROP-036`](#prop-036--un-precio-o-una-superficie-negativos-no-se-guardan) | Un precio o una superficie negativos no se guardan | ✅ Implementada |
+| [`PROP-037`](#prop-037--la-descripción-tiene-un-tope-de-caracteres) | La descripción tiene un tope de caracteres | ✅ Implementada |
 
 ### PROP-001 — Semántica de price y rent_price
 
@@ -332,7 +333,7 @@ Sea cual sea el formato de entrada, el polígono se guarda como un GeoJSON Polyg
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
 - `backend/real_estate/geo.py:224-227` (`geojson_coords`) — Cierra el anillo y voltea cada par a [lng, lat].
-- `backend/real_estate/serializers.py:312-333` (`validate_polygon`) — Acepta objeto GeoJSON, anillo simple o cualquiera de los dos codificado como texto JSON.
+- `backend/real_estate/serializers.py:336-356` (`validate_polygon`) — Acepta objeto GeoJSON, anillo simple o cualquiera de los dos codificado como texto JSON.
 - `backend/real_estate/serializers.py:274-281` (`to_representation`) — A la salida se reconvierte a [[lat, lng], ...] para el frontend.
 
 **Casos**
@@ -355,7 +356,7 @@ Si un anuncio trae polígono pero no trae latitude/longitude, se guardan las del
 
 - `backend/real_estate/serializers.py:22-57` (`polygon_center_lat_lng`) — Acepta tanto el GeoJSON normalizado como el anillo [lat, lng] y descarta el punto de cierre.
 - `backend/real_estate/serializers.py:27-33` (`ensure_polygon_center`) — Solo rellena los huecos, nunca pisa unas coordenadas enviadas explícitamente.
-- `backend/real_estate/serializers.py:345-347` (`ensure_polygon_center`) — En update, un polígono nuevo sin coordenadas nuevas anula las anteriores y las recalcula.
+- `backend/real_estate/serializers.py:364-366` (`ensure_polygon_center`) — En update, un polígono nuevo sin coordenadas nuevas anula las anteriores y las recalcula.
 
 **Casos**
 
@@ -646,10 +647,11 @@ Como máximo 10 imágenes por propiedad, cada una de hasta 10 MB y entre 200x200
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/estate_map/settings.py:386-388` (`MAX_PROPERTY_UPLOAD_MB`) — MAX_IMAGES_PER_PROPERTY = 10, MAX_IMAGE_SIZE_MB = 10, MAX_PROPERTY_UPLOAD_MB = 50.
-- `backend/estate_map/settings.py:369-371` (`ALLOWED_IMAGE_TYPES`) — image/jpeg, image/jpg, image/png y image/webp.
+- `backend/estate_map/settings.py:391-393` (`MAX_PROPERTY_UPLOAD_MB`) — MAX_IMAGES_PER_PROPERTY = 10, MAX_IMAGE_SIZE_MB = 10, MAX_PROPERTY_UPLOAD_MB = 50.
+- `backend/estate_map/settings.py:374-376` (`ALLOWED_IMAGE_TYPES`) — image/jpeg, image/jpg, image/png y image/webp.
 - `backend/real_estate/serializers.py:253-308` (`validate_uploaded_images`) — Aplica en orden el tope por propiedad, el tope combinado y los tres validadores por imagen.
 - `backend/real_estate/validators.py:8-44` (`validate_image_dimensions`) — Tamaño máximo, dimensiones mínimas y máximas, y extensión permitida.
+- `backend/real_estate/exception_handlers.py:59-64` (`def api_exception_handler`) — Cuando el cuerpo supera los topes del parser de Django, el rechazo ocurre antes del serializador y Django respondería con una página HTML. Este manejador lo devuelve como error de campo sobre `uploaded_images`, que es lo que el formulario necesita para abrir el paso de fotos y lo que deja rastro del campo en el registro de actividad.
 
 **Casos**
 
@@ -919,3 +921,37 @@ Los validadores no reescriben nada: las filas ya guardadas fuera de rango se que
 **Cobertura exigida:** api
 
 - `backend/real_estate/tests/generated/test_spec_properties.py`
+
+### PROP-037 — La descripción tiene un tope de caracteres
+
+**Estado:** ✅ Implementada
+
+La descripción de un anuncio no puede pasar de MAX_DESCRIPTION_LENGTH (8.000 caracteres). El formulario lo impide al escribir y el serializador lo rechaza con un 400 que dice cuántos caracteres tiene.
+
+> **Por qué:** La columna es un TextField y nada por encima ponía techo, así que el único límite era el guardia de cuerpo de Django: 60 MB de datos que se rechazan mientras se parsea la petición, es decir mucho después de que la persona terminara de escribir y sin poder señalar el campo.
+El número sale de los datos, no de una intuición: la descripción más larga del catálogo tiene unos 6.400 caracteres y es de un anuncio importado, y la más larga escrita por una persona no llega a 900. Un tope por debajo de lo que ya existe convertiría un guardia contra el abuso en una trampa, porque haría ineditables los anuncios largos que ya están publicados.
+La ingesta escribe con `Property.objects.create` y no pasa por el serializador, así que importar un anuncio largo sigue siendo posible.
+
+**Backend**
+
+- Endpoint: `POST /api/properties/`
+- Al denegar: HTTP `400`
+
+**Evidencia en el código** (verificada por `tools/specs/validate.py`)
+
+- `backend/estate_map/settings.py` (`MAX_DESCRIPTION_LENGTH`) — 8000 caracteres, por encima de la descripción más larga que existe.
+- `backend/real_estate/serializers.py` (`def validate_description`) — Rechaza con 400 e incluye la longitud real en el mensaje.
+- `frontend/app/add-property/page.tsx` (`MAX_DESCRIPTION_LENGTH`) — El mismo número en el esquema de validación y como `maxLength` del textarea, más un contador que aparece al acercarse al tope para que dejar de poder escribir no se lea como un campo roto.
+
+**Casos**
+
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| Publicar con una descripción dentro del tope | — | `caracteres`=900 | — | permitido |
+| Publicar con una descripción por encima del tope | authenticated | — | `title`=Descripción interminable, `price`=1000, `description`={description_over_limit} | denied (HTTP 400) |
+| Editar un anuncio importado con descripción larga ya guardada | — | `caracteres`=6401 | — | permitido: el tope se eligió por encima de lo que ya existe |
+
+**Cobertura exigida:** api
+
+- `backend/real_estate/tests/generated/test_spec_properties.py`
+- `backend/real_estate/tests/test_property_text_limits.py`

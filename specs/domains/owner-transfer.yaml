@@ -98,7 +98,7 @@ rules:
         lines: "2557-2578"
         symbol: def _resolve_transfer_target
       - file: backend/real_estate/serializers.py
-        lines: "630-639"
+        lines: "649-657"
         symbol: class OwnerTransferSerializer
       - file: backend/real_estate/services/accounts.py
         lines: 22-40

@@ -85,7 +85,7 @@ rules:
       remedio distinto del de pedir otro enlace.
     evidence:
       - file: backend/estate_map/settings.py
-        lines: "529-531"
+        lines: "540-542"
         symbol: PUBLICATION_RESUME_TOKEN_EXPIRY_DAYS
       - file: backend/real_estate/models.py
         lines: "670-672"
@@ -196,7 +196,7 @@ rules:
       silencio lo que ve quien tiene el enlace.
     evidence:
       - file: backend/real_estate/serializers.py
-        lines: "589-602"
+        lines: "619-631"
         symbol: class PublicationDraftSerializer
       - file: backend/real_estate/views.py
         lines: "1262-1279"
@@ -235,7 +235,7 @@ rules:
         symbol: "class PendingPublicationImage"
         note: Archivos temporales ordenados y ligados al borrador pendiente.
       - file: backend/real_estate/serializers.py
-        lines: "618-626"
+        lines: "637-644"
         symbol: "get_temporary_images"
         note: El enlace devuelve las fotos que debe reconstruir el formulario.
       - file: frontend/app/continuar-publicacion/[token]/page.tsx
@@ -272,7 +272,7 @@ rules:
         lines: 19-40
         symbol: def get_or_create_by_email
       - file: frontend/app/add-property/page.tsx
-        lines: "1080-1082"
+        lines: "1092-1094"
         symbol: "!resumeToken"
         note: El enlace hace de sesión, así que el formulario no abre el modal de cuenta.
     permissions:
@@ -414,7 +414,7 @@ rules:
         lines: "114-152"
         symbol: def validate_image_batch
       - file: backend/real_estate/serializers.py
-        lines: "541-543"
+        lines: "560-562"
         symbol: "def validate_uploaded_images(self, value):"
         note: PendingPublicationSerializer delega en el validador compartido.
     backend:
@@ -445,7 +445,7 @@ rules:
         lines: "150-190"
         symbol: def sweep_stale_draft_images
       - file: backend/estate_map/settings.py
-        lines: "455-461"
+        lines: "468-472"
         symbol: '"sweep-stale-draft-images": {'
     tests:
       api: true

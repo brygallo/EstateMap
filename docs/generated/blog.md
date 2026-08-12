@@ -268,7 +268,7 @@ La acción «uno por día» arranca al día siguiente del último post ya progra
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/blog/admin.py:155-184` (`def schedule_daily`)
+- `backend/blog/admin.py:154-182` (`def schedule_daily`)
 
 **Casos**
 
