@@ -9,6 +9,12 @@ outright and three skipped themselves with "no published inventory in this
 environment". A green run that never opened a city page or a listing is worse
 than a red one, because it looks like coverage.
 
+Advertising is seeded for the same reason. Since ADS-016 stopped treating an
+empty placement as a reason to render the house sign, that sign only exists
+where staff created a `promo` campaign — so a database with no campaigns has no
+slot for the browser to inspect, and the two tests that check the WhatsApp
+message and the position of the slot on a listing had nothing to find.
+
 Why it refuses to run
 ---------------------
 A seeder is a writer, and this one writes listings that look real: a title, a
@@ -36,6 +42,8 @@ import os
 from django.conf import settings
 from django.core.management.base import BaseCommand, CommandError
 
+from advertising.models import Campaign
+from advertising.placements import Placement
 from real_estate.cache_utils import bump_props_version
 from real_estate.models import City, Property, Province, User
 
@@ -50,6 +58,15 @@ SEED_CODE_PREFIX = "E2E0"
 SEED_TITLE_PREFIX = "[E2E]"
 
 SEED_OWNER_EMAIL = "e2e-seed@example.com"
+
+# The only placement seeded with a house sign, and it is the one the suite
+# asserts on: `property_sidebar` sits under the contact card of a listing
+# (ADS-004) and its WhatsApp message carries the space and the city (ADS-018).
+#
+# Nothing is seeded for `home_feed`, and that is not an oversight: the test for
+# ADS-016 opens `/` and asserts no slot is rendered there, which is only a real
+# assertion while the home page has no campaign of its own.
+SEED_PLACEMENT = Placement.PROPERTY_SIDEBAR
 
 # Above this many properties the command did not create, the database is
 # somebody's real inventory and not a test fixture.
@@ -254,6 +271,7 @@ class Command(BaseCommand):
         owner = self._seed_owner()
         self._seed_locations()
         created, updated = self._seed_properties(owner)
+        self._seed_house_sign()
 
         # Every public read is cached under a version key, and `summary` is what
         # `/propiedades` renders its city list from. The post_save signals bump
@@ -267,7 +285,8 @@ class Command(BaseCommand):
             self.style.SUCCESS(
                 f"Seeded {created + updated} properties "
                 f"({created} created, {updated} updated) "
-                f"across {len(LOCATIONS)} cities."
+                f"across {len(LOCATIONS)} cities, "
+                f"plus one house sign on {SEED_PLACEMENT}."
             )
         )
 
@@ -335,6 +354,40 @@ class Command(BaseCommand):
         for city_name, place in LOCATIONS.items():
             province, _ = Province.objects.get_or_create(name=place["province"])
             City.objects.get_or_create(name=city_name, province=province)
+
+    def _seed_house_sign(self):
+        """
+        The «espacio disponible» campaign the advertising tests walk into.
+
+        A `promo` campaign carries no advertiser, no destination URL and no
+        amount: the button builds its WhatsApp link on the page from the
+        placement and the city, which is the whole point of ADS-018. Evergreen
+        on purpose — with both dates empty it is live from the moment it is
+        written, so the suite never races the clock.
+
+        Keyed by placement and kind, the pair that identifies it: a second run
+        rewrites the same row instead of overbooking the placement.
+        """
+        Campaign.objects.update_or_create(
+            placement=SEED_PLACEMENT,
+            kind=Campaign.Kind.PROMO,
+            defaults={
+                "advertiser": None,
+                "headline": "¿Quieres aparecer en este espacio?",
+                "body": (
+                    "Lo ven quienes están buscando propiedades ahora mismo. "
+                    "Escríbenos y lo hablamos."
+                ),
+                "cta_label": "Escribir por WhatsApp",
+                "target_url": "",
+                "starts_at": None,
+                "ends_at": None,
+                "target_cities": [],
+                "target_provinces": [],
+                "amount_charged_usd": None,
+                "is_active": True,
+            },
+        )
 
     def _seed_properties(self, owner):
         """

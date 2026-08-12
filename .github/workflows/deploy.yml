@@ -81,6 +81,15 @@ jobs:
           host: ${{ secrets.SERVER_IP }}
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
+          # The action's default is 10 minutes, and the deploy does not fit in
+          # it: on a 8 GB shared host the two Docker builds alone take longer
+          # than that when a dependency changed. Cutting the SSH session does
+          # not stop the script — it kills it wherever it happened to be, and
+          # the run of 2026-08-12 died between `up -d` creating the containers
+          # and starting them, leaving the site answering 502 with the images
+          # already built. The timeout has to sit above the worst deploy, not
+          # above the average one.
+          command_timeout: 30m
           script: |
             set -e
             echo "📂 Navigating to project directory..."
