@@ -2204,7 +2204,7 @@ Staff puede eliminar cualquier propiedad desde el panel, incluidas las creadas p
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
 - `backend/estate_map/observability.py:96-99` (`def health`)
-- `backend/estate_map/urls.py:7-9` (`name='health'`)
+- `backend/estate_map/urls.py:10-12` (`name='health'`)
 
 **Casos**
 

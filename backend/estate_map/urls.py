@@ -1,10 +1,12 @@
 from django.contrib import admin
 from django.urls import path, include
+from .crawlers import robots
 from .observability import health
 from advertising.admin_api import AdminAdvertiserViewSet, AdminCampaignViewSet
 from blog.admin_api import AdminBlogCategoryViewSet, AdminBlogImageViewSet, AdminBlogPostViewSet
 
 urlpatterns = [
+    path('robots.txt', robots, name='robots'),
     path('api/health/', health, name='health'),
     path('admin/', admin.site.urls),
     path('api/', include('real_estate.urls')),

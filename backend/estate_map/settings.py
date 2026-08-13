@@ -50,6 +50,7 @@ SITE_ID = 1
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'estate_map.crawlers.NoIndexMiddleware',
     'estate_map.upload_errors.UploadErrorMiddleware',
     'estate_map.observability.ObservabilityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',

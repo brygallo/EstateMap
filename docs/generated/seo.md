@@ -19,6 +19,7 @@ Reglas que deciden qué páginas públicas merecen entrar en el índice y qué s
 | [`SEO-002`](#seo-002--la-fecha-del-dataset-refleja-el-inventario-que-lo-compone) | La fecha del dataset refleja el inventario que lo compone | ✅ Implementada |
 | [`SEO-003`](#seo-003--solo-se-declaran-como-perfiles-oficiales-las-cuentas-que-existen) | Solo se declaran como perfiles oficiales las cuentas que existen | ✅ Implementada |
 | [`SEO-004`](#seo-004--la-verificación-en-buscadores-se-configura-por-entorno) | La verificación en buscadores se configura por entorno | ✅ Implementada |
+| [`SEO-005`](#seo-005--el-host-de-la-api-no-se-indexa) | El host de la API no se indexa | ✅ Implementada |
 
 ### SEO-001 — Las landings locales necesitan cinco anuncios para entrar al índice
 
@@ -122,3 +123,31 @@ Las etiquetas de verificación de Google y Bing salen de `NEXT_PUBLIC_GOOGLE_SIT
 | --- | --- | --- | --- | --- |
 | Variable sin definir | — | `NEXT_PUBLIC_BING_SITE_VERIFICATION`= | — | no se emite la meta msvalidate.01 |
 | Variable con código | — | `NEXT_PUBLIC_BING_SITE_VERIFICATION`=ABC123 | — | se emite la meta msvalidate.01 con ese valor |
+
+### SEO-005 — El host de la API no se indexa
+
+**Estado:** ✅ Implementada
+
+`api.geopropiedadesecuador.com` sirve un `robots.txt` que prohíbe todo el rastreo, y cada respuesta del backend lleva `X-Robots-Tag: noindex, nofollow`. La vista que ya definía su propia cabecera conserva la suya.
+
+> **Por qué:** El host respondía 404 a `/robots.txt`, que para un rastreador significa «recorre lo que quieras». Y DRF, ante el `Accept: text/html` que envía cualquier bot, devuelve su API navegable: una página HTML por endpoint con los anuncios del portal dentro. Es el mismo contenido del portal servido por segunda vez bajo un segundo dominio, compitiendo con las páginas construidas para posicionar y gastando rastreo que se le quita a las landings de ciudad.
+Son dos capas porque fallan distinto. `robots.txt` evita la descarga, pero una URL enlazada desde fuera puede acabar indexada sin llegar a rastrearse nunca; la cabecera es lo que la saca del índice. Ninguna de las dos es una medida de seguridad: la API es pública y sigue siéndolo.
+
+**Evidencia en el código** (verificada por `tools/specs/validate.py`)
+
+- `backend/estate_map/crawlers.py` (`ROBOTS_TXT =`)
+- `backend/estate_map/crawlers.py` (`class NoIndexMiddleware`)
+- `backend/estate_map/settings.py` (`'estate_map.crawlers.NoIndexMiddleware',`)
+- `backend/estate_map/urls.py` (`path('robots.txt', robots, name='robots')`)
+
+**Casos**
+
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| robots.txt del host de la API | — | — | — | allowed |
+| Respuesta pública cualquiera | — | — | — | allowed |
+| Redirector de publicidad | — | — | — | allowed |
+
+**Cobertura exigida:** api
+
+- `backend/real_estate/tests/test_crawler_directives.py`

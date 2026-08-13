@@ -138,3 +138,45 @@ rules:
       - name: Variable con código
         given: {NEXT_PUBLIC_BING_SITE_VERIFICATION: "ABC123"}
         expected: se emite la meta msvalidate.01 con ese valor
+
+  - id: SEO-005
+    name: El host de la API no se indexa
+    status: implemented
+    summary: >-
+      `api.geopropiedadesecuador.com` sirve un `robots.txt` que prohíbe todo el
+      rastreo, y cada respuesta del backend lleva `X-Robots-Tag: noindex,
+      nofollow`. La vista que ya definía su propia cabecera conserva la suya.
+    rationale: >-
+      El host respondía 404 a `/robots.txt`, que para un rastreador significa
+      «recorre lo que quieras». Y DRF, ante el `Accept: text/html` que envía
+      cualquier bot, devuelve su API navegable: una página HTML por endpoint con
+      los anuncios del portal dentro. Es el mismo contenido del portal servido
+      por segunda vez bajo un segundo dominio, compitiendo con las páginas
+      construidas para posicionar y gastando rastreo que se le quita a las
+      landings de ciudad.
+
+      Son dos capas porque fallan distinto. `robots.txt` evita la descarga, pero
+      una URL enlazada desde fuera puede acabar indexada sin llegar a rastrearse
+      nunca; la cabecera es lo que la saca del índice. Ninguna de las dos es una
+      medida de seguridad: la API es pública y sigue siéndolo.
+    evidence:
+      - file: backend/estate_map/crawlers.py
+        symbol: "ROBOTS_TXT ="
+      - file: backend/estate_map/crawlers.py
+        symbol: "class NoIndexMiddleware"
+      - file: backend/estate_map/settings.py
+        symbol: "'estate_map.crawlers.NoIndexMiddleware',"
+      - file: backend/estate_map/urls.py
+        symbol: "path('robots.txt', robots, name='robots')"
+    tests: {api: true}
+    cases:
+      - name: robots.txt del host de la API
+        expected: allowed
+        expected_http_status: 200
+        note: "Devuelve `Disallow: /` en texto plano."
+      - name: Respuesta pública cualquiera
+        expected: allowed
+        note: "Lleva `X-Robots-Tag: noindex, nofollow`."
+      - name: Redirector de publicidad
+        expected: allowed
+        note: Conserva la cabecera que ya ponía la vista.

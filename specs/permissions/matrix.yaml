@@ -2704,7 +2704,7 @@ rules:
         lines: 96-99
         symbol: def health
       - file: backend/estate_map/urls.py
-        lines: "7-9"
+        lines: "10-12"
         symbol: name='health'
     permissions:
       required: [ops.health_read]
