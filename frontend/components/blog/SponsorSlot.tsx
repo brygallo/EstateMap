@@ -2,6 +2,8 @@ import Image from 'next/image';
 import { ArrowUpRight, BadgeCheck } from 'lucide-react';
 
 import { getPublicApiUrl } from '@/lib/api-url';
+import { HouseAd } from '@/components/ads/HouseAd';
+import { type Placement as AdPlacement } from '@/lib/ads';
 import { getSponsors, pickSponsor, type Placement } from '@/lib/sponsors';
 
 /**
@@ -17,6 +19,12 @@ import { getSponsors, pickSponsor, type Placement } from '@/lib/sponsors';
  *   and it is also what keeps the surrounding article readable as editorial.
  * - The href points at the API redirect, never at the advertiser. That is what
  *   makes the click countable and keeps the referrer policy on the server.
+ *
+ * The blog keeps its own dark card instead of reusing `AdSlot`: it sits between
+ * paragraphs of an article, not in a sidebar. What it does share is the house
+ * sign — a `promo` campaign has no advertiser and no redirect, so rendering it
+ * here as if it did would crash the page the day staff offers a blog placement
+ * for sale from the panel.
  */
 
 type SponsorSlotProps = {
@@ -30,6 +38,19 @@ export async function SponsorSlotBlock({ placement, seed, className }: SponsorSl
   const slots = await getSponsors(placement);
   const slot = pickSponsor(slots, seed);
   if (!slot) return null;
+
+  if (slot.kind === 'promo' || !slot.advertiser || !slot.click_path) {
+    return (
+      <HouseAd
+        placement={placement as AdPlacement}
+        variant="banner"
+        className={className ?? 'mt-10'}
+        headline={slot.headline}
+        body={slot.body}
+        ctaLabel={slot.cta_label}
+      />
+    );
+  }
 
   // The redirect lives on the API host, so the href has to be absolute.
   const href = `${getPublicApiUrl().replace(/\/api\/?$/, '')}${slot.click_path}`;

@@ -6,6 +6,7 @@ function slot(id: number, weight = 10): SponsorSlot {
   return {
     id,
     placement: 'post_inline',
+    kind: 'partner',
     headline: `Campaña ${id}`,
     body: 'Texto',
     cta_label: 'Ver',

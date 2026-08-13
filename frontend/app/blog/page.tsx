@@ -173,10 +173,24 @@ export default async function BlogPage() {
               <p className="hidden text-sm text-textSecondary sm:block">Ideas útiles para tu próxima decisión inmobiliaria</p>
               </div>
               <div className="mt-6 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-                {rest.map((post) => (
+                {rest.slice(0, 3).map((post) => (
                   <PostCard key={post.slug} post={post} />
                 ))}
               </div>
+
+              {/* `index_feed` was in the placement catalogue with nothing
+                  painting it, so a campaign sold there would never have been
+                  seen. After the first row: past the fold, before the reader
+                  runs out of articles. */}
+              <SponsorSlotBlock placement="index_feed" seed="blog-index-feed" className="mt-5" />
+
+              {rest.length > 3 && (
+                <div className="mt-5 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+                  {rest.slice(3).map((post) => (
+                    <PostCard key={post.slug} post={post} />
+                  ))}
+                </div>
+              )}
             </section>
           )}
         </>

@@ -14,12 +14,14 @@ import { getServerApiUrl } from './api-url';
 export type SponsorSlot = {
   id: number;
   placement: string;
+  /** `promo` is the house sign: it has no advertiser and no redirect. */
+  kind: 'paid' | 'partner' | 'promo';
   headline: string;
   body: string;
   cta_label: string;
   image: string | null;
   image_alt: string;
-  click_path: string;
+  click_path: string | null;
   weight: number;
   advertiser: {
     name: string;
@@ -27,7 +29,7 @@ export type SponsorSlot = {
     tagline: string;
     logo: string | null;
     logo_alt: string;
-  };
+  } | null;
 };
 
 export type Placement =
