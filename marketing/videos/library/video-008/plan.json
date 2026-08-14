@@ -1,0 +1,79 @@
+{
+  "title": "Catorce mil ya están en el mapa. La tuya no.",
+  "audience": "propietario",
+  "funnel_stage": "conversión",
+  "objective": "Que un propietario ecuatoriano con una casa o terreno para vender o arrendar entre a geopropiedadesecuador.com e inicie la publicación de su propiedad.",
+  "conversion_event": "Inicio del formulario de publicación (paso 1 del flujo \"Publicar propiedad\")",
+  "pillar": "Publicar sin fricción",
+  "series": "Publicar cuesta cero",
+  "concept": "Pieza de venta para propietarios con tráfico frío. El argumento no es el procedimiento, es la ausencia: el mapa de Geo Propiedades Ecuador ya tiene más de catorce mil propiedades en venta, y la de quien mira no está. La pieza abre en la quietud de una propiedad que nadie ve, muestra el hueco, la pone en el mapa con sus fotos, su precio y la Forma del terreno, y termina en el resultado concreto: el interesado llama o escribe directo, sin comisión de por medio. Cierra preguntando qué espera para ser la siguiente.",
+  "promise": "Tu propiedad puede estar en el mismo mapa donde ya hay más de catorce mil en venta, sin pagar por publicar ni comisión al cerrar, y quien se interese te escribe directo a ti.",
+  "cta": "Publica tu propiedad gratis",
+  "hypothesis": "En tráfico frío de propietarios, liderar con el precio cero y negar explícitamente la suscripción y la prueba gratis reduce la sospecha de costo oculto y aumenta los inicios de publicación frente a un video que explica primero el formulario.",
+  "cover_text": "¿Dónde está tu propiedad?",
+  "caption": "Tienes un terreno o una casa en venta y no la ve nadie. En el mapa de Geo Propiedades Ecuador ya hay más de catorce mil propiedades en venta; la tuya todavía no está entre ellas. Ponerla ahí no te cuesta un centavo y no cobramos comisión cuando cierres: queda en el mapa con tus fotos, tu precio y la Forma del terreno si la dibujas, y quien se interese te llama o te escribe directo a ti, sin intermediarios. ¿Qué esperas para que la tuya sea la siguiente? geopropiedadesecuador.com #ecuador #bienesraices #vendermicasa #terrenosecuador #arriendo",
+  "narration": "Tienes un terreno o una casa en venta. Pusiste el letrero, les dijiste a los conocidos, y pasan los meses. No la ve nadie. En el mapa de Geo Propiedades Ecuador ya hay más de catorce mil propiedades en venta. La tuya no está entre ellas. Ponla ahí tú también: queda en el mapa con tus fotos, tu precio y la forma del terreno si la dibujas, donde la gente busca. Y cuando a alguien le guste, te llama o te escribe directo a ti. Sin intermediarios y sin comisión: lo que acuerdes es tuyo. Publicarla no te cuesta un centavo. ¿Qué esperas para que la tuya sea la siguiente en el mapa? Publica tu propiedad gratis en geo propiedades ecuador punto com.",
+  "verification_notes": [
+    "La cifra hablada, «más de catorce mil propiedades en venta», procede de la propia página pública geopropiedadesecuador.com/estadisticas-inmobiliarias, leída el 2026-08-14, que publica 14.950 propiedades en venta activas. Se dice como piso, no como cantidad exacta. Es inventario del catálogo, que incluye anuncios importados: por eso la pieza NO dice que sean miles de personas las que publicaron, ni que hayan vendido.",
+    "Si ese conteo público bajara de catorce mil, la afirmación deja de ser cierta y la pieza se retira; conviene revisarlo antes de cualquier republicación.",
+    "Publicar gratis y sin comisión por ventas ni arriendos: frontend/lib/help-faqs.ts. Verificar que esas FAQ sigan publicadas antes de comprar la voz final.",
+    "Contacto directo por teléfono o WhatsApp con el anunciante, sin intermediarios: frontend/lib/help-faqs.ts y el bloque de contacto de la ficha pública.",
+    "La Forma del terreno va siempre condicionada a que quien publica la dibuje, y nunca se promete exactitud topográfica ni legal.",
+    "No se promete que la propiedad se venda, ni en qué plazo. 'Que sea la siguiente' se refiere a estar en el mapa, que es lo que la pieza demuestra, y así se enuncia en la voz.",
+    "'Lo que acuerdes con esa persona queda completo para ti' se refiere únicamente a la ausencia de comisión de la plataforma; no promete precio ni resultado.",
+    "Ninguna animación pinta cifras: el número vive en la locución, donde queda registrada su fuente.",
+    "Se retiran de la pieza el borrador guardado y el 'sin límite de propiedades' por decisión del usuario del 2026-08-14, aunque ambos sigan siendo ciertos según las FAQ.",
+    "CTA único de propietario. No aparece lenguaje de comprador ni de agente.",
+    "Acento de portada por número de video: 008 corresponde a lavanda #A78BFA.",
+    "Voz de borrador con Kokoro local. No usar --final sin orden humana explícita."
+  ],
+  "music": "Instrumental sin voces, 95 pulsos por minuto. Guitarra eléctrica limpia con notas sueltas, bajo suave y percusión ligera de palmas y bombo discreto. Ánimo cálido y cercano, nada corporativo. Siempre por debajo de la voz; abre un poco solo en el cierre de marca. Sin coros ni golpes dramáticos.",
+  "scenes": [
+    {
+      "purpose": "gancho",
+      "duration": 7.2,
+      "voice": "Tienes un terreno o una casa en venta. Pusiste el letrero, les dijiste a los conocidos, y pasan los meses. No la ve nadie.",
+      "on_screen_text": "No la ve nadie",
+      "asset": "sim:vender",
+      "visual_direction": "Arranca ya en movimiento: la propiedad con su letrero de SE VENDE meciéndose, el sol y las nubes cruzando despacio detrás. El letrero está ahí desde el primer cuadro y nada más ocurre alrededor: la quietud es el punto. Alterna entre terreno y casa para que se reconozcan las dos audiencias.",
+      "transition": "cut"
+    },
+    {
+      "purpose": "problema",
+      "duration": 6.8,
+      "voice": "En el mapa de Geo Propiedades Ecuador ya hay más de catorce mil propiedades en venta. La tuya no está entre ellas.",
+      "on_screen_text": "Catorce mil ya están",
+      "asset": "sim:ya-estan",
+      "visual_direction": "El mapa se llena de pines uno tras otro, en cascada, mientras la cámara se acerca. Cuando la voz dice que la tuya no está, se abre un hueco marcado con un contorno punteado y la etiqueta 'Aquí falta la tuya'. No se pinta ninguna cifra: el número lo dice la voz, con su fuente registrada.",
+      "transition": "cut"
+    },
+    {
+      "purpose": "prueba",
+      "duration": 7.3,
+      "voice": "Ponla ahí tú también: queda en el mapa con tus fotos, tu precio y la forma del terreno si la dibujas, donde la gente busca.",
+      "on_screen_text": "Ponla en el mapa",
+      "asset": "sim:anuncio-en-mapa",
+      "visual_direction": "La ficha viaja desde abajo hasta su lugar sobre el mapa, se dibuja el polígono de la Forma del terreno y el precio se posa encima. El movimiento es una sola toma continua, sin cortes.",
+      "transition": "cut"
+    },
+    {
+      "purpose": "resultado",
+      "duration": 7.4,
+      "voice": "Y cuando a alguien le guste, te llama o te escribe directo a ti. Sin intermediarios y sin comisión: lo que acuerdes es tuyo.",
+      "on_screen_text": "Te escriben a ti",
+      "asset": "sim:te-contactan",
+      "visual_direction": "El teléfono del anunciante: primero la llamada entrante vibrando, después el mensaje del interesado llegando al chat. Nada de intermediarios en pantalla: la conversación es entre dos personas.",
+      "transition": "cut"
+    },
+    {
+      "purpose": "cta",
+      "duration": 9.5,
+      "voice": "Publicarla no te cuesta un centavo. ¿Qué esperas para que la tuya sea la siguiente en el mapa? Publica tu propiedad gratis en geo propiedades ecuador punto com.",
+      "on_screen_text": "Que sea la siguiente",
+      "asset": null,
+      "visual_direction": "Cierre de marca común de la serie: tile, Geo Propiedades Ecuador, dominio geopropiedadesecuador.com, el CTA 'Publica tu propiedad gratis' y la firma de Aents.",
+      "transition": "fade"
+    }
+  ],
+  "cover_art": "oferta"
+}

@@ -1,0 +1,63 @@
+1
+00:00:00,000 --> 00:00:00,827
+¿Vas a vender
+
+2
+00:00:00,827 --> 00:00:02,417
+o alquilar una propiedad?
+
+3
+00:00:02,417 --> 00:00:04,134
+Publícala por cero dólares.
+
+4
+00:00:04,600 --> 00:00:06,718
+Primero elige el tipo de propiedad
+
+5
+00:00:06,718 --> 00:00:07,867
+y si está en venta
+
+6
+00:00:07,867 --> 00:00:08,533
+o alquiler.
+
+7
+00:00:08,533 --> 00:00:09,743
+Tu avance se guarda
+
+8
+00:00:09,743 --> 00:00:11,497
+mientras completas cada paso.
+
+9
+00:00:11,933 --> 00:00:13,840
+Después marca la ubicación en el
+
+10
+00:00:13,840 --> 00:00:15,864
+mapa o dibuja la Forma del terreno.
+
+11
+00:00:16,300 --> 00:00:17,358
+Agrega el precio,
+
+12
+00:00:17,358 --> 00:00:18,291
+sube tus fotos
+
+13
+00:00:18,291 --> 00:00:20,096
+y elige cuál aparece primero.
+
+14
+00:00:20,533 --> 00:00:21,820
+Completa el formulario
+
+15
+00:00:21,820 --> 00:00:22,771
+y publica gratis,
+
+16
+00:00:22,771 --> 00:00:23,498
+sin comisión.

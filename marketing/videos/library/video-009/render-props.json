@@ -1,0 +1,1815 @@
+{
+  "title": "Lo que se revisa antes de comprar un terreno",
+  "coverText": "Antes de comprar un terreno",
+  "cta": "Encuentra tu futuro hogar",
+  "url": "geopropiedadesecuador.com",
+  "brandTile": "brand/aents-brand-tile-1024.png",
+  "kicker": null,
+  "musicFile": "jobs/video-009/audio/music.mp3",
+  "showSafeAreas": false,
+  "scenes": [
+    {
+      "purpose": "gancho",
+      "durationInFrames": 270,
+      "headline": "No sale en fotos",
+      "captions": [
+        {
+          "text": "Antes de comprar un terreno",
+          "start": 0.0,
+          "end": 1.773,
+          "words": [
+            {
+              "text": "Antes",
+              "start": 0.0,
+              "end": 0.38
+            },
+            {
+              "text": "de",
+              "start": 0.38,
+              "end": 0.57
+            },
+            {
+              "text": "comprar",
+              "start": 0.57,
+              "end": 1.077
+            },
+            {
+              "text": "un",
+              "start": 1.077,
+              "end": 1.267
+            },
+            {
+              "text": "terreno",
+              "start": 1.267,
+              "end": 1.773
+            }
+          ]
+        },
+        {
+          "text": "en Ecuador hay cosas",
+          "start": 1.773,
+          "end": 3.103,
+          "words": [
+            {
+              "text": "en",
+              "start": 0.0,
+              "end": 0.19
+            },
+            {
+              "text": "Ecuador",
+              "start": 0.19,
+              "end": 0.697
+            },
+            {
+              "text": "hay",
+              "start": 0.697,
+              "end": 0.95
+            },
+            {
+              "text": "cosas",
+              "start": 0.95,
+              "end": 1.33
+            }
+          ]
+        },
+        {
+          "text": "que no salen en ninguna foto,",
+          "start": 3.103,
+          "end": 4.94,
+          "words": [
+            {
+              "text": "que",
+              "start": 0.0,
+              "end": 0.253
+            },
+            {
+              "text": "no",
+              "start": 0.253,
+              "end": 0.443
+            },
+            {
+              "text": "salen",
+              "start": 0.443,
+              "end": 0.823
+            },
+            {
+              "text": "en",
+              "start": 0.823,
+              "end": 1.013
+            },
+            {
+              "text": "ninguna",
+              "start": 1.013,
+              "end": 1.52
+            },
+            {
+              "text": "foto,",
+              "start": 1.52,
+              "end": 1.837
+            }
+          ]
+        },
+        {
+          "text": "y son justo las que salen caras.",
+          "start": 4.94,
+          "end": 6.967,
+          "words": [
+            {
+              "text": "y",
+              "start": 0.0,
+              "end": 0.127
+            },
+            {
+              "text": "son",
+              "start": 0.127,
+              "end": 0.38
+            },
+            {
+              "text": "justo",
+              "start": 0.38,
+              "end": 0.76
+            },
+            {
+              "text": "las",
+              "start": 0.76,
+              "end": 1.013
+            },
+            {
+              "text": "que",
+              "start": 1.013,
+              "end": 1.267
+            },
+            {
+              "text": "salen",
+              "start": 1.267,
+              "end": 1.647
+            },
+            {
+              "text": "caras.",
+              "start": 1.647,
+              "end": 2.027
+            }
+          ]
+        },
+        {
+          "text": "Esto es lo que se revisa.",
+          "start": 6.967,
+          "end": 8.55,
+          "words": [
+            {
+              "text": "Esto",
+              "start": 0.0,
+              "end": 0.317
+            },
+            {
+              "text": "es",
+              "start": 0.317,
+              "end": 0.507
+            },
+            {
+              "text": "lo",
+              "start": 0.507,
+              "end": 0.697
+            },
+            {
+              "text": "que",
+              "start": 0.697,
+              "end": 0.95
+            },
+            {
+              "text": "se",
+              "start": 0.95,
+              "end": 1.14
+            },
+            {
+              "text": "revisa.",
+              "start": 1.14,
+              "end": 1.583
+            }
+          ]
+        }
+      ],
+      "visualDirection": "Arranca ya en movimiento con las preguntas que ninguna foto responde, apareciendo una tras otra. Nada de producto todavía: la pieza enseña primero.",
+      "transition": "cut",
+      "asset": "sim:preguntas",
+      "assetType": "simulation",
+      "photo": null,
+      "voiceFile": "jobs/video-009/audio/voice-01.mp3",
+      "assetStartInFrames": 0,
+      "assetTotalInFrames": 270,
+      "accent": "#22C55E"
+    },
+    {
+      "purpose": "prueba",
+      "durationInFrames": 287,
+      "headline": "Escrituras primero",
+      "captions": [
+        {
+          "text": "Pide las escrituras",
+          "start": 0.0,
+          "end": 1.266,
+          "words": [
+            {
+              "text": "Pide",
+              "start": 0.0,
+              "end": 0.317
+            },
+            {
+              "text": "las",
+              "start": 0.317,
+              "end": 0.57
+            },
+            {
+              "text": "escrituras",
+              "start": 0.57,
+              "end": 1.266
+            }
+          ]
+        },
+        {
+          "text": "y comprueba en el Registro",
+          "start": 1.266,
+          "end": 2.976,
+          "words": [
+            {
+              "text": "y",
+              "start": 0.0,
+              "end": 0.127
+            },
+            {
+              "text": "comprueba",
+              "start": 0.127,
+              "end": 0.76
+            },
+            {
+              "text": "en",
+              "start": 0.76,
+              "end": 0.95
+            },
+            {
+              "text": "el",
+              "start": 0.95,
+              "end": 1.14
+            },
+            {
+              "text": "Registro",
+              "start": 1.14,
+              "end": 1.71
+            }
+          ]
+        },
+        {
+          "text": "de la Propiedad",
+          "start": 2.976,
+          "end": 3.989,
+          "words": [
+            {
+              "text": "de",
+              "start": 0.0,
+              "end": 0.19
+            },
+            {
+              "text": "la",
+              "start": 0.19,
+              "end": 0.38
+            },
+            {
+              "text": "Propiedad",
+              "start": 0.38,
+              "end": 1.013
+            }
+          ]
+        },
+        {
+          "text": "que quien te vende es",
+          "start": 3.989,
+          "end": 5.382,
+          "words": [
+            {
+              "text": "que",
+              "start": 0.0,
+              "end": 0.253
+            },
+            {
+              "text": "quien",
+              "start": 0.253,
+              "end": 0.633
+            },
+            {
+              "text": "te",
+              "start": 0.633,
+              "end": 0.823
+            },
+            {
+              "text": "vende",
+              "start": 0.823,
+              "end": 1.203
+            },
+            {
+              "text": "es",
+              "start": 1.203,
+              "end": 1.393
+            }
+          ]
+        },
+        {
+          "text": "de verdad el dueño.",
+          "start": 5.382,
+          "end": 6.585,
+          "words": [
+            {
+              "text": "de",
+              "start": 0.0,
+              "end": 0.19
+            },
+            {
+              "text": "verdad",
+              "start": 0.19,
+              "end": 0.633
+            },
+            {
+              "text": "el",
+              "start": 0.633,
+              "end": 0.823
+            },
+            {
+              "text": "dueño.",
+              "start": 0.823,
+              "end": 1.203
+            }
+          ]
+        },
+        {
+          "text": "Suena obvio,",
+          "start": 6.585,
+          "end": 7.345,
+          "words": [
+            {
+              "text": "Suena",
+              "start": 0.0,
+              "end": 0.38
+            },
+            {
+              "text": "obvio,",
+              "start": 0.38,
+              "end": 0.76
+            }
+          ]
+        },
+        {
+          "text": "y es donde más gente se cae.",
+          "start": 7.345,
+          "end": 9.118,
+          "words": [
+            {
+              "text": "y",
+              "start": 0.0,
+              "end": 0.127
+            },
+            {
+              "text": "es",
+              "start": 0.127,
+              "end": 0.317
+            },
+            {
+              "text": "donde",
+              "start": 0.317,
+              "end": 0.697
+            },
+            {
+              "text": "más",
+              "start": 0.697,
+              "end": 0.95
+            },
+            {
+              "text": "gente",
+              "start": 0.95,
+              "end": 1.33
+            },
+            {
+              "text": "se",
+              "start": 1.33,
+              "end": 1.52
+            },
+            {
+              "text": "cae.",
+              "start": 1.52,
+              "end": 1.773
+            }
+          ]
+        }
+      ],
+      "visualDirection": "El documento y el sello del Registro de la Propiedad: el nombre del papel y el del vendedor se cotejan hasta coincidir. Nada de la interfaz del portal.",
+      "transition": "cut",
+      "asset": "sim:escrituras",
+      "assetType": "simulation",
+      "photo": null,
+      "voiceFile": "jobs/video-009/audio/voice-02.mp3",
+      "assetStartInFrames": 0,
+      "assetTotalInFrames": 287,
+      "accent": "#6B5CF6"
+    },
+    {
+      "purpose": "prueba",
+      "durationInFrames": 386,
+      "headline": "Gravámenes y predial",
+      "captions": [
+        {
+          "text": "En ese mismo registro pide",
+          "start": 0.0,
+          "end": 1.8,
+          "words": [
+            {
+              "text": "En",
+              "start": 0.0,
+              "end": 0.2
+            },
+            {
+              "text": "ese",
+              "start": 0.2,
+              "end": 0.467
+            },
+            {
+              "text": "mismo",
+              "start": 0.467,
+              "end": 0.867
+            },
+            {
+              "text": "registro",
+              "start": 0.867,
+              "end": 1.467
+            },
+            {
+              "text": "pide",
+              "start": 1.467,
+              "end": 1.8
+            }
+          ]
+        },
+        {
+          "text": "el certificado de gravámenes,",
+          "start": 1.8,
+          "end": 3.733,
+          "words": [
+            {
+              "text": "el",
+              "start": 0.0,
+              "end": 0.2
+            },
+            {
+              "text": "certificado",
+              "start": 0.2,
+              "end": 1.0
+            },
+            {
+              "text": "de",
+              "start": 1.0,
+              "end": 1.2
+            },
+            {
+              "text": "gravámenes,",
+              "start": 1.2,
+              "end": 1.933
+            }
+          ]
+        },
+        {
+          "text": "y en el municipio comprueba",
+          "start": 3.733,
+          "end": 5.6,
+          "words": [
+            {
+              "text": "y",
+              "start": 0.0,
+              "end": 0.133
+            },
+            {
+              "text": "en",
+              "start": 0.133,
+              "end": 0.333
+            },
+            {
+              "text": "el",
+              "start": 0.333,
+              "end": 0.533
+            },
+            {
+              "text": "municipio",
+              "start": 0.533,
+              "end": 1.2
+            },
+            {
+              "text": "comprueba",
+              "start": 1.2,
+              "end": 1.867
+            }
+          ]
+        },
+        {
+          "text": "que el impuesto predial esté",
+          "start": 5.6,
+          "end": 7.533,
+          "words": [
+            {
+              "text": "que",
+              "start": 0.0,
+              "end": 0.267
+            },
+            {
+              "text": "el",
+              "start": 0.267,
+              "end": 0.467
+            },
+            {
+              "text": "impuesto",
+              "start": 0.467,
+              "end": 1.067
+            },
+            {
+              "text": "predial",
+              "start": 1.067,
+              "end": 1.6
+            },
+            {
+              "text": "esté",
+              "start": 1.6,
+              "end": 1.933
+            }
+          ]
+        },
+        {
+          "text": "al día.",
+          "start": 7.533,
+          "end": 8.0,
+          "words": [
+            {
+              "text": "al",
+              "start": 0.0,
+              "end": 0.2
+            },
+            {
+              "text": "día.",
+              "start": 0.2,
+              "end": 0.467
+            }
+          ]
+        },
+        {
+          "text": "Un abogado te explica qué",
+          "start": 8.0,
+          "end": 9.733,
+          "words": [
+            {
+              "text": "Un",
+              "start": 0.0,
+              "end": 0.2
+            },
+            {
+              "text": "abogado",
+              "start": 0.2,
+              "end": 0.733
+            },
+            {
+              "text": "te",
+              "start": 0.733,
+              "end": 0.933
+            },
+            {
+              "text": "explica",
+              "start": 0.933,
+              "end": 1.467
+            },
+            {
+              "text": "qué",
+              "start": 1.467,
+              "end": 1.733
+            }
+          ]
+        },
+        {
+          "text": "significa cada cosa antes de",
+          "start": 9.733,
+          "end": 11.667,
+          "words": [
+            {
+              "text": "significa",
+              "start": 0.0,
+              "end": 0.667
+            },
+            {
+              "text": "cada",
+              "start": 0.667,
+              "end": 1.0
+            },
+            {
+              "text": "cosa",
+              "start": 1.0,
+              "end": 1.333
+            },
+            {
+              "text": "antes",
+              "start": 1.333,
+              "end": 1.733
+            },
+            {
+              "text": "de",
+              "start": 1.733,
+              "end": 1.933
+            }
+          ]
+        },
+        {
+          "text": "que firmes.",
+          "start": 11.667,
+          "end": 12.4,
+          "words": [
+            {
+              "text": "que",
+              "start": 0.0,
+              "end": 0.267
+            },
+            {
+              "text": "firmes.",
+              "start": 0.267,
+              "end": 0.733
+            }
+          ]
+        }
+      ],
+      "visualDirection": "El certificado con sus casillas revisándose una a una: hipoteca, embargo, demanda; y al lado el predial del municipio. Se resuelve en la nota de que esto lo lee un abogado.",
+      "transition": "cut",
+      "asset": "sim:gravamenes",
+      "assetType": "simulation",
+      "photo": null,
+      "voiceFile": "jobs/video-009/audio/voice-03.mp3",
+      "assetStartInFrames": 0,
+      "assetTotalInFrames": 386,
+      "accent": "#14B8A6"
+    },
+    {
+      "purpose": "prueba",
+      "durationInFrames": 251,
+      "headline": "¿Qué puedes construir?",
+      "captions": [
+        {
+          "text": "Averigua el uso de suelo.",
+          "start": 0.0,
+          "end": 1.48,
+          "words": [
+            {
+              "text": "Averigua",
+              "start": 0.0,
+              "end": 0.533
+            },
+            {
+              "text": "el",
+              "start": 0.533,
+              "end": 0.71
+            },
+            {
+              "text": "uso",
+              "start": 0.71,
+              "end": 0.947
+            },
+            {
+              "text": "de",
+              "start": 0.947,
+              "end": 1.124
+            },
+            {
+              "text": "suelo.",
+              "start": 1.124,
+              "end": 1.48
+            }
+          ]
+        },
+        {
+          "text": "Es el municipio el que dice",
+          "start": 1.48,
+          "end": 3.137,
+          "words": [
+            {
+              "text": "Es",
+              "start": 0.0,
+              "end": 0.178
+            },
+            {
+              "text": "el",
+              "start": 0.178,
+              "end": 0.355
+            },
+            {
+              "text": "municipio",
+              "start": 0.355,
+              "end": 0.947
+            },
+            {
+              "text": "el",
+              "start": 0.947,
+              "end": 1.124
+            },
+            {
+              "text": "que",
+              "start": 1.124,
+              "end": 1.361
+            },
+            {
+              "text": "dice",
+              "start": 1.361,
+              "end": 1.657
+            }
+          ]
+        },
+        {
+          "text": "qué se puede construir en",
+          "start": 3.137,
+          "end": 4.676,
+          "words": [
+            {
+              "text": "qué",
+              "start": 0.0,
+              "end": 0.237
+            },
+            {
+              "text": "se",
+              "start": 0.237,
+              "end": 0.414
+            },
+            {
+              "text": "puede",
+              "start": 0.414,
+              "end": 0.769
+            },
+            {
+              "text": "construir",
+              "start": 0.769,
+              "end": 1.361
+            },
+            {
+              "text": "en",
+              "start": 1.361,
+              "end": 1.539
+            }
+          ]
+        },
+        {
+          "text": "ese terreno,",
+          "start": 4.676,
+          "end": 5.386,
+          "words": [
+            {
+              "text": "ese",
+              "start": 0.0,
+              "end": 0.237
+            },
+            {
+              "text": "terreno,",
+              "start": 0.237,
+              "end": 0.71
+            }
+          ]
+        },
+        {
+          "text": "y no siempre es lo",
+          "start": 5.386,
+          "end": 6.51,
+          "words": [
+            {
+              "text": "y",
+              "start": 0.0,
+              "end": 0.118
+            },
+            {
+              "text": "no",
+              "start": 0.118,
+              "end": 0.296
+            },
+            {
+              "text": "siempre",
+              "start": 0.296,
+              "end": 0.769
+            },
+            {
+              "text": "es",
+              "start": 0.769,
+              "end": 0.947
+            },
+            {
+              "text": "lo",
+              "start": 0.947,
+              "end": 1.124
+            }
+          ]
+        },
+        {
+          "text": "que tienes en la cabeza.",
+          "start": 6.51,
+          "end": 7.931,
+          "words": [
+            {
+              "text": "que",
+              "start": 0.0,
+              "end": 0.237
+            },
+            {
+              "text": "tienes",
+              "start": 0.237,
+              "end": 0.651
+            },
+            {
+              "text": "en",
+              "start": 0.651,
+              "end": 0.829
+            },
+            {
+              "text": "la",
+              "start": 0.829,
+              "end": 1.006
+            },
+            {
+              "text": "cabeza.",
+              "start": 1.006,
+              "end": 1.42
+            }
+          ]
+        }
+      ],
+      "visualDirection": "El plano municipal del predio con su clasificación y lo permitido: pisos, retiros, ocupación. Se ve que la respuesta viene del municipio, no del vendedor.",
+      "transition": "cut",
+      "asset": "sim:uso-suelo",
+      "assetType": "simulation",
+      "photo": null,
+      "voiceFile": "jobs/video-009/audio/voice-04.mp3",
+      "assetStartInFrames": 0,
+      "assetTotalInFrames": 251,
+      "accent": "#A78BFA"
+    },
+    {
+      "purpose": "prueba",
+      "durationInFrames": 324,
+      "headline": "Camina los linderos",
+      "captions": [
+        {
+          "text": "Camina los linderos",
+          "start": 0.0,
+          "end": 1.336,
+          "words": [
+            {
+              "text": "Camina",
+              "start": 0.0,
+              "end": 0.468
+            },
+            {
+              "text": "los",
+              "start": 0.468,
+              "end": 0.735
+            },
+            {
+              "text": "linderos",
+              "start": 0.735,
+              "end": 1.336
+            }
+          ]
+        },
+        {
+          "text": "con quien vende",
+          "start": 1.336,
+          "end": 2.405,
+          "words": [
+            {
+              "text": "con",
+              "start": 0.0,
+              "end": 0.267
+            },
+            {
+              "text": "quien",
+              "start": 0.267,
+              "end": 0.668
+            },
+            {
+              "text": "vende",
+              "start": 0.668,
+              "end": 1.069
+            }
+          ]
+        },
+        {
+          "text": "y compáralos con lo que dicen",
+          "start": 2.405,
+          "end": 4.409,
+          "words": [
+            {
+              "text": "y",
+              "start": 0.0,
+              "end": 0.134
+            },
+            {
+              "text": "compáralos",
+              "start": 0.134,
+              "end": 0.868
+            },
+            {
+              "text": "con",
+              "start": 0.868,
+              "end": 1.136
+            },
+            {
+              "text": "lo",
+              "start": 1.136,
+              "end": 1.336
+            },
+            {
+              "text": "que",
+              "start": 1.336,
+              "end": 1.603
+            },
+            {
+              "text": "dicen",
+              "start": 1.603,
+              "end": 2.004
+            }
+          ]
+        },
+        {
+          "text": "los papeles.",
+          "start": 4.409,
+          "end": 5.21,
+          "words": [
+            {
+              "text": "los",
+              "start": 0.0,
+              "end": 0.267
+            },
+            {
+              "text": "papeles.",
+              "start": 0.267,
+              "end": 0.802
+            }
+          ]
+        },
+        {
+          "text": "Si algo no cuadra,",
+          "start": 5.21,
+          "end": 6.412,
+          "words": [
+            {
+              "text": "Si",
+              "start": 0.0,
+              "end": 0.2
+            },
+            {
+              "text": "algo",
+              "start": 0.2,
+              "end": 0.534
+            },
+            {
+              "text": "no",
+              "start": 0.534,
+              "end": 0.735
+            },
+            {
+              "text": "cuadra,",
+              "start": 0.735,
+              "end": 1.202
+            }
+          ]
+        },
+        {
+          "text": "un topógrafo lo mide.",
+          "start": 6.412,
+          "end": 7.815,
+          "words": [
+            {
+              "text": "un",
+              "start": 0.0,
+              "end": 0.2
+            },
+            {
+              "text": "topógrafo",
+              "start": 0.2,
+              "end": 0.868
+            },
+            {
+              "text": "lo",
+              "start": 0.868,
+              "end": 1.069
+            },
+            {
+              "text": "mide.",
+              "start": 1.069,
+              "end": 1.403
+            }
+          ]
+        },
+        {
+          "text": "Un metro de diferencia es mucha plata.",
+          "start": 7.815,
+          "end": 10.353,
+          "words": [
+            {
+              "text": "Un",
+              "start": 0.0,
+              "end": 0.2
+            },
+            {
+              "text": "metro",
+              "start": 0.2,
+              "end": 0.601
+            },
+            {
+              "text": "de",
+              "start": 0.601,
+              "end": 0.802
+            },
+            {
+              "text": "diferencia",
+              "start": 0.802,
+              "end": 1.536
+            },
+            {
+              "text": "es",
+              "start": 1.536,
+              "end": 1.737
+            },
+            {
+              "text": "mucha",
+              "start": 1.737,
+              "end": 2.137
+            },
+            {
+              "text": "plata.",
+              "start": 2.137,
+              "end": 2.538
+            }
+          ]
+        }
+      ],
+      "visualDirection": "El recorrido del perímetro a pie, mojón por mojón, y la cinta midiendo un lado que no coincide con lo declarado. Termina con el topógrafo y su equipo.",
+      "transition": "cut",
+      "asset": "sim:linderos",
+      "assetType": "simulation",
+      "photo": null,
+      "voiceFile": "jobs/video-009/audio/voice-05.mp3",
+      "assetStartInFrames": 0,
+      "assetTotalInFrames": 324,
+      "accent": "#22C55E"
+    },
+    {
+      "purpose": "prueba",
+      "durationInFrames": 290,
+      "headline": "Agua, luz y acceso",
+      "captions": [
+        {
+          "text": "Mira qué servicios llegan",
+          "start": 0.0,
+          "end": 1.845,
+          "words": [
+            {
+              "text": "Mira",
+              "start": 0.0,
+              "end": 0.355
+            },
+            {
+              "text": "qué",
+              "start": 0.355,
+              "end": 0.639
+            },
+            {
+              "text": "servicios",
+              "start": 0.639,
+              "end": 1.348
+            },
+            {
+              "text": "llegan",
+              "start": 1.348,
+              "end": 1.845
+            }
+          ]
+        },
+        {
+          "text": "hasta ahí: agua, luz, alcantarillado.",
+          "start": 1.845,
+          "end": 4.258,
+          "words": [
+            {
+              "text": "hasta",
+              "start": 0.0,
+              "end": 0.426
+            },
+            {
+              "text": "ahí:",
+              "start": 0.426,
+              "end": 0.71
+            },
+            {
+              "text": "agua,",
+              "start": 0.71,
+              "end": 1.065
+            },
+            {
+              "text": "luz,",
+              "start": 1.065,
+              "end": 1.348
+            },
+            {
+              "text": "alcantarillado.",
+              "start": 1.348,
+              "end": 2.413
+            }
+          ]
+        },
+        {
+          "text": "Y cómo se entra en invierno,",
+          "start": 4.258,
+          "end": 6.246,
+          "words": [
+            {
+              "text": "Y",
+              "start": 0.0,
+              "end": 0.142
+            },
+            {
+              "text": "cómo",
+              "start": 0.142,
+              "end": 0.497
+            },
+            {
+              "text": "se",
+              "start": 0.497,
+              "end": 0.71
+            },
+            {
+              "text": "entra",
+              "start": 0.71,
+              "end": 1.136
+            },
+            {
+              "text": "en",
+              "start": 1.136,
+              "end": 1.348
+            },
+            {
+              "text": "invierno,",
+              "start": 1.348,
+              "end": 1.987
+            }
+          ]
+        },
+        {
+          "text": "no solo el día soleado",
+          "start": 6.246,
+          "end": 7.878,
+          "words": [
+            {
+              "text": "no",
+              "start": 0.0,
+              "end": 0.213
+            },
+            {
+              "text": "solo",
+              "start": 0.213,
+              "end": 0.568
+            },
+            {
+              "text": "el",
+              "start": 0.568,
+              "end": 0.781
+            },
+            {
+              "text": "día",
+              "start": 0.781,
+              "end": 1.065
+            },
+            {
+              "text": "soleado",
+              "start": 1.065,
+              "end": 1.632
+            }
+          ]
+        },
+        {
+          "text": "que fuiste a verlo.",
+          "start": 7.878,
+          "end": 9.226,
+          "words": [
+            {
+              "text": "que",
+              "start": 0.0,
+              "end": 0.284
+            },
+            {
+              "text": "fuiste",
+              "start": 0.284,
+              "end": 0.781
+            },
+            {
+              "text": "a",
+              "start": 0.781,
+              "end": 0.923
+            },
+            {
+              "text": "verlo.",
+              "start": 0.923,
+              "end": 1.348
+            }
+          ]
+        }
+      ],
+      "visualDirection": "Los servicios llegando o quedándose cortos frente al terreno, y después la misma vía en seco y con lluvia. El contraste se lee sin sonido.",
+      "transition": "cut",
+      "asset": "sim:servicios",
+      "assetType": "simulation",
+      "photo": null,
+      "voiceFile": "jobs/video-009/audio/voice-06.mp3",
+      "assetStartInFrames": 0,
+      "assetTotalInFrames": 290,
+      "accent": "#6B5CF6"
+    },
+    {
+      "purpose": "prueba",
+      "durationInFrames": 264,
+      "headline": "Precio por metro",
+      "captions": [
+        {
+          "text": "Para comparar,",
+          "start": 0.0,
+          "end": 0.829,
+          "words": [
+            {
+              "text": "Para",
+              "start": 0.0,
+              "end": 0.296
+            },
+            {
+              "text": "comparar,",
+              "start": 0.296,
+              "end": 0.829
+            }
+          ]
+        },
+        {
+          "text": "divide el precio total",
+          "start": 0.829,
+          "end": 2.191,
+          "words": [
+            {
+              "text": "divide",
+              "start": 0.0,
+              "end": 0.414
+            },
+            {
+              "text": "el",
+              "start": 0.414,
+              "end": 0.592
+            },
+            {
+              "text": "precio",
+              "start": 0.592,
+              "end": 1.007
+            },
+            {
+              "text": "total",
+              "start": 1.007,
+              "end": 1.362
+            }
+          ]
+        },
+        {
+          "text": "para el área.",
+          "start": 2.191,
+          "end": 2.96,
+          "words": [
+            {
+              "text": "para",
+              "start": 0.0,
+              "end": 0.296
+            },
+            {
+              "text": "el",
+              "start": 0.296,
+              "end": 0.474
+            },
+            {
+              "text": "área.",
+              "start": 0.474,
+              "end": 0.77
+            }
+          ]
+        },
+        {
+          "text": "Con el precio por metro cuadrado,",
+          "start": 2.96,
+          "end": 4.914,
+          "words": [
+            {
+              "text": "Con",
+              "start": 0.0,
+              "end": 0.237
+            },
+            {
+              "text": "el",
+              "start": 0.237,
+              "end": 0.414
+            },
+            {
+              "text": "precio",
+              "start": 0.414,
+              "end": 0.829
+            },
+            {
+              "text": "por",
+              "start": 0.829,
+              "end": 1.066
+            },
+            {
+              "text": "metro",
+              "start": 1.066,
+              "end": 1.421
+            },
+            {
+              "text": "cuadrado,",
+              "start": 1.421,
+              "end": 1.954
+            }
+          ]
+        },
+        {
+          "text": "dos terrenos de distinto tamaño se",
+          "start": 4.914,
+          "end": 6.986,
+          "words": [
+            {
+              "text": "dos",
+              "start": 0.0,
+              "end": 0.237
+            },
+            {
+              "text": "terrenos",
+              "start": 0.237,
+              "end": 0.77
+            },
+            {
+              "text": "de",
+              "start": 0.77,
+              "end": 0.947
+            },
+            {
+              "text": "distinto",
+              "start": 0.947,
+              "end": 1.48
+            },
+            {
+              "text": "tamaño",
+              "start": 1.48,
+              "end": 1.895
+            },
+            {
+              "text": "se",
+              "start": 1.895,
+              "end": 2.072
+            }
+          ]
+        },
+        {
+          "text": "miran de igual a igual.",
+          "start": 6.986,
+          "end": 8.348,
+          "words": [
+            {
+              "text": "miran",
+              "start": 0.0,
+              "end": 0.355
+            },
+            {
+              "text": "de",
+              "start": 0.355,
+              "end": 0.533
+            },
+            {
+              "text": "igual",
+              "start": 0.533,
+              "end": 0.888
+            },
+            {
+              "text": "a",
+              "start": 0.888,
+              "end": 1.007
+            },
+            {
+              "text": "igual.",
+              "start": 1.007,
+              "end": 1.362
+            }
+          ]
+        }
+      ],
+      "visualDirection": "La división en pantalla: precio total entre área declarada, el resultado subiendo, y el remate de dos terrenos de distinto tamaño comparados por su metro cuadrado.",
+      "transition": "cut",
+      "asset": "sim:dividir",
+      "assetType": "simulation",
+      "photo": null,
+      "voiceFile": "jobs/video-009/audio/voice-07.mp3",
+      "assetStartInFrames": 0,
+      "assetTotalInFrames": 264,
+      "accent": "#14B8A6"
+    },
+    {
+      "purpose": "resultado",
+      "durationInFrames": 336,
+      "headline": "Míralo en el mapa",
+      "captions": [
+        {
+          "text": "Y lo primero de toda",
+          "start": 0.0,
+          "end": 1.343,
+          "words": [
+            {
+              "text": "Y",
+              "start": 0.0,
+              "end": 0.128
+            },
+            {
+              "text": "lo",
+              "start": 0.128,
+              "end": 0.32
+            },
+            {
+              "text": "primero",
+              "start": 0.32,
+              "end": 0.831
+            },
+            {
+              "text": "de",
+              "start": 0.831,
+              "end": 1.023
+            },
+            {
+              "text": "toda",
+              "start": 1.023,
+              "end": 1.343
+            }
+          ]
+        },
+        {
+          "text": "esa lista,",
+          "start": 1.343,
+          "end": 1.982,
+          "words": [
+            {
+              "text": "esa",
+              "start": 0.0,
+              "end": 0.256
+            },
+            {
+              "text": "lista,",
+              "start": 0.256,
+              "end": 0.639
+            }
+          ]
+        },
+        {
+          "text": "saber dónde queda de verdad",
+          "start": 1.982,
+          "end": 3.773,
+          "words": [
+            {
+              "text": "saber",
+              "start": 0.0,
+              "end": 0.384
+            },
+            {
+              "text": "dónde",
+              "start": 0.384,
+              "end": 0.767
+            },
+            {
+              "text": "queda",
+              "start": 0.767,
+              "end": 1.151
+            },
+            {
+              "text": "de",
+              "start": 1.151,
+              "end": 1.343
+            },
+            {
+              "text": "verdad",
+              "start": 1.343,
+              "end": 1.791
+            }
+          ]
+        },
+        {
+          "text": "y qué hay alrededor,",
+          "start": 3.773,
+          "end": 5.052,
+          "words": [
+            {
+              "text": "y",
+              "start": 0.0,
+              "end": 0.128
+            },
+            {
+              "text": "qué",
+              "start": 0.128,
+              "end": 0.384
+            },
+            {
+              "text": "hay",
+              "start": 0.384,
+              "end": 0.639
+            },
+            {
+              "text": "alrededor,",
+              "start": 0.639,
+              "end": 1.279
+            }
+          ]
+        },
+        {
+          "text": "lo puedes ver antes de manejar",
+          "start": 5.052,
+          "end": 7.034,
+          "words": [
+            {
+              "text": "lo",
+              "start": 0.0,
+              "end": 0.192
+            },
+            {
+              "text": "puedes",
+              "start": 0.192,
+              "end": 0.639
+            },
+            {
+              "text": "ver",
+              "start": 0.639,
+              "end": 0.895
+            },
+            {
+              "text": "antes",
+              "start": 0.895,
+              "end": 1.279
+            },
+            {
+              "text": "de",
+              "start": 1.279,
+              "end": 1.471
+            },
+            {
+              "text": "manejar",
+              "start": 1.471,
+              "end": 1.982
+            }
+          ]
+        },
+        {
+          "text": "hasta allá.",
+          "start": 7.034,
+          "end": 7.738,
+          "words": [
+            {
+              "text": "hasta",
+              "start": 0.0,
+              "end": 0.384
+            },
+            {
+              "text": "allá.",
+              "start": 0.384,
+              "end": 0.703
+            }
+          ]
+        },
+        {
+          "text": "Eso está en el mapa",
+          "start": 7.738,
+          "end": 9.017,
+          "words": [
+            {
+              "text": "Eso",
+              "start": 0.0,
+              "end": 0.256
+            },
+            {
+              "text": "está",
+              "start": 0.256,
+              "end": 0.576
+            },
+            {
+              "text": "en",
+              "start": 0.576,
+              "end": 0.767
+            },
+            {
+              "text": "el",
+              "start": 0.767,
+              "end": 0.959
+            },
+            {
+              "text": "mapa",
+              "start": 0.959,
+              "end": 1.279
+            }
+          ]
+        },
+        {
+          "text": "de Geo Propiedades Ecuador.",
+          "start": 9.017,
+          "end": 10.744,
+          "words": [
+            {
+              "text": "de",
+              "start": 0.0,
+              "end": 0.192
+            },
+            {
+              "text": "Geo",
+              "start": 0.192,
+              "end": 0.448
+            },
+            {
+              "text": "Propiedades",
+              "start": 0.448,
+              "end": 1.215
+            },
+            {
+              "text": "Ecuador.",
+              "start": 1.215,
+              "end": 1.727
+            }
+          ]
+        }
+      ],
+      "visualDirection": "Aquí entra el producto por primera vez: la cámara se aleja desde el terreno y aparece el entorno con sus vías y el acceso trazado. Es el premio de la pieza, no su principio.",
+      "transition": "cut",
+      "asset": "sim:alrededor",
+      "assetType": "simulation",
+      "photo": null,
+      "voiceFile": "jobs/video-009/audio/voice-08.mp3",
+      "assetStartInFrames": 0,
+      "assetTotalInFrames": 336,
+      "accent": "#A78BFA"
+    },
+    {
+      "purpose": "cta",
+      "durationInFrames": 276,
+      "headline": "Guarda la lista",
+      "captions": [
+        {
+          "text": "Guarda esta lista,",
+          "start": 0.0,
+          "end": 1.168,
+          "words": [
+            {
+              "text": "Guarda",
+              "start": 0.0,
+              "end": 0.454
+            },
+            {
+              "text": "esta",
+              "start": 0.454,
+              "end": 0.779
+            },
+            {
+              "text": "lista,",
+              "start": 0.779,
+              "end": 1.168
+            }
+          ]
+        },
+        {
+          "text": "y cuando encuentres el terreno,",
+          "start": 1.168,
+          "end": 3.179,
+          "words": [
+            {
+              "text": "y",
+              "start": 0.0,
+              "end": 0.13
+            },
+            {
+              "text": "cuando",
+              "start": 0.13,
+              "end": 0.584
+            },
+            {
+              "text": "encuentres",
+              "start": 0.584,
+              "end": 1.298
+            },
+            {
+              "text": "el",
+              "start": 1.298,
+              "end": 1.492
+            },
+            {
+              "text": "terreno,",
+              "start": 1.492,
+              "end": 2.011
+            }
+          ]
+        },
+        {
+          "text": "ya sabes qué preguntar.",
+          "start": 3.179,
+          "end": 4.671,
+          "words": [
+            {
+              "text": "ya",
+              "start": 0.0,
+              "end": 0.195
+            },
+            {
+              "text": "sabes",
+              "start": 0.195,
+              "end": 0.584
+            },
+            {
+              "text": "qué",
+              "start": 0.584,
+              "end": 0.843
+            },
+            {
+              "text": "preguntar.",
+              "start": 0.843,
+              "end": 1.492
+            }
+          ]
+        },
+        {
+          "text": "Encuentra tu futuro hogar en geo",
+          "start": 4.671,
+          "end": 6.812,
+          "words": [
+            {
+              "text": "Encuentra",
+              "start": 0.0,
+              "end": 0.649
+            },
+            {
+              "text": "tu",
+              "start": 0.649,
+              "end": 0.843
+            },
+            {
+              "text": "futuro",
+              "start": 0.843,
+              "end": 1.298
+            },
+            {
+              "text": "hogar",
+              "start": 1.298,
+              "end": 1.687
+            },
+            {
+              "text": "en",
+              "start": 1.687,
+              "end": 1.881
+            },
+            {
+              "text": "geo",
+              "start": 1.881,
+              "end": 2.141
+            }
+          ]
+        },
+        {
+          "text": "propiedades ecuador punto com.",
+          "start": 6.812,
+          "end": 8.758,
+          "words": [
+            {
+              "text": "propiedades",
+              "start": 0.0,
+              "end": 0.779
+            },
+            {
+              "text": "ecuador",
+              "start": 0.779,
+              "end": 1.298
+            },
+            {
+              "text": "punto",
+              "start": 1.298,
+              "end": 1.687
+            },
+            {
+              "text": "com.",
+              "start": 1.687,
+              "end": 1.946
+            }
+          ]
+        }
+      ],
+      "visualDirection": "Cierre de marca común de la serie: tile, Geo Propiedades Ecuador, dominio, el CTA 'Encuentra tu futuro hogar' y la firma de Aents.",
+      "transition": "fade",
+      "asset": null,
+      "assetType": null,
+      "photo": null,
+      "voiceFile": "jobs/video-009/audio/voice-09.mp3",
+      "assetStartInFrames": 0,
+      "assetTotalInFrames": 276,
+      "accent": "#22C55E"
+    }
+  ]
+}

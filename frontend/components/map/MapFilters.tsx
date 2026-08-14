@@ -35,6 +35,7 @@ interface MapFiltersProps {
   hasActiveFilters: boolean;
   onChange: (filters: PropertyFilters) => void;
   onClear: () => void;
+  onCitySelect?: (center: { latitude: number; longitude: number }) => void;
 }
 
 const QUICK_FILTERS = [
@@ -67,6 +68,7 @@ export default function MapFilters({
   hasActiveFilters,
   onChange,
   onClear,
+  onCitySelect,
 }: MapFiltersProps) {
   const [open, setOpen] = useState(false);
   const update = (patch: Partial<PropertyFilters>, source = 'advanced') => {
@@ -283,7 +285,18 @@ export default function MapFilters({
               {cityOptions.length > 0 && (
                 <motion.div variants={item} className="space-y-1.5">
                   <Label className="text-xs font-medium text-textSecondary">Ciudad</Label>
-                  <Select value={filters.city} onValueChange={(value) => update({ city: value })}>
+                  <Select
+                    value={filters.city}
+                    onValueChange={(value) => {
+                      update({ city: value });
+                      if (value === 'all') return;
+                      const group = filters.province !== 'all'
+                        ? selectedProvince
+                        : locations.find((location) => location.centers?.[value]);
+                      const center = group?.centers?.[value];
+                      if (center) onCitySelect?.(center);
+                    }}
+                  >
                     <SelectTrigger aria-label="Ciudad" className="rounded-button border-line">
                       <SelectValue placeholder="Ciudad" />
                     </SelectTrigger>

@@ -1,6 +1,6 @@
 'use client';
 
-import { MessageCircle } from 'lucide-react';
+import { Megaphone, MessageCircle } from 'lucide-react';
 
 import { buildWhatsAppUrl } from '@/lib/constants';
 import { trackEvent } from '@/lib/analytics';
@@ -60,8 +60,8 @@ export function HouseAd({
 
   return (
     <aside className={`not-prose ${className ?? 'my-8'}`} aria-label="Espacio publicitario disponible">
-      <p className="mb-2 text-[0.7rem] font-semibold uppercase tracking-[0.12em] text-textSecondary">
-        Espacio disponible
+      <p className="mb-2.5 inline-flex items-center gap-1.5 text-[0.7rem] font-bold uppercase tracking-[0.14em] text-textSecondary">
+        <Megaphone className="h-3.5 w-3.5" aria-hidden="true" /> Espacio disponible
       </p>
 
       <a
@@ -71,17 +71,18 @@ export function HouseAd({
         onClick={() =>
           trackEvent('ad_slot_inquiry_clicked', { placement, city: city || '' })
         }
-        className={`group flex rounded-card border border-dashed border-line bg-surface transition-colors hover:border-primary ${
-          variant === 'strip' ? 'flex-col gap-2 p-4 sm:flex-row sm:items-center sm:gap-4' : 'flex-col gap-2 p-5'
+        className={`group relative flex overflow-hidden rounded-card border border-dashed border-primary/40 bg-gradient-to-br from-primaryLight via-white to-white shadow-card transition-all hover:-translate-y-0.5 hover:border-primary hover:shadow-cardHover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 ${
+          variant === 'strip' ? 'flex-col gap-4 p-4 sm:flex-row sm:items-center' : 'flex-col gap-5 p-5 sm:flex-row sm:items-center sm:p-6'
         }`}
       >
+        <span className="absolute -right-10 -top-14 h-32 w-32 rounded-full border border-primary/10" aria-hidden="true" />
         <div className="flex min-w-0 flex-1 flex-col gap-1.5">
-          <p className="text-base font-bold leading-snug text-textPrimary">
+          <p className="text-lg font-black leading-snug tracking-tight text-textPrimary">
             {headline || DEFAULT_HEADLINE}
           </p>
           <p className="text-sm leading-relaxed text-textSecondary">{body || DEFAULT_BODY}</p>
         </div>
-        <span className="inline-flex shrink-0 items-center gap-1.5 text-sm font-semibold text-primary">
+        <span className="relative inline-flex min-h-11 shrink-0 items-center justify-center gap-2 rounded-full bg-primary px-5 text-sm font-bold text-primary-foreground shadow-card transition-colors group-hover:bg-primaryHover">
           <MessageCircle className="h-4 w-4" strokeWidth={2} aria-hidden />
           {ctaLabel || DEFAULT_CTA}
         </span>

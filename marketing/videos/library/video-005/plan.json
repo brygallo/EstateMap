@@ -1,0 +1,78 @@
+{
+  "title": "Tres cosas que revisar antes de contactar",
+  "audience": "comprador",
+  "funnel_stage": "consideración",
+  "objective": "Conseguir que compradores e inquilinos abran Geo Propiedades Ecuador para revisar una ficha con más contexto antes de contactar: fotos y datos declarados, análisis de precio frente a inventario comparable y ubicación en el mapa.",
+  "conversion_event": "Clic al sitio desde el perfil o guardado de la pieza; secundariamente, apertura de una ficha desde el mapa.",
+  "pillar": "Educación inmobiliaria",
+  "series": "Antes de contactar",
+  "concept": "Un mini tutorial de tres comprobaciones disponibles en la ficha: recorrer las fotos y lo declarado, leer el precio por metro cuadrado que calcula el sistema junto con su comparación frente a inventario activo comparable, y abrir la ubicación en el mapa junto con la Forma del terreno cuando la ficha la muestre. La pieza no juzga si una propiedad conviene: muestra el contexto y devuelve la decisión a quien busca.",
+  "promise": "Antes de contactar, puedes reunir más contexto con tres revisiones visibles en la ficha.",
+  "cta": "Encuentra tu futuro hogar",
+  "hypothesis": "Si en lugar de vender el mapa le damos al comprador un método de tres pasos que puede aplicar hoy, la pieza gana guardados y visitas cualificadas al sitio, porque el valor se entrega antes del clic y el producto aparece como el lugar donde ese método ya es posible.",
+  "cover_text": "Revisa esto antes de contactar",
+  "caption": "¿Te gustó una propiedad? No contactes todavía. Revisa las fotos y los datos declarados. Mira el precio por m² y su comparación frente a propiedades activas del mismo tipo, operación y ciudad. Después abre la ubicación y la Forma del terreno cuando esté disponible. Encuentra tu futuro hogar en geopropiedadesecuador.com #ViviendaEcuador #PropiedadesEcuador",
+  "narration": "¿Te gustó una propiedad? Espera antes de contactar. Primero revisa todas las fotos y los datos declarados: habitaciones, baños y área. Luego abre el análisis del anuncio. La ficha calcula el precio por metro cuadrado. Lo compara con propiedades activas del mismo tipo, operación y ciudad, y muestra el rango habitual y cuántos comparables existen. Después revisa la ubicación y la Forma del terreno, cuando esté disponible. Mira bien hoy el lugar que mañana podrías llamar hogar. Encuentra tu futuro hogar en Geo Propiedades Ecuador.",
+  "music": "Colchón instrumental suave, sin voces. Piano eléctrico de notas espaciadas, bajo cálido y percusión ligera de escobillas, cerca de noventa pulsos por minuto. Ánimo sereno y didáctico, volumen bajo y constante bajo la voz. Solo entra si queda archivada su licencia comercial gratuita.",
+  "verification_notes": [
+    "El video no afirma que una propiedad sea buena, barata, rentable ni segura: solo enseña a leer datos que ya están publicados en la ficha.",
+    "Las características citadas (habitaciones, baños, área) y el precio son campos declarados por el anunciante en la ficha pública; la voz dice 'lo declarado' para no atribuir esos datos a una verificación de la plataforma.",
+    "La ficha calcula el precio por m² como precio dividido para el área total declarada, no el área construida, según PRC-002 y PropertyIntelligence.",
+    "La comparación usa inventario activo del mismo tipo, operación y ciudad, excluye el propio anuncio y muestra rango P25–P75 y tamaño de muestra. No se presenta como comparación por cercanía exacta.",
+    "La Forma del terreno se nombra con el término exacto de la interfaz y se condiciona a 'si la ficha la muestra'. No se promete exactitud topográfica ni legal.",
+    "El mapa es MapLibre; ninguna escena lo nombra ni sugiere otra tecnología.",
+    "No aparecen contadores de visitas, datos de contacto, credenciales ni paneles administrativos. Las fichas de las animaciones son ilustraciones genéricas, no una propiedad real identificable.",
+    "No se menciona publicación, gratuidad ni comisión: la pieza es solo de comprador y conserva un único CTA.",
+    "CTA: se usa 'Encuentra tu futuro hogar' según el brief y la corrección humana registrada en memory/lessons.md del 13/08/2026 para piezas de comprador, que prevalece sobre la familia genérica 'Explora el mapa'.",
+    "Serie 'Antes de contactar': es nueva y funciona como espejo para comprador de 'Antes de publicar'. Requiere registro en memory/decisions.md si se aprueba.",
+    "Todas las animaciones usadas ya están registradas; no se propone ningún sim nuevo sin implementación, registro en Python y Remotion, y prueba.",
+    "Borrador con voz local Kokoro. No se ejecuta --final sin aprobación humana explícita del MP4."
+  ],
+  "scenes": [
+    {
+      "purpose": "gancho",
+      "duration": 3.5,
+      "voice": "¿Te gustó una propiedad? Espera antes de contactar.",
+      "on_screen_text": "Antes de contactar",
+      "asset": "sim:revisar-fotos",
+      "visual_direction": "Arranca ya en movimiento: la ficha entra desde abajo con la foto grande ocupando el cuadro y un ligero desplazamiento hacia arriba, como cuando alguien acaba de abrir un anuncio. El producto se reconoce en el cuadro uno. Sobre la foto, un destello suave recorre el borde y las características quedan todavía apagadas, insinuando que falta información por mirar. Marca superior con dominio a x=24 y tile a 84 px del borde derecho, ambos desde y=205. Rótulo y subtítulos en una sola columna anclada abajo, terminando en y=1580, con 72 px entre titular y subtítulo. Zonas seguras: nada esencial arriba de y=240, debajo de y=1460, ni en los 240 px de la derecha bajo y=820.",
+      "transition": "cut"
+    },
+    {
+      "purpose": "prueba",
+      "duration": 6.0,
+      "voice": "Primero revisa todas las fotos y los datos declarados: habitaciones, baños y área.",
+      "on_screen_text": "Mira toda la ficha",
+      "asset": "sim:revisar-fotos",
+      "visual_direction": "Continúa la misma ficha sin corte de contexto: la galería avanza con desplazamiento continuo por tres o cuatro fotos y luego la vista baja hasta el bloque de características, donde habitaciones, baños y área se encienden uno a uno acompañando exactamente el orden de la voz. El movimiento es constante, nunca congela la ficha. Los valores son genéricos e ilustrativos, no de una propiedad identificable. Rótulo en una sola fila abajo, marca superior fija en y=205.",
+      "transition": "cut"
+    },
+    {
+      "purpose": "prueba",
+      "duration": 10.0,
+      "voice": "Luego abre el análisis del anuncio. La ficha calcula el precio por metro cuadrado. Lo compara con propiedades activas del mismo tipo, operación y ciudad, y muestra el rango habitual y cuántos comparables existen.",
+      "on_screen_text": "Precio vs. similares",
+      "asset": "sim:precio-area",
+      "visual_direction": "Recrea el bloque real Inteligencia del anuncio: primero aparece el precio por m² calculado por el sistema; después Frente a similares, el rango habitual y el tamaño de muestra. La animación explica visualmente que los comparables son anuncios activos del mismo tipo, operación y ciudad, sin insinuar cercanía exacta ni usar el área construida. Los valores son un ejemplo ilustrativo y no un dato de mercado citable. Rótulo abajo, marca superior fija.",
+      "transition": "cut"
+    },
+    {
+      "purpose": "prueba",
+      "duration": 6.0,
+      "voice": "Después revisa la ubicación y la Forma del terreno, cuando esté disponible.",
+      "on_screen_text": "Revisa la ubicación",
+      "asset": "sim:ubicacion-ficha",
+      "visual_direction": "La ficha se retrae y el mapa toma el cuadro con un acercamiento continuo hasta la zona; primero aparece el punto de la propiedad y, cuando la voz lo nombra, el punto da paso al polígono de la Forma del terreno dibujándose sobre el mapa, con su etiqueta escrita tal cual aparece en la interfaz. Sin calles ni nombres reales legibles: es una recreación ilustrativa, no una captura. Rótulo abajo, marca superior fija.",
+      "transition": "cut"
+    },
+    {
+      "purpose": "cta",
+      "duration": 8.5,
+      "voice": "Mira bien hoy el lugar que mañana podrías llamar hogar. Encuentra tu futuro hogar en Geo Propiedades Ecuador.",
+      "on_screen_text": "Tu futuro hogar",
+      "asset": null,
+      "visual_direction": "Las tres comprobaciones vuelven un instante como tres marcas que se completan sobre el mapa mientras entra la marca al nombrarse Geo Propiedades Ecuador, y el plano se resuelve en la tarjeta de cierre común de la serie: tile, Geo Propiedades Ecuador, dominio geopropiedadesecuador.com, el CTA 'Encuentra tu futuro hogar' y la firma de Aents. El cierre no se modifica respecto al resto de la serie.",
+      "transition": "fade"
+    }
+  ]
+}

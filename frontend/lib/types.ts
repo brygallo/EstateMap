@@ -101,11 +101,13 @@ export interface PropertyCluster {
   is_cluster: true;
   count: number;
   label?: string | null;
-  group_level?: 'country' | 'province' | 'city' | 'grid' | string;
+  group_level?: 'country' | 'province' | 'city' | string;
   latitude: number;
   longitude: number;
   focus_latitude?: number;
   focus_longitude?: number;
+  anchor_latitude?: number;
+  anchor_longitude?: number;
   expansion_zoom: number;
   bounds?: MapBounds;
   suspicious_count?: number;
@@ -126,7 +128,7 @@ export interface MapCityGroup {
 }
 
 export interface MapPayloadContext {
-  group_level: 'country' | 'province' | 'city' | 'grid' | 'points' | string;
+  group_level: 'country' | 'province' | 'city' | 'points' | string;
   title: string;
   subtitle: string;
   next_level?: string | null;
@@ -170,6 +172,7 @@ export interface PropertyFilters {
 export interface PropertyLocationGroup {
   province: string;
   cities: string[];
+  centers?: Record<string, { latitude: number; longitude: number }>;
 }
 
 /** Bounding box del mapa visible, en grados. */

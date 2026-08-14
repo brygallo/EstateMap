@@ -1,0 +1,8 @@
+{
+  "approved_at": "2026-08-13T16:46:25.843677-05:00",
+  "approved_by": "Claude",
+  "notes": "Voz final, cierre de marca y musica pedidos por el usuario. Se retiran los totales de inventario inventados de las burbujas del mapa.",
+  "lint_passed": true,
+  "forced": false,
+  "plan_sha": "ebfbd342dcc879ba0b68f226d7e4dfe15a73ecb7a0a6827c947d330b6f8a0e78"
+}

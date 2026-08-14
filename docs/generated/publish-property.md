@@ -271,7 +271,7 @@ Cada `post_save`/`post_delete` de `Property` encadena, por señal: una fila de `
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
 - `backend/real_estate/views.py:411-413` (`exclude(status='inactive')`) — Único filtro que saca inactive del catálogo público; no toca la fila.
-- `backend/real_estate/views.py:1017-1019` (`def my_properties`) — including inactive: el dueño ve su propiedad inactiva, el público no.
+- `backend/real_estate/views.py:1029-1031` (`def my_properties`) — including inactive: el dueño ve su propiedad inactiva, el público no.
 - `backend/real_estate/models.py:344-346` (`on_delete=models.CASCADE`) — PropertyImage.property cae en cascada con la Property.
 - `frontend/app/my-properties/page.tsx:250-270` (`const handleDelete`) — DELETE /properties/<id>/ tras window.confirm; PropertyViewSet no sobrescribe destroy.
 

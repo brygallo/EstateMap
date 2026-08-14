@@ -1,15 +1,16 @@
 import React from 'react';
-import {AbsoluteFill, Audio, Sequence, Series, staticFile, useCurrentFrame} from 'remotion';
+import {AbsoluteFill, Audio, interpolate, Sequence, Series, spring, staticFile, useCurrentFrame, useVideoConfig} from 'remotion';
 import {SceneCard} from './scene';
 import {SafeAreaOverlay} from './safe-areas';
 import {useFontReady} from './layout';
-import {palette, safe} from './theme';
+import {palette, safe, stage} from './theme';
 import type {VideoProps} from './types';
 
 const fontUrl = staticFile('fonts/PlusJakartaSans-ExtraBold.ttf');
 
 const Progress: React.FC<{scenes: VideoProps['scenes']; accent: string}> = ({scenes, accent}) => {
   const frame = useCurrentFrame();
+  const {fps} = useVideoConfig();
   const total = scenes.reduce((sum, scene) => sum + scene.durationInFrames, 0) || 1;
   return (
     <div
@@ -17,14 +18,28 @@ const Progress: React.FC<{scenes: VideoProps['scenes']; accent: string}> = ({sce
         position: 'absolute',
         left: safe.left,
         right: safe.left,
-        top: safe.top - 40,
+        // TikTok paints its caption, username and audio controls over the
+        // bottom of the upload. Keep our progress cue at the edge of the safe
+        // canvas instead of underneath the platform chrome.
+        top: 1920 - safe.bottom - 8,
         height: 6,
         borderRadius: 99,
         backgroundColor: 'rgba(255,255,255,.16)',
         overflow: 'hidden',
       }}
     >
-      <div style={{height: '100%', width: `${Math.min(1, frame / total) * 100}%`, backgroundColor: accent}} />
+      <div
+        style={{
+          height: '100%',
+          width: `${Math.min(1, frame / total) * 100}%`,
+          background: `linear-gradient(90deg, ${accent}, #FFFFFF, ${accent})`,
+          backgroundSize: '220% 100%',
+          backgroundPositionX: `${interpolate(frame, [0, total], [100, -100])}%`,
+          boxShadow: `0 0 18px ${accent}`,
+          transformOrigin: 'left center',
+          transform: `scaleY(${spring({frame, fps, config: {damping: 18}})})`,
+        }}
+      />
     </div>
   );
 };
@@ -35,6 +50,7 @@ export const EstateMapVideo: React.FC<VideoProps> = ({
   cta,
   url,
   brandTile,
+  kicker,
   showSafeAreas,
 }) => {
   const ready = useFontReady();
@@ -60,6 +76,7 @@ export const EstateMapVideo: React.FC<VideoProps> = ({
               cta={cta}
               url={url}
               brandTile={brandTile}
+              kicker={kicker ?? null}
               ready={ready}
             />
           </Series.Sequence>

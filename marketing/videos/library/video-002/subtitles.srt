@@ -1,0 +1,43 @@
+1
+00:00:00,000 --> 00:00:02,035
+Deja de buscar propiedades a ciegas.
+
+2
+00:00:02,500 --> 00:00:04,439
+En Geo Propiedades Ecuador ves
+
+3
+00:00:04,439 --> 00:00:05,753
+dónde queda cada una.
+
+4
+00:00:06,200 --> 00:00:07,244
+Elige tu ciudad,
+
+5
+00:00:07,244 --> 00:00:08,485
+acércate a la zona
+
+6
+00:00:08,485 --> 00:00:09,594
+y mira las casas
+
+7
+00:00:09,594 --> 00:00:10,508
+con su precio.
+
+8
+00:00:10,967 --> 00:00:11,916
+Filtra por precio
+
+9
+00:00:11,916 --> 00:00:13,340
+y quédate con las opciones
+
+10
+00:00:13,340 --> 00:00:14,079
+que te sirven.
+
+11
+00:00:14,533 --> 00:00:15,890
+Encuentra tu futuro hogar.

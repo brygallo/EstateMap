@@ -36,7 +36,7 @@ El contenido no busca “hacerse viral” en abstracto. Debe provocar una acció
 | 15–20 s | Resultado | ¿Qué cambia para mí? |
 | Últimos 2–3 s | Un CTA | ¿Qué hago ahora? |
 
-Para una demostración simple se puede usar 10–15 s; una explicación necesita 20–30 s. Los 8 s pertenecen a la propuesta de video automático de una propiedad, no son una norma para toda la cuenta.
+La ventana editorial normal es de 18–45 s. Una promesa con demostración simple usa 18 s; un flujo con varios pasos, mecanismo, objeciones o contexto usa 20–30 s; y un tutorial específico que enseña una secuencia completa puede usar 31–45 s. La duración se elige en el brief y no se rellena con pausas o repeticiones. Los 8 s pertenecen a la propuesta de video automático de una propiedad, no son una norma para toda la cuenta. Por encima de 45 s y hasta 120 la pieza es una historia —el origen del producto, un caso completo— y el brief declara la duración y el motivo; ese formato admite hasta nueve escenas y hasta 10 s antes de mostrar el producto.
 
 ## Psicología aplicada, con límites
 
@@ -62,4 +62,3 @@ Prueba una variable por lote:
 | Duración | 12 s | 20 s | 30 s |
 
 No compares simultáneamente duraciones, ganchos y CTAs: no sabrás qué causó el resultado.
-

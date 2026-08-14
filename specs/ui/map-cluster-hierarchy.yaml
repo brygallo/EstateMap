@@ -1,0 +1,74 @@
+version: 1
+domain: map-cluster-hierarchy
+title: Jerarquía territorial del mapa
+status: implemented
+summary: >
+  La navegación agrupada termina en ciudad y desde allí muestra directamente
+  los labels de precios de propiedades individuales.
+
+rules:
+  - id: MCLUS-001
+    name: El mapa solo agrupa por país, provincia y ciudad
+    status: implemented
+    summary: >
+      No existe una cuarta capa de agrupadores por grilla. Hasta zoom 9.2 el
+      backend elige país, provincia o ciudad; después entrega puntos.
+    evidence:
+      - file: backend/real_estate/services/map_payload.py
+        lines: "134-179"
+        symbol: MAX_CLUSTER_ZOOM
+        note: El corte único cambia de modo agrupado a puntos individuales.
+      - file: backend/real_estate/services/map_payload.py
+        lines: "238-245"
+        symbol: _group_level_for_zoom
+        note: Los únicos niveles devueltos son country, province y city.
+    cases:
+      - name: Vista posterior a ciudad
+        expected: puntos individuales sin agrupadores de grilla
+    tests: {}
+
+  - id: MCLUS-002
+    name: Pulsar una ciudad abre directamente sus precios
+    status: implemented
+    summary: >
+      El agrupador de ciudad centra la cámara en el ancla territorial a zoom 12,
+      que está por encima del umbral de agrupación y muestra los labels de precio.
+    evidence:
+      - file: backend/real_estate/services/map_payload.py
+        lines: "440-459"
+        symbol: anchor_latitude
+        note: El payload lleva el centro territorial o el centro de inventario como fallback.
+      - file: frontend/components/maps/MapLibreMap.tsx
+        lines: "631-669"
+        symbol: "groupLevel === 'city'"
+        note: Ciudad usa su ancla y abre directamente a zoom 12.
+    cases:
+      - name: Persona pulsa el agrupador de una ciudad
+        expected: cámara centrada en la ciudad a zoom de puntos
+    tests: {}
+
+  - id: MCLUS-003
+    name: Elegir una ciudad en los filtros mueve el mapa a su centro
+    status: implemented
+    summary: >
+      El catálogo de ubicaciones debe entregar un centro para cada ciudad con
+      inventario activo. Al elegirla en el filtro, el mapa debe desplazarse a
+      ese punto y entrar al nivel de detalle de ciudad.
+    evidence:
+      - file: backend/real_estate/views.py
+        lines: "841-880"
+        symbol: "centers.setdefault"
+        note: El catálogo calcula el centro medio de las propiedades activas de cada ciudad.
+      - file: frontend/components/map/MapFilters.tsx
+        lines: "297-313"
+        symbol: "onCitySelect"
+        note: Elegir una ciudad entrega su centro al contenedor del mapa.
+      - file: frontend/components/MapPageClient.tsx
+        lines: "200-213"
+        symbol: "handleCityFilterSelect"
+        note: La cámara viaja al centro recibido con zoom de ciudad.
+    cases:
+      - name: Persona elige una ciudad en el filtro móvil
+        expected: el mapa se centra en la ciudad seleccionada
+    tests:
+      api: true

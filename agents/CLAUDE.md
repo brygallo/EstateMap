@@ -129,3 +129,69 @@ una regla y su prueba, así que no lo pongas en un test que no la ejerza de verd
 - El mapa es MapLibre. `react-leaflet` se eliminó del proyecto.
 - En la interfaz se dice «Forma del terreno», y los contadores de visitas no se
   muestran nunca en público.
+
+## Copy comercial guiado por skills
+
+El repositorio distingue el copy de una página del copy de un anuncio. Cuando
+la tarea incluya ambos, no los redactes como piezas aisladas: el anuncio debe
+prometer exactamente lo que la página de destino demuestra.
+
+### `$copywriting`: páginas y superficies de conversión
+
+Es obligatoria al escribir o reescribir home, landing pages, páginas de
+funcionalidades, precios, producto, about, titulares, propuestas de valor,
+subtítulos y CTA. Antes de redactar:
+
+1. Lee las specs del dominio y el contexto de producto disponible.
+2. Define el tipo de página, una sola acción primaria, el público, su problema,
+   objeciones, fuente de tráfico y nivel de conocimiento previo.
+3. Conecta función → beneficio → resultado sin convertir una propuesta en una
+   capacidad existente.
+4. Escribe en español claro para Ecuador, con lenguaje del cliente, una idea por
+   sección y CTA que diga qué obtiene la persona.
+5. Revisa que cada afirmación verificable tenga respaldo. No fabriques cifras,
+   testimonios, comparaciones, garantías ni urgencia.
+
+### `$ad-copy`: publicidad pagada y guiones de anuncios
+
+Es obligatoria para Meta Ads, Facebook Ads, Instagram Ads, captions de pauta,
+primary text, headlines, descriptions, hooks, ángulos, variantes y guiones
+UGC/video cuyo fin sea publicidad. Antes de escribir:
+
+1. Clasifica el tráfico (`cold`, `warm` o `retargeting`), el nivel de conciencia,
+   si la pieza vende el clic o demuestra la solución, y el placement/formato.
+2. Trata los primeros 125 caracteres del primary text y los primeros tres
+   segundos del video como el gancho. Mantén headlines móviles breves y no
+   pongas información esencial en la description.
+3. Usa una audiencia, una idea y un CTA por pieza. Genera variantes cambiando el
+   gancho o ángulo, no mezclando promesas incompatibles.
+4. Conserva message match con la página de destino. Si el anuncio muestra el
+   producto, el destino también debe reconocerlo y continuar esa promesa.
+5. Rechaza cualquier técnica de la skill que requiera hechos no demostrados:
+   cifras específicas, autoridades, estudios, testimonios, resultados,
+   escasez, urgencia o prueba social solo se usan con evidencia aprobada.
+
+### Orden cuando aplican ambas
+
+1. Verifica hechos y límites en `specs/`, código y fuentes aprobadas.
+2. Usa `$copywriting` para fijar propuesta, argumento y CTA de la página destino.
+3. Usa `$ad-copy` para adaptar esa promesa al tráfico, conciencia y placement.
+4. Comprueba coherencia entre anuncio, landing, interfaz y backend.
+
+Estas skills asesoran la redacción; no autorizan gasto, publicación, cambios de
+producto ni afirmaciones nuevas. Esas acciones conservan sus aprobaciones
+explícitas y sus contratos propios.
+
+En video corto, la duración tampoco es fija: el brief elige normalmente entre
+18 y 45 segundos según la carga explicativa. Una demostración simple usa 18 s;
+varios pasos, mecanismo, objeciones o contexto usan 20–30 s; un tutorial
+específico que enseña una secuencia completa puede usar 31–45 s. No se añade
+relleno para alcanzar una cifra ni se comprime una explicación hasta perder
+claridad.
+
+Por encima de 45 segundos y hasta 120 la pieza es una **historia**: un relato
+real que hay que sostener, como el origen del producto o un caso completo. El
+brief declara la duración y el motivo, y la fábrica le concede hasta nueve
+escenas y hasta 10 segundos para plantear antes de mostrar el producto. Sigue
+teniendo un público, una idea y un CTA; el formato da aire para explicar, no
+permiso para prometer más.

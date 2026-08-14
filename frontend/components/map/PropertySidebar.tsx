@@ -23,6 +23,7 @@ interface PropertySidebarProps {
   hasActiveFilters: boolean;
   onFilterChange: (filters: PropertyFilters) => void;
   onClearFilters: () => void;
+  onCitySelect?: (center: { latitude: number; longitude: number }) => void;
   /** Cierra el drawer móvil (muestra el botón X del encabezado si se define). */
   onClose?: () => void;
 
@@ -62,6 +63,7 @@ export default function PropertySidebar({
   hasActiveFilters,
   onFilterChange,
   onClearFilters,
+  onCitySelect,
   onClose,
   visibleProperties,
   cityGroups = [],
@@ -230,16 +232,16 @@ export default function PropertySidebar({
       {/* Encabezado móvil. Non-sticky on purpose: MapFilters below is the
           single sticky bar in this scroll container, so it must not compete
           with the title for the top slot. */}
-      <div className="flex items-center justify-between gap-2 border-b border-line bg-white px-3.5 pb-2 lg:hidden">
-        <h2 className="text-base font-bold text-textPrimary">Filtros y propiedades</h2>
+      <div className="flex h-10 items-center justify-between gap-2 border-b border-line bg-white px-3.5 lg:hidden">
+        <h2 className="text-sm font-bold text-textPrimary">Filtros y propiedades</h2>
         {onClose && (
           <button
             type="button"
             onClick={onClose}
-            className="-mr-1.5 flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-button text-textSecondary transition-colors hover:bg-muted hover:text-textPrimary"
+            className="relative -mr-1.5 flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-button text-textSecondary transition-colors before:absolute before:-inset-0.5 hover:bg-muted hover:text-textPrimary"
             aria-label="Cerrar filtros"
           >
-            <X className="h-5 w-5" strokeWidth={2} aria-hidden />
+            <X className="h-[18px] w-[18px]" strokeWidth={2} aria-hidden />
           </button>
         )}
       </div>
@@ -251,6 +253,7 @@ export default function PropertySidebar({
         hasActiveFilters={hasActiveFilters}
         onChange={onFilterChange}
         onClear={onClearFilters}
+        onCitySelect={onCitySelect}
       />
 
       {/* Encabezado del listado: distingue "visibles en el mapa" de "total encontradas" */}

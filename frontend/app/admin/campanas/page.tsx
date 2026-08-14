@@ -389,7 +389,7 @@ export default function AdsAdminPage() {
     <AdminRoute>
       <div className="flex min-h-[calc(100dvh-var(--app-header-height))]">
         <AdminSidebar />
-        <main className="flex-1 overflow-x-hidden p-4 sm:p-6 lg:p-8">
+        <main className="min-w-0 max-w-full flex-1 overflow-x-hidden p-4 sm:p-6 lg:p-8">
           <div className="mx-auto max-w-6xl space-y-6">
             <header className="flex flex-wrap items-end justify-between gap-4">
               <div>

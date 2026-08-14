@@ -4,12 +4,12 @@
 
 Vista legible de `specs/`. Cada regla marcada como implementada apunta a las líneas de código que la aplican, y `tools/specs/validate.py` comprueba que ese código siga existiendo, así que esta página no puede quedarse desfasada en silencio.
 
-**Total de reglas: 310**
+**Total de reglas: 316**
 
 | Estado | Reglas |
 | --- | --- |
 | 🗑️ Obsoleta | 2 |
-| ✅ Implementada | 270 |
+| ✅ Implementada | 276 |
 | ⛔ No implementada | 16 |
 | 🟡 Parcial | 9 |
 | 📝 Propuesta (sin código) | 13 |
@@ -29,6 +29,8 @@ Vista legible de `specs/`. Cada regla marcada como implementada apunta a las lí
 | subscriptions | `specs/domains/subscriptions.yaml` | 7 | [subscriptions.md](./subscriptions.md) |
 | catalog | `specs/errors/catalog.yaml` | 9 | [catalog.md](./catalog.md) |
 | matrix | `specs/permissions/matrix.yaml` | 73 | [matrix.md](./matrix.md) |
+| map-cluster-hierarchy | `specs/ui/map-cluster-hierarchy.yaml` | 3 | [map-cluster-hierarchy.md](./map-cluster-hierarchy.md) |
+| map-performance | `specs/ui/map-performance.yaml` | 3 | [map-performance.md](./map-performance.md) |
 | visibility-rules | `specs/ui/visibility-rules.yaml` | 4 | [visibility-rules.md](./visibility-rules.md) |
 | import-properties | `specs/workflows/import-properties.yaml` | 14 | [import-properties.md](./import-properties.md) |
 | publish-property | `specs/workflows/publish-property.yaml` | 21 | [publish-property.md](./publish-property.md) |

@@ -1,19 +1,11 @@
 @import './aents-tokens.css';
 
 :root {
-  --type-responsive-factor: var(--type-responsive-mobile);
+  --type-responsive-factor: calc(var(--type-responsive-mobile) * 0.94);
   --app-header-height: 4rem;
-  /* Height of MobileTabBar — its h-14 row plus the 1px top border — excluding
-     the safe-area inset the bar adds below that. Layouts that pin something to
-     the bottom on mobile offset by this, so it must match the rendered bar
-     exactly or the two overlap. */
-  --mobile-tabbar-height: calc(3.5rem + 1px);
-}
-
-@media (min-width: 768px) {
-  :root {
-    --mobile-tabbar-height: 0rem;
-  }
+  /* Mobile navigation lives in the hamburger menu. Bottom-anchored controls
+     only need to clear the device safe area. */
+  --mobile-tabbar-height: 0rem;
 }
 
 /* Los avisos se posicionan bajo el header (offset de top), pero en el eje z
@@ -42,6 +34,59 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/*
+ * Phone density pass. Large page-level Tailwind spacing steps otherwise keep
+ * their desktop dimensions below `sm`, making every hero and stacked section
+ * feel oversized on a 320–430px viewport. Only the large steps are tightened:
+ * controls, inputs and touch targets keep their accessible dimensions.
+ */
+@media (max-width: 639px) {
+  /* Map attribution remains mandatory, but should sit quietly in the corner
+     instead of reading like another map control on a phone. */
+  .maplibregl-ctrl-bottom-right {
+    right: var(--space-1) !important;
+    bottom: var(--space-1) !important;
+    left: auto !important;
+  }
+
+  .maplibregl-ctrl-attrib {
+    max-width: 180px !important;
+    padding: 1px var(--space-1) !important;
+    font-size: 9px !important;
+    line-height: 1.25 !important;
+  }
+
+  .py-10,
+  .py-12 {
+    padding-top: var(--space-8);
+    padding-bottom: var(--space-8);
+  }
+
+  .py-14,
+  .py-16 {
+    padding-top: var(--space-10);
+    padding-bottom: var(--space-10);
+  }
+
+  .py-20,
+  .py-24 {
+    padding-top: var(--space-12);
+    padding-bottom: var(--space-12);
+  }
+
+  .space-y-16 > :not([hidden]) ~ :not([hidden]),
+  .space-y-20 > :not([hidden]) ~ :not([hidden]) {
+    --tw-space-y-reverse: 0;
+    margin-top: calc(var(--space-10) * calc(1 - var(--tw-space-y-reverse)));
+    margin-bottom: calc(var(--space-10) * var(--tw-space-y-reverse));
+  }
+
+  .gap-10,
+  .gap-12 {
+    gap: var(--space-8);
+  }
+}
 
 /*
  * Brand Book type scale, responsive step. Every --type-*-size is

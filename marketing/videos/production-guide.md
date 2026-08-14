@@ -5,10 +5,11 @@
 - Lienzo: 1080 × 1920 (9:16).
 - Exportación: MP4, H.264, audio AAC, 30 fps como base.
 - Calidad: al menos 720p; conserva el máster a 1080p.
-- Audio: voz clara; música por debajo de la voz; usa únicamente audio propio o con licencia comercial.
-- Subtítulos: quemados, revisados manualmente, máximo dos líneas y alto contraste.
-- Zona segura interna de trabajo: no pongas texto esencial en los 120 px superiores, 220 px inferiores ni 140 px del lateral derecho. Verifica siempre con la interfaz actual de ambas apps antes de publicar; estos márgenes son una plantilla conservadora, no una especificación oficial fija.
-- Portada: rostro, mapa o pantalla reconocible; 3–6 palabras, legibles en miniatura.
+- Audio: voz clara. Por defecto las piezas salen sin música; si se añade una pista, debe ser gratuita para uso comercial y conservar autor, URL y licencia junto al archivo. Nunca música pagada.
+- Subtítulos: quemados, máximo dos líneas y alto contraste. La sincronía no se estima: cada grupo de palabras se sintetiza por separado y su duración medida es su tiempo en pantalla.
+- Zona segura: no pongas texto esencial en los 240 px superiores (pestañas), los 460 px inferiores (caption, usuario y ticker de música; TikTok sube más que Instagram), los 240 px del lateral derecho por debajo de y = 820 (columna de acciones) ni los 64 px del lateral izquierdo. Las cifras anteriores de esta guía (120/220/140) eran una plantilla conservadora que la interfaz real de TikTok y Reels desborda; las vigentes están medidas contra esa interfaz y viven en `remotion/src/theme.ts`, de modo que renderer y documentación no pueden divergir. Para comprobar un montaje, renderiza la composición `SafeAreas` en Remotion Studio: dibuja las zonas encima del video.
+- Tipografía: los rótulos y el CTA se miden con la fuente real en el navegador de render (`remotion/src/layout.ts`) y bajan de cuerpo antes que desbordar. Un CTA largo ya no puede salirse del cuadro.
+- Portada: rostro, mapa o pantalla reconocible; 3–6 palabras, legibles en miniatura. `video render` la exporta como `exports/cover.png` y `video cover` la regenera.
 
 ## Lenguaje de edición
 
@@ -46,6 +47,8 @@
 
 Ejemplo: `2026-08-15_owner_social-kit_from-post-to-reel_question-v01.mp4`.
 
+`video pack` aplica esta convención automáticamente al crear `library/_outbox/<nombre>/` con el MP4, la portada en JPG, el caption, el SRT y `publish.json`.
+
 ## Base de fuentes
 
 - Meta recomienda Reels verticales 9:16 con audio y mensajes dentro de la zona segura: <https://www.facebook.com/business/ads/facebook-instagram-reels-ads>
@@ -55,4 +58,3 @@ Ejemplo: `2026-08-15_owner_social-kit_from-post-to-reel_question-v01.mp4`.
 - Creative Center permite estudiar anuncios por región, industria, objetivo y retención por segundo: <https://ads.tiktok.com/help/article/how-to-use-the-top-ads-dashboard>
 
 Las reglas cambian. Comprueba estos enlaces antes de una campaña pagada.
-

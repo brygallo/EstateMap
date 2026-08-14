@@ -1,0 +1,389 @@
+{
+  "title": "Deja de buscar propiedades a ciegas",
+  "coverText": "Deja de buscar a ciegas",
+  "cta": "Encuentra tu futuro hogar",
+  "url": "geopropiedadesecuador.com",
+  "brandTile": "brand/aents-brand-tile-1024.png",
+  "kicker": null,
+  "musicFile": "jobs/video-002/audio/music.mp3",
+  "showSafeAreas": false,
+  "scenes": [
+    {
+      "purpose": "gancho",
+      "durationInFrames": 75,
+      "headline": "Buscar a ciegas",
+      "captions": [
+        {
+          "text": "Deja de buscar propiedades a ciegas.",
+          "start": 0.0,
+          "end": 2.035,
+          "words": [
+            {
+              "text": "Deja",
+              "start": 0.0,
+              "end": 0.283
+            },
+            {
+              "text": "de",
+              "start": 0.283,
+              "end": 0.452
+            },
+            {
+              "text": "buscar",
+              "start": 0.452,
+              "end": 0.848
+            },
+            {
+              "text": "propiedades",
+              "start": 0.848,
+              "end": 1.526
+            },
+            {
+              "text": "a",
+              "start": 1.526,
+              "end": 1.639
+            },
+            {
+              "text": "ciegas.",
+              "start": 1.639,
+              "end": 2.035
+            }
+          ]
+        }
+      ],
+      "visualDirection": "Movimiento desde el primer cuadro: tarjetas de anuncio caen y se apilan sobre navy, cada una con foto y precio y el campo de ubicación vacío, marcado con un guion gris. La pila se inclina y satura el cuadro. Rótulo en una sola fila, columna anclada abajo dentro de la zona segura, con 72 px de separación respecto al subtítulo.",
+      "transition": "cut",
+      "asset": "sim:anuncios",
+      "assetType": "simulation",
+      "photo": null,
+      "voiceFile": "jobs/video-002/audio/voice-01.mp3",
+      "assetStartInFrames": 0,
+      "assetTotalInFrames": 75,
+      "accent": "#22C55E"
+    },
+    {
+      "purpose": "problema",
+      "durationInFrames": 111,
+      "headline": "Ahora sobre el mapa",
+      "captions": [
+        {
+          "text": "En Geo Propiedades Ecuador ves",
+          "start": 0.0,
+          "end": 1.939,
+          "words": [
+            {
+              "text": "En",
+              "start": 0.0,
+              "end": 0.188
+            },
+            {
+              "text": "Geo",
+              "start": 0.188,
+              "end": 0.438
+            },
+            {
+              "text": "Propiedades",
+              "start": 0.438,
+              "end": 1.189
+            },
+            {
+              "text": "Ecuador",
+              "start": 1.189,
+              "end": 1.689
+            },
+            {
+              "text": "ves",
+              "start": 1.689,
+              "end": 1.939
+            }
+          ]
+        },
+        {
+          "text": "dónde queda cada una.",
+          "start": 1.939,
+          "end": 3.253,
+          "words": [
+            {
+              "text": "dónde",
+              "start": 0.0,
+              "end": 0.375
+            },
+            {
+              "text": "queda",
+              "start": 0.375,
+              "end": 0.751
+            },
+            {
+              "text": "cada",
+              "start": 0.751,
+              "end": 1.064
+            },
+            {
+              "text": "una.",
+              "start": 1.064,
+              "end": 1.314
+            }
+          ]
+        }
+      ],
+      "visualDirection": "Los anuncios apilados se apartan hacia los bordes y entra el mapa con la marca ocupando el centro; el verde principal y el teal aparecen al entrar el mapa. El producto queda reconocible antes del segundo tres. Rótulo en una fila, texto blanco sobre caja oscura.",
+      "transition": "cut",
+      "asset": "sim:llegada",
+      "assetType": "simulation",
+      "photo": null,
+      "voiceFile": "jobs/video-002/audio/voice-02.mp3",
+      "assetStartInFrames": 0,
+      "assetTotalInFrames": 111,
+      "accent": "#6B5CF6"
+    },
+    {
+      "purpose": "prueba",
+      "durationInFrames": 143,
+      "headline": "Ciudad, zona, casa",
+      "captions": [
+        {
+          "text": "Elige tu ciudad,",
+          "start": 0.0,
+          "end": 1.044,
+          "words": [
+            {
+              "text": "Elige",
+              "start": 0.0,
+              "end": 0.392
+            },
+            {
+              "text": "tu",
+              "start": 0.392,
+              "end": 0.587
+            },
+            {
+              "text": "ciudad,",
+              "start": 0.587,
+              "end": 1.044
+            }
+          ]
+        },
+        {
+          "text": "acércate a la zona",
+          "start": 1.044,
+          "end": 2.285,
+          "words": [
+            {
+              "text": "acércate",
+              "start": 0.0,
+              "end": 0.587
+            },
+            {
+              "text": "a",
+              "start": 0.587,
+              "end": 0.718
+            },
+            {
+              "text": "la",
+              "start": 0.718,
+              "end": 0.914
+            },
+            {
+              "text": "zona",
+              "start": 0.914,
+              "end": 1.24
+            }
+          ]
+        },
+        {
+          "text": "y mira las casas",
+          "start": 2.285,
+          "end": 3.394,
+          "words": [
+            {
+              "text": "y",
+              "start": 0.0,
+              "end": 0.131
+            },
+            {
+              "text": "mira",
+              "start": 0.131,
+              "end": 0.457
+            },
+            {
+              "text": "las",
+              "start": 0.457,
+              "end": 0.718
+            },
+            {
+              "text": "casas",
+              "start": 0.718,
+              "end": 1.11
+            }
+          ]
+        },
+        {
+          "text": "con su precio.",
+          "start": 3.394,
+          "end": 4.308,
+          "words": [
+            {
+              "text": "con",
+              "start": 0.0,
+              "end": 0.261
+            },
+            {
+              "text": "su",
+              "start": 0.261,
+              "end": 0.457
+            },
+            {
+              "text": "precio.",
+              "start": 0.457,
+              "end": 0.914
+            }
+          ]
+        }
+      ],
+      "visualDirection": "Recorrido continuo y sin saltos: vista del país, un toque sobre la burbuja de una ciudad, acercamiento sostenido hasta una zona y apertura de las burbujas en barrios y luego en casas con su etiqueta de precio. El gesto de toque dura lo que duraría de verdad; nada se congela.",
+      "transition": "cut",
+      "asset": "sim:mapa",
+      "assetType": "simulation",
+      "photo": null,
+      "voiceFile": "jobs/video-002/audio/voice-03.mp3",
+      "assetStartInFrames": 0,
+      "assetTotalInFrames": 143,
+      "accent": "#14B8A6"
+    },
+    {
+      "purpose": "resultado",
+      "durationInFrames": 107,
+      "headline": "Filtra por precio",
+      "captions": [
+        {
+          "text": "Filtra por precio",
+          "start": 0.0,
+          "end": 0.949,
+          "words": [
+            {
+              "text": "Filtra",
+              "start": 0.0,
+              "end": 0.369
+            },
+            {
+              "text": "por",
+              "start": 0.369,
+              "end": 0.58
+            },
+            {
+              "text": "precio",
+              "start": 0.58,
+              "end": 0.949
+            }
+          ]
+        },
+        {
+          "text": "y quédate con las opciones",
+          "start": 0.949,
+          "end": 2.373,
+          "words": [
+            {
+              "text": "y",
+              "start": 0.0,
+              "end": 0.105
+            },
+            {
+              "text": "quédate",
+              "start": 0.105,
+              "end": 0.527
+            },
+            {
+              "text": "con",
+              "start": 0.527,
+              "end": 0.738
+            },
+            {
+              "text": "las",
+              "start": 0.738,
+              "end": 0.949
+            },
+            {
+              "text": "opciones",
+              "start": 0.949,
+              "end": 1.424
+            }
+          ]
+        },
+        {
+          "text": "que te sirven.",
+          "start": 2.373,
+          "end": 3.112,
+          "words": [
+            {
+              "text": "que",
+              "start": 0.0,
+              "end": 0.211
+            },
+            {
+              "text": "te",
+              "start": 0.211,
+              "end": 0.369
+            },
+            {
+              "text": "sirven.",
+              "start": 0.369,
+              "end": 0.738
+            }
+          ]
+        }
+      ],
+      "visualDirection": "Sobre la zona ya abierta, un control de precio se desliza y los pines que quedan fuera del rango se atenúan y desaparecen; permanecen unos pocos pines activos en verde con su etiqueta. La cámara mantiene un leve movimiento para que nunca haya cuadro estático.",
+      "transition": "cut",
+      "asset": "sim:filtros",
+      "assetType": "simulation",
+      "photo": null,
+      "voiceFile": "jobs/video-002/audio/voice-04.mp3",
+      "assetStartInFrames": 0,
+      "assetTotalInFrames": 107,
+      "accent": "#A78BFA"
+    },
+    {
+      "purpose": "cta",
+      "durationInFrames": 54,
+      "headline": "Empieza aquí",
+      "captions": [
+        {
+          "text": "Encuentra tu futuro hogar.",
+          "start": 0.0,
+          "end": 1.357,
+          "words": [
+            {
+              "text": "Encuentra",
+              "start": 0.0,
+              "end": 0.522
+            },
+            {
+              "text": "tu",
+              "start": 0.522,
+              "end": 0.678
+            },
+            {
+              "text": "futuro",
+              "start": 0.678,
+              "end": 1.044
+            },
+            {
+              "text": "hogar.",
+              "start": 1.044,
+              "end": 1.357
+            }
+          ]
+        }
+      ],
+      "visualDirection": "Tarjeta de marca global sin modificaciones: tile violeta, Geo Propiedades Ecuador, dominio geopropiedadesecuador.com, el CTA en una sola fila y la firma de Aents. Fondo navy, tipografía Plus Jakarta Sans ExtraBold, todo dentro de la zona segura.",
+      "transition": "fade",
+      "asset": null,
+      "assetType": null,
+      "photo": null,
+      "voiceFile": "jobs/video-002/audio/voice-05.mp3",
+      "assetStartInFrames": 0,
+      "assetTotalInFrames": 54,
+      "accent": "#22C55E"
+    }
+  ]
+}

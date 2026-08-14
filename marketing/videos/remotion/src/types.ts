@@ -21,8 +21,11 @@ export type Scene = {
   visualDirection: string;
   transition: 'cut' | 'fade';
   asset: string | null;
-  assetType: 'image' | 'video' | null;
+  assetType: 'image' | 'video' | 'simulation' | null;
+  photo: string | null;
   voiceFile: string;
+  assetStartInFrames: number;
+  assetTotalInFrames: number;
   accent: string;
 };
 
@@ -32,6 +35,7 @@ export type VideoProps = {
   cta: string;
   url: string;
   brandTile: string | null;
+  kicker: string | null;
   musicFile: string | null;
   showSafeAreas: boolean;
   scenes: Scene[];
@@ -39,9 +43,20 @@ export type VideoProps = {
 
 export type CoverProps = {
   coverText: string;
+  /**
+   * Which illustration to draw, named by the plan. The keyword heuristics below
+   * it still run when this is absent, so covers planned before this existed
+   * keep rendering exactly as they did.
+   */
+  coverArt?: string | null;
+  // The cover carries the piece's own call to action and audience. Deriving
+  // either from the cover text alone is how a professional video ended up
+  // offering the buyer's CTA on its first frame.
+  cta: string;
+  audience: string;
   url: string;
   brandTile: string | null;
   accent: string;
   asset: string | null;
-  assetType: 'image' | 'video' | null;
+  assetType: 'image' | null;
 };

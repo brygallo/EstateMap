@@ -86,9 +86,9 @@ const LinkColumn = ({
   links: { href: string; label: string }[];
   className?: string;
 }) => (
-  <nav aria-label={title} className={`text-center sm:text-left ${className ?? ''}`}>
+  <nav aria-label={title} className={`text-left ${className ?? ''}`}>
     <h2 className={headingClass}>{title}</h2>
-    <ul className="mt-5 space-y-3.5">
+    <ul className="mt-3 space-y-2.5">
       {links.map((link) => (
         <FooterLink key={link.href} {...link} />
       ))}
@@ -101,8 +101,8 @@ const Footer = () => (
     <div className="aents-footer-grid" aria-hidden />
     <div className="aents-footer-glow" aria-hidden />
 
-    <div className="relative mx-auto max-w-7xl px-4 py-12 sm:px-6 sm:py-16 lg:px-8">
-      <div className="grid gap-12 lg:grid-cols-12 lg:gap-10">
+    <div className="relative mx-auto max-w-7xl px-4 py-8 sm:px-6 sm:py-10 lg:px-8">
+      <div className="grid gap-8 lg:grid-cols-12 lg:gap-8">
         {/* Marca */}
         <div className="flex flex-col items-center text-center sm:items-start sm:text-left lg:col-span-5">
           <div className="aents-footer-brand aents-site-footer__brand">
@@ -122,7 +122,7 @@ const Footer = () => (
                 alt=""
                 width={48}
                 height={48}
-                className="aents-brand-symbol h-12 w-12"
+                className="aents-brand-symbol h-10 w-10"
                 aria-hidden
                 unoptimized
               />
@@ -138,7 +138,7 @@ const Footer = () => (
             Geo Propiedades Ecuador, un producto digital del ecosistema Aents.
           </p>
 
-          <p className="mt-6 max-w-sm text-sm leading-relaxed text-white/75">
+          <p className="mt-4 max-w-sm text-sm leading-6 text-white/75">
             Encuentra casas, departamentos, terrenos y locales directamente en el mapa.
             Publica gratis y llega a compradores en todo Ecuador.
           </p>
@@ -147,14 +147,14 @@ const Footer = () => (
             href={whatsappHref}
             target="_blank"
             rel="noreferrer"
-            className="aents-footer-action mt-6 inline-flex items-center gap-2 rounded-full px-5 py-2.5 text-sm font-semibold"
+            className="aents-footer-action mt-4 inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold"
           >
             <MessageCircle className="h-4 w-4" strokeWidth={2.25} aria-hidden />
             Escríbenos por WhatsApp
           </a>
 
           {/* Redes sociales */}
-          <div className="mt-8 flex items-center justify-center gap-3 sm:justify-start">
+          <div className="mt-5 flex items-center justify-center gap-3 sm:justify-start">
             {SOCIAL_LINKS.map(({ href, label, icon: Icon }) => (
               <a
                 key={label}
@@ -171,14 +171,14 @@ const Footer = () => (
         </div>
 
         {/* Enlaces */}
-        <div className="aents-footer-columns grid gap-10 sm:grid-cols-2 lg:col-span-7 lg:grid-cols-3 lg:gap-8">
+        <div className="aents-footer-columns grid grid-cols-2 gap-x-5 gap-y-8 sm:gap-8 lg:col-span-7 lg:grid-cols-3 lg:gap-6">
           <LinkColumn title="Explorar" links={EXPLORE_LINKS} />
           <LinkColumn title="Plataforma" links={PLATFORM_LINKS} />
 
           {/* Contacto */}
-          <div className="text-center sm:text-left">
+          <div className="col-span-2 text-center sm:text-left lg:col-span-1">
             <h2 className={headingClass}>Contacto</h2>
-            <ul className="mt-5 flex flex-col items-center space-y-3.5 text-sm text-white/70 sm:items-start">
+            <ul className="mt-3 flex flex-wrap items-center justify-center gap-x-5 gap-y-3 text-sm text-white/70 sm:justify-start lg:flex-col lg:items-start lg:space-y-2.5 lg:gap-0">
               <li>
                 <a href={whatsappHref} target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 transition-colors hover:text-white">
                   <MessageCircle className={contactIconClass} strokeWidth={2} aria-hidden />
@@ -202,12 +202,12 @@ const Footer = () => (
 
       {/* Partners. The cheapest strip in the inventory and the most seen one:
           it is brand, not campaign, so it takes the narrow variant. */}
-      <div className="mt-12">
+      <div className="mt-6 sm:mt-8">
         <AdSlot placement="site_footer" seed="footer" variant="strip" className="" />
       </div>
 
       {/* Barra inferior */}
-      <div className="mt-14 border-t border-white/[0.12] pt-6">
+      <div className="mt-6 border-t border-white/[0.12] pt-5 sm:mt-8">
         <div className="flex flex-col items-center justify-between gap-4 sm:flex-row">
           <p className={`${mutedClass} max-w-xl text-center sm:text-left`}>
             © {new Date().getFullYear()} Geo Propiedades Ecuador, un producto de{' '}

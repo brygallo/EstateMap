@@ -42,7 +42,7 @@ export default function MarketStatsSections({
 
   return (
     <>
-      <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <section className="grid grid-cols-2 gap-3 lg:grid-cols-3 lg:gap-4">
         <Kpi icon={Ruler} label="Precio promedio por m²" value={`${money(data.overall.avg_price_m2)}/m²`} />
         <Kpi icon={Building2} label="Propiedades analizadas" value={integer(data.overall.count)} />
         <Kpi icon={TrendingUp} label="Precio promedio" value={money(data.overall.avg_price)} />
@@ -56,10 +56,10 @@ export default function MarketStatsSections({
         seed={cityName ?? 'ecuador'}
         city={cityName}
         variant="banner"
-        className="mt-10"
+        className="mt-8"
       />
 
-      <section className="mt-10 grid gap-6 lg:grid-cols-[1.4fr_0.6fr]">
+      <section className="mt-8 grid items-start gap-6 lg:grid-cols-[minmax(0,1.35fr)_minmax(280px,0.65fr)]">
         <div className="rounded-card border border-line bg-white p-5 shadow-card sm:p-7">
           <h2 className="text-xl font-bold text-textPrimary">
             {cityName ? `Precio por m² según sector en ${cityName}` : 'Precio por m² según ciudad'}
@@ -126,7 +126,7 @@ export default function MarketStatsSections({
           </div>
         </div>
       </section>
-      <section className="mt-8 grid gap-6 lg:grid-cols-2">
+      <section className="mt-6 grid gap-6 lg:grid-cols-2">
         <StatsTable
           title={cityName ? 'Evolución del precio' : 'Evolución por ciudad'}
           rows={data.evolution.map((row) => [
@@ -168,12 +168,12 @@ function StatsTable({ title, rows }: { title: string; rows: string[][] }) {
 
 function Kpi({ icon: Icon, label, value }: { icon: typeof Ruler; label: string; value: string }) {
   return (
-    <div className="rounded-card border border-line bg-white p-5 shadow-card">
-      <span className="flex h-10 w-10 items-center justify-center rounded-button bg-primaryLight text-primary">
-        <Icon className="h-5 w-5" />
+    <div className="min-w-0 rounded-card border border-line bg-white p-4 shadow-card sm:p-5">
+      <span className="flex h-9 w-9 items-center justify-center rounded-button bg-primaryLight text-primary sm:h-10 sm:w-10">
+        <Icon className="h-4 w-4 sm:h-5 sm:w-5" aria-hidden="true" />
       </span>
-      <p className="mt-4 text-xs font-semibold uppercase tracking-wide text-textSecondary">{label}</p>
-      <p className="mt-1 font-geo text-xl font-black text-textPrimary">{value}</p>
+      <p className="mt-3 text-[0.68rem] font-semibold uppercase leading-4 tracking-wide text-textSecondary sm:mt-4 sm:text-xs">{label}</p>
+      <p className="mt-1 break-words font-geo text-lg font-black text-textPrimary sm:text-xl">{value}</p>
     </div>
   );
 }

@@ -452,7 +452,7 @@ function OwnerExecutive({ metrics }: { metrics: OwnerMetrics }) {
       </div>
 
       <div className="grid gap-4 xl:grid-cols-[minmax(0,1.3fr)_minmax(360px,0.7fr)]">
-        <Card className="rounded-card shadow-card">
+        <Card className="min-w-0 overflow-hidden rounded-card shadow-card">
           <CardHeader className="pb-2">
             <CardTitle className="flex items-center gap-2 text-base"><BarChart3 className="h-4 w-4" /> Actividad de los últimos 14 días</CardTitle>
             <p className="text-xs text-textSecondary">Acciones reales de visitantes, como abrir propiedades, contactar o intentar publicar. No incluye bots.</p>
@@ -475,7 +475,7 @@ function OwnerExecutive({ metrics }: { metrics: OwnerMetrics }) {
                 </div>
               </div>
             )}
-            <div className="overflow-x-auto pb-1">
+            <div className="max-w-full overflow-x-auto pb-1 overscroll-x-contain">
               <div className="flex h-36 min-w-[680px] items-end gap-2 border-b border-line" aria-label="Acciones registradas por día">
                 {metrics.trends.map((item) => {
                   const height = Math.max(5, (item.events / maxEvents) * 100);

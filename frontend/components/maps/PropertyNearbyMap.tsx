@@ -55,7 +55,7 @@ export default function PropertyNearbyMap({ property, nearbyProperties }: Proper
         const params = new URLSearchParams({
           bbox: `${bounds.west},${bounds.south},${bounds.east},${bounds.north}`,
           zoom: String(zoom),
-          limit: zoom < 11.5 ? '900' : '1400',
+          limit: zoom <= 9.2 ? '900' : '1400',
         });
         const response = await apiFetch(`/properties/map_points/?${params}`, {
           skipAuth: true,

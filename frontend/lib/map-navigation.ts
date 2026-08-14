@@ -1,5 +1,11 @@
 import type { Property } from '@/lib/types';
 
+export function getClusterTargetZoom(groupLevel?: string | null): number {
+  if (groupLevel === 'country') return 6;
+  if (groupLevel === 'province') return 8;
+  return 12;
+}
+
 /**
  * Mueve el mapa hacia una propiedad: si tiene polígono, encuadra sus límites
  * con el máximo zoom; si solo tiene punto, vuela al marcador. Acepta el

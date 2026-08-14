@@ -69,7 +69,8 @@ def concat_audio(parts: list[Path], target: Path) -> None:
         shutil.copy2(parts[0], target)
         return
     listing = target.with_suffix(".txt")
-    listing.write_text("\n".join(f"file '{path.as_posix()}'" for path in parts), encoding="utf-8")
+    escaped = (str(path.as_posix()).replace("'", "'\\''") for path in parts)
+    listing.write_text("\n".join(f"file '{value}'" for value in escaped), encoding="utf-8")
     run([
         "ffmpeg", "-y", "-f", "concat", "-safe", "0", "-i", str(listing),
         "-codec:a", "libmp3lame", "-q:a", "2", str(target),

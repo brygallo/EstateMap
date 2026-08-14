@@ -4,7 +4,6 @@ import Script from 'next/script';
 import './globals.css';
 import { AuthProvider } from '@/lib/auth-context';
 import NavBar from '@/components/NavBar';
-import MobileTabBar from '@/components/MobileTabBar';
 import Footer from '@/components/Footer';
 import { Toaster } from 'sonner';
 import { SOCIAL_PROFILE_URLS, WHATSAPP_NUMBER } from '@/lib/constants';
@@ -362,15 +361,11 @@ export default function RootLayout({
             <main
               id="main"
               tabIndex={-1}
-              // The bottom padding clears the mobile tab bar (its own height
-              // plus the gesture-bar inset) so the last row of any page stays
-              // reachable. It collapses at md, where the bar is hidden.
-              className="flex-grow pt-[var(--app-header-height)] pb-[calc(var(--mobile-tabbar-height)+env(safe-area-inset-bottom))] focus:outline-none md:pb-0"
+              className="flex-grow pt-[var(--app-header-height)] focus:outline-none"
             >
               {children}
             </main>
             <Footer />
-            <MobileTabBar />
           </div>
           <Toaster
             richColors

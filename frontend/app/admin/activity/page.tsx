@@ -328,11 +328,11 @@ function FiltersCard({
 
 function EventsTableHeader() {
   return (
-    <div className="grid grid-cols-[1fr_auto] border-b border-line bg-muted/40 px-4 py-3 text-xs font-semibold uppercase tracking-wide text-textSecondary sm:grid-cols-[1.1fr_1.2fr_0.8fr_auto]">
+    <div className="grid grid-cols-1 border-b border-line bg-muted/40 px-4 py-3 text-xs font-semibold uppercase tracking-wide text-textSecondary sm:grid-cols-[1.1fr_1.2fr_0.8fr_auto]">
       <span>Actividad</span>
       <span className="hidden sm:block">Propiedad</span>
       <span className="hidden sm:block">Usuario</span>
-      <span>Fecha</span>
+      <span className="hidden sm:block">Fecha</span>
     </div>
   );
 }
@@ -351,7 +351,7 @@ function EventRow({ event }: { event: EventItem }) {
 
   return (
     <div className="border-b border-line last:border-0">
-      <div className="grid grid-cols-[1fr_auto] items-center gap-3 px-4 py-3 transition-colors hover:bg-muted/30 sm:grid-cols-[1.1fr_1.2fr_0.8fr_auto]">
+      <div className="grid min-w-0 grid-cols-1 items-center gap-3 px-4 py-3 transition-colors hover:bg-muted/30 sm:grid-cols-[1.1fr_1.2fr_0.8fr_auto]">
         <div className="min-w-0">
           <p className={cn('truncate text-sm font-medium', failed ? 'text-error' : 'text-textPrimary')}>{title}</p>
           {failed && (
@@ -384,7 +384,7 @@ function EventRow({ event }: { event: EventItem }) {
             </Link>
           ) : <span className="truncate text-sm text-textSecondary">{event.user_label}</span>}
         </div>
-        <span className="whitespace-nowrap text-xs text-textSecondary">
+        <span className="text-xs text-textSecondary sm:whitespace-nowrap">
           {new Date(event.created_at).toLocaleString('es-EC', { dateStyle: 'short', timeStyle: 'short' })}
         </span>
       </div>

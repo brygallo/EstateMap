@@ -64,9 +64,8 @@ export default function PropertyPageActions({
       {/* Spacer so the bar never covers the end of the page content. */}
       <div className="h-20 lg:hidden" aria-hidden />
 
-      {/* Stacked directly on top of MobileTabBar rather than over it: the tab
-          bar already owns the gesture-bar inset, so this only has to clear its
-          height. */}
+      {/* Kept above the device safe area so the actions remain reachable above
+          the iOS home indicator and Android gesture bar. */}
       <div className="fixed inset-x-0 bottom-[calc(var(--mobile-tabbar-height)+env(safe-area-inset-bottom))] z-nav border-t border-line bg-white/95 px-3 py-3 shadow-[0_-8px_24px_rgba(15,23,42,0.10)] backdrop-blur lg:hidden">
         <div className="flex items-center gap-2">
           <button

@@ -1,0 +1,22 @@
+{
+  "reviewed_at": "2026-08-13T16:23:28.555755-05:00",
+  "passed": true,
+  "checks": {
+    "vertical_1080x1920": true,
+    "duration_8_to_120_seconds": true,
+    "duration_close_to_target": true,
+    "plan_lint_passed": true,
+    "cover_exists": true,
+    "subtitles_exist": true,
+    "all_assets_resolve": true,
+    "approval_exists": true
+  },
+  "measured_duration_seconds": 25.152,
+  "target_duration_seconds": 24.0,
+  "human_review": {
+    "signed_at": "2026-08-13T16:36:40.403976-05:00",
+    "signed_by": "bryan",
+    "notes": "Aprobado por el usuario para publicar: máster con voz Dan y música Close Up"
+  },
+  "notes": ""
+}

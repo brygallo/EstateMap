@@ -67,7 +67,7 @@ from .email_utils import (
     create_password_reset_token,
     create_publication_resume_token,
 )
-from .services.map_payload import build_map_payload
+from .services.map_payload import MAX_CLUSTER_ZOOM, build_map_payload
 from .services.accounts import InactiveAccountError, InvitedAccountService
 from .services.authentication import GoogleAuthenticationService, GoogleIdentityError
 from .services.notifications import (
@@ -732,11 +732,10 @@ class PropertyViewSet(viewsets.ModelViewSet):
         """
         zoom = _parse_float(request.query_params.get('zoom'))
         zoom = 7 if zoom is None else zoom
-        # En cualquier zoom de agrupación (zoom < 11.5) el clustering se calcula
-        # sobre TODO el dataset filtrado, ignorando el bbox del viewport. Así los
-        # centroides son estables y los agrupadores no "caminan" al panear. El
-        # bbox sólo se usa para recortar la salida de la grilla (ver viewport).
-        cluster_zoom = zoom < 11.5
+        # Country, province, and city groups use the complete filtered dataset,
+        # ignoring the bbox. This keeps territorial centroids stable and avoids
+        # introducing a fourth grouping layer as the camera moves closer.
+        cluster_zoom = zoom <= MAX_CLUSTER_ZOOM
         self._ignore_map_bbox = cluster_zoom
         snapped = _snap_bbox(request.query_params.get('bbox'))
         self._bbox_override = ','.join(f'{coord:.3f}' for coord in snapped) if snapped else None
@@ -767,8 +766,9 @@ class PropertyViewSet(viewsets.ModelViewSet):
             'city',
             'province',
         )
-        viewport = snapped if cluster_zoom else None
-        payload = build_map_payload(queryset, zoom, max_items, viewport=viewport)
+        # Territorial clusters intentionally receive the full filtered queryset;
+        # point mode was already clipped by get_queryset() using the visible bbox.
+        payload = build_map_payload(queryset, zoom, max_items)
         if _is_public_read(request):
             cache.set(cache_key, payload, CACHE_TTL_MAP_POINTS)
         return _public_response(payload, request, s_maxage=CACHE_TTL_MAP_POINTS)
@@ -854,9 +854,10 @@ class PropertyViewSet(viewsets.ModelViewSet):
         rows = (
             Property.objects.exclude(status='inactive')
             .values('province', 'city')
-            .distinct()
+            .annotate(latitude=Avg('latitude'), longitude=Avg('longitude'))
         )
         provinces = {}
+        centers = {}
         for row in rows:
             prov = (row['province'] or '').strip()
             city = (row['city'] or '').strip()
@@ -865,8 +866,19 @@ class PropertyViewSet(viewsets.ModelViewSet):
             bucket = provinces.setdefault(prov, set())
             if city:
                 bucket.add(city)
+                latitude = row['latitude']
+                longitude = row['longitude']
+                if latitude is not None and longitude is not None:
+                    centers.setdefault(prov, {})[city] = {
+                        'latitude': float(latitude),
+                        'longitude': float(longitude),
+                    }
         result = [
-            {'province': prov, 'cities': sorted(cities)}
+            {
+                'province': prov,
+                'cities': sorted(cities),
+                'centers': centers.get(prov, {}),
+            }
             for prov, cities in sorted(provinces.items(), key=lambda kv: kv[0].lower())
         ]
         if _is_public_read(request):

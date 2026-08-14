@@ -1,66 +1,169 @@
 import React from 'react';
-import {AbsoluteFill, Audio, Img, interpolate, staticFile, useCurrentFrame, useVideoConfig, Video} from 'remotion';
+import {AbsoluteFill, Audio, Easing, Img, interpolate, spring, staticFile, useCurrentFrame, useVideoConfig, Video} from 'remotion';
 import {MapField} from './map-field';
+import {SIMULATIONS} from './simulations';
+import {Outro} from './outro';
 import {Captions} from './captions';
 import {fit} from './layout';
-import {font, headlineBox, palette, safe} from './theme';
+import {font, headlineBox, palette, safe, stage, textFloor} from './theme';
 import type {Scene} from './types';
 
-const AssetLayer: React.FC<{scene: Scene; frame: number; offset: number}> = ({scene, frame, offset}) => {
-  if (!scene.asset || !scene.assetType) {
-    return <MapField accent={scene.accent} frame={frame + offset} />;
-  }
+/**
+ * The product plays in the stage at the top of the frame with nothing on top of
+ * it. Everything the piece has to say happens in the panel underneath.
+ */
+const Stage: React.FC<{scene: Scene; frame: number; offset: number}> = ({scene, frame, offset}) => {
+  const {fps} = useVideoConfig();
   const span = Math.max(1, scene.durationInFrames);
-  const scale = interpolate(frame, [0, span], [1.04, 1.13], {extrapolateRight: 'clamp'});
-  const slide = interpolate(frame, [0, span], [0, -18], {extrapolateRight: 'clamp'});
-  const style: React.CSSProperties = {
-    width: '100%',
-    height: '100%',
-    objectFit: 'cover',
-    transform: `scale(${scale}) translateY(${slide}px)`,
-  };
+  const zoom = scene.assetType === 'simulation' ? 1 : interpolate(frame, [0, span], [1.0, 1.06], {extrapolateRight: 'clamp'});
+  const entrance = spring({frame, fps, config: {damping: 20, mass: 0.85, stiffness: 150}});
+  // Scenes meet on a stable frame. Moving the outgoing scene during its final
+  // syllable reads like an accidental crop on short-form platforms.
+  const depthScale = 1.035 - entrance * 0.035;
+  const depthY = (1 - entrance) * 28;
+  const sheen = interpolate(frame, [fps * 0.08, fps * 0.72], [-420, 1320], {
+    easing: Easing.out(Easing.quad),
+    extrapolateLeft: 'clamp',
+    extrapolateRight: 'clamp',
+  });
+  const Simulation = scene.assetType === 'simulation' && scene.asset ? SIMULATIONS[scene.asset] : undefined;
+  const body = Simulation
+    ? <Simulation frame={frame + scene.assetStartInFrames} total={scene.assetTotalInFrames} accent={palette.green} photo={scene.photo ?? null} />
+    : !scene.asset || !scene.assetType
+      ? <MapField accent={scene.accent} frame={frame + offset} />
+      : scene.assetType === 'video'
+        ? <Video src={staticFile(scene.asset)} muted loop startFrom={scene.assetStartInFrames} style={{width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'top center'}} />
+        : <Img src={staticFile(scene.asset)} style={{width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'top center'}} />;
   return (
-    <AbsoluteFill style={{backgroundColor: palette.ink}}>
-      {scene.assetType === 'video' ? (
-        <Video src={staticFile(scene.asset)} muted loop style={style} />
-      ) : (
-        <Img src={staticFile(scene.asset)} style={style} />
-      )}
-      <AbsoluteFill
+    <div
+      style={{
+        position: 'absolute',
+        left: 0,
+        top: stage.top,
+        width: 1080,
+        height: stage.height,
+        overflow: 'hidden',
+        backgroundColor: palette.ink,
+      }}
+    >
+      <div
         style={{
-          background:
-            'linear-gradient(180deg, rgba(8,9,21,.72) 0%, rgba(8,9,21,.18) 26%, rgba(8,9,21,.55) 62%, rgba(8,9,21,.95) 100%)',
+          width: '100%',
+          height: '100%',
+          transform: `translateY(${depthY}px) scale(${zoom * depthScale})`,
+          transformOrigin: '50% 28%',
+          filter: `blur(${(1 - entrance) * 4}px)`,
+        }}
+      >
+        {body}
+      </div>
+      <div
+        style={{
+          position: 'absolute',
+          top: 0,
+          bottom: 720,
+          left: sheen,
+          width: 220,
+          opacity: interpolate(frame, [0, fps * 0.2, fps * 0.64, fps * 0.82], [0, 0.16, 0.08, 0], {
+            extrapolateLeft: 'clamp',
+            extrapolateRight: 'clamp',
+          }),
+          background: 'linear-gradient(100deg, transparent, rgba(255,255,255,.9), transparent)',
+          transform: 'skewX(-18deg)',
+          mixBlendMode: 'screen',
         }}
       />
-    </AbsoluteFill>
+      {/* Just enough shade under the platform's own top bar to keep the
+          wordmark legible; the interface itself stays untouched. */}
+      {scene.assetType === 'simulation' ? null : <div
+        style={{
+          position: 'absolute',
+          left: 0,
+          right: 0,
+          bottom: 0,
+          height: 820,
+          background: 'linear-gradient(180deg, rgba(8,9,21,0) 0%, rgba(8,9,21,.38) 26%, rgba(8,9,21,.86) 52%, rgba(8,9,21,.98) 72%, rgba(8,9,21,1) 100%)',
+        }}
+      />}
+    </div>
   );
 };
 
-const Headline: React.FC<{text: string; accent: string; frame: number; ready: boolean; large: boolean}> = ({
+/** The address on the left, the mark alone on the right. */
+const Wordmark: React.FC<{brandTile: string | null; frame: number; label?: string}> = ({brandTile, frame, label = 'geopropiedadesecuador.com'}) => {
+  const {fps} = useVideoConfig();
+  const enter = spring({frame: frame - 3, fps, config: {damping: 18, mass: 0.65}});
+  return (
+  <>
+    <div
+      style={{
+        position: 'absolute',
+        left: safe.left,
+        top: safe.top,
+        padding: '13px 24px',
+        borderRadius: 99,
+        backgroundColor: 'rgba(8,9,21,.72)',
+        borderTop: '2px solid rgba(255,255,255,.16)',
+        borderRight: '2px solid rgba(255,255,255,.16)',
+        borderBottom: '2px solid rgba(255,255,255,.16)',
+        backdropFilter: 'blur(14px)',
+        fontFamily: font,
+        fontWeight: 800,
+        fontSize: 28,
+        letterSpacing: '-0.01em',
+        color: palette.white,
+        opacity: enter,
+        transform: `translateX(${(1 - enter) * -46}px)`,
+      }}
+    >
+      {label}
+    </div>
+    {brandTile ? (
+      <Img
+        src={staticFile(brandTile)}
+        style={{
+          position: 'absolute',
+          right: safe.left,
+          top: safe.top,
+          width: 64,
+          height: 64,
+          borderRadius: 19,
+          boxShadow: '0 12px 30px rgba(8,9,21,.55)',
+          opacity: enter,
+          transform: `translateY(${(1 - enter) * -24}px) rotate(${(1 - enter) * 8}deg)`,
+        }}
+      />
+    ) : null}
+  </>
+  );
+};
+
+const Headline: React.FC<{text: string; accent: string; frame: number; ready: boolean}> = ({
   text,
   accent,
   frame,
   ready,
-  large,
 }) => {
   const {fps} = useVideoConfig();
   if (!ready) return null;
+  // A headline always occupies a single row: two rows crowd the caption under
+  // it and cost the piece a beat of reading time.
   const {fontSize, lines} = fit(text, {
     maxWidth: headlineBox.width,
-    maxLines: 3,
-    max: large ? 128 : 108,
-    min: 52,
+    maxLines: 1,
+    max: 76,
+    min: 38,
     letterSpacing: '-0.05em',
   });
   return (
-    <div style={{position: 'absolute', left: headlineBox.left, width: headlineBox.width, top: headlineBox.top}}>
+    <div>
       <div
         style={{
-          width: 104,
-          height: 14,
+          width: 66,
+          height: 8,
           borderRadius: 99,
           backgroundColor: accent,
-          marginBottom: 34,
+          marginBottom: 16,
           transform: `scaleX(${interpolate(frame, [0, fps * 0.4], [0, 1], {
             extrapolateLeft: 'clamp',
             extrapolateRight: 'clamp',
@@ -73,21 +176,17 @@ const Headline: React.FC<{text: string; accent: string; frame: number; ready: bo
           fontFamily: font,
           fontWeight: 800,
           fontSize,
-          lineHeight: 0.99,
+          lineHeight: 1,
           letterSpacing: '-0.05em',
           color: palette.white,
-          textShadow: '0 8px 40px rgba(8,9,21,.85)',
         }}
       >
         {lines.map((line, index) => {
           const start = fps * (0.05 + index * 0.09);
-          const appear = interpolate(frame, [start, start + fps * 0.32], [0, 1], {
-            extrapolateLeft: 'clamp',
-            extrapolateRight: 'clamp',
-          });
+          const appear = spring({frame: frame - start, fps, config: {damping: 20, mass: 0.7, stiffness: 150}});
           return (
             <div key={index} style={{overflow: 'hidden'}}>
-              <div style={{transform: `translateY(${(1 - appear) * 78}px)`, opacity: appear}}>{line}</div>
+              <div style={{transform: `translateY(${(1 - appear) * 70}px)`, opacity: appear}}>{line}</div>
             </div>
           );
         })}
@@ -95,28 +194,6 @@ const Headline: React.FC<{text: string; accent: string; frame: number; ready: bo
     </div>
   );
 };
-
-const Wordmark: React.FC<{accent: string}> = ({accent}) => (
-  <div
-    style={{
-      position: 'absolute',
-      left: safe.left,
-      top: safe.top - 96,
-      display: 'flex',
-      alignItems: 'center',
-      gap: 14,
-      fontFamily: font,
-      fontWeight: 800,
-      fontSize: 26,
-      letterSpacing: '0.02em',
-      color: palette.white,
-      opacity: 0.92,
-    }}
-  >
-    <div style={{width: 16, height: 16, borderRadius: 5, backgroundColor: accent}} />
-    GEO PROPIEDADES
-  </div>
-);
 
 const Closing: React.FC<{cta: string; url: string; brandTile: string | null; accent: string; frame: number; ready: boolean}> = ({
   cta,
@@ -127,57 +204,56 @@ const Closing: React.FC<{cta: string; url: string; brandTile: string | null; acc
   ready,
 }) => {
   const {fps} = useVideoConfig();
-  const appear = interpolate(frame, [0, fps * 0.4], [0, 1], {extrapolateLeft: 'clamp', extrapolateRight: 'clamp'});
+  const appear = interpolate(frame, [0, fps * 0.35], [0, 1], {extrapolateLeft: 'clamp', extrapolateRight: 'clamp'});
   if (!ready) return null;
   const {fontSize, lines} = fit(cta, {
     maxWidth: headlineBox.width,
     maxLines: 2,
-    max: 132,
-    min: 58,
+    max: 104,
+    min: 56,
     letterSpacing: '-0.05em',
   });
   return (
-    <AbsoluteFill style={{alignItems: 'center', justifyContent: 'center', opacity: appear}}>
-      <div style={{width: headlineBox.width, textAlign: 'center'}}>
-        {brandTile ? (
-          <Img
-            src={staticFile(brandTile)}
-            style={{width: 168, height: 168, borderRadius: 42, marginBottom: 46, objectFit: 'cover'}}
-          />
-        ) : null}
+    <div
+      style={{
+        position: 'absolute',
+        left: headlineBox.left,
+        width: headlineBox.width,
+        bottom: 1920 - 1440,
+        opacity: appear,
+      }}
+    >
+      <div style={{display: 'flex', alignItems: 'center', gap: 22, marginBottom: 26}}>
+        {brandTile ? <Img src={staticFile(brandTile)} style={{width: 84, height: 84, borderRadius: 24}} /> : null}
         <div
           style={{
-            fontFamily: font,
-            fontWeight: 800,
-            fontSize,
-            lineHeight: 1,
-            letterSpacing: '-0.05em',
-            color: palette.white,
-            textShadow: '0 8px 40px rgba(8,9,21,.9)',
-          }}
-        >
-          {lines.map((line, index) => (
-            <div key={index}>{line}</div>
-          ))}
-        </div>
-        <div
-          style={{
-            marginTop: 40,
-            display: 'inline-block',
-            padding: '18px 34px',
+            padding: '14px 26px',
             borderRadius: 99,
             backgroundColor: accent,
             color: palette.ink,
             fontFamily: font,
             fontWeight: 800,
-            fontSize: 40,
-            letterSpacing: '-0.01em',
+            fontSize: 34,
           }}
         >
           {url}
         </div>
       </div>
-    </AbsoluteFill>
+      <div
+        style={{
+          fontFamily: font,
+          fontWeight: 800,
+          fontSize,
+          lineHeight: 1,
+          letterSpacing: '-0.05em',
+          color: palette.white,
+        }}
+      >
+        {lines.map((line, index) => (
+          <div key={index}>{line}</div>
+        ))}
+      </div>
+    </div>
   );
 };
 
@@ -189,38 +265,37 @@ export const SceneCard: React.FC<{
   cta: string;
   url: string;
   brandTile: string | null;
+  kicker: string | null;
   ready: boolean;
-}> = ({scene, index, total, offset, cta, url, brandTile, ready}) => {
+}> = ({scene, index, total, offset, cta, url, brandTile, kicker, ready}) => {
   const frame = useCurrentFrame();
   const {fps} = useVideoConfig();
   const isFinal = scene.purpose === 'cta' || index === total - 1;
-  const enter = interpolate(frame, [0, fps * 0.3], [scene.transition === 'fade' ? 0 : 1, 1], {
+  const enter = interpolate(frame, [0, fps * 0.28], [scene.transition === 'fade' ? 0 : 1, 1], {
     extrapolateLeft: 'clamp',
     extrapolateRight: 'clamp',
   });
-  // One visible push per caption keeps the frame from ever sitting still for
-  // the length of a whole sentence.
-  const seconds = frame / fps;
-  const beat = scene.captions.findIndex((caption) => seconds < caption.end);
-  const beatStart = beat <= 0 ? 0 : scene.captions[beat - 1].end;
-  const push = interpolate(seconds - beatStart, [0, 0.5], [1.014, 1], {
-    extrapolateLeft: 'clamp',
-    extrapolateRight: 'clamp',
-  });
-
   return (
     <AbsoluteFill style={{opacity: enter, backgroundColor: palette.ink}}>
-      <AbsoluteFill style={{transform: `scale(${push})`}}>
-        <AssetLayer scene={scene} frame={frame} offset={offset} />
-      </AbsoluteFill>
-      <Wordmark accent={scene.accent} />
+      <Stage scene={scene} frame={frame} offset={offset} />
+      {isFinal ? null : <Wordmark brandTile={brandTile} frame={frame} label={scene.asset?.startsWith('sim:aents-') ? 'aents.net' : 'geopropiedadesecuador.com'} />}
       {isFinal ? (
-        <Closing cta={cta} url={url} brandTile={brandTile} accent={scene.accent} frame={frame} ready={ready} />
+        scene.assetType === 'simulation' && scene.asset ? null : <Outro cta={cta} url={url} brandTile={brandTile} accent={scene.accent} kicker={kicker} />
       ) : (
-        <>
-          <Headline text={scene.headline} accent={scene.accent} frame={frame} ready={ready} large={index === 0} />
+        <div
+          style={{
+            position: 'absolute',
+            left: headlineBox.left,
+            width: headlineBox.width,
+            bottom: 1920 - textFloor,
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 34,
+          }}
+        >
+          <Headline text={scene.headline} accent={scene.accent} frame={frame} ready={ready} />
           <Captions captions={scene.captions} frame={frame} accent={scene.accent} ready={ready} />
-        </>
+        </div>
       )}
       {scene.voiceFile ? <Audio src={staticFile(scene.voiceFile)} /> : null}
     </AbsoluteFill>

@@ -31,7 +31,7 @@ HOOK usePropertyFilters
   │  (usePropertyFilters.ts:356-363)
   ▼
 GET /api/properties/map_points/?bbox=&zoom=&limit=&<filtros>
-  │  limit = 900 si zoom < 11.5, si no 1400  (usePropertyFilters.ts:380)
+  │  limit = 900 si zoom <= 9.2, si no 1400  (usePropertyFilters.ts)
   ▼
 DJANGO  PropertyViewSet.map_points          (views.py:578-628)
   │
@@ -46,19 +46,18 @@ DJANGO  PropertyViewSet.map_points          (views.py:578-628)
   │
   ├─ get_queryset(): excluye status='inactive' y is_duplicate=True
   │  (views.py:321) + filtros de query  (views.py:324-373)
-  │  bbox se aplica en SQL SOLO si zoom >= 11.5  (views.py:379, :594-595)
+  │  bbox se aplica en SQL SOLO si zoom > 9.2  (views.py)
   │
   ├─ .only(...) 10 columnas  (views.py:612-623)
   ▼
-build_map_payload(queryset, zoom, max_items, viewport)   (map_payload.py:132-187)
+build_map_payload(queryset, zoom, max_items)   (map_payload.py)
   │
   ├─ .values(POINT_FIELDS) → 10 campos, nunca más  (map_payload.py:7-18, :137)
   ├─ descarta filas sin punto válido dentro de Ecuador  (map_payload.py:138, :205-245)
   │
-  ├─ zoom >= 11.5  →  mode='points'   lista plana de propiedades  (map_payload.py:141-152)
-  └─ zoom <  11.5  →  mode='mixed'    clusters + puntos representativos
-        group_level según zoom (country/province/city/grid)  (map_payload.py:248-255)
-        recorte por viewport solo en nivel `grid`  (map_payload.py:163-167)
+  ├─ zoom > 9.2  →  mode='points'   lista plana de propiedades
+  └─ zoom <= 9.2 →  mode='mixed'    clusters + puntos representativos
+        group_level según zoom (country/province/city)
   ▼
 JSON  { mode, zoom, context, total_count, cluster_count, point_count,
         city_groups, items[] }
@@ -67,8 +66,7 @@ JSON  { mode, zoom, context, total_count, cluster_count, point_count,
 NAVEGADOR
   │  items se separan en clusters y puntos  (MapLibreMap.tsx:242-249)
   ├─ clusters → marcadores HTML con anti-solape por prioridad  (MapLibreMap.tsx:556-588)
-  │            clic → fitBounds(cluster.bounds, maxZoom=expansion_zoom)
-  │            (MapLibreMap.tsx:644-672)
+  │            clic → centro territorial y siguiente nivel fijo
   ├─ puntos   → capa GeoJSON `properties` + marcadores HTML de precio
   │            (MapLibreMap.tsx:542, :686-812)
   └─ polígonos→ capa `property-polygons`, visible solo desde zoom 14
@@ -94,7 +92,7 @@ con esos nombres; el enrutado completo de la app está en
 | Parámetro | Tipo | Por defecto | Efecto | Cita |
 |---|---|---|---|---|
 | `zoom` | float | `7` | Decide modo (`points` vs `mixed`) y nivel de agrupación | `views.py:588-589`, `map_payload.py:133-134` |
-| `bbox` | `oeste,sur,este,norte` (lng,lat,lng,lat) | — | Recorta en SQL solo con `zoom >= 11.5`; con zoom menor solo recorta la salida de la grilla | `views.py:596-597`, `:379`, `map_payload.py:163-167` |
+| `bbox` | `oeste,sur,este,norte` (lng,lat,lng,lat) | — | Recorta en SQL solo con `zoom > 9.2`; los niveles territoriales se calculan sobre todo el conjunto filtrado | `views.py`, `map_payload.py` |
 | `limit` | int | `1000` | Tope de ítems; se re-acota a 1600 (clusters) / 2000 (puntos) | `views.py:599`, `map_payload.py:135` |
 | `search` | texto | — | `icontains` sobre título, dirección, ciudad y descripción | `views.py:324-331` |
 | `type` / `property_type` | texto | — | Igualdad exacta; `all` se ignora | `views.py:333-335` |
@@ -126,11 +124,9 @@ pantalla desaparece (`views.py:256-259`).
 
 ### 2.3 Por qué el clustering ignora el bbox
 
-Con `zoom < 11.5` el flag `self._ignore_map_bbox` desactiva el filtro SQL por
-bbox (`views.py:594-595` → `views.py:379`). El clustering se calcula sobre
-**todo** el dataset filtrado, de modo que los centroides son estables y los
-agrupadores no "caminan" al panear; el bbox solo recorta la salida en el nivel
-`grid` (`views.py:590-593`, `map_payload.py:159-167`).
+Con `zoom <= 9.2` el flag `self._ignore_map_bbox` desactiva el filtro SQL por
+bbox. País, provincia y ciudad se calculan sobre **todo** el dataset filtrado,
+de modo que sus posiciones son estables y no "caminan" al panear.
 
 ---
 
@@ -214,8 +210,8 @@ max_items = max(1, min(int(max_items), 1600 if cluster_zoom else 2000))
 
 | Modo | Tope efectivo de `items` | Cita |
 |---|---|---|
-| `mixed` (zoom < 11.5) | ≤ 1600, y de esos como máximo `min(180, max(40, max_items//4))` son puntos individuales | `map_payload.py:135`, `:172-174` |
-| `points` (zoom ≥ 11.5) | ≤ 2000 | `map_payload.py:135`, `:142` |
+| `mixed` (zoom ≤ 9.2) | ≤ 1600, y de esos como máximo `min(180, max(40, max_items//4))` son puntos individuales | `map_payload.py` |
+| `points` (zoom > 9.2) | ≤ 2000 | `map_payload.py` |
 
 El cliente pide 900 o 1400 según el modo (`usePropertyFilters.ts:380`,
 `PropertyNearbyMap.tsx:58`), así que en la práctica el tope duro del backend
@@ -223,19 +219,18 @@ nunca se alcanza desde la UI.
 
 ### 4.3 Niveles de zoom
 
-Umbral maestro: `cluster_zoom = zoom < 11.5` (`map_payload.py:134`, replicado en
-`views.py:594` y en el cliente en `usePropertyFilters.ts:139` y `:380`).
+Umbral maestro: `MAX_CLUSTER_ZOOM = 9.2`, compartido por el constructor del
+payload y la vista; el cliente usa el mismo corte para límites y caché.
 
 | Zoom | `group_level` | Qué se agrupa | Cita |
 |---|---|---|---|
 | ≤ 5.2 | `country` | Todo Ecuador en un solo bucket | `map_payload.py:249-250`, `:292-293` |
-| 5.2 – 6.8 | `province` | Por provincia, si el nombre normalizado existe en `PROVINCE_CENTERS` | `map_payload.py:251-252`, `:294-295`, `:22-49` |
-| 6.8 – 9.2 | `city` | Por ciudad/cantón, si tiene ancla conocida | `map_payload.py:253-254`, `:296-297`, `:301-302` |
-| 9.2 – 11.5 | `grid` | Rejilla geográfica | `map_payload.py:255`, `:298` |
-| ≥ 11.5 | *(sin agrupación)* | `mode='points'` | `map_payload.py:134`, `:141-152` |
+| 5.2 – 6.8 | `province` | Por nombre normalizado de provincia | `map_payload.py` |
+| 6.8 – 9.2 | `city` | Por provincia y ciudad/cantón | `map_payload.py` |
+| > 9.2 | *(sin agrupación)* | `mode='points'` | `map_payload.py` |
 
-Cuando el nivel es `province` o `city` pero la provincia/ciudad no tiene ancla
-conocida, la fila cae al bucket de rejilla (`map_payload.py:294-298`).
+Cuando una provincia o ciudad no tiene un ancla conocida, conserva su nivel
+territorial y usa el centro de su propio inventario como destino.
 
 ### 4.4 Tamaño de la rejilla
 
@@ -251,7 +246,7 @@ localizar el "foco" más denso (`map_payload.py:412-421`).
 
 ### 4.5 Cluster vs punto suelto
 
-En niveles `city` y `grid`, un bucket con **3 o menos** propiedades no se
+En el nivel `city`, un bucket con **3 o menos** propiedades no se
 convierte en cluster: sus filas se emiten como puntos individuales
 (`map_payload.py:428`, `:431-433`). En `country` y `province` siempre se fuerza
 el cluster (`map_payload.py:428`).
@@ -269,7 +264,7 @@ precio descendente antes de recortar (`map_payload.py:169-170`, `:172-174`).
 |---|---|---|---|
 | `mode` | ambos | `'points'` o `'mixed'` | `map_payload.py:144`, `:177` |
 | `zoom` | ambos | Zoom efectivo usado | `map_payload.py:145`, `:178` |
-| `group_level` | solo `mixed` | `country` / `province` / `city` / `grid` | `map_payload.py:179` |
+| `group_level` | solo `mixed` | `country` / `province` / `city` | `map_payload.py` |
 | `grid_size` | solo `mixed` | Grados de la celda | `map_payload.py:180` |
 | `context` | ambos | Títulos para la UI + `total_count` | `map_payload.py:146`, `:181`, `:566-597` |
 | `total_count` | ambos | Filas con punto válido en **todo** el dataset filtrado, no solo las enviadas | `map_payload.py:139`, `:147`, `:182` |
@@ -369,20 +364,20 @@ resulta más estrecho que `MIN_BOUNDS_SPAN = 0.0014` (~150 m) la caja se ensanch
 hasta ese mínimo, porque una caja de ancho cero no tiene zoom que la encuadre
 (`map_payload.py:532-534`, `:556-561`).
 
-`expansion_zoom` traduce esa extensión a un nivel de zoom contra un lienzo
-nominal de 1100×700 px, acotado a `[11.0, 16.5]` (`map_payload.py:472-494`). El
+`expansion_zoom` conserva la traducción de esa extensión contra un lienzo
+nominal de 1100×700 px, acotada a `[11.0, 16.5]`, como dato descriptivo. El
+clic ya no lo usa para decidir el siguiente nivel: país, provincia y ciudad
+avanzan a zoom 6, 8 y 12 respectivamente. El
 comentario del código explica que en Ecuador, sobre el ecuador, un grado de
 latitud y uno de longitud cubren casi los mismos píxeles Mercator, por lo que
 ambos ejes se comparan directamente (`map_payload.py:481-486`).
 
-### 6.2 Recorte por viewport
+### 6.2 Navegación territorial
 
-Solo en nivel `grid` (`map_payload.py:163-167`). `_within_viewport`
-(`map_payload.py:497-519`) usa un padding del 60 % del alto/ancho del viewport
-(mínimo 0.02°) y compara la **extensión** del grupo contra la caja, no la
-posición de su marcador: un cluster cuyas propiedades cruzan el borde de la
-pantalla se caía aunque el usuario las estuviera viendo
-(`map_payload.py:502-504`).
+Los niveles agrupados no se recortan por viewport: se calculan sobre todo el
+inventario filtrado. El clic usa `anchor_latitude` y `anchor_longitude`; si no
+existe un ancla conocida, el backend entrega el centro del inventario del grupo.
+Después de ciudad se solicita directamente el modo `points`.
 
 ---
 

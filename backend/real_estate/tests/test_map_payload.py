@@ -105,3 +105,27 @@ def test_expansion_zoom_follows_how_spread_out_the_group_is():
     )
 
     assert tight_cluster['expansion_zoom'] > spread_cluster['expansion_zoom']
+
+
+def test_map_uses_only_country_province_and_city_clusters():
+    rows = [_listing(i, -0.20 + i * 0.001, -78.47 + i * 0.001) for i in range(10)]
+
+    assert build_map_payload(FakeQuerySet(rows), zoom=5.0, max_items=100)['group_level'] == 'country'
+    assert build_map_payload(FakeQuerySet(rows), zoom=6.0, max_items=100)['group_level'] == 'province'
+    assert build_map_payload(FakeQuerySet(rows), zoom=8.0, max_items=100)['group_level'] == 'city'
+
+    points = build_map_payload(FakeQuerySet(rows), zoom=9.3, max_items=100)
+    assert points['mode'] == 'points'
+    assert points['cluster_count'] == 0
+    assert all(not item['is_cluster'] for item in points['items'])
+
+
+def test_city_cluster_exposes_territorial_anchor_for_direct_navigation():
+    rows = [_listing(i, -0.205 + i * 0.001, -78.43 + i * 0.001) for i in range(10)]
+
+    payload = build_map_payload(FakeQuerySet(rows), zoom=8.0, max_items=100)
+    cluster = next(item for item in payload['items'] if item['is_cluster'])
+
+    assert cluster['group_level'] == 'city'
+    assert cluster['anchor_latitude'] == pytest.approx(-0.18)
+    assert cluster['anchor_longitude'] == pytest.approx(-78.47)

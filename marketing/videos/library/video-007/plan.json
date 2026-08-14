@@ -1,0 +1,115 @@
+{
+  "title": "Esta web la hizo Aents",
+  "audience": "profesional",
+  "funnel_stage": "consideración",
+  "objective": "Convertir un portal ya funcionando en prueba de capacidad de Aents y llevar a dueños de empresa y emprendedores ecuatorianos a agendar su proyecto en aents.net o por WhatsApp.",
+  "conversion_event": "Mensaje de WhatsApp al 098 373 8151 o visita a aents.net con intención de agendar (formulario o chat iniciado).",
+  "pillar": "Confianza y producto humano",
+  "series": "Caso de estudio Aents",
+  "concept": "Caso de estudio en primera persona: se abre con Geo Propiedades Ecuador funcionando y se revela antes del segundo 3 que lo construyó Aents. Después se demuestra pieza por pieza que no es una página sino un sistema —mapa público, filtros, ficha, precio por metro cuadrado con comparables activos, publicación y gestión de inventario— y esa prueba se conecta con lo que Aents hace para otras empresas: web, apps iOS y Android, sistemas, automatización e integraciones, desde la estrategia hasta el lanzamiento. Cierra con un solo CTA de agenda.",
+  "promise": "Si ves funcionando lo que Aents ya construyó, sabes exactamente quién puede construir tu software.",
+  "cta": "Escríbenos y agenda tu idea",
+  "hypothesis": "En tráfico frío B2B, mostrar un producto real y verificable antes de nombrar al proveedor genera más confianza que enumerar servicios; si la demostración ocupa el centro del video y el CTA aparece una sola vez al final, la pieza producirá más mensajes de WhatsApp cualificados que un anuncio de servicios genérico.",
+  "cover_text": "Esta web la hizo Aents",
+  "caption": "Geo Propiedades Ecuador no es una página: es un mapa público, búsqueda con filtros, fichas, precio por metro cuadrado con comparables y publicación de propiedades. Lo construimos nosotros. Somos Aents, un estudio de software ecuatoriano desde la Amazonía: webs, aplicaciones iOS y Android, sistemas empresariales, automatización e integraciones. Estrategia, diseño, desarrollo y lanzamiento. ¿Tienes una idea? Agéndala: aents.net o WhatsApp 098 373 8151. #Ecuador #software #desarrolloweb #apps #emprendedoresEcuador #Aents",
+  "narration": "Esta es Geo Propiedades Ecuador. Y esta web la hizo Aents. No es solo una página: es un mapa público del Ecuador donde cada propiedad tiene su lugar. Quien busca filtra por precio y zona, y quedan solo las opciones que le sirven. Abre una ficha y ve fotos, precio, características y ubicación en un solo lugar. Hasta el precio por metro cuadrado se compara con inventario activo del mismo tipo y ciudad. Y los propietarios publican sin costo y gestionan su inventario desde su cuenta. Todo esto lo hicimos nosotros: estrategia, diseño, desarrollo y lanzamiento. Somos Aents, estudio de software ecuatoriano, desde la Amazonía. Hacemos sitios web, aplicaciones para iPhone y Android, sistemas para tu empresa, automatizaciones e integraciones. ¿Tienes una idea? Construyámosla. Escríbenos por WhatsApp al cero nueve ocho, tres siete tres, ocho uno cinco uno, o entra a aents punto net.",
+  "verification_notes": [
+    "Mapa público, búsqueda, filtros y ficha con fotos, precio, características y ubicación: capacidades listadas en el contexto verificado de producto y ya demostradas en los videos 001, 002 y 005; confirmar contra specs/ y el frontend público antes de renderizar. El mapa es MapLibre y nunca se nombra Leaflet.",
+    "Precio por metro cuadrado con contexto: se afirma exactamente lo que hace la animación registrada sim:precio-area, comparación con inventario activo del mismo tipo, operación y ciudad. No se afirma tasación, valor de mercado ni plusvalía.",
+    "Publicación sin costo: respaldada por frontend/lib/help-faqs.ts (gratis, sin comisión, sin límite) según el contexto verificado. Reconfirmar que la FAQ y la página publicada siguen vigentes antes del render; si cambia, se elimina la palabra sin costo.",
+    "Sistemas de gestión: en pantalla solo se representa la gestión del propio inventario (editar, actualizar, dar de baja desde la cuenta del propietario). No se muestra ni se insinúa panel administrativo, métricas privadas, contadores de visitas ni datos de contacto.",
+    "No se menciona el video automático del anuncio (propuesta en specs/proposals/social-kit.yaml) ni publicación automática en redes.",
+    "Escenas 7, 8 y 9 describen la oferta de Aents tal como la entrega el brief (webs, apps iOS y Android, sistemas empresariales, automatización e integraciones; estrategia, diseño, desarrollo y lanzamiento; estudio ecuatoriano desde la Amazonía). Verificar literalidad contra la landing publicada de aents.net antes del render.",
+    "Se eliminó a propósito la formulación webs que venden y crecen del brief: en la voz quedaría como promesa de resultado. La pieza no promete ventas, plazos, ahorros, retorno ni cantidad de clientes.",
+    "No hay prueba social ni cifras: no se menciona número de propiedades, usuarios, visitas ni proyectos entregados.",
+    "Número de WhatsApp 098 373 8151 tomado del brief; confirmar que es la línea comercial activa antes de publicar. Se narra dígito a dígito para la voz.",
+    "Todas las escenas usan animaciones ya registradas (sim:llegada, sim:mapa, sim:filtros, sim:ficha, sim:precio-area, sim:publicar-gratis) o escenas tipográficas de marca con asset null. No se declara ninguna animación nueva sin implementar, y nada se presenta como grabación de pantalla.",
+    "Portada específica de Aents con acento violeta #6B5CF6. Bloque de marca superior desde y=205, margen lateral de 120 px y al menos 48 px libres entre el título y la ilustración.",
+    "Música: solo si existe una pista gratuita para uso comercial con autor, URL y licencia archivados en el sidecar. Sin esa evidencia, la pieza se renderiza en silencio.",
+    "Voz: renderizar con Kokoro local. No ejecutar --final ni cotizar voz pagada hasta una orden humana explícita."
+  ],
+  "music": "Colchón instrumental cálido y moderno, sin voces ni coros: piano eléctrico suave, pulso electrónico discreto y bajo redondo, alrededor de 90 pulsos por minuto. Ánimo optimista y sobrio, volumen bajo bajo la narración, con una pequeña apertura al nombrar Aents y un cierre limpio en el CTA.",
+  "scenes": [
+    {
+      "purpose": "gancho",
+      "duration": 4.5,
+      "voice": "Esta es Geo Propiedades Ecuador. Y esta web la hizo Aents.",
+      "on_screen_text": "La hizo Aents",
+      "asset": "sim:aents-reveal",
+      "visual_direction": "Cámara ya en movimiento en el primer cuadro: el mapa de Geo Propiedades entra desde la derecha con su marca sobre el fondo claro de la serie, ocupando de y=250 a y=900 como sujeto único. Al segundo 2,5 el tile violeta de Aents se posa sobre la esquina del panel de producto con la misma elevación y bordes de la serie, como una firma de autor. Rótulo en la banda inferior, marca superior desde y=205 y margen lateral de 120 px.",
+      "transition": "cut"
+    },
+    {
+      "purpose": "prueba",
+      "duration": 6,
+      "voice": "No es solo una página: es un mapa público del Ecuador donde cada propiedad tiene su lugar.",
+      "on_screen_text": "Mapa público real",
+      "asset": "sim:mapa",
+      "visual_direction": "Recorrido continuo y sin saltos: del mapa del país a una zona reconocible, las burbujas de ciudad se abren en barrios y luego en casas con su precio. Un solo sujeto grande y centrado, valores de precio a 56 px y etiquetas nunca menores a 22 px. El tile violeta de Aents queda pequeño y fijo en la esquina del panel, sin competir con el mapa.",
+      "transition": "cut"
+    },
+    {
+      "purpose": "prueba",
+      "duration": 6,
+      "voice": "Quien busca filtra por precio y zona, y quedan solo las opciones que le sirven.",
+      "on_screen_text": "Filtra y decide",
+      "asset": "sim:filtros",
+      "visual_direction": "El control de precio se arrastra con velocidad humana sobre el mapa y las propiedades fuera del rango se desvanecen una a una, no de golpe. La cámara acompaña con un leve empuje hacia el grupo que sobrevive. Se conserva la jerarquía real del filtro del producto: etiqueta, rango y contador de resultados.",
+      "transition": "cut"
+    },
+    {
+      "purpose": "prueba",
+      "duration": 6,
+      "voice": "Abre una ficha y ve fotos, precio, características y ubicación en un solo lugar.",
+      "on_screen_text": "Ficha completa",
+      "asset": "sim:ficha",
+      "visual_direction": "Un pin del mapa se toca y la ficha sube en una sola toma, ocupando el centro del cuadro: foto grande, precio destacado y fila de características con sus etiquetas reales. Nada de datos de contacto, contadores de visitas ni información de una propiedad identificable; los valores son ilustrativos.",
+      "transition": "cut"
+    },
+    {
+      "purpose": "prueba",
+      "duration": 6.5,
+      "voice": "Hasta el precio por metro cuadrado se compara con inventario activo del mismo tipo y ciudad.",
+      "on_screen_text": "Precio con contexto",
+      "asset": "sim:precio-area",
+      "visual_direction": "El precio por metro cuadrado sube y se coloca dentro del rango de comparables activos del mismo tipo, operación y ciudad, con el número de comparables visible. Cifra a 64 px, rango dibujado como banda ancha y clara. La cámara hace un empuje lento hacia la banda; el rótulo no se solapa con el número.",
+      "transition": "cut"
+    },
+    {
+      "purpose": "prueba",
+      "duration": 6,
+      "voice": "Y los propietarios publican sin costo y gestionan su inventario desde su cuenta.",
+      "on_screen_text": "Publicar y gestionar",
+      "asset": "sim:inventario-agente",
+      "visual_direction": "El flujo de publicación avanza junto al distintivo de costo cero y sin comisión, y al final las propiedades publicadas se ordenan como tarjetas propias con sus acciones de editar y desactivar. Solo la vista del propio dueño: ningún panel administrativo, ninguna métrica privada en pantalla.",
+      "transition": "cut"
+    },
+    {
+      "purpose": "resultado",
+      "duration": 9,
+      "voice": "Todo esto lo hicimos nosotros: estrategia, diseño, desarrollo y lanzamiento. Somos Aents, estudio de software ecuatoriano, desde la Amazonía.",
+      "on_screen_text": "Estudio ecuatoriano",
+      "asset": "sim:aents-proceso",
+      "visual_direction": "Escena tipográfica de marca Aents sobre navy: el panel de producto se aleja y se convierte en un bloque violeta que ocupa el centro. Cuatro etapas se encienden en línea con movimiento continuo, estrategia, diseño, desarrollo y lanzamiento, y debajo entra el tile violeta con el nombre Aents y la palabra Amazonía. Tipografía Plus Jakarta Sans ExtraBold, valores de 56 a 70 px, cámara siempre en deriva lenta.",
+      "transition": "fade"
+    },
+    {
+      "purpose": "resultado",
+      "duration": 8,
+      "voice": "Hacemos sitios web, aplicaciones para iPhone y Android, sistemas para tu empresa, automatizaciones e integraciones.",
+      "on_screen_text": "Web, apps, sistemas",
+      "asset": "sim:aents-servicios",
+      "visual_direction": "Cuatro tarjetas grandes de la serie entran de una en una, nunca simultáneas ni en rejilla densa: sitio web, aplicación móvil, sistema empresarial y automatización con integraciones. Cada tarjeta ocupa casi todo el ancho útil, con su etiqueta a 40 px, y al entrar la siguiente la anterior se recoge hacia el fondo con la elevación de marca.",
+      "transition": "cut"
+    },
+    {
+      "purpose": "cta",
+      "duration": 9,
+      "voice": "¿Tienes una idea? Construyámosla. Escríbenos por WhatsApp al cero nueve ocho, tres siete tres, ocho uno cinco uno, o entra a aents punto net.",
+      "on_screen_text": "Agenda tu idea",
+      "asset": "sim:aents-contacto",
+      "visual_direction": "Tarjeta de cierre de la serie con acento violeta: tile de Aents, la frase Construyamos tu software, el dominio aents.net y el WhatsApp 098 373 8151 en una sola columna dentro de la zona segura. Un único CTA, sin datos de Geo Propiedades ni segundas llamadas a la acción. El número se muestra agrupado igual que se pronuncia y el bloque cierra con la firma de Aents.",
+      "transition": "fade"
+    }
+  ]
+}

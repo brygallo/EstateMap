@@ -1,0 +1,107 @@
+{
+  "title": "Antes de comprar un departamento, revisa esto",
+  "audience": "comprador",
+  "funnel_stage": "consideración",
+  "objective": "Que el comprador de departamento reconozca qué debe revisar antes de decidir y entre al mapa de Geo Propiedades Ecuador para ver el entorno del edificio antes de ir a verlo.",
+  "conversion_event": "Clic al sitio desde el perfil o guardado de la pieza, seguido de una sesión de exploración en el mapa.",
+  "pillar": "Educación inmobiliaria",
+  "series": "Antes de comprar",
+  "concept": "Historia educativa de 90 segundos para quien está por comprar un departamento en Ecuador. La idea que sostiene todo: no compras un departamento suelto, compras una parte de un edificio con sus reglas, sus vecinos y sus deudas. Las siete primeras escenas enseñan comprobaciones que ocurren fuera de cualquier portal —declaratoria de propiedad horizontal y reglamento, parqueadero y bodega en la escritura, alícuota al día por escrito, actas de asamblea y estado real del edificio, escrituras y gravámenes leídos por un abogado, y el precio por metro comparado con metros útiles—. Solo la séptima nombra Geo Propiedades Ecuador como cuña honesta: lo único de esa lista que sí puedes ver antes de moverte es el entorno del edificio, porque las propiedades están sobre el mapa. Cierra sin veredicto: ir a verlo sabiendo qué preguntar.",
+  "promise": "Vas a saber exactamente qué pedir y qué mirar antes de decidirte por un departamento, y podrás ver el entorno del edificio en el mapa antes de ir.",
+  "cta": "Encuentra tu futuro hogar",
+  "hypothesis": "Si la pieza enseña primero comprobaciones útiles que no dependen del portal, el comprador la percibe como consejo y no como publicidad, y la mención única del mapa al final —limitada a lo que el producto sí hace— genera más clics cualificados que una demostración de producto desde el segundo cero.",
+  "cover_text": "Antes de comprar un departamento",
+  "caption": "Comprar un departamento no es comprar solo el departamento: es entrar a un edificio con sus reglas, sus vecinos y sus deudas. Esto es lo que conviene pedir antes de decidir: la declaratoria de propiedad horizontal y el reglamento, el parqueadero y la bodega en la escritura, la alícuota al día por escrito, las actas de las últimas asambleas y el estado del ascensor, la bomba y la cisterna. Las escrituras y los gravámenes, que los lea un abogado. Y el entorno del edificio sí lo puedes ver antes de ir: en geopropiedadesecuador.com las propiedades están sobre el mapa. Esto es información general, no asesoría legal. #Ecuador #Departamentos #ComprarDepartamento #Quito #Guayaquil #GeoPropiedadesEcuador",
+  "narration": "Cuando compras un departamento no compras solo el departamento. Compras una parte de un edificio, con sus reglas, sus vecinos y sus deudas. Y eso se revisa antes. Pide la declaratoria de propiedad horizontal y el reglamento interno. Ahí dice qué es tuyo y qué es común. Y revisa que el parqueadero y la bodega consten en la escritura, no que te los hayan asignado de palabra. Pregunta cuánto es la alícuota y qué cubre. Es un gasto de todos los meses, igual que la luz. Y pide por escrito, firmado por la administración, que el vendedor esté al día. Pide las actas de las últimas asambleas. Ahí aparecen las derramas: las cuotas extras que se aprueban cuando hay algo grande que arreglar. Y camina el edificio: el ascensor, la bomba, la cisterna, las humedades en los pasillos. Las escrituras, el certificado de gravámenes y el predial al día no los revisas por encima. Que los lea un abogado, línea por línea, antes de firmar cualquier cosa. Divide el precio para los metros y compara. Pero fíjate qué metros te están contando: hay anuncios que suman áreas comunes. Compara metros útiles con metros útiles, del mismo tipo y en la misma ciudad. Y lo que hay alrededor del edificio también se revisa. Eso sí lo ves antes de ir: en Geo Propiedades Ecuador las propiedades están sobre el mapa, así que ves la zona, las vías y por dónde se llega. Ve a verlo sabiendo qué preguntar. Encuentra tu futuro hogar en Geo Propiedades Ecuador.",
+  "verification_notes": [
+    "Cuatro escenas quedan con asset null a propósito: el brief pide sim:que-compras, sim:propiedad-horizontal, sim:alicuota y sim:edificio, y esas animaciones todavía no existen ni están registradas en Python y Remotion. El linter bloquearía un identificador desconocido, así que la escena queda descrita en visual_direction y el render no se lanza hasta que las cuatro estén implementadas, registradas y con prueba. Ninguna se sustituye por una animación parecida.",
+    "sim:gravamenes, sim:dividir y sim:alrededor ya existen en el catálogo aprobado y demuestran literalmente la voz de las escenas 5, 6 y 7.",
+    "La única afirmación de producto de la pieza es que las propiedades están sobre un mapa y que ahí se ve la zona, las vías y el acceso. Es lo que hace el mapa MapLibre del portal; no se promete exactitud topográfica ni información del edificio que el producto no tenga.",
+    "No se menciona el kit social, ni láminas, ni QR, ni métricas de visitas, ni publicación automática, ni el video automático propuesto.",
+    "No aparece lenguaje de propietario: no se dice publicar, gratis, sin comisión ni sin límite. El CTA es de comprador, uno solo, al final.",
+    "Ninguna cifra: no se afirma inventario, demanda, cantidad de comparables, precios de mercado ni plusvalía. La comparación de metros útiles se enuncia como método del comprador, no como dato del portal.",
+    "No se afirma que una zona sea buena, segura o rentable. La escena 7 dice qué se ve —zona, vías, acceso—, no cómo juzgarla.",
+    "La pieza da información general de revisión documental y remite explícitamente a un abogado. No da asesoría legal ni afirma requisitos legales concretos: pide documentos por su nombre y deja la interpretación a un profesional.",
+    "El caption incluye la advertencia de que es información general y no asesoría legal.",
+    "Gancho y concepto nuevos frente al catálogo: el 009 trata terrenos leyendo la ficha; este trata departamentos y propiedad horizontal, casi todo fuera del portal.",
+    "Portada video 010: acento violeta según la alternancia verde, violeta, teal, lavanda. Bloque de logo y dominio desde y=205, margen lateral de 120 px, mínimo 48 px entre el título y la ilustración.",
+    "Narración de 1405 caracteres; a 16,2 caracteres por segundo medidos con la voz de borrador da unos 87 segundos. La voz de producción suele salir alrededor de un 20 % más lenta, así que el máster final se mide antes de firmar.",
+    "Antes de dar por buena cualquier escena hay que renderizar, extraer un fotograma del medio de cada una y comprobar que se reconozca sin leyenda, que nada se solape y que ningún texto baje de 22 px."
+  ],
+  "music": "Instrumental suave y cálido, sin voces. Piano eléctrico con notas sueltas, bajo grave sostenido y una nota larga de cuerdas al fondo. Tempo lento, cerca de 80 pulsos por minuto, sin batería marcada. Ánimo sereno, de alguien que explica con calma. Siempre por debajo de la voz y más baja en el cierre.",
+  "scenes": [
+    {
+      "purpose": "gancho",
+      "duration": 10,
+      "voice": "Cuando compras un departamento no compras solo el departamento. Compras una parte de un edificio, con sus reglas, sus vecinos y sus deudas. Y eso se revisa antes.",
+      "on_screen_text": "Compras el edificio",
+      "asset": "sim:que-compras",
+      "visual_direction": "Animación nueva a construir y registrar como sim:que-compras. Escena tipográfica de marca sobre el fondo claro de la serie mientras la animación no exista. Cuando se construya: un edificio de departamentos visto desde la vereda, dibujado como se ve en la vida real, con su portón, su vereda y un árbol; la cámara sube despacio y una sola ventana iluminada se separa apenas del volumen para mostrar que ese es el departamento. Enseguida el edificio entero se ilumina por capas —fachada, ascensor, cisterna en la azotea— para decir sin texto que lo que compras es todo eso. Un solo sujeto grande de y=250 a y=900, cámara siempre en movimiento y remate con el edificio completo asentándose.",
+      "transition": "cut"
+    },
+    {
+      "purpose": "prueba",
+      "duration": 13,
+      "voice": "Pide la declaratoria de propiedad horizontal y el reglamento interno. Ahí dice qué es tuyo y qué es común. Y revisa que el parqueadero y la bodega consten en la escritura, no que te los hayan asignado de palabra.",
+      "on_screen_text": "Qué dice la escritura",
+      "asset": "sim:propiedad-horizontal",
+      "visual_direction": "Animación nueva a construir y registrar como sim:propiedad-horizontal. Mientras no exista, escena tipográfica de marca. Cuando se construya: un juego de documentos en papel sobre una mesa, dibujados como papeles reales con sello y firma, entrando escalonados. El primero se abre y sobre el corte del edificio se pintan en dos tonos lo privado y lo común, con etiquetas grandes de al menos 24 px. A la mitad ocurre el cambio de estado: el papel pasa la página y aparecen dos renglones, parqueadero y bodega, que se marcan como parte del documento; al lado, un cartel de parqueadero apenas dibujado con tiza se borra para mostrar la diferencia entre constar y estar asignado de palabra.",
+      "transition": "cut"
+    },
+    {
+      "purpose": "prueba",
+      "duration": 11,
+      "voice": "Pregunta cuánto es la alícuota y qué cubre. Es un gasto de todos los meses, igual que la luz. Y pide por escrito, firmado por la administración, que el vendedor esté al día.",
+      "on_screen_text": "Alícuota al día",
+      "asset": "sim:alicuota",
+      "visual_direction": "Animación nueva a construir y registrar como sim:alicuota. Mientras no exista, escena tipográfica de marca. Cuando se construya: un recibo mensual de administración en primer plano, del tamaño de media pantalla, con el monto en cifra grande claramente ilustrativa —nunca presentada como valor real de mercado— y debajo dos o tres renglones de lo que cubre. Los recibos se apilan uno por mes con ritmo constante para que se sienta el gasto recurrente. Al final entra un certificado firmado y sellado que se posa encima de la pila; el sello cae con peso como remate.",
+      "transition": "cut"
+    },
+    {
+      "purpose": "prueba",
+      "duration": 14,
+      "voice": "Pide las actas de las últimas asambleas. Ahí aparecen las derramas: las cuotas extras que se aprueban cuando hay algo grande que arreglar. Y camina el edificio: el ascensor, la bomba, la cisterna, las humedades en los pasillos.",
+      "on_screen_text": "Actas y derramas",
+      "asset": "sim:edificio",
+      "visual_direction": "Animación nueva a construir y registrar como sim:edificio. Mientras no exista, escena tipográfica de marca. Cuando se construya: primero un acta de asamblea abierta, con firmas al pie, y un punto del orden del día que se resalta solo. A la mitad la cámara deja el papel y entra al edificio en corte lateral, con la misma línea de suelo y el mismo punto de vista de la escena uno: se recorre de arriba abajo el tanque de la azotea, el ascensor con su puerta abriéndose, el cuarto de bombas y un pasillo con una mancha de humedad en la esquina. Cada elemento se detiene un instante con su etiqueta grande y la cámara sigue bajando sin parar hasta el hall.",
+      "transition": "cut"
+    },
+    {
+      "purpose": "prueba",
+      "duration": 10.5,
+      "voice": "Las escrituras, el certificado de gravámenes y el predial al día no los revisas por encima. Que los lea un abogado, línea por línea, antes de firmar cualquier cosa.",
+      "on_screen_text": "Léelo con abogado",
+      "asset": "sim:gravamenes",
+      "visual_direction": "Se usa la animación aprobada del certificado de gravámenes y el predial leídos uno a uno, con su ritmo de lectura línea por línea. Mantener el panel de producto de la serie, su elevación y su tipografía; la cámara acompaña la lectura con un desplazamiento lento y el remate es el último documento cerrándose.",
+      "transition": "cut"
+    },
+    {
+      "purpose": "prueba",
+      "duration": 12.5,
+      "voice": "Divide el precio para los metros y compara. Pero fíjate qué metros te están contando: hay anuncios que suman áreas comunes. Compara metros útiles con metros útiles, del mismo tipo y en la misma ciudad.",
+      "on_screen_text": "Compara metros útiles",
+      "asset": "sim:dividir",
+      "visual_direction": "Se usa la animación aprobada de dividir precio para el área y comparar dos propiedades de distinto tamaño. Los valores son claramente ilustrativos y no se presentan como precios de mercado. El acento de la escena está en qué área entra en la división: la superficie útil se destaca frente al área que incluiría espacios comunes.",
+      "transition": "cut"
+    },
+    {
+      "purpose": "resultado",
+      "duration": 12,
+      "voice": "Y lo que hay alrededor del edificio también se revisa. Eso sí lo ves antes de ir: en Geo Propiedades Ecuador las propiedades están sobre el mapa, así que ves la zona, las vías y por dónde se llega.",
+      "on_screen_text": "Ve el entorno primero",
+      "asset": "sim:alrededor",
+      "visual_direction": "Se usa la animación aprobada del entorno en el mapa: la vista baja a la zona, aparecen las vías y el acceso alrededor del inmueble. La marca entra aquí, con el dominio y el tile en el bloque superior desde y=205 y dentro del margen lateral de 120 px. Ninguna burbuja muestra cantidades de propiedades. La cámara termina asentada sobre la manzana del edificio.",
+      "transition": "cut"
+    },
+    {
+      "purpose": "cta",
+      "duration": 6,
+      "voice": "Ve a verlo sabiendo qué preguntar. Encuentra tu futuro hogar en Geo Propiedades Ecuador.",
+      "on_screen_text": "Tu futuro hogar",
+      "asset": null,
+      "visual_direction": "Tarjeta de cierre de marca de la serie, sin cambios: tile violeta, Geo Propiedades Ecuador, el dominio geopropiedadesecuador.com, el CTA Encuentra tu futuro hogar y la firma de Aents. Entrada suave del tile y asentamiento del texto; nada más se mueve.",
+      "transition": "fade"
+    }
+  ],
+  "cover_art": "terreno"
+}

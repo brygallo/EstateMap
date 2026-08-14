@@ -65,8 +65,14 @@ const guard = (path) => {
 
 const wait = (ms) => new Promise((done) => setTimeout(done, ms));
 
-async function play(page, step, baseUrl) {
+async function play(page, step, baseUrl, clock) {
   switch (step.action) {
+    case 'mark':
+      // Recording starts when the browser context is created, so the first
+      // seconds of every take are a blank page. This is where the usable clip
+      // begins; everything before it is trimmed away.
+      clock.startsAt = (Date.now() - clock.openedAt) / 1000;
+      break;
     case 'goto':
       guard(step.path);
       await page.goto(new URL(step.path, baseUrl).toString(), {waitUntil: 'domcontentloaded', timeout: 60_000});
@@ -77,16 +83,38 @@ async function play(page, step, baseUrl) {
     case 'move':
       await page.mouse.move(step.x, step.y, {steps: 20});
       break;
-    case 'drag':
-      await page.mouse.move(step.from[0], step.from[1], {steps: 12});
+    case 'drag': {
+      // Playwright fires every step of a gesture as fast as it can, so a drag
+      // with thirty steps is over in a few milliseconds: the recording shows a
+      // jump and then a frozen screen. Pacing the steps against the clock is
+      // what makes the motion look like a hand moving a map.
+      const duration = step.ms ?? 2000;
+      const steps = Math.max(2, Math.round((duration / 1000) * 30));
+      await page.mouse.move(step.from[0], step.from[1], {steps: 10});
+      await wait(160);
       await page.mouse.down();
-      await page.mouse.move(step.to[0], step.to[1], {steps: step.steps ?? 30});
+      for (let index = 1; index <= steps; index += 1) {
+        const progress = index / steps;
+        const eased = progress < 0.5 ? 2 * progress * progress : 1 - Math.pow(-2 * progress + 2, 2) / 2;
+        await page.mouse.move(
+          step.from[0] + (step.to[0] - step.from[0]) * eased,
+          step.from[1] + (step.to[1] - step.from[1]) * eased,
+        );
+        await wait(duration / steps);
+      }
       await page.mouse.up();
       break;
-    case 'wheel':
+    }
+    case 'wheel': {
+      const duration = step.ms ?? 1600;
+      const ticks = Math.max(2, Math.round((duration / 1000) * 20));
       await page.mouse.move(step.x, step.y, {steps: 10});
-      await page.mouse.wheel(0, step.deltaY ?? -300);
+      for (let index = 0; index < ticks; index += 1) {
+        await page.mouse.wheel(0, (step.deltaY ?? -300) / ticks);
+        await wait(duration / ticks);
+      }
       break;
+    }
     case 'scroll':
       await page.evaluate(
         ([to, ms]) => new Promise((done) => {
@@ -116,6 +144,21 @@ async function play(page, step, baseUrl) {
       }
       break;
     }
+    case 'click': {
+      // The map is a canvas, so a cluster can only be reached by coordinate.
+      await page.mouse.move(step.x, step.y, {steps: 24});
+      await wait(step.before ?? 420);
+      await page.mouse.down();
+      await wait(90);
+      await page.mouse.up();
+      break;
+    }
+    case 'shot': {
+      // A still is crisp where a recording is not: no compression, no dropped
+      // repaints, and it can be pushed slowly by the renderer instead.
+      await page.screenshot({path: join(output, `${step.name}.png`), animations: 'disabled'});
+      break;
+    }
     case 'clickFirst': {
       const target = page.locator(step.selector).first();
       await target.waitFor({state: 'visible', timeout: 20_000});
@@ -136,22 +179,28 @@ async function capture(flow, baseUrl, browser) {
   mkdirSync(temporary, {recursive: true});
   const context = await browser.newContext({
     // A 1080 px wide viewport is a desktop breakpoint: the portal would render
-    // its desktop layout and the clip would look nothing like a phone. Record a
-    // real phone viewport at triple density instead, which lands exactly on
-    // 1080 x 1920. Step coordinates are therefore in 360 x 640 space.
-    viewport: {width: 360, height: 640},
-    deviceScaleFactor: 3,
+    // its desktop layout and the clip would look nothing like a phone. 540 px
+    // stays under every mobile breakpoint and is exactly half of the master, so
+    // the clip only has to be doubled afterwards.
+    //
+    // The recorder captures at CSS viewport size and only ever scales *down* to
+    // the requested size, padding the rest of the canvas. Asking for 1080 x 1920
+    // here would put the page in a corner of a grey frame, so the video is
+    // recorded at viewport size and upscaled with ffmpeg instead.
+    viewport: {width: 540, height: 960},
+    deviceScaleFactor: 2,
     isMobile: true,
     hasTouch: true,
     locale: 'es-EC',
     timezoneId: 'America/Guayaquil',
-    recordVideo: {dir: temporary, size: {width: 1080, height: 1920}},
+    recordVideo: {dir: temporary, size: {width: 540, height: 960}},
   });
   await context.addInitScript(CURSOR);
+  const clock = {openedAt: Date.now(), startsAt: null};
   const page = await context.newPage();
   try {
     for (const step of flow.steps) {
-      await play(page, step, baseUrl);
+      await play(page, step, baseUrl, clock);
     }
   } finally {
     await page.close();
@@ -159,18 +208,34 @@ async function capture(flow, baseUrl, browser) {
   }
   const raw = readFileSync;
   const {readdirSync} = await import('node:fs');
-  const recorded = readdirSync(temporary).filter((name) => name.endsWith('.webm'));
+  const {statSync} = await import('node:fs');
+  const recorded = readdirSync(temporary)
+    .filter((name) => name.endsWith('.webm'))
+    .map((name) => join(temporary, name))
+    .sort((a, b) => statSync(b).size - statSync(a).size);
   if (!recorded.length) throw new Error(`No recording produced for ${flow.name}`);
-  const source = join(temporary, recorded[0]);
+  const source = recorded[0];
   const target = join(output, `${flow.name}.mp4`);
+  if (clock.startsAt === null) {
+    throw new Error(`Flow ${flow.name} has no "mark" step saying where the usable clip starts`);
+  }
   await run('ffmpeg', [
     '-y', '-i', source,
-    '-t', String(flow.seconds ?? 8),
-    '-vf', 'scale=1080:1920:force_original_aspect_ratio=increase,crop=1080:1920,fps=30',
+    '-ss', clock.startsAt.toFixed(2), '-t', String(flow.seconds ?? 8),
+    '-vf', 'scale=1080:1920:flags=lanczos:force_original_aspect_ratio=increase,crop=1080:1920,fps=30',
     '-an', '-c:v', 'libx264', '-crf', '20', '-pix_fmt', 'yuv420p',
     target,
   ]);
-  rmSync(temporary, {recursive: true, force: true});
+  // A clip that came out empty must fail loudly: a silent zero-byte file only
+  // shows up much later, as a broken render.
+  const {stdout} = await run('ffprobe', [
+    '-v', 'error', '-show_entries', 'format=duration', '-of', 'default=nw=1:nk=1', target,
+  ]);
+  const seconds = Number.parseFloat(stdout.trim());
+  if (!Number.isFinite(seconds) || seconds < 1) {
+    throw new Error(`Clip is empty (${stdout.trim() || 'no duration'}); check the mark position`);
+  }
+  if (!process.env.CAPTURE_KEEP_RAW) rmSync(temporary, {recursive: true, force: true});
   void raw;
   return target;
 }
@@ -185,7 +250,21 @@ async function main() {
     process.exit(1);
   }
   mkdirSync(output, {recursive: true});
-  const browser = await chromium.launch({args: ['--autoplay-policy=no-user-gesture-required']});
+  // The map is a WebGL canvas. Headless Chrome falls back to software
+  // rasterisation and repaints it at roughly seven frames a second, which reads
+  // as stuttering no matter what frame rate the recorder writes. A headed window
+  // uses the real GPU, so that is the default; CAPTURE_HEADLESS=1 forces the old
+  // behaviour for an unattended machine.
+  const browser = await chromium.launch({
+    headless: Boolean(process.env.CAPTURE_HEADLESS),
+    args: [
+      '--autoplay-policy=no-user-gesture-required',
+      '--ignore-gpu-blocklist',
+      '--enable-gpu-rasterization',
+      '--enable-zero-copy',
+      '--disable-frame-rate-limit',
+    ],
+  });
   const manifestPath = join(output, 'manifest.json');
   const manifest = existsSync(manifestPath)
     ? JSON.parse(readFileSync(manifestPath, 'utf8'))

@@ -4,6 +4,12 @@ Revisión del estado real de `marketing/videos/` el 2026-08-12, con evidencia
 ejecutada (no leída) y un plan por fases para convertirlo en una fábrica capaz
 de sostener publicaciones semanales en TikTok e Instagram Reels.
 
+> **Estado: fases 0 a 4 implementadas el 2026-08-12.** Lo que sigue es el
+> diagnóstico original, conservado porque explica por qué el sistema es como es.
+> Al final hay un registro de lo que se construyó y de los defectos que
+> aparecieron al ejecutarlo. La fase 5 (videos por propiedad) queda descartada
+> por ahora: la fábrica vende la plataforma.
+
 ---
 
 ## 1. Qué hay hoy
@@ -34,7 +40,7 @@ se comporta el sistema es hipótesis sin una sola pieza que la respalde.
 
 `video_factory.py` es el prototipo completo (plan + FFmpeg `drawtext` + catálogo
 propio) y `factory.py` es el sistema con estado que lo sustituye. El segundo
-importa del primero solo `create_plan`, `generate_voice`, `generate_music`,
+importa del primero solo `create_plan` y `generate_voice`,
 `write_srt`, `run`, `FONT` y `FPS`. Todo lo demás es código muerto que sigue
 ejecutable y sigue leyéndose:
 
@@ -192,7 +198,7 @@ Es la fase que decide si los videos funcionan o no.
    escrito y conservar el `on_screen_text` de la última escena junto al CTA.
 6. **Música:** quitar la síntesis de senoidales. Por defecto, sin música —el
    audio de tendencia se añade al publicar— y una carpeta `assets/music/` con
-   pistas licenciadas y su `LICENSE.md` para cuando haga falta. Los efectos, si
+   pistas gratuitas para uso comercial, autor y licencia archivados. Los efectos, si
    se mantienen, con retardo para no pisar la primera sílaba.
 7. **Control de duración:** estimar la duración a partir del texto antes de
    sintetizar; si supera el objetivo en más de un 15 %, pedir a Claude una
@@ -268,7 +274,64 @@ condiciones innegociables:
 
 ---
 
-## 5. Dos cosas que hay que decidir antes de producir en volumen
+## 5. Lo que se construyó y lo que se rompió al hacerlo
+
+Registro de la ejecución del plan, el 2026-08-12. Vale la pena conservarlo
+porque cada defecto apareció al ejecutar el sistema, no al leerlo.
+
+### Defectos encontrados al producir el primer video
+
+1. **El planificador moría siempre.** El system prompt le pide a Claude verificar
+   afirmaciones contra `specs/`, así que el Claude anidado intentaba usar Bash,
+   se le denegaba el permiso y agotaba su único turno. `--max-turns 1` devolvía
+   `error_max_turns` con `stderr` vacío, de modo que el error que veía la
+   persona era literalmente `Claude CLI failed:`. Se planifica a libro cerrado
+   (`--tools ""`) y los fallos se leen del JSON, donde de verdad están.
+2. **`video review` nunca había funcionado.** `ffprobe` con esa plantilla CSV
+   devuelve `1080x1920x`, y el `split("x")` esperaba dos valores. La fábrica
+   nunca había llegado a revisar nada.
+3. **El CTA se salía del cuadro.** Confirmado en el primer MP4 producido:
+   «Explora el mapa en geopropiedadesecuador.com» quedaba cortado por el borde
+   derecho. De ahí el ajuste tipográfico medido con la fuente real.
+4. **Playwright rellena, no escala.** El grabador captura al tamaño CSS del
+   viewport y solo reduce; pedirle un lienzo de 1080 × 1920 desde un viewport de
+   360 px dejaba la página en una esquina sobre gris. Se graba a 540 × 960 y se
+   escala con ffmpeg.
+5. **La grabación empezaba antes que la página.** El vídeo arranca al crear el
+   contexto del navegador, así que los primeros segundos eran una página en
+   blanco y el recorte se quedaba justo con esa parte. De ahí el paso `mark`.
+6. **El velo era demasiado suave.** Las capturas del portal son una interfaz
+   clara y el texto es blanco; el degradado original no sostenía el contraste.
+
+### Defectos encontrados en la revisión del código nuevo
+
+- `video learn` guardaba el catálogo antes de pedirle las lecciones a Claude: si
+  esa llamada fallaba, los videos quedaban en `learned` y su evidencia no
+  producía ninguna lección jamás.
+- Re-renderizar dejaba vivo el `review.json` anterior, así que se podía firmar y
+  empaquetar un máster que nadie había revisado. Ahora el render invalida la
+  revisión, `sign` exige el estado `reviewed` y el render comprueba que el plan
+  no haya cambiado desde la aprobación.
+- El linter reventaba con un traceback si alguien editaba `plan.json` a mano y
+  dejaba un campo nulo, justo en el bucle que el propio comando recomienda.
+- `video cover` vaciaba la carpeta de trabajo y luego buscaba en ella la imagen
+  de portada, generando una portada distinta a la del render.
+- Un fallo a mitad de `new` dejaba un directorio huérfano que bloqueaba el
+  siguiente número para siempre.
+- La clave de caché de voz no incluía la voz de macOS ni el modelo de
+  ElevenLabs: cambiarlos servía audio antiguo.
+
+### Verificado en ejecución
+
+- Cadena completa `new → lint → approve → render → review → sign → cover → pack`
+  sobre `video-001`, con material real capturado del portal.
+- `video variants --hooks 3` produce tres piezas hermanas con el mismo cuerpo y
+  distinto gancho, cada una lintada y registrada como experimento.
+- Tiempos de máquina: planificar ≈ 90 s, renderizar ≈ 90–180 s según cuánta voz
+  haya en caché. Un lote de cuatro piezas cabe en menos de veinte minutos de
+  máquina.
+
+## 6. Dos cosas que hay que decidir antes de producir en volumen
 
 - **Licencia de Remotion.** El uso comercial por una empresa requiere licencia
   de pago según el tamaño del equipo. Está anotado en el `README.md` como

@@ -494,7 +494,7 @@ rules:
       no hay forma de pedir el inventario ajeno sin ser administrador.
     evidence:
       - file: backend/real_estate/views.py
-        lines: "1017-1019"
+        lines: "1029-1031"
         symbol: def my_properties
         note: >-
           El alcance sale de request.user.is_staff; para el resto es
@@ -814,7 +814,7 @@ rules:
       por eso puede cachearse y marcarse como pública.
     evidence:
       - file: backend/real_estate/views.py
-        lines: "919-932"
+        lines: "942-954"
         symbol: def summary
       - file: backend/real_estate/views.py
         lines: "109-118"
@@ -871,7 +871,7 @@ rules:
       saque del índice.
     evidence:
       - file: backend/real_estate/views.py
-        lines: "871-883"
+        lines: "889-900"
         symbol: def catalog
     permissions:
       required: [map.read_catalog]
@@ -924,7 +924,7 @@ rules:
       con el método IQR; no expone datos de ninguna cuenta.
     evidence:
       - file: backend/real_estate/views.py
-        lines: "1971-1980"
+        lines: "1983-1991"
         symbol: class MarketStatsView
     permissions:
       required: [properties.read_market_stats]
@@ -1024,7 +1024,7 @@ rules:
       año. PERM-022 enuncia la corrección.
     evidence:
       - file: backend/real_estate/views.py
-        lines: "1534-1537"
+        lines: "1546-1548"
         symbol: class ImageProxyView
       - file: backend/real_estate/urls.py
         lines: "75-77"
@@ -1090,7 +1090,7 @@ rules:
         lines: "1576-1599"
         symbol: class PendingImageView
       - file: backend/real_estate/views.py
-        lines: "1598-1600"
+        lines: "1610-1612"
         symbol: path.parent != Path(settings.IMAGE_UPLOAD_TEMP_DIR)
     permissions:
       required: [images.read_public]
@@ -1127,7 +1127,7 @@ rules:
       alta un lead ya marcado como gestionado.
     evidence:
       - file: backend/real_estate/views.py
-        lines: "1130-1132"
+        lines: "1142-1144"
         symbol: "if self.action == 'create':"
       - file: backend/real_estate/serializers.py
         lines: "499-503"
@@ -1211,7 +1211,7 @@ rules:
       pertenece.
     evidence:
       - file: backend/real_estate/views.py
-        lines: "1152-1154"
+        lines: "1164-1166"
         symbol: return qs.filter(property__owner=user)
     permissions:
       required: [leads.read_own, leads.read_all]
@@ -1252,7 +1252,7 @@ rules:
       status.
     evidence:
       - file: backend/real_estate/views.py
-        lines: "1142-1149"
+        lines: "1154-1160"
         symbol: LeadStatusSerializer
       - file: backend/real_estate/serializers.py
         lines: "527-529"
@@ -1295,7 +1295,7 @@ rules:
       status es read_only en la creación.
     evidence:
       - file: backend/real_estate/views.py
-        lines: "1177-1181"
+        lines: "1189-1192"
         symbol: "self.throttle_scope = 'pending_create'"
       - file: backend/estate_map/settings.py
         lines: "184-194"
@@ -1340,10 +1340,10 @@ rules:
       filtraría datos de contacto.
     evidence:
       - file: backend/real_estate/views.py
-        lines: "1172-1174"
+        lines: "1184-1186"
         symbol: "return [IsAuthenticated(), IsAdminUser()]"
       - file: backend/real_estate/views.py
-        lines: "1184-1186"
+        lines: "1196-1198"
         symbol: return PendingPublication.objects.none()
     permissions:
       required: [pending_publications.read_all, pending_publications.update_status]
@@ -1386,7 +1386,7 @@ rules:
       cliente.
     evidence:
       - file: backend/real_estate/views.py
-        lines: "1434-1437"
+        lines: "1446-1448"
         symbol: "self.throttle_scope = 'activity_create'"
       - file: backend/real_estate/serializers.py
         lines: "716-721"
@@ -1427,10 +1427,10 @@ rules:
       puede alterar un evento desde la API.
     evidence:
       - file: backend/real_estate/views.py
-        lines: "1172-1174"
+        lines: "1184-1186"
         symbol: "return [IsAuthenticated(), IsAdminUser()]"
       - file: backend/real_estate/views.py
-        lines: "1419-1421"
+        lines: "1431-1433"
         symbol: "http_method_names = ['get', 'post', 'head', 'options']"
     permissions:
       required: [activity.read_all]
@@ -1469,7 +1469,7 @@ rules:
       code email_not_verified en lugar de un fallo genérico.
     evidence:
       - file: backend/real_estate/views.py
-        lines: "1471-1473"
+        lines: "1483-1485"
         symbol: class CustomTokenObtainPairView
       - file: backend/estate_map/settings.py
         lines: "213-232"
@@ -1535,7 +1535,7 @@ rules:
       a la vez. Ver PERM-007.
     evidence:
       - file: backend/real_estate/views.py
-        lines: "1475-1477"
+        lines: "1487-1489"
         symbol: class RegisterView
       - file: backend/real_estate/serializers.py
         lines: "798-804"
@@ -1578,7 +1578,7 @@ rules:
         lines: 27-39
         symbol: claims.get("email_verified") is not True
       - file: backend/real_estate/views.py
-        lines: "1481-1483"
+        lines: "1493-1495"
         symbol: class GoogleLoginView
     permissions:
       required: [auth.google_login]
@@ -1644,10 +1644,10 @@ rules:
       caducidad. Al canjearlo se activan is_active e is_email_verified a la vez.
     evidence:
       - file: backend/real_estate/views.py
-        lines: "1608-1610"
+        lines: "1620-1622"
         symbol: class VerifyEmailView
       - file: backend/real_estate/views.py
-        lines: "1657-1659"
+        lines: "1669-1671"
         symbol: user.is_email_verified = True
     permissions:
       required: [auth.verify_email]
@@ -1677,7 +1677,7 @@ rules:
       referencia para PERM-039, donde el patrón no se siguió.
     evidence:
       - file: backend/real_estate/views.py
-        lines: "1745-1747"
+        lines: "1757-1759"
         symbol: "# Por seguridad, no revelar si el email existe o no"
     permissions:
       required: [auth.request_password_reset]
@@ -1707,7 +1707,7 @@ rules:
       regla congela la conducta actual para que un cambio la haga saltar.
     evidence:
       - file: backend/real_estate/views.py
-        lines: "1626-1628"
+        lines: "1638-1640"
         symbol: "{'error': 'Usuario no encontrado'}"
     permissions:
       required: [auth.resend_verification]
@@ -1759,7 +1759,7 @@ rules:
       endpoint no necesita comprobación de objeto.
     evidence:
       - file: backend/real_estate/views.py
-        lines: "1949-1951"
+        lines: "1961-1963"
         symbol: return self.request.user
     permissions:
       required: [account.read_own_profile]
@@ -1830,7 +1830,7 @@ rules:
       sin conocer la contraseña.
     evidence:
       - file: backend/real_estate/views.py
-        lines: "1952-1954"
+        lines: "1964-1966"
         symbol: class ChangePasswordView
       - file: backend/real_estate/serializers.py
         lines: "922-924"
@@ -1870,10 +1870,10 @@ rules:
       puede completar el cambio aunque haya iniciado la solicitud.
     evidence:
       - file: backend/real_estate/views.py
-        lines: "1816-1818"
+        lines: "1828-1830"
         symbol: class RequestEmailChangeView
       - file: backend/real_estate/views.py
-        lines: "1834-1836"
+        lines: "1846-1848"
         symbol: EmailChangeToken.objects.filter(user=user, is_used=False).update(is_used=True)
     permissions:
       required: [account.request_email_change, account.verify_email_change]
@@ -1910,10 +1910,10 @@ rules:
       recibe 403.
     evidence:
       - file: backend/real_estate/views.py
-        lines: "2118-2120"
+        lines: "2130-2132"
         symbol: class AdminDashboardView
       - file: backend/real_estate/views.py
-        lines: "2207-2209"
+        lines: "2219-2221"
         symbol: AdminMetricsService(now=now).build()
       - file: backend/real_estate/permissions.py
         lines: "46-50"
@@ -1955,10 +1955,10 @@ rules:
       queda registrada en el log de auditoría con el actor.
     evidence:
       - file: backend/real_estate/views.py
-        lines: "2226-2228"
+        lines: "2238-2240"
         symbol: class AdminSystemStatusView
       - file: backend/real_estate/views.py
-        lines: "2336-2338"
+        lines: "2348-2350"
         symbol: admin_audit action=incident.resolve
     permissions:
       required: [admin.system_status_read, admin.system_status_write]
@@ -1992,10 +1992,10 @@ rules:
       la misma vista y podría haberse quedado sin cubrir.
     evidence:
       - file: backend/real_estate/views.py
-        lines: "2334-2336"
+        lines: "2346-2348"
         symbol: incident.save(update_fields=["resolved", "last_seen_at"])
       - file: backend/real_estate/views.py
-        lines: "2120-2122"
+        lines: "2132-2134"
         symbol: "permission_classes = [IsAuthenticated, IsAdminUser]"
     permissions:
       required: [admin.system_status_write]
@@ -2034,7 +2034,7 @@ rules:
       actividad de cada cuenta.
     evidence:
       - file: backend/real_estate/views.py
-        lines: "2342-2344"
+        lines: "2354-2356"
         symbol: class AdminUserViewSet
     permissions:
       required: [admin.users_read]
@@ -2147,7 +2147,7 @@ rules:
       auditoría con el actor y el objetivo. PERM-052 enuncia la corrección.
     evidence:
       - file: backend/real_estate/views.py
-        lines: "2445-2449"
+        lines: "2457-2460"
         symbol: admin_audit action=user.delete
     permissions:
       required: [admin.users_delete]
@@ -2208,10 +2208,10 @@ rules:
       incluido su propietario.
     evidence:
       - file: backend/real_estate/views.py
-        lines: "2451-2453"
+        lines: "2463-2465"
         symbol: class AdminPropertyViewSet
       - file: backend/real_estate/views.py
-        lines: "2468-2470"
+        lines: "2480-2482"
         symbol: "Property.objects.select_related('owner', 'source')"
     permissions:
       required: [admin.properties_read]
@@ -2247,7 +2247,7 @@ rules:
       conviene verificar que hereda el permission_classes de la clase.
     evidence:
       - file: backend/real_estate/views.py
-        lines: "2663-2665"
+        lines: "2675-2677"
         symbol: def stats
       - file: backend/real_estate/urls.py
         lines: "83-85"
@@ -2282,10 +2282,10 @@ rules:
       serializer.
     evidence:
       - file: backend/real_estate/views.py
-        lines: "2464-2466"
+        lines: "2476-2478"
         symbol: "PATCH_ALLOWED_FIELDS = {'status', 'title', 'price', 'city', 'description'}"
       - file: backend/real_estate/views.py
-        lines: "2520-2531"
+        lines: "2532-2542"
         symbol: admin_audit action=property.update
     permissions:
       required: [admin.properties_update]
@@ -2325,7 +2325,7 @@ rules:
       única ruta por la que se puede borrar la propiedad de otra persona.
     evidence:
       - file: backend/real_estate/views.py
-        lines: "2608-2610"
+        lines: "2620-2622"
         symbol: admin_audit action=property.delete
     permissions:
       required: [admin.properties_delete]
@@ -2359,7 +2359,7 @@ rules:
         lines: "2614-2627"
         symbol: def bulk_status
       - file: backend/real_estate/views.py
-        lines: "2657-2659"
+        lines: "2669-2671"
         symbol: admin_audit action=property.bulk_status
     permissions:
       required: [admin.properties_bulk_status]

@@ -1,0 +1,9 @@
+{
+  "passed": true,
+  "errors": 0,
+  "warnings": 0,
+  "findings": [],
+  "estimated_seconds": 27.5,
+  "target_seconds": 24,
+  "checked_at": "2026-08-13T16:03:30.144162-05:00"
+}

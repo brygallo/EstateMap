@@ -511,10 +511,10 @@ const PropertyModal = ({ property: initialProperty, isOpen, onClose, onViewOnMap
           onTouchMove={handleSheetTouchMove}
           onTouchEnd={handleSheetTouchEnd}
           onTouchCancel={cancelSheetGesture}
-          className="absolute inset-x-0 top-0 z-20 flex h-11 touch-none items-center justify-center bg-white/95 backdrop-blur lg:hidden"
+          className="absolute inset-x-0 top-0 z-20 flex h-7 touch-none items-center justify-center bg-white/95 backdrop-blur before:absolute before:inset-x-0 before:-inset-y-2 lg:hidden"
           aria-label={sheetExpanded ? 'Contraer ficha' : 'Expandir ficha'}
         >
-          <span className="h-1.5 w-11 rounded-full bg-slate-300" aria-hidden />
+          <span className="h-1 w-8 rounded-full bg-line" aria-hidden />
         </button>
         <div className="flex h-full flex-col">
           {/* Share Button. On a phone this opens the OS sheet — WhatsApp is
@@ -530,17 +530,20 @@ const PropertyModal = ({ property: initialProperty, isOpen, onClose, onViewOnMap
                 url: getShareUrl(),
               });
             }}
-            className="absolute right-16 top-12 z-10 flex h-11 w-11 items-center justify-center rounded-full bg-black/55 text-white shadow-card backdrop-blur transition-colors hover:bg-black/75 lg:right-12 lg:top-3 lg:h-8 lg:w-8"
+            className="absolute right-16 top-8 z-10 flex h-11 w-11 items-center justify-center rounded-full bg-black/55 text-white shadow-card backdrop-blur transition-colors hover:bg-black/75 lg:right-12 lg:top-3 lg:h-8 lg:w-8"
             title="Compartir propiedad"
             aria-label="Compartir propiedad"
           >
             <Share2 className="h-4 w-4" strokeWidth={2} aria-hidden />
           </button>
 
-          {/* Close Button */}
+          {/* Close Button. It sits over the photo, not over a white panel like
+              the filter and search sheets do, so it carries the same dark
+              treatment as the share button beside it. A white chip with a dark
+              glyph disappears against a bright facade or an overcast sky. */}
           <button
             onClick={dismissSheet}
-            className="absolute right-3 top-12 z-10 flex h-11 w-11 items-center justify-center rounded-full bg-white/95 text-textPrimary shadow-card backdrop-blur transition-colors hover:bg-white lg:top-3 lg:h-8 lg:w-8"
+            className="absolute right-3 top-8 z-10 flex h-11 w-11 items-center justify-center rounded-full bg-black/55 text-white shadow-card backdrop-blur transition-colors hover:bg-black/75 lg:top-3 lg:h-8 lg:w-8"
             aria-label="Cerrar"
           >
             <X className="h-4 w-4" strokeWidth={2} aria-hidden />
@@ -554,7 +557,7 @@ const PropertyModal = ({ property: initialProperty, isOpen, onClose, onViewOnMap
             // the photo strip's horizontal scroll no matter what the strip
             // declares. The sheet gesture does not need it — its handlers
             // already ignore anything that is not clearly vertical.
-            className="min-h-0 flex-1 overflow-y-auto overscroll-contain pb-24 pt-11 lg:max-h-none lg:pb-0 lg:pt-0"
+            className="min-h-0 flex-1 overflow-y-auto overscroll-contain pb-24 pt-7 lg:max-h-none lg:pb-0 lg:pt-0"
             onTouchStart={handleSheetTouchStart}
             onTouchMove={handleSheetTouchMove}
             onTouchEnd={handleSheetTouchEnd}

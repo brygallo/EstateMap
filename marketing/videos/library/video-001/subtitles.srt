@@ -1,0 +1,39 @@
+1
+00:00:00,000 --> 00:00:01,057
+¿Comprarías una casa
+
+2
+00:00:01,057 --> 00:00:02,220
+sin saber dónde queda?
+
+3
+00:00:02,667 --> 00:00:04,616
+En Geo Propiedades Ecuador sabes
+
+4
+00:00:04,616 --> 00:00:05,974
+exactamente dónde está.
+
+5
+00:00:06,433 --> 00:00:07,384
+Elige la ciudad
+
+6
+00:00:07,384 --> 00:00:08,633
+y acércate a la zona
+
+7
+00:00:08,633 --> 00:00:09,465
+que necesitas.
+
+8
+00:00:09,900 --> 00:00:10,558
+Mira fotos,
+
+9
+00:00:10,558 --> 00:00:12,713
+precio y detalles de cada propiedad.
+
+10
+00:00:13,167 --> 00:00:14,524
+Encuentra tu futuro hogar.

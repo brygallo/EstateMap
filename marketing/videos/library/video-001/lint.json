@@ -1,15 +1,9 @@
 {
   "passed": true,
   "errors": 0,
-  "warnings": 1,
-  "findings": [
-    {
-      "level": "warning",
-      "rule": "cover_words",
-      "detail": "La portada tiene 7 palabras; conviene entre 3 y 6"
-    }
-  ],
-  "estimated_seconds": 19.0,
+  "warnings": 0,
+  "findings": [],
+  "estimated_seconds": 16.9,
   "target_seconds": 18,
-  "checked_at": "2026-08-12T14:36:42.128070-05:00"
+  "checked_at": "2026-08-13T11:18:06.685747-05:00"
 }

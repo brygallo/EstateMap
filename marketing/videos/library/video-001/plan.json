@@ -1,73 +1,70 @@
 {
-  "title": "Busca en el mapa, no a ciegas",
+  "title": "¿Comprarías una casa sin saber dónde queda?",
   "audience": "comprador",
-  "funnel_stage": "descubrimiento",
-  "objective": "Que un comprador o inquilino entienda que en Geo Propiedades Ecuador la búsqueda empieza en el mapa y abra el mapa del portal.",
-  "conversion_event": "Clic al sitio y apertura del mapa en geopropiedadesecuador.com",
+  "funnel_stage": "consideración",
+  "objective": "Inspirar al comprador a encontrar su futuro hogar usando la ubicación",
+  "conversion_event": "Clic al enlace del perfil hacia geopropiedadesecuador.com",
   "pillar": "Mapa primero",
   "series": "Busca así, no así",
-  "concept": "Contraste directo entre una lista de anuncios sin contexto espacial y el mapa del portal con los pines de la zona. Primero se muestra la incomodidad real de mirar fotos y precios sin saber dónde queda la propiedad, y enseguida se corta al mapa acercándose sobre los pines para demostrar que la búsqueda puede empezar por la zona. Es la pieza fundacional de la serie: establece el mensaje rector con pantalla real, sin explicar funciones ni mezclar públicos.",
-  "promise": "Puedes buscar por zona sobre un mapa real, en vez de adivinar dónde queda cada anuncio de una lista.",
-  "cta": "Explora el mapa",
-  "hypothesis": "Si mostramos el contraste visual entre lista y mapa en los primeros tres segundos, el comprador reconocerá su propia fricción y hará clic al sitio en mayor proporción que con una pieza que explique filtros o funciones.",
-  "cover_text": "Busca en el mapa, no a ciegas",
-  "caption": "Buscar casa en una lista es buscar a ciegas: ves fotos y precio, pero no sabes en qué zona está. En Geo Propiedades Ecuador la búsqueda empieza en el mapa. Explora la zona que te interesa en geopropiedadesecuador.com 🗺️ #Ecuador #Casas #Arriendo #Quito #Guayaquil",
-  "music_prompt": "Instrumental moderno y limpio, tempo medio alto, percusión seca y bajo cálido, sensación de descubrimiento sin épica; mezclado por debajo de la voz, con un pequeño realce en el corte al mapa y cierre suave al final. Solo pista con licencia comercial.",
-  "narration": "Buscar casa así es buscar a ciegas. Ves fotos y precio, pero no sabes dónde queda. En Geo Propiedades Ecuador empiezas en el mapa y acercas tu zona. Cada pin es una propiedad publicada, con precio y ubicación. Explora el mapa en geopropiedadesecuador punto com.",
+  "concept": "Una propiedad atrae, pero la falta de ubicación impide decidir; el mapa muestra dónde queda y ayuda a buscar en la zona necesaria.",
+  "promise": "El comprador pasa de una propiedad sin contexto a ver dónde queda, cuánto cuesta y cómo es la casa.",
+  "cta": "Encuentra tu futuro hogar",
+  "hypothesis": "Mostrar la duda y resolverla con el producto antes del segundo tres comunica el diferencial mejor que prolongar la frustración.",
+  "cover_text": "¿Dónde queda?",
+  "caption": "¿Comprarías una casa sin saber dónde queda? En Geo Propiedades Ecuador ves su ubicación exacta y encuentras opciones en la zona que necesitas. Compara fotos, precio y detalles de cada propiedad en geopropiedadesecuador.com.",
+  "narration": "¿Comprarías una casa sin saber dónde queda? En Geo Propiedades Ecuador sabes exactamente dónde está. Elige la ciudad y acércate a la zona que necesitas. Mira fotos, precio y detalles de cada propiedad. Encuentra tu futuro hogar.",
   "verification_notes": [
-    "No se usa ficha-propiedad.mp4, por lo tanto esta pieza no requiere autorización de ningún anunciante.",
-    "No se afirma cantidad de propiedades, usuarios, visitas, demanda, plusvalía ni seguridad de ninguna zona.",
-    "No se usan las palabras gratis, sin comisión ni sin límite: son mensajes de propietario y esta pieza es de comprador.",
-    "El mapa es MapLibre; no nombrarlo Leaflet en pantalla, voz ni caption.",
-    "Revisar en las grabaciones aprobadas que no aparezcan contadores públicos de visitas, notificaciones, pestañas del navegador, paneles administrativos ni datos de contacto.",
-    "La afirmación 'cada pin es una propiedad publicada, con precio y ubicación' se respalda en el catálogo público y en la ficha visible; no se promete exactitud topográfica ni legal de la ubicación.",
-    "El CTA es único y corresponde al público comprador: explorar el mapa. No se menciona publicar ni contactar al equipo."
+    "No se afirma cantidad de anuncios, demanda, plusvalía, rentabilidad ni seguridad de ninguna zona.",
+    "Las escenas usan recreaciones animadas del producto, no capturas: no se presenta ninguna como grabación de pantalla.",
+    "El mapa es MapLibre; no nombrarlo Leaflet en ningún material derivado.",
+    "No aparecen contadores de visitas, datos de contacto privados ni paneles administrativos."
   ],
   "scenes": [
     {
       "purpose": "gancho",
       "duration": 2.5,
-      "voice": "Buscar casa así es buscar a ciegas.",
-      "on_screen_text": "Lista sin mapa",
-      "asset": "casas-en-venta.mp4",
-      "visual_direction": "Arranca en movimiento: scroll rápido del listado público de casas en venta desde el primer cuadro, fichas pasando una tras otra. Rótulo en caja oscura sobre el tercio central, Plus Jakarta Sans ExtraBold en blanco. Sin logo todavía.",
-      "transition": "cut"
-    },
-    {
-      "purpose": "problema",
-      "duration": 3.5,
-      "voice": "Ves fotos y precio, pero no sabes dónde queda.",
-      "on_screen_text": "¿Dónde queda?",
-      "asset": "casas-en-venta.mp4",
-      "visual_direction": "El scroll se detiene en una ficha y hace zoom digital lento hacia el precio y el área. El rótulo aparece con un leve rebote junto al dato de ubicación, subrayado en lavanda #A78BFA para señalar el vacío de contexto.",
+      "voice": "¿Comprarías una casa sin saber dónde queda?",
+      "on_screen_text": "¿Comprarías a ciegas?",
+      "asset": "sim:anuncios",
+      "visual_direction": "Tarjetas con dibujos vectoriales de casas entran con velocidad; el movimiento se detiene al revelar que ninguna indica la ubicación.",
       "transition": "cut"
     },
     {
       "purpose": "prueba",
-      "duration": 4.5,
-      "voice": "En Geo Propiedades Ecuador empiezas en el mapa y acercas tu zona.",
-      "on_screen_text": "Empieza en el mapa",
-      "asset": "mapa-explorar.mp4",
-      "visual_direction": "Corte duro al mapa de la página principal: desplazamiento y acercamiento continuo sobre los pines. Logo pequeño de Geo Propiedades Ecuador entra en la esquina inferior izquierda, dentro de zona segura. Rótulo en la parte superior con acento verde #22C55E.",
+      "duration": 2.5,
+      "voice": "En Geo Propiedades Ecuador sabes exactamente dónde está.",
+      "on_screen_text": "Ubicación exacta",
+      "asset": "sim:llegada",
+      "visual_direction": "La tarjeta se aparta y el mapa entra inmediatamente con la marca de Geo Propiedades Ecuador.",
+      "transition": "cut"
+    },
+    {
+      "purpose": "prueba",
+      "duration": 5.0,
+      "voice": "Elige la ciudad y acércate a la zona que necesitas.",
+      "on_screen_text": "La zona que necesitas",
+      "asset": "sim:zona",
+      "visual_direction": "El mapa recorre país, ciudad y barrio; el agrupado se abre en propiedades con precio.",
       "transition": "cut"
     },
     {
       "purpose": "resultado",
-      "duration": 4.2,
-      "voice": "Cada pin es una propiedad publicada, con precio y ubicación.",
-      "on_screen_text": "Cada pin, una propiedad",
-      "asset": "mapa-explorar.mp4",
-      "visual_direction": "Continúa el mismo mapa con un zoom más cerrado sobre un grupo de pines de una zona. Un círculo teal #14B8A6 pulsa una vez sobre un pin para dirigir la mirada, sin abrir datos privados ni contadores.",
-      "transition": "fade"
+      "duration": 4.0,
+      "voice": "Mira fotos, precio y detalles de cada propiedad.",
+      "on_screen_text": "Fotos, precio y más",
+      "asset": "sim:ficha",
+      "visual_direction": "Se abre la propiedad y aparecen sus fotos, precio, ubicación y características principales.",
+      "transition": "cut"
     },
     {
       "purpose": "cta",
-      "duration": 3.3,
-      "voice": "Explora el mapa en geopropiedadesecuador punto com.",
-      "on_screen_text": "Explora el mapa",
+      "duration": 3.5,
+      "voice": "Encuentra tu futuro hogar.",
+      "on_screen_text": "Empieza aquí",
       "asset": null,
-      "visual_direction": "Placa final de marca sobre navy #0F1020: logo de Geo Propiedades Ecuador, dominio geopropiedadesecuador.com en blanco y barra de acento verde #22C55E que crece de izquierda a derecha. Texto centrado en zona segura, sin elementos animados adicionales.",
-      "transition": "cut"
+      "visual_direction": "Tarjeta de cierre de marca.",
+      "transition": "fade"
     }
-  ]
+  ],
+  "kicker": "Publica tu propiedad gratis"
 }

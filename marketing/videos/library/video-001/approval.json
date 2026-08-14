@@ -1,8 +1,8 @@
 {
-  "approved_at": "2026-08-12T14:36:42.129396-05:00",
-  "approved_by": "fase-3",
-  "notes": "Con material real capturado",
+  "approved_at": "2026-08-13T11:18:06.687291-05:00",
+  "approved_by": "bryan",
+  "notes": "Portada profesional con casa, pin, logo y nombre completo de Geo Propiedades Ecuador.",
   "lint_passed": true,
   "forced": false,
-  "plan_sha": "68ff23810719235f49c08bd0550f3bf695bbef4f603d5b41dbe44a3f710c4a8c"
+  "plan_sha": "fc629f4b41809b1ad5204b7bd9eb0da66ff0a153b74328dd6d246c4e4e24bb0b"
 }

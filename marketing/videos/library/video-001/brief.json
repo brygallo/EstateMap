@@ -1,6 +1,6 @@
 {
-  "brief": "Enseñar a un comprador que la búsqueda empieza en el mapa: de la lista sin contexto al mapa con los pines de la zona",
+  "brief": "Comprador. Ángulo: cuando buscas casa ves cientos de publicaciones y no sabes dónde queda ninguna. En Geo Propiedades Ecuador empiezas por el mapa: ves cuántas propiedades hay en cada ciudad, bajas a la zona que te gusta y ahí ves cada casa con su precio; abres una y tienes la ficha completa. Usa las animaciones sim:mapa para la demostración principal y sim:ficha para el resultado. No uses ninguna captura de pantalla. Cinco escenas como máximo.",
   "automatic_selection": false,
   "target_duration_seconds": 18,
-  "created_at": "2026-08-12T14:36:36.505290-05:00"
+  "created_at": "2026-08-13T08:34:26.755889-05:00"
 }

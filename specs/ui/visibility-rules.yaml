@@ -40,7 +40,7 @@ rules:
           Lista blanca de columnas que viajan al cliente. Lo que no está aquí no
           sale, y ese es el mecanismo que protege la regla.
       - file: backend/real_estate/services/map_payload.py
-        lines: "137"
+        lines: "139-141"
         symbol: "queryset.values(*POINT_FIELDS)"
         note: Único punto donde se materializan los puntos del mapa.
     frontend:

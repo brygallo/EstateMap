@@ -1,0 +1,347 @@
+{
+  "title": "¿Comprarías una casa sin saber dónde queda?",
+  "coverText": "¿Dónde queda?",
+  "cta": "Encuentra tu futuro hogar",
+  "url": "geopropiedadesecuador.com",
+  "brandTile": "brand/aents-brand-tile-1024.png",
+  "kicker": "Publica tu propiedad gratis",
+  "musicFile": "jobs/video-001/audio/music.mp3",
+  "showSafeAreas": false,
+  "scenes": [
+    {
+      "purpose": "gancho",
+      "durationInFrames": 80,
+      "headline": "¿Comprarías a ciegas?",
+      "captions": [
+        {
+          "text": "¿Comprarías una casa",
+          "start": 0.0,
+          "end": 1.057,
+          "words": [
+            {
+              "text": "¿Comprarías",
+              "start": 0.0,
+              "end": 0.581
+            },
+            {
+              "text": "una",
+              "start": 0.581,
+              "end": 0.793
+            },
+            {
+              "text": "casa",
+              "start": 0.793,
+              "end": 1.057
+            }
+          ]
+        },
+        {
+          "text": "sin saber dónde queda?",
+          "start": 1.057,
+          "end": 2.22,
+          "words": [
+            {
+              "text": "sin",
+              "start": 0.0,
+              "end": 0.211
+            },
+            {
+              "text": "saber",
+              "start": 0.211,
+              "end": 0.528
+            },
+            {
+              "text": "dónde",
+              "start": 0.528,
+              "end": 0.846
+            },
+            {
+              "text": "queda?",
+              "start": 0.846,
+              "end": 1.163
+            }
+          ]
+        }
+      ],
+      "visualDirection": "Tarjetas con dibujos vectoriales de casas entran con velocidad; el movimiento se detiene al revelar que ninguna indica la ubicación.",
+      "transition": "cut",
+      "asset": "sim:anuncios",
+      "assetType": "simulation",
+      "photo": null,
+      "voiceFile": "jobs/video-001/audio/voice-01.mp3",
+      "assetStartInFrames": 0,
+      "assetTotalInFrames": 80,
+      "accent": "#22C55E"
+    },
+    {
+      "purpose": "prueba",
+      "durationInFrames": 113,
+      "headline": "Ubicación exacta",
+      "captions": [
+        {
+          "text": "En Geo Propiedades Ecuador sabes",
+          "start": 0.0,
+          "end": 1.949,
+          "words": [
+            {
+              "text": "En",
+              "start": 0.0,
+              "end": 0.177
+            },
+            {
+              "text": "Geo",
+              "start": 0.177,
+              "end": 0.413
+            },
+            {
+              "text": "Propiedades",
+              "start": 0.413,
+              "end": 1.122
+            },
+            {
+              "text": "Ecuador",
+              "start": 1.122,
+              "end": 1.595
+            },
+            {
+              "text": "sabes",
+              "start": 1.595,
+              "end": 1.949
+            }
+          ]
+        },
+        {
+          "text": "exactamente dónde está.",
+          "start": 1.949,
+          "end": 3.307,
+          "words": [
+            {
+              "text": "exactamente",
+              "start": 0.0,
+              "end": 0.709
+            },
+            {
+              "text": "dónde",
+              "start": 0.709,
+              "end": 1.063
+            },
+            {
+              "text": "está.",
+              "start": 1.063,
+              "end": 1.358
+            }
+          ]
+        }
+      ],
+      "visualDirection": "La tarjeta se aparta y el mapa entra inmediatamente con la marca de Geo Propiedades Ecuador.",
+      "transition": "cut",
+      "asset": "sim:llegada",
+      "assetType": "simulation",
+      "photo": null,
+      "voiceFile": "jobs/video-001/audio/voice-02.mp3",
+      "assetStartInFrames": 0,
+      "assetTotalInFrames": 113,
+      "accent": "#14B8A6"
+    },
+    {
+      "purpose": "prueba",
+      "durationInFrames": 104,
+      "headline": "La zona que necesitas",
+      "captions": [
+        {
+          "text": "Elige la ciudad",
+          "start": 0.0,
+          "end": 0.951,
+          "words": [
+            {
+              "text": "Elige",
+              "start": 0.0,
+              "end": 0.357
+            },
+            {
+              "text": "la",
+              "start": 0.357,
+              "end": 0.535
+            },
+            {
+              "text": "ciudad",
+              "start": 0.535,
+              "end": 0.951
+            }
+          ]
+        },
+        {
+          "text": "y acércate a la zona",
+          "start": 0.951,
+          "end": 2.2,
+          "words": [
+            {
+              "text": "y",
+              "start": 0.0,
+              "end": 0.119
+            },
+            {
+              "text": "acércate",
+              "start": 0.119,
+              "end": 0.654
+            },
+            {
+              "text": "a",
+              "start": 0.654,
+              "end": 0.773
+            },
+            {
+              "text": "la",
+              "start": 0.773,
+              "end": 0.951
+            },
+            {
+              "text": "zona",
+              "start": 0.951,
+              "end": 1.248
+            }
+          ]
+        },
+        {
+          "text": "que necesitas.",
+          "start": 2.2,
+          "end": 3.032,
+          "words": [
+            {
+              "text": "que",
+              "start": 0.0,
+              "end": 0.238
+            },
+            {
+              "text": "necesitas.",
+              "start": 0.238,
+              "end": 0.832
+            }
+          ]
+        }
+      ],
+      "visualDirection": "El mapa recorre país, ciudad y barrio; el agrupado se abre en propiedades con precio.",
+      "transition": "cut",
+      "asset": "sim:zona",
+      "assetType": "simulation",
+      "photo": null,
+      "voiceFile": "jobs/video-001/audio/voice-03.mp3",
+      "assetStartInFrames": 0,
+      "assetTotalInFrames": 104,
+      "accent": "#6B5CF6"
+    },
+    {
+      "purpose": "resultado",
+      "durationInFrames": 98,
+      "headline": "Fotos, precio y más",
+      "captions": [
+        {
+          "text": "Mira fotos,",
+          "start": 0.0,
+          "end": 0.658,
+          "words": [
+            {
+              "text": "Mira",
+              "start": 0.0,
+              "end": 0.299
+            },
+            {
+              "text": "fotos,",
+              "start": 0.299,
+              "end": 0.658
+            }
+          ]
+        },
+        {
+          "text": "precio y detalles de cada propiedad.",
+          "start": 0.658,
+          "end": 2.813,
+          "words": [
+            {
+              "text": "precio",
+              "start": 0.0,
+              "end": 0.419
+            },
+            {
+              "text": "y",
+              "start": 0.419,
+              "end": 0.539
+            },
+            {
+              "text": "detalles",
+              "start": 0.539,
+              "end": 1.077
+            },
+            {
+              "text": "de",
+              "start": 1.077,
+              "end": 1.257
+            },
+            {
+              "text": "cada",
+              "start": 1.257,
+              "end": 1.556
+            },
+            {
+              "text": "propiedad.",
+              "start": 1.556,
+              "end": 2.155
+            }
+          ]
+        }
+      ],
+      "visualDirection": "Se abre la propiedad y aparecen sus fotos, precio, ubicación y características principales.",
+      "transition": "cut",
+      "asset": "sim:ficha",
+      "assetType": "simulation",
+      "photo": null,
+      "voiceFile": "jobs/video-001/audio/voice-04.mp3",
+      "assetStartInFrames": 0,
+      "assetTotalInFrames": 98,
+      "accent": "#A78BFA"
+    },
+    {
+      "purpose": "cta",
+      "durationInFrames": 54,
+      "headline": "Empieza aquí",
+      "captions": [
+        {
+          "text": "Encuentra tu futuro hogar.",
+          "start": 0.0,
+          "end": 1.357,
+          "words": [
+            {
+              "text": "Encuentra",
+              "start": 0.0,
+              "end": 0.522
+            },
+            {
+              "text": "tu",
+              "start": 0.522,
+              "end": 0.678
+            },
+            {
+              "text": "futuro",
+              "start": 0.678,
+              "end": 1.044
+            },
+            {
+              "text": "hogar.",
+              "start": 1.044,
+              "end": 1.357
+            }
+          ]
+        }
+      ],
+      "visualDirection": "Tarjeta de cierre de marca.",
+      "transition": "fade",
+      "asset": null,
+      "assetType": null,
+      "photo": null,
+      "voiceFile": "jobs/video-001/audio/voice-05.mp3",
+      "assetStartInFrames": 0,
+      "assetTotalInFrames": 54,
+      "accent": "#22C55E"
+    }
+  ]
+}

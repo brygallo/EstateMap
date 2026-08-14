@@ -24,6 +24,7 @@ const defaultProps: VideoProps = {
   cta: 'Explora el mapa',
   url: 'geopropiedadesecuador.com',
   brandTile: null,
+  kicker: null,
   musicFile: null,
   showSafeAreas: false,
   scenes: [
@@ -36,7 +37,10 @@ const defaultProps: VideoProps = {
       transition: 'fade',
       asset: null,
       assetType: null,
+      photo: null,
       voiceFile: '',
+      assetStartInFrames: 0,
+      assetTotalInFrames: 90,
       accent: palette.green,
     },
     {
@@ -48,7 +52,10 @@ const defaultProps: VideoProps = {
       transition: 'cut',
       asset: null,
       assetType: null,
+      photo: null,
       voiceFile: '',
+      assetStartInFrames: 0,
+      assetTotalInFrames: 90,
       accent: palette.violet,
     },
   ],
@@ -56,6 +63,8 @@ const defaultProps: VideoProps = {
 
 const coverProps: CoverProps = {
   coverText: 'Busca por zona',
+  cta: 'Explora el mapa',
+  audience: 'comprador',
   url: 'geopropiedadesecuador.com',
   brandTile: null,
   accent: palette.green,

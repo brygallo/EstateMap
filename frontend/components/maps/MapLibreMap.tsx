@@ -13,7 +13,7 @@ import { trackEvent } from '@/lib/analytics';
 import { getPropertyPoint, isPointInEcuadorBounds } from '@/lib/geo';
 import { iconMarkerHtml, priceMarkerHtml, statusColor } from '@/lib/mapMarkers';
 import { getPropertyTypeLabel } from '@/lib/property-labels';
-import { flyToProperty } from '@/lib/map-navigation';
+import { flyToProperty, getClusterTargetZoom } from '@/lib/map-navigation';
 import aentsTokens from '@/lib/aents-tokens.json';
 
 // MapLibre GL `paint` properties are resolved by the GL renderer, not by CSS,
@@ -24,6 +24,7 @@ type HtmlMarkerRecord = {
   marker: maplibregl.Marker;
   element: HTMLButtonElement;
   signature: string;
+  coordinates: [number, number];
 };
 
 interface MapLibreMapProps {
@@ -52,22 +53,6 @@ const EMPTY_COLLECTION: GeoJSON.FeatureCollection = {
 };
 
 const HTML_MARKER_MIN_ZOOM = 10.5;
-
-const getClusterBounds = (cluster: any): [[number, number], [number, number]] | null => {
-  const bounds = cluster?.bounds;
-  if (!bounds) return null;
-  const west = Number(bounds.west);
-  const south = Number(bounds.south);
-  const east = Number(bounds.east);
-  const north = Number(bounds.north);
-  if (![west, south, east, north].every(Number.isFinite)) return null;
-  if (Math.abs(west - east) < 0.0001 && Math.abs(south - north) < 0.0001) return null;
-  if (!isPointInEcuadorBounds(south, west) || !isPointInEcuadorBounds(north, east)) return null;
-  return [
-    [west, south],
-    [east, north],
-  ];
-};
 
 const clusterPriority = (cluster: any) => {
   const level = String(cluster?.group_level ?? '');
@@ -311,6 +296,7 @@ export default function MapLibreMap({
     // resized the map. The selected property then lands in the centre of the
     // actual visible canvas instead of underneath a panel.
     const frame = window.requestAnimationFrame(() => {
+      map.stop();
       map.resize();
       flyToProperty(map, selectedProperty);
     });
@@ -594,6 +580,8 @@ export default function MapLibreMap({
         const lng = Number(cluster.longitude);
         const focusLat = Number(cluster.focus_latitude ?? cluster.latitude);
         const focusLng = Number(cluster.focus_longitude ?? cluster.longitude);
+        const anchorLat = Number(cluster.anchor_latitude ?? cluster.latitude);
+        const anchorLng = Number(cluster.anchor_longitude ?? cluster.longitude);
         if (!count || !isPointInEcuadorBounds(lat, lng)) return;
 
         const key = String(cluster.id);
@@ -601,6 +589,9 @@ export default function MapLibreMap({
         const focusCoordinates: [number, number] = isPointInEcuadorBounds(focusLat, focusLng)
           ? [focusLng, focusLat]
           : coordinates;
+        const anchorCoordinates: [number, number] = isPointInEcuadorBounds(anchorLat, anchorLng)
+          ? [anchorLng, anchorLat]
+          : focusCoordinates;
         const sizeClass = count >= 100 ? 'maplibre-cluster-large' : count >= 25 ? 'maplibre-cluster-medium' : '';
         const label = typeof cluster.label === 'string' ? cluster.label.trim() : '';
         const shortLabel = label.length > 16 ? `${label.slice(0, 15)}…` : label;
@@ -613,7 +604,7 @@ export default function MapLibreMap({
           element.type = 'button';
           element.className = 'maplibre-cluster-marker';
           const marker = new maplibregl.Marker({ element, anchor: 'center' }).setLngLat(coordinates).addTo(map);
-          record = { marker, element, signature: '' };
+          record = { marker, element, signature: '', coordinates };
           clusterMarkerRefs.current.set(key, record);
         }
 
@@ -633,7 +624,10 @@ export default function MapLibreMap({
           `;
           record.signature = signature;
         }
-        record.marker.setLngLat(coordinates);
+        if (record.coordinates[0] !== coordinates[0] || record.coordinates[1] !== coordinates[1]) {
+          record.marker.setLngLat(coordinates);
+          record.coordinates = coordinates;
+        }
         record.element.onclick = (event) => {
           event.preventDefault();
           event.stopPropagation();
@@ -642,31 +636,32 @@ export default function MapLibreMap({
           // it does not travel with the map and appear to reload in place.
           record?.marker.remove();
           clusterMarkerRefs.current.delete(key);
-          const targetZoom = Math.min(Math.max(Number(cluster.expansion_zoom) || map.getZoom() + 2, 11), 16.5);
+          const groupLevel = String(cluster.group_level ?? '');
+          const targetZoom = getClusterTargetZoom(groupLevel);
           trackEvent('map_backend_cluster_clicked', {
             group_level: cluster.group_level ?? null,
             count,
             label: label || null,
             target_zoom: targetZoom,
           });
-          // Framing the group's own extent is what guarantees the user lands on
-          // its properties. A fixed centre and zoom per level cannot: it ignores
-          // the active filters, so it used to open on empty map whenever the
-          // matching listings sat away from the canton's official centre.
-          // `expansion_zoom` only caps how far a tight group may zoom in.
-          const clusterBounds = getClusterBounds(cluster);
-          if (clusterBounds) {
-            map.fitBounds(clusterBounds, {
-              padding: 92,
-              maxZoom: targetZoom,
-              duration: 680,
+          // City is the final aggregation level. Open it at point zoom around
+          // its territorial anchor so the next response contains price labels,
+          // never another synthetic grid cluster.
+          if (groupLevel === 'city') {
+            map.easeTo({
+              center: anchorCoordinates,
+              zoom: targetZoom,
+              duration: 620,
               easing: (t) => 1 - Math.pow(1 - t, 3),
             });
             return;
           }
-          // Degenerate extent (every listing on one coordinate): nothing to fit.
+
+          // Country and province advance exactly one territorial level around
+          // their anchor; fitting a very wide extent could leave the same
+          // grouping level on screen after the click.
           map.easeTo({
-            center: focusCoordinates,
+            center: anchorCoordinates,
             zoom: targetZoom,
             duration: 620,
             easing: (t) => 1 - Math.pow(1 - t, 3),
@@ -712,9 +707,9 @@ export default function MapLibreMap({
         : zoom >= 14
           ? 220
           : 130;
-    const minDistance = zoom >= 16 ? 0.00045 : zoom >= 14 ? 0.0011 : 0.0028;
     const selectedId = selectedPropertyRef.current?.id;
-    const usedPositions: [number, number][] = [];
+    const collisionCellSize = 82;
+    const occupiedCells = new Map<string, Array<{ x: number; y: number; clearance: number }>>();
     const nextKeys = new Set<string>();
     let renderedCount = 0;
 
@@ -740,18 +735,27 @@ export default function MapLibreMap({
         .forEach(({ property, point }) => {
           const isSelected = property.id === selectedId;
           if (!isSelected && renderedCount >= maxMarkers) return;
-          if (
-            !isSelected &&
-            usedPositions.some(([lng, lat]) => Math.abs(lat - point[1]) < minDistance && Math.abs(lng - point[0]) < minDistance)
-          ) {
-            return;
-          }
-
-          usedPositions.push(point);
+          const useIcon = zoom < 12 && !isSelected;
+          const projected = map.project(point);
+          const clearance = useIcon ? 38 : 82;
+          const cellX = Math.floor(projected.x / collisionCellSize);
+          const cellY = Math.floor(projected.y / collisionCellSize);
+          const nearbyCellOccupied = [-1, 0, 1].some((xOffset) =>
+            [-1, 0, 1].some((yOffset) =>
+              (occupiedCells.get(`${cellX + xOffset}:${cellY + yOffset}`) || []).some((used) =>
+                Math.abs(projected.x - used.x) < Math.max(clearance, used.clearance) &&
+                Math.abs(projected.y - used.y) < 34
+              )
+            )
+          );
+          if (!isSelected && nearbyCellOccupied) return;
+          const cellKey = `${cellX}:${cellY}`;
+          const cell = occupiedCells.get(cellKey) || [];
+          cell.push({ x: projected.x, y: projected.y, clearance });
+          occupiedCells.set(cellKey, cell);
           renderedCount += 1;
 
           const key = String(property.id);
-          const useIcon = zoom < 12 && !isSelected;
           const isMuted = selectedId != null && !isSelected;
           const signature = `${property.status}:${property.property_type}:${property.price}:${isSelected}:${isMuted}:${useIcon ? 'icon' : 'price'}`;
           nextKeys.add(key);
@@ -764,7 +768,7 @@ export default function MapLibreMap({
               ? 'maplibre-price-marker'
               : 'maplibre-price-marker maplibre-marker-enter';
             const marker = new maplibregl.Marker({ element, anchor: 'bottom' }).setLngLat(point).addTo(map);
-            record = { marker, element, signature: '' };
+            record = { marker, element, signature: '', coordinates: point };
             markerRefs.current.set(key, record);
             if (!mobileInteractionRef.current) {
               window.setTimeout(() => element.classList.remove('maplibre-marker-enter'), 160);
@@ -801,7 +805,10 @@ export default function MapLibreMap({
             event.stopPropagation();
             onPolygonClick(property);
           };
-          record.marker.setLngLat(point);
+          if (record.coordinates[0] !== point[0] || record.coordinates[1] !== point[1]) {
+            record.marker.setLngLat(point);
+            record.coordinates = point;
+          }
         });
 
       markerRefs.current.forEach((record, key) => {
@@ -1088,9 +1095,15 @@ export default function MapLibreMap({
         }
         @media (max-width: 639px) {
           .maplibregl-ctrl-bottom-right {
-            bottom: 72px;
-            left: 96px;
-            right: auto;
+            bottom: 4px;
+            left: auto;
+            right: 4px;
+          }
+          .maplibregl-ctrl-attrib {
+            max-width: 180px;
+            padding: 1px 4px;
+            font-size: 9px;
+            line-height: 1.25;
           }
         }
         @media (prefers-reduced-motion: reduce) {

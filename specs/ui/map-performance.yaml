@@ -1,0 +1,73 @@
+version: 1
+domain: map-performance
+title: Rendimiento percibido del mapa
+status: implemented
+summary: >
+  El mapa prioriza los puntos sobre datos secundarios, conserva las rutas de
+  caché pública aunque exista una sesión y evita repetir el movimiento de cámara
+  cuando llega el detalle de una propiedad seleccionada.
+
+rules:
+  - id: MPERF-001
+    name: Las lecturas públicas del mapa no dependen de la sesión
+    status: implemented
+    summary: >
+      Puntos, listado, resumen y catálogos de filtros se solicitan sin cabecera
+      de autorización aunque exista una sesión local. Así pueden reutilizar la
+      caché pública y no esperan una renovación del token para dibujar el mapa.
+    evidence:
+      - file: frontend/hooks/usePropertyFilters.ts
+        lines: "281-470"
+        symbol: "skipAuth: true"
+        note: Todas las lecturas públicas que alimentan el mapa omiten autenticación.
+    cases:
+      - name: Persona autenticada abre el mapa
+        expected: los endpoints públicos se solicitan sin Authorization
+    tests: {}
+
+  - id: MPERF-002
+    name: Una selección produce una sola transición de cámara
+    status: implemented
+    summary: >
+      Los manejadores seleccionan la propiedad y un único efecto centra la
+      cámara por id. La llegada posterior del detalle de esa misma propiedad no
+      inicia otra transición.
+    evidence:
+      - file: frontend/components/maps/MapLibreMap.tsx
+        lines: "294-310"
+        symbol: centeredSelectionRef.current
+        note: El id seleccionado impide repetir el centrado.
+      - file: frontend/components/MapPageClient.tsx
+        lines: "289-345"
+        symbol: setSelectedProperty
+        note: Los manejadores seleccionan y abren la ficha sin mover directamente el mapa.
+    cases:
+      - name: El detalle reemplaza el resumen de la propiedad seleccionada
+        expected: la cámara no inicia otra transición
+    tests: {}
+
+  - id: MPERF-003
+    name: La conexión lenta prioriza puntos sobre fichas e imágenes
+    status: implemented
+    summary: >
+      Cuando el navegador comunica ahorro de datos o una conexión 2g, el mapa
+      reduce la muestra transferida, omite imágenes en la lista inicial y
+      retrasa las fichas. En móvil, fichas y catálogos auxiliares esperan hasta
+      que se abra el panel.
+    evidence:
+      - file: frontend/lib/network-profile.ts
+        lines: "14-32"
+        symbol: getMapNetworkProfile
+        note: Define el perfil restringido para 2g y ahorro de datos.
+      - file: frontend/hooks/usePropertyFilters.ts
+        lines: "398-511"
+        symbol: networkProfile.mapPointLimit
+        note: Aplica límites, imágenes y retraso del perfil a las peticiones.
+      - file: frontend/components/MapPageClient.tsx
+        lines: "113-117"
+        symbol: cardsEnabled
+        note: En móvil posterga datos secundarios mientras el panel está cerrado.
+    cases:
+      - name: Navegador con saveData activo
+        expected: los puntos se solicitan antes que las fichas con imágenes
+    tests: {}

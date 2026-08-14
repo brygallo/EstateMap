@@ -1,5 +1,5 @@
 import Image from 'next/image';
-import { ArrowUpRight } from 'lucide-react';
+import { ArrowUpRight, Megaphone } from 'lucide-react';
 
 import { getPublicApiUrl } from '@/lib/api-url';
 import { getAdSlots, pickAd, PLACEMENT_LABELS, type AdSlotData, type Placement } from '@/lib/ads';
@@ -38,10 +38,10 @@ type AdSlotProps = {
 };
 
 const layout: Record<Variant, string> = {
-  card: 'flex flex-col gap-3 p-5',
-  banner: 'flex flex-col gap-4 p-5 sm:flex-row sm:items-center sm:gap-5',
-  aside: 'flex flex-col gap-3 p-5',
-  strip: 'flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:gap-4',
+  card: 'flex flex-col gap-4 p-5',
+  banner: 'flex flex-col gap-5 p-5 sm:flex-row sm:items-center sm:p-6',
+  aside: 'flex flex-col gap-4 p-5',
+  strip: 'flex flex-col gap-4 p-4 sm:flex-row sm:items-center',
 };
 
 const imageBox: Record<Variant, string> = {
@@ -98,15 +98,15 @@ function PaidAd({
 
   return (
     <aside className={`not-prose ${className ?? 'my-8'}`} aria-label={`Publicidad de ${name}`}>
-      <p className="mb-2 text-[0.7rem] font-semibold uppercase tracking-[0.12em] text-textSecondary">
-        Publicidad
+      <p className="mb-2.5 inline-flex items-center gap-1.5 text-[0.7rem] font-bold uppercase tracking-[0.14em] text-textSecondary">
+        <Megaphone className="h-3.5 w-3.5" aria-hidden="true" /> Publicidad
       </p>
 
       <a
         href={href}
         target="_blank"
         rel="sponsored nofollow noopener noreferrer"
-        className={`group rounded-card border border-line bg-surface transition-colors hover:border-primary ${layout[variant]}`}
+        className={`group relative overflow-hidden rounded-card border border-line bg-white shadow-card transition-all hover:-translate-y-0.5 hover:border-primary hover:shadow-cardHover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 ${layout[variant]}`}
       >
         {slot.image ? (
           <div className={imageBox[variant]}>
@@ -115,19 +115,19 @@ function PaidAd({
               alt={slot.image_alt || name}
               fill
               sizes="(max-width: 640px) 100vw, 320px"
-              className="object-cover"
+              className="object-cover transition-transform duration-300 group-hover:scale-[1.03]"
               loading="lazy"
             />
           </div>
         ) : null}
 
-        <div className="flex min-w-0 flex-1 flex-col gap-1.5">
-          <p className="text-xs font-semibold uppercase tracking-wide text-textSecondary">
+        <div className="flex min-w-0 flex-1 flex-col gap-2">
+          <p className="text-xs font-bold uppercase tracking-[0.12em] text-primary">
             {name}
           </p>
-          <p className="text-base font-bold leading-snug text-textPrimary">{slot.headline}</p>
+          <p className="text-lg font-black leading-snug tracking-tight text-textPrimary">{slot.headline}</p>
           <p className="text-sm leading-relaxed text-textSecondary">{slot.body}</p>
-          <span className="mt-1 inline-flex items-center gap-1 text-sm font-semibold text-primary">
+          <span className="mt-1 inline-flex min-h-10 w-fit items-center gap-1.5 rounded-full bg-primaryLight px-4 text-sm font-bold text-primary transition-colors group-hover:bg-primary group-hover:text-primary-foreground">
             {slot.cta_label}
             <ArrowUpRight
               className="h-4 w-4 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5"

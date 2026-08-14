@@ -96,7 +96,7 @@ const NavBar = () => {
         </Link>
 
         {/* Desktop Navigation */}
-        <div className="hidden items-center gap-1 md:flex">
+        <div className="hidden items-center gap-1 lg:flex">
           {token ? (
             <>
               <Link href="/propiedades" className={navLinkClass('/propiedades')}>
@@ -107,8 +107,8 @@ const NavBar = () => {
                 <FolderKanban className="h-4 w-4" />
                 Mis propiedades
               </Link>
-              {/* Section links only at lg+ so the md bar (with CTA + avatar) stays uncramped. */}
-              <div className="hidden items-center gap-1 lg:flex">
+              {/* Secondary links join only when the complete bar has enough room. */}
+              <div className="hidden items-center gap-1 xl:flex">
                 <Link
                   href="/estadisticas-inmobiliarias"
                   className={navLinkClass('/estadisticas-inmobiliarias')}
@@ -179,8 +179,8 @@ const NavBar = () => {
                 <MapPinned className="h-4 w-4" />
                 Explorar
               </Link>
-              {/* Section links only at lg+ to keep the md guest bar uncramped. */}
-              <div className="hidden items-center gap-1 lg:flex">
+              {/* Secondary links join only when the complete bar has enough room. */}
+              <div className="hidden items-center gap-1 xl:flex">
                 <Link
                   href="/estadisticas-inmobiliarias"
                   className={navLinkClass('/estadisticas-inmobiliarias')}
@@ -214,7 +214,7 @@ const NavBar = () => {
           )}
         </div>
 
-        <div className="flex items-center gap-2 md:hidden">
+        <div className="flex items-center gap-2 lg:hidden">
           <Link
             href="/publicar-propiedad"
             className="mobile-publish-cta aents-header-cta inline-flex h-10 items-center gap-1.5 rounded-full px-3 text-xs font-bold text-white"
@@ -233,7 +233,7 @@ const NavBar = () => {
             <Button
               variant="ghost"
               size="icon"
-              className="text-textPrimary hover:bg-primaryLight hover:text-primary md:hidden"
+              className="text-textPrimary hover:bg-primaryLight hover:text-primary lg:hidden"
               aria-label="Abrir menú"
             >
               <Menu className="h-6 w-6" />

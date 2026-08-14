@@ -1,0 +1,1849 @@
+{
+  "title": "Antes de comprar un departamento, revisa esto",
+  "coverText": "Antes de comprar un departamento",
+  "cta": "Encuentra tu futuro hogar",
+  "url": "geopropiedadesecuador.com",
+  "brandTile": "brand/aents-brand-tile-1024.png",
+  "kicker": null,
+  "musicFile": null,
+  "showSafeAreas": false,
+  "scenes": [
+    {
+      "purpose": "gancho",
+      "durationInFrames": 286,
+      "headline": "Compras el edificio",
+      "captions": [
+        {
+          "text": "Cuando compras un departamento no",
+          "start": 0.0,
+          "end": 1.955,
+          "words": [
+            {
+              "text": "Cuando",
+              "start": 0.0,
+              "end": 0.402
+            },
+            {
+              "text": "compras",
+              "start": 0.402,
+              "end": 0.862
+            },
+            {
+              "text": "un",
+              "start": 0.862,
+              "end": 1.035
+            },
+            {
+              "text": "departamento",
+              "start": 1.035,
+              "end": 1.782
+            },
+            {
+              "text": "no",
+              "start": 1.782,
+              "end": 1.955
+            }
+          ]
+        },
+        {
+          "text": "compras solo el departamento.",
+          "start": 1.955,
+          "end": 3.622,
+          "words": [
+            {
+              "text": "compras",
+              "start": 0.0,
+              "end": 0.46
+            },
+            {
+              "text": "solo",
+              "start": 0.46,
+              "end": 0.747
+            },
+            {
+              "text": "el",
+              "start": 0.747,
+              "end": 0.92
+            },
+            {
+              "text": "departamento.",
+              "start": 0.92,
+              "end": 1.667
+            }
+          ]
+        },
+        {
+          "text": "Compras una parte de un edificio,",
+          "start": 3.622,
+          "end": 5.52,
+          "words": [
+            {
+              "text": "Compras",
+              "start": 0.0,
+              "end": 0.46
+            },
+            {
+              "text": "una",
+              "start": 0.46,
+              "end": 0.69
+            },
+            {
+              "text": "parte",
+              "start": 0.69,
+              "end": 1.035
+            },
+            {
+              "text": "de",
+              "start": 1.035,
+              "end": 1.207
+            },
+            {
+              "text": "un",
+              "start": 1.207,
+              "end": 1.38
+            },
+            {
+              "text": "edificio,",
+              "start": 1.38,
+              "end": 1.897
+            }
+          ]
+        },
+        {
+          "text": "con sus reglas,",
+          "start": 5.52,
+          "end": 6.382,
+          "words": [
+            {
+              "text": "con",
+              "start": 0.0,
+              "end": 0.23
+            },
+            {
+              "text": "sus",
+              "start": 0.23,
+              "end": 0.46
+            },
+            {
+              "text": "reglas,",
+              "start": 0.46,
+              "end": 0.862
+            }
+          ]
+        },
+        {
+          "text": "sus vecinos y sus deudas.",
+          "start": 6.382,
+          "end": 7.82,
+          "words": [
+            {
+              "text": "sus",
+              "start": 0.0,
+              "end": 0.23
+            },
+            {
+              "text": "vecinos",
+              "start": 0.23,
+              "end": 0.69
+            },
+            {
+              "text": "y",
+              "start": 0.69,
+              "end": 0.805
+            },
+            {
+              "text": "sus",
+              "start": 0.805,
+              "end": 1.035
+            },
+            {
+              "text": "deudas.",
+              "start": 1.035,
+              "end": 1.437
+            }
+          ]
+        },
+        {
+          "text": "Y eso se revisa antes.",
+          "start": 7.82,
+          "end": 9.085,
+          "words": [
+            {
+              "text": "Y",
+              "start": 0.0,
+              "end": 0.115
+            },
+            {
+              "text": "eso",
+              "start": 0.115,
+              "end": 0.345
+            },
+            {
+              "text": "se",
+              "start": 0.345,
+              "end": 0.517
+            },
+            {
+              "text": "revisa",
+              "start": 0.517,
+              "end": 0.92
+            },
+            {
+              "text": "antes.",
+              "start": 0.92,
+              "end": 1.265
+            }
+          ]
+        }
+      ],
+      "visualDirection": "Animación nueva a construir y registrar como sim:que-compras. Escena tipográfica de marca sobre el fondo claro de la serie mientras la animación no exista. Cuando se construya: un edificio de departamentos visto desde la vereda, dibujado como se ve en la vida real, con su portón, su vereda y un árbol; la cámara sube despacio y una sola ventana iluminada se separa apenas del volumen para mostrar que ese es el departamento. Enseguida el edificio entero se ilumina por capas —fachada, ascensor, cisterna en la azotea— para decir sin texto que lo que compras es todo eso. Un solo sujeto grande de y=250 a y=900, cámara siempre en movimiento y remate con el edificio completo asentándose.",
+      "transition": "cut",
+      "asset": "sim:que-compras",
+      "assetType": "simulation",
+      "photo": null,
+      "voiceFile": "jobs/video-010/audio/voice-01.mp3",
+      "assetStartInFrames": 0,
+      "assetTotalInFrames": 286,
+      "accent": "#22C55E"
+    },
+    {
+      "purpose": "prueba",
+      "durationInFrames": 361,
+      "headline": "Qué dice la escritura",
+      "captions": [
+        {
+          "text": "Pide la declaratoria de propiedad",
+          "start": 0.0,
+          "end": 1.885,
+          "words": [
+            {
+              "text": "Pide",
+              "start": 0.0,
+              "end": 0.277
+            },
+            {
+              "text": "la",
+              "start": 0.277,
+              "end": 0.443
+            },
+            {
+              "text": "declaratoria",
+              "start": 0.443,
+              "end": 1.164
+            },
+            {
+              "text": "de",
+              "start": 1.164,
+              "end": 1.33
+            },
+            {
+              "text": "propiedad",
+              "start": 1.33,
+              "end": 1.885
+            }
+          ]
+        },
+        {
+          "text": "horizontal y el reglamento interno.",
+          "start": 1.885,
+          "end": 3.825,
+          "words": [
+            {
+              "text": "horizontal",
+              "start": 0.0,
+              "end": 0.61
+            },
+            {
+              "text": "y",
+              "start": 0.61,
+              "end": 0.721
+            },
+            {
+              "text": "el",
+              "start": 0.721,
+              "end": 0.887
+            },
+            {
+              "text": "reglamento",
+              "start": 0.887,
+              "end": 1.497
+            },
+            {
+              "text": "interno.",
+              "start": 1.497,
+              "end": 1.94
+            }
+          ]
+        },
+        {
+          "text": "Ahí dice qué es tuyo",
+          "start": 3.825,
+          "end": 4.989,
+          "words": [
+            {
+              "text": "Ahí",
+              "start": 0.0,
+              "end": 0.222
+            },
+            {
+              "text": "dice",
+              "start": 0.222,
+              "end": 0.499
+            },
+            {
+              "text": "qué",
+              "start": 0.499,
+              "end": 0.721
+            },
+            {
+              "text": "es",
+              "start": 0.721,
+              "end": 0.887
+            },
+            {
+              "text": "tuyo",
+              "start": 0.887,
+              "end": 1.164
+            }
+          ]
+        },
+        {
+          "text": "y qué es común.",
+          "start": 4.989,
+          "end": 5.821,
+          "words": [
+            {
+              "text": "y",
+              "start": 0.0,
+              "end": 0.111
+            },
+            {
+              "text": "qué",
+              "start": 0.111,
+              "end": 0.333
+            },
+            {
+              "text": "es",
+              "start": 0.333,
+              "end": 0.499
+            },
+            {
+              "text": "común.",
+              "start": 0.499,
+              "end": 0.832
+            }
+          ]
+        },
+        {
+          "text": "Y revisa que el parqueadero",
+          "start": 5.821,
+          "end": 7.373,
+          "words": [
+            {
+              "text": "Y",
+              "start": 0.0,
+              "end": 0.111
+            },
+            {
+              "text": "revisa",
+              "start": 0.111,
+              "end": 0.499
+            },
+            {
+              "text": "que",
+              "start": 0.499,
+              "end": 0.721
+            },
+            {
+              "text": "el",
+              "start": 0.721,
+              "end": 0.887
+            },
+            {
+              "text": "parqueadero",
+              "start": 0.887,
+              "end": 1.552
+            }
+          ]
+        },
+        {
+          "text": "y la bodega consten en",
+          "start": 7.373,
+          "end": 8.648,
+          "words": [
+            {
+              "text": "y",
+              "start": 0.0,
+              "end": 0.111
+            },
+            {
+              "text": "la",
+              "start": 0.111,
+              "end": 0.277
+            },
+            {
+              "text": "bodega",
+              "start": 0.277,
+              "end": 0.665
+            },
+            {
+              "text": "consten",
+              "start": 0.665,
+              "end": 1.109
+            },
+            {
+              "text": "en",
+              "start": 1.109,
+              "end": 1.275
+            }
+          ]
+        },
+        {
+          "text": "la escritura,",
+          "start": 8.648,
+          "end": 9.368,
+          "words": [
+            {
+              "text": "la",
+              "start": 0.0,
+              "end": 0.166
+            },
+            {
+              "text": "escritura,",
+              "start": 0.166,
+              "end": 0.721
+            }
+          ]
+        },
+        {
+          "text": "no que te los hayan asignado",
+          "start": 9.368,
+          "end": 10.976,
+          "words": [
+            {
+              "text": "no",
+              "start": 0.0,
+              "end": 0.166
+            },
+            {
+              "text": "que",
+              "start": 0.166,
+              "end": 0.388
+            },
+            {
+              "text": "te",
+              "start": 0.388,
+              "end": 0.554
+            },
+            {
+              "text": "los",
+              "start": 0.554,
+              "end": 0.776
+            },
+            {
+              "text": "hayan",
+              "start": 0.776,
+              "end": 1.109
+            },
+            {
+              "text": "asignado",
+              "start": 1.109,
+              "end": 1.608
+            }
+          ]
+        },
+        {
+          "text": "de palabra.",
+          "start": 10.976,
+          "end": 11.586,
+          "words": [
+            {
+              "text": "de",
+              "start": 0.0,
+              "end": 0.166
+            },
+            {
+              "text": "palabra.",
+              "start": 0.166,
+              "end": 0.61
+            }
+          ]
+        }
+      ],
+      "visualDirection": "Animación nueva a construir y registrar como sim:propiedad-horizontal. Mientras no exista, escena tipográfica de marca. Cuando se construya: un juego de documentos en papel sobre una mesa, dibujados como papeles reales con sello y firma, entrando escalonados. El primero se abre y sobre el corte del edificio se pintan en dos tonos lo privado y lo común, con etiquetas grandes de al menos 24 px. A la mitad ocurre el cambio de estado: el papel pasa la página y aparecen dos renglones, parqueadero y bodega, que se marcan como parte del documento; al lado, un cartel de parqueadero apenas dibujado con tiza se borra para mostrar la diferencia entre constar y estar asignado de palabra.",
+      "transition": "cut",
+      "asset": "sim:propiedad-horizontal",
+      "assetType": "simulation",
+      "photo": null,
+      "voiceFile": "jobs/video-010/audio/voice-02.mp3",
+      "assetStartInFrames": 0,
+      "assetTotalInFrames": 361,
+      "accent": "#6B5CF6"
+    },
+    {
+      "purpose": "prueba",
+      "durationInFrames": 298,
+      "headline": "Alícuota al día",
+      "captions": [
+        {
+          "text": "Pregunta cuánto es la alícuota",
+          "start": 0.0,
+          "end": 1.752,
+          "words": [
+            {
+              "text": "Pregunta",
+              "start": 0.0,
+              "end": 0.509
+            },
+            {
+              "text": "cuánto",
+              "start": 0.509,
+              "end": 0.904
+            },
+            {
+              "text": "es",
+              "start": 0.904,
+              "end": 1.074
+            },
+            {
+              "text": "la",
+              "start": 1.074,
+              "end": 1.244
+            },
+            {
+              "text": "alícuota",
+              "start": 1.244,
+              "end": 1.752
+            }
+          ]
+        },
+        {
+          "text": "y qué cubre.",
+          "start": 1.752,
+          "end": 2.431,
+          "words": [
+            {
+              "text": "y",
+              "start": 0.0,
+              "end": 0.113
+            },
+            {
+              "text": "qué",
+              "start": 0.113,
+              "end": 0.339
+            },
+            {
+              "text": "cubre.",
+              "start": 0.339,
+              "end": 0.678
+            }
+          ]
+        },
+        {
+          "text": "Es un gasto de todos",
+          "start": 2.431,
+          "end": 3.618,
+          "words": [
+            {
+              "text": "Es",
+              "start": 0.0,
+              "end": 0.17
+            },
+            {
+              "text": "un",
+              "start": 0.17,
+              "end": 0.339
+            },
+            {
+              "text": "gasto",
+              "start": 0.339,
+              "end": 0.678
+            },
+            {
+              "text": "de",
+              "start": 0.678,
+              "end": 0.848
+            },
+            {
+              "text": "todos",
+              "start": 0.848,
+              "end": 1.187
+            }
+          ]
+        },
+        {
+          "text": "los meses,",
+          "start": 3.618,
+          "end": 4.183,
+          "words": [
+            {
+              "text": "los",
+              "start": 0.0,
+              "end": 0.226
+            },
+            {
+              "text": "meses,",
+              "start": 0.226,
+              "end": 0.565
+            }
+          ]
+        },
+        {
+          "text": "igual que la luz.",
+          "start": 4.183,
+          "end": 5.144,
+          "words": [
+            {
+              "text": "igual",
+              "start": 0.0,
+              "end": 0.339
+            },
+            {
+              "text": "que",
+              "start": 0.339,
+              "end": 0.565
+            },
+            {
+              "text": "la",
+              "start": 0.565,
+              "end": 0.735
+            },
+            {
+              "text": "luz.",
+              "start": 0.735,
+              "end": 0.961
+            }
+          ]
+        },
+        {
+          "text": "Y pide por escrito,",
+          "start": 5.144,
+          "end": 6.218,
+          "words": [
+            {
+              "text": "Y",
+              "start": 0.0,
+              "end": 0.113
+            },
+            {
+              "text": "pide",
+              "start": 0.113,
+              "end": 0.396
+            },
+            {
+              "text": "por",
+              "start": 0.396,
+              "end": 0.622
+            },
+            {
+              "text": "escrito,",
+              "start": 0.622,
+              "end": 1.074
+            }
+          ]
+        },
+        {
+          "text": "firmado por la administración,",
+          "start": 6.218,
+          "end": 7.913,
+          "words": [
+            {
+              "text": "firmado",
+              "start": 0.0,
+              "end": 0.452
+            },
+            {
+              "text": "por",
+              "start": 0.452,
+              "end": 0.678
+            },
+            {
+              "text": "la",
+              "start": 0.678,
+              "end": 0.848
+            },
+            {
+              "text": "administración,",
+              "start": 0.848,
+              "end": 1.696
+            }
+          ]
+        },
+        {
+          "text": "que el vendedor esté al día.",
+          "start": 7.913,
+          "end": 9.496,
+          "words": [
+            {
+              "text": "que",
+              "start": 0.0,
+              "end": 0.226
+            },
+            {
+              "text": "el",
+              "start": 0.226,
+              "end": 0.396
+            },
+            {
+              "text": "vendedor",
+              "start": 0.396,
+              "end": 0.904
+            },
+            {
+              "text": "esté",
+              "start": 0.904,
+              "end": 1.187
+            },
+            {
+              "text": "al",
+              "start": 1.187,
+              "end": 1.357
+            },
+            {
+              "text": "día.",
+              "start": 1.357,
+              "end": 1.583
+            }
+          ]
+        }
+      ],
+      "visualDirection": "Animación nueva a construir y registrar como sim:alicuota. Mientras no exista, escena tipográfica de marca. Cuando se construya: un recibo mensual de administración en primer plano, del tamaño de media pantalla, con el monto en cifra grande claramente ilustrativa —nunca presentada como valor real de mercado— y debajo dos o tres renglones de lo que cubre. Los recibos se apilan uno por mes con ritmo constante para que se sienta el gasto recurrente. Al final entra un certificado firmado y sellado que se posa encima de la pila; el sello cae con peso como remate.",
+      "transition": "cut",
+      "asset": "sim:alicuota",
+      "assetType": "simulation",
+      "photo": null,
+      "voiceFile": "jobs/video-010/audio/voice-03.mp3",
+      "assetStartInFrames": 0,
+      "assetTotalInFrames": 298,
+      "accent": "#14B8A6"
+    },
+    {
+      "purpose": "prueba",
+      "durationInFrames": 384,
+      "headline": "Actas y derramas",
+      "captions": [
+        {
+          "text": "Pide las actas de las últimas asambleas.",
+          "start": 0.0,
+          "end": 2.248,
+          "words": [
+            {
+              "text": "Pide",
+              "start": 0.0,
+              "end": 0.281
+            },
+            {
+              "text": "las",
+              "start": 0.281,
+              "end": 0.506
+            },
+            {
+              "text": "actas",
+              "start": 0.506,
+              "end": 0.843
+            },
+            {
+              "text": "de",
+              "start": 0.843,
+              "end": 1.012
+            },
+            {
+              "text": "las",
+              "start": 1.012,
+              "end": 1.236
+            },
+            {
+              "text": "últimas",
+              "start": 1.236,
+              "end": 1.686
+            },
+            {
+              "text": "asambleas.",
+              "start": 1.686,
+              "end": 2.248
+            }
+          ]
+        },
+        {
+          "text": "Ahí aparecen las derramas:",
+          "start": 2.248,
+          "end": 3.709,
+          "words": [
+            {
+              "text": "Ahí",
+              "start": 0.0,
+              "end": 0.225
+            },
+            {
+              "text": "aparecen",
+              "start": 0.225,
+              "end": 0.731
+            },
+            {
+              "text": "las",
+              "start": 0.731,
+              "end": 0.955
+            },
+            {
+              "text": "derramas:",
+              "start": 0.955,
+              "end": 1.461
+            }
+          ]
+        },
+        {
+          "text": "las cuotas extras",
+          "start": 3.709,
+          "end": 4.72,
+          "words": [
+            {
+              "text": "las",
+              "start": 0.0,
+              "end": 0.225
+            },
+            {
+              "text": "cuotas",
+              "start": 0.225,
+              "end": 0.618
+            },
+            {
+              "text": "extras",
+              "start": 0.618,
+              "end": 1.012
+            }
+          ]
+        },
+        {
+          "text": "que se aprueban",
+          "start": 4.72,
+          "end": 5.619,
+          "words": [
+            {
+              "text": "que",
+              "start": 0.0,
+              "end": 0.225
+            },
+            {
+              "text": "se",
+              "start": 0.225,
+              "end": 0.393
+            },
+            {
+              "text": "aprueban",
+              "start": 0.393,
+              "end": 0.899
+            }
+          ]
+        },
+        {
+          "text": "cuando hay algo grande",
+          "start": 5.619,
+          "end": 6.912,
+          "words": [
+            {
+              "text": "cuando",
+              "start": 0.0,
+              "end": 0.393
+            },
+            {
+              "text": "hay",
+              "start": 0.393,
+              "end": 0.618
+            },
+            {
+              "text": "algo",
+              "start": 0.618,
+              "end": 0.899
+            },
+            {
+              "text": "grande",
+              "start": 0.899,
+              "end": 1.292
+            }
+          ]
+        },
+        {
+          "text": "que arreglar.",
+          "start": 6.912,
+          "end": 7.642,
+          "words": [
+            {
+              "text": "que",
+              "start": 0.0,
+              "end": 0.225
+            },
+            {
+              "text": "arreglar.",
+              "start": 0.225,
+              "end": 0.731
+            }
+          ]
+        },
+        {
+          "text": "Y camina el edificio:",
+          "start": 7.642,
+          "end": 8.823,
+          "words": [
+            {
+              "text": "Y",
+              "start": 0.0,
+              "end": 0.112
+            },
+            {
+              "text": "camina",
+              "start": 0.112,
+              "end": 0.506
+            },
+            {
+              "text": "el",
+              "start": 0.506,
+              "end": 0.674
+            },
+            {
+              "text": "edificio:",
+              "start": 0.674,
+              "end": 1.18
+            }
+          ]
+        },
+        {
+          "text": "el ascensor,",
+          "start": 8.823,
+          "end": 9.497,
+          "words": [
+            {
+              "text": "el",
+              "start": 0.0,
+              "end": 0.169
+            },
+            {
+              "text": "ascensor,",
+              "start": 0.169,
+              "end": 0.674
+            }
+          ]
+        },
+        {
+          "text": "la bomba,",
+          "start": 9.497,
+          "end": 10.003,
+          "words": [
+            {
+              "text": "la",
+              "start": 0.0,
+              "end": 0.169
+            },
+            {
+              "text": "bomba,",
+              "start": 0.169,
+              "end": 0.506
+            }
+          ]
+        },
+        {
+          "text": "la cisterna,",
+          "start": 10.003,
+          "end": 10.677,
+          "words": [
+            {
+              "text": "la",
+              "start": 0.0,
+              "end": 0.169
+            },
+            {
+              "text": "cisterna,",
+              "start": 0.169,
+              "end": 0.674
+            }
+          ]
+        },
+        {
+          "text": "las humedades en los pasillos.",
+          "start": 10.677,
+          "end": 12.363,
+          "words": [
+            {
+              "text": "las",
+              "start": 0.0,
+              "end": 0.225
+            },
+            {
+              "text": "humedades",
+              "start": 0.225,
+              "end": 0.787
+            },
+            {
+              "text": "en",
+              "start": 0.787,
+              "end": 0.955
+            },
+            {
+              "text": "los",
+              "start": 0.955,
+              "end": 1.18
+            },
+            {
+              "text": "pasillos.",
+              "start": 1.18,
+              "end": 1.686
+            }
+          ]
+        }
+      ],
+      "visualDirection": "Animación nueva a construir y registrar como sim:edificio. Mientras no exista, escena tipográfica de marca. Cuando se construya: primero un acta de asamblea abierta, con firmas al pie, y un punto del orden del día que se resalta solo. A la mitad la cámara deja el papel y entra al edificio en corte lateral, con la misma línea de suelo y el mismo punto de vista de la escena uno: se recorre de arriba abajo el tanque de la azotea, el ascensor con su puerta abriéndose, el cuarto de bombas y un pasillo con una mancha de humedad en la esquina. Cada elemento se detiene un instante con su etiqueta grande y la cámara sigue bajando sin parar hasta el hall.",
+      "transition": "cut",
+      "asset": "sim:edificio",
+      "assetType": "simulation",
+      "photo": null,
+      "voiceFile": "jobs/video-010/audio/voice-04.mp3",
+      "assetStartInFrames": 0,
+      "assetTotalInFrames": 384,
+      "accent": "#A78BFA"
+    },
+    {
+      "purpose": "prueba",
+      "durationInFrames": 292,
+      "headline": "Léelo con abogado",
+      "captions": [
+        {
+          "text": "Las escrituras,",
+          "start": 0.0,
+          "end": 0.869,
+          "words": [
+            {
+              "text": "Las",
+              "start": 0.0,
+              "end": 0.232
+            },
+            {
+              "text": "escrituras,",
+              "start": 0.232,
+              "end": 0.869
+            }
+          ]
+        },
+        {
+          "text": "el certificado de gravámenes",
+          "start": 0.869,
+          "end": 2.549,
+          "words": [
+            {
+              "text": "el",
+              "start": 0.0,
+              "end": 0.174
+            },
+            {
+              "text": "certificado",
+              "start": 0.174,
+              "end": 0.869
+            },
+            {
+              "text": "de",
+              "start": 0.869,
+              "end": 1.043
+            },
+            {
+              "text": "gravámenes",
+              "start": 1.043,
+              "end": 1.68
+            }
+          ]
+        },
+        {
+          "text": "y el predial al día no",
+          "start": 2.549,
+          "end": 3.882,
+          "words": [
+            {
+              "text": "y",
+              "start": 0.0,
+              "end": 0.116
+            },
+            {
+              "text": "el",
+              "start": 0.116,
+              "end": 0.29
+            },
+            {
+              "text": "predial",
+              "start": 0.29,
+              "end": 0.753
+            },
+            {
+              "text": "al",
+              "start": 0.753,
+              "end": 0.927
+            },
+            {
+              "text": "día",
+              "start": 0.927,
+              "end": 1.159
+            },
+            {
+              "text": "no",
+              "start": 1.159,
+              "end": 1.333
+            }
+          ]
+        },
+        {
+          "text": "los revisas por encima.",
+          "start": 3.882,
+          "end": 5.214,
+          "words": [
+            {
+              "text": "los",
+              "start": 0.0,
+              "end": 0.232
+            },
+            {
+              "text": "revisas",
+              "start": 0.232,
+              "end": 0.695
+            },
+            {
+              "text": "por",
+              "start": 0.695,
+              "end": 0.927
+            },
+            {
+              "text": "encima.",
+              "start": 0.927,
+              "end": 1.333
+            }
+          ]
+        },
+        {
+          "text": "Que los lea un abogado,",
+          "start": 5.214,
+          "end": 6.547,
+          "words": [
+            {
+              "text": "Que",
+              "start": 0.0,
+              "end": 0.232
+            },
+            {
+              "text": "los",
+              "start": 0.232,
+              "end": 0.463
+            },
+            {
+              "text": "lea",
+              "start": 0.463,
+              "end": 0.695
+            },
+            {
+              "text": "un",
+              "start": 0.695,
+              "end": 0.869
+            },
+            {
+              "text": "abogado,",
+              "start": 0.869,
+              "end": 1.333
+            }
+          ]
+        },
+        {
+          "text": "línea por línea,",
+          "start": 6.547,
+          "end": 7.474,
+          "words": [
+            {
+              "text": "línea",
+              "start": 0.0,
+              "end": 0.348
+            },
+            {
+              "text": "por",
+              "start": 0.348,
+              "end": 0.579
+            },
+            {
+              "text": "línea,",
+              "start": 0.579,
+              "end": 0.927
+            }
+          ]
+        },
+        {
+          "text": "antes de firmar cualquier cosa.",
+          "start": 7.474,
+          "end": 9.27,
+          "words": [
+            {
+              "text": "antes",
+              "start": 0.0,
+              "end": 0.348
+            },
+            {
+              "text": "de",
+              "start": 0.348,
+              "end": 0.521
+            },
+            {
+              "text": "firmar",
+              "start": 0.521,
+              "end": 0.927
+            },
+            {
+              "text": "cualquier",
+              "start": 0.927,
+              "end": 1.506
+            },
+            {
+              "text": "cosa.",
+              "start": 1.506,
+              "end": 1.796
+            }
+          ]
+        }
+      ],
+      "visualDirection": "Se usa la animación aprobada del certificado de gravámenes y el predial leídos uno a uno, con su ritmo de lectura línea por línea. Mantener el panel de producto de la serie, su elevación y su tipografía; la cámara acompaña la lectura con un desplazamiento lento y el remate es el último documento cerrándose.",
+      "transition": "cut",
+      "asset": "sim:gravamenes",
+      "assetType": "simulation",
+      "photo": null,
+      "voiceFile": "jobs/video-010/audio/voice-05.mp3",
+      "assetStartInFrames": 0,
+      "assetTotalInFrames": 292,
+      "accent": "#22C55E"
+    },
+    {
+      "purpose": "prueba",
+      "durationInFrames": 355,
+      "headline": "Compara metros útiles",
+      "captions": [
+        {
+          "text": "Divide el precio",
+          "start": 0.0,
+          "end": 0.981,
+          "words": [
+            {
+              "text": "Divide",
+              "start": 0.0,
+              "end": 0.404
+            },
+            {
+              "text": "el",
+              "start": 0.404,
+              "end": 0.577
+            },
+            {
+              "text": "precio",
+              "start": 0.577,
+              "end": 0.981
+            }
+          ]
+        },
+        {
+          "text": "para los metros",
+          "start": 0.981,
+          "end": 1.904,
+          "words": [
+            {
+              "text": "para",
+              "start": 0.0,
+              "end": 0.289
+            },
+            {
+              "text": "los",
+              "start": 0.289,
+              "end": 0.519
+            },
+            {
+              "text": "metros",
+              "start": 0.519,
+              "end": 0.923
+            }
+          ]
+        },
+        {
+          "text": "y compara.",
+          "start": 1.904,
+          "end": 2.481,
+          "words": [
+            {
+              "text": "y",
+              "start": 0.0,
+              "end": 0.115
+            },
+            {
+              "text": "compara.",
+              "start": 0.115,
+              "end": 0.577
+            }
+          ]
+        },
+        {
+          "text": "Pero fíjate qué metros te están contando:",
+          "start": 2.481,
+          "end": 4.847,
+          "words": [
+            {
+              "text": "Pero",
+              "start": 0.0,
+              "end": 0.289
+            },
+            {
+              "text": "fíjate",
+              "start": 0.289,
+              "end": 0.692
+            },
+            {
+              "text": "qué",
+              "start": 0.692,
+              "end": 0.923
+            },
+            {
+              "text": "metros",
+              "start": 0.923,
+              "end": 1.327
+            },
+            {
+              "text": "te",
+              "start": 1.327,
+              "end": 1.5
+            },
+            {
+              "text": "están",
+              "start": 1.5,
+              "end": 1.846
+            },
+            {
+              "text": "contando:",
+              "start": 1.846,
+              "end": 2.366
+            }
+          ]
+        },
+        {
+          "text": "hay anuncios que suman áreas comunes.",
+          "start": 4.847,
+          "end": 6.982,
+          "words": [
+            {
+              "text": "hay",
+              "start": 0.0,
+              "end": 0.231
+            },
+            {
+              "text": "anuncios",
+              "start": 0.231,
+              "end": 0.75
+            },
+            {
+              "text": "que",
+              "start": 0.75,
+              "end": 0.981
+            },
+            {
+              "text": "suman",
+              "start": 0.981,
+              "end": 1.327
+            },
+            {
+              "text": "áreas",
+              "start": 1.327,
+              "end": 1.673
+            },
+            {
+              "text": "comunes.",
+              "start": 1.673,
+              "end": 2.135
+            }
+          ]
+        },
+        {
+          "text": "Compara metros útiles",
+          "start": 6.982,
+          "end": 8.251,
+          "words": [
+            {
+              "text": "Compara",
+              "start": 0.0,
+              "end": 0.462
+            },
+            {
+              "text": "metros",
+              "start": 0.462,
+              "end": 0.866
+            },
+            {
+              "text": "útiles",
+              "start": 0.866,
+              "end": 1.269
+            }
+          ]
+        },
+        {
+          "text": "con metros útiles,",
+          "start": 8.251,
+          "end": 9.29,
+          "words": [
+            {
+              "text": "con",
+              "start": 0.0,
+              "end": 0.231
+            },
+            {
+              "text": "metros",
+              "start": 0.231,
+              "end": 0.635
+            },
+            {
+              "text": "útiles,",
+              "start": 0.635,
+              "end": 1.039
+            }
+          ]
+        },
+        {
+          "text": "del mismo tipo",
+          "start": 9.29,
+          "end": 10.155,
+          "words": [
+            {
+              "text": "del",
+              "start": 0.0,
+              "end": 0.231
+            },
+            {
+              "text": "mismo",
+              "start": 0.231,
+              "end": 0.577
+            },
+            {
+              "text": "tipo",
+              "start": 0.577,
+              "end": 0.866
+            }
+          ]
+        },
+        {
+          "text": "y en la misma ciudad.",
+          "start": 10.155,
+          "end": 11.367,
+          "words": [
+            {
+              "text": "y",
+              "start": 0.0,
+              "end": 0.115
+            },
+            {
+              "text": "en",
+              "start": 0.115,
+              "end": 0.289
+            },
+            {
+              "text": "la",
+              "start": 0.289,
+              "end": 0.462
+            },
+            {
+              "text": "misma",
+              "start": 0.462,
+              "end": 0.808
+            },
+            {
+              "text": "ciudad.",
+              "start": 0.808,
+              "end": 1.212
+            }
+          ]
+        }
+      ],
+      "visualDirection": "Se usa la animación aprobada de dividir precio para el área y comparar dos propiedades de distinto tamaño. Los valores son claramente ilustrativos y no se presentan como precios de mercado. El acento de la escena está en qué área entra en la división: la superficie útil se destaca frente al área que incluiría espacios comunes.",
+      "transition": "cut",
+      "asset": "sim:dividir",
+      "assetType": "simulation",
+      "photo": null,
+      "voiceFile": "jobs/video-010/audio/voice-06.mp3",
+      "assetStartInFrames": 0,
+      "assetTotalInFrames": 355,
+      "accent": "#6B5CF6"
+    },
+    {
+      "purpose": "resultado",
+      "durationInFrames": 342,
+      "headline": "Ve el entorno primero",
+      "captions": [
+        {
+          "text": "Y lo que hay alrededor",
+          "start": 0.0,
+          "end": 1.306,
+          "words": [
+            {
+              "text": "Y",
+              "start": 0.0,
+              "end": 0.114
+            },
+            {
+              "text": "lo",
+              "start": 0.114,
+              "end": 0.284
+            },
+            {
+              "text": "que",
+              "start": 0.284,
+              "end": 0.511
+            },
+            {
+              "text": "hay",
+              "start": 0.511,
+              "end": 0.738
+            },
+            {
+              "text": "alrededor",
+              "start": 0.738,
+              "end": 1.306
+            }
+          ]
+        },
+        {
+          "text": "del edificio también se revisa.",
+          "start": 1.306,
+          "end": 3.067,
+          "words": [
+            {
+              "text": "del",
+              "start": 0.0,
+              "end": 0.227
+            },
+            {
+              "text": "edificio",
+              "start": 0.227,
+              "end": 0.738
+            },
+            {
+              "text": "también",
+              "start": 0.738,
+              "end": 1.193
+            },
+            {
+              "text": "se",
+              "start": 1.193,
+              "end": 1.363
+            },
+            {
+              "text": "revisa.",
+              "start": 1.363,
+              "end": 1.761
+            }
+          ]
+        },
+        {
+          "text": "Eso sí lo ves antes",
+          "start": 3.067,
+          "end": 4.203,
+          "words": [
+            {
+              "text": "Eso",
+              "start": 0.0,
+              "end": 0.227
+            },
+            {
+              "text": "sí",
+              "start": 0.227,
+              "end": 0.398
+            },
+            {
+              "text": "lo",
+              "start": 0.398,
+              "end": 0.568
+            },
+            {
+              "text": "ves",
+              "start": 0.568,
+              "end": 0.795
+            },
+            {
+              "text": "antes",
+              "start": 0.795,
+              "end": 1.136
+            }
+          ]
+        },
+        {
+          "text": "de ir:",
+          "start": 4.203,
+          "end": 4.544,
+          "words": [
+            {
+              "text": "de",
+              "start": 0.0,
+              "end": 0.17
+            },
+            {
+              "text": "ir:",
+              "start": 0.17,
+              "end": 0.341
+            }
+          ]
+        },
+        {
+          "text": "en Geo Propiedades Ecuador",
+          "start": 4.544,
+          "end": 6.077,
+          "words": [
+            {
+              "text": "en",
+              "start": 0.0,
+              "end": 0.17
+            },
+            {
+              "text": "Geo",
+              "start": 0.17,
+              "end": 0.398
+            },
+            {
+              "text": "Propiedades",
+              "start": 0.398,
+              "end": 1.079
+            },
+            {
+              "text": "Ecuador",
+              "start": 1.079,
+              "end": 1.533
+            }
+          ]
+        },
+        {
+          "text": "las propiedades están",
+          "start": 6.077,
+          "end": 7.327,
+          "words": [
+            {
+              "text": "las",
+              "start": 0.0,
+              "end": 0.227
+            },
+            {
+              "text": "propiedades",
+              "start": 0.227,
+              "end": 0.909
+            },
+            {
+              "text": "están",
+              "start": 0.909,
+              "end": 1.25
+            }
+          ]
+        },
+        {
+          "text": "sobre el mapa,",
+          "start": 7.327,
+          "end": 8.122,
+          "words": [
+            {
+              "text": "sobre",
+              "start": 0.0,
+              "end": 0.341
+            },
+            {
+              "text": "el",
+              "start": 0.341,
+              "end": 0.511
+            },
+            {
+              "text": "mapa,",
+              "start": 0.511,
+              "end": 0.795
+            }
+          ]
+        },
+        {
+          "text": "así que ves la zona,",
+          "start": 8.122,
+          "end": 9.258,
+          "words": [
+            {
+              "text": "así",
+              "start": 0.0,
+              "end": 0.227
+            },
+            {
+              "text": "que",
+              "start": 0.227,
+              "end": 0.454
+            },
+            {
+              "text": "ves",
+              "start": 0.454,
+              "end": 0.682
+            },
+            {
+              "text": "la",
+              "start": 0.682,
+              "end": 0.852
+            },
+            {
+              "text": "zona,",
+              "start": 0.852,
+              "end": 1.136
+            }
+          ]
+        },
+        {
+          "text": "las vías y por dónde se llega.",
+          "start": 9.258,
+          "end": 10.962,
+          "words": [
+            {
+              "text": "las",
+              "start": 0.0,
+              "end": 0.227
+            },
+            {
+              "text": "vías",
+              "start": 0.227,
+              "end": 0.511
+            },
+            {
+              "text": "y",
+              "start": 0.511,
+              "end": 0.625
+            },
+            {
+              "text": "por",
+              "start": 0.625,
+              "end": 0.852
+            },
+            {
+              "text": "dónde",
+              "start": 0.852,
+              "end": 1.193
+            },
+            {
+              "text": "se",
+              "start": 1.193,
+              "end": 1.363
+            },
+            {
+              "text": "llega.",
+              "start": 1.363,
+              "end": 1.704
+            }
+          ]
+        }
+      ],
+      "visualDirection": "Se usa la animación aprobada del entorno en el mapa: la vista baja a la zona, aparecen las vías y el acceso alrededor del inmueble. La marca entra aquí, con el dominio y el tile en el bloque superior desde y=205 y dentro del margen lateral de 120 px. Ninguna burbuja muestra cantidades de propiedades. La cámara termina asentada sobre la manzana del edificio.",
+      "transition": "cut",
+      "asset": "sim:alrededor",
+      "assetType": "simulation",
+      "photo": null,
+      "voiceFile": "jobs/video-010/audio/voice-07.mp3",
+      "assetStartInFrames": 0,
+      "assetTotalInFrames": 342,
+      "accent": "#14B8A6"
+    },
+    {
+      "purpose": "cta",
+      "durationInFrames": 165,
+      "headline": "Tu futuro hogar",
+      "captions": [
+        {
+          "text": "Ve a verlo sabiendo qué preguntar.",
+          "start": 0.0,
+          "end": 1.971,
+          "words": [
+            {
+              "text": "Ve",
+              "start": 0.0,
+              "end": 0.174
+            },
+            {
+              "text": "a",
+              "start": 0.174,
+              "end": 0.29
+            },
+            {
+              "text": "verlo",
+              "start": 0.29,
+              "end": 0.638
+            },
+            {
+              "text": "sabiendo",
+              "start": 0.638,
+              "end": 1.16
+            },
+            {
+              "text": "qué",
+              "start": 1.16,
+              "end": 1.392
+            },
+            {
+              "text": "preguntar.",
+              "start": 1.392,
+              "end": 1.971
+            }
+          ]
+        },
+        {
+          "text": "Encuentra tu futuro hogar en Geo",
+          "start": 1.971,
+          "end": 3.885,
+          "words": [
+            {
+              "text": "Encuentra",
+              "start": 0.0,
+              "end": 0.58
+            },
+            {
+              "text": "tu",
+              "start": 0.58,
+              "end": 0.754
+            },
+            {
+              "text": "futuro",
+              "start": 0.754,
+              "end": 1.16
+            },
+            {
+              "text": "hogar",
+              "start": 1.16,
+              "end": 1.508
+            },
+            {
+              "text": "en",
+              "start": 1.508,
+              "end": 1.681
+            },
+            {
+              "text": "Geo",
+              "start": 1.681,
+              "end": 1.913
+            }
+          ]
+        },
+        {
+          "text": "Propiedades Ecuador.",
+          "start": 3.885,
+          "end": 5.044,
+          "words": [
+            {
+              "text": "Propiedades",
+              "start": 0.0,
+              "end": 0.696
+            },
+            {
+              "text": "Ecuador.",
+              "start": 0.696,
+              "end": 1.16
+            }
+          ]
+        }
+      ],
+      "visualDirection": "Tarjeta de cierre de marca de la serie, sin cambios: tile violeta, Geo Propiedades Ecuador, el dominio geopropiedadesecuador.com, el CTA Encuentra tu futuro hogar y la firma de Aents. Entrada suave del tile y asentamiento del texto; nada más se mueve.",
+      "transition": "fade",
+      "asset": null,
+      "assetType": null,
+      "photo": null,
+      "voiceFile": "jobs/video-010/audio/voice-08.mp3",
+      "assetStartInFrames": 0,
+      "assetTotalInFrames": 165,
+      "accent": "#A78BFA"
+    }
+  ]
+}

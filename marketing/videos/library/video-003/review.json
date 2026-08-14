@@ -1,0 +1,22 @@
+{
+  "reviewed_at": "2026-08-13T14:38:21.794498-05:00",
+  "passed": true,
+  "checks": {
+    "vertical_1080x1920": true,
+    "duration_8_to_60_seconds": true,
+    "duration_close_to_target": true,
+    "plan_lint_passed": true,
+    "cover_exists": true,
+    "subtitles_exist": true,
+    "all_assets_resolve": true,
+    "approval_exists": true
+  },
+  "measured_duration_seconds": 23.979,
+  "target_duration_seconds": 24.0,
+  "human_review": {
+    "signed_at": "2026-08-13T14:43:53.462021-05:00",
+    "signed_by": "bryan",
+    "notes": "Aprobado para publicar en TikTok y Facebook Reels"
+  },
+  "notes": ""
+}

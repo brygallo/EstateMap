@@ -3,10 +3,7 @@
 import { useCallback, useEffect, useMemo, useState, useRef } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import dynamic from 'next/dynamic';
-import { Loader2, SlidersHorizontal, X } from 'lucide-react';
-import { motion, useDragControls, useMotionValue, animate } from 'motion/react';
-import { Button } from '@/components/ui/button';
-import { useAuth } from '@/lib/auth-context';
+import { Loader2, X } from 'lucide-react';
 import { useGeolocation } from '@/hooks/useGeolocation';
 import { useIsMobile } from '@/hooks/useMediaQuery';
 import { haptic } from '@/lib/haptics';
@@ -18,6 +15,7 @@ import PropertyModal from '@/components/PropertyModal';
 import LocationPermissionModal from '@/components/LocationPermissionModal';
 import MapPropertyCard from '@/components/map/MapPropertyCard';
 import MapActiveFilters from '@/components/map/MapActiveFilters';
+import MobilePropertyDrawer, { type MobileDrawerSnap } from '@/components/map/MobilePropertyDrawer';
 import type { MapBounds, Property } from '@/lib/types';
 
 // Cargar el mapa MapLibre solo en cliente (sin SSR).
@@ -48,46 +46,8 @@ const MainMap = dynamic(() => import('@/components/maps/MapLibreMap'), {
 // Centro de Ecuador para mostrar el país completo al iniciar.
 const DEFAULT_CENTER: [number, number] = [-1.5, -78.5];
 
-type DrawerSnap = 'closed' | 'half' | 'full';
-
-/** Where the drawer sits before it has been measured — safely off screen. */
-const DRAWER_OFFSCREEN = 2000;
-/**
- * Fraction of the drawer's own height that stays below the fold at `half`.
- * 0.56 leaves the filter bar, the result count and roughly two cards visible,
- * which is the smallest slice that is still worth opening.
- */
-const HALF_HIDDEN_RATIO = 0.56;
-
-/** Resting offsets in px, measured from the fully open position. */
-const snapOffsetsFor = (height: number): Record<DrawerSnap, number> => ({
-  full: 0,
-  half: Math.round(height * HALF_HIDDEN_RATIO),
-  closed: height,
-});
-
-/**
- * Picks the snap a released drag should settle into.
- *
- * Velocity is checked before position: a deliberate flick should throw the
- * sheet past the neighbouring detent, the way a native sheet does, rather than
- * snapping back because the finger did not travel far enough.
- */
-const resolveSnap = (offset: number, velocity: number, height: number, from: DrawerSnap): DrawerSnap => {
-  const order: DrawerSnap[] = ['full', 'half', 'closed'];
-  if (Math.abs(velocity) > 550) {
-    const index = order.indexOf(from);
-    const next = velocity > 0 ? index + 1 : index - 1;
-    return order[Math.min(Math.max(next, 0), order.length - 1)];
-  }
-  const offsets = snapOffsetsFor(height);
-  return order.reduce((best, snap) =>
-    Math.abs(offsets[snap] - offset) < Math.abs(offsets[best] - offset) ? snap : best
-  , from);
-};
-
 // Bounds win over centre+zoom, always. The previous order preferred the
-// fallback whenever its zoom was >= 11.5, which was every city jump: the camera
+// fallback whenever its zoom entered point mode, which was every city jump: the camera
 // went to the canton's nominal centre at a fixed zoom and could land on empty
 // map while the matching listings sat off screen. `zoom` is now only the cap on
 // how far a tightly packed group may zoom in.
@@ -111,40 +71,22 @@ const fitMapToBounds = (map: any, bounds?: MapBounds, fallback?: { lat: number; 
 };
 
 const MapPage = () => {
-  const { token } = useAuth();
   const searchParams = useSearchParams();
   const router = useRouter();
 
   const mapRef = useRef<any>(null);
-  const drawerDragControls = useDragControls();
-  // Ignore the click synthesized right after a pointer drag of the handle, so
-  // dragging the drawer does not double as an accidental tap-to-close.
-  const drawerDraggingRef = useRef(false);
-
   const [bounds, setBounds] = useState<MapBounds | null>(null);
   const [mapZoom, setMapZoom] = useState(7);
   const [selectedProperty, setSelectedProperty] = useState<Property | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   const isMobile = useIsMobile();
-  const drawerRef = useRef<HTMLDivElement>(null);
-  // The list scrolls inside the sheet, not with it — see the drag surface note
-  // where the drawer is rendered.
-  const drawerScrollRef = useRef<HTMLDivElement>(null);
-  const drawerY = useMotionValue(DRAWER_OFFSCREEN);
   // Where the drawer rests. `half` is the state a map app spends most of its
   // time in — enough list to scan, enough map to keep your bearings. Going
   // straight from hidden to covering the map, as the old boolean did, meant
   // every glance at the results lost the pin you were looking at.
-  const [drawerSnap, setDrawerSnap] = useState<DrawerSnap>('closed');
-  // Measured height of the sheet. Every resting offset is expressed in terms of
-  // it, and it is not a constant: the sheet grows as the result count and the
-  // first cards arrive. 0 means "not measured yet" — see the fallback below.
-  const [drawerHeight, setDrawerHeight] = useState(0);
+  const [drawerSnap, setDrawerSnap] = useState<MobileDrawerSnap>('closed');
   const sidebarOpen = drawerSnap !== 'closed';
-  // Tracks a body-initiated drag so a downward flick on the list can hand over
-  // to the sheet without the list scrolling at the same time.
-  const bodyDragRef = useRef<{ y: number; scrollTop: number; handedOver: boolean } | null>(null);
 
   const {
     filters,
@@ -165,7 +107,12 @@ const MapPage = () => {
     handleFilterChange,
     clearFilters,
     hasActiveFilters,
-  } = usePropertyFilters({ token, bounds, zoom: mapZoom });
+  } = usePropertyFilters({
+    bounds,
+    zoom: mapZoom,
+    cardsEnabled: !isMobile || sidebarOpen,
+    auxiliaryDataEnabled: !isMobile || sidebarOpen,
+  });
   const sidebarProperties = cardProperties;
   // Las cards y los puntos provienen de endpoints distintos. Al unirlos por id,
   // toda propiedad visible en el listado conserva un pin, incluso si su punto
@@ -250,6 +197,17 @@ const MapPage = () => {
     });
   }, []);
 
+  const handleCityFilterSelect = useCallback((center: { latitude: number; longitude: number }) => {
+    const map = mapRef.current;
+    if (!map) return;
+    map.flyTo({
+      center: [center.longitude, center.latitude],
+      zoom: 12,
+      duration: 700,
+    });
+    if (isMobile) setDrawerSnap('half');
+  }, [isMobile]);
+
   const handleLocate = useCallback(() => {
     trackEvent('map_locate_clicked', {
       location_blocked: geo.locationBlocked,
@@ -267,13 +225,11 @@ const MapPage = () => {
     (async () => {
       try {
         const { apiFetch } = await import('@/lib/api');
-        const res = await apiFetch(`/properties/${propertyId}/`, { skipAuth: !token });
+        const res = await apiFetch(`/properties/${propertyId}/`, { skipAuth: true });
         if (res.ok && !cancelled) {
           const property: Property = await res.json();
           setSelectedProperty(property);
           setIsModalOpen(true);
-          const hasSharedViewport = ['lat', 'lng', 'zoom'].every((key) => searchParams?.has(key));
-          if (!hasSharedViewport) setTimeout(() => flyToProperty(mapRef.current, property), 1000);
         }
       } catch (err) {
         console.error('Error abriendo la propiedad del enlace:', err);
@@ -283,7 +239,7 @@ const MapPage = () => {
     return () => {
       cancelled = true;
     };
-  }, [searchParams, token]);
+  }, [searchParams]);
 
   // Clic en el listado: solo mueve el mapa y resalta.
   const handleSidebarPropertyClick = (property: Property) => {
@@ -294,7 +250,6 @@ const MapPage = () => {
       property_type: property.property_type,
       status: property.status,
     });
-    flyToProperty(mapRef.current, property);
     setSelectedProperty(property);
     setIsModalOpen(false);
     // "Show me this one on the map" — get out of the map's way, but keep the
@@ -312,14 +267,13 @@ const MapPage = () => {
       property_type: property.property_type,
       status: property.status,
     });
-    flyToProperty(mapRef.current, property);
     setSelectedProperty(property);
     setIsModalOpen(true);
     if (isMobile) setDrawerSnap('closed');
   };
 
   // Clic en el polígono/marcador: mueve el mapa y abre el modal.
-  const handlePolygonClick = async (property: Property) => {
+  const handlePolygonClick = useCallback(async (property: Property) => {
     // Pins are small and the finger covers them; the tick is the only immediate
     // confirmation that the right one was hit, before the camera even moves.
     haptic('selection');
@@ -331,20 +285,19 @@ const MapPage = () => {
       status: property.status,
       zoom: mapRef.current?.getZoom?.() ?? null,
     });
-    flyToProperty(mapRef.current, property);
     setSelectedProperty(property);
     setIsModalOpen(true);
 
     try {
       const { apiFetch } = await import('@/lib/api');
-      const res = await apiFetch(`/properties/${property.id}/`, { skipAuth: !token });
+      const res = await apiFetch(`/properties/${property.id}/`, { skipAuth: true });
       if (res.ok) {
         setSelectedProperty(await res.json());
       }
     } catch (err) {
       console.error('Error cargando detalle de propiedad:', err);
     }
-  };
+  }, []);
 
   // "Ver en el mapa" desde el modal: recentra el mapa en la propiedad y, en
   // móvil (donde el panel tapa el mapa), oculta el panel para verlo.
@@ -380,120 +333,6 @@ const MapPage = () => {
     }
   };
 
-  // Cierre del drawer de filtros con Escape (teclado / lectores de pantalla).
-  // Escape steps down one detent rather than closing outright, matching what
-  // dragging down does.
-  useEffect(() => {
-    if (!sidebarOpen) return;
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') setDrawerSnap((current) => (current === 'full' ? 'half' : 'closed'));
-    };
-    document.addEventListener('keydown', onKeyDown);
-    return () => document.removeEventListener('keydown', onKeyDown);
-  }, [sidebarOpen]);
-
-  // Animate to the resting offset whenever the detent changes. Measured on each
-  // run rather than cached: the drawer's height follows its content, and the
-  // result count changes it.
-  // Runs on desktop too, and deliberately so: `useMediaQuery` reports `false`
-  // during hydration, so a desktop-only branch here would park the drawer at
-  // y=0 for one frame — on a phone that is the drawer flashing fully open over
-  // the map. The `.property-sidebar-drawer` rule below neutralises the
-  // transform at lg, which is the only place desktop needs to differ.
-  //
-  // Re-runs when the measured height changes, not only when the detent does: a
-  // sheet parked at `closed` is translated down by exactly its own height, so a
-  // height measured before the cards arrived left it hundreds of pixels short
-  // of off screen — on a phone that looked like the filter bar opening by
-  // itself over the map.
-  useEffect(() => {
-    // Until the first measurement lands, over-estimate: the sheet is capped at
-    // 85dvh, so the viewport height always parks it fully out of sight.
-    const height = drawerHeight || window.innerHeight;
-    const controls = animate(drawerY, snapOffsetsFor(height)[drawerSnap], {
-      type: 'spring',
-      stiffness: 420,
-      damping: 38,
-    });
-    return () => controls.stop();
-  }, [drawerSnap, drawerHeight, drawerY]);
-
-  // The sheet's height follows its content, so it has to be watched rather than
-  // read once. Also covers the `max-h-[85dvh]` cap changing when the device is
-  // rotated or the browser chrome collapses.
-  useEffect(() => {
-    const node = drawerRef.current;
-    if (!node) return;
-    const measure = () => setDrawerHeight((current) => (current === node.offsetHeight ? current : node.offsetHeight));
-    measure();
-    if (typeof ResizeObserver === 'undefined') return;
-    const observer = new ResizeObserver(measure);
-    observer.observe(node);
-    return () => observer.disconnect();
-  }, []);
-
-  const settleDrawer = useCallback(
-    (offset: number, velocity: number) => {
-      const height = drawerRef.current?.offsetHeight || window.innerHeight;
-      const target = resolveSnap(offset, velocity, height, drawerSnap);
-      if (target !== drawerSnap) haptic('impact');
-      setDrawerSnap(target);
-      // Same detent: the spring in the effect above will not re-run, so nudge
-      // the sheet back to rest here.
-      if (target === drawerSnap) {
-        animate(drawerY, snapOffsetsFor(height)[target], { type: 'spring', stiffness: 420, damping: 38 });
-      }
-    },
-    [drawerSnap, drawerY]
-  );
-
-  /**
-   * Hands a vertical drag on the list over to the sheet.
-   *
-   * A native sheet does not require you to find the little grabber: from the
-   * top of the list, pulling down moves the sheet and pushing up opens it to
-   * its full height, exactly like the property sheet. Anywhere else the list
-   * just scrolls. The handover happens on move, not on down, so the direction
-   * is known before the gesture is claimed.
-   */
-  const handleBodyPointerDown = (event: React.PointerEvent<HTMLDivElement>) => {
-    if (!isMobile || event.pointerType === 'mouse') return;
-    bodyDragRef.current = {
-      y: event.clientY,
-      scrollTop: drawerScrollRef.current?.scrollTop ?? 0,
-      handedOver: false,
-    };
-  };
-
-  const handleBodyPointerMove = (event: React.PointerEvent<HTMLDivElement>) => {
-    const start = bodyDragRef.current;
-    if (!start || start.handedOver) return;
-    // Only from the top of the list, and only once the gesture is unambiguous —
-    // otherwise a slow scroll would keep stealing itself.
-    if (start.scrollTop > 2) return;
-    const deltaY = event.clientY - start.y;
-
-    if (deltaY >= 12) {
-      start.handedOver = true;
-      drawerDragControls.start(event);
-      return;
-    }
-
-    // Upward from the top while the sheet is only half open: raise it instead
-    // of scrolling a list that is mostly below the fold. Snapped rather than
-    // dragged because the browser is scrolling this same gesture — a detent
-    // change survives the pointercancel that scroll can fire, a drag does not.
-    if (deltaY <= -12 && drawerSnap === 'half') {
-      start.handedOver = true;
-      setDrawerSnap('full');
-      haptic('impact');
-    }
-  };
-
-  const handleBodyPointerEnd = () => {
-    bodyDragRef.current = null;
-  };
-
   useEffect(() => {
     if (!mapRef.current) return;
     const first = window.setTimeout(() => mapRef.current?.invalidateSize?.(), 80);
@@ -504,10 +343,10 @@ const MapPage = () => {
     };
   }, [isModalOpen]);
 
-  // En móvil, el drawer y el detalle deben tener su propio desplazamiento sin
-  // transmitir el gesto a la página ni al mapa que queda debajo.
+  // The property detail still owns its scroll lock. The search/filter drawer
+  // keeps its lock beside the rest of its mobile behavior.
   useEffect(() => {
-    if ((!sidebarOpen && !isModalOpen) || !isMobile) return;
+    if (!isModalOpen || !isMobile) return;
 
     const previousOverflow = document.body.style.overflow;
     const previousOverscrollBehavior = document.body.style.overscrollBehavior;
@@ -518,152 +357,58 @@ const MapPage = () => {
       document.body.style.overflow = previousOverflow;
       document.body.style.overscrollBehavior = previousOverscrollBehavior;
     };
-  }, [isMobile, isModalOpen, sidebarOpen]);
+  }, [isMobile, isModalOpen]);
+
+  const renderPropertySidebar = (onClose?: () => void) => (
+    <PropertySidebar
+      filters={filters}
+      owners={owners}
+      locations={locations}
+      hasActiveFilters={hasActiveFilters}
+      onFilterChange={handleFilterChange}
+      onClearFilters={clearFilters}
+      onCitySelect={handleCityFilterSelect}
+      onClose={onClose}
+      visibleProperties={sidebarProperties}
+      cityGroups={mapCityGroups}
+      mapContext={mapContext}
+      selectedProperty={selectedProperty}
+      onPropertyClick={handleSidebarPropertyClick}
+      onPropertyOpen={handleSidebarPropertyOpen}
+      loading={loading}
+      error={error}
+      onRetry={retry}
+      totalCount={totalCount}
+      userLocation={geo.userLocation}
+      onZoomOut={handleZoomOut}
+      onResetMapView={handleResetMapView}
+      onCityGroupClick={handleCityGroupClick}
+      hasMore={cardsHasMore}
+      loadingMore={cardsLoadingMore}
+      onLoadMore={loadMoreCards}
+    />
+  );
 
   return (
     // Subtracts the mobile tab bar as well as the header, so the map fills the
     // gap between them exactly instead of pushing the page into a scroll.
     <div className="relative h-[calc(100dvh-var(--app-header-height)-var(--mobile-tabbar-height)-env(safe-area-inset-bottom))] overflow-hidden lg:h-[calc(100dvh-var(--app-header-height))] lg:flex">
-      {/* Botón para abrir filtros y propiedades en móvil (con conteo explícito) */}
-      {!sidebarOpen && !selectedProperty && !isModalOpen && (
-        <Button
-          // Opens to `half`, not `full`: the point of tapping the count is to
-          // see the results without losing the map they came from.
-          onClick={() => {
-            setDrawerSnap('half');
-            haptic('impact');
-          }}
-          className="fixed bottom-[calc(var(--mobile-tabbar-height)+env(safe-area-inset-bottom)+0.75rem)] left-1/2 z-nav h-12 -translate-x-1/2 gap-2 rounded-full px-5 shadow-cardHover lg:bottom-4 lg:hidden [&_svg]:size-5"
-          aria-label="Abrir filtros y propiedades"
+      {isMobile ? (
+        <MobilePropertyDrawer
+          snap={drawerSnap}
+          onSnapChange={setDrawerSnap}
+          resultCount={totalCount ?? sidebarProperties.length}
+          loading={loading}
+          hidden={Boolean(selectedProperty || isModalOpen)}
+          lockScroll={!isModalOpen}
         >
-          <SlidersHorizontal strokeWidth={2} />
-          <span className="font-semibold tabular-nums">
-            {loading
-              ? 'Cargando…'
-              : `${totalCount ?? sidebarProperties.length} ${(totalCount ?? sidebarProperties.length) === 1 ? 'propiedad' : 'propiedades'}`}
-          </span>
-        </Button>
+          {renderPropertySidebar(() => setDrawerSnap('closed'))}
+        </MobilePropertyDrawer>
+      ) : (
+        <aside className="property-sidebar-scroll h-full w-96 flex-shrink-0 overflow-y-auto overscroll-contain border-r border-line bg-white">
+          {renderPropertySidebar()}
+        </aside>
       )}
-
-      {/* Fondo oscuro en móvil: solo cuando el drawer tapa el mapa. En `half`
-          el mapa sigue siendo el contexto activo y oscurecerlo lo contradice. */}
-      {drawerSnap === 'full' && (
-        <div
-          className="fixed inset-x-0 bottom-0 top-[var(--app-header-height)] z-backdrop touch-none bg-black/50 lg:hidden"
-          aria-hidden
-          onClick={() => setDrawerSnap('half')}
-        />
-      )}
-
-      {/* Panel lateral en desktop; drawer inferior en móvil (más natural sobre el mapa) */}
-      <motion.div
-        ref={drawerRef}
-        style={{ y: drawerY }}
-        drag="y"
-        dragControls={drawerDragControls}
-        dragListener={false}
-        // `top: 0` pins the fully open position; the bottom bound is generous
-        // so a closing flick is not fought by the constraint on the way out.
-        dragConstraints={{ top: 0, bottom: DRAWER_OFFSCREEN }}
-        dragElastic={0.04}
-        onDragStart={() => {
-          drawerDraggingRef.current = true;
-        }}
-        onDragEnd={(_, info) => {
-          window.setTimeout(() => {
-            drawerDraggingRef.current = false;
-          }, 0);
-          bodyDragRef.current = null;
-          settleDrawer(drawerY.get(), info.velocity.y);
-        }}
-        className={`
-        property-sidebar-drawer
-        fixed lg:relative z-panel lg:z-0
-        flex flex-col overflow-hidden
-        bg-white text-textPrimary
-        inset-x-0 bottom-0 max-h-[85dvh] rounded-t-2xl shadow-cardHover
-        lg:inset-auto lg:left-0 lg:h-full lg:max-h-none lg:w-96 lg:flex-shrink-0
-        lg:rounded-none lg:border-r lg:border-line lg:shadow-none
-      `}
-      >
-        {/* Asa de arrastre (solo móvil). Tocarla alterna entre las dos alturas
-            abiertas, que es lo que un grabber hace en iOS; para cerrar están el
-            gesto hacia abajo y la X del panel. */}
-        <button
-          type="button"
-          className="flex w-full flex-none touch-none cursor-grab justify-center bg-white py-3 active:cursor-grabbing lg:hidden"
-          onPointerDown={(event) => drawerDragControls.start(event)}
-          onClick={() => {
-            if (drawerDraggingRef.current) return;
-            setDrawerSnap((current) => (current === 'full' ? 'half' : 'full'));
-            haptic('impact');
-          }}
-          aria-label={drawerSnap === 'full' ? 'Reducir el panel' : 'Ampliar el panel'}
-          aria-expanded={drawerSnap === 'full'}
-        >
-          <span className="h-1.5 w-10 rounded-full bg-line" aria-hidden />
-        </button>
-
-        {/* The scroller is deliberately *inside* the draggable element rather
-            than being it. `drag="y"` makes Framer write `touch-action: pan-x`
-            onto the element it is applied to, which forbids vertical touch
-            panning there and in everything below it — with the list on the
-            draggable node, the sheet could not be scrolled with a finger at
-            all, and neither could the expanded filter panel. */}
-        <div
-          ref={drawerScrollRef}
-          className="property-sidebar-scroll min-h-0 flex-1 overflow-y-auto overscroll-contain"
-          onPointerDown={handleBodyPointerDown}
-          onPointerMove={handleBodyPointerMove}
-          onPointerUp={handleBodyPointerEnd}
-          onPointerCancel={handleBodyPointerEnd}
-        >
-          <PropertySidebar
-            filters={filters}
-            owners={owners}
-            locations={locations}
-            hasActiveFilters={hasActiveFilters}
-            onFilterChange={handleFilterChange}
-            onClearFilters={clearFilters}
-            onClose={() => setDrawerSnap('closed')}
-            visibleProperties={sidebarProperties}
-            cityGroups={mapCityGroups}
-            mapContext={mapContext}
-            selectedProperty={selectedProperty}
-            onPropertyClick={handleSidebarPropertyClick}
-            onPropertyOpen={handleSidebarPropertyOpen}
-            loading={loading}
-            error={error}
-            onRetry={retry}
-            totalCount={totalCount}
-            userLocation={geo.userLocation}
-            onZoomOut={handleZoomOut}
-            onResetMapView={handleResetMapView}
-            onCityGroupClick={handleCityGroupClick}
-            hasMore={cardsHasMore}
-            loadingMore={cardsLoadingMore}
-            onLoadMore={loadMoreCards}
-          />
-        </div>
-      </motion.div>
-
-      <style>{`
-        /* Framer writes an inline touch-action of pan-x here because the sheet
-           is dragged on the y axis. Touch-action intersects down the tree, so
-           that one declaration also blocks vertical scrolling inside the list
-           and inside the expanded filters. The sheet is dragged from its handle
-           and from the pointer handover below, neither of which needs the
-           browser gesture disabled. */
-        .property-sidebar-drawer {
-          touch-action: auto !important;
-        }
-
-        @media (min-width: 1024px) {
-          .property-sidebar-drawer {
-            transform: none !important;
-          }
-        }
-      `}</style>
 
       {/* Mapa: en desktop ocupa el espacio restante entre listado y ficha. */}
       <div

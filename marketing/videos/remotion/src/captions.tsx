@@ -31,8 +31,8 @@ export const Captions: React.FC<{captions: Caption[]; frame: number; accent: str
   const {fontSize, lines} = fit(current.text, {
     maxWidth: MAX_WIDTH,
     maxLines: 2,
-    max: 76,
-    min: 44,
+    max: 54,
+    min: 34,
     letterSpacing: '-0.02em',
   });
 
@@ -47,18 +47,15 @@ export const Captions: React.FC<{captions: Caption[]; frame: number; accent: str
   return (
     <div
       style={{
-        position: 'absolute',
-        left: captionBox.left,
         width: MAX_WIDTH,
-        bottom: captionBox.bottom,
+        minHeight: fontSize * 1.85,
         fontFamily: font,
         fontWeight: 800,
         fontSize,
-        lineHeight: 1.14,
+        lineHeight: 1.1,
         letterSpacing: '-0.02em',
         opacity: appear,
         transform: `translateY(${rise}px)`,
-        textShadow: '0 6px 34px rgba(8,9,21,.92), 0 2px 8px rgba(8,9,21,.8)',
       }}
     >
       {lines.map((line, lineNumber) => (

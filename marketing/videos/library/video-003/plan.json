@@ -1,0 +1,77 @@
+{
+  "title": "Publica tu propiedad por $0",
+  "audience": "propietario",
+  "funnel_stage": "conversión",
+  "objective": "Que un propietario en Ecuador inicie el formulario de publicación en geopropiedadesecuador.com después de entender los pasos concretos para anunciar una propiedad en venta o alquiler.",
+  "conversion_event": "Inicio del formulario de publicación (visita a la página de publicar desde el perfil o el enlace del video), medido como sesión que llega al primer paso del formulario.",
+  "pillar": "Publicar sin fricción",
+  "series": "En 15 segundos",
+  "concept": "Mini tutorial para propietarios que quieren vender o alquilar. La pieza abre con el costo verificable de $0 y recorre el formulario real en orden: tipo y operación con autoguardado, ubicación con un punto o la Forma del terreno, precio, fotos y elección de portada. Termina con un solo CTA.",
+  "promise": "Puedes anunciar una propiedad en venta o alquiler por $0 y sin comisión siguiendo un formulario guiado.",
+  "cta": "Publica tu propiedad gratis",
+  "hypothesis": "Si el video llama primero a quien quiere vender o alquilar y después demuestra cada paso del formulario durante 24 segundos, más propietarios iniciarán la publicación que con una pieza de oferta directa sin recorrido. Variable aislada para una variante futura: mini tutorial frente a demostración de 18 segundos; se mantienen promesa, CTA y firma visual.",
+  "cover_text": "Publica por $0, sin comisión",
+  "caption": "¿Vas a vender o alquilar una propiedad? Anúnciala por $0 y sin comisión en Geo Propiedades Ecuador. Elige el tipo y la operación, marca la ubicación con un punto o la Forma del terreno, agrega el precio, sube tus fotos y elige la portada. Empieza en geopropiedadesecuador.com #BienesRaicesEcuador #PropiedadesEcuador",
+  "narration": "¿Vas a vender o alquilar una propiedad? Publícala por cero dólares. Primero elige el tipo de propiedad y si está en venta o alquiler. Tu avance se guarda mientras completas cada paso. Después marca la ubicación en el mapa o dibuja la Forma del terreno. Agrega el precio, sube tus fotos y elige cuál aparece primero. Completa el formulario y publica gratis, sin comisión.",
+  "music": "Instrumental suave y optimista, sin voces. Teclado eléctrico con notas cortas, bajo redondo y percusión ligera, cerca de cien pulsos por minuto. Volumen bajo y constante bajo la locución, sin subidas bruscas, cierre limpio en la tarjeta de marca. Solo pista gratuita con licencia comercial archivada.",
+  "verification_notes": [
+    "Gratis y sin comisión: respaldado por product-context.md (publicación gratuita, sin comisión y sin límite de propiedades, según frontend/lib/help-faqs.ts). Antes de renderizar hay que releer help-faqs.ts y la página de ayuda publicada; si el texto cambió, cambia la voz de la escena 5 y la portada.",
+    "Forma del terreno: es el término exacto de interfaz. La voz dice 'dibujas la Forma del terreno' y no promete exactitud legal ni topográfica.",
+    "Quité 'vista previa' del guion aunque el brief la pedía: no pude comprobar en add-property/page.tsx que exista ese estado. La escena 4 dice 'tu ficha queda lista', que describe el resultado de publicar y no una pantalla concreta. Si el formulario sí tiene previsualización, se repone la frase y se vuelve a renderizar el borrador.",
+    "No se menciona el número de fotos para no depender de un límite que puede cambiar; product-context registra hasta diez fotos reordenables, así que 'tus fotos' es conservador.",
+    "No se prometen visitas, contactos, plazos de venta, demanda, plusvalía ni publicación automática en redes. Tampoco se menciona el kit social: esta pieza tiene un solo CTA.",
+    "Las cuatro animaciones propias de esta pieza están implementadas y registradas en Python y Remotion: costo cero, formulario, ubicación y precio con fotos. Se derivan de los componentes reales del alta y conservan Forma del terreno como término exacto de interfaz.",
+    "Todas las animaciones son ilustraciones dibujadas del producto. Ni la voz ni los rótulos afirman que se esté viendo una grabación de pantalla.",
+    "El mapa es MapLibre; ninguna animación ni texto lo nombra de otra forma.",
+    "No aparecen propiedades reales identificables, datos de contacto, contadores de visitas, paneles administrativos ni credenciales. Los precios y direcciones de la animación son de muestra.",
+    "Voz del borrador: Kokoro local. No ejecutar 'video render --final' hasta que una persona apruebe el MP4 explícitamente.",
+    "Portada con acento teal por corresponder al video 003 en la rotación verde, violeta, teal, lavanda. Marca superior desde y=205, dominio a x=24, tile a 84 px del borde derecho, y al menos 48 px libres entre el título y la ilustración."
+  ],
+  "scenes": [
+    {
+      "purpose": "gancho",
+      "duration": 4.0,
+      "voice": "¿Vas a vender o alquilar una propiedad? Publícala por cero dólares.",
+      "on_screen_text": "Publica por $0",
+      "asset": "sim:publicar-gratis",
+      "visual_direction": "Arranca en movimiento: la columna de pasos de publicación se dibuja de arriba abajo sobre navy y el primer paso se marca en verde. A la derecha, una etiqueta de precio del anuncio con el valor tachado y un cero grande en teal. El producto se reconoce en el primer cuadro. Rótulo en una sola fila en la banda inferior, dentro de la zona segura; marca superior con dominio y tile desde y=205.",
+      "transition": "cut"
+    },
+    {
+      "purpose": "problema",
+      "duration": 7.0,
+      "voice": "Primero elige el tipo de propiedad y si está en venta o alquiler. Tu avance se guarda mientras completas cada paso.",
+      "on_screen_text": "Formulario guiado",
+      "asset": "sim:formulario",
+      "visual_direction": "Entra la marca apartando el desorden: los papeles y trámites acumulados salen de cuadro y aparece el formulario del portal con su cabecera, el indicador de pasos y los primeros campos reales del alta, tipo de propiedad y operación. Jerarquía y etiquetas siguen las del formulario de publicación, simplificadas solo lo necesario para leerse en vertical. Cursor bajando por los campos, sin saltos.",
+      "transition": "cut"
+    },
+    {
+      "purpose": "prueba",
+      "duration": 5.0,
+      "voice": "Después marca la ubicación en el mapa o dibuja la Forma del terreno.",
+      "on_screen_text": "Forma del terreno",
+      "asset": "sim:ubicacion-publicacion",
+      "visual_direction": "El mapa ocupa la franja superior, limpio y sin texto encima. Un toque deja caer el pin sobre una manzana y el pin se asienta con rebote corto. Después el control cambia al segundo modo y una mano traza cuatro vértices que cierran un polígono en verde translúcido, etiquetado Forma del terreno igual que en la interfaz. Movimiento continuo, sin congelar la imagen. Todo el texto en la banda inferior.",
+      "transition": "cut"
+    },
+    {
+      "purpose": "resultado",
+      "duration": 5.0,
+      "voice": "Agrega el precio, sube tus fotos y elige cuál aparece primero.",
+      "on_screen_text": "Precio y fotos",
+      "asset": "sim:fotos-publicacion",
+      "visual_direction": "El campo de precio se completa dígito a dígito con separador de miles y etiqueta de moneda. Debajo, miniaturas entrando en la cuadrícula y una arrastrándose a la primera posición, como el reordenamiento del cargador de imágenes. Al terminar, las piezas se acomodan y forman la ficha con foto, precio y características, en el mismo orden que la tarjeta del portal.",
+      "transition": "cut"
+    },
+    {
+      "purpose": "cta",
+      "duration": 3.0,
+      "voice": "Completa el formulario y publica gratis, sin comisión.",
+      "on_screen_text": "Publica gratis",
+      "asset": null,
+      "visual_direction": "Tarjeta de marca común de la serie, sin cambios: tile violeta, Geo Propiedades Ecuador, el dominio geopropiedadesecuador.com, el CTA Publica tu propiedad gratis y la firma de Aents. Fondo navy con acento teal en el CTA para acompañar la portada. Un solo CTA en toda la pieza.",
+      "transition": "fade"
+    }
+  ]
+}

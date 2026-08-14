@@ -1,0 +1,6 @@
+{
+  "brief": "Video 4 para agentes e inmobiliarias (audience profesional, etapa consideración). Serie 'Busca así, no así' aplicada al trabajo del agente. Gancho por error común: el agente manda capturas de fotos por WhatsApp y el cliente sigue preguntando dónde queda. Cuerpo: en Geo Propiedades cada propiedad de su inventario tiene una ficha con la ubicación real en el mapa y un enlace corto que puede enviar, y publicar su inventario es gratis y sin comisión. No usar el argumento de «sin límite de publicaciones»: queda fuera por decisión humana. Resultado: en vez de mandar diez fotos sueltas manda una ficha que responde dónde queda, cuánto cuesta y cómo se ve. CTA: 'Prueba el flujo con una propiedad'. No prometer volumen de contactos, rapidez de venta, exclusividad ni publicación automática en redes. Máximo cinco escenas, el producto en cuadro antes del segundo tres. Propón las animaciones que cada escena necesite: si hace falta una nueva para el inventario del agente o para el enlace que se envía al cliente, decláralas como sim: nuevas con una descripción precisa, y reutiliza sim:ficha y sim:mapa donde ilustren literalmente la frase.",
+  "automatic_selection": false,
+  "target_duration_seconds": 24,
+  "created_at": "2026-08-13T14:19:25.584529-05:00"
+}

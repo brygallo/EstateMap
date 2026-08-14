@@ -36,6 +36,32 @@ Resume el contrato completo; lo que sigue son solo los puntos que más se incump
 - En la interfaz se dice «Forma del terreno». Los contadores de visitas nunca se
   muestran en público.
 
+## Skills obligatorias para copy comercial
+
+- Usa `$copywriting` al crear o reescribir copy de páginas públicas: home,
+  landing pages, páginas de funcionalidades, precios, producto, titulares,
+  propuestas de valor y CTA. Antes de redactar, verifica público, objetivo,
+  fuente de tráfico y una única acción principal.
+- Usa `$ad-copy` para anuncios pagados en Meta, captions publicitarios, ganchos,
+  variantes y guiones de video/UGC destinados a publicidad. Clasifica primero
+  tráfico, nivel de conciencia, estrategia y formato; entrega los campos y
+  límites propios del placement.
+- Si un anuncio conduce a una página nueva o reescrita, usa primero
+  `$copywriting` para fijar la promesa y el destino, y después `$ad-copy` para
+  mantener concordancia entre anuncio y landing.
+- Estas skills mejoran estructura y persuasión; no son fuente de hechos. Toda
+  cifra, precio, ahorro, demanda, disponibilidad, capacidad, testimonio,
+  autoridad, urgencia o prueba social debe estar respaldaldada por `specs/`, el
+  código o una fuente aprobada. Si no existe evidencia, se omite.
+- Una capacidad del producto solo puede ofrecerse si existe en el código y una
+  spec `implemented` o `partial` describe honestamente su alcance. Una propuesta,
+  experimento, mockup o intención nunca se presenta ni se insinúa como disponible.
+- Usar una skill no autoriza publicar, gastar en pauta ni cambiar producto. La
+  aprobación y la publicación siguen siendo pasos humanos explícitos.
+- En video, el brief elige normalmente una duración de 18–45 s: 18 s para una
+  demostración simple, 20–30 s para varios pasos o contexto y 31–45 s para un
+  tutorial específico. No se agrega relleno para alcanzar una duración.
+
 ## Comandos
 
 ```bash

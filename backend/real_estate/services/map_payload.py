@@ -17,6 +17,8 @@ POINT_FIELDS = (
     'province',
 )
 
+MAX_CLUSTER_ZOOM = 9.2
+
 ECUADOR_CENTER = {'lat': -1.5, 'lng': -78.5}
 
 PROVINCE_CENTERS = {
@@ -129,9 +131,9 @@ CITY_DISPLAY_NAMES = {
 }
 
 
-def build_map_payload(queryset, zoom, max_items, viewport=None):
+def build_map_payload(queryset, zoom, max_items):
     zoom = 7 if zoom is None else float(zoom)
-    cluster_zoom = zoom < 11.5
+    cluster_zoom = zoom <= MAX_CLUSTER_ZOOM
     max_items = max(1, min(int(max_items), 1600 if cluster_zoom else 2000))
 
     rows = list(queryset.values(*POINT_FIELDS))
@@ -155,16 +157,6 @@ def build_map_payload(queryset, zoom, max_items, viewport=None):
     grid_size = _cluster_grid_size_for_zoom(zoom)
     buckets = _build_buckets(valid_rows, group_level, grid_size)
     clusters, representative_points = _build_items_from_buckets(buckets, zoom, group_level)
-
-    # La grilla es una vista local: sólo mandamos lo cercano al viewport para
-    # mantener el payload liviano. Las posiciones se calcularon sobre TODO el
-    # dataset filtrado, así que nunca "caminan" al panear; el viewport sólo
-    # decide qué agrupadores (ya estables) se envían.
-    if group_level == 'grid' and viewport:
-        clusters = [item for item in clusters if _within_viewport(item, viewport)]
-        representative_points = [
-            item for item in representative_points if _within_viewport(item, viewport)
-        ]
 
     clusters.sort(key=lambda item: item['count'], reverse=True)
     representative_points.sort(key=lambda item: float(item.get('price') or 0), reverse=True)
@@ -250,9 +242,7 @@ def _group_level_for_zoom(zoom):
         return 'country'
     if zoom <= 6.8:
         return 'province'
-    if zoom <= 9.2:
-        return 'city'
-    return 'grid'
+    return 'city'
 
 
 def _cluster_grid_size_for_zoom(zoom):
@@ -291,11 +281,12 @@ def _bucket_key_and_label(row, group_level, grid_size):
 
     if group_level == 'country':
         return 'country:ecuador', 'Ecuador'
-    if group_level == 'province' and province and province_key in PROVINCE_CENTERS:
+    if group_level == 'province' and province:
         return f"province:{province_key}", province
-    if group_level == 'city' and city and _city_anchor(province_key, city_key):
-        return f"city:{city_key}", city
-    return f"grid:{math.floor(lat / grid_size)}:{math.floor(lng / grid_size)}", None
+    if group_level == 'city':
+        fallback_key = f"{math.floor(lat / grid_size)}:{math.floor(lng / grid_size)}"
+        return f"city:{province_key}:{city_key or fallback_key}", city or None
+    return 'country:ecuador', 'Ecuador'
 
 
 def _city_anchor(province_key, city_key):
@@ -460,6 +451,8 @@ def _cluster_payload(key, bucket, zoom):
         'longitude': center['lng'],
         'focus_latitude': focus['lat'],
         'focus_longitude': focus['lng'],
+        'anchor_latitude': (bucket.get('anchor') or center)['lat'],
+        'anchor_longitude': (bucket.get('anchor') or center)['lng'],
         'expansion_zoom': _expansion_zoom_for_bounds(bounds),
         'bounds': bounds,
         'suspicious_count': bucket.get('suspicious_count', 0),
@@ -492,31 +485,6 @@ def _expansion_zoom_for_bounds(bounds):
         math.log2(360.0 * height / (512.0 * lat_span)),
     )
     return round(min(max(zoom, MIN_EXPANSION_ZOOM), MAX_EXPANSION_ZOOM), 2)
-
-
-def _within_viewport(item, viewport, pad_ratio=0.6):
-    west, south, east, north = viewport
-    lat_pad = max((north - south) * pad_ratio, 0.02)
-    lng_pad = max((east - west) * pad_ratio, 0.02)
-
-    # A group is relevant when its extent overlaps the viewport, not when its
-    # marker happens to fall inside it: a cluster whose properties cross the
-    # edge of the screen was being dropped even though the user can see them.
-    item_bounds = item.get('bounds')
-    if item_bounds:
-        return (
-            float(item_bounds['south']) <= (north + lat_pad)
-            and float(item_bounds['north']) >= (south - lat_pad)
-            and float(item_bounds['west']) <= (east + lng_pad)
-            and float(item_bounds['east']) >= (west - lng_pad)
-        )
-
-    lat = float(item['latitude'])
-    lng = float(item['longitude'])
-    return (
-        (south - lat_pad) <= lat <= (north + lat_pad)
-        and (west - lng_pad) <= lng <= (east + lng_pad)
-    )
 
 
 def _distance_km(lat_a, lng_a, lat_b, lng_b):
@@ -580,18 +548,13 @@ def _payload_context(group_level, total_count):
             'subtitle': 'Toca una ciudad para abrir sus propiedades',
             'next_level': 'points',
         },
-        'grid': {
-            'title': 'Zonas',
-            'subtitle': 'Agrupadores por zonas visibles',
-            'next_level': 'points',
-        },
         'points': {
             'title': 'Propiedades',
             'subtitle': 'Puntos individuales en la vista actual',
             'next_level': None,
         },
     }
-    context = labels.get(group_level, labels['grid']).copy()
+    context = labels.get(group_level, labels['points']).copy()
     context['group_level'] = group_level
     context['total_count'] = total_count
     return context

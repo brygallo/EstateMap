@@ -190,10 +190,10 @@ export default async function CityStatsPage({ params }: CityStatsPageProps) {
         <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLd(structuredData) }} />
       )}
       <section className="border-b border-line bg-gradient-to-br from-primary via-primaryHover to-[var(--navy)] text-white">
-        <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8 lg:py-24">
+        <div className="mx-auto max-w-7xl px-4 pb-12 pt-6 sm:px-6 sm:pb-14 sm:pt-8 lg:px-8 lg:pb-14 lg:pt-10">
           {/* Visible counterpart of the BreadcrumbList JSON-LD; light text for the dark hero. */}
-          <nav aria-label="Migas de pan" className="mb-6">
-            <ol className="flex flex-wrap items-center gap-1.5 text-sm text-white/70">
+          <nav aria-label="Migas de pan" className="mb-3">
+            <ol className="flex flex-wrap items-center gap-1.5 text-xs text-white/70 sm:text-sm">
               <li>
                 <Link href="/" className="transition-colors hover:text-white">
                   Inicio
@@ -212,27 +212,27 @@ export default async function CityStatsPage({ params }: CityStatsPageProps) {
             </ol>
           </nav>
           <div className="max-w-3xl">
-            <span className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-sm font-semibold ring-1 ring-white/20">
+            <span className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-xs font-semibold ring-1 ring-white/20">
               <TrendingUp className="h-4 w-4" /> Datos del mercado de {cityName}
             </span>
-            <h1 className="mt-5 text-4xl font-black tracking-tight sm:text-5xl">
+            <h1 className="mt-2 text-2xl font-black tracking-tight sm:mt-3 sm:text-3xl lg:text-4xl">
               ¿Cuánto cuesta el metro cuadrado en {cityName}?
             </h1>
-            <p className="mt-5 max-w-2xl text-lg leading-8 text-white/80">
+            <p className="mt-2 max-w-2xl text-sm leading-6 text-white/80 sm:mt-3 sm:text-base sm:leading-7">
               {hasData
                 ? `Precio promedio de ${money(stats!.overall.avg_price_m2)}/m² sobre ${integer(stats!.overall.count)} propiedades en venta activas. Actualizado el ${updatedLabel}.`
                 : `Aún no hay suficiente inventario comparable en ${cityName} para calcular precios confiables.`}
             </p>
             <Link
               href={`/propiedades/${ciudad}`}
-              className="mt-7 inline-flex items-center gap-2 rounded-full bg-white px-5 py-3 font-semibold text-primary shadow-cardHover"
+              className="mt-4 inline-flex min-h-11 items-center gap-2 rounded-full bg-white px-4 py-2.5 text-sm font-semibold text-primary shadow-cardHover sm:mt-5"
             >
               Ver propiedades en {cityName} <ArrowRight className="h-4 w-4" />
             </Link>
           </div>
         </div>
       </section>
-      <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
+      <div className="relative z-10 mx-auto -mt-6 max-w-7xl px-4 pb-12 sm:px-6 lg:px-8">
         {!hasData ? (
           <div className="rounded-card border border-line bg-white p-8 text-center shadow-card">
             <p className="text-textPrimary">

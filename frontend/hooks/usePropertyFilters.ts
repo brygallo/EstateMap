@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { apiFetch } from '@/lib/api';
+import { readMapNetworkProfile } from '@/lib/network-profile';
 import type {
   MapBounds,
   MapCityGroup,
@@ -145,7 +146,7 @@ function filtersKey(f: PropertyFilters): string {
 }
 
 function mapRequestKey(f: PropertyFilters, zoom: number): string {
-  const zoomBucket = zoom < 11.5 ? Math.floor(zoom * 2) / 2 : 'points';
+  const zoomBucket = zoom <= 9.2 ? Math.floor(zoom * 2) / 2 : 'points';
   return `${filtersKey(f)}|zoom:${zoomBucket}`;
 }
 
@@ -191,9 +192,10 @@ function getOrCreateCache(
 }
 
 interface UsePropertyFiltersArgs {
-  token: string | null;
   bounds: MapBounds | null;
   zoom?: number;
+  cardsEnabled?: boolean;
+  auxiliaryDataEnabled?: boolean;
 }
 
 /**
@@ -201,7 +203,12 @@ interface UsePropertyFiltersArgs {
  * con la URL y trae del backend (con debounce) solo las propiedades que caen en
  * el bbox visible y cumplen los filtros. Así no se descarga todo el catálogo.
  */
-export function usePropertyFilters({ token, bounds, zoom = 7 }: UsePropertyFiltersArgs) {
+export function usePropertyFilters({
+  bounds,
+  zoom = 7,
+  cardsEnabled = true,
+  auxiliaryDataEnabled = true,
+}: UsePropertyFiltersArgs) {
   const searchParams = useSearchParams();
   const router = useRouter();
 
@@ -220,6 +227,7 @@ export function usePropertyFilters({ token, bounds, zoom = 7 }: UsePropertyFilte
   const [cardsPage, setCardsPage] = useState(1);
   const [cardsHasMore, setCardsHasMore] = useState(false);
   const [cardsPageSize, setCardsPageSize] = useState(20);
+  const [networkProfile] = useState(readMapNetworkProfile);
   // true cuando la última carga de propiedades del área falló (red / respuesta
   // no OK). Permite distinguir "0 resultados" real de un error, y ofrecer
   // reintentar en lugar de mostrar una lista vacía silenciosa.
@@ -243,11 +251,13 @@ export function usePropertyFilters({ token, bounds, zoom = 7 }: UsePropertyFilte
 
   useEffect(() => {
     const mobileQuery = window.matchMedia('(max-width: 767px), (pointer: coarse)');
-    const updatePageSize = () => setCardsPageSize(mobileQuery.matches ? 8 : 20);
+    const updatePageSize = () => setCardsPageSize(
+      networkProfile.constrained ? networkProfile.cardPageSize : mobileQuery.matches ? 8 : 20
+    );
     updatePageSize();
     mobileQuery.addEventListener('change', updatePageSize);
     return () => mobileQuery.removeEventListener('change', updatePageSize);
-  }, []);
+  }, [networkProfile]);
 
   useEffect(() => {
     const next = filtersFromParams(searchParams);
@@ -270,10 +280,11 @@ export function usePropertyFilters({ token, bounds, zoom = 7 }: UsePropertyFilte
 
   // Lista de propietarios para el filtro por usuario (independiente del bbox).
   useEffect(() => {
+    if (!auxiliaryDataEnabled) return;
     let cancelled = false;
     (async () => {
       try {
-        const res = await apiFetch('/properties/owners/', { skipAuth: !token });
+        const res = await apiFetch('/properties/owners/', { skipAuth: true });
         if (res.ok && !cancelled) {
           setOwners(await res.json());
         }
@@ -284,14 +295,15 @@ export function usePropertyFilters({ token, bounds, zoom = 7 }: UsePropertyFilte
     return () => {
       cancelled = true;
     };
-  }, [token]);
+  }, [auxiliaryDataEnabled]);
 
   // Provincias/ciudades disponibles para el filtro por ubicación (todo el catálogo).
   useEffect(() => {
+    if (!auxiliaryDataEnabled) return;
     let cancelled = false;
     (async () => {
       try {
-        const res = await apiFetch('/properties/locations/', { skipAuth: !token });
+        const res = await apiFetch('/properties/locations/', { skipAuth: true });
         if (res.ok && !cancelled) {
           setLocations(await res.json());
         }
@@ -302,7 +314,7 @@ export function usePropertyFilters({ token, bounds, zoom = 7 }: UsePropertyFilte
     return () => {
       cancelled = true;
     };
-  }, [token]);
+  }, [auxiliaryDataEnabled]);
 
   // Count every matching row through the aggregate endpoint. The public list
   // endpoint is intentionally capped and must never be used as a catalog total.
@@ -313,7 +325,7 @@ export function usePropertyFilters({ token, bounds, zoom = 7 }: UsePropertyFilte
       try {
         const params = filtersToApiParams(filters, null);
         const res = await apiFetch(`/properties/summary/?${params.toString()}`, {
-          skipAuth: !token,
+          skipAuth: true,
           signal: controller.signal,
         });
         if (res.ok && !cancelled) {
@@ -325,13 +337,13 @@ export function usePropertyFilters({ token, bounds, zoom = 7 }: UsePropertyFilte
           console.error('Error fetching total count:', err);
         }
       }
-    }, 300);
+    }, networkProfile.constrained ? 1_800 : 300);
     return () => {
       cancelled = true;
       controller.abort();
       clearTimeout(timer);
     };
-  }, [filters, token]);
+  }, [filters, networkProfile.constrained]);
 
   // Traer puntos ultralivianos del mapa cuando cambian filtros o bounds.
   useEffect(() => {
@@ -386,10 +398,12 @@ export function usePropertyFilters({ token, bounds, zoom = 7 }: UsePropertyFilte
       try {
         const params = filtersToApiParams(filters, bounds);
         params.set('zoom', String(zoom));
-        params.set('limit', zoom < 11.5 ? '900' : '1400');
+        params.set('limit', String(
+          zoom <= 9.2 ? Math.min(900, networkProfile.mapPointLimit) : networkProfile.mapPointLimit
+        ));
         const qs = params.toString();
         const res = await apiFetch(`/properties/map_points/?${qs}`, {
-          skipAuth: !token,
+          skipAuth: true,
           signal: controller.signal,
         });
         if (res.ok) {
@@ -422,7 +436,7 @@ export function usePropertyFilters({ token, bounds, zoom = 7 }: UsePropertyFilte
     return () => {
       if (debounceRef.current) clearTimeout(debounceRef.current);
     };
-  }, [filters, bounds, token, reloadKey, zoom]);
+  }, [filters, bounds, reloadKey, zoom, networkProfile]);
 
   const fetchCardsPage = useCallback(
     async (page: number, mode: 'replace' | 'append' = 'replace') => {
@@ -445,14 +459,14 @@ export function usePropertyFilters({ token, bounds, zoom = 7 }: UsePropertyFilte
         const params = filtersToApiParams(filters, null, {
           page,
           pageSize: cardsPageSize,
-          includeImages: true,
+          includeImages: networkProfile.includeCardImages,
           distanceOrigin: {
             lat: (bounds.south + bounds.north) / 2,
             lng: (bounds.west + bounds.east) / 2,
           },
         });
         const res = await apiFetch(`/properties/?${params.toString()}`, {
-          skipAuth: !token,
+          skipAuth: true,
           signal: controller.signal,
         });
         if (!res.ok) {
@@ -482,15 +496,19 @@ export function usePropertyFilters({ token, bounds, zoom = 7 }: UsePropertyFilte
         }
       }
     },
-    [bounds, cardsPageSize, filters, token]
+    [bounds, cardsPageSize, filters, networkProfile.includeCardImages]
   );
 
   useEffect(() => {
+    if (!cardsEnabled) {
+      cardsAbortRef.current?.abort();
+      return;
+    }
     const timer = setTimeout(() => {
       fetchCardsPage(1, 'replace');
-    }, 750);
+    }, networkProfile.cardDelayMs);
     return () => clearTimeout(timer);
-  }, [fetchCardsPage]);
+  }, [cardsEnabled, fetchCardsPage, networkProfile.cardDelayMs]);
 
   const loadMoreCards = useCallback(() => {
     if (cardsLoading || cardsLoadingMore || !cardsHasMore) return;

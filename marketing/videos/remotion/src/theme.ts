@@ -14,6 +14,27 @@ export const accents = [palette.green, palette.teal, palette.violet, palette.lav
 export const font = '"EstateMap Display", "Avenir Next", system-ui, sans-serif';
 
 /**
+ * Phones are taller than the 16:9 the canvas assumes, and TikTok fills the
+ * screen: it scales a 9:16 upload to the screen height, which pushes the sides
+ * out of view. The canvas is never cropped vertically — it is cropped
+ * horizontally, and by more than it looks.
+ *
+ * On a 1080 px canvas the hidden margin is `(1080 - 1920 / ratio) / 2`:
+ *
+ *   19.5:9  (iPhone X and later, most Android)   97 px per side
+ *   20:9    (taller Android)                    108 px per side
+ *
+ * 120 px clears both. Nothing legible may start inside it — not text, not the
+ * brand block, not a card border. Backgrounds and gradients still bleed to the
+ * full 1080: they are meant to be cut.
+ *
+ * This was measured, not guessed: with the 19.5:9 crop applied to video-003 the
+ * domain pill read "opropiedadesecuador.com", the brand tile was sliced in half
+ * and "¿Cómo quieres ubicarla?" lost its opening sign.
+ */
+export const sideCrop = 120;
+
+/**
  * Reserved space for the platform interface, measured on a 1080 x 1920 canvas.
  *
  * `bottom` covers the TikTok caption, username and music ticker, which reach
@@ -22,21 +43,54 @@ export const font = '"EstateMap Display", "Avenir Next", system-ui, sans-serif';
  * may use the full width.
  */
 export const safe = {
-  top: 240,
+  // TikTok's top navigation clears this line on a 1080 x 1920 export. This is
+  // also the established brand anchor for the video system.
+  top: 205,
   bottom: 460,
-  left: 64,
-  right: 240,
+  // The side margin is the device crop, not a taste decision. Anything anchored
+  // closer to the edge than this is invisible on a phone.
+  left: sideCrop,
+  right: 250,
   railTop: 820,
+};
+
+/**
+ * Split layout: the product occupies the top of the frame untouched, and every
+ * word lives in a band underneath it. Text over a screen recording forced a
+ * heavy scrim that made the interface unreadable, which defeats the point of
+ * filming the interface at all.
+ */
+export const stage = {
+  top: 0,
+  // The picture fills the frame; its lower quarter is kept free of detail and
+  // shaded so the words can live there without covering anything.
+  height: 1920,
+};
+
+export const panel = {
+  top: stage.height,
+  height: 1920 - stage.height,
+};
+
+// Words end here: below this line TikTok paints its own caption and username.
+// Keep every spoken word above TikTok's 460 px bottom UI reservation. The
+// previous 1580 px floor let the second caption line fall behind the username
+// and post caption on smaller devices.
+export const textFloor = 1440;
+
+/**
+ * The headline rests on the last stretch of the stage over a short gradient —
+ * enough to be readable, not enough to hide what the interface is doing — and
+ * the spoken line runs underneath on clean ground.
+ */
+export const captionBox = {
+  left: safe.left,
+  width: 1080 - safe.left - safe.right,
+  bottom: 1920 - textFloor,
 };
 
 export const headlineBox = {
   left: safe.left,
-  width: 1080 - safe.left * 2,
-  top: safe.top + 60,
-};
-
-export const captionBox = {
-  left: safe.left,
   width: 1080 - safe.left - safe.right,
-  bottom: safe.bottom,
+  bottom: 1920 - textFloor + 190,
 };

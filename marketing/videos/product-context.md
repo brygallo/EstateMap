@@ -20,9 +20,6 @@ Geo Propiedades Ecuador es un portal inmobiliario ecuatoriano centrado en explor
 - Inicio del formulario sin cuenta; el registro se pide al publicar y el borrador se conserva.
 - Hasta 10 fotos por propiedad, reordenables y optimizadas automáticamente.
 - Edición, desactivación y eliminación desde “Mis propiedades”.
-- Kit posterior a la publicación con láminas para redes, textos editables, QR y URL corta.
-- Enlaces del kit con atribución por red y reporte privado de las visitas que trajeron esas publicaciones.
-- Láminas de bajada de precio y vendido cuando ese hecho ocurrió.
 
 ## No prometer
 
@@ -31,6 +28,10 @@ Geo Propiedades Ecuador es un portal inmobiliario ecuatoriano centrado en explor
 - Que una zona es segura, rentable o de alta plusvalía.
 - Publicación automática en Instagram, TikTok o Facebook. El usuario comparte el archivo.
 - Video automático del anuncio. Es una propuesta, no una función implementada.
+- **El kit social todavía no está terminado** (indicado por la persona responsable el 2026-08-14). No se muestra
+  ni se insinúa en ninguna pieza: ni las láminas para redes, ni los textos editables, ni el QR o la URL corta, ni
+  el reporte privado de visitas por red, ni las láminas de bajada de precio o vendido. Vuelve a la lista de
+  capacidades mostrables solo cuando esa misma persona lo declare acabado.
 - Exactitud legal o topográfica de la Forma del terreno.
 
 ## Identidad visual

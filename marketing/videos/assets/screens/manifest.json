@@ -3,48 +3,66 @@
   "base_url": "https://geopropiedadesecuador.com",
   "clips": [
     {
-      "file": "casas-en-venta.mp4",
-      "description": "Listado público de casas en venta con precio, área y ubicación en cada ficha",
-      "proves": "Que el catálogo tiene fichas completas y públicas",
-      "seconds": 7,
+      "file": "capturas.mp4",
+      "description": "Imágenes fijas de las pantallas públicas, para complementar las animaciones",
+      "proves": "Cómo se ve realmente cada pantalla",
+      "seconds": 2,
       "requires_authorization": false,
-      "captured_at": "2026-08-12T19:33:41.765Z",
+      "captured_at": "2026-08-13T13:15:53.788Z",
+      "source": "https://geopropiedadesecuador.com"
+    },
+    {
+      "file": "casas-en-venta.mp4",
+      "description": "Listado público de casas en venta con precio, área y ubicación en cada ficha — muestra anuncios identificables con precio y ubicación",
+      "proves": "Que el catálogo tiene fichas completas y públicas",
+      "seconds": 9,
+      "requires_authorization": true,
+      "captured_at": "2026-08-12T20:40:37.628Z",
       "source": "https://geopropiedadesecuador.com"
     },
     {
       "file": "estadisticas.mp4",
       "description": "Página pública de estadísticas inmobiliarias del portal",
       "proves": "Que el portal publica datos agregados de su propio catálogo",
-      "seconds": 7,
+      "seconds": 9,
       "requires_authorization": false,
-      "captured_at": "2026-08-12T19:34:12.611Z",
+      "captured_at": "2026-08-13T13:04:51.728Z",
       "source": "https://geopropiedadesecuador.com"
     },
     {
       "file": "ficha-propiedad.mp4",
-      "description": "Apertura de una ficha pública desde el listado, con fotos, precio y ubicación",
-      "proves": "Que desde el listado se llega a la ficha en un clic",
-      "seconds": 8,
+      "description": "Se abre la ficha de una propiedad desde el listado y se recorre su descripción, fotos, precio y ubicación",
+      "proves": "Que la ficha reúne fotos, precio, características y ubicación en una sola pantalla",
+      "seconds": 10,
       "requires_authorization": true,
-      "captured_at": "2026-08-12T19:33:53.013Z",
+      "captured_at": "2026-08-13T12:48:52.982Z",
+      "source": "https://geopropiedadesecuador.com"
+    },
+    {
+      "file": "inteligencia-anuncio.mp4",
+      "description": "Bloque «Inteligencia del anuncio» dentro de una ficha: precio por m², comparación con el inventario activo de la zona y rango habitual",
+      "proves": "Que el portal dice si un anuncio está por encima o por debajo del rango de su zona, con comparables reales",
+      "seconds": 10,
+      "requires_authorization": true,
+      "captured_at": "2026-08-13T13:05:22.065Z",
       "source": "https://geopropiedadesecuador.com"
     },
     {
       "file": "mapa-explorar.mp4",
-      "description": "Mapa del portal en la página principal, desplazándose y acercándose sobre los pines de propiedades",
-      "proves": "Que la búsqueda ocurre sobre un mapa real, no sobre una lista",
-      "seconds": 9,
-      "requires_authorization": false,
-      "captured_at": "2026-08-12T19:33:31.926Z",
+      "description": "Del mapa nacional a una zona concreta de Quito: se toca el grupo de la ciudad, se abre en barrios y se toca un pin para ver la propiedad",
+      "proves": "Que puedes ver qué hay disponible exactamente en la zona que te interesa",
+      "seconds": 14,
+      "requires_authorization": true,
+      "captured_at": "2026-08-12T20:49:19.280Z",
       "source": "https://geopropiedadesecuador.com"
     },
     {
       "file": "publicar-inicio.mp4",
       "description": "Primer paso público del formulario de publicación, antes de pedir cuenta",
       "proves": "Que se puede empezar a publicar sin registrarse primero",
-      "seconds": 7,
+      "seconds": 9,
       "requires_authorization": false,
-      "captured_at": "2026-08-12T19:34:02.570Z",
+      "captured_at": "2026-08-12T20:41:21.732Z",
       "source": "https://geopropiedadesecuador.com"
     }
   ]

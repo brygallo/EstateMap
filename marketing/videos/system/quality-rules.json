@@ -1,12 +1,43 @@
 {
-  "version": 1,
-  "required": {
-    "human_plan_approval": true,
-    "human_prepublication_review": true,
-    "burned_captions": true,
-    "single_audience": true,
-    "single_cta": true,
-    "verified_claims": true,
-    "licensed_assets": true
-  }
+  "version": 2,
+  "human": {
+    "plan_approval": true,
+    "prepublication_review": true
+  },
+  "automatic": {
+    "plan": [
+      "hook_first",
+      "cta_last",
+      "single_cta",
+      "scene_count",
+      "product_reveal",
+      "headline_length",
+      "headline_width",
+      "cover_words",
+      "voice_readable",
+      "voice_empty",
+      "narration_matches",
+      "duration",
+      "forbidden_claim",
+      "unsourced_number",
+      "cta_family",
+      "audience_focus",
+      "message_duplication",
+      "asset_missing",
+      "asset_authorization",
+      "repeated_hook",
+      "similar_hook"
+    ],
+    "master": [
+      "vertical_1080x1920",
+      "duration_8_to_60_seconds",
+      "duration_close_to_target",
+      "plan_lint_passed",
+      "cover_exists",
+      "subtitles_exist",
+      "all_assets_resolve",
+      "approval_exists"
+    ]
+  },
+  "note": "Las reglas de plan viven en quality.py y las del máster en factory.cmd_review; esta lista es el índice, no la implementación."
 }
