@@ -33,13 +33,13 @@ export default function PropertyImage({
       )}
     >
       {!loaded && (
-        <Skeleton className="absolute inset-0 h-full w-full rounded-none" />
+        <Skeleton className="absolute inset-0 h-full w-full rounded-none motion-reduce:animate-none" />
       )}
       <Image
         alt={alt}
         fill={fill}
         className={cn(
-          'transition-opacity duration-300 ease-out',
+          'transition-opacity duration-300 ease-out motion-reduce:transition-none',
           loaded ? 'opacity-100' : 'opacity-0',
           className
         )}

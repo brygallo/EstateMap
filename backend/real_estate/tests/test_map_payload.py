@@ -129,3 +129,21 @@ def test_city_cluster_exposes_territorial_anchor_for_direct_navigation():
     assert cluster['group_level'] == 'city'
     assert cluster['anchor_latitude'] == pytest.approx(-0.18)
     assert cluster['anchor_longitude'] == pytest.approx(-78.47)
+
+
+def test_province_cluster_reports_whether_it_has_named_cities():
+    """SPEC:MCLUS-006 — provinces without cities can skip the empty level."""
+    without_cities = [_listing(i, -0.10 + i * 0.001, -76.90, city='', province='Sucumbíos') for i in range(4)]
+    with_city = [_listing(i, -0.20 + i * 0.001, -78.47, city='Quito') for i in range(4)]
+
+    empty_cluster = next(
+        item for item in build_map_payload(FakeQuerySet(without_cities), zoom=6.0, max_items=100)['items']
+        if item['is_cluster']
+    )
+    named_cluster = next(
+        item for item in build_map_payload(FakeQuerySet(with_city), zoom=6.0, max_items=100)['items']
+        if item['is_cluster']
+    )
+
+    assert empty_cluster['has_named_cities'] is False
+    assert named_cluster['has_named_cities'] is True

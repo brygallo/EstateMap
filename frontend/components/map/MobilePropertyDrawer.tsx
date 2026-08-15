@@ -5,8 +5,13 @@ import { SlidersHorizontal } from 'lucide-react';
 import { animate, motion, useDragControls, useMotionValue } from 'motion/react';
 import { Button } from '@/components/ui/button';
 import { haptic } from '@/lib/haptics';
+import {
+  mobilePanelSnapOffsets,
+  resolveMobilePanelSnap,
+  type MobilePanelSnap,
+} from '@/lib/mobile-map-panel';
 
-export type MobileDrawerSnap = 'closed' | 'half' | 'full';
+export type MobileDrawerSnap = MobilePanelSnap;
 
 interface MobilePropertyDrawerProps {
   snap: MobileDrawerSnap;
@@ -15,41 +20,12 @@ interface MobilePropertyDrawerProps {
   loading: boolean;
   hidden?: boolean;
   lockScroll?: boolean;
+  /** Lets detail content own vertical scrolling instead of nesting two scrollers. */
+  contentOwnsScroll?: boolean;
   children: ReactNode;
 }
 
 const DRAWER_OFFSCREEN = 2000;
-const HALF_HIDDEN_RATIO = 0.56;
-
-const snapOffsetsFor = (height: number): Record<MobileDrawerSnap, number> => ({
-  full: 0,
-  half: Math.round(height * HALF_HIDDEN_RATIO),
-  closed: height,
-});
-
-export const resolveMobileDrawerSnap = (
-  offset: number,
-  velocity: number,
-  height: number,
-  from: MobileDrawerSnap
-): MobileDrawerSnap => {
-  const order: MobileDrawerSnap[] = ['full', 'half', 'closed'];
-  if (Math.abs(velocity) > 550) {
-    const index = order.indexOf(from);
-    const next = velocity > 0 ? index + 1 : index - 1;
-    return order[Math.min(Math.max(next, 0), order.length - 1)];
-  }
-
-  const offsets = snapOffsetsFor(height);
-  return order.reduce(
-    (best, candidate) =>
-      Math.abs(offsets[candidate] - offset) < Math.abs(offsets[best] - offset)
-        ? candidate
-        : best,
-    from
-  );
-};
-
 /**
  * Complete mobile search/results surface: launcher, backdrop, snap positions,
  * drag handoff, internal scrolling and document scroll lock live together.
@@ -61,6 +37,7 @@ export default function MobilePropertyDrawer({
   loading,
   hidden = false,
   lockScroll = true,
+  contentOwnsScroll = false,
   children,
 }: MobilePropertyDrawerProps) {
   const drawerRef = useRef<HTMLDivElement>(null);
@@ -83,7 +60,7 @@ export default function MobilePropertyDrawer({
 
   useEffect(() => {
     const height = drawerHeight || window.innerHeight;
-    const controls = animate(drawerY, snapOffsetsFor(height)[snap], {
+    const controls = animate(drawerY, mobilePanelSnapOffsets(height)[snap], {
       type: 'spring',
       stiffness: 420,
       damping: 38,
@@ -118,11 +95,11 @@ export default function MobilePropertyDrawer({
   const settle = useCallback(
     (offset: number, velocity: number) => {
       const height = drawerRef.current?.offsetHeight || window.innerHeight;
-      const target = resolveMobileDrawerSnap(offset, velocity, height, snap);
+      const target = resolveMobilePanelSnap(offset, velocity, height, snap);
       if (target !== snap) haptic('impact');
       onSnapChange(target);
       if (target === snap) {
-        animate(drawerY, snapOffsetsFor(height)[target], {
+        animate(drawerY, mobilePanelSnapOffsets(height)[target], {
           type: 'spring',
           stiffness: 420,
           damping: 38,
@@ -134,9 +111,12 @@ export default function MobilePropertyDrawer({
 
   const handleBodyPointerDown = (event: React.PointerEvent<HTMLDivElement>) => {
     if (event.pointerType === 'mouse') return;
+    const nestedScroll = event.target instanceof HTMLElement
+      ? event.target.closest('[data-mobile-panel-scroll]')
+      : null;
     bodyDragRef.current = {
       y: event.clientY,
-      scrollTop: scrollRef.current?.scrollTop ?? 0,
+      scrollTop: nestedScroll?.scrollTop ?? scrollRef.current?.scrollTop ?? 0,
       handedOver: false,
     };
   };
@@ -164,7 +144,7 @@ export default function MobilePropertyDrawer({
       {!open && !hidden && (
         <Button
           onClick={() => {
-            onSnapChange('half');
+            onSnapChange('full');
             haptic('impact');
           }}
           className="fixed bottom-[calc(var(--mobile-tabbar-height)+env(safe-area-inset-bottom)+0.75rem)] left-1/2 z-nav h-12 -translate-x-1/2 gap-2 rounded-full px-5 shadow-cardHover lg:hidden [&_svg]:size-5"
@@ -183,7 +163,7 @@ export default function MobilePropertyDrawer({
         <button
           type="button"
           className="fixed inset-x-0 bottom-0 top-[var(--app-header-height)] z-backdrop touch-none bg-black/50 lg:hidden"
-          aria-label="Reducir buscador y filtros"
+          aria-label="Reducir panel"
           onClick={() => onSnapChange('half')}
         />
       )}
@@ -206,7 +186,7 @@ export default function MobilePropertyDrawer({
           clearBodyDrag();
           settle(drawerY.get(), info.velocity.y);
         }}
-        className="property-sidebar-drawer fixed inset-x-0 bottom-0 z-panel flex max-h-[85dvh] flex-col overflow-hidden rounded-t-2xl bg-white text-textPrimary shadow-cardHover lg:hidden"
+        className="property-sidebar-drawer fixed inset-x-0 bottom-0 z-panel flex h-[85dvh] flex-col overflow-hidden rounded-t-2xl bg-white text-textPrimary shadow-cardHover lg:hidden"
       >
         <button
           type="button"
@@ -225,11 +205,12 @@ export default function MobilePropertyDrawer({
 
         <div
           ref={scrollRef}
-          className="property-sidebar-scroll min-h-0 flex-1 overflow-y-auto overscroll-contain"
-          onPointerDown={handleBodyPointerDown}
-          onPointerMove={handleBodyPointerMove}
-          onPointerUp={clearBodyDrag}
-          onPointerCancel={clearBodyDrag}
+          data-mobile-panel-scroll={contentOwnsScroll ? undefined : true}
+          className={`property-sidebar-scroll relative min-h-0 flex-1 ${contentOwnsScroll ? 'overflow-hidden' : 'overflow-y-auto overscroll-contain'}`}
+          onPointerDown={contentOwnsScroll ? undefined : handleBodyPointerDown}
+          onPointerMove={contentOwnsScroll ? undefined : handleBodyPointerMove}
+          onPointerUp={contentOwnsScroll ? undefined : clearBodyDrag}
+          onPointerCancel={contentOwnsScroll ? undefined : clearBodyDrag}
         >
           {children}
         </div>

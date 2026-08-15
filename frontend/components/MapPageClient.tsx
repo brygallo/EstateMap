@@ -129,7 +129,7 @@ const MapPage = () => {
     return [...clusters, ...points.values()];
   }, [cardProperties, mapProperties]);
   const mapPointProperties = mapDisplayProperties.filter((item): item is Property => !(item as any).is_cluster);
-  const geo = useGeolocation(mapRef, mapPointProperties, loading);
+  const geo = useGeolocation(mapRef, mapPointProperties, mapLoading);
 
   const handleMapReady = (map: any) => {
     mapRef.current = map;
@@ -252,9 +252,9 @@ const MapPage = () => {
     });
     setSelectedProperty(property);
     setIsModalOpen(false);
-    // "Show me this one on the map" — get out of the map's way, but keep the
-    // list within a thumb's reach rather than dismissing it outright.
-    if (isMobile) setDrawerSnap('closed');
+    // Keep the selected card within thumb reach. A second tap on that same
+    // card opens details, while half height preserves the map context.
+    if (isMobile) setDrawerSnap('half');
     haptic('selection');
   };
 
@@ -269,7 +269,7 @@ const MapPage = () => {
     });
     setSelectedProperty(property);
     setIsModalOpen(true);
-    if (isMobile) setDrawerSnap('closed');
+    if (isMobile) setDrawerSnap('half');
   };
 
   // Clic en el polígono/marcador: mueve el mapa y abre el modal.
@@ -287,6 +287,7 @@ const MapPage = () => {
     });
     setSelectedProperty(property);
     setIsModalOpen(true);
+    if (isMobile) setDrawerSnap('half');
 
     try {
       const { apiFetch } = await import('@/lib/api');
@@ -310,7 +311,10 @@ const MapPage = () => {
       });
     }
     if (selectedProperty) flyToProperty(mapRef.current, selectedProperty);
-    if (isMobile) setIsModalOpen(false);
+    if (isMobile) {
+      setIsModalOpen(false);
+      setDrawerSnap('closed');
+    }
   };
 
   const handleCloseModal = () => {
@@ -323,6 +327,7 @@ const MapPage = () => {
     }
     setIsModalOpen(false);
     setSelectedProperty(null);
+    if (isMobile) setDrawerSnap('closed');
 
     // Quitar el parámetro ?property al cerrar el modal.
     const params = new URLSearchParams(window.location.search);
@@ -333,6 +338,15 @@ const MapPage = () => {
     }
   };
 
+  const handleMapBackgroundClick = useCallback(() => {
+    if (!isMobile || drawerSnap === 'closed') return;
+    if (isModalOpen) {
+      handleCloseModal();
+      return;
+    }
+    setDrawerSnap('closed');
+  }, [drawerSnap, isMobile, isModalOpen]);
+
   useEffect(() => {
     if (!mapRef.current) return;
     const first = window.setTimeout(() => mapRef.current?.invalidateSize?.(), 80);
@@ -342,22 +356,6 @@ const MapPage = () => {
       window.clearTimeout(second);
     };
   }, [isModalOpen]);
-
-  // The property detail still owns its scroll lock. The search/filter drawer
-  // keeps its lock beside the rest of its mobile behavior.
-  useEffect(() => {
-    if (!isModalOpen || !isMobile) return;
-
-    const previousOverflow = document.body.style.overflow;
-    const previousOverscrollBehavior = document.body.style.overscrollBehavior;
-    document.body.style.overflow = 'hidden';
-    document.body.style.overscrollBehavior = 'none';
-
-    return () => {
-      document.body.style.overflow = previousOverflow;
-      document.body.style.overscrollBehavior = previousOverscrollBehavior;
-    };
-  }, [isMobile, isModalOpen]);
 
   const renderPropertySidebar = (onClose?: () => void) => (
     <PropertySidebar
@@ -396,13 +394,26 @@ const MapPage = () => {
       {isMobile ? (
         <MobilePropertyDrawer
           snap={drawerSnap}
-          onSnapChange={setDrawerSnap}
+          onSnapChange={(nextSnap) => {
+            setDrawerSnap(nextSnap);
+            if (nextSnap === 'closed' && isModalOpen) handleCloseModal();
+          }}
           resultCount={totalCount ?? sidebarProperties.length}
           loading={loading}
-          hidden={Boolean(selectedProperty || isModalOpen)}
-          lockScroll={!isModalOpen}
+          hidden={Boolean(selectedProperty && !isModalOpen)}
+          lockScroll
+          contentOwnsScroll={Boolean(isModalOpen && selectedProperty)}
         >
-          {renderPropertySidebar(() => setDrawerSnap('closed'))}
+          {isModalOpen && selectedProperty ? (
+            <PropertyModal
+              property={selectedProperty}
+              isOpen
+              onClose={handleCloseModal}
+              onViewOnMap={handleViewOnMap}
+              getContextualShareUrl={getContextualShareUrl}
+              embeddedInMobilePanel
+            />
+          ) : renderPropertySidebar(() => setDrawerSnap('closed'))}
         </MobilePropertyDrawer>
       ) : (
         <aside className="property-sidebar-scroll h-full w-96 flex-shrink-0 overflow-y-auto overscroll-contain border-r border-line bg-white">
@@ -427,6 +438,7 @@ const MapPage = () => {
           onBoundsChange={setBounds}
           onZoomChange={setMapZoom}
           onPolygonClick={handlePolygonClick}
+          onMapBackgroundClick={handleMapBackgroundClick}
           onLocate={handleLocate}
           locating={geo.loadingLocation}
           locationBlocked={geo.locationBlocked}
@@ -470,13 +482,13 @@ const MapPage = () => {
       )}
 
       {/* Ficha lateral de detalle */}
-          <PropertyModal
+          {!isMobile && <PropertyModal
             property={selectedProperty}
             isOpen={isModalOpen}
             onClose={handleCloseModal}
             onViewOnMap={handleViewOnMap}
             getContextualShareUrl={getContextualShareUrl}
-          />
+          />}
 
       {/* Modal de permiso de ubicación */}
       <LocationPermissionModal

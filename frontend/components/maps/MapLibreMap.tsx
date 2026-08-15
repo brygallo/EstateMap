@@ -13,7 +13,7 @@ import { trackEvent } from '@/lib/analytics';
 import { getPropertyPoint, isPointInEcuadorBounds } from '@/lib/geo';
 import { iconMarkerHtml, priceMarkerHtml, statusColor } from '@/lib/mapMarkers';
 import { getPropertyTypeLabel } from '@/lib/property-labels';
-import { flyToProperty, getClusterTargetZoom } from '@/lib/map-navigation';
+import { flyToProperty, getClusterTargetCenter, getClusterTargetZoom, getMarkerRevealDelay } from '@/lib/map-navigation';
 import aentsTokens from '@/lib/aents-tokens.json';
 
 // MapLibre GL `paint` properties are resolved by the GL renderer, not by CSS,
@@ -37,6 +37,7 @@ interface MapLibreMapProps {
   onBoundsChange?: (bounds: { west: number; south: number; east: number; north: number }) => void;
   onZoomChange?: (zoom: number) => void;
   onPolygonClick: (property: any) => void;
+  onMapBackgroundClick?: () => void;
   onLocate: () => void;
   locating: boolean;
   locationBlocked: boolean;
@@ -200,6 +201,7 @@ export default function MapLibreMap({
   onBoundsChange,
   onZoomChange,
   onPolygonClick,
+  onMapBackgroundClick,
   onLocate,
   locating,
   locationBlocked,
@@ -215,6 +217,7 @@ export default function MapLibreMap({
   const markerRefs = useRef<Map<string, HtmlMarkerRecord>>(new Map());
   const clusterMarkerRefs = useRef<Map<string, HtmlMarkerRecord>>(new Map());
   const selectedPropertyRef = useRef<any>(selectedProperty);
+  const onMapBackgroundClickRef = useRef(onMapBackgroundClick);
   const centeredSelectionRef = useRef<string | number | null>(null);
   const mobileInteractionRef = useRef(false);
   const reportedViewportRef = useRef<{
@@ -282,6 +285,10 @@ export default function MapLibreMap({
   useEffect(() => {
     selectedPropertyRef.current = selectedProperty;
   }, [selectedProperty]);
+
+  useEffect(() => {
+    onMapBackgroundClickRef.current = onMapBackgroundClick;
+  }, [onMapBackgroundClick]);
 
   useEffect(() => {
     const map = mapRef.current;
@@ -486,6 +493,18 @@ export default function MapLibreMap({
 
     map.on('moveend', reportViewport);
     map.on('zoomend', reportViewport);
+    map.on('click', (event) => {
+      const interactiveFeatures = map.queryRenderedFeatures(event.point, {
+        layers: [
+          'property-clusters',
+          'property-points',
+          'property-polygons-fill',
+          'selected-polygon-fill',
+          'selected-point',
+        ],
+      });
+      if (interactiveFeatures.length === 0) onMapBackgroundClickRef.current?.();
+    });
 
     const clickCluster = (event: maplibregl.MapLayerMouseEvent) => {
       const feature = map.queryRenderedFeatures(event.point, { layers: ['property-clusters'] })[0];
@@ -574,7 +593,7 @@ export default function MapLibreMap({
         })
         .map((item) => item.cluster);
 
-      visibleClusters.forEach((cluster) => {
+      visibleClusters.forEach((cluster, clusterIndex) => {
         const count = Number(cluster.count || 0);
         const lat = Number(cluster.latitude);
         const lng = Number(cluster.longitude);
@@ -602,10 +621,15 @@ export default function MapLibreMap({
         if (!record) {
           const element = document.createElement('button');
           element.type = 'button';
-          element.className = 'maplibre-cluster-marker';
+          element.className = 'maplibre-cluster-marker maplibre-cluster-enter';
+          element.style.setProperty('--map-marker-delay', `${getMarkerRevealDelay(clusterIndex)}ms`);
           const marker = new maplibregl.Marker({ element, anchor: 'center' }).setLngLat(coordinates).addTo(map);
           record = { marker, element, signature: '', coordinates };
           clusterMarkerRefs.current.set(key, record);
+          window.setTimeout(
+            () => element.classList.remove('maplibre-cluster-enter'),
+            getMarkerRevealDelay(clusterIndex) + 220
+          );
         }
 
         record.element.setAttribute(
@@ -637,19 +661,20 @@ export default function MapLibreMap({
           record?.marker.remove();
           clusterMarkerRefs.current.delete(key);
           const groupLevel = String(cluster.group_level ?? '');
-          const targetZoom = getClusterTargetZoom(groupLevel);
+          const hasNamedCities = cluster.has_named_cities !== false;
+          const targetZoom = getClusterTargetZoom(groupLevel, hasNamedCities);
           trackEvent('map_backend_cluster_clicked', {
             group_level: cluster.group_level ?? null,
             count,
             label: label || null,
             target_zoom: targetZoom,
           });
-          // City is the final aggregation level. Open it at point zoom around
-          // its territorial anchor so the next response contains price labels,
-          // never another synthetic grid cluster.
-          if (groupLevel === 'city') {
+          // City is the final aggregation level. Its marker is snapped to a
+          // real listing, so opening around that same point cannot send the
+          // person to an official centre with no inventory.
+          if (groupLevel === 'city' || (groupLevel === 'province' && !hasNamedCities)) {
             map.easeTo({
-              center: anchorCoordinates,
+              center: getClusterTargetCenter(groupLevel, coordinates, anchorCoordinates, hasNamedCities),
               zoom: targetZoom,
               duration: 620,
               easing: (t) => 1 - Math.pow(1 - t, 3),
@@ -764,15 +789,15 @@ export default function MapLibreMap({
           if (!record) {
             const element = document.createElement('button');
             element.type = 'button';
-            element.className = mobileInteractionRef.current
-              ? 'maplibre-price-marker'
-              : 'maplibre-price-marker maplibre-marker-enter';
+            element.className = 'maplibre-price-marker maplibre-marker-enter';
+            element.style.setProperty('--map-marker-delay', `${getMarkerRevealDelay(renderedCount - 1)}ms`);
             const marker = new maplibregl.Marker({ element, anchor: 'bottom' }).setLngLat(point).addTo(map);
             record = { marker, element, signature: '', coordinates: point };
             markerRefs.current.set(key, record);
-            if (!mobileInteractionRef.current) {
-              window.setTimeout(() => element.classList.remove('maplibre-marker-enter'), 160);
-            }
+            window.setTimeout(
+              () => element.classList.remove('maplibre-marker-enter'),
+              getMarkerRevealDelay(renderedCount - 1) + 220
+            );
           }
 
           const markerDescription = getMarkerAriaLabel(property);
@@ -1004,6 +1029,10 @@ export default function MapLibreMap({
         .maplibre-cluster-marker:hover .maplibre-cluster {
           box-shadow: 0 0 0 3px rgb(var(--primary-strong-rgb) / 0.22), inset 0 1px 0 rgba(255, 255, 255, 0.22), 0 3px 7px rgba(15, 23, 42, 0.18);
         }
+        .maplibre-cluster-enter .maplibre-cluster {
+          animation: mapMarkerContentIn 180ms cubic-bezier(0.2, 0, 0, 1) both;
+          animation-delay: var(--map-marker-delay, 0ms);
+        }
         .maplibre-cluster strong {
           font-size: 16px;
           font-weight: 900;
@@ -1068,6 +1097,7 @@ export default function MapLibreMap({
         }
         .maplibre-marker-enter .gp-marker {
           animation: mapMarkerContentIn 180ms cubic-bezier(0.2, 0, 0, 1) both;
+          animation-delay: var(--map-marker-delay, 0ms);
         }
         .maplibre-marker-exit {
           opacity: 1;

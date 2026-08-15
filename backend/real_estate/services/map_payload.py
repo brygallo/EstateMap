@@ -388,6 +388,7 @@ def _build_buckets(valid_rows, group_level, grid_size):
             'anchor': anchor,
             'group_level': group_level,
             'suspicious_count': 0,
+            'has_named_cities': False,
         })
         bucket['count'] += 1
         bucket['lat_sum'] += lat
@@ -397,6 +398,8 @@ def _build_buckets(valid_rows, group_level, grid_size):
         bucket['lng_min'] = min(bucket['lng_min'], lng)
         bucket['lng_max'] = max(bucket['lng_max'], lng)
         bucket['rows'].append(row)
+        if city_key:
+            bucket['has_named_cities'] = True
         if group_level == 'city' and bucket.get('anchor') and _distance_km(lat, lng, bucket['anchor']['lat'], bucket['anchor']['lng']) > 85:
             bucket['suspicious_count'] += 1
 
@@ -456,6 +459,7 @@ def _cluster_payload(key, bucket, zoom):
         'expansion_zoom': _expansion_zoom_for_bounds(bounds),
         'bounds': bounds,
         'suspicious_count': bucket.get('suspicious_count', 0),
+        'has_named_cities': bucket.get('has_named_cities', False),
     }
 
 

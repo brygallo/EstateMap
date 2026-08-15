@@ -31,21 +31,23 @@ rules:
     name: Pulsar una ciudad abre directamente sus precios
     status: implemented
     summary: >
-      El agrupador de ciudad centra la cámara en el ancla territorial a zoom 12,
-      que está por encima del umbral de agrupación y muestra los labels de precio.
+      El agrupador de ciudad centra la cámara en una propiedad real del grupo a
+      zoom 12, que está por encima del umbral de agrupación y muestra los labels
+      de precio. Nunca desplaza a la persona a un centro territorial sin inventario.
     evidence:
       - file: backend/real_estate/services/map_payload.py
-        lines: "440-459"
-        symbol: anchor_latitude
-        note: El payload lleva el centro territorial o el centro de inventario como fallback.
+        lines: "439-455"
+        symbol: "'latitude': center['lat']"
+        note: La posición visible del agrupador es el medoid, es decir, las coordenadas de una propiedad real del grupo.
       - file: frontend/components/maps/MapLibreMap.tsx
-        lines: "631-669"
+        lines: "675-712"
         symbol: "groupLevel === 'city'"
-        note: Ciudad usa su ancla y abre directamente a zoom 12.
+        note: Ciudad reutiliza la posición del agrupador y abre directamente a zoom 12; el ancla territorial se reserva para país y provincia.
     cases:
       - name: Persona pulsa el agrupador de una ciudad
-        expected: cámara centrada en la ciudad a zoom de puntos
-    tests: {}
+        expected: cámara centrada en una propiedad real de la ciudad a zoom de puntos
+    tests:
+      unit: true
 
   - id: MCLUS-003
     name: Elegir una ciudad en los filtros mueve el mapa a su centro
@@ -72,3 +74,144 @@ rules:
         expected: el mapa se centra en la ciudad seleccionada
     tests:
       api: true
+
+  - id: MCLUS-004
+    name: El mapa comunica y revela progresivamente cada cambio de nivel
+    status: implemented
+    summary: >
+      Al cambiar entre país, provincia, ciudad y puntos, el mapa muestra de
+      inmediato una barra de actividad y conserva los resultados del nivel anterior
+      hasta tener su reemplazo. Cuando llega la respuesta, los agrupadores y precios
+      nuevos aparecen en una secuencia breve cuyo retraso total está limitado para
+      no volver lenta la vista.
+    rationale: >
+      El backend entrega cada nivel como una respuesta completa. Sin respuesta
+      inmediata ni transición de entrada, el intervalo entre niveles parece un
+      bloqueo aunque la petición siga avanzando.
+    evidence:
+      - file: frontend/hooks/usePropertyFilters.ts
+        lines: "350-377"
+        symbol: "if (hasCachedResults)"
+        note: Una petición sin caché activa la carga antes del debounce; el estado vacío queda reservado para respuestas terminadas y los marcadores anteriores permanecen hasta recibir el reemplazo.
+      - file: frontend/lib/map-navigation.ts
+        lines: "20-22"
+        symbol: getMarkerRevealDelay
+        note: Escalona las entradas 22 ms y limita toda la secuencia a 264 ms.
+      - file: frontend/components/maps/MapLibreMap.tsx
+        lines: "625-639"
+        symbol: "--map-marker-delay"
+        note: Los agrupadores nuevos reciben el retraso progresivo sin animar la transformación geográfica de MapLibre.
+      - file: frontend/components/maps/MapLibreMap.tsx
+        lines: "793-812"
+        symbol: getMarkerRevealDelay
+        note: Los precios individuales usan la misma secuencia breve al entrar.
+    cases:
+      - name: Persona cambia a un nivel del mapa que todavía no está en caché
+        expected: ve actividad inmediata sin un mapa vacío y luego los resultados se reemplazan progresivamente
+      - name: La respuesta contiene muchos resultados visibles
+        expected: el último retraso de entrada no supera 264 ms
+    tests:
+      unit: true
+
+  - id: MCLUS-005
+    name: Buscador, filtros y detalle comparten un solo panel móvil
+    status: implemented
+    summary: >
+      En móvil existe una sola instancia del panel del mapa. El panel cambia su
+      contenido entre búsqueda, filtros, resultados y detalle de propiedad, pero
+      conserva las mismas posiciones cerrado, medio y completo, el mismo resorte,
+      la misma manija y la misma transferencia entre scroll y arrastre. Buscar y
+      filtrar abre completo; el detalle abre a media altura para conservar el mapa.
+    rationale: >
+      Montar un drawer para buscar y un modal distinto para el detalle produce
+      alturas, cierres y gestos contradictorios. Cambiar el contenido dentro de
+      una única superficie mantiene la memoria muscular de la persona.
+    evidence:
+      - file: frontend/components/MapPageClient.tsx
+        lines: "387-425"
+        symbol: embeddedInMobilePanel
+        note: La única instancia de MobilePropertyDrawer alterna entre PropertySidebar y PropertyModal según el modo actual.
+      - file: frontend/components/map/MobilePropertyDrawer.tsx
+        lines: "31-223"
+        symbol: MobilePropertyDrawer
+        note: Un solo componente posee posiciones, resorte, manija, scroll, arrastre, backdrop y bloqueo del documento.
+      - file: frontend/components/PropertyModal.tsx
+        lines: "128-145"
+        symbol: embeddedInMobilePanel
+        note: El detalle puede entregar solo su contenido al panel móvil compartido; conserva su panel lateral independiente únicamente en escritorio.
+      - file: frontend/components/maps/MapLibreMap.tsx
+        lines: "480-520"
+        symbol: onMapBackgroundClickRef
+        note: Un toque sin propiedades ni agrupadores debajo se comunica al único panel móvil para cerrarlo.
+    cases:
+      - name: Persona abre una propiedad desde los resultados en móvil
+        expected: el panel existente cambia a detalle a media altura sin montar otro modal móvil
+      - name: Persona abre el buscador y los filtros en móvil
+        expected: el mismo panel abre completo para mostrar todos los controles
+      - name: Persona arrastra hacia abajo el detalle completo
+        expected: usa el mismo gesto y pasa primero a media altura y luego a cerrado
+      - name: Persona toca una zona libre del mapa con filtros o detalle abiertos
+        expected: el panel se cierra; tocar una propiedad o agrupador no lo cierra
+    tests:
+      unit: true
+
+  - id: MCLUS-007
+    name: La tarjeta del mapa usa un flujo progresivo sin botones repetidos
+    status: implemented
+    summary: >
+      En móvil y escritorio, la tarjeta compacta no muestra botones «Mapa», «Ver
+      mapa» ni «Detalle». El primer toque sobre cualquier parte de una tarjeta la
+      centra en el mapa y la selecciona; un segundo toque sobre esa misma tarjeta
+      abre el detalle. En móvil, el primer toque deja el panel a media altura.
+    rationale: >
+      La lista del mapa repite muchas tarjetas. Botones por fila consumen altura y
+      dominan visualmente; selección y detalle pueden formar una secuencia natural.
+    evidence:
+      - file: frontend/components/PropertyCard.tsx
+        lines: "231-335"
+        symbol: "onClick={selected ? onOpenDetails : onClick}"
+        note: El bloque principal alterna entre centrar y abrir detalle según el estado seleccionado; no renderiza acciones separadas.
+      - file: frontend/components/map/MapPropertyCard.tsx
+        lines: "14-32"
+        symbol: MapPropertyCard
+        note: Móvil y escritorio consumen la misma tarjeta compacta compartida.
+      - file: frontend/components/map/PropertySidebar.tsx
+        lines: "100-155"
+        symbol: compareSelectedFirst
+        note: La seleccionada se inyecta si falta y gana cualquier criterio de orden para permanecer primera.
+    cases:
+      - name: Persona toca una tarjeta no seleccionada
+        expected: centra la propiedad y, en móvil, deja el panel a media altura
+      - name: Persona vuelve a tocar la tarjeta seleccionada
+        expected: abre el detalle de la propiedad
+      - name: La propiedad seleccionada no estaba en la página actual o no tiene distancia
+        expected: se incorpora y aparece primera de todos modos
+    tests: {}
+
+  - id: MCLUS-006
+    name: Pulsar una provincia sin ciudades abre directamente sus propiedades
+    status: implemented
+    summary: >
+      Cuando todas las propiedades activas agrupadas bajo una provincia carecen
+      de ciudad, pulsar el agrupador provincial centra la cámara en una propiedad
+      real del grupo y entra al nivel de puntos. Si existe al menos una ciudad
+      registrada, conserva la navegación normal al nivel de ciudad.
+    rationale: >
+      Mantener un nivel de ciudad vacío obliga a realizar un paso que no aporta
+      información y puede centrar la cámara lejos del inventario.
+    evidence:
+      - file: backend/real_estate/services/map_payload.py
+        lines: "368-460"
+        symbol: has_named_cities
+        note: El agrupador provincial comunica si al menos una propiedad tiene ciudad registrada.
+      - file: frontend/components/maps/MapLibreMap.tsx
+        lines: "640-675"
+        symbol: "groupLevel === 'province' && !hasNamedCities"
+        note: Una provincia sin ciudades usa el centro del inventario y salta directamente al zoom de puntos.
+    cases:
+      - name: Provincia cuyo inventario no tiene ninguna ciudad registrada
+        expected: cámara centrada en una propiedad real a zoom de puntos
+      - name: Provincia con al menos una ciudad registrada
+        expected: navegación al nivel de ciudad sin cambios
+    tests:
+      unit: true

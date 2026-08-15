@@ -240,94 +240,78 @@ export default function PropertyCard({
 
     return (
       <div
-        className={`aents-property-card aents-property-card-compact flex gap-2 p-1.5 ${
+        className={`aents-property-card aents-property-card-compact flex min-h-[88px] items-stretch overflow-hidden p-1.5 ${
           selected ? 'is-selected ring-2 ring-primary border-primary' : ''
         }`}
       >
-        {/* Miniatura */}
-        <div className="relative h-[68px] w-[68px] flex-shrink-0 overflow-hidden rounded-lg">
-          {thumbUrl ? (
-            <PropertyImage
-              src={thumbUrl}
-              alt={heading}
-              fill
-              sizes="68px"
-              className="object-cover"
-              wrapperClassName="absolute inset-0"
-            />
-          ) : (
-            <ImagePlaceholder
-              type={String(property.property_type)}
-              className="h-full w-full"
-              iconClassName="h-7 w-7"
-            />
-          )}
-          {property.polygon && (
-            <span
-              className="absolute bottom-1 left-1 flex h-4 w-4 items-center justify-center rounded-md bg-white/90 shadow-card"
-              title="Polígono delimitado"
-            >
-              <Layers className="h-2.5 w-2.5 text-success" strokeWidth={2.5} aria-hidden />
+        <button
+          type="button"
+          onClick={selected ? onOpenDetails : onClick}
+          aria-label={selected ? `Ver detalle de ${heading}` : `Ubicar ${heading} en el mapa`}
+          className="group flex min-w-0 flex-1 touch-manipulation gap-2 rounded-lg text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
+        >
+          <span className="relative h-[76px] w-[76px] flex-shrink-0 overflow-hidden rounded-lg">
+            {thumbUrl ? (
+              <PropertyImage
+                src={thumbUrl}
+                alt=""
+                fill
+                sizes="76px"
+                className="object-cover transition-transform duration-200 group-hover:scale-[1.03]"
+                wrapperClassName="absolute inset-0"
+              />
+            ) : (
+              <ImagePlaceholder
+                type={String(property.property_type)}
+                className="h-full w-full"
+                iconClassName="h-7 w-7"
+              />
+            )}
+            {property.polygon && (
+              <span
+                className="absolute bottom-1 left-1 flex h-4 w-4 items-center justify-center rounded-md bg-white/90 shadow-card"
+                title="Polígono delimitado"
+              >
+                <Layers className="h-2.5 w-2.5 text-success" strokeWidth={2.5} aria-hidden />
+              </span>
+            )}
+          </span>
+
+          <span className="flex min-w-0 flex-1 flex-col justify-center py-0.5">
+            <span className="flex items-start justify-between gap-1.5">
+              <span className="line-clamp-2 text-[12px] font-semibold leading-tight text-textPrimary group-hover:text-primary">
+                {heading}
+              </span>
+              <span className={`badge ${operationBadgeClass} flex-shrink-0`}>{badgeLabel}</span>
             </span>
-          )}
-        </div>
 
-        {/* Contenido */}
-        <div className="flex min-w-0 flex-1 flex-col justify-center">
-          <div className="flex items-start justify-between gap-1.5">
-            <h3 className="line-clamp-2 text-[12px] font-semibold leading-tight text-textPrimary">
-              {heading}
-            </h3>
-            <span className={`badge ${operationBadgeClass} flex-shrink-0`}>{badgeLabel}</span>
-          </div>
+            <span className="mt-1 flex flex-wrap items-baseline gap-x-1.5 gap-y-0.5">
+              <span className="price text-[14px] font-bold">{formatPrice(property.price)}</span>
+              {isRent && !hasRentPrice && <span className="text-[11px] font-medium text-textSecondary">/mes</span>}
+              {hasRentPrice && (
+                <span className="text-[11px] font-medium text-textSecondary">
+                  · Alquiler {formatPrice(property.rent_price)}/mes
+                </span>
+              )}
+            </span>
 
-          <div className="mt-1 flex flex-wrap items-baseline gap-x-1.5 gap-y-0.5">
-            <span className="price text-[14px] font-bold">{formatPrice(property.price)}</span>
-            {isRent && !hasRentPrice && <span className="text-[11px] font-medium text-textSecondary">/mes</span>}
-            {hasRentPrice && (
-              <span className="text-[11px] font-medium text-textSecondary">
-                · Alquiler {formatPrice(property.rent_price)}/mes
-              </span>
-            )}
-          </div>
+            <span className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[10px] text-textSecondary">
+              {distanceLabel && (
+                <span className="inline-flex items-center gap-1 font-semibold text-primary">
+                  <Navigation className="h-3.5 w-3.5" strokeWidth={1.75} aria-hidden />
+                  {distanceLabel}
+                </span>
+              )}
+              {meta.map(({ icon: Icon, label }, i) => (
+                <span key={i} className="inline-flex items-center gap-1">
+                  <Icon className="h-3.5 w-3.5 text-primary" strokeWidth={1.75} aria-hidden />
+                  {label}
+                </span>
+              ))}
+            </span>
+          </span>
+        </button>
 
-          <div className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[10px] text-textSecondary">
-            {distanceLabel && (
-              <span className="inline-flex items-center gap-1 font-semibold text-primary">
-                <Navigation className="h-3.5 w-3.5" strokeWidth={1.75} aria-hidden />
-                {distanceLabel}
-              </span>
-            )}
-            {meta.map(({ icon: Icon, label }, i) => (
-              <span key={i} className="inline-flex items-center gap-1">
-                <Icon className="h-3.5 w-3.5 text-primary" strokeWidth={1.75} aria-hidden />
-                {label}
-              </span>
-            ))}
-          </div>
-
-          {/* These two live in the mobile map drawer, which is the densest list
-              in the app and also the one worked entirely with a thumb. They were
-              18px tall; 36px plus the 4px gap clears the 40px comfort floor
-              without forcing the card itself taller. `touch-manipulation` drops
-              the 300ms double-tap wait so the tap feels immediate. */}
-          <div className="mt-1.5 grid grid-cols-2 gap-1.5">
-            <button
-              type="button"
-              onClick={onClick}
-              className="min-h-9 touch-manipulation rounded-md border border-line bg-white px-2 text-[11px] font-semibold text-textPrimary transition-colors hover:border-primary hover:text-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 active:bg-background"
-            >
-              Ver mapa
-            </button>
-            <button
-              type="button"
-              onClick={onOpenDetails}
-              className="min-h-9 touch-manipulation rounded-md bg-primary px-2 text-[11px] font-semibold text-white transition-colors hover:bg-primaryHover focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 active:bg-primaryHover"
-            >
-              Detalle
-            </button>
-          </div>
-        </div>
       </div>
     );
   }

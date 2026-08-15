@@ -221,7 +221,7 @@ export function usePropertyFilters({
   const [cardProperties, setCardProperties] = useState<Property[]>([]);
   const [owners, setOwners] = useState<Owner[]>([]);
   const [locations, setLocations] = useState<PropertyLocationGroup[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [cardsLoading, setCardsLoading] = useState(false);
   const [cardsLoadingMore, setCardsLoadingMore] = useState(false);
   const [cardsPage, setCardsPage] = useState(1);
@@ -349,26 +349,37 @@ export function usePropertyFilters({
   useEffect(() => {
     if (debounceRef.current) clearTimeout(debounceRef.current);
 
+    // Mark an uncached request as loading before the debounce starts. Empty
+    // states must only render after a completed response, never during the
+    // short interval between a camera change and the network request.
+    const pendingKey = mapRequestKey(filters, zoom);
+    const pendingCache = getOrCreateCache(resultCachesRef.current, pendingKey);
+    if (bounds && pendingCache.items.length === 0) setLoading(true);
+
     debounceRef.current = setTimeout(async () => {
       const key = mapRequestKey(filters, zoom);
       const cache = getOrCreateCache(resultCachesRef.current, key);
       const hasCachedResults = cache.items.length > 0;
 
-      // A different zoom bucket represents a different aggregation level.
-      // Do not keep drawing clusters from the previous level while its
-      // replacement is loading, since they move with the camera and look as if
-      // the clicked cluster was loaded twice.
+      // A different zoom bucket represents a different aggregation level. Use
+      // it immediately when cached; otherwise keep the previous level visible
+      // until the replacement arrives so the map never flashes empty.
       if (displayedMapKeyRef.current !== key) {
         displayedMapKeyRef.current = key;
-        setMapProperties(cache.items);
-        setMapCityGroups(cache.cityGroups);
-        setMapContext(cache.context);
+        if (hasCachedResults) {
+          setMapProperties(cache.items);
+          setMapCityGroups(cache.cityGroups);
+          setMapContext(cache.context);
+        } else {
+          setLoading(true);
+        }
       }
 
       if (!bounds) {
         setMapProperties(cache.items);
         setMapCityGroups(cache.cityGroups);
         setMapContext(cache.context);
+        setLoading(false);
         return;
       }
 
@@ -380,6 +391,7 @@ export function usePropertyFilters({
         if (cache.items.length) setMapProperties(cache.items);
         setMapCityGroups(cache.cityGroups);
         setMapContext(cache.context);
+        setLoading(false);
         return;
       }
 
@@ -406,7 +418,7 @@ export function usePropertyFilters({
           skipAuth: true,
           signal: controller.signal,
         });
-        if (res.ok) {
+        if (res.ok && abortRef.current === controller) {
           const data = await res.json();
           const list: MapPropertyItem[] = Array.isArray(data) ? data : data.items ?? data.results ?? [];
           const cityGroups: MapCityGroup[] = Array.isArray(data?.city_groups) ? data.city_groups : [];

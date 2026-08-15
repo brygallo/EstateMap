@@ -101,12 +101,16 @@ export default function PropertySidebar({
     [selectedProperty, userLocation]
   );
   const propertiesWithDistance = useMemo(
-    () =>
-      visibleProperties.map((property) => ({
+    () => {
+      const properties = selectedProperty && !visibleProperties.some((property) => property.id === selectedProperty.id)
+        ? [selectedProperty, ...visibleProperties]
+        : visibleProperties;
+      return properties.map((property) => ({
         property,
         distanceKm: getPropertyDistanceKm(distanceOrigin, property),
-      })),
-    [distanceOrigin, visibleProperties]
+      }));
+    },
+    [distanceOrigin, selectedProperty, visibleProperties]
   );
   const sortedProperties = useMemo(() => {
     const getNumber = (value: unknown) => {
@@ -119,26 +123,27 @@ export default function PropertySidebar({
       return Number.isFinite(value) ? value : 0;
     };
 
-    if (activeSortMode === 'price_asc') {
-      return [...propertiesWithDistance].sort((a, b) => getNumber(a.property.price) - getNumber(b.property.price));
-    }
-    if (activeSortMode === 'price_desc') {
-      return [...propertiesWithDistance].sort((a, b) => getNumber(b.property.price) - getNumber(a.property.price));
-    }
-    if (activeSortMode === 'area_desc') {
-      return [...propertiesWithDistance].sort((a, b) => getNumber(b.property.area) - getNumber(a.property.area));
-    }
-    if (activeSortMode === 'recent') {
-      return [...propertiesWithDistance].sort((a, b) => getDateValue(b.property) - getDateValue(a.property));
-    }
-    if (!distanceOrigin) return propertiesWithDistance;
-    return [...propertiesWithDistance].sort((a, b) => {
+    const compareSelectedFirst = (a: typeof propertiesWithDistance[number], b: typeof propertiesWithDistance[number]) => {
+      const selectedId = selectedProperty?.id;
+      if (selectedId == null) return 0;
+      if (a.property.id === selectedId) return -1;
+      if (b.property.id === selectedId) return 1;
+      return 0;
+    };
+    const compareByMode = (a: typeof propertiesWithDistance[number], b: typeof propertiesWithDistance[number]) => {
+      if (activeSortMode === 'price_asc') return getNumber(a.property.price) - getNumber(b.property.price);
+      if (activeSortMode === 'price_desc') return getNumber(b.property.price) - getNumber(a.property.price);
+      if (activeSortMode === 'area_desc') return getNumber(b.property.area) - getNumber(a.property.area);
+      if (activeSortMode === 'recent') return getDateValue(b.property) - getDateValue(a.property);
+      if (!distanceOrigin) return 0;
       if (a.distanceKm == null && b.distanceKm == null) return 0;
       if (a.distanceKm == null) return 1;
       if (b.distanceKm == null) return -1;
       return a.distanceKm - b.distanceKm;
-    });
-  }, [activeSortMode, distanceOrigin, propertiesWithDistance]);
+    };
+
+    return [...propertiesWithDistance].sort((a, b) => compareSelectedFirst(a, b) || compareByMode(a, b));
+  }, [activeSortMode, distanceOrigin, propertiesWithDistance, selectedProperty?.id]);
   const renderedProperties = sortedProperties.slice(0, visibleCardCount);
   const hiddenPropertiesCount = Math.max(sortedProperties.length - renderedProperties.length, 0);
   const showGroupNavigation = Boolean(mapContext && mapContext.group_level !== 'points');

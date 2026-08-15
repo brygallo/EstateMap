@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect, useMemo, useRef } from 'react';
-import Image from 'next/image';
 import {
   X,
   Share2,
@@ -25,6 +24,8 @@ import {
   Loader2,
   CheckCircle2,
   Archive,
+  CalendarDays,
+  TrendingDown,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import PropertyTitle from '@/components/PropertyTitle';
@@ -32,6 +33,8 @@ import { trackEvent } from '@/lib/analytics';
 import { haptic } from '@/lib/haptics';
 import { useShareAction } from '@/hooks/useShareAction';
 import GalleryViewer from '@/components/ui/GalleryViewer';
+import PropertyImage from '@/components/ui/PropertyImage';
+import PropertyIntelligence from '@/components/PropertyIntelligence';
 import { PhoneReveal } from '@/components/PropertyContactActions';
 import RevealableDescription from '@/components/RevealableDescription';
 import { ecuadorPhoneHref, normalizeEcuadorPhone } from '@/lib/phone';
@@ -133,9 +136,11 @@ interface PropertyModalProps {
   onViewOnMap?: () => void;
   /** Builds a share URL that can preserve the current map viewport and filters. */
   getContextualShareUrl?: () => string;
+  /** Renders only the content inside the shared mobile map panel. */
+  embeddedInMobilePanel?: boolean;
 }
 
-const PropertyModal = ({ property: initialProperty, isOpen, onClose, onViewOnMap, getContextualShareUrl }: PropertyModalProps) => {
+const PropertyModal = ({ property: initialProperty, isOpen, onClose, onViewOnMap, getContextualShareUrl, embeddedInMobilePanel = false }: PropertyModalProps) => {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [galleryOpen, setGalleryOpen] = useState(false);
   const shareAction = useShareAction();
@@ -274,7 +279,20 @@ const PropertyModal = ({ property: initialProperty, isOpen, onClose, onViewOnMap
   const sourceUrl =
     !isClosed && typeof property.source_url === 'string' ? property.source_url.trim() : '';
   const sourceAgency = typeof property.source_agency === 'string' ? property.source_agency.trim() : '';
-  const publishedDate = formatDate(property.created_at);
+  const publicationDate = property.is_imported
+    ? property.source_published_at || property.imported_at || property.created_at
+    : property.created_at;
+  const publishedDate = formatDate(publicationDate);
+  const publicationLabel = property.is_imported
+    ? (property.source_published_at ? 'Publicado originalmente el' : 'Detectado el')
+    : 'Publicado el';
+  const previousPriceValue = Number.parseFloat(String(property.previous_price ?? ''));
+  const currentPriceValue = Number.parseFloat(String(property.price ?? ''));
+  const hasPriceDrop = !isClosed
+    && Number.isFinite(previousPriceValue)
+    && Number.isFinite(currentPriceValue)
+    && previousPriceValue > currentPriceValue;
+  const priceChangedDate = hasPriceDrop ? formatDate(property.price_changed_at) : '';
   // Mensaje prellenado: el vendedor sabe que el contacto viene de la plataforma, con la URL del anuncio.
   const whatsappPropertyUrl =
     typeof window !== 'undefined' ? `${window.location.origin}/propiedad/${property.id}` : sourceUrl;
@@ -345,7 +363,7 @@ const PropertyModal = ({ property: initialProperty, isOpen, onClose, onViewOnMap
 
   const dismissSheet = () => {
     if (sheetDismissing) return;
-    if (window.innerWidth >= 1024 || window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    if (embeddedInMobilePanel || window.innerWidth >= 1024 || window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
       onClose();
       return;
     }
@@ -473,7 +491,7 @@ const PropertyModal = ({ property: initialProperty, isOpen, onClose, onViewOnMap
   return (
     <>
       {/* Scrim solo en móvil: cierra al tocar fuera sin tapar el mapa en desktop. */}
-      <div
+      {!embeddedInMobilePanel && <div
         className="fixed inset-x-0 bottom-0 top-[var(--app-header-height)] z-backdrop bg-black/40 lg:hidden"
         onClick={dismissSheet}
         style={{
@@ -481,7 +499,7 @@ const PropertyModal = ({ property: initialProperty, isOpen, onClose, onViewOnMap
           transition: sheetDragOffset !== 0 ? 'none' : 'opacity 240ms ease-out',
         }}
         aria-hidden="true"
-      />
+      />}
       <div
         ref={panelRef}
         tabIndex={-1}
@@ -489,10 +507,12 @@ const PropertyModal = ({ property: initialProperty, isOpen, onClose, onViewOnMap
         aria-modal={isMobileViewport ? true : undefined}
         aria-label={`Detalle de ${property.title || 'propiedad'}`}
         className={cn(
-          'fixed inset-x-0 bottom-0 z-panel outline-none animate-panelIn will-change-transform lg:relative lg:inset-auto lg:z-0 lg:h-full lg:w-[26rem] lg:flex-shrink-0 lg:transform-none',
-          sheetExpanded ? 'mobile-sheet-expanded' : 'mobile-sheet-compact'
+          embeddedInMobilePanel
+            ? 'absolute inset-0 h-full w-full outline-none'
+            : 'fixed inset-x-0 bottom-0 z-panel outline-none animate-panelIn will-change-transform lg:relative lg:inset-auto lg:z-0 lg:h-full lg:w-[26rem] lg:flex-shrink-0 lg:transform-none',
+          !embeddedInMobilePanel && (sheetExpanded ? 'mobile-sheet-expanded' : 'mobile-sheet-compact')
         )}
-        style={{
+        style={embeddedInMobilePanel ? undefined : {
           transform: sheetDismissing ? 'translateY(105%)' : `translateY(${sheetDragOffset}px)`,
           transition: sheetDragOffset !== 0 ? 'none' : 'transform 240ms cubic-bezier(0.22, 1, 0.36, 1)',
         }}
@@ -501,10 +521,12 @@ const PropertyModal = ({ property: initialProperty, isOpen, onClose, onViewOnMap
       <div
         className={cn(
           'property-detail-panel relative overflow-hidden rounded-t-modal border border-line bg-background shadow-cardHover transition-[height] duration-300 ease-out lg:h-full lg:rounded-none lg:border-0 lg:border-l lg:border-line lg:shadow-none',
-          sheetExpanded ? 'h-[calc(100dvh-var(--app-header-height))]' : 'h-[48dvh] min-h-[360px]'
+          embeddedInMobilePanel
+            ? 'h-full rounded-none border-0 shadow-none'
+            : sheetExpanded ? 'h-[calc(100dvh-var(--app-header-height))]' : 'h-[48dvh] min-h-[360px]'
         )}
       >
-        <button
+        {!embeddedInMobilePanel && <button
           type="button"
           onClick={() => sheetExpanded ? collapseSheet() : setSheetExpanded(true)}
           onTouchStart={handleSheetTouchStart}
@@ -515,7 +537,7 @@ const PropertyModal = ({ property: initialProperty, isOpen, onClose, onViewOnMap
           aria-label={sheetExpanded ? 'Contraer ficha' : 'Expandir ficha'}
         >
           <span className="h-1 w-8 rounded-full bg-line" aria-hidden />
-        </button>
+        </button>}
         <div className="flex h-full flex-col">
           {/* Share Button. On a phone this opens the OS sheet — WhatsApp is
               where a property link actually gets sent in Ecuador — and only
@@ -552,20 +574,21 @@ const PropertyModal = ({ property: initialProperty, isOpen, onClose, onViewOnMap
           {/* Scrollable Content */}
           <div
             ref={sheetScrollRef}
+            data-mobile-panel-scroll
             // Deliberately NOT `touch-pan-y`: touch-action intersects down the
             // tree, so pinning this container to the vertical axis would kill
             // the photo strip's horizontal scroll no matter what the strip
             // declares. The sheet gesture does not need it — its handlers
             // already ignore anything that is not clearly vertical.
             className="min-h-0 flex-1 overflow-y-auto overscroll-contain pb-24 pt-7 lg:max-h-none lg:pb-0 lg:pt-0"
-            onTouchStart={handleSheetTouchStart}
-            onTouchMove={handleSheetTouchMove}
-            onTouchEnd={handleSheetTouchEnd}
-            onTouchCancel={cancelSheetGesture}
+            onTouchStart={embeddedInMobilePanel ? undefined : handleSheetTouchStart}
+            onTouchMove={embeddedInMobilePanel ? undefined : handleSheetTouchMove}
+            onTouchEnd={embeddedInMobilePanel ? undefined : handleSheetTouchEnd}
+            onTouchCancel={embeddedInMobilePanel ? undefined : cancelSheetGesture}
           >
             {/* Image Gallery Section */}
             {activeImage ? (
-              <div className="property-detail-gallery group relative h-48 bg-slate-900 sm:h-56 lg:h-64">
+              <div className="property-detail-gallery group relative h-48 bg-muted sm:h-56 lg:h-64">
                 {/* A native scroll-snap strip rather than a JS swipe. The
                     browser supplies momentum, rubber-banding at the ends and
                     interruptible scrolling; the previous handler only measured
@@ -587,7 +610,7 @@ const PropertyModal = ({ property: initialProperty, isOpen, onClose, onViewOnMap
                       key={`${img.image}-${idx}`}
                       className="relative h-full w-full flex-none snap-center snap-always"
                     >
-                      <Image
+                      <PropertyImage
                         src={img.image}
                         alt={idx === 0 ? property.title : `${property.title} — imagen ${idx + 1}`}
                         fill
@@ -595,6 +618,7 @@ const PropertyModal = ({ property: initialProperty, isOpen, onClose, onViewOnMap
                         priority={idx === 0}
                         onClick={() => setGalleryOpen(true)}
                         className="cursor-pointer object-cover"
+                        wrapperClassName="absolute inset-0"
                       />
                     </div>
                   ))}
@@ -646,7 +670,14 @@ const PropertyModal = ({ property: initialProperty, isOpen, onClose, onViewOnMap
                           idx === safeImageIndex ? 'border-white scale-110' : 'border-transparent opacity-60 hover:opacity-100'
                         )}
                       >
-                        <Image src={img.image} alt="" fill sizes="48px" className="object-cover" />
+                        <PropertyImage
+                          src={img.image}
+                          alt=""
+                          fill
+                          sizes="48px"
+                          className="object-cover"
+                          wrapperClassName="absolute inset-0"
+                        />
                       </button>
                     ))}
                     {images.length > 5 && (
@@ -704,9 +735,12 @@ const PropertyModal = ({ property: initialProperty, isOpen, onClose, onViewOnMap
               {/* Header */}
               <div className="rounded-card border border-line bg-white p-3 shadow-card">
                 <div className="mb-2 flex items-start justify-between gap-2">
-                  <PropertyTitle as="h2" compact className="flex-1">
-                    {property.title || 'Propiedad'}
-                  </PropertyTitle>
+                  <div className="min-w-0 flex-1">
+                    <PropertyTitle as="h2" compact>{property.title || 'Propiedad'}</PropertyTitle>
+                    <p className="mt-1 text-xs font-medium text-primary">
+                      {getPropertyTypeLabel(property.property_type)}
+                    </p>
+                  </div>
                   <span className={cn('badge flex-shrink-0', getListingStatusBadgeClass(property))}>
                     {getListingStatusLabel(property)}
                   </span>
@@ -728,6 +762,13 @@ const PropertyModal = ({ property: initialProperty, isOpen, onClose, onViewOnMap
                     </span>
                   )}
                 </div>
+                {hasPriceDrop && (
+                  <div className="mb-2 flex items-center gap-1.5 text-xs font-semibold text-secondary">
+                    <TrendingDown className="h-4 w-4" strokeWidth={2} aria-hidden />
+                    Bajó desde {formatPrice(previousPriceValue)}
+                    {priceChangedDate ? ` el ${priceChangedDate}` : ''}
+                  </div>
+                )}
 
                 {/* Location */}
                 {(property.address || property.city) && (
@@ -835,6 +876,8 @@ const PropertyModal = ({ property: initialProperty, isOpen, onClose, onViewOnMap
               </div>
               )}
 
+              {!isClosed && <PropertyIntelligence propertyId={property.id} compact />}
+
               {/* Datos de publicacion y fuente */}
               <div className="rounded-card border border-line bg-white p-3 shadow-card">
                 <h3 className="mb-2 text-sm font-semibold text-textPrimary">Publicación y contacto</h3>
@@ -853,6 +896,12 @@ const PropertyModal = ({ property: initialProperty, isOpen, onClose, onViewOnMap
                 </div>
 
                 <div className="space-y-1.5 text-xs text-textSecondary">
+                  {publishedDate && (
+                    <div className="flex items-center gap-2">
+                      <CalendarDays className="h-4 w-4 flex-shrink-0 text-primary" strokeWidth={1.75} aria-hidden />
+                      <span>{publicationLabel} {publishedDate}</span>
+                    </div>
+                  )}
                   {contactPhone && (
                     <div className="flex items-center gap-2">
                       <Phone className="h-4 w-4 flex-shrink-0 text-primary" strokeWidth={1.75} aria-hidden />

@@ -1,9 +1,24 @@
 import type { Property } from '@/lib/types';
 
-export function getClusterTargetZoom(groupLevel?: string | null): number {
+export function getClusterTargetZoom(groupLevel?: string | null, hasNamedCities = true): number {
   if (groupLevel === 'country') return 6;
-  if (groupLevel === 'province') return 8;
+  if (groupLevel === 'province' && hasNamedCities) return 8;
   return 12;
+}
+
+export function getClusterTargetCenter(
+  groupLevel: string | null | undefined,
+  inventoryCenter: [number, number],
+  territorialAnchor: [number, number],
+  hasNamedCities = true
+): [number, number] {
+  return groupLevel === 'city' || (groupLevel === 'province' && !hasNamedCities)
+    ? inventoryCenter
+    : territorialAnchor;
+}
+
+export function getMarkerRevealDelay(index: number): number {
+  return Math.min(Math.max(0, Math.floor(index)) * 22, 264);
 }
 
 /**

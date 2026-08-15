@@ -1,0 +1,41 @@
+version: 1
+domain: map-interaction
+title: Prioridad interactiva entre polígonos y pines
+status: proposed
+summary: >-
+  Toda la superficie de un polígono abre el detalle de su propiedad, mientras
+  los pines permanecen visual e interactivamente por encima.
+
+rules:
+  - id: MINT-001
+    name: Pulsar cualquier punto de un polígono abre su propiedad
+    status: proposed
+    summary: >-
+      El relleno completo de cada polígono publicado es una superficie
+      interactiva. Al pulsarlo se abre la misma card de detalle que abre su pin.
+    cases:
+      - name: Pulsación dentro del relleno y lejos del borde
+        expected: se abre el detalle de la propiedad del polígono
+      - name: Pulsación sobre la línea del polígono
+        expected: se abre el mismo detalle
+    tests:
+      unit: true
+
+  - id: MINT-002
+    name: Los pines tienen prioridad sobre polígonos superpuestos
+    status: proposed
+    summary: >-
+      Los polígonos se dibujan y consultan por debajo de los pines. Cuando un
+      pin coincide con uno o varios polígonos, pulsar esa posición abre siempre
+      la propiedad del pin. La superposición entre polígonos no bloquea ningún
+      pin y el orden de consulta elige de forma determinista el polígono visible
+      superior cuando no existe un pin bajo la pulsación.
+    cases:
+      - name: Pin situado dentro de un polígono de otra propiedad
+        expected: se abre la propiedad del pin
+      - name: Dos polígonos intersectados sin pin bajo la pulsación
+        expected: se abre el polígono visible superior
+      - name: Varios polígonos intersectados con un pin bajo la pulsación
+        expected: se abre la propiedad del pin
+    tests:
+      unit: true
