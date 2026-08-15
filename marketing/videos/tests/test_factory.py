@@ -11,11 +11,33 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 import catalog
 import factory
+import extensions
 import planner
 import quality
+import review_tools
 import subtitles
 import tts
 import voice
+import workflow
+
+
+class SharedAgentContractTests(unittest.TestCase):
+    """Claude, Codex and the planner must load the same video council contract."""
+
+    ROOT = Path(__file__).resolve().parents[1]
+
+    def test_claude_and_codex_reference_the_same_contract_version(self):
+        marker = "CONTRACT: VIDEO_COUNCIL_V1"
+        for filename in ("CLAUDE.md", "AGENTS.md", "council.md"):
+            self.assertIn(marker, (self.ROOT / filename).read_text(encoding="utf-8"), filename)
+
+    def test_the_planner_loads_every_shared_contract(self):
+        required = {"CLAUDE.md", "AGENTS.md", "council.md", "animation-standard.md"}
+        self.assertTrue(required.issubset(set(planner.CONTEXT_FILES)))
+
+    def test_codex_is_explicitly_bound_to_the_full_video_contract(self):
+        contract = (self.ROOT / "AGENTS.md").read_text(encoding="utf-8")
+        self.assertIn("`CLAUDE.md` es normativo también para Codex", contract)
 
 
 def plan(**overrides):
@@ -149,6 +171,25 @@ class PaidVoiceCacheTests(unittest.TestCase):
 
 
 class DraftVersusFinalVoiceTests(unittest.TestCase):
+    def test_header_only_audio_is_rejected_before_cache_reuse(self):
+        """SPEC:VFACT-012"""
+        with tempfile.TemporaryDirectory() as temporary:
+            clip = Path(temporary) / "broken.mp3"
+            clip.write_bytes(b"ID3")
+            with unittest.mock.patch.object(tts.media, "probe_duration", side_effect=RuntimeError("invalid")):
+                self.assertFalse(tts.AudioClipValidator.is_valid(clip))
+
+    def test_macos_voice_cleans_an_invalid_aiff(self):
+        """SPEC:VFACT-012"""
+        with tempfile.TemporaryDirectory() as temporary:
+            target = Path(temporary) / "voice.mp3"
+            provider = tts.MacOSVoice()
+            with unittest.mock.patch.object(tts.media, "run"):
+                with unittest.mock.patch.object(tts.AudioClipValidator, "require", side_effect=RuntimeError("silent")):
+                    with self.assertRaises(RuntimeError):
+                        provider.synthesize([tts.Clip("Hola", target)])
+            self.assertFalse(target.with_suffix(".aiff").exists())
+
     """Iterating on a script is free; only an explicit master is bought."""
 
     def test_the_draft_voice_is_free(self):
@@ -160,6 +201,65 @@ class DraftVersusFinalVoiceTests(unittest.TestCase):
 
     def test_a_final_master_uses_the_paid_voice(self):
         self.assertTrue(tts.final().paid)
+
+    def test_a_named_profile_resolves_its_provider_and_settings(self):
+        provider = tts.build("draft-dora")
+        self.assertEqual(provider.name, "kokoro")
+        self.assertEqual(provider.profile_id, "draft-dora")
+        self.assertEqual(provider.settings()["voice"], "ef_dora")
+
+    def test_a_paid_profile_cannot_be_used_for_a_draft(self):
+        with self.assertRaises(RuntimeError):
+            tts.select("final-main", final_master=False)
+
+    def test_the_old_provider_variable_still_picks_the_draft_voice(self):
+        """`DRAFT_TTS_PROVIDER=macos` is the documented Kokoro fallback and has to keep working."""
+        with unittest.mock.patch.dict(os.environ, {"DRAFT_TTS_PROVIDER": "macos"}):
+            os.environ.pop("DRAFT_VOICE_PROFILE", None)
+            provider = tts.select(None, final_master=False)
+        self.assertEqual(provider.name, "macos")
+        self.assertEqual(provider.profile_id, "draft-paulina")
+
+    def test_the_old_variable_does_not_downgrade_a_matching_profile(self):
+        """`DRAFT_TTS_PROVIDER=kokoro` names the provider the default already uses."""
+        with unittest.mock.patch.dict(os.environ, {"DRAFT_TTS_PROVIDER": "kokoro"}):
+            os.environ.pop("DRAFT_VOICE_PROFILE", None)
+            self.assertEqual(tts.select(None, final_master=False).profile_id, "draft-dora")
+
+    def test_the_new_variable_wins_over_the_old_one(self):
+        with unittest.mock.patch.dict(os.environ, {
+            "DRAFT_TTS_PROVIDER": "macos",
+            "DRAFT_VOICE_PROFILE": "draft-dora",
+        }):
+            self.assertEqual(tts.select(None, final_master=False).profile_id, "draft-dora")
+
+    def test_a_plan_profile_wins_over_both_variables(self):
+        with unittest.mock.patch.dict(os.environ, {
+            "DRAFT_TTS_PROVIDER": "macos",
+            "DRAFT_VOICE_PROFILE": "draft-paulina",
+        }):
+            self.assertEqual(tts.select("draft-dora", final_master=False).profile_id, "draft-dora")
+
+    def test_every_scene_uses_the_video_profile(self):
+        candidate = plan(voice_profile="draft-dora")
+        candidate["scenes"][1]["voice_profile"] = "draft-paulina"
+        providers = factory.scene_providers(candidate, final_master=False)
+        self.assertEqual({provider.profile_id for provider in providers}, {"draft-dora"})
+
+    def test_a_cli_profile_override_applies_to_every_scene(self):
+        candidate = plan(voice_profile="draft-dora")
+        candidate["scenes"][1]["voice_profile"] = "draft-paulina"
+        providers = factory.scene_providers(candidate, final_master=False, override="draft-paulina")
+        self.assertEqual({provider.profile_id for provider in providers}, {"draft-paulina"})
+
+    def test_a_final_voice_lock_rejects_another_profile(self):
+        with tempfile.TemporaryDirectory() as directory:
+            target = Path(directory)
+            first = tts.build("voice-01")
+            factory.enforce_voice_lock(target, first)
+            factory.enforce_voice_lock(target, first)
+            with self.assertRaises(RuntimeError):
+                factory.enforce_voice_lock(target, tts.build("voice-02"))
 
     def test_a_final_master_without_a_key_stops_before_rendering(self):
         with unittest.mock.patch.dict(os.environ, {"ELEVENLABS_VOICE_ID": "voice-abc"}):
@@ -241,6 +341,19 @@ class LintTests(unittest.TestCase):
 
     def test_a_sound_plan_passes(self):
         self.assertTrue(self.lint(plan())["passed"])
+
+    def test_an_invented_voice_profile_is_caught_before_approval(self):
+        report = self.lint(plan(voice_profile="voz-que-no-existe"))
+        self.assertFalse(report["passed"])
+        self.assertTrue(any(item["rule"] == "voice_profile_unknown" for item in report["findings"]))
+
+    def test_a_known_voice_profile_passes(self):
+        self.assertTrue(self.lint(plan(voice_profile="draft-dora"))["passed"])
+
+    def test_a_paid_voice_profile_warns_that_drafts_refuse_it(self):
+        report = self.lint(plan(voice_profile="final-main"))
+        self.assertTrue(report["passed"])
+        self.assertTrue(any(item["rule"] == "voice_profile_paid" for item in report["findings"]))
 
     def test_a_headline_longer_than_four_words_fails(self):
         broken = plan()
@@ -411,6 +524,10 @@ class AnimationRegistryTests(unittest.TestCase):
 
         self.assertTrue(quality.PRODUCT_ASSETS <= set(renderer.SIMULATIONS))
 
+    def test_listing_gallery_freezes_after_the_fourth_photo(self):
+        source = (Path(__file__).resolve().parents[1] / "remotion/src/simulations.tsx").read_text(encoding="utf-8")
+        self.assertIn("const shotPhase = shotClock >= 4 ? 1", source)
+
 
 class SubtitleTests(unittest.TestCase):
     def test_cues_are_offset_by_the_scenes_before_them(self):
@@ -443,6 +560,174 @@ class CatalogTests(unittest.TestCase):
 
     def test_package_names_are_ascii_and_readable(self):
         self.assertEqual(factory.slug("Kit social después de publicar", 3), "kit-social-despues")
+
+
+class VideoWorkflowTests(unittest.TestCase):
+    def test_two_renders_cannot_own_the_same_video(self):
+        """SPEC:VFACT-013"""
+        with tempfile.TemporaryDirectory() as temporary:
+            directory = Path(temporary)
+            with workflow.RenderLock(directory):
+                with self.assertRaises(RuntimeError):
+                    with workflow.RenderLock(directory):
+                        self.fail("A second render acquired the same video")
+
+    def test_an_explicit_denial_is_not_a_forbidden_claim(self):
+        statement = "Un mapa no dice si una zona es rentable."
+        self.assertTrue(workflow.ForbiddenClaimPolicy.is_explicitly_negated(statement, "rentable"))
+        claims = quality.check_claims({"narration": statement, "verification_notes": []})
+        self.assertNotIn("forbidden_claim", {finding["rule"] for finding in claims})
+
+    def test_published_and_learned_states_cannot_regress(self):
+        """SPEC:VFACT-001 SPEC:VFACT-004"""
+        for state in ("published", "learned"):
+            item = {"state": state}
+            with unittest.mock.patch.object(catalog, "save"):
+                with self.assertRaises(RuntimeError):
+                    catalog.update(item, {"videos": [item]}, "reviewed")
+            self.assertEqual(item["state"], state)
+
+    def test_results_contract_requires_a_declared_numeric_metric(self):
+        """SPEC:VFACT-002"""
+        with tempfile.TemporaryDirectory() as temporary:
+            path = Path(temporary) / "results.csv"
+            path.write_text(
+                ",".join(workflow.ResultsTable.FIELDS) + "\n"
+                "tiktok,2026-08-14T12:00:00-05:00,24,500,300,100,20,10,4,3,1,views_3s,iterate,Test another hook\n",
+                encoding="utf-8",
+            )
+            rows = workflow.ResultsTable.read(path)
+        self.assertEqual(workflow.ResultsTable.total(rows, "views_3s"), 300)
+
+    def test_publication_sync_is_idempotent_and_preserves_learned(self):
+        """SPEC:VFACT-003 SPEC:VFACT-008"""
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            source = root / "sync.json"
+            source.write_text(json.dumps([{
+                "video": "video-001", "platform": "tiktok",
+                "published_at": "2026-08-14T12:00:00-05:00", "url": "https://example.test/1",
+            }]), encoding="utf-8")
+            item = {"id": "video-001", "state": "learned"}
+            state = {"version": 1, "videos": [item]}
+            synchronizer = extensions.PublicationSynchronizer(root)
+            with unittest.mock.patch.object(catalog, "load", return_value=state):
+                with unittest.mock.patch.object(catalog, "save"):
+                    first = synchronizer.execute(source)
+                    second = synchronizer.execute(source)
+        self.assertEqual(first["updated"], ["video-001"])
+        self.assertEqual(second["updated"], ["video-001"])
+        self.assertEqual(item["state"], "learned")
+
+    def test_experiment_needs_two_arms_with_enough_views(self):
+        """SPEC:VFACT-010"""
+        entries = [
+            {"video": "video-001", "value": 40, "views": 120},
+            {"video": "video-002", "value": 30, "views": 80},
+        ]
+        decision = workflow.ExperimentDecision.build(entries, "views_3s", 100)
+        self.assertEqual(decision["status"], "inconclusive")
+        entries[1]["views"] = 120
+        decision = workflow.ExperimentDecision.build(entries, "views_3s", 100)
+        self.assertEqual(decision["winner"], "video-001")
+
+    def test_long_education_is_not_mislabeled_as_a_story(self):
+        """SPEC:VFACT-011"""
+        self.assertEqual(
+            workflow.EditorialFormat.classify({"pillar": "Educación inmobiliaria"}, 80),
+            "education",
+        )
+
+    def test_registered_asset_cannot_be_described_as_missing(self):
+        """SPEC:VFACT-009"""
+        sample = plan(verification_notes=["sim:mapa todavía no existe"])
+        findings = workflow.PlanConsistencyAudit.findings(sample, {"sim:mapa"})
+        self.assertEqual(findings[0]["rule"], "asset_note_consistency")
+
+
+class ReviewWorkflowTests(unittest.TestCase):
+    def test_reapproval_metadata_comes_from_the_current_plan(self):
+        """SPEC:VFACT-004"""
+        sample = plan(title="Current title", pillar="Educación inmobiliaria")
+        metadata = workflow.PlanCatalogMetadata.build(sample, 27)
+        self.assertEqual(metadata["title"], "Current title")
+        self.assertEqual(metadata["pillar"], "Educación inmobiliaria")
+        self.assertEqual(metadata["hook"], sample["scenes"][0]["voice"])
+
+    def test_a_corrected_reviewed_draft_can_be_reapproved(self):
+        """SPEC:VFACT-004"""
+        workflow.ApprovalPolicy.require_approvable("reviewed")
+
+    def test_a_published_video_cannot_be_reapproved(self):
+        """SPEC:VFACT-004"""
+        with self.assertRaises(RuntimeError):
+            workflow.ApprovalPolicy.require_approvable("published")
+
+    def test_text_gate_does_not_claim_eighteen_pixels_meets_a_twenty_two_pixel_floor(self):
+        """SPEC:VFACT-005"""
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            source = root / "remotion/src"
+            source.mkdir(parents=True)
+            (source / "scene.tsx").write_text("fontSize: 22", encoding="utf-8")
+            (source / "simulations.tsx").write_text("fontSize: 18", encoding="utf-8")
+            report = review_tools.TextLegibilityAudit(root).report()
+        self.assertTrue(report["passed"])
+        self.assertEqual(report["editorial_minimum_literal_px"], 22)
+        self.assertEqual(report["simulation_minimum_literal_px"], 18)
+        self.assertEqual(report["simulation_small_literal_count"], 1)
+
+    def test_global_cta_is_not_reported_as_an_empty_scene(self):
+        """SPEC:VFACT-005"""
+        sample = plan(scenes=[{
+            "purpose": "cta",
+            "duration": 4,
+            "asset": None,
+            "visual_direction": "Global branded outro",
+        }])
+        timings = [{"render_seconds": 4.0}]
+        self.assertEqual(review_tools.MotionAudit.warnings(sample, timings), [])
+
+    def test_long_non_cta_scene_without_an_asset_is_reported(self):
+        """SPEC:VFACT-005"""
+        sample = plan(scenes=[{
+            "purpose": "prueba",
+            "duration": 4,
+            "asset": None,
+            "visual_direction": "No visual resource",
+        }])
+        timings = [{"render_seconds": 4.0}]
+        self.assertEqual(
+            review_tools.MotionAudit.warnings(sample, timings),
+            ["Scene 1 has no visual asset for 4.0 seconds"],
+        )
+
+    def test_preview_writes_outside_canonical_exports(self):
+        """SPEC:VFACT-006"""
+        with tempfile.TemporaryDirectory() as temporary:
+            directory = Path(temporary) / "video-001"
+            directory.mkdir()
+            catalog.write_json(directory / "render-props.json", {
+                "scenes": [{"durationInFrames": 30}], "musicFile": None, "showSafeAreas": False,
+            })
+            renderer = extensions.ScenePreviewRenderer()
+            with unittest.mock.patch.object(catalog, "find", return_value=(directory, {"id": "video-001"}, {})):
+                with unittest.mock.patch.object(extensions.renderer, "render_video", side_effect=lambda props, target: target):
+                    target = renderer.execute("video-001", 1, True)
+        self.assertEqual(target.parts[-2:], ("previews", "scene-01.mp4"))
+
+    def test_review_page_has_video_controls_and_a_skip_link(self):
+        """SPEC:VFACT-005"""
+        with tempfile.TemporaryDirectory() as temporary:
+            directory = Path(temporary)
+            page = review_tools.ReviewPage(directory).write(
+                {"id": "video-001", "state": "reviewed"},
+                {"title": "Review me"},
+                {"measured_duration_seconds": 20, "checks": {"master": True}},
+            )
+            content = page.read_text(encoding="utf-8")
+        self.assertIn("<video controls", content)
+        self.assertIn('class="skip"', content)
 
 
 class SafeAreaTests(unittest.TestCase):
@@ -486,6 +771,94 @@ class SafeAreaTests(unittest.TestCase):
                 self.side_crop(),
                 "the domain pill and the brand tile must not be anchored inside the side crop",
             )
+
+
+class CoverArtTests(unittest.TestCase):
+    """A cover_art with no branch in cover.tsx falls back silently.
+
+    Video-010 asked for "terreno" and shipped a house, a price and a lot area
+    on the thumbnail of a piece about flats. Nothing downstream could catch it:
+    the fallback is a legitimate path for plans that name no illustration.
+    """
+
+    def test_the_implemented_branches_are_readable(self):
+        self.assertIn("departamento", quality.cover_art_branches())
+
+    def test_an_unimplemented_cover_art_is_an_error(self):
+        findings = quality.check_cover_art({"cover_art": "no-existe-esta-portada"})
+        self.assertEqual([f["rule"] for f in findings], ["cover_art_missing"])
+
+    def test_an_implemented_cover_art_passes(self):
+        self.assertEqual(quality.check_cover_art({"cover_art": "departamento"}), [])
+
+    def test_no_cover_art_is_allowed(self):
+        self.assertEqual(quality.check_cover_art({}), [])
+
+
+class AtomicPhraseTests(unittest.TestCase):
+    """The brand is the last thing every piece says; it cannot break in half.
+
+    Video-010 ended on "Encuentra tu futuro hogar en Geo" / "Propiedades
+    Ecuador", which reads as two companies for as long as the caption holds.
+    """
+
+    def caption_holding(self, text: str, phrase: str) -> str:
+        for caption in voice.split_captions(text):
+            if phrase.split()[0] in caption:
+                return caption
+        self.fail(f"no caption contains {phrase}")
+
+    def test_brand_survives_the_closing_line(self):
+        held = self.caption_holding(
+            "Ve a verlo sabiendo qué preguntar. Encuentra tu futuro hogar en Geo Propiedades Ecuador.",
+            "Geo Propiedades Ecuador",
+        )
+        self.assertIn("Geo Propiedades Ecuador", held)
+
+    def test_brand_survives_mid_sentence(self):
+        held = self.caption_holding(
+            "Eso sí lo ves antes de ir: en Geo Propiedades Ecuador las propiedades están sobre el mapa.",
+            "Geo Propiedades Ecuador",
+        )
+        self.assertIn("Geo Propiedades Ecuador", held)
+
+    def test_the_binder_never_reaches_a_caption(self):
+        captions = voice.split_captions("Encuentra tu futuro hogar en Geo Propiedades Ecuador.")
+        self.assertFalse(any(voice.BINDER in caption for caption in captions))
+
+
+class ExampleFigureTests(unittest.TestCase):
+    """An example price teaches a calculation; a market figure claims a fact.
+
+    The council once blocked `sim:dividir` for painting $122.000 and 400 m2,
+    reading "no animation invents figures" as a ban on every number. The rule
+    bans claims about the market or the platform, and explicitly allows the
+    price and features of one illustrative listing. These checks pin the line
+    the linter has always drawn so the prose cannot drift away from it again.
+    """
+
+    def claims(self, narration: str, notes: list[str] | None = None) -> list[str]:
+        plan = {"narration": narration, "verification_notes": notes or []}
+        return [f["rule"] for f in quality.check_claims(plan)]
+
+    def test_example_price_and_area_are_not_findings(self):
+        rules = self.claims("Divide el precio para los metros: $122.000 entre 400 m2.")
+        self.assertNotIn("unsourced_number", rules)
+
+    def test_market_percentage_needs_a_source(self):
+        rules = self.claims("El 3,4 % de las casas de Quito se vende en un mes.")
+        self.assertIn("unsourced_number", rules)
+
+    def test_platform_count_needs_a_source(self):
+        rules = self.claims("Hay 8719 propiedades publicadas en Quito.")
+        self.assertIn("unsourced_number", rules)
+
+    def test_a_sourced_count_passes(self):
+        rules = self.claims(
+            "Hay 8719 propiedades publicadas en Quito.",
+            ["8719 propiedades: conteo del panel el 2026-08-14"],
+        )
+        self.assertNotIn("unsourced_number", rules)
 
 
 if __name__ == "__main__":

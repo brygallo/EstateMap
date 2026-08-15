@@ -1,5 +1,42 @@
 # Historial de cambios
 
+## 2026-08-14 — Primera revisión del consejo sobre una pieza real
+
+- El video-010 pasó por los cinco roles. Los tres carriles coincidieron en que el argumento era nuevo y la superficie no: portada, escena 5, escena 6 y escena 7 venían de la pieza de terrenos y demostraban otro sujeto.
+- Animaciones nuevas: `sim:metros-utiles` separa metros útiles de áreas comunes y recalcula el precio por metro con magnitudes de departamento; `sim:entorno-mapa` muestra el marcador del edificio sobre el callejero base sin rotular vías ni trazar rutas, porque el mapa del portal no tiene capa de anotación ni ruteo. `sim:edificio` se rehízo como recorrido con cuatro paradas y respuesta causal.
+- `sim:gravamenes` recibe una prop de sujeto con el texto del 009 por defecto, y `sim:gravamenes-departamento` la envuelve para esta pieza.
+- `cover.tsx` gana el ramal `departamento` y rotula `EJEMPLO` a 22 px también en la tarjeta genérica; el título medía contra 900 px una columna de 840, que era la causa real de las cuatro líneas.
+- `quality.py` valida `cover_art` contra los ramales implementados en `cover.tsx` (`cover_art_missing`), y `voice.py` impide que «Geo Propiedades Ecuador» se parta entre dos subtítulos.
+
+## 2026-08-14 — El dato de ejemplo queda escrito como permitido
+
+- `CLAUDE.md` parte la regla en dos: la cifra que afirma un hecho de mercado o de plataforma exige fuente fechada; el precio, el área y las características de una propiedad ilustrativa se inventan a propósito para enseñar un cálculo, con rótulo `EJEMPLO` en pantalla, magnitudes verosímiles para el sujeto de la pieza y una voz que no las convierta en dato.
+- `animation-standard.md` lo incorpora al apartado de producto e interfaces, y `council.md` lo lleva al rol que revisa la verdad comercial: un ejemplo marcado no se reporta como hallazgo, y una magnitud imposible es un defecto de coherencia, no de invención.
+- `council.md` añade que un hallazgo sobre lo que se ve en pantalla se comprueba antes en un fotograma o en el componente; afirmar «no se dice en pantalla» sin mirarlo es un hallazgo inválido que el editor devuelve.
+- `tests/test_factory.py` fija la frontera en la máquina: el linter avisa de porcentajes y de conteos de propiedades sin nota, y no del precio ni del área de un ejemplo.
+- Ese test destapó un defecto de `NUMBER_CLAIM` en `quality.py`: el `\b` final impedía que «3,4 %» coincidiera nunca, porque después de `%` no hay frontera de palabra. El porcentaje era la única cifra que la máquina no podía ver. Ahora el límite solo se exige a las unidades escritas.
+
+## 2026-08-14 — Consejo multiagente compartido
+
+- Nuevo `council.md`: editor jefe, verificación de producto/negocio, estrategia/guion, dirección visual/voz/audio y control de calidad independiente, con dueños, entregables, bloqueos y cinco puertas.
+- Nuevo `marketing/videos/AGENTS.md`: Codex debe leer el mismo `CLAUDE.md`, sistema creativo y estándar de animación que Claude. Ambos documentos comparten `CONTRACT: VIDEO_COUNCIL_V1` y el planner carga los dos.
+- La paralelización se limita a tres carriles independientes; un editor integra un único plan y Calidad revisa sin modificarlo. Gasto, firma, publicación y pauta siguen siendo decisiones humanas separadas.
+
+## 2026-08-14 — Catálogo multivoz
+
+- Nuevo `system/voice-profiles.json` con perfiles estables, defaults de borrador y máster, descripciones y ajustes por proveedor.
+- `plan.json` admite un único `voice_profile` para el narrador completo. `render` y `voice-cost` aceptan `--voice-profile` como override global.
+- El render rechaza perfiles pagados en borradores y registra el perfil exacto en `production.json`. La primera generación final escribe `voice-lock.json`; otra voz o ajustes distintos se rechazan antes del gasto.
+- Se conserva compatibilidad con las variables antiguas `DRAFT_TTS_PROVIDER` y `FINAL_TTS_PROVIDER` en la ruta que usa el render: nombran un proveedor y se traducen al perfil de esa etapa que ya habla con él, así que `DRAFT_TTS_PROVIDER=macos` sigue cayendo en `draft-paulina`. Las nuevas `DRAFT_VOICE_PROFILE` y `FINAL_VOICE_PROFILE` tienen prioridad.
+- El linter valida el `voice_profile` del plan contra el catálogo: un identificador inventado es error antes de aprobar, y un perfil de pago avisa de que los borradores lo rechazan.
+- Se registran siete perfiles finales de ElevenLabs (`voice-01` a `voice-07`) con los identificadores entregados. Sus etiquetas creativas quedan pendientes de audición para no inventar características de voz.
+
+## 2026-08-14 — Estándar profesional de animación
+
+- Se incorpora `animation-standard.md` como contrato global para toda composición: definición de acabado, jerarquía visual, gramática de movimiento, ritmo, cámara, profundidad, recreaciones del producto, efectos, transiciones, arquitectura Remotion, rendimiento, accesibilidad y revisión.
+- El planner carga el estándar y exige que cada dirección visual describa estado inicial, acción, respuesta y prueba resuelta; ya no acepta placeholders o entradas decorativas como demostración.
+- `creative-system.md` y el README enlazan el estándar para que crear una animación nueva implique cumplirlo, registrarla en ambos motores y probarla en duraciones mínima, nominal y larga.
+
 ## 2026-08-14 — Animaciones de propietario y portada elegida por el plan
 
 - Cuatro animaciones nuevas para la pieza de oferta: `sim:vender` (el terreno y la casa con su letrero), `sim:cero-comision` (lo que cuesta publicar, y lo que no es), `sim:anuncio-en-mapa` (el anuncio viaja del formulario al mapa y se dibuja la Forma del terreno) y `sim:te-contactan` (entra la llamada del interesado y después su mensaje).

@@ -15,6 +15,7 @@ library/video-001/
 ├── assets/
 │   ├── input/            # capturas, clips y fotos aprobados
 │   └── generated/        # recursos creados para esta pieza
+├── voice-lock.json       # voz final inmutable después de autorizar el gasto
 ├── audio/
 │   └── voice-NN.mp3      # locución medida de cada escena
 ├── exports/
@@ -24,9 +25,18 @@ library/video-001/
 ├── cover-props.json      # props de la portada
 ├── production.json       # tiempos reales y configuración usada
 ├── review.json           # controles automáticos y firma humana
+├── review/               # consola HTML y fotogramas críticos por escena
+├── previews/             # renders parciales que no alteran el máster
+├── experiment-decision.json # decisión determinista de una familia de variantes
 ├── learning.json         # evidencia usada por el ciclo de aprendizaje
 └── results.csv           # se rellena al publicar y medir
 ```
+
+Cuando el consejo multiagente participa, sus entregables viven bajo
+`council/`: `product-proof.md`, `strategy-script.md`,
+`production-design.md`, `editorial-decision.md` y `quality-verdict.md`. Son
+evidencia de proceso; no reemplazan `plan.json`, `approval.json`, `review.json`
+ni los demás registros autoritativos de la máquina.
 
 Ya no existen `scenes/`, `video-NNN.md`, `memory/video-catalog.jsonl` ni `memory/run-log.jsonl`. El catálogo canónico es `memory/catalog.json`.
 
@@ -51,6 +61,7 @@ Ya no existen `scenes/`, `video-NNN.md`, `memory/video-catalog.jsonl` ni `memory
 ### 3. Guion
 
 - Voz exacta completa, lista para TTS.
+- Perfil de voz opcional para todo el video. Todas sus escenas comparten el mismo narrador.
 - Gancho hablado en los primeros dos segundos.
 - Rótulos exactos; no simples indicaciones.
 - Portada de 3–6 palabras.
@@ -71,7 +82,8 @@ Los tiempos definitivos no salen del plan: se miden del audio sintetizado y qued
 
 ### 5. Producción
 
-- Proveedor de voz, voz y velocidad usados (`production.json`).
+- Proveedor, perfil, voz y velocidad usados (`production.json`). El primer
+  máster final bloquea su firma en `voice-lock.json`; cambiarla exige una pieza nueva.
 - Música: por defecto ninguna; si se añade, debe ser gratuita para uso comercial y guardar título, autor, fuente y licencia en el sidecar. Nunca música pagada.
 - Lista de recursos y permiso de uso; los clips que muestran una propiedad concreta exigen nota de autorización del anunciante.
 - Especificación técnica heredada de `creative-system.md`.
@@ -85,8 +97,9 @@ Los tiempos definitivos no salen del plan: se miden del audio sintetizado y qued
 
 ### 7. Resultado y aprendizaje
 
-- Plataforma, fecha, orgánico/pagado y ventana de medición.
-- Alcance, vistas 2/3/6 s, finalizaciones, guardados, compartidos, clics y conversiones cuando estén disponibles.
+- Plataforma, fecha y ventana de medición.
+- Vistas, vistas a 3 s, finalizaciones, guardados, compartidos, visitas al perfil, clics y conversiones cuando estén disponibles.
+- Una métrica primaria explícita para interpretar el resultado.
 - Decisión: escalar, iterar, reutilizar, retirar.
 - Aprendizaje que alimenta `memory/lessons.json`.
 

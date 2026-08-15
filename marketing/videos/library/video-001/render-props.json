@@ -5,60 +5,60 @@
   "url": "geopropiedadesecuador.com",
   "brandTile": "brand/aents-brand-tile-1024.png",
   "kicker": "Publica tu propiedad gratis",
-  "musicFile": "jobs/video-001/audio/music.mp3",
+  "musicFile": null,
   "showSafeAreas": false,
   "scenes": [
     {
       "purpose": "gancho",
-      "durationInFrames": 80,
+      "durationInFrames": 77,
       "headline": "¿Comprarías a ciegas?",
       "captions": [
         {
           "text": "¿Comprarías una casa",
           "start": 0.0,
-          "end": 1.057,
+          "end": 1.005,
           "words": [
             {
               "text": "¿Comprarías",
               "start": 0.0,
-              "end": 0.581
+              "end": 0.553
             },
             {
               "text": "una",
-              "start": 0.581,
-              "end": 0.793
+              "start": 0.553,
+              "end": 0.754
             },
             {
               "text": "casa",
-              "start": 0.793,
-              "end": 1.057
+              "start": 0.754,
+              "end": 1.005
             }
           ]
         },
         {
           "text": "sin saber dónde queda?",
-          "start": 1.057,
-          "end": 2.22,
+          "start": 1.005,
+          "end": 2.112,
           "words": [
             {
               "text": "sin",
               "start": 0.0,
-              "end": 0.211
+              "end": 0.201
             },
             {
               "text": "saber",
-              "start": 0.211,
-              "end": 0.528
+              "start": 0.201,
+              "end": 0.503
             },
             {
               "text": "dónde",
-              "start": 0.528,
-              "end": 0.846
+              "start": 0.503,
+              "end": 0.804
             },
             {
               "text": "queda?",
-              "start": 0.846,
-              "end": 1.163
+              "start": 0.804,
+              "end": 1.106
             }
           ]
         }
@@ -70,65 +70,65 @@
       "photo": null,
       "voiceFile": "jobs/video-001/audio/voice-01.mp3",
       "assetStartInFrames": 0,
-      "assetTotalInFrames": 80,
+      "assetTotalInFrames": 77,
       "accent": "#22C55E"
     },
     {
       "purpose": "prueba",
-      "durationInFrames": 113,
+      "durationInFrames": 109,
       "headline": "Ubicación exacta",
       "captions": [
         {
           "text": "En Geo Propiedades Ecuador sabes",
           "start": 0.0,
-          "end": 1.949,
+          "end": 1.873,
           "words": [
             {
               "text": "En",
               "start": 0.0,
-              "end": 0.177
+              "end": 0.17
             },
             {
               "text": "Geo",
-              "start": 0.177,
-              "end": 0.413
+              "start": 0.17,
+              "end": 0.397
             },
             {
               "text": "Propiedades",
-              "start": 0.413,
-              "end": 1.122
+              "start": 0.397,
+              "end": 1.079
             },
             {
               "text": "Ecuador",
-              "start": 1.122,
-              "end": 1.595
+              "start": 1.079,
+              "end": 1.533
             },
             {
               "text": "sabes",
-              "start": 1.595,
-              "end": 1.949
+              "start": 1.533,
+              "end": 1.873
             }
           ]
         },
         {
           "text": "exactamente dónde está.",
-          "start": 1.949,
-          "end": 3.307,
+          "start": 1.873,
+          "end": 3.179,
           "words": [
             {
               "text": "exactamente",
               "start": 0.0,
-              "end": 0.709
+              "end": 0.681
             },
             {
               "text": "dónde",
-              "start": 0.709,
-              "end": 1.063
+              "start": 0.681,
+              "end": 1.022
             },
             {
               "text": "está.",
-              "start": 1.063,
-              "end": 1.358
+              "start": 1.022,
+              "end": 1.306
             }
           ]
         }
@@ -140,40 +140,40 @@
       "photo": null,
       "voiceFile": "jobs/video-001/audio/voice-02.mp3",
       "assetStartInFrames": 0,
-      "assetTotalInFrames": 113,
-      "accent": "#14B8A6"
+      "assetTotalInFrames": 109,
+      "accent": "#6B5CF6"
     },
     {
       "purpose": "prueba",
-      "durationInFrames": 104,
+      "durationInFrames": 105,
       "headline": "La zona que necesitas",
       "captions": [
         {
           "text": "Elige la ciudad",
           "start": 0.0,
-          "end": 0.951,
+          "end": 0.955,
           "words": [
             {
               "text": "Elige",
               "start": 0.0,
-              "end": 0.357
+              "end": 0.358
             },
             {
               "text": "la",
-              "start": 0.357,
-              "end": 0.535
+              "start": 0.358,
+              "end": 0.537
             },
             {
               "text": "ciudad",
-              "start": 0.535,
-              "end": 0.951
+              "start": 0.537,
+              "end": 0.955
             }
           ]
         },
         {
           "text": "y acércate a la zona",
-          "start": 0.951,
-          "end": 2.2,
+          "start": 0.955,
+          "end": 2.208,
           "words": [
             {
               "text": "y",
@@ -183,39 +183,39 @@
             {
               "text": "acércate",
               "start": 0.119,
-              "end": 0.654
+              "end": 0.656
             },
             {
               "text": "a",
-              "start": 0.654,
-              "end": 0.773
+              "start": 0.656,
+              "end": 0.776
             },
             {
               "text": "la",
-              "start": 0.773,
-              "end": 0.951
+              "start": 0.776,
+              "end": 0.955
             },
             {
               "text": "zona",
-              "start": 0.951,
-              "end": 1.248
+              "start": 0.955,
+              "end": 1.253
             }
           ]
         },
         {
           "text": "que necesitas.",
-          "start": 2.2,
-          "end": 3.032,
+          "start": 2.208,
+          "end": 3.043,
           "words": [
             {
               "text": "que",
               "start": 0.0,
-              "end": 0.238
+              "end": 0.239
             },
             {
               "text": "necesitas.",
-              "start": 0.238,
-              "end": 0.832
+              "start": 0.239,
+              "end": 0.835
             }
           ]
         }
@@ -227,65 +227,65 @@
       "photo": null,
       "voiceFile": "jobs/video-001/audio/voice-03.mp3",
       "assetStartInFrames": 0,
-      "assetTotalInFrames": 104,
-      "accent": "#6B5CF6"
+      "assetTotalInFrames": 105,
+      "accent": "#14B8A6"
     },
     {
       "purpose": "resultado",
-      "durationInFrames": 98,
+      "durationInFrames": 100,
       "headline": "Fotos, precio y más",
       "captions": [
         {
           "text": "Mira fotos,",
           "start": 0.0,
-          "end": 0.658,
+          "end": 0.676,
           "words": [
             {
               "text": "Mira",
               "start": 0.0,
-              "end": 0.299
+              "end": 0.307
             },
             {
               "text": "fotos,",
-              "start": 0.299,
-              "end": 0.658
+              "start": 0.307,
+              "end": 0.676
             }
           ]
         },
         {
           "text": "precio y detalles de cada propiedad.",
-          "start": 0.658,
-          "end": 2.813,
+          "start": 0.676,
+          "end": 2.888,
           "words": [
             {
               "text": "precio",
               "start": 0.0,
-              "end": 0.419
+              "end": 0.43
             },
             {
               "text": "y",
-              "start": 0.419,
-              "end": 0.539
+              "start": 0.43,
+              "end": 0.553
             },
             {
               "text": "detalles",
-              "start": 0.539,
-              "end": 1.077
+              "start": 0.553,
+              "end": 1.106
             },
             {
               "text": "de",
-              "start": 1.077,
-              "end": 1.257
+              "start": 1.106,
+              "end": 1.29
             },
             {
               "text": "cada",
-              "start": 1.257,
-              "end": 1.556
+              "start": 1.29,
+              "end": 1.597
             },
             {
               "text": "propiedad.",
-              "start": 1.556,
-              "end": 2.155
+              "start": 1.597,
+              "end": 2.212
             }
           ]
         }
@@ -297,38 +297,38 @@
       "photo": null,
       "voiceFile": "jobs/video-001/audio/voice-04.mp3",
       "assetStartInFrames": 0,
-      "assetTotalInFrames": 98,
+      "assetTotalInFrames": 100,
       "accent": "#A78BFA"
     },
     {
       "purpose": "cta",
-      "durationInFrames": 54,
+      "durationInFrames": 56,
       "headline": "Empieza aquí",
       "captions": [
         {
           "text": "Encuentra tu futuro hogar.",
           "start": 0.0,
-          "end": 1.357,
+          "end": 1.412,
           "words": [
             {
               "text": "Encuentra",
               "start": 0.0,
-              "end": 0.522
+              "end": 0.543
             },
             {
               "text": "tu",
-              "start": 0.522,
-              "end": 0.678
+              "start": 0.543,
+              "end": 0.706
             },
             {
               "text": "futuro",
-              "start": 0.678,
-              "end": 1.044
+              "start": 0.706,
+              "end": 1.086
             },
             {
               "text": "hogar.",
-              "start": 1.044,
-              "end": 1.357
+              "start": 1.086,
+              "end": 1.412
             }
           ]
         }
@@ -340,7 +340,7 @@
       "photo": null,
       "voiceFile": "jobs/video-001/audio/voice-05.mp3",
       "assetStartInFrames": 0,
-      "assetTotalInFrames": 54,
+      "assetTotalInFrames": 56,
       "accent": "#22C55E"
     }
   ]

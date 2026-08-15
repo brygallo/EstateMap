@@ -28,7 +28,11 @@ const Stage: React.FC<{scene: Scene; frame: number; offset: number}> = ({scene, 
   });
   const Simulation = scene.assetType === 'simulation' && scene.asset ? SIMULATIONS[scene.asset] : undefined;
   const body = Simulation
-    ? <Simulation frame={frame + scene.assetStartInFrames} total={scene.assetTotalInFrames} accent={palette.green} photo={scene.photo ?? null} />
+    // The simulation carries the accent of its own scene. Pinning it to the
+    // brand green left the card painted green while the headline, the captions
+    // and the progress bar alternated violet, teal and lavender: two accents
+    // fighting inside the same frame.
+    ? <Simulation frame={frame + scene.assetStartInFrames} total={scene.assetTotalInFrames} accent={scene.accent} photo={scene.photo ?? null} />
     : !scene.asset || !scene.assetType
       ? <MapField accent={scene.accent} frame={frame + offset} />
       : scene.assetType === 'video'

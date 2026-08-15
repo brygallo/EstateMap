@@ -5,13 +5,13 @@
   "url": "geopropiedadesecuador.com",
   "brandTile": "brand/aents-brand-tile-1024.png",
   "kicker": null,
-  "musicFile": null,
+  "musicFile": "jobs/video-010/audio/music.mp3",
   "showSafeAreas": false,
   "scenes": [
     {
       "purpose": "gancho",
       "durationInFrames": 286,
-      "headline": "Compras el edificio",
+      "headline": "Parte de un edificio",
       "captions": [
         {
           "text": "Cuando compras un departamento no",
@@ -401,7 +401,7 @@
         {
           "text": "la escritura,",
           "start": 8.648,
-          "end": 9.368,
+          "end": 9.369,
           "words": [
             {
               "text": "la",
@@ -417,7 +417,7 @@
         },
         {
           "text": "no que te los hayan asignado",
-          "start": 9.368,
+          "start": 9.369,
           "end": 10.976,
           "words": [
             {
@@ -508,11 +508,11 @@
             {
               "text": "la",
               "start": 1.074,
-              "end": 1.244
+              "end": 1.243
             },
             {
               "text": "alícuota",
-              "start": 1.244,
+              "start": 1.243,
               "end": 1.752
             }
           ]
@@ -520,7 +520,7 @@
         {
           "text": "y qué cubre.",
           "start": 1.752,
-          "end": 2.431,
+          "end": 2.43,
           "words": [
             {
               "text": "y",
@@ -541,8 +541,8 @@
         },
         {
           "text": "Es un gasto de todos",
-          "start": 2.431,
-          "end": 3.618,
+          "start": 2.43,
+          "end": 3.617,
           "words": [
             {
               "text": "Es",
@@ -573,8 +573,8 @@
         },
         {
           "text": "los meses,",
-          "start": 3.618,
-          "end": 4.183,
+          "start": 3.617,
+          "end": 4.182,
           "words": [
             {
               "text": "los",
@@ -590,8 +590,8 @@
         },
         {
           "text": "igual que la luz.",
-          "start": 4.183,
-          "end": 5.144,
+          "start": 4.182,
+          "end": 5.143,
           "words": [
             {
               "text": "igual",
@@ -617,8 +617,8 @@
         },
         {
           "text": "Y pide por escrito,",
-          "start": 5.144,
-          "end": 6.218,
+          "start": 5.143,
+          "end": 6.217,
           "words": [
             {
               "text": "Y",
@@ -644,7 +644,7 @@
         },
         {
           "text": "firmado por la administración,",
-          "start": 6.218,
+          "start": 6.217,
           "end": 7.913,
           "words": [
             {
@@ -672,7 +672,7 @@
         {
           "text": "que el vendedor esté al día.",
           "start": 7.913,
-          "end": 9.496,
+          "end": 9.495,
           "words": [
             {
               "text": "que",
@@ -697,11 +697,11 @@
             {
               "text": "al",
               "start": 1.187,
-              "end": 1.357
+              "end": 1.356
             },
             {
               "text": "día.",
-              "start": 1.357,
+              "start": 1.356,
               "end": 1.583
             }
           ]
@@ -719,170 +719,163 @@
     },
     {
       "purpose": "prueba",
-      "durationInFrames": 384,
-      "headline": "Actas y derramas",
+      "durationInFrames": 395,
+      "headline": "Actas y cuotas extra",
       "captions": [
         {
           "text": "Pide las actas de las últimas asambleas.",
           "start": 0.0,
-          "end": 2.248,
+          "end": 2.239,
           "words": [
             {
               "text": "Pide",
               "start": 0.0,
-              "end": 0.281
+              "end": 0.28
             },
             {
               "text": "las",
-              "start": 0.281,
-              "end": 0.506
+              "start": 0.28,
+              "end": 0.504
             },
             {
               "text": "actas",
-              "start": 0.506,
-              "end": 0.843
+              "start": 0.504,
+              "end": 0.84
             },
             {
               "text": "de",
-              "start": 0.843,
-              "end": 1.012
+              "start": 0.84,
+              "end": 1.008
             },
             {
               "text": "las",
-              "start": 1.012,
-              "end": 1.236
+              "start": 1.008,
+              "end": 1.231
             },
             {
               "text": "últimas",
-              "start": 1.236,
-              "end": 1.686
+              "start": 1.231,
+              "end": 1.679
             },
             {
               "text": "asambleas.",
-              "start": 1.686,
-              "end": 2.248
+              "start": 1.679,
+              "end": 2.239
             }
           ]
         },
         {
-          "text": "Ahí aparecen las derramas:",
-          "start": 2.248,
-          "end": 3.709,
+          "text": "Ahí aparecen las cuotas extraordinarias:",
+          "start": 2.239,
+          "end": 4.478,
           "words": [
             {
               "text": "Ahí",
               "start": 0.0,
-              "end": 0.225
+              "end": 0.224
             },
             {
               "text": "aparecen",
-              "start": 0.225,
-              "end": 0.731
+              "start": 0.224,
+              "end": 0.728
             },
             {
               "text": "las",
-              "start": 0.731,
-              "end": 0.955
-            },
-            {
-              "text": "derramas:",
-              "start": 0.955,
-              "end": 1.461
-            }
-          ]
-        },
-        {
-          "text": "las cuotas extras",
-          "start": 3.709,
-          "end": 4.72,
-          "words": [
-            {
-              "text": "las",
-              "start": 0.0,
-              "end": 0.225
+              "start": 0.728,
+              "end": 0.952
             },
             {
               "text": "cuotas",
-              "start": 0.225,
-              "end": 0.618
+              "start": 0.952,
+              "end": 1.343
             },
             {
-              "text": "extras",
-              "start": 0.618,
-              "end": 1.012
+              "text": "extraordinarias:",
+              "start": 1.343,
+              "end": 2.239
             }
           ]
         },
         {
-          "text": "que se aprueban",
-          "start": 4.72,
-          "end": 5.619,
+          "text": "los cobros que se aprueban",
+          "start": 4.478,
+          "end": 5.989,
           "words": [
             {
-              "text": "que",
+              "text": "los",
               "start": 0.0,
-              "end": 0.225
+              "end": 0.224
+            },
+            {
+              "text": "cobros",
+              "start": 0.224,
+              "end": 0.616
+            },
+            {
+              "text": "que",
+              "start": 0.616,
+              "end": 0.84
             },
             {
               "text": "se",
-              "start": 0.225,
-              "end": 0.393
+              "start": 0.84,
+              "end": 1.008
             },
             {
               "text": "aprueban",
-              "start": 0.393,
-              "end": 0.899
+              "start": 1.008,
+              "end": 1.511
             }
           ]
         },
         {
           "text": "cuando hay algo grande",
-          "start": 5.619,
-          "end": 6.912,
+          "start": 5.989,
+          "end": 7.276,
           "words": [
             {
               "text": "cuando",
               "start": 0.0,
-              "end": 0.393
+              "end": 0.392
             },
             {
               "text": "hay",
-              "start": 0.393,
-              "end": 0.618
+              "start": 0.392,
+              "end": 0.616
             },
             {
               "text": "algo",
-              "start": 0.618,
-              "end": 0.899
+              "start": 0.616,
+              "end": 0.896
             },
             {
               "text": "grande",
-              "start": 0.899,
-              "end": 1.292
+              "start": 0.896,
+              "end": 1.287
             }
           ]
         },
         {
           "text": "que arreglar.",
-          "start": 6.912,
-          "end": 7.642,
+          "start": 7.276,
+          "end": 8.004,
           "words": [
             {
               "text": "que",
               "start": 0.0,
-              "end": 0.225
+              "end": 0.224
             },
             {
               "text": "arreglar.",
-              "start": 0.225,
-              "end": 0.731
+              "start": 0.224,
+              "end": 0.728
             }
           ]
         },
         {
           "text": "Y camina el edificio:",
-          "start": 7.642,
-          "end": 8.823,
+          "start": 8.004,
+          "end": 9.18,
           "words": [
             {
               "text": "Y",
@@ -892,100 +885,100 @@
             {
               "text": "camina",
               "start": 0.112,
-              "end": 0.506
+              "end": 0.504
             },
             {
               "text": "el",
-              "start": 0.506,
-              "end": 0.674
+              "start": 0.504,
+              "end": 0.672
             },
             {
               "text": "edificio:",
-              "start": 0.674,
-              "end": 1.18
+              "start": 0.672,
+              "end": 1.175
             }
           ]
         },
         {
           "text": "el ascensor,",
-          "start": 8.823,
-          "end": 9.497,
+          "start": 9.18,
+          "end": 9.851,
           "words": [
             {
               "text": "el",
               "start": 0.0,
-              "end": 0.169
+              "end": 0.168
             },
             {
               "text": "ascensor,",
-              "start": 0.169,
-              "end": 0.674
+              "start": 0.168,
+              "end": 0.672
             }
           ]
         },
         {
           "text": "la bomba,",
-          "start": 9.497,
-          "end": 10.003,
+          "start": 9.851,
+          "end": 10.355,
           "words": [
             {
               "text": "la",
               "start": 0.0,
-              "end": 0.169
+              "end": 0.168
             },
             {
               "text": "bomba,",
-              "start": 0.169,
-              "end": 0.506
+              "start": 0.168,
+              "end": 0.504
             }
           ]
         },
         {
           "text": "la cisterna,",
-          "start": 10.003,
-          "end": 10.677,
+          "start": 10.355,
+          "end": 11.027,
           "words": [
             {
               "text": "la",
               "start": 0.0,
-              "end": 0.169
+              "end": 0.168
             },
             {
               "text": "cisterna,",
-              "start": 0.169,
-              "end": 0.674
+              "start": 0.168,
+              "end": 0.672
             }
           ]
         },
         {
           "text": "las humedades en los pasillos.",
-          "start": 10.677,
-          "end": 12.363,
+          "start": 11.027,
+          "end": 12.706,
           "words": [
             {
               "text": "las",
               "start": 0.0,
-              "end": 0.225
+              "end": 0.224
             },
             {
               "text": "humedades",
-              "start": 0.225,
-              "end": 0.787
+              "start": 0.224,
+              "end": 0.784
             },
             {
               "text": "en",
-              "start": 0.787,
-              "end": 0.955
+              "start": 0.784,
+              "end": 0.952
             },
             {
               "text": "los",
-              "start": 0.955,
-              "end": 1.18
+              "start": 0.952,
+              "end": 1.175
             },
             {
               "text": "pasillos.",
-              "start": 1.18,
-              "end": 1.686
+              "start": 1.175,
+              "end": 1.679
             }
           ]
         }
@@ -997,7 +990,7 @@
       "photo": null,
       "voiceFile": "jobs/video-010/audio/voice-04.mp3",
       "assetStartInFrames": 0,
-      "assetTotalInFrames": 384,
+      "assetTotalInFrames": 395,
       "accent": "#A78BFA"
     },
     {
@@ -1202,7 +1195,7 @@
       ],
       "visualDirection": "Se usa la animación aprobada del certificado de gravámenes y el predial leídos uno a uno, con su ritmo de lectura línea por línea. Mantener el panel de producto de la serie, su elevación y su tipografía; la cámara acompaña la lectura con un desplazamiento lento y el remate es el último documento cerrándose.",
       "transition": "cut",
-      "asset": "sim:gravamenes",
+      "asset": "sim:gravamenes-departamento",
       "assetType": "simulation",
       "photo": null,
       "voiceFile": "jobs/video-010/audio/voice-05.mp3",
@@ -1456,7 +1449,7 @@
       ],
       "visualDirection": "Se usa la animación aprobada de dividir precio para el área y comparar dos propiedades de distinto tamaño. Los valores son claramente ilustrativos y no se presentan como precios de mercado. El acento de la escena está en qué área entra en la división: la superficie útil se destaca frente al área que incluiría espacios comunes.",
       "transition": "cut",
-      "asset": "sim:dividir",
+      "asset": "sim:metros-utiles",
       "assetType": "simulation",
       "photo": null,
       "voiceFile": "jobs/video-010/audio/voice-06.mp3",
@@ -1605,7 +1598,7 @@
             {
               "text": "Ecuador",
               "start": 1.079,
-              "end": 1.533
+              "end": 1.534
             }
           ]
         },
@@ -1730,7 +1723,7 @@
       ],
       "visualDirection": "Se usa la animación aprobada del entorno en el mapa: la vista baja a la zona, aparecen las vías y el acceso alrededor del inmueble. La marca entra aquí, con el dominio y el tile en el bloque superior desde y=205 y dentro del margen lateral de 120 px. Ninguna burbuja muestra cantidades de propiedades. La cámara termina asentada sobre la manzana del edificio.",
       "transition": "cut",
-      "asset": "sim:alrededor",
+      "asset": "sim:entorno-mapa",
       "assetType": "simulation",
       "photo": null,
       "voiceFile": "jobs/video-010/audio/voice-07.mp3",
@@ -1781,9 +1774,9 @@
           ]
         },
         {
-          "text": "Encuentra tu futuro hogar en Geo",
+          "text": "Encuentra tu futuro hogar",
           "start": 1.971,
-          "end": 3.885,
+          "end": 3.479,
           "words": [
             {
               "text": "Encuentra",
@@ -1804,33 +1797,33 @@
               "text": "hogar",
               "start": 1.16,
               "end": 1.508
-            },
-            {
-              "text": "en",
-              "start": 1.508,
-              "end": 1.681
-            },
-            {
-              "text": "Geo",
-              "start": 1.681,
-              "end": 1.913
             }
           ]
         },
         {
-          "text": "Propiedades Ecuador.",
-          "start": 3.885,
+          "text": "en Geo Propiedades Ecuador.",
+          "start": 3.479,
           "end": 5.044,
           "words": [
             {
-              "text": "Propiedades",
+              "text": "en",
               "start": 0.0,
-              "end": 0.696
+              "end": 0.174
+            },
+            {
+              "text": "Geo",
+              "start": 0.174,
+              "end": 0.406
+            },
+            {
+              "text": "Propiedades",
+              "start": 0.406,
+              "end": 1.102
             },
             {
               "text": "Ecuador.",
-              "start": 0.696,
-              "end": 1.16
+              "start": 1.102,
+              "end": 1.566
             }
           ]
         }

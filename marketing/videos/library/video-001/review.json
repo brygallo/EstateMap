@@ -1,22 +1,58 @@
 {
-  "reviewed_at": "2026-08-13T11:57:55.044678-05:00",
+  "reviewed_at": "2026-08-14T19:21:25.739221-05:00",
   "passed": true,
   "checks": {
     "vertical_1080x1920": true,
-    "duration_8_to_60_seconds": true,
+    "duration_8_to_120_seconds": true,
     "duration_close_to_target": true,
     "plan_lint_passed": true,
     "cover_exists": true,
     "subtitles_exist": true,
     "all_assets_resolve": true,
-    "approval_exists": true
+    "approval_exists": true,
+    "text_minimum_declared": true
   },
-  "measured_duration_seconds": 15.019,
+  "measured_duration_seconds": 14.933,
   "target_duration_seconds": 18.0,
-  "human_review": {
-    "signed_at": "2026-08-13T12:04:28.233156-05:00",
-    "signed_by": "bryan",
-    "notes": "Aprobado para publicar en TikTok y Facebook Reels"
-  },
-  "notes": ""
+  "human_review": null,
+  "notes": "",
+  "visual_review": {
+    "overlay_geometry_version": 1,
+    "critical_frames": [
+      {
+        "scene": 1,
+        "timestamp": 1.283,
+        "path": "frames/scene-01.jpg"
+      },
+      {
+        "scene": 2,
+        "timestamp": 4.383,
+        "path": "frames/scene-02.jpg"
+      },
+      {
+        "scene": 3,
+        "timestamp": 7.95,
+        "path": "frames/scene-03.jpg"
+      },
+      {
+        "scene": 4,
+        "timestamp": 11.367,
+        "path": "frames/scene-04.jpg"
+      },
+      {
+        "scene": 5,
+        "timestamp": 13.967,
+        "path": "frames/scene-05.jpg"
+      }
+    ],
+    "text": {
+      "declared_floor_px": 22,
+      "editorial_minimum_literal_px": 28,
+      "simulation_minimum_literal_px": 18,
+      "simulation_small_literal_count": 21,
+      "passed": true,
+      "note": "Simulation microcopy and dynamic fitted text are verified in the critical-frame contact sheet."
+    },
+    "warnings": []
+  }
 }

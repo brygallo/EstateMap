@@ -24,6 +24,7 @@ import media
 
 
 ROOT = Path(__file__).resolve().parent
+VOICE_PROFILES = ROOT / "system/voice-profiles.json"
 
 
 @dataclass(frozen=True)
@@ -57,6 +58,14 @@ class VoiceProvider:
     name = ""
     paid = False
 
+    def __init__(self, profile_id: str | None = None, profile_settings: dict[str, str] | None = None):
+        self.profile_id = profile_id or self.name
+        self.profile_settings = profile_settings or {}
+
+    def configured(self, key: str, environment: str, default: str = "") -> str:
+        """Resolve a profile value first, then an environment override."""
+        return str(self.profile_settings.get(key) or os.environ.get(environment, default))
+
     def settings(self) -> dict[str, str]:
         """Every knob that changes the audio, and nothing else."""
         raise NotImplementedError
@@ -64,7 +73,7 @@ class VoiceProvider:
     def signature(self) -> str:
         """The cache signature: same settings, same clips, no new spending."""
         parts = [f"{key}={value}" for key, value in sorted(self.settings().items())]
-        return "|".join([self.name, *parts])
+        return "|".join([self.name, f"profile={self.profile_id}", *parts])
 
     def speed(self) -> float:
         return float(self.settings().get("speed", "1.04"))
@@ -83,6 +92,26 @@ class VoiceProvider:
         raise NotImplementedError
 
 
+class AudioClipValidator:
+    """Reject header-only and corrupt audio before it enters the shared cache."""
+
+    MINIMUM_SECONDS = 0.08
+
+    @classmethod
+    def is_valid(cls, path: Path) -> bool:
+        if not path.is_file() or path.stat().st_size == 0:
+            return False
+        try:
+            return media.probe_duration(path) >= cls.MINIMUM_SECONDS
+        except (RuntimeError, ValueError):
+            return False
+
+    @classmethod
+    def require(cls, path: Path, provider: str) -> None:
+        if not cls.is_valid(path):
+            raise RuntimeError(f"{provider} produced no valid audio: {path}")
+
+
 class KokoroVoice(VoiceProvider):
     """Local open-weights Spanish speech. Free and unlimited, so drafts use it."""
 
@@ -90,8 +119,8 @@ class KokoroVoice(VoiceProvider):
 
     def settings(self) -> dict[str, str]:
         return {
-            "voice": os.environ.get("KOKORO_VOICE", "ef_dora"),
-            "speed": os.environ.get("KOKORO_SPEED", "1.04"),
+            "voice": self.configured("voice", "KOKORO_VOICE", "ef_dora"),
+            "speed": self.configured("speed", "KOKORO_SPEED", "1.04"),
         }
 
     def check_ready(self) -> None:
@@ -138,18 +167,22 @@ class MacOSVoice(VoiceProvider):
     name = "macos"
 
     def settings(self) -> dict[str, str]:
-        return {"voice": os.environ.get("LOCAL_VOICE", "Paulina")}
+        return {
+            "voice": self.configured("voice", "LOCAL_VOICE", "Paulina"),
+            "rate": self.configured("rate", "LOCAL_VOICE_RATE", "185"),
+        }
 
     def synthesize(self, clips: list[Clip]) -> None:
         voice = self.settings()["voice"]
         for clip in clips:
             aiff = clip.target.with_suffix(".aiff")
-            raw = clip.target.with_suffix(".raw.mp3")
-            media.run(["say", "-v", voice, "-r", "185", "-o", str(aiff), clip.text])
-            media.run(["ffmpeg", "-y", "-i", str(aiff), "-codec:a", "libmp3lame", "-q:a", "2", str(raw)])
-            media.trim_silence(raw, clip.target)
-            aiff.unlink(missing_ok=True)
-            raw.unlink(missing_ok=True)
+            try:
+                media.run(["say", "-v", voice, "-r", self.settings()["rate"], "-o", str(aiff), clip.text])
+                AudioClipValidator.require(aiff, f"macOS voice {voice}")
+                media.trim_silence(aiff, clip.target)
+                AudioClipValidator.require(clip.target, f"macOS voice {voice}")
+            finally:
+                aiff.unlink(missing_ok=True)
 
 
 class ElevenLabsVoice(VoiceProvider):
@@ -166,13 +199,17 @@ class ElevenLabsVoice(VoiceProvider):
 
     def settings(self) -> dict[str, str]:
         return {
-            "voice_id": os.environ.get("ELEVENLABS_VOICE_ID", ""),
-            "model_id": os.environ.get("ELEVENLABS_TTS_MODEL", "eleven_multilingual_v2"),
-            "output_format": os.environ.get("ELEVENLABS_OUTPUT_FORMAT", "mp3_44100_128"),
-            "stability": os.environ.get("ELEVENLABS_STABILITY", "0.62"),
-            "similarity_boost": os.environ.get("ELEVENLABS_SIMILARITY", "0.55"),
-            "speed": os.environ.get("ELEVENLABS_SPEED", "1.02"),
+            "voice_id": self._voice_id(),
+            "model_id": self.configured("model_id", "ELEVENLABS_TTS_MODEL", "eleven_multilingual_v2"),
+            "output_format": self.configured("output_format", "ELEVENLABS_OUTPUT_FORMAT", "mp3_44100_128"),
+            "stability": self.configured("stability", "ELEVENLABS_STABILITY", "0.62"),
+            "similarity_boost": self.configured("similarity_boost", "ELEVENLABS_SIMILARITY", "0.55"),
+            "speed": self.configured("speed", "ELEVENLABS_SPEED", "1.02"),
         }
+
+    def _voice_id(self) -> str:
+        environment = str(self.profile_settings.get("voice_id_env", "ELEVENLABS_VOICE_ID"))
+        return str(self.profile_settings.get("voice_id") or os.environ.get(environment, ""))
 
     def check_ready(self, require_key: bool = True) -> None:
         if not self.settings()["voice_id"]:
@@ -270,11 +307,61 @@ PROVIDERS: dict[str, type[VoiceProvider]] = {
 }
 
 
+def profile_catalog(path: Path = VOICE_PROFILES) -> dict:
+    if not path.exists():
+        return {"version": 1, "defaults": {"draft": "kokoro", "final": "elevenlabs"}, "profiles": {}}
+    data = json.loads(path.read_text(encoding="utf-8"))
+    if not isinstance(data.get("profiles"), dict) or not isinstance(data.get("defaults"), dict):
+        raise RuntimeError(f"Invalid voice profile catalog: {path}")
+    return data
+
+
 def build(name: str) -> VoiceProvider:
+    catalog = profile_catalog()
+    profile = catalog["profiles"].get(name)
+    provider_name = str(profile.get("provider")) if profile else name.lower()
     try:
-        return PROVIDERS[name.lower()]()
+        provider = PROVIDERS[provider_name]
     except KeyError:
-        raise RuntimeError(f"Unknown speech provider: {name}. Known: {', '.join(sorted(PROVIDERS))}") from None
+        known = sorted(set(PROVIDERS) | set(catalog["profiles"]))
+        raise RuntimeError(f"Unknown voice profile or provider: {name}. Known: {', '.join(known)}") from None
+    settings = dict(profile.get("settings") or {}) if profile else {}
+    return provider(profile_id=name, profile_settings=settings)
+
+
+def legacy_profile(name: str, stage: str, catalog: dict) -> str:
+    """Translate the pre-catalog `*_TTS_PROVIDER` variables into a profile id.
+
+    Those variables named a provider, not a profile, and `DRAFT_TTS_PROVIDER=macos`
+    is still the documented way to fall back when Kokoro is not installed. So a
+    bare provider name resolves to the profile of this stage that already speaks
+    with it, instead of bypassing the catalog and losing that profile's settings.
+    """
+    profiles = catalog["profiles"]
+    if name in profiles:
+        return name
+    preferred = catalog["defaults"].get(stage)
+    if profiles.get(preferred, {}).get("provider") == name:
+        return preferred
+    for profile_id, profile in profiles.items():
+        if profile.get("provider") == name:
+            return profile_id
+    return name
+
+
+def select(profile_id: str | None, final_master: bool) -> VoiceProvider:
+    """Resolve an explicit profile or the configured default for this render stage."""
+    catalog = profile_catalog()
+    stage = "final" if final_master else "draft"
+    selected = profile_id or os.environ.get(f"{stage.upper()}_VOICE_PROFILE")
+    legacy = os.environ.get(f"{stage.upper()}_TTS_PROVIDER")
+    if not selected and legacy:
+        selected = legacy_profile(legacy, stage, catalog)
+    selected = selected or catalog["defaults"][stage]
+    provider = build(selected)
+    if not final_master and provider.paid:
+        raise RuntimeError(f"Draft voice profile {selected} is paid; drafts must use a free provider")
+    return provider
 
 
 def draft() -> VoiceProvider:
@@ -284,9 +371,9 @@ def draft() -> VoiceProvider:
     those takes should cost credits — so this ignores whatever the paid settings
     say.
     """
-    return build(os.environ.get("DRAFT_TTS_PROVIDER", "kokoro"))
+    return select(None, final_master=False)
 
 
 def final() -> VoiceProvider:
     """The voice a master is bought with. Only an explicit request may ask."""
-    return build(os.environ.get("FINAL_TTS_PROVIDER", "elevenlabs"))
+    return select(None, final_master=True)

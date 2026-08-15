@@ -1,0 +1,73 @@
+{
+  "title": "Tres revisiones antes de decidir",
+  "audience": "comprador",
+  "funnel_stage": "consideración",
+  "objective": "Enseñar tres comprobaciones concretas antes de decidir por una propiedad.",
+  "conversion_event": "Guardado de la pieza o sesión de exploración del mapa desde el perfil.",
+  "pillar": "Educación inmobiliaria",
+  "series": "Revisa antes de decidir",
+  "concept": "Una secuencia educativa de tres comprobaciones: ubicación, documentos y medidas.",
+  "promise": "Vas a saber qué tres cosas revisar antes de decidir por una propiedad.",
+  "cta": "Encuentra tu futuro hogar",
+  "hypothesis": "Una lista numerada y demostrada paso a paso se entiende mejor que una explicación abstracta sobre los límites de la plataforma.",
+  "cover_text": "Revisa estas 3 cosas",
+  "cover_art": "decision",
+  "caption": "¿Te gustó una propiedad? Antes de decidir, revisa dónde queda, pide una revisión profesional de sus documentos y confirma sus medidas. En Geo Propiedades Ecuador puedes comparar fotos, precio y ubicación pública antes de contactar. Encuentra tu futuro hogar en geopropiedadesecuador.com #GeoPropiedadesEcuador #BienesRaicesEcuador #ComprarCasa",
+  "narration": "¿Te gustó una propiedad? No decidas solo por las fotos. Primero, revisa dónde queda y si la ubicación encaja con tu día a día. Segundo, pide a un profesional que revise escrituras y gravámenes. Tercero, confirma las medidas con el profesional correspondiente. En Geo Propiedades Ecuador comparas fotos, precio y ubicación pública antes de contactar. Encuentra tu futuro hogar.",
+  "voice_profile": "draft-dora",
+  "music": null,
+  "verification_notes": [
+    "La pieza enseña tres comprobaciones y no afirma seguridad, rentabilidad, plusvalía ni conveniencia de ninguna zona.",
+    "La ubicación se presenta como ubicación pública sobre el mapa y nunca como exactitud topográfica.",
+    "La revisión de escrituras, gravámenes y medidas se remite a los profesionales correspondientes; el video no da asesoría legal ni topográfica.",
+    "No se menciona ni insinúa el kit social, sus láminas, textos, QR, enlaces o métricas.",
+    "sim:ficha, sim:mapa, sim:gravamenes y sim:ubicacion-ficha están implementadas y se usan únicamente para ilustrar lo que la voz nombra."
+  ],
+  "scenes": [
+    {
+      "purpose": "gancho",
+      "duration": 4,
+      "voice": "¿Te gustó una propiedad? No decidas solo por las fotos.",
+      "on_screen_text": "La foto no basta",
+      "asset": "sim:ficha",
+      "visual_direction": "La ficha entra completa. El carrusel avanza hasta la cuarta foto y queda estable para mostrar que mirar fotos es apenas el comienzo.",
+      "transition": "cut"
+    },
+    {
+      "purpose": "prueba",
+      "duration": 6,
+      "voice": "Primero, revisa dónde queda y si la ubicación encaja con tu día a día.",
+      "on_screen_text": "1. Revisa ubicación",
+      "asset": "sim:mapa",
+      "visual_direction": "El mapa recorre ciudad, zona y pines, y termina asentado en la ubicación pública. No aparecen juicios ni sellos de aprobación sobre la zona.",
+      "transition": "cut"
+    },
+    {
+      "purpose": "prueba",
+      "duration": 7,
+      "voice": "Segundo, pide a un profesional que revise escrituras y gravámenes.",
+      "on_screen_text": "2. Revisa documentos",
+      "asset": "sim:gravamenes",
+      "visual_direction": "Los documentos se leen línea por línea. La animación no añade un sello de aprobación automática y deja clara la revisión profesional.",
+      "transition": "cut"
+    },
+    {
+      "purpose": "resultado",
+      "duration": 7,
+      "voice": "Tercero, confirma las medidas con el profesional correspondiente.",
+      "on_screen_text": "3. Confirma medidas",
+      "asset": "sim:ubicacion-ficha",
+      "visual_direction": "La ficha muestra la Forma del terreno y la ubicación declarada como datos que deben confirmarse, sin atribuir precisión topográfica.",
+      "transition": "cut"
+    },
+    {
+      "purpose": "cta",
+      "duration": 3,
+      "voice": "En Geo Propiedades Ecuador comparas fotos, precio y ubicación pública antes de contactar. Encuentra tu futuro hogar.",
+      "on_screen_text": "Compara antes",
+      "asset": null,
+      "visual_direction": "Cierre global aprobado con tile, dominio, CTA y firma de Aents. Entrada suave y estado final quieto para lectura.",
+      "transition": "fade"
+    }
+  ]
+}

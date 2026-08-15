@@ -51,6 +51,28 @@ TRAILING_BINDERS = GLUED_BEFORE_BREAK | {
 }
 
 
+# Names that must never be cut in half by a line break. The brand is the one
+# thing every piece ends on, and "…en Geo" / "Propiedades Ecuador" reads as two
+# different companies for the second the caption holds.
+ATOMIC_PHRASES = ("Geo Propiedades Ecuador",)
+# A non-breaking space would not do: str.split() treats it as whitespace, so
+# the words would come apart again. The word joiner is not whitespace.
+BINDER = "\u2060"
+
+
+def bind_atomic(text: str) -> str:
+    """Turn a protected name into a single token for the length rules."""
+    bound = text
+    for phrase in ATOMIC_PHRASES:
+        bound = re.sub(
+            re.escape(phrase).replace(r"\ ", r"\s+"),
+            lambda match: BINDER.join(match.group(0).split()),
+            bound,
+            flags=re.IGNORECASE,
+        )
+    return bound
+
+
 def split_clauses(text: str) -> list[str]:
     cleaned = " ".join(text.split())
     pieces = re.split(r"(?<=[.,;:!?…])\s+", cleaned)
@@ -105,9 +127,11 @@ def merge_fragments(groups: list[str]) -> list[str]:
 def split_captions(text: str) -> list[str]:
     """Split narration into karaoke-sized breath groups."""
     groups: list[str] = []
-    for clause in split_clauses(text):
+    for clause in split_clauses(bind_atomic(text)):
         groups.extend(split_long_clause(clause))
-    return merge_fragments(groups)
+    # The binder only exists to survive the length rules; nothing downstream —
+    # synthesis, highlighting or the .srt — should ever see it.
+    return [group.replace(BINDER, " ") for group in merge_fragments(groups)]
 
 
 def word_timings(caption: str, duration: float) -> list[dict[str, Any]]:
@@ -170,6 +194,9 @@ def synthesize(texts: list[str], provider: tts.VoiceProvider) -> list[Path]:
     """Return one trimmed mp3 per text, reusing cached clips when unchanged."""
     CACHE.mkdir(parents=True, exist_ok=True)
     targets = [clip_path(text, provider) for text in texts]
+    for target in set(targets):
+        if target.exists() and not tts.AudioClipValidator.is_valid(target):
+            target.unlink()
     # A caption repeated across scenes hashes to one file, so it is synthesised
     # once no matter how many times the script says it.
     pending = list(dict.fromkeys(
@@ -177,6 +204,8 @@ def synthesize(texts: list[str], provider: tts.VoiceProvider) -> list[Path]:
     ))
     if pending:
         provider.synthesize(pending)
+    for target in set(targets):
+        tts.AudioClipValidator.require(target, provider.profile_id)
     return targets
 
 

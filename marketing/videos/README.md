@@ -2,6 +2,11 @@
 
 Un solo motor convierte una idea en un MP4 vertical listo para publicar. La CLI es `factory.py`, invocada siempre a través del script `video`: Claude crea concepto, guion y storyboard; un linter revisa el plan antes de gastar voz o render; Kokoro sintetiza cada escena completa y mide su duración real; Remotion monta escenas, subtítulos karaoke, portada y audio. Está pensada para vender la plataforma —no propiedades específicas— a propietarios, compradores/inquilinos y profesionales inmobiliarios.
 
+Claude y Codex trabajan bajo el mismo contrato. [AGENTS.md](AGENTS.md) obliga a
+Codex a leer las reglas normativas de [CLAUDE.md](CLAUDE.md), y
+[council.md](council.md) organiza la producción en carriles paralelos con un
+editor jefe, cuatro responsabilidades y cinco puertas verificables.
+
 El motor se apoya en módulos de responsabilidad única:
 
 - `catalog.py`: el catálogo de videos, sus estados y la escritura atómica en disco.
@@ -42,7 +47,40 @@ video render video-001 --final    # producción: compra la voz de ElevenLabs
 
 Cada frase comprada queda en `.cache/voice/paid/` bajo el hash de su texto exacto, así que re-renderizar un guion sin cambios no cuesta nada y editar una línea solo compra esa línea. La copia pagada se guarda intacta: un recorte fallido o un render interrumpido nunca obligan a pagarla otra vez. `ELEVENLABS_MAX_CHARS_PER_RUN` corta la tirada que se salga de lo previsto y `.cache/voice/elevenlabs-usage.jsonl` lleva la cuenta.
 
-Cada proveedor firma su propio caché (`tts.py`), de modo que los ajustes de Kokoro no pueden invalidar lo pagado a ElevenLabs. Cambiar la voz, el modelo o los ajustes de pago sí vuelve a comprar el guion entero.
+Cada proveedor y perfil firma su propio caché (`tts.py`), de modo que los ajustes de Kokoro no pueden invalidar lo pagado a ElevenLabs y dos voces del mismo proveedor nunca comparten por accidente una toma. Cambiar la voz, el modelo o los ajustes de pago sí vuelve a comprar las líneas asignadas a ese perfil.
+
+### Catálogo y selección de voces
+
+Los perfiles viven en `system/voice-profiles.json`. Cada uno declara proveedor,
+nombre humano, descripción y ajustes de síntesis. Cuando llegue una nueva lista
+de voces se añade allí; las claves y secretos permanecen en `.env`.
+
+El perfil puede elegirse en estos niveles, de mayor a menor prioridad:
+
+1. `video render video-001 --voice-profile perfil`: fuerza una voz para todas las escenas.
+2. `voice_profile` en la raíz del plan: narrador del video completo.
+3. `DRAFT_VOICE_PROFILE` o `FINAL_VOICE_PROFILE`: valor global de la etapa.
+4. `DRAFT_TTS_PROVIDER` o `FINAL_TTS_PROVIDER`: las variables antiguas, que
+   nombran un proveedor y no un perfil. Se traducen al perfil de esa etapa que ya
+   habla con ese proveedor, así que `DRAFT_TTS_PROVIDER=macos` sigue siendo el
+   respaldo cuando Kokoro no está instalado y resuelve a `draft-paulina`.
+5. Los defaults del catálogo.
+
+Si el plan no declara nada, los defaults conservan el comportamiento anterior. El
+linter rechaza un `voice_profile` que no exista en el catálogo, de modo que una
+voz inventada se detiene antes de la aprobación y no en mitad del render. Un
+borrador rechaza perfiles pagados. Todas las escenas usan la misma voz. La primera
+generación final crea `voice-lock.json` con el perfil y la firma exacta de sus
+ajustes; desde ese momento intentar cambiarla falla antes de gastar.
+
+```bash
+marketing/videos/video voice-cost video-001 --voice-profile final-main
+marketing/videos/video render video-001 --voice-profile draft-paulina
+marketing/videos/video voices
+```
+
+`production.json` conserva el perfil usado y cada entrada de `scene_timings`
+registra ese mismo perfil y proveedor.
 
 Las credenciales van en `.env`, ignorado por git; `.env.example` documenta las variables sin valores. El plan gratuito de ElevenLabs no permite uso comercial ni voces de biblioteca por API.
 
@@ -123,6 +161,11 @@ Cada escena se sintetiza como una sola toma para que preguntas, comas y conector
 
 Por defecto no hay música; `--music` exige una pista gratuita para uso comercial y un sidecar con autor y licencia. El render exporta `exports/video.mp4` y también `exports/cover.png`; `video cover video-001` regenera solo la portada.
 
+La futura biblioteca de fondos no admitirá archivos huérfanos: cada pista debe
+traer título, autor, URL de origen, licencia, `commercial_use: true` y
+`paid: false`. La selección por energía o tipo de video se construirá sobre ese
+catálogo, sin debilitar esta validación.
+
 ### 4. Revisar técnicamente y firmar
 
 ```bash
@@ -130,7 +173,18 @@ marketing/videos/video review video-001
 marketing/videos/video sign video-001 --by "nombre" --notes "MP4 revisado"
 ```
 
-`review` verifica dimensiones 1080 × 1920, duración dentro de 8–120 s y cercana al objetivo, lint del plan, portada, subtítulos, recursos y aprobación. `sign` registra la revisión humana explícita del MP4 final; sin firma no se puede empaquetar ni registrar resultados.
+`review` verifica dimensiones 1080 × 1920, duración dentro de 8–120 s y cercana al objetivo, lint del plan, portada, subtítulos, recursos y aprobación. También extrae el fotograma central de cada escena y genera `review/index.html`: una consola local con el máster, checks, advertencias de legibilidad y overlays de TikTok/Reels y del recorte lateral del teléfono. `sign` registra la revisión humana explícita del MP4 final; sin firma no se puede empaquetar.
+
+Para corregir una escena sin montar el video completo ni tocar el máster:
+
+```bash
+marketing/videos/video preview video-010 --scene 3
+marketing/videos/video preview video-010 --scene 3 --overlay
+```
+
+Preview reutiliza la voz y las props del último borrador y escribe únicamente en
+`previews/`. Un render completo se construye con artefactos `pending` y solo
+reemplaza el máster cuando video, portada, subtítulos y props terminaron.
 
 ### 5. Empaquetar y publicar
 
@@ -154,12 +208,28 @@ Crea videos hermanos con el mismo cuerpo y ganchos distintos (voz, rótulo y por
 
 ### 7. Registrar resultados y aprender
 
+Publicación y medición son hechos distintos. Primero sincroniza la confirmación
+externa desde una lista JSON de `{video, platform, published_at, url, status}`:
+
 ```bash
+marketing/videos/video sync /ruta/publicaciones.json --dry-run
+marketing/videos/video sync /ruta/publicaciones.json
 marketing/videos/video results video-001 /ruta/resultados.csv
 marketing/videos/video learn
 ```
 
-`learn` actualiza cobertura, genera aprendizajes prudentes desde métricas y los incorpora al contexto del siguiente video.
+`results.csv` se limita a campos que las plataformas exportan y exige declarar
+una métrica primaria. `learn` actualiza cobertura, genera aprendizajes prudentes
+desde métricas y los incorpora al contexto del siguiente video. Para resolver
+un experimento de gancho con muestra mínima:
+
+```bash
+marketing/videos/video experiment video-001 --metric views_3s --minimum-views 100
+```
+
+La decisión queda como `inconclusive` hasta que control y variantes alcancen la
+muestra. Las piezas se clasifican como `demonstration`, `tutorial`, `story` o
+`education`; educación extensa ya no se etiqueta automáticamente como historia.
 
 ### Consultar estados
 
@@ -182,6 +252,8 @@ firma visual compartidos, la registra en `renderer.py` y `planner.py`, y añade 
 prueba. El linter rechaza cualquier identificador `sim:*` que el plan mencione
 pero que todavía no esté implementado. La IA ayuda a diseñar y programar cada
 pieza; ninguna animación se inventa o publica sin revisión humana del borrador.
+El nivel de acabado, la gramática de movimiento, la arquitectura y el checklist
+obligatorio están definidos en [animation-standard.md](animation-standard.md).
 
 ## Corregir y enseñar a la máquina
 
@@ -232,4 +304,4 @@ Se versiona todo lo textual y estructural, incluido el renderer Remotion. `.giti
 - Revisión a las 24 horas y a los 7 días.
 - El ganador es el que acerca al objetivo del brief, no el que obtiene más reproducciones.
 
-Consulta [strategy.md](strategy.md) para los pilares, [production-guide.md](production-guide.md) para especificaciones y [examples/first-12-videos.md](examples/first-12-videos.md) para arrancar.
+Consulta [strategy.md](strategy.md) para los pilares, [production-guide.md](production-guide.md) para especificaciones, [animation-standard.md](animation-standard.md) para dirección de movimiento y [examples/first-12-videos.md](examples/first-12-videos.md) para arrancar.

@@ -1,0 +1,73 @@
+{
+  "reviewed_at": "2026-08-14T19:22:39.344827-05:00",
+  "passed": true,
+  "checks": {
+    "vertical_1080x1920": true,
+    "duration_8_to_120_seconds": true,
+    "duration_close_to_target": true,
+    "plan_lint_passed": true,
+    "cover_exists": true,
+    "subtitles_exist": true,
+    "all_assets_resolve": true,
+    "approval_exists": true,
+    "text_minimum_declared": true
+  },
+  "measured_duration_seconds": 83.179,
+  "target_duration_seconds": 90.0,
+  "human_review": null,
+  "notes": "",
+  "visual_review": {
+    "overlay_geometry_version": 1,
+    "critical_frames": [
+      {
+        "scene": 1,
+        "timestamp": 4.767,
+        "path": "frames/scene-01.jpg"
+      },
+      {
+        "scene": 2,
+        "timestamp": 15.55,
+        "path": "frames/scene-02.jpg"
+      },
+      {
+        "scene": 3,
+        "timestamp": 26.533,
+        "path": "frames/scene-03.jpg"
+      },
+      {
+        "scene": 4,
+        "timestamp": 38.083,
+        "path": "frames/scene-04.jpg"
+      },
+      {
+        "scene": 5,
+        "timestamp": 49.533,
+        "path": "frames/scene-05.jpg"
+      },
+      {
+        "scene": 6,
+        "timestamp": 60.317,
+        "path": "frames/scene-06.jpg"
+      },
+      {
+        "scene": 7,
+        "timestamp": 71.933,
+        "path": "frames/scene-07.jpg"
+      },
+      {
+        "scene": 8,
+        "timestamp": 80.383,
+        "path": "frames/scene-08.jpg"
+      }
+    ],
+    "text": {
+      "declared_floor_px": 22,
+      "editorial_minimum_literal_px": 28,
+      "simulation_minimum_literal_px": 18,
+      "simulation_small_literal_count": 21,
+      "passed": true,
+      "note": "Simulation microcopy and dynamic fitted text are verified in the critical-frame contact sheet."
+    },
+    "warnings": []
+  }
+}

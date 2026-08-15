@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updated_at": "2026-08-14T15:52:46.137019-05:00",
+  "updated_at": "2026-08-14T19:28:05.789261-05:00",
   "videos": [
     {
       "id": "video-001",
@@ -17,8 +17,8 @@
       "cta": "Encuentra tu futuro hogar",
       "target_duration_seconds": 18,
       "created_at": "2026-08-13T08:34:26.758901-05:00",
-      "updated_at": "2026-08-13T11:57:55.046538-05:00",
-      "duration_seconds": 15.019,
+      "updated_at": "2026-08-14T19:21:26.968991-05:00",
+      "duration_seconds": 14.933,
       "automated_review_passed": true,
       "signed_by": "bryan"
     },
@@ -26,7 +26,7 @@
       "id": "video-002",
       "number": 2,
       "title": "Deja de buscar propiedades a ciegas",
-      "state": "signed",
+      "state": "reviewed",
       "directory": "library/video-002",
       "audience": "comprador",
       "funnel_stage": "descubrimiento",
@@ -37,8 +37,8 @@
       "cta": "Encuentra tu futuro hogar",
       "target_duration_seconds": 18,
       "created_at": "2026-08-13T12:05:19.277412-05:00",
-      "updated_at": "2026-08-13T12:41:54.256097-05:00",
-      "duration_seconds": 16.384,
+      "updated_at": "2026-08-14T19:28:05.789217-05:00",
+      "duration_seconds": 16.427,
       "automated_review_passed": true,
       "signed_by": "bryan",
       "packed_at": "2026-08-13T12:41:54.256057-05:00",
@@ -193,7 +193,7 @@
       "id": "video-010",
       "number": 10,
       "title": "Antes de comprar un departamento, revisa esto",
-      "state": "rendered",
+      "state": "reviewed",
       "directory": "library/video-010",
       "audience": "comprador",
       "funnel_stage": "consideración",
@@ -204,8 +204,30 @@
       "cta": "Encuentra tu futuro hogar",
       "target_duration_seconds": 90,
       "created_at": "2026-08-14T15:07:24.229639-05:00",
-      "updated_at": "2026-08-14T15:52:46.136956-05:00",
-      "duration_seconds": 82.773
+      "updated_at": "2026-08-14T19:22:44.848803-05:00",
+      "duration_seconds": 83.179,
+      "automated_review_passed": true,
+      "editorial_format": "education"
+    },
+    {
+      "id": "video-011",
+      "number": 11,
+      "title": "Tres revisiones antes de decidir",
+      "state": "reviewed",
+      "directory": "library/video-011",
+      "audience": "comprador",
+      "funnel_stage": "consideración",
+      "pillar": "Educación inmobiliaria",
+      "series": "Revisa antes de decidir",
+      "concept": "Una secuencia educativa de tres comprobaciones: ubicación, documentos y medidas.",
+      "hook": "¿Te gustó una propiedad? No decidas solo por las fotos.",
+      "cta": "Encuentra tu futuro hogar",
+      "target_duration_seconds": 27,
+      "editorial_format": "demonstration",
+      "created_at": "2026-08-14T18:33:05.330116-05:00",
+      "updated_at": "2026-08-14T19:09:28.134820-05:00",
+      "duration_seconds": 25.216,
+      "automated_review_passed": true
     }
   ]
 }

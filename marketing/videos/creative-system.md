@@ -21,6 +21,7 @@ Este documento es la “biblia” común de la serie. Claude debe variar el conc
 - Movimiento de mapa, cursor, toque o rostro desde el primer cuadro.
 - Logo al cierre o integrado después del gancho; nunca una intro animada vacía.
 - Animaciones nativas de Remotion por encima de recursos genéricos. Claude crea las composiciones nuevas que el guion necesite, pero conserva los componentes y la firma visual de la serie.
+- Toda composición nueva cumple [`animation-standard.md`](animation-standard.md): arco completo, jerarquía por fotograma, causalidad, movimiento dirigido por `frame`, acabado en las duraciones mínima, nominal y larga, y revisión en móvil. Un animatic, placeholder o bloque con una entrada genérica no cuenta como animación implementada.
 - Cada composición parte de los componentes reales de EstateMap: conserva la jerarquía, las etiquetas y la transición entre estados relevantes, y simplifica solo lo necesario para que se lea en video vertical.
 - Una animación propuesta no existe hasta estar implementada y registrada tanto en Python como en Remotion; el linter debe bloquear los identificadores `sim:*` desconocidos.
 - La portada comparte identidad y CTA con la serie, pero cambia su composición central para representar el concepto concreto de cada video.

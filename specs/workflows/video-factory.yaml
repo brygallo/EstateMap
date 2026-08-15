@@ -1,0 +1,270 @@
+version: 1
+domain: video-factory
+title: Fábrica editorial de videos
+status: implemented
+summary: >-
+  Reglas internas que mantienen coherentes producción, publicación, revisión y
+  aprendizaje de las piezas editoriales. No describen el video automático del
+  producto ni autorizan publicar en redes.
+
+rules:
+  - id: VFACT-001
+    name: Un estado publicado no puede retroceder
+    status: implemented
+    summary: >-
+      Published y learned son estados congelados; una actualización genérica no
+      puede devolverlos a revisión, render o firma.
+    rationale: >-
+      La realidad externa y los artefactos que ya se distribuyeron no deben
+      reescribirse como si todavía estuvieran en producción.
+    evidence:
+      - file: marketing/videos/catalog.py
+        symbol: IMMUTABLE_STATES
+      - file: marketing/videos/catalog.py
+        symbol: "def update"
+    tests: {unit: true}
+    cases:
+      - name: Pieza publicada intenta volver a reviewed
+        expected: rechazado sin cambiar el estado
+
+  - id: VFACT-002
+    name: Medir no equivale a publicar
+    status: implemented
+    summary: >-
+      Results acepta únicamente piezas cuya publicación ya fue confirmada y
+      valida una tabla pequeña con una métrica primaria declarada.
+    rationale: >-
+      Una pieza puede publicarse antes de que exista una ventana de medición; no
+      se deben mezclar dos hechos ocurridos en momentos distintos.
+    evidence:
+      - file: marketing/videos/workflow.py
+        symbol: class ResultsTable
+      - file: marketing/videos/factory.py
+        symbol: "def cmd_results"
+    tests: {unit: true}
+    cases:
+      - name: Resultados antes de sincronizar publicación
+        expected: rechazados
+
+  - id: VFACT-003
+    name: Learned conserva la evidencia procesada
+    status: implemented
+    summary: >-
+      Learn procesa solo piezas published y cambia su estado después de crear
+      los artefactos y aprendizajes; una sincronización posterior no la degrada.
+    rationale: >-
+      Marcar antes de completar el análisis haría que un fallo saltase la pieza
+      en el reintento; degradarla después duplicaría el aprendizaje.
+    evidence:
+      - file: marketing/videos/factory.py
+        symbol: "def cmd_learn"
+      - file: marketing/videos/extensions.py
+        symbol: class PublicationSynchronizer
+    tests: {unit: true}
+    cases:
+      - name: Se vuelve a sincronizar una pieza learned
+        expected: conserva learned
+
+  - id: VFACT-004
+    name: Los artefactos publicados son inmutables
+    status: implemented
+    summary: >-
+      Documentos, portada y revisión se niegan a reescribir una pieza published
+      o learned; un borrador corregido puede invalidar su aprobación anterior y
+      volver a aprobarse, pero una pieza publicada se corrige como otra variante.
+    rationale: >-
+      El archivo local debe seguir representando exactamente lo que salió a la
+      red y fue medido.
+    evidence:
+      - file: marketing/videos/workflow.py
+        symbol: class StatePolicy
+      - file: marketing/videos/workflow.py
+        symbol: class ApprovalPolicy
+      - file: marketing/videos/workflow.py
+        symbol: class PlanCatalogMetadata
+      - file: marketing/videos/factory.py
+        symbol: "def cmd_cover"
+    tests: {unit: true}
+    cases:
+      - name: Regenerar la portada publicada
+        expected: rechazado antes de escribir
+
+  - id: VFACT-005
+    name: La revisión incluye evidencia visual legible
+    status: implemented
+    summary: >-
+      Review extrae un fotograma central por escena, informa tamaños literales,
+      avisa de escenas largas sin recurso y genera una página local accesible
+      con overlays de plataforma antes de la firma humana.
+    rationale: >-
+      Resolución, duración y existencia de archivos no prueban legibilidad,
+      ritmo ni convivencia con la interfaz de TikTok y Reels.
+    evidence:
+      - file: marketing/videos/review_tools.py
+        symbol: class VisualReview
+      - file: marketing/videos/review_tools.py
+        symbol: class ReviewPage
+      - file: marketing/videos/factory.py
+        symbol: "def cmd_review"
+    tests: {unit: true}
+    cases:
+      - name: Revisión técnica aprobada
+        expected: página con video, checks y fotogramas críticos
+
+  - id: VFACT-006
+    name: Una escena se puede previsualizar sin tocar el máster
+    status: implemented
+    summary: >-
+      Preview usa props ya sintetizadas, desactiva música y escribe únicamente
+      bajo previews; no cambia exports, production, review ni catálogo.
+    rationale: >-
+      Corregir una escena no debe exigir montar la pieza completa ni invalidar
+      una revisión existente.
+    evidence:
+      - file: marketing/videos/extensions.py
+        symbol: class ScenePreviewRenderer
+    tests: {unit: true}
+    cases:
+      - name: Preview de la primera escena
+        expected: previews/scene-01.mp4
+
+  - id: VFACT-008
+    name: Las publicaciones externas se sincronizan de forma idempotente
+    status: implemented
+    summary: >-
+      Sync valida el lote completo, hace upsert por video y plataforma, registra
+      anomalías de firma y confirma published sin degradar learned.
+    rationale: >-
+      El catálogo y la realidad externa no pueden depender de que ya existan
+      métricas ni de editar una tabla Markdown a mano.
+    evidence:
+      - file: marketing/videos/extensions.py
+        symbol: class PublicationSynchronizer
+      - file: marketing/videos/workflow.py
+        symbol: class PublicationImport
+    tests: {unit: true}
+    cases:
+      - name: Se importa dos veces la misma publicación
+        expected: un solo registro por video y plataforma
+
+  - id: VFACT-007
+    name: Render y paquete se promueven solo cuando están completos
+    status: implemented
+    summary: >-
+      El render escribe video, portada, subtítulos y props con nombres pending;
+      conserva el máster y su revisión si algo falla. Pack construye en un
+      directorio temporal y mueve el conjunto completo al outbox al final.
+    rationale: >-
+      Una interrupción no debe destruir el último máster válido ni presentar
+      como publicable una carpeta a medio construir.
+    evidence:
+      - file: marketing/videos/factory.py
+        symbol: pending_final
+      - file: marketing/videos/factory.py
+        symbol: tempfile.TemporaryDirectory
+    tests: {}
+    cases:
+      - name: Falla la portada después de renderizar el video
+        expected: se conserva el máster anterior y se eliminan los pending
+
+  - id: VFACT-009
+    name: El plan no puede negar un recurso que utiliza
+    status: implemented
+    summary: >-
+      El lint falla cuando una nota afirma que una simulación registrada no
+      existe mientras una escena ya la referencia como asset.
+    rationale: >-
+      Las notas obsoletas vuelven imposible saber si el render estaba autorizado
+      o si se ejecutó sobre un placeholder.
+    evidence:
+      - file: marketing/videos/workflow.py
+        symbol: class PlanConsistencyAudit
+      - file: marketing/videos/factory.py
+        symbol: "def run_lint"
+    tests: {unit: true}
+    cases:
+      - name: Asset registrado con nota todavía no existe
+        expected: error de lint
+
+  - id: VFACT-010
+    name: Un experimento declara su métrica antes de elegir ganador
+    status: implemented
+    summary: >-
+      La decisión compara una sola métrica y solo declara ganador cuando existen
+      al menos dos brazos y todos superan el mínimo de vistas configurado.
+    rationale: >-
+      Elegir por intuición o con muestras desiguales convierte ruido en una regla
+      editorial permanente.
+    evidence:
+      - file: marketing/videos/workflow.py
+        symbol: class ExperimentDecision
+      - file: marketing/videos/extensions.py
+        symbol: class HookExperimentAnalyzer
+    tests: {unit: true}
+    cases:
+      - name: Un brazo no alcanza la muestra mínima
+        expected: inconclusive
+
+  - id: VFACT-011
+    name: Educación extensa no se disfraza de historia
+    status: implemented
+    summary: >-
+      La clasificación distingue demostración, tutorial, historia y educación;
+      una pieza educativa de más de 45 segundos queda identificada como tal.
+    rationale: >-
+      La duración por sí sola no describe el trabajo editorial ni justifica una
+      narrativa larga.
+    evidence:
+      - file: marketing/videos/workflow.py
+        symbol: class EditorialFormat
+    tests: {unit: true}
+    cases:
+      - name: Educación inmobiliaria de ochenta segundos
+        expected: education
+
+  - id: VFACT-012
+    name: Una voz solo entra al caché cuando contiene audio válido
+    status: implemented
+    summary: >-
+      Cada proveedor debe producir un archivo con duración medible antes de que
+      la toma se reutilice. El respaldo de macOS valida el AIFF original, lo
+      convierte directamente y elimina el temporal incluso cuando say termina
+      sin audio; una entrada corrupta del caché se invalida y se regenera.
+    rationale: >-
+      macOS say puede responder con código cero y dejar únicamente una cabecera
+      AIFF. Convertirla crea un MP3 que parece archivo pero no contiene cuadros
+      de audio, desplazando el fallo hasta el render y dejando residuos falsos.
+    evidence:
+      - file: marketing/videos/tts.py
+        symbol: class AudioClipValidator
+      - file: marketing/videos/tts.py
+        symbol: class MacOSVoice
+      - file: marketing/videos/voice.py
+        symbol: "def synthesize"
+    tests: {unit: true}
+    cases:
+      - name: say devuelve una cabecera sin audio
+        expected: falla antes de cachear y elimina el AIFF temporal
+      - name: El caché contiene un MP3 inválido
+        expected: se invalida y se vuelve a sintetizar
+
+  - id: VFACT-013
+    name: Un video tiene un solo render activo
+    status: implemented
+    summary: >-
+      Render toma un bloqueo no bloqueante exclusivo por carpeta antes de leer
+      o escribir audio, pending, máster, portada, revisión o catálogo. Otro
+      proceso para el mismo video falla antes de tocar artefactos.
+    rationale: >-
+      Dos renders compartían subtitles.pending.srt y render-props.pending.json;
+      el primero podía promoverlos mientras el segundo todavía los necesitaba,
+      dejando un fallo tardío aunque uno de los másteres hubiese terminado.
+    evidence:
+      - file: marketing/videos/workflow.py
+        symbol: class RenderLock
+      - file: marketing/videos/factory.py
+        symbol: "@workflow.RenderLock.serialized"
+    tests: {unit: true}
+    cases:
+      - name: Dos procesos renderizan el mismo video
+        expected: el segundo falla antes de tocar archivos

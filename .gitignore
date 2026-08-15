@@ -75,6 +75,7 @@ marketing/videos/library/**/*.png
 marketing/videos/library/**/*.jpg
 marketing/videos/library/**/*.jpeg
 marketing/videos/library/**/*.webp
+marketing/videos/library/**/.render.lock
 marketing/videos/library/_outbox/
 marketing/videos/remotion/public/jobs/
 marketing/videos/remotion/public/fonts/

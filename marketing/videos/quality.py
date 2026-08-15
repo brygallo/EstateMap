@@ -13,7 +13,9 @@ import re
 from pathlib import Path
 from typing import Any
 
+import tts
 import voice
+import workflow
 
 
 ROOT = Path(__file__).resolve().parent
@@ -77,7 +79,7 @@ def product_reveal_deadline(target: int) -> float:
 
 
 PRODUCT_ASSETS = {
-    "sim:alrededor", "sim:forma-dibujada", "sim:medidas",
+    "sim:alrededor", "sim:entorno-mapa", "sim:forma-dibujada", "sim:medidas", "sim:metros-utiles",
     "sim:mapa", "sim:llegada", "sim:zona", "sim:filtros", "sim:ficha",
     "sim:publicar-gratis", "sim:formulario", "sim:ubicacion-publicacion",
     "sim:fotos-publicacion", "sim:inventario-agente", "sim:enlace-corto",
@@ -107,7 +109,13 @@ EMOJI = re.compile(
     "[\U0001F300-\U0001FAFF\U00002600-\U000027BF\U0001F1E6-\U0001F1FF]",
     flags=re.UNICODE,
 )
-NUMBER_CLAIM = re.compile(r"\b\d[\d.,]*\s*(%|por ciento|mil|millones|usuarios|visitas|propiedades|anuncios)\b", re.IGNORECASE)
+# The trailing word boundary only applies to the spelled-out units: a "%" is
+# already a non-word character, so requiring \b after it made "3,4 %" — the
+# most dangerous invented figure of all — impossible to match.
+NUMBER_CLAIM = re.compile(
+    r"\b\d[\d.,]*\s*(?:%|(?:por ciento|mil|millones|usuarios|visitas|propiedades|anuncios)\b)",
+    re.IGNORECASE,
+)
 
 
 def finding(level: str, rule: str, detail: str) -> dict[str, str]:
@@ -200,6 +208,41 @@ def check_voice(plan: dict[str, Any]) -> list[dict[str, str]]:
     return findings
 
 
+def check_voice_profile(plan: dict[str, Any]) -> list[dict[str, str]]:
+    """A narrator the catalog does not know must not survive until render time.
+
+    An invented profile id builds no provider, so it fails after a human has
+    already approved the plan. This gate exists precisely so that nothing gets
+    approved and then dies on its way to the speakers.
+    """
+    name = plan.get("voice_profile")
+    if not name:
+        return []
+    catalog = tts.profile_catalog()
+    profile = catalog["profiles"].get(name)
+    if profile is None:
+        known = ", ".join(sorted(catalog["profiles"])) or "ninguno"
+        return [finding(
+            "error",
+            "voice_profile_unknown",
+            f"El plan pide la voz «{name}», que no está en system/voice-profiles.json. Perfiles disponibles: {known}",
+        )]
+    provider = tts.PROVIDERS.get(str(profile.get("provider")))
+    if provider is None:
+        return [finding(
+            "error",
+            "voice_profile_provider",
+            f"La voz «{name}» declara el proveedor «{profile.get('provider')}», que no existe en tts.py",
+        )]
+    if provider.paid:
+        return [finding(
+            "warning",
+            "voice_profile_paid",
+            f"La voz «{name}» es de pago: los borradores la rechazan y solo un máster final puede usarla",
+        )]
+    return []
+
+
 def check_duration(plan: dict[str, Any], target: int) -> list[dict[str, str]]:
     estimated = sum(voice.estimate_seconds(text_of(scene, "voice")) for scene in plan.get("scenes") or [])
     findings = []
@@ -219,7 +262,7 @@ def check_claims(plan: dict[str, Any]) -> list[dict[str, str]]:
         " ".join(text_of(scene, "on_screen_text") for scene in plan.get("scenes") or []),
     ]).lower()
     for term, reason in FORBIDDEN.items():
-        if term in haystack:
+        if term in haystack and not workflow.ForbiddenClaimPolicy.is_explicitly_negated(haystack, term):
             findings.append(finding("error", "forbidden_claim", f"Aparece «{term}»: {reason}"))
     notes = " ".join(plan.get("verification_notes") or [])
     for match in NUMBER_CLAIM.finditer(haystack):
@@ -257,6 +300,35 @@ def check_message_duplication(plan: dict[str, Any]) -> list[dict[str, str]]:
         if len(headline.split()) >= 3 and shared_ratio(headline, spoken) >= 0.75:
             findings.append(finding("warning", "message_duplication", f"Escena {index}: rótulo y voz repiten casi el mismo mensaje"))
     return findings
+
+
+def cover_art_branches() -> set[str]:
+    """The illustrations `cover.tsx` actually implements, read from the source."""
+    source = ROOT / "remotion/src/cover.tsx"
+    if not source.exists():
+        return set()
+    return set(re.findall(r"coverArt === '([^']+)'", source.read_text(encoding="utf-8")))
+
+
+def check_cover_art(plan: dict[str, Any]) -> list[dict[str, str]]:
+    """A cover_art nobody implemented is worse than none at all.
+
+    Video-010 asked for "terreno", which has no branch, so the cover fell back
+    to the generic house card: a piece about flats shipped with a house, a
+    price and a lot area on its thumbnail. The fallback is silent by design,
+    so nothing downstream can catch this — only the plan can.
+    """
+    named = text_of(plan, "cover_art")
+    if not named:
+        return []
+    branches = cover_art_branches()
+    if branches and named not in branches:
+        return [finding(
+            "error",
+            "cover_art_missing",
+            f"El plan pide la portada «{named}», que no existe en cover.tsx: {sorted(branches)}",
+        )]
+    return []
 
 
 def restricted_clips() -> set[str]:
@@ -337,11 +409,13 @@ def lint(plan: dict[str, Any], directory: Path, target: int, catalog: dict[str, 
     findings += check_product_reveal(plan, target)
     findings += check_headlines(plan)
     findings += check_voice(plan)
+    findings += check_voice_profile(plan)
     findings += check_duration(plan, target)
     findings += check_claims(plan)
     findings += check_cta(plan)
     findings += check_message_duplication(plan)
     findings += check_assets(plan, directory)
+    findings += check_cover_art(plan)
     findings += check_repetition(plan, catalog, identifier)
     errors = [item for item in findings if item["level"] == "error"]
     return {

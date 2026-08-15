@@ -12,6 +12,7 @@ import re
 import shutil
 import subprocess
 import sys
+import tempfile
 import unicodedata
 from dataclasses import dataclass
 from datetime import date
@@ -21,14 +22,17 @@ from typing import Any
 import assets as asset_library
 import catalog as catalog_store
 import documents
+from extensions import ExtensionCommands
 import lessons as lessons_store
 import media
 import planner
 import quality
 import renderer
+import review_tools
 import subtitles
 import tts
 import voice
+import workflow
 
 
 ROOT = Path(__file__).resolve().parent
@@ -118,19 +122,12 @@ def populate_video(
     item = {
         "id": identifier,
         "number": number,
-        "title": plan["title"],
         "state": "planned",
         "directory": str(directory.relative_to(ROOT)),
-        "audience": plan["audience"],
-        "funnel_stage": plan["funnel_stage"],
-        "pillar": plan["pillar"],
-        "series": plan["series"],
-        "concept": plan["concept"],
-        "hook": plan["scenes"][0]["voice"],
-        "cta": plan["cta"],
         "target_duration_seconds": duration,
         "created_at": catalog_store.now(),
         "updated_at": catalog_store.now(),
+        **workflow.PlanCatalogMetadata.build(plan, duration),
         **(extra or {}),
     }
     catalog["videos"].append(item)
@@ -148,6 +145,11 @@ def run_lint(directory: Path, item: dict[str, Any], catalog: dict[str, Any]) -> 
         raise RuntimeError(f"plan.json is missing in {directory}")
     target = int(item.get("target_duration_seconds", 20))
     report = quality.lint(plan, directory, target, catalog, item["id"])
+    consistency = workflow.PlanConsistencyAudit.findings(plan, set(renderer.SIMULATIONS))
+    report["findings"].extend(consistency)
+    report["errors"] += sum(finding["level"] == "error" for finding in consistency)
+    report["warnings"] += sum(finding["level"] == "warning" for finding in consistency)
+    report["passed"] = report["errors"] == 0
     report["checked_at"] = catalog_store.now()
     catalog_store.write_json(directory / "lint.json", report)
     return report
@@ -182,6 +184,7 @@ def cmd_docs(args: argparse.Namespace) -> None:
     longer describes the video that will be rendered.
     """
     directory, item, _ = catalog_store.find(args.video)
+    workflow.StatePolicy.require_mutable(item, "rewrite documents")
     plan = catalog_store.load_json(directory / "plan.json")
     if plan is None:
         raise RuntimeError(f"plan.json is missing in {directory}")
@@ -208,6 +211,21 @@ def plan_captions(plan: dict[str, Any]) -> list[str]:
     return captions
 
 
+def scene_providers(plan: dict[str, Any], final_master: bool, override: str | None = None) -> list[tts.VoiceProvider]:
+    """Resolve the one narrator every scene in a video must share."""
+    provider = tts.select(override or plan.get("voice_profile"), final_master)
+    return [provider for _ in plan.get("scenes") or []]
+
+
+def provider_batches(plan: dict[str, Any], providers: list[tts.VoiceProvider]) -> list[tuple[tts.VoiceProvider, list[str]]]:
+    """Group lines by exact voice signature so quotes and consent stay accurate."""
+    batches: dict[str, tuple[tts.VoiceProvider, list[str]]] = {}
+    for scene, provider in zip(plan.get("scenes") or [], providers):
+        signature = provider.signature()
+        batches.setdefault(signature, (provider, []))[1].append(quality.text_of(scene, "voice"))
+    return list(batches.values())
+
+
 def agree_to_spend(question: str, assumed: bool) -> None:
     """Get a human yes before buying, or a deliberate one recorded in the command.
 
@@ -226,17 +244,38 @@ def agree_to_spend(question: str, assumed: bool) -> None:
         raise RuntimeError("Cancelled before spending any credits")
 
 
-def confirm_voice_spend(plan: dict[str, Any], provider: tts.VoiceProvider, assumed: bool) -> None:
+def confirm_voice_spend(plan: dict[str, Any], providers: list[tts.VoiceProvider], assumed: bool) -> None:
     """Show what this master will buy and let a person stop it."""
-    report = voice.quote(plan_captions(plan), provider)
-    if not report["billable_characters"]:
+    reports = [(provider, voice.quote(texts, provider)) for provider, texts in provider_batches(plan, providers)]
+    billable = [(provider, report) for provider, report in reports if report["billable_characters"]]
+    if not billable:
         print("Final voice: every line is already paid for and cached; this costs nothing.")
         return
-    print(
-        f"Final voice: {report['billable_captions']} of {report['captions']} lines are new, "
-        f"{report['billable_characters']} characters to buy."
-    )
+    for provider, report in billable:
+        print(
+            f"Final voice {provider.profile_id}: {report['billable_captions']} of "
+            f"{report['captions']} lines are new, {report['billable_characters']} characters to buy."
+        )
     agree_to_spend("Buy them?", assumed)
+
+
+def enforce_voice_lock(directory: Path, provider: tts.VoiceProvider) -> None:
+    """A final voice and its paid settings become immutable for this video."""
+    target = directory / "voice-lock.json"
+    locked = catalog_store.load_json(target)
+    if locked:
+        if locked.get("signature") != provider.signature():
+            raise RuntimeError(
+                f"This video is locked to voice profile {locked.get('voice_profile')}; "
+                f"create a new video or variant instead of buying another voice"
+            )
+        return
+    catalog_store.write_json(target, {
+        "locked_at": catalog_store.now(),
+        "voice_profile": provider.profile_id,
+        "tts_provider": provider.name,
+        "signature": provider.signature(),
+    })
 
 
 def cmd_voice_cost(args: argparse.Namespace) -> None:
@@ -245,16 +284,28 @@ def cmd_voice_cost(args: argparse.Namespace) -> None:
     plan = catalog_store.load_json(directory / "plan.json")
     if plan is None:
         raise RuntimeError("plan.json is missing")
-    provider = tts.final()
-    captions = plan_captions(plan)
-    report = voice.quote(captions, provider)
-    print(f"{item['id']}: {report['provider']}")
-    print(f"  captions          {report['captions']}")
-    print(f"  already cached    {report['cached']}")
-    print(f"  to synthesise     {report['billable_captions']}")
-    if provider.paid:
-        print(f"  characters to buy {report['billable_characters']} (limit {report['ceiling']} per run)")
-        print(f"  spent so far      {provider.spent_characters()} characters")
+    providers = scene_providers(plan, final_master=True, override=args.voice_profile)
+    print(f"{item['id']}:")
+    for provider, captions in provider_batches(plan, providers):
+        report = voice.quote(captions, provider)
+        print(f"  {provider.profile_id} ({report['provider']})")
+        print(f"    captions          {report['captions']}")
+        print(f"    already cached    {report['cached']}")
+        print(f"    to synthesise     {report['billable_captions']}")
+        if provider.paid:
+            print(f"    characters to buy {report['billable_characters']} (limit {report['ceiling']} per run)")
+            print(f"    spent so far      {provider.spent_characters()} characters")
+
+
+def cmd_voices(args: argparse.Namespace) -> None:
+    """List configured profiles without contacting or charging a provider."""
+    catalog = tts.profile_catalog()
+    print(f"draft default: {catalog['defaults']['draft']}")
+    print(f"final default: {catalog['defaults']['final']}")
+    for profile_id, profile in catalog["profiles"].items():
+        print(f"{profile_id:18} {profile['provider']:12} {profile.get('label', '')}")
+        if profile.get("description"):
+            print(f"{'':18} {'':12} {profile['description']}")
 
 
 def music_license(track: Path) -> dict[str, Any]:
@@ -273,8 +324,10 @@ def music_license(track: Path) -> dict[str, Any]:
 
 def cmd_approve(args: argparse.Namespace) -> None:
     directory, item, catalog = catalog_store.find(args.video)
-    if item["state"] not in {"planned", "approved"}:
-        raise RuntimeError(f"Only a planned video can be approved; current state: {item['state']}")
+    workflow.ApprovalPolicy.require_approvable(item["state"])
+    plan = catalog_store.load_json(directory / "plan.json")
+    if plan is None:
+        raise RuntimeError("plan.json is missing")
     report = run_lint(directory, item, catalog)
     if not report["passed"] and not args.force:
         print_lint(item["id"], report)
@@ -288,10 +341,15 @@ def cmd_approve(args: argparse.Namespace) -> None:
         "plan_sha": plan_sha(directory),
     }
     catalog_store.write_json(directory / "approval.json", approval)
-    catalog_store.update(item, catalog, "approved")
+    metadata = workflow.PlanCatalogMetadata.build(
+        plan,
+        int(item.get("target_duration_seconds", 20)),
+    )
+    catalog_store.update(item, catalog, "approved", **metadata)
     print(f"{item['id']}: approved")
 
 
+@workflow.RenderLock.serialized
 def cmd_render(args: argparse.Namespace) -> None:
     media.require_tool("node")
     media.require_tool("ffmpeg")
@@ -305,14 +363,20 @@ def cmd_render(args: argparse.Namespace) -> None:
     if approval.get("plan_sha") and approval["plan_sha"] != plan_sha(directory):
         raise RuntimeError("plan.json changed after approval; approve it again before rendering")
     # Drafts are free and finals are bought once, at the end, on purpose.
-    provider = tts.final() if args.final else tts.draft()
-    provider.check_ready()
+    providers = scene_providers(plan, final_master=args.final, override=args.voice_profile)
+    for provider, _ in provider_batches(plan, providers):
+        provider.check_ready()
     if args.final:
-        confirm_voice_spend(plan, provider, args.yes)
-    # A new master invalidates the review that was signed off on the old one.
-    (directory / "review.json").unlink(missing_ok=True)
+        locked = catalog_store.load_json(directory / "voice-lock.json")
+        if locked and locked.get("signature") != providers[0].signature():
+            raise RuntimeError(
+                f"This video is locked to voice profile {locked.get('voice_profile')}; "
+                f"create a new video or variant instead of buying another voice"
+            )
+        confirm_voice_spend(plan, providers, args.yes)
+        enforce_voice_lock(directory, providers[0])
     timings = []
-    for index, scene in enumerate(plan["scenes"]):
+    for index, (scene, provider) in enumerate(zip(plan["scenes"], providers)):
         target = directory / "audio" / f"voice-{index + 1:02}.mp3"
         captions = voice.speak_scene(scene["voice"], target, provider)
         spoken = captions[-1]["end"] if captions else 0.0
@@ -323,19 +387,41 @@ def cmd_render(args: argparse.Namespace) -> None:
             "scene": index + 1,
             "voice_file": str(target),
             "voice_seconds": round(spoken, 3),
+            "voice_profile": provider.profile_id,
+            "tts_provider": provider.name,
             "render_seconds": render_seconds,
             "captions": captions,
         })
-    subtitles.write_srt(timings, directory / "subtitles.srt")
+    pending_subtitles = directory / "subtitles.pending.srt"
+    subtitles.write_srt(timings, pending_subtitles)
     music = Path(args.music).expanduser().resolve() if args.music else None
     if music and not music.is_file():
         raise RuntimeError(f"Music track not found: {music}")
     license_data = music_license(music) if music else None
     props = renderer.build_props(directory, plan, timings, music)
-    props_path = directory / "render-props.json"
+    props_path = directory / "render-props.pending.json"
     catalog_store.write_json(props_path, props)
-    final = renderer.render_video(props_path, directory / "exports/video.mp4")
-    cover = renderer.render_cover(directory, plan, directory / "exports/cover.png")
+    pending_final = directory / "exports/video.pending.mp4"
+    pending_cover = directory / "exports/cover.pending.png"
+    pending_final.unlink(missing_ok=True)
+    pending_cover.unlink(missing_ok=True)
+    try:
+        renderer.render_video(props_path, pending_final)
+        renderer.render_cover(directory, plan, pending_cover)
+    except Exception:
+        pending_final.unlink(missing_ok=True)
+        pending_cover.unlink(missing_ok=True)
+        pending_subtitles.unlink(missing_ok=True)
+        props_path.unlink(missing_ok=True)
+        raise
+    final = directory / "exports/video.mp4"
+    cover = directory / "exports/cover.png"
+    pending_final.replace(final)
+    pending_cover.replace(cover)
+    pending_subtitles.replace(directory / "subtitles.srt")
+    props_path.replace(directory / "render-props.json")
+    # Only a complete replacement invalidates the review of the old master.
+    (directory / "review.json").unlink(missing_ok=True)
     duration = round(media.probe_duration(final), 3)
     catalog_store.write_json(directory / "production.json", {
         "rendered_at": catalog_store.now(),
@@ -344,7 +430,8 @@ def cmd_render(args: argparse.Namespace) -> None:
         # The encoder tag of the finished MP4 says only "libx264", so the
         # quality a published piece was made with is unverifiable from the file.
         "encoder_flags": renderer.ENCODER_FLAGS,
-        "tts_provider": provider.name,
+        "tts_provider": providers[0].name if len({provider.name for provider in providers}) == 1 else "mixed",
+        "voice_profiles": list(dict.fromkeys(provider.profile_id for provider in providers)),
         "is_final_voice": bool(args.final),
         "music": str(music) if music else None,
         "music_license": license_data,
@@ -362,6 +449,7 @@ def cmd_render(args: argparse.Namespace) -> None:
 
 def cmd_review(args: argparse.Namespace) -> None:
     directory, item, catalog = catalog_store.find(args.video)
+    workflow.StatePolicy.require_mutable(item, "review it again")
     final = directory / "exports/video.mp4"
     if not final.exists():
         raise RuntimeError("Render the video before reviewing it")
@@ -397,9 +485,24 @@ def cmd_review(args: argparse.Namespace) -> None:
         "human_review": None,
         "notes": args.notes,
     }
+    production = catalog_store.load_json(directory / "production.json", {})
+    review["visual_review"] = review_tools.VisualReview(ROOT, directory).build(
+        plan, production.get("scene_timings") or []
+    )
+    checks["text_minimum_declared"] = review["visual_review"]["text"]["passed"]
+    passed = all(checks.values())
+    review["passed"] = passed
     catalog_store.write_json(directory / "review.json", review)
-    catalog_store.update(item, catalog, "reviewed" if passed else "rendered", automated_review_passed=passed)
+    page = review_tools.ReviewPage(directory).write(item, plan, review)
+    catalog_store.update(
+        item,
+        catalog,
+        "reviewed" if passed else "rendered",
+        automated_review_passed=passed,
+        duration_seconds=round(duration, 3),
+    )
     print(json.dumps(review, ensure_ascii=False, indent=2))
+    print(page)
     if not passed:
         raise RuntimeError("Automated review failed")
 
@@ -419,6 +522,7 @@ def cmd_sign(args: argparse.Namespace) -> None:
 
 def cmd_cover(args: argparse.Namespace) -> None:
     directory, item, _ = catalog_store.find(args.video)
+    workflow.StatePolicy.require_mutable(item, "replace the cover")
     plan = catalog_store.load_json(directory / "plan.json")
     if plan is None:
         raise RuntimeError("plan.json is missing")
@@ -443,25 +547,30 @@ def cmd_pack(args: argparse.Namespace) -> None:
         f"{slug(item.get('hook_label') or plan['scenes'][0]['purpose'], 2)}-v01",
     ])
     outbox = catalog_store.OUTBOX / name
-    outbox.mkdir(parents=True, exist_ok=True)
-    shutil.copy2(final, outbox / f"{name}.mp4")
-    cover = directory / "exports/cover.png"
-    if cover.exists():
-        media.run(["ffmpeg", "-y", "-i", str(cover), "-q:v", "3", str(outbox / f"{name}.jpg")])
-    shutil.copy2(directory / "caption.txt", outbox / f"{name}.txt")
-    if (directory / "subtitles.srt").exists():
-        shutil.copy2(directory / "subtitles.srt", outbox / f"{name}.srt")
-    catalog_store.write_json(outbox / "publish.json", {
-        "video": item["id"],
-        "title": plan["title"],
-        "audience": plan["audience"],
-        "funnel_stage": plan["funnel_stage"],
-        "cta": plan["cta"],
-        "cover_text": plan["cover_text"],
-        "duration_seconds": item.get("duration_seconds"),
-        "verification_notes": plan["verification_notes"],
-        "packed_at": catalog_store.now(),
-    })
+    if outbox.exists():
+        raise RuntimeError(f"Publishing package already exists and is immutable: {outbox}")
+    catalog_store.OUTBOX.mkdir(parents=True, exist_ok=True)
+    with tempfile.TemporaryDirectory(prefix=f".{name}-", dir=catalog_store.OUTBOX) as temporary:
+        staging = Path(temporary)
+        shutil.copy2(final, staging / f"{name}.mp4")
+        cover = directory / "exports/cover.png"
+        if cover.exists():
+            media.run(["ffmpeg", "-y", "-i", str(cover), "-q:v", "3", str(staging / f"{name}.jpg")])
+        shutil.copy2(directory / "caption.txt", staging / f"{name}.txt")
+        if (directory / "subtitles.srt").exists():
+            shutil.copy2(directory / "subtitles.srt", staging / f"{name}.srt")
+        catalog_store.write_json(staging / "publish.json", {
+            "video": item["id"],
+            "title": plan["title"],
+            "audience": plan["audience"],
+            "funnel_stage": plan["funnel_stage"],
+            "cta": plan["cta"],
+            "cover_text": plan["cover_text"],
+            "duration_seconds": item.get("duration_seconds"),
+            "verification_notes": plan["verification_notes"],
+            "packed_at": catalog_store.now(),
+        })
+        staging.replace(outbox)
     catalog_store.update(item, catalog, packed_at=catalog_store.now(), package=str(outbox.relative_to(ROOT)))
     print(outbox)
 
@@ -530,17 +639,16 @@ def cmd_feedback(args: argparse.Namespace) -> None:
 
 def cmd_results(args: argparse.Namespace) -> None:
     directory, item, catalog = catalog_store.find(args.video)
-    if item["state"] not in {"signed", "published", "learned"}:
-        raise RuntimeError("Sign the human review before recording publication results")
+    if item["state"] not in {"published", "learned"}:
+        raise RuntimeError("Synchronise a confirmed publication before recording results")
     if not args.file.is_file():
         raise RuntimeError(f"Results file not found: {args.file}")
-    with args.file.open(encoding="utf-8", newline="") as handle:
-        rows = list(csv.DictReader(handle))
-    if not rows:
-        raise RuntimeError("Results CSV has no data rows")
+    rows = workflow.ResultsTable.read(args.file)
     shutil.copy2(args.file, directory / "results.csv")
-    catalog_store.update(item, catalog, "published", published_at=rows[0].get("published_at"), result_rows=len(rows))
+    catalog_store.update(item, catalog, result_rows=len(rows), results_updated_at=catalog_store.now())
     print(directory / "results.csv")
+
+
 
 
 def calculate_gaps(catalog: dict[str, Any]) -> dict[str, Any]:
@@ -614,6 +722,7 @@ def cmd_status(_: argparse.Namespace) -> None:
 def parser() -> argparse.ArgumentParser:
     root = argparse.ArgumentParser(description="Geo Propiedades video factory")
     commands = root.add_subparsers(dest="command", required=True)
+    extensions = ExtensionCommands(ROOT)
 
     new = commands.add_parser("new", help="Plan the next video")
     new.add_argument("brief", nargs="?")
@@ -633,7 +742,11 @@ def parser() -> argparse.ArgumentParser:
 
     voice_cost = commands.add_parser("voice-cost", help="Show what the voice track would cost before rendering")
     voice_cost.add_argument("video")
+    voice_cost.add_argument("--voice-profile", help="Override the video voice profile for every scene")
     voice_cost.set_defaults(handler=cmd_voice_cost)
+
+    voices = commands.add_parser("voices", help="List configured voice profiles without synthesising")
+    voices.set_defaults(handler=cmd_voices)
 
     approve = commands.add_parser("approve", help="Approve a plan before rendering")
     approve.add_argument("video")
@@ -644,6 +757,7 @@ def parser() -> argparse.ArgumentParser:
 
     render = commands.add_parser("render", help="Render an approved video")
     render.add_argument("video")
+    render.add_argument("--voice-profile", help="Override the video voice profile for every scene")
     render.add_argument("--music", help="Free commercial-use track with a .license.json sidecar")
     render.add_argument(
         "--yes",
@@ -697,6 +811,23 @@ def parser() -> argparse.ArgumentParser:
     results.add_argument("video")
     results.add_argument("file", type=Path)
     results.set_defaults(handler=cmd_results)
+
+    sync = commands.add_parser("sync", help="Reconcile confirmed external publications from JSON")
+    sync.add_argument("file", type=Path)
+    sync.add_argument("--dry-run", action="store_true")
+    sync.set_defaults(handler=extensions.sync)
+
+    experiment = commands.add_parser("experiment", help="Decide a hook experiment from comparable results")
+    experiment.add_argument("video")
+    experiment.add_argument("--metric", required=True, choices=sorted(workflow.ResultsTable.NUMERIC_FIELDS))
+    experiment.add_argument("--minimum-views", type=int, default=100)
+    experiment.set_defaults(handler=extensions.experiment)
+
+    preview = commands.add_parser("preview", help="Render one scene from existing draft props")
+    preview.add_argument("video")
+    preview.add_argument("--scene", type=int, required=True)
+    preview.add_argument("--overlay", action="store_true", help="Show platform safe areas")
+    preview.set_defaults(handler=extensions.preview)
 
     learn = commands.add_parser("learn", help="Update coverage and learn from published videos")
     learn.set_defaults(handler=cmd_learn)

@@ -1,11 +1,19 @@
 # Instrucciones para Claude
 
+CONTRACT: VIDEO_COUNCIL_V1
+
+Este contrato es idéntico para Claude y Codex. En trabajo de video, ambos leen y
+aplican también `AGENTS.md`, `council.md`, `creative-system.md` y
+`animation-standard.md`. El consejo define la paralelización y los roles, pero
+ningún rol puede relajar las reglas de este archivo.
+
 Actúa como estratega y productor de video corto para Geo Propiedades Ecuador. Antes de crear contenido, lee `product-context.md`, `strategy.md` y el brief de campaña.
 
 ## Contrato obligatorio
 
 - Escribe para Ecuador, en español claro y natural. No uses jerga de marketing en la pieza final.
-- No inventes cifras, demanda, ahorros, alcance, seguridad de zonas, retorno de inversión, disponibilidad, precios ni testimonios.
+- **Una cifra que afirma un hecho necesita fuente fechada.** Quedan prohibidas las cantidades sobre el mercado o sobre la plataforma —inventario, demanda, porcentajes, alcance, ahorros, retorno de inversión, disponibilidad, precios de mercado, seguridad de zonas— y los testimonios. Solo entran citando su fuente en `verification_notes`.
+- **Un dato de ejemplo se inventa a propósito, y es la forma correcta de enseñar un cálculo.** El precio, el área o las características de una propiedad ilustrativa no afirman nada del mercado: son el ejemplo de un anuncio, igual que la foto de una casa que no existe. Se permiten con tres condiciones: que la pieza los marque como `EJEMPLO` en pantalla, que sean verosímiles para el sujeto de la pieza —un departamento no mide 400 m²— y que la voz no los convierta en dato. «Divide el precio para los metros» es válido; «el metro cuadrado está en $303» es una afirmación de mercado y está prohibida. Antes de bloquear una pieza por una cifra, comprueba el rótulo en pantalla: un ejemplo marcado no es un hallazgo.
 - No ofrezcas ni insinúes capacidades por intuición o por atractivo comercial. Antes de cada promesa inspecciona el código y su spec: solo se comunica como disponible lo que tenga implementación real y una regla `implemented` o `partial` que describa honestamente su alcance. `proposed`, experimentos, mockups e ideas se omiten de la pieza.
 - Distingue entre lo que existe y lo propuesto. El video automático figura como propuesta en `specs/proposals/social-kit.yaml`; nunca lo presentes como función disponible.
 - El kit social actual sí genera láminas y textos, QR/URL corta y métricas privadas de visitas por red. Verifica cualquier afirmación nueva contra `specs/` o el código.
@@ -24,6 +32,8 @@ El guion se reescribe muchas veces antes de que quede bien. Esas vueltas no cues
 - **Nunca lances `--final` por iniciativa propia.** Es la única puerta al gasto: espera la orden explícita.
 - Antes de gastar, `video voice-cost <id>` dice cuántos caracteres se comprarían. `--final` lo repite y pide confirmación por terminal. Sin terminal se niega: el silencio no es un sí. Solo `--yes` autoriza por adelantado, y no lo uses sin que te lo pidan.
 - Cada línea comprada queda cacheada por su texto exacto en `.cache/voice/paid/`. Volver a renderizar un guion sin cambios no cuesta nada; si editas una frase, solo se compra esa frase.
+- Los perfiles de voz viven en `system/voice-profiles.json`. Cada video elige una sola voz y todas sus escenas la conservan. `--voice-profile` fuerza esa voz en la pieza completa y tiene prioridad sobre el plan.
+- Un borrador nunca acepta un perfil pagado. La primera generación final escribe `voice-lock.json`; después no se puede cambiar perfil ni ajustes en ese video. Una voz distinta exige una variante o pieza nueva.
 - Cambiar la voz, el modelo o los ajustes de ElevenLabs invalida lo cacheado y vuelve a comprar el guion entero. No los toques sin querer hacerlo.
 - El plan gratuito de ElevenLabs **no incluye licencia comercial**. Antes de publicar una pieza con voz pagada, confirma que la cuenta está en un plan que sí la incluya.
 
@@ -31,6 +41,7 @@ El guion se reescribe muchas veces antes de que quede bien. Esas vueltas no cues
 
 - Por defecto una pieza sale sin música.
 - Solo se admite una pista externa gratuita para uso comercial, de autor identificable, con URL y licencia archivadas en el sidecar requerido.
+- Una biblioteca futura puede clasificar pistas por energía, tempo y uso narrativo, pero cada archivo conserva su propio sidecar; pertenecer al catálogo no reemplaza la prueba de licencia.
 - La fábrica no compone, compra ni genera música con créditos. Sin evidencia de licencia comercial gratuita, usa silencio.
 ## Estilo creativo
 
@@ -82,7 +93,7 @@ Cuando escribas un guion, devuelve siempre: objetivo, hipótesis, público, dura
 4. Decide escena por escena si una animación existente demuestra literalmente la voz. Si no, crea una nueva en Remotion, basada en los estados y componentes reales del producto, regístrala y añade una prueba.
 5. Diseña una portada específica para el concepto. Mantén la firma visual y el CTA global, pero no recicles la ilustración ni los datos del video anterior.
 6. Sintetiza una sola toma por escena y usa las divisiones únicamente para subtítulos.
-7. Renderiza primero con Kokoro local y música gratuita con licencia comercial archivada. Nunca uses `--final` en esta fase.
+7. Renderiza primero con Kokoro local. Usa música solo cuando el brief o la dirección de producción la elijan y exista una licencia comercial gratuita archivada. Nunca uses `--final` en esta fase.
 8. Revisa el MP4, la portada, la sincronía, las zonas seguras de TikTok y la fidelidad con el producto. Corrige y vuelve a renderizar hasta que el borrador esté listo para revisión humana.
 9. Solo después de una aprobación humana explícita cotiza y genera la voz pagada. Una aprobación del borrador no autoriza publicación.
 

@@ -1,0 +1,131 @@
+{
+  "version": 1,
+  "defaults": {
+    "draft": "draft-dora",
+    "final": "final-main"
+  },
+  "profiles": {
+    "draft-dora": {
+      "provider": "kokoro",
+      "label": "Dora — borrador",
+      "description": "Voz femenina neutra para iteraciones gratuitas.",
+      "settings": {
+        "voice": "ef_dora",
+        "speed": "1.04"
+      }
+    },
+    "draft-paulina": {
+      "provider": "macos",
+      "label": "Paulina — respaldo local",
+      "description": "Respaldo gratuito de macOS cuando Kokoro no está disponible.",
+      "settings": {
+        "voice": "Paulina",
+        "rate": "185"
+      }
+    },
+    "final-main": {
+      "provider": "elevenlabs",
+      "label": "Voz principal final",
+      "description": "Perfil final actual; el identificador se obtiene del entorno.",
+      "settings": {
+        "voice_id_env": "ELEVENLABS_VOICE_ID",
+        "model_id": "eleven_multilingual_v2",
+        "output_format": "mp3_44100_128",
+        "stability": "0.62",
+        "similarity_boost": "0.55",
+        "speed": "1.02"
+      }
+    },
+    "voice-01": {
+      "provider": "elevenlabs",
+      "label": "Voz 01",
+      "description": "Perfil pendiente de audición y clasificación creativa.",
+      "settings": {
+        "voice_id": "452WrNT9o8dphaYW5YGU",
+        "model_id": "eleven_multilingual_v2",
+        "output_format": "mp3_44100_128",
+        "stability": "0.62",
+        "similarity_boost": "0.55",
+        "speed": "1.02"
+      }
+    },
+    "voice-02": {
+      "provider": "elevenlabs",
+      "label": "Voz 02",
+      "description": "Perfil pendiente de audición y clasificación creativa.",
+      "settings": {
+        "voice_id": "qRUgOhnxGASxirG4fKjv",
+        "model_id": "eleven_multilingual_v2",
+        "output_format": "mp3_44100_128",
+        "stability": "0.62",
+        "similarity_boost": "0.55",
+        "speed": "1.02"
+      }
+    },
+    "voice-03": {
+      "provider": "elevenlabs",
+      "label": "Voz 03",
+      "description": "Perfil pendiente de audición y clasificación creativa.",
+      "settings": {
+        "voice_id": "qWWAqFomnJ99VwQLREfT",
+        "model_id": "eleven_multilingual_v2",
+        "output_format": "mp3_44100_128",
+        "stability": "0.62",
+        "similarity_boost": "0.55",
+        "speed": "1.02"
+      }
+    },
+    "voice-04": {
+      "provider": "elevenlabs",
+      "label": "Voz 04",
+      "description": "Perfil pendiente de audición y clasificación creativa.",
+      "settings": {
+        "voice_id": "tomkxGQGz4b1kE0EM722",
+        "model_id": "eleven_multilingual_v2",
+        "output_format": "mp3_44100_128",
+        "stability": "0.62",
+        "similarity_boost": "0.55",
+        "speed": "1.02"
+      }
+    },
+    "voice-05": {
+      "provider": "elevenlabs",
+      "label": "Voz 05",
+      "description": "Perfil pendiente de audición y clasificación creativa.",
+      "settings": {
+        "voice_id": "4XUsiqPDK4UACIM2BILe",
+        "model_id": "eleven_multilingual_v2",
+        "output_format": "mp3_44100_128",
+        "stability": "0.62",
+        "similarity_boost": "0.55",
+        "speed": "1.02"
+      }
+    },
+    "voice-06": {
+      "provider": "elevenlabs",
+      "label": "Voz 06",
+      "description": "Perfil pendiente de audición y clasificación creativa.",
+      "settings": {
+        "voice_id": "a0MaQpDjx7p7bZmqzFp1",
+        "model_id": "eleven_multilingual_v2",
+        "output_format": "mp3_44100_128",
+        "stability": "0.62",
+        "similarity_boost": "0.55",
+        "speed": "1.02"
+      }
+    },
+    "voice-07": {
+      "provider": "elevenlabs",
+      "label": "Voz 07",
+      "description": "Perfil pendiente de audición y clasificación creativa.",
+      "settings": {
+        "voice_id": "KFj5NhzCzmFRreBlYsUw",
+        "model_id": "eleven_multilingual_v2",
+        "output_format": "mp3_44100_128",
+        "stability": "0.62",
+        "similarity_boost": "0.55",
+        "speed": "1.02"
+      }
+    }
+  }
+}

@@ -25,6 +25,7 @@ STATES = ["planned", "approved", "rendered", "reviewed", "signed", "published", 
 # States a video can be rendered from: approved, or rendered before and being
 # rebuilt after a correction.
 RENDERABLE = {"approved", "rendered", "reviewed", "signed"}
+IMMUTABLE_STATES = {"published", "learned"}
 
 
 def now() -> str:
@@ -78,6 +79,9 @@ def update(item: dict[str, Any], catalog: dict[str, Any], state: str | None = No
     if state:
         if state not in STATES:
             raise RuntimeError(f"Invalid state: {state}")
+        current = item.get("state")
+        if current in IMMUTABLE_STATES and state != current:
+            raise RuntimeError(f"A {current} video is immutable; create a variant instead")
         item["state"] = state
     item.update(fields)
     item["updated_at"] = now()

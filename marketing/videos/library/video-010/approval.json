@@ -1,8 +1,8 @@
 {
-  "approved_at": "2026-08-14T15:15:30.560418-05:00",
+  "approved_at": "2026-08-14T19:22:38.435991-05:00",
   "approved_by": "Claude",
-  "notes": "Guia educativa de departamento con el mismo formato del 009: siete escenas ensenan fuera del portal y la cuna entra en la septima. Cuatro animaciones nuevas sobre la tarjeta de papel.",
+  "notes": "Reverificacion de Calidad: el plan describia las animaciones como pendientes y las escenas 6 y 7 seguian narrando las heredadas. Direcciones visuales reescritas para describir lo que el master muestra. Sin cambios de voz, rotulos ni assets: no requiere rerender.",
   "lint_passed": true,
   "forced": false,
-  "plan_sha": "f8120dc5389293c2450f2cc7705ddfcf33c831168112e3ba994c9a4d51a5a048"
+  "plan_sha": "33d8764bb254b941cf24b72e61f0417dbf5e510aaf4a0ec1c33d138e3290de49"
 }

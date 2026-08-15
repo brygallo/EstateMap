@@ -18,10 +18,14 @@ PURPOSES = ["gancho", "problema", "prueba", "resultado", "cta"]
 
 CONTEXT_FILES = [
     "CLAUDE.md",
+    "AGENTS.md",
+    "council.md",
     "product-context.md",
     "strategy.md",
     "production-guide.md",
     "creative-system.md",
+    "animation-standard.md",
+    "system/voice-profiles.json",
     "memory/lessons.md",
     "memory/content-gaps.json",
     "memory/decisions.md",
@@ -51,8 +55,9 @@ PLAN_SCHEMA = {
         "cover_text": {"type": "string", "maxLength": 32},
         "caption": {"type": "string"},
         "narration": {"type": "string"},
+        "voice_profile": {"type": ["string", "null"]},
         # Optional instrumental brief. Absent means the piece carries no music,
-        # which stays the default: a bed is bought only when someone asks.
+        # which stays the default: a licensed free bed is used only when selected.
         "music": {"type": ["string", "null"], "maxLength": 300},
         "verification_notes": {"type": "array", "items": {"type": "string"}},
         # The ceiling is the story format's; `quality.scene_budget` holds short
@@ -188,13 +193,16 @@ SIMULATIONS = {
     "sim:edificio": "animación educativa: las actas de asamblea y el estado real del edificio",
     "sim:escrituras": "animación: la escritura, el propietario inscrito y la comprobación de que es quien vende",
     "sim:gravamenes": "animación: el certificado de gravámenes y el predial, leídos uno a uno",
+    "sim:gravamenes-departamento": "animación: el mismo certificado de gravámenes, dicho sobre un departamento",
     "sim:uso-suelo": "animación: el uso de suelo del municipio y lo que permite construir",
     "sim:linderos": "animación: caminar los linderos y encontrar la medida que no cuadra",
     "sim:servicios": "animación: los servicios que llegan al terreno y el acceso en invierno",
     "sim:alrededor": "animación: el entorno del terreno en el mapa, las vías y el acceso",
+    "sim:entorno-mapa": "animación: las vías y el entorno inmediato de un edificio antes de visitarlo",
     "sim:forma-dibujada": "animación: la Forma del terreno dibujándose, con el aviso de que no es un plano legal",
     "sim:medidas": "animación: el campo Medidas de la ficha marcado como referencia aproximada",
     "sim:dividir": "animación: precio total dividido para el área, el precio por m² y dos terrenos de distinto tamaño comparados",
+    "sim:metros-utiles": "animación educativa: comparar el precio usando metros útiles y separar las áreas comunes",
     "sim:preguntas": "animación educativa: lo que una foto de un terreno no puede decirte, fuera de cualquier portal",
     "sim:anuncios": "animación: anuncios cayendo en pila, cada uno con foto y precio y el hueco de la ubicación vacío",
     "sim:llegada": "animación: los anuncios se apartan y entra el mapa con la marca; úsala en la escena donde se nombra Geo Propiedades",
@@ -278,6 +286,14 @@ text-to-speech voice: no emoji, no hashtags, no stage directions, no abbreviatio
 the voice cannot read. Write numbers and URLs the way they are pronounced.
 Each on_screen_text is a rótulo of at most four words and 22 characters: it has to fit on a single row.
 The narration field joins every voice field in order.
+Every animated visual direction must describe a complete causal arc: initial state,
+action, visible response and resolved proof. Follow animation-standard.md. Do not
+request a generic entrance, decorative particles, a placeholder or an unfinished
+sketch as the scene's demonstration.
+Choose one video-level voice_profile only when the brief requests a known profile;
+otherwise leave it null so the render stage uses its configured default. Every
+scene uses that same narrator. Never invent a profile id or change voices inside
+one video.
 
 The music field is a short instrumental brief in Spanish describing the bed that
 sits under the voice: genre, instruments, tempo and mood. It is never sung and

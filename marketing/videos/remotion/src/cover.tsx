@@ -73,10 +73,17 @@ const PublishCover: React.FC<{accent: string}> = ({accent}) => (
   </div>
 );
 
-const ReviewChecklistCover: React.FC<{accent: string}> = ({accent}) => (
+const ReviewChecklistCover: React.FC<{accent: string; heading?: string; labels?: string[]}> = ({
+  accent,
+  heading = 'Antes de contactar',
+  labels = ['Fotos y datos', 'Precio ÷ área', 'Ubicación'],
+}) => (
   <div style={{width: '100%', height: '100%', padding: 34, borderRadius: 38, background: '#F7F9FC', boxShadow: '0 34px 100px rgba(0,0,0,.38)', fontFamily: font}}>
-    <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}><div style={{fontSize: 25, fontWeight: 800, color: palette.ink}}>Antes de contactar</div><div style={{padding: '10px 16px', borderRadius: 99, background: `${accent}20`, color: accent, fontSize: 20, fontWeight: 800}}>3 COMPROBACIONES</div></div>
-    <div style={{marginTop: 25, display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 15}}>{[['01','Fotos y datos'],['02','Precio ÷ área'],['03','Ubicación']].map(([number, label]) => <div key={number} style={{height: 235, padding: '25px 22px', borderRadius: 26, background: number === '01' ? `${accent}18` : '#EDF2F7', border: `2px solid ${number === '01' ? `${accent}40` : '#E2E8F0'}`, display: 'flex', flexDirection: 'column', justifyContent: 'space-between'}}><div style={{fontSize: 24, fontWeight: 800, color: accent}}>{number}</div><div style={{fontSize: 28, lineHeight: 1.05, fontWeight: 800, color: palette.ink}}>{label}</div><div style={{width: 42, height: 42, borderRadius: 14, background: accent, color: '#FFF', display: 'grid', placeItems: 'center', fontSize: 24, fontWeight: 800}}>✓</div></div>)}</div>
+    <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}><div style={{fontSize: 25, fontWeight: 800, color: palette.ink}}>{heading}</div><div style={{padding: '10px 16px', borderRadius: 99, background: `${accent}20`, color: accent, fontSize: 20, fontWeight: 800}}>3 COMPROBACIONES</div></div>
+    <div style={{marginTop: 25, display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 15}}>{labels.map((label, index) => {
+      const number = String(index + 1).padStart(2, '0');
+      return <div key={number} style={{height: 235, padding: '25px 22px', borderRadius: 26, background: number === '01' ? `${accent}18` : '#EDF2F7', border: `2px solid ${number === '01' ? `${accent}40` : '#E2E8F0'}`, display: 'flex', flexDirection: 'column', justifyContent: 'space-between'}}><div style={{fontSize: 24, fontWeight: 800, color: accent}}>{number}</div><div style={{fontSize: 28, lineHeight: 1.05, fontWeight: 800, color: palette.ink}}>{label}</div><div style={{width: 42, height: 42, borderRadius: 14, background: accent, color: '#FFF', display: 'grid', placeItems: 'center', fontSize: 24, fontWeight: 800}}>✓</div></div>;
+    })}</div>
   </div>
 );
 
@@ -143,6 +150,93 @@ const LinkCover: React.FC<{accent: string}> = ({accent}) => (
     </div>
   </div>
 );
+
+/**
+ * The flat is one lit unit inside a building that comes with it.
+ *
+ * Same reading as `sim:que-compras` and `sim:propiedad-horizontal`: façade on
+ * the left, the building opened on the right so the slabs, the shaft and the
+ * tank are visible, and one unit picked out in the accent. A single house on a
+ * lawn — the generic illustration — says the opposite of what this piece says.
+ *
+ * The listing beside it is an example, not a market figure, and it carries the
+ * `EJEMPLO` badge that authorises it: same marker the animations paint in
+ * `FieldShell`, at a size that survives a phone. Its magnitudes are a flat's,
+ * not a plot's.
+ */
+const FlatCover: React.FC<{accent: string}> = ({accent}) => {
+  const floors = [88, 134, 180, 226];
+  const columns = [46, 116];
+  const rows = [52, 98, 144, 190];
+  const legend: Array<[string, string, string]> = [
+    ['Tu departamento', '78 m²', accent],
+    ['Áreas comunes', 'Del edificio', '#98A2B3'],
+  ];
+  return (
+    <div style={{width: '100%', height: '100%', padding: 30, borderRadius: 38, background: '#F7F9FC', boxShadow: '0 34px 100px rgba(0,0,0,.38)', fontFamily: font, display: 'grid', gridTemplateRows: 'auto 1fr'}}>
+      <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 18}}>
+        <div style={{fontSize: 25, fontWeight: 800, color: palette.ink}}>Departamento en Cumbayá</div>
+        <div style={{padding: '9px 16px', borderRadius: 99, background: `${accent}20`, border: `2px solid ${accent}45`, color: accent, fontSize: 22, fontWeight: 800, letterSpacing: '.08em'}}>EJEMPLO</div>
+      </div>
+      <div style={{marginTop: 18, display: 'grid', gridTemplateColumns: '300px 1fr', gap: 22, alignItems: 'center'}}>
+        <svg width="100%" height="100%" viewBox="0 0 300 300" preserveAspectRatio="xMidYMid meet">
+          <defs>
+            <linearGradient id="cover-flat-glass" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stopColor="#D6F0F7"/><stop offset="1" stopColor="#7C97AE"/></linearGradient>
+          </defs>
+          <ellipse cx="150" cy="286" rx="140" ry="9" fill="#0B1220" opacity=".12" />
+          {/* the building, and the third of it that is drawn open */}
+          <rect x="30" y="42" width="240" height="238" rx="6" fill="#E9EEF5" stroke="#D3DCE8" strokeWidth="2" />
+          <rect x="186" y="42" width="84" height="238" fill="#D5DEEA" />
+          <path d="M186 42 V280" stroke="#93A4B8" strokeWidth="3" strokeDasharray="10 8" />
+          <rect x="22" y="26" width="256" height="16" rx="5" fill="#2E4055" />
+          {/* the tank on the roof, standing over the shaft it feeds */}
+          <rect x="200" y="0" width="54" height="24" rx="5" fill="#8FA2B5" />
+          <path d="M212 24 V30 M242 24 V30" stroke="#8FA2B5" strokeWidth="6" />
+          {floors.map((y) => (
+            <g key={`floor-${y}`}>
+              <path d={`M30 ${y} H186`} stroke="#CBD6E4" strokeWidth="4" />
+              <rect x="186" y={y - 5} width="84" height="10" fill="#A9B8C9" />
+            </g>
+          ))}
+          {/* the shaft: the part of the building nobody photographs */}
+          <rect x="222" y="42" width="30" height="188" fill="#BAC7D7" />
+          <path d="M237 42 V144" stroke="#8B9CB0" strokeWidth="3" />
+          <rect x="224" y="144" width="26" height="36" rx="3" fill="#6E8398" />
+          {rows.map((y) => columns.map((x) => (
+            <rect key={`w-${x}-${y}`} x={x} y={y} width="58" height="32" rx="4" fill="url(#cover-flat-glass)" />
+          )))}
+          {/* one lit unit: the flat */}
+          <rect x="40" y="138" width="78" height="44" rx="6" fill={accent} stroke="#FFFFFF" strokeWidth="5" />
+          <rect x="52" y="148" width="54" height="24" rx="3" fill="#FFFFFF" opacity=".38" />
+          <rect x="30" y="230" width="240" height="50" fill="#DCE4EE" />
+          <path d="M30 230 H270" stroke="#C3CEDD" strokeWidth="4" />
+          <rect x="70" y="240" width="46" height="40" rx="4" fill="#35485E" />
+          <rect x="130" y="242" width="40" height="30" rx="3" fill="url(#cover-flat-glass)" />
+          <path d="M10 280 H290" stroke="#CBD5E3" strokeWidth="6" strokeLinecap="round" />
+        </svg>
+        <div>
+          <div style={{fontSize: 52, fontWeight: 800, letterSpacing: '-.05em', color: palette.ink}}>$122.000</div>
+          <div style={{marginTop: 8, fontSize: 23, fontWeight: 800, color: '#5C6480'}}>2 hab. · 2 baños · 78 m²</div>
+          <div style={{marginTop: 12, display: 'flex', alignItems: 'center', gap: 10}}>
+            <LocationGlyph accent={accent} />
+            <span style={{fontSize: 22, fontWeight: 800, color: '#5C6480'}}>Ubicación en el mapa</span>
+          </div>
+          <div style={{marginTop: 16}}>
+            {legend.map(([label, value, swatch]) => (
+              <div key={label} style={{marginBottom: 12, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 14, padding: '15px 18px', borderRadius: 16, background: '#EDF2F7'}}>
+                <span style={{display: 'flex', alignItems: 'center', gap: 11, fontSize: 22, fontWeight: 800, color: '#5D667E'}}>
+                  <i style={{width: 18, height: 18, borderRadius: 5, background: swatch}} />
+                  {label}
+                </span>
+                <span style={{fontSize: 24, fontWeight: 800, color: swatch === accent ? accent : '#5D667E', whiteSpace: 'nowrap'}}>{value}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
 
 /**
  * The origin story in one image: the listing the way it arrived — a photo, a
@@ -224,16 +318,35 @@ export const EstateMapCover: React.FC<CoverProps> = ({coverText, coverArt, cta, 
   // for covers written before `cover_art` existed.
   const isOriginStory = coverArt === 'origen';
   const isOfferStory = coverArt === 'oferta';
+  const isFlatStory = coverArt === 'departamento';
+  const isDecisionStory = coverArt === 'decision';
   const isAgentStory = coverArt === 'agente' || (!coverArt && audience === 'profesional');
   const isAentsStory = coverArt === 'aents' || (!coverArt && normalizedCoverText.includes('aents'));
   const accent = isAentsStory ? palette.violet : inputAccent;
-  const isFilterStory = normalizedCoverText.includes('ciegas');
-  const isReviewStory = normalizedCoverText.includes('revisa') || normalizedCoverText.includes('contactar');
-  const isPublishStory = /publica(?:r)?/.test(normalizedCoverText)
+  // A named `cover_art` decides on its own. The keyword tests stay for the
+  // covers written before the field existed, but they may no longer steal a
+  // cover whose plan already said what it wants to draw.
+  const isFilterStory = !coverArt && normalizedCoverText.includes('ciegas');
+  const isReviewStory = !coverArt
+    && (normalizedCoverText.includes('revisa') || normalizedCoverText.includes('contactar'));
+  const isPublishStory = !coverArt
+    && /publica(?:r)?/.test(normalizedCoverText)
     && (normalizedCoverText.includes('gratis') || normalizedCoverText.includes('$0') || normalizedCoverText.includes('sin comisión'));
+  // The title is measured against the box it is actually painted in. Measuring
+  // against a wider one is what broke video-010: `fit` returned two lines that
+  // the 840 px column then wrapped into four, and the illustration — placed at
+  // a fixed height — sat on top of the last two.
+  const titleWidth = 1080 - safe.left * 2;
   const {fontSize, lines} = ready
-    ? fit(coverText, {maxWidth: 900, maxLines: 2, max: 116, min: 72, letterSpacing: '-0.05em'})
+    ? fit(coverText, {maxWidth: titleWidth - 4, maxLines: 2, max: 116, min: 64, letterSpacing: '-0.05em'})
     : {fontSize: 92, lines: [coverText]};
+  // Where the title block ends: badge (24 px text in an 11 px padded pill with
+  // a 2 px border) plus the 27 px gap plus the fitted lines.
+  const titleBottom = 370 + 55 + 27 + lines.length * fontSize * 0.96;
+  // `CLAUDE.md` asks for 48 px clear below the title; 72 pays for the
+  // descenders the line box does not count. Illustrations that already clear it
+  // keep the height their composition was drawn for.
+  const artTop = (top: number) => Math.max(top, Math.ceil(titleBottom + 72));
   return (
     <AbsoluteFill style={{backgroundColor: palette.ink, overflow: 'hidden'}}>
       <style>{`@font-face { font-family: 'EstateMap Display'; src: url('${staticFile('fonts/PlusJakartaSans-ExtraBold.ttf')}') format('truetype'); font-weight: 800; font-style: normal; font-display: block; }`}</style>
@@ -249,29 +362,42 @@ export const EstateMapCover: React.FC<CoverProps> = ({coverText, coverArt, cta, 
         </div>
 
         <div style={{position: 'absolute', left: safe.left, right: safe.left, top: 370}}>
-          <div style={{display: 'inline-flex', alignItems: 'center', gap: 12, padding: '11px 20px', borderRadius: 99, color: accent, backgroundColor: `${accent}18`, border: `2px solid ${accent}45`, fontFamily: font, fontWeight: 800, fontSize: 24}}>{isOfferStory ? 'PARA PROPIETARIOS' : isOriginStory ? 'CÓMO NACIÓ ESTO' : isAentsStory ? 'CASO REAL · SOFTWARE A MEDIDA' : isPublishStory ? 'PUBLICA GRATIS' : isReviewStory ? 'ANTES DE CONTACTAR' : isAgentStory ? <><LocationGlyph accent={accent}/> PARA AGENTES</> : <><LocationGlyph accent={accent}/> UBICACIÓN PRIMERO</>}</div>
+          <div style={{display: 'inline-flex', alignItems: 'center', gap: 12, padding: '11px 20px', borderRadius: 99, color: accent, backgroundColor: `${accent}18`, border: `2px solid ${accent}45`, fontFamily: font, fontWeight: 800, fontSize: 24}}>{isOfferStory ? 'PARA PROPIETARIOS' : isOriginStory ? 'CÓMO NACIÓ ESTO' : isFlatStory ? 'PROPIEDAD HORIZONTAL' : isAentsStory ? 'CASO REAL · SOFTWARE A MEDIDA' : isPublishStory ? 'PUBLICA GRATIS' : isDecisionStory ? 'ANTES DE DECIDIR' : isReviewStory ? 'ANTES DE CONTACTAR' : isAgentStory ? <><LocationGlyph accent={accent}/> PARA AGENTES</> : <><LocationGlyph accent={accent}/> UBICACIÓN PRIMERO</>}</div>
           <div style={{marginTop: 27, fontFamily: font, fontWeight: 800, fontSize, lineHeight: .96, letterSpacing: '-0.05em', color: palette.white}}>{lines.map((line, index) => <div key={index}>{line}</div>)}</div>
         </div>
 
         {isOriginStory ? (
-          <div style={{position: 'absolute', left: safe.left, right: safe.left, top: 760, height: 410}}><OriginCover accent={accent}/></div>
+          <div style={{position: 'absolute', left: safe.left, right: safe.left, top: artTop(760), height: 410}}><OriginCover accent={accent}/></div>
         ) : isOfferStory ? (
-          <div style={{position: 'absolute', left: safe.left, right: safe.left, top: 750, height: 420}}><OfferCover accent={accent}/></div>
+          <div style={{position: 'absolute', left: safe.left, right: safe.left, top: artTop(750), height: 420}}><OfferCover accent={accent}/></div>
+        ) : isFlatStory ? (
+          <div style={{position: 'absolute', left: safe.left, right: safe.left, top: artTop(750), height: 420}}><FlatCover accent={accent}/></div>
         ) : isAentsStory ? (
-          <div style={{position: 'absolute', left: safe.left, right: safe.left, top: 790, height: 390}}><AentsCaseCover accent={accent}/></div>
+          <div style={{position: 'absolute', left: safe.left, right: safe.left, top: artTop(790), height: 390}}><AentsCaseCover accent={accent}/></div>
         ) : isPublishStory ? (
-          <div style={{position: 'absolute', left: safe.left, right: safe.left, top: 750, height: 420}}><PublishCover accent={accent}/></div>
+          <div style={{position: 'absolute', left: safe.left, right: safe.left, top: artTop(750), height: 420}}><PublishCover accent={accent}/></div>
+        ) : isDecisionStory ? (
+          <div style={{position: 'absolute', left: safe.left, right: safe.left, top: artTop(815), height: 360}}><ReviewChecklistCover accent={accent} heading="Antes de decidir" labels={['Ubicación', 'Documentos', 'Medidas']} /></div>
         ) : isReviewStory ? (
-          <div style={{position: 'absolute', left: safe.left, right: safe.left, top: 815, height: 360}}><ReviewChecklistCover accent={accent}/></div>
+          <div style={{position: 'absolute', left: safe.left, right: safe.left, top: artTop(815), height: 360}}><ReviewChecklistCover accent={accent}/></div>
         ) : isAgentStory ? (
-          <div style={{position: 'absolute', left: safe.left, right: safe.left, top: 750, height: 420}}><LinkCover accent={accent}/></div>
+          <div style={{position: 'absolute', left: safe.left, right: safe.left, top: artTop(750), height: 420}}><LinkCover accent={accent}/></div>
         ) : isFilterStory ? (
-          <div style={{position: 'absolute', left: safe.left, right: safe.left, top: 750, height: 420}}><FilterMapCover accent={accent}/></div>
+          <div style={{position: 'absolute', left: safe.left, right: safe.left, top: artTop(750), height: 420}}><FilterMapCover accent={accent}/></div>
         ) : <>
+          {/* The house and the card below it are one drawing 400 px apart, and
+              the pair reaches the strip at y=1248: it cannot be pushed down to
+              clear a long title. A cover whose title needs the room names its
+              own illustration instead of landing here. */}
           <div style={{position: 'absolute', left: 156, top: 560, width: 768, height: 422, opacity: .98}}><PremiumHouse accent={accent} /></div>
           <div style={{position: 'absolute', left: safe.left, right: safe.left, top: 960, padding: '27px 30px', borderRadius: 30, background: 'linear-gradient(145deg, rgba(255,255,255,.13), rgba(255,255,255,.06))', border: '2px solid rgba(255,255,255,.14)', boxShadow: '0 28px 80px rgba(0,0,0,.34)', backdropFilter: 'blur(18px)', display: 'flex', alignItems: 'center'}}>
           <div style={{flex: 1}}>
-            <div style={{fontFamily: font, fontWeight: 800, fontSize: 22, color: 'rgba(255,255,255,.5)'}}>{isFilterStory ? 'OPCIÓN EN TU ZONA' : 'CASA EN CUMBAYÁ'}</div>
+            {/* The price and the features below are an example of a listing, so
+                they carry the same badge the animations paint in `FieldShell`. */}
+            <div style={{display: 'flex', alignItems: 'center', gap: 12, fontFamily: font, fontWeight: 800, fontSize: 22, color: 'rgba(255,255,255,.5)'}}>
+              <span>{isFilterStory ? 'OPCIÓN EN TU ZONA' : 'CASA EN CUMBAYÁ'}</span>
+              <span style={{padding: '5px 12px', borderRadius: 99, border: '2px solid rgba(255,255,255,.28)', color: 'rgba(255,255,255,.78)', fontSize: 22, letterSpacing: '.08em'}}>EJEMPLO</span>
+            </div>
             <div style={{marginTop: 7, fontFamily: font, fontWeight: 800, fontSize: 47, color: palette.white, letterSpacing: '-0.04em'}}>$122.000</div>
             <div style={{marginTop: 7, fontFamily: font, fontWeight: 800, fontSize: 23, color: 'rgba(255,255,255,.65)'}}>3 hab. · 2 baños · 400 m²</div>
           </div>
@@ -282,7 +408,7 @@ export const EstateMapCover: React.FC<CoverProps> = ({coverText, coverArt, cta, 
 
         <div style={{position: 'absolute', left: safe.left, right: safe.left, top: 1248, display: 'flex', alignItems: 'center', gap: 18}}>
           <div style={{width: 112, height: 9, borderRadius: 99, backgroundColor: accent, boxShadow: `0 0 30px ${accent}`}} />
-          <div style={{fontFamily: font, fontWeight: 800, fontSize: 30, color: 'rgba(255,255,255,.68)'}}>{isOfferStory ? 'Sin comisión, sin límite y sin crear cuenta' : isOriginStory ? 'De un anuncio sin lugar a un lugar en el mapa' : isAentsStory ? 'Webs · apps · sistemas · automatización' : isPublishStory ? 'Un proceso corto, claro y guiado' : isReviewStory ? 'Llega sabiendo qué preguntar' : isAgentStory ? 'Una ficha responde dónde queda' : isFilterStory ? 'Ciudad, zona y precio sobre el mapa' : 'Fotos, precio y detalles en un solo lugar'}</div>
+          <div style={{fontFamily: font, fontWeight: 800, fontSize: 30, color: 'rgba(255,255,255,.68)'}}>{isOfferStory ? 'Sin comisión, sin límite y sin crear cuenta' : isOriginStory ? 'De un anuncio sin lugar a un lugar en el mapa' : isFlatStory ? 'Compras una parte de un edificio entero' : isAentsStory ? 'Webs · apps · sistemas · automatización' : isPublishStory ? 'Un proceso corto, claro y guiado' : isDecisionStory ? 'Ubica, revisa y confirma' : isReviewStory ? 'Llega sabiendo qué preguntar' : isAgentStory ? 'Una ficha responde dónde queda' : isFilterStory ? 'Ciudad, zona y precio sobre el mapa' : 'Fotos, precio y detalles en un solo lugar'}</div>
         </div>
 
         <div style={{position: 'absolute', left: safe.left, right: safe.left, top: 1435, padding: '24px 30px', borderRadius: 28, backgroundColor: accent, color: palette.ink, display: 'flex', alignItems: 'center', justifyContent: 'space-between', boxShadow: `0 24px 70px ${accent}2E`}}>

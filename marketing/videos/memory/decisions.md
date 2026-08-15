@@ -1,5 +1,44 @@
 # Decisiones vigentes
 
+## 2026-08-14 — Una pieza no hereda una animación que habla de otro sujeto
+
+- **El video-010 salió del planificador con tres animaciones de la pieza de terrenos.** Rotulaban «¿Debe algo el terreno?», comparaban lotes de 400 y 800 m² y dibujaban un solar con casitas, en una historia sobre departamentos. El consejo lo levantó por tres carriles distintos y a la vez. Reusar una `sim:*` está bien cuando demuestra lo mismo; cuando cambia el sujeto, no es reutilización, es otra pieza diciendo otra cosa.
+- **Cuando el sujeto es lo único que cambia, se parametriza; cuando cambia la demostración, se escribe una animación nueva.** `sim:gravamenes` recibió una prop de sujeto cuyo valor por defecto reproduce exactamente lo que el video-009 firmó, y `sim:gravamenes-departamento` la envuelve. En cambio la escena de metros y la del entorno necesitaban demostrar otra cosa, así que nacieron `sim:metros-utiles` y `sim:entorno-mapa`; las heredadas quedan intactas para el 009.
+- **Una pieza firmada es inmutable, pero eso no obliga a heredar su defecto.** El 009 se queda como está; el 010 no arrastra su sujeto.
+- **Una portada nombrada que no existe cae al respaldo genérico sin avisar.** `cover_art: "terreno"` no tenía ramal en `cover.tsx`, así que una historia sobre departamentos se publicaba con una casa, un precio y 400 m² en la miniatura. Ahora `quality.py` lo trata como error de lint (`cover_art_missing`) leyendo los ramales del propio `cover.tsx`: el respaldo sigue siendo legítimo para un plan que no nombra ilustración, y por eso nada aguas abajo podía detectarlo.
+
+## 2026-08-14 — Un dato de ejemplo no es una cifra inventada
+
+- **La línea no está en el número, está en lo que el número afirma.** «El 3,4 % de las casas», «8719 propiedades en Quito» o «el metro cuadrado está en $303» son afirmaciones sobre el mercado o sobre la plataforma y exigen fuente fechada. Un precio y un área que solo existen para enseñar una división no afirman nada: son el ejemplo de un anuncio, igual que la foto de una casa que no existe.
+- **Motivo: la regla del 2026-08-13 se leyó al revés.** El consejo revisó el video-010 y bloqueó `sim:dividir` por pintar $122.000 y 400 m², citando «ninguna animación inventa cifras». Esa decisión prohíbe los totales de inventario que se borraron de `sim:mapa` y en el mismo apartado autoriza el precio y las características de una propiedad ilustrativa. Prohibir el ejemplo deja a la fábrica sin forma de enseñar un cálculo, que es justo lo que la pieza educativa tiene que hacer.
+- **Tres condiciones para el ejemplo:** rótulo `EJEMPLO` visible mientras la cifra esté en pantalla, magnitudes verosímiles para el sujeto de la pieza —un departamento no mide 400 m²— y una voz que no convierta el ejemplo en dato.
+- **Un hallazgo sobre lo que se ve se comprueba mirando.** El bloqueo se sostenía en que «nada en pantalla lo dice» cuando la tarjeta lleva el rótulo `EJEMPLO` arriba a la derecha en todas las escenas. Antes de emitir un hallazgo visual hay que extraer el fotograma o leer el componente.
+- **El linter tenía la frontera bien puesta y el porcentaje roto.** `NUMBER_CLAIM` en `quality.py` solo persigue porcentajes, miles, millones, usuarios, visitas, propiedades y anuncios, así que un precio o un área de ejemplo nunca fueron un hallazgo de la máquina; el defecto de criterio estaba en la prosa del contrato, que decía «no inventes cifras… ni precios» sin la distinción. Pero el test que fija esa frontera destapó que el `\b` final de la expresión hacía imposible que «3,4 %» coincidiera: el porcentaje, la cifra inventada más peligrosa, llevaba desde siempre sin detectarse.
+- **La frontera se prueba, no se recuerda.** `ExampleFigureTests` en `tests/test_factory.py` comprueba las dos direcciones: el precio y el área de un ejemplo no producen hallazgo, y el porcentaje y el conteo de propiedades sin nota sí.
+
+## 2026-08-14 — Un consejo multiagente, un solo contrato y un solo editor
+
+- **Claude y Codex obedecen las mismas reglas.** `marketing/videos/AGENTS.md` remite al contrato normativo de `CLAUDE.md` y ambos comparten `VIDEO_COUNCIL_V1`; el planner carga además el consejo y el estándar de animación.
+- **Tres carriles trabajan en paralelo:** verdad de producto/negocio, estrategia/guion y producción audiovisual. Sus tareas no se duplican y cada decisión tiene un dueño.
+- **Un editor jefe integra una sola pieza.** No se vota ni se mezclan versiones incompatibles. La evidencia decide; un conflicto entre specs y código bloquea la afirmación.
+- **Calidad es independiente y no corrige archivos.** Emite `PASS` o `FAIL`, asigna el defecto a su dueño y repite solo las puertas afectadas.
+- **Los agentes aceleran decisiones reversibles.** Gasto de voz final, firma, publicación y pauta conservan puertas humanas explícitas y separadas.
+
+## 2026-08-14 — Perfiles de voz por video y por escena
+
+- **Las voces se configuran como perfiles versionados.** `system/voice-profiles.json` relaciona un identificador estable con proveedor, descripción y ajustes; claves y secretos siguen fuera del repositorio.
+- **La unidad obligatoria es una voz por video.** Todas las escenas conservan el mismo narrador. La CLI puede forzar un perfil en toda la pieza antes de generar el máster.
+- **La primera generación final bloquea voz y ajustes.** `voice-lock.json` conserva perfil, proveedor y firma; cualquier intento posterior de usar otra voz falla antes de comprar. Una voz distinta exige una variante o video nuevo.
+- **Los borradores siguen siendo gratuitos.** La selección rechaza cualquier perfil pagado antes de sintetizar; incorporar más voces no abre una ruta nueva de gasto.
+- **La música continúa entrando solo con licencia individual.** Descargar un lote o clasificarlo por estilo no convierte las pistas en utilizables si falta autor, fuente o permiso comercial gratuito.
+
+## 2026-08-14 — Las animaciones se aprueban como secuencias terminadas
+
+- **`animation-standard.md` es el contrato global de dirección de movimiento.** Una composición demuestra una idea mediante estado inicial, acción causal, respuesta y prueba resuelta; un animatic, placeholder o entrada genérica no se registra como `sim:*` disponible.
+- **La complejidad de código no tiene un techo estético.** Se permite cuando construye jerarquía, profundidad, continuidad, detalle o una demostración más clara. Partículas, transiciones y cantidad de elementos no sustituyen una composición legible.
+- **El acabado se revisa en movimiento y en móvil.** La composición debe completar su arco con duraciones mínima, nominal y larga, respetar zonas seguras, producir fotogramas deterministas y sostener un foco dominante por beat.
+- **El planner recibe el estándar como contexto.** Cada dirección visual nueva debe especificar estado inicial, acción, respuesta visible y resultado, para que el plan ya nazca como una secuencia realizable y no como una indicación vaga.
+
 ## 2026-08-14 — La serie «Publicar cuesta cero», y qué separa una pieza de venta de un tutorial
 
 - **Serie nueva para propietario: «Publicar cuesta cero».** Lidera con la oferta en vez de enseñar el procedimiento. El video 003 ya es el tutorial del formulario; repetirlo con otro gancho habría sido la misma pieza dos veces.
