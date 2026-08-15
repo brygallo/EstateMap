@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
 import { SlidersHorizontal } from 'lucide-react';
-import { animate, motion, useDragControls, useMotionValue } from 'motion/react';
+import { animate, motion, useDragControls, useMotionValue, useTransform } from 'motion/react';
 import { Button } from '@/components/ui/button';
 import { haptic } from '@/lib/haptics';
 import {
@@ -65,6 +65,12 @@ export default function MobilePropertyDrawer({
   } | null>(null);
   const [drawerHeight, setDrawerHeight] = useState(0);
   const open = snap !== 'closed';
+  const backdropOpacity = useTransform(
+    drawerY,
+    [0, Math.max(mobilePanelSnapOffsets(drawerHeight || 1).half, 1)],
+    [0.5, 0],
+    { clamp: true }
+  );
 
   useEffect(() => {
     if (!open) return;
@@ -264,14 +270,18 @@ export default function MobilePropertyDrawer({
         </Button>
       )}
 
-      {snap === 'full' && (
-        <button
-          type="button"
-          className="fixed inset-x-0 bottom-0 top-[var(--app-header-height)] z-backdrop touch-none bg-black/50 lg:hidden"
-          aria-label="Reducir panel"
-          onClick={() => onSnapChange('half')}
-        />
-      )}
+      <motion.button
+        type="button"
+        style={{
+          opacity: backdropOpacity,
+          pointerEvents: snap === 'full' ? 'auto' : 'none',
+        }}
+        className="fixed inset-x-0 bottom-0 top-[var(--app-header-height)] z-backdrop touch-none bg-black lg:hidden"
+        aria-label="Reducir panel"
+        aria-hidden={snap !== 'full'}
+        tabIndex={snap === 'full' ? 0 : -1}
+        onClick={() => onSnapChange('half')}
+      />
 
       <motion.div
         ref={drawerRef}
