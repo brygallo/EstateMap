@@ -242,7 +242,7 @@ rules:
       editar.
     evidence:
       - file: backend/real_estate/views.py
-        lines: "558-563"
+        lines: "564-568"
         symbol: "idempotency_key = (request.headers.get('Idempotency-Key')"
         note: Sin cabecera, se comporta como un create normal.
       - file: backend/real_estate/views.py
@@ -437,11 +437,11 @@ rules:
       "eliminar" con `window.confirm` como acción irreversible.
     evidence:
       - file: backend/real_estate/views.py
-        lines: "411-413"
+        lines: "414-416"
         symbol: "exclude(status='inactive')"
         note: Único filtro que saca inactive del catálogo público; no toca la fila.
       - file: backend/real_estate/views.py
-        lines: "1029-1031"
+        lines: "1033-1035"
         symbol: def my_properties
         note: "including inactive: el dueño ve su propiedad inactiva, el público no."
       - file: backend/real_estate/models.py

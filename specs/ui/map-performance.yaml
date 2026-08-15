@@ -8,6 +8,39 @@ summary: >
   cuando llega el detalle de una propiedad seleccionada.
 
 rules:
+  - id: MPERF-004
+    name: Cada nivel territorial reutiliza una sola respuesta cacheada
+    status: implemented
+    summary: >
+      Las vistas de Ecuador, provincias y ciudades usan respectivamente una
+      clave canónica de Redis. En esos niveles se ignoran el bbox y los decimales
+      del zoom porque el resultado territorial se calcula sobre todo el inventario
+      filtrado; solo el nivel de propiedades individuales conserva claves espaciales.
+    rationale: >
+      Incluir la posición exacta de la cámara en una clave cuyo resultado no
+      depende de esa posición convertía cada pequeño movimiento en un cache miss.
+      La versión del inventario ya invalida estas respuestas cuando una propiedad
+      cambia, por lo que pueden conservarse calientes durante una hora.
+    evidence:
+      - file: backend/real_estate/services/map_payload.py
+        symbol: canonical_cluster_zoom
+        note: País, provincia y ciudad se reducen a un zoom estable por nivel.
+      - file: backend/real_estate/views.py
+        symbol: cache_bbox
+        note: El cache territorial usa `all`, TTL de una hora y el zoom canónico; los puntos siguen usando bbox y TTL corto.
+      - file: frontend/hooks/usePropertyFilters.ts
+        symbol: mapRequestKey
+        note: La memoria del navegador usa los mismos tres niveles y no añade debounce a sus peticiones.
+    cases:
+      - name: La persona mueve el mapa sin salir del nivel de provincias
+        expected: reutiliza la misma respuesta de Redis sin recalcular Pichincha ni las demás provincias
+      - name: La persona pasa de provincias a ciudades
+        expected: solicita una única respuesta canónica distinta para el nuevo nivel
+      - name: La persona entra al nivel de propiedades individuales
+        expected: la clave vuelve a incluir el área visible para no mezclar puntos de zonas distintas
+    tests:
+      unit: true
+
   - id: MPERF-001
     name: Las lecturas públicas del mapa no dependen de la sesión
     status: implemented
@@ -64,7 +97,7 @@ rules:
         symbol: networkProfile.mapPointLimit
         note: Aplica límites, imágenes y retraso del perfil a las peticiones.
       - file: frontend/components/MapPageClient.tsx
-        lines: "113-117"
+        lines: "87-90"
         symbol: cardsEnabled
         note: En móvil posterga datos secundarios mientras el panel está cerrado.
     cases:

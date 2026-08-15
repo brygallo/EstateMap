@@ -101,12 +101,12 @@ function StatTile({
   label: string;
 }) {
   return (
-    <div className="flex flex-col items-center justify-center gap-1.5 rounded-card border border-line bg-surface/90 px-3 py-3 text-center transition-all duration-200 hover:-translate-y-0.5 hover:shadow-cardHover">
-      <span className="flex h-9 w-9 items-center justify-center rounded-full bg-primaryLight">
+    <div className="flex min-h-[72px] flex-col items-center justify-center gap-1 rounded-card border border-line bg-surface/90 px-2 py-2 text-center transition-all duration-200 hover:-translate-y-0.5 hover:shadow-cardHover sm:min-h-0 sm:gap-1.5 sm:px-3 sm:py-3">
+      <span className="flex h-7 w-7 items-center justify-center rounded-full bg-primaryLight sm:h-9 sm:w-9">
         <Icon className="h-4 w-4 text-primary" strokeWidth={1.75} aria-hidden />
       </span>
-      <div className="font-geo text-2xl font-semibold tabular-nums text-textPrimary">{value}</div>
-      <div className="text-xs font-medium text-textSecondary">{label}</div>
+      <div className="font-geo text-lg font-semibold tabular-nums text-textPrimary sm:text-2xl">{value}</div>
+      <div className="text-[11px] font-medium leading-tight text-textSecondary sm:text-xs">{label}</div>
     </div>
   );
 }
@@ -503,12 +503,12 @@ export default async function PropertyPage({ params }: PropertyPageProps) {
       {/* overflow-x-clip (not hidden) trims the full-bleed map section's
           scrollbar-width overhang without creating a scroll container, so the
           sticky contact card keeps tracking the document scroll. */}
-      <div className="aents-page-shell relative min-h-[calc(100dvh-var(--app-header-height))] overflow-x-clip bg-background pb-16">
+      <div className="aents-page-shell relative min-h-[calc(100dvh-var(--app-header-height))] overflow-x-clip bg-background pb-20 lg:pb-16">
         <BrandAtmosphere className="opacity-45" />
-        <div className="relative mx-auto max-w-6xl px-4 pt-8">
+        <div className="relative mx-auto max-w-6xl px-3 pt-3 sm:px-4 sm:pt-8">
           {/* Breadcrumb */}
-          <nav aria-label="Migas de pan" className="mb-6">
-            <ol className="flex flex-wrap items-center gap-1.5 text-sm text-textSecondary">
+          <nav aria-label="Migas de pan" className="mb-3 sm:mb-6">
+            <ol className="flex flex-nowrap items-center gap-1.5 overflow-hidden text-xs text-textSecondary sm:flex-wrap sm:text-sm">
               <li>
                 <Link href="/" className="inline-flex items-center gap-1 transition-colors hover:text-primary">
                   <Home className="h-4 w-4" strokeWidth={1.75} aria-hidden />
@@ -595,8 +595,8 @@ export default async function PropertyPage({ params }: PropertyPageProps) {
             </div>
           )}
 
-          <section className="mt-4 rounded-card border border-line bg-surface p-4 shadow-card sm:p-5">
-            <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-center">
+          <section className="mt-2 rounded-card border border-line bg-surface p-3 shadow-card sm:mt-4 sm:p-5">
+            <div className="grid gap-3 sm:gap-4 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-center">
               <div>
                 <div className="flex flex-wrap items-center gap-2">
                   <Badge className="rounded-full bg-primaryLight text-primary hover:bg-primaryLight">
@@ -612,7 +612,7 @@ export default async function PropertyPage({ params }: PropertyPageProps) {
                   )}
                   {isImported && <AdminRefreshProperty propertyId={property.id} />}
                 </div>
-                <PropertyTitle className="mt-3">
+                <PropertyTitle className="mt-2 sm:mt-3">
                   {property.title}
                 </PropertyTitle>
                 {(property.city || property.address) && (
@@ -628,7 +628,7 @@ export default async function PropertyPage({ params }: PropertyPageProps) {
                 )}
               </div>
 
-              <div className="rounded-card border border-line bg-background p-4 lg:min-w-80">
+              <div className="rounded-card border border-line bg-background p-3 sm:p-4 lg:min-w-80">
                 <div className="text-xs font-medium uppercase tracking-wide text-textSecondary">
                   {isClosed ? 'Último precio publicado' : 'Precio'}
                 </div>
@@ -702,10 +702,10 @@ export default async function PropertyPage({ params }: PropertyPageProps) {
           {!isClosed && <PropertyIntelligence propertyId={property.id} />}
 
           {/* Cuerpo: contenido + tarjeta de contacto */}
-          <div className="mt-8 grid grid-cols-1 gap-8 lg:grid-cols-3">
+          <div className="mt-4 grid grid-cols-1 gap-6 sm:mt-8 sm:gap-8 lg:grid-cols-3">
             {/* Columna principal */}
             <div className="lg:col-span-2">
-              <div className="mb-2 flex flex-wrap items-center gap-2">
+              <div className="mb-2 hidden flex-wrap items-center gap-2 lg:flex">
                 <Badge className="rounded-full bg-primaryLight text-primary hover:bg-primaryLight">
                   {propertyTypeLabel}
                 </Badge>
@@ -716,13 +716,13 @@ export default async function PropertyPage({ params }: PropertyPageProps) {
                 )}
               </div>
 
-              <p className="mt-3 text-sm text-textSecondary">{summaryParts.join(' • ')}</p>
+              <p className="text-sm leading-5 text-textSecondary lg:mt-3">{summaryParts.join(' • ')}</p>
 
-              <Separator className="my-6 bg-line" />
+              <Separator className="my-4 bg-line sm:my-6" />
 
               {/* Características */}
-              <h2 className="mb-4 text-lg font-semibold text-textPrimary">Características</h2>
-              <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+              <h2 className="mb-2 text-base font-semibold text-textPrimary sm:mb-4 sm:text-lg">Características</h2>
+              <div className="grid grid-cols-4 gap-1.5 sm:gap-4">
                 {Number.isFinite(areaValue) && (
                   <StatTile icon={Ruler} value={Math.round(areaValue)} label="m² total" />
                 )}
@@ -740,8 +740,8 @@ export default async function PropertyPage({ params }: PropertyPageProps) {
               {/* Descripción */}
               {property.description && (
                 <>
-                  <Separator className="my-6 bg-line" />
-                  <h2 className="mb-3 text-lg font-semibold text-textPrimary">Descripción</h2>
+                  <Separator className="my-4 bg-line sm:my-6" />
+                  <h2 className="mb-2 text-base font-semibold text-textPrimary sm:mb-3 sm:text-lg">Descripción</h2>
                   <RevealableDescription
                     text={property.description}
                     source="property_page_description_text"
@@ -754,7 +754,7 @@ export default async function PropertyPage({ params }: PropertyPageProps) {
             </div>
 
             {/* Tarjeta de contacto (sticky) */}
-            <aside className="lg:col-span-1">
+            <aside className="hidden lg:col-span-1 lg:block">
               {/* Sticks below the fixed header, not at the viewport edge: with
                   `top-6` the card parked underneath the bar. */}
               <div className="rounded-card border border-line bg-surface p-6 shadow-card lg:sticky lg:top-[calc(var(--app-header-height)+1.5rem)]">
@@ -933,9 +933,9 @@ export default async function PropertyPage({ params }: PropertyPageProps) {
 
           {/* The explorer spans the full viewport so locations can be compared
               without confining the map to the details text column. */}
-          <section className="relative left-1/2 mt-10 w-screen -translate-x-1/2 border-y border-line bg-surface" aria-labelledby="property-map-title">
-            <div className="mx-auto max-w-6xl px-4 py-4">
-              <h2 id="property-map-title" className="text-lg font-semibold text-textPrimary">Ubicación y propiedades cercanas</h2>
+          <section className="relative left-1/2 mt-6 w-screen -translate-x-1/2 border-y border-line bg-surface sm:mt-10" aria-labelledby="property-map-title">
+            <div className="mx-auto max-w-6xl px-3 py-3 sm:px-4 sm:py-4">
+              <h2 id="property-map-title" className="text-base font-semibold text-textPrimary sm:text-lg">Ubicación y propiedades cercanas</h2>
               <div className="mt-1 flex items-start gap-2 text-sm text-textSecondary">
                 <MapPin className="mt-0.5 h-4 w-4 flex-shrink-0 text-primary" strokeWidth={1.75} aria-hidden />
                 <span>
@@ -959,11 +959,11 @@ export default async function PropertyPage({ params }: PropertyPageProps) {
             city={property.city}
             province={property.province}
             variant="banner"
-            className="mt-12"
+            className="mt-6 sm:mt-12"
           />
 
           {nearbyProperties.length > 0 && (
-            <section className="mt-12 border-t border-line pt-10" aria-labelledby="nearby-properties-title">
+            <section className="mt-8 border-t border-line pt-6 sm:mt-12 sm:pt-10" aria-labelledby="nearby-properties-title">
               <div className="mb-5 flex flex-wrap items-end justify-between gap-3">
                 <div>
                   <div className="mb-1 flex items-center gap-2 text-sm font-semibold text-primary">

@@ -146,7 +146,13 @@ function filtersKey(f: PropertyFilters): string {
 }
 
 function mapRequestKey(f: PropertyFilters, zoom: number): string {
-  const zoomBucket = zoom <= 9.2 ? Math.floor(zoom * 2) / 2 : 'points';
+  const zoomBucket = zoom <= 5.2
+    ? 'country'
+    : zoom <= 6.8
+      ? 'province'
+      : zoom <= 9.2
+        ? 'city'
+        : 'points';
   return `${filtersKey(f)}|zoom:${zoomBucket}`;
 }
 
@@ -443,7 +449,7 @@ export function usePropertyFilters({
         clearTimeout(showTimer);
         if (abortRef.current === controller) setLoading(false);
       }
-    }, 220);
+    }, zoom <= 9.2 ? 0 : 220);
 
     return () => {
       if (debounceRef.current) clearTimeout(debounceRef.current);

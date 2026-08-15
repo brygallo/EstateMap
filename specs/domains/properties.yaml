@@ -71,7 +71,7 @@ rules:
       los duplicados marcados.
     evidence:
       - file: backend/real_estate/views.py
-        lines: "411-413"
+        lines: "414-416"
         symbol: exclude(status='inactive')
         note: Base de get_queryset en PropertyViewSet; de aquí derivan list, map_points y summary.
       - file: backend/real_estate/models.py
@@ -109,7 +109,7 @@ rules:
       ver también lo que no es suyo.
     evidence:
       - file: backend/real_estate/views.py
-        lines: "1029-1031"
+        lines: "1033-1035"
         symbol: my_properties
         note: >-
           La acción declara permission_classes=[IsAuthenticated] y elige entre
@@ -150,7 +150,7 @@ rules:
         symbol: class InventoryPagination
         note: page_size 24, page_size_query_param 'page_size', máximo 100.
       - file: backend/real_estate/views.py
-        lines: "1029-1031"
+        lines: "1033-1035"
         symbol: def my_properties
         note: stats se calcula con queryset.aggregate antes de paginar.
       - file: frontend/app/my-properties/page.tsx
@@ -595,7 +595,7 @@ rules:
         symbol: IsOwnerOrReadOnly
         note: permission_classes = [IsAuthenticatedOrReadOnly, IsOwnerOrReadOnly] en PropertyViewSet.
       - file: backend/real_estate/views.py
-        lines: "2476-2478"
+        lines: "2480-2482"
         symbol: PATCH_ALLOWED_FIELDS
         note: El panel admin puede tocar propiedades ajenas, pero solo status, title, price, city y description.
     backend:
@@ -1216,7 +1216,7 @@ rules:
         symbol: fetchCardsPage
         note: Las tarjetas omiten bbox, envían el centro del mapa y anexan cada página sin duplicados.
       - file: frontend/components/map/PropertySidebar.tsx
-        lines: "166-193"
+        lines: "162-188"
         symbol: IntersectionObserver
         note: El sentinel solicita automáticamente la página siguiente al acercarse al final del scroll.
     backend:
@@ -1311,7 +1311,7 @@ rules:
           Volver a poner el anuncio en venta lo reabre; si no, el cambio parece
           aceptado y se deshace solo.
       - file: backend/real_estate/views.py
-        lines: "2665-2667"
+        lines: "2669-2671"
         symbol: "changes['closed_reason'] = ''"
         note: >-
           El cambio de estado en lote escribe con .update(), que nunca llega a
@@ -1378,7 +1378,7 @@ rules:
       ruta se comprueba.
     evidence:
       - file: backend/real_estate/views.py
-        lines: "385-405"
+        lines: "406-425"
         symbol: "visible |= Q(is_duplicate=False) & ~Q(closed_reason='')"
         note: >-
           Las acciones de detalle resuelven la fila por id, no por el catálogo
@@ -1600,3 +1600,33 @@ rules:
       - name: Editar un anuncio importado con descripción larga ya guardada
         given: {caracteres: 6401}
         expected: "permitido: el tope se eligió por encima de lo que ya existe"
+
+  - id: PROP-038
+    name: La ficha completa prioriza contenido y acciones móviles
+    status: implemented
+    summary: >-
+      En celular, la ficha completa presenta galería, identidad, precio,
+      características y descripción con una densidad compacta. No repite la
+      tarjeta lateral de contacto de escritorio porque las acciones principales
+      ya permanecen disponibles en la barra inferior móvil.
+    rationale: >-
+      Repetir precio, anunciante y todos los botones en una tarjeta vertical
+      obliga a recorrer varios bloques antes de llegar a ubicación y propiedades
+      cercanas. La barra inferior ya mantiene contacto y compartir al alcance del
+      pulgar, así que el bloque lateral solo aporta valor en escritorio.
+    evidence:
+      - file: frontend/app/property/[id]/page.tsx
+        symbol: StatTile
+        note: Las características usan una fila compacta en celular y recuperan el espaciado amplio desde tablet.
+      - file: frontend/app/property/[id]/page.tsx
+        symbol: "hidden lg:col-span-1 lg:block"
+        note: La tarjeta lateral redundante se reserva para escritorio; PropertyPageActions mantiene las acciones móviles.
+      - file: frontend/components/PropertyPageActions.tsx
+        symbol: PropertyPageActions
+        note: La barra inferior conserva contacto y compartir con safe area en celular.
+    cases:
+      - name: Persona consulta una ficha completa en celular
+        expected: ve los datos clave compactos y una sola superficie persistente de acciones
+      - name: Persona consulta la misma ficha en escritorio
+        expected: conserva la tarjeta lateral sticky y el espaciado amplio
+    tests: {}

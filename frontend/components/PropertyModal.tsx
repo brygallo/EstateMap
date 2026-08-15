@@ -580,7 +580,10 @@ const PropertyModal = ({ property: initialProperty, isOpen, onClose, onViewOnMap
             // the photo strip's horizontal scroll no matter what the strip
             // declares. The sheet gesture does not need it — its handlers
             // already ignore anything that is not clearly vertical.
-            className="min-h-0 flex-1 overflow-y-auto overscroll-contain pb-24 pt-7 lg:max-h-none lg:pb-0 lg:pt-0"
+            className={cn(
+              'min-h-0 flex-1 overflow-y-auto overscroll-contain pb-24 lg:max-h-none lg:pb-0 lg:pt-0',
+              embeddedInMobilePanel ? 'pt-0' : 'pt-7'
+            )}
             onTouchStart={embeddedInMobilePanel ? undefined : handleSheetTouchStart}
             onTouchMove={embeddedInMobilePanel ? undefined : handleSheetTouchMove}
             onTouchEnd={embeddedInMobilePanel ? undefined : handleSheetTouchEnd}

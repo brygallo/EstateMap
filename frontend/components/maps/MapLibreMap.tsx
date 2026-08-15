@@ -14,6 +14,7 @@ import { getPropertyPoint, isPointInEcuadorBounds } from '@/lib/geo';
 import { iconMarkerHtml, priceMarkerHtml, statusColor } from '@/lib/mapMarkers';
 import { getPropertyTypeLabel } from '@/lib/property-labels';
 import { flyToProperty, getClusterTargetCenter, getClusterTargetZoom, getMarkerRevealDelay } from '@/lib/map-navigation';
+import { getMapFeatureProperty } from '@/lib/map-feature';
 import aentsTokens from '@/lib/aents-tokens.json';
 
 // MapLibre GL `paint` properties are resolved by the GL renderer, not by CSS,
@@ -217,6 +218,7 @@ export default function MapLibreMap({
   const markerRefs = useRef<Map<string, HtmlMarkerRecord>>(new Map());
   const clusterMarkerRefs = useRef<Map<string, HtmlMarkerRecord>>(new Map());
   const selectedPropertyRef = useRef<any>(selectedProperty);
+  const onPolygonClickRef = useRef(onPolygonClick);
   const onMapBackgroundClickRef = useRef(onMapBackgroundClick);
   const centeredSelectionRef = useRef<string | number | null>(null);
   const mobileInteractionRef = useRef(false);
@@ -285,6 +287,10 @@ export default function MapLibreMap({
   useEffect(() => {
     selectedPropertyRef.current = selectedProperty;
   }, [selectedProperty]);
+
+  useEffect(() => {
+    onPolygonClickRef.current = onPolygonClick;
+  }, [onPolygonClick]);
 
   useEffect(() => {
     onMapBackgroundClickRef.current = onMapBackgroundClick;
@@ -524,6 +530,20 @@ export default function MapLibreMap({
     };
 
     map.on('click', 'property-clusters', clickCluster);
+    const clickPolygon = (event: maplibregl.MapLayerMouseEvent) => {
+      const feature = event.features?.[0] ?? map.queryRenderedFeatures(event.point, {
+        layers: ['property-polygons-fill'],
+      })[0];
+      const property = getMapFeatureProperty(propertiesRef.current, feature?.properties?.id ?? feature?.id);
+      if (property) onPolygonClickRef.current(property);
+    };
+    map.on('click', 'property-polygons-fill', clickPolygon);
+    map.on('mouseenter', 'property-polygons-fill', () => {
+      map.getCanvas().style.cursor = 'pointer';
+    });
+    map.on('mouseleave', 'property-polygons-fill', () => {
+      map.getCanvas().style.cursor = '';
+    });
     map.on('mouseenter', 'property-clusters', () => {
       map.getCanvas().style.cursor = 'pointer';
     });

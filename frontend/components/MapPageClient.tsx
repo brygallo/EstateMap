@@ -46,30 +46,6 @@ const MainMap = dynamic(() => import('@/components/maps/MapLibreMap'), {
 // Centro de Ecuador para mostrar el país completo al iniciar.
 const DEFAULT_CENTER: [number, number] = [-1.5, -78.5];
 
-// Bounds win over centre+zoom, always. The previous order preferred the
-// fallback whenever its zoom entered point mode, which was every city jump: the camera
-// went to the canton's nominal centre at a fixed zoom and could land on empty
-// map while the matching listings sat off screen. `zoom` is now only the cap on
-// how far a tightly packed group may zoom in.
-const fitMapToBounds = (map: any, bounds?: MapBounds, fallback?: { lat: number; lng: number; zoom: number }) => {
-  if (!map) return;
-  if (bounds) {
-    const samePoint = Math.abs(bounds.west - bounds.east) < 0.0001 && Math.abs(bounds.south - bounds.north) < 0.0001;
-    if (!samePoint) {
-      map.fitBounds(
-        [
-          [bounds.west, bounds.south],
-          [bounds.east, bounds.north],
-        ],
-        { padding: 86, maxZoom: fallback?.zoom ?? 13, duration: 720 }
-      );
-      return;
-    }
-  }
-  if (!fallback) return;
-  map.flyTo({ center: [fallback.lng, fallback.lat], zoom: fallback.zoom, duration: 700 });
-};
-
 const MapPage = () => {
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -91,8 +67,6 @@ const MapPage = () => {
   const {
     filters,
     mapProperties,
-    mapCityGroups,
-    mapContext,
     cardProperties,
     owners,
     locations,
@@ -181,20 +155,6 @@ const MapPage = () => {
     } else {
       map.flyTo(DEFAULT_CENTER, 7, { duration: 0.9 });
     }
-  }, []);
-
-  const handleCityGroupClick = useCallback((group: { latitude: number; longitude: number; zoom: number; label: string; bounds?: MapBounds }) => {
-    const map = mapRef.current;
-    if (!map) return;
-    trackEvent('map_city_group_clicked', {
-      city: group.label,
-      zoom: group.zoom,
-    });
-    fitMapToBounds(map, group.bounds, {
-      lat: group.latitude,
-      lng: group.longitude,
-      zoom: group.zoom || 12,
-    });
   }, []);
 
   const handleCityFilterSelect = useCallback((center: { latitude: number; longitude: number }) => {
@@ -368,8 +328,6 @@ const MapPage = () => {
       onCitySelect={handleCityFilterSelect}
       onClose={onClose}
       visibleProperties={sidebarProperties}
-      cityGroups={mapCityGroups}
-      mapContext={mapContext}
       selectedProperty={selectedProperty}
       onPropertyClick={handleSidebarPropertyClick}
       onPropertyOpen={handleSidebarPropertyOpen}
@@ -380,7 +338,6 @@ const MapPage = () => {
       userLocation={geo.userLocation}
       onZoomOut={handleZoomOut}
       onResetMapView={handleResetMapView}
-      onCityGroupClick={handleCityGroupClick}
       hasMore={cardsHasMore}
       loadingMore={cardsLoadingMore}
       onLoadMore={loadMoreCards}

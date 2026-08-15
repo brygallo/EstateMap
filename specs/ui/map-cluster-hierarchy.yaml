@@ -19,7 +19,7 @@ rules:
         symbol: MAX_CLUSTER_ZOOM
         note: El corte único cambia de modo agrupado a puntos individuales.
       - file: backend/real_estate/services/map_payload.py
-        lines: "238-245"
+        lines: "254-260"
         symbol: _group_level_for_zoom
         note: Los únicos niveles devueltos son country, province y city.
     cases:
@@ -36,7 +36,7 @@ rules:
       de precio. Nunca desplaza a la persona a un centro territorial sin inventario.
     evidence:
       - file: backend/real_estate/services/map_payload.py
-        lines: "439-455"
+        lines: "467-482"
         symbol: "'latitude': center['lat']"
         note: La posición visible del agrupador es el medoid, es decir, las coordenadas de una propiedad real del grupo.
       - file: frontend/components/maps/MapLibreMap.tsx
@@ -66,7 +66,7 @@ rules:
         symbol: "onCitySelect"
         note: Elegir una ciudad entrega su centro al contenedor del mapa.
       - file: frontend/components/MapPageClient.tsx
-        lines: "200-213"
+        lines: "160-172"
         symbol: "handleCityFilterSelect"
         note: La cámara viaja al centro recibido con zoom de ciudad.
     cases:
@@ -98,11 +98,11 @@ rules:
         symbol: getMarkerRevealDelay
         note: Escalona las entradas 22 ms y limita toda la secuencia a 264 ms.
       - file: frontend/components/maps/MapLibreMap.tsx
-        lines: "625-639"
+        lines: "645-658"
         symbol: "--map-marker-delay"
         note: Los agrupadores nuevos reciben el retraso progresivo sin animar la transformación geográfica de MapLibre.
       - file: frontend/components/maps/MapLibreMap.tsx
-        lines: "793-812"
+        lines: "813-831"
         symbol: getMarkerRevealDelay
         note: Los precios individuales usan la misma secuencia breve al entrar.
     cases:
@@ -122,13 +122,18 @@ rules:
       conserva las mismas posiciones cerrado, medio y completo, el mismo resorte,
       la misma manija y la misma transferencia entre scroll y arrastre. Buscar y
       filtrar abre completo; el detalle abre a media altura para conservar el mapa.
+      Un gesto rápido hacia abajo, iniciado cuando el contenido está arriba,
+      cierra el panel por completo. En el detalle embebido, la fotografía empieza
+      inmediatamente debajo de la manija compartida, sin reservar una segunda
+      franja superior. El listado contiene únicamente propiedades, sin tarjetas
+      auxiliares de «Vista actual» ni listas de ciudades.
     rationale: >
       Montar un drawer para buscar y un modal distinto para el detalle produce
       alturas, cierres y gestos contradictorios. Cambiar el contenido dentro de
       una única superficie mantiene la memoria muscular de la persona.
     evidence:
       - file: frontend/components/MapPageClient.tsx
-        lines: "387-425"
+        lines: "371-408"
         symbol: embeddedInMobilePanel
         note: La única instancia de MobilePropertyDrawer alterna entre PropertySidebar y PropertyModal según el modo actual.
       - file: frontend/components/map/MobilePropertyDrawer.tsx
@@ -143,15 +148,26 @@ rules:
         lines: "480-520"
         symbol: onMapBackgroundClickRef
         note: Un toque sin propiedades ni agrupadores debajo se comunica al único panel móvil para cerrarlo.
+      - file: frontend/components/maps/MapLibreMap.tsx
+        symbol: onPolygonClickRef
+        note: La capa rellena de cada polígono resuelve la propiedad tocada y entrega el mismo callback que los marcadores de precio.
     cases:
       - name: Persona abre una propiedad desde los resultados en móvil
         expected: el panel existente cambia a detalle a media altura sin montar otro modal móvil
       - name: Persona abre el buscador y los filtros en móvil
         expected: el mismo panel abre completo para mostrar todos los controles
-      - name: Persona arrastra hacia abajo el detalle completo
-        expected: usa el mismo gesto y pasa primero a media altura y luego a cerrado
+      - name: Persona desliza hacia arriba el contenido con el panel a media altura
+        expected: el panel se amplía por completo antes de desplazar el contenido
+      - name: Persona desliza rápidamente hacia abajo el detalle desde el inicio del contenido
+        expected: el gesto se transfiere al panel y lo cierra por completo
+      - name: Persona abre el detalle de una propiedad en móvil
+        expected: la fotografía empieza debajo de la manija sin un espacio superior vacío
+      - name: Persona abre el listado de resultados
+        expected: ve las propiedades sin bloques de vista actual ni navegación por ciudades
       - name: Persona toca una zona libre del mapa con filtros o detalle abiertos
         expected: el panel se cierra; tocar una propiedad o agrupador no lo cierra
+      - name: Persona toca el área de un polígono en el mapa
+        expected: se abre el detalle de esa propiedad igual que al tocar su marcador
     tests:
       unit: true
 
@@ -205,7 +221,7 @@ rules:
         symbol: has_named_cities
         note: El agrupador provincial comunica si al menos una propiedad tiene ciudad registrada.
       - file: frontend/components/maps/MapLibreMap.tsx
-        lines: "640-675"
+        lines: "695-729"
         symbol: "groupLevel === 'province' && !hasNamedCities"
         note: Una provincia sin ciudades usa el centro del inventario y salta directamente al zoom de puntos.
     cases:

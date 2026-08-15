@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { resolveMobilePanelSnap } from '@/lib/mobile-map-panel';
+import { resolveMobilePanelSnap, shouldExpandMobilePanel } from '@/lib/mobile-map-panel';
 
 describe('resolveMobilePanelSnap', () => {
   it('settles at the nearest position after a slow drag', () => {
@@ -9,13 +9,23 @@ describe('resolveMobilePanelSnap', () => {
     expect(resolveMobilePanelSnap(760, 100, 800, 'half')).toBe('closed');
   });
 
-  it('uses flick direction before distance', () => {
-    expect(resolveMobilePanelSnap(20, 700, 800, 'full')).toBe('half');
+  it('closes completely in one flick but opens one position at a time', () => {
+    expect(resolveMobilePanelSnap(20, 700, 800, 'full')).toBe('closed');
+    expect(resolveMobilePanelSnap(500, 700, 800, 'half')).toBe('closed');
     expect(resolveMobilePanelSnap(760, -700, 800, 'closed')).toBe('half');
+    expect(resolveMobilePanelSnap(400, -700, 800, 'half')).toBe('full');
   });
 
   it('does not move beyond the first or last position', () => {
     expect(resolveMobilePanelSnap(0, -700, 800, 'full')).toBe('full');
     expect(resolveMobilePanelSnap(800, 700, 800, 'closed')).toBe('closed');
+  });
+});
+
+describe('shouldExpandMobilePanel', () => {
+  it('expands a half-open panel before scrolling its content upward', () => {
+    expect(shouldExpandMobilePanel('half', 300, 280, 0)).toBe(true);
+    expect(shouldExpandMobilePanel('half', 300, 280, 12)).toBe(false);
+    expect(shouldExpandMobilePanel('full', 300, 280, 0)).toBe(false);
   });
 });

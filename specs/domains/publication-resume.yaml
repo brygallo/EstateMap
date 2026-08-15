@@ -35,7 +35,7 @@ rules:
         lines: "1226-1252"
         symbol: def resume_link
       - file: backend/real_estate/views.py
-        lines: "1184-1186"
+        lines: "1188-1190"
         symbol: "return [IsAuthenticated(), IsAdminUser()]"
         note: Toda acción del viewset que no sea `create` exige staff.
       - file: backend/real_estate/email_utils.py
@@ -343,10 +343,10 @@ rules:
         lines: "598-600"
         symbol: related_name="pending_publications"
       - file: backend/real_estate/views.py
-        lines: "1362-1364"
+        lines: "1366-1368"
         symbol: pending.status = 'converted'
       - file: backend/real_estate/views.py
-        lines: "1239-1241"
+        lines: "1243-1245"
         symbol: "'Esta solicitud ya se convirtió en un anuncio.'"
     tests:
       api: true
@@ -376,7 +376,7 @@ rules:
         symbol: "resolveAndPublish"
         note: Prepara el enlace si hace falta y abre el borrador recuperado para corregirlo.
       - file: backend/real_estate/views.py
-        lines: "1349-1364"
+        lines: "1365-1379"
         symbol: "serializer.save(owner=owner)"
         note: La propiedad queda a nombre del correo del pendiente y se notifica tanto a cuentas nuevas como existentes.
       - file: backend/real_estate/email_utils.py

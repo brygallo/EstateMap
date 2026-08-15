@@ -1,6 +1,6 @@
 import pytest
 
-from real_estate.services.map_payload import build_map_payload
+from real_estate.services.map_payload import build_map_payload, canonical_cluster_zoom
 
 
 def _listing(index, lat, lng, city='Quito', province='Pichincha'):
@@ -24,6 +24,14 @@ class FakeQuerySet:
 
     def values(self, *fields):
         return [{field: row.get(field) for field in fields} for row in self.rows]
+
+
+def test_territorial_zoom_has_one_canonical_cache_payload_per_level():
+    """SPEC:MPERF-004 — territorial camera movement must reuse one payload."""
+    assert canonical_cluster_zoom(4.5) == canonical_cluster_zoom(5.2) == 5.0
+    assert canonical_cluster_zoom(5.3) == canonical_cluster_zoom(6.8) == 6.0
+    assert canonical_cluster_zoom(6.9) == canonical_cluster_zoom(9.2) == 8.0
+    assert canonical_cluster_zoom(14.25) == 14.25
 
 
 def test_polygon_without_stored_point_gets_a_map_pin_at_its_center():

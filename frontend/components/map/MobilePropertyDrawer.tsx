@@ -8,6 +8,7 @@ import { haptic } from '@/lib/haptics';
 import {
   mobilePanelSnapOffsets,
   resolveMobilePanelSnap,
+  shouldExpandMobilePanel,
   type MobilePanelSnap,
 } from '@/lib/mobile-map-panel';
 
@@ -46,6 +47,7 @@ export default function MobilePropertyDrawer({
   const drawerY = useMotionValue(DRAWER_OFFSCREEN);
   const draggingRef = useRef(false);
   const bodyDragRef = useRef<{ y: number; scrollTop: number; handedOver: boolean } | null>(null);
+  const touchExpandRef = useRef<{ y: number; scrollTop: number } | null>(null);
   const [drawerHeight, setDrawerHeight] = useState(0);
   const open = snap !== 'closed';
 
@@ -139,6 +141,33 @@ export default function MobilePropertyDrawer({
     bodyDragRef.current = null;
   };
 
+  const handleBodyTouchStart = (event: React.TouchEvent<HTMLDivElement>) => {
+    const touch = event.touches[0];
+    if (!touch) return;
+    const nestedScroll = event.target instanceof HTMLElement
+      ? event.target.closest('[data-mobile-panel-scroll]')
+      : null;
+    touchExpandRef.current = {
+      y: touch.clientY,
+      scrollTop: nestedScroll?.scrollTop ?? scrollRef.current?.scrollTop ?? 0,
+    };
+  };
+
+  const handleBodyTouchMove = (event: React.TouchEvent<HTMLDivElement>) => {
+    const start = touchExpandRef.current;
+    const touch = event.touches[0];
+    if (!start || !touch) return;
+    if (shouldExpandMobilePanel(snap, start.y, touch.clientY, start.scrollTop)) {
+      touchExpandRef.current = null;
+      onSnapChange('full');
+      haptic('impact');
+    }
+  };
+
+  const clearBodyTouch = () => {
+    touchExpandRef.current = null;
+  };
+
   return (
     <>
       {!open && !hidden && (
@@ -207,10 +236,14 @@ export default function MobilePropertyDrawer({
           ref={scrollRef}
           data-mobile-panel-scroll={contentOwnsScroll ? undefined : true}
           className={`property-sidebar-scroll relative min-h-0 flex-1 ${contentOwnsScroll ? 'overflow-hidden' : 'overflow-y-auto overscroll-contain'}`}
-          onPointerDown={contentOwnsScroll ? undefined : handleBodyPointerDown}
-          onPointerMove={contentOwnsScroll ? undefined : handleBodyPointerMove}
-          onPointerUp={contentOwnsScroll ? undefined : clearBodyDrag}
-          onPointerCancel={contentOwnsScroll ? undefined : clearBodyDrag}
+          onPointerDown={handleBodyPointerDown}
+          onPointerMove={handleBodyPointerMove}
+          onPointerUp={clearBodyDrag}
+          onPointerCancel={clearBodyDrag}
+          onTouchStart={handleBodyTouchStart}
+          onTouchMove={handleBodyTouchMove}
+          onTouchEnd={clearBodyTouch}
+          onTouchCancel={clearBodyTouch}
         >
           {children}
         </div>

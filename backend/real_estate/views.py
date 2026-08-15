@@ -67,7 +67,7 @@ from .email_utils import (
     create_password_reset_token,
     create_publication_resume_token,
 )
-from .services.map_payload import MAX_CLUSTER_ZOOM, build_map_payload
+from .services.map_payload import MAX_CLUSTER_ZOOM, build_map_payload, canonical_cluster_zoom
 from .services.accounts import InactiveAccountError, InvitedAccountService
 from .services.authentication import GoogleAuthenticationService, GoogleIdentityError
 from .services.notifications import (
@@ -100,6 +100,7 @@ CACHE_TTL_LOCATIONS = 60 * 60
 CACHE_TTL_SUMMARY = 60 * 10
 CACHE_TTL_INTELLIGENCE = 60 * 10
 CACHE_TTL_MAP_POINTS = 120
+CACHE_TTL_MAP_CLUSTERS = 60 * 60
 CACHE_TTL_MARKET_STATS = 60 * 30
 CACHE_TTL_GEO = 60 * 60 * 24
 CACHE_TTL_PROPERTY_LIST = 120
@@ -739,20 +740,23 @@ class PropertyViewSet(viewsets.ModelViewSet):
         self._ignore_map_bbox = cluster_zoom
         snapped = _snap_bbox(request.query_params.get('bbox'))
         self._bbox_override = ','.join(f'{coord:.3f}' for coord in snapped) if snapped else None
+        payload_zoom = canonical_cluster_zoom(zoom) if cluster_zoom else zoom
+        cache_bbox = 'all' if cluster_zoom else (self._bbox_override or 'all')
+        cache_ttl = CACHE_TTL_MAP_CLUSTERS if cluster_zoom else CACHE_TTL_MAP_POINTS
 
         max_items = int(request.query_params.get('limit') or 1000)
         cache_key = versioned_key(
             'map_points',
-            f'z{zoom}',
+            f'z{payload_zoom}',
             f'n{max_items}',
-            self._bbox_override or 'all',
+            cache_bbox,
             _filter_signature(request.query_params),
             scope='map',
         )
         if _is_public_read(request):
             cached = cache.get(cache_key)
             if cached is not None:
-                return _public_response(cached, request, s_maxage=CACHE_TTL_MAP_POINTS)
+                return _public_response(cached, request, s_maxage=cache_ttl)
 
         queryset = self.filter_queryset(self.get_queryset()).only(
             'id',
@@ -768,10 +772,10 @@ class PropertyViewSet(viewsets.ModelViewSet):
         )
         # Territorial clusters intentionally receive the full filtered queryset;
         # point mode was already clipped by get_queryset() using the visible bbox.
-        payload = build_map_payload(queryset, zoom, max_items)
+        payload = build_map_payload(queryset, payload_zoom, max_items)
         if _is_public_read(request):
-            cache.set(cache_key, payload, CACHE_TTL_MAP_POINTS)
-        return _public_response(payload, request, s_maxage=CACHE_TTL_MAP_POINTS)
+            cache.set(cache_key, payload, cache_ttl)
+        return _public_response(payload, request, s_maxage=cache_ttl)
 
     @action(
         detail=False,

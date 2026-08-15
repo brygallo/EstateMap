@@ -19,6 +19,12 @@ POINT_FIELDS = (
 
 MAX_CLUSTER_ZOOM = 9.2
 
+CLUSTER_LEVEL_ZOOMS = {
+    'country': 5.0,
+    'province': 6.0,
+    'city': 8.0,
+}
+
 ECUADOR_CENTER = {'lat': -1.5, 'lng': -78.5}
 
 PROVINCE_CENTERS = {
@@ -177,6 +183,14 @@ def build_map_payload(queryset, zoom, max_items):
         'city_groups': _city_group_payload(valid_rows),
         'items': items,
     }
+
+
+def canonical_cluster_zoom(zoom):
+    """Collapse every territorial view into one stable payload per level."""
+    numeric_zoom = 7 if zoom is None else float(zoom)
+    if numeric_zoom > MAX_CLUSTER_ZOOM:
+        return numeric_zoom
+    return CLUSTER_LEVEL_ZOOMS[_group_level_for_zoom(numeric_zoom)]
 
 
 def _normalize_name(value):

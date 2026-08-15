@@ -8,6 +8,13 @@ export const mobilePanelSnapOffsets = (height: number): Record<MobilePanelSnap, 
   closed: height,
 });
 
+export const shouldExpandMobilePanel = (
+  snap: MobilePanelSnap,
+  startY: number,
+  currentY: number,
+  scrollTop: number
+): boolean => snap === 'half' && scrollTop <= 2 && startY - currentY >= 10;
+
 export const resolveMobilePanelSnap = (
   offset: number,
   velocity: number,
@@ -16,9 +23,9 @@ export const resolveMobilePanelSnap = (
 ): MobilePanelSnap => {
   const order: MobilePanelSnap[] = ['full', 'half', 'closed'];
   if (Math.abs(velocity) > 550) {
+    if (velocity > 0) return 'closed';
     const index = order.indexOf(from);
-    const next = velocity > 0 ? index + 1 : index - 1;
-    return order[Math.min(Math.max(next, 0), order.length - 1)];
+    return order[Math.max(index - 1, 0)];
   }
 
   const offsets = mobilePanelSnapOffsets(height);
