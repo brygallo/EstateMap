@@ -27,6 +27,19 @@ export const shouldCloseMobilePanel = (
   return scrollTop <= 2 && deltaY >= 36 && Math.abs(deltaY) > Math.abs(deltaX) * 1.15;
 };
 
+export const resolveMobileTouchTarget = (
+  direction: 'up' | 'down',
+  displacement: number,
+  velocity: number,
+  current: MobilePanelSnap
+): MobilePanelSnap => {
+  if (direction === 'down' && (displacement >= 24 || velocity > 300)) return 'closed';
+  if (direction === 'up' && current === 'half' && (displacement <= -10 || velocity < -300)) {
+    return 'full';
+  }
+  return current;
+};
+
 export const resolveMobilePanelSnap = (
   offset: number,
   velocity: number,

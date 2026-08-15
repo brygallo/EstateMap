@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   resolveMobilePanelSnap,
+  resolveMobileTouchTarget,
   shouldCloseMobilePanel,
   shouldExpandMobilePanel,
 } from '@/lib/mobile-map-panel';
@@ -46,5 +47,15 @@ describe('shouldCloseMobilePanel', () => {
     const currentScrollTop = 0;
     expect(initialScrollTop).toBeGreaterThan(2);
     expect(shouldCloseMobilePanel(120, 200, 126, 250, currentScrollTop)).toBe(true);
+  });
+});
+
+describe('resolveMobileTouchTarget', () => {
+  it('uses app-like release thresholds after following the finger', () => {
+    expect(resolveMobileTouchTarget('down', 30, 120, 'full')).toBe('closed');
+    expect(resolveMobileTouchTarget('down', 8, 120, 'half')).toBe('half');
+    expect(resolveMobileTouchTarget('down', 8, 420, 'half')).toBe('closed');
+    expect(resolveMobileTouchTarget('up', -16, -120, 'half')).toBe('full');
+    expect(resolveMobileTouchTarget('up', -4, -120, 'half')).toBe('half');
   });
 });

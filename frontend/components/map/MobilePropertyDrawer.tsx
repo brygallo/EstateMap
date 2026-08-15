@@ -8,8 +8,7 @@ import { haptic } from '@/lib/haptics';
 import {
   mobilePanelSnapOffsets,
   resolveMobilePanelSnap,
-  shouldCloseMobilePanel,
-  shouldExpandMobilePanel,
+  resolveMobileTouchTarget,
   type MobilePanelSnap,
 } from '@/lib/mobile-map-panel';
 
@@ -57,6 +56,12 @@ export default function MobilePropertyDrawer({
     y: number;
     initialScrollTop: number;
     scrollElement: HTMLElement | null;
+    direction: 'up' | 'down' | null;
+    originY: number | null;
+    originOffset: number;
+    lastY: number;
+    lastTime: number;
+    velocity: number;
   } | null>(null);
   const [drawerHeight, setDrawerHeight] = useState(0);
   const open = snap !== 'closed';
@@ -122,7 +127,9 @@ export default function MobilePropertyDrawer({
   );
 
   const handleBodyPointerDown = (event: React.PointerEvent<HTMLDivElement>) => {
-    if (event.pointerType === 'mouse') return;
+    // Touch has a finger-following recognizer below. Running Motion's pointer
+    // drag at the same time makes both recognizers fight over `drawerY`.
+    if (event.pointerType !== 'pen') return;
     const nestedScroll = event.target instanceof HTMLElement
       ? event.target.closest('[data-mobile-panel-scroll]')
       : null;
@@ -162,6 +169,12 @@ export default function MobilePropertyDrawer({
       y: touch.clientY,
       initialScrollTop: nestedScroll?.scrollTop ?? scrollRef.current?.scrollTop ?? 0,
       scrollElement: nestedScroll instanceof HTMLElement ? nestedScroll : scrollRef.current,
+      direction: null,
+      originY: null,
+      originOffset: mobilePanelSnapOffsets(drawerRef.current?.offsetHeight || window.innerHeight)[snap],
+      lastY: touch.clientY,
+      lastTime: event.timeStamp,
+      velocity: 0,
     };
   };
 
@@ -169,27 +182,66 @@ export default function MobilePropertyDrawer({
     const start = touchGestureRef.current;
     const touch = event.touches[0];
     if (!start || !touch) return;
-    if (shouldExpandMobilePanel(snap, start.y, touch.clientY, start.initialScrollTop)) {
-      touchGestureRef.current = null;
-      onSnapChange('full');
-      haptic('impact');
+
+    const totalX = touch.clientX - start.x;
+    const totalY = touch.clientY - start.y;
+    if (!start.direction) {
+      if (Math.abs(totalY) < 8 || Math.abs(totalY) <= Math.abs(totalX) * 1.15) return;
+      const currentScrollTop = start.scrollElement?.scrollTop ?? start.initialScrollTop;
+      if (totalY < 0 && snap === 'half' && start.initialScrollTop <= 2) {
+        start.direction = 'up';
+        start.originY = start.y;
+      } else if (totalY > 0 && currentScrollTop <= 2) {
+        start.direction = 'down';
+        // When native scrolling reaches the top, hand off at the current finger
+        // position so the drawer continues the same gesture without jumping.
+        start.originY = start.initialScrollTop <= 2 ? start.y : touch.clientY;
+      } else {
+        return;
+      }
     }
+
+    const originY = start.originY;
+    if (originY == null) return;
+    const height = drawerRef.current?.offsetHeight || window.innerHeight;
+    const movement = touch.clientY - originY;
+    const nextOffset = Math.min(height, Math.max(0, start.originOffset + movement));
+    drawerY.set(nextOffset);
+    const elapsed = Math.max(event.timeStamp - start.lastTime, 1);
+    start.velocity = ((touch.clientY - start.lastY) / elapsed) * 1000;
+    start.lastY = touch.clientY;
+    start.lastTime = event.timeStamp;
+    event.preventDefault();
   };
 
-  const handleBodyTouchEnd = (event: React.TouchEvent<HTMLDivElement>) => {
+  const handleBodyTouchEnd = () => {
     const start = touchGestureRef.current;
     touchGestureRef.current = null;
-    const touch = event.changedTouches[0];
-    if (!start || !touch) return;
-    const currentScrollTop = start.scrollElement?.scrollTop ?? start.initialScrollTop;
-    if (shouldCloseMobilePanel(start.x, start.y, touch.clientX, touch.clientY, currentScrollTop)) {
-      onSnapChange('closed');
+    if (!start?.direction) return;
+    const displacement = drawerY.get() - start.originOffset;
+    const target = resolveMobileTouchTarget(start.direction, displacement, start.velocity, snap);
+    if (target !== snap) {
       haptic('impact');
+      onSnapChange(target);
+    } else {
+      animate(drawerY, start.originOffset, {
+        type: 'spring',
+        stiffness: 420,
+        damping: 38,
+      });
     }
   };
 
   const clearBodyTouch = () => {
+    const start = touchGestureRef.current;
     touchGestureRef.current = null;
+    if (start?.direction) {
+      animate(drawerY, start.originOffset, {
+        type: 'spring',
+        stiffness: 420,
+        damping: 38,
+      });
+    }
   };
 
   return (
