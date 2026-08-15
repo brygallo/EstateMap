@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { render, screen } from '@testing-library/react';
+import { createElement } from 'react';
 
 import {
   extractHeadings,
@@ -74,7 +75,9 @@ describe('extractHeadings', () => {
 
 describe('renderMarkdown', () => {
   it('renders headings with an anchor id', () => {
-    const { container } = render(<div>{renderMarkdown('## Escrituras y registro')}</div>);
+    const { container } = render(
+      createElement('div', null, renderMarkdown('## Escrituras y registro'))
+    );
 
     const heading = container.querySelector('h2');
     expect(heading?.id).toBe('escrituras-y-registro');
@@ -83,9 +86,11 @@ describe('renderMarkdown', () => {
 
   it('renders bold, italics, code and links', () => {
     render(
-      <div>
-        {renderMarkdown('Texto **fuerte**, *suave*, `código` y [un enlace](/blog).')}
-      </div>
+      createElement(
+        'div',
+        null,
+        renderMarkdown('Texto **fuerte**, *suave*, `código` y [un enlace](/blog).')
+      )
     );
 
     expect(screen.getByText('fuerte').tagName).toBe('STRONG');
@@ -95,7 +100,7 @@ describe('renderMarkdown', () => {
   });
 
   it('opens external links in a new tab without passing authority', () => {
-    render(<div>{renderMarkdown('Ver [el BIESS](https://biess.fin.ec).')}</div>);
+    render(createElement('div', null, renderMarkdown('Ver [el BIESS](https://biess.fin.ec).')));
 
     const link = screen.getByRole('link', { name: 'el BIESS' });
     expect(link).toHaveAttribute('target', '_blank');
@@ -107,7 +112,11 @@ describe('renderMarkdown', () => {
     // is text, not HTML. A <script> in a post must reach the reader as
     // characters on the page and nothing else.
     const { container } = render(
-      <div>{renderMarkdown('Ojo con <script>alert(1)</script> y <b>esto</b>.')}</div>
+      createElement(
+        'div',
+        null,
+        renderMarkdown('Ojo con <script>alert(1)</script> y <b>esto</b>.')
+      )
     );
 
     expect(container.querySelector('script')).toBeNull();
@@ -142,7 +151,11 @@ describe('images', () => {
 
   it('renders it as a figure with alt text and caption', () => {
     const { container } = render(
-      <div>{renderMarkdown('![Un barrio](https://cdn/x.jpg "Barrio de Quito")')}</div>
+      createElement(
+        'div',
+        null,
+        renderMarkdown('![Un barrio](https://cdn/x.jpg "Barrio de Quito")')
+      )
     );
 
     expect(container.querySelector('figure')).not.toBeNull();
@@ -194,9 +207,11 @@ describe('tables', () => {
 
   it('renders header cells as th', () => {
     render(
-      <div>
-        {renderMarkdown(['| Ciudad | Precio |', '| --- | --- |', '| Quito | $1.200 |'].join('\n'))}
-      </div>
+      createElement(
+        'div',
+        null,
+        renderMarkdown(['| Ciudad | Precio |', '| --- | --- |', '| Quito | $1.200 |'].join('\n'))
+      )
     );
 
     expect(screen.getByRole('columnheader', { name: 'Ciudad' })).toBeInTheDocument();
@@ -214,7 +229,13 @@ describe('callouts', () => {
   });
 
   it('renders the tone label so the reader knows what it is', () => {
-    render(<div>{renderMarkdown([':::aviso', 'Ojo con esto.', ':::'].join('\n'))}</div>);
+    render(
+      createElement(
+        'div',
+        null,
+        renderMarkdown([':::aviso', 'Ojo con esto.', ':::'].join('\n'))
+      )
+    );
 
     expect(screen.getByText('Atención')).toBeInTheDocument();
     expect(screen.getByText('Ojo con esto.')).toBeInTheDocument();
@@ -222,7 +243,13 @@ describe('callouts', () => {
 
   it('renders an unclosed callout instead of swallowing the text', () => {
     // An editor who forgets the closing ":::" must still see their words.
-    render(<div>{renderMarkdown([':::nota', 'Texto sin cerrar.'].join('\n'))}</div>);
+    render(
+      createElement(
+        'div',
+        null,
+        renderMarkdown([':::nota', 'Texto sin cerrar.'].join('\n'))
+      )
+    );
 
     expect(screen.getByText('Texto sin cerrar.')).toBeInTheDocument();
   });
