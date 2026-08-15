@@ -15,6 +15,18 @@ export const shouldExpandMobilePanel = (
   scrollTop: number
 ): boolean => snap === 'half' && scrollTop <= 2 && startY - currentY >= 10;
 
+export const shouldCloseMobilePanel = (
+  startX: number,
+  startY: number,
+  currentX: number,
+  currentY: number,
+  scrollTop: number
+): boolean => {
+  const deltaX = currentX - startX;
+  const deltaY = currentY - startY;
+  return scrollTop <= 2 && deltaY >= 36 && Math.abs(deltaY) > Math.abs(deltaX) * 1.15;
+};
+
 export const resolveMobilePanelSnap = (
   offset: number,
   velocity: number,

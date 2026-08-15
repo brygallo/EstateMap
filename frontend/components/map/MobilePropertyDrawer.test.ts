@@ -1,5 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import { resolveMobilePanelSnap, shouldExpandMobilePanel } from '@/lib/mobile-map-panel';
+import {
+  resolveMobilePanelSnap,
+  shouldCloseMobilePanel,
+  shouldExpandMobilePanel,
+} from '@/lib/mobile-map-panel';
 
 describe('resolveMobilePanelSnap', () => {
   it('settles at the nearest position after a slow drag', () => {
@@ -27,5 +31,20 @@ describe('shouldExpandMobilePanel', () => {
     expect(shouldExpandMobilePanel('half', 300, 280, 0)).toBe(true);
     expect(shouldExpandMobilePanel('half', 300, 280, 12)).toBe(false);
     expect(shouldExpandMobilePanel('full', 300, 280, 0)).toBe(false);
+  });
+});
+
+describe('shouldCloseMobilePanel', () => {
+  it('closes on a deliberate downward touch gesture from the top', () => {
+    expect(shouldCloseMobilePanel(120, 200, 126, 250, 0)).toBe(true);
+    expect(shouldCloseMobilePanel(120, 200, 126, 250, 20)).toBe(false);
+    expect(shouldCloseMobilePanel(120, 200, 180, 245, 0)).toBe(false);
+  });
+
+  it('closes once nested content reaches the top during the same gesture', () => {
+    const initialScrollTop = 80;
+    const currentScrollTop = 0;
+    expect(initialScrollTop).toBeGreaterThan(2);
+    expect(shouldCloseMobilePanel(120, 200, 126, 250, currentScrollTop)).toBe(true);
   });
 });

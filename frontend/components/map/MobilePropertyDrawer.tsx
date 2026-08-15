@@ -8,6 +8,7 @@ import { haptic } from '@/lib/haptics';
 import {
   mobilePanelSnapOffsets,
   resolveMobilePanelSnap,
+  shouldCloseMobilePanel,
   shouldExpandMobilePanel,
   type MobilePanelSnap,
 } from '@/lib/mobile-map-panel';
@@ -46,8 +47,17 @@ export default function MobilePropertyDrawer({
   const dragControls = useDragControls();
   const drawerY = useMotionValue(DRAWER_OFFSCREEN);
   const draggingRef = useRef(false);
-  const bodyDragRef = useRef<{ y: number; scrollTop: number; handedOver: boolean } | null>(null);
-  const touchExpandRef = useRef<{ y: number; scrollTop: number } | null>(null);
+  const bodyDragRef = useRef<{
+    y: number;
+    scrollElement: HTMLElement | null;
+    handedOver: boolean;
+  } | null>(null);
+  const touchGestureRef = useRef<{
+    x: number;
+    y: number;
+    initialScrollTop: number;
+    scrollElement: HTMLElement | null;
+  } | null>(null);
   const [drawerHeight, setDrawerHeight] = useState(0);
   const open = snap !== 'closed';
 
@@ -118,14 +128,14 @@ export default function MobilePropertyDrawer({
       : null;
     bodyDragRef.current = {
       y: event.clientY,
-      scrollTop: nestedScroll?.scrollTop ?? scrollRef.current?.scrollTop ?? 0,
+      scrollElement: nestedScroll instanceof HTMLElement ? nestedScroll : scrollRef.current,
       handedOver: false,
     };
   };
 
   const handleBodyPointerMove = (event: React.PointerEvent<HTMLDivElement>) => {
     const start = bodyDragRef.current;
-    if (!start || start.handedOver || start.scrollTop > 2) return;
+    if (!start || start.handedOver || (start.scrollElement?.scrollTop ?? 0) > 2) return;
     const deltaY = event.clientY - start.y;
     if (deltaY >= 12) {
       start.handedOver = true;
@@ -147,25 +157,39 @@ export default function MobilePropertyDrawer({
     const nestedScroll = event.target instanceof HTMLElement
       ? event.target.closest('[data-mobile-panel-scroll]')
       : null;
-    touchExpandRef.current = {
+    touchGestureRef.current = {
+      x: touch.clientX,
       y: touch.clientY,
-      scrollTop: nestedScroll?.scrollTop ?? scrollRef.current?.scrollTop ?? 0,
+      initialScrollTop: nestedScroll?.scrollTop ?? scrollRef.current?.scrollTop ?? 0,
+      scrollElement: nestedScroll instanceof HTMLElement ? nestedScroll : scrollRef.current,
     };
   };
 
   const handleBodyTouchMove = (event: React.TouchEvent<HTMLDivElement>) => {
-    const start = touchExpandRef.current;
+    const start = touchGestureRef.current;
     const touch = event.touches[0];
     if (!start || !touch) return;
-    if (shouldExpandMobilePanel(snap, start.y, touch.clientY, start.scrollTop)) {
-      touchExpandRef.current = null;
+    if (shouldExpandMobilePanel(snap, start.y, touch.clientY, start.initialScrollTop)) {
+      touchGestureRef.current = null;
       onSnapChange('full');
       haptic('impact');
     }
   };
 
+  const handleBodyTouchEnd = (event: React.TouchEvent<HTMLDivElement>) => {
+    const start = touchGestureRef.current;
+    touchGestureRef.current = null;
+    const touch = event.changedTouches[0];
+    if (!start || !touch) return;
+    const currentScrollTop = start.scrollElement?.scrollTop ?? start.initialScrollTop;
+    if (shouldCloseMobilePanel(start.x, start.y, touch.clientX, touch.clientY, currentScrollTop)) {
+      onSnapChange('closed');
+      haptic('impact');
+    }
+  };
+
   const clearBodyTouch = () => {
-    touchExpandRef.current = null;
+    touchGestureRef.current = null;
   };
 
   return (
@@ -242,7 +266,7 @@ export default function MobilePropertyDrawer({
           onPointerCancel={clearBodyDrag}
           onTouchStart={handleBodyTouchStart}
           onTouchMove={handleBodyTouchMove}
-          onTouchEnd={clearBodyTouch}
+          onTouchEnd={handleBodyTouchEnd}
           onTouchCancel={clearBodyTouch}
         >
           {children}
