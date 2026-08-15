@@ -32,7 +32,7 @@ No existe una cuarta capa de agrupadores por grilla. Hasta zoom 9.2 el backend e
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
 - `backend/real_estate/services/map_payload.py:134-179` (`MAX_CLUSTER_ZOOM`) — El corte único cambia de modo agrupado a puntos individuales.
-- `backend/real_estate/services/map_payload.py:238-245` (`_group_level_for_zoom`) — Los únicos niveles devueltos son country, province y city.
+- `backend/real_estate/services/map_payload.py:254-260` (`_group_level_for_zoom`) — Los únicos niveles devueltos son country, province y city.
 
 **Casos**
 
@@ -49,7 +49,7 @@ El agrupador de ciudad centra la cámara en una propiedad real del grupo a zoom 
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/real_estate/services/map_payload.py:439-455` (`'latitude': center['lat']`) — La posición visible del agrupador es el medoid, es decir, las coordenadas de una propiedad real del grupo.
+- `backend/real_estate/services/map_payload.py:467-482` (`'latitude': center['lat']`) — La posición visible del agrupador es el medoid, es decir, las coordenadas de una propiedad real del grupo.
 - `frontend/components/maps/MapLibreMap.tsx:675-712` (`groupLevel === 'city'`) — Ciudad reutiliza la posición del agrupador y abre directamente a zoom 12; el ancla territorial se reserva para país y provincia.
 
 **Casos**
@@ -73,7 +73,7 @@ El catálogo de ubicaciones debe entregar un centro para cada ciudad con inventa
 
 - `backend/real_estate/views.py:841-880` (`centers.setdefault`) — El catálogo calcula el centro medio de las propiedades activas de cada ciudad.
 - `frontend/components/map/MapFilters.tsx:297-313` (`onCitySelect`) — Elegir una ciudad entrega su centro al contenedor del mapa.
-- `frontend/components/MapPageClient.tsx:200-213` (`handleCityFilterSelect`) — La cámara viaja al centro recibido con zoom de ciudad.
+- `frontend/components/MapPageClient.tsx:160-172` (`handleCityFilterSelect`) — La cámara viaja al centro recibido con zoom de ciudad.
 
 **Casos**
 
@@ -99,8 +99,8 @@ Al cambiar entre país, provincia, ciudad y puntos, el mapa muestra de inmediato
 
 - `frontend/hooks/usePropertyFilters.ts:350-377` (`if (hasCachedResults)`) — Una petición sin caché activa la carga antes del debounce; el estado vacío queda reservado para respuestas terminadas y los marcadores anteriores permanecen hasta recibir el reemplazo.
 - `frontend/lib/map-navigation.ts:20-22` (`getMarkerRevealDelay`) — Escalona las entradas 22 ms y limita toda la secuencia a 264 ms.
-- `frontend/components/maps/MapLibreMap.tsx:625-639` (`--map-marker-delay`) — Los agrupadores nuevos reciben el retraso progresivo sin animar la transformación geográfica de MapLibre.
-- `frontend/components/maps/MapLibreMap.tsx:793-812` (`getMarkerRevealDelay`) — Los precios individuales usan la misma secuencia breve al entrar.
+- `frontend/components/maps/MapLibreMap.tsx:645-658` (`--map-marker-delay`) — Los agrupadores nuevos reciben el retraso progresivo sin animar la transformación geográfica de MapLibre.
+- `frontend/components/maps/MapLibreMap.tsx:813-831` (`getMarkerRevealDelay`) — Los precios individuales usan la misma secuencia breve al entrar.
 
 **Casos**
 
@@ -117,7 +117,7 @@ Al cambiar entre país, provincia, ciudad y puntos, el mapa muestra de inmediato
 
 **Estado:** ✅ Implementada
 
-En móvil existe una sola instancia del panel del mapa. El panel cambia su contenido entre búsqueda, filtros, resultados y detalle de propiedad, pero conserva las mismas posiciones cerrado, medio y completo, el mismo resorte, la misma manija y la misma transferencia entre scroll y arrastre. Buscar y filtrar abre completo; el detalle abre a media altura para conservar el mapa.
+En móvil existe una sola instancia del panel del mapa. El panel cambia su contenido entre búsqueda, filtros, resultados y detalle de propiedad, pero conserva las mismas posiciones cerrado, medio y completo, el mismo resorte, la misma manija y la misma transferencia entre scroll y arrastre. Buscar y filtrar abre completo; el detalle abre a media altura para conservar el mapa. Un gesto rápido hacia abajo, iniciado cuando el contenido está arriba, cierra el panel por completo. En el detalle embebido, la fotografía empieza inmediatamente debajo de la manija compartida, sin reservar una segunda franja superior. El listado contiene únicamente propiedades, sin tarjetas auxiliares de «Vista actual» ni listas de ciudades.
 
 
 > **Por qué:** Montar un drawer para buscar y un modal distinto para el detalle produce alturas, cierres y gestos contradictorios. Cambiar el contenido dentro de una única superficie mantiene la memoria muscular de la persona.
@@ -125,10 +125,11 @@ En móvil existe una sola instancia del panel del mapa. El panel cambia su conte
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `frontend/components/MapPageClient.tsx:387-425` (`embeddedInMobilePanel`) — La única instancia de MobilePropertyDrawer alterna entre PropertySidebar y PropertyModal según el modo actual.
+- `frontend/components/MapPageClient.tsx:371-408` (`embeddedInMobilePanel`) — La única instancia de MobilePropertyDrawer alterna entre PropertySidebar y PropertyModal según el modo actual.
 - `frontend/components/map/MobilePropertyDrawer.tsx:31-223` (`MobilePropertyDrawer`) — Un solo componente posee posiciones, resorte, manija, scroll, arrastre, backdrop y bloqueo del documento.
 - `frontend/components/PropertyModal.tsx:128-145` (`embeddedInMobilePanel`) — El detalle puede entregar solo su contenido al panel móvil compartido; conserva su panel lateral independiente únicamente en escritorio.
 - `frontend/components/maps/MapLibreMap.tsx:480-520` (`onMapBackgroundClickRef`) — Un toque sin propiedades ni agrupadores debajo se comunica al único panel móvil para cerrarlo.
+- `frontend/components/maps/MapLibreMap.tsx` (`onPolygonClickRef`) — La capa rellena de cada polígono resuelve la propiedad tocada y entrega el mismo callback que los marcadores de precio.
 
 **Casos**
 
@@ -136,8 +137,12 @@ En móvil existe una sola instancia del panel del mapa. El panel cambia su conte
 | --- | --- | --- | --- | --- |
 | Persona abre una propiedad desde los resultados en móvil | — | — | — | el panel existente cambia a detalle a media altura sin montar otro modal móvil |
 | Persona abre el buscador y los filtros en móvil | — | — | — | el mismo panel abre completo para mostrar todos los controles |
-| Persona arrastra hacia abajo el detalle completo | — | — | — | usa el mismo gesto y pasa primero a media altura y luego a cerrado |
+| Persona desliza hacia arriba el contenido con el panel a media altura | — | — | — | el panel se amplía por completo antes de desplazar el contenido |
+| Persona desliza rápidamente hacia abajo el detalle desde el inicio del contenido | — | — | — | el gesto se transfiere al panel y lo cierra por completo |
+| Persona abre el detalle de una propiedad en móvil | — | — | — | la fotografía empieza debajo de la manija sin un espacio superior vacío |
+| Persona abre el listado de resultados | — | — | — | ve las propiedades sin bloques de vista actual ni navegación por ciudades |
 | Persona toca una zona libre del mapa con filtros o detalle abiertos | — | — | — | el panel se cierra; tocar una propiedad o agrupador no lo cierra |
+| Persona toca el área de un polígono en el mapa | — | — | — | se abre el detalle de esa propiedad igual que al tocar su marcador |
 
 **Cobertura exigida:** unit
 
@@ -180,7 +185,7 @@ Cuando todas las propiedades activas agrupadas bajo una provincia carecen de ciu
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
 - `backend/real_estate/services/map_payload.py:368-460` (`has_named_cities`) — El agrupador provincial comunica si al menos una propiedad tiene ciudad registrada.
-- `frontend/components/maps/MapLibreMap.tsx:640-675` (`groupLevel === 'province' && !hasNamedCities`) — Una provincia sin ciudades usa el centro del inventario y salta directamente al zoom de puntos.
+- `frontend/components/maps/MapLibreMap.tsx:695-729` (`groupLevel === 'province' && !hasNamedCities`) — Una provincia sin ciudades usa el centro del inventario y salta directamente al zoom de puntos.
 
 **Casos**
 

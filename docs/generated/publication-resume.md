@@ -53,7 +53,7 @@ Un usuario staff genera, para un PendingPublication concreto, un enlace de conti
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
 - `backend/real_estate/views.py:1226-1252` (`def resume_link`)
-- `backend/real_estate/views.py:1184-1186` (`return [IsAuthenticated(), IsAdminUser()]`) — Toda acción del viewset que no sea `create` exige staff.
+- `backend/real_estate/views.py:1188-1190` (`return [IsAuthenticated(), IsAdminUser()]`) — Toda acción del viewset que no sea `create` exige staff.
 - `backend/real_estate/email_utils.py:381-404` (`def create_publication_resume_token`)
 
 **Casos**
@@ -301,8 +301,8 @@ Al completarse el canje, el PendingPublication pasa a converted y guarda una ref
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
 - `backend/real_estate/models.py:598-600` (`related_name="pending_publications"`)
-- `backend/real_estate/views.py:1362-1364` (`pending.status = 'converted'`)
-- `backend/real_estate/views.py:1239-1241` (`'Esta solicitud ya se convirtió en un anuncio.'`)
+- `backend/real_estate/views.py:1366-1368` (`pending.status = 'converted'`)
+- `backend/real_estate/views.py:1243-1245` (`'Esta solicitud ya se convirtió en un anuncio.'`)
 
 **Casos**
 
@@ -331,7 +331,7 @@ Desde la bandeja, staff abre el mismo formulario recuperado, corrige los campos 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
 - `frontend/app/admin/pending-publications/page.tsx:224-243` (`resolveAndPublish`) — Prepara el enlace si hace falta y abre el borrador recuperado para corregirlo.
-- `backend/real_estate/views.py:1349-1364` (`serializer.save(owner=owner)`) — La propiedad queda a nombre del correo del pendiente y se notifica tanto a cuentas nuevas como existentes.
+- `backend/real_estate/views.py:1365-1379` (`serializer.save(owner=owner)`) — La propiedad queda a nombre del correo del pendiente y se notifica tanto a cuentas nuevas como existentes.
 - `backend/real_estate/email_utils.py:406-450` (`send_account_claim_email`) — La cuenta nueva recibe el enlace de definición de contraseña y el enlace público del anuncio.
 
 **Casos**

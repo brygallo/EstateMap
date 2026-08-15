@@ -105,7 +105,7 @@ Se asigna en save() y no en el serializador porque todos los caminos de escritur
 
 - `backend/real_estate/services/short_codes.py:19` (`ALPHABET`) — Sin 0, O, 1, I ni L.
 - `backend/real_estate/models.py:307-309` (`short_code`) — Solo se asigna cuando está vacío, que es lo que lo hace estable frente a cualquier edición posterior.
-- `backend/real_estate/views.py:782-784` (`by_code`) — Resolución pública, sin distinguir mayúsculas y excluyendo inactivas.
+- `backend/real_estate/views.py:786-788` (`by_code`) — Resolución pública, sin distinguir mayúsculas y excluyendo inactivas.
 - `backend/real_estate/serializers.py:233-235` (`short_code`) — Read-only bajo fields='__all__'. Sin esto un cliente podría fijarse su propio código y ocupar el de otro, porque la columna es única.
 
 **Casos**

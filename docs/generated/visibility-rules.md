@@ -49,7 +49,7 @@ Está como `partial` y no como `implemented` porque hay dos fugas verificadas: e
 
 - `backend/real_estate/services/map_payload.py:7` (`POINT_FIELDS`) — Lista blanca de columnas que viajan al cliente. Lo que no está aquí no sale, y ese es el mecanismo que protege la regla.
 
-- `backend/real_estate/services/map_payload.py:139-141` (`queryset.values(*POINT_FIELDS)`) — Único punto donde se materializan los puntos del mapa.
+- `backend/real_estate/services/map_payload.py:145-147` (`queryset.values(*POINT_FIELDS)`) — Único punto donde se materializan los puntos del mapa.
 
 **Casos**
 

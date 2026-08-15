@@ -52,6 +52,7 @@ Reglas de negocio del inventario: qué es una propiedad publicable, cómo se int
 | [`PROP-035`](#prop-035--la-ficha-publica-el-precio-anterior-y-cuándo-cambió) | La ficha publica el precio anterior y cuándo cambió | ✅ Implementada |
 | [`PROP-036`](#prop-036--un-precio-o-una-superficie-negativos-no-se-guardan) | Un precio o una superficie negativos no se guardan | ✅ Implementada |
 | [`PROP-037`](#prop-037--la-descripción-tiene-un-tope-de-caracteres) | La descripción tiene un tope de caracteres | ✅ Implementada |
+| [`PROP-038`](#prop-038--la-ficha-completa-prioriza-contenido-y-acciones-móviles) | La ficha completa prioriza contenido y acciones móviles | ✅ Implementada |
 
 ### PROP-001 — Semántica de price y rent_price
 
@@ -90,7 +91,7 @@ Una propiedad con status='inactive' desaparece del listado, del mapa y de todos 
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/real_estate/views.py:411-413` (`exclude(status='inactive')`) — Base de get_queryset en PropertyViewSet; de aquí derivan list, map_points y summary.
+- `backend/real_estate/views.py:414-416` (`exclude(status='inactive')`) — Base de get_queryset en PropertyViewSet; de aquí derivan list, map_points y summary.
 - `backend/real_estate/models.py:85-87` (`STATUS_CHOICES`) — Los tres estados posibles son for_sale, for_rent e inactive.
 
 **Casos**
@@ -116,7 +117,7 @@ Una propiedad con status='inactive' desaparece del listado, del mapa y de todos 
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/real_estate/views.py:1029-1031` (`my_properties`) — La acción declara permission_classes=[IsAuthenticated] y elige entre Property.objects.all() y filter(owner=request.user) sin tocar status.
+- `backend/real_estate/views.py:1033-1035` (`my_properties`) — La acción declara permission_classes=[IsAuthenticated] y elige entre Property.objects.all() y filter(owner=request.user) sin tocar status.
 
 **Casos**
 
@@ -145,7 +146,7 @@ my_properties responde con el sobre paginado de DRF (count, next, previous, resu
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
 - `backend/real_estate/views.py:257-266` (`class InventoryPagination`) — page_size 24, page_size_query_param 'page_size', máximo 100.
-- `backend/real_estate/views.py:1029-1031` (`def my_properties`) — stats se calcula con queryset.aggregate antes de paginar.
+- `backend/real_estate/views.py:1033-1035` (`def my_properties`) — stats se calcula con queryset.aggregate antes de paginar.
 - `frontend/app/my-properties/page.tsx:194-219` (`const fetchInventory`) — El cliente manda search, status y ordering y acumula páginas.
 
 **Casos**
@@ -404,7 +405,7 @@ La escritura sobre una propiedad existente exige ser su owner; cualquier otro us
 
 - `backend/real_estate/permissions.py:4-15` (`IsOwnerOrReadOnly`) — Permite cualquier método seguro y compara obj.owner == request.user para el resto.
 - `backend/real_estate/views.py:311-313` (`IsOwnerOrReadOnly`) — permission_classes = [IsAuthenticatedOrReadOnly, IsOwnerOrReadOnly] en PropertyViewSet.
-- `backend/real_estate/views.py:2476-2478` (`PATCH_ALLOWED_FIELDS`) — El panel admin puede tocar propiedades ajenas, pero solo status, title, price, city y description.
+- `backend/real_estate/views.py:2480-2482` (`PATCH_ALLOWED_FIELDS`) — El panel admin puede tocar propiedades ajenas, pero solo status, title, price, city y description.
 
 **Casos**
 
@@ -747,7 +748,7 @@ El listado lateral es un feed paginado del catálogo filtrado completo, ordenado
 
 - `backend/real_estate/views.py:467-493` (`distance_score`) — El listado ordena el catálogo filtrado por distancia aproximada y deja coordenadas ausentes al final.
 - `frontend/hooks/usePropertyFilters.ts:427-473` (`fetchCardsPage`) — Las tarjetas omiten bbox, envían el centro del mapa y anexan cada página sin duplicados.
-- `frontend/components/map/PropertySidebar.tsx:166-193` (`IntersectionObserver`) — El sentinel solicita automáticamente la página siguiente al acercarse al final del scroll.
+- `frontend/components/map/PropertySidebar.tsx:162-188` (`IntersectionObserver`) — El sentinel solicita automáticamente la página siguiente al acercarse al final del scroll.
 
 **Casos**
 
@@ -802,7 +803,7 @@ La normalización vive en `save()` porque todos los caminos de escritura pasan p
 - `backend/real_estate/models.py:173-181` (`closed_reason = models`)
 - `backend/real_estate/models.py:294-307` (`if self.closed_reason:`) — Cerrar pone inactive y sella la fecha; abrir la borra.
 - `backend/real_estate/serializers.py:38-50` (`def reopen_on_reactivation`) — Volver a poner el anuncio en venta lo reabre; si no, el cambio parece aceptado y se deshace solo.
-- `backend/real_estate/views.py:2665-2667` (`changes['closed_reason'] = ''`) — El cambio de estado en lote escribe con .update(), que nunca llega a save(), así que reabre a mano.
+- `backend/real_estate/views.py:2669-2671` (`changes['closed_reason'] = ''`) — El cambio de estado en lote escribe con .update(), que nunca llega a save(), así que reabre a mano.
 
 **Casos**
 
@@ -837,7 +838,7 @@ Ese privilegio es de la ficha por id y solo de ella. La ruta por código corto n
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/real_estate/views.py:385-405` (`visible |= Q(is_duplicate=False) & ~Q(closed_reason='')`) — Las acciones de detalle resuelven la fila por id, no por el catálogo público; el dueño entra siempre.
+- `backend/real_estate/views.py:406-425` (`visible |= Q(is_duplicate=False) & ~Q(closed_reason='')`) — Las acciones de detalle resuelven la fila por id, no por el catálogo público; el dueño entra siempre.
 - `backend/real_estate/views.py:801-811` (`exclude(status='inactive', closed_reason='')`) — El código corto de un anuncio vendido sigue resolviendo.
 
 **Casos**
@@ -955,3 +956,24 @@ La ingesta escribe con `Property.objects.create` y no pasa por el serializador, 
 
 - `backend/real_estate/tests/generated/test_spec_properties.py`
 - `backend/real_estate/tests/test_property_text_limits.py`
+
+### PROP-038 — La ficha completa prioriza contenido y acciones móviles
+
+**Estado:** ✅ Implementada
+
+En celular, la ficha completa presenta galería, identidad, precio, características y descripción con una densidad compacta. No repite la tarjeta lateral de contacto de escritorio porque las acciones principales ya permanecen disponibles en la barra inferior móvil.
+
+> **Por qué:** Repetir precio, anunciante y todos los botones en una tarjeta vertical obliga a recorrer varios bloques antes de llegar a ubicación y propiedades cercanas. La barra inferior ya mantiene contacto y compartir al alcance del pulgar, así que el bloque lateral solo aporta valor en escritorio.
+
+**Evidencia en el código** (verificada por `tools/specs/validate.py`)
+
+- `frontend/app/property/[id]/page.tsx` (`StatTile`) — Las características usan una fila compacta en celular y recuperan el espaciado amplio desde tablet.
+- `frontend/app/property/[id]/page.tsx` (`hidden lg:col-span-1 lg:block`) — La tarjeta lateral redundante se reserva para escritorio; PropertyPageActions mantiene las acciones móviles.
+- `frontend/components/PropertyPageActions.tsx` (`PropertyPageActions`) — La barra inferior conserva contacto y compartir con safe area en celular.
+
+**Casos**
+
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| Persona consulta una ficha completa en celular | — | — | — | ve los datos clave compactos y una sola superficie persistente de acciones |
+| Persona consulta la misma ficha en escritorio | — | — | — | conserva la tarjeta lateral sticky y el espaciado amplio |

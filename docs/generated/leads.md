@@ -156,7 +156,7 @@ GET/PATCH/DELETE sobre /api/leads/ exigen autenticación; el queryset se filtra 
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/real_estate/views.py:1157-1159` (`def get_queryset`) — Devuelve Lead.objects.none() si no hay usuario autenticado, el queryset completo si is_staff, y filter(property__owner=user) en cualquier otro caso.
+- `backend/real_estate/views.py:1161-1163` (`def get_queryset`) — Devuelve Lead.objects.none() si no hay usuario autenticado, el queryset completo si is_staff, y filter(property__owner=user) en cualquier otro caso.
 
 
 **Casos**
@@ -188,7 +188,7 @@ LeadViewSet.perform_create guarda el lead y llama de forma síncrona a LeadNotif
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/real_estate/views.py:1166-1168` (`def perform_create`) — serializer.save() seguido de LeadNotificationService().notify_created(lead), dentro del mismo ciclo request/response.
+- `backend/real_estate/views.py:1170-1172` (`def perform_create`) — serializer.save() seguido de LeadNotificationService().notify_created(lead), dentro del mismo ciclo request/response.
 - `backend/real_estate/services/notifications.py:13-22` (`class LeadNotificationService`) — notify_created llama a send_lead_notification sin encolarla en Celery.
 - `backend/real_estate/email_utils.py:229-246` (`def send_lead_notification`) — Reúne owner.email y property.contact_email como destinatarios.
 
@@ -293,8 +293,8 @@ GET/PATCH sobre /api/pending-publications/ exigen IsAuthenticated e IsAdminUser 
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/real_estate/views.py:1141-1143` (`def get_permissions`) — return [IsAuthenticated(), IsAdminUser()] para toda acción salvo create.
-- `backend/real_estate/views.py:1157-1159` (`def get_queryset`) — PendingPublication.objects.none() salvo que user.is_staff sea verdadero.
+- `backend/real_estate/views.py:1145-1147` (`def get_permissions`) — return [IsAuthenticated(), IsAdminUser()] para toda acción salvo create.
+- `backend/real_estate/views.py:1161-1163` (`def get_queryset`) — PendingPublication.objects.none() salvo que user.is_staff sea verdadero.
 
 **Casos**
 
@@ -325,7 +325,7 @@ PendingPublicationViewSet.get_throttles aplica ScopedRateThrottle con throttle_s
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/real_estate/views.py:1189-1191` (`throttle_scope = 'pending_create'`) — Solo el POST público se limita; el resto de acciones ya exige staff y no lleva throttle.
+- `backend/real_estate/views.py:1193-1195` (`throttle_scope = 'pending_create'`) — Solo el POST público se limita; el resto de acciones ya exige staff y no lleva throttle.
 - `backend/estate_map/settings.py:189-191` (`'pending_create': '10/min'`)
 
 **Casos**
@@ -348,7 +348,7 @@ PendingPublicationViewSet.perform_create llama a PendingPublicationNotificationS
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/real_estate/views.py:1166-1168` (`def perform_create`) — PendingPublicationNotificationService().notify_created(pending) en el mismo request.
+- `backend/real_estate/views.py:1170-1172` (`def perform_create`) — PendingPublicationNotificationService().notify_created(pending) en el mismo request.
 - `backend/real_estate/email_utils.py:194-203` (`def send_pending_publication_notification`) — recipients sale de settings.ADMINS más PENDING_PUBLICATION_NOTIFY_EMAIL; si queda vacío, la función retorna sin enviar nada.
 - `backend/real_estate/services/notifications.py:25-37` (`class PendingPublicationNotificationService`) — Mismo patrón try/except que LeadNotificationService.
 
@@ -422,7 +422,7 @@ ActivityEventViewSet.get_throttles aplica ScopedRateThrottle con throttle_scope=
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/real_estate/views.py:1446-1448` (`throttle_scope = 'activity_create'`)
+- `backend/real_estate/views.py:1450-1452` (`throttle_scope = 'activity_create'`)
 - `backend/estate_map/settings.py:188-190` (`'activity_create': '30/min'`)
 
 **Casos**

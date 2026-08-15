@@ -14,9 +14,38 @@ El mapa prioriza los puntos sobre datos secundarios, conserva las rutas de cach�
 
 | Id | Regla | Estado |
 | --- | --- | --- |
+| [`MPERF-004`](#mperf-004--cada-nivel-territorial-reutiliza-una-sola-respuesta-cacheada) | Cada nivel territorial reutiliza una sola respuesta cacheada | ✅ Implementada |
 | [`MPERF-001`](#mperf-001--las-lecturas-públicas-del-mapa-no-dependen-de-la-sesión) | Las lecturas públicas del mapa no dependen de la sesión | ✅ Implementada |
 | [`MPERF-002`](#mperf-002--una-selección-produce-una-sola-transición-de-cámara) | Una selección produce una sola transición de cámara | ✅ Implementada |
 | [`MPERF-003`](#mperf-003--la-conexión-lenta-prioriza-puntos-sobre-fichas-e-imágenes) | La conexión lenta prioriza puntos sobre fichas e imágenes | ✅ Implementada |
+
+### MPERF-004 — Cada nivel territorial reutiliza una sola respuesta cacheada
+
+**Estado:** ✅ Implementada
+
+Las vistas de Ecuador, provincias y ciudades usan respectivamente una clave canónica de Redis. En esos niveles se ignoran el bbox y los decimales del zoom porque el resultado territorial se calcula sobre todo el inventario filtrado; solo el nivel de propiedades individuales conserva claves espaciales.
+
+
+> **Por qué:** Incluir la posición exacta de la cámara en una clave cuyo resultado no depende de esa posición convertía cada pequeño movimiento en un cache miss. La versión del inventario ya invalida estas respuestas cuando una propiedad cambia, por lo que pueden conservarse calientes durante una hora.
+
+
+**Evidencia en el código** (verificada por `tools/specs/validate.py`)
+
+- `backend/real_estate/services/map_payload.py` (`canonical_cluster_zoom`) — País, provincia y ciudad se reducen a un zoom estable por nivel.
+- `backend/real_estate/views.py` (`cache_bbox`) — El cache territorial usa `all`, TTL de una hora y el zoom canónico; los puntos siguen usando bbox y TTL corto.
+- `frontend/hooks/usePropertyFilters.ts` (`mapRequestKey`) — La memoria del navegador usa los mismos tres niveles y no añade debounce a sus peticiones.
+
+**Casos**
+
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| La persona mueve el mapa sin salir del nivel de provincias | — | — | — | reutiliza la misma respuesta de Redis sin recalcular Pichincha ni las demás provincias |
+| La persona pasa de provincias a ciudades | — | — | — | solicita una única respuesta canónica distinta para el nuevo nivel |
+| La persona entra al nivel de propiedades individuales | — | — | — | la clave vuelve a incluir el área visible para no mezclar puntos de zonas distintas |
+
+**Cobertura exigida:** unit
+
+- `backend/real_estate/tests/test_map_payload.py`
 
 ### MPERF-001 — Las lecturas públicas del mapa no dependen de la sesión
 
@@ -64,7 +93,7 @@ Cuando el navegador comunica ahorro de datos o una conexión 2g, el mapa reduce 
 
 - `frontend/lib/network-profile.ts:14-32` (`getMapNetworkProfile`) — Define el perfil restringido para 2g y ahorro de datos.
 - `frontend/hooks/usePropertyFilters.ts:398-511` (`networkProfile.mapPointLimit`) — Aplica límites, imágenes y retraso del perfil a las peticiones.
-- `frontend/components/MapPageClient.tsx:113-117` (`cardsEnabled`) — En móvil posterga datos secundarios mientras el panel está cerrado.
+- `frontend/components/MapPageClient.tsx:87-90` (`cardsEnabled`) — En móvil posterga datos secundarios mientras el panel está cerrado.
 
 **Casos**
 

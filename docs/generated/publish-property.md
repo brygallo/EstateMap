@@ -165,7 +165,7 @@ Si `POST /api/properties/` llega con cabecera `Idempotency-Key` y ya existe un r
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/real_estate/views.py:558-563` (`idempotency_key = (request.headers.get('Idempotency-Key')`) — Sin cabecera, se comporta como un create normal.
+- `backend/real_estate/views.py:564-568` (`idempotency_key = (request.headers.get('Idempotency-Key')`) — Sin cabecera, se comporta como un create normal.
 - `backend/real_estate/views.py:577-579` (`response['X-Idempotent-Replay'] = 'true'`)
 - `backend/real_estate/views.py:589-591` (`cache.set(result_key, response.data['id'], 60 * 60 * 24)`)
 - `frontend/app/add-property/page.tsx:1170-1172` (`Idempotency-Key`) — No se manda en la edición (PUT), solo en la creación.
@@ -270,8 +270,8 @@ Cada `post_save`/`post_delete` de `Property` encadena, por señal: una fila de `
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/real_estate/views.py:411-413` (`exclude(status='inactive')`) — Único filtro que saca inactive del catálogo público; no toca la fila.
-- `backend/real_estate/views.py:1029-1031` (`def my_properties`) — including inactive: el dueño ve su propiedad inactiva, el público no.
+- `backend/real_estate/views.py:414-416` (`exclude(status='inactive')`) — Único filtro que saca inactive del catálogo público; no toca la fila.
+- `backend/real_estate/views.py:1033-1035` (`def my_properties`) — including inactive: el dueño ve su propiedad inactiva, el público no.
 - `backend/real_estate/models.py:344-346` (`on_delete=models.CASCADE`) — PropertyImage.property cae en cascada con la Property.
 - `frontend/app/my-properties/page.tsx:250-270` (`const handleDelete`) — DELETE /properties/<id>/ tras window.confirm; PropertyViewSet no sobrescribe destroy.
 
