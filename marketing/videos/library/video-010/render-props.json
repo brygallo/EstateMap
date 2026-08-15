@@ -10,1185 +10,1185 @@
   "scenes": [
     {
       "purpose": "gancho",
-      "durationInFrames": 286,
+      "durationInFrames": 333,
       "headline": "Parte de un edificio",
       "captions": [
         {
           "text": "Cuando compras un departamento no",
           "start": 0.0,
-          "end": 1.955,
+          "end": 2.293,
           "words": [
             {
               "text": "Cuando",
               "start": 0.0,
-              "end": 0.402
+              "end": 0.472
             },
             {
               "text": "compras",
-              "start": 0.402,
-              "end": 0.862
+              "start": 0.472,
+              "end": 1.012
             },
             {
               "text": "un",
-              "start": 0.862,
-              "end": 1.035
+              "start": 1.012,
+              "end": 1.214
             },
             {
               "text": "departamento",
-              "start": 1.035,
-              "end": 1.782
+              "start": 1.214,
+              "end": 2.091
             },
             {
               "text": "no",
-              "start": 1.782,
-              "end": 1.955
+              "start": 2.091,
+              "end": 2.293
             }
           ]
         },
         {
           "text": "compras solo el departamento.",
-          "start": 1.955,
-          "end": 3.622,
+          "start": 2.293,
+          "end": 4.249,
           "words": [
             {
               "text": "compras",
               "start": 0.0,
-              "end": 0.46
+              "end": 0.54
             },
             {
               "text": "solo",
-              "start": 0.46,
-              "end": 0.747
+              "start": 0.54,
+              "end": 0.877
             },
             {
               "text": "el",
-              "start": 0.747,
-              "end": 0.92
+              "start": 0.877,
+              "end": 1.079
             },
             {
               "text": "departamento.",
-              "start": 0.92,
-              "end": 1.667
+              "start": 1.079,
+              "end": 1.956
             }
           ]
         },
         {
           "text": "Compras una parte de un edificio,",
-          "start": 3.622,
-          "end": 5.52,
+          "start": 4.249,
+          "end": 6.474,
           "words": [
             {
               "text": "Compras",
               "start": 0.0,
-              "end": 0.46
+              "end": 0.539
             },
             {
               "text": "una",
-              "start": 0.46,
-              "end": 0.69
+              "start": 0.539,
+              "end": 0.809
             },
             {
               "text": "parte",
-              "start": 0.69,
-              "end": 1.035
+              "start": 0.809,
+              "end": 1.214
             },
             {
               "text": "de",
-              "start": 1.035,
-              "end": 1.207
+              "start": 1.214,
+              "end": 1.416
             },
             {
               "text": "un",
-              "start": 1.207,
-              "end": 1.38
+              "start": 1.416,
+              "end": 1.619
             },
             {
               "text": "edificio,",
-              "start": 1.38,
-              "end": 1.897
+              "start": 1.619,
+              "end": 2.225
             }
           ]
         },
         {
           "text": "con sus reglas,",
-          "start": 5.52,
-          "end": 6.382,
+          "start": 6.474,
+          "end": 7.486,
           "words": [
             {
               "text": "con",
               "start": 0.0,
-              "end": 0.23
+              "end": 0.27
             },
             {
               "text": "sus",
-              "start": 0.23,
-              "end": 0.46
+              "start": 0.27,
+              "end": 0.54
             },
             {
               "text": "reglas,",
-              "start": 0.46,
-              "end": 0.862
+              "start": 0.54,
+              "end": 1.012
             }
           ]
         },
         {
           "text": "sus vecinos y sus deudas.",
-          "start": 6.382,
-          "end": 7.82,
+          "start": 7.486,
+          "end": 9.171,
           "words": [
             {
               "text": "sus",
               "start": 0.0,
-              "end": 0.23
+              "end": 0.27
             },
             {
               "text": "vecinos",
-              "start": 0.23,
-              "end": 0.69
+              "start": 0.27,
+              "end": 0.809
             },
             {
               "text": "y",
-              "start": 0.69,
-              "end": 0.805
+              "start": 0.809,
+              "end": 0.944
             },
             {
               "text": "sus",
-              "start": 0.805,
-              "end": 1.035
+              "start": 0.944,
+              "end": 1.214
             },
             {
               "text": "deudas.",
-              "start": 1.035,
-              "end": 1.437
+              "start": 1.214,
+              "end": 1.686
             }
           ]
         },
         {
           "text": "Y eso se revisa antes.",
-          "start": 7.82,
-          "end": 9.085,
+          "start": 9.171,
+          "end": 10.655,
           "words": [
             {
               "text": "Y",
               "start": 0.0,
-              "end": 0.115
+              "end": 0.135
             },
             {
               "text": "eso",
-              "start": 0.115,
-              "end": 0.345
+              "start": 0.135,
+              "end": 0.405
             },
             {
               "text": "se",
-              "start": 0.345,
-              "end": 0.517
+              "start": 0.405,
+              "end": 0.607
             },
             {
               "text": "revisa",
-              "start": 0.517,
-              "end": 0.92
+              "start": 0.607,
+              "end": 1.079
             },
             {
               "text": "antes.",
-              "start": 0.92,
-              "end": 1.265
+              "start": 1.079,
+              "end": 1.484
             }
           ]
         }
       ],
-      "visualDirection": "Animación nueva a construir y registrar como sim:que-compras. Escena tipográfica de marca sobre el fondo claro de la serie mientras la animación no exista. Cuando se construya: un edificio de departamentos visto desde la vereda, dibujado como se ve en la vida real, con su portón, su vereda y un árbol; la cámara sube despacio y una sola ventana iluminada se separa apenas del volumen para mostrar que ese es el departamento. Enseguida el edificio entero se ilumina por capas —fachada, ascensor, cisterna en la azotea— para decir sin texto que lo que compras es todo eso. Un solo sujeto grande de y=250 a y=900, cámara siempre en movimiento y remate con el edificio completo asentándose.",
+      "visualDirection": "sim:que-compras, construida y registrada. Un edificio de departamentos visto desde la vereda, dibujado como se ve en la vida real, con su portón, su vereda y un árbol; la cámara sube despacio y una sola ventana iluminada se separa apenas del volumen para mostrar que ese es el departamento. Enseguida el edificio entero se ilumina por capas —fachada, ascensor, cisterna en la azotea— para decir sin texto que lo que compras es todo eso. Un solo sujeto grande de y=250 a y=900, cámara siempre en movimiento y remate con el edificio completo asentándose.",
       "transition": "cut",
       "asset": "sim:que-compras",
       "assetType": "simulation",
       "photo": null,
       "voiceFile": "jobs/video-010/audio/voice-01.mp3",
       "assetStartInFrames": 0,
-      "assetTotalInFrames": 286,
+      "assetTotalInFrames": 333,
       "accent": "#22C55E"
     },
     {
       "purpose": "prueba",
-      "durationInFrames": 361,
+      "durationInFrames": 423,
       "headline": "Qué dice la escritura",
       "captions": [
         {
           "text": "Pide la declaratoria de propiedad",
           "start": 0.0,
-          "end": 1.885,
+          "end": 2.219,
           "words": [
             {
               "text": "Pide",
               "start": 0.0,
-              "end": 0.277
+              "end": 0.326
             },
             {
               "text": "la",
-              "start": 0.277,
-              "end": 0.443
+              "start": 0.326,
+              "end": 0.522
             },
             {
               "text": "declaratoria",
-              "start": 0.443,
-              "end": 1.164
+              "start": 0.522,
+              "end": 1.37
             },
             {
               "text": "de",
-              "start": 1.164,
-              "end": 1.33
+              "start": 1.37,
+              "end": 1.566
             },
             {
               "text": "propiedad",
-              "start": 1.33,
-              "end": 1.885
+              "start": 1.566,
+              "end": 2.219
             }
           ]
         },
         {
           "text": "horizontal y el reglamento interno.",
-          "start": 1.885,
-          "end": 3.825,
+          "start": 2.219,
+          "end": 4.502,
           "words": [
             {
               "text": "horizontal",
               "start": 0.0,
-              "end": 0.61
+              "end": 0.718
             },
             {
               "text": "y",
-              "start": 0.61,
-              "end": 0.721
+              "start": 0.718,
+              "end": 0.848
             },
             {
               "text": "el",
-              "start": 0.721,
-              "end": 0.887
+              "start": 0.848,
+              "end": 1.044
             },
             {
               "text": "reglamento",
-              "start": 0.887,
-              "end": 1.497
+              "start": 1.044,
+              "end": 1.762
             },
             {
               "text": "interno.",
-              "start": 1.497,
-              "end": 1.94
+              "start": 1.762,
+              "end": 2.284
             }
           ]
         },
         {
           "text": "Ahí dice qué es tuyo",
-          "start": 3.825,
-          "end": 4.989,
+          "start": 4.502,
+          "end": 5.873,
           "words": [
             {
               "text": "Ahí",
               "start": 0.0,
-              "end": 0.222
+              "end": 0.261
             },
             {
               "text": "dice",
-              "start": 0.222,
-              "end": 0.499
+              "start": 0.261,
+              "end": 0.587
             },
             {
               "text": "qué",
-              "start": 0.499,
-              "end": 0.721
+              "start": 0.587,
+              "end": 0.848
             },
             {
               "text": "es",
-              "start": 0.721,
-              "end": 0.887
+              "start": 0.848,
+              "end": 1.044
             },
             {
               "text": "tuyo",
-              "start": 0.887,
-              "end": 1.164
+              "start": 1.044,
+              "end": 1.37
             }
           ]
         },
         {
           "text": "y qué es común.",
-          "start": 4.989,
-          "end": 5.821,
+          "start": 5.873,
+          "end": 6.851,
           "words": [
             {
               "text": "y",
               "start": 0.0,
-              "end": 0.111
+              "end": 0.131
             },
             {
               "text": "qué",
-              "start": 0.111,
-              "end": 0.333
+              "start": 0.131,
+              "end": 0.392
             },
             {
               "text": "es",
-              "start": 0.333,
-              "end": 0.499
+              "start": 0.392,
+              "end": 0.587
             },
             {
               "text": "común.",
-              "start": 0.499,
-              "end": 0.832
+              "start": 0.587,
+              "end": 0.979
             }
           ]
         },
         {
           "text": "Y revisa que el parqueadero",
-          "start": 5.821,
-          "end": 7.373,
+          "start": 6.851,
+          "end": 8.678,
           "words": [
             {
               "text": "Y",
               "start": 0.0,
-              "end": 0.111
+              "end": 0.131
             },
             {
               "text": "revisa",
-              "start": 0.111,
-              "end": 0.499
+              "start": 0.131,
+              "end": 0.587
             },
             {
               "text": "que",
-              "start": 0.499,
-              "end": 0.721
+              "start": 0.587,
+              "end": 0.848
             },
             {
               "text": "el",
-              "start": 0.721,
-              "end": 0.887
+              "start": 0.848,
+              "end": 1.044
             },
             {
               "text": "parqueadero",
-              "start": 0.887,
-              "end": 1.552
+              "start": 1.044,
+              "end": 1.827
             }
           ]
         },
         {
           "text": "y la bodega consten en",
-          "start": 7.373,
-          "end": 8.648,
+          "start": 8.678,
+          "end": 10.179,
           "words": [
             {
               "text": "y",
               "start": 0.0,
-              "end": 0.111
+              "end": 0.131
             },
             {
               "text": "la",
-              "start": 0.111,
-              "end": 0.277
+              "start": 0.131,
+              "end": 0.326
             },
             {
               "text": "bodega",
-              "start": 0.277,
-              "end": 0.665
+              "start": 0.326,
+              "end": 0.783
             },
             {
               "text": "consten",
-              "start": 0.665,
-              "end": 1.109
+              "start": 0.783,
+              "end": 1.305
             },
             {
               "text": "en",
-              "start": 1.109,
-              "end": 1.275
+              "start": 1.305,
+              "end": 1.501
             }
           ]
         },
         {
           "text": "la escritura,",
-          "start": 8.648,
-          "end": 9.369,
+          "start": 10.179,
+          "end": 11.027,
           "words": [
             {
               "text": "la",
               "start": 0.0,
-              "end": 0.166
+              "end": 0.196
             },
             {
               "text": "escritura,",
-              "start": 0.166,
-              "end": 0.721
+              "start": 0.196,
+              "end": 0.848
             }
           ]
         },
         {
           "text": "no que te los hayan asignado",
-          "start": 9.369,
-          "end": 10.976,
+          "start": 11.027,
+          "end": 12.92,
           "words": [
             {
               "text": "no",
               "start": 0.0,
-              "end": 0.166
+              "end": 0.196
             },
             {
               "text": "que",
-              "start": 0.166,
-              "end": 0.388
+              "start": 0.196,
+              "end": 0.457
             },
             {
               "text": "te",
-              "start": 0.388,
-              "end": 0.554
+              "start": 0.457,
+              "end": 0.653
             },
             {
               "text": "los",
-              "start": 0.554,
-              "end": 0.776
+              "start": 0.653,
+              "end": 0.914
             },
             {
               "text": "hayan",
-              "start": 0.776,
-              "end": 1.109
+              "start": 0.914,
+              "end": 1.305
             },
             {
               "text": "asignado",
-              "start": 1.109,
-              "end": 1.608
+              "start": 1.305,
+              "end": 1.892
             }
           ]
         },
         {
           "text": "de palabra.",
-          "start": 10.976,
-          "end": 11.586,
+          "start": 12.92,
+          "end": 13.637,
           "words": [
             {
               "text": "de",
               "start": 0.0,
-              "end": 0.166
+              "end": 0.196
             },
             {
               "text": "palabra.",
-              "start": 0.166,
-              "end": 0.61
+              "start": 0.196,
+              "end": 0.718
             }
           ]
         }
       ],
-      "visualDirection": "Animación nueva a construir y registrar como sim:propiedad-horizontal. Mientras no exista, escena tipográfica de marca. Cuando se construya: un juego de documentos en papel sobre una mesa, dibujados como papeles reales con sello y firma, entrando escalonados. El primero se abre y sobre el corte del edificio se pintan en dos tonos lo privado y lo común, con etiquetas grandes de al menos 24 px. A la mitad ocurre el cambio de estado: el papel pasa la página y aparecen dos renglones, parqueadero y bodega, que se marcan como parte del documento; al lado, un cartel de parqueadero apenas dibujado con tiza se borra para mostrar la diferencia entre constar y estar asignado de palabra.",
+      "visualDirection": "sim:propiedad-horizontal, construida y registrada. Un juego de documentos en papel sobre una mesa, dibujados como papeles reales con sello y firma, entrando escalonados. El primero se abre y sobre el corte del edificio se pintan en dos tonos lo privado y lo común, con etiquetas grandes de al menos 24 px. A la mitad ocurre el cambio de estado: el papel pasa la página y aparecen dos renglones, parqueadero y bodega, que se marcan como parte del documento; al lado, un cartel de parqueadero apenas dibujado con tiza se borra para mostrar la diferencia entre constar y estar asignado de palabra.",
       "transition": "cut",
       "asset": "sim:propiedad-horizontal",
       "assetType": "simulation",
       "photo": null,
       "voiceFile": "jobs/video-010/audio/voice-02.mp3",
       "assetStartInFrames": 0,
-      "assetTotalInFrames": 361,
+      "assetTotalInFrames": 423,
       "accent": "#6B5CF6"
     },
     {
       "purpose": "prueba",
-      "durationInFrames": 298,
+      "durationInFrames": 366,
       "headline": "Alícuota al día",
       "captions": [
         {
           "text": "Pregunta cuánto es la alícuota",
           "start": 0.0,
-          "end": 1.752,
+          "end": 2.166,
           "words": [
             {
               "text": "Pregunta",
               "start": 0.0,
-              "end": 0.509
+              "end": 0.629
             },
             {
               "text": "cuánto",
-              "start": 0.509,
-              "end": 0.904
+              "start": 0.629,
+              "end": 1.118
             },
             {
               "text": "es",
-              "start": 0.904,
-              "end": 1.074
+              "start": 1.118,
+              "end": 1.327
             },
             {
               "text": "la",
-              "start": 1.074,
-              "end": 1.243
+              "start": 1.327,
+              "end": 1.537
             },
             {
               "text": "alícuota",
-              "start": 1.243,
-              "end": 1.752
+              "start": 1.537,
+              "end": 2.166
             }
           ]
         },
         {
           "text": "y qué cubre.",
-          "start": 1.752,
-          "end": 2.43,
+          "start": 2.166,
+          "end": 3.004,
           "words": [
             {
               "text": "y",
               "start": 0.0,
-              "end": 0.113
+              "end": 0.14
             },
             {
               "text": "qué",
-              "start": 0.113,
-              "end": 0.339
+              "start": 0.14,
+              "end": 0.419
             },
             {
               "text": "cubre.",
-              "start": 0.339,
-              "end": 0.678
+              "start": 0.419,
+              "end": 0.838
             }
           ]
         },
         {
           "text": "Es un gasto de todos",
-          "start": 2.43,
-          "end": 3.617,
+          "start": 3.004,
+          "end": 4.471,
           "words": [
             {
               "text": "Es",
               "start": 0.0,
-              "end": 0.17
+              "end": 0.21
             },
             {
               "text": "un",
-              "start": 0.17,
-              "end": 0.339
+              "start": 0.21,
+              "end": 0.419
             },
             {
               "text": "gasto",
-              "start": 0.339,
-              "end": 0.678
+              "start": 0.419,
+              "end": 0.838
             },
             {
               "text": "de",
-              "start": 0.678,
-              "end": 0.848
+              "start": 0.838,
+              "end": 1.048
             },
             {
               "text": "todos",
-              "start": 0.848,
-              "end": 1.187
+              "start": 1.048,
+              "end": 1.467
             }
           ]
         },
         {
           "text": "los meses,",
-          "start": 3.617,
-          "end": 4.182,
+          "start": 4.471,
+          "end": 5.17,
           "words": [
             {
               "text": "los",
               "start": 0.0,
-              "end": 0.226
+              "end": 0.279
             },
             {
               "text": "meses,",
-              "start": 0.226,
-              "end": 0.565
+              "start": 0.279,
+              "end": 0.699
             }
           ]
         },
         {
           "text": "igual que la luz.",
-          "start": 4.182,
-          "end": 5.143,
+          "start": 5.17,
+          "end": 6.357,
           "words": [
             {
               "text": "igual",
               "start": 0.0,
-              "end": 0.339
+              "end": 0.419
             },
             {
               "text": "que",
-              "start": 0.339,
-              "end": 0.565
+              "start": 0.419,
+              "end": 0.699
             },
             {
               "text": "la",
-              "start": 0.565,
-              "end": 0.735
+              "start": 0.699,
+              "end": 0.908
             },
             {
               "text": "luz.",
-              "start": 0.735,
-              "end": 0.961
+              "start": 0.908,
+              "end": 1.188
             }
           ]
         },
         {
           "text": "Y pide por escrito,",
-          "start": 5.143,
-          "end": 6.217,
+          "start": 6.357,
+          "end": 7.685,
           "words": [
             {
               "text": "Y",
               "start": 0.0,
-              "end": 0.113
+              "end": 0.14
             },
             {
               "text": "pide",
-              "start": 0.113,
-              "end": 0.396
+              "start": 0.14,
+              "end": 0.489
             },
             {
               "text": "por",
-              "start": 0.396,
-              "end": 0.622
+              "start": 0.489,
+              "end": 0.768
             },
             {
               "text": "escrito,",
-              "start": 0.622,
-              "end": 1.074
+              "start": 0.768,
+              "end": 1.327
             }
           ]
         },
         {
           "text": "firmado por la administración,",
-          "start": 6.217,
-          "end": 7.913,
+          "start": 7.685,
+          "end": 9.78,
           "words": [
             {
               "text": "firmado",
               "start": 0.0,
-              "end": 0.452
+              "end": 0.559
             },
             {
               "text": "por",
-              "start": 0.452,
-              "end": 0.678
+              "start": 0.559,
+              "end": 0.838
             },
             {
               "text": "la",
-              "start": 0.678,
-              "end": 0.848
+              "start": 0.838,
+              "end": 1.048
             },
             {
               "text": "administración,",
-              "start": 0.848,
-              "end": 1.696
+              "start": 1.048,
+              "end": 2.096
             }
           ]
         },
         {
           "text": "que el vendedor esté al día.",
-          "start": 7.913,
-          "end": 9.495,
+          "start": 9.78,
+          "end": 11.737,
           "words": [
             {
               "text": "que",
               "start": 0.0,
-              "end": 0.226
+              "end": 0.279
             },
             {
               "text": "el",
-              "start": 0.226,
-              "end": 0.396
+              "start": 0.279,
+              "end": 0.489
             },
             {
               "text": "vendedor",
-              "start": 0.396,
-              "end": 0.904
+              "start": 0.489,
+              "end": 1.118
             },
             {
               "text": "esté",
-              "start": 0.904,
-              "end": 1.187
+              "start": 1.118,
+              "end": 1.467
             },
             {
               "text": "al",
-              "start": 1.187,
-              "end": 1.356
+              "start": 1.467,
+              "end": 1.677
             },
             {
               "text": "día.",
-              "start": 1.356,
-              "end": 1.583
+              "start": 1.677,
+              "end": 1.956
             }
           ]
         }
       ],
-      "visualDirection": "Animación nueva a construir y registrar como sim:alicuota. Mientras no exista, escena tipográfica de marca. Cuando se construya: un recibo mensual de administración en primer plano, del tamaño de media pantalla, con el monto en cifra grande claramente ilustrativa —nunca presentada como valor real de mercado— y debajo dos o tres renglones de lo que cubre. Los recibos se apilan uno por mes con ritmo constante para que se sienta el gasto recurrente. Al final entra un certificado firmado y sellado que se posa encima de la pila; el sello cae con peso como remate.",
+      "visualDirection": "sim:alicuota, construida y registrada. Un recibo mensual de administración en primer plano, del tamaño de media pantalla, con el monto en cifra grande claramente ilustrativa —nunca presentada como valor real de mercado— y debajo dos o tres renglones de lo que cubre. Los recibos se apilan uno por mes con ritmo constante para que se sienta el gasto recurrente. Al final entra un certificado firmado y sellado que se posa encima de la pila; el sello cae con peso como remate.",
       "transition": "cut",
       "asset": "sim:alicuota",
       "assetType": "simulation",
       "photo": null,
       "voiceFile": "jobs/video-010/audio/voice-03.mp3",
       "assetStartInFrames": 0,
-      "assetTotalInFrames": 298,
+      "assetTotalInFrames": 366,
       "accent": "#14B8A6"
     },
     {
       "purpose": "prueba",
-      "durationInFrames": 395,
+      "durationInFrames": 496,
       "headline": "Actas y cuotas extra",
       "captions": [
         {
           "text": "Pide las actas de las últimas asambleas.",
           "start": 0.0,
-          "end": 2.239,
+          "end": 2.833,
           "words": [
             {
               "text": "Pide",
               "start": 0.0,
-              "end": 0.28
+              "end": 0.354
             },
             {
               "text": "las",
-              "start": 0.28,
-              "end": 0.504
+              "start": 0.354,
+              "end": 0.638
             },
             {
               "text": "actas",
-              "start": 0.504,
-              "end": 0.84
+              "start": 0.638,
+              "end": 1.063
             },
             {
               "text": "de",
-              "start": 0.84,
-              "end": 1.008
+              "start": 1.063,
+              "end": 1.275
             },
             {
               "text": "las",
-              "start": 1.008,
-              "end": 1.231
+              "start": 1.275,
+              "end": 1.558
             },
             {
               "text": "últimas",
-              "start": 1.231,
-              "end": 1.679
+              "start": 1.558,
+              "end": 2.125
             },
             {
               "text": "asambleas.",
-              "start": 1.679,
-              "end": 2.239
+              "start": 2.125,
+              "end": 2.833
             }
           ]
         },
         {
           "text": "Ahí aparecen las cuotas extraordinarias:",
-          "start": 2.239,
-          "end": 4.478,
+          "start": 2.833,
+          "end": 5.667,
           "words": [
             {
               "text": "Ahí",
               "start": 0.0,
-              "end": 0.224
+              "end": 0.283
             },
             {
               "text": "aparecen",
-              "start": 0.224,
-              "end": 0.728
+              "start": 0.283,
+              "end": 0.921
             },
             {
               "text": "las",
-              "start": 0.728,
-              "end": 0.952
+              "start": 0.921,
+              "end": 1.204
             },
             {
               "text": "cuotas",
-              "start": 0.952,
-              "end": 1.343
+              "start": 1.204,
+              "end": 1.7
             },
             {
               "text": "extraordinarias:",
-              "start": 1.343,
-              "end": 2.239
+              "start": 1.7,
+              "end": 2.833
             }
           ]
         },
         {
           "text": "los cobros que se aprueban",
-          "start": 4.478,
-          "end": 5.989,
+          "start": 5.667,
+          "end": 7.579,
           "words": [
             {
               "text": "los",
               "start": 0.0,
-              "end": 0.224
+              "end": 0.283
             },
             {
               "text": "cobros",
-              "start": 0.224,
-              "end": 0.616
+              "start": 0.283,
+              "end": 0.779
             },
             {
               "text": "que",
-              "start": 0.616,
-              "end": 0.84
+              "start": 0.779,
+              "end": 1.063
             },
             {
               "text": "se",
-              "start": 0.84,
-              "end": 1.008
+              "start": 1.063,
+              "end": 1.275
             },
             {
               "text": "aprueban",
-              "start": 1.008,
-              "end": 1.511
+              "start": 1.275,
+              "end": 1.913
             }
           ]
         },
         {
           "text": "cuando hay algo grande",
-          "start": 5.989,
-          "end": 7.276,
+          "start": 7.579,
+          "end": 9.208,
           "words": [
             {
               "text": "cuando",
               "start": 0.0,
-              "end": 0.392
+              "end": 0.496
             },
             {
               "text": "hay",
-              "start": 0.392,
-              "end": 0.616
+              "start": 0.496,
+              "end": 0.779
             },
             {
               "text": "algo",
-              "start": 0.616,
-              "end": 0.896
+              "start": 0.779,
+              "end": 1.133
             },
             {
               "text": "grande",
-              "start": 0.896,
-              "end": 1.287
+              "start": 1.133,
+              "end": 1.629
             }
           ]
         },
         {
           "text": "que arreglar.",
-          "start": 7.276,
-          "end": 8.004,
+          "start": 9.208,
+          "end": 10.129,
           "words": [
             {
               "text": "que",
               "start": 0.0,
-              "end": 0.224
+              "end": 0.283
             },
             {
               "text": "arreglar.",
-              "start": 0.224,
-              "end": 0.728
+              "start": 0.283,
+              "end": 0.921
             }
           ]
         },
         {
           "text": "Y camina el edificio:",
-          "start": 8.004,
-          "end": 9.18,
+          "start": 10.129,
+          "end": 11.617,
           "words": [
             {
               "text": "Y",
               "start": 0.0,
-              "end": 0.112
+              "end": 0.142
             },
             {
               "text": "camina",
-              "start": 0.112,
-              "end": 0.504
+              "start": 0.142,
+              "end": 0.638
             },
             {
               "text": "el",
-              "start": 0.504,
-              "end": 0.672
+              "start": 0.638,
+              "end": 0.85
             },
             {
               "text": "edificio:",
-              "start": 0.672,
-              "end": 1.175
+              "start": 0.85,
+              "end": 1.488
             }
           ]
         },
         {
           "text": "el ascensor,",
-          "start": 9.18,
-          "end": 9.851,
+          "start": 11.617,
+          "end": 12.467,
           "words": [
             {
               "text": "el",
               "start": 0.0,
-              "end": 0.168
+              "end": 0.213
             },
             {
               "text": "ascensor,",
-              "start": 0.168,
-              "end": 0.672
+              "start": 0.213,
+              "end": 0.85
             }
           ]
         },
         {
           "text": "la bomba,",
-          "start": 9.851,
-          "end": 10.355,
+          "start": 12.467,
+          "end": 13.104,
           "words": [
             {
               "text": "la",
               "start": 0.0,
-              "end": 0.168
+              "end": 0.213
             },
             {
               "text": "bomba,",
-              "start": 0.168,
-              "end": 0.504
+              "start": 0.213,
+              "end": 0.638
             }
           ]
         },
         {
           "text": "la cisterna,",
-          "start": 10.355,
-          "end": 11.027,
+          "start": 13.104,
+          "end": 13.954,
           "words": [
             {
               "text": "la",
               "start": 0.0,
-              "end": 0.168
+              "end": 0.213
             },
             {
               "text": "cisterna,",
-              "start": 0.168,
-              "end": 0.672
+              "start": 0.213,
+              "end": 0.85
             }
           ]
         },
         {
           "text": "las humedades en los pasillos.",
-          "start": 11.027,
-          "end": 12.706,
+          "start": 13.954,
+          "end": 16.079,
           "words": [
             {
               "text": "las",
               "start": 0.0,
-              "end": 0.224
+              "end": 0.283
             },
             {
               "text": "humedades",
-              "start": 0.224,
-              "end": 0.784
+              "start": 0.283,
+              "end": 0.992
             },
             {
               "text": "en",
-              "start": 0.784,
-              "end": 0.952
+              "start": 0.992,
+              "end": 1.204
             },
             {
               "text": "los",
-              "start": 0.952,
-              "end": 1.175
+              "start": 1.204,
+              "end": 1.488
             },
             {
               "text": "pasillos.",
-              "start": 1.175,
-              "end": 1.679
+              "start": 1.488,
+              "end": 2.125
             }
           ]
         }
       ],
-      "visualDirection": "Animación nueva a construir y registrar como sim:edificio. Mientras no exista, escena tipográfica de marca. Cuando se construya: primero un acta de asamblea abierta, con firmas al pie, y un punto del orden del día que se resalta solo. A la mitad la cámara deja el papel y entra al edificio en corte lateral, con la misma línea de suelo y el mismo punto de vista de la escena uno: se recorre de arriba abajo el tanque de la azotea, el ascensor con su puerta abriéndose, el cuarto de bombas y un pasillo con una mancha de humedad en la esquina. Cada elemento se detiene un instante con su etiqueta grande y la cámara sigue bajando sin parar hasta el hall.",
+      "visualDirection": "sim:edificio, construida y registrada. Primero un acta de asamblea abierta, con firmas al pie, y un punto del orden del día que se resalta solo. A la mitad la cámara deja el papel y entra al edificio en corte lateral, con la misma línea de suelo y el mismo punto de vista de la escena uno: se recorre de arriba abajo el tanque de la azotea, el ascensor con su puerta abriéndose, el cuarto de bombas y un pasillo con una mancha de humedad en la esquina. Cada elemento se detiene un instante con su etiqueta grande y la cámara sigue bajando sin parar hasta el hall.",
       "transition": "cut",
       "asset": "sim:edificio",
       "assetType": "simulation",
       "photo": null,
       "voiceFile": "jobs/video-010/audio/voice-04.mp3",
       "assetStartInFrames": 0,
-      "assetTotalInFrames": 395,
+      "assetTotalInFrames": 496,
       "accent": "#A78BFA"
     },
     {
       "purpose": "prueba",
-      "durationInFrames": 292,
+      "durationInFrames": 347,
       "headline": "Léelo con abogado",
       "captions": [
         {
           "text": "Las escrituras,",
           "start": 0.0,
-          "end": 0.869,
+          "end": 1.043,
           "words": [
             {
               "text": "Las",
               "start": 0.0,
-              "end": 0.232
+              "end": 0.278
             },
             {
               "text": "escrituras,",
-              "start": 0.232,
-              "end": 0.869
+              "start": 0.278,
+              "end": 1.043
             }
           ]
         },
         {
           "text": "el certificado de gravámenes",
-          "start": 0.869,
-          "end": 2.549,
+          "start": 1.043,
+          "end": 3.06,
           "words": [
             {
               "text": "el",
               "start": 0.0,
-              "end": 0.174
+              "end": 0.209
             },
             {
               "text": "certificado",
-              "start": 0.174,
-              "end": 0.869
-            },
-            {
-              "text": "de",
-              "start": 0.869,
+              "start": 0.209,
               "end": 1.043
             },
             {
-              "text": "gravámenes",
+              "text": "de",
               "start": 1.043,
-              "end": 1.68
+              "end": 1.252
+            },
+            {
+              "text": "gravámenes",
+              "start": 1.252,
+              "end": 2.017
             }
           ]
         },
         {
           "text": "y el predial al día no",
-          "start": 2.549,
-          "end": 3.882,
+          "start": 3.06,
+          "end": 4.659,
           "words": [
             {
               "text": "y",
               "start": 0.0,
-              "end": 0.116
+              "end": 0.139
             },
             {
               "text": "el",
-              "start": 0.116,
-              "end": 0.29
+              "start": 0.139,
+              "end": 0.348
             },
             {
               "text": "predial",
-              "start": 0.29,
-              "end": 0.753
+              "start": 0.348,
+              "end": 0.904
             },
             {
               "text": "al",
-              "start": 0.753,
-              "end": 0.927
+              "start": 0.904,
+              "end": 1.113
             },
             {
               "text": "día",
-              "start": 0.927,
-              "end": 1.159
+              "start": 1.113,
+              "end": 1.391
             },
             {
               "text": "no",
-              "start": 1.159,
-              "end": 1.333
+              "start": 1.391,
+              "end": 1.599
             }
           ]
         },
         {
           "text": "los revisas por encima.",
-          "start": 3.882,
-          "end": 5.214,
+          "start": 4.659,
+          "end": 6.259,
           "words": [
             {
               "text": "los",
               "start": 0.0,
-              "end": 0.232
+              "end": 0.278
             },
             {
               "text": "revisas",
-              "start": 0.232,
-              "end": 0.695
+              "start": 0.278,
+              "end": 0.834
             },
             {
               "text": "por",
-              "start": 0.695,
-              "end": 0.927
+              "start": 0.834,
+              "end": 1.113
             },
             {
               "text": "encima.",
-              "start": 0.927,
-              "end": 1.333
+              "start": 1.113,
+              "end": 1.599
             }
           ]
         },
         {
           "text": "Que los lea un abogado,",
-          "start": 5.214,
-          "end": 6.547,
+          "start": 6.259,
+          "end": 7.858,
           "words": [
             {
               "text": "Que",
               "start": 0.0,
-              "end": 0.232
+              "end": 0.278
             },
             {
               "text": "los",
-              "start": 0.232,
-              "end": 0.463
+              "start": 0.278,
+              "end": 0.556
             },
             {
               "text": "lea",
-              "start": 0.463,
-              "end": 0.695
+              "start": 0.556,
+              "end": 0.834
             },
             {
               "text": "un",
-              "start": 0.695,
-              "end": 0.869
+              "start": 0.834,
+              "end": 1.043
             },
             {
               "text": "abogado,",
-              "start": 0.869,
-              "end": 1.333
+              "start": 1.043,
+              "end": 1.599
             }
           ]
         },
         {
           "text": "línea por línea,",
-          "start": 6.547,
-          "end": 7.474,
+          "start": 7.858,
+          "end": 8.971,
           "words": [
             {
               "text": "línea",
               "start": 0.0,
-              "end": 0.348
+              "end": 0.417
             },
             {
               "text": "por",
-              "start": 0.348,
-              "end": 0.579
+              "start": 0.417,
+              "end": 0.695
             },
             {
               "text": "línea,",
-              "start": 0.579,
-              "end": 0.927
+              "start": 0.695,
+              "end": 1.113
             }
           ]
         },
         {
           "text": "antes de firmar cualquier cosa.",
-          "start": 7.474,
-          "end": 9.27,
+          "start": 8.971,
+          "end": 11.126,
           "words": [
             {
               "text": "antes",
               "start": 0.0,
-              "end": 0.348
+              "end": 0.417
             },
             {
               "text": "de",
-              "start": 0.348,
-              "end": 0.521
+              "start": 0.417,
+              "end": 0.626
             },
             {
               "text": "firmar",
-              "start": 0.521,
-              "end": 0.927
+              "start": 0.626,
+              "end": 1.113
             },
             {
               "text": "cualquier",
-              "start": 0.927,
-              "end": 1.506
+              "start": 1.113,
+              "end": 1.808
             },
             {
               "text": "cosa.",
-              "start": 1.506,
-              "end": 1.796
+              "start": 1.808,
+              "end": 2.156
             }
           ]
         }
@@ -1200,630 +1200,630 @@
       "photo": null,
       "voiceFile": "jobs/video-010/audio/voice-05.mp3",
       "assetStartInFrames": 0,
-      "assetTotalInFrames": 292,
+      "assetTotalInFrames": 347,
       "accent": "#22C55E"
     },
     {
       "purpose": "prueba",
-      "durationInFrames": 355,
+      "durationInFrames": 403,
       "headline": "Compara metros útiles",
       "captions": [
         {
           "text": "Divide el precio",
           "start": 0.0,
-          "end": 0.981,
+          "end": 1.119,
           "words": [
             {
               "text": "Divide",
               "start": 0.0,
-              "end": 0.404
+              "end": 0.461
             },
             {
               "text": "el",
-              "start": 0.404,
-              "end": 0.577
+              "start": 0.461,
+              "end": 0.658
             },
             {
               "text": "precio",
-              "start": 0.577,
-              "end": 0.981
+              "start": 0.658,
+              "end": 1.119
             }
           ]
         },
         {
           "text": "para los metros",
-          "start": 0.981,
-          "end": 1.904,
+          "start": 1.119,
+          "end": 2.172,
           "words": [
             {
               "text": "para",
               "start": 0.0,
-              "end": 0.289
+              "end": 0.329
             },
             {
               "text": "los",
-              "start": 0.289,
-              "end": 0.519
+              "start": 0.329,
+              "end": 0.592
             },
             {
               "text": "metros",
-              "start": 0.519,
-              "end": 0.923
+              "start": 0.592,
+              "end": 1.053
             }
           ]
         },
         {
           "text": "y compara.",
-          "start": 1.904,
-          "end": 2.481,
+          "start": 2.172,
+          "end": 2.831,
           "words": [
             {
               "text": "y",
               "start": 0.0,
-              "end": 0.115
+              "end": 0.132
             },
             {
               "text": "compara.",
-              "start": 0.115,
-              "end": 0.577
+              "start": 0.132,
+              "end": 0.658
             }
           ]
         },
         {
           "text": "Pero fíjate qué metros te están contando:",
-          "start": 2.481,
-          "end": 4.847,
+          "start": 2.831,
+          "end": 5.53,
           "words": [
             {
               "text": "Pero",
               "start": 0.0,
-              "end": 0.289
+              "end": 0.329
             },
             {
               "text": "fíjate",
-              "start": 0.289,
-              "end": 0.692
+              "start": 0.329,
+              "end": 0.79
             },
             {
               "text": "qué",
-              "start": 0.692,
-              "end": 0.923
+              "start": 0.79,
+              "end": 1.053
             },
             {
               "text": "metros",
-              "start": 0.923,
-              "end": 1.327
+              "start": 1.053,
+              "end": 1.514
             },
             {
               "text": "te",
-              "start": 1.327,
-              "end": 1.5
+              "start": 1.514,
+              "end": 1.712
             },
             {
               "text": "están",
-              "start": 1.5,
-              "end": 1.846
+              "start": 1.712,
+              "end": 2.106
             },
             {
               "text": "contando:",
-              "start": 1.846,
-              "end": 2.366
+              "start": 2.106,
+              "end": 2.699
             }
           ]
         },
         {
           "text": "hay anuncios que suman áreas comunes.",
-          "start": 4.847,
-          "end": 6.982,
+          "start": 5.53,
+          "end": 7.965,
           "words": [
             {
               "text": "hay",
               "start": 0.0,
-              "end": 0.231
+              "end": 0.263
             },
             {
               "text": "anuncios",
-              "start": 0.231,
-              "end": 0.75
+              "start": 0.263,
+              "end": 0.856
             },
             {
               "text": "que",
-              "start": 0.75,
-              "end": 0.981
+              "start": 0.856,
+              "end": 1.119
             },
             {
               "text": "suman",
-              "start": 0.981,
-              "end": 1.327
+              "start": 1.119,
+              "end": 1.514
             },
             {
               "text": "áreas",
-              "start": 1.327,
-              "end": 1.673
+              "start": 1.514,
+              "end": 1.909
             },
             {
               "text": "comunes.",
-              "start": 1.673,
-              "end": 2.135
+              "start": 1.909,
+              "end": 2.436
             }
           ]
         },
         {
           "text": "Compara metros útiles",
-          "start": 6.982,
-          "end": 8.251,
+          "start": 7.965,
+          "end": 9.413,
           "words": [
             {
               "text": "Compara",
               "start": 0.0,
-              "end": 0.462
+              "end": 0.527
             },
             {
               "text": "metros",
-              "start": 0.462,
-              "end": 0.866
+              "start": 0.527,
+              "end": 0.987
             },
             {
               "text": "útiles",
-              "start": 0.866,
-              "end": 1.269
+              "start": 0.987,
+              "end": 1.448
             }
           ]
         },
         {
           "text": "con metros útiles,",
-          "start": 8.251,
-          "end": 9.29,
+          "start": 9.413,
+          "end": 10.598,
           "words": [
             {
               "text": "con",
               "start": 0.0,
-              "end": 0.231
+              "end": 0.263
             },
             {
               "text": "metros",
-              "start": 0.231,
-              "end": 0.635
+              "start": 0.263,
+              "end": 0.724
             },
             {
               "text": "útiles,",
-              "start": 0.635,
-              "end": 1.039
+              "start": 0.724,
+              "end": 1.185
             }
           ]
         },
         {
           "text": "del mismo tipo",
-          "start": 9.29,
-          "end": 10.155,
+          "start": 10.598,
+          "end": 11.586,
           "words": [
             {
               "text": "del",
               "start": 0.0,
-              "end": 0.231
+              "end": 0.263
             },
             {
               "text": "mismo",
-              "start": 0.231,
-              "end": 0.577
+              "start": 0.263,
+              "end": 0.658
             },
             {
               "text": "tipo",
-              "start": 0.577,
-              "end": 0.866
+              "start": 0.658,
+              "end": 0.987
             }
           ]
         },
         {
           "text": "y en la misma ciudad.",
-          "start": 10.155,
-          "end": 11.367,
+          "start": 11.586,
+          "end": 12.968,
           "words": [
             {
               "text": "y",
               "start": 0.0,
-              "end": 0.115
+              "end": 0.132
             },
             {
               "text": "en",
-              "start": 0.115,
-              "end": 0.289
+              "start": 0.132,
+              "end": 0.329
             },
             {
               "text": "la",
-              "start": 0.289,
-              "end": 0.462
+              "start": 0.329,
+              "end": 0.527
             },
             {
               "text": "misma",
-              "start": 0.462,
-              "end": 0.808
+              "start": 0.527,
+              "end": 0.922
             },
             {
               "text": "ciudad.",
-              "start": 0.808,
-              "end": 1.212
+              "start": 0.922,
+              "end": 1.382
             }
           ]
         }
       ],
-      "visualDirection": "Se usa la animación aprobada de dividir precio para el área y comparar dos propiedades de distinto tamaño. Los valores son claramente ilustrativos y no se presentan como precios de mercado. El acento de la escena está en qué área entra en la división: la superficie útil se destaca frente al área que incluiría espacios comunes.",
+      "visualDirection": "sim:metros-utiles, escrita para esta pieza porque la animación de terrenos comparaba dos lotes por tamaño y no distinguía nunca lo útil de lo común. Dos anuncios de departamento lado a lado con la misma escala de barra: uno declara su área sumando las comunes y el otro solo la útil. El toque parte la barra del primero en su tramo útil y su tramo común, y el precio por metro se recalcula delante de quien mira, de modo que el que «parece más barato» deja de serlo. Los valores llevan el rótulo EJEMPLO y son magnitudes de departamento; nunca se enuncian como precios de mercado.",
       "transition": "cut",
       "asset": "sim:metros-utiles",
       "assetType": "simulation",
       "photo": null,
       "voiceFile": "jobs/video-010/audio/voice-06.mp3",
       "assetStartInFrames": 0,
-      "assetTotalInFrames": 355,
+      "assetTotalInFrames": 403,
       "accent": "#6B5CF6"
     },
     {
       "purpose": "resultado",
-      "durationInFrames": 342,
+      "durationInFrames": 411,
       "headline": "Ve el entorno primero",
       "captions": [
         {
           "text": "Y lo que hay alrededor",
           "start": 0.0,
-          "end": 1.306,
+          "end": 1.577,
           "words": [
             {
               "text": "Y",
               "start": 0.0,
-              "end": 0.114
+              "end": 0.137
             },
             {
               "text": "lo",
-              "start": 0.114,
-              "end": 0.284
+              "start": 0.137,
+              "end": 0.343
             },
             {
               "text": "que",
-              "start": 0.284,
-              "end": 0.511
+              "start": 0.343,
+              "end": 0.617
             },
             {
               "text": "hay",
-              "start": 0.511,
-              "end": 0.738
+              "start": 0.617,
+              "end": 0.891
             },
             {
               "text": "alrededor",
-              "start": 0.738,
-              "end": 1.306
+              "start": 0.891,
+              "end": 1.577
             }
           ]
         },
         {
           "text": "del edificio también se revisa.",
-          "start": 1.306,
-          "end": 3.067,
+          "start": 1.577,
+          "end": 3.703,
           "words": [
             {
               "text": "del",
               "start": 0.0,
-              "end": 0.227
+              "end": 0.274
             },
             {
               "text": "edificio",
-              "start": 0.227,
-              "end": 0.738
+              "start": 0.274,
+              "end": 0.891
             },
             {
               "text": "también",
-              "start": 0.738,
-              "end": 1.193
+              "start": 0.891,
+              "end": 1.44
             },
             {
               "text": "se",
-              "start": 1.193,
-              "end": 1.363
+              "start": 1.44,
+              "end": 1.646
             },
             {
               "text": "revisa.",
-              "start": 1.363,
-              "end": 1.761
+              "start": 1.646,
+              "end": 2.126
             }
           ]
         },
         {
           "text": "Eso sí lo ves antes",
-          "start": 3.067,
-          "end": 4.203,
+          "start": 3.703,
+          "end": 5.074,
           "words": [
             {
               "text": "Eso",
               "start": 0.0,
-              "end": 0.227
+              "end": 0.274
             },
             {
               "text": "sí",
-              "start": 0.227,
-              "end": 0.398
+              "start": 0.274,
+              "end": 0.48
             },
             {
               "text": "lo",
-              "start": 0.398,
-              "end": 0.568
+              "start": 0.48,
+              "end": 0.686
             },
             {
               "text": "ves",
-              "start": 0.568,
-              "end": 0.795
+              "start": 0.686,
+              "end": 0.96
             },
             {
               "text": "antes",
-              "start": 0.795,
-              "end": 1.136
+              "start": 0.96,
+              "end": 1.371
             }
           ]
         },
         {
           "text": "de ir:",
-          "start": 4.203,
-          "end": 4.544,
+          "start": 5.074,
+          "end": 5.485,
           "words": [
             {
               "text": "de",
               "start": 0.0,
-              "end": 0.17
+              "end": 0.206
             },
             {
               "text": "ir:",
-              "start": 0.17,
-              "end": 0.341
+              "start": 0.206,
+              "end": 0.411
             }
           ]
         },
         {
           "text": "en Geo Propiedades Ecuador",
-          "start": 4.544,
-          "end": 6.077,
+          "start": 5.485,
+          "end": 7.337,
           "words": [
             {
               "text": "en",
               "start": 0.0,
-              "end": 0.17
+              "end": 0.206
             },
             {
               "text": "Geo",
-              "start": 0.17,
-              "end": 0.398
+              "start": 0.206,
+              "end": 0.48
             },
             {
               "text": "Propiedades",
-              "start": 0.398,
-              "end": 1.079
+              "start": 0.48,
+              "end": 1.303
             },
             {
               "text": "Ecuador",
-              "start": 1.079,
-              "end": 1.534
+              "start": 1.303,
+              "end": 1.851
             }
           ]
         },
         {
           "text": "las propiedades están",
-          "start": 6.077,
-          "end": 7.327,
+          "start": 7.337,
+          "end": 8.845,
           "words": [
             {
               "text": "las",
               "start": 0.0,
-              "end": 0.227
+              "end": 0.274
             },
             {
               "text": "propiedades",
-              "start": 0.227,
-              "end": 0.909
+              "start": 0.274,
+              "end": 1.097
             },
             {
               "text": "están",
-              "start": 0.909,
-              "end": 1.25
+              "start": 1.097,
+              "end": 1.509
             }
           ]
         },
         {
           "text": "sobre el mapa,",
-          "start": 7.327,
-          "end": 8.122,
+          "start": 8.845,
+          "end": 9.805,
           "words": [
             {
               "text": "sobre",
               "start": 0.0,
-              "end": 0.341
+              "end": 0.411
             },
             {
               "text": "el",
-              "start": 0.341,
-              "end": 0.511
+              "start": 0.411,
+              "end": 0.617
             },
             {
               "text": "mapa,",
-              "start": 0.511,
-              "end": 0.795
+              "start": 0.617,
+              "end": 0.96
             }
           ]
         },
         {
           "text": "así que ves la zona,",
-          "start": 8.122,
-          "end": 9.258,
+          "start": 9.805,
+          "end": 11.177,
           "words": [
             {
               "text": "así",
               "start": 0.0,
-              "end": 0.227
+              "end": 0.274
             },
             {
               "text": "que",
-              "start": 0.227,
-              "end": 0.454
+              "start": 0.274,
+              "end": 0.549
             },
             {
               "text": "ves",
-              "start": 0.454,
-              "end": 0.682
+              "start": 0.549,
+              "end": 0.823
             },
             {
               "text": "la",
-              "start": 0.682,
-              "end": 0.852
+              "start": 0.823,
+              "end": 1.029
             },
             {
               "text": "zona,",
-              "start": 0.852,
-              "end": 1.136
+              "start": 1.029,
+              "end": 1.371
             }
           ]
         },
         {
           "text": "las vías y por dónde se llega.",
-          "start": 9.258,
-          "end": 10.962,
+          "start": 11.177,
+          "end": 13.234,
           "words": [
             {
               "text": "las",
               "start": 0.0,
-              "end": 0.227
+              "end": 0.274
             },
             {
               "text": "vías",
-              "start": 0.227,
-              "end": 0.511
+              "start": 0.274,
+              "end": 0.617
             },
             {
               "text": "y",
-              "start": 0.511,
-              "end": 0.625
+              "start": 0.617,
+              "end": 0.754
             },
             {
               "text": "por",
-              "start": 0.625,
-              "end": 0.852
+              "start": 0.754,
+              "end": 1.029
             },
             {
               "text": "dónde",
-              "start": 0.852,
-              "end": 1.193
+              "start": 1.029,
+              "end": 1.44
             },
             {
               "text": "se",
-              "start": 1.193,
-              "end": 1.363
+              "start": 1.44,
+              "end": 1.646
             },
             {
               "text": "llega.",
-              "start": 1.363,
-              "end": 1.704
+              "start": 1.646,
+              "end": 2.057
             }
           ]
         }
       ],
-      "visualDirection": "Se usa la animación aprobada del entorno en el mapa: la vista baja a la zona, aparecen las vías y el acceso alrededor del inmueble. La marca entra aquí, con el dominio y el tile en el bloque superior desde y=205 y dentro del margen lateral de 120 px. Ninguna burbuja muestra cantidades de propiedades. La cámara termina asentada sobre la manzana del edificio.",
+      "visualDirection": "sim:entorno-mapa, escrita para esta pieza porque la animación de terrenos dibujaba un lote con casitas y, peor, rotulaba vías y trazaba una ruta de acceso que el producto no tiene. Aquí el callejero base del mapa —manzanas, avenida y parque— con el marcador de la propiedad tal como lo pinta el portal, y un acercamiento que centra la selección. Sin rótulos de vías, sin ruta trazada y sin burbujas de cantidades. La marca entra aquí, con el dominio y el tile en el bloque superior desde y=205 y dentro del margen lateral de 120 px. La cámara termina asentada sobre la manzana del edificio.",
       "transition": "cut",
       "asset": "sim:entorno-mapa",
       "assetType": "simulation",
       "photo": null,
       "voiceFile": "jobs/video-010/audio/voice-07.mp3",
       "assetStartInFrames": 0,
-      "assetTotalInFrames": 342,
+      "assetTotalInFrames": 411,
       "accent": "#14B8A6"
     },
     {
       "purpose": "cta",
-      "durationInFrames": 165,
+      "durationInFrames": 173,
       "headline": "Tu futuro hogar",
       "captions": [
         {
           "text": "Ve a verlo sabiendo qué preguntar.",
           "start": 0.0,
-          "end": 1.971,
+          "end": 2.077,
           "words": [
             {
               "text": "Ve",
               "start": 0.0,
-              "end": 0.174
+              "end": 0.183
             },
             {
               "text": "a",
-              "start": 0.174,
-              "end": 0.29
+              "start": 0.183,
+              "end": 0.305
             },
             {
               "text": "verlo",
-              "start": 0.29,
-              "end": 0.638
+              "start": 0.305,
+              "end": 0.672
             },
             {
               "text": "sabiendo",
-              "start": 0.638,
-              "end": 1.16
+              "start": 0.672,
+              "end": 1.222
             },
             {
               "text": "qué",
-              "start": 1.16,
-              "end": 1.392
+              "start": 1.222,
+              "end": 1.466
             },
             {
               "text": "preguntar.",
-              "start": 1.392,
-              "end": 1.971
+              "start": 1.466,
+              "end": 2.077
             }
           ]
         },
         {
           "text": "Encuentra tu futuro hogar",
-          "start": 1.971,
-          "end": 3.479,
+          "start": 2.077,
+          "end": 3.665,
           "words": [
             {
               "text": "Encuentra",
               "start": 0.0,
-              "end": 0.58
+              "end": 0.611
             },
             {
               "text": "tu",
-              "start": 0.58,
-              "end": 0.754
+              "start": 0.611,
+              "end": 0.794
             },
             {
               "text": "futuro",
-              "start": 0.754,
-              "end": 1.16
+              "start": 0.794,
+              "end": 1.222
             },
             {
               "text": "hogar",
-              "start": 1.16,
-              "end": 1.508
+              "start": 1.222,
+              "end": 1.588
             }
           ]
         },
         {
           "text": "en Geo Propiedades Ecuador.",
-          "start": 3.479,
-          "end": 5.044,
+          "start": 3.665,
+          "end": 5.315,
           "words": [
             {
               "text": "en",
               "start": 0.0,
-              "end": 0.174
+              "end": 0.183
             },
             {
               "text": "Geo",
-              "start": 0.174,
-              "end": 0.406
+              "start": 0.183,
+              "end": 0.428
             },
             {
               "text": "Propiedades",
-              "start": 0.406,
-              "end": 1.102
+              "start": 0.428,
+              "end": 1.161
             },
             {
               "text": "Ecuador.",
-              "start": 1.102,
-              "end": 1.566
+              "start": 1.161,
+              "end": 1.649
             }
           ]
         }
@@ -1835,7 +1835,7 @@
       "photo": null,
       "voiceFile": "jobs/video-010/audio/voice-08.mp3",
       "assetStartInFrames": 0,
-      "assetTotalInFrames": 165,
+      "assetTotalInFrames": 173,
       "accent": "#A78BFA"
     }
   ]

@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updated_at": "2026-08-14T19:28:05.789261-05:00",
+  "updated_at": "2026-08-14T19:38:34.556086-05:00",
   "videos": [
     {
       "id": "video-001",
@@ -48,7 +48,7 @@
       "id": "video-003",
       "number": 3,
       "title": "Publica tu propiedad por $0",
-      "state": "signed",
+      "state": "rendered",
       "directory": "library/video-003",
       "audience": "propietario",
       "funnel_stage": "conversión",
@@ -59,8 +59,8 @@
       "cta": "Publica tu propiedad gratis",
       "target_duration_seconds": 24,
       "created_at": "2026-08-13T12:50:45.517868-05:00",
-      "updated_at": "2026-08-13T14:43:53.799606-05:00",
-      "duration_seconds": 23.979,
+      "updated_at": "2026-08-14T19:38:34.556058-05:00",
+      "duration_seconds": 24.768,
       "automated_review_passed": true,
       "signed_by": "bryan",
       "packed_at": "2026-08-13T14:43:53.799570-05:00",
@@ -204,8 +204,8 @@
       "cta": "Encuentra tu futuro hogar",
       "target_duration_seconds": 90,
       "created_at": "2026-08-14T15:07:24.229639-05:00",
-      "updated_at": "2026-08-14T19:22:44.848803-05:00",
-      "duration_seconds": 83.179,
+      "updated_at": "2026-08-14T19:35:53.146777-05:00",
+      "duration_seconds": 98.453,
       "automated_review_passed": true,
       "editorial_format": "education"
     },
