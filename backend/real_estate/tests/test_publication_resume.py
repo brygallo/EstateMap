@@ -218,15 +218,22 @@ def test_the_draft_carries_everything_except_the_photos(api_client, pending):
 
 
 @pytest.mark.django_db
-def test_redeeming_publishes_and_creates_the_account(api_client, pending, clear_mailbox):
-    """SPEC:RSM-007 — publish first, register after: the account was the wall."""
+def test_redeeming_publishes_and_creates_the_account(
+    api_client, pending, clear_mailbox, django_capture_on_commit_callbacks
+):
+    """SPEC:RSM-007 — publish first, register after: the account was the wall.
+
+    SPEC:RSM-013 — the email leaves the request, so the assertion has to run
+    the on_commit callbacks the same way production does.
+    """
     token = create_publication_resume_token(pending)
 
-    response = api_client.post(
-        reverse('publication_draft_redeem', kwargs={'token': token.token}),
-        valid_property_payload(),
-        format='json',
-    )
+    with django_capture_on_commit_callbacks(execute=True):
+        response = api_client.post(
+            reverse('publication_draft_redeem', kwargs={'token': token.token}),
+            valid_property_payload(),
+            format='json',
+        )
 
     assert response.status_code == 201
     assert response.data['account_created'] is True
@@ -312,14 +319,17 @@ def test_the_invited_account_cannot_log_in_until_it_has_a_password(api_client, p
 
 
 @pytest.mark.django_db
-def test_setting_the_password_from_the_email_unlocks_the_account(api_client, pending, clear_mailbox):
+def test_setting_the_password_from_the_email_unlocks_the_account(
+    api_client, pending, clear_mailbox, django_capture_on_commit_callbacks
+):
     """SPEC:RSM-008 — the mailbox is where the proof of identity actually happens."""
     token = create_publication_resume_token(pending)
-    api_client.post(
-        reverse('publication_draft_redeem', kwargs={'token': token.token}),
-        valid_property_payload(),
-        format='json',
-    )
+    with django_capture_on_commit_callbacks(execute=True):
+        api_client.post(
+            reverse('publication_draft_redeem', kwargs={'token': token.token}),
+            valid_property_payload(),
+            format='json',
+        )
     reset_token = mail.outbox[0].body.split('/reset-password?token=')[1].split()[0]
 
     reset = api_client.post(
@@ -372,7 +382,9 @@ def test_an_unknown_token_answers_exactly_like_a_spent_one(api_client, pending):
 
 
 @pytest.mark.django_db
-def test_redeeming_with_retained_image_ids_transfers_the_photos(api_client, pending):
+def test_redeeming_with_retained_image_ids_transfers_the_photos(
+    api_client, pending, django_capture_on_commit_callbacks
+):
     """SPEC:RSM-006 — the UI always sends pending_image_ids; redemption must honor it.
 
     The add-property form posts the field even when nothing was discarded
@@ -395,13 +407,16 @@ def test_redeeming_with_retained_image_ids_transfers_the_photos(api_client, pend
 
     payload = valid_property_payload()
     payload['pending_image_ids'] = json.dumps([kept.pk])
-    response = api_client.post(
-        reverse('publication_draft_redeem', kwargs={'token': token.token}),
-        payload,
-        format='multipart',
-    )
+    with django_capture_on_commit_callbacks(execute=True):
+        response = api_client.post(
+            reverse('publication_draft_redeem', kwargs={'token': token.token}),
+            payload,
+            format='multipart',
+        )
 
     assert response.status_code == 201
     prop = Property.objects.get(pk=response.data['property']['id'])
     assert prop.images.count() == 1
+    # SPEC:RSM-013 — the copy is what the listing needs; dropping the original
+    # is cleanup the request no longer waits for.
     assert pending.temporary_images.count() == 0

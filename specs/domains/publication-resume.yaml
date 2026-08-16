@@ -91,7 +91,7 @@ rules:
         lines: "670-672"
         symbol: def is_valid
       - file: backend/real_estate/views.py
-        lines: "1407-1413"
+        lines: "1405-1410"
         symbol: def invalid_resume_token_response
     backend:
       enforce: true
@@ -442,7 +442,7 @@ rules:
       seguimiento comercial; lo que se recoge es solo el peso.
     evidence:
       - file: backend/real_estate/tasks.py
-        lines: "150-190"
+        lines: "223-262"
         symbol: def sweep_stale_draft_images
       - file: backend/estate_map/settings.py
         lines: "477-480"
@@ -454,3 +454,46 @@ rules:
         expected: "lo ejecuta test_pending_publication_drafts.py"
       - name: un borrador con enlace de continuación vivo conserva sus fotos
         expected: "el token válido lo protege del barrido"
+
+  - id: RSM-013
+    name: El canje no espera al correo ni a la limpieza de fotos
+    status: implemented
+    summary: >-
+      La respuesta del canje se emite en cuanto la propiedad está creada. El
+      correo de reclamación o de traspaso y el borrado de las fotos temporales
+      del borrador se encolan en Celery tras el commit, no dentro de la
+      petición.
+    rationale: >-
+      Ninguno de los dos resultados lo lee quien publica, y los dos son lentos
+      por naturaleza: el correo es un viaje de ida y vuelta a un relé SMTP
+      externo, y el borrado es una petición HTTPS al almacén de objetos por
+      cada foto. Un canje medido en producción tardó 26,2 s, a cuatro segundos
+      del `--timeout` de gunicorn, que habría matado al worker con la propiedad
+      ya creada.
+
+      El correo conserva un reintento en línea si el broker no responde, porque
+      es el único mensaje que lleva el enlace para definir la contraseña
+      (RSM-008) y perderlo deja la cuenta inaccesible; la latencia vieja es
+      mejor que el silencio. La limpieza no lo necesita: las fotos ya están
+      copiadas en el anuncio y su borrador se queda sin ningún token vivo, así
+      que el barrido de RSM-012 las recoge de todos modos. Por eso las filas se
+      borran en la tarea y no en la petición: si la tarea se pierde, queda el
+      rastro que el barrido sabe encontrar.
+    evidence:
+      - file: backend/real_estate/services/publication_redeem.py
+        symbol: class PublicationRedeemSideEffectsService
+        note: Encola ambas tras el commit; el correo cae a envío en línea si el broker falla.
+      - file: backend/real_estate/tasks.py
+        symbol: def notify_publication_redeemed
+        note: El token de contraseña se acuña aquí, no viaja por la cola.
+      - file: backend/real_estate/tasks.py
+        symbol: def discard_redeemed_draft_images
+      - file: backend/real_estate/views.py
+        symbol: PublicationRedeemSideEffectsService().schedule(
+    tests:
+      api: true
+    cases:
+      - name: el canje responde y luego llega el correo con el enlace de contraseña
+        expected: "201 inmediato; el correo se envía al ejecutar los callbacks de on_commit"
+      - name: las fotos temporales del borrador canjeado se borran en la tarea
+        expected: "tras ejecutar los callbacks, temporary_images queda vacío y el anuncio conserva su copia"

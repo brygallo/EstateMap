@@ -147,6 +147,79 @@ def sweep_pending_images():
 
 
 @shared_task
+def notify_publication_redeemed(owner_id, property_id, account_created):
+    """
+    Send the claim or transfer email that closes a redeemed resume link.
+
+    Out of the request on purpose. The redeem endpoint held an SMTP round trip
+    to an external relay while the person watched a spinner, and the portal
+    only has three synchronous gunicorn workers, so every second spent waiting
+    on Brevo was a third of the whole site's capacity parked on a side effect
+    nobody is waiting to read.
+
+    The reset token is minted here rather than passed in: it is a bearer
+    credential, and a queue message is a worse place to keep one than the row
+    it comes from.
+    """
+    from django.contrib.auth import get_user_model
+
+    from .email_utils import create_password_reset_token
+    from .models import Property
+    from .services.notifications import (
+        AccountClaimNotificationService,
+        OwnershipTransferNotificationService,
+    )
+
+    owner = get_user_model().objects.filter(pk=owner_id).first()
+    prop = Property.objects.filter(pk=property_id).first()
+    if owner is None or prop is None:
+        # Deleted between the response and this task. Nothing to announce.
+        logger.info(
+            "notify_publication_redeemed: owner=%s property=%s no longer exist",
+            owner_id, property_id,
+        )
+        return {"sent": False, "reason": "gone"}
+
+    if account_created:
+        reset_token = create_password_reset_token(owner)
+        sent = AccountClaimNotificationService().notify_claim(owner, reset_token.token, prop)
+    else:
+        sent = OwnershipTransferNotificationService().notify_transferred(owner, prop)
+
+    return {"sent": bool(sent), "account_created": bool(account_created)}
+
+
+@shared_task
+def discard_redeemed_draft_images(pending_id):
+    """
+    Drop the temporary photos of a draft that has already become a listing.
+
+    Each delete is one HTTPS round trip to the object store, and the redeem
+    request used to pay for all of them before answering — for photos the new
+    listing had already copied and no longer needs. Losing this task is not a
+    correctness problem: the rows stay, their draft has no live token left, and
+    `sweep_stale_draft_images` collects them later.
+    """
+    from .models import PendingPublicationImage
+
+    removed = 0
+    for image in PendingPublicationImage.objects.filter(pending_id=pending_id).iterator():
+        storage, name = image.image.storage, image.image.name
+        image.delete()
+        if name:
+            try:
+                storage.delete(name)
+            except Exception:
+                logger.warning(
+                    "Could not delete redeemed draft image object %s", name, exc_info=True
+                )
+        removed += 1
+
+    logger.info("discard_redeemed_draft_images: pending=%s removed=%s", pending_id, removed)
+    return {"pending": pending_id, "removed": removed}
+
+
+@shared_task
 def sweep_stale_draft_images():
     """
     Drop the stored photos of abandoned publication drafts.

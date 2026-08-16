@@ -76,6 +76,7 @@ from .services.notifications import (
     OwnershipTransferNotificationService,
     PendingPublicationNotificationService,
 )
+from .services.publication_redeem import PublicationRedeemSideEffectsService
 import requests
 from google.oauth2 import id_token
 from google.auth.transport import requests as google_requests
@@ -1367,19 +1368,12 @@ class PublicationDraftRedeemView(generics.GenericAPIView):
             pending.property = prop
             pending.save(update_fields=['status', 'property', 'updated_at'])
 
-            temporary_files = [(row.image.storage, row.image.name) for row in pending.temporary_images.all()]
-            pending.temporary_images.all().delete()
-            transaction.on_commit(
-                lambda files=temporary_files: [storage.delete(name) for storage, name in files]
-            )
-
-        if created:
-            reset_token = create_password_reset_token(owner)
-            AccountClaimNotificationService().notify_claim(
-                owner, reset_token.token, prop
-            )
-        else:
-            OwnershipTransferNotificationService().notify_transferred(owner, prop)
+        PublicationRedeemSideEffectsService().schedule(
+            pending_id=pending.pk,
+            owner_id=owner.pk,
+            property_id=prop.pk,
+            account_created=created,
+        )
 
         logger.info(
             "resume_redeemed pending=%s property=%s owner=%s new_account=%s",

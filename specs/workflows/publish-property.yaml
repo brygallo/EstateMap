@@ -46,7 +46,7 @@ rules:
         symbol: "class PendingPublication(models.Model)"
         note: "Docstring: no se muestra en el mapa; sirve para seguimiento comercial."
       - file: backend/real_estate/views.py
-        lines: "311-313"
+        lines: "314-316"
         symbol: "permission_classes = [IsAuthenticatedOrReadOnly, IsOwnerOrReadOnly]"
         note: Respaldo del servidor si la petición llega sin pasar por el frontend.
     backend:
@@ -346,11 +346,11 @@ rules:
       en disco para que la barrida horaria la reintente.
     evidence:
       - file: backend/real_estate/tasks.py
-        lines: "250-268"
+        lines: "323-340"
         symbol: def enqueue_optimization
         note: transaction.on_commit envuelve el intento asíncrono con fallback síncrono.
       - file: backend/real_estate/tasks.py
-        lines: "279-285"
+        lines: "352-357"
         symbol: "optimize_property_image(image_id)"
         note: Llamada directa (no .delay) como fallback cuando el broker no responde.
       - file: backend/real_estate/tasks.py

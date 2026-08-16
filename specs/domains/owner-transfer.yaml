@@ -36,7 +36,7 @@ rules:
         lines: "2526-2573"
         symbol: def transfer_owner
       - file: backend/real_estate/views.py
-        lines: "2480-2482"
+        lines: "2474-2476"
         symbol: "PATCH_ALLOWED_FIELDS = {'status', 'title', 'price', 'city', 'description'}"
         note: owner no está, así que un PATCH que solo lo traiga se queda sin cuerpo y responde 400.
       - file: backend/real_estate/urls.py
@@ -95,7 +95,7 @@ rules:
       ninguno.
     evidence:
       - file: backend/real_estate/views.py
-        lines: "2590-2610"
+        lines: "2588-2607"
         symbol: def _resolve_transfer_target
       - file: backend/real_estate/serializers.py
         lines: "649-657"
@@ -176,7 +176,7 @@ rules:
         lines: "22-27"
         symbol: return obj.owner == request.user
       - file: backend/real_estate/views.py
-        lines: "2566-2568"
+        lines: "2560-2562"
         symbol: prop.owner = target
     permissions:
       required: [properties.edit_own]
@@ -209,7 +209,7 @@ rules:
       leads. Desvincularlo es lo que convierte la reclamación en definitiva.
     evidence:
       - file: backend/real_estate/views.py
-        lines: "2573-2575"
+        lines: "2567-2569"
         symbol: prop.is_imported = False
       - file: backend/ingesta/pipeline/retirement.py
         lines: "36"
@@ -240,7 +240,7 @@ rules:
       por hecha.
     evidence:
       - file: backend/real_estate/views.py
-        lines: "2586-2588"
+        lines: "2580-2582"
         symbol: action=property.transfer_owner
       - file: backend/real_estate/services/notifications.py
         lines: "54-72"
@@ -279,7 +279,7 @@ rules:
         lines: 64-69
         symbol: def property_cache_saved
       - file: backend/real_estate/views.py
-        lines: "2575-2577"
+        lines: "2569-2571"
         symbol: prop.save(update_fields=updated_fields)
     tests:
       api: true
@@ -303,7 +303,7 @@ rules:
       cambia y no toca ningún otro.
     evidence:
       - file: backend/real_estate/views.py
-        lines: "2567-2569"
+        lines: "2561-2563"
         symbol: updated_fields = ['owner']
     tests:
       api: true

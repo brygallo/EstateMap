@@ -27,6 +27,7 @@ Quien empieza a publicar y abandona deja un PendingPublication con su borrador c
 | [`RSM-010`](#rsm-010--staff-puede-corregir-y-publicar-el-borrador-a-nombre-de-la-persona) | Staff puede corregir y publicar el borrador a nombre de la persona | ✅ Implementada |
 | [`RSM-011`](#rsm-011--las-fotos-de-un-borrador-anónimo-pasan-las-mismas-validaciones-que-las-autenticadas) | Las fotos de un borrador anónimo pasan las mismas validaciones que las autenticadas | ✅ Implementada |
 | [`RSM-012`](#rsm-012--las-fotos-de-borradores-abandonados-se-barren) | Las fotos de borradores abandonados se barren | ✅ Implementada |
+| [`RSM-013`](#rsm-013--el-canje-no-espera-al-correo-ni-a-la-limpieza-de-fotos) | El canje no espera al correo ni a la limpieza de fotos | ✅ Implementada |
 
 ### RSM-001 — Staff emite el enlace desde la bandeja de pendientes
 
@@ -89,7 +90,7 @@ Un token de continuación deja de servir 14 días después de emitirse, y a part
 
 - `backend/estate_map/settings.py:549-551` (`PUBLICATION_RESUME_TOKEN_EXPIRY_DAYS`)
 - `backend/real_estate/models.py:670-672` (`def is_valid`)
-- `backend/real_estate/views.py:1407-1413` (`def invalid_resume_token_response`)
+- `backend/real_estate/views.py:1405-1410` (`def invalid_resume_token_response`)
 
 **Casos**
 
@@ -381,7 +382,7 @@ Una tarea periódica elimina del almacén las imágenes temporales de borradores
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/real_estate/tasks.py:150-190` (`def sweep_stale_draft_images`)
+- `backend/real_estate/tasks.py:223-262` (`def sweep_stale_draft_images`)
 - `backend/estate_map/settings.py:477-480` (`"sweep-stale-draft-images": {`)
 
 **Casos**
@@ -394,3 +395,30 @@ Una tarea periódica elimina del almacén las imágenes temporales de borradores
 **Cobertura exigida:** api
 
 - `backend/real_estate/tests/test_pending_publication_drafts.py`
+
+### RSM-013 — El canje no espera al correo ni a la limpieza de fotos
+
+**Estado:** ✅ Implementada
+
+La respuesta del canje se emite en cuanto la propiedad está creada. El correo de reclamación o de traspaso y el borrado de las fotos temporales del borrador se encolan en Celery tras el commit, no dentro de la petición.
+
+> **Por qué:** Ninguno de los dos resultados lo lee quien publica, y los dos son lentos por naturaleza: el correo es un viaje de ida y vuelta a un relé SMTP externo, y el borrado es una petición HTTPS al almacén de objetos por cada foto. Un canje medido en producción tardó 26,2 s, a cuatro segundos del `--timeout` de gunicorn, que habría matado al worker con la propiedad ya creada.
+El correo conserva un reintento en línea si el broker no responde, porque es el único mensaje que lleva el enlace para definir la contraseña (RSM-008) y perderlo deja la cuenta inaccesible; la latencia vieja es mejor que el silencio. La limpieza no lo necesita: las fotos ya están copiadas en el anuncio y su borrador se queda sin ningún token vivo, así que el barrido de RSM-012 las recoge de todos modos. Por eso las filas se borran en la tarea y no en la petición: si la tarea se pierde, queda el rastro que el barrido sabe encontrar.
+
+**Evidencia en el código** (verificada por `tools/specs/validate.py`)
+
+- `backend/real_estate/services/publication_redeem.py` (`class PublicationRedeemSideEffectsService`) — Encola ambas tras el commit; el correo cae a envío en línea si el broker falla.
+- `backend/real_estate/tasks.py` (`def notify_publication_redeemed`) — El token de contraseña se acuña aquí, no viaja por la cola.
+- `backend/real_estate/tasks.py` (`def discard_redeemed_draft_images`)
+- `backend/real_estate/views.py` (`PublicationRedeemSideEffectsService().schedule(`)
+
+**Casos**
+
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| el canje responde y luego llega el correo con el enlace de contraseña | — | — | — | 201 inmediato; el correo se envía al ejecutar los callbacks de on_commit |
+| las fotos temporales del borrador canjeado se borran en la tarea | — | — | — | tras ejecutar los callbacks, temporary_images queda vacío y el anuncio conserva su copia |
+
+**Cobertura exigida:** api
+
+- `backend/real_estate/tests/test_publication_resume.py`

@@ -422,7 +422,7 @@ ActivityEventViewSet.get_throttles aplica ScopedRateThrottle con throttle_scope=
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/real_estate/views.py:1450-1452` (`throttle_scope = 'activity_create'`)
+- `backend/real_estate/views.py:1444-1446` (`throttle_scope = 'activity_create'`)
 - `backend/estate_map/settings.py:191-193` (`'activity_create': '30/min'`)
 
 **Casos**

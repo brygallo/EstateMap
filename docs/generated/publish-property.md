@@ -55,7 +55,7 @@ El formulario intercepta el submit antes de llamar a `POST /api/properties/`: si
 
 - `frontend/app/add-property/page.tsx:1092-1100` (`if (!token && !isEditMode && !resumeToken) {`) — Guarda el borrador, envía la solicitud pendiente y abre el modal, sin llamar a /properties/.
 - `backend/real_estate/models.py:560-562` (`class PendingPublication(models.Model)`) — Docstring: no se muestra en el mapa; sirve para seguimiento comercial.
-- `backend/real_estate/views.py:311-313` (`permission_classes = [IsAuthenticatedOrReadOnly, IsOwnerOrReadOnly]`) — Respaldo del servidor si la petición llega sin pasar por el frontend.
+- `backend/real_estate/views.py:314-316` (`permission_classes = [IsAuthenticatedOrReadOnly, IsOwnerOrReadOnly]`) — Respaldo del servidor si la petición llega sin pasar por el frontend.
 
 **Casos**
 
@@ -226,8 +226,8 @@ Antes de procesar, `create` toma un candado en caché de 60 s por el mismo diges
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/real_estate/tasks.py:250-268` (`def enqueue_optimization`) — transaction.on_commit envuelve el intento asíncrono con fallback síncrono.
-- `backend/real_estate/tasks.py:279-285` (`optimize_property_image(image_id)`) — Llamada directa (no .delay) como fallback cuando el broker no responde.
+- `backend/real_estate/tasks.py:323-340` (`def enqueue_optimization`) — transaction.on_commit envuelve el intento asíncrono con fallback síncrono.
+- `backend/real_estate/tasks.py:352-357` (`optimize_property_image(image_id)`) — Llamada directa (no .delay) como fallback cuando el broker no responde.
 - `backend/real_estate/tasks.py:113-126` (`def sweep_pending_images`) — Reintento horario si incluso el fallback síncrono falla.
 
 **Casos**

@@ -591,11 +591,11 @@ rules:
         symbol: IsOwnerOrReadOnly
         note: Permite cualquier método seguro y compara obj.owner == request.user para el resto.
       - file: backend/real_estate/views.py
-        lines: "311-313"
+        lines: "314-316"
         symbol: IsOwnerOrReadOnly
         note: permission_classes = [IsAuthenticatedOrReadOnly, IsOwnerOrReadOnly] en PropertyViewSet.
       - file: backend/real_estate/views.py
-        lines: "2480-2482"
+        lines: "2474-2476"
         symbol: PATCH_ALLOWED_FIELDS
         note: El panel admin puede tocar propiedades ajenas, pero solo status, title, price, city y description.
     backend:
@@ -925,7 +925,7 @@ rules:
       simultáneos.
     evidence:
       - file: backend/real_estate/views.py
-        lines: "597-603"
+        lines: "604-609"
         symbol: is_bot_request
         note: Property.objects.filter(pk=...).update(views_count=F('views_count') + 1) solo si no es bot.
       - file: backend/real_estate/models.py
@@ -1311,7 +1311,7 @@ rules:
           Volver a poner el anuncio en venta lo reabre; si no, el cambio parece
           aceptado y se deshace solo.
       - file: backend/real_estate/views.py
-        lines: "2669-2671"
+        lines: "2663-2665"
         symbol: "changes['closed_reason'] = ''"
         note: >-
           El cambio de estado en lote escribe con .update(), que nunca llega a
@@ -1384,7 +1384,7 @@ rules:
           Las acciones de detalle resuelven la fila por id, no por el catálogo
           público; el dueño entra siempre.
       - file: backend/real_estate/views.py
-        lines: "801-811"
+        lines: "812-821"
         symbol: "exclude(status='inactive', closed_reason='')"
         note: El código corto de un anuncio vendido sigue resolviendo.
     backend:

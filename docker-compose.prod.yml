@@ -22,7 +22,20 @@ services:
       # from .env.prod and an empty one turns the call into a no-op.
       NEXT_REVALIDATE_URL: ${NEXT_REVALIDATE_URL:-http://frontend:3000/api/revalidate}
 
-    command: gunicorn estate_map.wsgi:application --bind 0.0.0.0:8000 --workers 3
+    # Threads, not more processes. Almost everything a request here waits on is
+    # somebody else's I/O — Postgres, Redis, MinIO, the SMTP relay, the Next.js
+    # revalidation hook — and a sync worker blocks entirely while it waits, so
+    # three of them meant three concurrent requests for the whole portal: one
+    # slow publish took a third of the site with it. Threads share the process
+    # and its memory, which is the constraint on this box; adding processes is
+    # not.
+    #
+    # The timeout is raised from the implicit 30 s for the same reason: a
+    # publish with photos measured 26 s in production, four seconds from being
+    # killed mid-write with the listing already created.
+    command: >-
+      gunicorn estate_map.wsgi:application --bind 0.0.0.0:8000
+      --worker-class gthread --workers 3 --threads 4 --timeout 120
 
     extra_hosts:
       - "host.docker.internal:host-gateway"
