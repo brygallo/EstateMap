@@ -1,0 +1,32 @@
+# Kernel memory tuning for the EstateMap production host
+# =======================================================
+# This is an EXAMPLE. It is NOT applied by the deploy pipeline: the host is
+# shared with other systems, so nothing in this repo writes to /etc.
+#
+# Install it by hand on the Contabo host:
+#     cp deploy/sysctl-memory.conf.example /etc/sysctl.d/99-swappiness.conf
+#     sysctl -p /etc/sysctl.d/99-swappiness.conf
+#     cat /proc/sys/vm/swappiness      # must print 10
+#
+# Applied on 2026-08-16. It lives here so a reinstalled or migrated host does
+# not silently go back to the default.
+#
+# WHY
+# ---
+# The box is 8 GB / 4 vCPU shared by Geo Propiedades, Aents, the mailserver and
+# roundcube. With the distribution default (60) the kernel is willing to page
+# out a service's working set while there is still cache it could drop instead,
+# and those pages never come back on their own — they wait on disk until
+# somebody asks for them, one latency spike at a time.
+#
+# What that cost, measured on 2026-08-16 with 757 MB parked in swap and 4.9 GB
+# of RAM free:
+#   - MinIO had 129 MB on disk; the first read of a 196 KB object took 31.3 s,
+#     against 0.1 s for the same object over plain HTTPS
+#   - GET /api/health/, which does no work at all, took 7.5 s
+#   - one publish took 26.2 s and logged itself as a slow endpoint
+#
+# Swap stays enabled on purpose: it is the safety net that keeps a memory spike
+# from becoming an OOM kill. What changes is that the kernel stops treating it
+# as a routine tier.
+vm.swappiness = 10

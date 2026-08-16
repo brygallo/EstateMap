@@ -129,6 +129,16 @@ services:
     container_name: estatemap_frontend
     restart: always
 
+    # The only container on this box with no ceiling, and the hungriest: it sits
+    # around 860 MB serving SSR plus sharp's image resizing. Uncapped, its next
+    # peak is paid by everybody else — the host is 8 GB shared with Aents, the
+    # mailserver and roundcube, and the last time it filled up the kernel put
+    # 129 MB of MinIO on disk, which is why one publish waited 26 s. The limit
+    # is not there to make Next.js smaller; it is there so a spike here cannot
+    # push somebody else's working set into swap. Roughly 75% headroom over the
+    # observed steady state, so ordinary traffic never reaches it.
+    mem_limit: 1500m
+
     environment:
       # Runtime environment variables (if needed)
       NODE_ENV: production

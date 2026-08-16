@@ -83,13 +83,39 @@ nunca se comparten entre sistemas (`backend/estate_map/celery.py:4-7`).
 
 | Servicio | Imagen / build | Puerto publicado | Rol |
 |---|---|---|---|
-| `estatemap_backend` | build `./backend` (`Dockerfile`, `python:3.12-slim`) | `127.0.0.1:8000:8000` (`:36`) | `gunicorn estate_map.wsgi:application --workers 3` (`:25`). Healthcheck contra `/api/health/` con `X-Forwarded-Proto: https` (`:39`) |
+| `estatemap_backend` | build `./backend` (`Dockerfile`, `python:3.12-slim`) | `127.0.0.1:8000:8000` (`:36`) | `gunicorn estate_map.wsgi:application --worker-class gthread --workers 3 --threads 4 --timeout 120`. Hilos y no más procesos porque casi todo lo que espera una petición es E/S ajena (Postgres, Redis, MinIO, el relé SMTP, el hook de revalidación) y un worker síncrono se bloquea entero: tres de ellos eran tres peticiones simultáneas para todo el portal. Healthcheck contra `/api/health/` con `X-Forwarded-Proto: https` |
 | `estatemap_worker` | build `./backend` | — (sin puertos) | `celery -A estate_map worker -B --concurrency=1 --max-tasks-per-child=50` (`:69`). Beat embebido |
 | `estatemap_frontend` | build `./frontend/Dockerfile.prod` | `127.0.0.1:3000:3000` (`:128`) | Next.js standalone, `node server.js`. Healthcheck contra `/robots.txt` (`:131`) |
 | Postgres | **nativo en el host** | — | No hay servicio en el compose de producción; `.env.prod.example:21-27` lo declara "Pre-instalado en servidor" |
 | Redis | **nativo en el host** | — | Alcanzado como `redis://aents-redis:6379/0` y `/1` a través de la red externa `aents_shared` (`:17-20`) |
 | MinIO | **nativo en el host** | — | `.env.prod.example:30-33` lo declara "Pre-instalado en servidor" |
 | nginx | **nativo en el host** | 80/443 | Terminación TLS y rate limiting; ver `deploy/nginx-rate-limit.conf.example` |
+
+### 2.1 Memoria del host: por qué hay `mem_limit` y `vm.swappiness`
+
+Compartir 8 GB con Aents, el correo y roundcube tiene una consecuencia que no se
+ve leyendo el compose: **la lentitud de este sistema casi nunca es de este
+sistema**. El 16 de agosto de 2026 el host tenía 757 MB en swap y 4,9 GB de RAM
+libre, y esas páginas dormidas eran de MinIO (129 MB), rspamd (176 MB) y Aents
+(98 MB) — del backend de Geo Propiedades, nada. El efecto sí se pagaba aquí:
+leer un objeto de 196 KB de MinIO tardó 31,3 s la primera vez (0,1 s por HTTPS
+directo), un `GET /api/health/` tardó 7,5 s y una publicación tardó 26,2 s.
+
+De ahí dos decisiones que conviene no deshacer:
+
+- **`vm.swappiness = 10`** en el host, plantilla en
+  `deploy/sysctl-memory.conf.example`. Se aplica **a mano**, como el fragmento
+  de nginx: nada de este repositorio escribe en `/etc`. El swap sigue activo a
+  propósito; lo que se corrige es que el kernel lo usara como un piso más de
+  memoria en vez de como red de seguridad.
+- **`mem_limit` en los contenedores** (`docker-compose.prod.yml`). No están para
+  hacer más pequeño a nadie, sino para que un pico de un contenedor no lo pague
+  el resto del host empujando su memoria a disco. El worker lleva 512 MB desde
+  siempre; el frontend Next, que rondaba 860 MB sin techo, lleva 1500 MB.
+
+Si alguna vez hay que devolver el swap a RAM en caliente: `swapoff -a && swapon -a`,
+y solo con RAM libre de sobra y sin un build en marcha — vaciarlo durante un pico
+de memoria es cómo se provoca un OOM.
 
 Redes (`docker-compose.prod.yml:150-158`): `estatemap_network` (bridge propia) y
 `aents_shared`, declarada `external: true` porque la crea el stack de Aents. El
