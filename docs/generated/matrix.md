@@ -1252,7 +1252,7 @@ Cualquiera puede registrarse sin autenticación, y la cuenta se crea con is_acti
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/estate_map/settings.py:217-219` (`'BLACKLIST_AFTER_ROTATION': True,`)
+- `backend/estate_map/settings.py:220-222` (`'BLACKLIST_AFTER_ROTATION': True,`)
 - `backend/real_estate/urls.py:45-47` (`name='token_refresh'`)
 
 **Casos**
@@ -2233,7 +2233,7 @@ DEFAULT_AUTHENTICATION_CLASSES contiene únicamente JWTAuthentication, así que 
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/estate_map/settings.py:169-171` (`rest_framework_simplejwt.authentication.JWTAuthentication`)
+- `backend/estate_map/settings.py:172-174` (`rest_framework_simplejwt.authentication.JWTAuthentication`)
 
 **Casos**
 

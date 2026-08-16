@@ -1,6 +1,7 @@
 import os
 from pathlib import Path
 from datetime import timedelta
+from corsheaders.defaults import default_headers
 from django.core.exceptions import ImproperlyConfigured
 
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -250,6 +251,13 @@ else:
 # Allow the frontend to show a support reference without exposing request or
 # authentication headers. These values contain no user data.
 CORS_EXPOSE_HEADERS = ['X-Request-ID', 'X-Response-Time-Ms', 'X-Release']
+
+# The publishing form sends `Idempotency-Key` on create, and the frontend is a
+# different origin from the API. Anything outside this allowlist makes the
+# browser reject the preflight and drop the request before it is sent: no
+# server log, and the form can only report a generic network failure. The
+# header is not in django-cors-headers' defaults, so it has to be added here.
+CORS_ALLOW_HEADERS = (*default_headers, 'idempotency-key')
 
 # Endurecimiento de seguridad activo solo fuera de DEBUG (producción). No se
 # habilita SECURE_SSL_REDIRECT para evitar bucles detrás de proxys/healthchecks;

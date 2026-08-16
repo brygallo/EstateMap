@@ -198,11 +198,11 @@ rules:
       y máximas por imagen, vive en specs/domains/properties.yaml (PROP-026).
     evidence:
       - file: backend/estate_map/settings.py
-        lines: "391-393"
+        lines: "401-403"
         symbol: MAX_PROPERTY_UPLOAD_MB
         note: MAX_IMAGES_PER_PROPERTY=10, MAX_IMAGE_SIZE_MB=10, MAX_PROPERTY_UPLOAD_MB=50.
       - file: backend/estate_map/settings.py
-        lines: "374-376"
+        lines: "384-386"
         symbol: ALLOWED_IMAGE_TYPES
       - file: backend/real_estate/serializers.py
         lines: "253-308"
@@ -318,7 +318,7 @@ rules:
         symbol: "class AntiScraperScopedThrottle(ScopedRateThrottle)"
         note: Exime staff e IPs internas; solo se usa en map_points y list.
       - file: backend/estate_map/settings.py
-        lines: "203-205"
+        lines: "206-208"
         symbol: "'property_write': '30/hour'"
     cases:
       - name: Staff publica más de 30 veces en una hora
@@ -892,3 +892,52 @@ rules:
         expected: "se informa el fallo de red; el borrador local sigue guardado"
       - name: Reintentar tras un fallo con la misma Idempotency-Key
         expected: "si el primer intento llegó a crear el anuncio, se devuelve ese mismo (WFP-006)"
+
+  - id: WFP-022
+    name: El preflight CORS autoriza la cabecera Idempotency-Key
+    status: implemented
+    summary: >-
+      `CORS_ALLOW_HEADERS` incluye `idempotency-key` además de la lista por
+      defecto de django-cors-headers. Sin ella, la respuesta al `OPTIONS`
+      previo no cubre la cabecera que el formulario envía al crear y el
+      navegador descarta el `POST /api/properties/` antes de enviarlo.
+    rationale: >-
+      El portal y la API son orígenes distintos
+      (`geopropiedadesecuador.com` contra `api.geopropiedadesecuador.com`), así
+      que toda cabecera fuera de la allowlist convierte la petición en un
+      preflight fallido. Ese fallo es el peor de los posibles: no deja rastro
+      en el servidor —la petición nunca llega— y el navegador solo entrega un
+      `TypeError` sin motivo, de modo que el formulario únicamente puede decir
+      «no se pudo comunicar con el servidor» y la persona culpa a su conexión.
+
+      Ocurrió: entre el 3 de agosto de 2026, cuando WFP-006 añadió la
+      cabecera, y el 16 del mismo mes, ninguna publicación hecha desde el
+      formulario llegó a crearse. Quedaron 39 `publication_create_failed` con
+      `status_code: "network"` y una sola propiedad creada en todo ese periodo,
+      por el canje de un enlace de continuación (WFP-019), que es el único
+      camino que no manda la cabecera. Por eso la regla es explícita y tiene
+      test propio: la allowlist por defecto no la contiene, y añadir una
+      cabecera al cliente sin añadirla aquí vuelve a romper el alta entera sin
+      un solo error en los registros.
+    evidence:
+      - file: backend/estate_map/settings.py
+        symbol: "CORS_ALLOW_HEADERS = (*default_headers, 'idempotency-key')"
+        note: La lista por defecto no incluye idempotency-key; hay que añadirla.
+      - file: frontend/app/add-property/page.tsx
+        symbol: "'Idempotency-Key': publicationRequestId"
+        note: La cabecera que obliga al preflight, solo en la creación.
+    tests:
+      api: true
+    cases:
+      - name: Preflight del alta declarando Idempotency-Key
+        given:
+          origin: "https://geopropiedadesecuador.com"
+          access_control_request_headers: "idempotency-key"
+        expected:
+          http_status: 200
+          header: "Access-Control-Allow-Headers incluye idempotency-key"
+      - name: Alta con la cabecera desde el origen del portal
+        given:
+          origin: "https://geopropiedadesecuador.com"
+          idempotency_key: "abc123"
+        expected: "el navegador no bloquea la petición y el alta sigue su curso normal"

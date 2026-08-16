@@ -1610,7 +1610,7 @@ rules:
       refresh reutilizado deja de servir. La app token_blacklist está instalada.
     evidence:
       - file: backend/estate_map/settings.py
-        lines: "217-219"
+        lines: "220-222"
         symbol: "'BLACKLIST_AFTER_ROTATION': True,"
       - file: backend/real_estate/urls.py
         lines: "45-47"
@@ -2740,7 +2740,7 @@ rules:
       admin.
     evidence:
       - file: backend/estate_map/settings.py
-        lines: "169-171"
+        lines: "172-174"
         symbol: rest_framework_simplejwt.authentication.JWTAuthentication
     permissions:
       required: [auth.login]

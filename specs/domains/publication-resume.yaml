@@ -85,7 +85,7 @@ rules:
       remedio distinto del de pedir otro enlace.
     evidence:
       - file: backend/estate_map/settings.py
-        lines: "540-542"
+        lines: "549-551"
         symbol: PUBLICATION_RESUME_TOKEN_EXPIRY_DAYS
       - file: backend/real_estate/models.py
         lines: "670-672"
@@ -445,7 +445,7 @@ rules:
         lines: "150-190"
         symbol: def sweep_stale_draft_images
       - file: backend/estate_map/settings.py
-        lines: "468-472"
+        lines: "477-480"
         symbol: '"sweep-stale-draft-images": {'
     tests:
       api: true
