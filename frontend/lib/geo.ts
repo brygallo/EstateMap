@@ -2,6 +2,14 @@ import type { Property } from '@/lib/types';
 
 export type LatLngPoint = { lat: number; lng: number };
 
+export type PropertyMapCamera =
+  | { mode: 'center'; center: [number, number]; zoom: number }
+  | {
+      mode: 'bounds';
+      bounds: [[number, number], [number, number]];
+      maxZoom: number;
+    };
+
 const toRadians = (degrees: number) => (degrees * Math.PI) / 180;
 
 // Ecuador continental + Galápagos, con un margen pequeño para no descartar
@@ -72,6 +80,37 @@ export const formatDistance = (distance: number | null) => {
   if (distance < 1) return `${Math.max(50, Math.round(distance * 1000 / 50) * 50)} m`;
   if (distance < 10) return `${distance.toFixed(1).replace('.0', '')} km`;
   return `${Math.round(distance)} km`;
+};
+
+/**
+ * Keeps the selected listing at the visual center while leaving enough
+ * geographic context to reveal nearby inventory.
+ */
+export const getPropertyMapCamera = (
+  selected: LatLngPoint,
+  nearbyPoints: LatLngPoint[]
+): PropertyMapCamera => {
+  if (nearbyPoints.length === 0) {
+    return { mode: 'center', center: [selected.lng, selected.lat], zoom: 12 };
+  }
+
+  const latitudeRadius = Math.max(
+    0.008,
+    ...nearbyPoints.map((point) => Math.abs(point.lat - selected.lat))
+  );
+  const longitudeRadius = Math.max(
+    0.008,
+    ...nearbyPoints.map((point) => Math.abs(point.lng - selected.lng))
+  );
+
+  return {
+    mode: 'bounds',
+    bounds: [
+      [selected.lng - longitudeRadius, selected.lat - latitudeRadius],
+      [selected.lng + longitudeRadius, selected.lat + latitudeRadius],
+    ],
+    maxZoom: 14,
+  };
 };
 
 export interface PropertyViewportDecision {

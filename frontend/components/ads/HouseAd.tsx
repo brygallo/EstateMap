@@ -33,10 +33,10 @@ type HouseAdProps = {
   ctaLabel?: string;
 };
 
-const DEFAULT_HEADLINE = '¿Quieres aparecer en este espacio?';
+const DEFAULT_HEADLINE = 'Anuncia tu negocio en esta zona';
 const DEFAULT_BODY =
-  'Lo ven quienes están buscando propiedades ahora mismo. Escríbenos y lo hablamos.';
-const DEFAULT_CTA = 'Escribir por WhatsApp';
+  'Presenta tu negocio a personas que exploran propiedades cercanas.';
+const DEFAULT_CTA = 'Consultar este espacio';
 
 export function HouseAd({
   placement,
@@ -72,17 +72,25 @@ export function HouseAd({
           trackEvent('ad_slot_inquiry_clicked', { placement, city: city || '' })
         }
         className={`group relative flex overflow-hidden rounded-card border border-dashed border-primary/40 bg-gradient-to-br from-primaryLight via-white to-white shadow-card transition-all hover:-translate-y-0.5 hover:border-primary hover:shadow-cardHover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 ${
-          variant === 'strip' ? 'flex-col gap-4 p-4 sm:flex-row sm:items-center' : 'flex-col gap-5 p-5 sm:flex-row sm:items-center sm:p-6'
+          variant === 'aside'
+            ? 'flex-col gap-4 p-5'
+            : variant === 'strip'
+              ? 'flex-col gap-4 p-4 sm:flex-row sm:items-center'
+              : 'flex-col gap-5 p-5 sm:flex-row sm:items-center sm:p-6'
         }`}
       >
         <span className="absolute -right-10 -top-14 h-32 w-32 rounded-full border border-primary/10" aria-hidden="true" />
         <div className="flex min-w-0 flex-1 flex-col gap-1.5">
-          <p className="text-lg font-black leading-snug tracking-tight text-textPrimary">
+          <p className="text-lg font-bold leading-snug tracking-tight text-textPrimary">
             {headline || DEFAULT_HEADLINE}
           </p>
-          <p className="text-sm leading-relaxed text-textSecondary">{body || DEFAULT_BODY}</p>
+          <p className="text-sm leading-6 text-textSecondary">{body || DEFAULT_BODY}</p>
         </div>
-        <span className="relative inline-flex min-h-11 shrink-0 items-center justify-center gap-2 rounded-full bg-primary px-5 text-sm font-bold text-primary-foreground shadow-card transition-colors group-hover:bg-primaryHover">
+        <span
+          className={`relative inline-flex min-h-11 shrink-0 items-center justify-center gap-2 rounded-full bg-primary px-5 text-sm font-bold text-primary-foreground shadow-card transition-colors group-hover:bg-primaryHover ${
+            variant === 'aside' ? 'w-full' : ''
+          }`}
+        >
           <MessageCircle className="h-4 w-4" strokeWidth={2} aria-hidden />
           {ctaLabel || DEFAULT_CTA}
         </span>

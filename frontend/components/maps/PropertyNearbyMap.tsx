@@ -4,7 +4,7 @@ import dynamic from 'next/dynamic';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import type { MapBounds, MapPropertyItem, Property } from '@/lib/types';
-import { getPropertyPoint } from '@/lib/geo';
+import { getPropertyMapCamera, getPropertyPoint } from '@/lib/geo';
 
 const GeneralMap = dynamic(() => import('./MapLibreMap'), {
   ssr: false,
@@ -81,18 +81,25 @@ export default function PropertyNearbyMap({ property, nearbyProperties }: Proper
 
   const handleMapReady = useCallback((map: any) => {
     mapRef.current = map;
-    const points = properties.map(getPropertyPoint).filter(Boolean) as Array<{ lat: number; lng: number }>;
-    if (points.length === 0) return;
-    if (points.length === 1) {
-      map.jumpTo({ center: [points[0].lng, points[0].lat], zoom: 16 });
+    const selectedPoint = getPropertyPoint(property);
+    if (!selectedPoint) return;
+    const nearbyPoints = properties
+      .filter((item) => String(item.id) !== String(property.id))
+      .map(getPropertyPoint)
+      .filter(Boolean) as Array<{ lat: number; lng: number }>;
+    const camera = getPropertyMapCamera(selectedPoint, nearbyPoints);
+
+    if (camera.mode === 'center') {
+      map.jumpTo({ center: camera.center, zoom: camera.zoom });
       return;
     }
-    const bounds: [[number, number], [number, number]] = [
-      [Math.min(...points.map((point) => point.lng)), Math.min(...points.map((point) => point.lat))],
-      [Math.max(...points.map((point) => point.lng)), Math.max(...points.map((point) => point.lat))],
-    ];
-    map.fitBounds(bounds, { padding: 54, maxZoom: 16, duration: 0 });
-  }, [properties]);
+
+    map.fitBounds(camera.bounds, {
+      padding: 64,
+      maxZoom: camera.maxZoom,
+      duration: 0,
+    });
+  }, [properties, property]);
 
   const handleLocate = useCallback(() => {
     if (!navigator.geolocation) {

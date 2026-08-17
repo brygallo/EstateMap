@@ -53,6 +53,7 @@ Reglas de negocio del inventario: qué es una propiedad publicable, cómo se int
 | [`PROP-036`](#prop-036--un-precio-o-una-superficie-negativos-no-se-guardan) | Un precio o una superficie negativos no se guardan | ✅ Implementada |
 | [`PROP-037`](#prop-037--la-descripción-tiene-un-tope-de-caracteres) | La descripción tiene un tope de caracteres | ✅ Implementada |
 | [`PROP-038`](#prop-038--la-ficha-completa-prioriza-contenido-y-acciones-móviles) | La ficha completa prioriza contenido y acciones móviles | ✅ Implementada |
+| [`PROP-039`](#prop-039--la-propiedad-de-la-ficha-queda-centrada-junto-a-sus-vecinas) | La propiedad de la ficha queda centrada junto a sus vecinas | ✅ Implementada |
 
 ### PROP-001 — Semántica de price y rent_price
 
@@ -977,3 +978,29 @@ En celular, la ficha completa presenta galería, identidad, precio, característ
 | --- | --- | --- | --- | --- |
 | Persona consulta una ficha completa en celular | — | — | — | ve los datos clave compactos y una sola superficie persistente de acciones |
 | Persona consulta la misma ficha en escritorio | — | — | — | conserva la tarjeta lateral sticky y el espaciado amplio |
+
+### PROP-039 — La propiedad de la ficha queda centrada junto a sus vecinas
+
+**Estado:** ✅ Implementada
+
+Al abrir el mapa de una ficha, la propiedad seleccionada ocupa el centro de la cámara. El encuadre se extiende de forma simétrica hasta incluir las publicaciones cercanas disponibles y limita el acercamiento inicial para que el anuncio no aparezca aislado cuando todavía hay inventario alrededor.
+
+> **Por qué:** Ajustar límites directamente entre todos los puntos centra el rectángulo geográfico, no necesariamente la propiedad que la persona está revisando. Un encuadre simétrico conserva esa referencia y deja opciones visibles a ambos lados para continuar explorando.
+
+**Evidencia en el código** (verificada por `tools/specs/validate.py`)
+
+- `frontend/lib/geo.ts` (`getPropertyMapCamera`) — Calcula límites simétricos alrededor de la propiedad y conserva un zoom de contexto cuando no hay vecinas.
+- `frontend/components/maps/PropertyNearbyMap.tsx` (`getPropertyMapCamera`) — Aplica el encuadre al iniciar el mapa de la ficha completa.
+- `frontend/lib/geo.test.ts` (`describe('getPropertyMapCamera'`) — Cubre varias vecinas, coordenadas coincidentes y ausencia de inventario cercano.
+
+**Casos**
+
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| Ficha con varias publicaciones cercanas | — | — | — | propiedad seleccionada centrada y vecinas visibles alrededor |
+| Ficha con una sola publicación cercana | — | — | — | ambas visibles con la propiedad seleccionada en el centro |
+| Ficha sin publicaciones cercanas | — | — | — | propiedad centrada con un zoom de contexto, no con acercamiento máximo |
+
+**Cobertura exigida:** unit
+
+- `frontend/lib/geo.test.ts`

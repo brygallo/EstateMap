@@ -125,9 +125,9 @@ function PaidAd({
           <p className="text-xs font-bold uppercase tracking-[0.12em] text-primary">
             {name}
           </p>
-          <p className="text-lg font-black leading-snug tracking-tight text-textPrimary">{slot.headline}</p>
-          <p className="text-sm leading-relaxed text-textSecondary">{slot.body}</p>
-          <span className="mt-1 inline-flex min-h-10 w-fit items-center gap-1.5 rounded-full bg-primaryLight px-4 text-sm font-bold text-primary transition-colors group-hover:bg-primary group-hover:text-primary-foreground">
+          <p className="break-words text-lg font-bold leading-snug tracking-tight text-textPrimary">{slot.headline}</p>
+          <p className="break-words text-sm leading-6 text-textSecondary">{slot.body}</p>
+          <span className={`mt-1 inline-flex min-h-11 items-center justify-center gap-1.5 rounded-full bg-primaryLight px-4 text-sm font-bold text-primary transition-colors group-hover:bg-primary group-hover:text-primary-foreground ${variant === 'aside' ? 'w-full' : 'w-fit'}`}>
             {slot.cta_label}
             <ArrowUpRight
               className="h-4 w-4 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5"

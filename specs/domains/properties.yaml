@@ -1630,3 +1630,36 @@ rules:
       - name: Persona consulta la misma ficha en escritorio
         expected: conserva la tarjeta lateral sticky y el espaciado amplio
     tests: {}
+
+  - id: PROP-039
+    name: La propiedad de la ficha queda centrada junto a sus vecinas
+    status: implemented
+    summary: >-
+      Al abrir el mapa de una ficha, la propiedad seleccionada ocupa el centro
+      de la cámara. El encuadre se extiende de forma simétrica hasta incluir las
+      publicaciones cercanas disponibles y limita el acercamiento inicial para
+      que el anuncio no aparezca aislado cuando todavía hay inventario alrededor.
+    rationale: >-
+      Ajustar límites directamente entre todos los puntos centra el rectángulo
+      geográfico, no necesariamente la propiedad que la persona está revisando.
+      Un encuadre simétrico conserva esa referencia y deja opciones visibles a
+      ambos lados para continuar explorando.
+    evidence:
+      - file: frontend/lib/geo.ts
+        symbol: getPropertyMapCamera
+        note: Calcula límites simétricos alrededor de la propiedad y conserva un zoom de contexto cuando no hay vecinas.
+      - file: frontend/components/maps/PropertyNearbyMap.tsx
+        symbol: getPropertyMapCamera
+        note: Aplica el encuadre al iniciar el mapa de la ficha completa.
+      - file: frontend/lib/geo.test.ts
+        symbol: describe('getPropertyMapCamera'
+        note: Cubre varias vecinas, coordenadas coincidentes y ausencia de inventario cercano.
+    cases:
+      - name: Ficha con varias publicaciones cercanas
+        expected: propiedad seleccionada centrada y vecinas visibles alrededor
+      - name: Ficha con una sola publicación cercana
+        expected: ambas visibles con la propiedad seleccionada en el centro
+      - name: Ficha sin publicaciones cercanas
+        expected: propiedad centrada con un zoom de contexto, no con acercamiento máximo
+    tests:
+      unit: true

@@ -757,7 +757,7 @@ export default async function PropertyPage({ params }: PropertyPageProps) {
             <aside className="hidden lg:col-span-1 lg:block">
               {/* Sticks below the fixed header, not at the viewport edge: with
                   `top-6` the card parked underneath the bar. */}
-              <div className="rounded-card border border-line bg-surface p-6 shadow-card lg:sticky lg:top-[calc(var(--app-header-height)+1.5rem)]">
+              <div className="isolate z-10 rounded-card border border-line bg-surface p-6 shadow-card lg:sticky lg:top-[calc(var(--app-header-height)+1.5rem)]">
                 <div className="text-xs font-medium uppercase tracking-wide text-textSecondary">
                   {isClosed ? 'Último precio publicado' : 'Precio'}
                 </div>
