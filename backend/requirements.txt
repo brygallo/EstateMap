@@ -26,6 +26,6 @@ google-auth-oauthlib>=1.2
 pytest>=7.4
 pytest-django>=4.7
 pytest-cov>=4.1
-pytest-xdist>=3.5  # Para tests paralelos
+pytest-xdist>=3.8.0  # Para tests paralelos
 factory-boy>=3.3  # Para crear datos de prueba
 faker>=22.0  # Para generar datos falsos
