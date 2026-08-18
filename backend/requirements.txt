@@ -1,6 +1,6 @@
 # DRF 3.17 supports Django through 6.0. Keep both frameworks inside that
 # tested compatibility window instead of allowing pip to select Django 6.1.
-Django>=6.0,<6.1
+Django>=6.1,<6.2
 djangorestframework>=3.17,<3.18
 djangorestframework-simplejwt>=5.3
 psycopg2-binary>=2.9
