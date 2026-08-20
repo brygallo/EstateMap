@@ -60,6 +60,47 @@ const REVALIDATE_SECONDS = 3600;
  */
 export const MIN_POSTS_FOR_INDEXING = 3;
 
+/**
+ * The date an article claims it was last modified.
+ *
+ * The editorial calendar schedules posts: `published_at` is a date in the
+ * future while `updated_at` is the day the text was written. Handing both
+ * straight to the schema made eight of the fifteen live articles declare they
+ * had been modified before they existed — a contradiction on the one signal AI
+ * search weighs most, since recent content is far likelier to be cited. An
+ * article is never modified before it is published, so the later of the two is
+ * the only honest answer.
+ */
+export function articleModifiedAt(post: { published_at: string; updated_at?: string | null }): string {
+  const published = post.published_at;
+  const updated = post.updated_at;
+  if (!updated) return published;
+  if (!published) return updated;
+  const updatedTime = Date.parse(updated);
+  const publishedTime = Date.parse(published);
+  if (Number.isNaN(updatedTime)) return published;
+  if (Number.isNaN(publishedTime)) return updated;
+  return updatedTime >= publishedTime ? updated : published;
+}
+
+/**
+ * The living pages appear in the blog like any other article, and this is the
+ * only thing that tells them apart. It is not a database category: no row
+ * backs it, because no row backs the pages either — they are recalculated from
+ * inventory on every revalidation.
+ */
+export const LIVE_CATEGORY: BlogCategory = {
+  slug: 'rankings-en-vivo',
+  name: 'Rankings en vivo',
+  description:
+    'Listas que se recalculan solas con las propiedades publicadas: los más baratos, los más grandes, el mejor precio por metro cuadrado, ciudad por ciudad.',
+  post_count: 0,
+};
+
+export function isLiveCategory(slug: string): boolean {
+  return slug === LIVE_CATEGORY.slug;
+}
+
 export function authorSlug(name: string): string {
   return slugify(name);
 }

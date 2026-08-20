@@ -74,7 +74,7 @@ El modelo User solo añade correo único, verificación de correo y campos de OA
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/real_estate/models.py:17-25` (`class User(AbstractUser)`) — Definición completa del usuario. Los únicos campos propios son email, is_email_verified y los tres de OAuth.
+- `backend/real_estate/models.py:26-33` (`class User(AbstractUser)`) — Definición completa del usuario. Los únicos campos propios son email, is_email_verified y los tres de OAuth.
 
 
 **Casos**

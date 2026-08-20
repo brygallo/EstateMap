@@ -19,6 +19,7 @@ import {
   money,
 } from '@/lib/market-stats';
 import { getBlogPosts } from '@/lib/blog';
+import { listLivePages } from '@/lib/live-resolve';
 
 export const revalidate = 1800;
 export const dynamicParams = true;
@@ -100,6 +101,13 @@ export default async function CityStatsPage({ params }: CityStatsPageProps) {
   // ones that also name the city, so a national post never gets linked from a
   // city page as if it were local.
   const { results: cityPosts } = await getBlogPosts({ tag: cityName, limit: 4 });
+  // Live rankings of this same city. Without this link the thousand pages of
+  // the blog depend on their own index alone; with it, the page that already
+  // ranks for «precio del m² en <ciudad>» feeds them.
+  const cityRankings = (await listLivePages())
+    .filter((page) => page.recipe.scope.kind === 'city' && page.recipe.scope.slug === ciudad)
+    .filter((page) => !page.recipe.opDef)
+    .slice(0, 6);
   const cityGuides = cityPosts.filter(
     (post) =>
       post.title.toLowerCase().includes(cityName.toLowerCase()) ||
@@ -278,6 +286,13 @@ export default async function CityStatsPage({ params }: CityStatsPageProps) {
                     Precio del metro cuadrado en Ecuador
                   </Link>
                 </li>
+                {cityRankings.map((page) => (
+                  <li key={page.slug}>
+                    <Link href={`/blog/${page.slug}`} className="font-semibold text-primary hover:underline">
+                      {page.title}
+                    </Link>
+                  </li>
+                ))}
                 {cityGuides.map((post) => (
                   <li key={post.slug}>
                     <Link href={`/blog/${post.slug}`} className="font-semibold text-primary hover:underline">

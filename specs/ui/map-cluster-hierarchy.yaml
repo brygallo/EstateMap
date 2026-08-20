@@ -58,7 +58,7 @@ rules:
       ese punto y entrar al nivel de detalle de ciudad.
     evidence:
       - file: backend/real_estate/views.py
-        lines: "841-880"
+        lines: "1027-1064"
         symbol: "centers.setdefault"
         note: El catálogo calcula el centro medio de las propiedades activas de cada ciudad.
       - file: frontend/components/map/MapFilters.tsx
@@ -145,7 +145,7 @@ rules:
         symbol: embeddedInMobilePanel
         note: El detalle puede entregar solo su contenido al panel móvil compartido; conserva su panel lateral independiente únicamente en escritorio.
       - file: frontend/components/maps/MapLibreMap.tsx
-        lines: "480-520"
+        lines: "521-560"
         symbol: onMapBackgroundClickRef
         note: Un toque sin propiedades ni agrupadores debajo se comunica al único panel móvil para cerrarlo.
       - file: frontend/components/maps/MapLibreMap.tsx

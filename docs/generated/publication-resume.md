@@ -53,8 +53,8 @@ Un usuario staff genera, para un PendingPublication concreto, un enlace de conti
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/real_estate/views.py:1226-1252` (`def resume_link`)
-- `backend/real_estate/views.py:1188-1190` (`return [IsAuthenticated(), IsAdminUser()]`) — Toda acción del viewset que no sea `create` exige staff.
+- `backend/real_estate/views.py:1381-1406` (`def resume_link`)
+- `backend/real_estate/views.py:1339-1341` (`return [IsAuthenticated(), IsAdminUser()]`) — Toda acción del viewset que no sea `create` exige staff.
 - `backend/real_estate/email_utils.py:381-404` (`def create_publication_resume_token`)
 
 **Casos**
@@ -89,8 +89,8 @@ Un token de continuación deja de servir 14 días después de emitirse, y a part
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
 - `backend/estate_map/settings.py:549-551` (`PUBLICATION_RESUME_TOKEN_EXPIRY_DAYS`)
-- `backend/real_estate/models.py:670-672` (`def is_valid`)
-- `backend/real_estate/views.py:1405-1410` (`def invalid_resume_token_response`)
+- `backend/real_estate/models.py:709-711` (`def is_valid`)
+- `backend/real_estate/views.py:1555-1559` (`def invalid_resume_token_response`)
 
 **Casos**
 
@@ -122,7 +122,7 @@ Canjear un token crea la propiedad y marca el token como consumido; un segundo c
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/real_estate/views.py:1264-1270` (`redeemed_at__isnull=True`) — UPDATE condicional dentro de la transacción que crea la propiedad.
+- `backend/real_estate/views.py:1419-1424` (`redeemed_at__isnull=True`) — UPDATE condicional dentro de la transacción que crea la propiedad.
 - `backend/real_estate/email_utils.py:388-396` (`revoked_at__isnull=True`) — Emitir un enlace nuevo retira el anterior, para que nunca haya dos vivos.
 
 **Casos**
@@ -154,7 +154,7 @@ Un usuario staff invalida los tokens vigentes de una solicitud en cualquier mome
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/real_estate/views.py:1258-1267` (`def revoke_resume_link`)
+- `backend/real_estate/views.py:1413-1421` (`def revoke_resume_link`)
 
 **Casos**
 
@@ -187,7 +187,7 @@ La respuesta del token contiene el JSON del borrador y los datos de contacto que
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
 - `backend/real_estate/serializers.py:619-631` (`class PublicationDraftSerializer`)
-- `backend/real_estate/views.py:1262-1279` (`class PublicationDraftView`)
+- `backend/real_estate/views.py:1429-1445` (`class PublicationDraftView`)
 
 **Casos**
 
@@ -211,7 +211,7 @@ Retomar restaura título, descripción, tipo, operación, precio, dirección, ci
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/real_estate/models.py:615-627` (`class PendingPublicationImage`) — Archivos temporales ordenados y ligados al borrador pendiente.
+- `backend/real_estate/models.py:654-665` (`class PendingPublicationImage`) — Archivos temporales ordenados y ligados al borrador pendiente.
 - `backend/real_estate/serializers.py:637-644` (`get_temporary_images`) — El enlace devuelve las fotos que debe reconstruir el formulario.
 - `frontend/app/continuar-publicacion/[token]/page.tsx:40-51` (`PROPERTY_DRAFT_STORAGE_KEY`) — El borrador y las URLs temporales se dejan donde el formulario ya los busca.
 
@@ -245,7 +245,7 @@ El canje crea la propiedad y, a partir del correo del borrador, una cuenta a la 
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/real_estate/views.py:1297-1363` (`class PublicationDraftRedeemView`)
+- `backend/real_estate/views.py:1452-1517` (`class PublicationDraftRedeemView`)
 - `backend/real_estate/services/accounts.py:19-40` (`def get_or_create_by_email`)
 - `frontend/app/add-property/page.tsx:1092-1094` (`!resumeToken`) — El enlace hace de sesión, así que el formulario no abre el modal de cuenta.
 
@@ -301,9 +301,9 @@ Al completarse el canje, el PendingPublication pasa a converted y guarda una ref
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/real_estate/models.py:598-600` (`related_name="pending_publications"`)
-- `backend/real_estate/views.py:1366-1368` (`pending.status = 'converted'`)
-- `backend/real_estate/views.py:1243-1245` (`'Esta solicitud ya se convirtió en un anuncio.'`)
+- `backend/real_estate/models.py:637-639` (`related_name="pending_publications"`)
+- `backend/real_estate/views.py:1517-1519` (`pending.status = 'converted'`)
+- `backend/real_estate/views.py:1394-1396` (`'Esta solicitud ya se convirtió en un anuncio.'`)
 
 **Casos**
 
@@ -332,7 +332,7 @@ Desde la bandeja, staff abre el mismo formulario recuperado, corrige los campos 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
 - `frontend/app/admin/pending-publications/page.tsx:224-243` (`resolveAndPublish`) — Prepara el enlace si hace falta y abre el borrador recuperado para corregirlo.
-- `backend/real_estate/views.py:1365-1379` (`serializer.save(owner=owner)`) — La propiedad queda a nombre del correo del pendiente y se notifica tanto a cuentas nuevas como existentes.
+- `backend/real_estate/views.py:1516-1529` (`serializer.save(owner=owner)`) — La propiedad queda a nombre del correo del pendiente y se notifica tanto a cuentas nuevas como existentes.
 - `backend/real_estate/email_utils.py:406-450` (`send_account_claim_email`) — La cuenta nueva recibe el enlace de definición de contraseña y el enlace público del anuncio.
 
 **Casos**
@@ -360,7 +360,7 @@ POST /api/pending-publications/ valida uploaded_images con el mismo lote de comp
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
 - `backend/real_estate/serializers.py:114-152` (`def validate_image_batch`)
-- `backend/real_estate/serializers.py:560-562` (`def validate_uploaded_images(self, value):`) — PendingPublicationSerializer delega en el validador compartido.
+- `backend/real_estate/serializers.py:567-569` (`def validate_uploaded_images(self, value):`) — PendingPublicationSerializer delega en el validador compartido.
 
 **Casos**
 

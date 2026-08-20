@@ -4,7 +4,11 @@ import Image from 'next/image';
 import { notFound } from 'next/navigation';
 import { ArrowRight, CalendarDays, ChevronRight, Clock3, Home, RefreshCw } from 'lucide-react';
 
-import { authorSlug, formatPostDate, getBlogPost, getBlogPosts } from '@/lib/blog';
+import { articleModifiedAt, authorSlug, formatPostDate, getBlogPost, getBlogPosts } from '@/lib/blog';
+import { listLivePages, resolveLivePage } from '@/lib/live-resolve';
+import { integer } from '@/lib/market-stats';
+import LiveRankingPage from '@/components/blog/LiveRankingPage';
+import { liveTitle, placePhrase, subjectPhrase, typeGender } from '@/lib/live-pages';
 import {
   extractHeadings,
   extractImages,
@@ -30,15 +34,54 @@ interface PostPageProps {
 }
 
 export async function generateStaticParams() {
-  const { results } = await getBlogPosts({ limit: 60 });
-  return results.map((post) => ({ slug: post.slug }));
+  // Written articles and living pages share one route, so they share this
+  // list. The living ones are capped: `dynamicParams` renders the rest on
+  // first request, and pre-building thousands of rankings would trade build
+  // time for pages nobody has asked for yet.
+  const [{ results }, livePages] = await Promise.all([
+    getBlogPosts({ limit: 60 }),
+    listLivePages(),
+  ]);
+  return [
+    ...results.map((post) => ({ slug: post.slug })),
+    ...livePages.slice(0, MAX_PREBUILT_LIVE_PAGES).map((page) => ({ slug: page.slug })),
+  ];
 }
+
+const MAX_PREBUILT_LIVE_PAGES = 120;
 
 export async function generateMetadata({ params }: PostPageProps): Promise<Metadata> {
   const { slug } = await params;
   const post = await getBlogPost(slug);
   if (!post) {
-    return { title: 'Artículo no encontrado', robots: { index: false, follow: false } };
+    const live = await resolveLivePage(slug);
+    if (!live) {
+      return { title: 'Artículo no encontrado', robots: { index: false, follow: false } };
+    }
+    const gender = typeGender(live.recipe.typeDef);
+    const title = liveTitle(live.recipe, live.ranking.items.length);
+    const description = `${title}, calculado sobre ${integer(
+      live.ranking.sample_size
+    )} anuncios activos en Geo Propiedades Ecuador. Se actualiza con el inventario publicado.`;
+    const base = generatePageMetadata(title, description, `/blog/${slug}`);
+    // The photo of the listing in first place, which is what the page is about.
+    // Without it every ranking shares the same generic card, and a link to «los
+    // terrenos más grandes» looks identical to one about mortgages.
+    const cover = live.ranking.items[0]?.image;
+    const images = cover ? [{ url: cover, alt: title }] : base.openGraph?.images;
+    return {
+      ...base,
+      ...(live.indexable ? {} : { robots: { index: false, follow: true } }),
+      openGraph: {
+        ...base.openGraph,
+        type: 'article',
+        images,
+        ...(live.ranking.context.updated_at
+          ? { modifiedTime: live.ranking.context.updated_at }
+          : {}),
+      },
+      twitter: { ...base.twitter, images: cover ? [cover] : base.twitter?.images },
+    };
   }
 
   const base = generatePageMetadata(
@@ -53,7 +96,7 @@ export async function generateMetadata({ params }: PostPageProps): Promise<Metad
       ...base.openGraph,
       type: 'article',
       publishedTime: post.published_at,
-      modifiedTime: post.updated_at,
+      modifiedTime: articleModifiedAt(post),
       authors: post.author_name ? [post.author_name] : undefined,
       tags: post.tags,
       ...(post.cover_image
@@ -65,8 +108,24 @@ export async function generateMetadata({ params }: PostPageProps): Promise<Metad
 
 export default async function BlogPostPage({ params }: PostPageProps) {
   const { slug } = await params;
+  // Two steps, in this order: a hand-written article always beats a generated
+  // one, which is what lets any living page be replaced by publishing a post
+  // with its slug (LIVE-001).
   const post = await getBlogPost(slug);
-  if (!post) notFound();
+  if (!post) {
+    const live = await resolveLivePage(slug);
+    if (!live) notFound();
+    return (
+      <LiveRankingPage
+        recipe={live.recipe}
+        ranking={live.ranking}
+        slug={live.slug}
+        siblings={live.siblings}
+        catalogueHref={live.catalogueHref}
+        statsHref={live.statsHref}
+      />
+    );
+  }
 
   // Same category first, so the reader lands on something adjacent instead of
   // whatever happens to be newest.
@@ -108,7 +167,7 @@ export default async function BlogPostPage({ params }: PostPageProps) {
         mainEntityOfPage: postUrl,
         inLanguage: 'es-EC',
         datePublished: post.published_at,
-        dateModified: post.updated_at,
+        dateModified: articleModifiedAt(post),
         wordCount: markdownToPlainText(post.body).split(/\s+/).length,
         keywords: post.tags.join(', '),
         articleSection: post.category?.name ?? 'Blog',
@@ -211,8 +270,12 @@ export default async function BlogPostPage({ params }: PostPageProps) {
     ],
   };
 
+  // A scheduled post is written before it goes live, so the raw `updated_at`
+  // can predate publication; `articleModifiedAt` is what the schema declares
+  // and what the page must show, or the two contradict each other.
+  const modifiedAt = articleModifiedAt(post);
   const wasUpdated =
-    new Date(post.updated_at).getTime() - new Date(post.published_at).getTime() >
+    new Date(modifiedAt).getTime() - new Date(post.published_at).getTime() >
     24 * 60 * 60 * 1000;
 
   return (
@@ -274,7 +337,7 @@ export default async function BlogPostPage({ params }: PostPageProps) {
               <span className="inline-flex items-center gap-1.5">
                 <RefreshCw className="h-4 w-4" strokeWidth={1.75} aria-hidden />
                 Actualizado el{' '}
-                <time dateTime={post.updated_at}>{formatPostDate(post.updated_at)}</time>
+                <time dateTime={modifiedAt}>{formatPostDate(modifiedAt)}</time>
               </span>
             )}
             <span className="inline-flex items-center gap-1.5">

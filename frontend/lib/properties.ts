@@ -221,6 +221,8 @@ interface GetFeaturedPropertiesOptions {
   status?: string;
   city?: string;
   province?: string;
+  /** Normalized key of a named zone, so a zone page shows that zone. */
+  sector?: string;
   limit?: number;
   revalidate?: number;
 }
@@ -325,6 +327,7 @@ export async function getFeaturedProperties({
   status,
   city,
   province,
+  sector,
   limit = 8,
   revalidate = 3600,
 }: GetFeaturedPropertiesOptions = {}): Promise<Property[]> {
@@ -337,6 +340,7 @@ export async function getFeaturedProperties({
     if (status) params.set('status', status);
     if (city) params.set('city', city);
     if (province) params.set('province', province);
+    if (sector) params.set('sector', sector);
 
     const res = await fetch(`${API_URL}/properties/?${params.toString()}`, {
       next: { revalidate, tags: ['properties'] },

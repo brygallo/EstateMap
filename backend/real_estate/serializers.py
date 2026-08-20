@@ -447,6 +447,12 @@ class MapPropertySerializer(serializers.ModelSerializer):
     """
     Payload liviano para el mapa/listado lateral. Evita enviar descripcion,
     imagenes completas y campos de detalle por cada item del viewport.
+
+    `updated_at` travels even though it is a detail field. The sitemap derives
+    every `lastmod` from it, and without a date it fell back to render time on
+    all 16k URLs — the one value search engines discard. Forty bytes per item
+    buys a `lastmod` that is true. A visit does not move it: the view counter is
+    a queryset `update()`, which never triggers `auto_now`.
     """
     images = serializers.SerializerMethodField()
 
@@ -474,6 +480,7 @@ class MapPropertySerializer(serializers.ModelSerializer):
             'source_url',
             'external_id',
             'images',
+            'updated_at',
         ]
 
     def get_images(self, obj):

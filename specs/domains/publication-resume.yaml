@@ -32,10 +32,10 @@ rules:
       sobre lo que ya se gestionó.
     evidence:
       - file: backend/real_estate/views.py
-        lines: "1226-1252"
+        lines: "1381-1406"
         symbol: def resume_link
       - file: backend/real_estate/views.py
-        lines: "1188-1190"
+        lines: "1339-1341"
         symbol: "return [IsAuthenticated(), IsAdminUser()]"
         note: Toda acción del viewset que no sea `create` exige staff.
       - file: backend/real_estate/email_utils.py
@@ -88,10 +88,10 @@ rules:
         lines: "549-551"
         symbol: PUBLICATION_RESUME_TOKEN_EXPIRY_DAYS
       - file: backend/real_estate/models.py
-        lines: "670-672"
+        lines: "709-711"
         symbol: def is_valid
       - file: backend/real_estate/views.py
-        lines: "1405-1410"
+        lines: "1555-1559"
         symbol: def invalid_resume_token_response
     backend:
       enforce: true
@@ -126,7 +126,7 @@ rules:
       guardado fallido deja el enlace gastado.
     evidence:
       - file: backend/real_estate/views.py
-        lines: "1264-1270"
+        lines: "1419-1424"
         symbol: redeemed_at__isnull=True
         note: UPDATE condicional dentro de la transacción que crea la propiedad.
       - file: backend/real_estate/email_utils.py
@@ -161,7 +161,7 @@ rules:
       datos o el mensaje acabó en el chat equivocado.
     evidence:
       - file: backend/real_estate/views.py
-        lines: "1258-1267"
+        lines: "1413-1421"
         symbol: def revoke_resume_link
     permissions:
       required: [pending_publications.revoke_resume_link]
@@ -199,7 +199,7 @@ rules:
         lines: "619-631"
         symbol: class PublicationDraftSerializer
       - file: backend/real_estate/views.py
-        lines: "1262-1279"
+        lines: "1429-1445"
         symbol: class PublicationDraftView
     permissions:
       required: [publication_drafts.read_by_token]
@@ -231,7 +231,7 @@ rules:
       enlace y se eliminan después de crear la propiedad definitiva.
     evidence:
       - file: backend/real_estate/models.py
-        lines: "615-627"
+        lines: "654-665"
         symbol: "class PendingPublicationImage"
         note: Archivos temporales ordenados y ligados al borrador pendiente.
       - file: backend/real_estate/serializers.py
@@ -266,7 +266,7 @@ rules:
       va a esa cuenta sin tocarle la contraseña.
     evidence:
       - file: backend/real_estate/views.py
-        lines: "1297-1363"
+        lines: "1452-1517"
         symbol: class PublicationDraftRedeemView
       - file: backend/real_estate/services/accounts.py
         lines: 19-40
@@ -340,13 +340,13 @@ rules:
       nadie podía comprobar.
     evidence:
       - file: backend/real_estate/models.py
-        lines: "598-600"
+        lines: "637-639"
         symbol: related_name="pending_publications"
       - file: backend/real_estate/views.py
-        lines: "1366-1368"
+        lines: "1517-1519"
         symbol: pending.status = 'converted'
       - file: backend/real_estate/views.py
-        lines: "1243-1245"
+        lines: "1394-1396"
         symbol: "'Esta solicitud ya se convirtió en un anuncio.'"
     tests:
       api: true
@@ -376,7 +376,7 @@ rules:
         symbol: "resolveAndPublish"
         note: Prepara el enlace si hace falta y abre el borrador recuperado para corregirlo.
       - file: backend/real_estate/views.py
-        lines: "1365-1379"
+        lines: "1516-1529"
         symbol: "serializer.save(owner=owner)"
         note: La propiedad queda a nombre del correo del pendiente y se notifica tanto a cuentas nuevas como existentes.
       - file: backend/real_estate/email_utils.py
@@ -414,7 +414,7 @@ rules:
         lines: "114-152"
         symbol: def validate_image_batch
       - file: backend/real_estate/serializers.py
-        lines: "560-562"
+        lines: "567-569"
         symbol: "def validate_uploaded_images(self, value):"
         note: PendingPublicationSerializer delega en el validador compartido.
     backend:

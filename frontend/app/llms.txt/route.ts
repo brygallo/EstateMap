@@ -6,7 +6,8 @@ import {
   slugify,
   SITE_URL,
 } from '@/lib/properties';
-import { getBlogPosts } from '@/lib/blog';
+import { getBlogPosts, LIVE_CATEGORY } from '@/lib/blog';
+import { listLivePages } from '@/lib/live-resolve';
 import {
   getMarketStats,
   MIN_LISTINGS_FOR_PROMOTION,
@@ -22,10 +23,11 @@ import {
 export const revalidate = 3600;
 
 export async function GET() {
-  const [properties, stats, blog] = await Promise.all([
+  const [properties, stats, blog, livePages] = await Promise.all([
     getAllProperties(),
     getMarketStats(),
     getBlogPosts({ limit: 40 }),
+    listLivePages(),
   ]);
 
   // AI crawlers do not execute JS, so this index is the site map as far as
@@ -76,6 +78,23 @@ ${stats.by_city
 `
     : '';
 
+  // Rankings that recalculate with inventory. The list is capped and carries
+  // no figures: what changes daily belongs on the page, not in a file that is
+  // fetched once. Naming the index is what makes the rest discoverable.
+  const liveSection = livePages.length
+    ? `## Rankings que se actualizan con el inventario
+
+Listas recalculadas con las propiedades publicadas: los más baratos, los más grandes, el mejor precio por metro cuadrado, los más recientes. Cada una existe solo mientras su zona tenga al menos diez anuncios que cumplan el criterio, e indica sobre cuántos se calculó. Hay ${livePages.length} activas.
+
+- [Índice de ${LIVE_CATEGORY.name.toLowerCase()}](${SITE_URL}/blog/categoria/${LIVE_CATEGORY.slug}): todas las listas, agrupadas por ciudad, provincia y país.
+${livePages
+  .slice(0, 40)
+  .map((page) => `- [${page.title}](${SITE_URL}/blog/${page.slug})`)
+  .join('\n')}
+
+`
+    : '';
+
   const provinceLines = provinces
     .map(
       (p) =>
@@ -118,6 +137,7 @@ ${statsSection}
 
 ${blogLines}
 
+${liveSection}
 ## Cómo interpretar páginas de categoría
 
 Las páginas de categoría como casas en venta, terrenos en venta, departamentos en alquiler y locales comerciales son landings de búsqueda. Muestran inventario cuando hay anuncios disponibles y, si una categoría todavía no tiene propiedades, orientan al usuario hacia acciones reales: abrir el mapa con filtros aplicados, revisar búsquedas relacionadas o publicar una propiedad.

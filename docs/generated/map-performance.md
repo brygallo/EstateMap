@@ -34,6 +34,7 @@ Las vistas de Ecuador, provincias y ciudades usan respectivamente una clave can�
 - `backend/real_estate/services/map_payload.py` (`canonical_cluster_zoom`) — País, provincia y ciudad se reducen a un zoom estable por nivel.
 - `backend/real_estate/views.py` (`cache_bbox`) — El cache territorial usa `all`, TTL de una hora y el zoom canónico; los puntos siguen usando bbox y TTL corto.
 - `frontend/hooks/usePropertyFilters.ts` (`mapRequestKey`) — La memoria del navegador usa los mismos tres niveles y no añade debounce a sus peticiones.
+- `tests/e2e/map.spec.ts` (`moving the map loads the zone it lands on`) — Acercarse dentro de un nivel agregado no pide red; cruzar al nivel de puntos sí.
 
 **Casos**
 
@@ -46,6 +47,7 @@ Las vistas de Ecuador, provincias y ciudades usan respectivamente una clave can�
 **Cobertura exigida:** unit
 
 - `backend/real_estate/tests/test_map_payload.py`
+- `tests/e2e/map.spec.ts`
 
 ### MPERF-001 — Las lecturas públicas del mapa no dependen de la sesión
 
@@ -73,7 +75,7 @@ Los manejadores seleccionan la propiedad y un único efecto centra la cámara po
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `frontend/components/maps/MapLibreMap.tsx:294-310` (`centeredSelectionRef.current`) — El id seleccionado impide repetir el centrado.
+- `frontend/components/maps/MapLibreMap.tsx:311-326` (`centeredSelectionRef.current`) — El id seleccionado impide repetir el centrado.
 - `frontend/components/MapPageClient.tsx:289-345` (`setSelectedProperty`) — Los manejadores seleccionan y abren la ficha sin mover directamente el mapa.
 
 **Casos**

@@ -1,6 +1,7 @@
 import json
 import logging
 import math
+import unicodedata
 import hashlib
 from rest_framework import viewsets, generics, status, filters
 from rest_framework.pagination import PageNumberPagination
@@ -68,6 +69,14 @@ from .email_utils import (
     create_publication_resume_token,
 )
 from .services.map_payload import MAX_CLUSTER_ZOOM, build_map_payload, canonical_cluster_zoom
+from .models import sector_key as sector_key_for
+from .services.sectors import MIN_SECTOR_LISTINGS, list_sectors
+from .services.rankings import (
+    CRITERIA as RANKING_CRITERIA,
+    DEFAULT_LIMIT as DEFAULT_RANKING_LIMIT,
+    available_scopes,
+    build_ranking,
+)
 from .services.accounts import InactiveAccountError, InvitedAccountService
 from .services.authentication import GoogleAuthenticationService, GoogleIdentityError
 from .services.notifications import (
@@ -105,6 +114,9 @@ CACHE_TTL_MAP_CLUSTERS = 60 * 60
 CACHE_TTL_MARKET_STATS = 60 * 30
 CACHE_TTL_GEO = 60 * 60 * 24
 CACHE_TTL_PROPERTY_LIST = 120
+# Rankings only change when inventory does, and the key carries the inventory
+# version, so this can sit as long as the territorial map payloads.
+CACHE_TTL_RANKINGS = 60 * 30
 
 # Browsers revalidate quickly; the shared caches (CDN / reverse proxy) are the
 # ones allowed to hold a payload for as long as the server-side entry lives.
@@ -270,6 +282,38 @@ class InventoryPagination(PageNumberPagination):
     page_size = 24
     page_size_query_param = 'page_size'
     max_page_size = 100
+
+
+def _fold(text: str) -> str:
+    """Key for grouping free-text place names.
+
+    Case and accents both vary in the same field — «CUMBAYÁ», «Cumbaya»,
+    «Cumbayá» are one place — so the key drops diacritics as well as case.
+    Without this the inventory of a sector splits in two and each half gets its
+    own average, which is worse than not publishing the sector at all.
+    """
+    normalized = unicodedata.normalize('NFD', (text or '').strip())
+    without_marks = ''.join(ch for ch in normalized if unicodedata.category(ch) != 'Mn')
+    return ' '.join(without_marks.casefold().split())
+
+
+def _display_name(spellings) -> str:
+    """The spelling to show for a group of variants.
+
+    The most frequent one wins, except that an accented variant beats an
+    unaccented one whenever it is at least half as common: people drop accents
+    when typing, not when naming a place, so «Cumbayá» is the name and
+    «Cumbaya» is how it gets typed.
+    """
+    ranked = spellings.most_common()
+    if not ranked:
+        return ''
+    top_name, top_count = ranked[0]
+    for name, count in ranked:
+        has_marks = any(unicodedata.category(ch) == 'Mn' for ch in unicodedata.normalize('NFD', name))
+        if has_marks and count >= top_count / 2:
+            return name
+    return top_name
 
 
 def _parse_float(value):
@@ -461,6 +505,12 @@ class PropertyViewSet(viewsets.ModelViewSet):
         bathrooms = params.get('bathrooms')
         if bathrooms and bathrooms != 'all' and bathrooms.isdigit():
             queryset = queryset.filter(bathrooms__gte=int(bathrooms))
+
+        # Zone filter: the key is already normalized on the row, so this is an
+        # index lookup rather than a scan over free text (PRC-009).
+        sector = (params.get('sector') or '').strip()
+        if sector:
+            queryset = queryset.filter(sector_key=sector_key_for(sector))
 
         owner = params.get('owner') or params.get('user')
         if owner and owner != 'all' and str(owner).isdigit():
@@ -721,6 +771,106 @@ class PropertyViewSet(viewsets.ModelViewSet):
         instance = get_object_or_404(Property, pk=pk)
         self.check_object_permissions(request, instance)
         return Response(promotion_stats(instance.pk))
+
+    @action(detail=False, methods=['get'], permission_classes=[AllowAny])
+    def rankings(self, request):
+        """
+        One resolved ranking of live inventory, with its sample and comparison.
+
+        The living pages of the blog («los terrenos más baratos de Quito») are
+        server-rendered from this, so it answers cold crawls too. The order is
+        resolved here rather than through a generic `ordering` parameter on the
+        listing: the plausibility guard, the threshold and the comparison
+        average are part of the answer, and a scraper handed a sortable
+        catalogue would take the catalogue.
+        """
+        criterion = (request.query_params.get('criterion') or '').strip()
+        if criterion not in RANKING_CRITERIA:
+            return Response(
+                {'detail': f'criterio desconocido: {criterion or "(vacío)"}'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        scope_args = {
+            'property_type': (request.query_params.get('type') or '').strip() or None,
+            'status': (request.query_params.get('status') or '').strip() or None,
+            'city': (request.query_params.get('city') or '').strip() or None,
+            'province': (request.query_params.get('province') or '').strip() or None,
+        }
+        limit = _parse_float(request.query_params.get('limit'))
+
+        cache_key = versioned_key(
+            'rankings',
+            _query_signature(request.query_params),
+            scope='rankings',
+        )
+        if _is_public_read(request):
+            cached = cache.get(cache_key)
+            if cached is not None:
+                return _public_response(cached, request, s_maxage=CACHE_TTL_RANKINGS)
+
+        payload = build_ranking(
+            criterion,
+            limit=int(limit) if limit else DEFAULT_RANKING_LIMIT,
+            **scope_args,
+        )
+        if _is_public_read(request):
+            cache.set(cache_key, payload, CACHE_TTL_RANKINGS)
+        return _public_response(payload, request, s_maxage=CACHE_TTL_RANKINGS)
+
+    @action(detail=False, methods=['get'], permission_classes=[AllowAny])
+    def sectors(self, request):
+        """Named zones with enough inventory to hold a page of their own.
+
+        The catalogue's finest geography, and the one people actually type:
+        «urbanización Gardenia», «edificio Vista Linda». Optional `city` narrows
+        it; `min` lowers the bar for callers that render a zone below the
+        indexing threshold.
+        """
+        city = (request.query_params.get('city') or '').strip() or None
+        minimum = _parse_float(request.query_params.get('min'))
+        minimum = int(minimum) if minimum else MIN_SECTOR_LISTINGS
+
+        cache_key = versioned_key(
+            'sectors',
+            _query_signature(request.query_params),
+            scope='sectors',
+        )
+        if _is_public_read(request):
+            cached = cache.get(cache_key)
+            if cached is not None:
+                return _public_response(cached, request, s_maxage=CACHE_TTL_MARKET_STATS)
+
+        payload = {'minimum': minimum, 'sectors': list_sectors(city=city, minimum=minimum)}
+        if _is_public_read(request):
+            cache.set(cache_key, payload, CACHE_TTL_MARKET_STATS)
+        return _public_response(payload, request, s_maxage=CACHE_TTL_MARKET_STATS)
+
+    @action(
+        detail=False,
+        methods=['get'],
+        permission_classes=[AllowAny],
+        url_path='ranking-scopes',
+    )
+    def ranking_scopes(self, request):
+        """Which places hold enough inventory for a living page to exist.
+
+        The blog needs this to know which of its thousands of possible rankings
+        are real, and the sitemap needs the same answer so it never advertises
+        a page the threshold keeps empty. Asking the ranking endpoint once per
+        candidate would be thousands of requests to learn that most have
+        nothing.
+        """
+        cache_key = versioned_key('ranking_scopes', scope='rankings')
+        if _is_public_read(request):
+            cached = cache.get(cache_key)
+            if cached is not None:
+                return _public_response(cached, request, s_maxage=CACHE_TTL_RANKINGS)
+
+        payload = available_scopes()
+        if _is_public_read(request):
+            cache.set(cache_key, payload, CACHE_TTL_RANKINGS)
+        return _public_response(payload, request, s_maxage=CACHE_TTL_RANKINGS)
 
     @action(detail=False, methods=['get'], permission_classes=[AllowAny])
     def map_points(self, request):
@@ -2062,8 +2212,11 @@ class MarketStatsView(generics.GenericAPIView):
         ))
         market_days = []
         city_periods = defaultdict(lambda: {'recent': [], 'previous': []})
-        # Sectors come from free-text addresses, so casing varies ("Puembo" vs
-        # "PUEMBO"): group case-insensitively and display the most common form.
+        # Sectors come from free-text addresses, so the same place arrives
+        # written several ways: "PUEMBO", "Puembo", "Cumbaya", "Cumbayá".
+        # Grouping by casefold alone split the accented spellings into separate
+        # sectors — Cumbayá held 42 listings and Cumbaya another 47, each with
+        # its own average — so the key drops diacritics too.
         sector_stats = defaultdict(lambda: {'names': Counter(), 'values': []})
         for row in active_rows:
             # Active catalog entries remain available through the current day.
@@ -2076,8 +2229,8 @@ class MarketStatsView(generics.GenericAPIView):
                 city_periods[city]['previous'].append(row['price_per_m2'])
             # `address` is currently the finest available geographic level.
             sector = (row['address'] or '').split(',')[0].strip()
-            if sector and sector.lower() != city.lower():
-                entry = sector_stats[(city, sector.casefold())]
+            if sector and _fold(sector) != _fold(city):
+                entry = sector_stats[(city, _fold(sector))]
                 entry['names'][sector] += 1
                 entry['values'].append(row['price_per_m2'])
 
@@ -2093,7 +2246,10 @@ class MarketStatsView(generics.GenericAPIView):
         by_sector = [
             {
                 'city': city,
-                'sector': entry['names'].most_common(1)[0][0],
+                'sector': _display_name(entry['names']),
+                # The key the zone page is addressed by, so the table can link
+                # to it without folding the name a second time.
+                'sector_key': _sector_key,
                 'count': len(entry['values']),
                 'avg_price_m2': sum(entry['values']) / len(entry['values']),
             }

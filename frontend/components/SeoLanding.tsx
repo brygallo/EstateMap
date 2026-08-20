@@ -24,6 +24,8 @@ export type FeaturedQuery = {
   status?: string;
   city?: string;
   province?: string;
+  /** Named zone, so a zone page's featured grid stays inside that zone. */
+  sector?: string;
 };
 
 /**
@@ -78,6 +80,7 @@ export default async function SeoLanding({
     city: featuredQuery?.city ?? parsedMapUrl.searchParams.get('city') ?? undefined,
     province:
       featuredQuery?.province ?? parsedMapUrl.searchParams.get('province') ?? undefined,
+    sector: featuredQuery?.sector,
   };
   const advertisingProvince = featuredFilters.province ?? properties[0]?.province ?? undefined;
   const featuredWithImages = await getFeaturedProperties({

@@ -42,11 +42,11 @@ rules:
         symbol: "if (!token && !isEditMode && !resumeToken) {"
         note: Guarda el borrador, envía la solicitud pendiente y abre el modal, sin llamar a /properties/.
       - file: backend/real_estate/models.py
-        lines: "560-562"
+        lines: "599-601"
         symbol: "class PendingPublication(models.Model)"
         note: "Docstring: no se muestra en el mapa; sirve para seguimiento comercial."
       - file: backend/real_estate/views.py
-        lines: "314-316"
+        lines: "356-358"
         symbol: "permission_classes = [IsAuthenticatedOrReadOnly, IsOwnerOrReadOnly]"
         note: Respaldo del servidor si la petición llega sin pasar por el frontend.
     backend:
@@ -242,14 +242,14 @@ rules:
       editar.
     evidence:
       - file: backend/real_estate/views.py
-        lines: "564-568"
+        lines: "615-617"
         symbol: "idempotency_key = (request.headers.get('Idempotency-Key')"
         note: Sin cabecera, se comporta como un create normal.
       - file: backend/real_estate/views.py
-        lines: "577-579"
+        lines: "629-631"
         symbol: "response['X-Idempotent-Replay'] = 'true'"
       - file: backend/real_estate/views.py
-        lines: "589-591"
+        lines: "641-643"
         symbol: "cache.set(result_key, response.data['id'], 60 * 60 * 24)"
       - file: frontend/app/add-property/page.tsx
         lines: "1170-1172"
@@ -278,10 +278,10 @@ rules:
       la petición falla, para no dejar la clave bloqueada 60 s de más.
     evidence:
       - file: backend/real_estate/views.py
-        lines: "580-582"
+        lines: "632-634"
         symbol: "lock_acquired = cache.add(lock_key, '1', 60)"
       - file: backend/real_estate/views.py
-        lines: "594-596"
+        lines: "646-648"
         symbol: "if lock_acquired:"
         note: cache.delete(lock_key) en el finally, se ejecute o no la creación.
     cases:
@@ -310,7 +310,7 @@ rules:
       cuenta. El techo aplica igual a todos.
     evidence:
       - file: backend/real_estate/views.py
-        lines: "349-362"
+        lines: "397-408"
         symbol: "self.throttle_scope = 'property_write'"
         note: ScopedRateThrottle, no AntiScraperScopedThrottle, para create/update/partial_update.
       - file: backend/real_estate/throttling.py
@@ -437,15 +437,15 @@ rules:
       "eliminar" con `window.confirm` como acción irreversible.
     evidence:
       - file: backend/real_estate/views.py
-        lines: "414-416"
+        lines: "457-459"
         symbol: "exclude(status='inactive')"
         note: Único filtro que saca inactive del catálogo público; no toca la fila.
       - file: backend/real_estate/views.py
-        lines: "1033-1035"
+        lines: "1184-1186"
         symbol: def my_properties
         note: "including inactive: el dueño ve su propiedad inactiva, el público no."
       - file: backend/real_estate/models.py
-        lines: "344-346"
+        lines: "383-385"
         symbol: "on_delete=models.CASCADE"
         note: PropertyImage.property cae en cascada con la Property.
       - file: frontend/app/my-properties/page.tsx

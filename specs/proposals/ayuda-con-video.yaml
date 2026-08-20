@@ -1,0 +1,80 @@
+version: 1
+domain: ayuda-con-video
+title: La página de ayuda enseña con vídeo animado
+status: proposed
+summary: >-
+  Cada paso de la ayuda se explica con un clip corto renderizado con la misma
+  fábrica de vídeo del proyecto, en bucle y sin sonido, con el texto actual
+  intacto debajo.
+
+# ---------------------------------------------------------------------------
+# El problema real de la ayuda no es que sea fea: es que explica con palabras
+# gestos que se entienden viéndolos. «Dibuja el terreno en el mapa» son tres
+# líneas de texto y dos segundos de vídeo. Y `marketing/videos/` ya tiene el
+# pipeline de Remotion montado, así que el coste es guion y render, no
+# infraestructura.
+# ---------------------------------------------------------------------------
+
+rules:
+  - id: HELPV-001
+    name: Cada paso que se explica con un gesto lleva su clip
+    status: proposed
+    summary: >-
+      Los pasos de publicación —dibujar la ubicación en el mapa, subir fotos,
+      completar los datos, contactar a un anunciante— muestran un clip de entre
+      seis y diez segundos en bucle, sin sonido, junto a su texto.
+    rationale: >-
+      El texto se queda: el clip enseña el gesto y el texto responde las dudas
+      que el clip no cubre. Sustituir uno por otro dejaría la página sin nada
+      que rastrear y sin nada que citar.
+    cases:
+      - name: Paso «dibuja tu terreno en el mapa»
+        expected: clip en bucle del trazado, con el texto debajo
+      - name: Paso sin componente visual, como los requisitos de la cuenta
+        expected: solo texto, sin clip de relleno
+
+  - id: HELPV-002
+    name: Un clip nunca bloquea la carga de la ayuda
+    status: proposed
+    summary: >-
+      Los clips se cargan en diferido, con póster propio, sin autoplay hasta
+      estar en pantalla, y con un peso máximo declarado por clip. Con
+      `prefers-reduced-motion` se queda el póster fijo.
+    rationale: >-
+      La ayuda la abre quien ya tiene un problema. Una página de soporte que
+      tarda porque trae cuatro vídeos convierte una duda en un abandono, y la
+      métrica que mide Google en esa página es justo la que se rompería.
+    cases:
+      - name: Ayuda abierta en móvil con datos móviles
+        expected: se ve el póster y el texto antes de descargar ningún clip
+      - name: Sistema con movimiento reducido
+        expected: póster fijo, sin reproducción
+
+  - id: HELPV-003
+    name: Los clips se declaran como vídeo para los buscadores
+    status: proposed
+    summary: >-
+      Cada clip publica `VideoObject` con nombre, descripción, duración,
+      miniatura y fecha de subida, junto al `FAQPage` que ya tiene la página.
+    rationale: >-
+      Es la parte multimodal que hoy falta en el análisis GEO: el contenido con
+      vídeo se selecciona bastante más, y sin schema el clip es invisible para
+      quien decide qué citar.
+    cases:
+      - name: Página de ayuda con cuatro clips
+        expected: cuatro VideoObject válidos junto al FAQPage existente
+
+  - id: HELPV-004
+    name: El clip se rehace cuando la interfaz que muestra cambia
+    status: proposed
+    summary: >-
+      Cada clip declara qué pantalla graba. Si esa pantalla cambia de forma
+      visible, el clip se marca como caducado y se rehace antes de seguir
+      publicándose.
+    rationale: >-
+      Un vídeo de ayuda que enseña una interfaz que ya no existe hace más daño
+      que no tener vídeo: quien lo sigue no encuentra el botón y escribe a
+      soporte. Es la deuda que acumulan todas las ayudas con vídeo.
+    cases:
+      - name: Cambia el flujo de publicación
+        expected: los clips de ese flujo quedan marcados como caducados

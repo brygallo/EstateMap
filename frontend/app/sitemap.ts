@@ -1,7 +1,16 @@
 import { MetadataRoute } from 'next';
 import { getAllProperties, getCities, getProvinces, slugify, SITE_URL, Property } from '@/lib/properties';
 import { generateCombos, MIN_LOCATION_PROPERTIES, parseComboSlug } from '@/lib/seo-combos';
-import { authorSlug, getBlogCategories, getBlogPosts, MIN_POSTS_FOR_INDEXING } from '@/lib/blog';
+import {
+  articleModifiedAt,
+  authorSlug,
+  getBlogCategories,
+  getBlogPosts,
+  LIVE_CATEGORY,
+  MIN_POSTS_FOR_INDEXING,
+} from '@/lib/blog';
+import { listLivePages } from '@/lib/live-resolve';
+import { getSectors, sectorSlug } from '@/lib/sectors';
 import { MIN_LISTINGS_FOR_PROMOTION } from '@/lib/market-stats';
 
 // Nota: las imágenes por propiedad se publican en un sitemap de imágenes aparte
@@ -24,26 +33,37 @@ function propertyDate(p: Property): Date | null {
   return Number.isNaN(d.getTime()) ? null : d;
 }
 
-function latestDate(dates: (Date | null)[], fallback: Date): Date {
+/**
+ * The most recent of a set of dates, or null when none is known.
+ *
+ * Null rather than `new Date()` on purpose: a `lastmod` that says "now" on
+ * every render is the value search engines discard, and it is also a lie. When
+ * there is no real date the field is left out, the same way SEO-002 omits
+ * `dateModified` on a dataset with no measured update.
+ */
+function latestDate(dates: (Date | null)[]): Date | null {
   let latest: Date | null = null;
   for (const d of dates) {
     if (d && (!latest || d > latest)) latest = d;
   }
-  return latest || fallback;
+  return latest;
 }
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const now = new Date();
-  const [properties, blog, blogCategories] = await Promise.all([
+  const [properties, blog, blogCategories, livePages, sectors] = await Promise.all([
     getAllProperties(),
     getBlogPosts({ limit: 60 }),
     getBlogCategories(),
+    listLivePages(),
+    getSectors(),
   ]);
 
   // `lastmod` honesto: la última vez que cambió el inventario, global y por
   // ubicación. Declarar "ahora" en cada request hace que Google ignore el
-  // campo; con fechas reales prioriza recrawlear lo que sí cambió.
-  const globalLatest = latestDate(properties.map(propertyDate), now);
+  // campo; con fechas reales prioriza recrawlear lo que sí cambió. La fecha
+  // llega en el listado (`updated_at` de MapPropertySerializer); si algún día
+  // deja de llegar, el campo se omite en lugar de volver a mentir.
+  const globalLatest = latestDate(properties.map(propertyDate)) ?? undefined;
   const locationLatest = new Map<string, Date>();
   for (const p of properties) {
     const d = propertyDate(p);
@@ -76,16 +96,14 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // `lastmod` comes from the articles' own dates, not from the inventory.
   // Categories below MIN_POSTS_FOR_INDEXING are left out for the same reason
   // sector landings are: a page holding one article competes with it.
-  const blogLatest = latestDate(
-    blog.results.map((post) => new Date(post.updated_at || post.published_at)),
-    now
-  );
+  const blogLatest =
+    latestDate(blog.results.map((post) => new Date(articleModifiedAt(post)))) ?? undefined;
   const blogRoutes: MetadataRoute.Sitemap = blog.results.length
     ? [
         { url: `${SITE_URL}/blog`, lastModified: blogLatest, changeFrequency: 'daily', priority: 0.75 },
         ...blog.results.map((post) => ({
           url: `${SITE_URL}/blog/${post.slug}`,
-          lastModified: new Date(post.updated_at || post.published_at),
+          lastModified: new Date(articleModifiedAt(post)),
           changeFrequency: 'monthly' as const,
           priority: 0.65,
         })),
@@ -119,14 +137,48 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     ).values()
   ).map((post) => ({
     url: `${SITE_URL}/blog/autor/${authorSlug(post.author_name)}`,
-    lastModified: new Date(post.updated_at || post.published_at),
+    lastModified: new Date(articleModifiedAt(post)),
     changeFrequency: 'monthly' as const,
     priority: 0.5,
   }));
 
+  // Living pages: only the ones the threshold lets exist, which is the same
+  // list the blog renders. The sitemap never advertises a ranking the market
+  // cannot fill (LIVE-004), and their `lastmod` is the inventory's, like every
+  // other page derived from it (SEO-006).
+  const liveRoutes: MetadataRoute.Sitemap = livePages.length
+    ? [
+        {
+          url: `${SITE_URL}/blog/categoria/${LIVE_CATEGORY.slug}`,
+          lastModified: globalLatest,
+          changeFrequency: 'daily' as const,
+          priority: 0.7,
+        },
+        ...livePages.map((page) => ({
+          url: `${SITE_URL}/blog/${page.slug}`,
+          lastModified:
+            page.recipe.scope.kind === 'city'
+              ? locationLatest.get(page.recipe.scope.slug) || globalLatest
+              : globalLatest,
+          changeFrequency: 'daily' as const,
+          priority: 0.6,
+        })),
+      ]
+    : [];
+
+  // Named zones. The endpoint already applies the same threshold the page
+  // uses to decide whether it asks to be indexed, so the sitemap cannot
+  // advertise a zone the page would mark noindex.
+  const sectorRoutes: MetadataRoute.Sitemap = sectors.map((sector) => ({
+    url: `${SITE_URL}/propiedades/${slugify(sector.city)}/${sectorSlug(sector)}`,
+    lastModified: sector.updated_at ? new Date(sector.updated_at) : globalLatest,
+    changeFrequency: 'daily' as const,
+    priority: 0.65,
+  }));
+
   const propertyRoutes: MetadataRoute.Sitemap = properties.map((property) => ({
     url: `${SITE_URL}/propiedad/${property.id}`,
-    lastModified: property.updated_at || property.created_at || now,
+    lastModified: property.updated_at || property.created_at || undefined,
     changeFrequency: 'weekly' as const,
     priority: 0.7,
   }));
@@ -177,5 +229,5 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     };
   });
 
-  return [...staticRoutes, ...blogRoutes, ...authorRoutes, ...propertyRoutes, ...cityRoutes, ...statsCityRoutes, ...provinceRoutes, ...comboRoutes];
+  return [...staticRoutes, ...blogRoutes, ...liveRoutes, ...sectorRoutes, ...authorRoutes, ...propertyRoutes, ...cityRoutes, ...statsCityRoutes, ...provinceRoutes, ...comboRoutes];
 }
