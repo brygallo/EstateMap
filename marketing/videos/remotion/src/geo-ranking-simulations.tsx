@@ -77,10 +77,10 @@ import type {SimulationProps} from './simulations';
  */
 const PAGE_FADE_TOP = 1140;
 /** Fixed, because scene 3 animates rows between numbered slots. */
-const ROW_H = 210;
+const ROW_H = 172;
 const CONTENT = {left: sideCrop, width: 1080 - sideCrop * 2};
 const ROW_GAP = 18;
-const ROWS_TOP = 524;
+const ROWS_TOP = 572;
 
 /**
  * The portal, filling the frame, with the caption shade over its lower half.
@@ -141,7 +141,7 @@ const EmPageHead: React.FC<{
   /** Turns the title over on its axis when the recipe changes. */
   flip?: number;
   height?: number;
-}> = ({title, note, enter = 1, flip = 0, height = 478}) => (
+}> = ({title, note, enter = 1, flip = 0, height = 540}) => (
   <div
     style={{
       position: 'absolute',
@@ -163,7 +163,7 @@ const EmPageHead: React.FC<{
     <div style={{position: 'absolute', left: CONTENT.left, right: CONTENT.left, top: 318}}>
       <div style={{display: 'flex', alignItems: 'center', gap: 14, marginBottom: 16}}>
         <EmBandPill>
-          <span style={{width: 18, height: 18, borderRadius: 4, border: `3px solid ${em.white}`, display: 'inline-block'}} />
+          <EmGlyph icon="trophy" size={22} color={em.white} />
           Ranking en vivo
         </EmBandPill>
         <EmExample />
@@ -208,9 +208,9 @@ const EmPageHead: React.FC<{
  * and the voice never turns one into a market fact.
  */
 const LOTS = [
-  {id: 'calderon', title: 'Terreno en Calderón', price: '$18.500', area: '240 m²', address: 'Calderón, Quito', perM2: '$77/m²', byPrice: 1, byArea: 3},
-  {id: 'carcelen', title: 'Terreno en Carcelén Alto', price: '$24.900', area: '300 m²', address: 'Carcelén, Quito', perM2: '$83/m²', byPrice: 2, byArea: 2},
-  {id: 'chillogallo', title: 'Terreno en Chillogallo', price: '$31.200', area: '320 m²', address: 'Chillogallo, Quito', perM2: '$98/m²', byPrice: 3, byArea: 1},
+  {id: 'calderon', title: 'Terreno · Calderón', price: '$18.500', area: '240 m²', address: 'Calderón, Quito', perM2: '$77/m²', byPrice: 1, byArea: 3},
+  {id: 'carcelen', title: 'Terreno · Carcelén', price: '$24.900', area: '300 m²', address: 'Carcelén, Quito', perM2: '$83/m²', byPrice: 2, byArea: 2},
+  {id: 'chillogallo', title: 'Terreno · Chillogallo', price: '$31.200', area: '320 m²', address: 'Chillogallo, Quito', perM2: '$98/m²', byPrice: 3, byArea: 1},
 ];
 
 /** The list as the other scenes show it: cheapest first. */
@@ -432,22 +432,21 @@ export const GeoRankingHookSim: React.FC<SimulationProps> = ({frame, total}) => 
         </div>
       </HeroPlane>
 
-      {/* Foreground: the cursor, on the card's lower edge, clear of every label. */}
+      {/* Foreground: the pointer, on the card's lower edge, clear of every
+          label. Drawn by `lucide`, not by a polygon. */}
       <HeroPlane camera={camera} depth={DEPTH.foreground}>
         <div
           style={{
             position: 'absolute',
             left: HERO_CARD.left + HERO_CARD.width - 112,
             top: HERO_TOP + 392 - reaction * 22,
-            width: 44,
-            height: 58,
-            background: em.text,
-            clipPath: 'polygon(0 0, 0 100%, 28% 76%, 46% 100%, 66% 88%, 48% 62%, 100% 54%)',
-            filter: 'drop-shadow(0 10px 16px rgba(15,23,42,.4))',
             transform: `scale(${1 + reaction * 0.24})`,
+            filter: 'drop-shadow(0 10px 16px rgba(15,23,42,.4))',
             opacity: 1 - gap,
           }}
-        />
+        >
+          <EmGlyph icon="cursor" size={54} color={em.text} />
+        </div>
       </HeroPlane>
 
       <HeroImpact progress={p} at={HERO_IMPACT_AT} x={540} y={HERO_TOP + 480} color={em.primary} reach={720} />
@@ -565,7 +564,7 @@ export const GeoRecipeSim: React.FC<SimulationProps> = ({frame, total}) => {
         note={byArea ? 'Ordenado por área' : 'Ordenado por precio'}
         enter={enter}
         flip={flip}
-        height={478}
+        height={540}
       />
 
       {/* The same three listings, travelling between the slots the two recipes
@@ -675,9 +674,10 @@ export const GeoRecipeSim: React.FC<SimulationProps> = ({frame, total}) => {
                   opacity: Math.min(1, rise * 2.6) * (1 - Math.max(0, rise - 0.9) * 8),
                 }}
               >
-                <EmThumb size={w - 28} height={92} tint={index} />
-                <div style={{marginTop: 10, fontSize: emType.micro, fontWeight: 800, color: em.textSecondary}}>
-                  anuncio
+                <EmThumb size={w - 28} height={92} tint={index + 3} kind="land" />
+                <div style={{marginTop: 10, display: 'flex', alignItems: 'center', gap: 8}}>
+                  <EmGlyph icon="check" size={22} color={em.primaryStrong} />
+                  <span style={{fontSize: emType.micro, fontWeight: 700, color: em.textSecondary}}>anuncio</span>
                 </div>
               </div>
             );
@@ -708,7 +708,10 @@ export const GeoRecipeSim: React.FC<SimulationProps> = ({frame, total}) => {
                   transform: `rotate(${aside * (index === 0 ? -8 : 8)}deg)`,
                 }}
               >
-                <div style={{fontSize: 40, fontWeight: 900, color: '#8A5A08', ...figures}}>{item.label}</div>
+                <div style={{display: 'flex', alignItems: 'center', gap: 10}}>
+                  <EmGlyph icon="reject" size={30} color="#8A5A08" />
+                  <span style={{fontSize: 40, fontWeight: 900, color: '#8A5A08', ...figures}}>{item.label}</span>
+                </div>
                 <div style={{marginTop: 6, fontSize: emType.meta, fontWeight: 800, color: '#8A5A08'}}>
                   {aside > 0.6 ? 'descartado' : item.note}
                 </div>
@@ -736,34 +739,39 @@ export const GeoReasonSim: React.FC<SimulationProps> = ({frame, total}) => {
   const span = Math.max(1, total ?? frame + 1);
   const p = frame / span;
 
+  // Two rows, not three. The scene is about the reason and about the map, and
+  // three rows with a two-line pill each ran straight into the headline. A shot
+  // shows one thing; the list was already established two scenes ago.
+  const shown = BY_PRICE.slice(0, 2);
+
   const enter = land(p, 0, 0.09);
   const push = glide(p, 0, 1);
-  const opened = BY_PRICE.map((_, index) => land(p, 0.12 + stagger(index, 0.11), 0.4 + stagger(index, 0.11)));
-  const touch = beat(p, 0.54, 0.64);
-  const travel = glide(p, 0.6, 0.86);
-  const landed = land(p, 0.78, 0.98);
+  const opened = shown.map((_, index) => land(p, 0.1 + stagger(index, 0.12), 0.36 + stagger(index, 0.12)));
+  const touch = beat(p, 0.46, 0.56);
+  const travel = glide(p, 0.52, 0.8);
+  const landed = land(p, 0.72, 0.95);
 
   return (
     <EmStage enter={enter} push={push}>
-      <EmPageHead title="Cada anuncio dice su motivo" note="Por qué ocupa esa posición" enter={enter} height={452} />
+      <EmPageHead title="Cada anuncio dice su motivo" note="Y en qué parte del mapa queda" enter={enter} height={440} />
 
       <div
         style={{
           position: 'absolute',
           left: CONTENT.left,
           width: CONTENT.width,
-          top: 476,
+          top: 470,
           display: 'flex',
           flexDirection: 'column',
           gap: ROW_GAP,
         }}
       >
-        {BY_PRICE.map((item, index) => (
+        {shown.map((item, index) => (
           <div
             key={item.place}
             style={{
-              opacity: index === 0 ? 1 - travel * 0.9 : 1,
-              transform: index === 0 ? `translateX(${travel * 430}px) scale(${1 - travel * 0.4})` : undefined,
+              opacity: index === 0 ? 1 - travel * 0.92 : 1,
+              transform: index === 0 ? `translateX(${travel * 300}px) translateY(${travel * 300}px) scale(${1 - travel * 0.52})` : undefined,
               position: 'relative',
               zIndex: index === 0 ? 4 : 1,
             }}
@@ -780,73 +788,106 @@ export const GeoReasonSim: React.FC<SimulationProps> = ({frame, total}) => {
               actions={false}
               raised={index === 0}
               width={CONTENT.width}
+              tint={index}
+              kind="land"
             />
           </div>
         ))}
       </div>
 
-      {/* The finger that picks the first one. */}
-      {touch > 0 && travel < 0.85 ? (
+      {/* The pointer that picks the first one. A hand, on the card's edge, so it
+          reads as a tap and not as a black shard over the photograph. */}
+      {touch > 0 && travel < 0.7 ? (
         <div
           style={{
             position: 'absolute',
-            left: 300,
-            top: 566 + touch * 14,
-            width: 42,
-            height: 56,
-            background: em.text,
-            clipPath: 'polygon(0 0, 0 100%, 28% 76%, 46% 100%, 66% 88%, 48% 62%, 100% 54%)',
-            filter: 'drop-shadow(0 8px 14px rgba(0,0,0,.35))',
-            transform: `scale(${1 + Math.sin(touch * Math.PI) * 0.2})`,
-            opacity: 1 - travel,
+            left: CONTENT.left + CONTENT.width - 108,
+            top: 566 + Math.sin(touch * Math.PI) * 16,
+            opacity: (1 - travel) * Math.min(1, touch * 2),
+            transform: `scale(${0.9 + Math.sin(touch * Math.PI) * 0.35})`,
+            filter: 'drop-shadow(0 8px 14px rgba(15,23,42,.35))',
             zIndex: 6,
           }}
-        />
+        >
+          <EmGlyph icon="cursor" size={58} color={em.primaryStrong} />
+        </div>
       ) : null}
 
       {/* The map it lands on: the row does not open a page, it becomes a place. */}
-      {travel > 0.05 ? (
+      {travel > 0.03 ? (
         <div
           style={{
             position: 'absolute',
             left: CONTENT.left,
             width: CONTENT.width,
-            top: 830,
-            height: 244,
+            top: 800,
+            height: 290,
             borderRadius: emCard.radius,
             overflow: 'hidden',
-            background: em.surface,
+            background: '#E8EEF3',
             border: emCard.border,
-            boxShadow: emCard.shadow,
-            opacity: Math.min(1, travel * 2),
+            boxShadow: emCard.shadowHover,
+            opacity: Math.min(1, travel * 2.2),
           }}
         >
-          {[0.26, 0.54, 0.8].map((at) => (
-            <div key={`h-${at}`} style={{position: 'absolute', left: 0, right: 0, top: `${at * 100}%`, height: 3, background: em.white}} />
-          ))}
-          {[0.2, 0.46, 0.74].map((at) => (
-            <div key={`v-${at}`} style={{position: 'absolute', top: 0, bottom: 0, left: `${at * 100}%`, width: 3, background: em.white}} />
-          ))}
+          {/* Blocks and streets, so it reads as a city and not as a grid. */}
+          {[[0, 0, 46, 34], [54, 0, 46, 34], [0, 42, 30, 58], [38, 42, 62, 26], [38, 76, 62, 24]].map(
+            ([x, y, w, h], i) => (
+              <div
+                key={i}
+                style={{
+                  position: 'absolute',
+                  left: `${x}%`,
+                  top: `${y}%`,
+                  width: `${w}%`,
+                  height: `${h}%`,
+                  background: i % 2 ? '#F4F7FA' : '#EDF2F6',
+                  border: '3px solid #FFFFFF',
+                }}
+              />
+            ),
+          )}
+          <div style={{position: 'absolute', left: 0, right: 0, top: '38%', height: 10, background: '#FFFFFF'}} />
+          <div style={{position: 'absolute', top: 0, bottom: 0, left: '34%', width: 10, background: '#FFFFFF'}} />
+          {/* The zone lighting up under the pin. */}
           {landed > 0 ? (
             <div
               style={{
                 position: 'absolute',
-                left: CONTENT.width * 0.46 - 92,
-                top: 92 - (1 - landed) * 160,
-                height: 64,
-                padding: '0 22px',
+                left: '20%',
+                top: '30%',
+                width: 260,
+                height: 200,
+                borderRadius: 18,
+                background: `${em.primary}26`,
+                border: `4px solid ${em.primary}`,
+                opacity: landed,
+                transform: `scale(${0.86 + landed * 0.14})`,
+              }}
+            />
+          ) : null}
+          {landed > 0 ? (
+            <div
+              style={{
+                position: 'absolute',
+                left: '26%',
+                top: 96 - (1 - landed) * 180,
+                height: 70,
+                padding: '0 24px',
                 borderRadius: emCard.radiusPill,
                 background: em.primaryStrong,
                 color: em.white,
-                fontSize: 32,
+                fontSize: 34,
                 fontWeight: 900,
                 display: 'flex',
                 alignItems: 'center',
+                gap: 10,
                 ...figures,
-                boxShadow: `0 14px 32px rgba(0,0,0,.3), 0 0 ${40 * landed}px ${em.primary}66`,
+                boxShadow: '0 16px 34px rgba(0,0,0,.3)',
                 transform: `scale(${0.8 + landed * 0.2})`,
               }}
             >
+              <EmGlyph icon="pin" size={30} color={em.white} />
               $18.500
             </div>
           ) : null}
@@ -887,7 +928,7 @@ export const GeoNoPromotedSim: React.FC<SimulationProps> = ({frame, total}) => {
           position: 'absolute',
           left: CONTENT.left,
           width: CONTENT.width,
-          top: 476,
+          top: 520,
           display: 'flex',
           flexDirection: 'column',
           gap: ROW_GAP,
@@ -907,35 +948,41 @@ export const GeoNoPromotedSim: React.FC<SimulationProps> = ({frame, total}) => {
               width={CONTENT.width}
               measureLive={index !== 0 || confirm > 0.12}
             />
-            {/* The first row is the one they try to buy. */}
+            {/* The first row is the one they try to buy.
+                They arrive from the right edge of the card, not from outside
+                the frame: anchoring them to the canvas put «Lo más visto» half
+                off screen, so the label the objection is about never got read. */}
             {index === 0
               ? BUYERS.map((label, order) => {
                   const attempt = attempts[order];
                   if (attempt <= 0) return null;
+                  const arrive = Math.min(1, attempt * 2.4);
                   const shove = Math.abs(Math.sin(Math.min(1, attempt * 1.6) * Math.PI * 2));
-                  const gone = settle(attempt, 0.6, 1);
+                  const gone = settle(attempt, 0.62, 1);
                   return (
                     <div
                       key={label}
                       style={{
                         position: 'absolute',
-                        right: -(1 - Math.min(1, attempt * 2.2)) * 480 - gone * 560,
-                        top: 20 + order * 60,
-                        height: 54,
-                        padding: '0 20px',
-                        borderRadius: emCard.radiusPill,
+                        right: 18 - (1 - arrive) * 320 - gone * 360,
+                        top: 24 + order * 58,
+                        height: 56,
+                        padding: '0 22px',
                         display: 'flex',
                         alignItems: 'center',
-                        background: `${em.warning}1F`,
-                        border: `3px solid ${em.warning}`,
-                        color: '#8A5A08',
-                        fontSize: 26,
+                        borderRadius: emCard.radiusPill,
+                        background: em.warning,
+                        border: '3px solid #B97C0A',
+                        color: '#3A2503',
+                        fontSize: 28,
                         fontWeight: 900,
-                        textDecoration: gone > 0.3 ? 'line-through' : undefined,
-                        opacity: 1 - gone * 0.85,
-                        filter: gone > 0.3 ? 'saturate(.3)' : undefined,
-                        transform: `translateX(${-shove * 26}px)`,
-                        zIndex: 7,
+                        whiteSpace: 'nowrap',
+                        textDecoration: gone > 0.25 ? 'line-through' : undefined,
+                        opacity: arrive * (1 - gone * 0.9),
+                        filter: gone > 0.25 ? 'saturate(.35)' : undefined,
+                        transform: `translateX(${-shove * 30}px) rotate(${gone * 6}deg)`,
+                        boxShadow: '0 10px 24px rgba(15,23,42,.22)',
+                        zIndex: 8,
                       }}
                     >
                       {label}
@@ -976,7 +1023,7 @@ export const GeoNoPromotedSim: React.FC<SimulationProps> = ({frame, total}) => {
               fontWeight: 900,
             }}
           >
-            <EmGlyph icon="tag" size={28} />
+            <EmGlyph icon="trophy" size={30} color={em.primaryStrong} />
             Ordenado por el dato
           </span>
         </div>

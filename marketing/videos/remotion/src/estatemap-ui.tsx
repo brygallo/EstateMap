@@ -1,6 +1,27 @@
 import React from 'react';
 import {figures} from './system-kit';
 import {font} from './theme';
+import {PropertyArt, PropertyKind} from './property-art';
+import {ArrowRight, Ban, Check, Home, MapPin, MousePointer2, Ruler, Tag, Trophy} from 'lucide-react';
+
+/** The glyphs the living pages use, by the name the piece calls them. */
+const ICONS = {
+  pin: MapPin,
+  ruler: Ruler,
+  tag: Tag,
+  trophy: Trophy,
+  home: Home,
+  arrow: ArrowRight,
+  /** The pointer. Hand-drawing a cursor out of a polygon is the same mistake
+      as hand-drawing a pin: there is a glyph for it and the product uses this
+      set. */
+  cursor: MousePointer2,
+  /** What passed the check, and what did not. */
+  check: Check,
+  reject: Ban,
+} as const;
+
+export type EmIcon = keyof typeof ICONS;
 
 /**
  * The portal's own interface, at canvas scale.
@@ -210,7 +231,9 @@ export const EmReason: React.FC<{text: string; enter?: number}> = ({text, enter 
       fontWeight: 600,
       opacity: Math.min(1, enter * 1.6),
       transform: `translateY(${(1 - enter) * 10}px)`,
-      whiteSpace: 'nowrap',
+      maxWidth: '100%',
+      boxSizing: 'border-box',
+      lineHeight: 1.25,
     }}
   >
     {text}
@@ -261,30 +284,9 @@ export const EmBandButton: React.FC<{label: string; ghost?: boolean}> = ({label,
 );
 
 /** The arrow the product puts after its primary action. */
-export const EmArrow: React.FC<{color?: string; size?: number}> = ({color = em.primaryStrong, size = 22}) => (
-  <span
-    style={{
-      width: size,
-      height: size,
-      flex: 'none',
-      position: 'relative',
-      display: 'inline-block',
-    }}
-  >
-    <span style={{position: 'absolute', left: 0, top: size / 2 - 1.5, width: size, height: 3, background: color, borderRadius: 2}} />
-    <span
-      style={{
-        position: 'absolute',
-        right: 1,
-        top: size / 2 - size * 0.3,
-        width: size * 0.55,
-        height: size * 0.55,
-        borderTop: `3px solid ${color}`,
-        borderRight: `3px solid ${color}`,
-        transform: 'rotate(45deg)',
-      }}
-    />
-  </span>
+/** The arrow the product puts after its primary action. */
+export const EmArrow: React.FC<{color?: string; size?: number}> = ({color = em.primaryStrong, size = 24}) => (
+  <ArrowRight size={size} color={color} strokeWidth={2.4} absoluteStrokeWidth />
 );
 
 /**
@@ -295,68 +297,32 @@ export const EmArrow: React.FC<{color?: string; size?: number}> = ({color = em.p
  * renderer would have to resolve, but the shape, the weight and the green are
  * the product's.
  */
-export const EmMeta: React.FC<{icon: 'pin' | 'ruler' | 'tag'; text: string}> = ({icon, text}) => (
+export const EmMeta: React.FC<{icon: EmIcon; text: string}> = ({icon, text}) => (
   <span style={{display: 'inline-flex', alignItems: 'center', gap: 10, fontSize: emType.meta, fontWeight: 400, color: em.textSecondary}}>
     <EmGlyph icon={icon} />
     {text}
   </span>
 );
 
-export const EmGlyph: React.FC<{icon: 'pin' | 'ruler' | 'tag'; size?: number}> = ({icon, size = 24}) => {
-  if (icon === 'pin') {
-    return (
-      <span style={{width: size, height: size, flex: 'none', position: 'relative', display: 'inline-block'}}>
-        <span
-          style={{
-            position: 'absolute',
-            left: size * 0.16,
-            top: 0,
-            width: size * 0.68,
-            height: size * 0.68,
-            borderRadius: '50% 50% 50% 0',
-            transform: 'rotate(-45deg)',
-            border: `3px solid ${em.primary}`,
-          }}
-        />
-      </span>
-    );
-  }
-  if (icon === 'ruler') {
-    return (
-      <span style={{width: size, height: size, flex: 'none', position: 'relative', display: 'inline-block'}}>
-        <span
-          style={{
-            position: 'absolute',
-            left: 0,
-            top: size * 0.28,
-            width: size,
-            height: size * 0.44,
-            border: `3px solid ${em.primary}`,
-            borderRadius: 3,
-          }}
-        />
-        {[0.34, 0.52, 0.7].map((at) => (
-          <span
-            key={at}
-            style={{position: 'absolute', left: size * at, top: size * 0.28, width: 3, height: size * 0.18, background: em.primary}}
-          />
-        ))}
-      </span>
-    );
-  }
-  return (
-    <span style={{width: size, height: size, flex: 'none', position: 'relative', display: 'inline-block'}}>
-      <span
-        style={{
-          position: 'absolute',
-          inset: size * 0.12,
-          border: `3px solid ${em.primary}`,
-          borderRadius: 4,
-          transform: 'rotate(45deg)',
-        }}
-      />
-    </span>
-  );
+/**
+ * An icon of the product, drawn by the product's own icon set.
+ *
+ * `LiveRankingPage.tsx` imports `ArrowRight, Home, MapPin, Ruler, Trophy` from
+ * `lucide-react`, at 16 px with a 1.75 stroke. This file had hand-drawn
+ * approximations of a pin and a ruler instead, which is the same mistake as
+ * approximating a colour: an invented icon is not the product's icon, and it
+ * looks invented. The factory now installs the same package at the same major
+ * version and uses the same glyphs.
+ */
+export const EmGlyph: React.FC<{icon: EmIcon; size?: number; color?: string}> = ({
+  icon,
+  size = 26,
+  color = em.primary,
+}) => {
+  const Glyph = ICONS[icon];
+  // The product draws these at 16 px with stroke 1.75. At twice the scale the
+  // stroke has to double too or the icon comes out spindly next to the type.
+  return <Glyph size={size} color={color} strokeWidth={2.2} absoluteStrokeWidth />;
 };
 
 /**
@@ -405,128 +371,30 @@ export const EmExample: React.FC<{scale?: number}> = ({scale = 1}) => (
  * 14 August gives — a plot seen from above reads as a shape floating in the
  * sky, and nobody knows what it is.
  */
-export const EmThumb: React.FC<{size?: number; height?: number; tint?: number}> = ({
-  size = 168,
-  height,
-  tint = 0,
-}) => {
-  const h = height ?? Math.round(size * 0.67);
-  const sky = ['#D7E9F8', '#DFF0FA', '#D2E5F6'][tint % 3];
-  const wallA = ['#F0E3D2', '#EDE2DA', '#F2E9DA'][tint % 3];
-  const wallB = ['#E5D7C6', '#E2D6CE', '#E8DECE'][tint % 3];
-  const roof = ['#2F3B52', '#3B3346', '#27384A'][tint % 3];
-  const houseW = size * 0.26;
-  const houseH = h * 0.42;
-  const groundTop = h * 0.58;
-  return (
-    <span
-      style={{
-        width: size,
-        height: h,
-        flex: 'none',
-        borderRadius: 14,
-        overflow: 'hidden',
-        position: 'relative',
-        background: `linear-gradient(180deg, ${sky} 0%, #F2F7FC 58%)`,
-        border: `2px solid ${em.lineSubtle}`,
-      }}
-    >
-      {/* Sun. */}
-      <span
-        style={{
-          position: 'absolute',
-          right: size * 0.1,
-          top: h * 0.1,
-          width: size * 0.13,
-          height: size * 0.13,
-          borderRadius: '50%',
-          background: '#FBE39B',
-        }}
-      />
-      {/* The two neighbours the empty lot sits between. */}
-      {[
-        {x: -size * 0.02, wall: wallA},
-        {x: size * 0.76, wall: wallB},
-      ].map((house, i) => (
-        <span key={i}>
-          <span
-            style={{
-              position: 'absolute',
-              left: house.x,
-              top: groundTop - houseH,
-              width: houseW,
-              height: houseH,
-              background: house.wall,
-            }}
-          />
-          {/* Roof: a real pitch, so it reads as a house and not as a block. */}
-          <span
-            style={{
-              position: 'absolute',
-              left: house.x - houseW * 0.12,
-              top: groundTop - houseH - h * 0.16,
-              width: 0,
-              height: 0,
-              borderLeft: `${(houseW * 1.24) / 2}px solid transparent`,
-              borderRight: `${(houseW * 1.24) / 2}px solid transparent`,
-              borderBottom: `${h * 0.16}px solid ${roof}`,
-            }}
-          />
-          <span
-            style={{
-              position: 'absolute',
-              left: house.x + houseW * 0.28,
-              top: groundTop - houseH * 0.62,
-              width: houseW * 0.44,
-              height: houseH * 0.34,
-              background: sky,
-            }}
-          />
-        </span>
-      ))}
-      {/* The lot: grass, and a fence along the front. */}
-      <span style={{position: 'absolute', left: 0, right: 0, top: groundTop, bottom: 0, background: '#E9EEF3'}} />
-      <span
-        style={{
-          position: 'absolute',
-          left: size * 0.26,
-          width: size * 0.48,
-          top: groundTop - h * 0.16,
-          height: h * 0.28,
-          background: '#CDE9D3',
-        }}
-      />
-      {[0, 1, 2, 3, 4, 5].map((i) => (
-        <span
-          key={`post-${i}`}
-          style={{
-            position: 'absolute',
-            left: size * (0.26 + i * 0.096),
-            top: groundTop - h * 0.02,
-            width: 3,
-            height: h * 0.13,
-            background: em.primary,
-          }}
-        />
-      ))}
-      <span
-        style={{
-          position: 'absolute',
-          left: size * 0.26,
-          width: size * 0.48,
-          top: groundTop + h * 0.02,
-          height: 3,
-          background: em.primary,
-        }}
-      />
-      {/* The road in front. */}
-      <span style={{position: 'absolute', left: 0, right: 0, bottom: 0, height: h * 0.2, background: '#C4CED8'}} />
-      <span
-        style={{position: 'absolute', left: size * 0.08, right: size * 0.08, bottom: h * 0.09, height: 3, background: '#EEF2F6'}}
-      />
-    </span>
-  );
-};
+export const EmThumb: React.FC<{
+  size?: number;
+  height?: number;
+  /** Kept as `tint` so callers do not have to change; it picks the palette. */
+  tint?: number;
+  kind?: PropertyKind;
+  progress?: number;
+}> = ({size = 168, height, tint = 0, kind = 'land', progress = 0}) => (
+  <span
+    style={{
+      width: size,
+      height: height ?? Math.round(size * 0.67),
+      flex: 'none',
+      borderRadius: 14,
+      overflow: 'hidden',
+      position: 'relative',
+      border: `2px solid ${em.lineSubtle}`,
+      background: em.surface,
+      display: 'block',
+    }}
+  >
+    <PropertyArt kind={kind} variant={tint} progress={progress} />
+  </span>
+);
 
 /**
  * One row of a living ranking, laid out as `LiveRankingPage.tsx` lays it out.
@@ -548,8 +416,10 @@ export const EmRankRow: React.FC<{
   enter?: number;
   raised?: boolean;
   width: number;
-  /** Which of the three illustrations this row shows. */
+  /** Which of the palettes this row's illustration uses. */
   tint?: number;
+  /** What is being sold, so the drawing is of that. */
+  kind?: PropertyKind;
   /** Dims the measure when the current recipe does not sort by it. */
   measureLive?: boolean;
 }> = ({
@@ -566,6 +436,7 @@ export const EmRankRow: React.FC<{
   raised = false,
   width,
   tint = 0,
+  kind = 'land',
   measureLive = true,
 }) => (
   <EmCard
@@ -579,7 +450,7 @@ export const EmRankRow: React.FC<{
   >
     <div style={{display: 'flex', gap: 22, alignItems: 'flex-start'}}>
       <EmRank place={place} />
-      <EmThumb size={182} height={140} tint={tint} />
+      <EmThumb size={182} height={140} tint={tint} kind={kind} />
       <div style={{flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 10}}>
         <div style={{display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 20}}>
           <span
@@ -589,9 +460,8 @@ export const EmRankRow: React.FC<{
               color: em.text,
               lineHeight: 1.18,
               overflow: 'hidden',
-              display: '-webkit-box',
-              WebkitLineClamp: 2,
-              WebkitBoxOrient: 'vertical',
+              whiteSpace: 'nowrap',
+              textOverflow: 'ellipsis',
             }}
           >
             {title}

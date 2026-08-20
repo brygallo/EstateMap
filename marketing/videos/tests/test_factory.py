@@ -659,6 +659,140 @@ class LintTests(unittest.TestCase):
         self.assertTrue(any(item["rule"] == "repeated_hook" for item in report["findings"]))
 
 
+class PropertyArtTests(unittest.TestCase):
+    """Where the product shows a photograph, a piece shows a drawing — a good one.
+
+    The placeholder a portal falls back to when a photo is missing is not the
+    product, and three empty boxes in a ranking read as broken. This art appears
+    in every piece that shows a listing, so the bar is set here once.
+    """
+
+    def art(self):
+        return (
+            Path(__file__).resolve().parents[1] / "remotion/src/property-art.tsx"
+        ).read_text(encoding="utf-8")
+
+    def test_the_four_kinds_the_product_has_are_drawn(self):
+        """`PropertyType` in the product is house | land | apartment |
+        commercial; a piece about flats may not draw three houses."""
+        art = self.art()
+        for kind in ("house", "apartment", "land", "commercial"):
+            self.assertIn(f"kind === '{kind}'", art, kind)
+
+    def test_nothing_in_the_art_is_a_flat_fill(self):
+        """A flat fill is the first thing the platform re-encode bands, and what
+        makes a drawing read as a diagram. Sky, walls, roofs and glass all carry
+        a gradient."""
+        art = self.art()
+        for gradient in ("sky-${uid}", "wall-${uid}", "roof-${uid}", "glass-${uid}"):
+            self.assertIn(gradient, art, gradient)
+
+    def test_every_volume_stands_on_the_ground(self):
+        """A subject with nothing under it is a sticker."""
+        art = self.art()
+        self.assertIn("const Grounded", art)
+        self.assertGreaterEqual(art.count("<Grounded"), 4, "each kind grounds its volumes")
+
+    def test_the_art_carries_the_detail_a_person_notices(self):
+        art = self.art()
+        for part in ("<Window", "<Tree", "<Car", "handle" if "handle" in art else "tirador" if "tirador" in art else "circle"):
+            self.assertIn(part, art, part)
+
+    def test_the_ranking_rows_use_the_art_and_not_a_placeholder(self):
+        kit = (
+            Path(__file__).resolve().parents[1] / "remotion/src/estatemap-ui.tsx"
+        ).read_text(encoding="utf-8")
+        self.assertIn("<PropertyArt", kit)
+        self.assertIn("kind={kind}", kit, "a row draws what it is selling")
+
+    def test_both_contracts_carry_the_illustration_rule(self):
+        root = Path(__file__).resolve().parents[1]
+        for name in ("CLAUDE.md", "AGENTS.md"):
+            text = (root / name).read_text(encoding="utf-8")
+            self.assertIn("property-art", text, name)
+
+
+class IconTests(unittest.TestCase):
+    """Icons come from the product's own set, not from a polygon.
+
+    EstateMap imports `lucide-react`; a cursor built out of a seven-point
+    `clipPath` is not that icon and it looks like what it is. The exception is
+    what a glyph cannot say — a property with its lot, its fence and the road in
+    front is a scene, and that is what `property-art.tsx` is for.
+    """
+
+    def kit(self):
+        return (
+            Path(__file__).resolve().parents[1] / "remotion/src/estatemap-ui.tsx"
+        ).read_text(encoding="utf-8")
+
+    def test_the_factory_installs_the_same_icon_set_as_the_product(self):
+        import json
+
+        root = Path(__file__).resolve().parents[1]
+        factory_pkg = json.loads((root / "remotion/package.json").read_text(encoding="utf-8"))
+        product_pkg = json.loads(
+            (root.parents[1] / "frontend/package.json").read_text(encoding="utf-8")
+        )
+        mine = factory_pkg["dependencies"]["lucide-react"].lstrip("^~")
+        theirs = product_pkg["dependencies"]["lucide-react"].lstrip("^~")
+        self.assertEqual(mine.split(".")[0], theirs.split(".")[0], "same major version")
+
+    def test_the_glyphs_the_living_pages_use_are_registered(self):
+        kit = self.kit()
+        self.assertIn("from 'lucide-react'", kit)
+        for name in ("MapPin", "Ruler", "Trophy", "ArrowRight", "MousePointer2"):
+            self.assertIn(name, kit, name)
+
+    def test_the_ranking_scenes_draw_no_icon_by_hand(self):
+        """`clipPath: polygon(...)` is how the cursor used to be made."""
+        source = (
+            Path(__file__).resolve().parents[1] / "remotion/src/geo-ranking-simulations.tsx"
+        ).read_text(encoding="utf-8")
+        self.assertNotIn("clipPath: 'polygon", source)
+
+    def test_both_contracts_carry_the_icon_rule(self):
+        root = Path(__file__).resolve().parents[1]
+        for name in ("CLAUDE.md", "AGENTS.md"):
+            text = (root / name).read_text(encoding="utf-8")
+            self.assertIn("lucide", text, name)
+
+
+class RenderGateTests(unittest.TestCase):
+    """A master is not how a piece gets looked at.
+
+    It costs half an hour, and by the time it exists the mistakes are already
+    inside it. The studio plays the same composition with the same props and the
+    same voice and answers a saved file in a second, so that is where a piece is
+    judged — and the render happens once, at the end, with the narration bought.
+
+    This was prose first. Prose is what the voice rotation was, and it was
+    broken eleven masters in a row.
+    """
+
+    def contracts(self):
+        root = Path(__file__).resolve().parents[1]
+        return {
+            name: (root / name).read_text(encoding="utf-8")
+            for name in ("CLAUDE.md", "AGENTS.md")
+        }
+
+    def test_the_studio_command_exists(self):
+        self.assertTrue(hasattr(factory, "cmd_studio"))
+
+    def test_a_render_without_final_is_refused(self):
+        source = (Path(__file__).resolve().parents[1] / "factory.py").read_text(encoding="utf-8")
+        block = source.split("def cmd_render")[1].split("\ndef ")[0]
+        self.assertIn("if not args.final and not getattr(args, \"draft\", False):", block)
+        self.assertIn("video studio", block, "the refusal has to say where to look instead")
+
+    def test_both_contracts_carry_the_rule(self):
+        """Claude and Codex read different files and obey the same contract."""
+        for name, text in self.contracts().items():
+            self.assertIn("studio", text, name)
+            self.assertIn("--final", text, name)
+
+
 class AnimationRegistryTests(unittest.TestCase):
     """An animation exists only when both halves of the factory know about it.
 

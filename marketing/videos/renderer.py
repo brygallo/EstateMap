@@ -415,7 +415,13 @@ def scene_props(
         "voiceFile": f"jobs/{name}/audio/{voice_target.name}",
         "assetStartInFrames": start,
         "assetTotalInFrames": timeline.total(scene.get("asset"), span),
-        "accent": ACCENTS[index % len(ACCENTS)],
+        # The rotation exists so consecutive pieces do not look identical, and
+        # it runs through the whole shared palette — violet and lavender
+        # included. On a piece drawn inside the product's own interface that is
+        # another brand's colour on a green screen: `geo-015` came out with a
+        # violet rule over its headline and a violet progress bar. A plan that
+        # states an accent has made a decision, and the rotation defers to it.
+        "accent": str(scene.get("accent") or "").strip() or ACCENTS[index % len(ACCENTS)],
     }
 
 

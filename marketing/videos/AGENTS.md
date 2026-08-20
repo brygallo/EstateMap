@@ -20,6 +20,14 @@ cuando se saltan, y las dos se aplican igual a Codex:
   con la voz ya comprada: `render --final`. Sin `--final`, el render se niega.
 - **La voz pagada nunca se lanza por iniciativa propia.** Es la única puerta al
   gasto y espera una orden explícita.
+- **Cada marca dibuja su interfaz con su kit.** `estatemap-ui.tsx` para Geo,
+  `interface-kit.tsx` para Aents; sus valores se miden del producto en marcha,
+  no se aproximan.
+- **Una propiedad se dibuja con `property-art.tsx`**, nunca con un marcador de
+  posición ni una caja de color.
+- **Todo lo que pueda ser un icono sale de `lucide-react`**, el mismo paquete
+  que usa el producto, a través de `EmGlyph`. Solo se dibuja a mano lo que un
+  icono no puede representar.
 Si uno de estos documentos se contradice con las reglas de `specs/` o con el
 código, se detiene la promesa afectada y se registra el hallazgo; no se elige la
 versión más conveniente.

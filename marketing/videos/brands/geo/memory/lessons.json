@@ -473,6 +473,46 @@
       "observation": "Cambio de estándar, no un defecto de esta pieza: la escena 1 de todos los videos pasa a exigirse por encima de las demás. Es la única que ve todo el mundo y la que congela el feed, y el acabado de ese fotograma es lo que dice quién hizo la pieza. Las aperturas anteriores de Geo quedan exentas y no se reutilizan.",
       "rule": "Toda apertura nueva se construye sobre remotion/src/hero-stage.tsx —cámara única, planos de profundidad declarados, luz con fuente, un impacto y cadencia— y su interfaz sobre remotion/src/interface-kit.tsx. Se registra en renderer.HERO_STAGINGS con su movimiento de cámara y dos ganchos seguidos no pueden rodarse igual. review_tools.HeroSceneAudit lo mide sobre el máster: mínimo tres eventos por segundo y máximo 12 % de imagen repetida. Geo todavía no tiene ninguna animación de gancho registrada: el primer video nuevo tiene que construir la suya. Regla completa en animation-standard.md §0.",
       "origin": "human"
+    },
+    {
+      "created_at": "2026-08-20T11:11:32.350481-05:00",
+      "status": "active",
+      "source": "geo-015",
+      "scope": "global",
+      "applies_to": null,
+      "observation": "Una pieza de Geo se dibujo con interface-kit.tsx, que es la superficie oscura de cristal de las piezas de Aents. EstateMap es un producto claro -tarjeta blanca, borde de un pelo, texto negro y un verde- asi que el video enseñaba un producto que no existe",
+      "rule": "La interfaz de una pieza de Geo se dibuja con remotion/src/estatemap-ui.tsx, cuyos valores se miden del producto en marcha con getComputedStyle sobre la pagina publicada, no se leen del CSS a ojo ni se ajustan a gusto. Radio 8, borde 1px D1D5DB, sombra 0 1px 2px rgba(0,0,0,.05), badge circulo de 44, precio peso 900, titulo 700, metadatos 400, pildora 600; todo doblado para el lienzo. interface-kit.tsx se queda para Aents",
+      "origin": "human"
+    },
+    {
+      "created_at": "2026-08-20T11:11:47.685342-05:00",
+      "status": "active",
+      "source": "geo-015",
+      "scope": "global",
+      "applies_to": null,
+      "observation": "Donde el producto enseña una fotografia de la propiedad, la pieza dibujaba el placeholder gris al que cae el portal cuando falta la foto. Un ranking con tres cajas vacias parece roto, y era lo unico que separaba esta pieza de geo-013",
+      "rule": "Toda propiedad que aparezca en una pieza se dibuja con remotion/src/property-art.tsx, en el tipo que corresponda -house, apartment, land, commercial, los mismos de PropertyType-. Nunca un placeholder ni una caja de color. La ilustracion se gana el cuidado que merece algo que sale en todas las piezas: cielo en degradado, sombra de contacto bajo cada volumen, alero que vuela sobre el muro, cristal con montantes y reflejo, puerta con escalon y tirador, arbolado en dos tonos, bordillo y un coche que da la escala. Nada plano, y la composicion pesa al centro porque una miniatura es casi cuadrada y recorta los lados",
+      "origin": "human"
+    },
+    {
+      "created_at": "2026-08-20T11:12:06.440856-05:00",
+      "status": "active",
+      "source": "geo-015",
+      "scope": "global",
+      "applies_to": null,
+      "observation": "Un master cuesta media hora y cuando existe los errores ya estan dentro. Se gastaron tres renders enteros en mirar cosas que el estudio enseña en un segundo",
+      "rule": "Una pieza se juzga en video studio <id>, que sintetiza la voz gratuita y levanta Remotion Studio. El render ocurre una sola vez, despues de que una persona apruebe lo que vio ahi y con la voz ya comprada: render --final. Sin --final el render se niega. --draft queda para depurar el renderer",
+      "origin": "human"
+    },
+    {
+      "created_at": "2026-08-20T11:12:06.609392-05:00",
+      "status": "active",
+      "source": "geo-015",
+      "scope": "global",
+      "applies_to": null,
+      "observation": "El rotulo de cada escena repetia palabra por palabra el subtitulo que tenia debajo -Ya esta hecha sobre ya esta hecha- asi que dos tercios del cuadro decian lo mismo",
+      "rule": "El rotulo dice lo que la voz no esta diciendo en ese momento. Se escribe despues del guion y se compara linea por linea contra su locucion; solo el CTA puede repetir. Maximo cuatro palabras y veintidos caracteres, que ya comprueba el linter",
+      "origin": "human"
     }
   ]
 }

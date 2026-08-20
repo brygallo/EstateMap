@@ -80,6 +80,73 @@ De ahí salen dos reglas que no se negocian por prisa:
   y tamaño de los controles salen de `interface-kit.tsx`. Una composición pide
   una ventana, un riel o una fila en un estado.
 
+## Una propiedad se dibuja, y se dibuja bien
+
+Donde el producto enseña una fotografía, una pieza no puede enseñar un
+rectángulo gris: ese es el marcador de posición al que cae el portal cuando
+falta la foto, y un ranking con tres cajas vacías parece roto. Fotografiar
+tampoco es opción —los anuncios de una pieza son inventados y una foto real
+sería una propiedad real que nadie ha autorizado—, así que se ilustra.
+
+- **Toda propiedad sale de `remotion/src/property-art.tsx`**, en el tipo que
+  corresponda: `house`, `apartment`, `land` o `commercial`, los mismos de
+  `PropertyType` en el producto. Nunca un marcador, nunca una caja de color.
+- **Se gana el cuidado que merece algo que aparece en todas las piezas.** Cielo
+  en degradado, sombra de contacto bajo cada volumen, alero que vuela sobre el
+  muro, cristal con montantes y reflejo, puerta con escalón y tirador, arbolado
+  en dos tonos, bordillo y un coche que da la escala. Nada plano: un relleno
+  liso es lo primero que la plataforma convierte en bandeado, y lo que hace que
+  un dibujo parezca un diagrama.
+- **Se dibuja como se reconoce en la calle**, no como lo modela el producto. Un
+  terreno es el hueco entre dos casas, con su cerca y la calle delante; visto
+  desde arriba es un contorno flotando en el cielo y nadie sabe qué es.
+- **La composición pesa al centro.** Una miniatura es casi cuadrada y recorta
+  los lados: nada que signifique algo vive cerca del borde.
+- Una `variant` distinta por fila. Tres anuncios en una columna no pueden
+  parecer la misma fotografía tres veces.
+
+## La interfaz de cada marca es la suya
+
+`interface-kit.tsx` dibuja la superficie oscura de cristal sobre la que se
+construyen las piezas de Aents. **EstateMap no es eso**: es un producto claro
+—tarjeta blanca, borde de un pelo, texto negro y un verde—, y una pieza de Geo
+dibujada con el kit oscuro enseña un producto que no existe.
+
+- La interfaz de una pieza de Geo se dibuja con `remotion/src/estatemap-ui.tsx`.
+- **Sus valores se miden del producto en marcha**, con `getComputedStyle` sobre
+  la página publicada, no se leen del CSS a ojo ni se ajustan a gusto. «Parecido»
+  es otro producto: radio 8, borde 1 px `#D1D5DB`, sombra `0 1px 2px
+  rgba(0,0,0,.05)`, badge círculo de 44, precio peso 900, título 700,
+  metadatos 400, píldora 600. Todo doblado para el lienzo, nada redondeado.
+- La tipografía es la del producto y con **sus pesos**. Plus Jakarta Sans en
+  variable en el portal; en la fábrica, `Regular` y `ExtraBold` declaradas las
+  dos. Con una sola cara, toda la interfaz sale al mismo peso y pierde la
+  jerarquía que la hace legible como interfaz.
+
+## Los iconos son los del producto, no dibujos
+
+EstateMap usa `lucide-react`, y la fábrica instala **el mismo paquete en la
+misma versión mayor**. Un icono dibujado a mano con polígonos no es el icono del
+producto y se nota: parece inventado, porque lo es.
+
+- **Todo lo que pueda ser un icono, es un icono**, y sale de `lucide` a través de
+  `EmGlyph`. Un pin, una regla, una etiqueta, un trofeo, un cursor, un visto, un
+  descarte, una flecha: todos existen y todos están en el registro.
+- **La excepción es lo que un icono no puede representar.** Una propiedad no es
+  un glifo: una casa con su lote, su cerca y la calle delante es una escena, y
+  eso se dibuja —con `property-art.tsx`—. La prueba es si un icono del set diría
+  lo mismo; si lo dice, se usa el icono.
+- El producto los dibuja a 16 px con trazo 1,75. En un lienzo del doble, el
+  trazo se dobla con `absoluteStrokeWidth` o el icono sale escuálido al lado de
+  la tipografía.
+
+## El rótulo dice lo que la voz no dice
+
+Un rótulo que repite palabra por palabra el subtítulo que tiene debajo gasta
+dos tercios del cuadro en decir una cosa. Se escribe **después** del guion y se
+compara línea por línea contra su locución; solo el CTA puede repetir. Máximo
+cuatro palabras y veintidós caracteres, que ya comprueba el linter.
+
 ## Quién pone qué
 
 - **El código pone la técnica y las normas.** Física del movimiento, profundidad,
