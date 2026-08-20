@@ -57,8 +57,16 @@ configuración correcta es la de fábrica: respetar las cabeceras del origen.
 redirecciones, porque nginx redirige :80 a :443 y Cloudflare volvería a pedir
 :80. `Full (strict)` es mejor en teoría, pero deja el sitio a merced de la
 renovación de Let's Encrypt: con `Full`, un certificado de origen caducado no
-lo ven los visitantes. Subir a estricto solo después de comprobar una
-renovación completa detrás del proxy (`certbot renew --dry-run`).
+lo ven los visitantes.
+
+La renovación detrás del proxy sí funciona —comprobada con
+`certbot renew --dry-run` sobre los dos certificados proxiados el día del
+cambio, ambos con «all simulated renewals succeeded»—, así que subir a estricto
+es viable. Se deja en `Full` a propósito: la diferencia real es protegerse de un
+intermediario entre el edge y el origen, y a cambio convierte cualquier fallo
+futuro de renovación en una caída total del portal en vez de en algo que nadie
+nota. Con el correo de dos negocios colgando de esta máquina, el modo que falla
+suave gana.
 
 ## Identidad del visitante
 
