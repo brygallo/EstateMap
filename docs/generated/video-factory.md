@@ -26,6 +26,9 @@ Reglas internas que mantienen coherentes producción, publicación, revisión y 
 | [`VFACT-011`](#vfact-011--educación-extensa-no-se-disfraza-de-historia) | Educación extensa no se disfraza de historia | ✅ Implementada |
 | [`VFACT-012`](#vfact-012--una-voz-solo-entra-al-caché-cuando-contiene-audio-válido) | Una voz solo entra al caché cuando contiene audio válido | ✅ Implementada |
 | [`VFACT-013`](#vfact-013--un-video-tiene-un-solo-render-activo) | Un video tiene un solo render activo | ✅ Implementada |
+| [`VFACT-014`](#vfact-014--la-fábrica-nunca-limpia-másteres-ni-voces-canónicas) | La fábrica nunca limpia másteres ni voces canónicas | ✅ Implementada |
+| [`VFACT-015`](#vfact-015--las-marcas-comparten-motor-pero-no-estado-editorial) | Las marcas comparten motor pero no estado editorial | ✅ Implementada |
+| [`VFACT-016`](#vfact-016--el-paquete-incluye-el-texto-exacto-para-publicar) | El paquete incluye el texto exacto para publicar | ✅ Implementada |
 
 ### VFACT-001 — Un estado publicado no puede retroceder
 
@@ -320,6 +323,86 @@ Render toma un bloqueo no bloqueante exclusivo por carpeta antes de leer o escri
 | Caso | Rol | Estado previo | Cuerpo | Esperado |
 | --- | --- | --- | --- | --- |
 | Dos procesos renderizan el mismo video | — | — | — | el segundo falla antes de tocar archivos |
+
+**Cobertura exigida:** unit
+
+- `marketing/videos/tests/test_factory.py`
+
+### VFACT-014 — La fábrica nunca limpia másteres ni voces canónicas
+
+**Estado:** ✅ Implementada
+
+Sin importar si una pieza está en borrador, revisada, firmada o publicada, la limpieza automática del render solo acepta archivos cuyo nombre incluye `.pending.`. Un MP4 canónico o un `voice-*.mp3` provoca un error antes de cualquier eliminación.
+
+> **Por qué:** Los artefactos locales no son temporales. Una recuperación o un nuevo render puede sustituirlos de forma explícita, pero una rutina de limpieza nunca debe interpretarlos como residuos.
+
+**Evidencia en el código** (verificada por `tools/specs/validate.py`)
+
+- `marketing/videos/workflow.py` (`class RenderCleanupPolicy`)
+- `marketing/videos/factory.py` (`def cmd_render`)
+
+**Casos**
+
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| La limpieza recibe video.mp4 o voice-01.mp3 | — | — | — | rechaza la eliminación y conserva el archivo |
+| La limpieza recibe geo-001.pending.mp4 | — | — | — | elimina únicamente el temporal |
+
+**Cobertura exigida:** unit
+
+- `marketing/videos/tests/test_factory.py`
+
+### VFACT-015 — Las marcas comparten motor pero no estado editorial
+
+**Estado:** ✅ Implementada
+
+Geo Propiedades sigue siendo el perfil predeterminado. Cada marca tiene catálogo, numeración, biblioteca, publicaciones, brechas y aprendizajes propios; cada identificador y carpeta lleva el prefijo de la marca, la identidad viaja en las props, el MP4 y la portada exportados conservan ese identificador, y las animaciones se validan contra la marca.
+
+> **Por qué:** Duplicar el motor produciría dos fábricas divergentes, mientras que compartir memoria o numeración mezclaría evidencia, publicaciones y decisiones de marcas distintas.
+
+**Evidencia en el código** (verificada por `tools/specs/validate.py`)
+
+- `marketing/videos/brand.py` (`class BrandProfile`)
+- `marketing/videos/catalog.py` (`def configure`)
+- `marketing/videos/catalog.py` (`def video_id`)
+- `marketing/videos/factory.py` (`def main`)
+- `marketing/videos/factory.py` (`def master_path`)
+- `marketing/videos/quality.py` (`def configure`)
+- `marketing/videos/renderer.py` (`def job_name`)
+
+**Casos**
+
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| Un comando sin marca consulta el catálogo de Geo Propiedades | — | — | — | usa Geo Propiedades y genera identificadores geo-NNN |
+| Aents y Geo crean su primera pieza | — | — | — | crean aents-001 y geo-001 en catálogos, bibliotecas y staging separados |
+| Un plan Aents pide una simulación exclusiva de Geo | — | — | — | error de lint antes de aprobar o renderizar |
+
+**Cobertura exigida:** unit
+
+- `marketing/videos/tests/test_factory.py`
+
+### VFACT-016 — El paquete incluye el texto exacto para publicar
+
+**Estado:** ✅ Implementada
+
+Pack genera globalmente `texto-para-publicar.txt` con el caption, una línea en blanco y entre uno y cinco hashtags válidos. Los hashtags propios del plan tienen prioridad y los videos anteriores usan los defaults de su marca; `publish.json` conserva la lista y el nombre del archivo.
+
+> **Por qué:** La persona que publica debe poder copiar un solo bloque sin reconstruir el caption ni buscar hashtags, pero esos metadatos no deben entrar en la locución o los subtítulos.
+
+**Evidencia en el código** (verificada por `tools/specs/validate.py`)
+
+- `marketing/videos/workflow.py` (`class PublishingCopy`)
+- `marketing/videos/factory.py` (`def cmd_pack`)
+- `marketing/videos/brand.py` (`default_hashtags`)
+
+**Casos**
+
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| Un plan nuevo declara hashtags propios | — | — | — | el archivo contiene caption, línea vacía y hashtags listos para copiar |
+| Un video anterior no tiene el campo hashtags | — | — | — | pack usa los hashtags predeterminados de la marca activa |
+| Un hashtag contiene espacios | — | — | — | pack lo rechaza antes de crear el paquete |
 
 **Cobertura exigida:** unit
 

@@ -1,0 +1,8 @@
+{
+  "brief": "Pieza para propietarios a partir del guion entregado por la persona responsable: publicas fotos, precio y descripcion y aun asi te preguntan donde queda; en Geo Propiedades la ubicacion es parte del anuncio.",
+  "automatic_selection": false,
+  "target_duration_seconds": 40,
+  "created_at": "2026-08-14T22:01:11.926553-05:00",
+  "target_revised_at": "2026-08-15T00:54:31.388753-05:00",
+  "target_revision_reason": "El objetivo de 33 s se calculo con la voz de borrador a 16,2 caracteres por segundo. La voz comprada de esta pieza, voice-06, habla a 14,1: el mismo guion, sin una palabra de relleno, dura 41,8 s. Sigue dentro de la ventana de formato corto, asi que se declara la duracion medida."
+}

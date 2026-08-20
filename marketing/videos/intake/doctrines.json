@@ -1,0 +1,123 @@
+{
+  "version": 1,
+  "note": "Los tipos de pensamiento de la fábrica. Una marca elige uno como doctrina principal y puede permitir otros. La doctrina no cambia las reglas duras (un público, una idea, un CTA, ninguna afirmación sin fuente): cambia cómo se piensa la pieza, cómo entra, a qué ritmo y con qué vocabulario.",
+  "doctrines": [
+    {
+      "id": "demostrativo",
+      "name": "Demostrativo",
+      "premise": "Enseñar el producto haciendo la cosa. La prueba es la pantalla.",
+      "hook": "Una pregunta que el producto responde moviéndose, no una promesa.",
+      "arc": ["problema visible", "el producto actúa", "el resultado en pantalla", "CTA"],
+      "rhythm": "Alto: al menos dos eventos por segundo, ninguna escena por encima de seis segundos.",
+      "register": "Directo, concreto, sin adjetivos de venta.",
+      "duration_band": [18, 45],
+      "product_appears_before_seconds": 3,
+      "forbids": ["metáforas que no se pueden mostrar", "prometer lo que no está en pantalla"],
+      "fits": ["software con interfaz", "aplicaciones", "portales", "herramientas"]
+    },
+    {
+      "id": "narrativo",
+      "name": "Narrativo",
+      "premise": "Un relato con alguien dentro. Hay un antes, un giro y un después.",
+      "hook": "La situación en la que el espectador se reconoce, en una sola frase.",
+      "arc": ["alguien con un problema", "el intento que falla", "el giro", "cómo queda", "CTA"],
+      "rhythm": "Medio: la escena puede respirar, pero nunca se detiene.",
+      "register": "Humano, en primera o segunda persona, sin moraleja explícita.",
+      "duration_band": [46, 120],
+      "product_appears_before_seconds": 10,
+      "forbids": ["testimonios inventados", "personajes que afirman datos"],
+      "fits": ["origen de un producto", "un caso completo", "servicios"]
+    },
+    {
+      "id": "didactico",
+      "name": "Didáctico",
+      "premise": "Enseñar una materia por pasos. Cada escena enseña algo que la anterior no enseñó.",
+      "hook": "Lo que la persona va a saber hacer al final.",
+      "arc": ["qué vas a aprender", "paso", "paso", "paso", "cómo se comprueba", "CTA"],
+      "rhythm": "Constante y previsible: el espectador debe poder seguir el paso.",
+      "register": "Claro, ordenado, sin prisa fingida.",
+      "duration_band": [121, 240],
+      "product_appears_before_seconds": 25,
+      "forbids": ["saltarse un paso por tiempo", "estirar la clase con relleno"],
+      "fits": ["procesos", "trámites", "productos que requieren aprendizaje"]
+    },
+    {
+      "id": "sencillo",
+      "name": "Sencillo",
+      "premise": "Una sola idea, dicha una vez, sin nada más en pantalla.",
+      "hook": "La idea entera en la primera frase.",
+      "arc": ["la idea", "la prueba", "CTA"],
+      "rhythm": "Bajo en eventos, alto en claridad: pocos elementos, mucho aire.",
+      "register": "Frases cortas. Palabras comunes. Cero jerga.",
+      "duration_band": [18, 25],
+      "product_appears_before_seconds": 3,
+      "forbids": ["segunda idea", "listas", "datos de apoyo"],
+      "fits": ["recordatorios", "una función concreta", "anuncios de una promesa"]
+    },
+    {
+      "id": "infantil",
+      "name": "Infantil",
+      "premise": "Se explica como se le explica a alguien que llega sin contexto: con cosas concretas, no con conceptos.",
+      "hook": "Una imagen literal de la idea, no una definición.",
+      "arc": ["una cosa que se ve", "qué le pasa", "cómo queda", "CTA"],
+      "rhythm": "Muy alto, con repetición deliberada de la forma.",
+      "register": "Palabras cortas, una oración por escena, colores plenos y metáforas físicas.",
+      "duration_band": [18, 30],
+      "product_appears_before_seconds": 3,
+      "forbids": ["tecnicismos", "abstracciones", "cifras"],
+      "fits": ["conceptos difíciles", "públicos sin contexto previo", "educación"]
+    },
+    {
+      "id": "moderno",
+      "name": "Moderno",
+      "premise": "La forma es parte del argumento: tipografía grande, movimiento seco, edición al golpe.",
+      "hook": "Un contraste visual antes que una frase.",
+      "arc": ["golpe", "idea", "producto", "CTA"],
+      "rhythm": "Muy alto, cortes marcados, silencio usado a propósito.",
+      "register": "Mínimo. El texto en pantalla carga más que la voz.",
+      "duration_band": [18, 30],
+      "product_appears_before_seconds": 3,
+      "forbids": ["estética genérica de plantilla", "relleno visual sin función"],
+      "fits": ["marcas de diseño", "productos visuales", "público joven"]
+    },
+    {
+      "id": "documental",
+      "name": "Documental",
+      "premise": "Hechos y contexto real, en tono sobrio. La autoridad viene de lo que se muestra.",
+      "hook": "Un hecho verificable que reencuadra el tema.",
+      "arc": ["el hecho", "el contexto", "qué significa", "qué hacer", "CTA"],
+      "rhythm": "Medio, con planos sostenidos.",
+      "register": "Sobrio, preciso, sin adjetivos.",
+      "duration_band": [46, 120],
+      "product_appears_before_seconds": 10,
+      "forbids": ["cifras sin fuente fechada", "dramatización de datos"],
+      "fits": ["temas con contexto público", "sectores regulados", "instituciones"]
+    },
+    {
+      "id": "provocador",
+      "name": "Provocador",
+      "premise": "Empieza por lo que el espectador cree, y lo pone en duda con algo que sí se puede demostrar.",
+      "hook": "La creencia común, dicha tal cual, antes de contradecirla.",
+      "arc": ["lo que crees", "por qué falla", "lo que sí funciona", "CTA"],
+      "rhythm": "Alto al inicio, baja al explicar.",
+      "register": "Directo y contundente, nunca agresivo con la persona.",
+      "duration_band": [18, 45],
+      "product_appears_before_seconds": 3,
+      "forbids": ["escasez fabricada", "urgencia falsa", "atacar a un competidor"],
+      "fits": ["categorías saturadas", "públicos escépticos"]
+    },
+    {
+      "id": "institucional",
+      "name": "Institucional",
+      "premise": "Respaldo y formalidad: quién responde, con qué reglas y ante quién.",
+      "hook": "El servicio y a quién sirve, sin rodeos.",
+      "arc": ["a quién le sirve", "qué se hace", "cómo se responde", "CTA"],
+      "rhythm": "Bajo y estable.",
+      "register": "Formal pero legible. Nada de grandilocuencia.",
+      "duration_band": [30, 120],
+      "product_appears_before_seconds": 10,
+      "forbids": ["promesas de resultado", "lenguaje comercial"],
+      "fits": ["sector público", "salud", "servicios regulados"]
+    }
+  ]
+}

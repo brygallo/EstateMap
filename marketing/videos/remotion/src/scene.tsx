@@ -12,7 +12,16 @@ import type {Scene} from './types';
  * The product plays in the stage at the top of the frame with nothing on top of
  * it. Everything the piece has to say happens in the panel underneath.
  */
-const Stage: React.FC<{scene: Scene; frame: number; offset: number}> = ({scene, frame, offset}) => {
+/** Who is rendering, for the animations that must show a mark or a domain. */
+export type StageBrand = {
+  brandId: string;
+  brandName: string;
+  brandTile: string | null;
+  brandSymbol: string | null;
+  brandDomain: string;
+};
+
+const Stage: React.FC<{scene: Scene; frame: number; offset: number; brand: StageBrand}> = ({scene, frame, offset, brand}) => {
   const {fps} = useVideoConfig();
   const span = Math.max(1, scene.durationInFrames);
   const zoom = scene.assetType === 'simulation' ? 1 : interpolate(frame, [0, span], [1.0, 1.06], {extrapolateRight: 'clamp'});
@@ -32,7 +41,7 @@ const Stage: React.FC<{scene: Scene; frame: number; offset: number}> = ({scene, 
     // brand green left the card painted green while the headline, the captions
     // and the progress bar alternated violet, teal and lavender: two accents
     // fighting inside the same frame.
-    ? <Simulation frame={frame + scene.assetStartInFrames} total={scene.assetTotalInFrames} accent={scene.accent} photo={scene.photo ?? null} />
+    ? <Simulation frame={frame + scene.assetStartInFrames} total={scene.assetTotalInFrames} accent={scene.accent} photo={scene.photo ?? null} {...brand} />
     : !scene.asset || !scene.assetType
       ? <MapField accent={scene.accent} frame={frame + offset} />
       : scene.assetType === 'video'
@@ -85,8 +94,8 @@ const Stage: React.FC<{scene: Scene; frame: number; offset: number}> = ({scene, 
           left: 0,
           right: 0,
           bottom: 0,
-          height: 820,
-          background: 'linear-gradient(180deg, rgba(8,9,21,0) 0%, rgba(8,9,21,.38) 26%, rgba(8,9,21,.86) 52%, rgba(8,9,21,.98) 72%, rgba(8,9,21,1) 100%)',
+          height: 340,
+          background: 'linear-gradient(180deg, rgba(8,9,21,0) 0%, rgba(8,9,21,.16) 34%, rgba(8,9,21,.44) 60%, rgba(8,9,21,.56) 82%, rgba(8,9,21,.58) 100%)',
         }}
       />}
     </div>
@@ -117,7 +126,7 @@ const Wordmark: React.FC<{brandTile: string | null; frame: number; label?: strin
         letterSpacing: '-0.01em',
         color: palette.white,
         opacity: enter,
-        transform: `translateX(${(1 - enter) * -46}px)`,
+        transform: `scale(${.98 + enter * .02})`,
       }}
     >
       {label}
@@ -134,7 +143,7 @@ const Wordmark: React.FC<{brandTile: string | null; frame: number; label?: strin
           borderRadius: 19,
           boxShadow: '0 12px 30px rgba(8,9,21,.55)',
           opacity: enter,
-          transform: `translateY(${(1 - enter) * -24}px) rotate(${(1 - enter) * 8}deg)`,
+          transform: `scale(${.94 + enter * .06})`,
         }}
       />
     ) : null}
@@ -189,8 +198,8 @@ const Headline: React.FC<{text: string; accent: string; frame: number; ready: bo
           const start = fps * (0.05 + index * 0.09);
           const appear = spring({frame: frame - start, fps, config: {damping: 20, mass: 0.7, stiffness: 150}});
           return (
-            <div key={index} style={{overflow: 'hidden'}}>
-              <div style={{transform: `translateY(${(1 - appear) * 70}px)`, opacity: appear}}>{line}</div>
+            <div key={index}>
+              <div style={{transform: `scale(${.98 + appear * .02})`, transformOrigin: 'left center', opacity: appear}}>{line}</div>
             </div>
           );
         })}
@@ -269,9 +278,13 @@ export const SceneCard: React.FC<{
   cta: string;
   url: string;
   brandTile: string | null;
+  brandId: string;
+  brandName: string;
+  brandTagline: string;
+  brandSymbol: string | null;
   kicker: string | null;
   ready: boolean;
-}> = ({scene, index, total, offset, cta, url, brandTile, kicker, ready}) => {
+}> = ({scene, index, total, offset, cta, url, brandTile, brandId, brandName, brandTagline, brandSymbol, kicker, ready}) => {
   const frame = useCurrentFrame();
   const {fps} = useVideoConfig();
   const isFinal = scene.purpose === 'cta' || index === total - 1;
@@ -281,10 +294,10 @@ export const SceneCard: React.FC<{
   });
   return (
     <AbsoluteFill style={{opacity: enter, backgroundColor: palette.ink}}>
-      <Stage scene={scene} frame={frame} offset={offset} />
-      {isFinal ? null : <Wordmark brandTile={brandTile} frame={frame} label={scene.asset?.startsWith('sim:aents-') ? 'aents.net' : 'geopropiedadesecuador.com'} />}
+      <Stage scene={scene} frame={frame} offset={offset} brand={{brandId, brandName, brandTile, brandSymbol, brandDomain: url}} />
+      {isFinal ? null : <Wordmark brandTile={brandTile} frame={frame} label={url} />}
       {isFinal ? (
-        scene.assetType === 'simulation' && scene.asset ? null : <Outro cta={cta} url={url} brandTile={brandTile} accent={scene.accent} kicker={kicker} />
+        scene.assetType === 'simulation' && scene.asset ? null : <Outro cta={cta} url={url} brandTile={brandTile} brandId={brandId} brandName={brandName} brandTagline={brandTagline} brandSymbol={brandSymbol} accent={scene.accent} kicker={kicker} />
       ) : (
         <div
           style={{

@@ -1,0 +1,77 @@
+{
+  "title": "Así funciona la compraventa de una propiedad",
+  "coverText": "Comprar, paso a paso",
+  "cta": "Encuentra tu futuro hogar",
+  "url": "geopropiedadesecuador.com",
+  "brandTile": "brand/aents-brand-tile-1024.png",
+  "kicker": null,
+  "musicFile": null,
+  "showSafeAreas": false,
+  "scenes": [
+    {
+      "purpose": "prueba",
+      "durationInFrames": 95,
+      "headline": "5. Escritura",
+      "captions": [
+        {
+          "text": "Después viene la escritura pública",
+          "start": 0.0,
+          "end": 1.91,
+          "words": [
+            {
+              "text": "Después",
+              "start": 0.0,
+              "end": 0.437
+            },
+            {
+              "text": "viene",
+              "start": 0.437,
+              "end": 0.764
+            },
+            {
+              "text": "la",
+              "start": 0.764,
+              "end": 0.928
+            },
+            {
+              "text": "escritura",
+              "start": 0.928,
+              "end": 1.473
+            },
+            {
+              "text": "pública",
+              "start": 1.473,
+              "end": 1.91
+            }
+          ]
+        },
+        {
+          "text": "de compraventa.",
+          "start": 1.91,
+          "end": 2.728,
+          "words": [
+            {
+              "text": "de",
+              "start": 0.0,
+              "end": 0.164
+            },
+            {
+              "text": "compraventa.",
+              "start": 0.164,
+              "end": 0.819
+            }
+          ]
+        }
+      ],
+      "visualDirection": "La escritura recibe el sello de la notaría y debajo aparecen quién vende y quién compra. El sello es el sujeto de la escena.",
+      "transition": "cut",
+      "asset": "sim:escritura-publica",
+      "assetType": "simulation",
+      "photo": null,
+      "voiceFile": "jobs/geo-012/audio/voice-06.mp3",
+      "assetStartInFrames": 0,
+      "assetTotalInFrames": 95,
+      "accent": "#6B5CF6"
+    }
+  ]
+}

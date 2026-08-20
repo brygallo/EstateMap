@@ -1,0 +1,104 @@
+{
+  "title": "Así funciona la compraventa de una propiedad",
+  "coverText": "Comprar, paso a paso",
+  "cta": "Encuentra tu futuro hogar",
+  "url": "geopropiedadesecuador.com",
+  "brandTile": "brand/aents-brand-tile-1024.png",
+  "kicker": null,
+  "musicFile": null,
+  "showSafeAreas": false,
+  "scenes": [
+    {
+      "purpose": "prueba",
+      "durationInFrames": 164,
+      "headline": "6. Inscripción",
+      "captions": [
+        {
+          "text": "Y finalmente,",
+          "start": 0.0,
+          "end": 0.733,
+          "words": [
+            {
+              "text": "Y",
+              "start": 0.0,
+              "end": 0.113
+            },
+            {
+              "text": "finalmente,",
+              "start": 0.113,
+              "end": 0.733
+            }
+          ]
+        },
+        {
+          "text": "la transferencia debe inscribirse",
+          "start": 0.733,
+          "end": 2.65,
+          "words": [
+            {
+              "text": "la",
+              "start": 0.0,
+              "end": 0.169
+            },
+            {
+              "text": "transferencia",
+              "start": 0.169,
+              "end": 0.959
+            },
+            {
+              "text": "debe",
+              "start": 0.959,
+              "end": 1.241
+            },
+            {
+              "text": "inscribirse",
+              "start": 1.241,
+              "end": 1.917
+            }
+          ]
+        },
+        {
+          "text": "para completar el proceso correspondiente.",
+          "start": 2.65,
+          "end": 5.019,
+          "words": [
+            {
+              "text": "para",
+              "start": 0.0,
+              "end": 0.282
+            },
+            {
+              "text": "completar",
+              "start": 0.282,
+              "end": 0.846
+            },
+            {
+              "text": "el",
+              "start": 0.846,
+              "end": 1.015
+            },
+            {
+              "text": "proceso",
+              "start": 1.015,
+              "end": 1.466
+            },
+            {
+              "text": "correspondiente.",
+              "start": 1.466,
+              "end": 2.368
+            }
+          ]
+        }
+      ],
+      "visualDirection": "La escritura entra al Registro de la Propiedad y el propietario inscrito deja de ser el vendedor. Ese cambio de estado es la prueba de la escena.",
+      "transition": "cut",
+      "asset": "sim:inscripcion",
+      "assetType": "simulation",
+      "photo": null,
+      "voiceFile": "jobs/video-012/audio/voice-07.mp3",
+      "assetStartInFrames": 0,
+      "assetTotalInFrames": 164,
+      "accent": "#14B8A6"
+    }
+  ]
+}

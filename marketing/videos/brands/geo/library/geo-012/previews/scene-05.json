@@ -1,0 +1,114 @@
+{
+  "title": "Así funciona la compraventa de una propiedad",
+  "coverText": "Comprar, paso a paso",
+  "cta": "Encuentra tu futuro hogar",
+  "url": "geopropiedadesecuador.com",
+  "brandTile": "brand/aents-brand-tile-1024.png",
+  "kicker": null,
+  "musicFile": null,
+  "showSafeAreas": false,
+  "scenes": [
+    {
+      "purpose": "prueba",
+      "durationInFrames": 152,
+      "headline": "4. Reserva o promesa",
+      "captions": [
+        {
+          "text": "Dependiendo de la negociación,",
+          "start": 0.0,
+          "end": 1.651,
+          "words": [
+            {
+              "text": "Dependiendo",
+              "start": 0.0,
+              "end": 0.66
+            },
+            {
+              "text": "de",
+              "start": 0.66,
+              "end": 0.826
+            },
+            {
+              "text": "la",
+              "start": 0.826,
+              "end": 0.991
+            },
+            {
+              "text": "negociación,",
+              "start": 0.991,
+              "end": 1.651
+            }
+          ]
+        },
+        {
+          "text": "pueden hacer una reserva",
+          "start": 1.651,
+          "end": 3.027,
+          "words": [
+            {
+              "text": "pueden",
+              "start": 0.0,
+              "end": 0.385
+            },
+            {
+              "text": "hacer",
+              "start": 0.385,
+              "end": 0.716
+            },
+            {
+              "text": "una",
+              "start": 0.716,
+              "end": 0.936
+            },
+            {
+              "text": "reserva",
+              "start": 0.936,
+              "end": 1.376
+            }
+          ]
+        },
+        {
+          "text": "o una promesa de compraventa.",
+          "start": 3.027,
+          "end": 4.623,
+          "words": [
+            {
+              "text": "o",
+              "start": 0.0,
+              "end": 0.11
+            },
+            {
+              "text": "una",
+              "start": 0.11,
+              "end": 0.33
+            },
+            {
+              "text": "promesa",
+              "start": 0.33,
+              "end": 0.771
+            },
+            {
+              "text": "de",
+              "start": 0.771,
+              "end": 0.936
+            },
+            {
+              "text": "compraventa.",
+              "start": 0.936,
+              "end": 1.596
+            }
+          ]
+        }
+      ],
+      "visualDirection": "El documento sube a la mesa y lo firman comprador y vendedor, en ese orden. El pie recuerda qué contiene: qué se vende, en cuánto y hasta cuándo.",
+      "transition": "cut",
+      "asset": "sim:promesa",
+      "assetType": "simulation",
+      "photo": null,
+      "voiceFile": "jobs/geo-012/audio/voice-05.mp3",
+      "assetStartInFrames": 0,
+      "assetTotalInFrames": 152,
+      "accent": "#22C55E"
+    }
+  ]
+}

@@ -1,0 +1,15 @@
+{
+  "brandId": "aents",
+  "brandName": "Aents",
+  "brandTagline": "Software for people.",
+  "brandSymbol": "brand/symbol-negative-512.png",
+  "coverText": "¿Qué encuentra tu cliente?",
+  "coverArt": "aents-buscador",
+  "cta": "Cuéntanos tu proyecto",
+  "audience": "empresa",
+  "url": "aents.net",
+  "brandTile": "brand/brand-tile-1024.png",
+  "accent": "#A78BFA",
+  "asset": null,
+  "assetType": null
+}

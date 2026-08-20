@@ -1,0 +1,288 @@
+{
+  "title": "Antes de comprar un departamento, revisa esto",
+  "coverText": "Antes de comprar un departamento",
+  "cta": "Encuentra tu futuro hogar",
+  "url": "geopropiedadesecuador.com",
+  "brandTile": "brand/aents-brand-tile-1024.png",
+  "kicker": null,
+  "musicFile": null,
+  "showSafeAreas": false,
+  "scenes": [
+    {
+      "purpose": "prueba",
+      "durationInFrames": 496,
+      "headline": "Actas y cuotas extra",
+      "captions": [
+        {
+          "text": "Pide las actas de las últimas asambleas.",
+          "start": 0.0,
+          "end": 2.833,
+          "words": [
+            {
+              "text": "Pide",
+              "start": 0.0,
+              "end": 0.354
+            },
+            {
+              "text": "las",
+              "start": 0.354,
+              "end": 0.638
+            },
+            {
+              "text": "actas",
+              "start": 0.638,
+              "end": 1.063
+            },
+            {
+              "text": "de",
+              "start": 1.063,
+              "end": 1.275
+            },
+            {
+              "text": "las",
+              "start": 1.275,
+              "end": 1.558
+            },
+            {
+              "text": "últimas",
+              "start": 1.558,
+              "end": 2.125
+            },
+            {
+              "text": "asambleas.",
+              "start": 2.125,
+              "end": 2.833
+            }
+          ]
+        },
+        {
+          "text": "Ahí aparecen las cuotas extraordinarias:",
+          "start": 2.833,
+          "end": 5.667,
+          "words": [
+            {
+              "text": "Ahí",
+              "start": 0.0,
+              "end": 0.283
+            },
+            {
+              "text": "aparecen",
+              "start": 0.283,
+              "end": 0.921
+            },
+            {
+              "text": "las",
+              "start": 0.921,
+              "end": 1.204
+            },
+            {
+              "text": "cuotas",
+              "start": 1.204,
+              "end": 1.7
+            },
+            {
+              "text": "extraordinarias:",
+              "start": 1.7,
+              "end": 2.833
+            }
+          ]
+        },
+        {
+          "text": "los cobros que se aprueban",
+          "start": 5.667,
+          "end": 7.579,
+          "words": [
+            {
+              "text": "los",
+              "start": 0.0,
+              "end": 0.283
+            },
+            {
+              "text": "cobros",
+              "start": 0.283,
+              "end": 0.779
+            },
+            {
+              "text": "que",
+              "start": 0.779,
+              "end": 1.063
+            },
+            {
+              "text": "se",
+              "start": 1.063,
+              "end": 1.275
+            },
+            {
+              "text": "aprueban",
+              "start": 1.275,
+              "end": 1.913
+            }
+          ]
+        },
+        {
+          "text": "cuando hay algo grande",
+          "start": 7.579,
+          "end": 9.208,
+          "words": [
+            {
+              "text": "cuando",
+              "start": 0.0,
+              "end": 0.496
+            },
+            {
+              "text": "hay",
+              "start": 0.496,
+              "end": 0.779
+            },
+            {
+              "text": "algo",
+              "start": 0.779,
+              "end": 1.133
+            },
+            {
+              "text": "grande",
+              "start": 1.133,
+              "end": 1.629
+            }
+          ]
+        },
+        {
+          "text": "que arreglar.",
+          "start": 9.208,
+          "end": 10.129,
+          "words": [
+            {
+              "text": "que",
+              "start": 0.0,
+              "end": 0.283
+            },
+            {
+              "text": "arreglar.",
+              "start": 0.283,
+              "end": 0.921
+            }
+          ]
+        },
+        {
+          "text": "Y camina el edificio:",
+          "start": 10.129,
+          "end": 11.617,
+          "words": [
+            {
+              "text": "Y",
+              "start": 0.0,
+              "end": 0.142
+            },
+            {
+              "text": "camina",
+              "start": 0.142,
+              "end": 0.638
+            },
+            {
+              "text": "el",
+              "start": 0.638,
+              "end": 0.85
+            },
+            {
+              "text": "edificio:",
+              "start": 0.85,
+              "end": 1.488
+            }
+          ]
+        },
+        {
+          "text": "el ascensor,",
+          "start": 11.617,
+          "end": 12.467,
+          "words": [
+            {
+              "text": "el",
+              "start": 0.0,
+              "end": 0.213
+            },
+            {
+              "text": "ascensor,",
+              "start": 0.213,
+              "end": 0.85
+            }
+          ]
+        },
+        {
+          "text": "la bomba,",
+          "start": 12.467,
+          "end": 13.104,
+          "words": [
+            {
+              "text": "la",
+              "start": 0.0,
+              "end": 0.213
+            },
+            {
+              "text": "bomba,",
+              "start": 0.213,
+              "end": 0.638
+            }
+          ]
+        },
+        {
+          "text": "la cisterna,",
+          "start": 13.104,
+          "end": 13.954,
+          "words": [
+            {
+              "text": "la",
+              "start": 0.0,
+              "end": 0.213
+            },
+            {
+              "text": "cisterna,",
+              "start": 0.213,
+              "end": 0.85
+            }
+          ]
+        },
+        {
+          "text": "las humedades en los pasillos.",
+          "start": 13.954,
+          "end": 16.079,
+          "words": [
+            {
+              "text": "las",
+              "start": 0.0,
+              "end": 0.283
+            },
+            {
+              "text": "humedades",
+              "start": 0.283,
+              "end": 0.992
+            },
+            {
+              "text": "en",
+              "start": 0.992,
+              "end": 1.204
+            },
+            {
+              "text": "los",
+              "start": 1.204,
+              "end": 1.488
+            },
+            {
+              "text": "pasillos.",
+              "start": 1.488,
+              "end": 2.125
+            }
+          ]
+        }
+      ],
+      "visualDirection": "sim:edificio, construida y registrada. Primero un acta de asamblea abierta, con firmas al pie, y un punto del orden del día que se resalta solo. A la mitad la cámara deja el papel y entra al edificio en corte lateral, con la misma línea de suelo y el mismo punto de vista de la escena uno: se recorre de arriba abajo el tanque de la azotea, el ascensor con su puerta abriéndose, el cuarto de bombas y un pasillo con una mancha de humedad en la esquina. Cada elemento se detiene un instante con su etiqueta grande y la cámara sigue bajando sin parar hasta el hall.",
+      "transition": "cut",
+      "asset": "sim:edificio",
+      "assetType": "simulation",
+      "photo": null,
+      "voiceFile": "jobs/video-010/audio/voice-04.mp3",
+      "assetStartInFrames": 0,
+      "assetTotalInFrames": 496,
+      "accent": "#A78BFA"
+    }
+  ]
+}

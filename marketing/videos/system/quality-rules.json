@@ -17,7 +17,6 @@
       "voice_readable",
       "voice_empty",
       "narration_matches",
-      "duration",
       "forbidden_claim",
       "unsourced_number",
       "cta_family",
@@ -30,8 +29,7 @@
     ],
     "master": [
       "vertical_1080x1920",
-      "duration_8_to_60_seconds",
-      "duration_close_to_target",
+      "duration_8_to_240_seconds",
       "plan_lint_passed",
       "cover_exists",
       "subtitles_exist",

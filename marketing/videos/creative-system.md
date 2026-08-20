@@ -1,6 +1,9 @@
-# Base técnica y creativa compartida
+# Base técnica y creativa compartida entre marcas
 
-Este documento es la “biblia” común de la serie. Claude debe variar el concepto, no la identidad. Cualquier cambio global se registra también en `memory/decisions.md` y `CHANGELOG.md`.
+Este documento es la base común del motor. Cada perfil conserva su propia
+identidad, verdad de producto, estrategia y memoria. Un cambio global se registra
+en la decisión común; un aprendizaje editorial se registra únicamente en la
+memoria de la marca que produjo la evidencia.
 
 ## Formato invariable
 

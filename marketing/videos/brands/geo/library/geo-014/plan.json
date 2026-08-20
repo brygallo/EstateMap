@@ -1,0 +1,74 @@
+{
+  "title": "Empieza por el lugar, no por la lista",
+  "audience": "comprador",
+  "funnel_stage": "descubrimiento",
+  "objective": "Que quien busca propiedad entre al mapa y explore por zona en vez de recorrer anuncios sueltos.",
+  "conversion_event": "Sesión de exploración del mapa desde el perfil o el enlace.",
+  "pillar": "Mapa primero",
+  "series": "Busca así, no así",
+  "concept": "El orden de la búsqueda invertido: en vez de abrir anuncio por anuncio y averiguar después dónde queda cada uno, mueves el mapa hasta la zona donde quieres vivir y las propiedades aparecen ahí dentro, con su precio. La pieza termina en la ficha de la que te interesó.",
+  "promise": "Puedes empezar la búsqueda por la zona donde quieres vivir y ver ahí mismo lo que hay.",
+  "cta": "Encuentra tu futuro hogar",
+  "hypothesis": "El geo-002 nombra el hábito para negarlo; esta pieza propone el orden contrario desde el primer segundo. Si el mapa se mueve por una mano visible antes del segundo tres, la promesa se entiende sin sonido y sube el clic al enlace del perfil.",
+  "cover_text": "Empieza por el lugar",
+  "cover_art": "zona",
+  "caption": "Buscar propiedad anuncio por anuncio es ver fotos y precios sueltos sin saber en qué parte de la ciudad estás. En Geo Propiedades Ecuador el orden es al revés: mueves el mapa hasta la zona donde quieres vivir y las propiedades aparecen ahí dentro, con su precio. Abres la que te gusta y ves sus fotos, sus características y dónde está. Encuentra tu futuro hogar en geopropiedadesecuador.com #GeoPropiedadesEcuador #BienesRaicesEcuador #CasasEnEcuador #Mapa",
+  "narration": "Empieza por el lugar donde quieres vivir, y no por la lista de anuncios. Anuncio por anuncio ves fotos y precios sueltos, sin saber en qué parte de la ciudad estás. En Geo Propiedades Ecuador mueves el mapa hasta la zona que te interesa, y las propiedades aparecen ahí dentro. Abres la que te gusta y ves sus fotos, su precio, sus características y dónde está. Encuentra tu futuro hogar en geo propiedades ecuador punto com.",
+  "voice_profile": "draft-dora",
+  "music": null,
+  "verification_notes": [
+    "Todo lo que muestra la pieza existe hoy: mapa interactivo con propiedades, precio sobre el mapa y ficha pública con fotos, precio, características y ubicación, según product-context.md y el código del portal.",
+    "No se afirma cuántas propiedades hay en el mapa, en una ciudad o en una zona. La animación de zona no pinta conteos de inventario ni de comparables.",
+    "Los precios que aparecen sobre el mapa y en la ficha son ejemplos de anuncio, marcados con el rótulo EJEMPLO en pantalla; no describen precios de mercado.",
+    "No se juzga ninguna zona como segura, rentable o de alta plusvalía; la pieza solo muestra cómo se busca.",
+    "No se menciona ni se insinúa el kit social, ni publicación automática en redes ni video automático del anuncio.",
+    "sim:mapa, sim:anuncios, sim:elige-zona y sim:ficha están implementadas y registradas en Python y en Remotion; cada una ilustra literalmente la frase de su escena."
+  ],
+  "scenes": [
+    {
+      "purpose": "gancho",
+      "duration": 5,
+      "voice": "Empieza por el lugar donde quieres vivir, y no por la lista de anuncios.",
+      "on_screen_text": "Empieza por el lugar",
+      "asset": "sim:mapa",
+      "visual_direction": "El mapa del país se acerca en un solo movimiento continuo: las burbujas de ciudad se abren en barrios y después en casas con su precio. El producto está en cuadro desde el primer fotograma.",
+      "transition": "cut"
+    },
+    {
+      "purpose": "problema",
+      "duration": 6,
+      "voice": "Anuncio por anuncio ves fotos y precios sueltos, sin saber en qué parte de la ciudad estás.",
+      "on_screen_text": "Precios sin lugar",
+      "asset": "sim:anuncios",
+      "visual_direction": "La pila de anuncios cae y se desplaza cada vez más rápido: cada tarjeta tiene su foto y su precio, y debajo el aviso de que la ubicación no está indicada.",
+      "transition": "cut"
+    },
+    {
+      "purpose": "prueba",
+      "duration": 7,
+      "voice": "En Geo Propiedades Ecuador mueves el mapa hasta la zona que te interesa, y las propiedades aparecen ahí dentro.",
+      "on_screen_text": "Elige la zona",
+      "asset": "sim:elige-zona",
+      "visual_direction": "Una mano arrastra el mapa hasta la zona y la toca; el círculo de la zona se traza mientras la cámara sigue cerrando. Las tarjetas sueltas de arriba caen dentro del círculo y se convierten en precios ubicados. Remate: la etiqueta de la zona aterriza sobre los pines.",
+      "transition": "cut"
+    },
+    {
+      "purpose": "resultado",
+      "duration": 6,
+      "voice": "Abres la que te gusta y ves sus fotos, su precio, sus características y dónde está.",
+      "on_screen_text": "Abre su ficha",
+      "asset": "sim:ficha",
+      "visual_direction": "La ficha pública entra con su galería, su precio de ejemplo rotulado y sus características declaradas. Sin cifras de zona ni de comparables.",
+      "transition": "cut"
+    },
+    {
+      "purpose": "cta",
+      "duration": 4,
+      "voice": "Encuentra tu futuro hogar en geo propiedades ecuador punto com.",
+      "on_screen_text": "Encuentra tu hogar",
+      "asset": null,
+      "visual_direction": "Cierre global aprobado: tile de marca, Geo Propiedades Ecuador, dominio, CTA y firma de Aents.",
+      "transition": "fade"
+    }
+  ]
+}

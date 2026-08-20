@@ -1,0 +1,23 @@
+{
+  "id": "geo",
+  "name": "Geo Propiedades Ecuador",
+  "domain": "geopropiedadesecuador.com",
+  "tagline": "Un producto de Aents",
+  "brand_tile": "assets/brand/aents-brand-tile-1024.png",
+  "brand_symbol": "assets/brand/aents-symbol-negative.png",
+  "storage": {
+    "library": "brands/geo/library",
+    "memory": "brands/geo/memory"
+  },
+  "repository": "../..",
+  "context_files": ["product-context.md", "strategy.md", "creative-system.md"],
+  "audiences": ["comprador", "propietario", "profesional"],
+  "cta_families": {
+    "comprador": ["explora el mapa", "encuentra tu futuro hogar"],
+    "propietario": ["publica", "sube", "comparte"],
+    "profesional": ["prueba", "escríbenos", "contáctanos", "solicita"]
+  },
+  "product_reveal_audiences": ["comprador"],
+  "default_hashtags": ["#GeoPropiedadesEcuador", "#PropiedadesEcuador", "#BienesRaicesEcuador"],
+  "simulations": []
+}

@@ -1,0 +1,111 @@
+{
+  "title": "Así funciona la compraventa de una propiedad",
+  "audience": "comprador",
+  "funnel_stage": "descubrimiento",
+  "objective": "Enseñar los seis pasos que van desde encontrar una propiedad hasta inscribir la transferencia a nombre de quien compra.",
+  "conversion_event": "Sesión de exploración del mapa desde el perfil o guardado de la pieza.",
+  "pillar": "Educación inmobiliaria",
+  "series": "Cómo funciona comprar",
+  "concept": "Una secuencia educativa de seis pasos: buscar, verificar, negociar, reserva o promesa, escritura pública e inscripción.",
+  "promise": "Vas a saber qué pasa después de encontrar la propiedad, paso por paso y en orden.",
+  "cta": "Encuentra tu futuro hogar",
+  "hypothesis": "Quien busca su primera propiedad reconoce el paso uno y no los cinco siguientes; ver el camino completo ordenado retiene mejor que una sola recomendación suelta.",
+  "cover_text": "Comprar, paso a paso",
+  "cover_art": "proceso",
+  "caption": "Encontrar la propiedad es apenas el primer paso. Después vienen la verificación del propietario y los gravámenes, la negociación, la reserva o promesa de compraventa, la escritura pública y la inscripción de la transferencia. Esta pieza explica el orden; los documentos los revisa el profesional que corresponda. El primer paso sí puedes darlo ahora: encuentra tu futuro hogar en geopropiedadesecuador.com #GeoPropiedadesEcuador #BienesRaicesEcuador #ComprarCasa",
+  "narration": "¿Encontraste la propiedad perfecta? Ojo, encontrarla es solo el primer paso. Primero, busca una propiedad que se ajuste a tu presupuesto y a la zona donde quieres comprar. Antes de pagar, verifica quién es el propietario y revisa que la propiedad no tenga problemas legales o gravámenes. Si todo está correcto, llega el momento de negociar. Dependiendo de la negociación, pueden hacer una reserva o una promesa de compraventa. Después viene la escritura pública de compraventa. Y finalmente, la transferencia debe inscribirse para completar el proceso correspondiente. Y ahora sí, termina el proceso de compra. ¿Y el primer paso? Encontrar la propiedad. Explórala directamente en el mapa con Geo Propiedades Ecuador.",
+  "voice_profile": "draft-dora",
+  "music": null,
+  "verification_notes": [
+    "La pieza describe el orden general de una compraventa de inmueble en Ecuador —verificación, negociación, reserva o promesa, escritura pública e inscripción— en los términos públicos del Código Civil: la compraventa de inmuebles se otorga por escritura pública y la tradición se perfecciona con la inscripción en el Registro de la Propiedad.",
+    "El video no da asesoría legal, notarial ni tributaria: no nombra plazos, aranceles, impuestos ni requisitos concretos, y remite la revisión de documentos a un abogado.",
+    "Ningún paso se presenta como algo que haga Geo Propiedades Ecuador. Lo único que la pieza atribuye al portal es buscar y comparar propiedades sobre el mapa, que es lo que existe hoy.",
+    "Los precios de la escena de negociación son un ejemplo inventado para enseñar la mecánica de una oferta, van bajo el rótulo EJEMPLO de la tarjeta de papel y no afirman precios de mercado.",
+    "No se menciona ni se insinúa el kit social, ni láminas, textos, QR, enlaces cortos o métricas por red.",
+    "No se muestran contadores de visitas, datos de contacto privados ni propiedades identificables: todas las escenas son animaciones ilustrativas, no capturas.",
+    "sim:ficha, sim:filtros, sim:verificar, sim:negociar, sim:promesa, sim:escritura-publica, sim:inscripcion y sim:pasos-compra están implementadas y registradas; ilustran únicamente lo que dice la voz."
+  ],
+  "scenes": [
+    {
+      "purpose": "gancho",
+      "duration": 5,
+      "voice": "¿Encontraste la propiedad perfecta? Ojo, encontrarla es solo el primer paso.",
+      "on_screen_text": "El primer paso",
+      "asset": "sim:ficha",
+      "visual_direction": "La ficha del anuncio entra completa con su foto, su precio de ejemplo y sus características: es lo que acaba de encontrar quien mira.",
+      "transition": "cut"
+    },
+    {
+      "purpose": "prueba",
+      "duration": 6,
+      "voice": "Primero, busca una propiedad que se ajuste a tu presupuesto y a la zona donde quieres comprar.",
+      "on_screen_text": "1. Buscar",
+      "asset": "sim:filtros",
+      "visual_direction": "El filtro de precio se ajusta sobre el mapa y las propiedades fuera del rango desaparecen. Sin juicios sobre la zona ni cifras de inventario.",
+      "transition": "cut"
+    },
+    {
+      "purpose": "prueba",
+      "duration": 7,
+      "voice": "Antes de pagar, verifica quién es el propietario y revisa que la propiedad no tenga problemas legales o gravámenes.",
+      "on_screen_text": "2. Verificar",
+      "asset": "sim:verificar",
+      "visual_direction": "La lupa recorre propietario, documentos y gravámenes y cada fila queda comprobada al pasar. Cierra remitiendo la revisión a un abogado.",
+      "transition": "cut"
+    },
+    {
+      "purpose": "prueba",
+      "duration": 4,
+      "voice": "Si todo está correcto, llega el momento de negociar.",
+      "on_screen_text": "3. Negociar",
+      "asset": "sim:negociar",
+      "visual_direction": "El precio publicado se tacha, entra la oferta y aparece el acuerdo. Las dos cifras van bajo el rótulo EJEMPLO de la tarjeta de papel.",
+      "transition": "cut"
+    },
+    {
+      "purpose": "prueba",
+      "duration": 6,
+      "voice": "Dependiendo de la negociación, pueden hacer una reserva o una promesa de compraventa.",
+      "on_screen_text": "4. Reserva o promesa",
+      "asset": "sim:promesa",
+      "visual_direction": "El documento sube a la mesa y lo firman comprador y vendedor, en ese orden. El pie recuerda qué contiene: qué se vende, en cuánto y hasta cuándo.",
+      "transition": "cut"
+    },
+    {
+      "purpose": "prueba",
+      "duration": 4,
+      "voice": "Después viene la escritura pública de compraventa.",
+      "on_screen_text": "5. Escritura",
+      "asset": "sim:escritura-publica",
+      "visual_direction": "La escritura recibe el sello de la notaría y debajo aparecen quién vende y quién compra. El sello es el sujeto de la escena.",
+      "transition": "cut"
+    },
+    {
+      "purpose": "prueba",
+      "duration": 6,
+      "voice": "Y finalmente, la transferencia debe inscribirse para completar el proceso correspondiente.",
+      "on_screen_text": "6. Inscripción",
+      "asset": "sim:inscripcion",
+      "visual_direction": "La escritura entra al Registro de la Propiedad y el propietario inscrito deja de ser el vendedor. Ese cambio de estado es la prueba de la escena.",
+      "transition": "cut"
+    },
+    {
+      "purpose": "resultado",
+      "duration": 4,
+      "voice": "Y ahora sí, termina el proceso de compra.",
+      "on_screen_text": "Proceso completo",
+      "asset": "sim:pasos-compra",
+      "visual_direction": "Los seis pasos se encienden en orden sobre dos rieles y el remate es la propiedad inscrita a nombre de quien compró.",
+      "transition": "cut"
+    },
+    {
+      "purpose": "cta",
+      "duration": 6,
+      "voice": "¿Y el primer paso? Encontrar la propiedad. Explórala directamente en el mapa con Geo Propiedades Ecuador.",
+      "on_screen_text": "Empieza en el mapa",
+      "asset": null,
+      "visual_direction": "Cierre global aprobado sobre el mapa de marca: tile, dominio, CTA y firma de Aents. Entrada suave y estado final quieto para lectura.",
+      "transition": "fade"
+    }
+  ]
+}

@@ -1,0 +1,668 @@
+{
+  "brandId": "geo",
+  "brandName": "Geo Propiedades Ecuador",
+  "brandTagline": "Un producto de Aents",
+  "brandSymbol": "brand/aents-symbol-negative.png",
+  "title": "Tres cosas que revisar antes de contactar",
+  "coverText": "Revisa esto antes de contactar",
+  "cta": "Encuentra tu futuro hogar",
+  "url": "geopropiedadesecuador.com",
+  "brandTile": "brand/aents-brand-tile-1024.png",
+  "kicker": null,
+  "musicFile": null,
+  "showSafeAreas": false,
+  "scenes": [
+    {
+      "purpose": "gancho",
+      "durationInFrames": 98,
+      "headline": "Antes de contactar",
+      "captions": [
+        {
+          "text": "¿Te gustó una propiedad?",
+          "start": 0.0,
+          "end": 1.32,
+          "words": [
+            {
+              "text": "¿Te",
+              "start": 0.0,
+              "end": 0.172
+            },
+            {
+              "text": "gustó",
+              "start": 0.172,
+              "end": 0.517
+            },
+            {
+              "text": "una",
+              "start": 0.517,
+              "end": 0.746
+            },
+            {
+              "text": "propiedad?",
+              "start": 0.746,
+              "end": 1.32
+            }
+          ]
+        },
+        {
+          "text": "Espera antes de contactar.",
+          "start": 1.32,
+          "end": 2.813,
+          "words": [
+            {
+              "text": "Espera",
+              "start": 0.0,
+              "end": 0.402
+            },
+            {
+              "text": "antes",
+              "start": 0.402,
+              "end": 0.746
+            },
+            {
+              "text": "de",
+              "start": 0.746,
+              "end": 0.918
+            },
+            {
+              "text": "contactar.",
+              "start": 0.918,
+              "end": 1.492
+            }
+          ]
+        }
+      ],
+      "visualDirection": "Arranca ya en movimiento: la ficha entra desde abajo con la foto grande ocupando el cuadro y un ligero desplazamiento hacia arriba, como cuando alguien acaba de abrir un anuncio. El producto se reconoce en el cuadro uno. Sobre la foto, un destello suave recorre el borde y las características quedan todavía apagadas, insinuando que falta información por mirar. Marca superior con dominio a x=24 y tile a 84 px del borde derecho, ambos desde y=205. Rótulo y subtítulos en una sola columna anclada abajo, terminando en y=1580, con 72 px entre titular y subtítulo. Zonas seguras: nada esencial arriba de y=240, debajo de y=1460, ni en los 240 px de la derecha bajo y=820.",
+      "transition": "cut",
+      "asset": "sim:revisar-fotos",
+      "assetType": "simulation",
+      "photo": null,
+      "voiceFile": "jobs/geo-005/audio/voice-01.mp3",
+      "assetStartInFrames": 0,
+      "assetTotalInFrames": 269,
+      "accent": "#22C55E"
+    },
+    {
+      "purpose": "prueba",
+      "durationInFrames": 171,
+      "headline": "Mira toda la ficha",
+      "captions": [
+        {
+          "text": "Primero revisa todas las fotos",
+          "start": 0.0,
+          "end": 2.04,
+          "words": [
+            {
+              "text": "Primero",
+              "start": 0.0,
+              "end": 0.527
+            },
+            {
+              "text": "revisa",
+              "start": 0.527,
+              "end": 0.987
+            },
+            {
+              "text": "todas",
+              "start": 0.987,
+              "end": 1.382
+            },
+            {
+              "text": "las",
+              "start": 1.382,
+              "end": 1.646
+            },
+            {
+              "text": "fotos",
+              "start": 1.646,
+              "end": 2.04
+            }
+          ]
+        },
+        {
+          "text": "y los datos declarados: habitaciones,",
+          "start": 2.04,
+          "end": 4.41,
+          "words": [
+            {
+              "text": "y",
+              "start": 0.0,
+              "end": 0.132
+            },
+            {
+              "text": "los",
+              "start": 0.132,
+              "end": 0.395
+            },
+            {
+              "text": "datos",
+              "start": 0.395,
+              "end": 0.79
+            },
+            {
+              "text": "declarados:",
+              "start": 0.79,
+              "end": 1.514
+            },
+            {
+              "text": "habitaciones,",
+              "start": 1.514,
+              "end": 2.37
+            }
+          ]
+        },
+        {
+          "text": "baños y área.",
+          "start": 4.41,
+          "end": 5.266,
+          "words": [
+            {
+              "text": "baños",
+              "start": 0.0,
+              "end": 0.395
+            },
+            {
+              "text": "y",
+              "start": 0.395,
+              "end": 0.527
+            },
+            {
+              "text": "área.",
+              "start": 0.527,
+              "end": 0.856
+            }
+          ]
+        }
+      ],
+      "visualDirection": "Continúa la misma ficha sin corte de contexto: la galería avanza con desplazamiento continuo por tres o cuatro fotos y luego la vista baja hasta el bloque de características, donde habitaciones, baños y área se encienden uno a uno acompañando exactamente el orden de la voz. El movimiento es constante, nunca congela la ficha. Los valores son genéricos e ilustrativos, no de una propiedad identificable. Rótulo en una sola fila abajo, marca superior fija en y=205.",
+      "transition": "cut",
+      "asset": "sim:revisar-fotos",
+      "assetType": "simulation",
+      "photo": null,
+      "voiceFile": "jobs/geo-005/audio/voice-02.mp3",
+      "assetStartInFrames": 98,
+      "assetTotalInFrames": 269,
+      "accent": "#6B5CF6"
+    },
+    {
+      "purpose": "prueba",
+      "durationInFrames": 430,
+      "headline": "Precio vs. similares",
+      "captions": [
+        {
+          "text": "Luego abre el análisis",
+          "start": 0.0,
+          "end": 1.535,
+          "words": [
+            {
+              "text": "Luego",
+              "start": 0.0,
+              "end": 0.4
+            },
+            {
+              "text": "abre",
+              "start": 0.4,
+              "end": 0.734
+            },
+            {
+              "text": "el",
+              "start": 0.734,
+              "end": 0.934
+            },
+            {
+              "text": "análisis",
+              "start": 0.934,
+              "end": 1.535
+            }
+          ]
+        },
+        {
+          "text": "del anuncio.",
+          "start": 1.535,
+          "end": 2.336,
+          "words": [
+            {
+              "text": "del",
+              "start": 0.0,
+              "end": 0.267
+            },
+            {
+              "text": "anuncio.",
+              "start": 0.267,
+              "end": 0.801
+            }
+          ]
+        },
+        {
+          "text": "La ficha calcula el precio",
+          "start": 2.336,
+          "end": 4.138,
+          "words": [
+            {
+              "text": "La",
+              "start": 0.0,
+              "end": 0.2
+            },
+            {
+              "text": "ficha",
+              "start": 0.2,
+              "end": 0.601
+            },
+            {
+              "text": "calcula",
+              "start": 0.601,
+              "end": 1.135
+            },
+            {
+              "text": "el",
+              "start": 1.135,
+              "end": 1.335
+            },
+            {
+              "text": "precio",
+              "start": 1.335,
+              "end": 1.802
+            }
+          ]
+        },
+        {
+          "text": "por metro cuadrado.",
+          "start": 4.138,
+          "end": 5.406,
+          "words": [
+            {
+              "text": "por",
+              "start": 0.0,
+              "end": 0.267
+            },
+            {
+              "text": "metro",
+              "start": 0.267,
+              "end": 0.667
+            },
+            {
+              "text": "cuadrado.",
+              "start": 0.667,
+              "end": 1.268
+            }
+          ]
+        },
+        {
+          "text": "Lo compara con propiedades activas",
+          "start": 5.406,
+          "end": 7.742,
+          "words": [
+            {
+              "text": "Lo",
+              "start": 0.0,
+              "end": 0.2
+            },
+            {
+              "text": "compara",
+              "start": 0.2,
+              "end": 0.734
+            },
+            {
+              "text": "con",
+              "start": 0.734,
+              "end": 1.001
+            },
+            {
+              "text": "propiedades",
+              "start": 1.001,
+              "end": 1.802
+            },
+            {
+              "text": "activas",
+              "start": 1.802,
+              "end": 2.336
+            }
+          ]
+        },
+        {
+          "text": "del mismo tipo,",
+          "start": 7.742,
+          "end": 8.743,
+          "words": [
+            {
+              "text": "del",
+              "start": 0.0,
+              "end": 0.267
+            },
+            {
+              "text": "mismo",
+              "start": 0.267,
+              "end": 0.667
+            },
+            {
+              "text": "tipo,",
+              "start": 0.667,
+              "end": 1.001
+            }
+          ]
+        },
+        {
+          "text": "operación y ciudad,",
+          "start": 8.743,
+          "end": 10.011,
+          "words": [
+            {
+              "text": "operación",
+              "start": 0.0,
+              "end": 0.667
+            },
+            {
+              "text": "y",
+              "start": 0.667,
+              "end": 0.801
+            },
+            {
+              "text": "ciudad,",
+              "start": 0.801,
+              "end": 1.268
+            }
+          ]
+        },
+        {
+          "text": "y muestra el rango habitual",
+          "start": 10.011,
+          "end": 11.88,
+          "words": [
+            {
+              "text": "y",
+              "start": 0.0,
+              "end": 0.133
+            },
+            {
+              "text": "muestra",
+              "start": 0.133,
+              "end": 0.667
+            },
+            {
+              "text": "el",
+              "start": 0.667,
+              "end": 0.868
+            },
+            {
+              "text": "rango",
+              "start": 0.868,
+              "end": 1.268
+            },
+            {
+              "text": "habitual",
+              "start": 1.268,
+              "end": 1.869
+            }
+          ]
+        },
+        {
+          "text": "y cuántos comparables existen.",
+          "start": 11.88,
+          "end": 13.882,
+          "words": [
+            {
+              "text": "y",
+              "start": 0.0,
+              "end": 0.133
+            },
+            {
+              "text": "cuántos",
+              "start": 0.133,
+              "end": 0.667
+            },
+            {
+              "text": "comparables",
+              "start": 0.667,
+              "end": 1.468
+            },
+            {
+              "text": "existen.",
+              "start": 1.468,
+              "end": 2.002
+            }
+          ]
+        }
+      ],
+      "visualDirection": "Recrea el bloque real Inteligencia del anuncio: primero aparece el precio por m² calculado por el sistema; después Frente a similares, el rango habitual y el tamaño de muestra. La animación explica visualmente que los comparables son anuncios activos del mismo tipo, operación y ciudad, sin insinuar cercanía exacta ni usar el área construida. Los valores son un ejemplo ilustrativo y no un dato de mercado citable. Rótulo abajo, marca superior fija.",
+      "transition": "cut",
+      "asset": "sim:precio-area",
+      "assetType": "simulation",
+      "photo": null,
+      "voiceFile": "jobs/geo-005/audio/voice-03.mp3",
+      "assetStartInFrames": 0,
+      "assetTotalInFrames": 430,
+      "accent": "#14B8A6"
+    },
+    {
+      "purpose": "prueba",
+      "durationInFrames": 153,
+      "headline": "Revisa la ubicación",
+      "captions": [
+        {
+          "text": "Después revisa la ubicación",
+          "start": 0.0,
+          "end": 1.759,
+          "words": [
+            {
+              "text": "Después",
+              "start": 0.0,
+              "end": 0.503
+            },
+            {
+              "text": "revisa",
+              "start": 0.503,
+              "end": 0.942
+            },
+            {
+              "text": "la",
+              "start": 0.942,
+              "end": 1.131
+            },
+            {
+              "text": "ubicación",
+              "start": 1.131,
+              "end": 1.759
+            }
+          ]
+        },
+        {
+          "text": "y la Forma del terreno,",
+          "start": 1.759,
+          "end": 3.204,
+          "words": [
+            {
+              "text": "y",
+              "start": 0.0,
+              "end": 0.126
+            },
+            {
+              "text": "la",
+              "start": 0.126,
+              "end": 0.314
+            },
+            {
+              "text": "Forma",
+              "start": 0.314,
+              "end": 0.691
+            },
+            {
+              "text": "del",
+              "start": 0.691,
+              "end": 0.942
+            },
+            {
+              "text": "terreno,",
+              "start": 0.942,
+              "end": 1.445
+            }
+          ]
+        },
+        {
+          "text": "cuando esté disponible.",
+          "start": 3.204,
+          "end": 4.649,
+          "words": [
+            {
+              "text": "cuando",
+              "start": 0.0,
+              "end": 0.44
+            },
+            {
+              "text": "esté",
+              "start": 0.44,
+              "end": 0.754
+            },
+            {
+              "text": "disponible.",
+              "start": 0.754,
+              "end": 1.445
+            }
+          ]
+        }
+      ],
+      "visualDirection": "La ficha se retrae y el mapa toma el cuadro con un acercamiento continuo hasta la zona; primero aparece el punto de la propiedad y, cuando la voz lo nombra, el punto da paso al polígono de la Forma del terreno dibujándose sobre el mapa, con su etiqueta escrita tal cual aparece en la interfaz. Sin calles ni nombres reales legibles: es una recreación ilustrativa, no una captura. Rótulo abajo, marca superior fija.",
+      "transition": "cut",
+      "asset": "sim:ubicacion-ficha",
+      "assetType": "simulation",
+      "photo": null,
+      "voiceFile": "jobs/geo-005/audio/voice-04.mp3",
+      "assetStartInFrames": 0,
+      "assetTotalInFrames": 153,
+      "accent": "#A78BFA"
+    },
+    {
+      "purpose": "cta",
+      "durationInFrames": 217,
+      "headline": "Tu futuro hogar",
+      "captions": [
+        {
+          "text": "Mira bien hoy el lugar",
+          "start": 0.0,
+          "end": 1.445,
+          "words": [
+            {
+              "text": "Mira",
+              "start": 0.0,
+              "end": 0.314
+            },
+            {
+              "text": "bien",
+              "start": 0.314,
+              "end": 0.628
+            },
+            {
+              "text": "hoy",
+              "start": 0.628,
+              "end": 0.88
+            },
+            {
+              "text": "el",
+              "start": 0.88,
+              "end": 1.068
+            },
+            {
+              "text": "lugar",
+              "start": 1.068,
+              "end": 1.445
+            }
+          ]
+        },
+        {
+          "text": "que mañana podrías llamar hogar.",
+          "start": 1.445,
+          "end": 3.456,
+          "words": [
+            {
+              "text": "que",
+              "start": 0.0,
+              "end": 0.251
+            },
+            {
+              "text": "mañana",
+              "start": 0.251,
+              "end": 0.691
+            },
+            {
+              "text": "podrías",
+              "start": 0.691,
+              "end": 1.194
+            },
+            {
+              "text": "llamar",
+              "start": 1.194,
+              "end": 1.634
+            },
+            {
+              "text": "hogar.",
+              "start": 1.634,
+              "end": 2.011
+            }
+          ]
+        },
+        {
+          "text": "Encuentra tu futuro hogar",
+          "start": 3.456,
+          "end": 5.089,
+          "words": [
+            {
+              "text": "Encuentra",
+              "start": 0.0,
+              "end": 0.628
+            },
+            {
+              "text": "tu",
+              "start": 0.628,
+              "end": 0.817
+            },
+            {
+              "text": "futuro",
+              "start": 0.817,
+              "end": 1.257
+            },
+            {
+              "text": "hogar",
+              "start": 1.257,
+              "end": 1.634
+            }
+          ]
+        },
+        {
+          "text": "en Geo Propiedades Ecuador.",
+          "start": 5.089,
+          "end": 6.786,
+          "words": [
+            {
+              "text": "en",
+              "start": 0.0,
+              "end": 0.188
+            },
+            {
+              "text": "Geo",
+              "start": 0.188,
+              "end": 0.44
+            },
+            {
+              "text": "Propiedades",
+              "start": 0.44,
+              "end": 1.194
+            },
+            {
+              "text": "Ecuador.",
+              "start": 1.194,
+              "end": 1.696
+            }
+          ]
+        }
+      ],
+      "visualDirection": "Las tres comprobaciones vuelven un instante como tres marcas que se completan sobre el mapa mientras entra la marca al nombrarse Geo Propiedades Ecuador, y el plano se resuelve en la tarjeta de cierre común de la serie: tile, Geo Propiedades Ecuador, dominio geopropiedadesecuador.com, el CTA 'Encuentra tu futuro hogar' y la firma de Aents. El cierre no se modifica respecto al resto de la serie.",
+      "transition": "fade",
+      "asset": null,
+      "assetType": null,
+      "photo": null,
+      "voiceFile": "jobs/geo-005/audio/voice-05.mp3",
+      "assetStartInFrames": 0,
+      "assetTotalInFrames": 217,
+      "accent": "#22C55E"
+    }
+  ]
+}

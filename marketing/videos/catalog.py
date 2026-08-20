@@ -13,11 +13,21 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
+import brand
+
 
 ROOT = Path(__file__).resolve().parent
-LIBRARY = ROOT / "library"
+LIBRARY = ROOT / "brands/geo/library"
 OUTBOX = LIBRARY / "_outbox"
-CATALOG = ROOT / "memory/catalog.json"
+CATALOG = ROOT / "brands/geo/memory/catalog.json"
+
+
+def configure(profile: brand.BrandProfile) -> None:
+    """Select storage owned by the active brand."""
+    global LIBRARY, OUTBOX, CATALOG
+    LIBRARY = profile.library
+    OUTBOX = LIBRARY / "_outbox"
+    CATALOG = profile.memory / "catalog.json"
 
 # The life of a piece, in order. A video only ever moves forward through these.
 STATES = ["planned", "approved", "rendered", "reviewed", "signed", "published", "learned", "archived"]
@@ -50,13 +60,42 @@ def load() -> dict[str, Any]:
     return load_json(CATALOG, {"version": 1, "updated_at": now(), "videos": []})
 
 
+def merge_concurrent(mine: list[dict[str, Any]], theirs: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Keep every video, preferring the copy the caller is holding.
+
+    A video the caller does not know about was written by somebody else after
+    this snapshot was loaded, so it is kept as it is on disk. A video both sides
+    have is the one being updated right now, and the caller's copy wins.
+    """
+    known = {str(item.get("id")) for item in mine}
+    extra = [item for item in theirs if str(item.get("id")) not in known]
+    return sorted([*mine, *extra], key=lambda item: int(item.get("number") or 0))
+
+
 def save(catalog: dict[str, Any]) -> None:
+    """Write the catalogue back without dropping another writer's work.
+
+    Every command loads the whole catalogue, changes one entry and writes the
+    whole thing back. Two agents work this repository at the same time, so each
+    of those snapshots is stale by the time it is written, and a plain overwrite
+    deletes whatever the other one planned in between. That is exactly how
+    `aents-003` vanished from the catalogue while its directory, its approval
+    and its synthesised voice stayed on disk: the next command could no longer
+    find a video that was entirely there.
+
+    Re-reading immediately before writing does not make this atomic — two writes
+    in the same instant can still race — but it turns the common case, two
+    sessions minutes apart, from silent data loss into a merge.
+    """
+    catalog["videos"] = merge_concurrent(
+        catalog.get("videos") or [], (load_json(CATALOG, {}) or {}).get("videos") or []
+    )
     catalog["updated_at"] = now()
     write_json(CATALOG, catalog)
 
 
 def video_id(number: int) -> str:
-    return f"video-{number:03}"
+    return f"{brand.current().id}-{number:03}"
 
 
 def next_number(catalog: dict[str, Any]) -> int:
@@ -64,7 +103,7 @@ def next_number(catalog: dict[str, Any]) -> int:
 
 
 def find(reference: str) -> tuple[Path, dict[str, Any], dict[str, Any]]:
-    """Resolve "7", "video-007" or "video_007" to its directory and entry."""
+    """Resolve a number or a brand-qualified identifier in the active catalog."""
     catalog = load()
     normalized = reference.lower().replace("_", "-")
     if normalized.isdigit():

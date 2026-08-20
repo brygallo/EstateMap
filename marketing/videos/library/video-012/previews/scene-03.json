@@ -1,0 +1,158 @@
+{
+  "title": "Así funciona la compraventa de una propiedad",
+  "coverText": "Comprar, paso a paso",
+  "cta": "Encuentra tu futuro hogar",
+  "url": "geopropiedadesecuador.com",
+  "brandTile": "brand/aents-brand-tile-1024.png",
+  "kicker": null,
+  "musicFile": null,
+  "showSafeAreas": false,
+  "scenes": [
+    {
+      "purpose": "prueba",
+      "durationInFrames": 208,
+      "headline": "2. Verificar",
+      "captions": [
+        {
+          "text": "Antes de pagar,",
+          "start": 0.0,
+          "end": 0.854,
+          "words": [
+            {
+              "text": "Antes",
+              "start": 0.0,
+              "end": 0.342
+            },
+            {
+              "text": "de",
+              "start": 0.342,
+              "end": 0.513
+            },
+            {
+              "text": "pagar,",
+              "start": 0.513,
+              "end": 0.854
+            }
+          ]
+        },
+        {
+          "text": "verifica quién es el propietario",
+          "start": 0.854,
+          "end": 2.734,
+          "words": [
+            {
+              "text": "verifica",
+              "start": 0.0,
+              "end": 0.513
+            },
+            {
+              "text": "quién",
+              "start": 0.513,
+              "end": 0.854
+            },
+            {
+              "text": "es",
+              "start": 0.854,
+              "end": 1.025
+            },
+            {
+              "text": "el",
+              "start": 1.025,
+              "end": 1.196
+            },
+            {
+              "text": "propietario",
+              "start": 1.196,
+              "end": 1.88
+            }
+          ]
+        },
+        {
+          "text": "y revisa que la propiedad no",
+          "start": 2.734,
+          "end": 4.386,
+          "words": [
+            {
+              "text": "y",
+              "start": 0.0,
+              "end": 0.114
+            },
+            {
+              "text": "revisa",
+              "start": 0.114,
+              "end": 0.513
+            },
+            {
+              "text": "que",
+              "start": 0.513,
+              "end": 0.741
+            },
+            {
+              "text": "la",
+              "start": 0.741,
+              "end": 0.911
+            },
+            {
+              "text": "propiedad",
+              "start": 0.911,
+              "end": 1.481
+            },
+            {
+              "text": "no",
+              "start": 1.481,
+              "end": 1.652
+            }
+          ]
+        },
+        {
+          "text": "tenga problemas legales",
+          "start": 4.386,
+          "end": 5.754,
+          "words": [
+            {
+              "text": "tenga",
+              "start": 0.0,
+              "end": 0.342
+            },
+            {
+              "text": "problemas",
+              "start": 0.342,
+              "end": 0.911
+            },
+            {
+              "text": "legales",
+              "start": 0.911,
+              "end": 1.367
+            }
+          ]
+        },
+        {
+          "text": "o gravámenes.",
+          "start": 5.754,
+          "end": 6.494,
+          "words": [
+            {
+              "text": "o",
+              "start": 0.0,
+              "end": 0.114
+            },
+            {
+              "text": "gravámenes.",
+              "start": 0.114,
+              "end": 0.741
+            }
+          ]
+        }
+      ],
+      "visualDirection": "La lupa recorre propietario, documentos y gravámenes y cada fila queda comprobada al pasar. Cierra remitiendo la revisión a un abogado.",
+      "transition": "cut",
+      "asset": "sim:verificar",
+      "assetType": "simulation",
+      "photo": null,
+      "voiceFile": "jobs/video-012/audio/voice-03.mp3",
+      "assetStartInFrames": 0,
+      "assetTotalInFrames": 208,
+      "accent": "#14B8A6"
+    }
+  ]
+}

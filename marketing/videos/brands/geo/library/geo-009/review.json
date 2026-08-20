@@ -1,0 +1,169 @@
+{
+  "reviewed_at": "2026-08-15T10:01:04.972702-05:00",
+  "passed": true,
+  "checks": {
+    "vertical_1080x1920": true,
+    "duration_8_to_120_seconds": true,
+    "duration_close_to_target": true,
+    "plan_lint_passed": true,
+    "cover_exists": true,
+    "subtitles_exist": true,
+    "all_assets_resolve": true,
+    "approval_exists": true,
+    "text_minimum_declared": true,
+    "no_interpolated_figures": true
+  },
+  "measured_duration_seconds": 89.664,
+  "target_duration_seconds": 90.0,
+  "human_review": null,
+  "notes": "",
+  "visual_review": {
+    "overlay_geometry_version": 1,
+    "critical_frames": [
+      {
+        "scene": 1,
+        "timestamp": 4.417,
+        "path": "frames/scene-01.jpg"
+      },
+      {
+        "scene": 2,
+        "timestamp": 13.733,
+        "path": "frames/scene-02.jpg"
+      },
+      {
+        "scene": 3,
+        "timestamp": 24.683,
+        "path": "frames/scene-03.jpg"
+      },
+      {
+        "scene": 4,
+        "timestamp": 34.85,
+        "path": "frames/scene-04.jpg"
+      },
+      {
+        "scene": 5,
+        "timestamp": 44.567,
+        "path": "frames/scene-05.jpg"
+      },
+      {
+        "scene": 6,
+        "timestamp": 54.817,
+        "path": "frames/scene-06.jpg"
+      },
+      {
+        "scene": 7,
+        "timestamp": 64.083,
+        "path": "frames/scene-07.jpg"
+      },
+      {
+        "scene": 8,
+        "timestamp": 74.467,
+        "path": "frames/scene-08.jpg"
+      },
+      {
+        "scene": 9,
+        "timestamp": 84.933,
+        "path": "frames/scene-09.jpg"
+      }
+    ],
+    "motion_strips": [
+      {
+        "scene": 1,
+        "samples": 16,
+        "from": 0.0,
+        "to": 8.833,
+        "path": "strips/scene-01.jpg"
+      },
+      {
+        "scene": 2,
+        "samples": 16,
+        "from": 8.833,
+        "to": 18.633,
+        "path": "strips/scene-02.jpg"
+      },
+      {
+        "scene": 3,
+        "samples": 16,
+        "from": 18.633,
+        "to": 30.733,
+        "path": "strips/scene-03.jpg"
+      },
+      {
+        "scene": 4,
+        "samples": 16,
+        "from": 30.733,
+        "to": 38.967,
+        "path": "strips/scene-04.jpg"
+      },
+      {
+        "scene": 5,
+        "samples": 16,
+        "from": 38.967,
+        "to": 50.167,
+        "path": "strips/scene-05.jpg"
+      },
+      {
+        "scene": 6,
+        "samples": 16,
+        "from": 50.167,
+        "to": 59.467,
+        "path": "strips/scene-06.jpg"
+      },
+      {
+        "scene": 7,
+        "samples": 16,
+        "from": 59.467,
+        "to": 68.7,
+        "path": "strips/scene-07.jpg"
+      },
+      {
+        "scene": 8,
+        "samples": 16,
+        "from": 68.7,
+        "to": 80.233,
+        "path": "strips/scene-08.jpg"
+      },
+      {
+        "scene": 9,
+        "samples": 16,
+        "from": 80.233,
+        "to": 89.633,
+        "path": "strips/scene-09.jpg"
+      }
+    ],
+    "text": {
+      "declared_floor_px": 22,
+      "editorial_minimum_literal_px": 28,
+      "simulation_minimum_literal_px": 18,
+      "simulation_small_literal_count": 21,
+      "passed": true,
+      "note": "Simulation microcopy and dynamic fitted text are verified in the critical-frame contact sheet."
+    },
+    "animated_figures": {
+      "passed": true,
+      "findings": [],
+      "note": "Una cifra interpolada afirma un valor falso en cada fotograma menos el último."
+    },
+    "warnings": [
+      "Scene 1 holds a still image for 7.1 s from 1.8 s",
+      "Scene 2 holds a still image for 8.5 s from 10.1 s",
+      "Scene 3 holds a still image for 5.9 s from 20.3 s",
+      "Scene 3 holds a still image for 2.9 s from 27.9 s",
+      "Scene 4 holds a still image for 3.2 s from 31.2 s",
+      "Scene 4 holds a still image for 4.6 s from 34.4 s",
+      "Scene 5 holds a still image for 8.7 s from 41.5 s",
+      "Scene 6 holds a still image for 3.9 s from 52.0 s",
+      "Scene 6 holds a still image for 3.5 s from 56.0 s",
+      "Scene 7 holds a still image for 4.4 s from 62.6 s",
+      "Scene 8 holds a still image for 4.3 s from 76.0 s",
+      "Scene 1 is still for 8.4 s of its 8.8 s (95%)",
+      "Scene 2 is still for 8.5 s of its 9.8 s (87%)",
+      "Scene 3 is still for 11.7 s of its 12.1 s (96%)",
+      "Scene 4 is still for 7.8 s of its 8.2 s (95%)",
+      "Scene 5 is still for 10.7 s of its 11.2 s (96%)",
+      "Scene 6 is still for 8.7 s of its 9.3 s (94%)",
+      "Scene 7 is still for 8.7 s of its 9.2 s (95%)",
+      "Scene 8 is still for 9.5 s of its 11.5 s (82%)"
+    ]
+  }
+}

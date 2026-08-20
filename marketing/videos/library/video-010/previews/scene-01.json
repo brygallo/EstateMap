@@ -1,0 +1,210 @@
+{
+  "title": "Antes de comprar un departamento, revisa esto",
+  "coverText": "Antes de comprar un departamento",
+  "cta": "Encuentra tu futuro hogar",
+  "url": "geopropiedadesecuador.com",
+  "brandTile": "brand/aents-brand-tile-1024.png",
+  "kicker": null,
+  "musicFile": null,
+  "showSafeAreas": false,
+  "scenes": [
+    {
+      "purpose": "gancho",
+      "durationInFrames": 333,
+      "headline": "Parte de un edificio",
+      "captions": [
+        {
+          "text": "Cuando compras un departamento no",
+          "start": 0.0,
+          "end": 2.293,
+          "words": [
+            {
+              "text": "Cuando",
+              "start": 0.0,
+              "end": 0.472
+            },
+            {
+              "text": "compras",
+              "start": 0.472,
+              "end": 1.012
+            },
+            {
+              "text": "un",
+              "start": 1.012,
+              "end": 1.214
+            },
+            {
+              "text": "departamento",
+              "start": 1.214,
+              "end": 2.091
+            },
+            {
+              "text": "no",
+              "start": 2.091,
+              "end": 2.293
+            }
+          ]
+        },
+        {
+          "text": "compras solo el departamento.",
+          "start": 2.293,
+          "end": 4.249,
+          "words": [
+            {
+              "text": "compras",
+              "start": 0.0,
+              "end": 0.54
+            },
+            {
+              "text": "solo",
+              "start": 0.54,
+              "end": 0.877
+            },
+            {
+              "text": "el",
+              "start": 0.877,
+              "end": 1.079
+            },
+            {
+              "text": "departamento.",
+              "start": 1.079,
+              "end": 1.956
+            }
+          ]
+        },
+        {
+          "text": "Compras una parte de un edificio,",
+          "start": 4.249,
+          "end": 6.474,
+          "words": [
+            {
+              "text": "Compras",
+              "start": 0.0,
+              "end": 0.539
+            },
+            {
+              "text": "una",
+              "start": 0.539,
+              "end": 0.809
+            },
+            {
+              "text": "parte",
+              "start": 0.809,
+              "end": 1.214
+            },
+            {
+              "text": "de",
+              "start": 1.214,
+              "end": 1.416
+            },
+            {
+              "text": "un",
+              "start": 1.416,
+              "end": 1.619
+            },
+            {
+              "text": "edificio,",
+              "start": 1.619,
+              "end": 2.225
+            }
+          ]
+        },
+        {
+          "text": "con sus reglas,",
+          "start": 6.474,
+          "end": 7.486,
+          "words": [
+            {
+              "text": "con",
+              "start": 0.0,
+              "end": 0.27
+            },
+            {
+              "text": "sus",
+              "start": 0.27,
+              "end": 0.54
+            },
+            {
+              "text": "reglas,",
+              "start": 0.54,
+              "end": 1.012
+            }
+          ]
+        },
+        {
+          "text": "sus vecinos y sus deudas.",
+          "start": 7.486,
+          "end": 9.171,
+          "words": [
+            {
+              "text": "sus",
+              "start": 0.0,
+              "end": 0.27
+            },
+            {
+              "text": "vecinos",
+              "start": 0.27,
+              "end": 0.809
+            },
+            {
+              "text": "y",
+              "start": 0.809,
+              "end": 0.944
+            },
+            {
+              "text": "sus",
+              "start": 0.944,
+              "end": 1.214
+            },
+            {
+              "text": "deudas.",
+              "start": 1.214,
+              "end": 1.686
+            }
+          ]
+        },
+        {
+          "text": "Y eso se revisa antes.",
+          "start": 9.171,
+          "end": 10.655,
+          "words": [
+            {
+              "text": "Y",
+              "start": 0.0,
+              "end": 0.135
+            },
+            {
+              "text": "eso",
+              "start": 0.135,
+              "end": 0.405
+            },
+            {
+              "text": "se",
+              "start": 0.405,
+              "end": 0.607
+            },
+            {
+              "text": "revisa",
+              "start": 0.607,
+              "end": 1.079
+            },
+            {
+              "text": "antes.",
+              "start": 1.079,
+              "end": 1.484
+            }
+          ]
+        }
+      ],
+      "visualDirection": "sim:que-compras, construida y registrada. Un edificio de departamentos visto desde la vereda, dibujado como se ve en la vida real, con su portón, su vereda y un árbol; la cámara sube despacio y una sola ventana iluminada se separa apenas del volumen para mostrar que ese es el departamento. Enseguida el edificio entero se ilumina por capas —fachada, ascensor, cisterna en la azotea— para decir sin texto que lo que compras es todo eso. Un solo sujeto grande de y=250 a y=900, cámara siempre en movimiento y remate con el edificio completo asentándose.",
+      "transition": "cut",
+      "asset": "sim:que-compras",
+      "assetType": "simulation",
+      "photo": null,
+      "voiceFile": "jobs/video-010/audio/voice-01.mp3",
+      "assetStartInFrames": 0,
+      "assetTotalInFrames": 333,
+      "accent": "#22C55E"
+    }
+  ]
+}

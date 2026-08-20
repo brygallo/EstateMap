@@ -1,0 +1,1468 @@
+{
+  "brandId": "aents",
+  "brandName": "Aents",
+  "brandTagline": "Software for people.",
+  "brandSymbol": "brand/symbol-negative-512.png",
+  "title": "Tu empresa no necesita más pasos. Necesita un sistema.",
+  "coverText": "¿Tu empresa necesita un sistema?",
+  "cta": "Cuéntanos qué quieres mejorar",
+  "url": "aents.net",
+  "brandTile": "brand/brand-tile-1024.png",
+  "kicker": null,
+  "musicFile": "jobs/aents-001/audio/music.mp3",
+  "showSafeAreas": false,
+  "scenes": [
+    {
+      "purpose": "gancho",
+      "durationInFrames": 171,
+      "headline": "Problema → Software",
+      "captions": [
+        {
+          "text": "El problema que tu empresa",
+          "start": 0.0,
+          "end": 1.846,
+          "words": [
+            {
+              "text": "El",
+              "start": 0.0,
+              "end": 0.205
+            },
+            {
+              "text": "problema",
+              "start": 0.205,
+              "end": 0.821
+            },
+            {
+              "text": "que",
+              "start": 0.821,
+              "end": 1.094
+            },
+            {
+              "text": "tu",
+              "start": 1.094,
+              "end": 1.299
+            },
+            {
+              "text": "empresa",
+              "start": 1.299,
+              "end": 1.846
+            }
+          ]
+        },
+        {
+          "text": "arrastra hoy puede ser el software",
+          "start": 1.846,
+          "end": 4.24,
+          "words": [
+            {
+              "text": "arrastra",
+              "start": 0.0,
+              "end": 0.615
+            },
+            {
+              "text": "hoy",
+              "start": 0.615,
+              "end": 0.889
+            },
+            {
+              "text": "puede",
+              "start": 0.889,
+              "end": 1.299
+            },
+            {
+              "text": "ser",
+              "start": 1.299,
+              "end": 1.573
+            },
+            {
+              "text": "el",
+              "start": 1.573,
+              "end": 1.778
+            },
+            {
+              "text": "software",
+              "start": 1.778,
+              "end": 2.394
+            }
+          ]
+        },
+        {
+          "text": "que use mañana.",
+          "start": 4.24,
+          "end": 5.266,
+          "words": [
+            {
+              "text": "que",
+              "start": 0.0,
+              "end": 0.274
+            },
+            {
+              "text": "use",
+              "start": 0.274,
+              "end": 0.547
+            },
+            {
+              "text": "mañana.",
+              "start": 0.547,
+              "end": 1.026
+            }
+          ]
+        }
+      ],
+      "visualDirection": "Apertura sobre el escenario hero, rodada en push-in. Cuatro tarjetas —hojas, documentos, mensajes, tareas— llegan desde su propio plano de profundidad y se funden en un solo nodo PROBLEMA; el nodo toma impulso, cae sobre el isotipo y el impacto suelta dos ondas. Del otro lado se arma una ventana real del producto: barra, navegación con un único destino activo y tres filas —tu proceso, tus datos, tu equipo— que pasan de en curso a listo una tras otra.",
+      "transition": "cut",
+      "asset": "sim:aents-problema-software",
+      "assetType": "simulation",
+      "photo": null,
+      "voiceFile": "jobs/aents-001/audio/voice-01.mp3",
+      "assetStartInFrames": 0,
+      "assetTotalInFrames": 171,
+      "accent": "#22C55E"
+    },
+    {
+      "purpose": "problema",
+      "durationInFrames": 172,
+      "headline": "Todo por separado",
+      "captions": [
+        {
+          "text": "Hoy una parte vive en",
+          "start": 0.0,
+          "end": 1.545,
+          "words": [
+            {
+              "text": "Hoy",
+              "start": 0.0,
+              "end": 0.281
+            },
+            {
+              "text": "una",
+              "start": 0.281,
+              "end": 0.562
+            },
+            {
+              "text": "parte",
+              "start": 0.562,
+              "end": 0.983
+            },
+            {
+              "text": "vive",
+              "start": 0.983,
+              "end": 1.335
+            },
+            {
+              "text": "en",
+              "start": 1.335,
+              "end": 1.545
+            }
+          ]
+        },
+        {
+          "text": "un Excel,",
+          "start": 1.545,
+          "end": 2.177,
+          "words": [
+            {
+              "text": "un",
+              "start": 0.0,
+              "end": 0.211
+            },
+            {
+              "text": "Excel,",
+              "start": 0.211,
+              "end": 0.632
+            }
+          ]
+        },
+        {
+          "text": "otra en documentos sueltos,",
+          "start": 2.177,
+          "end": 4.074,
+          "words": [
+            {
+              "text": "otra",
+              "start": 0.0,
+              "end": 0.351
+            },
+            {
+              "text": "en",
+              "start": 0.351,
+              "end": 0.562
+            },
+            {
+              "text": "documentos",
+              "start": 0.562,
+              "end": 1.335
+            },
+            {
+              "text": "sueltos,",
+              "start": 1.335,
+              "end": 1.897
+            }
+          ]
+        },
+        {
+          "text": "otra en WhatsApp.",
+          "start": 4.074,
+          "end": 5.268,
+          "words": [
+            {
+              "text": "otra",
+              "start": 0.0,
+              "end": 0.351
+            },
+            {
+              "text": "en",
+              "start": 0.351,
+              "end": 0.562
+            },
+            {
+              "text": "WhatsApp.",
+              "start": 0.562,
+              "end": 1.194
+            }
+          ]
+        }
+      ],
+      "visualDirection": "Tres de las cuatro fuentes sueltan piezas que salen en direcciones distintas, con duplicados y trayectorias cruzadas. Nada llega a ninguna parte.",
+      "transition": "cut",
+      "asset": "sim:aents-disperso",
+      "assetType": "simulation",
+      "photo": null,
+      "voiceFile": "jobs/aents-001/audio/voice-02.mp3",
+      "assetStartInFrames": 0,
+      "assetTotalInFrames": 321,
+      "accent": "#6B5CF6"
+    },
+    {
+      "purpose": "problema",
+      "durationInFrames": 149,
+      "headline": "Y se repite",
+      "captions": [
+        {
+          "text": "Y otra depende de que alguien",
+          "start": 0.0,
+          "end": 2.016,
+          "words": [
+            {
+              "text": "Y",
+              "start": 0.0,
+              "end": 0.134
+            },
+            {
+              "text": "otra",
+              "start": 0.134,
+              "end": 0.47
+            },
+            {
+              "text": "depende",
+              "start": 0.47,
+              "end": 1.008
+            },
+            {
+              "text": "de",
+              "start": 1.008,
+              "end": 1.209
+            },
+            {
+              "text": "que",
+              "start": 1.209,
+              "end": 1.478
+            },
+            {
+              "text": "alguien",
+              "start": 1.478,
+              "end": 2.016
+            }
+          ]
+        },
+        {
+          "text": "se acuerde de hacerla,",
+          "start": 2.016,
+          "end": 3.494,
+          "words": [
+            {
+              "text": "se",
+              "start": 0.0,
+              "end": 0.202
+            },
+            {
+              "text": "acuerde",
+              "start": 0.202,
+              "end": 0.739
+            },
+            {
+              "text": "de",
+              "start": 0.739,
+              "end": 0.941
+            },
+            {
+              "text": "hacerla,",
+              "start": 0.941,
+              "end": 1.478
+            }
+          ]
+        },
+        {
+          "text": "todos los días.",
+          "start": 3.494,
+          "end": 4.502,
+          "words": [
+            {
+              "text": "todos",
+              "start": 0.0,
+              "end": 0.403
+            },
+            {
+              "text": "los",
+              "start": 0.403,
+              "end": 0.672
+            },
+            {
+              "text": "días.",
+              "start": 0.672,
+              "end": 1.008
+            }
+          ]
+        }
+      ],
+      "visualDirection": "La misma toma continúa y el foco pasa a la tarea manual: su vuelta vuelve a empezar una y otra vez sin resolverse.",
+      "transition": "cut",
+      "asset": "sim:aents-disperso",
+      "assetType": "simulation",
+      "photo": null,
+      "voiceFile": "jobs/aents-001/audio/voice-03.mp3",
+      "assetStartInFrames": 172,
+      "assetTotalInFrames": 321,
+      "accent": "#14B8A6"
+    },
+    {
+      "purpose": "problema",
+      "durationInFrames": 196,
+      "headline": "No trabajan juntas",
+      "captions": [
+        {
+          "text": "Casi nunca falta tecnología.",
+          "start": 0.0,
+          "end": 1.939,
+          "words": [
+            {
+              "text": "Casi",
+              "start": 0.0,
+              "end": 0.346
+            },
+            {
+              "text": "nunca",
+              "start": 0.346,
+              "end": 0.762
+            },
+            {
+              "text": "falta",
+              "start": 0.762,
+              "end": 1.177
+            },
+            {
+              "text": "tecnología.",
+              "start": 1.177,
+              "end": 1.939
+            }
+          ]
+        },
+        {
+          "text": "Lo que falta es",
+          "start": 1.939,
+          "end": 3.047,
+          "words": [
+            {
+              "text": "Lo",
+              "start": 0.0,
+              "end": 0.208
+            },
+            {
+              "text": "que",
+              "start": 0.208,
+              "end": 0.485
+            },
+            {
+              "text": "falta",
+              "start": 0.485,
+              "end": 0.9
+            },
+            {
+              "text": "es",
+              "start": 0.9,
+              "end": 1.108
+            }
+          ]
+        },
+        {
+          "text": "que esas herramientas se hablen",
+          "start": 3.047,
+          "end": 5.264,
+          "words": [
+            {
+              "text": "que",
+              "start": 0.0,
+              "end": 0.277
+            },
+            {
+              "text": "esas",
+              "start": 0.277,
+              "end": 0.623
+            },
+            {
+              "text": "herramientas",
+              "start": 0.623,
+              "end": 1.524
+            },
+            {
+              "text": "se",
+              "start": 1.524,
+              "end": 1.732
+            },
+            {
+              "text": "hablen",
+              "start": 1.732,
+              "end": 2.216
+            }
+          ]
+        },
+        {
+          "text": "entre ellas.",
+          "start": 5.264,
+          "end": 6.095,
+          "words": [
+            {
+              "text": "entre",
+              "start": 0.0,
+              "end": 0.416
+            },
+            {
+              "text": "ellas.",
+              "start": 0.416,
+              "end": 0.831
+            }
+          ]
+        }
+      ],
+      "visualDirection": "La cámara se aleja y revela que las cuatro herramientas existen, pero cada una vive en su isla. Los enlaces entre ellas se intentan y se apagan antes de llegar; el isotipo entra al centro y empieza a completarlos.",
+      "transition": "cut",
+      "asset": "sim:aents-desconectado",
+      "assetType": "simulation",
+      "photo": null,
+      "voiceFile": "jobs/aents-001/audio/voice-04.mp3",
+      "assetStartInFrames": 0,
+      "assetTotalInFrames": 196,
+      "accent": "#A78BFA"
+    },
+    {
+      "purpose": "prueba",
+      "durationInFrames": 200,
+      "headline": "Primero entendemos",
+      "captions": [
+        {
+          "text": "Por eso no empezamos programando.",
+          "start": 0.0,
+          "end": 2.305,
+          "words": [
+            {
+              "text": "Por",
+              "start": 0.0,
+              "end": 0.279
+            },
+            {
+              "text": "eso",
+              "start": 0.279,
+              "end": 0.559
+            },
+            {
+              "text": "no",
+              "start": 0.559,
+              "end": 0.768
+            },
+            {
+              "text": "empezamos",
+              "start": 0.768,
+              "end": 1.467
+            },
+            {
+              "text": "programando.",
+              "start": 1.467,
+              "end": 2.305
+            }
+          ]
+        },
+        {
+          "text": "Empezamos entendiendo cómo trabaja",
+          "start": 2.305,
+          "end": 4.75,
+          "words": [
+            {
+              "text": "Empezamos",
+              "start": 0.0,
+              "end": 0.699
+            },
+            {
+              "text": "entendiendo",
+              "start": 0.699,
+              "end": 1.537
+            },
+            {
+              "text": "cómo",
+              "start": 1.537,
+              "end": 1.886
+            },
+            {
+              "text": "trabaja",
+              "start": 1.886,
+              "end": 2.445
+            }
+          ]
+        },
+        {
+          "text": "tu empresa de verdad.",
+          "start": 4.75,
+          "end": 6.217,
+          "words": [
+            {
+              "text": "tu",
+              "start": 0.0,
+              "end": 0.21
+            },
+            {
+              "text": "empresa",
+              "start": 0.21,
+              "end": 0.768
+            },
+            {
+              "text": "de",
+              "start": 0.768,
+              "end": 0.978
+            },
+            {
+              "text": "verdad.",
+              "start": 0.978,
+              "end": 1.467
+            }
+          ]
+        }
+      ],
+      "visualDirection": "El desorden se apaga y queda un mapa de proceso limpio: entrada, decisión, personas y resultado. Una lectura lo recorre de principio a fin y se detiene a marcar el paso donde se traba.",
+      "transition": "cut",
+      "asset": "sim:aents-entender",
+      "assetType": "simulation",
+      "photo": null,
+      "voiceFile": "jobs/aents-001/audio/voice-05.mp3",
+      "assetStartInFrames": 0,
+      "assetTotalInFrames": 200,
+      "accent": "#22C55E"
+    },
+    {
+      "purpose": "prueba",
+      "durationInFrames": 219,
+      "headline": "App o plataforma",
+      "captions": [
+        {
+          "text": "Recién ahí decidimos qué construir.",
+          "start": 0.0,
+          "end": 2.723,
+          "words": [
+            {
+              "text": "Recién",
+              "start": 0.0,
+              "end": 0.545
+            },
+            {
+              "text": "ahí",
+              "start": 0.545,
+              "end": 0.856
+            },
+            {
+              "text": "decidimos",
+              "start": 0.856,
+              "end": 1.634
+            },
+            {
+              "text": "qué",
+              "start": 1.634,
+              "end": 1.945
+            },
+            {
+              "text": "construir.",
+              "start": 1.945,
+              "end": 2.723
+            }
+          ]
+        },
+        {
+          "text": "A veces es una aplicación móvil",
+          "start": 2.723,
+          "end": 5.212,
+          "words": [
+            {
+              "text": "A",
+              "start": 0.0,
+              "end": 0.156
+            },
+            {
+              "text": "veces",
+              "start": 0.156,
+              "end": 0.622
+            },
+            {
+              "text": "es",
+              "start": 0.622,
+              "end": 0.856
+            },
+            {
+              "text": "una",
+              "start": 0.856,
+              "end": 1.167
+            },
+            {
+              "text": "aplicación",
+              "start": 1.167,
+              "end": 2.022
+            },
+            {
+              "text": "móvil",
+              "start": 2.022,
+              "end": 2.489
+            }
+          ]
+        },
+        {
+          "text": "o una plataforma web.",
+          "start": 5.212,
+          "end": 6.845,
+          "words": [
+            {
+              "text": "o",
+              "start": 0.0,
+              "end": 0.156
+            },
+            {
+              "text": "una",
+              "start": 0.156,
+              "end": 0.467
+            },
+            {
+              "text": "plataforma",
+              "start": 0.467,
+              "end": 1.322
+            },
+            {
+              "text": "web.",
+              "start": 1.322,
+              "end": 1.634
+            }
+          ]
+        }
+      ],
+      "visualDirection": "Desde la necesidad central, el selector elige las dos primeras formas: teléfono para la app y navegador para la plataforma. Cada una se enciende cuando le toca y queda enlazada al centro.",
+      "transition": "cut",
+      "asset": "sim:aents-soluciones",
+      "assetType": "simulation",
+      "photo": null,
+      "voiceFile": "jobs/aents-001/audio/voice-06.mp3",
+      "assetStartInFrames": 0,
+      "assetTotalInFrames": 426,
+      "accent": "#6B5CF6"
+    },
+    {
+      "purpose": "prueba",
+      "durationInFrames": 207,
+      "headline": "Sistema y automatizar",
+      "captions": [
+        {
+          "text": "Otras veces es un sistema",
+          "start": 0.0,
+          "end": 1.786,
+          "words": [
+            {
+              "text": "Otras",
+              "start": 0.0,
+              "end": 0.412
+            },
+            {
+              "text": "veces",
+              "start": 0.412,
+              "end": 0.824
+            },
+            {
+              "text": "es",
+              "start": 0.824,
+              "end": 1.031
+            },
+            {
+              "text": "un",
+              "start": 1.031,
+              "end": 1.237
+            },
+            {
+              "text": "sistema",
+              "start": 1.237,
+              "end": 1.786
+            }
+          ]
+        },
+        {
+          "text": "para toda la operación,",
+          "start": 1.786,
+          "end": 3.367,
+          "words": [
+            {
+              "text": "para",
+              "start": 0.0,
+              "end": 0.344
+            },
+            {
+              "text": "toda",
+              "start": 0.344,
+              "end": 0.687
+            },
+            {
+              "text": "la",
+              "start": 0.687,
+              "end": 0.893
+            },
+            {
+              "text": "operación,",
+              "start": 0.893,
+              "end": 1.58
+            }
+          ]
+        },
+        {
+          "text": "o automatizar lo que hoy alguien",
+          "start": 3.367,
+          "end": 5.634,
+          "words": [
+            {
+              "text": "o",
+              "start": 0.0,
+              "end": 0.137
+            },
+            {
+              "text": "automatizar",
+              "start": 0.137,
+              "end": 0.962
+            },
+            {
+              "text": "lo",
+              "start": 0.962,
+              "end": 1.168
+            },
+            {
+              "text": "que",
+              "start": 1.168,
+              "end": 1.443
+            },
+            {
+              "text": "hoy",
+              "start": 1.443,
+              "end": 1.718
+            },
+            {
+              "text": "alguien",
+              "start": 1.718,
+              "end": 2.267
+            }
+          ]
+        },
+        {
+          "text": "hace a mano.",
+          "start": 5.634,
+          "end": 6.458,
+          "words": [
+            {
+              "text": "hace",
+              "start": 0.0,
+              "end": 0.344
+            },
+            {
+              "text": "a",
+              "start": 0.344,
+              "end": 0.481
+            },
+            {
+              "text": "mano.",
+              "start": 0.481,
+              "end": 0.824
+            }
+          ]
+        }
+      ],
+      "visualDirection": "La misma órbita continúa y el selector completa las dos restantes: el panel del sistema y la integración que une lo que estaba suelto. Al final las cuatro quedan enlazadas en un solo ecosistema.",
+      "transition": "cut",
+      "asset": "sim:aents-soluciones",
+      "assetType": "simulation",
+      "photo": null,
+      "voiceFile": "jobs/aents-001/audio/voice-07.mp3",
+      "assetStartInFrames": 219,
+      "assetTotalInFrames": 426,
+      "accent": "#14B8A6"
+    },
+    {
+      "purpose": "prueba",
+      "durationInFrames": 118,
+      "headline": "Tú lo conoces",
+      "captions": [
+        {
+          "text": "El problema lo conoces tú.",
+          "start": 0.0,
+          "end": 2.374,
+          "words": [
+            {
+              "text": "El",
+              "start": 0.0,
+              "end": 0.274
+            },
+            {
+              "text": "problema",
+              "start": 0.274,
+              "end": 1.096
+            },
+            {
+              "text": "lo",
+              "start": 1.096,
+              "end": 1.369
+            },
+            {
+              "text": "conoces",
+              "start": 1.369,
+              "end": 2.1
+            },
+            {
+              "text": "tú.",
+              "start": 2.1,
+              "end": 2.374
+            }
+          ]
+        },
+        {
+          "text": "Nadie mejor.",
+          "start": 2.374,
+          "end": 3.469,
+          "words": [
+            {
+              "text": "Nadie",
+              "start": 0.0,
+              "end": 0.548
+            },
+            {
+              "text": "mejor.",
+              "start": 0.548,
+              "end": 1.096
+            }
+          ]
+        }
+      ],
+      "visualDirection": "El objeto entra en la primera etapa como boceto: es lo que trae quien mira, todavía sin construir.",
+      "transition": "cut",
+      "asset": "sim:aents-etapas",
+      "assetType": "simulation",
+      "photo": null,
+      "voiceFile": "jobs/aents-001/audio/voice-08.mp3",
+      "assetStartInFrames": 0,
+      "assetTotalInFrames": 392,
+      "accent": "#A78BFA"
+    },
+    {
+      "purpose": "prueba",
+      "durationInFrames": 274,
+      "headline": "Hasta el lanzamiento",
+      "captions": [
+        {
+          "text": "Lo demás lo ponemos nosotros: estrategia,",
+          "start": 0.0,
+          "end": 3.614,
+          "words": [
+            {
+              "text": "Lo",
+              "start": 0.0,
+              "end": 0.271
+            },
+            {
+              "text": "demás",
+              "start": 0.271,
+              "end": 0.813
+            },
+            {
+              "text": "lo",
+              "start": 0.813,
+              "end": 1.084
+            },
+            {
+              "text": "ponemos",
+              "start": 1.084,
+              "end": 1.807
+            },
+            {
+              "text": "nosotros:",
+              "start": 1.807,
+              "end": 2.62
+            },
+            {
+              "text": "estrategia,",
+              "start": 2.62,
+              "end": 3.614
+            }
+          ]
+        },
+        {
+          "text": "diseño, desarrollo,",
+          "start": 3.614,
+          "end": 5.24,
+          "words": [
+            {
+              "text": "diseño,",
+              "start": 0.0,
+              "end": 0.632
+            },
+            {
+              "text": "desarrollo,",
+              "start": 0.632,
+              "end": 1.626
+            }
+          ]
+        },
+        {
+          "text": "y no te soltamos",
+          "start": 5.24,
+          "end": 6.776,
+          "words": [
+            {
+              "text": "y",
+              "start": 0.0,
+              "end": 0.181
+            },
+            {
+              "text": "no",
+              "start": 0.181,
+              "end": 0.452
+            },
+            {
+              "text": "te",
+              "start": 0.452,
+              "end": 0.723
+            },
+            {
+              "text": "soltamos",
+              "start": 0.723,
+              "end": 1.536
+            }
+          ]
+        },
+        {
+          "text": "hasta el lanzamiento.",
+          "start": 6.776,
+          "end": 8.674,
+          "words": [
+            {
+              "text": "hasta",
+              "start": 0.0,
+              "end": 0.542
+            },
+            {
+              "text": "el",
+              "start": 0.542,
+              "end": 0.813
+            },
+            {
+              "text": "lanzamiento.",
+              "start": 0.813,
+              "end": 1.897
+            }
+          ]
+        }
+      ],
+      "visualDirection": "El mismo objeto sigue su viaje y se transforma en cada etapa: del boceto al wireframe, del wireframe al producto con interfaz y del producto al lanzamiento en teléfono y escritorio. El riel inferior marca dónde va.",
+      "transition": "cut",
+      "asset": "sim:aents-etapas",
+      "assetType": "simulation",
+      "photo": null,
+      "voiceFile": "jobs/aents-001/audio/voice-09.mp3",
+      "assetStartInFrames": 118,
+      "assetTotalInFrames": 392,
+      "accent": "#22C55E"
+    },
+    {
+      "purpose": "resultado",
+      "durationInFrames": 145,
+      "headline": "No al genérico",
+      "captions": [
+        {
+          "text": "No se trata de que",
+          "start": 0.0,
+          "end": 1.157,
+          "words": [
+            {
+              "text": "No",
+              "start": 0.0,
+              "end": 0.183
+            },
+            {
+              "text": "se",
+              "start": 0.183,
+              "end": 0.365
+            },
+            {
+              "text": "trata",
+              "start": 0.365,
+              "end": 0.731
+            },
+            {
+              "text": "de",
+              "start": 0.731,
+              "end": 0.913
+            },
+            {
+              "text": "que",
+              "start": 0.913,
+              "end": 1.157
+            }
+          ]
+        },
+        {
+          "text": "tu empresa se acomode a",
+          "start": 1.157,
+          "end": 2.618,
+          "words": [
+            {
+              "text": "tu",
+              "start": 0.0,
+              "end": 0.183
+            },
+            {
+              "text": "empresa",
+              "start": 0.183,
+              "end": 0.67
+            },
+            {
+              "text": "se",
+              "start": 0.67,
+              "end": 0.852
+            },
+            {
+              "text": "acomode",
+              "start": 0.852,
+              "end": 1.339
+            },
+            {
+              "text": "a",
+              "start": 1.339,
+              "end": 1.461
+            }
+          ]
+        },
+        {
+          "text": "un software que no la conoce.",
+          "start": 2.618,
+          "end": 4.384,
+          "words": [
+            {
+              "text": "un",
+              "start": 0.0,
+              "end": 0.183
+            },
+            {
+              "text": "software",
+              "start": 0.183,
+              "end": 0.731
+            },
+            {
+              "text": "que",
+              "start": 0.731,
+              "end": 0.974
+            },
+            {
+              "text": "no",
+              "start": 0.974,
+              "end": 1.157
+            },
+            {
+              "text": "la",
+              "start": 1.157,
+              "end": 1.339
+            },
+            {
+              "text": "conoce.",
+              "start": 1.339,
+              "end": 1.766
+            }
+          ]
+        }
+      ],
+      "visualDirection": "Un bloque genérico intenta entrar en el hueco que dibuja el proceso de la empresa y falla por un lado, y después por otro. El fracaso se ve fracasar antes de que llegue la solución.",
+      "transition": "cut",
+      "asset": "sim:aents-medida",
+      "assetType": "simulation",
+      "photo": null,
+      "voiceFile": "jobs/aents-001/audio/voice-10.mp3",
+      "assetStartInFrames": 0,
+      "assetTotalInFrames": 318,
+      "accent": "#6B5CF6"
+    },
+    {
+      "purpose": "resultado",
+      "durationInFrames": 173,
+      "headline": "Hecho a tu medida",
+      "captions": [
+        {
+          "text": "Se trata de construir",
+          "start": 0.0,
+          "end": 1.54,
+          "words": [
+            {
+              "text": "Se",
+              "start": 0.0,
+              "end": 0.21
+            },
+            {
+              "text": "trata",
+              "start": 0.21,
+              "end": 0.63
+            },
+            {
+              "text": "de",
+              "start": 0.63,
+              "end": 0.84
+            },
+            {
+              "text": "construir",
+              "start": 0.84,
+              "end": 1.54
+            }
+          ]
+        },
+        {
+          "text": "la tecnología alrededor de cómo",
+          "start": 1.54,
+          "end": 3.781,
+          "words": [
+            {
+              "text": "la",
+              "start": 0.0,
+              "end": 0.21
+            },
+            {
+              "text": "tecnología",
+              "start": 0.21,
+              "end": 0.98
+            },
+            {
+              "text": "alrededor",
+              "start": 0.98,
+              "end": 1.681
+            },
+            {
+              "text": "de",
+              "start": 1.681,
+              "end": 1.891
+            },
+            {
+              "text": "cómo",
+              "start": 1.891,
+              "end": 2.241
+            }
+          ]
+        },
+        {
+          "text": "tu empresa ya trabaja.",
+          "start": 3.781,
+          "end": 5.322,
+          "words": [
+            {
+              "text": "tu",
+              "start": 0.0,
+              "end": 0.21
+            },
+            {
+              "text": "empresa",
+              "start": 0.21,
+              "end": 0.77
+            },
+            {
+              "text": "ya",
+              "start": 0.77,
+              "end": 0.98
+            },
+            {
+              "text": "trabaja.",
+              "start": 0.98,
+              "end": 1.54
+            }
+          ]
+        }
+      ],
+      "visualDirection": "Las piezas se construyen una a una alrededor de ese mismo hueco hasta cerrarlo exactamente. La forma final es la del proceso, no la del bloque.",
+      "transition": "cut",
+      "asset": "sim:aents-medida",
+      "assetType": "simulation",
+      "photo": null,
+      "voiceFile": "jobs/aents-001/audio/voice-11.mp3",
+      "assetStartInFrames": 145,
+      "assetTotalInFrames": 318,
+      "accent": "#14B8A6"
+    },
+    {
+      "purpose": "prueba",
+      "durationInFrames": 223,
+      "headline": "Lo hicimos nosotros",
+      "captions": [
+        {
+          "text": "Geo Propiedades Ecuador es nuestro.",
+          "start": 0.0,
+          "end": 2.877,
+          "words": [
+            {
+              "text": "Geo",
+              "start": 0.0,
+              "end": 0.329
+            },
+            {
+              "text": "Propiedades",
+              "start": 0.329,
+              "end": 1.315
+            },
+            {
+              "text": "Ecuador",
+              "start": 1.315,
+              "end": 1.973
+            },
+            {
+              "text": "es",
+              "start": 1.973,
+              "end": 2.219
+            },
+            {
+              "text": "nuestro.",
+              "start": 2.219,
+              "end": 2.877
+            }
+          ]
+        },
+        {
+          "text": "Lo pensamos,",
+          "start": 2.877,
+          "end": 3.863,
+          "words": [
+            {
+              "text": "Lo",
+              "start": 0.0,
+              "end": 0.247
+            },
+            {
+              "text": "pensamos,",
+              "start": 0.247,
+              "end": 0.986
+            }
+          ]
+        },
+        {
+          "text": "lo construimos y hoy está funcionando.",
+          "start": 3.863,
+          "end": 6.987,
+          "words": [
+            {
+              "text": "lo",
+              "start": 0.0,
+              "end": 0.247
+            },
+            {
+              "text": "construimos",
+              "start": 0.247,
+              "end": 1.233
+            },
+            {
+              "text": "y",
+              "start": 1.233,
+              "end": 1.397
+            },
+            {
+              "text": "hoy",
+              "start": 1.397,
+              "end": 1.726
+            },
+            {
+              "text": "está",
+              "start": 1.726,
+              "end": 2.137
+            },
+            {
+              "text": "funcionando.",
+              "start": 2.137,
+              "end": 3.124
+            }
+          ]
+        }
+      ],
+      "visualDirection": "Geo Propiedades Ecuador funcionando, con la firma de autoría de Aents: el caso real que demuestra la frase anterior en vez de afirmarla.",
+      "transition": "cut",
+      "asset": "sim:aents-reveal",
+      "assetType": "simulation",
+      "photo": null,
+      "voiceFile": "jobs/aents-001/audio/voice-12.mp3",
+      "assetStartInFrames": 0,
+      "assetTotalInFrames": 223,
+      "accent": "#A78BFA"
+    },
+    {
+      "purpose": "resultado",
+      "durationInFrames": 177,
+      "headline": "Cuéntanos tu idea",
+      "captions": [
+        {
+          "text": "Si tienes una idea,",
+          "start": 0.0,
+          "end": 1.348,
+          "words": [
+            {
+              "text": "Si",
+              "start": 0.0,
+              "end": 0.213
+            },
+            {
+              "text": "tienes",
+              "start": 0.213,
+              "end": 0.709
+            },
+            {
+              "text": "una",
+              "start": 0.709,
+              "end": 0.993
+            },
+            {
+              "text": "idea,",
+              "start": 0.993,
+              "end": 1.348
+            }
+          ]
+        },
+        {
+          "text": "o un proceso",
+          "start": 1.348,
+          "end": 2.27,
+          "words": [
+            {
+              "text": "o",
+              "start": 0.0,
+              "end": 0.142
+            },
+            {
+              "text": "un",
+              "start": 0.142,
+              "end": 0.355
+            },
+            {
+              "text": "proceso",
+              "start": 0.355,
+              "end": 0.922
+            }
+          ]
+        },
+        {
+          "text": "que te está costando,",
+          "start": 2.27,
+          "end": 3.759,
+          "words": [
+            {
+              "text": "que",
+              "start": 0.0,
+              "end": 0.284
+            },
+            {
+              "text": "te",
+              "start": 0.284,
+              "end": 0.496
+            },
+            {
+              "text": "está",
+              "start": 0.496,
+              "end": 0.851
+            },
+            {
+              "text": "costando,",
+              "start": 0.851,
+              "end": 1.489
+            }
+          ]
+        },
+        {
+          "text": "escríbenos por WhatsApp.",
+          "start": 3.759,
+          "end": 5.461,
+          "words": [
+            {
+              "text": "escríbenos",
+              "start": 0.0,
+              "end": 0.78
+            },
+            {
+              "text": "por",
+              "start": 0.78,
+              "end": 1.064
+            },
+            {
+              "text": "WhatsApp.",
+              "start": 1.064,
+              "end": 1.702
+            }
+          ]
+        }
+      ],
+      "visualDirection": "Cierre sobre el fondo de marca: entra el isotipo y después la acción de WhatsApp, con el número visible.",
+      "transition": "cut",
+      "asset": "sim:aents-contacto",
+      "assetType": "simulation",
+      "photo": null,
+      "voiceFile": "jobs/aents-001/audio/voice-13.mp3",
+      "assetStartInFrames": 0,
+      "assetTotalInFrames": 248,
+      "accent": "#22C55E"
+    },
+    {
+      "purpose": "cta",
+      "durationInFrames": 71,
+      "headline": "¿Qué construimos?",
+      "captions": [
+        {
+          "text": "Aents. Software for people.",
+          "start": 0.0,
+          "end": 1.929,
+          "words": [
+            {
+              "text": "Aents.",
+              "start": 0.0,
+              "end": 0.445
+            },
+            {
+              "text": "Software",
+              "start": 0.445,
+              "end": 1.113
+            },
+            {
+              "text": "for",
+              "start": 1.113,
+              "end": 1.41
+            },
+            {
+              "text": "people.",
+              "start": 1.41,
+              "end": 1.929
+            }
+          ]
+        }
+      ],
+      "visualDirection": "La misma toma remata con el nombre, la firma y aents.net. El último fotograma se sostiene estable.",
+      "transition": "fade",
+      "asset": "sim:aents-contacto",
+      "assetType": "simulation",
+      "photo": null,
+      "voiceFile": "jobs/aents-001/audio/voice-14.mp3",
+      "assetStartInFrames": 177,
+      "assetTotalInFrames": 248,
+      "accent": "#6B5CF6"
+    }
+  ]
+}

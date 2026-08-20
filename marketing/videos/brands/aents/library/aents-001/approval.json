@@ -1,0 +1,8 @@
+{
+  "approved_at": "2026-08-15T18:00:30.635312-05:00",
+  "approved_by": "bryan vía Claude",
+  "notes": "Guion reescrito manteniendo sentido y estructura: primera persona, más explicativo y más humano, CTA explícito a WhatsApp. Se añade la escena 12 con sim:aents-reveal para mostrar Geo Propiedades Ecuador funcionando como caso real construido por Aents, con sus cifras marcadas EJEMPLO. Animaciones corregidas: tarjetas de tamaño uniforme y sin solapes en soluciones, y contenido real por etapa en etapas.",
+  "lint_passed": true,
+  "forced": false,
+  "plan_sha": "fcf369736365253d890f167496f779cc803dd84ec8bcf77236e142d9f1cc8210"
+}

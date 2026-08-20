@@ -1,0 +1,249 @@
+{
+  "title": "Antes de comprar un departamento, revisa esto",
+  "coverText": "Antes de comprar un departamento",
+  "cta": "Encuentra tu futuro hogar",
+  "url": "geopropiedadesecuador.com",
+  "brandTile": "brand/aents-brand-tile-1024.png",
+  "kicker": null,
+  "musicFile": null,
+  "showSafeAreas": false,
+  "scenes": [
+    {
+      "purpose": "prueba",
+      "durationInFrames": 366,
+      "headline": "Alícuota al día",
+      "captions": [
+        {
+          "text": "Pregunta cuánto es la alícuota",
+          "start": 0.0,
+          "end": 2.166,
+          "words": [
+            {
+              "text": "Pregunta",
+              "start": 0.0,
+              "end": 0.629
+            },
+            {
+              "text": "cuánto",
+              "start": 0.629,
+              "end": 1.118
+            },
+            {
+              "text": "es",
+              "start": 1.118,
+              "end": 1.327
+            },
+            {
+              "text": "la",
+              "start": 1.327,
+              "end": 1.537
+            },
+            {
+              "text": "alícuota",
+              "start": 1.537,
+              "end": 2.166
+            }
+          ]
+        },
+        {
+          "text": "y qué cubre.",
+          "start": 2.166,
+          "end": 3.004,
+          "words": [
+            {
+              "text": "y",
+              "start": 0.0,
+              "end": 0.14
+            },
+            {
+              "text": "qué",
+              "start": 0.14,
+              "end": 0.419
+            },
+            {
+              "text": "cubre.",
+              "start": 0.419,
+              "end": 0.838
+            }
+          ]
+        },
+        {
+          "text": "Es un gasto de todos",
+          "start": 3.004,
+          "end": 4.471,
+          "words": [
+            {
+              "text": "Es",
+              "start": 0.0,
+              "end": 0.21
+            },
+            {
+              "text": "un",
+              "start": 0.21,
+              "end": 0.419
+            },
+            {
+              "text": "gasto",
+              "start": 0.419,
+              "end": 0.838
+            },
+            {
+              "text": "de",
+              "start": 0.838,
+              "end": 1.048
+            },
+            {
+              "text": "todos",
+              "start": 1.048,
+              "end": 1.467
+            }
+          ]
+        },
+        {
+          "text": "los meses,",
+          "start": 4.471,
+          "end": 5.17,
+          "words": [
+            {
+              "text": "los",
+              "start": 0.0,
+              "end": 0.279
+            },
+            {
+              "text": "meses,",
+              "start": 0.279,
+              "end": 0.699
+            }
+          ]
+        },
+        {
+          "text": "igual que la luz.",
+          "start": 5.17,
+          "end": 6.357,
+          "words": [
+            {
+              "text": "igual",
+              "start": 0.0,
+              "end": 0.419
+            },
+            {
+              "text": "que",
+              "start": 0.419,
+              "end": 0.699
+            },
+            {
+              "text": "la",
+              "start": 0.699,
+              "end": 0.908
+            },
+            {
+              "text": "luz.",
+              "start": 0.908,
+              "end": 1.188
+            }
+          ]
+        },
+        {
+          "text": "Y pide por escrito,",
+          "start": 6.357,
+          "end": 7.685,
+          "words": [
+            {
+              "text": "Y",
+              "start": 0.0,
+              "end": 0.14
+            },
+            {
+              "text": "pide",
+              "start": 0.14,
+              "end": 0.489
+            },
+            {
+              "text": "por",
+              "start": 0.489,
+              "end": 0.768
+            },
+            {
+              "text": "escrito,",
+              "start": 0.768,
+              "end": 1.327
+            }
+          ]
+        },
+        {
+          "text": "firmado por la administración,",
+          "start": 7.685,
+          "end": 9.78,
+          "words": [
+            {
+              "text": "firmado",
+              "start": 0.0,
+              "end": 0.559
+            },
+            {
+              "text": "por",
+              "start": 0.559,
+              "end": 0.838
+            },
+            {
+              "text": "la",
+              "start": 0.838,
+              "end": 1.048
+            },
+            {
+              "text": "administración,",
+              "start": 1.048,
+              "end": 2.096
+            }
+          ]
+        },
+        {
+          "text": "que el vendedor esté al día.",
+          "start": 9.78,
+          "end": 11.737,
+          "words": [
+            {
+              "text": "que",
+              "start": 0.0,
+              "end": 0.279
+            },
+            {
+              "text": "el",
+              "start": 0.279,
+              "end": 0.489
+            },
+            {
+              "text": "vendedor",
+              "start": 0.489,
+              "end": 1.118
+            },
+            {
+              "text": "esté",
+              "start": 1.118,
+              "end": 1.467
+            },
+            {
+              "text": "al",
+              "start": 1.467,
+              "end": 1.677
+            },
+            {
+              "text": "día.",
+              "start": 1.677,
+              "end": 1.956
+            }
+          ]
+        }
+      ],
+      "visualDirection": "sim:alicuota, construida y registrada. Un recibo mensual de administración en primer plano, del tamaño de media pantalla, con el monto en cifra grande claramente ilustrativa —nunca presentada como valor real de mercado— y debajo dos o tres renglones de lo que cubre. Los recibos se apilan uno por mes con ritmo constante para que se sienta el gasto recurrente. Al final entra un certificado firmado y sellado que se posa encima de la pila; el sello cae con peso como remate.",
+      "transition": "cut",
+      "asset": "sim:alicuota",
+      "assetType": "simulation",
+      "photo": null,
+      "voiceFile": "jobs/geo-010/audio/voice-03.mp3",
+      "assetStartInFrames": 0,
+      "assetTotalInFrames": 366,
+      "accent": "#14B8A6"
+    }
+  ]
+}

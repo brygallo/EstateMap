@@ -63,20 +63,21 @@ detail_state.png
 
 # Video factory: keep plans, scripts, reviews, catalogs and result data in Git;
 # exclude generated or supplied binary media from each local production.
-marketing/videos/library/**/*.mp4
-marketing/videos/library/**/*.mov
-marketing/videos/library/**/*.m4v
-marketing/videos/library/**/*.webm
-marketing/videos/library/**/*.mp3
-marketing/videos/library/**/*.wav
-marketing/videos/library/**/*.aiff
-marketing/videos/library/**/*.m4a
-marketing/videos/library/**/*.png
-marketing/videos/library/**/*.jpg
-marketing/videos/library/**/*.jpeg
-marketing/videos/library/**/*.webp
-marketing/videos/library/**/.render.lock
-marketing/videos/library/_outbox/
+marketing/videos/brands/*/library/**/*.mp4
+marketing/videos/brands/*/library/**/*.mov
+marketing/videos/brands/*/library/**/*.m4v
+marketing/videos/brands/*/library/**/*.webm
+marketing/videos/brands/*/library/**/*.mp3
+marketing/videos/brands/*/library/**/*.wav
+marketing/videos/brands/*/library/**/*.aiff
+marketing/videos/brands/*/library/**/*.m4a
+marketing/videos/brands/*/library/**/*.png
+marketing/videos/brands/*/library/**/*.jpg
+marketing/videos/brands/*/library/**/*.jpeg
+marketing/videos/brands/*/library/**/*.webp
+marketing/videos/brands/*/library/**/.render.lock
+marketing/videos/brands/*/library/**/.cache/
+marketing/videos/brands/*/library/_outbox/
 marketing/videos/remotion/public/jobs/
 marketing/videos/remotion/public/fonts/
 marketing/videos/remotion/public/brand/aents-symbol-negative.png

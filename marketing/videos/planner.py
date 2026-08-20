@@ -10,26 +10,23 @@ from pathlib import Path
 from typing import Any
 
 import quality
+import brand
 
 
 ROOT = Path(__file__).resolve().parent
 
 PURPOSES = ["gancho", "problema", "prueba", "resultado", "cta"]
 
-CONTEXT_FILES = [
+COMMON_CONTEXT_FILES = [
     "CLAUDE.md",
     "AGENTS.md",
     "council.md",
-    "product-context.md",
-    "strategy.md",
     "production-guide.md",
-    "creative-system.md",
     "animation-standard.md",
     "system/voice-profiles.json",
-    "memory/lessons.md",
-    "memory/content-gaps.json",
-    "memory/decisions.md",
 ]
+# Compatibility for callers and tests that inspect the common contract list.
+CONTEXT_FILES = COMMON_CONTEXT_FILES
 
 PLAN_SCHEMA = {
     "type": "object",
@@ -54,18 +51,25 @@ PLAN_SCHEMA = {
         "hypothesis": {"type": "string"},
         "cover_text": {"type": "string", "maxLength": 32},
         "caption": {"type": "string"},
+        "hashtags": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 5,
+            "items": {"type": "string", "pattern": "^#[A-Za-z0-9_ÁÉÍÓÚÜÑáéíóúüñ]+$"},
+        },
         "narration": {"type": "string"},
         "voice_profile": {"type": ["string", "null"]},
         # Optional instrumental brief. Absent means the piece carries no music,
         # which stays the default: a licensed free bed is used only when selected.
         "music": {"type": ["string", "null"], "maxLength": 300},
         "verification_notes": {"type": "array", "items": {"type": "string"}},
-        # The ceiling is the story format's; `quality.scene_budget` holds short
-        # form to five, so a fifteen-second piece still cannot arrive with nine.
+        # The ceiling is the lesson format's; `quality.scene_budget` holds short
+        # form to eight and a story to sixteen, so a fifteen-second piece still
+        # cannot arrive with forty.
         "scenes": {
             "type": "array",
             "minItems": 3,
-            "maxItems": 9,
+            "maxItems": 40,
             "items": {
                 "type": "object",
                 "additionalProperties": False,
@@ -136,8 +140,15 @@ LESSONS_SCHEMA = {
 
 def read_context() -> str:
     parts = []
-    for name in CONTEXT_FILES:
-        path = ROOT / name
+    profile = brand.current()
+    paths = [ROOT / name for name in COMMON_CONTEXT_FILES]
+    paths.extend(profile.context_files)
+    paths.extend([
+        profile.memory / "lessons.md",
+        profile.memory / "content-gaps.json",
+        profile.memory / "decisions.md",
+    ])
+    for path in paths:
         if path.exists():
             parts.append(path.read_text(encoding="utf-8"))
     return "\n\n".join(parts)
@@ -225,15 +236,100 @@ SIMULATIONS = {
     "sim:ya-estan": "animación de propietario: el mapa lleno de propiedades en venta y el hueco de la que falta",
     "sim:anuncio-en-mapa": "animación de propietario: el anuncio publicado aterriza en el mapa con su forma de terreno y su precio",
     "sim:te-contactan": "animación de propietario: la llamada y el mensaje del interesado llegan directo al anunciante",
+    "sim:donde-queda": "animación de propietario: el anuncio ya publicado, con la fila de ubicación vacía y los mensajes preguntando dónde queda",
+    "sim:ya-lo-saben": "animación de propietario: el mismo anuncio con su ubicación en el mapa y mensajes que ya no preguntan la dirección",
+    "sim:elige-zona": "animación de comprador: el mapa se mueve hasta la zona elegida y los anuncios sueltos aparecen dentro como propiedades ubicadas",
+    "sim:verificar": "animación educativa: comprobar propietario, documentos y gravámenes antes de pagar",
+    "sim:negociar": "animación educativa: el precio publicado se tacha, entra una oferta y se llega a un acuerdo",
+    "sim:promesa": "animación educativa: la reserva o promesa de compraventa firmada por comprador y vendedor",
+    "sim:escritura-publica": "animación educativa: la escritura pública de compraventa firmada ante notario",
+    "sim:inscripcion": "animación educativa: la transferencia se inscribe y cambia el propietario inscrito",
+    "sim:pasos-compra": "animación educativa: los seis pasos de una compraventa, en orden, hasta la inscripción",
     "sim:aents-reveal": "animación de Aents: Geo Propiedades Ecuador aparece como caso real construido por Aents",
+    "sim:aents-idea": "animación de Aents: una idea se conecta con app, plataforma web, sistema y automatización",
+    "sim:aents-flujo": "animación de Aents: documentos, hojas y mensajes separados convergen en un solo flujo conectado",
     "sim:aents-proceso": "animación de Aents: estrategia, diseño, desarrollo y lanzamiento",
     "sim:aents-servicios": "animación de Aents: webs, apps, sistemas empresariales y automatización con integraciones",
     "sim:aents-contacto": "animación final de Aents: Agenda tu idea, WhatsApp 098 373 8151 y aents.net",
+    "sim:aents-web-busqueda": "animación de Aents: alguien busca una empresa, abre su web y decide entre confiar o seguir buscando",
+    "sim:aents-web-lenta": "animación de Aents: una web lenta y antigua que no cabe en el teléfono y acaba cerrada",
+    "sim:aents-web-nueva": "animación de Aents: la misma página reconstruida, recorrida por secciones y adaptada al móvil",
+    "sim:aents-web-conversion": "animación de Aents: una búsqueda se vuelve visita y la visita, una solicitud de información",
+    "sim:aents-web-cierre": "animación final de Aents para webs: la página recibe contactos a cualquier hora, WhatsApp y aents.net",
+    "sim:aents-crecimiento": "animación de Aents: el contador de clientes de un negocio de ejemplo sube mientras los canales que lo atienden se cruzan",
+    "sim:aents-carga": "animación de Aents: clientes, datos y procesos suben, el tiempo baja y la cola que sostiene una sola persona termina en error",
+    "sim:aents-giro": "animación de Aents: el ruido se apaga, queda la pregunta de si el sistema puede hacer el trabajo y entra el isotipo",
+    "sim:aents-arquitectura": "animación de Aents: clientes, web y app, el sistema a medida, sus módulos y la automatización se conectan de arriba abajo",
+    "sim:aents-automatizacion": "animación de Aents: entra un pedido de ejemplo y el sistema confirma pago, inventario, factura, aviso al cliente y reporte",
+    "sim:aents-panel": "animación de Aents: un panel de ejemplo responde qué necesita atención hoy y muestra los roles del equipo",
+    "sim:aents-escala": "animación de Aents: el número de clientes del ejemplo pasa de diez a diez mil y la interfaz no se mueve",
+    "sim:aents-posicionamiento": "animación de Aents: la palabra software se tacha y la reemplaza construimos sistemas que hacen avanzar negocios",
+    "sim:aents-cierre": "cierre de marca de Aents: isotipo, nombre, Software para personas, sus servicios y aents.net",
+    "sim:aents-busqueda": "animación de Aents: una búsqueda de ejemplo devuelve perfiles sociales y un directorio, y la fila de la página web propia queda vacía",
+    "sim:aents-lenta": "animación de Aents: una web de ejemplo tarda en abrir y su contenido se sale de la pantalla al encogerse el marco a un teléfono",
+    "sim:aents-rebote": "animación de Aents: el visitante busca, entra y se va, y la etiqueta nuevo cliente se tacha hasta quedar oportunidad perdida",
+    "sim:aents-rearmado": "animación de Aents: las piezas de una página de ejemplo se ensamblan en una web clara y alguien pulsa solicitar cotización",
+    "sim:aents-prueba-web": "animación de Aents: posicionamiento, móvil, velocidad y conversión se confirman y el cuadro entrega el cierre con aents.net",
+    "sim:aents-antes": "animación de Aents: la cámara se aleja de las credenciales de una constructora de ejemplo y descubre la web antigua donde viven, rotulada ANTES",
+    "sim:aents-contraste": "animación de Aents: la empresa de ejemplo frente a su presencia digital, en dos columnas, y la pregunta de si se ve el problema",
+    "sim:aents-reconstruccion": "animación de Aents: la web antigua se selecciona y se borra, y la página nueva se arma por piezas hasta el título y sus botones",
+    "sim:aents-credibilidad": "animación de Aents: un recorrido por la página nueva con las cifras de la empresa de ejemplo y sus proyectos por tipo",
+    "sim:aents-cotizacion": "animación de Aents: un proyecto de ejemplo se abre, alguien pulsa solicitar cotización y entra la nueva solicitud",
+    "sim:aents-adaptacion": "animación de Aents: la página pasa de escritorio a teléfono reordenándose y un pulgar alcanza el botón",
+    "sim:aents-comparacion": "animación de Aents: la web antigua y la nueva comparten cuadro hasta que el divisor deja solo la nueva",
+    "sim:aents-problema-software": "animación de Aents: un problema cruza el isotipo y sale convertido en software con el proceso, los datos y el equipo",
+    "sim:aents-disperso": "animación de Aents: el mismo proceso repartido en hojas, documentos, mensajes y una tarea que se repite sin resolverse",
+    "sim:aents-desconectado": "animación de Aents: las herramientas existen pero aisladas, y los enlaces se completan cuando entra la marca",
+    "sim:aents-entender": "animación de Aents: el flujo real del negocio leído paso a paso hasta marcar dónde se traba",
+    "sim:aents-soluciones": "animación de Aents: una misma necesidad elige app, plataforma web, sistema o automatización y las cuatro quedan enlazadas",
+    "sim:aents-etapas": "animación de Aents: un mismo producto cruza estrategia, diseño, desarrollo y lanzamiento transformándose en cada etapa",
+    "sim:aents-medida": "animación de Aents: el bloque genérico no encaja en el proceso de la empresa y el software se construye alrededor de él",
+    "sim:aents-seo-encontrar": "animación de Aents: un buscador y una IA que responde entregan resultados y fuentes donde la web del negocio no aparece",
+    "sim:aents-seo-entender": "animación de Aents: un lector recorre la página y entiende quién es el negocio, qué hace y cuándo mostrarlo",
+    "sim:aents-seo-intencion": "animación de Aents: el anuncio que interrumpe frente a la búsqueda que ya venía con la intención puesta",
+    "sim:aents-seo-senales": "animación de Aents: una página bonita que no dice de qué trata, y las señales que la vuelven entendible",
+    "sim:aents-seo-red": "animación de Aents: una sola página de servicios se abre en una página por cada búsqueda real",
+    "sim:aents-seo-respuesta": "animación de Aents: la lista de resultados se convierte en una respuesta escrita con sus fuentes",
+    "sim:aents-seo-sin-truco": "animación de Aents: no hay botón para salir en la IA ni mil páginas generadas que sirvan; queda la información clara y propia",
+    "sim:aents-seo-datos": "animación de Aents: la frase vaga se cambia por datos concretos que una respuesta puede citar",
+    "sim:aents-seo-entidad": "animación de Aents: la misma identidad repetida en varios lugares confiables",
+    "sim:aents-seo-lectores": "animación de Aents: lo que recibe un lector de IA, el contenido servido en el código y el despliegue que se bloquea si falta",
+    "sim:aents-encoge": "animación de Aents: la misma página pasa de monitor a teléfono encogiéndose sin reordenarse, hasta que el texto no se lee y el botón no se toca",
+    "sim:aents-sintomas": "animación de Aents: cinco fallos móviles demostrados dentro de un mismo teléfono, cada uno con su equis",
+    "sim:aents-dos-caminos": "animación de Aents: a un lado una página de escritorio que se reduce, al otro un teléfono que se llena por orden de importancia",
+    "sim:aents-cabe": "animación de Aents: una interfaz de escritorio se construye entera y después se comprime en un teléfono hasta que cabe, y la pregunta de si es cómoda",
+    "sim:aents-pregunta": "animación de Aents: las acciones posibles se ordenan alrededor de una persona hasta que dos ocupan la pantalla del teléfono",
+    "sim:aents-portal-escritorio": "animación de Aents: la plataforma de propiedades en escritorio, con mapa, buscador, filtros y listado, se estrecha sin reordenarse y choca",
+    "sim:aents-portal-movil": "animación de Aents: la misma plataforma en el teléfono, con mapa a pantalla completa, ficha que sube desde abajo y filtros detrás de un botón",
+    "sim:aents-dedo": "animación de Aents: el mismo botón alcanzado por un cursor y por un dedo, y el tamaño que hace falta para que el dedo acierte",
+    "sim:aents-tarjetas": "animación de Aents: una tabla se pliega en tarjetas, una ventana se convierte en hoja inferior y un menú superior en navegación inferior",
+    "sim:aents-gestos": "animación de Aents: tocar, deslizar, mantener, arrastrar y ampliar, cada gesto con su consecuencia dentro del mismo teléfono",
+    "sim:aents-peso": "animación de Aents: la misma página abre al instante con fibra y se atasca con datos móviles, hasta que se recorta lo que se descarga",
+    "sim:aents-hacia-arriba": "animación de Aents: el marco crece de teléfono a monitor y aparecen columnas y paneles nuevos sin agrandar la columna original",
+    "sim:aents-usala": "animación de Aents: la prueba de usar la web desde el teléfono paso a paso y el arco que alcanza el pulgar",
+    "sim:aents-ia-funciona": "animación de Aents: un pedido genera una aplicación que abre y funciona, y al alejarse aparecen las capas que nadie decidió",
+    "sim:aents-ia-contexto": "animación de Aents: un pedido vago devuelve algo genérico que se descarta, y con el contexto puesto la estructura se rehace con nombres y jerarquía",
+    "sim:aents-ia-partes": "animación de Aents: un pedido enorme dispara cientos de archivos donde el error no se encuentra, frente a cinco bloques construidos y probados en orden",
+    "sim:aents-ia-reglas": "animación de Aents: dos citas de ejemplo chocan en el mismo horario y las preguntas sin responder se convierten en reglas que resuelven el conflicto",
+    "sim:aents-ia-camino-feliz": "animación de Aents: el recorrido perfecto se confirma y después falla sin conexión, con doble toque y sin permiso",
+    "sim:aents-ia-revision": "animación de Aents: en vez de aceptar todo se revisa, se pregunta por cada decisión y el código sobrante y duplicado desaparece",
+    "sim:aents-ia-dependencias": "animación de Aents: los paquetes entierran una aplicación pequeña hasta que tres preguntas dejan solo los necesarios",
+    "sim:aents-ia-seguridad": "animación de Aents: esconder el botón no impide que una petición llegue al servidor, hasta que las capas de acceso, permisos y validación la rechazan",
+    "sim:aents-ia-secretos": "animación de Aents: contraseñas, claves y datos de clientes se detienen antes de entrar en una herramienta de inteligencia artificial",
+    "sim:aents-ia-pruebas": "animación de Aents: la misma pieza cambia de papel y prueba su propio trabajo hasta encontrar y corregir la causa del fallo",
+    "sim:aents-ia-git": "animación de Aents: decenas de archivos modificados rompen la aplicación y el proyecto vuelve a su último punto estable",
+    "sim:aents-ia-orden": "animación de Aents: el proyecto se llena de archivos casi iguales hasta que se funden los duplicados y queda una estructura legible",
+    "sim:aents-ia-criterio": "animación de Aents: el software está construido pero el centro del negocio está vacío hasta que una persona pone reglas, roles, proceso y objetivo",
+    "sim:aents-ia-cierre": "cierre de Aents para la clase de inteligencia artificial: el camino de contexto a producto y la invitación a contar qué estás construyendo",
 }
 
 
 def describe_assets(assets: list[dict[str, Any]]) -> str:
-    animated = "\n".join(f"- {name}: {description}" for name, description in SIMULATIONS.items())
+    profile = brand.current()
+    allowed = set(profile.simulations) if profile.simulations else set(SIMULATIONS)
+    animated = "\n".join(
+        f"- {name}: {description}" for name, description in SIMULATIONS.items() if name in allowed
+    )
     preamble = (
         "Animated recreations you can use in any scene. They are drawn illustrations of the "
         "product, never screenshots, so describe what they show without claiming the viewer is "
@@ -259,15 +355,26 @@ def describe_assets(assets: list[dict[str, Any]]) -> str:
 
 
 def create_plan(brief: str, duration: int, assets: list[dict[str, Any]], catalog: str) -> dict[str, Any]:
+    profile = brand.current()
     scenes = quality.scene_budget(duration)
     reveal = quality.product_reveal_deadline(duration)
-    shape = (
-        "This is a story: it may set the scene before it demonstrates, and it has to "
-        "hold attention with narrative, not with filler. Every beat moves the story on."
-        if quality.is_story(duration)
-        else "This is short form: one promise and its demonstration, nothing else."
-    )
-    prompt = f"""Create one production-ready Spanish social video for Geo Propiedades Ecuador.
+    if quality.is_lesson(duration):
+        shape = (
+            "This is a lesson: the viewer stays because they are learning something they "
+            "came for, so every scene has to teach a step they did not know before it. "
+            "Order the steps so each one earns the next; never restate a point for length."
+        )
+    elif quality.is_story(duration):
+        shape = (
+            "This is a story: it may set the scene before it demonstrates, and it has to "
+            "hold attention with narrative, not with filler. Every beat moves the story on."
+        )
+    else:
+        shape = "This is short form: one promise and its demonstration, nothing else."
+    prompt = f"""Create one production-ready Spanish social video for {profile.name}.
+
+The selected brand is {profile.id}. Its canonical domain is {profile.domain}.
+The audience must be one of: {', '.join(profile.audiences)}.
 
 Target duration: {duration} seconds, and scene durations must total approximately that.
 The renderer measures the real speech, so keep narration tight: roughly 15 spoken
@@ -277,15 +384,17 @@ of narration in total.
 {shape}
 
 The first scene must hook in two seconds. Use at most {scenes} scenes, one audience,
-one promise and one CTA. In buyer videos the map or product demonstration must
-begin by second {reveal:.0f}; do not spend consecutive scenes repeating the problem. The
-CTA for a buyer is “Encuentra tu futuro hogar” or “Explora el mapa”, and owner
-language such as “publica tu propiedad” must not appear in that piece.
+one promise and one CTA. Follow the selected brand's product-reveal rule; do not
+spend consecutive scenes repeating the problem. Use only the CTA families and
+audience rules in the selected brand context.
 Every voice field is the exact narration spoken during that scene, written for a
 text-to-speech voice: no emoji, no hashtags, no stage directions, no abbreviations
 the voice cannot read. Write numbers and URLs the way they are pronounced.
 Each on_screen_text is a rótulo of at most four words and 22 characters: it has to fit on a single row.
 The narration field joins every voice field in order.
+Add 3 to 5 relevant hashtags in the hashtags field. Each one starts with #,
+contains no spaces, and must not introduce a claim that the approved copy does
+not make. These hashtags are publishing metadata and are never spoken.
 Every animated visual direction must describe a complete causal arc: initial state,
 action, visible response and resolved proof. Follow animation-standard.md. Do not
 request a generic entrance, decorative particles, a placeholder or an unfinished
@@ -312,7 +421,9 @@ explicitly asks for a variant.
 USER BRIEF:
 {brief}
 """
-    return ask(prompt, PLAN_SCHEMA, read_context())
+    schema = json.loads(json.dumps(PLAN_SCHEMA))
+    schema["properties"]["audience"]["enum"] = list(profile.audiences)
+    return ask(prompt, schema, read_context())
 
 
 def create_hooks(plan: dict[str, Any], count: int) -> list[dict[str, Any]]:
@@ -332,8 +443,9 @@ APPROVED PLAN:
 
 
 def create_lessons(evidence: list[dict[str, Any]], coverage: dict[str, Any]) -> dict[str, Any]:
+    profile = brand.current()
     prompt = (
-        "Analyze these social video results for Geo Propiedades Ecuador. Produce cautious, "
+        f"Analyze these social video results for {profile.name}. Produce cautious, "
         "actionable Spanish lessons. Do not infer causality without a controlled comparison; "
         "label limited evidence in the observation. Recommend content gaps that complement "
         "the catalog.\n\n"

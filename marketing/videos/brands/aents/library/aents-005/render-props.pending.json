@@ -1,0 +1,816 @@
+{
+  "brandId": "aents",
+  "brandName": "Aents",
+  "brandTagline": "Software for people.",
+  "brandSymbol": "brand/symbol-negative-512.png",
+  "title": "Tu web decide en tres segundos",
+  "coverText": "Tres segundos para decidir",
+  "cta": "Conversemos tu página web",
+  "url": "aents.net",
+  "brandTile": "brand/brand-tile-1024.png",
+  "kicker": null,
+  "musicFile": null,
+  "showSafeAreas": false,
+  "scenes": [
+    {
+      "purpose": "gancho",
+      "durationInFrames": 191,
+      "headline": "Te acaban de buscar",
+      "captions": [
+        {
+          "text": "Alguien acaba de buscar tu empresa",
+          "start": 0.0,
+          "end": 1.938,
+          "words": [
+            {
+              "text": "Alguien",
+              "start": 0.0,
+              "end": 0.443
+            },
+            {
+              "text": "acaba",
+              "start": 0.443,
+              "end": 0.775
+            },
+            {
+              "text": "de",
+              "start": 0.775,
+              "end": 0.941
+            },
+            {
+              "text": "buscar",
+              "start": 0.941,
+              "end": 1.329
+            },
+            {
+              "text": "tu",
+              "start": 1.329,
+              "end": 1.495
+            },
+            {
+              "text": "empresa",
+              "start": 1.495,
+              "end": 1.938
+            }
+          ]
+        },
+        {
+          "text": "en internet.",
+          "start": 1.938,
+          "end": 2.602,
+          "words": [
+            {
+              "text": "en",
+              "start": 0.0,
+              "end": 0.166
+            },
+            {
+              "text": "internet.",
+              "start": 0.166,
+              "end": 0.664
+            }
+          ]
+        },
+        {
+          "text": "Y en segundos va a decidir",
+          "start": 2.602,
+          "end": 4.097,
+          "words": [
+            {
+              "text": "Y",
+              "start": 0.0,
+              "end": 0.111
+            },
+            {
+              "text": "en",
+              "start": 0.111,
+              "end": 0.277
+            },
+            {
+              "text": "segundos",
+              "start": 0.277,
+              "end": 0.775
+            },
+            {
+              "text": "va",
+              "start": 0.775,
+              "end": 0.941
+            },
+            {
+              "text": "a",
+              "start": 0.941,
+              "end": 1.052
+            },
+            {
+              "text": "decidir",
+              "start": 1.052,
+              "end": 1.495
+            }
+          ]
+        },
+        {
+          "text": "si confía en ti,",
+          "start": 4.097,
+          "end": 4.982,
+          "words": [
+            {
+              "text": "si",
+              "start": 0.0,
+              "end": 0.166
+            },
+            {
+              "text": "confía",
+              "start": 0.166,
+              "end": 0.554
+            },
+            {
+              "text": "en",
+              "start": 0.554,
+              "end": 0.72
+            },
+            {
+              "text": "ti,",
+              "start": 0.72,
+              "end": 0.886
+            }
+          ]
+        },
+        {
+          "text": "o sigue buscando.",
+          "start": 4.982,
+          "end": 5.923,
+          "words": [
+            {
+              "text": "o",
+              "start": 0.0,
+              "end": 0.111
+            },
+            {
+              "text": "sigue",
+              "start": 0.111,
+              "end": 0.443
+            },
+            {
+              "text": "buscando.",
+              "start": 0.443,
+              "end": 0.941
+            }
+          ]
+        }
+      ],
+      "visualDirection": "Se escribe el nombre de una empresa en un buscador, se abre su web y pasan tres segundos contados en pantalla; la decisión se abre en dos caminos: confía en ti o sigue buscando.",
+      "transition": "cut",
+      "asset": "sim:aents-web-busqueda",
+      "assetType": "simulation",
+      "photo": null,
+      "voiceFile": "jobs/aents-005/audio/voice-01.mp3",
+      "assetStartInFrames": 0,
+      "assetTotalInFrames": 191,
+      "accent": "#22C55E"
+    },
+    {
+      "purpose": "problema",
+      "durationInFrames": 163,
+      "headline": "Habla por tu empresa",
+      "captions": [
+        {
+          "text": "Una web lenta,",
+          "start": 0.0,
+          "end": 0.8,
+          "words": [
+            {
+              "text": "Una",
+              "start": 0.0,
+              "end": 0.229
+            },
+            {
+              "text": "web",
+              "start": 0.229,
+              "end": 0.457
+            },
+            {
+              "text": "lenta,",
+              "start": 0.457,
+              "end": 0.8
+            }
+          ]
+        },
+        {
+          "text": "antigua o difícil de usar no",
+          "start": 0.8,
+          "end": 2.459,
+          "words": [
+            {
+              "text": "antigua",
+              "start": 0.0,
+              "end": 0.457
+            },
+            {
+              "text": "o",
+              "start": 0.457,
+              "end": 0.572
+            },
+            {
+              "text": "difícil",
+              "start": 0.572,
+              "end": 1.029
+            },
+            {
+              "text": "de",
+              "start": 1.029,
+              "end": 1.201
+            },
+            {
+              "text": "usar",
+              "start": 1.201,
+              "end": 1.487
+            },
+            {
+              "text": "no",
+              "start": 1.487,
+              "end": 1.658
+            }
+          ]
+        },
+        {
+          "text": "solo se ve mal.",
+          "start": 2.459,
+          "end": 3.316,
+          "words": [
+            {
+              "text": "solo",
+              "start": 0.0,
+              "end": 0.286
+            },
+            {
+              "text": "se",
+              "start": 0.286,
+              "end": 0.457
+            },
+            {
+              "text": "ve",
+              "start": 0.457,
+              "end": 0.629
+            },
+            {
+              "text": "mal.",
+              "start": 0.629,
+              "end": 0.858
+            }
+          ]
+        },
+        {
+          "text": "También habla por tu empresa.",
+          "start": 3.316,
+          "end": 4.974,
+          "words": [
+            {
+              "text": "También",
+              "start": 0.0,
+              "end": 0.457
+            },
+            {
+              "text": "habla",
+              "start": 0.457,
+              "end": 0.8
+            },
+            {
+              "text": "por",
+              "start": 0.8,
+              "end": 1.029
+            },
+            {
+              "text": "tu",
+              "start": 1.029,
+              "end": 1.201
+            },
+            {
+              "text": "empresa.",
+              "start": 1.201,
+              "end": 1.658
+            }
+          ]
+        }
+      ],
+      "visualDirection": "Una web antigua se queda cargando; al pasar al teléfono conserva su ancho de escritorio y deja el botón fuera de pantalla. El cursor cierra la pestaña y queda el rastro de que se fue.",
+      "transition": "cut",
+      "asset": "sim:aents-web-lenta",
+      "assetType": "simulation",
+      "photo": null,
+      "voiceFile": "jobs/aents-005/audio/voice-02.mp3",
+      "assetStartInFrames": 0,
+      "assetTotalInFrames": 163,
+      "accent": "#6B5CF6"
+    },
+    {
+      "purpose": "solucion",
+      "durationInFrames": 262,
+      "headline": "Rápida y adaptable",
+      "captions": [
+        {
+          "text": "Tu página debería hacer",
+          "start": 0.0,
+          "end": 1.423,
+          "words": [
+            {
+              "text": "Tu",
+              "start": 0.0,
+              "end": 0.178
+            },
+            {
+              "text": "página",
+              "start": 0.178,
+              "end": 0.593
+            },
+            {
+              "text": "debería",
+              "start": 0.593,
+              "end": 1.067
+            },
+            {
+              "text": "hacer",
+              "start": 1.067,
+              "end": 1.423
+            }
+          ]
+        },
+        {
+          "text": "exactamente lo contrario.",
+          "start": 1.423,
+          "end": 2.905,
+          "words": [
+            {
+              "text": "exactamente",
+              "start": 0.0,
+              "end": 0.711
+            },
+            {
+              "text": "lo",
+              "start": 0.711,
+              "end": 0.889
+            },
+            {
+              "text": "contrario.",
+              "start": 0.889,
+              "end": 1.482
+            }
+          ]
+        },
+        {
+          "text": "En Aents creamos sitios web rápidos,",
+          "start": 2.905,
+          "end": 5.039,
+          "words": [
+            {
+              "text": "En",
+              "start": 0.0,
+              "end": 0.178
+            },
+            {
+              "text": "Aents",
+              "start": 0.178,
+              "end": 0.533
+            },
+            {
+              "text": "creamos",
+              "start": 0.533,
+              "end": 1.008
+            },
+            {
+              "text": "sitios",
+              "start": 1.008,
+              "end": 1.423
+            },
+            {
+              "text": "web",
+              "start": 1.423,
+              "end": 1.66
+            },
+            {
+              "text": "rápidos,",
+              "start": 1.66,
+              "end": 2.134
+            }
+          ]
+        },
+        {
+          "text": "adaptables y pensados",
+          "start": 5.039,
+          "end": 6.343,
+          "words": [
+            {
+              "text": "adaptables",
+              "start": 0.0,
+              "end": 0.652
+            },
+            {
+              "text": "y",
+              "start": 0.652,
+              "end": 0.771
+            },
+            {
+              "text": "pensados",
+              "start": 0.771,
+              "end": 1.304
+            }
+          ]
+        },
+        {
+          "text": "para los objetivos de tu empresa.",
+          "start": 6.343,
+          "end": 8.299,
+          "words": [
+            {
+              "text": "para",
+              "start": 0.0,
+              "end": 0.296
+            },
+            {
+              "text": "los",
+              "start": 0.296,
+              "end": 0.533
+            },
+            {
+              "text": "objetivos",
+              "start": 0.533,
+              "end": 1.126
+            },
+            {
+              "text": "de",
+              "start": 1.126,
+              "end": 1.304
+            },
+            {
+              "text": "tu",
+              "start": 1.304,
+              "end": 1.482
+            },
+            {
+              "text": "empresa.",
+              "start": 1.482,
+              "end": 1.956
+            }
+          ]
+        }
+      ],
+      "visualDirection": "Un barrido de luz recorre la misma página y cada bloque suelto se convierte en su componente terminado; después se recorre por secciones y se estrecha hasta el teléfono, donde el diseño se reacomoda en lugar de recortarse.",
+      "transition": "cut",
+      "asset": "sim:aents-web-nueva",
+      "assetType": "simulation",
+      "photo": null,
+      "voiceFile": "jobs/aents-005/audio/voice-03.mp3",
+      "assetStartInFrames": 0,
+      "assetTotalInFrames": 262,
+      "accent": "#14B8A6"
+    },
+    {
+      "purpose": "prueba",
+      "durationInFrames": 222,
+      "headline": "De búsqueda a cliente",
+      "captions": [
+        {
+          "text": "Pero una buena página no termina",
+          "start": 0.0,
+          "end": 1.909,
+          "words": [
+            {
+              "text": "Pero",
+              "start": 0.0,
+              "end": 0.289
+            },
+            {
+              "text": "una",
+              "start": 0.289,
+              "end": 0.521
+            },
+            {
+              "text": "buena",
+              "start": 0.521,
+              "end": 0.868
+            },
+            {
+              "text": "página",
+              "start": 0.868,
+              "end": 1.273
+            },
+            {
+              "text": "no",
+              "start": 1.273,
+              "end": 1.447
+            },
+            {
+              "text": "termina",
+              "start": 1.447,
+              "end": 1.909
+            }
+          ]
+        },
+        {
+          "text": "en el diseño.",
+          "start": 1.909,
+          "end": 2.662,
+          "words": [
+            {
+              "text": "en",
+              "start": 0.0,
+              "end": 0.174
+            },
+            {
+              "text": "el",
+              "start": 0.174,
+              "end": 0.347
+            },
+            {
+              "text": "diseño.",
+              "start": 0.347,
+              "end": 0.752
+            }
+          ]
+        },
+        {
+          "text": "Debe convertir una búsqueda en",
+          "start": 2.662,
+          "end": 4.455,
+          "words": [
+            {
+              "text": "Debe",
+              "start": 0.0,
+              "end": 0.289
+            },
+            {
+              "text": "convertir",
+              "start": 0.289,
+              "end": 0.868
+            },
+            {
+              "text": "una",
+              "start": 0.868,
+              "end": 1.099
+            },
+            {
+              "text": "búsqueda",
+              "start": 1.099,
+              "end": 1.62
+            },
+            {
+              "text": "en",
+              "start": 1.62,
+              "end": 1.794
+            }
+          ]
+        },
+        {
+          "text": "una visita,",
+          "start": 4.455,
+          "end": 5.092,
+          "words": [
+            {
+              "text": "una",
+              "start": 0.0,
+              "end": 0.231
+            },
+            {
+              "text": "visita,",
+              "start": 0.231,
+              "end": 0.636
+            }
+          ]
+        },
+        {
+          "text": "y una visita en una oportunidad.",
+          "start": 5.092,
+          "end": 6.943,
+          "words": [
+            {
+              "text": "y",
+              "start": 0.0,
+              "end": 0.116
+            },
+            {
+              "text": "una",
+              "start": 0.116,
+              "end": 0.347
+            },
+            {
+              "text": "visita",
+              "start": 0.347,
+              "end": 0.752
+            },
+            {
+              "text": "en",
+              "start": 0.752,
+              "end": 0.926
+            },
+            {
+              "text": "una",
+              "start": 0.926,
+              "end": 1.157
+            },
+            {
+              "text": "oportunidad.",
+              "start": 1.157,
+              "end": 1.852
+            }
+          ]
+        }
+      ],
+      "visualDirection": "Tres estaciones encadenadas: la búsqueda lleva a la visita, bajo la página se encienden posicionamiento, velocidad y móvil, se pulsa Solicitar información y llega una solicitud.",
+      "transition": "cut",
+      "asset": "sim:aents-web-conversion",
+      "assetType": "simulation",
+      "photo": null,
+      "voiceFile": "jobs/aents-005/audio/voice-04.mp3",
+      "assetStartInFrames": 0,
+      "assetTotalInFrames": 222,
+      "accent": "#A78BFA"
+    },
+    {
+      "purpose": "cta",
+      "durationInFrames": 269,
+      "headline": "Conversemos tu página",
+      "captions": [
+        {
+          "text": "Tu página web trabaja por",
+          "start": 0.0,
+          "end": 1.506,
+          "words": [
+            {
+              "text": "Tu",
+              "start": 0.0,
+              "end": 0.174
+            },
+            {
+              "text": "página",
+              "start": 0.174,
+              "end": 0.579
+            },
+            {
+              "text": "web",
+              "start": 0.579,
+              "end": 0.811
+            },
+            {
+              "text": "trabaja",
+              "start": 0.811,
+              "end": 1.274
+            },
+            {
+              "text": "por",
+              "start": 1.274,
+              "end": 1.506
+            }
+          ]
+        },
+        {
+          "text": "tu empresa incluso",
+          "start": 1.506,
+          "end": 2.606,
+          "words": [
+            {
+              "text": "tu",
+              "start": 0.0,
+              "end": 0.174
+            },
+            {
+              "text": "empresa",
+              "start": 0.174,
+              "end": 0.637
+            },
+            {
+              "text": "incluso",
+              "start": 0.637,
+              "end": 1.101
+            }
+          ]
+        },
+        {
+          "text": "cuando tú no estás trabajando.",
+          "start": 2.606,
+          "end": 4.344,
+          "words": [
+            {
+              "text": "cuando",
+              "start": 0.0,
+              "end": 0.405
+            },
+            {
+              "text": "tú",
+              "start": 0.405,
+              "end": 0.579
+            },
+            {
+              "text": "no",
+              "start": 0.579,
+              "end": 0.753
+            },
+            {
+              "text": "estás",
+              "start": 0.753,
+              "end": 1.101
+            },
+            {
+              "text": "trabajando.",
+              "start": 1.101,
+              "end": 1.738
+            }
+          ]
+        },
+        {
+          "text": "Haz que la primera impresión",
+          "start": 4.344,
+          "end": 6.024,
+          "words": [
+            {
+              "text": "Haz",
+              "start": 0.0,
+              "end": 0.232
+            },
+            {
+              "text": "que",
+              "start": 0.232,
+              "end": 0.463
+            },
+            {
+              "text": "la",
+              "start": 0.463,
+              "end": 0.637
+            },
+            {
+              "text": "primera",
+              "start": 0.637,
+              "end": 1.101
+            },
+            {
+              "text": "impresión",
+              "start": 1.101,
+              "end": 1.68
+            }
+          ]
+        },
+        {
+          "text": "de tu empresa esté a",
+          "start": 6.024,
+          "end": 7.24,
+          "words": [
+            {
+              "text": "de",
+              "start": 0.0,
+              "end": 0.174
+            },
+            {
+              "text": "tu",
+              "start": 0.174,
+              "end": 0.348
+            },
+            {
+              "text": "empresa",
+              "start": 0.348,
+              "end": 0.811
+            },
+            {
+              "text": "esté",
+              "start": 0.811,
+              "end": 1.101
+            },
+            {
+              "text": "a",
+              "start": 1.101,
+              "end": 1.216
+            }
+          ]
+        },
+        {
+          "text": "su altura: conversemos.",
+          "start": 7.24,
+          "end": 8.514,
+          "words": [
+            {
+              "text": "su",
+              "start": 0.0,
+              "end": 0.174
+            },
+            {
+              "text": "altura:",
+              "start": 0.174,
+              "end": 0.579
+            },
+            {
+              "text": "conversemos.",
+              "start": 0.579,
+              "end": 1.274
+            }
+          ]
+        }
+      ],
+      "visualDirection": "Un reloj recorre el día completo mientras llegan avisos rotulados como ejemplo; la escena se asienta en la marca Aents, el WhatsApp y aents.net.",
+      "transition": "cut",
+      "asset": "sim:aents-web-cierre",
+      "assetType": "simulation",
+      "photo": null,
+      "voiceFile": "jobs/aents-005/audio/voice-05.mp3",
+      "assetStartInFrames": 0,
+      "assetTotalInFrames": 269,
+      "accent": "#22C55E"
+    }
+  ]
+}

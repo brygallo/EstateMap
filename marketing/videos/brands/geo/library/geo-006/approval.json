@@ -1,0 +1,8 @@
+{
+  "approved_at": "2026-08-14T23:14:19.039968-05:00",
+  "approved_by": "bryan (via Claude)",
+  "notes": "Aprobado por el usuario para re-render con la nueva configuracion visual: sombra al 20%, velo 340px y barra anclada a textFloor.",
+  "lint_passed": true,
+  "forced": false,
+  "plan_sha": "d68815534c98ff34511d337dacdc19fb08ca394875f983c2d244c3f13337cd7d"
+}

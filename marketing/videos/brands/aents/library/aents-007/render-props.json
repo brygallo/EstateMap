@@ -1,0 +1,4120 @@
+{
+  "brandId": "aents",
+  "brandName": "Aents",
+  "brandTagline": "Software for people.",
+  "brandSymbol": "brand/symbol-negative-512.png",
+  "title": "¿Diseñada para móvil o solo adaptada?",
+  "coverText": "¿Diseñada o solo adaptada?",
+  "cta": "Cuéntanos tu proyecto",
+  "url": "aents.net",
+  "brandTile": "brand/brand-tile-1024.png",
+  "kicker": null,
+  "musicFile": null,
+  "showSafeAreas": false,
+  "scenes": [
+    {
+      "purpose": "gancho",
+      "durationInFrames": 228,
+      "headline": "¿Diseñada para móvil?",
+      "captions": [
+        {
+          "text": "¿Tu página web está diseñada",
+          "start": 0.0,
+          "end": 1.552,
+          "words": [
+            {
+              "text": "¿Tu",
+              "start": 0.0,
+              "end": 0.166
+            },
+            {
+              "text": "página",
+              "start": 0.166,
+              "end": 0.554
+            },
+            {
+              "text": "web",
+              "start": 0.554,
+              "end": 0.776
+            },
+            {
+              "text": "está",
+              "start": 0.776,
+              "end": 1.053
+            },
+            {
+              "text": "diseñada",
+              "start": 1.053,
+              "end": 1.552
+            }
+          ]
+        },
+        {
+          "text": "para el celular,",
+          "start": 1.552,
+          "end": 2.438,
+          "words": [
+            {
+              "text": "para",
+              "start": 0.0,
+              "end": 0.277
+            },
+            {
+              "text": "el",
+              "start": 0.277,
+              "end": 0.443
+            },
+            {
+              "text": "celular,",
+              "start": 0.443,
+              "end": 0.887
+            }
+          ]
+        },
+        {
+          "text": "o solamente se hace más pequeña",
+          "start": 2.438,
+          "end": 4.211,
+          "words": [
+            {
+              "text": "o",
+              "start": 0.0,
+              "end": 0.111
+            },
+            {
+              "text": "solamente",
+              "start": 0.111,
+              "end": 0.665
+            },
+            {
+              "text": "se",
+              "start": 0.665,
+              "end": 0.831
+            },
+            {
+              "text": "hace",
+              "start": 0.831,
+              "end": 1.108
+            },
+            {
+              "text": "más",
+              "start": 1.108,
+              "end": 1.33
+            },
+            {
+              "text": "pequeña",
+              "start": 1.33,
+              "end": 1.773
+            }
+          ]
+        },
+        {
+          "text": "cuando alguien entra",
+          "start": 4.211,
+          "end": 5.375,
+          "words": [
+            {
+              "text": "cuando",
+              "start": 0.0,
+              "end": 0.388
+            },
+            {
+              "text": "alguien",
+              "start": 0.388,
+              "end": 0.831
+            },
+            {
+              "text": "entra",
+              "start": 0.831,
+              "end": 1.164
+            }
+          ]
+        },
+        {
+          "text": "desde uno?",
+          "start": 5.375,
+          "end": 5.929,
+          "words": [
+            {
+              "text": "desde",
+              "start": 0.0,
+              "end": 0.332
+            },
+            {
+              "text": "uno?",
+              "start": 0.332,
+              "end": 0.554
+            }
+          ]
+        },
+        {
+          "text": "Porque no es lo mismo.",
+          "start": 5.929,
+          "end": 7.148,
+          "words": [
+            {
+              "text": "Porque",
+              "start": 0.0,
+              "end": 0.388
+            },
+            {
+              "text": "no",
+              "start": 0.388,
+              "end": 0.554
+            },
+            {
+              "text": "es",
+              "start": 0.554,
+              "end": 0.72
+            },
+            {
+              "text": "lo",
+              "start": 0.72,
+              "end": 0.887
+            },
+            {
+              "text": "mismo.",
+              "start": 0.887,
+              "end": 1.219
+            }
+          ]
+        }
+      ],
+      "visualDirection": "Una página moderna abierta en un monitor. El marco se estrecha hasta volverse un teléfono, pero la maquetación no cambia: todo se encoge proporcionalmente. El titular queda ilegible, los botones quedan del tamaño de una uña y las columnas se aprietan unas contra otras. Sobre la pantalla entra «¿DISEÑADA PARA MÓVIL?» y, resuelto el encogimiento, se sustituye por «¿O SOLO ADAPTADA?». El bloque de marca de Aents está desde el primer fotograma.",
+      "transition": "cut",
+      "asset": "sim:aents-encoge",
+      "assetType": "simulation",
+      "photo": null,
+      "voiceFile": "jobs/aents-007/audio/voice-01.mp3",
+      "assetStartInFrames": 0,
+      "assetTotalInFrames": 228,
+      "accent": "#22C55E"
+    },
+    {
+      "purpose": "problema",
+      "durationInFrames": 450,
+      "headline": "Compruébalo ahora",
+      "captions": [
+        {
+          "text": "Puedes comprobarlo ahora mismo.",
+          "start": 0.0,
+          "end": 1.74,
+          "words": [
+            {
+              "text": "Puedes",
+              "start": 0.0,
+              "end": 0.393
+            },
+            {
+              "text": "comprobarlo",
+              "start": 0.393,
+              "end": 1.066
+            },
+            {
+              "text": "ahora",
+              "start": 1.066,
+              "end": 1.403
+            },
+            {
+              "text": "mismo.",
+              "start": 1.403,
+              "end": 1.74
+            }
+          ]
+        },
+        {
+          "text": "Abre tu página desde el teléfono.",
+          "start": 1.74,
+          "end": 3.592,
+          "words": [
+            {
+              "text": "Abre",
+              "start": 0.0,
+              "end": 0.281
+            },
+            {
+              "text": "tu",
+              "start": 0.281,
+              "end": 0.449
+            },
+            {
+              "text": "página",
+              "start": 0.449,
+              "end": 0.842
+            },
+            {
+              "text": "desde",
+              "start": 0.842,
+              "end": 1.179
+            },
+            {
+              "text": "el",
+              "start": 1.179,
+              "end": 1.347
+            },
+            {
+              "text": "teléfono.",
+              "start": 1.347,
+              "end": 1.852
+            }
+          ]
+        },
+        {
+          "text": "¿Los botones son diminutos?",
+          "start": 3.592,
+          "end": 5.051,
+          "words": [
+            {
+              "text": "¿Los",
+              "start": 0.0,
+              "end": 0.224
+            },
+            {
+              "text": "botones",
+              "start": 0.224,
+              "end": 0.673
+            },
+            {
+              "text": "son",
+              "start": 0.673,
+              "end": 0.898
+            },
+            {
+              "text": "diminutos?",
+              "start": 0.898,
+              "end": 1.459
+            }
+          ]
+        },
+        {
+          "text": "¿Tienes que ampliar para leer?",
+          "start": 5.051,
+          "end": 6.678,
+          "words": [
+            {
+              "text": "¿Tienes",
+              "start": 0.0,
+              "end": 0.393
+            },
+            {
+              "text": "que",
+              "start": 0.393,
+              "end": 0.617
+            },
+            {
+              "text": "ampliar",
+              "start": 0.617,
+              "end": 1.066
+            },
+            {
+              "text": "para",
+              "start": 1.066,
+              "end": 1.347
+            },
+            {
+              "text": "leer?",
+              "start": 1.347,
+              "end": 1.627
+            }
+          ]
+        },
+        {
+          "text": "¿El formulario incomoda?",
+          "start": 6.678,
+          "end": 7.969,
+          "words": [
+            {
+              "text": "¿El",
+              "start": 0.0,
+              "end": 0.168
+            },
+            {
+              "text": "formulario",
+              "start": 0.168,
+              "end": 0.786
+            },
+            {
+              "text": "incomoda?",
+              "start": 0.786,
+              "end": 1.291
+            }
+          ]
+        },
+        {
+          "text": "¿Hay tablas que se salen",
+          "start": 7.969,
+          "end": 9.316,
+          "words": [
+            {
+              "text": "¿Hay",
+              "start": 0.0,
+              "end": 0.224
+            },
+            {
+              "text": "tablas",
+              "start": 0.224,
+              "end": 0.617
+            },
+            {
+              "text": "que",
+              "start": 0.617,
+              "end": 0.842
+            },
+            {
+              "text": "se",
+              "start": 0.842,
+              "end": 1.01
+            },
+            {
+              "text": "salen",
+              "start": 1.01,
+              "end": 1.347
+            }
+          ]
+        },
+        {
+          "text": "de la pantalla?",
+          "start": 9.316,
+          "end": 10.158,
+          "words": [
+            {
+              "text": "de",
+              "start": 0.0,
+              "end": 0.168
+            },
+            {
+              "text": "la",
+              "start": 0.168,
+              "end": 0.337
+            },
+            {
+              "text": "pantalla?",
+              "start": 0.337,
+              "end": 0.842
+            }
+          ]
+        },
+        {
+          "text": "Si te pasa algo de esto,",
+          "start": 10.158,
+          "end": 11.505,
+          "words": [
+            {
+              "text": "Si",
+              "start": 0.0,
+              "end": 0.168
+            },
+            {
+              "text": "te",
+              "start": 0.168,
+              "end": 0.337
+            },
+            {
+              "text": "pasa",
+              "start": 0.337,
+              "end": 0.617
+            },
+            {
+              "text": "algo",
+              "start": 0.617,
+              "end": 0.898
+            },
+            {
+              "text": "de",
+              "start": 0.898,
+              "end": 1.066
+            },
+            {
+              "text": "esto,",
+              "start": 1.066,
+              "end": 1.347
+            }
+          ]
+        },
+        {
+          "text": "tu página se adapta,",
+          "start": 11.505,
+          "end": 12.627,
+          "words": [
+            {
+              "text": "tu",
+              "start": 0.0,
+              "end": 0.168
+            },
+            {
+              "text": "página",
+              "start": 0.168,
+              "end": 0.561
+            },
+            {
+              "text": "se",
+              "start": 0.561,
+              "end": 0.73
+            },
+            {
+              "text": "adapta,",
+              "start": 0.73,
+              "end": 1.122
+            }
+          ]
+        },
+        {
+          "text": "pero no fue pensada",
+          "start": 12.627,
+          "end": 13.749,
+          "words": [
+            {
+              "text": "pero",
+              "start": 0.0,
+              "end": 0.281
+            },
+            {
+              "text": "no",
+              "start": 0.281,
+              "end": 0.449
+            },
+            {
+              "text": "fue",
+              "start": 0.449,
+              "end": 0.673
+            },
+            {
+              "text": "pensada",
+              "start": 0.673,
+              "end": 1.122
+            }
+          ]
+        },
+        {
+          "text": "para el móvil.",
+          "start": 13.749,
+          "end": 14.535,
+          "words": [
+            {
+              "text": "para",
+              "start": 0.0,
+              "end": 0.281
+            },
+            {
+              "text": "el",
+              "start": 0.281,
+              "end": 0.449
+            },
+            {
+              "text": "móvil.",
+              "start": 0.449,
+              "end": 0.786
+            }
+          ]
+        }
+      ],
+      "visualDirection": "Un teléfono grande al centro y cinco síntomas demostrados uno tras otro dentro de él, nunca enumerados en una lista. Un dedo intenta un botón diminuto y toca al lado; dos dedos amplían un texto ilegible; un formulario obliga a un desplazamiento largo; una tabla se sale por el borde derecho y hay que arrastrarla; un menú de escritorio ocupa media pantalla. Cada fallo recibe una equis pequeña que se queda. Al final los cinco se apagan y queda la frase: «Que funcione en móvil no es lo mismo que estar diseñado para móvil».",
+      "transition": "cut",
+      "asset": "sim:aents-sintomas",
+      "assetType": "simulation",
+      "photo": null,
+      "voiceFile": "jobs/aents-007/audio/voice-02.mp3",
+      "assetStartInFrames": 0,
+      "assetTotalInFrames": 450,
+      "accent": "#6B5CF6"
+    },
+    {
+      "purpose": "problema",
+      "durationInFrames": 424,
+      "headline": "Dos formas de empezar",
+      "captions": [
+        {
+          "text": "Aquí entra un concepto importante:",
+          "start": 0.0,
+          "end": 2.006,
+          "words": [
+            {
+              "text": "Aquí",
+              "start": 0.0,
+              "end": 0.295
+            },
+            {
+              "text": "entra",
+              "start": 0.295,
+              "end": 0.649
+            },
+            {
+              "text": "un",
+              "start": 0.649,
+              "end": 0.826
+            },
+            {
+              "text": "concepto",
+              "start": 0.826,
+              "end": 1.357
+            },
+            {
+              "text": "importante:",
+              "start": 1.357,
+              "end": 2.006
+            }
+          ]
+        },
+        {
+          "text": "mobile first.",
+          "start": 2.006,
+          "end": 2.773,
+          "words": [
+            {
+              "text": "mobile",
+              "start": 0.0,
+              "end": 0.413
+            },
+            {
+              "text": "first.",
+              "start": 0.413,
+              "end": 0.767
+            }
+          ]
+        },
+        {
+          "text": "Responsive y mobile first están",
+          "start": 2.773,
+          "end": 4.66,
+          "words": [
+            {
+              "text": "Responsive",
+              "start": 0.0,
+              "end": 0.649
+            },
+            {
+              "text": "y",
+              "start": 0.649,
+              "end": 0.767
+            },
+            {
+              "text": "mobile",
+              "start": 0.767,
+              "end": 1.18
+            },
+            {
+              "text": "first",
+              "start": 1.18,
+              "end": 1.534
+            },
+            {
+              "text": "están",
+              "start": 1.534,
+              "end": 1.888
+            }
+          ]
+        },
+        {
+          "text": "relacionados,",
+          "start": 4.66,
+          "end": 5.427,
+          "words": [
+            {
+              "text": "relacionados,",
+              "start": 0.0,
+              "end": 0.767
+            }
+          ]
+        },
+        {
+          "text": "pero no son lo mismo.",
+          "start": 5.427,
+          "end": 6.666,
+          "words": [
+            {
+              "text": "pero",
+              "start": 0.0,
+              "end": 0.295
+            },
+            {
+              "text": "no",
+              "start": 0.295,
+              "end": 0.472
+            },
+            {
+              "text": "son",
+              "start": 0.472,
+              "end": 0.708
+            },
+            {
+              "text": "lo",
+              "start": 0.708,
+              "end": 0.885
+            },
+            {
+              "text": "mismo.",
+              "start": 0.885,
+              "end": 1.239
+            }
+          ]
+        },
+        {
+          "text": "Responsive adapta un diseño",
+          "start": 6.666,
+          "end": 8.318,
+          "words": [
+            {
+              "text": "Responsive",
+              "start": 0.0,
+              "end": 0.649
+            },
+            {
+              "text": "adapta",
+              "start": 0.649,
+              "end": 1.062
+            },
+            {
+              "text": "un",
+              "start": 1.062,
+              "end": 1.239
+            },
+            {
+              "text": "diseño",
+              "start": 1.239,
+              "end": 1.652
+            }
+          ]
+        },
+        {
+          "text": "a distintos tamaños.",
+          "start": 8.318,
+          "end": 9.497,
+          "words": [
+            {
+              "text": "a",
+              "start": 0.0,
+              "end": 0.118
+            },
+            {
+              "text": "distintos",
+              "start": 0.118,
+              "end": 0.708
+            },
+            {
+              "text": "tamaños.",
+              "start": 0.708,
+              "end": 1.18
+            }
+          ]
+        },
+        {
+          "text": "Mobile first decide primero qué",
+          "start": 9.497,
+          "end": 11.385,
+          "words": [
+            {
+              "text": "Mobile",
+              "start": 0.0,
+              "end": 0.413
+            },
+            {
+              "text": "first",
+              "start": 0.413,
+              "end": 0.767
+            },
+            {
+              "text": "decide",
+              "start": 0.767,
+              "end": 1.18
+            },
+            {
+              "text": "primero",
+              "start": 1.18,
+              "end": 1.652
+            },
+            {
+              "text": "qué",
+              "start": 1.652,
+              "end": 1.888
+            }
+          ]
+        },
+        {
+          "text": "necesita quien entra",
+          "start": 11.385,
+          "end": 12.624,
+          "words": [
+            {
+              "text": "necesita",
+              "start": 0.0,
+              "end": 0.531
+            },
+            {
+              "text": "quien",
+              "start": 0.531,
+              "end": 0.885
+            },
+            {
+              "text": "entra",
+              "start": 0.885,
+              "end": 1.239
+            }
+          ]
+        },
+        {
+          "text": "desde el teléfono.",
+          "start": 12.624,
+          "end": 13.686,
+          "words": [
+            {
+              "text": "desde",
+              "start": 0.0,
+              "end": 0.354
+            },
+            {
+              "text": "el",
+              "start": 0.354,
+              "end": 0.531
+            },
+            {
+              "text": "teléfono.",
+              "start": 0.531,
+              "end": 1.062
+            }
+          ]
+        }
+      ],
+      "visualDirection": "Pantalla partida en dos columnas que avanzan a la vez. A la izquierda, RESPONSIVE: una página de escritorio completa se reduce por pasos hasta caber en un teléfono, conservando el mismo orden. A la derecha, MOBILE FIRST: un teléfono vacío al que entra primero la acción principal, después la navegación, después el contenido, y solo al final, cuando el marco se ensancha, los elementos secundarios. Las dos columnas terminan en un teléfono, y debajo de cada una queda su definición en una línea.",
+      "transition": "cut",
+      "asset": "sim:aents-dos-caminos",
+      "assetType": "simulation",
+      "photo": null,
+      "voiceFile": "jobs/aents-007/audio/voice-03.mp3",
+      "assetStartInFrames": 0,
+      "assetTotalInFrames": 424,
+      "accent": "#14B8A6"
+    },
+    {
+      "purpose": "problema",
+      "durationInFrames": 556,
+      "headline": "Que quepa no basta",
+      "captions": [
+        {
+          "text": "Lo tradicional es empezar por",
+          "start": 0.0,
+          "end": 1.721,
+          "words": [
+            {
+              "text": "Lo",
+              "start": 0.0,
+              "end": 0.172
+            },
+            {
+              "text": "tradicional",
+              "start": 0.172,
+              "end": 0.861
+            },
+            {
+              "text": "es",
+              "start": 0.861,
+              "end": 1.033
+            },
+            {
+              "text": "empezar",
+              "start": 1.033,
+              "end": 1.492
+            },
+            {
+              "text": "por",
+              "start": 1.492,
+              "end": 1.721
+            }
+          ]
+        },
+        {
+          "text": "la pantalla grande.",
+          "start": 1.721,
+          "end": 2.812,
+          "words": [
+            {
+              "text": "la",
+              "start": 0.0,
+              "end": 0.172
+            },
+            {
+              "text": "pantalla",
+              "start": 0.172,
+              "end": 0.689
+            },
+            {
+              "text": "grande.",
+              "start": 0.689,
+              "end": 1.09
+            }
+          ]
+        },
+        {
+          "text": "Hay espacio de sobra,",
+          "start": 2.812,
+          "end": 4.017,
+          "words": [
+            {
+              "text": "Hay",
+              "start": 0.0,
+              "end": 0.23
+            },
+            {
+              "text": "espacio",
+              "start": 0.23,
+              "end": 0.689
+            },
+            {
+              "text": "de",
+              "start": 0.689,
+              "end": 0.861
+            },
+            {
+              "text": "sobra,",
+              "start": 0.861,
+              "end": 1.205
+            }
+          ]
+        },
+        {
+          "text": "así que entran el menú,",
+          "start": 4.017,
+          "end": 5.336,
+          "words": [
+            {
+              "text": "así",
+              "start": 0.0,
+              "end": 0.23
+            },
+            {
+              "text": "que",
+              "start": 0.23,
+              "end": 0.459
+            },
+            {
+              "text": "entran",
+              "start": 0.459,
+              "end": 0.861
+            },
+            {
+              "text": "el",
+              "start": 0.861,
+              "end": 1.033
+            },
+            {
+              "text": "menú,",
+              "start": 1.033,
+              "end": 1.32
+            }
+          ]
+        },
+        {
+          "text": "los filtros,",
+          "start": 5.336,
+          "end": 6.025,
+          "words": [
+            {
+              "text": "los",
+              "start": 0.0,
+              "end": 0.23
+            },
+            {
+              "text": "filtros,",
+              "start": 0.23,
+              "end": 0.689
+            }
+          ]
+        },
+        {
+          "text": "la tabla,",
+          "start": 6.025,
+          "end": 6.541,
+          "words": [
+            {
+              "text": "la",
+              "start": 0.0,
+              "end": 0.172
+            },
+            {
+              "text": "tabla,",
+              "start": 0.172,
+              "end": 0.516
+            }
+          ]
+        },
+        {
+          "text": "los gráficos y los paneles.",
+          "start": 6.541,
+          "end": 8.091,
+          "words": [
+            {
+              "text": "los",
+              "start": 0.0,
+              "end": 0.23
+            },
+            {
+              "text": "gráficos",
+              "start": 0.23,
+              "end": 0.746
+            },
+            {
+              "text": "y",
+              "start": 0.746,
+              "end": 0.861
+            },
+            {
+              "text": "los",
+              "start": 0.861,
+              "end": 1.09
+            },
+            {
+              "text": "paneles.",
+              "start": 1.09,
+              "end": 1.549
+            }
+          ]
+        },
+        {
+          "text": "Después toca la versión",
+          "start": 8.091,
+          "end": 9.468,
+          "words": [
+            {
+              "text": "Después",
+              "start": 0.0,
+              "end": 0.459
+            },
+            {
+              "text": "toca",
+              "start": 0.459,
+              "end": 0.746
+            },
+            {
+              "text": "la",
+              "start": 0.746,
+              "end": 0.918
+            },
+            {
+              "text": "versión",
+              "start": 0.918,
+              "end": 1.377
+            }
+          ]
+        },
+        {
+          "text": "de celular:",
+          "start": 9.468,
+          "end": 10.099,
+          "words": [
+            {
+              "text": "de",
+              "start": 0.0,
+              "end": 0.172
+            },
+            {
+              "text": "celular:",
+              "start": 0.172,
+              "end": 0.631
+            }
+          ]
+        },
+        {
+          "text": "escondemos cosas,",
+          "start": 10.099,
+          "end": 11.074,
+          "words": [
+            {
+              "text": "escondemos",
+              "start": 0.0,
+              "end": 0.631
+            },
+            {
+              "text": "cosas,",
+              "start": 0.631,
+              "end": 0.975
+            }
+          ]
+        },
+        {
+          "text": "apilamos otras,",
+          "start": 11.074,
+          "end": 11.935,
+          "words": [
+            {
+              "text": "apilamos",
+              "start": 0.0,
+              "end": 0.516
+            },
+            {
+              "text": "otras,",
+              "start": 0.516,
+              "end": 0.861
+            }
+          ]
+        },
+        {
+          "text": "achicamos los botones,",
+          "start": 11.935,
+          "end": 13.197,
+          "words": [
+            {
+              "text": "achicamos",
+              "start": 0.0,
+              "end": 0.574
+            },
+            {
+              "text": "los",
+              "start": 0.574,
+              "end": 0.803
+            },
+            {
+              "text": "botones,",
+              "start": 0.803,
+              "end": 1.262
+            }
+          ]
+        },
+        {
+          "text": "y al final entra.",
+          "start": 13.197,
+          "end": 14.173,
+          "words": [
+            {
+              "text": "y",
+              "start": 0.0,
+              "end": 0.115
+            },
+            {
+              "text": "al",
+              "start": 0.115,
+              "end": 0.287
+            },
+            {
+              "text": "final",
+              "start": 0.287,
+              "end": 0.631
+            },
+            {
+              "text": "entra.",
+              "start": 0.631,
+              "end": 0.975
+            }
+          ]
+        },
+        {
+          "text": "Eso puede ser responsive,",
+          "start": 14.173,
+          "end": 15.607,
+          "words": [
+            {
+              "text": "Eso",
+              "start": 0.0,
+              "end": 0.23
+            },
+            {
+              "text": "puede",
+              "start": 0.23,
+              "end": 0.574
+            },
+            {
+              "text": "ser",
+              "start": 0.574,
+              "end": 0.803
+            },
+            {
+              "text": "responsive,",
+              "start": 0.803,
+              "end": 1.435
+            }
+          ]
+        },
+        {
+          "text": "pero que quepa no significa",
+          "start": 15.607,
+          "end": 17.214,
+          "words": [
+            {
+              "text": "pero",
+              "start": 0.0,
+              "end": 0.287
+            },
+            {
+              "text": "que",
+              "start": 0.287,
+              "end": 0.516
+            },
+            {
+              "text": "quepa",
+              "start": 0.516,
+              "end": 0.861
+            },
+            {
+              "text": "no",
+              "start": 0.861,
+              "end": 1.033
+            },
+            {
+              "text": "significa",
+              "start": 1.033,
+              "end": 1.607
+            }
+          ]
+        },
+        {
+          "text": "que sea cómodo.",
+          "start": 17.214,
+          "end": 18.075,
+          "words": [
+            {
+              "text": "que",
+              "start": 0.0,
+              "end": 0.23
+            },
+            {
+              "text": "sea",
+              "start": 0.23,
+              "end": 0.459
+            },
+            {
+              "text": "cómodo.",
+              "start": 0.459,
+              "end": 0.861
+            }
+          ]
+        }
+      ],
+      "visualDirection": "Se construye una interfaz de escritorio pieza por pieza —menú, barra lateral, tabla, gráficos, filtros, botones y tarjetas— hasta llenar el monitor con todo perfectamente distribuido. Entonces aparece un teléfono al lado y las piezas intentan entrar todas a la vez; no caben. El sistema empieza a arreglarlo a la vista: un panel desaparece, la tabla se encoge, las columnas se apilan, los botones menguan, el menú se convierte de golpe en un icono. Todo entra y aparece un visto verde con «CABE EN MÓVIL». El visto se apaga, entra la pregunta «¿Pero es cómodo usarlo?» y en su lugar queda una equis.",
+      "transition": "cut",
+      "asset": "sim:aents-cabe",
+      "assetType": "simulation",
+      "photo": null,
+      "voiceFile": "jobs/aents-007/audio/voice-04.mp3",
+      "assetStartInFrames": 0,
+      "assetTotalInFrames": 556,
+      "accent": "#A78BFA"
+    },
+    {
+      "purpose": "prueba",
+      "durationInFrames": 351,
+      "headline": "Cambia la pregunta",
+      "captions": [
+        {
+          "text": "Mobile first propone cambiar",
+          "start": 0.0,
+          "end": 1.69,
+          "words": [
+            {
+              "text": "Mobile",
+              "start": 0.0,
+              "end": 0.408
+            },
+            {
+              "text": "first",
+              "start": 0.408,
+              "end": 0.758
+            },
+            {
+              "text": "propone",
+              "start": 0.758,
+              "end": 1.224
+            },
+            {
+              "text": "cambiar",
+              "start": 1.224,
+              "end": 1.69
+            }
+          ]
+        },
+        {
+          "text": "la pregunta.",
+          "start": 1.69,
+          "end": 2.389,
+          "words": [
+            {
+              "text": "la",
+              "start": 0.0,
+              "end": 0.175
+            },
+            {
+              "text": "pregunta.",
+              "start": 0.175,
+              "end": 0.699
+            }
+          ]
+        },
+        {
+          "text": "En vez de preguntar cómo hacemos",
+          "start": 2.389,
+          "end": 4.312,
+          "words": [
+            {
+              "text": "En",
+              "start": 0.0,
+              "end": 0.175
+            },
+            {
+              "text": "vez",
+              "start": 0.175,
+              "end": 0.408
+            },
+            {
+              "text": "de",
+              "start": 0.408,
+              "end": 0.583
+            },
+            {
+              "text": "preguntar",
+              "start": 0.583,
+              "end": 1.165
+            },
+            {
+              "text": "cómo",
+              "start": 1.165,
+              "end": 1.457
+            },
+            {
+              "text": "hacemos",
+              "start": 1.457,
+              "end": 1.923
+            }
+          ]
+        },
+        {
+          "text": "que todo esto entre,",
+          "start": 4.312,
+          "end": 5.477,
+          "words": [
+            {
+              "text": "que",
+              "start": 0.0,
+              "end": 0.233
+            },
+            {
+              "text": "todo",
+              "start": 0.233,
+              "end": 0.524
+            },
+            {
+              "text": "esto",
+              "start": 0.524,
+              "end": 0.816
+            },
+            {
+              "text": "entre,",
+              "start": 0.816,
+              "end": 1.165
+            }
+          ]
+        },
+        {
+          "text": "preguntamos qué necesita hacer",
+          "start": 5.477,
+          "end": 7.284,
+          "words": [
+            {
+              "text": "preguntamos",
+              "start": 0.0,
+              "end": 0.699
+            },
+            {
+              "text": "qué",
+              "start": 0.699,
+              "end": 0.932
+            },
+            {
+              "text": "necesita",
+              "start": 0.932,
+              "end": 1.457
+            },
+            {
+              "text": "hacer",
+              "start": 1.457,
+              "end": 1.806
+            }
+          ]
+        },
+        {
+          "text": "esta persona desde su teléfono.",
+          "start": 7.284,
+          "end": 9.09,
+          "words": [
+            {
+              "text": "esta",
+              "start": 0.0,
+              "end": 0.291
+            },
+            {
+              "text": "persona",
+              "start": 0.291,
+              "end": 0.758
+            },
+            {
+              "text": "desde",
+              "start": 0.758,
+              "end": 1.107
+            },
+            {
+              "text": "su",
+              "start": 1.107,
+              "end": 1.282
+            },
+            {
+              "text": "teléfono.",
+              "start": 1.282,
+              "end": 1.806
+            }
+          ]
+        },
+        {
+          "text": "Y esa diferencia lo cambia casi todo.",
+          "start": 9.09,
+          "end": 11.246,
+          "words": [
+            {
+              "text": "Y",
+              "start": 0.0,
+              "end": 0.117
+            },
+            {
+              "text": "esa",
+              "start": 0.117,
+              "end": 0.35
+            },
+            {
+              "text": "diferencia",
+              "start": 0.35,
+              "end": 0.991
+            },
+            {
+              "text": "lo",
+              "start": 0.991,
+              "end": 1.165
+            },
+            {
+              "text": "cambia",
+              "start": 1.165,
+              "end": 1.573
+            },
+            {
+              "text": "casi",
+              "start": 1.573,
+              "end": 1.865
+            },
+            {
+              "text": "todo.",
+              "start": 1.865,
+              "end": 2.156
+            }
+          ]
+        }
+      ],
+      "visualDirection": "El desorden de la escena anterior se apaga y queda un teléfono vacío con una persona en el centro. Alrededor flotan acciones posibles: buscar, comparar, contactar, filtrar, guardar, compartir, ver información. En vez de meterlas todas, dos se acercan al centro y ocupan el lugar principal dentro del teléfono, y el resto se ordena en un anillo secundario, más pequeño y más apagado. Queda el rótulo «Primero la necesidad».",
+      "transition": "cut",
+      "asset": "sim:aents-pregunta",
+      "assetType": "simulation",
+      "photo": null,
+      "voiceFile": "jobs/aents-007/audio/voice-05.mp3",
+      "assetStartInFrames": 0,
+      "assetTotalInFrames": 351,
+      "accent": "#22C55E"
+    },
+    {
+      "purpose": "prueba",
+      "durationInFrames": 386,
+      "headline": "Un ejemplo real",
+      "captions": [
+        {
+          "text": "Te pongo un ejemplo.",
+          "start": 0.0,
+          "end": 1.178,
+          "words": [
+            {
+              "text": "Te",
+              "start": 0.0,
+              "end": 0.177
+            },
+            {
+              "text": "pongo",
+              "start": 0.177,
+              "end": 0.53
+            },
+            {
+              "text": "un",
+              "start": 0.53,
+              "end": 0.707
+            },
+            {
+              "text": "ejemplo.",
+              "start": 0.707,
+              "end": 1.178
+            }
+          ]
+        },
+        {
+          "text": "Una plataforma para buscar propiedades.",
+          "start": 1.178,
+          "end": 3.475,
+          "words": [
+            {
+              "text": "Una",
+              "start": 0.0,
+              "end": 0.236
+            },
+            {
+              "text": "plataforma",
+              "start": 0.236,
+              "end": 0.884
+            },
+            {
+              "text": "para",
+              "start": 0.884,
+              "end": 1.178
+            },
+            {
+              "text": "buscar",
+              "start": 1.178,
+              "end": 1.59
+            },
+            {
+              "text": "propiedades.",
+              "start": 1.59,
+              "end": 2.297
+            }
+          ]
+        },
+        {
+          "text": "En computadora sobra espacio:",
+          "start": 3.475,
+          "end": 5.184,
+          "words": [
+            {
+              "text": "En",
+              "start": 0.0,
+              "end": 0.177
+            },
+            {
+              "text": "computadora",
+              "start": 0.177,
+              "end": 0.884
+            },
+            {
+              "text": "sobra",
+              "start": 0.884,
+              "end": 1.237
+            },
+            {
+              "text": "espacio:",
+              "start": 1.237,
+              "end": 1.708
+            }
+          ]
+        },
+        {
+          "text": "caben el mapa,",
+          "start": 5.184,
+          "end": 6.008,
+          "words": [
+            {
+              "text": "caben",
+              "start": 0.0,
+              "end": 0.353
+            },
+            {
+              "text": "el",
+              "start": 0.353,
+              "end": 0.53
+            },
+            {
+              "text": "mapa,",
+              "start": 0.53,
+              "end": 0.825
+            }
+          ]
+        },
+        {
+          "text": "la lista,",
+          "start": 6.008,
+          "end": 6.538,
+          "words": [
+            {
+              "text": "la",
+              "start": 0.0,
+              "end": 0.177
+            },
+            {
+              "text": "lista,",
+              "start": 0.177,
+              "end": 0.53
+            }
+          ]
+        },
+        {
+          "text": "el buscador y los filtros",
+          "start": 6.538,
+          "end": 8.07,
+          "words": [
+            {
+              "text": "el",
+              "start": 0.0,
+              "end": 0.177
+            },
+            {
+              "text": "buscador",
+              "start": 0.177,
+              "end": 0.707
+            },
+            {
+              "text": "y",
+              "start": 0.707,
+              "end": 0.825
+            },
+            {
+              "text": "los",
+              "start": 0.825,
+              "end": 1.06
+            },
+            {
+              "text": "filtros",
+              "start": 1.06,
+              "end": 1.531
+            }
+          ]
+        },
+        {
+          "text": "a la vez.",
+          "start": 8.07,
+          "end": 8.6,
+          "words": [
+            {
+              "text": "a",
+              "start": 0.0,
+              "end": 0.118
+            },
+            {
+              "text": "la",
+              "start": 0.118,
+              "end": 0.295
+            },
+            {
+              "text": "vez.",
+              "start": 0.295,
+              "end": 0.53
+            }
+          ]
+        },
+        {
+          "text": "Si metes esa misma pantalla",
+          "start": 8.6,
+          "end": 10.249,
+          "words": [
+            {
+              "text": "Si",
+              "start": 0.0,
+              "end": 0.177
+            },
+            {
+              "text": "metes",
+              "start": 0.177,
+              "end": 0.53
+            },
+            {
+              "text": "esa",
+              "start": 0.53,
+              "end": 0.766
+            },
+            {
+              "text": "misma",
+              "start": 0.766,
+              "end": 1.119
+            },
+            {
+              "text": "pantalla",
+              "start": 1.119,
+              "end": 1.649
+            }
+          ]
+        },
+        {
+          "text": "en un teléfono,",
+          "start": 10.249,
+          "end": 11.133,
+          "words": [
+            {
+              "text": "en",
+              "start": 0.0,
+              "end": 0.177
+            },
+            {
+              "text": "un",
+              "start": 0.177,
+              "end": 0.353
+            },
+            {
+              "text": "teléfono,",
+              "start": 0.353,
+              "end": 0.884
+            }
+          ]
+        },
+        {
+          "text": "todo empieza a chocar.",
+          "start": 11.133,
+          "end": 12.429,
+          "words": [
+            {
+              "text": "todo",
+              "start": 0.0,
+              "end": 0.295
+            },
+            {
+              "text": "empieza",
+              "start": 0.295,
+              "end": 0.766
+            },
+            {
+              "text": "a",
+              "start": 0.766,
+              "end": 0.884
+            },
+            {
+              "text": "chocar.",
+              "start": 0.884,
+              "end": 1.296
+            }
+          ]
+        }
+      ],
+      "visualDirection": "Un monitor con la plataforma en su versión de escritorio: mapa grande con marcadores de precio de ejemplo, panel lateral con buscador, filtros y listado de propiedades. Todo cabe y todo se lee. La cámara se acerca y el marco del monitor se estrecha hasta el ancho de un teléfono conservando la misma maquetación: el panel lateral aplasta el mapa, los marcadores se amontonan, el buscador queda sin sitio. El rótulo EJEMPLO acompaña a los precios mientras están en pantalla.",
+      "transition": "cut",
+      "asset": "sim:aents-portal-escritorio",
+      "assetType": "simulation",
+      "photo": null,
+      "voiceFile": "jobs/aents-007/audio/voice-06.mp3",
+      "assetStartInFrames": 0,
+      "assetTotalInFrames": 386,
+      "accent": "#6B5CF6"
+    },
+    {
+      "purpose": "prueba",
+      "durationInFrames": 616,
+      "headline": "La versión móvil",
+      "captions": [
+        {
+          "text": "En el teléfono cambiamos",
+          "start": 0.0,
+          "end": 1.395,
+          "words": [
+            {
+              "text": "En",
+              "start": 0.0,
+              "end": 0.167
+            },
+            {
+              "text": "el",
+              "start": 0.167,
+              "end": 0.335
+            },
+            {
+              "text": "teléfono",
+              "start": 0.335,
+              "end": 0.837
+            },
+            {
+              "text": "cambiamos",
+              "start": 0.837,
+              "end": 1.395
+            }
+          ]
+        },
+        {
+          "text": "la experiencia entera.",
+          "start": 1.395,
+          "end": 2.622,
+          "words": [
+            {
+              "text": "la",
+              "start": 0.0,
+              "end": 0.167
+            },
+            {
+              "text": "experiencia",
+              "start": 0.167,
+              "end": 0.837
+            },
+            {
+              "text": "entera.",
+              "start": 0.837,
+              "end": 1.227
+            }
+          ]
+        },
+        {
+          "text": "Así funciona Geo Propiedades Ecuador,",
+          "start": 2.622,
+          "end": 4.686,
+          "words": [
+            {
+              "text": "Así",
+              "start": 0.0,
+              "end": 0.223
+            },
+            {
+              "text": "funciona",
+              "start": 0.223,
+              "end": 0.725
+            },
+            {
+              "text": "Geo",
+              "start": 0.725,
+              "end": 0.948
+            },
+            {
+              "text": "Propiedades",
+              "start": 0.948,
+              "end": 1.618
+            },
+            {
+              "text": "Ecuador,",
+              "start": 1.618,
+              "end": 2.064
+            }
+          ]
+        },
+        {
+          "text": "una plataforma que construimos",
+          "start": 4.686,
+          "end": 6.415,
+          "words": [
+            {
+              "text": "una",
+              "start": 0.0,
+              "end": 0.223
+            },
+            {
+              "text": "plataforma",
+              "start": 0.223,
+              "end": 0.837
+            },
+            {
+              "text": "que",
+              "start": 0.837,
+              "end": 1.06
+            },
+            {
+              "text": "construimos",
+              "start": 1.06,
+              "end": 1.729
+            }
+          ]
+        },
+        {
+          "text": "en Aents.",
+          "start": 6.415,
+          "end": 6.917,
+          "words": [
+            {
+              "text": "en",
+              "start": 0.0,
+              "end": 0.167
+            },
+            {
+              "text": "Aents.",
+              "start": 0.167,
+              "end": 0.502
+            }
+          ]
+        },
+        {
+          "text": "El mapa ocupa toda la pantalla.",
+          "start": 6.917,
+          "end": 8.646,
+          "words": [
+            {
+              "text": "El",
+              "start": 0.0,
+              "end": 0.167
+            },
+            {
+              "text": "mapa",
+              "start": 0.167,
+              "end": 0.446
+            },
+            {
+              "text": "ocupa",
+              "start": 0.446,
+              "end": 0.781
+            },
+            {
+              "text": "toda",
+              "start": 0.781,
+              "end": 1.06
+            },
+            {
+              "text": "la",
+              "start": 1.06,
+              "end": 1.227
+            },
+            {
+              "text": "pantalla.",
+              "start": 1.227,
+              "end": 1.729
+            }
+          ]
+        },
+        {
+          "text": "Buscador y filtros viven detrás",
+          "start": 8.646,
+          "end": 10.431,
+          "words": [
+            {
+              "text": "Buscador",
+              "start": 0.0,
+              "end": 0.502
+            },
+            {
+              "text": "y",
+              "start": 0.502,
+              "end": 0.614
+            },
+            {
+              "text": "filtros",
+              "start": 0.614,
+              "end": 1.06
+            },
+            {
+              "text": "viven",
+              "start": 1.06,
+              "end": 1.395
+            },
+            {
+              "text": "detrás",
+              "start": 1.395,
+              "end": 1.785
+            }
+          ]
+        },
+        {
+          "text": "de un botón.",
+          "start": 10.431,
+          "end": 11.1,
+          "words": [
+            {
+              "text": "de",
+              "start": 0.0,
+              "end": 0.167
+            },
+            {
+              "text": "un",
+              "start": 0.167,
+              "end": 0.335
+            },
+            {
+              "text": "botón.",
+              "start": 0.335,
+              "end": 0.669
+            }
+          ]
+        },
+        {
+          "text": "Al tocar una propiedad,",
+          "start": 11.1,
+          "end": 12.383,
+          "words": [
+            {
+              "text": "Al",
+              "start": 0.0,
+              "end": 0.167
+            },
+            {
+              "text": "tocar",
+              "start": 0.167,
+              "end": 0.502
+            },
+            {
+              "text": "una",
+              "start": 0.502,
+              "end": 0.725
+            },
+            {
+              "text": "propiedad,",
+              "start": 0.725,
+              "end": 1.283
+            }
+          ]
+        },
+        {
+          "text": "la ficha sube desde abajo:",
+          "start": 12.383,
+          "end": 13.833,
+          "words": [
+            {
+              "text": "la",
+              "start": 0.0,
+              "end": 0.167
+            },
+            {
+              "text": "ficha",
+              "start": 0.167,
+              "end": 0.502
+            },
+            {
+              "text": "sube",
+              "start": 0.502,
+              "end": 0.781
+            },
+            {
+              "text": "desde",
+              "start": 0.781,
+              "end": 1.116
+            },
+            {
+              "text": "abajo:",
+              "start": 1.116,
+              "end": 1.45
+            }
+          ]
+        },
+        {
+          "text": "la arrastras hacia arriba",
+          "start": 13.833,
+          "end": 15.284,
+          "words": [
+            {
+              "text": "la",
+              "start": 0.0,
+              "end": 0.167
+            },
+            {
+              "text": "arrastras",
+              "start": 0.167,
+              "end": 0.725
+            },
+            {
+              "text": "hacia",
+              "start": 0.725,
+              "end": 1.06
+            },
+            {
+              "text": "arriba",
+              "start": 1.06,
+              "end": 1.45
+            }
+          ]
+        },
+        {
+          "text": "para ver más",
+          "start": 15.284,
+          "end": 16.009,
+          "words": [
+            {
+              "text": "para",
+              "start": 0.0,
+              "end": 0.279
+            },
+            {
+              "text": "ver",
+              "start": 0.279,
+              "end": 0.502
+            },
+            {
+              "text": "más",
+              "start": 0.502,
+              "end": 0.725
+            }
+          ]
+        },
+        {
+          "text": "y hacia abajo",
+          "start": 16.009,
+          "end": 16.79,
+          "words": [
+            {
+              "text": "y",
+              "start": 0.0,
+              "end": 0.112
+            },
+            {
+              "text": "hacia",
+              "start": 0.112,
+              "end": 0.446
+            },
+            {
+              "text": "abajo",
+              "start": 0.446,
+              "end": 0.781
+            }
+          ]
+        },
+        {
+          "text": "para volver al mapa.",
+          "start": 16.79,
+          "end": 17.905,
+          "words": [
+            {
+              "text": "para",
+              "start": 0.0,
+              "end": 0.279
+            },
+            {
+              "text": "volver",
+              "start": 0.279,
+              "end": 0.669
+            },
+            {
+              "text": "al",
+              "start": 0.669,
+              "end": 0.837
+            },
+            {
+              "text": "mapa.",
+              "start": 0.837,
+              "end": 1.116
+            }
+          ]
+        },
+        {
+          "text": "La misma función,",
+          "start": 17.905,
+          "end": 18.854,
+          "words": [
+            {
+              "text": "La",
+              "start": 0.0,
+              "end": 0.167
+            },
+            {
+              "text": "misma",
+              "start": 0.167,
+              "end": 0.502
+            },
+            {
+              "text": "función,",
+              "start": 0.502,
+              "end": 0.948
+            }
+          ]
+        },
+        {
+          "text": "otra manera de usarla.",
+          "start": 18.854,
+          "end": 20.081,
+          "words": [
+            {
+              "text": "otra",
+              "start": 0.0,
+              "end": 0.279
+            },
+            {
+              "text": "manera",
+              "start": 0.279,
+              "end": 0.669
+            },
+            {
+              "text": "de",
+              "start": 0.669,
+              "end": 0.837
+            },
+            {
+              "text": "usarla.",
+              "start": 0.837,
+              "end": 1.227
+            }
+          ]
+        }
+      ],
+      "visualDirection": "La interfaz mala anterior se desmonta y se reconstruye como el producto real. El mapa ocupa el teléfono entero; abajo, centrado, el botón flotante con el icono de filtros y el contador de propiedades de ejemplo. Un dedo desplaza el mapa, toca un marcador de precio y la ficha sube desde abajo con foto, precio y ubicación. El dedo la arrastra hacia arriba y ocupa la pantalla completa con más información; la arrastra hacia abajo y vuelve el mapa. Toca el botón inferior y suben el buscador y los filtros desde abajo; elige tipo y rango, y el mapa se actualiza detrás. Cierra con las dos versiones lado a lado, distintas y equivalentes.",
+      "transition": "cut",
+      "asset": "sim:aents-portal-movil",
+      "assetType": "simulation",
+      "photo": null,
+      "voiceFile": "jobs/aents-007/audio/voice-07.mp3",
+      "assetStartInFrames": 0,
+      "assetTotalInFrames": 616,
+      "accent": "#14B8A6"
+    },
+    {
+      "purpose": "prueba",
+      "durationInFrames": 432,
+      "headline": "Dedos, no cursores",
+      "captions": [
+        {
+          "text": "En la computadora usas un mouse;",
+          "start": 0.0,
+          "end": 1.883,
+          "words": [
+            {
+              "text": "En",
+              "start": 0.0,
+              "end": 0.176
+            },
+            {
+              "text": "la",
+              "start": 0.176,
+              "end": 0.353
+            },
+            {
+              "text": "computadora",
+              "start": 0.353,
+              "end": 1.059
+            },
+            {
+              "text": "usas",
+              "start": 1.059,
+              "end": 1.353
+            },
+            {
+              "text": "un",
+              "start": 1.353,
+              "end": 1.53
+            },
+            {
+              "text": "mouse;",
+              "start": 1.53,
+              "end": 1.883
+            }
+          ]
+        },
+        {
+          "text": "en el celular usas los dedos.",
+          "start": 1.883,
+          "end": 3.589,
+          "words": [
+            {
+              "text": "en",
+              "start": 0.0,
+              "end": 0.176
+            },
+            {
+              "text": "el",
+              "start": 0.176,
+              "end": 0.353
+            },
+            {
+              "text": "celular",
+              "start": 0.353,
+              "end": 0.824
+            },
+            {
+              "text": "usas",
+              "start": 0.824,
+              "end": 1.118
+            },
+            {
+              "text": "los",
+              "start": 1.118,
+              "end": 1.353
+            },
+            {
+              "text": "dedos.",
+              "start": 1.353,
+              "end": 1.706
+            }
+          ]
+        },
+        {
+          "text": "Un botón pequeño funciona perfecto",
+          "start": 3.589,
+          "end": 5.648,
+          "words": [
+            {
+              "text": "Un",
+              "start": 0.0,
+              "end": 0.176
+            },
+            {
+              "text": "botón",
+              "start": 0.176,
+              "end": 0.529
+            },
+            {
+              "text": "pequeño",
+              "start": 0.529,
+              "end": 1.0
+            },
+            {
+              "text": "funciona",
+              "start": 1.0,
+              "end": 1.53
+            },
+            {
+              "text": "perfecto",
+              "start": 1.53,
+              "end": 2.059
+            }
+          ]
+        },
+        {
+          "text": "con un cursor,",
+          "start": 5.648,
+          "end": 6.472,
+          "words": [
+            {
+              "text": "con",
+              "start": 0.0,
+              "end": 0.235
+            },
+            {
+              "text": "un",
+              "start": 0.235,
+              "end": 0.412
+            },
+            {
+              "text": "cursor,",
+              "start": 0.412,
+              "end": 0.824
+            }
+          ]
+        },
+        {
+          "text": "y con el dedo se vuelve",
+          "start": 6.472,
+          "end": 7.884,
+          "words": [
+            {
+              "text": "y",
+              "start": 0.0,
+              "end": 0.118
+            },
+            {
+              "text": "con",
+              "start": 0.118,
+              "end": 0.353
+            },
+            {
+              "text": "el",
+              "start": 0.353,
+              "end": 0.529
+            },
+            {
+              "text": "dedo",
+              "start": 0.529,
+              "end": 0.824
+            },
+            {
+              "text": "se",
+              "start": 0.824,
+              "end": 1.0
+            },
+            {
+              "text": "vuelve",
+              "start": 1.0,
+              "end": 1.412
+            }
+          ]
+        },
+        {
+          "text": "una molestia:",
+          "start": 7.884,
+          "end": 8.648,
+          "words": [
+            {
+              "text": "una",
+              "start": 0.0,
+              "end": 0.235
+            },
+            {
+              "text": "molestia:",
+              "start": 0.235,
+              "end": 0.765
+            }
+          ]
+        },
+        {
+          "text": "tocas el de al lado, fallas,",
+          "start": 8.648,
+          "end": 10.237,
+          "words": [
+            {
+              "text": "tocas",
+              "start": 0.0,
+              "end": 0.353
+            },
+            {
+              "text": "el",
+              "start": 0.353,
+              "end": 0.529
+            },
+            {
+              "text": "de",
+              "start": 0.529,
+              "end": 0.706
+            },
+            {
+              "text": "al",
+              "start": 0.706,
+              "end": 0.882
+            },
+            {
+              "text": "lado,",
+              "start": 0.882,
+              "end": 1.177
+            },
+            {
+              "text": "fallas,",
+              "start": 1.177,
+              "end": 1.588
+            }
+          ]
+        },
+        {
+          "text": "lo intentas otra vez.",
+          "start": 10.237,
+          "end": 11.472,
+          "words": [
+            {
+              "text": "lo",
+              "start": 0.0,
+              "end": 0.176
+            },
+            {
+              "text": "intentas",
+              "start": 0.176,
+              "end": 0.706
+            },
+            {
+              "text": "otra",
+              "start": 0.706,
+              "end": 1.0
+            },
+            {
+              "text": "vez.",
+              "start": 1.0,
+              "end": 1.235
+            }
+          ]
+        },
+        {
+          "text": "Los botones necesitan tamaño",
+          "start": 11.472,
+          "end": 13.178,
+          "words": [
+            {
+              "text": "Los",
+              "start": 0.0,
+              "end": 0.235
+            },
+            {
+              "text": "botones",
+              "start": 0.235,
+              "end": 0.706
+            },
+            {
+              "text": "necesitan",
+              "start": 0.706,
+              "end": 1.294
+            },
+            {
+              "text": "tamaño",
+              "start": 1.294,
+              "end": 1.706
+            }
+          ]
+        },
+        {
+          "text": "y separación.",
+          "start": 13.178,
+          "end": 13.943,
+          "words": [
+            {
+              "text": "y",
+              "start": 0.0,
+              "end": 0.118
+            },
+            {
+              "text": "separación.",
+              "start": 0.118,
+              "end": 0.765
+            }
+          ]
+        }
+      ],
+      "visualDirection": "Pantalla partida. A la izquierda, un cursor y cinco botones pequeños y pegados: la punta del cursor entra limpiamente en el que busca y lo activa. A la derecha, exactamente el mismo diseño, pero quien actúa es un dedo con su área real de contacto: toca y activa el botón de al lado, lo intenta de nuevo y vuelve a fallar. Entonces, solo en la mitad derecha, los botones crecen y se separan; el mismo gesto acierta y el botón confirma. Queda el rótulo «Diseña para dedos, no para cursores».",
+      "transition": "cut",
+      "asset": "sim:aents-dedo",
+      "assetType": "simulation",
+      "photo": null,
+      "voiceFile": "jobs/aents-007/audio/voice-08.mp3",
+      "assetStartInFrames": 0,
+      "assetTotalInFrames": 432,
+      "accent": "#A78BFA"
+    },
+    {
+      "purpose": "prueba",
+      "durationInFrames": 396,
+      "headline": "Adapta el componente",
+      "captions": [
+        {
+          "text": "En computadora una tabla",
+          "start": 0.0,
+          "end": 1.509,
+          "words": [
+            {
+              "text": "En",
+              "start": 0.0,
+              "end": 0.181
+            },
+            {
+              "text": "computadora",
+              "start": 0.181,
+              "end": 0.905
+            },
+            {
+              "text": "una",
+              "start": 0.905,
+              "end": 1.147
+            },
+            {
+              "text": "tabla",
+              "start": 1.147,
+              "end": 1.509
+            }
+          ]
+        },
+        {
+          "text": "con muchas columnas tiene sentido.",
+          "start": 1.509,
+          "end": 3.561,
+          "words": [
+            {
+              "text": "con",
+              "start": 0.0,
+              "end": 0.241
+            },
+            {
+              "text": "muchas",
+              "start": 0.241,
+              "end": 0.664
+            },
+            {
+              "text": "columnas",
+              "start": 0.664,
+              "end": 1.207
+            },
+            {
+              "text": "tiene",
+              "start": 1.207,
+              "end": 1.569
+            },
+            {
+              "text": "sentido.",
+              "start": 1.569,
+              "end": 2.052
+            }
+          ]
+        },
+        {
+          "text": "En el celular esa misma",
+          "start": 3.561,
+          "end": 5.01,
+          "words": [
+            {
+              "text": "En",
+              "start": 0.0,
+              "end": 0.181
+            },
+            {
+              "text": "el",
+              "start": 0.181,
+              "end": 0.362
+            },
+            {
+              "text": "celular",
+              "start": 0.362,
+              "end": 0.845
+            },
+            {
+              "text": "esa",
+              "start": 0.845,
+              "end": 1.087
+            },
+            {
+              "text": "misma",
+              "start": 1.087,
+              "end": 1.449
+            }
+          ]
+        },
+        {
+          "text": "información se lee mejor",
+          "start": 5.01,
+          "end": 6.519,
+          "words": [
+            {
+              "text": "información",
+              "start": 0.0,
+              "end": 0.724
+            },
+            {
+              "text": "se",
+              "start": 0.724,
+              "end": 0.905
+            },
+            {
+              "text": "lee",
+              "start": 0.905,
+              "end": 1.147
+            },
+            {
+              "text": "mejor",
+              "start": 1.147,
+              "end": 1.509
+            }
+          ]
+        },
+        {
+          "text": "en tarjetas.",
+          "start": 6.519,
+          "end": 7.244,
+          "words": [
+            {
+              "text": "en",
+              "start": 0.0,
+              "end": 0.181
+            },
+            {
+              "text": "tarjetas.",
+              "start": 0.181,
+              "end": 0.724
+            }
+          ]
+        },
+        {
+          "text": "Pasa igual con menús,",
+          "start": 7.244,
+          "end": 8.511,
+          "words": [
+            {
+              "text": "Pasa",
+              "start": 0.0,
+              "end": 0.302
+            },
+            {
+              "text": "igual",
+              "start": 0.302,
+              "end": 0.664
+            },
+            {
+              "text": "con",
+              "start": 0.664,
+              "end": 0.905
+            },
+            {
+              "text": "menús,",
+              "start": 0.905,
+              "end": 1.268
+            }
+          ]
+        },
+        {
+          "text": "ventanas y formularios:",
+          "start": 8.511,
+          "end": 9.9,
+          "words": [
+            {
+              "text": "ventanas",
+              "start": 0.0,
+              "end": 0.543
+            },
+            {
+              "text": "y",
+              "start": 0.543,
+              "end": 0.664
+            },
+            {
+              "text": "formularios:",
+              "start": 0.664,
+              "end": 1.388
+            }
+          ]
+        },
+        {
+          "text": "no reduzcas el componente,",
+          "start": 9.9,
+          "end": 11.469,
+          "words": [
+            {
+              "text": "no",
+              "start": 0.0,
+              "end": 0.181
+            },
+            {
+              "text": "reduzcas",
+              "start": 0.181,
+              "end": 0.724
+            },
+            {
+              "text": "el",
+              "start": 0.724,
+              "end": 0.905
+            },
+            {
+              "text": "componente,",
+              "start": 0.905,
+              "end": 1.569
+            }
+          ]
+        },
+        {
+          "text": "adáptalo al contexto.",
+          "start": 11.469,
+          "end": 12.737,
+          "words": [
+            {
+              "text": "adáptalo",
+              "start": 0.0,
+              "end": 0.543
+            },
+            {
+              "text": "al",
+              "start": 0.543,
+              "end": 0.724
+            },
+            {
+              "text": "contexto.",
+              "start": 0.724,
+              "end": 1.268
+            }
+          ]
+        }
+      ],
+      "visualDirection": "Una tabla de escritorio de ejemplo con seis columnas —nombre, estado, fecha, valor, responsable y acciones— llena el cuadro. El marco se estrecha, pero la tabla no se encoge: cada fila se pliega y se convierte en una tarjeta que conserva solo lo importante y deja la acción a mano. Con la misma continuidad, una ventana modal de escritorio baja hasta convertirse en una hoja que sube desde abajo, y un menú superior se convierte en navegación inferior. Queda la frase «No reduzcas el componente. Adáptalo al contexto».",
+      "transition": "cut",
+      "asset": "sim:aents-tarjetas",
+      "assetType": "simulation",
+      "photo": null,
+      "voiceFile": "jobs/aents-007/audio/voice-09.mp3",
+      "assetStartInFrames": 0,
+      "assetTotalInFrames": 396,
+      "accent": "#22C55E"
+    },
+    {
+      "purpose": "prueba",
+      "durationInFrames": 381,
+      "headline": "Diseña la interacción",
+      "captions": [
+        {
+          "text": "Además, el teléfono tiene formas",
+          "start": 0.0,
+          "end": 1.842,
+          "words": [
+            {
+              "text": "Además,",
+              "start": 0.0,
+              "end": 0.403
+            },
+            {
+              "text": "el",
+              "start": 0.403,
+              "end": 0.576
+            },
+            {
+              "text": "teléfono",
+              "start": 0.576,
+              "end": 1.094
+            },
+            {
+              "text": "tiene",
+              "start": 1.094,
+              "end": 1.439
+            },
+            {
+              "text": "formas",
+              "start": 1.439,
+              "end": 1.842
+            }
+          ]
+        },
+        {
+          "text": "de interactuar que puedes aprovechar.",
+          "start": 1.842,
+          "end": 3.973,
+          "words": [
+            {
+              "text": "de",
+              "start": 0.0,
+              "end": 0.173
+            },
+            {
+              "text": "interactuar",
+              "start": 0.173,
+              "end": 0.864
+            },
+            {
+              "text": "que",
+              "start": 0.864,
+              "end": 1.094
+            },
+            {
+              "text": "puedes",
+              "start": 1.094,
+              "end": 1.497
+            },
+            {
+              "text": "aprovechar.",
+              "start": 1.497,
+              "end": 2.13
+            }
+          ]
+        },
+        {
+          "text": "Tocar. Deslizar. Arrastrar.",
+          "start": 3.973,
+          "end": 5.412,
+          "words": [
+            {
+              "text": "Tocar.",
+              "start": 0.0,
+              "end": 0.345
+            },
+            {
+              "text": "Deslizar.",
+              "start": 0.345,
+              "end": 0.864
+            },
+            {
+              "text": "Arrastrar.",
+              "start": 0.864,
+              "end": 1.439
+            }
+          ]
+        },
+        {
+          "text": "Mantener presionado.",
+          "start": 5.412,
+          "end": 6.563,
+          "words": [
+            {
+              "text": "Mantener",
+              "start": 0.0,
+              "end": 0.518
+            },
+            {
+              "text": "presionado.",
+              "start": 0.518,
+              "end": 1.151
+            }
+          ]
+        },
+        {
+          "text": "Ampliar con dos dedos.",
+          "start": 6.563,
+          "end": 7.83,
+          "words": [
+            {
+              "text": "Ampliar",
+              "start": 0.0,
+              "end": 0.461
+            },
+            {
+              "text": "con",
+              "start": 0.461,
+              "end": 0.691
+            },
+            {
+              "text": "dos",
+              "start": 0.691,
+              "end": 0.921
+            },
+            {
+              "text": "dedos.",
+              "start": 0.921,
+              "end": 1.267
+            }
+          ]
+        },
+        {
+          "text": "Un teléfono no es una computadora pequeña:",
+          "start": 7.83,
+          "end": 10.248,
+          "words": [
+            {
+              "text": "Un",
+              "start": 0.0,
+              "end": 0.173
+            },
+            {
+              "text": "teléfono",
+              "start": 0.173,
+              "end": 0.691
+            },
+            {
+              "text": "no",
+              "start": 0.691,
+              "end": 0.864
+            },
+            {
+              "text": "es",
+              "start": 0.864,
+              "end": 1.036
+            },
+            {
+              "text": "una",
+              "start": 1.036,
+              "end": 1.267
+            },
+            {
+              "text": "computadora",
+              "start": 1.267,
+              "end": 1.957
+            },
+            {
+              "text": "pequeña:",
+              "start": 1.957,
+              "end": 2.418
+            }
+          ]
+        },
+        {
+          "text": "es otra manera de usar",
+          "start": 10.248,
+          "end": 11.572,
+          "words": [
+            {
+              "text": "es",
+              "start": 0.0,
+              "end": 0.173
+            },
+            {
+              "text": "otra",
+              "start": 0.173,
+              "end": 0.461
+            },
+            {
+              "text": "manera",
+              "start": 0.461,
+              "end": 0.864
+            },
+            {
+              "text": "de",
+              "start": 0.864,
+              "end": 1.036
+            },
+            {
+              "text": "usar",
+              "start": 1.036,
+              "end": 1.324
+            }
+          ]
+        },
+        {
+          "text": "el software.",
+          "start": 11.572,
+          "end": 12.263,
+          "words": [
+            {
+              "text": "el",
+              "start": 0.0,
+              "end": 0.173
+            },
+            {
+              "text": "software.",
+              "start": 0.173,
+              "end": 0.691
+            }
+          ]
+        }
+      ],
+      "visualDirection": "Un solo teléfono y cinco gestos encadenados sin cortar: un toque abre una ficha; un deslizamiento lateral cambia la fotografía; una pulsación sostenida despliega opciones; un arrastre mueve un elemento de sitio; dos dedos amplían el mapa. Cada gesto imprime brevemente su nombre —TOCAR, DESLIZAR, MANTENER, ARRASTRAR, AMPLIAR— junto al punto de contacto y se apaga cuando llega el siguiente. Al final los cinco nombres reaparecen en fila bajo el teléfono y queda «Diseña la interacción».",
+      "transition": "cut",
+      "asset": "sim:aents-gestos",
+      "assetType": "simulation",
+      "photo": null,
+      "voiceFile": "jobs/aents-007/audio/voice-10.mp3",
+      "assetStartInFrames": 0,
+      "assetTotalInFrames": 381,
+      "accent": "#6B5CF6"
+    },
+    {
+      "purpose": "problema",
+      "durationInFrames": 576,
+      "headline": "También es velocidad",
+      "captions": [
+        {
+          "text": "Y mobile first no es solo diseño:",
+          "start": 0.0,
+          "end": 1.926,
+          "words": [
+            {
+              "text": "Y",
+              "start": 0.0,
+              "end": 0.117
+            },
+            {
+              "text": "mobile",
+              "start": 0.117,
+              "end": 0.525
+            },
+            {
+              "text": "first",
+              "start": 0.525,
+              "end": 0.875
+            },
+            {
+              "text": "no",
+              "start": 0.875,
+              "end": 1.05
+            },
+            {
+              "text": "es",
+              "start": 1.05,
+              "end": 1.226
+            },
+            {
+              "text": "solo",
+              "start": 1.226,
+              "end": 1.517
+            },
+            {
+              "text": "diseño:",
+              "start": 1.517,
+              "end": 1.926
+            }
+          ]
+        },
+        {
+          "text": "también es rendimiento.",
+          "start": 1.926,
+          "end": 3.268,
+          "words": [
+            {
+              "text": "también",
+              "start": 0.0,
+              "end": 0.467
+            },
+            {
+              "text": "es",
+              "start": 0.467,
+              "end": 0.642
+            },
+            {
+              "text": "rendimiento.",
+              "start": 0.642,
+              "end": 1.342
+            }
+          ]
+        },
+        {
+          "text": "Tú desarrollas en una máquina",
+          "start": 3.268,
+          "end": 5.019,
+          "words": [
+            {
+              "text": "Tú",
+              "start": 0.0,
+              "end": 0.175
+            },
+            {
+              "text": "desarrollas",
+              "start": 0.175,
+              "end": 0.875
+            },
+            {
+              "text": "en",
+              "start": 0.875,
+              "end": 1.05
+            },
+            {
+              "text": "una",
+              "start": 1.05,
+              "end": 1.284
+            },
+            {
+              "text": "máquina",
+              "start": 1.284,
+              "end": 1.751
+            }
+          ]
+        },
+        {
+          "text": "potente con fibra óptica,",
+          "start": 5.019,
+          "end": 6.478,
+          "words": [
+            {
+              "text": "potente",
+              "start": 0.0,
+              "end": 0.467
+            },
+            {
+              "text": "con",
+              "start": 0.467,
+              "end": 0.7
+            },
+            {
+              "text": "fibra",
+              "start": 0.7,
+              "end": 1.05
+            },
+            {
+              "text": "óptica,",
+              "start": 1.05,
+              "end": 1.459
+            }
+          ]
+        },
+        {
+          "text": "y tu usuario entra",
+          "start": 6.478,
+          "end": 7.587,
+          "words": [
+            {
+              "text": "y",
+              "start": 0.0,
+              "end": 0.117
+            },
+            {
+              "text": "tu",
+              "start": 0.117,
+              "end": 0.292
+            },
+            {
+              "text": "usuario",
+              "start": 0.292,
+              "end": 0.759
+            },
+            {
+              "text": "entra",
+              "start": 0.759,
+              "end": 1.109
+            }
+          ]
+        },
+        {
+          "text": "desde un teléfono sencillo",
+          "start": 7.587,
+          "end": 9.163,
+          "words": [
+            {
+              "text": "desde",
+              "start": 0.0,
+              "end": 0.35
+            },
+            {
+              "text": "un",
+              "start": 0.35,
+              "end": 0.525
+            },
+            {
+              "text": "teléfono",
+              "start": 0.525,
+              "end": 1.05
+            },
+            {
+              "text": "sencillo",
+              "start": 1.05,
+              "end": 1.576
+            }
+          ]
+        },
+        {
+          "text": "con datos móviles.",
+          "start": 9.163,
+          "end": 10.213,
+          "words": [
+            {
+              "text": "con",
+              "start": 0.0,
+              "end": 0.233
+            },
+            {
+              "text": "datos",
+              "start": 0.233,
+              "end": 0.584
+            },
+            {
+              "text": "móviles.",
+              "start": 0.584,
+              "end": 1.05
+            }
+          ]
+        },
+        {
+          "text": "Entonces pregúntate si hace falta",
+          "start": 10.213,
+          "end": 12.197,
+          "words": [
+            {
+              "text": "Entonces",
+              "start": 0.0,
+              "end": 0.525
+            },
+            {
+              "text": "pregúntate",
+              "start": 0.525,
+              "end": 1.167
+            },
+            {
+              "text": "si",
+              "start": 1.167,
+              "end": 1.342
+            },
+            {
+              "text": "hace",
+              "start": 1.342,
+              "end": 1.634
+            },
+            {
+              "text": "falta",
+              "start": 1.634,
+              "end": 1.984
+            }
+          ]
+        },
+        {
+          "text": "cargar todas esas imágenes,",
+          "start": 12.197,
+          "end": 13.773,
+          "words": [
+            {
+              "text": "cargar",
+              "start": 0.0,
+              "end": 0.409
+            },
+            {
+              "text": "todas",
+              "start": 0.409,
+              "end": 0.759
+            },
+            {
+              "text": "esas",
+              "start": 0.759,
+              "end": 1.05
+            },
+            {
+              "text": "imágenes,",
+              "start": 1.05,
+              "end": 1.576
+            }
+          ]
+        },
+        {
+          "text": "o descargar cien resultados",
+          "start": 13.773,
+          "end": 15.407,
+          "words": [
+            {
+              "text": "o",
+              "start": 0.0,
+              "end": 0.117
+            },
+            {
+              "text": "descargar",
+              "start": 0.117,
+              "end": 0.7
+            },
+            {
+              "text": "cien",
+              "start": 0.7,
+              "end": 0.992
+            },
+            {
+              "text": "resultados",
+              "start": 0.992,
+              "end": 1.634
+            }
+          ]
+        },
+        {
+          "text": "para mostrar diez.",
+          "start": 15.407,
+          "end": 16.458,
+          "words": [
+            {
+              "text": "para",
+              "start": 0.0,
+              "end": 0.292
+            },
+            {
+              "text": "mostrar",
+              "start": 0.292,
+              "end": 0.759
+            },
+            {
+              "text": "diez.",
+              "start": 0.759,
+              "end": 1.05
+            }
+          ]
+        },
+        {
+          "text": "Primero lo importante;",
+          "start": 16.458,
+          "end": 17.742,
+          "words": [
+            {
+              "text": "Primero",
+              "start": 0.0,
+              "end": 0.467
+            },
+            {
+              "text": "lo",
+              "start": 0.467,
+              "end": 0.642
+            },
+            {
+              "text": "importante;",
+              "start": 0.642,
+              "end": 1.284
+            }
+          ]
+        },
+        {
+          "text": "después lo demás.",
+          "start": 17.742,
+          "end": 18.734,
+          "words": [
+            {
+              "text": "después",
+              "start": 0.0,
+              "end": 0.467
+            },
+            {
+              "text": "lo",
+              "start": 0.467,
+              "end": 0.642
+            },
+            {
+              "text": "demás.",
+              "start": 0.642,
+              "end": 0.992
+            }
+          ]
+        }
+      ],
+      "visualDirection": "Arriba una computadora rotulada FIBRA y abajo un teléfono rotulado DATOS MÓVILES, cargando la misma página. En la computadora la página aparece de inmediato. Sobre el teléfono caen bloques pesados —imágenes, scripts, video, datos— que se acumulan en una barra de carga que no avanza. Entonces se corrige a la vista: las imágenes se comprimen a una versión ligera, la lista deja de bajar cien tarjetas y baja diez, y lo que no se ve todavía se queda esperando. La barra completa y la página del teléfono abre. Queda «Carga lo que necesitas, cuando lo necesitas».",
+      "transition": "cut",
+      "asset": "sim:aents-peso",
+      "assetType": "simulation",
+      "photo": null,
+      "voiceFile": "jobs/aents-007/audio/voice-11.mp3",
+      "assetStartInFrames": 0,
+      "assetTotalInFrames": 576,
+      "accent": "#14B8A6"
+    },
+    {
+      "purpose": "resultado",
+      "durationInFrames": 271,
+      "headline": "De móvil hacia arriba",
+      "captions": [
+        {
+          "text": "Y cuando la experiencia en",
+          "start": 0.0,
+          "end": 1.513,
+          "words": [
+            {
+              "text": "Y",
+              "start": 0.0,
+              "end": 0.112
+            },
+            {
+              "text": "cuando",
+              "start": 0.112,
+              "end": 0.504
+            },
+            {
+              "text": "la",
+              "start": 0.504,
+              "end": 0.672
+            },
+            {
+              "text": "experiencia",
+              "start": 0.672,
+              "end": 1.345
+            },
+            {
+              "text": "en",
+              "start": 1.345,
+              "end": 1.513
+            }
+          ]
+        },
+        {
+          "text": "el teléfono funciona,",
+          "start": 1.513,
+          "end": 2.69,
+          "words": [
+            {
+              "text": "el",
+              "start": 0.0,
+              "end": 0.168
+            },
+            {
+              "text": "teléfono",
+              "start": 0.168,
+              "end": 0.672
+            },
+            {
+              "text": "funciona,",
+              "start": 0.672,
+              "end": 1.177
+            }
+          ]
+        },
+        {
+          "text": "puedes crecer: tablet, laptop, monitor.",
+          "start": 2.69,
+          "end": 4.707,
+          "words": [
+            {
+              "text": "puedes",
+              "start": 0.0,
+              "end": 0.392
+            },
+            {
+              "text": "crecer:",
+              "start": 0.392,
+              "end": 0.785
+            },
+            {
+              "text": "tablet,",
+              "start": 0.785,
+              "end": 1.177
+            },
+            {
+              "text": "laptop,",
+              "start": 1.177,
+              "end": 1.569
+            },
+            {
+              "text": "monitor.",
+              "start": 1.569,
+              "end": 2.017
+            }
+          ]
+        },
+        {
+          "text": "No haciendo todo más grande,",
+          "start": 4.707,
+          "end": 6.276,
+          "words": [
+            {
+              "text": "No",
+              "start": 0.0,
+              "end": 0.168
+            },
+            {
+              "text": "haciendo",
+              "start": 0.168,
+              "end": 0.672
+            },
+            {
+              "text": "todo",
+              "start": 0.672,
+              "end": 0.953
+            },
+            {
+              "text": "más",
+              "start": 0.953,
+              "end": 1.177
+            },
+            {
+              "text": "grande,",
+              "start": 1.177,
+              "end": 1.569
+            }
+          ]
+        },
+        {
+          "text": "sino aprovechando el espacio",
+          "start": 6.276,
+          "end": 7.902,
+          "words": [
+            {
+              "text": "sino",
+              "start": 0.0,
+              "end": 0.28
+            },
+            {
+              "text": "aprovechando",
+              "start": 0.28,
+              "end": 1.009
+            },
+            {
+              "text": "el",
+              "start": 1.009,
+              "end": 1.177
+            },
+            {
+              "text": "espacio",
+              "start": 1.177,
+              "end": 1.625
+            }
+          ]
+        },
+        {
+          "text": "que aparece.",
+          "start": 7.902,
+          "end": 8.574,
+          "words": [
+            {
+              "text": "que",
+              "start": 0.0,
+              "end": 0.224
+            },
+            {
+              "text": "aparece.",
+              "start": 0.224,
+              "end": 0.672
+            }
+          ]
+        }
+      ],
+      "visualDirection": "Un teléfono con una sola columna resuelta. El marco se ensancha de forma continua: al llegar al ancho de tableta aparece una segunda columna; al llegar al de portátil se abre un panel lateral que antes estaba detrás de un botón; al llegar al monitor conviven mapa, resultados y filtros a la vez. Nada crece de tamaño: lo que ocurre es que aparecen piezas nuevas en el espacio que se libera. Una regla superior va marcando el ancho en cada parada. Queda «Más espacio, más posibilidades».",
+      "transition": "cut",
+      "asset": "sim:aents-hacia-arriba",
+      "assetType": "simulation",
+      "photo": null,
+      "voiceFile": "jobs/aents-007/audio/voice-12.mp3",
+      "assetStartInFrames": 0,
+      "assetTotalInFrames": 271,
+      "accent": "#A78BFA"
+    },
+    {
+      "purpose": "resultado",
+      "durationInFrames": 510,
+      "headline": "No la mires. Úsala.",
+      "captions": [
+        {
+          "text": "Haz esta prueba",
+          "start": 0.0,
+          "end": 0.925,
+          "words": [
+            {
+              "text": "Haz",
+              "start": 0.0,
+              "end": 0.231
+            },
+            {
+              "text": "esta",
+              "start": 0.231,
+              "end": 0.52
+            },
+            {
+              "text": "prueba",
+              "start": 0.52,
+              "end": 0.925
+            }
+          ]
+        },
+        {
+          "text": "con la página de tu empresa.",
+          "start": 0.925,
+          "end": 2.544,
+          "words": [
+            {
+              "text": "con",
+              "start": 0.0,
+              "end": 0.231
+            },
+            {
+              "text": "la",
+              "start": 0.231,
+              "end": 0.405
+            },
+            {
+              "text": "página",
+              "start": 0.405,
+              "end": 0.81
+            },
+            {
+              "text": "de",
+              "start": 0.81,
+              "end": 0.983
+            },
+            {
+              "text": "tu",
+              "start": 0.983,
+              "end": 1.157
+            },
+            {
+              "text": "empresa.",
+              "start": 1.157,
+              "end": 1.619
+            }
+          ]
+        },
+        {
+          "text": "Ábrela desde el teléfono",
+          "start": 2.544,
+          "end": 3.99,
+          "words": [
+            {
+              "text": "Ábrela",
+              "start": 0.0,
+              "end": 0.405
+            },
+            {
+              "text": "desde",
+              "start": 0.405,
+              "end": 0.752
+            },
+            {
+              "text": "el",
+              "start": 0.752,
+              "end": 0.925
+            },
+            {
+              "text": "teléfono",
+              "start": 0.925,
+              "end": 1.446
+            }
+          ]
+        },
+        {
+          "text": "y no te quedes mirando",
+          "start": 3.99,
+          "end": 5.32,
+          "words": [
+            {
+              "text": "y",
+              "start": 0.0,
+              "end": 0.116
+            },
+            {
+              "text": "no",
+              "start": 0.116,
+              "end": 0.289
+            },
+            {
+              "text": "te",
+              "start": 0.289,
+              "end": 0.463
+            },
+            {
+              "text": "quedes",
+              "start": 0.463,
+              "end": 0.867
+            },
+            {
+              "text": "mirando",
+              "start": 0.867,
+              "end": 1.33
+            }
+          ]
+        },
+        {
+          "text": "si se ve bonita: úsala.",
+          "start": 5.32,
+          "end": 6.592,
+          "words": [
+            {
+              "text": "si",
+              "start": 0.0,
+              "end": 0.173
+            },
+            {
+              "text": "se",
+              "start": 0.173,
+              "end": 0.347
+            },
+            {
+              "text": "ve",
+              "start": 0.347,
+              "end": 0.52
+            },
+            {
+              "text": "bonita:",
+              "start": 0.52,
+              "end": 0.925
+            },
+            {
+              "text": "úsala.",
+              "start": 0.925,
+              "end": 1.272
+            }
+          ]
+        },
+        {
+          "text": "Busca algo,",
+          "start": 6.592,
+          "end": 7.228,
+          "words": [
+            {
+              "text": "Busca",
+              "start": 0.0,
+              "end": 0.347
+            },
+            {
+              "text": "algo,",
+              "start": 0.347,
+              "end": 0.636
+            }
+          ]
+        },
+        {
+          "text": "abre el menú,",
+          "start": 7.228,
+          "end": 7.98,
+          "words": [
+            {
+              "text": "abre",
+              "start": 0.0,
+              "end": 0.289
+            },
+            {
+              "text": "el",
+              "start": 0.289,
+              "end": 0.463
+            },
+            {
+              "text": "menú,",
+              "start": 0.463,
+              "end": 0.752
+            }
+          ]
+        },
+        {
+          "text": "llena el formulario,",
+          "start": 7.98,
+          "end": 9.137,
+          "words": [
+            {
+              "text": "llena",
+              "start": 0.0,
+              "end": 0.347
+            },
+            {
+              "text": "el",
+              "start": 0.347,
+              "end": 0.52
+            },
+            {
+              "text": "formulario,",
+              "start": 0.52,
+              "end": 1.157
+            }
+          ]
+        },
+        {
+          "text": "navega con una sola mano.",
+          "start": 9.137,
+          "end": 10.582,
+          "words": [
+            {
+              "text": "navega",
+              "start": 0.0,
+              "end": 0.405
+            },
+            {
+              "text": "con",
+              "start": 0.405,
+              "end": 0.636
+            },
+            {
+              "text": "una",
+              "start": 0.636,
+              "end": 0.867
+            },
+            {
+              "text": "sola",
+              "start": 0.867,
+              "end": 1.157
+            },
+            {
+              "text": "mano.",
+              "start": 1.157,
+              "end": 1.446
+            }
+          ]
+        },
+        {
+          "text": "Si desde el celular te resulta",
+          "start": 10.582,
+          "end": 12.375,
+          "words": [
+            {
+              "text": "Si",
+              "start": 0.0,
+              "end": 0.173
+            },
+            {
+              "text": "desde",
+              "start": 0.173,
+              "end": 0.52
+            },
+            {
+              "text": "el",
+              "start": 0.52,
+              "end": 0.694
+            },
+            {
+              "text": "celular",
+              "start": 0.694,
+              "end": 1.157
+            },
+            {
+              "text": "te",
+              "start": 1.157,
+              "end": 1.33
+            },
+            {
+              "text": "resulta",
+              "start": 1.33,
+              "end": 1.793
+            }
+          ]
+        },
+        {
+          "text": "mucho más incómodo",
+          "start": 12.375,
+          "end": 13.474,
+          "words": [
+            {
+              "text": "mucho",
+              "start": 0.0,
+              "end": 0.347
+            },
+            {
+              "text": "más",
+              "start": 0.347,
+              "end": 0.578
+            },
+            {
+              "text": "incómodo",
+              "start": 0.578,
+              "end": 1.099
+            }
+          ]
+        },
+        {
+          "text": "que desde la computadora,",
+          "start": 13.474,
+          "end": 14.919,
+          "words": [
+            {
+              "text": "que",
+              "start": 0.0,
+              "end": 0.231
+            },
+            {
+              "text": "desde",
+              "start": 0.231,
+              "end": 0.578
+            },
+            {
+              "text": "la",
+              "start": 0.578,
+              "end": 0.752
+            },
+            {
+              "text": "computadora,",
+              "start": 0.752,
+              "end": 1.446
+            }
+          ]
+        },
+        {
+          "text": "ahí tienes algo que mejorar.",
+          "start": 14.919,
+          "end": 16.538,
+          "words": [
+            {
+              "text": "ahí",
+              "start": 0.0,
+              "end": 0.231
+            },
+            {
+              "text": "tienes",
+              "start": 0.231,
+              "end": 0.636
+            },
+            {
+              "text": "algo",
+              "start": 0.636,
+              "end": 0.925
+            },
+            {
+              "text": "que",
+              "start": 0.925,
+              "end": 1.157
+            },
+            {
+              "text": "mejorar.",
+              "start": 1.157,
+              "end": 1.619
+            }
+          ]
+        }
+      ],
+      "visualDirection": "Una mano sostiene el teléfono y hace la prueba de verdad, un paso tras otro: abre el menú, escribe una búsqueda, llena un formulario corto y pulsa la acción principal. Cada paso completado deja un visto. Después la mano se queda quieta y sobre la pantalla se dibuja el arco que alcanza el pulgar: la zona cómoda abajo, la difícil arriba. La acción principal está dentro de la zona cómoda. Queda la frase «No la mires. Úsala».",
+      "transition": "cut",
+      "asset": "sim:aents-usala",
+      "assetType": "simulation",
+      "photo": null,
+      "voiceFile": "jobs/aents-007/audio/voice-13.mp3",
+      "assetStartInFrames": 0,
+      "assetTotalInFrames": 510,
+      "accent": "#22C55E"
+    },
+    {
+      "purpose": "cta",
+      "durationInFrames": 395,
+      "headline": "Cuéntanos tu proyecto",
+      "captions": [
+        {
+          "text": "No diseñes una página",
+          "start": 0.0,
+          "end": 1.283,
+          "words": [
+            {
+              "text": "No",
+              "start": 0.0,
+              "end": 0.175
+            },
+            {
+              "text": "diseñes",
+              "start": 0.175,
+              "end": 0.641
+            },
+            {
+              "text": "una",
+              "start": 0.641,
+              "end": 0.875
+            },
+            {
+              "text": "página",
+              "start": 0.875,
+              "end": 1.283
+            }
+          ]
+        },
+        {
+          "text": "para computadora y después",
+          "start": 1.283,
+          "end": 2.857,
+          "words": [
+            {
+              "text": "para",
+              "start": 0.0,
+              "end": 0.292
+            },
+            {
+              "text": "computadora",
+              "start": 0.292,
+              "end": 0.991
+            },
+            {
+              "text": "y",
+              "start": 0.991,
+              "end": 1.108
+            },
+            {
+              "text": "después",
+              "start": 1.108,
+              "end": 1.574
+            }
+          ]
+        },
+        {
+          "text": "la obligues a entrar en",
+          "start": 2.857,
+          "end": 4.257,
+          "words": [
+            {
+              "text": "la",
+              "start": 0.0,
+              "end": 0.175
+            },
+            {
+              "text": "obligues",
+              "start": 0.175,
+              "end": 0.7
+            },
+            {
+              "text": "a",
+              "start": 0.7,
+              "end": 0.816
+            },
+            {
+              "text": "entrar",
+              "start": 0.816,
+              "end": 1.225
+            },
+            {
+              "text": "en",
+              "start": 1.225,
+              "end": 1.399
+            }
+          ]
+        },
+        {
+          "text": "un teléfono.",
+          "start": 4.257,
+          "end": 4.956,
+          "words": [
+            {
+              "text": "un",
+              "start": 0.0,
+              "end": 0.175
+            },
+            {
+              "text": "teléfono.",
+              "start": 0.175,
+              "end": 0.7
+            }
+          ]
+        },
+        {
+          "text": "Diseña para la persona",
+          "start": 4.956,
+          "end": 6.298,
+          "words": [
+            {
+              "text": "Diseña",
+              "start": 0.0,
+              "end": 0.408
+            },
+            {
+              "text": "para",
+              "start": 0.408,
+              "end": 0.7
+            },
+            {
+              "text": "la",
+              "start": 0.7,
+              "end": 0.875
+            },
+            {
+              "text": "persona",
+              "start": 0.875,
+              "end": 1.341
+            }
+          ]
+        },
+        {
+          "text": "que va a usarla.",
+          "start": 6.298,
+          "end": 7.231,
+          "words": [
+            {
+              "text": "que",
+              "start": 0.0,
+              "end": 0.233
+            },
+            {
+              "text": "va",
+              "start": 0.233,
+              "end": 0.408
+            },
+            {
+              "text": "a",
+              "start": 0.408,
+              "end": 0.525
+            },
+            {
+              "text": "usarla.",
+              "start": 0.525,
+              "end": 0.933
+            }
+          ]
+        },
+        {
+          "text": "En Aents construimos webs rápidas",
+          "start": 7.231,
+          "end": 9.213,
+          "words": [
+            {
+              "text": "En",
+              "start": 0.0,
+              "end": 0.175
+            },
+            {
+              "text": "Aents",
+              "start": 0.175,
+              "end": 0.525
+            },
+            {
+              "text": "construimos",
+              "start": 0.525,
+              "end": 1.225
+            },
+            {
+              "text": "webs",
+              "start": 1.225,
+              "end": 1.516
+            },
+            {
+              "text": "rápidas",
+              "start": 1.516,
+              "end": 1.983
+            }
+          ]
+        },
+        {
+          "text": "y adaptables,",
+          "start": 9.213,
+          "end": 9.971,
+          "words": [
+            {
+              "text": "y",
+              "start": 0.0,
+              "end": 0.117
+            },
+            {
+              "text": "adaptables,",
+              "start": 0.117,
+              "end": 0.758
+            }
+          ]
+        },
+        {
+          "text": "apps y sistemas a medida.",
+          "start": 9.971,
+          "end": 11.429,
+          "words": [
+            {
+              "text": "apps",
+              "start": 0.0,
+              "end": 0.292
+            },
+            {
+              "text": "y",
+              "start": 0.292,
+              "end": 0.408
+            },
+            {
+              "text": "sistemas",
+              "start": 0.408,
+              "end": 0.933
+            },
+            {
+              "text": "a",
+              "start": 0.933,
+              "end": 1.05
+            },
+            {
+              "text": "medida.",
+              "start": 1.05,
+              "end": 1.458
+            }
+          ]
+        },
+        {
+          "text": "Cuéntanos tu proyecto.",
+          "start": 11.429,
+          "end": 12.712,
+          "words": [
+            {
+              "text": "Cuéntanos",
+              "start": 0.0,
+              "end": 0.583
+            },
+            {
+              "text": "tu",
+              "start": 0.583,
+              "end": 0.758
+            },
+            {
+              "text": "proyecto.",
+              "start": 0.758,
+              "end": 1.283
+            }
+          ]
+        }
+      ],
+      "visualDirection": "La interfaz móvil de la escena anterior se apaga elemento por elemento hasta dejar el teléfono solo; el teléfono se reduce y en su lugar entra el isotipo. Debajo, Aents, Software para personas, los servicios y aents.net junto al botón de conversar.",
+      "transition": "fade",
+      "asset": "sim:aents-cierre",
+      "assetType": "simulation",
+      "photo": null,
+      "voiceFile": "jobs/aents-007/audio/voice-14.mp3",
+      "assetStartInFrames": 0,
+      "assetTotalInFrames": 395,
+      "accent": "#6B5CF6"
+    }
+  ]
+}

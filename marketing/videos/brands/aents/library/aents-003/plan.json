@@ -1,0 +1,138 @@
+{
+  "title": "Que te encuentren y que te citen",
+  "audience": "empresa",
+  "funnel_stage": "descubrimiento",
+  "objective": "Enseñar a una empresa cómo se consigue que un buscador la muestre y una inteligencia artificial la use como fuente, y abrir una conversación sobre su presencia digital",
+  "conversion_event": "contact_request",
+  "pillar": "Sitios web",
+  "series": "Conoce Aents",
+  "concept": "De salir en el buscador a ser la fuente que cita una inteligencia artificial",
+  "promise": "Una web que un buscador entiende y que un lector de inteligencia artificial puede leer sin ejecutar nada",
+  "cta": "Conversemos tu presencia digital",
+  "hypothesis": "Una empresa que ya intuye que no la encuentran se queda a ver una clase completa si cada escena le enseña un paso que no sabía, y llega al cierre entendiendo que el problema es técnico y tiene quien lo resuelva",
+  "cover_text": "¿Te puede citar una IA?",
+  "cover_art": "aents-citado",
+  "caption": "Tener una página web no significa que te encuentren. En esta clase explicamos, paso a paso, qué es el SEO sin jerga, por qué un buscador necesita entender tu página antes de mostrarla, cómo se arma una página por cada cosa que la gente busca de verdad, y qué cambia ahora que muchas personas preguntan directamente a una inteligencia artificial. No hay trucos ni botones secretos: hay información clara, propia y verificable, una identidad que dice lo mismo en todas partes, y un detalle técnico que decide casi todo. Los lectores de las inteligencias artificiales no ejecutan JavaScript, así que una web que se dibuja en el navegador les llega en blanco. El taller del ejemplo es inventado y sus datos aparecen rotulados como ejemplo. En Aents hacemos webs, apps, sistemas empresariales y automatización. Conversemos tu presencia digital.",
+  "hashtags": [
+    "#Aents",
+    "#SEOEcuador",
+    "#PaginasWeb",
+    "#SoftwareEcuador"
+  ],
+  "narration": "Tener una página web no significa que la gente encuentre tu negocio. Puedes hacer un trabajo excelente, pero si alguien busca lo que tú vendes y aparece tu competencia, para internet casi no existes. Y ahora hay algo nuevo: mucha gente ya no busca solo en un buscador, también le pregunta a una inteligencia artificial. SEO significa optimización para motores de búsqueda, pero olvídate del término. SEO es lograr que un buscador entienda quién eres, qué haces y cuándo debería mostrarte. Si alguien busca un taller mecánico en Cuenca y el buscador entendió tu página, puedes aparecer justo cuando esa persona está decidiendo. Y esa es la diferencia con la publicidad. Un anuncio interrumpe a alguien que estaba haciendo otra cosa. En una búsqueda, la persona ya está buscando lo que tú vendes. Llega con la intención puesta, y por eso una página bien hecha puede seguir trayendo visitas mucho después de publicarla. Aquí viene lo importante: un buscador no posiciona una página por bonita. Necesita entenderla. Se fija en el título, en la estructura, en las direcciones de tus páginas, en los enlaces internos, en la velocidad, en cómo se ve en el teléfono y en los datos estructurados. Pero sobre todo busca contenido que de verdad responda la pregunta. Un ejemplo. En vez de tener una sola página que diga servicios, puedes tener una página para cada cosa que alguien busca de verdad: mantenimiento de motores, cambio de frenos, revisión antes de comprar un auto usado. Cada página responde una búsqueda distinta, y todas llevan al mismo lugar. Hasta aquí hablamos del buscador de siempre. Pero apareció una segunda pelea. Antes la pregunta era cómo salgo primero en el buscador. Ahora también es otra: cómo consigo que una inteligencia artificial use mi página como fuente cuando alguien le pregunta por algo que yo hago. Y no, no hay un botón secreto. No existe el truco para salir en una inteligencia artificial. Lo que hay es información clara, propia, actualizada y fácil de verificar. Publicar mil páginas generadas que no dicen nada nuevo no te posiciona en ningún lado: solo llena internet de ruido con tu nombre encima. Piénsalo así. Si tu página solo dice que llevas años en el mercado, eso no le sirve a nadie. Pero si publicas lo que solo tú sabes, cuánto cuesta el servicio, cuánto se demora, qué incluye, qué revisas, entonces hay algo concreto. Una persona lo entiende, y una inteligencia artificial también puede leerlo, compararlo y citarlo. Otra parte es tu identidad digital. Tu empresa, tus productos, tu dirección, quién escribe, tus perfiles. Todo debería decir lo mismo. Cuando esa información coincide en varios lugares confiables, a un buscador y a una inteligencia artificial les resulta mucho más fácil entender qué representa tu negocio. Y hay un detalle técnico que decide todo esto. Los lectores de las inteligencias artificiales no ejecutan JavaScript: leen el código que el servidor entrega y se van. Si tu web se dibuja en el navegador, ellos ven una página en blanco. Por eso en Aents servimos el contenido ya escrito en el código, con datos estructurados y un archivo para modelos, y el despliegue se bloquea si algo de eso falta. Al final es simple. No se trata de engañar al buscador, sino de tener información lo bastante buena y lo bastante clara como para que valga la pena mostrarla, y para que una inteligencia artificial quiera citarla. Si quieres que tu negocio esté listo para eso, conversemos tu presencia digital.",
+  "voice_profile": null,
+  "music": null,
+  "verification_notes": [
+    "Que los lectores de los motores de respuesta no rendericen JavaScript y reciban el HTML crudo está documentado en ../Aents/doc/SEO.md:26-33, que es el motivo por el que ese trabajo se hizo: las dos superficies eran SPAs de Vite y servían solo <div id=\"root\"></div>.",
+    "Que Aents sirve el contenido ya escrito en el código es verificable: ../Aents/scripts/prerender.mjs existe y ../Aents/apps/web/package.json:8 lo encadena dentro del propio comando build, así que no hay dist desplegable sin él.",
+    "Los datos estructurados y el archivo para modelos los emite ../Aents/packages/seo/src/index.ts, que serializa head, robots.txt, sitemap.xml y llms.txt (líneas 3-5 y 317).",
+    "Que el despliegue se bloquea si falta algo lo hace ../Aents/scripts/check-seo.mjs: verifica el dist y termina con process.exit(1) (líneas 308, 318 y 326), y ../Aents/.github/workflows/backend.yml:90 lo ejecuta antes de subir el artefacto.",
+    "Los lectores nombrados en robots.txt son GPTBot, ClaudeBot y PerplexityBot, exigidos en ../Aents/scripts/check-seo.mjs:275 y declarados en ../Aents/packages/seo/src/index.ts:102-111. La pieza no los enuncia por su nombre en la voz: dice «los lectores de las inteligencias artificiales», que es lo que la animación muestra.",
+    "El cierre nombra webs, apps, sistemas empresariales y automatización, verificados en ../Aents/apps/web/src/i18n.ts:367-378. La pieza no ofrece SEO como servicio en ningún momento: SEO no aparece como servicio en ninguna superficie publicada de apps/web, así que el CTA es sobre la presencia digital y la locución nunca promete posicionar.",
+    "Ninguna escena promete una posición, un plazo, un aumento de tráfico ni una cifra de resultados. «Puede seguir trayendo visitas mucho después de publicarla» describe la naturaleza del canal, no un resultado medido, y no lleva cantidad.",
+    "El taller mecánico de Cuenca es inventado y se llama Taller XYZ, siguiendo la convención de EMPRESA XYZ del perfil, para que no pueda confundirse con un taller real. Su precio de 35 dólares, sus 2 horas, lo que incluye y sus 3 meses de garantía pertenecen a esa empresa inventada, aparecen rotulados EJEMPLO mientras están en pantalla y la locución nunca los enuncia: la voz dice «cuánto cuesta el servicio, cuánto se demora», no las cantidades.",
+    "«Mil páginas generadas» no es una cifra sobre nada: es la forma de decir muchas, y la animación dibuja una pila sin contarla.",
+    "Ninguna superficie ajena aparece con su marca. El buscador se dibuja como campo, lupa y lista, y la inteligencia artificial como respuesta escrita con sus fuentes; los dominios citados son de ejemplo."
+  ],
+  "scenes": [
+    {
+      "purpose": "gancho",
+      "duration": 19,
+      "voice": "Tener una página web no significa que la gente encuentre tu negocio. Puedes hacer un trabajo excelente, pero si alguien busca lo que tú vendes y aparece tu competencia, para internet casi no existes. Y ahora hay algo nuevo: mucha gente ya no busca solo en un buscador, también le pregunta a una inteligencia artificial.",
+      "on_screen_text": "¿Te encuentran?",
+      "asset": "sim:aents-seo-encontrar",
+      "visual_direction": "La web de un negocio de ejemplo aparece sola y en el centro. El cuadro se abre en dos: a la izquierda un buscador con su lista de resultados, a la derecha una respuesta escrita con sus fuentes. La web se queda abajo, apagada, y ninguna de las dos la nombra.",
+      "transition": "cut"
+    },
+    {
+      "purpose": "prueba",
+      "duration": 18,
+      "voice": "SEO significa optimización para motores de búsqueda, pero olvídate del término. SEO es lograr que un buscador entienda quién eres, qué haces y cuándo debería mostrarte. Si alguien busca un taller mecánico en Cuenca y el buscador entendió tu página, puedes aparecer justo cuando esa persona está decidiendo.",
+      "on_screen_text": "Que te entienda",
+      "asset": "sim:aents-seo-entender",
+      "visual_direction": "Un lector recorre de arriba abajo la página del taller de ejemplo, y de cada pasada sale una ficha: quién eres, qué haces, cuándo mostrarte. Abajo entra la búsqueda y la página ya está en la lista.",
+      "transition": "cut"
+    },
+    {
+      "purpose": "prueba",
+      "duration": 17,
+      "voice": "Y esa es la diferencia con la publicidad. Un anuncio interrumpe a alguien que estaba haciendo otra cosa. En una búsqueda, la persona ya está buscando lo que tú vendes. Llega con la intención puesta, y por eso una página bien hecha puede seguir trayendo visitas mucho después de publicarla.",
+      "on_screen_text": "Ya te está buscando",
+      "asset": "sim:aents-seo-intencion",
+      "visual_direction": "Pantalla partida. A la izquierda un anuncio cae encima de lo que alguien estaba mirando y se va de lado. A la derecha alguien escribe lo que necesita y la página que responde aparece debajo. Cierra el rótulo de que la intención ya estaba ahí.",
+      "transition": "cut"
+    },
+    {
+      "purpose": "prueba",
+      "duration": 20,
+      "voice": "Aquí viene lo importante: un buscador no posiciona una página por bonita. Necesita entenderla. Se fija en el título, en la estructura, en las direcciones de tus páginas, en los enlaces internos, en la velocidad, en cómo se ve en el teléfono y en los datos estructurados. Pero sobre todo busca contenido que de verdad responda la pregunta.",
+      "on_screen_text": "No basta lo bonito",
+      "asset": "sim:aents-seo-senales",
+      "visual_direction": "Una página con buen diseño y nada que decir se cubre con la constatación de que no dice de qué trata. A su lado se encienden una a una las señales que sí la hacen entendible, y al final queda la que importa: que responda la pregunta.",
+      "transition": "cut"
+    },
+    {
+      "purpose": "prueba",
+      "duration": 17,
+      "voice": "Un ejemplo. En vez de tener una sola página que diga servicios, puedes tener una página para cada cosa que alguien busca de verdad: mantenimiento de motores, cambio de frenos, revisión antes de comprar un auto usado. Cada página responde una búsqueda distinta, y todas llevan al mismo lugar.",
+      "on_screen_text": "Una página por tema",
+      "asset": "sim:aents-seo-red",
+      "visual_direction": "La página de servicios se abre en tres páginas, cada una con la búsqueda que responde y su propia dirección. Después las tres devuelven al visitante al mismo destino.",
+      "transition": "cut"
+    },
+    {
+      "purpose": "problema",
+      "duration": 16,
+      "voice": "Hasta aquí hablamos del buscador de siempre. Pero apareció una segunda pelea. Antes la pregunta era cómo salgo primero en el buscador. Ahora también es otra: cómo consigo que una inteligencia artificial use mi página como fuente cuando alguien le pregunta por algo que yo hago.",
+      "on_screen_text": "La segunda pelea",
+      "asset": "sim:aents-seo-respuesta",
+      "visual_direction": "La lista de resultados se retira hacia arriba y en su lugar queda una respuesta escrita. Debajo, sus fuentes: dos sitios que no son el del ejemplo y un hueco punteado donde podría estar.",
+      "transition": "cut"
+    },
+    {
+      "purpose": "prueba",
+      "duration": 18,
+      "voice": "Y no, no hay un botón secreto. No existe el truco para salir en una inteligencia artificial. Lo que hay es información clara, propia, actualizada y fácil de verificar. Publicar mil páginas generadas que no dicen nada nuevo no te posiciona en ningún lado: solo llena internet de ruido con tu nombre encima.",
+      "on_screen_text": "No hay truco",
+      "asset": "sim:aents-seo-sin-truco",
+      "visual_direction": "Se pulsa un botón que promete salir en la inteligencia artificial y no pasa nada. La pila de páginas generadas que iba a reemplazarlo se derrumba. Queda lo que sí sostiene: clara, propia, actualizada, verificable.",
+      "transition": "cut"
+    },
+    {
+      "purpose": "prueba",
+      "duration": 20,
+      "voice": "Piénsalo así. Si tu página solo dice que llevas años en el mercado, eso no le sirve a nadie. Pero si publicas lo que solo tú sabes, cuánto cuesta el servicio, cuánto se demora, qué incluye, qué revisas, entonces hay algo concreto. Una persona lo entiende, y una inteligencia artificial también puede leerlo, compararlo y citarlo.",
+      "on_screen_text": "Datos, no adjetivos",
+      "asset": "sim:aents-seo-datos",
+      "visual_direction": "La frase vaga se levanta y se va, y en su lugar entran cuatro datos concretos del taller de ejemplo, rotulados como ejemplo. Abajo, una respuesta los cita con la fuente encendida.",
+      "transition": "cut"
+    },
+    {
+      "purpose": "prueba",
+      "duration": 18,
+      "voice": "Otra parte es tu identidad digital. Tu empresa, tus productos, tu dirección, quién escribe, tus perfiles. Todo debería decir lo mismo. Cuando esa información coincide en varios lugares confiables, a un buscador y a una inteligencia artificial les resulta mucho más fácil entender qué representa tu negocio.",
+      "on_screen_text": "Que todo coincida",
+      "asset": "sim:aents-seo-entidad",
+      "visual_direction": "Seis lugares donde aparece el negocio de ejemplo se conectan a un mismo centro. Cuando todos repiten el mismo nombre, las líneas cambian al color de lo confirmado y queda una sola identidad.",
+      "transition": "cut"
+    },
+    {
+      "purpose": "resultado",
+      "duration": 24,
+      "voice": "Y hay un detalle técnico que decide todo esto. Los lectores de las inteligencias artificiales no ejecutan JavaScript: leen el código que el servidor entrega y se van. Si tu web se dibuja en el navegador, ellos ven una página en blanco. Por eso en Aents servimos el contenido ya escrito en el código, con datos estructurados y un archivo para modelos, y el despliegue se bloquea si algo de eso falta.",
+      "on_screen_text": "Que puedan leerte",
+      "asset": "sim:aents-seo-lectores",
+      "visual_direction": "A la izquierda lo que ve el navegador; a la derecha lo que recibe un lector de inteligencia artificial: una raíz vacía. Después el mismo panel llega con el contenido ya escrito, aparecen las tres entregas y cierra la compuerta que impide desplegar si falta alguna.",
+      "transition": "cut"
+    },
+    {
+      "purpose": "cta",
+      "duration": 17,
+      "voice": "Al final es simple. No se trata de engañar al buscador, sino de tener información lo bastante buena y lo bastante clara como para que valga la pena mostrarla, y para que una inteligencia artificial quiera citarla. Si quieres que tu negocio esté listo para eso, conversemos tu presencia digital.",
+      "on_screen_text": "Conversemos",
+      "asset": "sim:aents-cierre",
+      "visual_direction": "Todo se apaga y queda la marca: isotipo, Aents, Software para personas, sus servicios y aents.net junto al botón de conversar.",
+      "transition": "fade"
+    }
+  ]
+}

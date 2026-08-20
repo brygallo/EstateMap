@@ -11,6 +11,79 @@ secuencia visual clara, memorable y precisa. Se permite toda la complejidad de
 código necesaria para lograr profundidad, continuidad y detalle; no se acepta
 complejidad que solo esconda una composición débil.
 
+## 0. La escena 1 no es una escena más
+
+Todas las demás reglas de este documento se aplican por igual a cualquier toma.
+Esta se aplica solo a la primera, y por encima de las demás.
+
+La razón no es estética. La escena 1 es la única que ve todo el mundo: es el
+fotograma en el que la plataforma congela la pieza en el feed, y es lo que
+decide si existe una escena 2. Y en una empresa que vende la construcción de
+software, esa toma no es la introducción del argumento: **es la muestra del
+trabajo**. Alguien que evalúa a un proveedor lee el acabado antes que la
+promesa, y con razón —el nivel de detalle que se permite una empresa en lo suyo
+es el que va a tener con lo del cliente—. Una apertura que parece una
+diapositiva ya respondió la pregunta que la pieza venía a hacer, y ningún guion
+la recupera.
+
+De ahí que sea una regla y no un consejo, y que la sostengan tres cosas
+distintas: un kit obligatorio, un registro que impide repetirse y una medición
+que tumba el máster.
+
+### Qué tiene que tener
+
+Cuatro cosas a la vez, no una elegida entre cuatro:
+
+1. **Profundidad cinematográfica.** Una sola cámara para toda la toma y planos
+   declarados: cada grupo dice a qué distancia vive y de ahí salen su escala, su
+   desenfoque y cuánto se desplaza. Luz con fuente identificable, suelo que la
+   recoge y aire con algo dentro. Lo plano es lo que se ve barato y es lo primero
+   que la recompresión de la plataforma convierte en bandas.
+2. **Coreografía densa.** Al menos tres eventos por segundo, encadenados por
+   causa y efecto. Nada entra para quedarse quieto.
+3. **Producto real, no símbolos.** Si aparece una interfaz, es una interfaz: un
+   solo destino activo, estados con forma y palabra además de color, objetivos
+   táctiles de tamaño real, escala de espaciado y de tipografía. Tres rectángulos
+   grises representando «el sistema» son exactamente lo que no hay que enseñar.
+4. **Un golpe visual que se recuerde.** Uno, y cae en el fotograma en que la idea
+   se da la vuelta, nunca en una entrada. Cuesta código y tiempo; se paga.
+
+### Cómo se sostiene
+
+- **Se construye sobre `remotion/src/hero-stage.tsx`.** Ahí viven la cámara, los
+  planos de profundidad, el suelo, la luz, el impacto y la cadencia. La interfaz
+  sale de `remotion/src/interface-kit.tsx`, que trae las normas de UX/UI dentro:
+  espaciado, jerarquía, estados, tamaño mínimo de un control, tipografía. Lo que
+  se puede decidir una vez está decidido una vez.
+- **Se registra en `renderer.HERO_STAGINGS`** con el movimiento de cámara que
+  usa. `quality.check_hero_scene` rechaza el plan cuya escena 1 nombre cualquier
+  otra cosa.
+- **No hay dos iguales.** Un kit compartido sube el suelo y, si nadie mira, aplana
+  todas las piezas al mismo plano. Por eso la puesta en escena es parte de lo que
+  el gancho declara, queda guardada en el catálogo, y dos aperturas seguidas con
+  el mismo movimiento se rechazan antes de renderizar. `HERO_MOVES` tiene cuatro;
+  cuando ninguno sirva, se añade el quinto.
+- **Se mide sobre el máster, no sobre el código.** `review_tools.HeroSceneAudit`
+  cuenta cuántas veces empieza algo y cuánto tiempo la toma repite la misma
+  imagen: mínimo tres eventos por segundo, máximo un 12 % de imagen repetida. Si
+  no llega, el máster no pasa la revisión. El gancho anterior de `aents-001` daba
+  0,5 eventos por segundo y repetía el 89 % de su duración, y nadie lo vio hasta
+  que se midió.
+- **El listón sube solo.** El mejor gancho que ha publicado una marca queda en su
+  memoria (`brands/<marca>/memory/hero-bar.json`) y el siguiente tiene que
+  igualarlo menos un margen. La regla se alimenta del trabajo, no de que alguien
+  se acuerde de subirla.
+
+### Qué pone cada uno
+
+El código pone la técnica: la física, la profundidad, la luz, el ritmo, las
+normas de interfaz y la comprobación de que se cumplieron. Lo que no puede poner
+—porque no lo sabe— es qué se está enseñando, por qué se mueve y qué debe
+entender quien mira. Eso es lo creativo, y ahí entra quien escribe: a definir, a
+variar, a cambiar la puesta en escena para que la número doce no sea la número
+uno con otro texto. El kit existe para que esa energía se gaste en el argumento
+y no en volver a resolver una sombra.
+
 ## 1. Definición de una animación terminada
 
 Una animación está terminada únicamente cuando cumple todo lo siguiente:
@@ -145,6 +218,16 @@ para descubrir cuál fue la acción principal, la coreografía debe rehacerse.
 
 ## 6. Producto e interfaces
 
+Una interfaz dibujada a ojo se nota, y se nota antes que el argumento. Quien
+mira estas piezas construye productos: lee el espaciado, la alineación, los
+estados y el tamaño de los controles sin proponérselo, y de ahí deduce cómo
+trabaja quien firma el video. Por eso las normas de interfaz no son consejo:
+están en `remotion/src/interface-kit.tsx` —escala de espaciado de 8, escala
+tipográfica con suelo de 22 px, elevación única, un solo destino activo en una
+navegación, estados que nunca se distinguen solo por color, y un objetivo táctil
+que ningún dedo real fallaría—. Una composición pide una ventana, un riel o una
+fila en un estado; no vuelve a inventar el rectángulo.
+
 - Una recreación conserva la verdad funcional del producto: jerarquía,
   etiquetas, orden de acciones, estados relevantes y resultado. Se puede
   simplificar densidad, nunca inventar una capacidad.
@@ -180,6 +263,18 @@ para descubrir cuál fue la acción principal, la coreografía debe rehacerse.
   decoración. Sus puntas, grosor y velocidad permanecen consistentes.
 - El texto importante entra como unidad o por grupos semánticos. Nunca aparece
   carácter por carácter mientras la voz continúa con otra idea.
+- **Un texto no sale de la caja a la que pertenece.** Un rótulo dentro de una
+  tarjeta, píldora, panel o marcador se queda dentro de sus bordes, y lo mismo
+  vale para el lienzo: nada se imprime encima del borde de su contenedor. La
+  única excepción es la salida deliberada que forma parte de la animación —un
+  elemento que entra o abandona el cuadro, una palabra que rebasa a propósito
+  para mostrar que no cabe— y entonces se ve como intención, no como accidente.
+- El tamaño de un texto contenido se mide, no se estima. Se ajusta con `fit()`
+  de `layout.ts` contra el ancho interior real del contenedor —su ancho menos el
+  padding—, nunca con un tamaño fijo ni con un condicional sobre la longitud de
+  la cadena: el primero se rompe con la primera palabra larga y el segundo
+  acierta por casualidad. `AUTOMATIZACIÓN` en `sim:aents-idea` se imprimió sobre
+  los dos bordes de su tarjeta por confiar en `title.length > 10 ? 22 : 29`.
 
 ## 8. Color, luz, textura y efectos
 
@@ -237,6 +332,103 @@ para descubrir cuál fue la acción principal, la coreografía debe rehacerse.
 - El código puede ser extenso cuando modela una animación rica. Aun así, debe
   dividirse por conceptos visuales, reutilizar primitivas y permitir ajustar la
   coreografía sin reescribir la ilustración.
+
+## 10 pre. Densidad: cuántas cosas pasan por segundo
+
+La causa número uno de que una pieza se sienta lenta no es su duración: es que
+pasan pocas cosas. Una escena correcta, bien compuesta y con un solo sujeto
+puede seguir siendo aburrida si el espectador ya vio todo lo que iba a pasar en
+el primer segundo y le quedan cuatro.
+
+- **Al menos dos eventos visibles por segundo.** Un evento es algo que empieza:
+  una llegada, una confirmación, una línea que se traza, una cifra que cambia,
+  una pieza que sale de su sitio, una luz que cruza. El empuje de cámara no
+  cuenta —es el suelo, no un evento.
+- **Ninguna escena pasa de seis segundos.** Por encima de eso son dos escenas.
+  El linter lo avisa (`scene_pace`), y cortar no rompe nada: una animación
+  continúa su arco entre escenas porque `renderer.AssetTimeline` la reanuda
+  donde iba. Se corta donde la voz cambia de idea.
+- **Más escenas antes que escenas más largas.** Los topes son ocho en formato
+  corto, dieciséis en historia y veinticuatro en clase. Un guion de 48 segundos
+  se cuenta mejor en catorce tomas que en nueve.
+- **El escalonado de un grupo es corto.** `stagger()` usa 0,045 por defecto:
+  cuatro tarjetas entran en medio segundo, no en tres. Cuatro tarjetas repartidas
+  por toda la escena son una lista; en medio segundo son un golpe.
+- **Las entradas duran poco.** Una llegada es un evento, no un viaje: en torno a
+  `ARRIVAL` (una décima del arco). Lo que tarda en llegar se lo quita al
+  siguiente evento.
+- **Los huecos se rellenan con micro-eventos.** `metronome()` da una cadencia
+  independiente de la coreografía principal: un pulso que baja por la línea, un
+  destello al confirmar, una pieza que sale de la pila. Ahí es donde se gana la
+  sensación de «pasa esto, y esto, y esto».
+- **El arco principal cierra antes del 70 % de la escena.** El resto es aire
+  para leer y para que el remate respire, no tiempo muerto que llenar.
+
+## 10 bis. El vocabulario de movimiento (`system-kit.tsx`)
+
+Estas son las reglas del sistema con el que se construyó el arco «Del problema
+al software» de Aents, y son obligatorias para toda composición nueva de
+cualquiera de las dos marcas. No describen un estilo: describen por qué una
+composición se lee como producto terminado y no como una presentación.
+
+- **Nada aparece: todo aterriza.** Una entrada usa `land()`, que sobrepasa su
+  marca un 4 % y vuelve. El exceso es pequeño a propósito; una tarjeta que
+  rebota como un juguete se lee como plantilla.
+- **Nada viaja a velocidad constante.** Lo que se desplaza usa `glide()` —
+  acelera y frena— o `settle()` cuando algo se lanza y se posa. `interpolate`
+  lineal se reserva para barridos de luz y progresos mecánicos.
+- **El sujeto puede tomar impulso.** `anticipate()` retrocede antes de salir. Se
+  usa en el sujeto de la escena, nunca en los elementos de apoyo.
+- **Un grupo entra escalonado.** `stagger(index)` da a cada miembro su propio
+  tiempo. Cuatro tarjetas que entran en el mismo fotograma son una diapositiva.
+- **El sujeto va delante de su propia luz.** `Halo` detrás del foco. Lo plano es
+  lo que se ve barato, y es la señal de profundidad más barata que sobrevive a
+  la recompresión de la plataforma.
+- **Una superficie tiene borde iluminado y sombra propia.** `glass()` para lo
+  neutro y `lit()` para lo que está siendo elegido. Un rectángulo con color de
+  fondo es un div; con luz arriba y sombra abajo es una tarjeta.
+- **El texto se destapa, no se funde.** `Reveal` recorta con máscara. Un fundido
+  no tiene dirección ni mano detrás: parece un marcador de posición.
+- **Un conector viaja con cabeza.** `Trace` dibuja la línea con un punto que
+  avanza. Una línea que solo crece es una barra de progreso; con cabeza es una
+  señal yendo a un sitio, que es el sujeto de media biblioteca.
+- **Toda escena lleva empuje continuo.** `Panel` y `Field` reciben `push={p}`:
+  un movimiento lento, de una sola dirección, durante toda la toma, con la
+  retícula del fondo derivando en contra. Sin él, la revisión marca la escena
+  como quieta y tiene razón.
+- **La profundidad se declara por plano.** Cada grupo tiene su distancia, y de
+  ella salen su escala, su desenfoque y cuánto se desplaza en el parallax. Todos
+  los elementos a la misma distancia es lo que hace que una composición parezca
+  un formulario.
+- **Un cambio de estado ocurre sobre un movimiento.** El objeto gira, se voltea o
+  cruza; no se funde con su siguiente versión. Un fundido entre dos estados
+  esconde justo lo que la escena existe para enseñar.
+- **El fracaso se ve fracasar.** Si algo no encaja, no conecta o se repite, tiene
+  que intentarlo y fallar en pantalla —al menos dos veces— antes de que llegue
+  la solución. Un acierto sin intento previo no se lee como respuesta.
+- **Nada se toca por accidente.** Dos elementos que comparten borde o se solapan
+  sin que la composición lo pida son un defecto, no una casualidad: el máster de
+  las 11:34 del aents-001 dejó la tarjeta SOFTWARE pegada al isotipo y la órbita
+  invadiendo su propio centro.
+- **La geometría que puede chocar se declara como datos, y se comprueba.** Las
+  cuatro opciones de `sim:aents-soluciones` vivían sobre una elipse que giraba, y
+  a los tamaños que tenían cada una invadía la tarjeta central 28 × 11 px: el
+  solape aparecía y desaparecía con el giro, y nadie lo vio hasta que una persona
+  lo señaló en pantalla. Ahora las posiciones son constantes (`CHOICE`, `NEED`,
+  `SOLUTIONS`) y una prueba recorre los rectángulos y falla si dos se acercan a
+  menos de la separación mínima. Una posición calculada al vuelo no se puede
+  comprobar; una declarada, sí.
+- **Los elementos que compiten por la misma decisión tienen el mismo tamaño.** Si
+  cuatro opciones y la necesidad que las elige están en el mismo cuadro, son
+  cinco tarjetas iguales. Una más pequeña, o una que crece un 4 % al ser elegida,
+  no se lee como jerarquía: se lee como descuido. Lo elegido se señala con luz,
+  con color o con posición, nunca con tamaño.
+- **Una afirmación sobre N pasos enseña N cosas distintas.** «Estrategia, diseño,
+  desarrollo y lanzamiento» sobre el mismo rectángulo gris con la opacidad movida
+  no son cuatro etapas, son un cuadro que parpadea; así estaba
+  `sim:aents-etapas`, y quien lo vio dijo exactamente eso: «solo salen cuadros
+  random». Cada paso dibuja lo que sale de él —el flujo trazado, el wireframe, el
+  producto construido, el producto en uso— o la escena no está afirmando nada.
 
 ## 11. Rendimiento y robustez
 

@@ -1,0 +1,103 @@
+{
+  "brandId": "aents",
+  "brandName": "Aents",
+  "brandTagline": "Software for people.",
+  "brandSymbol": "brand/symbol-negative-512.png",
+  "title": "Tu empresa no necesita más pasos. Necesita un sistema.",
+  "coverText": "¿Tu empresa necesita un sistema?",
+  "cta": "Cuéntanos qué quieres mejorar",
+  "url": "aents.net",
+  "brandTile": "brand/brand-tile-1024.png",
+  "kicker": null,
+  "musicFile": null,
+  "showSafeAreas": false,
+  "scenes": [
+    {
+      "purpose": "gancho",
+      "durationInFrames": 120,
+      "headline": "Problema → Software",
+      "captions": [
+        {
+          "text": "Tu empresa tiene un problema.",
+          "start": 0.0,
+          "end": 1.584,
+          "words": [
+            {
+              "text": "Tu",
+              "start": 0.0,
+              "end": 0.164
+            },
+            {
+              "text": "empresa",
+              "start": 0.164,
+              "end": 0.601
+            },
+            {
+              "text": "tiene",
+              "start": 0.601,
+              "end": 0.928
+            },
+            {
+              "text": "un",
+              "start": 0.928,
+              "end": 1.092
+            },
+            {
+              "text": "problema.",
+              "start": 1.092,
+              "end": 1.584
+            }
+          ]
+        },
+        {
+          "text": "Aents puede convertirlo",
+          "start": 1.584,
+          "end": 2.894,
+          "words": [
+            {
+              "text": "Aents",
+              "start": 0.0,
+              "end": 0.328
+            },
+            {
+              "text": "puede",
+              "start": 0.328,
+              "end": 0.655
+            },
+            {
+              "text": "convertirlo",
+              "start": 0.655,
+              "end": 1.311
+            }
+          ]
+        },
+        {
+          "text": "en software.",
+          "start": 2.894,
+          "end": 3.55,
+          "words": [
+            {
+              "text": "en",
+              "start": 0.0,
+              "end": 0.164
+            },
+            {
+              "text": "software.",
+              "start": 0.164,
+              "end": 0.655
+            }
+          ]
+        }
+      ],
+      "visualDirection": "El isotipo de Aents está en cuadro desde el primer fotograma. Un nodo ámbar rotulado PROBLEMA entra por la izquierda, atraviesa el símbolo y sale por la derecha convertido en una interfaz limpia. El recorrido dura toda la escena: nada se detiene.",
+      "transition": "cut",
+      "asset": "sim:aents-problema-software",
+      "assetType": "simulation",
+      "photo": null,
+      "voiceFile": "jobs/aents-001/audio/voice-01.mp3",
+      "assetStartInFrames": 0,
+      "assetTotalInFrames": 120,
+      "accent": "#22C55E"
+    }
+  ]
+}

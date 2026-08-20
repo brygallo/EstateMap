@@ -1,0 +1,82 @@
+{
+  "title": "Busqué tu empresa en Google",
+  "audience": "empresa",
+  "funnel_stage": "descubrimiento",
+  "objective": "Que una empresa compruebe por sí misma qué encuentra su cliente y abra una conversación",
+  "conversion_event": "whatsapp_contact",
+  "pillar": "Software a medida",
+  "series": "Conoce Aents",
+  "concept": "Lo que tu cliente encuentra cuando te busca",
+  "promise": "Aents construye webs que abren rápido, funcionan en el celular y convierten visitas en oportunidades",
+  "cta": "Cuéntanos tu proyecto",
+  "hypothesis": "Poner al espectador en el lugar de su propio cliente hace visible un problema que no puede ver desde dentro",
+  "cover_text": "¿Qué encuentra tu cliente?",
+  "cover_art": "aents-buscador",
+  "caption": "Busca tu empresa como lo haría un cliente. Si no aparece tu página, si tarda en abrir o si en el celular no se puede usar, esa visita se va a otro lado y nunca te enteras. En Aents diseñamos y desarrollamos webs rápidas, adaptables y pensadas para posicionar tu marca y generar oportunidades. Cuéntanos tu proyecto.",
+  "hashtags": [
+    "#Aents",
+    "#PáginaWeb",
+    "#SoftwareEcuador",
+    "#DesarrolloWeb",
+    "#Emprendedores"
+  ],
+  "narration": "Busqué tu empresa en Google, y esto fue lo que encontré. Tu Instagram, tu Facebook, un directorio, pero ninguna página web tuya. Y si sí tienes una, a veces pasa lo otro: tarda en abrir, y cuando por fin abre, en el celular no hay forma de usarla. Tu cliente está viendo exactamente esto. Vuelve atrás, entra donde sí puede, y acabas de perder una oportunidad sin enterarte. Ahora imagina que encuentra esto: una página que abre rápido, se ve bien en el celular y está hecha para convertir visitas en oportunidades. Diseño, desarrollo, rendimiento y posicionamiento trabajando juntos. Haz la prueba: busca tu empresa en Google. Si no te gusta lo que encuentra tu cliente, cuéntanos tu proyecto.",
+  "voice_profile": null,
+  "music": null,
+  "verification_notes": [
+    "Oferta de web verificada en ../Aents/apps/web/src/i18n.ts:367-369: «Webs que venden y crecen · Experiencias rápidas y adaptables, diseñadas para posicionar tu marca, generar oportunidades y crecer con tu negocio». De ahí salen los cuatro pilares que se sellan en la escena 4: posicionamiento, móvil, velocidad y conversión.",
+    "Alcance del trabajo verificado en ../Aents/apps/web/src/i18n.ts:364-365: «desde la estrategia y el diseño hasta el desarrollo y lanzamiento». Por eso la voz dice diseño, desarrollo, rendimiento y posicionamiento, y nada más.",
+    "CTA verificado en ../Aents/apps/web/src/i18n.ts:366 («Cuéntanos tu proyecto») y contacto en ../Aents/apps/web/src/i18n.ts:399.",
+    "Se omite deliberadamente cualquier promesa de medición o analítica: ../Aents/doc/PLAN.md:85 y 102 la dejan como trabajo pendiente sujeto a una política de privacidad, y ../Aents/packages/analytics es un paquete vacío. El guion original la incluía como quinta insignia de esa fila y se retiró.",
+    "No se afirma ninguna cifra de velocidad, rebote ni conversión. El contador de segundos de la escena 2 y los resultados de búsqueda de la escena 1 son de una empresa inventada y llevan el rótulo EJEMPLO en pantalla mientras se ven.",
+    "La superficie de búsqueda se dibuja genérica —campo, lupa y filas— y no reproduce la marca de ningún buscador. Los perfiles se nombran por el tipo de página que son.",
+    "La página reconstruida de la escena 4 muestra Servicios, Proyectos y Contacto. El guion original pedía además Testimonios y se retiró: una prueba social inventada no entra ni como rótulo."
+  ],
+  "scenes": [
+    {
+      "purpose": "gancho",
+      "duration": 8,
+      "voice": "Busqué tu empresa en Google, y esto fue lo que encontré. Tu Instagram, tu Facebook, un directorio, pero ninguna página web tuya.",
+      "on_screen_text": "Sin página web",
+      "asset": "sim:aents-busqueda",
+      "visual_direction": "Se escribe «Tu Empresa» en un campo de búsqueda genérico. Aparecen tres resultados —perfil de Instagram, página de Facebook y ficha de directorio— y la cuarta fila queda vacía, con borde punteado ámbar: la página web propia no aparece.",
+      "transition": "cut"
+    },
+    {
+      "purpose": "problema",
+      "duration": 7,
+      "voice": "Y si sí tienes una, a veces pasa lo otro: tarda en abrir, y cuando por fin abre, en el celular no hay forma de usarla.",
+      "on_screen_text": "Lenta y no adaptada",
+      "asset": "sim:aents-lenta",
+      "visual_direction": "tuempresa.com tarda en abrir mientras el contador marca los segundos. Cuando por fin carga, el marco se encoge hasta el tamaño de un teléfono y la página conserva su ancho de escritorio: el contenido se sale de la pantalla.",
+      "transition": "cut"
+    },
+    {
+      "purpose": "problema",
+      "duration": 7,
+      "voice": "Tu cliente está viendo exactamente esto. Vuelve atrás, entra donde sí puede, y acabas de perder una oportunidad sin enterarte.",
+      "on_screen_text": "Se va sin escribir",
+      "asset": "sim:aents-rebote",
+      "visual_direction": "El recorrido del visitante avanza de izquierda a derecha: busca, entra, se va. «NUEVO CLIENTE» se tacha y en su lugar queda «OPORTUNIDAD PERDIDA».",
+      "transition": "cut"
+    },
+    {
+      "purpose": "prueba",
+      "duration": 12,
+      "voice": "Ahora imagina que encuentra esto: una página que abre rápido, se ve bien en el celular y está hecha para convertir visitas en oportunidades. Diseño, desarrollo, rendimiento y posicionamiento trabajando juntos.",
+      "on_screen_text": "Hecha para funcionar",
+      "asset": "sim:aents-rearmado",
+      "visual_direction": "Las piezas de la página entran desde fuera y se ensamblan en una web clara: barra, titular, Servicios, Proyectos y Contacto. El puntero pulsa «Solicitar cotización», aparece una nueva oportunidad y debajo se sellan los cuatro pilares: posicionamiento, móvil, velocidad y conversión.",
+      "transition": "cut"
+    },
+    {
+      "purpose": "cta",
+      "duration": 6,
+      "voice": "Haz la prueba: busca tu empresa en Google. Si no te gusta lo que encuentra tu cliente, cuéntanos tu proyecto.",
+      "on_screen_text": "Cuéntanos tu proyecto",
+      "asset": "sim:aents-prueba-web",
+      "visual_direction": "Tarjeta de cierre: isotipo de Aents, el nombre, «Software para personas», la invitación a buscar la propia empresa y los dos accesos, «Cuéntanos tu proyecto» y aents.net.",
+      "transition": "cut"
+    }
+  ]
+}

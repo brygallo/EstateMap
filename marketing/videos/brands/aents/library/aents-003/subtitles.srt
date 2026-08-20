@@ -1,0 +1,563 @@
+1
+00:00:00,000 --> 00:00:01,837
+Tener una página web no significa
+
+2
+00:00:01,837 --> 00:00:03,674
+que la gente encuentre tu negocio.
+
+3
+00:00:03,674 --> 00:00:05,511
+Puedes hacer un trabajo excelente,
+
+4
+00:00:05,511 --> 00:00:06,861
+pero si alguien busca lo
+
+5
+00:00:06,861 --> 00:00:07,618
+que tú vendes
+
+6
+00:00:07,618 --> 00:00:08,968
+y aparece tu competencia,
+
+7
+00:00:08,968 --> 00:00:10,589
+para internet casi no existes.
+
+8
+00:00:10,589 --> 00:00:11,832
+Y ahora hay algo nuevo:
+
+9
+00:00:11,832 --> 00:00:13,399
+mucha gente ya no busca solo
+
+10
+00:00:13,399 --> 00:00:14,209
+en un buscador,
+
+11
+00:00:14,209 --> 00:00:15,398
+también le pregunta a
+
+12
+00:00:15,398 --> 00:00:16,910
+una inteligencia artificial.
+
+13
+00:00:17,367 --> 00:00:18,914
+SEO significa optimización
+
+14
+00:00:18,914 --> 00:00:20,346
+para motores de búsqueda,
+
+15
+00:00:20,346 --> 00:00:21,835
+pero olvídate del término.
+
+16
+00:00:21,835 --> 00:00:22,637
+SEO es lograr
+
+17
+00:00:22,637 --> 00:00:24,700
+que un buscador entienda quién eres,
+
+18
+00:00:24,700 --> 00:00:26,819
+qué haces y cuándo debería mostrarte.
+
+19
+00:00:26,819 --> 00:00:28,366
+Si alguien busca un taller
+
+20
+00:00:28,366 --> 00:00:29,454
+mecánico en Cuenca
+
+21
+00:00:29,454 --> 00:00:31,345
+y el buscador entendió tu página,
+
+22
+00:00:31,345 --> 00:00:32,605
+puedes aparecer justo
+
+23
+00:00:32,605 --> 00:00:34,610
+cuando esa persona está decidiendo.
+
+24
+00:00:35,067 --> 00:00:36,327
+Y esa es la diferencia
+
+25
+00:00:36,327 --> 00:00:37,313
+con la publicidad.
+
+26
+00:00:37,313 --> 00:00:39,066
+Un anuncio interrumpe a alguien
+
+27
+00:00:39,066 --> 00:00:40,709
+que estaba haciendo otra cosa.
+
+28
+00:00:40,709 --> 00:00:41,585
+En una búsqueda,
+
+29
+00:00:41,585 --> 00:00:43,119
+la persona ya está buscando
+
+30
+00:00:43,119 --> 00:00:44,050
+lo que tú vendes.
+
+31
+00:00:44,050 --> 00:00:45,694
+Llega con la intención puesta,
+
+32
+00:00:45,694 --> 00:00:47,118
+y por eso una página bien
+
+33
+00:00:47,118 --> 00:00:48,652
+hecha puede seguir trayendo
+
+34
+00:00:48,652 --> 00:00:49,857
+visitas mucho después
+
+35
+00:00:49,857 --> 00:00:50,624
+de publicarla.
+
+36
+00:00:51,067 --> 00:00:52,464
+Aquí viene lo importante:
+
+37
+00:00:52,464 --> 00:00:53,861
+un buscador no posiciona
+
+38
+00:00:53,861 --> 00:00:55,091
+una página por bonita.
+
+39
+00:00:55,091 --> 00:00:56,208
+Necesita entenderla.
+
+40
+00:00:56,208 --> 00:00:57,382
+Se fija en el título,
+
+41
+00:00:57,382 --> 00:00:58,332
+en la estructura,
+
+42
+00:00:58,332 --> 00:01:00,232
+en las direcciones de tus páginas,
+
+43
+00:01:00,232 --> 00:01:01,573
+en los enlaces internos,
+
+44
+00:01:01,573 --> 00:01:02,467
+en la velocidad,
+
+45
+00:01:02,467 --> 00:01:03,417
+en cómo se ve en
+
+46
+00:01:03,417 --> 00:01:05,709
+el teléfono y en los datos estructurados.
+
+47
+00:01:05,709 --> 00:01:07,497
+Pero sobre todo busca contenido
+
+48
+00:01:07,497 --> 00:01:08,782
+que de verdad responda
+
+49
+00:01:08,782 --> 00:01:09,453
+la pregunta.
+
+50
+00:01:09,900 --> 00:01:10,518
+Un ejemplo.
+
+51
+00:01:10,518 --> 00:01:11,923
+En vez de tener una sola
+
+52
+00:01:11,923 --> 00:01:13,385
+página que diga servicios,
+
+53
+00:01:13,385 --> 00:01:14,734
+puedes tener una página
+
+54
+00:01:14,734 --> 00:01:15,577
+para cada cosa
+
+55
+00:01:15,577 --> 00:01:17,150
+que alguien busca de verdad:
+
+56
+00:01:17,150 --> 00:01:18,555
+mantenimiento de motores,
+
+57
+00:01:18,555 --> 00:01:19,511
+cambio de frenos,
+
+58
+00:01:19,511 --> 00:01:21,759
+revisión antes de comprar un auto usado.
+
+59
+00:01:21,759 --> 00:01:23,670
+Cada página responde una búsqueda
+
+60
+00:01:23,670 --> 00:01:24,176
+distinta,
+
+61
+00:01:24,176 --> 00:01:25,862
+y todas llevan al mismo lugar.
+
+62
+00:01:26,300 --> 00:01:28,117
+Hasta aquí hablamos del buscador
+
+63
+00:01:28,117 --> 00:01:28,723
+de siempre.
+
+64
+00:01:28,723 --> 00:01:30,486
+Pero apareció una segunda pelea.
+
+65
+00:01:30,486 --> 00:01:32,303
+Antes la pregunta era cómo salgo
+
+66
+00:01:32,303 --> 00:01:33,570
+primero en el buscador.
+
+67
+00:01:33,570 --> 00:01:34,781
+Ahora también es otra:
+
+68
+00:01:34,781 --> 00:01:36,654
+cómo consigo que una inteligencia
+
+69
+00:01:36,654 --> 00:01:38,306
+artificial use mi página como
+
+70
+00:01:38,306 --> 00:01:40,179
+fuente cuando alguien le pregunta
+
+71
+00:01:40,179 --> 00:01:41,335
+por algo que yo hago.
+
+72
+00:01:41,800 --> 00:01:42,083
+Y no,
+
+73
+00:01:42,083 --> 00:01:43,441
+no hay un botón secreto.
+
+74
+00:01:43,441 --> 00:01:44,516
+No existe el truco
+
+75
+00:01:44,516 --> 00:01:46,892
+para salir en una inteligencia artificial.
+
+76
+00:01:46,892 --> 00:01:49,099
+Lo que hay es información clara, propia,
+
+77
+00:01:49,099 --> 00:01:50,966
+actualizada y fácil de verificar.
+
+78
+00:01:50,966 --> 00:01:52,720
+Publicar mil páginas generadas
+
+79
+00:01:52,720 --> 00:01:54,247
+que no dicen nada nuevo no
+
+80
+00:01:54,247 --> 00:01:55,831
+te posiciona en ningún lado:
+
+81
+00:01:55,831 --> 00:01:57,472
+solo llena internet de ruido
+
+82
+00:01:57,472 --> 00:01:58,660
+con tu nombre encima.
+
+83
+00:01:59,100 --> 00:01:59,829
+Piénsalo así.
+
+84
+00:01:59,829 --> 00:02:01,119
+Si tu página solo dice
+
+85
+00:02:01,119 --> 00:02:02,802
+que llevas años en el mercado,
+
+86
+00:02:02,802 --> 00:02:04,148
+eso no le sirve a nadie.
+
+87
+00:02:04,148 --> 00:02:05,775
+Pero si publicas lo que solo
+
+88
+00:02:05,775 --> 00:02:06,279
+tú sabes,
+
+89
+00:02:06,279 --> 00:02:07,738
+cuánto cuesta el servicio,
+
+90
+00:02:07,738 --> 00:02:08,691
+cuánto se demora,
+
+91
+00:02:08,691 --> 00:02:09,364
+qué incluye,
+
+92
+00:02:09,364 --> 00:02:10,037
+qué revisas,
+
+93
+00:02:10,037 --> 00:02:11,552
+entonces hay algo concreto.
+
+94
+00:02:11,552 --> 00:02:12,898
+Una persona lo entiende,
+
+95
+00:02:12,898 --> 00:02:14,581
+y una inteligencia artificial
+
+96
+00:02:14,581 --> 00:02:15,759
+también puede leerlo,
+
+97
+00:02:15,759 --> 00:02:16,936
+compararlo y citarlo.
+
+98
+00:02:17,400 --> 00:02:19,422
+Otra parte es tu identidad digital.
+
+99
+00:02:19,422 --> 00:02:20,058
+Tu empresa,
+
+100
+00:02:20,058 --> 00:02:20,867
+tus productos,
+
+101
+00:02:20,867 --> 00:02:21,618
+tu dirección,
+
+102
+00:02:21,618 --> 00:02:22,427
+quién escribe,
+
+103
+00:02:22,427 --> 00:02:23,178
+tus perfiles.
+
+104
+00:02:23,178 --> 00:02:24,796
+Todo debería decir lo mismo.
+
+105
+00:02:24,796 --> 00:02:26,645
+Cuando esa información coincide
+
+106
+00:02:26,645 --> 00:02:28,321
+en varios lugares confiables,
+
+107
+00:02:28,321 --> 00:02:29,130
+a un buscador
+
+108
+00:02:29,130 --> 00:02:30,979
+y a una inteligencia artificial
+
+109
+00:02:30,979 --> 00:02:32,596
+les resulta mucho más fácil
+
+110
+00:02:32,596 --> 00:02:33,983
+entender qué representa
+
+111
+00:02:33,983 --> 00:02:34,619
+tu negocio.
+
+112
+00:02:35,067 --> 00:02:36,424
+Y hay un detalle técnico
+
+113
+00:02:36,424 --> 00:02:37,564
+que decide todo esto.
+
+114
+00:02:37,564 --> 00:02:39,409
+Los lectores de las inteligencias
+
+115
+00:02:39,409 --> 00:02:41,363
+artificiales no ejecutan JavaScript:
+
+116
+00:02:41,363 --> 00:02:42,177
+leen el código
+
+117
+00:02:42,177 --> 00:02:43,479
+que el servidor entrega
+
+118
+00:02:43,479 --> 00:02:43,968
+y se van.
+
+119
+00:02:43,968 --> 00:02:45,053
+Si tu web se dibuja
+
+120
+00:02:45,053 --> 00:02:45,921
+en el navegador,
+
+121
+00:02:45,921 --> 00:02:47,604
+ellos ven una página en blanco.
+
+122
+00:02:47,604 --> 00:02:49,015
+Por eso en Aents servimos
+
+123
+00:02:49,015 --> 00:02:50,480
+el contenido ya escrito en
+
+124
+00:02:50,480 --> 00:02:51,023
+el código,
+
+125
+00:02:51,023 --> 00:02:52,325
+con datos estructurados
+
+126
+00:02:52,325 --> 00:02:53,031
+y un archivo
+
+127
+00:02:53,031 --> 00:02:53,737
+para modelos,
+
+128
+00:02:53,737 --> 00:02:55,202
+y el despliegue se bloquea
+
+129
+00:02:55,202 --> 00:02:56,342
+si algo de eso falta.
+
+130
+00:02:56,800 --> 00:02:57,848
+Al final es simple.
+
+131
+00:02:57,848 --> 00:02:59,116
+No se trata de engañar
+
+132
+00:02:59,116 --> 00:02:59,778
+al buscador,
+
+133
+00:02:59,778 --> 00:03:01,211
+sino de tener información
+
+134
+00:03:01,211 --> 00:03:02,204
+lo bastante buena
+
+135
+00:03:02,204 --> 00:03:03,582
+y lo bastante clara como
+
+136
+00:03:03,582 --> 00:03:05,402
+para que valga la pena mostrarla,
+
+137
+00:03:05,402 --> 00:03:06,946
+y para que una inteligencia
+
+138
+00:03:06,946 --> 00:03:08,379
+artificial quiera citarla.
+
+139
+00:03:08,379 --> 00:03:10,089
+Si quieres que tu negocio esté
+
+140
+00:03:10,089 --> 00:03:10,916
+listo para eso,
+
+141
+00:03:10,916 --> 00:03:12,735
+conversemos tu presencia digital.

@@ -1,0 +1,107 @@
+{
+  "reviewed_at": "2026-08-15T09:56:36.117402-05:00",
+  "passed": true,
+  "checks": {
+    "vertical_1080x1920": true,
+    "duration_8_to_120_seconds": true,
+    "duration_close_to_target": true,
+    "plan_lint_passed": true,
+    "cover_exists": true,
+    "subtitles_exist": true,
+    "all_assets_resolve": true,
+    "approval_exists": true,
+    "text_minimum_declared": true,
+    "no_interpolated_figures": true
+  },
+  "measured_duration_seconds": 24.768,
+  "target_duration_seconds": 24.0,
+  "human_review": null,
+  "notes": "",
+  "visual_review": {
+    "overlay_geometry_version": 1,
+    "critical_frames": [
+      {
+        "scene": 1,
+        "timestamp": 2.4,
+        "path": "frames/scene-01.jpg"
+      },
+      {
+        "scene": 2,
+        "timestamp": 8.467,
+        "path": "frames/scene-02.jpg"
+      },
+      {
+        "scene": 3,
+        "timestamp": 14.5,
+        "path": "frames/scene-03.jpg"
+      },
+      {
+        "scene": 4,
+        "timestamp": 19.05,
+        "path": "frames/scene-04.jpg"
+      },
+      {
+        "scene": 5,
+        "timestamp": 22.983,
+        "path": "frames/scene-05.jpg"
+      }
+    ],
+    "motion_strips": [
+      {
+        "scene": 1,
+        "samples": 9,
+        "from": 0.0,
+        "to": 4.8,
+        "path": "strips/scene-01.jpg"
+      },
+      {
+        "scene": 2,
+        "samples": 14,
+        "from": 4.8,
+        "to": 12.133,
+        "path": "strips/scene-02.jpg"
+      },
+      {
+        "scene": 3,
+        "samples": 9,
+        "from": 12.133,
+        "to": 16.867,
+        "path": "strips/scene-03.jpg"
+      },
+      {
+        "scene": 4,
+        "samples": 8,
+        "from": 16.867,
+        "to": 21.233,
+        "path": "strips/scene-04.jpg"
+      },
+      {
+        "scene": 5,
+        "samples": 7,
+        "from": 21.233,
+        "to": 24.733,
+        "path": "strips/scene-05.jpg"
+      }
+    ],
+    "text": {
+      "declared_floor_px": 22,
+      "editorial_minimum_literal_px": 28,
+      "simulation_minimum_literal_px": 18,
+      "simulation_small_literal_count": 21,
+      "passed": true,
+      "note": "Simulation microcopy and dynamic fitted text are verified in the critical-frame contact sheet."
+    },
+    "animated_figures": {
+      "passed": true,
+      "findings": [],
+      "note": "Una cifra interpolada afirma un valor falso en cada fotograma menos el último."
+    },
+    "warnings": [
+      "Scene 1 holds a still image for 3.9 s from 0.9 s",
+      "Scene 2 holds a still image for 5.2 s from 6.9 s",
+      "Scene 1 is still for 3.9 s of its 4.8 s (81%)",
+      "Scene 2 is still for 6.8 s of its 7.3 s (93%)",
+      "Scene 4 is still for 3.4 s of its 4.4 s (78%)"
+    ]
+  }
+}

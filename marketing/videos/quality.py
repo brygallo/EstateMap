@@ -16,6 +16,7 @@ from typing import Any
 import tts
 import voice
 import workflow
+import brand
 
 
 ROOT = Path(__file__).resolve().parent
@@ -27,6 +28,19 @@ CTA_FAMILIES = {
     "propietario": ["publica", "sube", "comparte"],
     "profesional": ["prueba", "escríbenos", "contáctanos", "solicita"],
 }
+
+
+def configure(profile: brand.BrandProfile) -> None:
+    global CTA_FAMILIES, ACTIVE_AUDIENCES, ACTIVE_SIMULATIONS, REVEAL_AUDIENCES
+    CTA_FAMILIES = {key: list(values) for key, values in profile.cta_families.items()}
+    ACTIVE_AUDIENCES = set(profile.audiences)
+    ACTIVE_SIMULATIONS = set(profile.simulations) if profile.simulations else set()
+    REVEAL_AUDIENCES = set(profile.product_reveal_audiences)
+
+
+ACTIVE_AUDIENCES = set(CTA_FAMILIES)
+ACTIVE_SIMULATIONS: set[str] = set()
+REVEAL_AUDIENCES = {"comprador"}
 
 # What this catches is a piece that changes who it is talking to, and that only
 # happens in the second person. A buyer video that says "escribes a quien
@@ -41,29 +55,59 @@ AUDIENCE_CROSS_TALK = {
     "propietario": ["busca dónde vivir", "explora el mapa para buscar"],
 }
 
-# A piece is either short form — a promise and its demonstration — or a story,
-# which earns room to explain where something came from before it shows it. The
-# limits below are not one number because a fifteen-second demo and a
-# ninety-second origin story fail in opposite directions: the demo fails by
+# A piece is short form — a promise and its demonstration —, a story, which
+# earns room to explain where something came from before it shows it, or a
+# lesson, which teaches a subject the viewer came to learn. The limits below are
+# not one number because these fail in opposite directions: the demo fails by
 # spending its runtime on pain, the story fails by cutting nine beats into five
-# and holding each animation for eighteen seconds.
+# and holding each animation for eighteen seconds, and the lesson fails by
+# compressing a subject until it teaches nothing.
 # A piece under this pillar teaches first and shows the product last.
 EDUCATION_PILLAR = "Educación inmobiliaria"
 
+# The two thresholds between the three formats, and the ceiling of the longest.
 SHORT_FORM_SECONDS = 45
+STORY_SECONDS = 120
+MAX_DURATION_SECONDS = 240
 
-MAX_SCENES = 5
-MAX_STORY_SCENES = 9
+# A scene is a beat, not a chapter. These ceilings were half of what they are
+# now, and the result was a 48-second story cut into nine takes of five seconds
+# each: the piece felt like it was not going anywhere because, for most of every
+# take, nothing was. An animation carries on across a cut — `renderer.AssetTimeline`
+# continues its arc — so more scenes buy rhythm without inventing content.
+MAX_SCENES = 8
+MAX_STORY_SCENES = 16
+# A lesson is not a longer story: it is a subject cut into steps, and each step
+# needs its own animation.
+#
+# The ceiling has to let `MAX_SCENE_SECONDS` be reachable, or the two rules
+# contradict each other: at twenty-four scenes a four-minute lesson cannot hold
+# a shot under ten seconds, and every plan arrives warned for a pace the budget
+# forbids. Forty is 240 divided by 6. It is not permission for sixty cards —
+# the pace rule is what keeps the beats honest now, and a scene still has to
+# earn its own animation.
+MAX_LESSON_SCENES = 40
+
+# Nobody watches a shot longer than this without deciding the piece is slow.
+# Above it the scene is two scenes: cut it where the voice changes subject.
+MAX_SCENE_SECONDS = 6.0
 
 PRODUCT_REVEAL_DEADLINE_SECONDS = 3.0
 STORY_PRODUCT_REVEAL_DEADLINE_SECONDS = 10.0
+LESSON_PRODUCT_REVEAL_DEADLINE_SECONDS = 25.0
 
 
 def is_story(target: int) -> bool:
-    return target > SHORT_FORM_SECONDS
+    return SHORT_FORM_SECONDS < target <= STORY_SECONDS
+
+
+def is_lesson(target: int) -> bool:
+    return target > STORY_SECONDS
 
 
 def scene_budget(target: int) -> int:
+    if is_lesson(target):
+        return MAX_LESSON_SCENES
     return MAX_STORY_SCENES if is_story(target) else MAX_SCENES
 
 
@@ -73,8 +117,12 @@ def product_reveal_deadline(target: int) -> float:
     Three seconds in short form: there is no budget for anything else. A story
     may set its scene first, but ten seconds is the whole allowance — the brand
     block is on screen from frame one either way, so this is about showing the
-    product, not about naming it.
+    product, not about naming it. A lesson teaches before it arrives anywhere,
+    so it gets twenty-five: still a deadline, because a piece that reaches the
+    product in its last ten seconds taught for free and sold nothing.
     """
+    if is_lesson(target):
+        return LESSON_PRODUCT_REVEAL_DEADLINE_SECONDS
     return STORY_PRODUCT_REVEAL_DEADLINE_SECONDS if is_story(target) else PRODUCT_REVEAL_DEADLINE_SECONDS
 
 
@@ -85,7 +133,9 @@ PRODUCT_ASSETS = {
     "sim:fotos-publicacion", "sim:inventario-agente", "sim:enlace-corto",
     "sim:revisar-fotos", "sim:precio-area", "sim:ubicacion-ficha",
     "sim:contacto", "sim:vender", "sim:cero-comision",
-    "sim:ya-estan", "sim:anuncio-en-mapa", "sim:te-contactan", "sim:aents-reveal", "sim:aents-proceso", "sim:aents-servicios", "sim:aents-contacto",
+    "sim:ya-estan", "sim:anuncio-en-mapa", "sim:te-contactan",
+    "sim:donde-queda", "sim:ya-lo-saben", "sim:elige-zona", "sim:aents-reveal", "sim:aents-proceso", "sim:aents-servicios", "sim:aents-contacto",
+    "sim:aents-arquitectura", "sim:aents-automatizacion", "sim:aents-panel", "sim:aents-escala", "sim:aents-cierre",
 }
 
 # From creative-system.md and the "No prometer" section of product-context.md.
@@ -134,6 +184,9 @@ def check_structure(plan: dict[str, Any], target: int) -> list[dict[str, str]]:
     scenes = plan.get("scenes") or []
     if not scenes:
         return [finding("error", "scenes", "El plan no tiene escenas")]
+    audience = text_of(plan, "audience")
+    if audience not in ACTIVE_AUDIENCES:
+        findings.append(finding("error", "audience", f"La audiencia «{audience}» no pertenece a la marca activa: {sorted(ACTIVE_AUDIENCES)}"))
     if scenes[0].get("purpose") != "gancho":
         findings.append(finding("error", "hook_first", f"La primera escena es '{scenes[0].get('purpose')}', debe ser 'gancho'"))
     if scenes[-1].get("purpose") != "cta":
@@ -144,6 +197,57 @@ def check_structure(plan: dict[str, Any], target: int) -> list[dict[str, str]]:
     budget = scene_budget(target)
     if len(scenes) > budget:
         findings.append(finding("error", "scene_count", f"Hay {len(scenes)} escenas; máximo {budget} para un video de {target} s"))
+    for index, scene in enumerate(scenes, 1):
+        duration = float(scene.get("duration") or 0)
+        if duration > MAX_SCENE_SECONDS:
+            findings.append(finding(
+                "warning",
+                "scene_pace",
+                f"Escena {index}: {duration:.0f} s en una sola toma; por encima de {MAX_SCENE_SECONDS:.0f} s "
+                f"córtala donde la voz cambia de idea. Una animación continúa entre escenas, así que dividirla no la interrumpe",
+            ))
+    return findings
+
+
+def check_final_voice_pace(plan: dict[str, Any]) -> list[dict[str, str]]:
+    """A plan that fits the draft voice may not fit the one that ships.
+
+    The linter runs against drafts, and drafts are read by the free local voice.
+    The paid narrators read slower — measured, not assumed — so a script written
+    to the draft grows when the master is finally bought. `aents-001` was planned
+    at 64.5 seconds, came out at 83.2, put six of its fourteen scenes past the
+    six-second ceiling and diluted its own opening below the density gate. The
+    voice was already paid for by then, and a paid voice cannot be changed.
+
+    So the plan is measured twice, and the second measurement is the one that
+    matters: it describes the piece a person will actually watch.
+    """
+    scenes = plan.get("scenes") or []
+    if not scenes:
+        return []
+    final = tts.build(tts.profile_catalog()["defaults"]["final"])
+    findings = []
+    long_scenes = [
+        index
+        for index, scene in enumerate(scenes, 1)
+        if voice.estimate_seconds(text_of(scene, "voice"), final) + 0.45 > MAX_SCENE_SECONDS
+    ]
+    if long_scenes:
+        findings.append(finding(
+            "warning",
+            "final_voice_pace",
+            f"Con la voz final, las escenas {long_scenes} pasan de {MAX_SCENE_SECONDS:.0f} s. "
+            f"La voz de pago lee más lento que el borrador y no se puede cambiar una vez comprada: "
+            f"acorta el texto ahora, no después",
+        ))
+    spoken = sum(voice.estimate_seconds(text_of(scene, "voice"), final) for scene in scenes)
+    total = round(spoken + len(scenes) * 0.45, 1)
+    findings.append(finding(
+        "info",
+        "final_voice_duration",
+        f"Con la voz final la pieza duraría unos {total} s (borrador: "
+        f"{round(sum(voice.estimate_seconds(text_of(scene, 'voice')) for scene in scenes) + len(scenes) * 0.45, 1)} s)",
+    ))
     return findings
 
 
@@ -160,7 +264,7 @@ def check_product_reveal(plan: dict[str, Any], target: int) -> list[dict[str, st
     the format, not a mistake, so only the deadline is lifted: the piece must
     still arrive at the product before it ends.
     """
-    if text_of(plan, "audience") != "comprador":
+    if text_of(plan, "audience") not in REVEAL_AUDIENCES:
         return []
     teaching = text_of(plan, "pillar") == EDUCATION_PILLAR
     deadline = float("inf") if teaching else product_reveal_deadline(target)
@@ -241,16 +345,6 @@ def check_voice_profile(plan: dict[str, Any]) -> list[dict[str, str]]:
             f"La voz «{name}» es de pago: los borradores la rechazan y solo un máster final puede usarla",
         )]
     return []
-
-
-def check_duration(plan: dict[str, Any], target: int) -> list[dict[str, str]]:
-    estimated = sum(voice.estimate_seconds(text_of(scene, "voice")) for scene in plan.get("scenes") or [])
-    findings = []
-    if estimated > target * 1.2:
-        findings.append(finding("error", "duration", f"La locución estimada dura {estimated:.1f} s frente a {target} s pedidos; acorta el guion"))
-    elif estimated < target * 0.6:
-        findings.append(finding("warning", "duration", f"La locución estimada dura solo {estimated:.1f} s frente a {target} s pedidos"))
-    return findings
 
 
 def check_claims(plan: dict[str, Any]) -> list[dict[str, str]]:
@@ -366,6 +460,12 @@ def check_assets(plan: dict[str, Any], directory: Path) -> list[dict[str, str]]:
                     "animation_missing",
                     f"Escena {index}: la animación {name} fue propuesta pero todavía no está implementada y registrada",
                 ))
+            elif ACTIVE_SIMULATIONS and name not in ACTIVE_SIMULATIONS:
+                findings.append(finding(
+                    "error",
+                    "animation_brand",
+                    f"Escena {index}: la animación {name} no pertenece a la marca activa",
+                ))
             continue
         if not (directory / "assets/input" / name).is_file():
             findings.append(finding("error", "asset_missing", f"Escena {index}: el recurso {name} no existe en assets/input"))
@@ -377,6 +477,62 @@ def check_assets(plan: dict[str, Any], directory: Path) -> list[dict[str, str]]:
                 f"que nombre «{Path(name).stem}» y deje constancia de la autorización del anunciante",
             ))
     return findings
+
+
+# Pieces planned before the hook rule existed. Their masters are frozen or their
+# plans predate `renderer.HERO_STAGINGS`, so the gate below would fail work that
+# is already done instead of the work it was written for. Nothing gets added to
+# this list: a piece that needs an opening builds one.
+HERO_EXEMPT = frozenset(
+    [f"geo-{number:03}" for number in range(1, 15)]
+    + [f"aents-{number:03}" for number in range(2, 9)]
+)
+
+
+def check_hero_scene(plan: dict[str, Any], catalog: dict[str, Any], identifier: str) -> list[dict[str, str]]:
+    """The opening scene is held to a standard the others are not.
+
+    Every viewer sees it, the feed freezes on it, and in a piece that sells the
+    building of software it is the sample of work: a hook that reads as a slide
+    has answered the only question the viewer was asking. So it is built on the
+    hero stage — camera, depth planes, light, interface rules — and the plan may
+    not name anything else in its first scene.
+
+    The second half of this check exists because of what a shared kit does when
+    nobody is watching. It raises the floor and then flattens every piece into
+    the same shot, which is its own kind of cheap. The staging is therefore part
+    of what a hook declares, and it may not repeat the one before it.
+    """
+    if identifier in HERO_EXEMPT:
+        return []
+    scenes = plan.get("scenes") or []
+    if not scenes:
+        return []
+    import renderer
+
+    asset = text_of(scenes[0], "asset")
+    staging = renderer.HERO_STAGINGS.get(asset)
+    if staging is None:
+        return [finding(
+            "error",
+            "hero_missing",
+            f"La escena 1 usa «{asset or 'ninguna animación'}», que no es una animación de gancho. "
+            f"Una apertura se construye sobre hero-stage.tsx y se registra en renderer.HERO_STAGINGS: "
+            f"{sorted(renderer.HERO_STAGINGS)}",
+        )]
+    previous = [
+        item for item in catalog.get("videos", [])
+        if item.get("id") != identifier and item.get("hero_staging")
+    ]
+    if previous and previous[-1]["hero_staging"] == staging:
+        return [finding(
+            "error",
+            "hero_staging_repeats",
+            f"El gancho se rueda «{staging}», igual que {previous[-1]['id']}. "
+            f"Dos aperturas seguidas con la misma puesta en escena convierten el kit en una plantilla; "
+            f"elige otro movimiento de HERO_MOVES y regístralo",
+        )]
+    return []
 
 
 def check_repetition(plan: dict[str, Any], catalog: dict[str, Any], identifier: str) -> list[dict[str, str]]:
@@ -407,21 +563,23 @@ def lint(plan: dict[str, Any], directory: Path, target: int, catalog: dict[str, 
     findings: list[dict[str, str]] = []
     findings += check_structure(plan, target)
     findings += check_product_reveal(plan, target)
+    findings += check_final_voice_pace(plan)
     findings += check_headlines(plan)
     findings += check_voice(plan)
     findings += check_voice_profile(plan)
-    findings += check_duration(plan, target)
     findings += check_claims(plan)
     findings += check_cta(plan)
     findings += check_message_duplication(plan)
     findings += check_assets(plan, directory)
     findings += check_cover_art(plan)
+    findings += check_hero_scene(plan, catalog, identifier)
     findings += check_repetition(plan, catalog, identifier)
     errors = [item for item in findings if item["level"] == "error"]
+    warnings = [item for item in findings if item["level"] == "warning"]
     return {
         "passed": not errors,
         "errors": len(errors),
-        "warnings": len(findings) - len(errors),
+        "warnings": len(warnings),
         "findings": findings,
         "estimated_seconds": round(sum(voice.estimate_seconds(text_of(scene, "voice")) for scene in plan.get("scenes") or []), 1),
         "target_seconds": target,

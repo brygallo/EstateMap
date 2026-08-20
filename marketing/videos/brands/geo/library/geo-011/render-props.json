@@ -1,0 +1,496 @@
+{
+  "brandId": "geo",
+  "brandName": "Geo Propiedades Ecuador",
+  "brandTagline": "Un producto de Aents",
+  "brandSymbol": "brand/aents-symbol-negative.png",
+  "title": "Tres revisiones antes de decidir",
+  "coverText": "Revisa estas 3 cosas",
+  "cta": "Encuentra tu futuro hogar",
+  "url": "geopropiedadesecuador.com",
+  "brandTile": "brand/aents-brand-tile-1024.png",
+  "kicker": null,
+  "musicFile": null,
+  "showSafeAreas": false,
+  "scenes": [
+    {
+      "purpose": "gancho",
+      "durationInFrames": 102,
+      "headline": "La foto no basta",
+      "captions": [
+        {
+          "text": "¿Te gustó una propiedad?",
+          "start": 0.0,
+          "end": 1.287,
+          "words": [
+            {
+              "text": "¿Te",
+              "start": 0.0,
+              "end": 0.168
+            },
+            {
+              "text": "gustó",
+              "start": 0.168,
+              "end": 0.504
+            },
+            {
+              "text": "una",
+              "start": 0.504,
+              "end": 0.727
+            },
+            {
+              "text": "propiedad?",
+              "start": 0.727,
+              "end": 1.287
+            }
+          ]
+        },
+        {
+          "text": "No decidas solo por las fotos.",
+          "start": 1.287,
+          "end": 2.966,
+          "words": [
+            {
+              "text": "No",
+              "start": 0.0,
+              "end": 0.168
+            },
+            {
+              "text": "decidas",
+              "start": 0.168,
+              "end": 0.616
+            },
+            {
+              "text": "solo",
+              "start": 0.616,
+              "end": 0.895
+            },
+            {
+              "text": "por",
+              "start": 0.895,
+              "end": 1.119
+            },
+            {
+              "text": "las",
+              "start": 1.119,
+              "end": 1.343
+            },
+            {
+              "text": "fotos.",
+              "start": 1.343,
+              "end": 1.679
+            }
+          ]
+        }
+      ],
+      "visualDirection": "La ficha entra completa. El carrusel avanza hasta la cuarta foto y queda estable para mostrar que mirar fotos es apenas el comienzo.",
+      "transition": "cut",
+      "asset": "sim:ficha",
+      "assetType": "simulation",
+      "photo": null,
+      "voiceFile": "jobs/geo-011/audio/voice-01.mp3",
+      "assetStartInFrames": 0,
+      "assetTotalInFrames": 102,
+      "accent": "#22C55E"
+    },
+    {
+      "purpose": "prueba",
+      "durationInFrames": 147,
+      "headline": "1. Revisa ubicación",
+      "captions": [
+        {
+          "text": "Primero, revisa dónde queda",
+          "start": 0.0,
+          "end": 1.743,
+          "words": [
+            {
+              "text": "Primero,",
+              "start": 0.0,
+              "end": 0.516
+            },
+            {
+              "text": "revisa",
+              "start": 0.516,
+              "end": 0.968
+            },
+            {
+              "text": "dónde",
+              "start": 0.968,
+              "end": 1.355
+            },
+            {
+              "text": "queda",
+              "start": 1.355,
+              "end": 1.743
+            }
+          ]
+        },
+        {
+          "text": "y si la ubicación encaja",
+          "start": 1.743,
+          "end": 3.356,
+          "words": [
+            {
+              "text": "y",
+              "start": 0.0,
+              "end": 0.129
+            },
+            {
+              "text": "si",
+              "start": 0.129,
+              "end": 0.323
+            },
+            {
+              "text": "la",
+              "start": 0.323,
+              "end": 0.516
+            },
+            {
+              "text": "ubicación",
+              "start": 0.516,
+              "end": 1.162
+            },
+            {
+              "text": "encaja",
+              "start": 1.162,
+              "end": 1.614
+            }
+          ]
+        },
+        {
+          "text": "con tu día a día.",
+          "start": 3.356,
+          "end": 4.453,
+          "words": [
+            {
+              "text": "con",
+              "start": 0.0,
+              "end": 0.258
+            },
+            {
+              "text": "tu",
+              "start": 0.258,
+              "end": 0.452
+            },
+            {
+              "text": "día",
+              "start": 0.452,
+              "end": 0.71
+            },
+            {
+              "text": "a",
+              "start": 0.71,
+              "end": 0.839
+            },
+            {
+              "text": "día.",
+              "start": 0.839,
+              "end": 1.097
+            }
+          ]
+        }
+      ],
+      "visualDirection": "El mapa recorre ciudad, zona y pines, y termina asentado en la ubicación pública. No aparecen juicios ni sellos de aprobación sobre la zona.",
+      "transition": "cut",
+      "asset": "sim:mapa",
+      "assetType": "simulation",
+      "photo": null,
+      "voiceFile": "jobs/geo-011/audio/voice-02.mp3",
+      "assetStartInFrames": 0,
+      "assetTotalInFrames": 147,
+      "accent": "#6B5CF6"
+    },
+    {
+      "purpose": "prueba",
+      "durationInFrames": 137,
+      "headline": "2. Revisa documentos",
+      "captions": [
+        {
+          "text": "Segundo, pide a un profesional",
+          "start": 0.0,
+          "end": 1.907,
+          "words": [
+            {
+              "text": "Segundo,",
+              "start": 0.0,
+              "end": 0.508
+            },
+            {
+              "text": "pide",
+              "start": 0.508,
+              "end": 0.826
+            },
+            {
+              "text": "a",
+              "start": 0.826,
+              "end": 0.953
+            },
+            {
+              "text": "un",
+              "start": 0.953,
+              "end": 1.144
+            },
+            {
+              "text": "profesional",
+              "start": 1.144,
+              "end": 1.907
+            }
+          ]
+        },
+        {
+          "text": "que revise escrituras",
+          "start": 1.907,
+          "end": 3.305,
+          "words": [
+            {
+              "text": "que",
+              "start": 0.0,
+              "end": 0.254
+            },
+            {
+              "text": "revise",
+              "start": 0.254,
+              "end": 0.699
+            },
+            {
+              "text": "escrituras",
+              "start": 0.699,
+              "end": 1.398
+            }
+          ]
+        },
+        {
+          "text": "y gravámenes.",
+          "start": 3.305,
+          "end": 4.131,
+          "words": [
+            {
+              "text": "y",
+              "start": 0.0,
+              "end": 0.127
+            },
+            {
+              "text": "gravámenes.",
+              "start": 0.127,
+              "end": 0.826
+            }
+          ]
+        }
+      ],
+      "visualDirection": "Los documentos se leen línea por línea. La animación no añade un sello de aprobación automática y deja clara la revisión profesional.",
+      "transition": "cut",
+      "asset": "sim:gravamenes",
+      "assetType": "simulation",
+      "photo": null,
+      "voiceFile": "jobs/geo-011/audio/voice-03.mp3",
+      "assetStartInFrames": 0,
+      "assetTotalInFrames": 137,
+      "accent": "#14B8A6"
+    },
+    {
+      "purpose": "resultado",
+      "durationInFrames": 125,
+      "headline": "3. Confirma medidas",
+      "captions": [
+        {
+          "text": "Tercero, confirma las medidas",
+          "start": 0.0,
+          "end": 1.679,
+          "words": [
+            {
+              "text": "Tercero,",
+              "start": 0.0,
+              "end": 0.463
+            },
+            {
+              "text": "confirma",
+              "start": 0.463,
+              "end": 0.984
+            },
+            {
+              "text": "las",
+              "start": 0.984,
+              "end": 1.216
+            },
+            {
+              "text": "medidas",
+              "start": 1.216,
+              "end": 1.679
+            }
+          ]
+        },
+        {
+          "text": "con el profesional correspondiente.",
+          "start": 1.679,
+          "end": 3.705,
+          "words": [
+            {
+              "text": "con",
+              "start": 0.0,
+              "end": 0.232
+            },
+            {
+              "text": "el",
+              "start": 0.232,
+              "end": 0.405
+            },
+            {
+              "text": "profesional",
+              "start": 0.405,
+              "end": 1.1
+            },
+            {
+              "text": "correspondiente.",
+              "start": 1.1,
+              "end": 2.026
+            }
+          ]
+        }
+      ],
+      "visualDirection": "La ficha muestra la Forma del terreno y la ubicación declarada como datos que deben confirmarse, sin atribuir precisión topográfica.",
+      "transition": "cut",
+      "asset": "sim:ubicacion-ficha",
+      "assetType": "simulation",
+      "photo": null,
+      "voiceFile": "jobs/geo-011/audio/voice-04.mp3",
+      "assetStartInFrames": 0,
+      "assetTotalInFrames": 125,
+      "accent": "#A78BFA"
+    },
+    {
+      "purpose": "cta",
+      "durationInFrames": 244,
+      "headline": "Compara antes",
+      "captions": [
+        {
+          "text": "En Geo Propiedades Ecuador",
+          "start": 0.0,
+          "end": 1.816,
+          "words": [
+            {
+              "text": "En",
+              "start": 0.0,
+              "end": 0.202
+            },
+            {
+              "text": "Geo",
+              "start": 0.202,
+              "end": 0.471
+            },
+            {
+              "text": "Propiedades",
+              "start": 0.471,
+              "end": 1.278
+            },
+            {
+              "text": "Ecuador",
+              "start": 1.278,
+              "end": 1.816
+            }
+          ]
+        },
+        {
+          "text": "comparas fotos,",
+          "start": 1.816,
+          "end": 2.825,
+          "words": [
+            {
+              "text": "comparas",
+              "start": 0.0,
+              "end": 0.605
+            },
+            {
+              "text": "fotos,",
+              "start": 0.605,
+              "end": 1.009
+            }
+          ]
+        },
+        {
+          "text": "precio y ubicación pública antes",
+          "start": 2.825,
+          "end": 5.044,
+          "words": [
+            {
+              "text": "precio",
+              "start": 0.0,
+              "end": 0.471
+            },
+            {
+              "text": "y",
+              "start": 0.471,
+              "end": 0.605
+            },
+            {
+              "text": "ubicación",
+              "start": 0.605,
+              "end": 1.278
+            },
+            {
+              "text": "pública",
+              "start": 1.278,
+              "end": 1.816
+            },
+            {
+              "text": "antes",
+              "start": 1.816,
+              "end": 2.219
+            }
+          ]
+        },
+        {
+          "text": "de contactar.",
+          "start": 5.044,
+          "end": 5.918,
+          "words": [
+            {
+              "text": "de",
+              "start": 0.0,
+              "end": 0.202
+            },
+            {
+              "text": "contactar.",
+              "start": 0.202,
+              "end": 0.874
+            }
+          ]
+        },
+        {
+          "text": "Encuentra tu futuro hogar.",
+          "start": 5.918,
+          "end": 7.667,
+          "words": [
+            {
+              "text": "Encuentra",
+              "start": 0.0,
+              "end": 0.673
+            },
+            {
+              "text": "tu",
+              "start": 0.673,
+              "end": 0.874
+            },
+            {
+              "text": "futuro",
+              "start": 0.874,
+              "end": 1.345
+            },
+            {
+              "text": "hogar.",
+              "start": 1.345,
+              "end": 1.749
+            }
+          ]
+        }
+      ],
+      "visualDirection": "Cierre global aprobado con tile, dominio, CTA y firma de Aents. Entrada suave y estado final quieto para lectura.",
+      "transition": "fade",
+      "asset": null,
+      "assetType": null,
+      "photo": null,
+      "voiceFile": "jobs/geo-011/audio/voice-05.mp3",
+      "assetStartInFrames": 0,
+      "assetTotalInFrames": 244,
+      "accent": "#22C55E"
+    }
+  ]
+}

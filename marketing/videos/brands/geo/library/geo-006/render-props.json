@@ -1,0 +1,2036 @@
+{
+  "brandId": "geo",
+  "brandName": "Geo Propiedades Ecuador",
+  "brandTagline": "Un producto de Aents",
+  "brandSymbol": "brand/aents-symbol-negative.png",
+  "title": "Cómo nació Geo Propiedades Ecuador",
+  "coverText": "Quería un terreno",
+  "cta": "Encuentra tu futuro hogar",
+  "url": "geopropiedadesecuador.com",
+  "brandTile": "brand/aents-brand-tile-1024.png",
+  "kicker": null,
+  "musicFile": null,
+  "showSafeAreas": false,
+  "scenes": [
+    {
+      "purpose": "gancho",
+      "durationInFrames": 113,
+      "headline": "Nadie decía dónde",
+      "captions": [
+        {
+          "text": "Quería comprar un terreno",
+          "start": 0.0,
+          "end": 1.509,
+          "words": [
+            {
+              "text": "Quería",
+              "start": 0.0,
+              "end": 0.406
+            },
+            {
+              "text": "comprar",
+              "start": 0.406,
+              "end": 0.871
+            },
+            {
+              "text": "un",
+              "start": 0.871,
+              "end": 1.045
+            },
+            {
+              "text": "terreno",
+              "start": 1.045,
+              "end": 1.509
+            }
+          ]
+        },
+        {
+          "text": "y nadie me decía dónde quedaba.",
+          "start": 1.509,
+          "end": 3.308,
+          "words": [
+            {
+              "text": "y",
+              "start": 0.0,
+              "end": 0.116
+            },
+            {
+              "text": "nadie",
+              "start": 0.116,
+              "end": 0.464
+            },
+            {
+              "text": "me",
+              "start": 0.464,
+              "end": 0.638
+            },
+            {
+              "text": "decía",
+              "start": 0.638,
+              "end": 0.987
+            },
+            {
+              "text": "dónde",
+              "start": 0.987,
+              "end": 1.335
+            },
+            {
+              "text": "quedaba.",
+              "start": 1.335,
+              "end": 1.799
+            }
+          ]
+        }
+      ],
+      "visualDirection": "Arranca ya en movimiento: los anuncios caen en pila, cada uno con su foto y su precio, y el renglón de la ubicación vacío. La cámara desciende con ellos, nunca se congela. Marca superior con dominio y tile desde y=205 dentro del margen lateral de 120 px. Rótulo y subtítulos en una sola columna anclada abajo, con 72 px entre titular y subtítulo.",
+      "transition": "cut",
+      "asset": "sim:anuncios",
+      "assetType": "simulation",
+      "photo": null,
+      "voiceFile": "jobs/geo-006/audio/voice-01.mp3",
+      "assetStartInFrames": 0,
+      "assetTotalInFrames": 377,
+      "accent": "#22C55E"
+    },
+    {
+      "purpose": "problema",
+      "durationInFrames": 264,
+      "headline": "Nunca un lugar",
+      "captions": [
+        {
+          "text": "Busqué en Facebook,",
+          "start": 0.0,
+          "end": 1.584,
+          "words": [
+            {
+              "text": "Busqué",
+              "start": 0.0,
+              "end": 0.584
+            },
+            {
+              "text": "en",
+              "start": 0.584,
+              "end": 0.834
+            },
+            {
+              "text": "Facebook,",
+              "start": 0.834,
+              "end": 1.584
+            }
+          ]
+        },
+        {
+          "text": "en grupos,",
+          "start": 1.584,
+          "end": 2.418,
+          "words": [
+            {
+              "text": "en",
+              "start": 0.0,
+              "end": 0.25
+            },
+            {
+              "text": "grupos,",
+              "start": 0.25,
+              "end": 0.834
+            }
+          ]
+        },
+        {
+          "text": "en páginas sueltas.",
+          "start": 2.418,
+          "end": 4.002,
+          "words": [
+            {
+              "text": "en",
+              "start": 0.0,
+              "end": 0.25
+            },
+            {
+              "text": "páginas",
+              "start": 0.25,
+              "end": 0.917
+            },
+            {
+              "text": "sueltas.",
+              "start": 0.917,
+              "end": 1.584
+            }
+          ]
+        },
+        {
+          "text": "Siempre lo mismo:",
+          "start": 4.002,
+          "end": 5.419,
+          "words": [
+            {
+              "text": "Siempre",
+              "start": 0.0,
+              "end": 0.667
+            },
+            {
+              "text": "lo",
+              "start": 0.667,
+              "end": 0.917
+            },
+            {
+              "text": "mismo:",
+              "start": 0.917,
+              "end": 1.417
+            }
+          ]
+        },
+        {
+          "text": "unas fotos,",
+          "start": 5.419,
+          "end": 6.336,
+          "words": [
+            {
+              "text": "unas",
+              "start": 0.0,
+              "end": 0.417
+            },
+            {
+              "text": "fotos,",
+              "start": 0.417,
+              "end": 0.917
+            }
+          ]
+        },
+        {
+          "text": "un precio y un teléfono.",
+          "start": 6.336,
+          "end": 8.337,
+          "words": [
+            {
+              "text": "un",
+              "start": 0.0,
+              "end": 0.25
+            },
+            {
+              "text": "precio",
+              "start": 0.25,
+              "end": 0.834
+            },
+            {
+              "text": "y",
+              "start": 0.834,
+              "end": 1.0
+            },
+            {
+              "text": "un",
+              "start": 1.0,
+              "end": 1.251
+            },
+            {
+              "text": "teléfono.",
+              "start": 1.251,
+              "end": 2.001
+            }
+          ]
+        }
+      ],
+      "visualDirection": "Continúa la misma toma sin corte de contexto: la pila sigue cayendo y el hueco vacío de la ubicación se repite anuncio tras anuncio hasta volverse el patrón. Los precios y las fotos son ilustrativos y ninguna tarjeta identifica un anuncio real ni una fuente concreta.",
+      "transition": "cut",
+      "asset": "sim:anuncios",
+      "assetType": "simulation",
+      "photo": null,
+      "voiceFile": "jobs/geo-006/audio/voice-02.mp3",
+      "assetStartInFrames": 113,
+      "assetTotalInFrames": 377,
+      "accent": "#6B5CF6"
+    },
+    {
+      "purpose": "problema",
+      "durationInFrames": 542,
+      "headline": "¿Cerca o lejos?",
+      "captions": [
+        {
+          "text": "De la ubicación,",
+          "start": 0.0,
+          "end": 1.247,
+          "words": [
+            {
+              "text": "De",
+              "start": 0.0,
+              "end": 0.234
+            },
+            {
+              "text": "la",
+              "start": 0.234,
+              "end": 0.468
+            },
+            {
+              "text": "ubicación,",
+              "start": 0.468,
+              "end": 1.247
+            }
+          ]
+        },
+        {
+          "text": "ni una palabra.",
+          "start": 1.247,
+          "end": 2.416,
+          "words": [
+            {
+              "text": "ni",
+              "start": 0.0,
+              "end": 0.234
+            },
+            {
+              "text": "una",
+              "start": 0.234,
+              "end": 0.546
+            },
+            {
+              "text": "palabra.",
+              "start": 0.546,
+              "end": 1.169
+            }
+          ]
+        },
+        {
+          "text": "Y la pregunta",
+          "start": 2.416,
+          "end": 3.507,
+          "words": [
+            {
+              "text": "Y",
+              "start": 0.0,
+              "end": 0.156
+            },
+            {
+              "text": "la",
+              "start": 0.156,
+              "end": 0.39
+            },
+            {
+              "text": "pregunta",
+              "start": 0.39,
+              "end": 1.091
+            }
+          ]
+        },
+        {
+          "text": "que nadie me contestaba era",
+          "start": 3.507,
+          "end": 5.689,
+          "words": [
+            {
+              "text": "que",
+              "start": 0.0,
+              "end": 0.312
+            },
+            {
+              "text": "nadie",
+              "start": 0.312,
+              "end": 0.779
+            },
+            {
+              "text": "me",
+              "start": 0.779,
+              "end": 1.013
+            },
+            {
+              "text": "contestaba",
+              "start": 1.013,
+              "end": 1.87
+            },
+            {
+              "text": "era",
+              "start": 1.87,
+              "end": 2.182
+            }
+          ]
+        },
+        {
+          "text": "la más simple de todas:",
+          "start": 5.689,
+          "end": 7.481,
+          "words": [
+            {
+              "text": "la",
+              "start": 0.0,
+              "end": 0.234
+            },
+            {
+              "text": "más",
+              "start": 0.234,
+              "end": 0.546
+            },
+            {
+              "text": "simple",
+              "start": 0.546,
+              "end": 1.091
+            },
+            {
+              "text": "de",
+              "start": 1.091,
+              "end": 1.325
+            },
+            {
+              "text": "todas:",
+              "start": 1.325,
+              "end": 1.792
+            }
+          ]
+        },
+        {
+          "text": "¿esto queda cerca",
+          "start": 7.481,
+          "end": 8.806,
+          "words": [
+            {
+              "text": "¿esto",
+              "start": 0.0,
+              "end": 0.39
+            },
+            {
+              "text": "queda",
+              "start": 0.39,
+              "end": 0.857
+            },
+            {
+              "text": "cerca",
+              "start": 0.857,
+              "end": 1.325
+            }
+          ]
+        },
+        {
+          "text": "o lejos de mi vida?",
+          "start": 8.806,
+          "end": 10.287,
+          "words": [
+            {
+              "text": "o",
+              "start": 0.0,
+              "end": 0.156
+            },
+            {
+              "text": "lejos",
+              "start": 0.156,
+              "end": 0.623
+            },
+            {
+              "text": "de",
+              "start": 0.623,
+              "end": 0.857
+            },
+            {
+              "text": "mi",
+              "start": 0.857,
+              "end": 1.091
+            },
+            {
+              "text": "vida?",
+              "start": 1.091,
+              "end": 1.481
+            }
+          ]
+        },
+        {
+          "text": "Del trabajo,",
+          "start": 10.287,
+          "end": 11.222,
+          "words": [
+            {
+              "text": "Del",
+              "start": 0.0,
+              "end": 0.312
+            },
+            {
+              "text": "trabajo,",
+              "start": 0.312,
+              "end": 0.935
+            }
+          ]
+        },
+        {
+          "text": "de la escuela,",
+          "start": 11.222,
+          "end": 12.313,
+          "words": [
+            {
+              "text": "de",
+              "start": 0.0,
+              "end": 0.234
+            },
+            {
+              "text": "la",
+              "start": 0.234,
+              "end": 0.468
+            },
+            {
+              "text": "escuela,",
+              "start": 0.468,
+              "end": 1.091
+            }
+          ]
+        },
+        {
+          "text": "de mi familia.",
+          "start": 12.313,
+          "end": 13.404,
+          "words": [
+            {
+              "text": "de",
+              "start": 0.0,
+              "end": 0.234
+            },
+            {
+              "text": "mi",
+              "start": 0.234,
+              "end": 0.468
+            },
+            {
+              "text": "familia.",
+              "start": 0.468,
+              "end": 1.091
+            }
+          ]
+        },
+        {
+          "text": "Y ahí se me ocurrió algo:",
+          "start": 13.404,
+          "end": 15.352,
+          "words": [
+            {
+              "text": "Y",
+              "start": 0.0,
+              "end": 0.156
+            },
+            {
+              "text": "ahí",
+              "start": 0.156,
+              "end": 0.468
+            },
+            {
+              "text": "se",
+              "start": 0.468,
+              "end": 0.701
+            },
+            {
+              "text": "me",
+              "start": 0.701,
+              "end": 0.935
+            },
+            {
+              "text": "ocurrió",
+              "start": 0.935,
+              "end": 1.559
+            },
+            {
+              "text": "algo:",
+              "start": 1.559,
+              "end": 1.948
+            }
+          ]
+        },
+        {
+          "text": "ponerlas todas sobre un mapa.",
+          "start": 15.352,
+          "end": 17.612,
+          "words": [
+            {
+              "text": "ponerlas",
+              "start": 0.0,
+              "end": 0.701
+            },
+            {
+              "text": "todas",
+              "start": 0.701,
+              "end": 1.169
+            },
+            {
+              "text": "sobre",
+              "start": 1.169,
+              "end": 1.637
+            },
+            {
+              "text": "un",
+              "start": 1.637,
+              "end": 1.87
+            },
+            {
+              "text": "mapa.",
+              "start": 1.87,
+              "end": 2.26
+            }
+          ]
+        }
+      ],
+      "visualDirection": "La idea toma forma en pantalla mientras la voz cierra la queja y la convierte en pregunta: del mapa del país se baja de forma continua hasta una zona, las burbujas de ciudad se abren en barrios y los barrios en casas con su precio. El movimiento se resuelve justo cuando la voz nombra el mapa. Sin calles ni nombres reales legibles: es una recreación ilustrativa, no una captura.",
+      "transition": "cut",
+      "asset": "sim:mapa",
+      "assetType": "simulation",
+      "photo": null,
+      "voiceFile": "jobs/geo-006/audio/voice-03.mp3",
+      "assetStartInFrames": 0,
+      "assetTotalInFrames": 542,
+      "accent": "#14B8A6"
+    },
+    {
+      "purpose": "prueba",
+      "durationInFrames": 439,
+      "headline": "Baja a tu zona",
+      "captions": [
+        {
+          "text": "Así nació Geo Propiedades Ecuador.",
+          "start": 0.0,
+          "end": 2.634,
+          "words": [
+            {
+              "text": "Así",
+              "start": 0.0,
+              "end": 0.31
+            },
+            {
+              "text": "nació",
+              "start": 0.31,
+              "end": 0.775
+            },
+            {
+              "text": "Geo",
+              "start": 0.775,
+              "end": 1.085
+            },
+            {
+              "text": "Propiedades",
+              "start": 1.085,
+              "end": 2.015
+            },
+            {
+              "text": "Ecuador.",
+              "start": 2.015,
+              "end": 2.634
+            }
+          ]
+        },
+        {
+          "text": "Bajas a la zona que conoces,",
+          "start": 2.634,
+          "end": 4.804,
+          "words": [
+            {
+              "text": "Bajas",
+              "start": 0.0,
+              "end": 0.465
+            },
+            {
+              "text": "a",
+              "start": 0.465,
+              "end": 0.62
+            },
+            {
+              "text": "la",
+              "start": 0.62,
+              "end": 0.852
+            },
+            {
+              "text": "zona",
+              "start": 0.852,
+              "end": 1.24
+            },
+            {
+              "text": "que",
+              "start": 1.24,
+              "end": 1.55
+            },
+            {
+              "text": "conoces,",
+              "start": 1.55,
+              "end": 2.17
+            }
+          ]
+        },
+        {
+          "text": "esa que recorres caminando,",
+          "start": 4.804,
+          "end": 6.896,
+          "words": [
+            {
+              "text": "esa",
+              "start": 0.0,
+              "end": 0.31
+            },
+            {
+              "text": "que",
+              "start": 0.31,
+              "end": 0.62
+            },
+            {
+              "text": "recorres",
+              "start": 0.62,
+              "end": 1.317
+            },
+            {
+              "text": "caminando,",
+              "start": 1.317,
+              "end": 2.092
+            }
+          ]
+        },
+        {
+          "text": "y ves lo que hay",
+          "start": 6.896,
+          "end": 8.213,
+          "words": [
+            {
+              "text": "y",
+              "start": 0.0,
+              "end": 0.155
+            },
+            {
+              "text": "ves",
+              "start": 0.155,
+              "end": 0.465
+            },
+            {
+              "text": "lo",
+              "start": 0.465,
+              "end": 0.697
+            },
+            {
+              "text": "que",
+              "start": 0.697,
+              "end": 1.007
+            },
+            {
+              "text": "hay",
+              "start": 1.007,
+              "end": 1.317
+            }
+          ]
+        },
+        {
+          "text": "a tu alrededor:",
+          "start": 8.213,
+          "end": 9.375,
+          "words": [
+            {
+              "text": "a",
+              "start": 0.0,
+              "end": 0.155
+            },
+            {
+              "text": "tu",
+              "start": 0.155,
+              "end": 0.387
+            },
+            {
+              "text": "alrededor:",
+              "start": 0.387,
+              "end": 1.162
+            }
+          ]
+        },
+        {
+          "text": "cada propiedad con su precio,",
+          "start": 9.375,
+          "end": 11.622,
+          "words": [
+            {
+              "text": "cada",
+              "start": 0.0,
+              "end": 0.387
+            },
+            {
+              "text": "propiedad",
+              "start": 0.387,
+              "end": 1.162
+            },
+            {
+              "text": "con",
+              "start": 1.162,
+              "end": 1.472
+            },
+            {
+              "text": "su",
+              "start": 1.472,
+              "end": 1.705
+            },
+            {
+              "text": "precio,",
+              "start": 1.705,
+              "end": 2.247
+            }
+          ]
+        },
+        {
+          "text": "en el lugar",
+          "start": 11.622,
+          "end": 12.552,
+          "words": [
+            {
+              "text": "en",
+              "start": 0.0,
+              "end": 0.232
+            },
+            {
+              "text": "el",
+              "start": 0.232,
+              "end": 0.465
+            },
+            {
+              "text": "lugar",
+              "start": 0.465,
+              "end": 0.93
+            }
+          ]
+        },
+        {
+          "text": "donde de verdad está.",
+          "start": 12.552,
+          "end": 14.179,
+          "words": [
+            {
+              "text": "donde",
+              "start": 0.0,
+              "end": 0.465
+            },
+            {
+              "text": "de",
+              "start": 0.465,
+              "end": 0.697
+            },
+            {
+              "text": "verdad",
+              "start": 0.697,
+              "end": 1.24
+            },
+            {
+              "text": "está.",
+              "start": 1.24,
+              "end": 1.627
+            }
+          ]
+        }
+      ],
+      "visualDirection": "Se abre una zona: primero el agrupado y después los pines de cada casa con su precio, apareciendo alrededor del centro del cuadro mientras la cámara sigue avanzando. Los valores son genéricos e ilustrativos. La marca se nombra en la voz mientras el producto ya está funcionando en pantalla.",
+      "transition": "cut",
+      "asset": "sim:zona",
+      "assetType": "simulation",
+      "photo": null,
+      "voiceFile": "jobs/geo-006/audio/voice-04.mp3",
+      "assetStartInFrames": 0,
+      "assetTotalInFrames": 439,
+      "accent": "#A78BFA"
+    },
+    {
+      "purpose": "prueba",
+      "durationInFrames": 416,
+      "headline": "Forma del terreno",
+      "captions": [
+        {
+          "text": "Y no siempre es un punto.",
+          "start": 0.0,
+          "end": 1.73,
+          "words": [
+            {
+              "text": "Y",
+              "start": 0.0,
+              "end": 0.138
+            },
+            {
+              "text": "no",
+              "start": 0.138,
+              "end": 0.346
+            },
+            {
+              "text": "siempre",
+              "start": 0.346,
+              "end": 0.9
+            },
+            {
+              "text": "es",
+              "start": 0.9,
+              "end": 1.107
+            },
+            {
+              "text": "un",
+              "start": 1.107,
+              "end": 1.315
+            },
+            {
+              "text": "punto.",
+              "start": 1.315,
+              "end": 1.73
+            }
+          ]
+        },
+        {
+          "text": "Cuando quien publica dibuja",
+          "start": 1.73,
+          "end": 3.667,
+          "words": [
+            {
+              "text": "Cuando",
+              "start": 0.0,
+              "end": 0.484
+            },
+            {
+              "text": "quien",
+              "start": 0.484,
+              "end": 0.9
+            },
+            {
+              "text": "publica",
+              "start": 0.9,
+              "end": 1.453
+            },
+            {
+              "text": "dibuja",
+              "start": 1.453,
+              "end": 1.937
+            }
+          ]
+        },
+        {
+          "text": "el terreno,",
+          "start": 3.667,
+          "end": 4.428,
+          "words": [
+            {
+              "text": "el",
+              "start": 0.0,
+              "end": 0.208
+            },
+            {
+              "text": "terreno,",
+              "start": 0.208,
+              "end": 0.761
+            }
+          ]
+        },
+        {
+          "text": "ves su forma sobre el mapa:",
+          "start": 4.428,
+          "end": 6.297,
+          "words": [
+            {
+              "text": "ves",
+              "start": 0.0,
+              "end": 0.277
+            },
+            {
+              "text": "su",
+              "start": 0.277,
+              "end": 0.484
+            },
+            {
+              "text": "forma",
+              "start": 0.484,
+              "end": 0.9
+            },
+            {
+              "text": "sobre",
+              "start": 0.9,
+              "end": 1.315
+            },
+            {
+              "text": "el",
+              "start": 1.315,
+              "end": 1.522
+            },
+            {
+              "text": "mapa:",
+              "start": 1.522,
+              "end": 1.868
+            }
+          ]
+        },
+        {
+          "text": "hasta dónde llega",
+          "start": 6.297,
+          "end": 7.542,
+          "words": [
+            {
+              "text": "hasta",
+              "start": 0.0,
+              "end": 0.415
+            },
+            {
+              "text": "dónde",
+              "start": 0.415,
+              "end": 0.83
+            },
+            {
+              "text": "llega",
+              "start": 0.83,
+              "end": 1.245
+            }
+          ]
+        },
+        {
+          "text": "y con qué está pegado.",
+          "start": 7.542,
+          "end": 9.064,
+          "words": [
+            {
+              "text": "y",
+              "start": 0.0,
+              "end": 0.138
+            },
+            {
+              "text": "con",
+              "start": 0.138,
+              "end": 0.415
+            },
+            {
+              "text": "qué",
+              "start": 0.415,
+              "end": 0.692
+            },
+            {
+              "text": "está",
+              "start": 0.692,
+              "end": 1.038
+            },
+            {
+              "text": "pegado.",
+              "start": 1.038,
+              "end": 1.522
+            }
+          ]
+        },
+        {
+          "text": "No es un plano legal",
+          "start": 9.064,
+          "end": 10.517,
+          "words": [
+            {
+              "text": "No",
+              "start": 0.0,
+              "end": 0.208
+            },
+            {
+              "text": "es",
+              "start": 0.208,
+              "end": 0.415
+            },
+            {
+              "text": "un",
+              "start": 0.415,
+              "end": 0.623
+            },
+            {
+              "text": "plano",
+              "start": 0.623,
+              "end": 1.038
+            },
+            {
+              "text": "legal",
+              "start": 1.038,
+              "end": 1.453
+            }
+          ]
+        },
+        {
+          "text": "ni una medición,",
+          "start": 10.517,
+          "end": 11.624,
+          "words": [
+            {
+              "text": "ni",
+              "start": 0.0,
+              "end": 0.208
+            },
+            {
+              "text": "una",
+              "start": 0.208,
+              "end": 0.484
+            },
+            {
+              "text": "medición,",
+              "start": 0.484,
+              "end": 1.107
+            }
+          ]
+        },
+        {
+          "text": "pero ya te haces una idea.",
+          "start": 11.624,
+          "end": 13.423,
+          "words": [
+            {
+              "text": "pero",
+              "start": 0.0,
+              "end": 0.346
+            },
+            {
+              "text": "ya",
+              "start": 0.346,
+              "end": 0.554
+            },
+            {
+              "text": "te",
+              "start": 0.554,
+              "end": 0.761
+            },
+            {
+              "text": "haces",
+              "start": 0.761,
+              "end": 1.176
+            },
+            {
+              "text": "una",
+              "start": 1.176,
+              "end": 1.453
+            },
+            {
+              "text": "idea.",
+              "start": 1.453,
+              "end": 1.799
+            }
+          ]
+        }
+      ],
+      "visualDirection": "El punto de la propiedad da paso al polígono de la Forma del terreno, que se dibuja sobre el mapa con la etiqueta escrita tal cual aparece en la interfaz. El cambio entre 'Solo ubicación' y 'Forma del terreno' se ve como en el producto. Nada sugiere precisión topográfica ni catastral.",
+      "transition": "cut",
+      "asset": "sim:ubicacion-ficha",
+      "assetType": "simulation",
+      "photo": null,
+      "voiceFile": "jobs/geo-006/audio/voice-05.mp3",
+      "assetStartInFrames": 0,
+      "assetTotalInFrames": 416,
+      "accent": "#22C55E"
+    },
+    {
+      "purpose": "prueba",
+      "durationInFrames": 407,
+      "headline": "Abre la ficha",
+      "captions": [
+        {
+          "text": "Tocas la propiedad",
+          "start": 0.0,
+          "end": 1.414,
+          "words": [
+            {
+              "text": "Tocas",
+              "start": 0.0,
+              "end": 0.447
+            },
+            {
+              "text": "la",
+              "start": 0.447,
+              "end": 0.67
+            },
+            {
+              "text": "propiedad",
+              "start": 0.67,
+              "end": 1.414
+            }
+          ]
+        },
+        {
+          "text": "y se abre su ficha completa:",
+          "start": 1.414,
+          "end": 3.499,
+          "words": [
+            {
+              "text": "y",
+              "start": 0.0,
+              "end": 0.149
+            },
+            {
+              "text": "se",
+              "start": 0.149,
+              "end": 0.372
+            },
+            {
+              "text": "abre",
+              "start": 0.372,
+              "end": 0.744
+            },
+            {
+              "text": "su",
+              "start": 0.744,
+              "end": 0.968
+            },
+            {
+              "text": "ficha",
+              "start": 0.968,
+              "end": 1.414
+            },
+            {
+              "text": "completa:",
+              "start": 1.414,
+              "end": 2.084
+            }
+          ]
+        },
+        {
+          "text": "las fotos,",
+          "start": 3.499,
+          "end": 4.243,
+          "words": [
+            {
+              "text": "las",
+              "start": 0.0,
+              "end": 0.298
+            },
+            {
+              "text": "fotos,",
+              "start": 0.298,
+              "end": 0.744
+            }
+          ]
+        },
+        {
+          "text": "el área,",
+          "start": 4.243,
+          "end": 4.839,
+          "words": [
+            {
+              "text": "el",
+              "start": 0.0,
+              "end": 0.223
+            },
+            {
+              "text": "área,",
+              "start": 0.223,
+              "end": 0.596
+            }
+          ]
+        },
+        {
+          "text": "las habitaciones,",
+          "start": 4.839,
+          "end": 6.104,
+          "words": [
+            {
+              "text": "las",
+              "start": 0.0,
+              "end": 0.298
+            },
+            {
+              "text": "habitaciones,",
+              "start": 0.298,
+              "end": 1.266
+            }
+          ]
+        },
+        {
+          "text": "los baños y lo que pide",
+          "start": 6.104,
+          "end": 7.891,
+          "words": [
+            {
+              "text": "los",
+              "start": 0.0,
+              "end": 0.298
+            },
+            {
+              "text": "baños",
+              "start": 0.298,
+              "end": 0.744
+            },
+            {
+              "text": "y",
+              "start": 0.744,
+              "end": 0.893
+            },
+            {
+              "text": "lo",
+              "start": 0.893,
+              "end": 1.117
+            },
+            {
+              "text": "que",
+              "start": 1.117,
+              "end": 1.414
+            },
+            {
+              "text": "pide",
+              "start": 1.414,
+              "end": 1.787
+            }
+          ]
+        },
+        {
+          "text": "el anunciante.",
+          "start": 7.891,
+          "end": 8.933,
+          "words": [
+            {
+              "text": "el",
+              "start": 0.0,
+              "end": 0.223
+            },
+            {
+              "text": "anunciante.",
+              "start": 0.223,
+              "end": 1.042
+            }
+          ]
+        },
+        {
+          "text": "Todo eso que en aquellos anuncios",
+          "start": 8.933,
+          "end": 11.464,
+          "words": [
+            {
+              "text": "Todo",
+              "start": 0.0,
+              "end": 0.372
+            },
+            {
+              "text": "eso",
+              "start": 0.372,
+              "end": 0.67
+            },
+            {
+              "text": "que",
+              "start": 0.67,
+              "end": 0.968
+            },
+            {
+              "text": "en",
+              "start": 0.968,
+              "end": 1.191
+            },
+            {
+              "text": "aquellos",
+              "start": 1.191,
+              "end": 1.861
+            },
+            {
+              "text": "anuncios",
+              "start": 1.861,
+              "end": 2.531
+            }
+          ]
+        },
+        {
+          "text": "yo tenía que adivinar.",
+          "start": 11.464,
+          "end": 13.102,
+          "words": [
+            {
+              "text": "yo",
+              "start": 0.0,
+              "end": 0.223
+            },
+            {
+              "text": "tenía",
+              "start": 0.223,
+              "end": 0.67
+            },
+            {
+              "text": "que",
+              "start": 0.67,
+              "end": 0.968
+            },
+            {
+              "text": "adivinar.",
+              "start": 0.968,
+              "end": 1.638
+            }
+          ]
+        }
+      ],
+      "visualDirection": "La ficha entra en cuadro con su foto grande, su precio y sus características, que se encienden siguiendo el orden exacto de la voz. La galería avanza con desplazamiento continuo. Todos los datos son ilustrativos y no corresponden a una propiedad identificable.",
+      "transition": "cut",
+      "asset": "sim:ficha",
+      "assetType": "simulation",
+      "photo": null,
+      "voiceFile": "jobs/geo-006/audio/voice-06.mp3",
+      "assetStartInFrames": 0,
+      "assetTotalInFrames": 407,
+      "accent": "#6B5CF6"
+    },
+    {
+      "purpose": "prueba",
+      "durationInFrames": 331,
+      "headline": "Escribe directo",
+      "captions": [
+        {
+          "text": "Y si te interesa,",
+          "start": 0.0,
+          "end": 1.269,
+          "words": [
+            {
+              "text": "Y",
+              "start": 0.0,
+              "end": 0.149
+            },
+            {
+              "text": "si",
+              "start": 0.149,
+              "end": 0.373
+            },
+            {
+              "text": "te",
+              "start": 0.373,
+              "end": 0.597
+            },
+            {
+              "text": "interesa,",
+              "start": 0.597,
+              "end": 1.269
+            }
+          ]
+        },
+        {
+          "text": "le escribes directo a quien",
+          "start": 1.269,
+          "end": 3.359,
+          "words": [
+            {
+              "text": "le",
+              "start": 0.0,
+              "end": 0.224
+            },
+            {
+              "text": "escribes",
+              "start": 0.224,
+              "end": 0.896
+            },
+            {
+              "text": "directo",
+              "start": 0.896,
+              "end": 1.493
+            },
+            {
+              "text": "a",
+              "start": 1.493,
+              "end": 1.642
+            },
+            {
+              "text": "quien",
+              "start": 1.642,
+              "end": 2.09
+            }
+          ]
+        },
+        {
+          "text": "la publicó.",
+          "start": 3.359,
+          "end": 4.18,
+          "words": [
+            {
+              "text": "la",
+              "start": 0.0,
+              "end": 0.224
+            },
+            {
+              "text": "publicó.",
+              "start": 0.224,
+              "end": 0.821
+            }
+          ]
+        },
+        {
+          "text": "El mensaje ya viene empezado;",
+          "start": 4.18,
+          "end": 6.345,
+          "words": [
+            {
+              "text": "El",
+              "start": 0.0,
+              "end": 0.224
+            },
+            {
+              "text": "mensaje",
+              "start": 0.224,
+              "end": 0.821
+            },
+            {
+              "text": "ya",
+              "start": 0.821,
+              "end": 1.045
+            },
+            {
+              "text": "viene",
+              "start": 1.045,
+              "end": 1.493
+            },
+            {
+              "text": "empezado;",
+              "start": 1.493,
+              "end": 2.165
+            }
+          ]
+        },
+        {
+          "text": "tú solo preguntas lo que necesitas saber,",
+          "start": 6.345,
+          "end": 9.406,
+          "words": [
+            {
+              "text": "tú",
+              "start": 0.0,
+              "end": 0.224
+            },
+            {
+              "text": "solo",
+              "start": 0.224,
+              "end": 0.597
+            },
+            {
+              "text": "preguntas",
+              "start": 0.597,
+              "end": 1.344
+            },
+            {
+              "text": "lo",
+              "start": 1.344,
+              "end": 1.568
+            },
+            {
+              "text": "que",
+              "start": 1.568,
+              "end": 1.866
+            },
+            {
+              "text": "necesitas",
+              "start": 1.866,
+              "end": 2.613
+            },
+            {
+              "text": "saber,",
+              "start": 2.613,
+              "end": 3.061
+            }
+          ]
+        },
+        {
+          "text": "sin dar vueltas.",
+          "start": 9.406,
+          "end": 10.6,
+          "words": [
+            {
+              "text": "sin",
+              "start": 0.0,
+              "end": 0.299
+            },
+            {
+              "text": "dar",
+              "start": 0.299,
+              "end": 0.597
+            },
+            {
+              "text": "vueltas.",
+              "start": 0.597,
+              "end": 1.194
+            }
+          ]
+        }
+      ],
+      "visualDirection": "El bloque de contacto de la ficha: 'Publicado por', el teléfono que se revela al pedirlo, y el par Llamar y WhatsApp tal como están en el producto. Al tocar WhatsApp, la vista cede al mensaje que la ficha deja escrito, que nombra Geo Propiedades y lleva el enlace del anuncio. El número queda enmascarado a propósito.",
+      "transition": "cut",
+      "asset": "sim:contacto",
+      "assetType": "simulation",
+      "photo": null,
+      "voiceFile": "jobs/geo-006/audio/voice-07.mp3",
+      "assetStartInFrames": 0,
+      "assetTotalInFrames": 331,
+      "accent": "#14B8A6"
+    },
+    {
+      "purpose": "resultado",
+      "durationInFrames": 497,
+      "headline": "No una foto suelta",
+      "captions": [
+        {
+          "text": "Eso es lo que nos distingue.",
+          "start": 0.0,
+          "end": 1.995,
+          "words": [
+            {
+              "text": "Eso",
+              "start": 0.0,
+              "end": 0.285
+            },
+            {
+              "text": "es",
+              "start": 0.285,
+              "end": 0.499
+            },
+            {
+              "text": "lo",
+              "start": 0.499,
+              "end": 0.712
+            },
+            {
+              "text": "que",
+              "start": 0.712,
+              "end": 0.997
+            },
+            {
+              "text": "nos",
+              "start": 0.997,
+              "end": 1.282
+            },
+            {
+              "text": "distingue.",
+              "start": 1.282,
+              "end": 1.995
+            }
+          ]
+        },
+        {
+          "text": "Aquí una propiedad no es",
+          "start": 1.995,
+          "end": 3.776,
+          "words": [
+            {
+              "text": "Aquí",
+              "start": 0.0,
+              "end": 0.356
+            },
+            {
+              "text": "una",
+              "start": 0.356,
+              "end": 0.641
+            },
+            {
+              "text": "propiedad",
+              "start": 0.641,
+              "end": 1.354
+            },
+            {
+              "text": "no",
+              "start": 1.354,
+              "end": 1.567
+            },
+            {
+              "text": "es",
+              "start": 1.567,
+              "end": 1.781
+            }
+          ]
+        },
+        {
+          "text": "una foto suelta",
+          "start": 3.776,
+          "end": 4.916,
+          "words": [
+            {
+              "text": "una",
+              "start": 0.0,
+              "end": 0.285
+            },
+            {
+              "text": "foto",
+              "start": 0.285,
+              "end": 0.641
+            },
+            {
+              "text": "suelta",
+              "start": 0.641,
+              "end": 1.14
+            }
+          ]
+        },
+        {
+          "text": "que hay que perseguir:",
+          "start": 4.916,
+          "end": 6.483,
+          "words": [
+            {
+              "text": "que",
+              "start": 0.0,
+              "end": 0.285
+            },
+            {
+              "text": "hay",
+              "start": 0.285,
+              "end": 0.57
+            },
+            {
+              "text": "que",
+              "start": 0.57,
+              "end": 0.855
+            },
+            {
+              "text": "perseguir:",
+              "start": 0.855,
+              "end": 1.567
+            }
+          ]
+        },
+        {
+          "text": "es un lugar",
+          "start": 6.483,
+          "end": 7.338,
+          "words": [
+            {
+              "text": "es",
+              "start": 0.0,
+              "end": 0.214
+            },
+            {
+              "text": "un",
+              "start": 0.214,
+              "end": 0.427
+            },
+            {
+              "text": "lugar",
+              "start": 0.427,
+              "end": 0.855
+            }
+          ]
+        },
+        {
+          "text": "que puedes ver antes de moverte",
+          "start": 7.338,
+          "end": 9.618,
+          "words": [
+            {
+              "text": "que",
+              "start": 0.0,
+              "end": 0.285
+            },
+            {
+              "text": "puedes",
+              "start": 0.285,
+              "end": 0.784
+            },
+            {
+              "text": "ver",
+              "start": 0.784,
+              "end": 1.069
+            },
+            {
+              "text": "antes",
+              "start": 1.069,
+              "end": 1.496
+            },
+            {
+              "text": "de",
+              "start": 1.496,
+              "end": 1.71
+            },
+            {
+              "text": "moverte",
+              "start": 1.71,
+              "end": 2.28
+            }
+          ]
+        },
+        {
+          "text": "de tu casa.",
+          "start": 9.618,
+          "end": 10.401,
+          "words": [
+            {
+              "text": "de",
+              "start": 0.0,
+              "end": 0.214
+            },
+            {
+              "text": "tu",
+              "start": 0.214,
+              "end": 0.427
+            },
+            {
+              "text": "casa.",
+              "start": 0.427,
+              "end": 0.784
+            }
+          ]
+        },
+        {
+          "text": "El mapa no te dice",
+          "start": 10.401,
+          "end": 11.755,
+          "words": [
+            {
+              "text": "El",
+              "start": 0.0,
+              "end": 0.214
+            },
+            {
+              "text": "mapa",
+              "start": 0.214,
+              "end": 0.57
+            },
+            {
+              "text": "no",
+              "start": 0.57,
+              "end": 0.784
+            },
+            {
+              "text": "te",
+              "start": 0.784,
+              "end": 0.997
+            },
+            {
+              "text": "dice",
+              "start": 0.997,
+              "end": 1.354
+            }
+          ]
+        },
+        {
+          "text": "si te conviene;",
+          "start": 11.755,
+          "end": 12.823,
+          "words": [
+            {
+              "text": "si",
+              "start": 0.0,
+              "end": 0.214
+            },
+            {
+              "text": "te",
+              "start": 0.214,
+              "end": 0.427
+            },
+            {
+              "text": "conviene;",
+              "start": 0.427,
+              "end": 1.069
+            }
+          ]
+        },
+        {
+          "text": "te dice dónde queda,",
+          "start": 12.823,
+          "end": 14.248,
+          "words": [
+            {
+              "text": "te",
+              "start": 0.0,
+              "end": 0.214
+            },
+            {
+              "text": "dice",
+              "start": 0.214,
+              "end": 0.57
+            },
+            {
+              "text": "dónde",
+              "start": 0.57,
+              "end": 0.997
+            },
+            {
+              "text": "queda,",
+              "start": 0.997,
+              "end": 1.425
+            }
+          ]
+        },
+        {
+          "text": "y esa decisión ya es tuya.",
+          "start": 14.248,
+          "end": 16.101,
+          "words": [
+            {
+              "text": "y",
+              "start": 0.0,
+              "end": 0.142
+            },
+            {
+              "text": "esa",
+              "start": 0.142,
+              "end": 0.427
+            },
+            {
+              "text": "decisión",
+              "start": 0.427,
+              "end": 1.069
+            },
+            {
+              "text": "ya",
+              "start": 1.069,
+              "end": 1.282
+            },
+            {
+              "text": "es",
+              "start": 1.282,
+              "end": 1.496
+            },
+            {
+              "text": "tuya.",
+              "start": 1.496,
+              "end": 1.852
+            }
+          ]
+        }
+      ],
+      "visualDirection": "Los anuncios sueltos del principio vuelven un instante y se apartan para dejar entrar el mapa con la marca, cerrando el arco que abrió la escena uno. El contraste se lee sin sonido: la foto sin lugar frente a la propiedad situada.",
+      "transition": "cut",
+      "asset": "sim:llegada",
+      "assetType": "simulation",
+      "photo": null,
+      "voiceFile": "jobs/geo-006/audio/voice-08.mp3",
+      "assetStartInFrames": 0,
+      "assetTotalInFrames": 497,
+      "accent": "#A78BFA"
+    },
+    {
+      "purpose": "cta",
+      "durationInFrames": 274,
+      "headline": "Tu futuro hogar",
+      "captions": [
+        {
+          "text": "Yo hice esto",
+          "start": 0.0,
+          "end": 0.905,
+          "words": [
+            {
+              "text": "Yo",
+              "start": 0.0,
+              "end": 0.209
+            },
+            {
+              "text": "hice",
+              "start": 0.209,
+              "end": 0.557
+            },
+            {
+              "text": "esto",
+              "start": 0.557,
+              "end": 0.905
+            }
+          ]
+        },
+        {
+          "text": "porque me hacía falta a mí.",
+          "start": 0.905,
+          "end": 2.783,
+          "words": [
+            {
+              "text": "porque",
+              "start": 0.0,
+              "end": 0.487
+            },
+            {
+              "text": "me",
+              "start": 0.487,
+              "end": 0.696
+            },
+            {
+              "text": "hacía",
+              "start": 0.696,
+              "end": 1.113
+            },
+            {
+              "text": "falta",
+              "start": 1.113,
+              "end": 1.531
+            },
+            {
+              "text": "a",
+              "start": 1.531,
+              "end": 1.67
+            },
+            {
+              "text": "mí.",
+              "start": 1.67,
+              "end": 1.879
+            }
+          ]
+        },
+        {
+          "text": "Hoy está aquí para ti.",
+          "start": 2.783,
+          "end": 4.314,
+          "words": [
+            {
+              "text": "Hoy",
+              "start": 0.0,
+              "end": 0.278
+            },
+            {
+              "text": "está",
+              "start": 0.278,
+              "end": 0.626
+            },
+            {
+              "text": "aquí",
+              "start": 0.626,
+              "end": 0.974
+            },
+            {
+              "text": "para",
+              "start": 0.974,
+              "end": 1.322
+            },
+            {
+              "text": "ti.",
+              "start": 1.322,
+              "end": 1.531
+            }
+          ]
+        },
+        {
+          "text": "Encuentra tu futuro hogar",
+          "start": 4.314,
+          "end": 6.123,
+          "words": [
+            {
+              "text": "Encuentra",
+              "start": 0.0,
+              "end": 0.696
+            },
+            {
+              "text": "tu",
+              "start": 0.696,
+              "end": 0.905
+            },
+            {
+              "text": "futuro",
+              "start": 0.905,
+              "end": 1.392
+            },
+            {
+              "text": "hogar",
+              "start": 1.392,
+              "end": 1.809
+            }
+          ]
+        },
+        {
+          "text": "en geo propiedades ecuador punto com.",
+          "start": 6.123,
+          "end": 8.698,
+          "words": [
+            {
+              "text": "en",
+              "start": 0.0,
+              "end": 0.209
+            },
+            {
+              "text": "geo",
+              "start": 0.209,
+              "end": 0.487
+            },
+            {
+              "text": "propiedades",
+              "start": 0.487,
+              "end": 1.322
+            },
+            {
+              "text": "ecuador",
+              "start": 1.322,
+              "end": 1.879
+            },
+            {
+              "text": "punto",
+              "start": 1.879,
+              "end": 2.296
+            },
+            {
+              "text": "com.",
+              "start": 2.296,
+              "end": 2.575
+            }
+          ]
+        }
+      ],
+      "visualDirection": "Cierre de marca común de la serie sobre el fondo de mapa en deriva: tile, Geo Propiedades Ecuador, dominio geopropiedadesecuador.com, el CTA 'Encuentra tu futuro hogar' y la firma de Aents. El cierre no se modifica respecto al resto de la serie.",
+      "transition": "fade",
+      "asset": null,
+      "assetType": null,
+      "photo": null,
+      "voiceFile": "jobs/geo-006/audio/voice-09.mp3",
+      "assetStartInFrames": 0,
+      "assetTotalInFrames": 274,
+      "accent": "#22C55E"
+    }
+  ]
+}

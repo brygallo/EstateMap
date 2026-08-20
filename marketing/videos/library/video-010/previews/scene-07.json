@@ -1,0 +1,286 @@
+{
+  "title": "Antes de comprar un departamento, revisa esto",
+  "coverText": "Antes de comprar un departamento",
+  "cta": "Encuentra tu futuro hogar",
+  "url": "geopropiedadesecuador.com",
+  "brandTile": "brand/aents-brand-tile-1024.png",
+  "kicker": null,
+  "musicFile": null,
+  "showSafeAreas": false,
+  "scenes": [
+    {
+      "purpose": "resultado",
+      "durationInFrames": 411,
+      "headline": "Ve el entorno primero",
+      "captions": [
+        {
+          "text": "Y lo que hay alrededor",
+          "start": 0.0,
+          "end": 1.577,
+          "words": [
+            {
+              "text": "Y",
+              "start": 0.0,
+              "end": 0.137
+            },
+            {
+              "text": "lo",
+              "start": 0.137,
+              "end": 0.343
+            },
+            {
+              "text": "que",
+              "start": 0.343,
+              "end": 0.617
+            },
+            {
+              "text": "hay",
+              "start": 0.617,
+              "end": 0.891
+            },
+            {
+              "text": "alrededor",
+              "start": 0.891,
+              "end": 1.577
+            }
+          ]
+        },
+        {
+          "text": "del edificio también se revisa.",
+          "start": 1.577,
+          "end": 3.703,
+          "words": [
+            {
+              "text": "del",
+              "start": 0.0,
+              "end": 0.274
+            },
+            {
+              "text": "edificio",
+              "start": 0.274,
+              "end": 0.891
+            },
+            {
+              "text": "también",
+              "start": 0.891,
+              "end": 1.44
+            },
+            {
+              "text": "se",
+              "start": 1.44,
+              "end": 1.646
+            },
+            {
+              "text": "revisa.",
+              "start": 1.646,
+              "end": 2.126
+            }
+          ]
+        },
+        {
+          "text": "Eso sí lo ves antes",
+          "start": 3.703,
+          "end": 5.074,
+          "words": [
+            {
+              "text": "Eso",
+              "start": 0.0,
+              "end": 0.274
+            },
+            {
+              "text": "sí",
+              "start": 0.274,
+              "end": 0.48
+            },
+            {
+              "text": "lo",
+              "start": 0.48,
+              "end": 0.686
+            },
+            {
+              "text": "ves",
+              "start": 0.686,
+              "end": 0.96
+            },
+            {
+              "text": "antes",
+              "start": 0.96,
+              "end": 1.371
+            }
+          ]
+        },
+        {
+          "text": "de ir:",
+          "start": 5.074,
+          "end": 5.485,
+          "words": [
+            {
+              "text": "de",
+              "start": 0.0,
+              "end": 0.206
+            },
+            {
+              "text": "ir:",
+              "start": 0.206,
+              "end": 0.411
+            }
+          ]
+        },
+        {
+          "text": "en Geo Propiedades Ecuador",
+          "start": 5.485,
+          "end": 7.337,
+          "words": [
+            {
+              "text": "en",
+              "start": 0.0,
+              "end": 0.206
+            },
+            {
+              "text": "Geo",
+              "start": 0.206,
+              "end": 0.48
+            },
+            {
+              "text": "Propiedades",
+              "start": 0.48,
+              "end": 1.303
+            },
+            {
+              "text": "Ecuador",
+              "start": 1.303,
+              "end": 1.851
+            }
+          ]
+        },
+        {
+          "text": "las propiedades están",
+          "start": 7.337,
+          "end": 8.845,
+          "words": [
+            {
+              "text": "las",
+              "start": 0.0,
+              "end": 0.274
+            },
+            {
+              "text": "propiedades",
+              "start": 0.274,
+              "end": 1.097
+            },
+            {
+              "text": "están",
+              "start": 1.097,
+              "end": 1.509
+            }
+          ]
+        },
+        {
+          "text": "sobre el mapa,",
+          "start": 8.845,
+          "end": 9.805,
+          "words": [
+            {
+              "text": "sobre",
+              "start": 0.0,
+              "end": 0.411
+            },
+            {
+              "text": "el",
+              "start": 0.411,
+              "end": 0.617
+            },
+            {
+              "text": "mapa,",
+              "start": 0.617,
+              "end": 0.96
+            }
+          ]
+        },
+        {
+          "text": "así que ves la zona,",
+          "start": 9.805,
+          "end": 11.177,
+          "words": [
+            {
+              "text": "así",
+              "start": 0.0,
+              "end": 0.274
+            },
+            {
+              "text": "que",
+              "start": 0.274,
+              "end": 0.549
+            },
+            {
+              "text": "ves",
+              "start": 0.549,
+              "end": 0.823
+            },
+            {
+              "text": "la",
+              "start": 0.823,
+              "end": 1.029
+            },
+            {
+              "text": "zona,",
+              "start": 1.029,
+              "end": 1.371
+            }
+          ]
+        },
+        {
+          "text": "las vías y por dónde se llega.",
+          "start": 11.177,
+          "end": 13.234,
+          "words": [
+            {
+              "text": "las",
+              "start": 0.0,
+              "end": 0.274
+            },
+            {
+              "text": "vías",
+              "start": 0.274,
+              "end": 0.617
+            },
+            {
+              "text": "y",
+              "start": 0.617,
+              "end": 0.754
+            },
+            {
+              "text": "por",
+              "start": 0.754,
+              "end": 1.029
+            },
+            {
+              "text": "dónde",
+              "start": 1.029,
+              "end": 1.44
+            },
+            {
+              "text": "se",
+              "start": 1.44,
+              "end": 1.646
+            },
+            {
+              "text": "llega.",
+              "start": 1.646,
+              "end": 2.057
+            }
+          ]
+        }
+      ],
+      "visualDirection": "sim:entorno-mapa, escrita para esta pieza porque la animación de terrenos dibujaba un lote con casitas y, peor, rotulaba vías y trazaba una ruta de acceso que el producto no tiene. Aquí el callejero base del mapa —manzanas, avenida y parque— con el marcador de la propiedad tal como lo pinta el portal, y un acercamiento que centra la selección. Sin rótulos de vías, sin ruta trazada y sin burbujas de cantidades. La marca entra aquí, con el dominio y el tile en el bloque superior desde y=205 y dentro del margen lateral de 120 px. La cámara termina asentada sobre la manzana del edificio.",
+      "transition": "cut",
+      "asset": "sim:entorno-mapa",
+      "assetType": "simulation",
+      "photo": null,
+      "voiceFile": "jobs/video-010/audio/voice-07.mp3",
+      "assetStartInFrames": 0,
+      "assetTotalInFrames": 411,
+      "accent": "#14B8A6"
+    }
+  ]
+}

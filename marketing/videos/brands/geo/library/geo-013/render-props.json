@@ -1,0 +1,753 @@
+{
+  "brandId": "geo",
+  "brandName": "Geo Propiedades Ecuador",
+  "brandTagline": "Un producto de Aents",
+  "brandSymbol": "brand/aents-symbol-negative.png",
+  "title": "Te van a preguntar dónde queda",
+  "coverText": "¿Dónde queda tu propiedad?",
+  "cta": "Publica tu propiedad gratis",
+  "url": "geopropiedadesecuador.com",
+  "brandTile": "brand/aents-brand-tile-1024.png",
+  "kicker": null,
+  "musicFile": "jobs/geo-013/audio/music.mp3",
+  "showSafeAreas": false,
+  "scenes": [
+    {
+      "purpose": "gancho",
+      "durationInFrames": 278,
+      "headline": "¿Dónde queda?",
+      "captions": [
+        {
+          "text": "Publicaste tu propiedad con fotos,",
+          "start": 0.0,
+          "end": 2.566,
+          "words": [
+            {
+              "text": "Publicaste",
+              "start": 0.0,
+              "end": 0.83
+            },
+            {
+              "text": "tu",
+              "start": 0.83,
+              "end": 1.056
+            },
+            {
+              "text": "propiedad",
+              "start": 1.056,
+              "end": 1.811
+            },
+            {
+              "text": "con",
+              "start": 1.811,
+              "end": 2.113
+            },
+            {
+              "text": "fotos,",
+              "start": 2.113,
+              "end": 2.566
+            }
+          ]
+        },
+        {
+          "text": "precio y descripción.",
+          "start": 2.566,
+          "end": 4.15,
+          "words": [
+            {
+              "text": "precio",
+              "start": 0.0,
+              "end": 0.528
+            },
+            {
+              "text": "y",
+              "start": 0.528,
+              "end": 0.679
+            },
+            {
+              "text": "descripción.",
+              "start": 0.679,
+              "end": 1.585
+            }
+          ]
+        },
+        {
+          "text": "Y el primer mensaje",
+          "start": 4.15,
+          "end": 5.659,
+          "words": [
+            {
+              "text": "Y",
+              "start": 0.0,
+              "end": 0.151
+            },
+            {
+              "text": "el",
+              "start": 0.151,
+              "end": 0.377
+            },
+            {
+              "text": "primer",
+              "start": 0.377,
+              "end": 0.905
+            },
+            {
+              "text": "mensaje",
+              "start": 0.905,
+              "end": 1.509
+            }
+          ]
+        },
+        {
+          "text": "que llega es siempre el mismo:",
+          "start": 5.659,
+          "end": 7.923,
+          "words": [
+            {
+              "text": "que",
+              "start": 0.0,
+              "end": 0.302
+            },
+            {
+              "text": "llega",
+              "start": 0.302,
+              "end": 0.755
+            },
+            {
+              "text": "es",
+              "start": 0.755,
+              "end": 0.981
+            },
+            {
+              "text": "siempre",
+              "start": 0.981,
+              "end": 1.585
+            },
+            {
+              "text": "el",
+              "start": 1.585,
+              "end": 1.811
+            },
+            {
+              "text": "mismo:",
+              "start": 1.811,
+              "end": 2.264
+            }
+          ]
+        },
+        {
+          "text": "¿dónde queda?",
+          "start": 7.923,
+          "end": 8.829,
+          "words": [
+            {
+              "text": "¿dónde",
+              "start": 0.0,
+              "end": 0.453
+            },
+            {
+              "text": "queda?",
+              "start": 0.453,
+              "end": 0.905
+            }
+          ]
+        }
+      ],
+      "visualDirection": "El anuncio publicado se lee fila por fila: fotos, precio y descripción se marcan como completas, y la fila de ubicación queda vacía en rojo a mitad de escena. Sobre ella entran los dos mensajes y un trazo los conecta con la fila vacía: de ahí salen las preguntas.",
+      "transition": "cut",
+      "asset": "sim:donde-queda",
+      "assetType": "simulation",
+      "photo": null,
+      "voiceFile": "jobs/geo-013/audio/voice-01.mp3",
+      "assetStartInFrames": 0,
+      "assetTotalInFrames": 278,
+      "accent": "#22C55E"
+    },
+    {
+      "purpose": "prueba",
+      "durationInFrames": 285,
+      "headline": "Marca el punto",
+      "captions": [
+        {
+          "text": "En Geo Propiedades Ecuador",
+          "start": 0.0,
+          "end": 1.971,
+          "words": [
+            {
+              "text": "En",
+              "start": 0.0,
+              "end": 0.219
+            },
+            {
+              "text": "Geo",
+              "start": 0.219,
+              "end": 0.511
+            },
+            {
+              "text": "Propiedades",
+              "start": 0.511,
+              "end": 1.387
+            },
+            {
+              "text": "Ecuador",
+              "start": 1.387,
+              "end": 1.971
+            }
+          ]
+        },
+        {
+          "text": "la ubicación es parte del anuncio:",
+          "start": 1.971,
+          "end": 4.453,
+          "words": [
+            {
+              "text": "la",
+              "start": 0.0,
+              "end": 0.219
+            },
+            {
+              "text": "ubicación",
+              "start": 0.219,
+              "end": 0.949
+            },
+            {
+              "text": "es",
+              "start": 0.949,
+              "end": 1.168
+            },
+            {
+              "text": "parte",
+              "start": 1.168,
+              "end": 1.606
+            },
+            {
+              "text": "del",
+              "start": 1.606,
+              "end": 1.898
+            },
+            {
+              "text": "anuncio:",
+              "start": 1.898,
+              "end": 2.482
+            }
+          ]
+        },
+        {
+          "text": "marcas el punto en el mapa,",
+          "start": 4.453,
+          "end": 6.424,
+          "words": [
+            {
+              "text": "marcas",
+              "start": 0.0,
+              "end": 0.511
+            },
+            {
+              "text": "el",
+              "start": 0.511,
+              "end": 0.73
+            },
+            {
+              "text": "punto",
+              "start": 0.73,
+              "end": 1.168
+            },
+            {
+              "text": "en",
+              "start": 1.168,
+              "end": 1.387
+            },
+            {
+              "text": "el",
+              "start": 1.387,
+              "end": 1.606
+            },
+            {
+              "text": "mapa,",
+              "start": 1.606,
+              "end": 1.971
+            }
+          ]
+        },
+        {
+          "text": "y si es un terreno,",
+          "start": 6.424,
+          "end": 7.811,
+          "words": [
+            {
+              "text": "y",
+              "start": 0.0,
+              "end": 0.146
+            },
+            {
+              "text": "si",
+              "start": 0.146,
+              "end": 0.365
+            },
+            {
+              "text": "es",
+              "start": 0.365,
+              "end": 0.584
+            },
+            {
+              "text": "un",
+              "start": 0.584,
+              "end": 0.803
+            },
+            {
+              "text": "terreno,",
+              "start": 0.803,
+              "end": 1.387
+            }
+          ]
+        },
+        {
+          "text": "dibujas su forma.",
+          "start": 7.811,
+          "end": 9.052,
+          "words": [
+            {
+              "text": "dibujas",
+              "start": 0.0,
+              "end": 0.584
+            },
+            {
+              "text": "su",
+              "start": 0.584,
+              "end": 0.803
+            },
+            {
+              "text": "forma.",
+              "start": 0.803,
+              "end": 1.241
+            }
+          ]
+        }
+      ],
+      "visualDirection": "El paso 2 del formulario real: se alterna entre marcar solo la ubicación y dibujar la Forma del terreno sobre el mapa, con los vértices visibles.",
+      "transition": "cut",
+      "asset": "sim:ubicacion-publicacion",
+      "assetType": "simulation",
+      "photo": null,
+      "voiceFile": "jobs/geo-013/audio/voice-02.mp3",
+      "assetStartInFrames": 0,
+      "assetTotalInFrames": 285,
+      "accent": "#6B5CF6"
+    },
+    {
+      "purpose": "prueba",
+      "durationInFrames": 275,
+      "headline": "Queda en el mapa",
+      "captions": [
+        {
+          "text": "Tu anuncio deja de ser",
+          "start": 0.0,
+          "end": 1.713,
+          "words": [
+            {
+              "text": "Tu",
+              "start": 0.0,
+              "end": 0.223
+            },
+            {
+              "text": "anuncio",
+              "start": 0.223,
+              "end": 0.819
+            },
+            {
+              "text": "deja",
+              "start": 0.819,
+              "end": 1.192
+            },
+            {
+              "text": "de",
+              "start": 1.192,
+              "end": 1.415
+            },
+            {
+              "text": "ser",
+              "start": 1.415,
+              "end": 1.713
+            }
+          ]
+        },
+        {
+          "text": "una descripción y queda",
+          "start": 1.713,
+          "end": 3.501,
+          "words": [
+            {
+              "text": "una",
+              "start": 0.0,
+              "end": 0.298
+            },
+            {
+              "text": "descripción",
+              "start": 0.298,
+              "end": 1.192
+            },
+            {
+              "text": "y",
+              "start": 1.192,
+              "end": 1.341
+            },
+            {
+              "text": "queda",
+              "start": 1.341,
+              "end": 1.788
+            }
+          ]
+        },
+        {
+          "text": "sobre el mapa,",
+          "start": 3.501,
+          "end": 4.544,
+          "words": [
+            {
+              "text": "sobre",
+              "start": 0.0,
+              "end": 0.447
+            },
+            {
+              "text": "el",
+              "start": 0.447,
+              "end": 0.67
+            },
+            {
+              "text": "mapa,",
+              "start": 0.67,
+              "end": 1.043
+            }
+          ]
+        },
+        {
+          "text": "con tus fotos y tu precio,",
+          "start": 4.544,
+          "end": 6.481,
+          "words": [
+            {
+              "text": "con",
+              "start": 0.0,
+              "end": 0.298
+            },
+            {
+              "text": "tus",
+              "start": 0.298,
+              "end": 0.596
+            },
+            {
+              "text": "fotos",
+              "start": 0.596,
+              "end": 1.043
+            },
+            {
+              "text": "y",
+              "start": 1.043,
+              "end": 1.192
+            },
+            {
+              "text": "tu",
+              "start": 1.192,
+              "end": 1.415
+            },
+            {
+              "text": "precio,",
+              "start": 1.415,
+              "end": 1.937
+            }
+          ]
+        },
+        {
+          "text": "donde la gente busca por zona.",
+          "start": 6.481,
+          "end": 8.716,
+          "words": [
+            {
+              "text": "donde",
+              "start": 0.0,
+              "end": 0.447
+            },
+            {
+              "text": "la",
+              "start": 0.447,
+              "end": 0.67
+            },
+            {
+              "text": "gente",
+              "start": 0.67,
+              "end": 1.117
+            },
+            {
+              "text": "busca",
+              "start": 1.117,
+              "end": 1.564
+            },
+            {
+              "text": "por",
+              "start": 1.564,
+              "end": 1.862
+            },
+            {
+              "text": "zona.",
+              "start": 1.862,
+              "end": 2.235
+            }
+          ]
+        }
+      ],
+      "visualDirection": "La tarjeta del anuncio viaja del formulario a su sitio en el mapa, se dibuja la Forma del terreno y el precio de ejemplo queda encima. Al final aparecen las propiedades vecinas.",
+      "transition": "cut",
+      "asset": "sim:anuncio-en-mapa",
+      "assetType": "simulation",
+      "photo": null,
+      "voiceFile": "jobs/geo-013/audio/voice-03.mp3",
+      "assetStartInFrames": 0,
+      "assetTotalInFrames": 275,
+      "accent": "#14B8A6"
+    },
+    {
+      "purpose": "resultado",
+      "durationInFrames": 215,
+      "headline": "Ya saben dónde queda",
+      "captions": [
+        {
+          "text": "Así, quien te escribe ya sabe dónde queda,",
+          "start": 0.0,
+          "end": 2.928,
+          "words": [
+            {
+              "text": "Así,",
+              "start": 0.0,
+              "end": 0.286
+            },
+            {
+              "text": "quien",
+              "start": 0.286,
+              "end": 0.714
+            },
+            {
+              "text": "te",
+              "start": 0.714,
+              "end": 0.928
+            },
+            {
+              "text": "escribe",
+              "start": 0.928,
+              "end": 1.5
+            },
+            {
+              "text": "ya",
+              "start": 1.5,
+              "end": 1.714
+            },
+            {
+              "text": "sabe",
+              "start": 1.714,
+              "end": 2.071
+            },
+            {
+              "text": "dónde",
+              "start": 2.071,
+              "end": 2.499
+            },
+            {
+              "text": "queda,",
+              "start": 2.499,
+              "end": 2.928
+            }
+          ]
+        },
+        {
+          "text": "y te pregunta por la propiedad",
+          "start": 2.928,
+          "end": 5.142,
+          "words": [
+            {
+              "text": "y",
+              "start": 0.0,
+              "end": 0.143
+            },
+            {
+              "text": "te",
+              "start": 0.143,
+              "end": 0.357
+            },
+            {
+              "text": "pregunta",
+              "start": 0.357,
+              "end": 1.0
+            },
+            {
+              "text": "por",
+              "start": 1.0,
+              "end": 1.285
+            },
+            {
+              "text": "la",
+              "start": 1.285,
+              "end": 1.5
+            },
+            {
+              "text": "propiedad",
+              "start": 1.5,
+              "end": 2.214
+            }
+          ]
+        },
+        {
+          "text": "y no por la dirección.",
+          "start": 5.142,
+          "end": 6.713,
+          "words": [
+            {
+              "text": "y",
+              "start": 0.0,
+              "end": 0.143
+            },
+            {
+              "text": "no",
+              "start": 0.143,
+              "end": 0.357
+            },
+            {
+              "text": "por",
+              "start": 0.357,
+              "end": 0.643
+            },
+            {
+              "text": "la",
+              "start": 0.643,
+              "end": 0.857
+            },
+            {
+              "text": "dirección.",
+              "start": 0.857,
+              "end": 1.571
+            }
+          ]
+        }
+      ],
+      "visualDirection": "El mismo anuncio de la primera escena, ahora con su fila de ubicación resuelta: un mapa pequeño con el punto dibujándose. Los mensajes que entran preguntan por la propiedad.",
+      "transition": "cut",
+      "asset": "sim:ya-lo-saben",
+      "assetType": "simulation",
+      "photo": null,
+      "voiceFile": "jobs/geo-013/audio/voice-04.mp3",
+      "assetStartInFrames": 0,
+      "assetTotalInFrames": 215,
+      "accent": "#A78BFA"
+    },
+    {
+      "purpose": "cta",
+      "durationInFrames": 199,
+      "headline": "Publica gratis",
+      "captions": [
+        {
+          "text": "Publicar no te cuesta nada.",
+          "start": 0.0,
+          "end": 1.819,
+          "words": [
+            {
+              "text": "Publicar",
+              "start": 0.0,
+              "end": 0.606
+            },
+            {
+              "text": "no",
+              "start": 0.606,
+              "end": 0.808
+            },
+            {
+              "text": "te",
+              "start": 0.808,
+              "end": 1.01
+            },
+            {
+              "text": "cuesta",
+              "start": 1.01,
+              "end": 1.482
+            },
+            {
+              "text": "nada.",
+              "start": 1.482,
+              "end": 1.819
+            }
+          ]
+        },
+        {
+          "text": "Publica tu propiedad gratis",
+          "start": 1.819,
+          "end": 3.704,
+          "words": [
+            {
+              "text": "Publica",
+              "start": 0.0,
+              "end": 0.539
+            },
+            {
+              "text": "tu",
+              "start": 0.539,
+              "end": 0.741
+            },
+            {
+              "text": "propiedad",
+              "start": 0.741,
+              "end": 1.414
+            },
+            {
+              "text": "gratis",
+              "start": 1.414,
+              "end": 1.886
+            }
+          ]
+        },
+        {
+          "text": "en geo propiedades ecuador punto com.",
+          "start": 3.704,
+          "end": 6.197,
+          "words": [
+            {
+              "text": "en",
+              "start": 0.0,
+              "end": 0.202
+            },
+            {
+              "text": "geo",
+              "start": 0.202,
+              "end": 0.471
+            },
+            {
+              "text": "propiedades",
+              "start": 0.471,
+              "end": 1.28
+            },
+            {
+              "text": "ecuador",
+              "start": 1.28,
+              "end": 1.819
+            },
+            {
+              "text": "punto",
+              "start": 1.819,
+              "end": 2.223
+            },
+            {
+              "text": "com.",
+              "start": 2.223,
+              "end": 2.492
+            }
+          ]
+        }
+      ],
+      "visualDirection": "Cierre global aprobado: tile de marca, Geo Propiedades Ecuador, dominio, CTA y firma de Aents.",
+      "transition": "fade",
+      "asset": null,
+      "assetType": null,
+      "photo": null,
+      "voiceFile": "jobs/geo-013/audio/voice-05.mp3",
+      "assetStartInFrames": 0,
+      "assetTotalInFrames": 199,
+      "accent": "#22C55E"
+    }
+  ]
+}

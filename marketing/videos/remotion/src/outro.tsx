@@ -7,10 +7,14 @@ import {font, palette, safe} from './theme';
  * recognisable in a feed: the mark, the product name, the domain and the call
  * to action of that particular video.
  */
-export const Outro: React.FC<{cta: string; url: string; brandTile: string | null; accent: string; kicker?: string | null}> = ({
+export const Outro: React.FC<{cta: string; url: string; brandTile: string | null; brandName: string; brandTagline: string; brandSymbol: string | null; brandId: string; accent: string; kicker?: string | null}> = ({
   cta,
   url,
   brandTile,
+  brandName,
+  brandTagline,
+  brandSymbol,
+  brandId,
   accent,
   kicker,
 }) => {
@@ -75,7 +79,7 @@ export const Outro: React.FC<{cta: string; url: string; brandTile: string | null
             transform: `translateY(${(1 - name) * 26}px)`,
           }}
         >
-          Geo Propiedades Ecuador
+          {brandName}
         </div>
         <div
           style={{
@@ -144,7 +148,7 @@ export const Outro: React.FC<{cta: string; url: string; brandTile: string | null
           opacity: interpolate(frame, [fps * 0.9, fps * 1.4], [0, 0.95], {extrapolateLeft: 'clamp', extrapolateRight: 'clamp'}),
         }}
       >
-        <span style={{fontSize: 26, fontWeight: 700, letterSpacing: '0.12em'}}>UN PRODUCTO DE</span>
+        <span style={{fontSize: 26, fontWeight: 700, letterSpacing: '0.12em'}}>{brandId === 'aents' ? brandTagline.toUpperCase() : 'UN PRODUCTO DE'}</span>
         <div
           style={{
             width: 62,
@@ -157,9 +161,9 @@ export const Outro: React.FC<{cta: string; url: string; brandTile: string | null
             boxShadow: '0 10px 28px rgba(107,92,246,.5)',
           }}
         >
-          <Img src={staticFile('brand/aents-symbol-negative.png')} style={{width: 44, height: 44}} />
+          {brandSymbol ? <Img src={staticFile(brandSymbol)} style={{width: 44, height: 44}} /> : null}
         </div>
-        <span style={{fontSize: 30, fontWeight: 800, letterSpacing: '0.08em'}}>AENTS</span>
+        {brandId === 'aents' ? null : <span style={{fontSize: 30, fontWeight: 800, letterSpacing: '0.08em'}}>AENTS</span>}
       </div>
     </AbsoluteFill>
   );

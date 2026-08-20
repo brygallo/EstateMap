@@ -1,0 +1,135 @@
+1
+00:00:00,000 --> 00:00:01,963
+Tu negocio puede estar creciendo y,
+
+2
+00:00:01,963 --> 00:00:02,412
+aun así,
+
+3
+00:00:02,412 --> 00:00:04,038
+estar perdiendo tiempo todos
+
+4
+00:00:04,038 --> 00:00:04,543
+los días.
+
+5
+00:00:05,000 --> 00:00:05,765
+Más clientes,
+
+6
+00:00:05,765 --> 00:00:06,531
+más mensajes,
+
+7
+00:00:06,531 --> 00:00:07,119
+más datos,
+
+8
+00:00:07,119 --> 00:00:08,944
+más procesos que alguien tiene
+
+9
+00:00:08,944 --> 00:00:09,769
+que controlar.
+
+10
+00:00:10,233 --> 00:00:11,603
+¿Y si el sistema hiciera
+
+11
+00:00:11,603 --> 00:00:12,288
+ese trabajo?
+
+12
+00:00:12,733 --> 00:00:14,566
+En Aents diseñamos el software
+
+13
+00:00:14,566 --> 00:00:16,162
+alrededor de cómo funciona
+
+14
+00:00:16,162 --> 00:00:17,404
+realmente tu negocio.
+
+15
+00:00:17,867 --> 00:00:19,234
+Conectamos tus procesos,
+
+16
+00:00:19,234 --> 00:00:20,658
+automatizamos las tareas
+
+17
+00:00:20,658 --> 00:00:21,911
+repetitivas y hacemos
+
+18
+00:00:21,911 --> 00:00:23,790
+que la información se mueva sola.
+
+19
+00:00:24,233 --> 00:00:25,284
+Y todo lo que pasa
+
+20
+00:00:25,284 --> 00:00:26,611
+en tu operación queda a
+
+21
+00:00:26,611 --> 00:00:27,108
+la vista,
+
+22
+00:00:27,108 --> 00:00:28,048
+en un solo panel
+
+23
+00:00:28,048 --> 00:00:28,712
+y con roles
+
+24
+00:00:28,712 --> 00:00:29,707
+para cada persona.
+
+25
+00:00:30,167 --> 00:00:32,019
+Porque un buen sistema no resuelve
+
+26
+00:00:32,019 --> 00:00:33,289
+solo el problema de hoy:
+
+27
+00:00:33,289 --> 00:00:35,459
+está preparado para lo que viene después.
+
+28
+00:00:35,900 --> 00:00:38,038
+No hacemos software por hacer software:
+
+29
+00:00:38,038 --> 00:00:39,737
+construimos sistemas que hacen
+
+30
+00:00:39,737 --> 00:00:40,668
+avanzar negocios.
+
+31
+00:00:41,133 --> 00:00:42,903
+Tu negocio ya sabe hacia dónde
+
+32
+00:00:42,903 --> 00:00:43,702
+quiere crecer.
+
+33
+00:00:43,702 --> 00:00:45,243
+Conversemos y construyamos
+
+34
+00:00:45,243 --> 00:00:46,727
+la tecnología para llegar.

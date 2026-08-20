@@ -1,0 +1,8 @@
+{
+  "approved_at": "2026-08-14T22:01:26.814061-05:00",
+  "approved_by": "user-request",
+  "notes": "Script written by the responsible person, split into an owner piece and a buyer piece at their request; single audience, single CTA, local draft only.",
+  "lint_passed": true,
+  "forced": false,
+  "plan_sha": "ca493e54278c27d59dbb89a6c5666ff6b137c97fe54557d53d5a80b64d2e7ab8"
+}

@@ -30,6 +30,10 @@ export type Scene = {
 };
 
 export type VideoProps = {
+  brandId?: string;
+  brandName?: string;
+  brandTagline?: string;
+  brandSymbol?: string | null;
   title: string;
   coverText: string;
   cta: string;
@@ -42,6 +46,10 @@ export type VideoProps = {
 };
 
 export type CoverProps = {
+  brandId?: string;
+  brandName?: string;
+  brandTagline?: string;
+  brandSymbol?: string | null;
   coverText: string;
   /**
    * Which illustration to draw, named by the plan. The keyword heuristics below

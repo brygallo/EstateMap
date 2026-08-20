@@ -1,0 +1,907 @@
+{
+  "brandId": "geo",
+  "brandName": "Geo Propiedades Ecuador",
+  "brandTagline": "Un producto de Aents",
+  "brandSymbol": "brand/aents-symbol-negative.png",
+  "title": "Catorce mil ya están en el mapa. La tuya no.",
+  "coverText": "¿Dónde está tu propiedad?",
+  "cta": "Publica tu propiedad gratis",
+  "url": "geopropiedadesecuador.com",
+  "brandTile": "brand/aents-brand-tile-1024.png",
+  "kicker": null,
+  "musicFile": null,
+  "showSafeAreas": false,
+  "scenes": [
+    {
+      "purpose": "gancho",
+      "durationInFrames": 262,
+      "headline": "No la ve nadie",
+      "captions": [
+        {
+          "text": "Tienes un terreno",
+          "start": 0.0,
+          "end": 1.266,
+          "words": [
+            {
+              "text": "Tienes",
+              "start": 0.0,
+              "end": 0.492
+            },
+            {
+              "text": "un",
+              "start": 0.492,
+              "end": 0.703
+            },
+            {
+              "text": "terreno",
+              "start": 0.703,
+              "end": 1.266
+            }
+          ]
+        },
+        {
+          "text": "o una casa en venta.",
+          "start": 1.266,
+          "end": 2.673,
+          "words": [
+            {
+              "text": "o",
+              "start": 0.0,
+              "end": 0.141
+            },
+            {
+              "text": "una",
+              "start": 0.141,
+              "end": 0.422
+            },
+            {
+              "text": "casa",
+              "start": 0.422,
+              "end": 0.774
+            },
+            {
+              "text": "en",
+              "start": 0.774,
+              "end": 0.985
+            },
+            {
+              "text": "venta.",
+              "start": 0.985,
+              "end": 1.407
+            }
+          ]
+        },
+        {
+          "text": "Pusiste el letrero,",
+          "start": 2.673,
+          "end": 4.009,
+          "words": [
+            {
+              "text": "Pusiste",
+              "start": 0.0,
+              "end": 0.563
+            },
+            {
+              "text": "el",
+              "start": 0.563,
+              "end": 0.774
+            },
+            {
+              "text": "letrero,",
+              "start": 0.774,
+              "end": 1.336
+            }
+          ]
+        },
+        {
+          "text": "les dijiste a los conocidos,",
+          "start": 4.009,
+          "end": 5.978,
+          "words": [
+            {
+              "text": "les",
+              "start": 0.0,
+              "end": 0.281
+            },
+            {
+              "text": "dijiste",
+              "start": 0.281,
+              "end": 0.844
+            },
+            {
+              "text": "a",
+              "start": 0.844,
+              "end": 0.985
+            },
+            {
+              "text": "los",
+              "start": 0.985,
+              "end": 1.266
+            },
+            {
+              "text": "conocidos,",
+              "start": 1.266,
+              "end": 1.969
+            }
+          ]
+        },
+        {
+          "text": "y pasan los meses.",
+          "start": 5.978,
+          "end": 7.244,
+          "words": [
+            {
+              "text": "y",
+              "start": 0.0,
+              "end": 0.141
+            },
+            {
+              "text": "pasan",
+              "start": 0.141,
+              "end": 0.563
+            },
+            {
+              "text": "los",
+              "start": 0.563,
+              "end": 0.844
+            },
+            {
+              "text": "meses.",
+              "start": 0.844,
+              "end": 1.266
+            }
+          ]
+        },
+        {
+          "text": "No la ve nadie.",
+          "start": 7.244,
+          "end": 8.299,
+          "words": [
+            {
+              "text": "No",
+              "start": 0.0,
+              "end": 0.211
+            },
+            {
+              "text": "la",
+              "start": 0.211,
+              "end": 0.422
+            },
+            {
+              "text": "ve",
+              "start": 0.422,
+              "end": 0.633
+            },
+            {
+              "text": "nadie.",
+              "start": 0.633,
+              "end": 1.055
+            }
+          ]
+        }
+      ],
+      "visualDirection": "Arranca ya en movimiento: la propiedad con su letrero de SE VENDE meciéndose, el sol y las nubes cruzando despacio detrás. El letrero está ahí desde el primer cuadro y nada más ocurre alrededor: la quietud es el punto. Alterna entre terreno y casa para que se reconozcan las dos audiencias.",
+      "transition": "cut",
+      "asset": "sim:vender",
+      "assetType": "simulation",
+      "photo": null,
+      "voiceFile": "jobs/geo-008/audio/voice-01.mp3",
+      "assetStartInFrames": 0,
+      "assetTotalInFrames": 262,
+      "accent": "#22C55E"
+    },
+    {
+      "purpose": "problema",
+      "durationInFrames": 217,
+      "headline": "Catorce mil ya están",
+      "captions": [
+        {
+          "text": "En el mapa",
+          "start": 0.0,
+          "end": 0.659,
+          "words": [
+            {
+              "text": "En",
+              "start": 0.0,
+              "end": 0.18
+            },
+            {
+              "text": "el",
+              "start": 0.18,
+              "end": 0.36
+            },
+            {
+              "text": "mapa",
+              "start": 0.36,
+              "end": 0.659
+            }
+          ]
+        },
+        {
+          "text": "de Geo Propiedades Ecuador ya hay",
+          "start": 0.659,
+          "end": 2.696,
+          "words": [
+            {
+              "text": "de",
+              "start": 0.0,
+              "end": 0.18
+            },
+            {
+              "text": "Geo",
+              "start": 0.18,
+              "end": 0.419
+            },
+            {
+              "text": "Propiedades",
+              "start": 0.419,
+              "end": 1.138
+            },
+            {
+              "text": "Ecuador",
+              "start": 1.138,
+              "end": 1.618
+            },
+            {
+              "text": "ya",
+              "start": 1.618,
+              "end": 1.798
+            },
+            {
+              "text": "hay",
+              "start": 1.798,
+              "end": 2.037
+            }
+          ]
+        },
+        {
+          "text": "más de catorce mil propiedades",
+          "start": 2.696,
+          "end": 4.554,
+          "words": [
+            {
+              "text": "más",
+              "start": 0.0,
+              "end": 0.24
+            },
+            {
+              "text": "de",
+              "start": 0.24,
+              "end": 0.419
+            },
+            {
+              "text": "catorce",
+              "start": 0.419,
+              "end": 0.899
+            },
+            {
+              "text": "mil",
+              "start": 0.899,
+              "end": 1.138
+            },
+            {
+              "text": "propiedades",
+              "start": 1.138,
+              "end": 1.858
+            }
+          ]
+        },
+        {
+          "text": "en venta.",
+          "start": 4.554,
+          "end": 5.093,
+          "words": [
+            {
+              "text": "en",
+              "start": 0.0,
+              "end": 0.18
+            },
+            {
+              "text": "venta.",
+              "start": 0.18,
+              "end": 0.539
+            }
+          ]
+        },
+        {
+          "text": "La tuya no está entre ellas.",
+          "start": 5.093,
+          "end": 6.771,
+          "words": [
+            {
+              "text": "La",
+              "start": 0.0,
+              "end": 0.18
+            },
+            {
+              "text": "tuya",
+              "start": 0.18,
+              "end": 0.479
+            },
+            {
+              "text": "no",
+              "start": 0.479,
+              "end": 0.659
+            },
+            {
+              "text": "está",
+              "start": 0.659,
+              "end": 0.959
+            },
+            {
+              "text": "entre",
+              "start": 0.959,
+              "end": 1.318
+            },
+            {
+              "text": "ellas.",
+              "start": 1.318,
+              "end": 1.678
+            }
+          ]
+        }
+      ],
+      "visualDirection": "El mapa se llena de pines uno tras otro, en cascada, mientras la cámara se acerca. Cuando la voz dice que la tuya no está, se abre un hueco marcado con un contorno punteado y la etiqueta 'Aquí falta la tuya'. No se pinta ninguna cifra: el número lo dice la voz, con su fuente registrada.",
+      "transition": "cut",
+      "asset": "sim:ya-estan",
+      "assetType": "simulation",
+      "photo": null,
+      "voiceFile": "jobs/geo-008/audio/voice-02.mp3",
+      "assetStartInFrames": 0,
+      "assetTotalInFrames": 217,
+      "accent": "#6B5CF6"
+    },
+    {
+      "purpose": "prueba",
+      "durationInFrames": 242,
+      "headline": "Ponla en el mapa",
+      "captions": [
+        {
+          "text": "Ponla ahí tú también:",
+          "start": 0.0,
+          "end": 1.332,
+          "words": [
+            {
+              "text": "Ponla",
+              "start": 0.0,
+              "end": 0.38
+            },
+            {
+              "text": "ahí",
+              "start": 0.38,
+              "end": 0.634
+            },
+            {
+              "text": "tú",
+              "start": 0.634,
+              "end": 0.824
+            },
+            {
+              "text": "también:",
+              "start": 0.824,
+              "end": 1.332
+            }
+          ]
+        },
+        {
+          "text": "queda en el mapa",
+          "start": 1.332,
+          "end": 2.409,
+          "words": [
+            {
+              "text": "queda",
+              "start": 0.0,
+              "end": 0.38
+            },
+            {
+              "text": "en",
+              "start": 0.38,
+              "end": 0.571
+            },
+            {
+              "text": "el",
+              "start": 0.571,
+              "end": 0.761
+            },
+            {
+              "text": "mapa",
+              "start": 0.761,
+              "end": 1.078
+            }
+          ]
+        },
+        {
+          "text": "con tus fotos,",
+          "start": 2.409,
+          "end": 3.297,
+          "words": [
+            {
+              "text": "con",
+              "start": 0.0,
+              "end": 0.254
+            },
+            {
+              "text": "tus",
+              "start": 0.254,
+              "end": 0.507
+            },
+            {
+              "text": "fotos,",
+              "start": 0.507,
+              "end": 0.888
+            }
+          ]
+        },
+        {
+          "text": "tu precio y la forma",
+          "start": 3.297,
+          "end": 4.629,
+          "words": [
+            {
+              "text": "tu",
+              "start": 0.0,
+              "end": 0.19
+            },
+            {
+              "text": "precio",
+              "start": 0.19,
+              "end": 0.634
+            },
+            {
+              "text": "y",
+              "start": 0.634,
+              "end": 0.761
+            },
+            {
+              "text": "la",
+              "start": 0.761,
+              "end": 0.951
+            },
+            {
+              "text": "forma",
+              "start": 0.951,
+              "end": 1.332
+            }
+          ]
+        },
+        {
+          "text": "del terreno si la dibujas,",
+          "start": 4.629,
+          "end": 6.277,
+          "words": [
+            {
+              "text": "del",
+              "start": 0.0,
+              "end": 0.254
+            },
+            {
+              "text": "terreno",
+              "start": 0.254,
+              "end": 0.761
+            },
+            {
+              "text": "si",
+              "start": 0.761,
+              "end": 0.951
+            },
+            {
+              "text": "la",
+              "start": 0.951,
+              "end": 1.141
+            },
+            {
+              "text": "dibujas,",
+              "start": 1.141,
+              "end": 1.649
+            }
+          ]
+        },
+        {
+          "text": "donde la gente busca.",
+          "start": 6.277,
+          "end": 7.609,
+          "words": [
+            {
+              "text": "donde",
+              "start": 0.0,
+              "end": 0.38
+            },
+            {
+              "text": "la",
+              "start": 0.38,
+              "end": 0.571
+            },
+            {
+              "text": "gente",
+              "start": 0.571,
+              "end": 0.951
+            },
+            {
+              "text": "busca.",
+              "start": 0.951,
+              "end": 1.332
+            }
+          ]
+        }
+      ],
+      "visualDirection": "La ficha viaja desde abajo hasta su lugar sobre el mapa, se dibuja el polígono de la Forma del terreno y el precio se posa encima. El movimiento es una sola toma continua, sin cortes.",
+      "transition": "cut",
+      "asset": "sim:anuncio-en-mapa",
+      "assetType": "simulation",
+      "photo": null,
+      "voiceFile": "jobs/geo-008/audio/voice-03.mp3",
+      "assetStartInFrames": 0,
+      "assetTotalInFrames": 242,
+      "accent": "#14B8A6"
+    },
+    {
+      "purpose": "resultado",
+      "durationInFrames": 243,
+      "headline": "Te escriben a ti",
+      "captions": [
+        {
+          "text": "Y cuando a alguien le guste,",
+          "start": 0.0,
+          "end": 1.772,
+          "words": [
+            {
+              "text": "Y",
+              "start": 0.0,
+              "end": 0.127
+            },
+            {
+              "text": "cuando",
+              "start": 0.127,
+              "end": 0.57
+            },
+            {
+              "text": "a",
+              "start": 0.57,
+              "end": 0.696
+            },
+            {
+              "text": "alguien",
+              "start": 0.696,
+              "end": 1.203
+            },
+            {
+              "text": "le",
+              "start": 1.203,
+              "end": 1.392
+            },
+            {
+              "text": "guste,",
+              "start": 1.392,
+              "end": 1.772
+            }
+          ]
+        },
+        {
+          "text": "te llama o te escribe directo",
+          "start": 1.772,
+          "end": 3.671,
+          "words": [
+            {
+              "text": "te",
+              "start": 0.0,
+              "end": 0.19
+            },
+            {
+              "text": "llama",
+              "start": 0.19,
+              "end": 0.57
+            },
+            {
+              "text": "o",
+              "start": 0.57,
+              "end": 0.696
+            },
+            {
+              "text": "te",
+              "start": 0.696,
+              "end": 0.886
+            },
+            {
+              "text": "escribe",
+              "start": 0.886,
+              "end": 1.392
+            },
+            {
+              "text": "directo",
+              "start": 1.392,
+              "end": 1.899
+            }
+          ]
+        },
+        {
+          "text": "a ti.",
+          "start": 3.671,
+          "end": 3.987,
+          "words": [
+            {
+              "text": "a",
+              "start": 0.0,
+              "end": 0.127
+            },
+            {
+              "text": "ti.",
+              "start": 0.127,
+              "end": 0.316
+            }
+          ]
+        },
+        {
+          "text": "Sin intermediarios y sin comisión:",
+          "start": 3.987,
+          "end": 6.139,
+          "words": [
+            {
+              "text": "Sin",
+              "start": 0.0,
+              "end": 0.253
+            },
+            {
+              "text": "intermediarios",
+              "start": 0.253,
+              "end": 1.203
+            },
+            {
+              "text": "y",
+              "start": 1.203,
+              "end": 1.329
+            },
+            {
+              "text": "sin",
+              "start": 1.329,
+              "end": 1.582
+            },
+            {
+              "text": "comisión:",
+              "start": 1.582,
+              "end": 2.152
+            }
+          ]
+        },
+        {
+          "text": "lo que acuerdes es tuyo.",
+          "start": 6.139,
+          "end": 7.658,
+          "words": [
+            {
+              "text": "lo",
+              "start": 0.0,
+              "end": 0.19
+            },
+            {
+              "text": "que",
+              "start": 0.19,
+              "end": 0.443
+            },
+            {
+              "text": "acuerdes",
+              "start": 0.443,
+              "end": 1.013
+            },
+            {
+              "text": "es",
+              "start": 1.013,
+              "end": 1.203
+            },
+            {
+              "text": "tuyo.",
+              "start": 1.203,
+              "end": 1.519
+            }
+          ]
+        }
+      ],
+      "visualDirection": "El teléfono del anunciante: primero la llamada entrante vibrando, después el mensaje del interesado llegando al chat. Nada de intermediarios en pantalla: la conversación es entre dos personas.",
+      "transition": "cut",
+      "asset": "sim:te-contactan",
+      "assetType": "simulation",
+      "photo": null,
+      "voiceFile": "jobs/geo-008/audio/voice-04.mp3",
+      "assetStartInFrames": 0,
+      "assetTotalInFrames": 243,
+      "accent": "#A78BFA"
+    },
+    {
+      "purpose": "cta",
+      "durationInFrames": 313,
+      "headline": "Que sea la siguiente",
+      "captions": [
+        {
+          "text": "Publicarla no te cuesta",
+          "start": 0.0,
+          "end": 1.526,
+          "words": [
+            {
+              "text": "Publicarla",
+              "start": 0.0,
+              "end": 0.7
+            },
+            {
+              "text": "no",
+              "start": 0.7,
+              "end": 0.89
+            },
+            {
+              "text": "te",
+              "start": 0.89,
+              "end": 1.081
+            },
+            {
+              "text": "cuesta",
+              "start": 1.081,
+              "end": 1.526
+            }
+          ]
+        },
+        {
+          "text": "un centavo.",
+          "start": 1.526,
+          "end": 2.226,
+          "words": [
+            {
+              "text": "un",
+              "start": 0.0,
+              "end": 0.191
+            },
+            {
+              "text": "centavo.",
+              "start": 0.191,
+              "end": 0.7
+            }
+          ]
+        },
+        {
+          "text": "¿Qué esperas para que la tuya",
+          "start": 2.226,
+          "end": 4.07,
+          "words": [
+            {
+              "text": "¿Qué",
+              "start": 0.0,
+              "end": 0.254
+            },
+            {
+              "text": "esperas",
+              "start": 0.254,
+              "end": 0.763
+            },
+            {
+              "text": "para",
+              "start": 0.763,
+              "end": 1.081
+            },
+            {
+              "text": "que",
+              "start": 1.081,
+              "end": 1.336
+            },
+            {
+              "text": "la",
+              "start": 1.336,
+              "end": 1.526
+            },
+            {
+              "text": "tuya",
+              "start": 1.526,
+              "end": 1.844
+            }
+          ]
+        },
+        {
+          "text": "sea la siguiente en el mapa?",
+          "start": 4.07,
+          "end": 5.851,
+          "words": [
+            {
+              "text": "sea",
+              "start": 0.0,
+              "end": 0.254
+            },
+            {
+              "text": "la",
+              "start": 0.254,
+              "end": 0.445
+            },
+            {
+              "text": "siguiente",
+              "start": 0.445,
+              "end": 1.081
+            },
+            {
+              "text": "en",
+              "start": 1.081,
+              "end": 1.272
+            },
+            {
+              "text": "el",
+              "start": 1.272,
+              "end": 1.463
+            },
+            {
+              "text": "mapa?",
+              "start": 1.463,
+              "end": 1.781
+            }
+          ]
+        },
+        {
+          "text": "Publica tu propiedad gratis",
+          "start": 5.851,
+          "end": 7.632,
+          "words": [
+            {
+              "text": "Publica",
+              "start": 0.0,
+              "end": 0.509
+            },
+            {
+              "text": "tu",
+              "start": 0.509,
+              "end": 0.7
+            },
+            {
+              "text": "propiedad",
+              "start": 0.7,
+              "end": 1.336
+            },
+            {
+              "text": "gratis",
+              "start": 1.336,
+              "end": 1.781
+            }
+          ]
+        },
+        {
+          "text": "en geo propiedades ecuador punto com.",
+          "start": 7.632,
+          "end": 9.985,
+          "words": [
+            {
+              "text": "en",
+              "start": 0.0,
+              "end": 0.191
+            },
+            {
+              "text": "geo",
+              "start": 0.191,
+              "end": 0.445
+            },
+            {
+              "text": "propiedades",
+              "start": 0.445,
+              "end": 1.208
+            },
+            {
+              "text": "ecuador",
+              "start": 1.208,
+              "end": 1.717
+            },
+            {
+              "text": "punto",
+              "start": 1.717,
+              "end": 2.099
+            },
+            {
+              "text": "com.",
+              "start": 2.099,
+              "end": 2.353
+            }
+          ]
+        }
+      ],
+      "visualDirection": "Cierre de marca común de la serie: tile, Geo Propiedades Ecuador, dominio geopropiedadesecuador.com, el CTA 'Publica tu propiedad gratis' y la firma de Aents.",
+      "transition": "fade",
+      "asset": null,
+      "assetType": null,
+      "photo": null,
+      "voiceFile": "jobs/geo-008/audio/voice-05.mp3",
+      "assetStartInFrames": 0,
+      "assetTotalInFrames": 313,
+      "accent": "#22C55E"
+    }
+  ]
+}

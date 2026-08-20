@@ -1,0 +1,8 @@
+{
+  "approved_at": "2026-08-15T01:49:14.769951-05:00",
+  "approved_by": "Claude (sesión web Aents)",
+  "notes": "Guion del cliente adaptado a cinco escenas; afirmaciones verificadas contra apps/web/src/i18n.ts del repositorio Aents",
+  "lint_passed": true,
+  "forced": false,
+  "plan_sha": "be8b4290b4c4c60ddd71df39e14eebd1acb3eeef492bb8db7eaf904b8cc9a496"
+}

@@ -1,5 +1,159 @@
 # Historial de cambios
 
+## 2026-08-15 — Arco de inteligencia artificial de Aents
+
+- Nuevo `remotion/src/aents-ia-simulations.tsx` con catorce animaciones para la
+  clase sobre construir software con inteligencia artificial:
+  `sim:aents-ia-funciona`, `sim:aents-ia-contexto`, `sim:aents-ia-partes`,
+  `sim:aents-ia-reglas`, `sim:aents-ia-camino-feliz`, `sim:aents-ia-revision`,
+  `sim:aents-ia-dependencias`, `sim:aents-ia-seguridad`,
+  `sim:aents-ia-secretos`, `sim:aents-ia-pruebas`, `sim:aents-ia-git`,
+  `sim:aents-ia-orden`, `sim:aents-ia-criterio` y `sim:aents-ia-cierre`. El
+  fondo, el panel, el texto contenido y el vocabulario de movimiento vienen de
+  `system-kit`; lo propio del archivo es el argumento.
+- Cada consejo se demuestra fallando antes de darse: el rastro del error se
+  pierde dos veces entre los archivos generados, el recorrido perfecto se repite
+  sin conexión y sin permiso, y la petición entra al servidor después de
+  esconder el botón. Un acierto sin intento previo no se lee como respuesta.
+- Ninguna herramienta de inteligencia artificial se nombra, se compara ni se
+  recomienda: el pedido se dibuja como un campo de mensaje genérico. Un test lo
+  comprueba sobre el archivo, con «copiloto» y el componente `Cursor` excluidos
+  por ser metáfora y pieza de interfaz, no marcas.
+- `sim:aents-ia-cierre` carga el bloque de marca completo porque `scene.tsx` no
+  dibuja el outro sobre una simulación en la escena final; sin eso la pieza
+  terminaría con un CTA que nadie puede accionar. Un test lo verifica.
+- Nueva portada `aents-ia` en `cover.tsx`: la pantalla que ya funciona junto a
+  la columna de capas que nadie marcó, con el rótulo «SI PROGRAMAS CON IA».
+
+## 2026-08-15 — Arco móvil de Aents
+
+- Nuevo `remotion/src/aents-mobile-simulations.tsx` con trece animaciones para
+  la clase sobre responsive y mobile first: `sim:aents-encoge`,
+  `sim:aents-sintomas`, `sim:aents-dos-caminos`, `sim:aents-cabe`,
+  `sim:aents-pregunta`, `sim:aents-portal-escritorio`, `sim:aents-portal-movil`,
+  `sim:aents-dedo`, `sim:aents-tarjetas`, `sim:aents-gestos`, `sim:aents-peso`,
+  `sim:aents-hacia-arriba` y `sim:aents-usala`. El fondo, el panel y el texto
+  contenido vienen de `system-kit`; lo propio del archivo es el argumento.
+- `sim:aents-portal-movil` no idealiza el producto: dibuja los estados que
+  implementa `frontend/components/map/MobilePropertyDrawer.tsx` —botón flotante
+  que abre buscador y filtros, ficha a media altura, ficha completa con fondo
+  atenuado y arrastre hacia abajo para cerrar—. Un test comprueba que esos
+  estados sigan nombrados en la composición.
+- Nueva portada `aents-movil` en `cover.tsx`: un solo teléfono partido por la
+  mitad, con la página de escritorio reducida a un lado y la versión pensada
+  para el dedo al otro, y un disco del tamaño de una yema sobre el botón.
+- `sim:aents-encoge` usa un marco que se transforma en vez de cambiar de
+  componente a mitad del recorrido. Alternar `Desktop` y `Phone` según el ancho
+  producía un salto de barra de navegación a bisel justo en el segundo en que la
+  escena tiene que leerse como una sola reducción continua.
+
+## 2026-08-15 — Formato clase y números reclamables
+
+- Nuevo formato **clase**, de 121 a 240 segundos: hasta catorce escenas y hasta
+  25 segundos antes de mostrar el producto (`quality.MAX_LESSON_SCENES`,
+  `quality.LESSON_PRODUCT_REVEAL_DEADLINE_SECONDS`). Debajo, la historia y el
+  formato corto conservan exactamente sus límites: `quality.is_story` pasa a
+  cerrar en 120 en vez de quedar abierta hacia arriba.
+- `video new` acepta `--duration` de 8 a 240, el esquema del planificador admite
+  las catorce escenas y la revisión del máster comprueba ese mismo rango
+  (`duration_8_to_240_seconds`). Un tope de escenas que no crecía convertía
+  cualquier pieza larga en cinco animaciones sostenidas medio minuto cada una.
+- `EditorialFormat.classify` etiqueta `lesson` por encima de dos minutos: a esa
+  duración nadie mira por el arco narrativo, mira porque está aprendiendo.
+- Nuevo `video new --number N`: reclama un número que el catálogo saltó.
+  `next_number` solo cuenta hacia adelante, así que un plan descartado dejaba un
+  hueco que ninguna pieza podía volver a ocupar. El catálogo se guarda ordenado
+  por número para que el planificador siga leyendo el final como lo más reciente,
+  y un número ya ocupado se rechaza antes de crear la carpeta.
+- `catalog.save` ya no borra el trabajo de otra sesión. Cada comando cargaba el
+  catálogo entero, cambiaba una entrada y lo escribía completo, así que dos
+  agentes trabajando a la vez se pisaban: `aents-003` desapareció del catálogo
+  mientras su carpeta, su aprobación y su voz sintetizada seguían en disco, y el
+  siguiente comando ya no encontraba un video que estaba entero. Ahora se
+  relee el archivo justo antes de escribir y se conservan las entradas que no
+  estaban en la copia cargada. No lo vuelve atómico; convierte el caso normal
+  —dos sesiones separadas por minutos— en una fusión en vez de una pérdida.
+- El render escribe su progreso en `exports/<id>.pending.render.log` mientras
+  avanza. Antes se capturaba toda la salida de Remotion y no se veía una línea
+  hasta que el proceso terminaba: aguantable en treinta segundos, pero una clase
+  son casi 6.000 fotogramas, y durante más de una hora un render que iba bien y
+  uno cuyas pestañas habían muerto se veían exactamente igual.
+- Nuevo `video render --concurrency N` y `VIDEO_RENDER_CONCURRENCY`. Remotion
+  abre una pestaña por núcleo y cada una sostiene un fotograma entero, que a
+  `--scale 2` mide 2160 × 3840. Una clase son casi 6.000 fotogramas: en una
+  máquina de 16 GB con otro render en marcha las pestañas mueren una tras otra
+  con `target closed`, que parece un defecto de la composición y no lo es. Por
+  defecto no se pasa nada y Remotion sigue eligiendo.
+- `test_planner_context_reads_only_the_selected_brand_memory` comprobaba que
+  Aents no tuviera aprendizajes. Falló el día que registró el primero; ahora
+  comprueba de qué marca sale la memoria, que es lo que la prueba defiende.
+
+## 2026-08-15 — La duración deja de ser una regla
+
+- La duración de una pieza es una decisión editorial, no una comprobación. Se
+  retiran las dos reglas que la vigilaban: `duration_close_to_target` en la
+  revisión del máster y `duration` en el lint del plan.
+- Un guion cuya locución estimada supere el objetivo declarado ya no se rechaza
+  antes de renderizar, y un máster que dure más o menos de lo previsto ya no
+  falla la revisión. `target_duration_seconds` sigue registrándose en el brief,
+  el catálogo y `review.json` como referencia.
+- Se mantiene `duration_8_to_120_seconds`: es el límite del formato vertical,
+  no una comparación contra el objetivo.
+- El índice `system/quality-rules.json` decía `duration_8_to_60_seconds` cuando
+  el código aceptaba 120 desde que existen las historias; queda corregido.
+- Motivo: el video-013 pasaba la revisión con objetivo 40 s y la fallaba con
+  objetivo 33 s sin que el máster hubiera cambiado. La regla medía el brief, no
+  la pieza.
+
+## 2026-08-14 — Texto de publicación listo para copiar
+
+- `pack` genera globalmente `texto-para-publicar.txt` con caption y hashtags en
+  el orden exacto de publicación, y registra ambos en `publish.json`.
+- Los planes nuevos admiten entre uno y cinco hashtags propios. Los planes
+  anteriores reciben los defaults seguros del perfil Geo o Aents.
+- Los hashtags permanecen fuera de locución, subtítulos y `caption.txt` para no
+  contaminar los artefactos editoriales existentes.
+
+## 2026-08-14 — Un motor, dos espacios editoriales
+
+- La CLI incorpora `--brand geo|aents`; Geo sigue siendo el default y conserva
+  catálogo, biblioteca y comandos históricos sin migraciones.
+- Aents recibe catálogo, numeración, biblioteca, publicaciones, brechas,
+  decisiones y aprendizajes independientes bajo `brands/aents/`.
+- `brand.py` concentra identidad, dominio, rutas, audiencias, CTA y simulaciones
+  permitidas. El planificador carga únicamente el contexto y memoria del perfil.
+- Las props de Remotion llevan marca, nombre, dominio, tagline y símbolo
+  explícitos. Portada, wordmark y cierre dejan de inferir la cuenta desde el
+  título o un identificador `sim:*`.
+- Aents consume los PNG canónicos de `../Aents/packages/brand/exports`; el
+  repositorio Aents permanece de solo lectura.
+- El staging de Remotion se prefija por marca, de modo que dos `video-001` no
+  comparten archivos transitorios.
+
+## 2026-08-14 — Dos piezas hermanas desde un guion de dos públicos
+
+- El guion entregado por la persona responsable hablaba al vendedor y al comprador en la misma pieza, con dos CTA y 46 s. El contrato lo prohíbe, así que se produce como dos videos con el mismo sistema visual: video-013 para propietarios (33 s) y video-014 para compradores (25 s).
+- Animaciones nuevas: `sim:donde-queda` y `sim:ya-lo-saben` son el mismo componente en sus dos estados —el anuncio publicado con la fila de ubicación vacía y los mensajes que preguntan dónde queda, y ese mismo anuncio con su punto en el mapa y mensajes que ya preguntan por la propiedad—. La pieza abre en la pregunta y cierra en su respuesta, y dibujar el remate como otra imagen habría escondido que es el mismo anuncio. `sim:elige-zona` invierte el orden de la búsqueda: una mano arrastra el mapa hasta la zona, se traza el círculo y las tarjetas sueltas caen dentro convertidas en precios ubicados.
+- `cover.tsx` gana los ramales `pregunta` (el anuncio sin ubicación y los mensajes encima) y `zona` (el círculo de la zona con sus precios dentro y los de fuera apagados). Ninguno cuenta inventario.
+- Las tres animaciones cuentan como mostrar el producto (`quality.PRODUCT_ASSETS`): las dos primeras son el anuncio publicado y la tercera es el mapa.
+- `PublishShell` acepta `camera`, como ya hacía `FieldShell`. El primer máster del 013 salió quieto entre el 55 % y el 85 % por escena; con el empuje lento, la foto de la tarjeta desplazándose durante toda la toma y `sim:ubicacion-publicacion` dibujando su polígono esquina por esquina en vez de conmutar en el segundo 1,55, la revisión no deja ni un aviso de movimiento. Las composiciones que no pasan `camera` no cambian.
+
+## 2026-08-14 — Los seis pasos de una compraventa
+
+- Video-012 desde un guion entregado por la persona responsable: qué pasa después de encontrar la propiedad, en formato educativo de 48 s y nueve escenas.
+- Animaciones nuevas: `sim:verificar` (la lupa recorre propietario, documentos y gravámenes y cada fila se lee mientras pasa), `sim:negociar` (el precio publicado se tacha, entra la oferta y aparece el acuerdo), `sim:promesa` (la firman comprador y vendedor, en ese orden), `sim:escritura-publica` (el sello de la notaría es el sujeto), `sim:inscripcion` (la escritura entra al registro y el propietario inscrito deja de ser el vendedor) y `sim:pasos-compra` (los seis pasos en orden). Ninguna cuenta como mostrar el producto: nada de eso ocurre dentro del portal, y el test lo fija.
+- `cover.tsx` gana el ramal `proceso` con la escalera de seis pasos.
+- `simulations.tsx` añade `pace`: progreso a ritmo constante para un movimiento que el ojo debe seguir. La curva de la casa está adelantada por diseño —gasta el 90 % de su distancia en el primer tercio—, así que una lupa que recorre una lista resolvía la escena en el primer segundo y el resto era una fotografía. El primer máster del 012 salió con 83–89 % de quietud por esa razón; `sim:filtros` arrastraba el mismo defecto y también se corrigió.
+- `FieldShell` acepta `camera`: un empuje lento y de una sola dirección durante toda la escena. Las composiciones anteriores no lo pasan y no cambian.
+- `sim:ficha` queda limpia para poder reutilizarse: el precio se imprime en vez de contar desde cero —su línea sale de `FROZEN_LINES`—, la tarjeta lleva `EJEMPLO` y el bloque de inteligencia pierde «La zona va de $511 a $905 · 2120 comparables» y el sello «dentro del rango». Eran cifras de mercado inventadas, y además se contradecían: $305 no está entre $511 y $905. Queda el precio dividido para el área declarada, que cualquiera puede rehacer.
+
+## 2026-08-14 — La revisión aprende a mirar el movimiento
+
+- `review_tools.MotionStripExtractor`: cada escena se muestrea cada medio segundo y se arma una tira de contacto en `review/strips/`, visible en la página de revisión junto a los fotogramas críticos.
+- `review_tools.AnimatedFigureAudit`: detecta en el código las cifras que se interpolan hasta su valor —redondear o formatear un valor animado y imprimirlo— y `video review` lo convierte en la comprobación dura `no_interpolated_figures`. Las cifras de piezas ya firmadas quedan en una lista de congelados explícita.
+- `review_tools.MotionDefectAudit`: `freezedetect` para escenas detenidas, proporción de quietud por escena y detección de saltos bruscos lejos de un corte. Umbrales calibrados contra defectos verificados a ojo en el video-010.
+- Ese detector reveló que el máster del 010 está quieto entre el 53 % y el 92 % de cada escena.
+
 ## 2026-08-14 — Primera revisión del consejo sobre una pieza real
 
 - El video-010 pasó por los cinco roles. Los tres carriles coincidieron en que el argumento era nuevo y la superficie no: portada, escena 5, escena 6 y escena 7 venían de la pieza de terrenos y demostraban otro sujeto.

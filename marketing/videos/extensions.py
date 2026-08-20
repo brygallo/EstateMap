@@ -9,6 +9,7 @@ from typing import Any
 
 import catalog as catalog_store
 import renderer
+import brand
 from workflow import ExperimentDecision, PublicationImport, ResultsTable
 
 
@@ -20,6 +21,10 @@ class PublicationSynchronizer:
         self.ledger_path = root / "memory/publications.json"
 
     def execute(self, source: Path, dry_run: bool = False) -> dict[str, Any]:
+        if self.root.resolve() == brand.ROOT.resolve():
+            self.ledger_path = brand.current().memory / "publications.json"
+        else:
+            self.ledger_path = self.root / "memory/publications.json"
         records = PublicationImport.read(source)
         catalog = catalog_store.load()
         videos = {item["id"]: item for item in catalog["videos"]}

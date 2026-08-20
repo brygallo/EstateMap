@@ -6,10 +6,36 @@ from __future__ import annotations
 import csv
 import fcntl
 import functools
+import re
 from pathlib import Path
 from typing import Any
 
 import catalog as catalog_store
+
+
+class PublishingCopy:
+    """Build the exact block a person pastes into a social publisher."""
+
+    HASHTAG = re.compile(r"^#[A-Za-z0-9_ÁÉÍÓÚÜÑáéíóúüñ]+$")
+
+    @classmethod
+    def build(cls, caption: str, hashtags: list[str] | tuple[str, ...]) -> dict[str, Any]:
+        clean_caption = caption.strip()
+        if not clean_caption:
+            raise RuntimeError("Publishing copy requires a caption")
+        clean_hashtags = []
+        for hashtag in hashtags:
+            value = str(hashtag).strip()
+            if not cls.HASHTAG.fullmatch(value):
+                raise RuntimeError(f"Invalid publishing hashtag: {value}")
+            if value.lower() not in {item.lower() for item in clean_hashtags}:
+                clean_hashtags.append(value)
+        if not clean_hashtags:
+            raise RuntimeError("Publishing copy requires at least one hashtag")
+        if len(clean_hashtags) > 5:
+            raise RuntimeError("Publishing copy accepts at most five hashtags")
+        text = f"{clean_caption}\n\n{' '.join(clean_hashtags)}\n"
+        return {"caption": clean_caption, "hashtags": clean_hashtags, "text": text}
 
 
 class EditorialFormat:
@@ -23,7 +49,11 @@ class EditorialFormat:
             return "demonstration"
         if target <= 45:
             return "tutorial"
-        return "story"
+        # Past two minutes the runtime is not a story that ran long: nobody
+        # watches four minutes for a narrative arc, they watch it to be taught.
+        if target <= 120:
+            return "story"
+        return "lesson"
 
 
 class ResultsTable:
@@ -109,6 +139,46 @@ class ExperimentDecision:
         }
 
 
+class FinalVoiceRotation:
+    """A bought master never speaks with the voice of the piece before it.
+
+    This lived only in the lessons file, and eleven consecutive masters were
+    bought with the same narrator anyway: a rule nobody enforces is a
+    preference. The rotation is deterministic — the video number picks the
+    profile — so anyone can say in advance which voice a piece will get, and the
+    check refuses a repeat instead of trusting whoever typed the command.
+
+    The pool is every paid profile that names its own voice id. A profile that
+    reads its id from the environment cannot be told apart from another one, so
+    it cannot take a turn in a rotation that has to be verifiable.
+    """
+
+    @classmethod
+    def pool(cls, catalog: dict[str, Any]) -> list[str]:
+        return sorted(
+            identifier
+            for identifier, profile in (catalog.get("profiles") or {}).items()
+            if str(profile.get("provider")) == "elevenlabs"
+            and str((profile.get("settings") or {}).get("voice_id", "")).strip()
+        )
+
+    @classmethod
+    def assign(cls, number: int, pool: list[str]) -> str:
+        if not pool:
+            raise RuntimeError(
+                "No paid voice profile names its own voice id, so the rotation has nothing to choose from"
+            )
+        return pool[(number - 1) % len(pool)]
+
+    @classmethod
+    def enforce(cls, chosen: str, previous: tuple[int, str] | None) -> None:
+        if previous and previous[1] == chosen:
+            raise RuntimeError(
+                f"video-{previous[0]:03} was already bought with {chosen}; a master does not reuse the voice "
+                f"of the piece before it. Choose another profile with --voice-profile"
+            )
+
+
 class StatePolicy:
     """Protect frozen artifacts before a command touches the filesystem."""
 
@@ -136,6 +206,8 @@ class PlanCatalogMetadata:
 
     @classmethod
     def build(cls, plan: dict[str, Any], duration: int) -> dict[str, Any]:
+        import renderer
+
         return {
             "title": plan["title"],
             "audience": plan["audience"],
@@ -146,6 +218,10 @@ class PlanCatalogMetadata:
             "hook": plan["scenes"][0]["voice"],
             "cta": plan["cta"],
             "editorial_format": EditorialFormat.classify(plan, duration),
+            # How the opening was shot, so the next piece can be refused for
+            # repeating it. A kit that is not varied on purpose becomes a
+            # template, and the catalogue is the only place that remembers.
+            "hero_staging": renderer.HERO_STAGINGS.get(plan["scenes"][0].get("asset")),
         }
 
 
@@ -186,6 +262,18 @@ class ForbiddenClaimPolicy:
         words = prefix.split()
         nearby = " ".join(words[-8:]) + " "
         return any(negation in nearby for negation in cls.NEGATIONS)
+
+
+class RenderCleanupPolicy:
+    """Limit automated render cleanup to disposable pending files."""
+
+    @classmethod
+    def discard(cls, *paths: Path) -> None:
+        for path in paths:
+            if ".pending." not in path.name:
+                raise RuntimeError(f"Refusing to delete a canonical artifact: {path}")
+        for path in paths:
+            path.unlink(missing_ok=True)
 
 
 class RenderLock:

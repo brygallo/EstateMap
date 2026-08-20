@@ -1,0 +1,117 @@
+{
+  "title": "Que el sistema haga el trabajo",
+  "audience": "empresa",
+  "funnel_stage": "descubrimiento",
+  "objective": "Posicionar a Aents como el estudio que construye el sistema completo de un negocio y abrir una conversación",
+  "conversion_event": "contact_request",
+  "pillar": "Software a medida",
+  "series": "Conoce Aents",
+  "concept": "Del negocio que se sostiene a mano al sistema que lo sostiene",
+  "promise": "Aents construye el sistema alrededor de cómo funciona tu negocio",
+  "cta": "Conversemos sobre tu negocio",
+  "hypothesis": "Mostrar primero el desorden que produce crecer y después el sistema que lo absorbe hace que una empresa se reconozca antes de escuchar la oferta",
+  "cover_text": "Que el sistema haga el trabajo",
+  "cover_art": "aents-sistema",
+  "caption": "Un negocio que crece acumula clientes, mensajes, datos y procesos que alguien tiene que controlar a mano. En Aents diseñamos el software alrededor de cómo funciona tu operación: conectamos procesos, automatizamos tareas repetitivas y dejamos todo a la vista en un solo panel, con roles para cada persona del equipo. Webs, apps, sistemas empresariales y automatización, desde la estrategia y el diseño hasta el desarrollo y el lanzamiento. Conversemos sobre tu negocio.",
+  "hashtags": [
+    "#Aents",
+    "#SoftwareEcuador",
+    "#Automatizacion",
+    "#SistemasEmpresariales"
+  ],
+  "narration": "Tu negocio puede estar creciendo y, aun así, estar perdiendo tiempo todos los días. Más clientes, más mensajes, más datos, más procesos que alguien tiene que controlar. ¿Y si el sistema hiciera ese trabajo? En Aents diseñamos el software alrededor de cómo funciona realmente tu negocio. Conectamos tus procesos, automatizamos las tareas repetitivas y hacemos que la información se mueva sola. Y todo lo que pasa en tu operación queda a la vista, en un solo panel y con roles para cada persona. Porque un buen sistema no resuelve solo el problema de hoy: está preparado para lo que viene después. No hacemos software por hacer software: construimos sistemas que hacen avanzar negocios. Tu negocio ya sabe hacia dónde quiere crecer. Conversemos y construyamos la tecnología para llegar.",
+  "voice_profile": null,
+  "music": null,
+  "verification_notes": [
+    "Oferta verificada en ../Aents/apps/web/src/i18n.ts:367-378: webs, apps para iOS y Android, sistemas empresariales y automatización e integraciones.",
+    "Paneles, roles y flujos verificados en ../Aents/apps/web/src/i18n.ts:373-375 (services.enterprise y services.enterpriseNote): plataformas de gestión, paneles, roles y flujos que conectan la operación en un solo lugar.",
+    "Automatización de procesos repetitivos verificada en ../Aents/apps/web/src/i18n.ts:376-378 (services.automation): conectar servicios, datos y procesos repetitivos.",
+    "Que el sistema esté preparado para crecer se apoya en ../Aents/apps/web/src/i18n.ts:368-372: experiencias que crecen con el negocio y una base preparada para evolucionar. No se promete ningún límite ni capacidad medida.",
+    "Tagline verificado en ../Aents/packages/brand/src/index.ts:6 y ../Aents/apps/web/src/i18n.ts:225: «Software para personas.». El cierre del guion original decía «BUILD WHAT'S NEXT», que no pertenece a la identidad y se descarta.",
+    "Se omite la inteligencia artificial del guion original. apps/web no la ofrece como servicio y ../Aents/doc/CONTEXTO-PROYECTO.md:85 solo la nombra dentro de la arquitectura de marca, con el nombre del área pendiente de confirmar en la línea 524. Esa escena se reemplaza por el panel de gestión, que sí está publicado.",
+    "Las cantidades de los paneles —clientes, pagos, pedidos y la escala de diez a diez mil— pertenecen a un negocio inventado, aparecen rotuladas EJEMPLO mientras están en pantalla y la locución nunca las convierte en dato. Ninguna afirma nada sobre Aents, sus clientes ni el mercado."
+  ],
+  "scenes": [
+    {
+      "purpose": "gancho",
+      "duration": 5,
+      "voice": "Tu negocio puede estar creciendo y, aun así, estar perdiendo tiempo todos los días.",
+      "on_screen_text": "Tu negocio crece",
+      "asset": "sim:aents-crecimiento",
+      "visual_direction": "El contador de clientes de un negocio de ejemplo salta de 47 a 384 mientras los canales por donde entra el trabajo aparecen alrededor y sus conexiones empiezan a cruzarse.",
+      "transition": "cut"
+    },
+    {
+      "purpose": "problema",
+      "duration": 5,
+      "voice": "Más clientes, más mensajes, más datos, más procesos que alguien tiene que controlar.",
+      "on_screen_text": "Todo se acumula",
+      "asset": "sim:aents-carga",
+      "visual_direction": "Clientes, datos y procesos suben; el tiempo baja. La cola de tareas que pasa por una sola persona se llena y la escena se detiene en un error.",
+      "transition": "cut"
+    },
+    {
+      "purpose": "problema",
+      "duration": 3,
+      "voice": "¿Y si el sistema hiciera ese trabajo?",
+      "on_screen_text": "Hay otra forma",
+      "asset": "sim:aents-giro",
+      "visual_direction": "El enredo se apaga y queda la pregunta sola en pantalla; después entra el isotipo de Aents.",
+      "transition": "fade"
+    },
+    {
+      "purpose": "prueba",
+      "duration": 5,
+      "voice": "En Aents diseñamos el software alrededor de cómo funciona realmente tu negocio.",
+      "on_screen_text": "Un sistema a medida",
+      "asset": "sim:aents-arquitectura",
+      "visual_direction": "La arquitectura se construye de arriba abajo: clientes, web y app, el sistema a medida, sus módulos y la automatización. Cada conexión se enciende antes de que llegue la banda siguiente.",
+      "transition": "cut"
+    },
+    {
+      "purpose": "prueba",
+      "duration": 6,
+      "voice": "Conectamos tus procesos, automatizamos las tareas repetitivas y hacemos que la información se mueva sola.",
+      "on_screen_text": "Tareas automatizadas",
+      "asset": "sim:aents-automatizacion",
+      "visual_direction": "Entra un pedido de ejemplo y el sistema va confirmando pago, inventario, factura, aviso al cliente y reporte, uno tras otro sobre la misma columna.",
+      "transition": "cut"
+    },
+    {
+      "purpose": "prueba",
+      "duration": 5,
+      "voice": "Y todo lo que pasa en tu operación queda a la vista, en un solo panel y con roles para cada persona.",
+      "on_screen_text": "Todo en un panel",
+      "asset": "sim:aents-panel",
+      "visual_direction": "El panel de un negocio de ejemplo responde qué necesita atención hoy, fila por fila, y abajo aparecen los roles del equipo.",
+      "transition": "cut"
+    },
+    {
+      "purpose": "resultado",
+      "duration": 6,
+      "voice": "Porque un buen sistema no resuelve solo el problema de hoy: está preparado para lo que viene después.",
+      "on_screen_text": "Preparado para crecer",
+      "asset": "sim:aents-escala",
+      "visual_direction": "El número de clientes del ejemplo pasa de diez a diez mil y las columnas crecen, mientras la interfaz del panel se queda exactamente donde estaba.",
+      "transition": "cut"
+    },
+    {
+      "purpose": "resultado",
+      "duration": 6,
+      "voice": "No hacemos software por hacer software: construimos sistemas que hacen avanzar negocios.",
+      "on_screen_text": "Sistemas, no software",
+      "asset": "sim:aents-posicionamiento",
+      "visual_direction": "La palabra software se tacha y se retira; en su lugar entra construimos sistemas que hacen avanzar negocios.",
+      "transition": "cut"
+    },
+    {
+      "purpose": "cta",
+      "duration": 7,
+      "voice": "Tu negocio ya sabe hacia dónde quiere crecer. Conversemos y construyamos la tecnología para llegar.",
+      "on_screen_text": "Conversemos",
+      "asset": "sim:aents-cierre",
+      "visual_direction": "Todo se apaga y queda la marca: isotipo, Aents, Software para personas, sus servicios y aents.net junto al botón de conversar.",
+      "transition": "fade"
+    }
+  ]
+}

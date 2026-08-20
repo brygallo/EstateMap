@@ -12,10 +12,18 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
+import brand
+
 
 ROOT = Path(__file__).resolve().parent
-STORE = ROOT / "memory/lessons.json"
-VIEW = ROOT / "memory/lessons.md"
+STORE = ROOT / "brands/geo/memory/lessons.json"
+VIEW = ROOT / "brands/geo/memory/lessons.md"
+
+
+def configure(profile: brand.BrandProfile) -> None:
+    global STORE, VIEW
+    STORE = profile.memory / "lessons.json"
+    VIEW = profile.memory / "lessons.md"
 
 PREAMBLE = """# Aprendizajes activos
 
@@ -40,6 +48,7 @@ def load() -> dict[str, Any]:
 
 
 def save(data: dict[str, Any]) -> None:
+    STORE.parent.mkdir(parents=True, exist_ok=True)
     STORE.write_text(json.dumps(data, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     render(data)
 
@@ -69,4 +78,5 @@ def render(data: dict[str, Any] | None = None) -> None:
             f"- Observación ({origin}): {lesson.get('observation', '').strip()}\n"
             f"- Regla: {lesson.get('rule', '').strip()}\n"
         )
+    VIEW.parent.mkdir(parents=True, exist_ok=True)
     VIEW.write_text("".join(sections).rstrip() + "\n", encoding="utf-8")

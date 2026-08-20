@@ -1,0 +1,163 @@
+{
+  "title": "Tu empresa no necesita más pasos. Necesita un sistema.",
+  "audience": "empresa",
+  "funnel_stage": "descubrimiento",
+  "objective": "Mostrar de forma concreta cómo Aents transforma procesos y necesidades empresariales en productos digitales a medida",
+  "conversion_event": "whatsapp_contact",
+  "pillar": "Software a medida",
+  "series": "Conoce Aents",
+  "concept": "Del problema al software",
+  "promise": "Aents diseña y desarrolla software alrededor de la forma real en que funciona tu negocio",
+  "cta": "Cuéntanos qué quieres mejorar",
+  "hypothesis": "Mostrar primero un problema empresarial reconocible y después visualizar su transformación en software hace que la propuesta de Aents sea más fácil de entender y recordar",
+  "cover_text": "¿Tu empresa necesita un sistema?",
+  "caption": "Casi ninguna empresa necesita más tecnología. Necesita que la que ya tiene trabaje junta. En Aents no empezamos programando: empezamos entendiendo cómo trabaja tu empresa, y recién ahí decidimos si lo que hace falta es una aplicación móvil, una plataforma web, un sistema para toda la operación o automatizar lo que hoy alguien hace a mano. Así construimos Geo Propiedades Ecuador. Cuéntanos qué quieres mejorar.",
+  "hashtags": [
+    "#Aents",
+    "#SoftwareEcuador",
+    "#DesarrolloDeSoftware",
+    "#SoftwareAMedida",
+    "#AutomatizacionEmpresarial"
+  ],
+  "narration": "Ese problema que tu empresa arrastra puede ser tu software. Hoy una parte vive en Excel, otra en documentos, otra en WhatsApp. Y otra depende de que alguien se acuerde, todos los días. Casi nunca falta tecnología. Falta que esas herramientas se hablen. Por eso no empezamos programando. Empezamos entendiendo cómo trabajas. Recién ahí decidimos qué construir: una app móvil, una plataforma web. Un sistema para toda la operación, o automatizar lo que se hace a mano. El problema lo conoces tú. Nadie mejor. Nosotros diseñamos, construimos y lanzamos. No te soltamos antes. No se trata de que tu empresa se acomode a un software genérico. Se trata de construir alrededor de cómo tu empresa ya trabaja. Geo Propiedades Ecuador es nuestro. Lo construimos y hoy funciona. Si tienes una idea o algo que mejorar, escríbenos por WhatsApp. Aents. Software for people.",
+  "voice_profile": null,
+  "music": null,
+  "verification_notes": [
+    "Oferta verificada en ../Aents/apps/web/src/i18n.ts:363-378: apps móviles, plataformas web, sistemas empresariales, automatización e integraciones.",
+    "Proceso verificado en ../Aents/apps/web/src/i18n.ts:364-365: estrategia, diseño, desarrollo y lanzamiento.",
+    "CTA y contacto verificados en ../Aents/apps/web/src/i18n.ts:379-380 y 399.",
+    "Geo Propiedades Ecuador es un producto construido por Aents y está publicado: la escena 12 lo muestra funcionando con la firma de autoría, que es la misma afirmación que sostiene geo-007. No se afirma nada sobre su mercado, su inventario ni sus resultados.",
+    "Ninguna escena afirma cantidad de clientes, plazos, precios, ahorros ni resultados: la pieza describe qué construye Aents y cómo, sin cifras.",
+    "Excel y WhatsApp se nombran en la locución como las herramientas que ya usa quien mira, nunca como productos de Aents; en pantalla se rotulan por categoría —hojas, documentos, mensajes, tareas— para no exhibir marcas de terceros.",
+    "La interfaz que aparece en el gancho es una ilustración del producto, no una captura: sus filas —proceso, datos y equipo— nombran lo que un sistema a medida reúne, y ninguna muestra cifras, clientes ni resultados.",
+    "Se omiten inteligencia artificial y la transformación de 15 minutos a segundos porque no existe evidencia aprobada."
+  ],
+  "scenes": [
+    {
+      "purpose": "gancho",
+      "duration": 4.5,
+      "voice": "Ese problema que tu empresa arrastra puede ser tu software.",
+      "on_screen_text": "Problema → Software",
+      "asset": "sim:aents-problema-software",
+      "visual_direction": "Apertura sobre el escenario hero, rodada en push-in. Cuatro tarjetas —hojas, documentos, mensajes, tareas— llegan desde su propio plano de profundidad y se funden en un solo nodo PROBLEMA; el nodo toma impulso, cae sobre el isotipo y el impacto suelta dos ondas. Del otro lado se arma una ventana real del producto: barra, navegación con un único destino activo y tres filas —tu proceso, tus datos, tu equipo— que pasan de en curso a listo una tras otra.",
+      "transition": "cut"
+    },
+    {
+      "purpose": "problema",
+      "duration": 4.5,
+      "voice": "Hoy una parte vive en Excel, otra en documentos, otra en WhatsApp.",
+      "on_screen_text": "Todo por separado",
+      "asset": "sim:aents-disperso",
+      "visual_direction": "Tres de las cuatro fuentes sueltan piezas que salen en direcciones distintas, con duplicados y trayectorias cruzadas. Nada llega a ninguna parte.",
+      "transition": "cut"
+    },
+    {
+      "purpose": "problema",
+      "duration": 4,
+      "voice": "Y otra depende de que alguien se acuerde, todos los días.",
+      "on_screen_text": "Y se repite",
+      "asset": "sim:aents-disperso",
+      "visual_direction": "La misma toma continúa y el foco pasa a la tarea manual: su vuelta vuelve a empezar una y otra vez sin resolverse.",
+      "transition": "cut"
+    },
+    {
+      "purpose": "problema",
+      "duration": 5,
+      "voice": "Casi nunca falta tecnología. Falta que esas herramientas se hablen.",
+      "on_screen_text": "No trabajan juntas",
+      "asset": "sim:aents-desconectado",
+      "visual_direction": "La cámara se aleja y revela que las cuatro herramientas existen, pero cada una vive en su isla. Los enlaces entre ellas se intentan y se apagan antes de llegar; el isotipo entra al centro y empieza a completarlos.",
+      "transition": "cut"
+    },
+    {
+      "purpose": "prueba",
+      "duration": 5.5,
+      "voice": "Por eso no empezamos programando. Empezamos entendiendo cómo trabajas.",
+      "on_screen_text": "Primero entendemos",
+      "asset": "sim:aents-entender",
+      "visual_direction": "El desorden se apaga y queda un mapa de proceso limpio: entrada, decisión, personas y resultado. Una lectura lo recorre de principio a fin y se detiene a marcar el paso donde se traba.",
+      "transition": "cut"
+    },
+    {
+      "purpose": "prueba",
+      "duration": 5.5,
+      "voice": "Recién ahí decidimos qué construir: una app móvil, una plataforma web.",
+      "on_screen_text": "App o plataforma",
+      "asset": "sim:aents-soluciones",
+      "visual_direction": "Desde la necesidad central, el selector elige las dos primeras formas: teléfono para la app y navegador para la plataforma. Cada una se enciende cuando le toca y queda enlazada al centro.",
+      "transition": "cut"
+    },
+    {
+      "purpose": "prueba",
+      "duration": 5.5,
+      "voice": "Un sistema para toda la operación, o automatizar lo que se hace a mano.",
+      "on_screen_text": "Sistema y automatizar",
+      "asset": "sim:aents-soluciones",
+      "visual_direction": "La misma órbita continúa y el selector completa las dos restantes: el panel del sistema y la integración que une lo que estaba suelto. Al final las cuatro quedan enlazadas en un solo ecosistema.",
+      "transition": "cut"
+    },
+    {
+      "purpose": "prueba",
+      "duration": 2.5,
+      "voice": "El problema lo conoces tú. Nadie mejor.",
+      "on_screen_text": "Tú lo conoces",
+      "asset": "sim:aents-etapas",
+      "visual_direction": "El objeto entra en la primera etapa como boceto: es lo que trae quien mira, todavía sin construir.",
+      "transition": "cut"
+    },
+    {
+      "purpose": "prueba",
+      "duration": 6,
+      "voice": "Nosotros diseñamos, construimos y lanzamos. No te soltamos antes.",
+      "on_screen_text": "Hasta el lanzamiento",
+      "asset": "sim:aents-etapas",
+      "visual_direction": "El mismo objeto sigue su viaje y se transforma en cada etapa: del boceto al wireframe, del wireframe al producto con interfaz y del producto al lanzamiento en teléfono y escritorio. El riel inferior marca dónde va.",
+      "transition": "cut"
+    },
+    {
+      "purpose": "resultado",
+      "duration": 4.5,
+      "voice": "No se trata de que tu empresa se acomode a un software genérico.",
+      "on_screen_text": "No al genérico",
+      "asset": "sim:aents-medida",
+      "visual_direction": "Un bloque genérico intenta entrar en el hueco que dibuja el proceso de la empresa y falla por un lado, y después por otro. El fracaso se ve fracasar antes de que llegue la solución.",
+      "transition": "cut"
+    },
+    {
+      "purpose": "resultado",
+      "duration": 4.5,
+      "voice": "Se trata de construir alrededor de cómo tu empresa ya trabaja.",
+      "on_screen_text": "Hecho a tu medida",
+      "asset": "sim:aents-medida",
+      "visual_direction": "Las piezas se construyen una a una alrededor de ese mismo hueco hasta cerrarlo exactamente. La forma final es la del proceso, no la del bloque.",
+      "transition": "cut"
+    },
+    {
+      "purpose": "prueba",
+      "duration": 5.5,
+      "voice": "Geo Propiedades Ecuador es nuestro. Lo construimos y hoy funciona.",
+      "on_screen_text": "Lo hicimos nosotros",
+      "asset": "sim:aents-reveal",
+      "visual_direction": "Geo Propiedades Ecuador funcionando, con la firma de autoría de Aents: el caso real que demuestra la frase anterior en vez de afirmarla.",
+      "transition": "cut"
+    },
+    {
+      "purpose": "resultado",
+      "duration": 5,
+      "voice": "Si tienes una idea o algo que mejorar, escríbenos por WhatsApp.",
+      "on_screen_text": "Cuéntanos tu idea",
+      "asset": "sim:aents-contacto",
+      "visual_direction": "Cierre sobre el fondo de marca: entra el isotipo y después la acción de WhatsApp, con el número visible.",
+      "transition": "cut"
+    },
+    {
+      "purpose": "cta",
+      "duration": 2,
+      "voice": "Aents. Software for people.",
+      "on_screen_text": "¿Qué construimos?",
+      "asset": "sim:aents-contacto",
+      "visual_direction": "La misma toma remata con el nombre, la firma y aents.net. El último fotograma se sostiene estable.",
+      "transition": "fade"
+    }
+  ]
+}

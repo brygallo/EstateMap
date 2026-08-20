@@ -1,0 +1,97 @@
+{
+  "title": "Así funciona la compraventa de una propiedad",
+  "coverText": "Comprar, paso a paso",
+  "cta": "Encuentra tu futuro hogar",
+  "url": "geopropiedadesecuador.com",
+  "brandTile": "brand/aents-brand-tile-1024.png",
+  "kicker": null,
+  "musicFile": null,
+  "showSafeAreas": false,
+  "scenes": [
+    {
+      "purpose": "gancho",
+      "durationInFrames": 171,
+      "headline": "El primer paso",
+      "captions": [
+        {
+          "text": "¿Encontraste la propiedad perfecta? Ojo,",
+          "start": 0.0,
+          "end": 2.727,
+          "words": [
+            {
+              "text": "¿Encontraste",
+              "start": 0.0,
+              "end": 0.861
+            },
+            {
+              "text": "la",
+              "start": 0.861,
+              "end": 1.077
+            },
+            {
+              "text": "propiedad",
+              "start": 1.077,
+              "end": 1.794
+            },
+            {
+              "text": "perfecta?",
+              "start": 1.794,
+              "end": 2.44
+            },
+            {
+              "text": "Ojo,",
+              "start": 2.44,
+              "end": 2.727
+            }
+          ]
+        },
+        {
+          "text": "encontrarla es solo el primer paso.",
+          "start": 2.727,
+          "end": 5.239,
+          "words": [
+            {
+              "text": "encontrarla",
+              "start": 0.0,
+              "end": 0.861
+            },
+            {
+              "text": "es",
+              "start": 0.861,
+              "end": 1.077
+            },
+            {
+              "text": "solo",
+              "start": 1.077,
+              "end": 1.435
+            },
+            {
+              "text": "el",
+              "start": 1.435,
+              "end": 1.651
+            },
+            {
+              "text": "primer",
+              "start": 1.651,
+              "end": 2.153
+            },
+            {
+              "text": "paso.",
+              "start": 2.153,
+              "end": 2.512
+            }
+          ]
+        }
+      ],
+      "visualDirection": "La ficha del anuncio entra completa con su foto, su precio de ejemplo y sus características: es lo que acaba de encontrar quien mira.",
+      "transition": "cut",
+      "asset": "sim:ficha",
+      "assetType": "simulation",
+      "photo": null,
+      "voiceFile": "jobs/video-012/audio/voice-01.mp3",
+      "assetStartInFrames": 0,
+      "assetTotalInFrames": 171,
+      "accent": "#22C55E"
+    }
+  ]
+}

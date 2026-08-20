@@ -1,0 +1,147 @@
+1
+00:00:00,000 --> 00:00:01,936
+Esta es Geo Propiedades Ecuador.
+
+2
+00:00:01,936 --> 00:00:03,448
+Y esta web la hizo Aents.
+
+3
+00:00:03,900 --> 00:00:05,285
+No es solo una página:
+
+4
+00:00:05,285 --> 00:00:07,236
+es un mapa público del Ecuador
+
+5
+00:00:07,236 --> 00:00:08,936
+donde cada propiedad tiene
+
+6
+00:00:08,936 --> 00:00:09,502
+su lugar.
+
+7
+00:00:09,967 --> 00:00:11,691
+Quien busca filtra por precio
+
+8
+00:00:11,691 --> 00:00:12,093
+y zona,
+
+9
+00:00:12,093 --> 00:00:13,644
+y quedan solo las opciones
+
+10
+00:00:13,644 --> 00:00:14,449
+que le sirven.
+
+11
+00:00:14,900 --> 00:00:17,104
+Abre una ficha y ve fotos, precio,
+
+12
+00:00:17,104 --> 00:00:19,173
+características y ubicación en
+
+13
+00:00:19,173 --> 00:00:20,108
+un solo lugar.
+
+14
+00:00:20,567 --> 00:00:22,549
+Hasta el precio por metro cuadrado
+
+15
+00:00:22,549 --> 00:00:24,417
+se compara con inventario activo
+
+16
+00:00:24,417 --> 00:00:25,267
+del mismo tipo
+
+17
+00:00:25,267 --> 00:00:25,776
+y ciudad.
+
+18
+00:00:26,233 --> 00:00:27,887
+Y los propietarios publican
+
+19
+00:00:27,887 --> 00:00:29,186
+sin costo y gestionan
+
+20
+00:00:29,186 --> 00:00:30,958
+su inventario desde su cuenta.
+
+21
+00:00:31,400 --> 00:00:34,568
+Todo esto lo hicimos nosotros: estrategia,
+
+22
+00:00:34,568 --> 00:00:35,109
+diseño,
+
+23
+00:00:35,109 --> 00:00:37,041
+desarrollo y lanzamiento.
+
+24
+00:00:37,041 --> 00:00:37,969
+Somos Aents,
+
+25
+00:00:37,969 --> 00:00:40,442
+estudio de software ecuatoriano,
+
+26
+00:00:40,442 --> 00:00:41,833
+desde la Amazonía.
+
+27
+00:00:42,267 --> 00:00:43,488
+Hacemos sitios web,
+
+28
+00:00:43,488 --> 00:00:45,095
+aplicaciones para iPhone
+
+29
+00:00:45,095 --> 00:00:45,738
+y Android,
+
+30
+00:00:45,738 --> 00:00:47,345
+sistemas para tu empresa,
+
+31
+00:00:47,345 --> 00:00:49,466
+automatizaciones e integraciones.
+
+32
+00:00:49,900 --> 00:00:52,466
+¿Tienes una idea? Construyámosla.
+
+33
+00:00:52,466 --> 00:00:55,114
+Escríbenos por WhatsApp al cero
+
+34
+00:00:55,114 --> 00:00:56,025
+nueve ocho,
+
+35
+00:00:56,025 --> 00:00:57,349
+tres siete tres,
+
+36
+00:00:57,349 --> 00:00:58,922
+ocho uno cinco uno,
+
+37
+00:00:58,922 --> 00:01:01,074
+o entra a aents punto net.

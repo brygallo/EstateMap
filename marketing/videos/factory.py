@@ -20,6 +20,7 @@ from pathlib import Path
 from typing import Any
 
 import assets as asset_library
+import brand
 import catalog as catalog_store
 import documents
 from extensions import ExtensionCommands
@@ -27,6 +28,7 @@ import lessons as lessons_store
 import media
 import planner
 import quality
+import scene_cache
 import renderer
 import review_tools
 import subtitles
@@ -60,6 +62,9 @@ class VideoRequest:
     assets_source: Path | None = None
     assets_from: Path | None = None
     extra: dict[str, Any] | None = None
+    # A number the catalogue skipped. `next_number` only ever counts forward, so
+    # a piece that was planned and discarded leaves a hole nothing can fill.
+    number: int | None = None
 
     def assets(self) -> Path | None:
         """Where the footage comes from: a sibling video's input wins."""
@@ -83,8 +88,18 @@ class Slot:
         return catalog_store.LIBRARY / self.identifier
 
 
+def master_path(directory: Path) -> Path:
+    return directory / "exports" / f"{directory.name}.mp4"
+
+
+def cover_path(directory: Path) -> Path:
+    return directory / "exports" / f"{directory.name}-cover.png"
+
+
 def create_video(catalog: dict[str, Any], request: VideoRequest) -> tuple[Path, dict[str, Any]]:
-    slot = Slot(catalog_store.next_number(catalog))
+    slot = Slot(request.number or catalog_store.next_number(catalog))
+    if any(int(item["number"]) == slot.number for item in catalog["videos"]):
+        raise RuntimeError(f"The catalogue already owns number {slot.number}: {slot.identifier}")
     if slot.directory.exists():
         raise RuntimeError(f"Video directory already exists: {slot.directory}")
     slot.directory.mkdir(parents=True)
@@ -109,6 +124,7 @@ def populate_video(
     (directory / "exports").mkdir()
     asset_library.copy_assets(request.assets(), directory / "assets/input")
     catalog_store.write_json(directory / "brief.json", {
+        "brand": brand.current().id,
         "brief": brief,
         "automatic_selection": not bool(brief.strip()),
         "target_duration_seconds": duration,
@@ -120,6 +136,7 @@ def populate_video(
     (directory / "caption.txt").write_text(plan["caption"] + "\n", encoding="utf-8")
     shutil.copyfile(ROOT / "templates/results.csv", directory / "results.csv")
     item = {
+        "brand": brand.current().id,
         "id": identifier,
         "number": number,
         "state": "planned",
@@ -131,6 +148,9 @@ def populate_video(
         **(extra or {}),
     }
     catalog["videos"].append(item)
+    # A reclaimed number would otherwise sit at the end of the list, where the
+    # planner reads the last entries as "the most recent work".
+    catalog["videos"].sort(key=lambda entry: int(entry["number"]))
     catalog_store.save(catalog)
     return directory, item
 
@@ -170,7 +190,9 @@ def cmd_new(args: argparse.Namespace) -> None:
     brief = args.brief or "Choose the next video that fills the most valuable gap in the existing catalog."
     manifest = asset_library.asset_manifest(asset_library.list_assets(args.assets))
     plan = planner.create_plan(brief, args.duration, manifest, catalog_store.summary(catalog))
-    directory, item = create_video(catalog, VideoRequest(plan, brief, args.duration, args.assets))
+    directory, item = create_video(
+        catalog, VideoRequest(plan, brief, args.duration, args.assets, number=args.number)
+    )
     report = run_lint(directory, item, catalog)
     print(directory)
     print_lint(item["id"], report)
@@ -257,6 +279,42 @@ def confirm_voice_spend(plan: dict[str, Any], providers: list[tts.VoiceProvider]
             f"{report['captions']} lines are new, {report['billable_characters']} characters to buy."
         )
     agree_to_spend("Buy them?", assumed)
+
+
+def previous_final_voice(catalog: dict[str, Any], number: int) -> tuple[int, str] | None:
+    """The voice the piece before this one was bought with, if any was."""
+    bought = []
+    for item in catalog.get("videos", []):
+        if int(item.get("number", 0)) >= number:
+            continue
+        lock = catalog_store.load_json(ROOT / item["directory"] / "voice-lock.json")
+        if lock and lock.get("voice_profile"):
+            bought.append((int(item["number"]), str(lock["voice_profile"])))
+    return max(bought) if bought else None
+
+
+def final_voice_providers(
+    directory: Path,
+    plan: dict[str, Any],
+    item: dict[str, Any],
+    catalog: dict[str, Any],
+    override: str | None,
+) -> list[tts.VoiceProvider]:
+    """Decide which voice a master is bought with, and refuse to repeat one.
+
+    Three rules meet here. A piece that already paid keeps its voice for ever,
+    including on a re-render. A piece that has not paid yet takes the rotation's
+    turn unless the person naming the command chose another profile. And either
+    way the choice cannot be the voice of the previous piece — which is the part
+    that used to depend on remembering it.
+    """
+    locked = catalog_store.load_json(directory / "voice-lock.json")
+    if locked:
+        return scene_providers(plan, final_master=True, override=locked.get("voice_profile"))
+    pool = workflow.FinalVoiceRotation.pool(tts.profile_catalog())
+    chosen = override or workflow.FinalVoiceRotation.assign(int(item["number"]), pool)
+    workflow.FinalVoiceRotation.enforce(chosen, previous_final_voice(catalog, int(item["number"])))
+    return scene_providers(plan, final_master=True, override=chosen)
 
 
 def enforce_voice_lock(directory: Path, provider: tts.VoiceProvider) -> None:
@@ -362,8 +420,14 @@ def cmd_render(args: argparse.Namespace) -> None:
     approval = catalog_store.load_json(directory / "approval.json", {})
     if approval.get("plan_sha") and approval["plan_sha"] != plan_sha(directory):
         raise RuntimeError("plan.json changed after approval; approve it again before rendering")
-    # Drafts are free and finals are bought once, at the end, on purpose.
-    providers = scene_providers(plan, final_master=args.final, override=args.voice_profile)
+    # Drafts are free and finals are bought once, at the end, on purpose. A
+    # final also picks its narrator by rotation, so the account does not end up
+    # sounding like one person reading every piece.
+    providers = (
+        final_voice_providers(directory, plan, item, catalog, args.voice_profile)
+        if args.final
+        else scene_providers(plan, final_master=False, override=args.voice_profile)
+    )
     for provider, _ in provider_batches(plan, providers):
         provider.check_ready()
     if args.final:
@@ -401,21 +465,32 @@ def cmd_render(args: argparse.Namespace) -> None:
     props = renderer.build_props(directory, plan, timings, music)
     props_path = directory / "render-props.pending.json"
     catalog_store.write_json(props_path, props)
-    pending_final = directory / "exports/video.pending.mp4"
-    pending_cover = directory / "exports/cover.pending.png"
-    pending_final.unlink(missing_ok=True)
-    pending_cover.unlink(missing_ok=True)
+    pending_final = directory / "exports" / f"{directory.name}.pending.mp4"
+    pending_cover = directory / "exports" / f"{directory.name}-cover.pending.png"
+    workflow.RenderCleanupPolicy.discard(pending_final, pending_cover)
+    # The master is assembled scene by scene so a correction to one shot does
+    # not re-draw the fifty-five seconds that were already right. A frame range
+    # of this composition is interchangeable with the same frames of a single
+    # pass, and `scene_cache` refuses to hand over a master whose length does not
+    # match the plan.
+    cache = scene_cache.SceneRenderCache(
+        directory,
+        fresh=bool(getattr(args, "fresh", False)),
+        concurrency=getattr(args, "concurrency", None),
+    )
     try:
-        renderer.render_video(props_path, pending_final)
+        cache.build(props_path, props, pending_final)
         renderer.render_cover(directory, plan, pending_cover)
     except Exception:
-        pending_final.unlink(missing_ok=True)
-        pending_cover.unlink(missing_ok=True)
-        pending_subtitles.unlink(missing_ok=True)
-        props_path.unlink(missing_ok=True)
+        workflow.RenderCleanupPolicy.discard(
+            pending_final,
+            pending_cover,
+            pending_subtitles,
+            props_path,
+        )
         raise
-    final = directory / "exports/video.mp4"
-    cover = directory / "exports/cover.png"
+    final = master_path(directory)
+    cover = cover_path(directory)
     pending_final.replace(final)
     pending_cover.replace(cover)
     pending_subtitles.replace(directory / "subtitles.srt")
@@ -430,6 +505,10 @@ def cmd_render(args: argparse.Namespace) -> None:
         # The encoder tag of the finished MP4 says only "libx264", so the
         # quality a published piece was made with is unverifiable from the file.
         "encoder_flags": renderer.ENCODER_FLAGS,
+        # The master is rendered at 2x and resampled down, so the flags above
+        # describe the intermediate, not the file that ships.
+        "supersample_scale": renderer.SUPERSAMPLE_SCALE,
+        "delivery_flags": renderer.DELIVERY_FLAGS,
         "tts_provider": providers[0].name if len({provider.name for provider in providers}) == 1 else "mixed",
         "voice_profiles": list(dict.fromkeys(provider.profile_id for provider in providers)),
         "is_final_voice": bool(args.final),
@@ -441,6 +520,9 @@ def cmd_render(args: argparse.Namespace) -> None:
         "scene_timings": [{key: value for key, value in timing.items() if key != "captions"} for timing in timings],
         "output": str(final.relative_to(directory)),
         "cover": str(cover.relative_to(directory)),
+        # Which shots this master actually re-drew. A piece assembled from
+        # cached scenes has to be able to say so.
+        **cache.report,
     })
     catalog_store.update(item, catalog, "rendered", duration_seconds=duration)
     print(final)
@@ -450,7 +532,7 @@ def cmd_render(args: argparse.Namespace) -> None:
 def cmd_review(args: argparse.Namespace) -> None:
     directory, item, catalog = catalog_store.find(args.video)
     workflow.StatePolicy.require_mutable(item, "review it again")
-    final = directory / "exports/video.mp4"
+    final = master_path(directory)
     if not final.exists():
         raise RuntimeError("Render the video before reviewing it")
     plan = catalog_store.load_json(directory / "plan.json")
@@ -462,10 +544,9 @@ def cmd_review(args: argparse.Namespace) -> None:
         "vertical_1080x1920": width == 1080 and height == 1920,
         # The same window `video new` accepts, so a story that was planned at
         # ninety seconds is not failed for being ninety seconds long.
-        "duration_8_to_120_seconds": 8 <= duration <= 120,
-        "duration_close_to_target": abs(duration - target) <= max(4.0, target * 0.25),
+        f"duration_8_to_{quality.MAX_DURATION_SECONDS}_seconds": 8 <= duration <= quality.MAX_DURATION_SECONDS,
         "plan_lint_passed": bool(lint_report.get("passed")),
-        "cover_exists": (directory / "exports/cover.png").is_file(),
+        "cover_exists": cover_path(directory).is_file(),
         "subtitles_exist": (directory / "subtitles.srt").is_file(),
         "all_assets_resolve": all(
             not scene.get("asset")
@@ -486,10 +567,19 @@ def cmd_review(args: argparse.Namespace) -> None:
         "notes": args.notes,
     }
     production = catalog_store.load_json(directory / "production.json", {})
-    review["visual_review"] = review_tools.VisualReview(ROOT, directory).build(
-        plan, production.get("scene_timings") or []
+    review["visual_review"] = review_tools.VisualReview(ROOT, directory, brand.current().memory).build(
+        plan, production.get("scene_timings") or [], item["id"]
     )
     checks["text_minimum_declared"] = review["visual_review"]["text"]["passed"]
+    # A figure that counts up to its value is false in every frame but the last,
+    # and the piece states it as fact while it climbs. It is not a warning.
+    checks["no_interpolated_figures"] = review["visual_review"]["animated_figures"]["passed"]
+    # The opening scene is the only one every viewer sees. It is measured on the
+    # finished file and it fails the master, because a hook that reads as a slide
+    # has already answered the question the piece was asking.
+    hero = review["visual_review"]["hero_scene"]
+    if hero.get("measured"):
+        checks["hero_scene_holds_attention"] = hero["passed"]
     passed = all(checks.values())
     review["passed"] = passed
     catalog_store.write_json(directory / "review.json", review)
@@ -527,17 +617,23 @@ def cmd_cover(args: argparse.Namespace) -> None:
     if plan is None:
         raise RuntimeError("plan.json is missing")
     renderer.stage_fonts()
-    print(renderer.render_cover(directory, plan, directory / "exports/cover.png"))
+    print(renderer.render_cover(directory, plan, cover_path(directory)))
 
 
 def cmd_pack(args: argparse.Namespace) -> None:
     directory, item, catalog = catalog_store.find(args.video)
-    final = directory / "exports/video.mp4"
+    final = master_path(directory)
     if not final.exists():
         raise RuntimeError("Render the video before packing it")
     if item["state"] not in {"signed", "published", "learned"} and not args.force:
         raise RuntimeError("Sign the human review before packing, or use --force")
     plan = catalog_store.load_json(directory / "plan.json")
+    if plan is None:
+        raise RuntimeError("plan.json is missing")
+    publishing_copy = workflow.PublishingCopy.build(
+        plan["caption"],
+        plan.get("hashtags") or brand.current().default_hashtags,
+    )
     stamp = date.today().isoformat()
     name = "_".join([
         stamp,
@@ -553,10 +649,13 @@ def cmd_pack(args: argparse.Namespace) -> None:
     with tempfile.TemporaryDirectory(prefix=f".{name}-", dir=catalog_store.OUTBOX) as temporary:
         staging = Path(temporary)
         shutil.copy2(final, staging / f"{name}.mp4")
-        cover = directory / "exports/cover.png"
+        cover = cover_path(directory)
         if cover.exists():
             media.run(["ffmpeg", "-y", "-i", str(cover), "-q:v", "3", str(staging / f"{name}.jpg")])
         shutil.copy2(directory / "caption.txt", staging / f"{name}.txt")
+        (staging / "texto-para-publicar.txt").write_text(
+            publishing_copy["text"], encoding="utf-8"
+        )
         if (directory / "subtitles.srt").exists():
             shutil.copy2(directory / "subtitles.srt", staging / f"{name}.srt")
         catalog_store.write_json(staging / "publish.json", {
@@ -568,6 +667,8 @@ def cmd_pack(args: argparse.Namespace) -> None:
             "cover_text": plan["cover_text"],
             "duration_seconds": item.get("duration_seconds"),
             "verification_notes": plan["verification_notes"],
+            "hashtags": publishing_copy["hashtags"],
+            "publication_text_file": "texto-para-publicar.txt",
             "packed_at": catalog_store.now(),
         })
         staging.replace(outbox)
@@ -666,7 +767,7 @@ def calculate_gaps(catalog: dict[str, Any]) -> dict[str, Any]:
 def cmd_learn(_: argparse.Namespace) -> None:
     catalog = catalog_store.load()
     gaps = calculate_gaps(catalog)
-    catalog_store.write_json(ROOT / "memory/content-gaps.json", gaps)
+    catalog_store.write_json(brand.current().memory / "content-gaps.json", gaps)
     pending = []
     evidence = []
     for item in catalog["videos"]:
@@ -696,7 +797,7 @@ def cmd_learn(_: argparse.Namespace) -> None:
             lessons_store.add({**lesson, "origin": "metrics"})
             added += 1
         gaps["recommended_gaps"] = analysis.get("recommended_gaps", [])
-        catalog_store.write_json(ROOT / "memory/content-gaps.json", gaps)
+        catalog_store.write_json(brand.current().memory / "content-gaps.json", gaps)
     for item in pending:
         item["state"] = "learned"
         item["updated_at"] = catalog_store.now()
@@ -720,15 +821,28 @@ def cmd_status(_: argparse.Namespace) -> None:
 
 
 def parser() -> argparse.ArgumentParser:
-    root = argparse.ArgumentParser(description="Geo Propiedades video factory")
+    root = argparse.ArgumentParser(description="Aents multi-brand video factory")
+    root.add_argument(
+        "--brand",
+        choices=brand.available(),
+        default=brand.DEFAULT_BRAND,
+        help="Brand workspace (default: geo)",
+    )
     commands = root.add_subparsers(dest="command", required=True)
     extensions = ExtensionCommands(ROOT)
 
     new = commands.add_parser("new", help="Plan the next video")
     new.add_argument("brief", nargs="?")
-    # Above 45 s the piece is a story and the gate switches budgets; see
-    # quality.scene_budget.
-    new.add_argument("--duration", type=int, default=20, choices=range(8, 121), metavar="8-120")
+    # Above 45 s the piece is a story and above 120 a lesson; the gate switches
+    # budgets at each threshold. See quality.scene_budget.
+    new.add_argument(
+        "--duration",
+        type=int,
+        default=20,
+        choices=range(8, quality.MAX_DURATION_SECONDS + 1),
+        metavar=f"8-{quality.MAX_DURATION_SECONDS}",
+    )
+    new.add_argument("--number", type=int, help="Claim a specific catalog number instead of the next one")
     new.add_argument("--assets", type=Path)
     new.set_defaults(handler=cmd_new)
 
@@ -768,6 +882,16 @@ def parser() -> argparse.ArgumentParser:
         "--final",
         action="store_true",
         help="Buy the paid voice for the master. Without it, drafts use the free local voice",
+    )
+    render.add_argument(
+        "--fresh",
+        action="store_true",
+        help="Ignore the scene cache and re-draw every shot",
+    )
+    render.add_argument(
+        "--concurrency",
+        type=int,
+        help="Browser tabs Remotion may render into at once. Lower it when the machine runs out of memory",
     )
     render.set_defaults(handler=cmd_render)
 
@@ -841,6 +965,11 @@ def main() -> int:
     voice.load_env()
     args = parser().parse_args()
     try:
+        profile = brand.configure(args.brand)
+        catalog_store.configure(profile)
+        lessons_store.configure(profile)
+        quality.configure(profile)
+        renderer.configure(profile)
         args.handler(args)
         return 0
     except (RuntimeError, OSError, ValueError, TypeError, AttributeError, KeyError, subprocess.CalledProcessError) as error:

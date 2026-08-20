@@ -1,7 +1,91 @@
 import React from 'react';
 import {AbsoluteFill, Easing, Img, interpolate, spring, staticFile, useVideoConfig} from 'remotion';
 import {font, palette, sideCrop, textFloor} from './theme';
-import {AentsContactSim, AentsProcessSim, AentsRevealSim, AentsServicesSim} from './aents-simulations';
+import {AentsContactSim, AentsIdeaSim, AentsProcessSim, AentsRevealSim, AentsServicesSim, AentsWorkflowSim} from './aents-simulations';
+import {
+  AentsWebBeforeAfterSim,
+  AentsWebClosingSim,
+  AentsWebContrastSim,
+  AentsWebCredibilitySim,
+  AentsWebDatedSim,
+  AentsWebFunnelSim,
+  AentsWebRebootSim,
+  AentsWebRebuildSim,
+  AentsWebRequestSim,
+  AentsWebResponsiveSim,
+  AentsWebSearchSim,
+  AentsWebSlowSim,
+} from './aents-web-simulations';
+import {
+  AentsArchitectureSim,
+  AentsAutomationSim,
+  AentsGrowthSim,
+  AentsOverloadSim,
+  AentsPanelSim,
+  AentsPositioningSim,
+  AentsScaleSim,
+  AentsSignOffSim,
+  AentsTurnSim,
+} from './aents-brand-simulations';
+import {
+  AentsCustomFitSim,
+  AentsDisconnectedSim,
+  AentsProblemToSoftwareSim,
+  AentsScatteredSim,
+  AentsSolutionsSim,
+  AentsStagesSim,
+  AentsUnderstandSim,
+} from './aents-system-simulations';
+import {
+  AentsBounceSim,
+  AentsQuerySim,
+  AentsRebuildSim,
+  AentsSlowSiteSim,
+  AentsWebProofSim,
+} from './aents-buscador-simulations';
+import {
+  AentsSeoAnswerSim,
+  AentsSeoDataSim,
+  AentsSeoEntitySim,
+  AentsSeoFoundSim,
+  AentsSeoIntentSim,
+  AentsSeoNetworkSim,
+  AentsSeoNoTrickSim,
+  AentsSeoReadableSim,
+  AentsSeoSignalsSim,
+  AentsSeoUnderstandSim,
+} from './aents-seo-simulations';
+import {
+  AentsMobileCardsSim,
+  AentsMobileFitsSim,
+  AentsMobileGesturesSim,
+  AentsMobilePortalDesktopSim,
+  AentsMobilePortalPhoneSim,
+  AentsMobileQuestionSim,
+  AentsMobileShrinkSim,
+  AentsMobileSymptomsSim,
+  AentsMobileTouchSim,
+  AentsMobileTwoPathsSim,
+  AentsMobileUpwardSim,
+  AentsMobileUseItSim,
+  AentsMobileWeightSim,
+} from './aents-mobile-simulations';
+import {
+  AentsAiClosingSim,
+  AentsAiContextSim,
+  AentsAiDependenciesSim,
+  AentsAiGitSim,
+  AentsAiHappyPathSim,
+  AentsAiJudgementSim,
+  AentsAiOrderSim,
+  AentsAiPartsSim,
+  AentsAiReviewSim,
+  AentsAiRulesSim,
+  AentsAiSecretsSim,
+  AentsAiSecuritySim,
+  AentsAiTestsSim,
+  AentsAiWorksSim,
+} from './aents-ia-simulations';
 
 /**
  * Animated recreations of the product.
@@ -18,6 +102,24 @@ import {AentsContactSim, AentsProcessSim, AentsRevealSim, AentsServicesSim} from
 const ease = (frame: number, from: number, to: number, a: number, b: number) =>
   interpolate(frame, [from, to], [a, b], {
     easing: Easing.bezier(0.22, 1, 0.36, 1),
+    extrapolateLeft: 'clamp',
+    extrapolateRight: 'clamp',
+  });
+
+/**
+ * A move that uses the whole interval it was given.
+ *
+ * `ease` is the series' gesture curve: it spends four fifths of its distance in
+ * the first fifth of its time, which is right for a chip settling and wrong for
+ * anything that has to last. A nine-second crane written with it lands in two
+ * seconds and leaves seven standing still, and the same curve driving a stagger
+ * fires every element of the group almost at once. `ramp` keeps its speed —
+ * soft ends, even middle — so a long travel, a tour or a sequence of arrivals
+ * actually occupies the time the scene gives it.
+ */
+const ramp = (value: number, from: number, to: number, a: number, b: number) =>
+  interpolate(value, [from, to], [a, b], {
+    easing: Easing.bezier(0.35, 0.12, 0.28, 0.92),
     extrapolateLeft: 'clamp',
     extrapolateRight: 'clamp',
   });
@@ -271,6 +373,9 @@ const ListingGalleryArt: React.FC<{shot: number; frame: number; accent: string}>
   );
 };
 
+/** The listing this card invents, so the figures live in one place. */
+const EXAMPLE_CARD_PRICE = '$122.000';
+
 export const CardSim: React.FC<{frame: number; total?: number; accent: string; photo?: string | null}> = ({
   frame,
   accent,
@@ -284,7 +389,6 @@ export const CardSim: React.FC<{frame: number; total?: number; accent: string; p
   const shotClock = Math.max(0, t - 0.5) / 0.7;
   const shotPhase = shotClock >= 4 ? 1 : shotClock - Math.floor(shotClock);
   const galleryReveal = ease(shotPhase, 0, 0.28, 0, 1);
-  const price = Math.round(ease(frame, fps * 0.15, fps * 1.0, 0, 122000) / 1000) * 1000;
   const contact = spring({frame: frame - fps * 1.9, fps, config: {damping: 17}});
   const shape = interpolate(t, [1.5, 2.3], [0, 1], {extrapolateLeft: 'clamp', extrapolateRight: 'clamp'});
   const stats: Array<[string, string]> = [
@@ -294,7 +398,12 @@ export const CardSim: React.FC<{frame: number; total?: number; accent: string; p
   ];
   return (
     <AbsoluteFill style={{backgroundColor: '#EDF1F7'}}>
-      <AbsoluteFill style={{transform: `scale(${ease(frame / fps, 0, 6, 1.02, 1.08)})`, transformOrigin: '50% 26%'}}>
+      {/* The gallery stops on the fourth photo on purpose, so after that the
+          only thing keeping the shot alive is this move. At the house ease it
+          was spent in the first second and a longer take — the bought voice is
+          slower than the draft — held for three seconds; at a constant rate it
+          carries the whole scene, however long the line turns out to be. */}
+      <AbsoluteFill style={{transform: `scale(${interpolate(frame, [0, fps * 8], [1.02, 1.1], {extrapolateLeft: 'clamp', extrapolateRight: 'clamp'})}) translateY(${interpolate(frame, [0, fps * 8], [0, -26], {extrapolateLeft: 'clamp', extrapolateRight: 'clamp'})}px)`, transformOrigin: '50% 26%'}}>
         <svg width="1080" height="1920" viewBox="0 0 1080 1920">
           <Grid opacity={0.5} />
         </svg>
@@ -312,7 +421,7 @@ export const CardSim: React.FC<{frame: number; total?: number; accent: string; p
           border: '2px solid rgba(255,255,255,.88)',
           fontFamily: font,
           color: palette.ink,
-          transform: `perspective(1200px) translateY(${interpolate(rise, [0, 1], [90, 0])}px) rotateX(${(1 - rise) * 5}deg) scale(${0.97 + rise * 0.03})`,
+          transform: `perspective(1200px) translateY(${interpolate(rise, [0, 1], [90, 0]) - interpolate(frame, [0, fps * 8], [0, 22], {extrapolateLeft: 'clamp', extrapolateRight: 'clamp'})}px) rotateX(${(1 - rise) * 5}deg) scale(${0.97 + rise * 0.03 + interpolate(frame, [0, fps * 8], [0, 0.03], {extrapolateLeft: 'clamp', extrapolateRight: 'clamp'})})`,
           opacity: rise,
         }}
       >
@@ -351,8 +460,16 @@ export const CardSim: React.FC<{frame: number; total?: number; accent: string; p
           </div>
         </div>
         <div style={{padding: '30px 32px 34px'}}>
-          <div style={{fontSize: 62, fontWeight: 800, letterSpacing: '-0.04em', color: accent}}>
-            ${price.toLocaleString('es-EC')}
+          <div style={{display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16}}>
+            {/* Printed, not counted: a price that climbs from zero states a
+                different figure in every frame but the last. And the badge is
+                what licenses an invented price and area on screen at all. */}
+            <div style={{fontSize: 62, fontWeight: 800, letterSpacing: '-0.04em', color: accent}}>
+              {EXAMPLE_CARD_PRICE}
+            </div>
+            <div style={{padding: '7px 14px', borderRadius: 99, border: '2px solid #DDE4EF', fontSize: 22, fontWeight: 800, letterSpacing: '.08em', color: '#8A93AB'}}>
+              EJEMPLO
+            </div>
           </div>
           <div style={{marginTop: 6, fontSize: 34, fontWeight: 800, letterSpacing: '-0.02em'}}>Casa en Cumbayá</div>
           <div
@@ -430,15 +547,19 @@ export const CardSim: React.FC<{frame: number; total?: number; accent: string; p
               opacity: ease(frame, fps * 1.25, fps * 1.6, 0, 1),
             }}
           >
+            {/* This block used to print «La zona va de $511 a $905 · 2120
+                comparables» and call the example «dentro del rango». Both
+                figures were invented, they contradicted each other — $305 is
+                not inside $511–$905 — and a range of zone prices is exactly the
+                market claim the brief forbids without a dated source. What is
+                left is arithmetic the viewer can redo: the example price
+                divided by the declared area. */}
             <div style={{fontSize: 22, fontWeight: 800, color: '#4A5270', letterSpacing: '0.05em'}}>
-              INTELIGENCIA DEL ANUNCIO
+              PRECIO POR METRO
             </div>
             <div style={{marginTop: 8, display: 'flex', justifyContent: 'space-between', alignItems: 'baseline'}}>
               <span style={{fontSize: 38, fontWeight: 800}}>$305/m²</span>
-              <span style={{fontSize: 25, fontWeight: 800, color: '#1B8648'}}>dentro del rango</span>
-            </div>
-            <div style={{marginTop: 6, fontSize: 22, fontWeight: 700, color: '#6B7391'}}>
-              La zona va de $511 a $905 · 2120 comparables
+              <span style={{fontSize: 25, fontWeight: 800, color: '#6B7391'}}>precio ÷ área</span>
             </div>
           </div>
           <div
@@ -1009,9 +1130,18 @@ export const FiltersSim: React.FC<{frame: number; total?: number; accent: string
   const span = Math.max(1, total ?? frame + 1);
   const progress = frame / span;
   const sheet = spring({frame: frame - fps * 0.15, fps, config: {damping: 18, mass: 0.85}});
-  const filtering = ease(progress, 0.25, 0.62, 0, 1);
-  const result = ease(progress, 0.58, 0.82, 0, 1);
+  // The knob is dragged by a hand, at the speed of a hand: with the house
+  // ease-out it snapped to the end of the rail in the first half second and the
+  // rest of the scene was a photograph.
+  const filtering = pace(progress, 0.16, 0.58, 0, 1);
+  const result = pace(progress, 0.56, 0.82, 0, 1);
   const knobX = 226 + filtering * 330;
+  // The knob is a 44 px dot on a 1080 px canvas, so dragging it is not motion
+  // anyone can see from across a room — the master froze for three seconds in
+  // the middle of the drag. The map answers the drag by closing in on the
+  // properties that survive it: one continuous move, in one direction, for the
+  // whole scene.
+  const approach = pace(progress, 0.05, 0.98, 0, 1);
   const pins = [
     {x: 190, y: 240, price: '$74k', keep: false},
     {x: 430, y: 330, price: '$122k', keep: true},
@@ -1023,6 +1153,7 @@ export const FiltersSim: React.FC<{frame: number; total?: number; accent: string
   return (
     <AbsoluteFill style={{backgroundColor: '#EDF1F7'}}>
       <svg width="1080" height="1920" viewBox="0 0 1080 1920">
+        <g transform={`translate(${-approach * 44} ${-approach * 18}) scale(${1 + approach * 0.06})`} style={{transformOrigin: '540px 420px'}}>
         <Grid opacity={0.95} />
         {pins.map((pin, index) => {
           const visible = pin.keep ? 1 : 1 - result;
@@ -1040,6 +1171,7 @@ export const FiltersSim: React.FC<{frame: number; total?: number; accent: string
             </g>
           );
         })}
+        </g>
       </svg>
       <div
         style={{
@@ -1081,7 +1213,28 @@ export const FiltersSim: React.FC<{frame: number; total?: number; accent: string
   );
 };
 
-export type SimulationProps = {frame: number; total: number; accent: string; photo?: string | null};
+/**
+ * What every animation receives.
+ *
+ * The brand block is optional and carries identity, not styling decisions: a
+ * composition that only needs a panel, a rail or a fitted label works for both
+ * brands without knowing which one is rendering it, and the few that must show
+ * a mark or a domain read it from here instead of hardcoding one account's
+ * files. An animation that hardcodes `aents-brand-tile-1024.png` cannot be
+ * reused by Geo, and duplicating it is how the same panel drifts into two
+ * slightly different panels.
+ */
+export type SimulationProps = {
+  frame: number;
+  total: number;
+  accent: string;
+  photo?: string | null;
+  brandId?: string;
+  brandName?: string;
+  brandTile?: string | null;
+  brandSymbol?: string | null;
+  brandDomain?: string;
+};
 
 /**
  * The panel the series shows the product in: one subject, lifted off a light
@@ -1100,11 +1253,16 @@ const PublishShell: React.FC<{
   // a short status instead of pushing every older piece's header out of line.
   statusSize?: number;
   lift?: number;
-}> = ({children, accent, title, eyebrow, status = 'Borrador guardado', statusSize = 19, lift = 1}) => (
+  // 0..1 along the scene, like `FieldShell`'s. A panel that plays its beats and
+  // then holds is read as a photograph with captions by `MotionDefectAudit` and
+  // by a person; this gives it a slow push that never stops until the cut.
+  // Scenes that leave it out keep exactly the framing they were built with.
+  camera?: number;
+}> = ({children, accent, title, eyebrow, status = 'Borrador guardado', statusSize = 19, lift = 1, camera = 0}) => (
   <AbsoluteFill style={{background: 'linear-gradient(180deg, #E9EEF5 0%, #DCE4EE 58%, #AEB9C8 100%)', fontFamily: font, color: palette.ink}}>
-    <div style={{position: 'absolute', left: -110, top: 235, width: 430, height: 430, borderRadius: 999, background: `${accent}24`, filter: 'blur(85px)'}} />
-    <div style={{position: 'absolute', right: -150, top: 650, width: 460, height: 460, borderRadius: 999, background: `${accent}1F`, filter: 'blur(95px)'}} />
-    <div style={{position: 'absolute', left: sideCrop, right: sideCrop, top: 305, minHeight: 720, padding: '40px 44px 46px', borderRadius: 40, background: 'linear-gradient(145deg, rgba(255,255,255,.99) 0%, rgba(249,251,254,.98) 100%)', border: '2px solid rgba(255,255,255,.95)', boxShadow: `0 48px 130px rgba(8,9,21,.3), 0 0 70px ${accent}16, 0 2px 0 rgba(255,255,255,.95) inset`, opacity: lift, transform: `translateY(${(1 - lift) * 70}px) scale(${0.96 + lift * 0.04})`, transformOrigin: '50% 30%'}}>
+    <div style={{position: 'absolute', left: -110 + camera * 30, top: 235, width: 430, height: 430, borderRadius: 999, background: `${accent}24`, filter: 'blur(85px)'}} />
+    <div style={{position: 'absolute', right: -150 + camera * 24, top: 650, width: 460, height: 460, borderRadius: 999, background: `${accent}1F`, filter: 'blur(95px)'}} />
+    <div style={{position: 'absolute', left: sideCrop, right: sideCrop, top: 305, minHeight: 720, padding: '40px 44px 46px', borderRadius: 40, background: 'linear-gradient(145deg, rgba(255,255,255,.99) 0%, rgba(249,251,254,.98) 100%)', border: '2px solid rgba(255,255,255,.95)', boxShadow: `0 48px 130px rgba(8,9,21,.3), 0 0 70px ${accent}16, 0 2px 0 rgba(255,255,255,.95) inset`, opacity: lift, transform: `translateY(${(1 - lift) * 70 - camera * 20}px) scale(${0.96 + lift * 0.04 + camera * 0.05})`, transformOrigin: '50% 28%'}}>
       <div style={{position: 'absolute', left: 42, right: 42, top: 0, height: 7, borderRadius: '0 0 99px 99px', background: `linear-gradient(90deg, transparent, ${accent}, transparent)`, boxShadow: `0 8px 26px ${accent}50`}} />
       <div style={{display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 18}}>
         <div style={{fontSize: 23, fontWeight: 800, letterSpacing: '.08em', color: accent}}>{eyebrow}</div>
@@ -1150,13 +1308,31 @@ export const PublicationFormSim: React.FC<SimulationProps> = ({frame, accent}) =
   </PublishShell>;
 };
 
-export const PublicationLocationSim: React.FC<SimulationProps> = ({frame, accent}) => {
+/**
+ * Step two of the real form, and the only step that has two answers.
+ *
+ * It used to flip from the pin to the plot outline at a fixed second and then
+ * hold whatever it had landed on, which left four fifths of the scene without a
+ * change of state. Now the map keeps drifting for the whole take, the pin
+ * breathes while it is the answer, and the outline is drawn corner by corner
+ * once the choice changes.
+ */
+export const PublicationLocationSim: React.FC<SimulationProps> = ({frame, total, accent}) => {
   const {fps} = useVideoConfig();
-  const polygon = frame > fps * 1.55;
+  const span = Math.max(1, total ?? frame + 1);
+  const progress = frame / span;
+  const polygon = progress > 0.44;
   const appear = spring({frame: frame - fps * .5, fps, config: {damping: 18}});
-  return <PublishShell accent={accent} eyebrow="PASO 2 DE 5" title="¿Cómo quieres ubicarla?">
-    <div style={{marginTop: 25, display: 'flex', gap: 12}}>{['Solo ubicación', 'Forma del terreno'].map((label, i) => <div key={label} style={{padding: '14px 18px', borderRadius: 16, background: (polygon ? i === 1 : i === 0) ? accent : '#EFF3F8', color: (polygon ? i === 1 : i === 0) ? '#FFF' : '#667085', fontSize: 22, fontWeight: 800}}>{label}</div>)}</div>
-    <div style={{marginTop: 20, height: 470, overflow: 'hidden', borderRadius: 29, background: '#E7EDF4', border: '2px solid #DCE4EE', boxShadow: `0 20px 50px rgba(40,55,80,.16) inset, 0 18px 42px ${accent}16`}}><svg width="100%" height="100%" viewBox="0 0 860 390"><g stroke="#CDD7E4" strokeWidth="13">{[80,220,360,500,640,780].map(x => <path key={x} d={`M${x} 0V390`}/>)}{[70,180,290].map(y => <path key={y} d={`M0 ${y}H860`}/>)}</g>{polygon ? <g style={{opacity: appear}}><polygon points="245,105 595,82 675,275 305,315" fill={`${accent}38`} stroke={accent} strokeWidth="9" strokeLinejoin="round"/>{[[245,105],[595,82],[675,275],[305,315]].map(([x,y]) => <circle key={`${x}-${y}`} cx={x} cy={y} r="13" fill="#FFF" stroke={accent} strokeWidth="7"/>)}</g> : <g transform="translate(445 188)" style={{opacity: appear}}><circle r="112" fill={accent} opacity=".12"/><circle r="84" fill={accent} opacity=".12"/><path d="M0-72c41 0 72 31 72 70 0 49-72 108-72 108S-72 47-72-2c0-39 31-70 72-70Z" fill={accent} stroke="#FFF" strokeWidth="8"/><circle cy="-4" r="22" fill="#FFF"/></g>}</svg></div>
+  const trace = pace(progress, 0.46, 0.84, 0, 1);
+  const drift = ramp(progress, 0, 1, 0, 1);
+  const breath = 1 + Math.sin(frame / 13) * 0.03;
+  const CORNERS: Array<[number, number]> = [[245, 105], [595, 82], [675, 275], [305, 315]];
+  return <PublishShell accent={accent} eyebrow="PASO 2 DE 5" title="¿Cómo quieres ubicarla?" camera={progress}>
+    <div style={{marginTop: 25, display: 'flex', gap: 12}}>{['Solo ubicación', 'Forma del terreno'].map((label, i) => <div key={label} style={{padding: '14px 18px', borderRadius: 16, background: (polygon ? i === 1 : i === 0) ? accent : '#EFF3F8', color: (polygon ? i === 1 : i === 0) ? '#FFF' : '#667085', fontSize: 22, fontWeight: 800, transition: 'none'}}>{label}</div>)}</div>
+    <div style={{marginTop: 20, height: 470, overflow: 'hidden', borderRadius: 29, background: '#E7EDF4', border: '2px solid #DCE4EE', boxShadow: `0 20px 50px rgba(40,55,80,.16) inset, 0 18px 42px ${accent}16`}}><svg width="100%" height="100%" viewBox="0 0 860 390"><g transform={`translate(${-38 * drift} ${-16 * drift}) scale(${1 + drift * 0.12})`}><g stroke="#CDD7E4" strokeWidth="13">{[80,220,360,500,640,780].map(x => <path key={x} d={`M${x} -60V450`}/>)}{[70,180,290,400].map(y => <path key={y} d={`M-60 ${y}H920`}/>)}</g>{polygon ? <g style={{opacity: appear}}><polygon points="245,105 595,82 675,275 305,315" fill={`${accent}38`} fillOpacity={trace} stroke={accent} strokeWidth="9" strokeLinejoin="round" pathLength="1" strokeDasharray="1" strokeDashoffset={1 - trace}/>{CORNERS.map(([x,y], index) => {
+      const set = smooth((trace - index * 0.25) / 0.25);
+      return <circle key={`${x}-${y}`} cx={x} cy={y} r={13 * set} fill="#FFF" stroke={accent} strokeWidth="7" opacity={set}/>;
+    })}</g> : <g transform={`translate(445 188) scale(${breath})`} style={{opacity: appear}}><circle r="112" fill={accent} opacity=".12"/><circle r={84 * breath} fill={accent} opacity=".12"/><path d="M0-72c41 0 72 31 72 70 0 49-72 108-72 108S-72 47-72-2c0-39 31-70 72-70Z" fill={accent} stroke="#FFF" strokeWidth="8"/><circle cy="-4" r="22" fill="#FFF"/></g>}</g></svg></div>
   </PublishShell>;
 };
 
@@ -2370,7 +2546,7 @@ export const OwnerListingOnMapSim: React.FC<SimulationProps> = ({frame, total, a
   const price = spring({frame: frame - span * 0.6, fps, config: {damping: 15, stiffness: 170}});
   const camera = ease(progress, 0.05, 0.9, 1.12, 1);
   return (
-    <PublishShell accent={accent} eyebrow="DÓNDE QUEDA" title="En el mapa, no en una lista" status="Ficha publicada" lift={lift}>
+    <PublishShell accent={accent} eyebrow="DÓNDE QUEDA" title="En el mapa, no en una lista" status="Ficha publicada" lift={lift} camera={progress}>
       <div style={{position: 'relative', marginTop: 26, height: 500, borderRadius: 32, overflow: 'hidden', border: '2px solid #DCE4EE', background: '#E7EDF4', boxShadow: `0 24px 56px ${accent}1A`}}>
         <svg width="100%" height="100%" viewBox="0 0 720 500" preserveAspectRatio="xMidYMid slice">
           <g transform={`translate(360 250) scale(${camera}) translate(-360 -250)`}>
@@ -2537,10 +2713,16 @@ const FieldShell: React.FC<{
   // words over the second beat's picture.
   title: React.ReactNode;
   lift?: number;
-}> = ({children, accent, where, title, lift = 1}) => (
+  // 0..1 along the scene. A card that only plays its beats and then holds is
+  // read by `MotionDefectAudit` — and by a person — as a photograph with
+  // captions. Passing the scene's own progress here gives the paper a slow,
+  // single-direction push that never stops until the cut. Older scenes that
+  // carry their motion inside the card leave it out and are unaffected.
+  camera?: number;
+}> = ({children, accent, where, title, lift = 1, camera = 0}) => (
   <AbsoluteFill style={{background: 'linear-gradient(180deg, #EDEAE3 0%, #DFDACE 58%, #B4AE9F 100%)', fontFamily: font, color: palette.ink}}>
-    <div style={{position: 'absolute', left: -110, top: 235, width: 430, height: 430, borderRadius: 999, background: `${accent}1E`, filter: 'blur(85px)'}} />
-    <div style={{position: 'absolute', right: -150, top: 650, width: 460, height: 460, borderRadius: 999, background: '#8A7A5A1A', filter: 'blur(95px)'}} />
+    <div style={{position: 'absolute', left: -110 + camera * 26, top: 235, width: 430, height: 430, borderRadius: 999, background: `${accent}1E`, filter: 'blur(85px)'}} />
+    <div style={{position: 'absolute', right: -150 + camera * 22, top: 650, width: 460, height: 460, borderRadius: 999, background: '#8A7A5A1A', filter: 'blur(95px)'}} />
     <div
       style={{
         position: 'absolute',
@@ -2554,7 +2736,7 @@ const FieldShell: React.FC<{
         border: '2px solid #E6DFCE',
         boxShadow: '0 46px 120px rgba(40,32,16,.32), 0 2px 0 rgba(255,255,255,.9) inset',
         opacity: lift,
-        transform: `translateY(${(1 - lift) * 70}px) scale(${0.96 + lift * 0.04})`,
+        transform: `translateY(${(1 - lift) * 70 - camera * 16}px) scale(${0.96 + lift * 0.04 + camera * 0.045})`,
         transformOrigin: '50% 30%',
       }}
     >
@@ -2593,37 +2775,75 @@ const FieldShell: React.FC<{
  * gets cropped, which is what happened to «Sus deudas» before. Only the tip of
  * each connector is projected, so the line keeps pointing at its object while
  * the words stay put.
+ *
+ * Two rules the first master broke. The flat you are buying is the only object
+ * painted in the accent, and it never moves: the lift car used to be drawn in
+ * the same colour and climbed the shaft, so a viewer saw «the lit window» jump
+ * from the middle of the façade to the top right. And the picture no longer
+ * runs into the caption scrim — it ends above it and dissolves into the ground,
+ * so the pavement is not sliced in half by a gradient it knows nothing about.
  */
 const BUILDING_CENTRE_X = 500;
+
+/** Two hex colours blended by `t`, so a façade lights up instead of switching. */
+const mixHex = (from: string, to: string, t: number) => {
+  const clamped = Math.min(1, Math.max(0, t));
+  const channel = (offset: number) => {
+    const a = parseInt(from.slice(offset, offset + 2), 16);
+    const b = parseInt(to.slice(offset, offset + 2), 16);
+    return Math.round(a + (b - a) * clamped)
+      .toString(16)
+      .padStart(2, '0');
+  };
+  return `#${channel(1)}${channel(3)}${channel(5)}`;
+};
+
+/**
+ * An unlit window is a hole, not a pale tile.
+ *
+ * The first pass painted them almost the colour of the façade, so the sweep
+ * that lights the building floor by floor was invisible on a phone — and a
+ * camera moving over a picture with no dark values reads as a still frame.
+ */
+const WINDOW_DARK = '#8397AB';
+const WINDOW_LIT = '#F6D79A';
 
 export const WhatYouBuySim: React.FC<SimulationProps> = ({frame, total, accent}) => {
   const span = Math.max(1, total ?? frame + 1);
   const progress = frame / span;
-  // One continuous rise: close on the entrance, then the whole volume. It
-  // finishes just as the tank is revealed, so nothing is lit off screen.
-  // A long, even rise rather than the snappy curve the elements use: a camera
-  // that lands in the first fifth leaves the rest of the scene standing still.
-  const camera = interpolate(progress, [0.06, 0.86], [0, 1], {
-    easing: Easing.bezier(0.45, 0.05, 0.3, 1),
-    extrapolateLeft: 'clamp',
-    extrapolateRight: 'clamp',
-  });
-  const camScale = 1.22 - camera * 0.22;
-  const camFocus = 430 - camera * 156;
+  // A crane that stops where the voice is pointing. It starts tight on the
+  // entrance and ends on the whole volume, always rising, but it climbs in
+  // moves of about a second and a quarter separated by pauses of two thirds of
+  // a second — long enough to read what was just named, short enough that the
+  // picture is never parked. A single even nine-second glide reads as a still
+  // frame: the eye needs the change to arrive, not to seep.
+  const camera = interpolate(
+    progress,
+    [0, 0.15, 0.18, 0.33, 0.36, 0.51, 0.54, 0.69, 0.72, 0.87, 1],
+    [0, 0.2, 0.2, 0.4, 0.4, 0.6, 0.6, 0.8, 0.8, 1, 1],
+    {easing: Easing.bezier(0.45, 0.05, 0.55, 0.95), extrapolateLeft: 'clamp', extrapolateRight: 'clamp'},
+  );
+  // The rise ends wide enough for the whole volume — roof tank included — to
+  // sit inside the picture box, above the caption scrim.
+  const camScale = 1.5 - camera * 0.62;
   const panX = 540 - BUILDING_CENTRE_X * camScale;
-  const panY = 280 - camFocus * camScale;
+  const panY = -390 + camera * 384;
   const project = (x: number, y: number): [number, number] => [x * camScale + panX, y * camScale + panY];
-  const single = ease(progress, 0.16, 0.34, 0, 1);
-  const sweep = ease(progress, 0.38, 0.7, 0, 1);
-  const shaft = ease(progress, 0.6, 0.76, 0, 1);
-  const tank = ease(progress, 0.68, 0.84, 0, 1);
+  const single = ease(progress, 0.15, 0.23, 0, 1);
+  // The façade answers floor by floor across most of the scene, so the windows
+  // are still lighting up while the last callout is being read.
+  const sweep = ramp(progress, 0.32, 0.86, 0, 1);
+  const shaft = ramp(progress, 0.5, 0.66, 0, 1);
+  const tank = ramp(progress, 0.68, 0.78, 0, 1);
   const columns = [300, 420, 540];
   const rows = [122, 186, 250, 314, 378];
-  const mine = {x: columns[1], y: rows[2]};
+  // Low enough to be inside the frame while the camera is still close, so the
+  // flat you are buying is on screen from the first beat to the last.
+  const mine = {x: columns[1], y: rows[3]};
   const tags: Array<{label: string; at: number; x: number; y: number; to: [number, number]}> = [
-    {label: 'Sus vecinos', at: 0.5, x: 124, y: 196, to: [columns[0], rows[2]]},
-    {label: 'Sus deudas', at: 0.68, x: 768, y: 150, to: [672, 76]},
-    {label: 'Sus reglas', at: 0.8, x: 124, y: 470, to: [465, 449]},
+    {label: 'Sus vecinos', at: 0.33, x: 132, y: 196, to: [columns[0] + 50, rows[3] + 23]},
+    {label: 'Sus deudas', at: 0.52, x: 744, y: 96, to: [616, 70]},
+    {label: 'Sus reglas', at: 0.8, x: 132, y: 352, to: [465, 449]},
   ];
   return (
     <AbsoluteFill style={{background: 'linear-gradient(180deg, #E6EDF5 0%, #EFEAE0 62%, #DFDACE 100%)', fontFamily: font, color: palette.ink}}>
@@ -2634,44 +2854,73 @@ export const WhatYouBuySim: React.FC<SimulationProps> = ({frame, total, accent})
         </div>
         <div style={{marginTop: 14, fontSize: 44, fontWeight: 800, letterSpacing: '-.04em'}}>No compras solo el departamento</div>
       </div>
-      {/* The picture starts below the title's line box: the camera is close at
-          the top of the arc, and anything drawn higher than this crosses the
-          words. */}
-      <div style={{position: 'absolute', left: 0, top: 432, width: 1080, height: 508, overflow: 'hidden'}}>
-        <svg width="1080" height="508" viewBox="0 0 1080 560" preserveAspectRatio="xMidYMid slice">
+      {/* The picture starts below the title's line box and stops short of the
+          caption scrim: the viewBox matches the box, so nothing is cropped by
+          an aspect ratio nobody chose. */}
+      <div style={{position: 'absolute', left: 0, top: 436, width: 1080, height: 464, overflow: 'hidden'}}>
+        <svg width="1080" height="464" viewBox="0 0 1080 464" preserveAspectRatio="xMidYMid slice">
+          <defs>
+            <linearGradient id="wyb-ground" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="#E9E7DF" stopOpacity="0" />
+              <stop offset="70%" stopColor="#E9E7DF" stopOpacity="1" />
+              <stop offset="100%" stopColor="#E9E7DF" stopOpacity="1" />
+            </linearGradient>
+          </defs>
           <g transform={`translate(${panX} ${panY}) scale(${camScale})`}>
             <rect x="-260" y="470" width="1600" height="30" fill="#CFCABA" />
-            <rect x="-260" y="500" width="1600" height="120" fill="#9EA5AE" />
+            <rect x="-260" y="500" width="1600" height="200" fill="#9EA5AE" />
             {[-140, 60, 260, 460, 660, 860, 1060].map((x) => (
               <rect key={`lane-${x}`} x={x} y={534} width="110" height="9" rx="4" fill="#E6E9EC" opacity=".7" />
             ))}
-            <g opacity=".5">
-              <rect x="60" y="230" width="190" height="240" rx="6" fill="#D8D2C6" />
-              <rect x="760" y="200" width="220" height="270" rx="6" fill="#D8D2C6" />
+            {/* The neighbours carry their own storeys and windows. Flat pale
+                blocks read as fog at phone size, and a camera moving over fog
+                is a camera that appears not to move at all. */}
+            <g opacity=".72">
+              {[[60, 230, 190, 240], [760, 200, 220, 270]].map(([x, y, width, height]) => (
+                <g key={`block-${x}`}>
+                  <rect x={x} y={y} width={width} height={height} rx="6" fill="#DAD4C7" stroke="#A79E8B" strokeWidth="3" />
+                  {[0, 1, 2, 3].map((floor) =>
+                    [0, 1, 2].map((slot) => (
+                      <rect
+                        key={`${floor}-${slot}`}
+                        x={x + 18 + slot * ((width - 36) / 3)}
+                        y={y + 26 + floor * ((height - 40) / 4)}
+                        width={(width - 36) / 3 - 14}
+                        height="30"
+                        rx="3"
+                        fill="#8E9DAD"
+                      />
+                    )),
+                  )}
+                </g>
+              ))}
             </g>
-            <rect x="280" y="114" width="440" height="356" rx="8" fill="#F3EFE7" stroke="#D6CDBA" strokeWidth="3" />
+            <rect x="280" y="114" width="440" height="356" rx="8" fill="#F3EFE7" stroke="#3E4A5C" strokeWidth="5" />
+            {/* One slab line per storey: the façade is a stack of homes, and the
+                lines are what makes the climb legible while the camera moves. */}
+            {rows.map((y) => (
+              <rect key={`slab-${y}`} x="282" y={y + 52} width="436" height="7" fill="#CDC3AC" />
+            ))}
             <rect x="272" y="100" width="456" height="20" rx="6" fill="#4A5768" />
             <g opacity={tank}>
               <rect x="560" y="48" width="112" height="44" rx="10" fill="#B9C3CE" stroke="#8D99A7" strokeWidth="3" />
               <rect x="584" y="34" width="12" height="16" rx="4" fill="#8D99A7" />
-              <rect x="572" y="62" width="88" height="8" rx="4" fill={accent} opacity=".75" />
+              <rect x="572" y="62" width="88" height="8" rx="4" fill="#8FA8C4" />
             </g>
             <rect x="636" y="120" width="64" height="350" rx="6" fill="#E4DFD2" stroke="#D0C8B6" strokeWidth="2" />
-            <rect
-              x="640"
-              y={ease(shaft, 0, 1, 400, 140)}
-              width="56"
-              height="66"
-              rx="4"
-              fill={accent}
-              opacity={0.25 + shaft * 0.65}
-            />
+            {/* The lift car is machinery, not a home: painting it in the accent
+                made it read as a second lit flat that changed floors. */}
+            <g opacity={0.3 + shaft * 0.7}>
+              <line x1="668" y1="126" x2="668" y2={ramp(shaft, 0, 1, 400, 140)} stroke="#C0B8A6" strokeWidth="3" />
+              <rect x="640" y={ramp(shaft, 0, 1, 400, 140)} width="56" height="66" rx="4" fill="#9AA6B4" stroke="#7C8896" strokeWidth="3" />
+              <line x1="668" y1={ramp(shaft, 0, 1, 400, 140)} x2="668" y2={ramp(shaft, 0, 1, 466, 206)} stroke="#7C8896" strokeWidth="2" />
+            </g>
             {rows.map((y, row) =>
               columns.map((x, column) => {
                 const isMine = x === mine.x && y === mine.y;
                 // The sweep climbs the façade from the ground up, one floor at
                 // a time, so the building answers instead of switching on.
-                const floor = ease(sweep, (rows.length - 1 - row) * 0.17, (rows.length - 1 - row) * 0.17 + 0.34, 0, 1);
+                const floor = ramp(sweep, (rows.length - 1 - row) * 0.17, (rows.length - 1 - row) * 0.17 + 0.34, 0, 1);
                 if (isMine) {
                   return (
                     <g key={`${row}-${column}`} transform={`translate(${-single * 16} ${-single * 12})`}>
@@ -2689,8 +2938,11 @@ export const WhatYouBuySim: React.FC<SimulationProps> = ({frame, total, accent})
                     width="100"
                     height="46"
                     rx="5"
-                    fill={floor > 0.5 ? '#F6D79A' : '#BFD0DE'}
-                    opacity={0.34 + floor * 0.66}
+                    // A window warms up; it does not change colour on one
+                    // frame the way a threshold made it.
+                    fill={mixHex(WINDOW_DARK, WINDOW_LIT, floor)}
+                    stroke="#5F6E80"
+                    strokeWidth="2.5"
                   />
                 );
               }),
@@ -2706,8 +2958,14 @@ export const WhatYouBuySim: React.FC<SimulationProps> = ({frame, total, accent})
               <circle cx="254" cy="392" r="29" fill="#9BBB86" />
             </g>
           </g>
+          {/* The asphalt dissolves into the page instead of ending on a hard
+              line the caption gradient then cuts again. Drawn under the
+              callouts, so no label is washed out by it. */}
+          <rect x="0" y="400" width="1080" height="64" fill="url(#wyb-ground)" />
           {tags.map((tag) => {
-            const show = ease(progress, tag.at, tag.at + 0.1, 0, 1);
+            // The leader is drawn, not switched on: it leaves the pill and
+            // travels to the part of the building it is naming.
+            const show = ramp(progress, tag.at, tag.at + 0.12, 0, 1);
             const width = tag.label.length * 15 + 34;
             const [targetX, targetY] = project(tag.to[0], tag.to[1]);
             const anchorX = tag.x < targetX ? tag.x + width : tag.x;
@@ -2741,113 +2999,258 @@ export const WhatYouBuySim: React.FC<SimulationProps> = ({frame, total, accent})
 /**
  * What the deed actually lists as yours, and what it only lends you.
  *
- * Two pages of the same document. The first paints the section of the building
- * in two tones and settles the difference between private and common. Then the
- * page turns — the action the voice is asking for — and the second one shows
- * the two lines everybody assumes: the parking space and the storage room. The
- * chalk sign beside them is wiped out while the printed line stays, which is
- * the whole point of asking for it in writing.
+ * One sheet, read from the top down. The camera goes where the voice goes: the
+ * heading of the declaratoria, the section of the block with the flats that
+ * are private and the parts that belong to everybody, the reglamento, and at
+ * the foot the two lines every buyer assumes — the parking space and the
+ * storage room — printed with their numbers. Beside them a chalk sign says the
+ * same thing and is rubbed out, and the camera goes back up to the printed
+ * line that is still there. That return is the argument of the scene.
+ *
+ * It was two pages that turned in the middle, and both of them stood still:
+ * the paper was drawn in a single frame and then nothing moved for three
+ * seconds at a time. A sheet the camera reads down carries its own rhythm —
+ * the reading is the movement — and the ink is dark enough for that movement
+ * to be legible on a phone, which a pale block sliding over cream never was.
  */
+/** Top of the reading window, in the sheet's own coordinates, at each stop. */
+const DEED_STATIONS = [0, 280, 520, 760];
+/** The section of the block, drawn once inside the sheet. */
+const DEED_SECTION = {left: 28, right: 728, top: 260, bottom: 790};
+const DEED_STOREYS = [296, 400, 504, 608];
+const DEED_ROWS = [
+  {name: 'Parqueadero', code: 'Nº 12', y: 990},
+  {name: 'Bodega', code: 'Nº 7', y: 1082},
+];
+
 export const HorizontalPropertySim: React.FC<SimulationProps> = ({frame, total, accent}) => {
   const {fps} = useVideoConfig();
   const span = Math.max(1, total ?? frame + 1);
   const progress = frame / span;
   const lift = spring({frame, fps, config: {damping: 18, mass: 0.85}});
-  const paint = ease(progress, 0.1, 0.3, 0, 1);
-  const label = ease(progress, 0.24, 0.38, 0, 1);
-  const turn = ease(progress, 0.42, 0.58, 0, 1);
-  const lines = ease(progress, 0.58, 0.72, 0, 1);
-  const wipe = ease(progress, 0.74, 0.9, 0, 1);
-  const floors = [46, 132, 218, 304];
+  // Three moves of about a second and three quarters, three pauses of half a
+  // second, and then the sign. Nothing waits: what is arriving into view is
+  // being inked while the sheet travels.
+  const lens = interpolate(
+    progress,
+    [0, 0.07, 0.2, 0.25, 0.37, 0.41, 0.62, 1],
+    [
+      DEED_STATIONS[0], DEED_STATIONS[0],
+      DEED_STATIONS[1], DEED_STATIONS[1],
+      DEED_STATIONS[2], DEED_STATIONS[2],
+      DEED_STATIONS[3], DEED_STATIONS[3],
+    ],
+    {easing: Easing.bezier(0.45, 0.05, 0.55, 0.95), extrapolateLeft: 'clamp', extrapolateRight: 'clamp'},
+  );
+  const intro = (index: number) => ease(progress, 0.01 + index * 0.02, 0.06 + index * 0.02, 0, 1);
+  // Each flat is inked as the reading reaches its storey.
+  const flat = (index: number) => ease(progress, 0.06 + index * 0.02, 0.12 + index * 0.02, 0, 1);
+  const shared = (index: number) => ease(progress, 0.26 + index * 0.04, 0.33 + index * 0.04, 0, 1);
+  const mineMark = ease(progress, 0.19, 0.25, 0, 1);
+  const yours = ease(progress, 0.21, 0.27, 0, 1);
+  // The pill belongs to the section: it leaves when the reading does, instead
+  // of hanging at the top edge of a page it no longer explains.
+  const common = ease(progress, 0.38, 0.44, 0, 1) * (1 - ease(progress, 0.5, 0.55, 0, 1));
+  const rules = (index: number) => ease(progress, 0.47 + index * 0.035, 0.53 + index * 0.035, 0, 1);
+  const row = (index: number) => ease(progress, 0.56 + index * 0.045, 0.63 + index * 0.045, 0, 1);
+  // The sign is a thing, not a layer: it lands on the paper, is written, is
+  // rubbed out, and is taken away again — and the printed line is still there
+  // underneath. Two of the largest movements of the scene are its arrival and
+  // its exit, and they are the argument.
+  // It arrives already written — a sign that exists — and everything that
+  // happens to it afterwards is permanent: rubbed out, then taken away. A
+  // change that undoes itself leaves the frame exactly as it found it, and
+  // both the eye and `freezedetect` read those seconds as a still image.
+  const sign = ease(progress, 0.65, 0.72, 0, 1);
+  const wipe = ramp(progress, 0.735, 0.84, 0, 1);
+  const away = ramp(progress, 0.855, 0.925, 0, 1);
+  const verdict = ease(progress, 0.9, 0.95, 0, 1);
+  const title = (
+    <span style={{position: 'relative', display: 'block', height: 54}}>
+      <span style={{position: 'absolute', left: 0, top: 0, opacity: 1 - sign}}>¿Qué es tuyo de verdad?</span>
+      <span style={{position: 'absolute', left: 0, top: 0, opacity: sign}}>Y que conste por escrito</span>
+    </span>
+  );
   return (
-    <FieldShell accent={accent} where="DECLARATORIA Y REGLAMENTO" title="¿Qué es tuyo de verdad?" lift={lift}>
-      <div style={{position: 'relative', marginTop: 24, height: 452, perspective: 1600}}>
-        <div style={{position: 'absolute', inset: 0, borderRadius: 16, overflow: 'hidden', border: '2px solid #E8E1D0', background: '#FFFFFF', opacity: turn > 0.05 ? 1 : 0}}>
-          <div style={{padding: '22px 24px'}}>
-            <div style={{fontSize: 22, fontWeight: 800, letterSpacing: '.07em', color: '#9A8F79'}}>LO QUE DEBE CONSTAR</div>
+    <FieldShell accent={accent} where="DECLARATORIA Y REGLAMENTO" title={title} lift={lift}>
+      <div style={{position: 'relative', marginTop: 24, height: 452, borderRadius: 16, overflow: 'hidden', border: '2px solid #E8E1D0', background: '#FFFFFF'}}>
+        <svg width="100%" height="100%" viewBox="0 0 756 452" preserveAspectRatio="xMidYMid slice">
+          <defs>
+            <pattern id="ph-common" width="14" height="14" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+              <rect width="14" height="14" fill="#E7DFCC" />
+              <rect width="5" height="14" fill="#B5A784" />
+            </pattern>
+          </defs>
+          <g transform={`translate(0 ${-lens})`}>
+            <rect x="0" y="-60" width="756" height="1420" fill="#FFFFFF" />
+            <text x="28" y="56" fontFamily={font} fontSize="31" fontWeight="800" fill={palette.ink}>
+              DECLARATORIA DE
+            </text>
+            <text x="28" y="96" fontFamily={font} fontSize="31" fontWeight="800" fill={palette.ink}>
+              PROPIEDAD HORIZONTAL
+            </text>
+            {[130, 158, 186, 214].map((y, index) => (
+              <rect key={`intro-${y}`} x="28" y={y} width={[700, 660, 700, 520][index] * intro(index)} height="13" rx="4" fill="#9C917A" />
+            ))}
+
+            <rect
+              x={DEED_SECTION.left}
+              y={DEED_SECTION.top}
+              width={DEED_SECTION.right - DEED_SECTION.left}
+              height={DEED_SECTION.bottom - DEED_SECTION.top}
+              fill="#F6F2E9"
+              stroke="#3E4A5C"
+              strokeWidth="5"
+            />
+            {/* What belongs to everybody: the roof, the riser that runs through
+                the block, the stairs and the hall, hatched as they are read. */}
             {[
-              {name: 'Parqueadero', code: 'Nº 12'},
-              {name: 'Bodega', code: 'Nº 7'},
-            ].map((row, index) => {
-              const show = ease(lines, index * 0.22, index * 0.22 + 0.6, 0, 1);
-              return (
-                <div key={row.name} style={{marginTop: 16, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 14, paddingBottom: 12, borderBottom: '3px dotted #DED6C4', opacity: show, transform: `translateY(${(1 - show) * 16}px)`}}>
-                  <span style={{fontSize: 30, fontWeight: 800, letterSpacing: '-.02em'}}>{row.name}</span>
-                  <span style={{display: 'flex', alignItems: 'center', gap: 12}}>
-                    <span style={{fontSize: 26, fontWeight: 800, color: '#8A7F69'}}>{row.code}</span>
-                    <span style={{padding: '7px 14px', borderRadius: 8, background: `${accent}18`, border: `2px solid ${accent}45`, fontSize: 22, fontWeight: 800, color: accent}}>EN LA ESCRITURA</span>
-                  </span>
-                </div>
-              );
-            })}
-            <div style={{marginTop: 26, display: 'flex', alignItems: 'center', gap: 20}}>
-              <div style={{position: 'relative', width: 300, height: 152, borderRadius: 12, background: '#3B4A44', border: '8px solid #8A6A4A', overflow: 'hidden'}}>
-                <div style={{position: 'absolute', inset: 0, display: 'grid', placeItems: 'center', clipPath: `inset(0 ${wipe * 100}% 0 0)`}}>
-                  <span style={{fontSize: 44, fontWeight: 800, color: '#F2EFE6', letterSpacing: '.04em', opacity: 0.9}}>P-12</span>
-                </div>
-                <div style={{position: 'absolute', top: 26, left: `${8 + wipe * 74}%`, width: 78, height: 100, borderRadius: 10, background: '#E9E2D2', border: '3px solid #C9BFA6', opacity: wipe > 0.02 && wipe < 0.98 ? 1 : 0}} />
-              </div>
-              <div style={{flex: 1, opacity: wipe, transform: `translateX(${(1 - wipe) * 20}px)`}}>
-                <div style={{fontSize: 30, fontWeight: 800, letterSpacing: '-.02em'}}>De palabra se borra</div>
-                <div style={{marginTop: 6, fontSize: 25, fontWeight: 700, color: '#8A7F69'}}>La escritura no</div>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div
-          style={{
-            position: 'absolute',
-            inset: 0,
-            borderRadius: 16,
-            overflow: 'hidden',
-            border: '2px solid #E8E1D0',
-            background: '#FFFFFF',
-            transformOrigin: '0% 50%',
-            transform: `rotateY(${-turn * 116}deg)`,
-            boxShadow: turn > 0.02 ? '18px 0 44px rgba(40,32,16,.24)' : 'none',
-            backfaceVisibility: 'hidden',
-          }}
-        >
-          <svg width="100%" height="100%" viewBox="0 0 756 452" preserveAspectRatio="xMidYMid meet">
-            <defs>
-              <pattern id="ph-common" width="14" height="14" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
-                <rect width="14" height="14" fill="#EDE6D6" />
-                <rect width="5" height="14" fill="#DCD2BC" />
-              </pattern>
-            </defs>
-            <rect x="96" y="24" width="564" height="386" rx="6" fill="#F6F2E9" stroke="#D6CDBA" strokeWidth="3" />
-            <rect x="96" y="24" width="564" height="22" fill="url(#ph-common)" opacity={paint} />
-            <rect x="96" y="368" width="564" height="42" fill="url(#ph-common)" opacity={paint} />
-            <rect x="470" y="46" width="98" height="322" fill="url(#ph-common)" opacity={paint} />
-            {floors.map((y, floor) =>
+              {key: 'roof', x: 28, y: 260, width: 700, height: 32},
+              {key: 'riser', x: 478, y: 292, width: 110, height: 428},
+              {key: 'stairs', x: 598, y: 292, width: 110, height: 428},
+              {key: 'hall', x: 28, y: 720, width: 700, height: 70},
+            ].map((zone, index) => (
+              <g key={zone.key} opacity={shared(Math.min(2, index))}>
+                <rect x={zone.x} y={zone.y} width={zone.width} height={zone.height} fill="url(#ph-common)" />
+                <rect x={zone.x} y={zone.y} width={zone.width} height={zone.height} fill="none" stroke="#7C725D" strokeWidth="3" />
+              </g>
+            ))}
+            {/* The slabs. A section without them is a grid of pale boxes: they
+                are the ink that makes the storeys count while the sheet moves. */}
+            {[292, 396, 500, 604, 708].map((y) => (
+              <rect key={`slab-${y}`} x="28" y={y} width="700" height="10" fill="#3E4A5C" />
+            ))}
+            {/* Flights of stairs, so the shared column reads as a stairwell. */}
+            <g opacity={shared(1)}>
+              {[0, 1, 2, 3, 4, 5, 6, 7].map((step) => (
+                <rect key={`step-${step}`} x={612 + (step % 2) * 42} y={312 + step * 50} width="56" height="12" rx="3" fill="#8D99A7" />
+              ))}
+            </g>
+            {DEED_STOREYS.map((y, floor) =>
               [0, 1].map((unit) => {
+                const index = floor * 2 + unit;
                 const isMine = floor === 1 && unit === 0;
-                const fill = isMine ? accent : '#D9E3EC';
+                const arrive = flat(index);
                 return (
-                  <g key={`${floor}-${unit}`}>
-                    <rect x={116 + unit * 176} y={y + 46} width="164" height="72" rx="4" fill={fill} opacity={isMine ? 0.28 + paint * 0.72 : 0.6} />
-                    <rect x={116 + unit * 176} y={y + 46} width="164" height="72" rx="4" fill="none" stroke="#C7CFD8" strokeWidth="2" />
+                  <g key={`${floor}-${unit}`} opacity={arrive}>
+                    <rect x={48 + unit * 214} y={y} width="200" height="88" rx="4" fill={isMine ? accent : '#CBD9E6'} opacity={isMine ? 0.32 + mineMark * 0.68 : 0.9} />
+                    <rect x={48 + unit * 214} y={y} width="200" height="88" rx="4" fill="none" stroke="#5F6E80" strokeWidth="3" />
+                    <rect x={68 + unit * 214} y={y + 22} width="72" height="44" rx="3" fill="#FFFFFF" opacity=".55" />
                   </g>
                 );
               }),
             )}
-            <rect x="568" y="46" width="72" height="322" fill="#E7EDF2" />
-            {[0, 1, 2, 3, 4, 5].map((step) => (
-              <rect key={`step-${step}`} x={576 + step * 8} y={70 + step * 50} width="52" height="10" rx="3" fill="#C7CFD8" />
-            ))}
-            <g opacity={label}>
-              <line x1="212" y1="176" x2="212" y2="240" stroke={accent} strokeWidth="3" strokeLinecap="round" />
-              <rect x="116" y="240" width="152" height="46" rx="12" fill="#FFFDF8" stroke={accent} strokeWidth="2" />
-              <text x="134" y="272" fontFamily={font} fontSize="27" fontWeight="800" fill={accent}>
+            <g opacity={yours}>
+              <rect x="48" y="400" width="200" height="88" rx="4" fill="none" stroke={accent} strokeWidth="6" />
+              <line x1="148" y1="488" x2="148" y2={ramp(yours, 0, 1, 488, 528)} stroke={accent} strokeWidth="4" strokeLinecap="round" />
+              <rect x="60" y="528" width="152" height="50" rx="12" fill="#FFFDF8" stroke={accent} strokeWidth="3" />
+              <text x="80" y="562" fontFamily={font} fontSize="28" fontWeight="800" fill={accent}>
                 Tuyo
               </text>
-              <line x1="519" y1="206" x2="600" y2="240" stroke="#8A7F69" strokeWidth="3" strokeLinecap="round" />
-              <rect x="560" y="240" width="160" height="46" rx="12" fill="#FFFDF8" stroke="#D6CDBA" strokeWidth="2" />
-              <text x="578" y="272" fontFamily={font} fontSize="27" fontWeight="800" fill="#8A7F69">
+            </g>
+            <g opacity={common}>
+              <line x1="640" y1="700" x2={ramp(common, 0, 1, 640, 640)} y2={ramp(common, 0, 1, 700, 812)} stroke="#7C725D" strokeWidth="4" strokeLinecap="round" />
+              <rect x="548" y="812" width="176" height="50" rx="12" fill="#FFFDF8" stroke="#C6BCA4" strokeWidth="3" />
+              <text x="570" y="846" fontFamily={font} fontSize="28" fontWeight="800" fill="#7C725D">
                 Común
               </text>
             </g>
-          </svg>
+
+            <text x="28" y="900" fontFamily={font} fontSize="28" fontWeight="800" fill={palette.ink}>
+              REGLAMENTO INTERNO
+            </text>
+            {[924, 952].map((y, index) => (
+              <rect key={`rule-${y}`} x="28" y={y} width={[700, 600][index] * rules(index)} height="13" rx="4" fill="#9C917A" />
+            ))}
+
+            {DEED_ROWS.map((line, index) => {
+              const arrive = row(index);
+              return (
+                <g key={line.name} opacity={arrive} transform={`translate(${(1 - arrive) * 420} 0)`}>
+                  <text x="28" y={line.y + 40} fontFamily={font} fontSize="34" fontWeight="800" fill={palette.ink}>
+                    {line.name}
+                  </text>
+                  <text x="300" y={line.y + 40} fontFamily={font} fontSize="28" fontWeight="800" fill="#8A7F69">
+                    {line.code}
+                  </text>
+                  <rect x="424" y={line.y + 6} width="302" height="48" rx="10" fill={`${accent}22`} stroke={accent} strokeWidth="3" />
+                  <text x="444" y={line.y + 40} fontFamily={font} fontSize="25" fontWeight="800" fill={accent}>
+                    EN LA ESCRITURA
+                  </text>
+                  <rect x="28" y={line.y + 70} width="698" height="3" fill="#E2DACA" />
+                </g>
+              );
+            })}
+          </g>
+        </svg>
+
+        {/* The sign that was only ever a promise. It lands on the paper,
+            is written from the left and rubbed out from the left — one box,
+            one direction, never two states of the same words at once — and
+            then it is taken away and the printed line is still underneath. */}
+        <div
+          style={{
+            position: 'absolute',
+            left: 46,
+            top: 78,
+            width: 664,
+            height: 320,
+            borderRadius: 18,
+            background: '#3B4A44',
+            border: '12px solid #8A6A4A',
+            boxShadow: '0 26px 60px rgba(30,24,12,.4)',
+            overflow: 'hidden',
+            transform: `translateY(${(1 - sign) * 470 + away * 500}px) rotate(${(1 - sign) * 3 - away * 4}deg)`,
+          }}
+        >
+          <div
+            style={{
+              position: 'absolute',
+              inset: 0,
+              display: 'grid',
+              placeItems: 'center',
+              alignContent: 'center',
+              gap: 10,
+              clipPath: `inset(0 0 0 ${wipe * 100}%)`,
+            }}
+          >
+            <span style={{fontSize: 30, fontWeight: 800, color: '#CFDDD3', letterSpacing: '.14em'}}>PARQUEADERO</span>
+            <span style={{fontSize: 92, fontWeight: 800, color: '#F2EFE6', letterSpacing: '.04em'}}>P-12</span>
+            <span style={{fontSize: 26, fontWeight: 800, color: '#9FB3A6', letterSpacing: '.06em'}}>ASIGNADO DE PALABRA</span>
+          </div>
+          <div
+            style={{
+              position: 'absolute',
+              top: 34,
+              left: `${wipe * 74}%`,
+              width: 178,
+              height: 244,
+              borderRadius: 14,
+              background: '#E9E2D2',
+              border: '5px solid #C9BFA6',
+              boxShadow: '0 10px 24px rgba(0,0,0,.35)',
+              opacity: wipe > 0.02 && wipe < 0.98 ? 1 : 0,
+            }}
+          />
+        </div>
+
+        <div
+          style={{
+            position: 'absolute',
+            left: 18,
+            right: 18,
+            bottom: 16,
+            padding: '16px 22px',
+            borderRadius: 16,
+            background: '#FFFDF8',
+            border: `3px solid ${accent}55`,
+            boxShadow: '0 18px 40px rgba(40,32,16,.18)',
+            opacity: verdict,
+            transform: `translateY(${(1 - verdict) * 70}px)`,
+          }}
+        >
+          <span style={{fontSize: 30, fontWeight: 800, letterSpacing: '-.02em'}}>De palabra se borra. </span>
+          <span style={{fontSize: 30, fontWeight: 800, letterSpacing: '-.02em', color: accent}}>La escritura no.</span>
         </div>
       </div>
     </FieldShell>
@@ -2860,31 +3263,47 @@ export const HorizontalPropertySim: React.FC<SimulationProps> = ({frame, total, 
  * One bill in the hand first, so the thing is recognisable; then the same bill
  * arriving month after month, which is the part that surprises a buyer; and
  * last the certificate landing on the pile with the seal coming down on it.
- * The amount is never a figure: it is a redacted block, because this factory
- * does not invent prices.
+ *
+ * The amount used to be a hatched block, which read as a form still loading.
+ * It is a figure now, and a declared one: an example monthly fee for an
+ * example building, tagged `EJEMPLO` beside the number as well as in the
+ * card's header. It is the same permission the piece already uses for a price
+ * and an area — what stays forbidden is claiming what a fee costs anywhere.
  */
+const SERVICE_CHARGE_EXAMPLE = {monthly: 85};
 export const ServiceChargeSim: React.FC<SimulationProps> = ({frame, total, accent}) => {
   const {fps} = useVideoConfig();
   const span = Math.max(1, total ?? frame + 1);
   const progress = frame / span;
   const lift = spring({frame, fps, config: {damping: 18, mass: 0.85}});
-  const months = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun'];
+  const months = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul'];
   const covers = ['Limpieza', 'Guardianía', 'Agua común', 'Ascensor'];
   // The single bill reads at full size, then it becomes the first sheet of a
-  // pile: same object, new meaning.
-  const settle = ease(progress, 0.3, 0.46, 0, 1);
-  const cert = ease(progress, 0.62, 0.76, 0, 1);
-  const stamp = ease(progress, 0.78, 0.87, 0, 1);
-  const ring = ease(progress, 0.85, 0.97, 0, 1);
+  // pile: same object, new meaning. The months then arrive one at a time,
+  // spread over the middle of the scene rather than crowded into a second and
+  // a half, because the point of the pile is that it keeps coming.
+  const open = ramp(progress, 0.01, 0.12, 0, 1);
+  const settle = ease(progress, 0.16, 0.28, 0, 1);
+  // Each month crosses the card at the speed of a hand putting it down. With
+  // the series' gesture curve the flight was over in three frames and the
+  // second between one bill and the next was a still image.
+  const arrival = (index: number) => ramp(progress, 0.13 + index * 0.083, 0.245 + index * 0.083, 0, 1);
+  // The front bill is the top of the pile: it says the month of the last one
+  // that landed, counted from the arrivals themselves.
+  const landed = months.slice(1).filter((_, index) => arrival(index) > 0.5).length;
+  const cert = ramp(progress, 0.68, 0.79, 0, 1);
+  const stamp = ease(progress, 0.82, 0.89, 0, 1);
+  const ring = ease(progress, 0.87, 0.96, 0, 1);
   return (
     <FieldShell accent={accent} where="A LA ADMINISTRACIÓN" title="La alícuota, cada mes" lift={lift}>
       <div style={{position: 'relative', marginTop: 24, height: 452}}>
-        <div style={{position: 'absolute', left: 0, top: 0, width: 400, height: 372, transform: `translate(${settle * 8}px, ${settle * 46}px) scale(${1 - settle * 0.2})`, transformOrigin: '0% 100%'}}>
+        {/* The bill owns the box instead of hiding in a corner of it. */}
+        <div style={{position: 'absolute', left: 0, top: 6, width: 452, height: 424, opacity: open, transform: `translate(${settle * 6}px, ${(1 - open) * 300 + settle * 12}px) scale(${1 - settle * 0.06})`, transformOrigin: '0% 100%'}}>
           {months.map((month, index) => {
             if (index === 0) {
               return null;
             }
-            const arrive = ease(progress, 0.34 + index * 0.045, 0.44 + index * 0.045, 0, 1);
+            const arrive = arrival(index - 1);
             return (
               <div
                 key={month}
@@ -2894,31 +3313,43 @@ export const ServiceChargeSim: React.FC<SimulationProps> = ({frame, total, accen
                   borderRadius: 14,
                   background: '#FFFFFF',
                   border: '2px solid #E8E1D0',
-                  boxShadow: '0 12px 26px rgba(40,32,16,.12)',
-                  opacity: arrive,
-                  transform: `translate(${(1 - arrive) * 420 + index * 11}px, ${-index * 13}px) rotate(${(1 - arrive) * 7 + (index % 2 ? -1.4 : 1.2)}deg)`,
+                  boxShadow: '0 12px 26px rgba(40,32,16,.16)',
+                  opacity: arrive > 0.001 ? 1 : 0,
+                  transform: `translate(${(1 - arrive) * 620 + index * 26}px, ${index * 5}px) rotate(${(1 - arrive) * 7 + (index % 2 ? -1.2 : 1)}deg)`,
                 }}
               >
-                <div style={{padding: '18px 22px', fontSize: 23, fontWeight: 800, letterSpacing: '.07em', color: '#9A8F79'}}>{month.toUpperCase()}</div>
+                {/* A bill you can see arriving. A white sheet crossing a cream
+                    card is a movement nobody registers, on a phone or in a
+                    difference metric: the month rides in on its own dark band. */}
+                <div style={{display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '26px 24px', borderRadius: '12px 12px 0 0', background: '#3E4A5C'}}>
+                  <span style={{fontSize: 30, fontWeight: 800, letterSpacing: '.06em', color: '#FFFFFF'}}>{month.toUpperCase()}</span>
+                  <span style={{fontSize: 25, fontWeight: 800, letterSpacing: '.06em', color: '#C8D3E0'}}>ALÍCUOTA</span>
+                </div>
+                <div style={{padding: '22px 24px', fontSize: 46, fontWeight: 800, letterSpacing: '-.03em', color: palette.ink}}>${SERVICE_CHARGE_EXAMPLE.monthly}</div>
               </div>
             );
           })}
-          <div style={{position: 'absolute', inset: 0, borderRadius: 14, background: '#FFFFFF', border: '2px solid #E8E1D0', boxShadow: '0 18px 40px rgba(40,32,16,.16)', padding: '22px 24px'}}>
-            <div style={{display: 'flex', alignItems: 'center', justifyContent: 'space-between'}}>
-              <span style={{fontSize: 23, fontWeight: 800, letterSpacing: '.07em', color: '#9A8F79'}}>ALÍCUOTA</span>
-              <span style={{fontSize: 23, fontWeight: 800, color: accent}}>{months[Math.min(months.length - 1, Math.floor(ease(progress, 0.34, 0.62, 0, months.length - 1) + 0.5))].toUpperCase()}</span>
+          <div style={{position: 'absolute', inset: 0, borderRadius: 14, background: '#FFFFFF', border: '2px solid #E8E1D0', boxShadow: '0 18px 40px rgba(40,32,16,.16)', overflow: 'hidden'}}>
+            {/* Every month's bill is the same object, and it is recognisable
+                from across the room: dark masthead, month, amount. */}
+            <div style={{display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '26px 24px', background: '#3E4A5C'}}>
+              <span style={{fontSize: 25, fontWeight: 800, letterSpacing: '.06em', color: '#C8D3E0'}}>ALÍCUOTA</span>
+              <span style={{fontSize: 30, fontWeight: 800, letterSpacing: '.06em', color: '#FFFFFF'}}>{months[landed].toUpperCase()}</span>
             </div>
-            <div style={{marginTop: 16, display: 'flex', alignItems: 'center', gap: 12}}>
-              <span style={{fontSize: 40, fontWeight: 800, letterSpacing: '-.03em'}}>$</span>
-              <span style={{flex: 1, height: 38, borderRadius: 8, background: 'repeating-linear-gradient(90deg,#DED6C4 0 22px,#EDE6D6 22px 40px)'}} />
+            <div style={{margin: '18px 24px 0', display: 'flex', alignItems: 'baseline', gap: 12}}>
+              <span style={{fontSize: 62, fontWeight: 800, letterSpacing: '-.04em', fontVariantNumeric: 'tabular-nums'}}>${SERVICE_CHARGE_EXAMPLE.monthly}</span>
+              <span style={{fontSize: 26, fontWeight: 800, color: '#8A7F69'}}>al mes</span>
+              <span style={{marginLeft: 'auto', padding: '6px 12px', borderRadius: 8, background: '#F3EFE4', border: '2px solid #E0D8C4', fontSize: 22, fontWeight: 800, letterSpacing: '.08em', color: '#9A8F79'}}>EJEMPLO</span>
             </div>
-            <div style={{marginTop: 18}}>
+            <div style={{margin: '16px 24px 0', height: 3, background: '#EDE6D6'}} />
+            <div style={{margin: '16px 24px 0', fontSize: 22, fontWeight: 800, letterSpacing: '.07em', color: '#9A8F79'}}>QUÉ CUBRE</div>
+            <div style={{margin: '12px 24px 0'}}>
               {covers.map((item, index) => {
-                const show = ease(progress, 0.08 + index * 0.05, 0.2 + index * 0.05, 0, 1);
+                const show = ease(progress, 0.07 + index * 0.025, 0.14 + index * 0.025, 0, 1);
                 return (
-                  <div key={item} style={{marginTop: index ? 12 : 0, display: 'flex', alignItems: 'center', gap: 12, opacity: show, transform: `translateX(${(1 - show) * -18}px)`}}>
+                  <div key={item} style={{marginTop: index ? 14 : 0, display: 'flex', alignItems: 'center', gap: 12, opacity: show, transform: `translateX(${(1 - show) * -18}px)`}}>
                     <span style={{width: 12, height: 12, borderRadius: 99, background: accent}} />
-                    <span style={{fontSize: 26, fontWeight: 800, letterSpacing: '-.02em'}}>{item}</span>
+                    <span style={{fontSize: 27, fontWeight: 800, letterSpacing: '-.02em'}}>{item}</span>
                   </div>
                 );
               })}
@@ -2929,34 +3360,38 @@ export const ServiceChargeSim: React.FC<SimulationProps> = ({frame, total, accen
           style={{
             position: 'absolute',
             right: 0,
-            top: 96,
+            top: 140,
             width: 336,
-            padding: '26px 26px 30px',
+            padding: '22px 22px 26px',
             borderRadius: 16,
             background: '#FFFDF8',
             border: `3px solid ${accent}55`,
             boxShadow: '0 22px 52px rgba(40,32,16,.2)',
-            opacity: cert,
-            transform: `translateY(${(1 - cert) * -74}px) rotate(${(1 - cert) * 4 - 1.4}deg)`,
+            opacity: cert > 0.001 ? 1 : 0,
+            transform: `translate(${(1 - cert) * 520}px, ${(1 - cert) * -40}px) rotate(${(1 - cert) * 8 - 1.4}deg)`,
           }}
         >
           <div style={{fontSize: 22, fontWeight: 800, letterSpacing: '.06em', color: '#9A8F79'}}>CERTIFICADO</div>
-          <div style={{marginTop: 8, fontSize: 32, fontWeight: 800, letterSpacing: '-.03em', lineHeight: 1.15}}>El vendedor está al día</div>
-          <div style={{marginTop: 10, fontSize: 24, fontWeight: 700, color: '#8A7F69'}}>Firmado por la administración</div>
-          <div style={{position: 'relative', marginTop: 22, height: 116}}>
+          <div style={{marginTop: 8, fontSize: 32, fontWeight: 800, letterSpacing: '-.03em', lineHeight: 1.14}}>
+            El vendedor
+            <br />
+            está al día
+          </div>
+          <div style={{marginTop: 10, fontSize: 23, fontWeight: 700, color: '#8A7F69'}}>Firmado por la administración</div>
+          <div style={{position: 'relative', marginTop: 18, height: 104}}>
             <div
               style={{
                 position: 'absolute',
-                right: 6,
+                right: 4,
                 top: 0,
-                width: 116,
-                height: 116,
+                width: 104,
+                height: 104,
                 borderRadius: 999,
                 border: `5px solid ${accent}`,
                 color: accent,
                 display: 'grid',
                 placeItems: 'center',
-                fontSize: 26,
+                fontSize: 24,
                 fontWeight: 800,
                 letterSpacing: '.06em',
                 opacity: stamp,
@@ -2968,17 +3403,17 @@ export const ServiceChargeSim: React.FC<SimulationProps> = ({frame, total, accen
             <div
               style={{
                 position: 'absolute',
-                right: 6,
+                right: 4,
                 top: 0,
-                width: 116,
-                height: 116,
+                width: 104,
+                height: 104,
                 borderRadius: 999,
                 border: `3px solid ${accent}`,
                 opacity: ring * (1 - ring) * 3.4,
                 transform: `scale(${1 + ring * 0.5})`,
               }}
             />
-            <div style={{position: 'absolute', left: 0, bottom: 6, width: 150, height: 3, background: '#DED6C4'}} />
+            <div style={{position: 'absolute', left: 0, bottom: 4, width: 140, height: 3, background: '#DED6C4'}} />
           </div>
         </div>
       </div>
@@ -3022,6 +3457,16 @@ const BUILDING_WORLD = {
   shaft: {x: 560, width: 100, top: 118, bottom: 1210},
 };
 
+/**
+ * Air above the roof.
+ *
+ * The tour's first stop is the water tank, and with the camera pinned at world
+ * zero the tank's inlet pipe touched the top edge of the panel: the thing the
+ * callout points at was being cropped by the frame. Every world coordinate is
+ * pushed down by this much instead of being retyped one by one.
+ */
+const BUILDING_SKY = 60;
+
 type BuildingStop = {
   label: string;
   note: string;
@@ -3035,10 +3480,24 @@ type BuildingStop = {
 };
 
 const BUILDING_STOPS: BuildingStop[] = [
-  {label: 'Cisterna', note: 'De dónde sale el agua', camera: 0, pill: [96, 190], target: [440, 96], from: 0, to: 0.16},
-  {label: 'Ascensor', note: 'Que abra y cierre', camera: 330, pill: [180, 560], target: [560, 585], from: 0.3, to: 0.46},
-  {label: 'Bomba', note: 'El cuarto de máquinas', camera: 700, pill: [396, 800], target: [300, 905], from: 0.6, to: 0.76},
-  {label: 'Humedades', note: 'En los pasillos', camera: 1060, pill: [96, 1230], target: [500, 1288], from: 0.88, to: 1.4},
+  {label: 'Cisterna', note: 'De dónde sale el agua', camera: 0, pill: [96, 190], target: [440, 96], from: 0, to: 0.2},
+  {label: 'Ascensor', note: 'Que abra y cierre', camera: 330, pill: [180, 560], target: [560, 585], from: 0.26, to: 0.48},
+  {label: 'Bomba', note: 'El cuarto de máquinas', camera: 700, pill: [396, 800], target: [300, 905], from: 0.54, to: 0.76},
+  {label: 'Humedades', note: 'En los pasillos', camera: 1060, pill: [96, 1230], target: [500, 1288], from: 0.82, to: 1.4},
+];
+
+/**
+ * The walk, written as time rather than as distance.
+ *
+ * Each entry is where the camera is at that point of the tour: it descends for
+ * about two seconds and stands still for half a one, which is what a person
+ * walking a building does. The curve matters as much as the numbers — the
+ * series' gesture ease covers four fifths of a descent in its first quarter
+ * and then creeps, so the tour used to arrive early and wait, and a stop of
+ * two and a half seconds is a still image with a caption over it.
+ */
+const BUILDING_TOUR: Array<[number, number]> = [
+  [0, 0], [0.06, 0], [0.28, 1], [0.34, 1], [0.56, 2], [0.62, 2], [0.84, 3], [1, 3],
 ];
 
 export const BuildingStateSim: React.FC<SimulationProps> = ({frame, total, accent}) => {
@@ -3047,22 +3506,31 @@ export const BuildingStateSim: React.FC<SimulationProps> = ({frame, total, accen
   const progress = frame / span;
   const lift = spring({frame, fps, config: {damping: 18, mass: 0.85}});
 
-  // Beat one: read the minutes, mark the line that costs money.
-  const agenda = (index: number) => ease(progress, 0.05 + index * 0.045, 0.19 + index * 0.045, 0, 1);
-  const highlight = ease(progress, 0.2, 0.31, 0, 1);
-  const approved = ease(progress, 0.31, 0.39, 0, 1);
-  // The handoff: the sheet is set down and the building is behind it.
-  const handoff = ease(progress, 0.4, 0.5, 0, 1);
+  // Beat one: the minutes of the last meetings — three of them, arriving one
+  // on top of another, because that is what the voice asks for — and then the
+  // line that costs money, marked on the one on top.
+  const sheet = (index: number) => ramp(progress, 0.01 + index * 0.07, 0.12 + index * 0.07, 0, 1);
+  const agenda = (index: number) => ease(progress, 0.17 + index * 0.025, 0.24 + index * 0.025, 0, 1);
+  const highlight = ramp(progress, 0.25, 0.31, 0, 1);
+  // The camera closes on the line that costs money: the beat that carries the
+  // middle of the sheet, where four staggered rules of grey never could.
+  const focusLine = ramp(progress, 0.28, 0.38, 0, 1);
+  const approved = ramp(progress, 0.33, 0.4, 0, 1);
+  // The handoff lands on «Y camina el edificio»: the sheets are set down
+  // exactly when the voice stops talking about them.
+  const handoff = ramp(progress, 0.41, 0.49, 0, 1);
 
   // Beat two: the walk down. Milestones are fractions of the tour, and the
   // tour is a fraction of the run, so no stop is ever cut in half.
-  const tourAt = (t: number) => 0.46 + 0.51 * t;
+  const tourAt = (t: number) => 0.47 + 0.51 * t;
   const camera = interpolate(
     progress,
-    BUILDING_STOPS.flatMap((stop, index) => (index === 0 ? [tourAt(0)] : [tourAt(stop.from - 0.16), tourAt(stop.from)])),
-    BUILDING_STOPS.flatMap((stop, index) => (index === 0 ? [stop.camera] : [BUILDING_STOPS[index - 1].camera, stop.camera])),
-    {easing: Easing.bezier(0.22, 1, 0.36, 1), extrapolateLeft: 'clamp', extrapolateRight: 'clamp'},
+    BUILDING_TOUR.map(([at]) => tourAt(at)),
+    BUILDING_TOUR.map(([, stop]) => BUILDING_STOPS[stop].camera),
+    {easing: Easing.bezier(0.45, 0.05, 0.55, 0.95), extrapolateLeft: 'clamp', extrapolateRight: 'clamp'},
   );
+  // What the panel is actually looking at, once the roof has been given air.
+  const lens = camera - BUILDING_SKY;
   const focus = BUILDING_STOPS.map((stop) =>
     Math.max(0, ease(progress, tourAt(stop.from), tourAt(stop.from + 0.05), 0, 1) - ease(progress, tourAt(stop.to), tourAt(stop.to + 0.05), 0, 1)),
   );
@@ -3070,20 +3538,19 @@ export const BuildingStateSim: React.FC<SimulationProps> = ({frame, total, accen
 
   // Micro answers, each one owned by the stop it belongs to.
   const water = focus[0];
-  const cab = interpolate(progress, [tourAt(0.14), tourAt(0.3)], [180, 530], {
-    easing: Easing.bezier(0.22, 1, 0.36, 1),
-    extrapolateLeft: 'clamp',
-    extrapolateRight: 'clamp',
-  });
-  const doors = ease(progress, tourAt(0.34), tourAt(0.44), 0, 1);
+  // The car climbs while the camera is watching the shaft, not before it.
+  const cab = ramp(progress, tourAt(0.28), tourAt(0.46), 180, 530);
+  const doors = ramp(progress, tourAt(0.46), tourAt(0.54), 0, 1);
   const impeller = frame * 3.4;
-  const pulse = ease(progress, tourAt(0.62), tourAt(0.72), 0, 1);
-  const damp = ease(progress, tourAt(0.88), tourAt(0.98), 0, 1);
+  const pulse = ease(progress, tourAt(0.58), tourAt(0.7), 0, 1);
+  const damp = ramp(progress, tourAt(0.86), tourAt(0.99), 0, 1);
 
   const title = (
     <span style={{position: 'relative', display: 'block', height: 54}}>
-      <span style={{position: 'absolute', left: 0, top: 0, opacity: 1 - handoff}}>Lo que ya se decidió</span>
-      <span style={{position: 'absolute', left: 0, top: 0, opacity: handoff}}>Y camina el edificio</span>
+      {/* Disjoint windows, never a crossfade: two titles at half opacity in
+          the same box read as one garbled line, not as a change of subject. */}
+      <span style={{position: 'absolute', left: 0, top: 0, opacity: 1 - ramp(progress, 0.41, 0.45, 0, 1)}}>Lo que ya se decidió</span>
+      <span style={{position: 'absolute', left: 0, top: 0, opacity: ramp(progress, 0.45, 0.49, 0, 1)}}>Y camina el edificio</span>
     </span>
   );
 
@@ -3091,27 +3558,51 @@ export const BuildingStateSim: React.FC<SimulationProps> = ({frame, total, accen
     <FieldShell accent={accent} where="ACTAS Y EDIFICIO" title={title} lift={lift}>
       <div style={{position: 'relative', marginTop: 22, height: 452, borderRadius: 18, overflow: 'hidden', border: '2px solid #E8E1D0', background: '#F0EDE4'}}>
         <svg width="100%" height="100%" viewBox="0 0 756 452" preserveAspectRatio="xMidYMid slice">
-          <g transform={`translate(0 ${-camera})`}>
-            <rect x="0" y="0" width="756" height="1560" fill="#EDEAE1" />
+          <g transform={`translate(0 ${-lens})`}>
+            <rect x="-40" y="-200" width="840" height="1800" fill="#EDEAE1" />
             <rect x="-40" y={BUILDING_WORLD.ground} width="840" height="30" fill="#CFCABA" />
-            <rect x="-40" y={BUILDING_WORLD.ground + 30} width="840" height="140" fill="#9EA5AE" />
+            <rect x="-40" y={BUILDING_WORLD.ground + 30} width="840" height="200" fill="#9EA5AE" />
             {[20, 240, 460, 680].map((x) => (
               <rect key={`asphalt-${x}`} x={x} y={BUILDING_WORLD.ground + 78} width="96" height="9" rx="4" fill="#E6E9EC" opacity=".7" />
             ))}
 
-            <rect x={BUILDING_WORLD.wallLeft} y={BUILDING_WORLD.roof} width={BUILDING_WORLD.wallRight - BUILDING_WORLD.wallLeft} height={BUILDING_WORLD.ground - BUILDING_WORLD.roof} fill="#FAF7F0" stroke="#CFC5AE" strokeWidth="3" />
-            <rect x={BUILDING_WORLD.wallLeft} y={BUILDING_WORLD.roof} width="26" height={BUILDING_WORLD.ground - BUILDING_WORLD.roof} fill="#E4DFD2" />
-            <rect x={BUILDING_WORLD.wallRight - 26} y={BUILDING_WORLD.roof} width="26" height={BUILDING_WORLD.ground - BUILDING_WORLD.roof} fill="#E4DFD2" />
-            <rect x="36" y="96" width="684" height="22" rx="4" fill="#4A5768" />
+            {/* The envelope first. Without a dark outline, a roof cap and slabs
+                you can actually see, the section read as a pale grid of
+                rectangles rather than as a building. */}
+            <rect
+              x={BUILDING_WORLD.wallLeft}
+              y={BUILDING_WORLD.roof}
+              width={BUILDING_WORLD.wallRight - BUILDING_WORLD.wallLeft}
+              height={BUILDING_WORLD.ground - BUILDING_WORLD.roof}
+              fill="#F8F4EB"
+              stroke="#3E4A5C"
+              strokeWidth="6"
+            />
+            <rect x={BUILDING_WORLD.wallLeft} y={BUILDING_WORLD.roof} width="30" height={BUILDING_WORLD.ground - BUILDING_WORLD.roof} fill="#E2DACA" />
+            <rect x={BUILDING_WORLD.wallRight - 30} y={BUILDING_WORLD.roof} width="30" height={BUILDING_WORLD.ground - BUILDING_WORLD.roof} fill="#E2DACA" />
+            {/* Same ink as the roof slab of scene one: it is the same building. */}
+            <rect x="32" y="92" width="692" height="26" rx="4" fill="#4A5768" />
+            {/* The slabs are the ink of the section: pale bands made the walk
+                down read as a still picture of beige boxes, on a phone and in
+                the difference between one frame and the next. */}
             {BUILDING_WORLD.slabs.map((y) => (
-              <rect key={`slab-${y}`} x={BUILDING_WORLD.wallLeft} y={y} width={BUILDING_WORLD.wallRight - BUILDING_WORLD.wallLeft} height="10" fill="#CFC5AE" />
+              <g key={`slab-${y}`}>
+                <rect x={BUILDING_WORLD.wallLeft} y={y} width={BUILDING_WORLD.wallRight - BUILDING_WORLD.wallLeft} height="18" fill="#3E4A5C" />
+                <rect x={BUILDING_WORLD.wallLeft} y={y + 18} width={BUILDING_WORLD.wallRight - BUILDING_WORLD.wallLeft} height="5" fill="#9A8C6E" />
+              </g>
             ))}
             {BUILDING_WORLD.slabs.slice(0, 6).map((y) => (
               <g key={`rooms-${y}`}>
-                <rect x="250" y={y + 10} width="8" height="172" fill="#E4DFD2" />
-                <rect x="430" y={y + 10} width="8" height="172" fill="#E4DFD2" />
-                <rect x="96" y={y + 118} width="86" height="64" rx="4" fill="#EFEAE0" />
-                <rect x="300" y={y + 118} width="86" height="64" rx="4" fill="#EFEAE0" />
+                {/* Partitions, rooms and the windows of the façade, so each
+                    storey reads as a home and not as an empty cell. */}
+                <rect x="250" y={y + 16} width="10" height="166" fill="#A99C82" />
+                <rect x="430" y={y + 16} width="10" height="166" fill="#A99C82" />
+                <rect x="96" y={y + 112} width="90" height="70" rx="4" fill="#E2DBCB" stroke="#8D99A7" strokeWidth="3" />
+                <rect x="300" y={y + 112} width="90" height="70" rx="4" fill="#E2DBCB" stroke="#8D99A7" strokeWidth="3" />
+                <rect x={BUILDING_WORLD.wallLeft + 7} y={y + 52} width="16" height="60" rx="3" fill="#8397AB" />
+                <rect x={BUILDING_WORLD.wallRight - 23} y={y + 52} width="16" height="60" rx="3" fill="#8397AB" />
+                <rect x={BUILDING_WORLD.wallLeft - 20} y={y + 156} width="20" height="10" rx="3" fill="#CFC5AE" />
+                <rect x={BUILDING_WORLD.wallRight} y={y + 156} width="20" height="10" rx="3" fill="#CFC5AE" />
               </g>
             ))}
 
@@ -3194,45 +3685,65 @@ export const BuildingStateSim: React.FC<SimulationProps> = ({frame, total, accen
             const [px, py] = stop.pill;
             const [tx, ty] = stop.target;
             const anchorX = px < tx ? px + width : px;
-            const anchorY = py - camera + 16;
+            const anchorY = py - lens + 16;
             return (
               <g key={stop.label} opacity={show}>
                 <line
                   x1={anchorX}
                   y1={anchorY}
                   x2={anchorX + (tx - anchorX) * show}
-                  y2={anchorY + (ty - camera - anchorY) * show}
+                  y2={anchorY + (ty - lens - anchorY) * show}
                   stroke={accent}
                   strokeWidth="3"
                   strokeLinecap="round"
                 />
-                <circle cx={tx} cy={ty - camera} r={5 * show} fill={accent} />
-                <rect x={px} y={py - camera - 16} width={width} height="80" rx="14" fill="#FFFDF8" stroke="#E6DFCE" strokeWidth="2" />
-                <text x={px + 18} y={py - camera + 16} fontFamily={font} fontSize="28" fontWeight="800" fill={palette.ink}>
+                <circle cx={tx} cy={ty - lens} r={5 * show} fill={accent} />
+                <rect x={px} y={py - lens - 16} width={width} height="80" rx="14" fill="#FFFDF8" stroke="#E6DFCE" strokeWidth="2" />
+                <text x={px + 18} y={py - lens + 16} fontFamily={font} fontSize="28" fontWeight="800" fill={palette.ink}>
                   {stop.label}
                 </text>
-                <text x={px + 18} y={py - camera + 48} fontFamily={font} fontSize="22" fontWeight="700" fill="#8A7F69">
+                <text x={px + 18} y={py - lens + 48} fontFamily={font} fontSize="22" fontWeight="700" fill="#8A7F69">
                   {stop.note}
                 </text>
               </g>
             );
           })}
+        </svg>
 
-          <g opacity={handoff}>
-            <line x1="710" y1="150" x2="710" y2="300" stroke="#CDC5B2" strokeWidth="4" strokeLinecap="round" />
+        {/* The four dots used to float on the right edge with nothing to say
+            what they counted. They are the walk, and now they say so. */}
+        <div
+          style={{
+            position: 'absolute',
+            right: 18,
+            bottom: 16,
+            display: 'flex',
+            alignItems: 'center',
+            gap: 12,
+            padding: '11px 18px',
+            borderRadius: 99,
+            background: '#FFFDF8',
+            border: '2px solid #E6DFCE',
+            opacity: handoff,
+            transform: `translateY(${(1 - handoff) * 18}px)`,
+          }}
+        >
+          <span style={{fontSize: 22, fontWeight: 800, letterSpacing: '.06em', color: '#9A8F79'}}>RECORRIDO</span>
+          <span style={{display: 'flex', alignItems: 'center', gap: 8}}>
             {BUILDING_STOPS.map((stop, index) => (
-              <circle
-                key={`rail-${stop.label}`}
-                cx="710"
-                cy={150 + index * 50}
-                r={7 + reached[index] * 3}
-                fill={reached[index] > 0.5 ? accent : '#FFFDF8'}
-                stroke={reached[index] > 0.5 ? accent : '#CDC5B2'}
-                strokeWidth="4"
+              <span
+                key={`walk-${stop.label}`}
+                style={{
+                  width: 14,
+                  height: 14,
+                  borderRadius: 99,
+                  background: reached[index] > 0.5 ? accent : 'transparent',
+                  border: `3px solid ${reached[index] > 0.5 ? accent : '#D6CCB6'}`,
+                }}
               />
             ))}
-          </g>
-        </svg>
+          </span>
+        </div>
 
         <div
           style={{
@@ -3254,17 +3765,49 @@ export const BuildingStateSim: React.FC<SimulationProps> = ({frame, total, accen
           <span style={{fontSize: 22, fontWeight: 800, color: '#8A5A22', letterSpacing: '.02em'}}>Cuota extraordinaria aprobada</span>
         </div>
 
+        {/* «Las actas de las últimas asambleas»: three of them, arriving one on
+            top of another. Each sheet is the size of the panel, so the reading
+            starts with three movements a phone can see instead of a page that
+            was simply already there. */}
+        {[0, 1].map((index) => {
+          const arrive = sheet(index);
+          return (
+            <div
+              key={`minutes-${index}`}
+              style={{
+                position: 'absolute',
+                inset: 0,
+                background: '#FFFDF8',
+                border: '2px solid #EFE7D6',
+                boxShadow: '0 16px 34px rgba(40,32,16,.16)',
+                transform: `translate(${(1 - arrive) * 700 + (2 - index) * 30}px, ${handoff * 500 - (2 - index) * 38}px) rotate(${(1 - arrive) * 5 + (index % 2 ? 2.4 : -2.6)}deg)`,
+              }}
+            >
+              <div style={{padding: '22px 28px', background: '#3E4A5C', fontSize: 24, fontWeight: 800, letterSpacing: '.07em', color: '#FFFFFF'}}>ACTA DE ASAMBLEA</div>
+              <div style={{padding: '26px 28px'}}>
+                <div style={{height: 14, width: 420, borderRadius: 99, background: '#A99C82'}} />
+                <div style={{marginTop: 16, height: 14, width: 340, borderRadius: 99, background: '#A99C82'}} />
+                <div style={{marginTop: 16, height: 14, width: 386, borderRadius: 99, background: '#A99C82'}} />
+              </div>
+            </div>
+          );
+        })}
         <div
           style={{
             position: 'absolute',
             inset: 0,
             background: '#FFFDF8',
-            padding: '26px 28px',
-            transform: `translateY(${handoff * 500}px)`,
+            border: '2px solid #EFE7D6',
+            boxShadow: '0 18px 40px rgba(40,32,16,.18)',
+            // The push has to keep the levy inside the frame: at 34% and an
+            // origin above it, the closing line — the one the voice is saying —
+            // was pushed past the bottom of the card and cut in half.
+            transformOrigin: '14% 58%',
+            transform: `translate(${(1 - sheet(2)) * 700}px, ${handoff * 500}px) rotate(${(1 - sheet(2)) * 5}deg) scale(${1 + focusLine * 0.2})`,
           }}
         >
-          <div style={{fontSize: 24, fontWeight: 800, letterSpacing: '.07em', color: '#9A8F79'}}>ACTA DE ASAMBLEA</div>
-          <div style={{marginTop: 18}}>
+          <div style={{padding: '22px 28px', background: '#3E4A5C', fontSize: 24, fontWeight: 800, letterSpacing: '.07em', color: '#FFFFFF'}}>ACTA DE ASAMBLEA</div>
+          <div style={{padding: '24px 28px 0'}}>
             {[0, 1, 2, 3].map((index) => (
               <div key={index} style={{position: 'relative', display: 'flex', alignItems: 'center', gap: 16, marginTop: index ? 14 : 0, height: 36}}>
                 <span style={{fontSize: 22, fontWeight: 800, color: '#B7AD97', width: 22}}>{index + 1}</span>
@@ -3274,30 +3817,39 @@ export const BuildingStateSim: React.FC<SimulationProps> = ({frame, total, accen
                     <span style={{position: 'relative', fontSize: 28, fontWeight: 800, opacity: agenda(index)}}>Cambio de la bomba de agua</span>
                   </span>
                 ) : (
-                  <span style={{height: 12, width: `${[420, 350, 0, 300][index] * agenda(index)}px`, borderRadius: 99, background: '#DED6C4'}} />
+                  <span style={{height: 14, width: `${[420, 350, 0, 300][index] * agenda(index)}px`, borderRadius: 99, background: '#A99C82'}} />
                 )}
               </div>
             ))}
-          </div>
-          <div
-            style={{
-              marginTop: 20,
-              padding: '16px 24px',
-              borderRadius: 14,
-              background: '#FFF6EA',
-              border: '3px solid #E0B584',
-              opacity: approved,
-              transform: `translateY(${(1 - approved) * 18}px)`,
-            }}
-          >
-            <div style={{fontSize: 22, fontWeight: 800, letterSpacing: '.06em', color: '#8A5A22'}}>CUOTA EXTRAORDINARIA</div>
-            <div style={{marginTop: 6, fontSize: 30, fontWeight: 800, color: palette.ink}}>Aprobada por la asamblea</div>
-          </div>
-          <div style={{marginTop: 20, display: 'flex', alignItems: 'flex-end', gap: 16}}>
-            <span style={{fontSize: 22, fontWeight: 800, color: '#B7AD97'}}>Firmas</span>
-            <svg width="220" height="34" viewBox="0 0 220 34" fill="none">
-              <path d="M4 26c18-18 26 4 40-6s16-16 30-6 20 18 34 8 22-18 36-10 26 14 40 6" stroke="#C9C0AA" strokeWidth="3" strokeLinecap="round" />
-            </svg>
+            {/* The decision that costs money is the one thing on the sheet that
+                is not printed in grey: it arrives as a solid band, because it
+                is the beat the voice is naming. */}
+            <div
+              style={{
+                marginTop: 20,
+                padding: '18px 24px',
+                borderRadius: 14,
+                background: '#C08A3E',
+                border: '3px solid #A2712C',
+                // It used to slide in from the left, and the card clips: for
+                // half a second the viewer saw a growing orange rectangle with
+                // no text on it. It rises into place with its words already on.
+                opacity: approved,
+                transform: `translateY(${(1 - approved) * 18}px)`,
+              }}
+            >
+              <div style={{fontSize: 22, fontWeight: 800, letterSpacing: '.06em', color: '#FFF1DC'}}>CUOTA EXTRAORDINARIA</div>
+              <div style={{marginTop: 6, fontSize: 30, fontWeight: 800, color: '#FFFFFF'}}>Aprobada por la asamblea</div>
+            </div>
+            {/* The signature line yields its space to the levy: the sheet is
+                taller than the card once both are on it, and what got cut was
+                the sentence the voice is saying. */}
+            <div style={{marginTop: 20 * (1 - approved), height: 34 * (1 - approved), opacity: 1 - approved, overflow: 'hidden', display: 'flex', alignItems: 'flex-end', gap: 16}}>
+              <span style={{fontSize: 22, fontWeight: 800, color: '#B7AD97'}}>Firmas</span>
+              <svg width="220" height="34" viewBox="0 0 220 34" fill="none">
+                <path d="M4 26c18-18 26 4 40-6s16-16 30-6 20 18 34 8 22-18 36-10 26 14 40 6" stroke="#C9C0AA" strokeWidth="3" strokeLinecap="round" />
+              </svg>
+            </div>
           </div>
         </div>
       </div>
@@ -3322,6 +3874,15 @@ const grouped = (value: number) => Math.round(value).toString().replace(/\B(?=(\
  * Every figure here is an example, and the card says so: the price, the total
  * and the usable area belong to an illustrative flat, sized like a flat. The
  * piece teaches the division; it never claims what a metre costs in any city.
+ *
+ * No figure is ever interpolated. A number that counts up from zero states a
+ * different amount on every frame, and all of them except the last are false —
+ * the master shipped with «$0/m²» readable on screen for the better part of a
+ * second. Amounts arrive already correct, as a unit, by opacity and offset.
+ *
+ * For the same reason nothing here cross-fades text. Two different strings
+ * blended in one box produced «95 útiles de útiles declarados» and «POR M²
+ * ÚTILARADO»: the old words now leave completely before the new ones start.
  */
 const USABLE_AREA_EXAMPLE = {
   price: 95000,
@@ -3330,6 +3891,54 @@ const USABLE_AREA_EXAMPLE = {
   rival: {price: 92000, usable: 68},
 };
 
+/**
+ * A swap of one string for another in a fixed box, with no overlap.
+ *
+ * `out` and `in` are separate windows with a gap between them, so at every
+ * frame at most one of the two is painted. The exiting words lift and fade,
+ * the arriving ones rise into place: a replacement, never a blend.
+ */
+const Swap: React.FC<{
+  out: number;
+  enter: number;
+  height: number;
+  before: React.ReactNode;
+  after: React.ReactNode;
+}> = ({out, enter, height, before, after}) => (
+  <div style={{position: 'relative', height}}>
+    {out < 1 ? (
+      <div style={{position: 'absolute', left: 0, top: 0, opacity: 1 - out, transform: `translateY(${out * -12}px)`}}>{before}</div>
+    ) : null}
+    {enter > 0 ? (
+      <div style={{position: 'absolute', left: 0, top: 0, opacity: enter, transform: `translateY(${(1 - enter) * 14}px)`}}>{after}</div>
+    ) : null}
+  </div>
+);
+
+/**
+ * A price per metre, revealed whole.
+ *
+ * The box keeps its size from the first frame — the division is set up and
+ * visible — and only the result arrives, already correct.
+ */
+const UnitPrice: React.FC<{amount: number; accent: string; enter: number}> = ({amount, accent, enter}) => (
+  <span
+    style={{
+      display: 'inline-block',
+      fontSize: 38,
+      fontWeight: 800,
+      letterSpacing: '-.04em',
+      color: accent,
+      fontVariantNumeric: 'tabular-nums',
+      opacity: enter,
+      transform: `translateY(${(1 - enter) * 12}px)`,
+    }}
+  >
+    ${grouped(amount)}
+    <span style={{fontSize: 24}}>/m²</span>
+  </span>
+);
+
 export const UsableAreaSim: React.FC<SimulationProps> = ({frame, total, accent}) => {
   const {fps} = useVideoConfig();
   const span = Math.max(1, total ?? frame + 1);
@@ -3337,22 +3946,30 @@ export const UsableAreaSim: React.FC<SimulationProps> = ({frame, total, accent})
   const lift = spring({frame, fps, config: {damping: 18, mass: 0.85}});
   const example = USABLE_AREA_EXAMPLE;
   const common = example.declared - example.usable;
+  // The three amounts, worked out once. They are only ever shown finished.
+  const unitDeclared = example.price / example.declared;
+  const unitUsable = example.price / example.usable;
+  const unitRival = example.rival.price / example.rival.usable;
 
-  // Beat one: both listings land and each one divides its own price.
-  const cardA = ease(progress, 0.02, 0.16, 0, 1);
-  const cardB = ease(progress, 0.08, 0.22, 0, 1);
-  const wrongUnit = ease(progress, 0.14, 0.28, 0, example.price / example.declared);
-  const rivalUnit = ease(progress, 0.2, 0.34, 0, example.rival.price / example.rival.usable);
-  const seemsCheaper = ease(progress, 0.32, 0.4, 0, 1) - ease(progress, 0.6, 0.66, 0, 1);
-  // Beat two: the tap that opens the declared area.
-  const tap = ease(progress, 0.38, 0.43, 0, 1) - ease(progress, 0.5, 0.55, 0, 1);
-  const ripple = ease(progress, 0.41, 0.52, 0, 1);
-  const split = ease(progress, 0.44, 0.58, 0, 1);
-  // Beat three: the same price over the usable metres, and the order flips.
-  const recompute = ease(progress, 0.62, 0.7, 0, 1);
-  const rightUnit = wrongUnit + ease(progress, 0.62, 0.74, 0, example.price / example.usable - example.price / example.declared);
-  const verdict = ease(progress, 0.72, 0.8, 0, 1);
-  const closing = ease(progress, 0.76, 0.85, 0, 1);
+  // Beat one: both listings land and each one shows its own division.
+  const cardA = ease(progress, 0.02, 0.14, 0, 1);
+  const cardB = ease(progress, 0.08, 0.2, 0, 1);
+  const showUnitA = ease(progress, 0.17, 0.23, 0, 1);
+  const showUnitB = ease(progress, 0.24, 0.3, 0, 1);
+  const seemsCheaper = Math.max(0, ease(progress, 0.33, 0.39, 0, 1) - ease(progress, 0.6, 0.65, 0, 1));
+  // Beat two: the tap that opens the declared area. The area line is replaced,
+  // not blended: it leaves before the split wording arrives.
+  const tap = Math.max(0, ease(progress, 0.4, 0.45, 0, 1) - ease(progress, 0.47, 0.52, 0, 1));
+  const ripple = ease(progress, 0.43, 0.54, 0, 1);
+  const areaOut = ease(progress, 0.44, 0.485, 0, 1);
+  const areaIn = ease(progress, 0.5, 0.57, 0, 1);
+  const split = ease(progress, 0.46, 0.6, 0, 1);
+  // Beat three: the same price over the usable metres. Label and amount are
+  // swapped with a gap between the exit and the entrance.
+  const unitOut = ease(progress, 0.63, 0.672, 0, 1);
+  const unitIn = ease(progress, 0.686, 0.75, 0, 1);
+  const verdict = ease(progress, 0.76, 0.83, 0, 1);
+  const closing = ease(progress, 0.8, 0.88, 0, 1);
 
   // One scale for both bars: 320 px is the declared area, so the usable part of
   // A and the whole of B come out exactly the same length when they are equal.
@@ -3361,28 +3978,52 @@ export const UsableAreaSim: React.FC<SimulationProps> = ({frame, total, accent})
   const commonWidth = barWidth - usableWidth;
   const hatch = 'repeating-linear-gradient(45deg, #C9C3B4 0 6px, #E4DECF 6px 12px)';
 
-  const cardStyle = (enter: number, highlighted: boolean): React.CSSProperties => ({
+  const cardStyle = (enter: number): React.CSSProperties => ({
     position: 'relative',
     padding: 18,
     borderRadius: 22,
     background: '#FFFFFF',
-    border: `2px solid ${highlighted ? `${accent}66` : '#E8E1D0'}`,
-    boxShadow: highlighted ? `0 18px 40px ${accent}22` : '0 14px 32px rgba(40,32,16,.10)',
+    border: '2px solid #E8E1D0',
+    boxShadow: '0 14px 32px rgba(40,32,16,.10)',
     opacity: enter,
     transform: `translateY(${(1 - enter) * 26}px)`,
   });
 
+  // The winner is marked by a ring that fades in over the card, so the border
+  // does not jump from one colour to another on a single frame.
+  const ring = (strength: number): React.CSSProperties => ({
+    position: 'absolute',
+    inset: -2,
+    borderRadius: 22,
+    border: `2px solid ${accent}66`,
+    boxShadow: `0 18px 40px ${accent}22`,
+    opacity: strength,
+    pointerEvents: 'none',
+  });
+
+  const unitLabel = (text: string) => (
+    <span style={{fontSize: 22, fontWeight: 800, letterSpacing: '.04em', color: '#8A7F69', whiteSpace: 'nowrap'}}>{text}</span>
+  );
+
   return (
     <FieldShell accent={accent} where="COMPARANDO ANUNCIOS" title="¿Qué metros te cuentan?" lift={lift}>
       <div style={{marginTop: 22, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, alignItems: 'stretch'}}>
-        <div style={cardStyle(cardA, verdict < 0.5)}>
+        <div style={cardStyle(cardA)}>
+          <div style={ring(1 - verdict)} />
           <div style={{fontSize: 22, fontWeight: 800, letterSpacing: '.07em', color: '#9A8F79'}}>ANUNCIO A</div>
           <div style={{marginTop: 6, fontSize: 38, fontWeight: 800, letterSpacing: '-.03em', fontVariantNumeric: 'tabular-nums'}}>${grouped(example.price)}</div>
-          <div style={{position: 'relative', marginTop: 8, height: 32}}>
-            <div style={{position: 'absolute', left: 0, top: 0, fontSize: 24, fontWeight: 700, color: '#8A7F69', opacity: 1 - split}}>{example.declared} m² declarados</div>
-            <div style={{position: 'absolute', left: 0, top: 0, fontSize: 24, fontWeight: 700, color: '#8A7F69', opacity: split}}>
-              <span style={{color: accent, fontWeight: 800}}>{example.usable} útiles</span> + {common} comunes
-            </div>
+          <div style={{position: 'relative', marginTop: 8}}>
+            <Swap
+              out={areaOut}
+              enter={areaIn}
+              height={32}
+              before={<span style={{fontSize: 24, fontWeight: 700, color: '#8A7F69', whiteSpace: 'nowrap'}}>{example.declared} m² declarados</span>}
+              after={
+                <span style={{fontSize: 24, fontWeight: 700, color: '#8A7F69', whiteSpace: 'nowrap'}}>
+                  <span style={{color: accent, fontWeight: 800}}>{example.usable} útiles</span> + {common} comunes
+                </span>
+              }
+            />
             <div
               style={{
                 position: 'absolute',
@@ -3417,34 +4058,39 @@ export const UsableAreaSim: React.FC<SimulationProps> = ({frame, total, accent})
             <div style={{position: 'absolute', left: usableWidth + split * 8, top: 0, width: commonWidth, height: 26, borderRadius: 8, background: hatch, opacity: split}} />
           </div>
           <div style={{marginTop: 14, padding: '12px 16px', borderRadius: 16, background: '#F3EFE4', border: '2px solid #E8E1D0'}}>
-            <div style={{position: 'relative', height: 28}}>
-              <div style={{position: 'absolute', left: 0, top: 0, fontSize: 22, fontWeight: 800, letterSpacing: '.04em', color: '#8A7F69', opacity: 1 - recompute}}>POR M² DECLARADO</div>
-              <div style={{position: 'absolute', left: 0, top: 0, fontSize: 22, fontWeight: 800, letterSpacing: '.04em', color: '#8A7F69', opacity: recompute}}>POR M² ÚTIL</div>
-            </div>
-            <div style={{fontSize: 38, fontWeight: 800, letterSpacing: '-.04em', color: accent, fontVariantNumeric: 'tabular-nums'}}>
-              ${grouped(recompute > 0.5 ? rightUnit : wrongUnit)}
-              <span style={{fontSize: 24}}>/m²</span>
+            <Swap out={unitOut} enter={unitIn} height={28} before={unitLabel('POR M² DECLARADO')} after={unitLabel('POR M² ÚTIL')} />
+            <div style={{position: 'relative', height: 46}}>
+              {unitOut < 1 ? (
+                <div style={{position: 'absolute', left: 0, top: 0, opacity: 1 - unitOut, transform: `translateY(${unitOut * -12}px)`}}>
+                  <UnitPrice amount={unitDeclared} accent={accent} enter={showUnitA} />
+                </div>
+              ) : null}
+              {unitIn > 0 ? (
+                <div style={{position: 'absolute', left: 0, top: 0}}>
+                  <UnitPrice amount={unitUsable} accent={accent} enter={unitIn} />
+                </div>
+              ) : null}
             </div>
           </div>
-          <div style={{marginTop: 8, padding: '8px 14px', borderRadius: 99, background: '#FFF6EA', border: '2px solid #E0B584', fontSize: 22, fontWeight: 800, color: '#8A5A22', opacity: Math.max(0, seemsCheaper)}}>
+          <div style={{marginTop: 8, padding: '8px 14px', borderRadius: 99, background: '#FFF6EA', border: '2px solid #E0B584', fontSize: 22, fontWeight: 800, color: '#8A5A22', opacity: seemsCheaper}}>
             Parece más barato
           </div>
         </div>
 
-        <div style={cardStyle(cardB, verdict > 0.5)}>
+        <div style={cardStyle(cardB)}>
+          <div style={ring(verdict)} />
           <div style={{fontSize: 22, fontWeight: 800, letterSpacing: '.07em', color: '#9A8F79'}}>ANUNCIO B</div>
           <div style={{marginTop: 6, fontSize: 38, fontWeight: 800, letterSpacing: '-.03em', fontVariantNumeric: 'tabular-nums'}}>${grouped(example.rival.price)}</div>
-          <div style={{marginTop: 8, height: 32, fontSize: 24, fontWeight: 700, color: '#8A7F69'}}>
+          <div style={{marginTop: 8, height: 32, fontSize: 24, fontWeight: 700, color: '#8A7F69', whiteSpace: 'nowrap'}}>
             <span style={{color: accent, fontWeight: 800}}>{example.rival.usable} útiles</span> declarados
           </div>
           <div style={{position: 'relative', marginTop: 12, height: 26}}>
             <div style={{position: 'absolute', left: 0, top: 0, width: usableWidth, height: 26, borderRadius: 8, background: accent}} />
           </div>
           <div style={{marginTop: 14, padding: '12px 16px', borderRadius: 16, background: '#F3EFE4', border: '2px solid #E8E1D0'}}>
-            <div style={{height: 28, fontSize: 22, fontWeight: 800, letterSpacing: '.04em', color: '#8A7F69'}}>POR M² ÚTIL</div>
-            <div style={{fontSize: 38, fontWeight: 800, letterSpacing: '-.04em', color: accent, fontVariantNumeric: 'tabular-nums'}}>
-              ${grouped(rivalUnit)}
-              <span style={{fontSize: 24}}>/m²</span>
+            <div style={{height: 28}}>{unitLabel('POR M² ÚTIL')}</div>
+            <div style={{height: 46}}>
+              <UnitPrice amount={unitRival} accent={accent} enter={showUnitB} />
             </div>
           </div>
           <div style={{marginTop: 8, padding: '8px 14px', borderRadius: 99, background: `${accent}14`, border: `2px solid ${accent}45`, fontSize: 22, fontWeight: 800, color: accent, opacity: verdict}}>
@@ -3465,7 +4111,7 @@ export const UsableAreaSim: React.FC<SimulationProps> = ({frame, total, accent})
           transform: `translateY(${(1 - closing) * 20}px)`,
         }}
       >
-        Metros útiles con metros útiles
+        Divide siempre por los metros útiles
       </div>
     </FieldShell>
   );
@@ -3517,19 +4163,28 @@ export const BuildingSurroundingsSim: React.FC<SimulationProps> = ({frame, total
   const progress = frame / span;
   const liftIn = spring({frame, fps, config: {damping: 18, mass: 0.85}});
   // The tiles settle first, the way a basemap arrives before its data.
-  const tiles = ease(progress, 0.02, 0.16, 0, 1);
-  const drop = interpolate(progress, [0.18, 0.29, 0.34], [-86, 8, 0], {
+  const tiles = ease(progress, 0.02, 0.12, 0, 1);
+  // The marker lands early: this is the one scene that shows the product, and
+  // a basemap on its own is not the product. The first master left a still
+  // grid on screen for four seconds before anything happened.
+  const drop = interpolate(progress, [0.1, 0.2, 0.25], [-96, 10, 0], {
     easing: Easing.bezier(0.22, 1, 0.36, 1),
     extrapolateLeft: 'clamp',
     extrapolateRight: 'clamp',
   });
-  const pin = ease(progress, 0.18, 0.28, 0, 1);
-  // Selecting a listing flies the map to it; the camera settles on its block.
-  const zoom = ease(progress, 0.34, 0.78, 1, 1.55);
-  const camX = ease(progress, 0.34, 0.78, 376, MAP_MARKER[0]);
-  const camY = ease(progress, 0.34, 0.78, 235, MAP_MARKER[1]);
-  const detail = ease(progress, 0.4, 0.74, 0, 1);
-  const chip = ease(progress, 0.78, 0.86, 0, 1);
+  const pin = ease(progress, 0.1, 0.19, 0, 1);
+  const land = ease(progress, 0.19, 0.32, 0, 1);
+  // Selecting a listing flies the map to it: a real approach, with one damped
+  // overshoot at the end so the camera reads as arriving rather than drifting.
+  const zoom = interpolate(progress, [0.24, 0.74, 0.87], [0.92, 2.16, 2.02], {
+    easing: Easing.bezier(0.22, 1, 0.36, 1),
+    extrapolateLeft: 'clamp',
+    extrapolateRight: 'clamp',
+  });
+  const camX = ease(progress, 0.24, 0.8, 376, MAP_MARKER[0]);
+  const camY = ease(progress, 0.24, 0.8, 235, MAP_MARKER[1]);
+  const detail = ease(progress, 0.26, 0.62, 0, 1);
+  const chip = ease(progress, 0.74, 0.83, 0, 1);
   const offsetX = 376 - camX * zoom;
   const offsetY = 235 - camY * zoom;
   // The marker keeps its size while the map grows underneath, as a real one does.
@@ -3537,9 +4192,18 @@ export const BuildingSurroundingsSim: React.FC<SimulationProps> = ({frame, total
   const markerY = offsetY + MAP_MARKER[1] * zoom;
 
   return (
-    <PublishShell accent={accent} eyebrow="EN GEO PROPIEDADES" title="El edificio, sobre el mapa" status="Ves la zona antes de ir" statusSize={22} lift={liftIn}>
+    <PublishShell accent={accent} eyebrow="EN GEO PROPIEDADES" title="El edificio, sobre el mapa" status="La zona, antes de ir" statusSize={22} lift={liftIn}>
       <div style={{position: 'relative', marginTop: 26, height: 470, borderRadius: 32, overflow: 'hidden', border: '2px solid #DCE4EE', background: '#F4F1E9', boxShadow: `0 24px 56px ${accent}1A`}}>
         <svg width="100%" height="100%" viewBox="0 0 752 470" preserveAspectRatio="xMidYMid slice">
+          <defs>
+            {/* A soft contact shadow. The hard little ellipse it replaces read
+                as a grey smudge of text under the pin at phone size. */}
+            <radialGradient id="pin-shadow">
+              <stop offset="0%" stopColor="#0F172A" stopOpacity="0.26" />
+              <stop offset="60%" stopColor="#0F172A" stopOpacity="0.12" />
+              <stop offset="100%" stopColor="#0F172A" stopOpacity="0" />
+            </radialGradient>
+          </defs>
           <g transform={`translate(${offsetX} ${offsetY}) scale(${zoom})`}>
             <rect x="-120" y="-120" width="1100" height="800" fill="#F4F1E9" />
             <g opacity={tiles}>
@@ -3572,8 +4236,19 @@ export const BuildingSurroundingsSim: React.FC<SimulationProps> = ({frame, total
             </g>
           </g>
 
+          {/* The impact of the landing, on the ground and gone. */}
+          <ellipse
+            cx={markerX}
+            cy={markerY + 4}
+            rx={26 + land * 52}
+            ry={7 + land * 14}
+            fill="none"
+            stroke={accent}
+            strokeWidth="3"
+            opacity={land * (1 - land) * 3.4}
+          />
           <g transform={`translate(${markerX} ${markerY + drop})`} opacity={pin}>
-            <ellipse cx="0" cy="6" rx={22 * pin} ry={5 * pin} fill="rgba(15,23,42,.18)" />
+            <ellipse cx="0" cy="8" rx={30 * pin} ry={9 * pin} fill="url(#pin-shadow)" />
             <path
               d="M0 0C-10 -22 -36 -28 -36 -50A36 36 0 1 1 36 -50C36 -28 10 -22 0 0Z"
               fill={accent}
@@ -3638,7 +4313,7 @@ export const DeedSim: React.FC<SimulationProps> = ({frame, total, accent}) => {
  *
  * The subject is a prop because the same registry check applies to a flat, and
  * a piece about flats cannot ask "¿Debe algo el terreno?". The default is the
- * plot wording video-009 shipped with, so its master stays exactly as signed.
+ * plot wording geo-009 shipped with, so its master stays exactly as signed.
  */
 export const EncumbrancesSim: React.FC<SimulationProps & {subject?: string}> = ({frame, total, accent, subject = 'el terreno'}) => {
   const {fps} = useVideoConfig();
@@ -4188,6 +4863,1108 @@ export const FlatEncumbrancesSim: React.FC<SimulationProps> = (props) => (
   <EncumbrancesSim {...props} subject="el departamento" />
 );
 
+/* ---------------------------------------------------------------------------
+ * Buying a property, step by step.
+ *
+ * Six animations for the piece that follows a purchase from the listing to the
+ * registry. Only the first step happens inside the portal, so all six share
+ * `FieldShell`: the paper card the series uses for everything that happens
+ * away from the product, with the `EJEMPLO` badge that licenses the invented
+ * prices. Every figure below is a printed constant — none of them is
+ * interpolated on its way to a value, because a number that climbs is false in
+ * every frame but the last.
+ * ------------------------------------------------------------------------- */
+
+const EXAMPLE_LISTED_PRICE = '$75.000';
+const EXAMPLE_OFFER_PRICE = '$70.000';
+
+/**
+ * Constant-rate progress, for a movement the eye is supposed to follow.
+ *
+ * `ease` is the house curve for entrances, and it is deliberately front-loaded:
+ * `bezier(0.22, 1, 0.36, 1)` has spent 90 % of its distance in the first third
+ * of its window. That is right for a card that lands, and wrong for a lens
+ * walking down a list — the first master of this piece resolved every scene in
+ * its opening second and then held, which `MotionDefectAudit` reported as 83 to
+ * 89 % stillness. A pass that is the content of the scene runs at one speed.
+ */
+const pace = (frame: number, from: number, to: number, a: number, b: number) =>
+  interpolate(frame, [from, to], [a, b], {extrapolateLeft: 'clamp', extrapolateRight: 'clamp'});
+
+/** Smoothstep, for progress that is already clamped to 0..1. */
+const smooth = (value: number) => {
+  const clamped = Math.min(1, Math.max(0, value));
+  return clamped * clamped * (3 - 2 * clamped);
+};
+
+const VERIFICATION_CHECKS: Array<[string, string]> = [
+  ['Propietario', 'Que sea quien te vende'],
+  ['Documentos', 'Escritura inscrita'],
+  ['Gravámenes', 'Certificado del registro'],
+];
+
+/** Distance between two rows of the checklist, in the card's own pixels. */
+const CHECK_ROW_PITCH = 135;
+
+/**
+ * Who is selling, and what the property still owes.
+ *
+ * The lens makes the causality explicit: nothing is ticked before something
+ * visibly looked at it, and it parks on the last row while that row answers.
+ * The closing strip is the honest limit of the piece — the portal does not
+ * verify any of this, a lawyer does.
+ */
+export const VerificationSim: React.FC<SimulationProps> = ({frame, total, accent}) => {
+  const {fps} = useVideoConfig();
+  const span = Math.max(1, total ?? frame + 1);
+  const progress = frame / span;
+  const lift = spring({frame, fps, config: {damping: 18, mass: 0.85}});
+  // One unhurried pass, and then the lens leaves to the right instead of
+  // parking on the last row: the scene keeps moving while the closing strip
+  // rises, and nothing ends up sitting on top of it.
+  const lens = pace(progress, 0.04, 0.94, 0, VERIFICATION_CHECKS.length + 0.6);
+  const lensDown = Math.min(lens, VERIFICATION_CHECKS.length - 1) * CHECK_ROW_PITCH;
+  const lensOut = Math.max(0, lens - (VERIFICATION_CHECKS.length - 0.8)) * 150;
+  const lensFade = 1 - smooth((lens - VERIFICATION_CHECKS.length + 0.4) / 1.2);
+  const lawyer = spring({frame: frame - span * 0.56, fps, config: {damping: 17}});
+  const breath = Math.sin(frame / 29) * 2.5;
+  return (
+    <FieldShell accent={accent} where="ANTES DE PAGAR" title="¿Quién vende y qué debe?" lift={lift} camera={progress}>
+      <div style={{position: 'relative', marginTop: 26, transform: `translateY(${breath}px)`}}>
+        {VERIFICATION_CHECKS.map(([label, detail], index) => {
+          const reached = smooth(lens - index + 0.6);
+          const answered = smooth((lens - index - 0.1) / 0.4);
+          return (
+            <div
+              key={label}
+              style={{
+                marginTop: index ? 14 : 0,
+                display: 'flex',
+                alignItems: 'center',
+                gap: 20,
+                padding: '22px 26px',
+                borderRadius: 16,
+                background: '#FFFFFF',
+                border: `2px solid ${answered > 0.5 ? `${accent}66` : '#E8E1D0'}`,
+                boxShadow: `0 ${10 + reached * 8}px ${24 + reached * 16}px rgba(40,32,16,${0.08 + reached * 0.06})`,
+                transform: `translateX(${(1 - reached) * -16}px)`,
+                opacity: 0.34 + reached * 0.66,
+              }}
+            >
+              <CheckMark progress={answered} accent={accent} />
+              <div style={{flex: 1}}>
+                <div style={{fontSize: 31, fontWeight: 800, letterSpacing: '-.02em'}}>{label}</div>
+                <div style={{marginTop: 4, fontSize: 24, fontWeight: 700, color: '#8A7F69'}}>{detail}</div>
+                {/* The row is read, not ticked: the bar advances while the lens
+                    is over it, so the time the scene spends here is time the
+                    composition is visibly doing something. */}
+                <div style={{marginTop: 10, height: 8, borderRadius: 99, background: '#EDE6D6', overflow: 'hidden'}}>
+                  <div style={{width: `${smooth((lens - index + 0.25) / 0.75) * 100}%`, height: '100%', borderRadius: 99, background: accent}} />
+                </div>
+              </div>
+            </div>
+          );
+        })}
+        <div
+          style={{
+            position: 'absolute',
+            right: -4,
+            top: 8,
+            width: 96,
+            height: 96,
+            opacity: lensFade,
+            transform: `translate(${lensOut}px, ${lensDown}px)`,
+          }}
+        >
+          <svg width="96" height="96" viewBox="0 0 96 96">
+            <circle cx="42" cy="42" r="28" fill="rgba(255,255,255,.42)" stroke={accent} strokeWidth="6" />
+            <circle cx="42" cy="42" r="28" fill="none" stroke="rgba(40,32,16,.14)" strokeWidth="2" />
+            <path d="M62 62 L84 84" stroke={accent} strokeWidth="10" strokeLinecap="round" />
+          </svg>
+        </div>
+      </div>
+      <div
+        style={{
+          marginTop: 20,
+          padding: '22px 26px',
+          borderRadius: 20,
+          background: `${accent}12`,
+          border: `2px solid ${accent}40`,
+          opacity: lawyer,
+          transform: `translateY(${(1 - lawyer) * 26}px)`,
+        }}
+      >
+        <div style={{fontSize: 28, fontWeight: 800}}>Un abogado lo revisa contigo</div>
+        <div style={{marginTop: 5, fontSize: 23, fontWeight: 700, color: '#8A7F69'}}>Antes de entregar dinero</div>
+      </div>
+    </FieldShell>
+  );
+};
+
+/**
+ * The published price, an offer, and the agreement between them.
+ *
+ * Both figures are printed constants under the `EJEMPLO` badge: they teach what
+ * negotiating looks like, and say nothing about any market. The strike is the
+ * action, the offer card is the response, and the band at the bottom is the
+ * proof — an agreement is two people accepting, not a discount granted.
+ */
+export const NegotiationSim: React.FC<SimulationProps> = ({frame, total, accent}) => {
+  const {fps} = useVideoConfig();
+  const span = Math.max(1, total ?? frame + 1);
+  const progress = frame / span;
+  const lift = spring({frame, fps, config: {damping: 18, mass: 0.85}});
+  const strike = pace(progress, 0.14, 0.38, 0, 1);
+  const offer = spring({frame: frame - span * 0.3, fps, config: {damping: 16, stiffness: 170}});
+  const deal = spring({frame: frame - span * 0.62, fps, config: {damping: 15, stiffness: 155}});
+  // The two cards keep closing the gap between them until the last frame, so
+  // the agreement is something the composition arrives at rather than states.
+  const converge = pace(progress, 0.36, 1, 0, 1);
+  // The chevron crosses the gap at a constant rate: it is what carries the eye
+  // from the crossed-out price to the offer while both cards settle.
+  const pointer = pace(progress, 0.3, 0.94, -1, 1);
+  return (
+    <FieldShell accent={accent} where="LA NEGOCIACIÓN" title="Del precio publicado al acuerdo" lift={lift} camera={progress}>
+      <div
+        style={{
+          marginTop: 24,
+          padding: '22px 28px',
+          borderRadius: 18,
+          background: '#FFFFFF',
+          border: '2px solid #E8E1D0',
+          boxShadow: '0 14px 32px rgba(40,32,16,.10)',
+          opacity: 1 - strike * 0.32,
+          transform: `translateY(${converge * 10}px) scale(${1 - strike * 0.03})`,
+          transformOrigin: 'left center',
+        }}
+      >
+        <div style={{fontSize: 22, fontWeight: 800, letterSpacing: '.07em', color: '#9A8F79'}}>PRECIO PUBLICADO</div>
+        <div style={{position: 'relative', display: 'inline-block', marginTop: 2}}>
+          <span style={{fontSize: 74, fontWeight: 800, letterSpacing: '-.05em'}}>{EXAMPLE_LISTED_PRICE}</span>
+          <span
+            style={{
+              position: 'absolute',
+              left: -8,
+              right: -8,
+              top: '54%',
+              height: 8,
+              borderRadius: 99,
+              background: '#C64E3D',
+              transformOrigin: 'left center',
+              transform: `scaleX(${strike})`,
+            }}
+          />
+        </div>
+      </div>
+      <div style={{height: 46, display: 'grid', placeItems: 'center', opacity: Math.min(1, offer * 1.4), transform: `translateY(${pointer * 13}px)`}}>
+        <svg width="44" height="30" viewBox="0 0 44 30">
+          <path d="M6 6 L22 22 L38 6" fill="none" stroke={accent} strokeWidth="8" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      </div>
+      <div
+        style={{
+          padding: '22px 28px',
+          borderRadius: 18,
+          background: '#FFFFFF',
+          border: `3px solid ${accent}`,
+          boxShadow: `0 20px 44px ${accent}2E`,
+          opacity: offer,
+          transform: `translateY(${(1 - offer) * 46 - converge * 10}px)`,
+        }}
+      >
+        <div style={{fontSize: 22, fontWeight: 800, letterSpacing: '.07em', color: accent}}>TU OFERTA</div>
+        <div style={{fontSize: 74, fontWeight: 800, letterSpacing: '-.05em', marginTop: 2}}>{EXAMPLE_OFFER_PRICE}</div>
+      </div>
+      <div
+        style={{
+          marginTop: 18,
+          display: 'flex',
+          alignItems: 'center',
+          gap: 16,
+          padding: '22px 26px',
+          borderRadius: 20,
+          background: `${accent}12`,
+          border: `2px solid ${accent}40`,
+          opacity: deal,
+          transform: `translateY(${(1 - deal) * 26}px)`,
+        }}
+      >
+        <CheckMark progress={deal} accent={accent} />
+        <div>
+          <div style={{fontSize: 28, fontWeight: 800}}>Acuerdo</div>
+          <div style={{marginTop: 4, fontSize: 23, fontWeight: 700, color: '#8A7F69'}}>Cuando las dos partes aceptan</div>
+        </div>
+      </div>
+    </FieldShell>
+  );
+};
+
+/** Two hands, two different rhythms: the signatures are drawn, never pasted. */
+const SIGNATURE_STROKES = [
+  'M10 46 C34 8 48 66 76 28 S120 10 152 44',
+  'M10 40 C28 14 56 62 88 24 S128 18 154 48',
+];
+
+/**
+ * The reservation or the promise: the first paper of the purchase.
+ *
+ * The document arrives from below and is signed by both sides in turn — the
+ * order matters, because the piece is about an agreement, not a form. What the
+ * paper contains is spelled out at the bottom: what is sold, for how much and
+ * until when.
+ */
+export const PromiseContractSim: React.FC<SimulationProps> = ({frame, total, accent}) => {
+  const {fps} = useVideoConfig();
+  const span = Math.max(1, total ?? frame + 1);
+  const progress = frame / span;
+  const lift = spring({frame, fps, config: {damping: 18, mass: 0.85}});
+  const rise = spring({frame: frame - fps * 0.1, fps, config: {damping: 19, mass: 0.95}});
+  // A pen moves at the speed of a hand, not of an entrance: both signatures are
+  // drawn at a constant rate and they cover the whole middle of the scene.
+  const signatures = [pace(progress, 0.28, 0.55, 0, 1), pace(progress, 0.55, 0.82, 0, 1)];
+  const bound = spring({frame: frame - span * 0.78, fps, config: {damping: 17}});
+  const settle = Math.sin(frame / 31) * 2;
+  return (
+    <FieldShell accent={accent} where="RESERVA O PROMESA" title="El acuerdo se pone por escrito" lift={lift} camera={progress}>
+      <div
+        style={{
+          marginTop: 24,
+          padding: '26px 28px 28px',
+          borderRadius: 14,
+          background: '#FFFFFF',
+          border: '2px solid #E8E1D0',
+          boxShadow: '0 18px 42px rgba(40,32,16,.14)',
+          opacity: rise,
+          transform: `translateY(${(1 - rise) * 150 + settle}px)`,
+        }}
+      >
+        <div style={{fontSize: 22, fontWeight: 800, letterSpacing: '.08em', color: '#9A8F79'}}>PROMESA DE COMPRAVENTA</div>
+        {[0.92, 0.74, 0.84].map((width, index) => (
+          <div
+            key={index}
+            style={{
+              marginTop: index ? 12 : 16,
+              height: 10,
+              borderRadius: 99,
+              background: '#DED6C4',
+              width: `${width * 100 * ease(progress, 0.1 + index * 0.06, 0.3 + index * 0.06, 0, 1)}%`,
+            }}
+          />
+        ))}
+        <div style={{marginTop: 24, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20}}>
+          {['Comprador', 'Vendedor'].map((who, index) => (
+            <div key={who}>
+              <svg width="100%" height="72" viewBox="0 0 164 72" preserveAspectRatio="xMidYMid meet">
+                <path
+                  d={SIGNATURE_STROKES[index]}
+                  fill="none"
+                  stroke={accent}
+                  strokeWidth="6"
+                  strokeLinecap="round"
+                  pathLength="1"
+                  strokeDasharray="1"
+                  strokeDashoffset={1 - signatures[index]}
+                />
+              </svg>
+              <div style={{height: 3, borderRadius: 99, background: '#DED6C4'}} />
+              <div style={{marginTop: 8, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10}}>
+                <span style={{fontSize: 24, fontWeight: 800, color: '#8A7F69', letterSpacing: '.04em'}}>{who}</span>
+                {/* The signature is thin ink; the chip is what makes the state
+                    change readable at phone size and from across the room. */}
+                <span
+                  style={{
+                    padding: '6px 12px',
+                    borderRadius: 99,
+                    fontSize: 22,
+                    fontWeight: 800,
+                    letterSpacing: '.04em',
+                    color: signatures[index] > 0.98 ? '#FFFFFF' : '#B3A78D',
+                    background: signatures[index] > 0.98 ? accent : '#F1EADA',
+                  }}
+                >
+                  {signatures[index] > 0.98 ? 'FIRMÓ' : '···'}
+                </span>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+      <div
+        style={{
+          marginTop: 18,
+          padding: '22px 26px',
+          borderRadius: 20,
+          background: `${accent}12`,
+          border: `2px solid ${accent}40`,
+          opacity: bound,
+          transform: `translateY(${(1 - bound) * 24}px)`,
+        }}
+      >
+        <div style={{fontSize: 28, fontWeight: 800}}>Qué se vende, en cuánto y hasta cuándo</div>
+      </div>
+    </FieldShell>
+  );
+};
+
+/**
+ * The deed of sale, signed before a notary.
+ *
+ * Deliberately not `DeedSim`: that one reads an existing deed at the registry
+ * to find out who owns the property. This one is the act itself, so the seal is
+ * the hero — it drops, presses and stays, and the two parties appear under it.
+ */
+export const PublicDeedSim: React.FC<SimulationProps> = ({frame, total, accent}) => {
+  const {fps} = useVideoConfig();
+  const span = Math.max(1, total ?? frame + 1);
+  const progress = frame / span;
+  const lift = spring({frame, fps, config: {damping: 18, mass: 0.85}});
+  const seal = spring({frame: frame - span * 0.32, fps, config: {damping: 13, stiffness: 150}});
+  const press = 1.9 - seal * 0.9;
+  const parties = pace(progress, 0.5, 0.86, 0, 1);
+  const notary = spring({frame: frame - span * 0.76, fps, config: {damping: 17}});
+  const paper = Math.sin(frame / 33) * 2;
+  // The stamp keeps settling under the hand that pressed it.
+  const sealDrift = Math.sin(frame / 41) * 0.7;
+  return (
+    <FieldShell accent={accent} where="EN LA NOTARÍA" title="La escritura de compraventa" lift={lift} camera={progress}>
+      <div
+        style={{
+          position: 'relative',
+          marginTop: 24,
+          padding: '26px 28px 30px',
+          borderRadius: 14,
+          background: '#FFFFFF',
+          border: '2px solid #E8E1D0',
+          boxShadow: '0 18px 42px rgba(40,32,16,.13)',
+          transform: `translateY(${paper}px)`,
+        }}
+      >
+        <div style={{fontSize: 22, fontWeight: 800, letterSpacing: '.08em', color: '#9A8F79'}}>ESCRITURA PÚBLICA</div>
+        {[0.9, 0.96, 0.68].map((width, index) => (
+          <div
+            key={index}
+            style={{
+              marginTop: index ? 12 : 16,
+              height: 10,
+              borderRadius: 99,
+              background: '#DED6C4',
+              width: `${width * 100 * ease(progress, 0.08 + index * 0.06, 0.28 + index * 0.06, 0, 1)}%`,
+            }}
+          />
+        ))}
+        <div style={{marginTop: 24, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 18, opacity: 0.25 + parties * 0.75}}>
+          {[['VENDE', 'El dueño inscrito'], ['COMPRA', 'Tú']].map(([role, who], index) => (
+            <div
+              key={role}
+              style={{
+                padding: '18px 20px',
+                borderRadius: 14,
+                background: '#F7F3E8',
+                border: '2px solid #E8E1D0',
+                transform: `translateY(${(1 - parties) * (index ? 24 : 16)}px)`,
+              }}
+            >
+              <div style={{fontSize: 22, fontWeight: 800, letterSpacing: '.07em', color: '#9A8F79'}}>{role}</div>
+              <div style={{marginTop: 5, fontSize: 32, fontWeight: 800, letterSpacing: '-.03em'}}>{who}</div>
+            </div>
+          ))}
+        </div>
+        <div
+          style={{
+            position: 'absolute',
+            // On the ruled body of the deed, not on the parties: a stamp
+            // belongs on the page, and this one was landing on top of the box
+            // that says who is buying.
+            right: 26,
+            top: 34,
+            width: 168,
+            height: 168,
+            opacity: Math.min(1, seal * 1.6),
+            transform: `rotate(${-16 + (1 - seal) * 22 + sealDrift}deg) scale(${press})`,
+          }}
+        >
+          <svg width="168" height="168" viewBox="0 0 168 168">
+            <circle cx="84" cy="84" r="74" fill="none" stroke={accent} strokeWidth="7" opacity="0.9" />
+            <circle cx="84" cy="84" r="60" fill="none" stroke={accent} strokeWidth="3" opacity="0.65" />
+            <text x="84" y="74" textAnchor="middle" fontFamily={font} fontWeight="800" fontSize="26" fill={accent} letterSpacing="2">
+              NOTARÍA
+            </text>
+            <path d="M40 92 H128" stroke={accent} strokeWidth="4" opacity="0.6" />
+            <text x="84" y="122" textAnchor="middle" fontFamily={font} fontWeight="800" fontSize="24" fill={accent}>
+              FIRMADA
+            </text>
+          </svg>
+        </div>
+      </div>
+      <div
+        style={{
+          marginTop: 18,
+          display: 'flex',
+          alignItems: 'center',
+          gap: 16,
+          padding: '22px 26px',
+          borderRadius: 20,
+          background: `${accent}12`,
+          border: `2px solid ${accent}40`,
+          opacity: notary,
+          transform: `translateY(${(1 - notary) * 24}px)`,
+        }}
+      >
+        <CheckMark progress={notary} accent={accent} />
+        <div style={{fontSize: 28, fontWeight: 800}}>Las dos partes firman ante el notario</div>
+      </div>
+    </FieldShell>
+  );
+};
+
+/**
+ * The transfer entering the registry, and the name that changes because of it.
+ *
+ * The proof of this scene is the last row: the deed travels into the building
+ * and the registered owner stops being the seller. Nothing else in the piece
+ * changes a state, which is why this one is drawn as a swap and not as a badge.
+ */
+export const RegistrationSim: React.FC<SimulationProps> = ({frame, total, accent}) => {
+  const {fps} = useVideoConfig();
+  const span = Math.max(1, total ?? frame + 1);
+  const progress = frame / span;
+  const lift = spring({frame, fps, config: {damping: 18, mass: 0.85}});
+  // The deed crosses the frame at a constant rate — it is the whole first half
+  // of the scene, and a front-loaded curve turned it into a jump followed by a
+  // held frame.
+  const travel = pace(progress, 0.04, 0.58, 0, 1);
+  const inside = pace(progress, 0.5, 0.66, 0, 1);
+  const swap = pace(progress, 0.6, 0.8, 0, 1);
+  const done = spring({frame: frame - span * 0.74, fps, config: {damping: 16, stiffness: 160}});
+  const glow = 0.25 + Math.abs(Math.sin(frame / 24)) * 0.2;
+  // A slow drift across the whole shot, so the building is never a still photo.
+  const camera = Math.sin(frame / 46) * 6;
+  return (
+    <FieldShell accent={accent} where="REGISTRO DE LA PROPIEDAD" title="La transferencia se inscribe" lift={lift} camera={progress}>
+      <div style={{marginTop: 24, height: 326, borderRadius: 16, overflow: 'hidden', border: '2px solid #E8E1D0', background: '#F7F3E8'}}>
+        <svg width="100%" height="100%" viewBox="0 0 660 326" preserveAspectRatio="xMidYMid slice">
+          <rect width="660" height="326" fill="#F7F3E8" />
+          <path d="M0 286 H660" stroke="#E0D7C3" strokeWidth="8" />
+          <g transform={`translate(${358 - camera} 62)`}>
+            <path d="M-8 46 L124 -8 L256 46 Z" fill="#D9CDB4" />
+            <rect x="-8" y="46" width="264" height="16" fill="#C9BC9F" />
+            {[0, 1, 2, 3].map((column) => (
+              <rect key={column} x={16 + column * 64} y={62} width={38} height={128} rx={6} fill="#E4DAC6" />
+            ))}
+            <rect x="-8" y="190" width="264" height="20" fill="#C9BC9F" />
+            {/* The door, not a slab: it reads as an entrance the deed goes
+                through, and it only lights once the deed is inside. */}
+            <path d="M96 190 V132 a28 28 0 0 1 56 0 V190 Z" fill="#CFC2A5" />
+            <path d="M96 190 V132 a28 28 0 0 1 56 0 V190 Z" fill={accent} opacity={inside * (0.35 + glow * 0.9)} />
+            <rect x="-24" y="210" width="296" height="12" fill="#D9CDB4" />
+          </g>
+          <g
+            opacity={1 - inside}
+            transform={`translate(${34 + travel * 392 - camera * 0.4} ${142 - travel * 8}) scale(${1 - travel * 0.34}) rotate(${travel * -6})`}
+          >
+            <rect x="0" y="0" width="126" height="152" rx="8" fill="#FFFFFF" stroke="#E0D7C3" strokeWidth="4" />
+            <rect x="18" y="24" width="76" height="9" rx="4" fill="#DED6C4" />
+            <rect x="18" y="46" width="90" height="9" rx="4" fill="#DED6C4" />
+            <rect x="18" y="68" width="62" height="9" rx="4" fill="#DED6C4" />
+            <circle cx="90" cy="116" r="24" fill="none" stroke={accent} strokeWidth="5" />
+          </g>
+        </svg>
+      </div>
+      <div
+        style={{
+          marginTop: 18,
+          padding: '20px 26px',
+          borderRadius: 16,
+          background: '#FFFFFF',
+          border: '2px solid #E8E1D0',
+        }}
+      >
+        <div style={{fontSize: 22, fontWeight: 800, letterSpacing: '.07em', color: '#9A8F79'}}>PROPIETARIO INSCRITO</div>
+        {/* One name is replaced by the other inside a window that clips them:
+            crossfading them in place read as a printing error at phone size. */}
+        <div style={{position: 'relative', height: 54, marginTop: 6, overflow: 'hidden'}}>
+          <div style={{position: 'absolute', inset: 0, fontSize: 42, fontWeight: 800, letterSpacing: '-.03em', color: '#B3A78D', opacity: 1 - smooth(swap * 1.6), transform: `translateY(${-swap * 54}px)`}}>
+            El vendedor
+          </div>
+          <div style={{position: 'absolute', inset: 0, fontSize: 42, fontWeight: 800, letterSpacing: '-.03em', color: accent, opacity: smooth(swap * 1.4), transform: `translateY(${(1 - swap) * 54}px)`}}>
+            Tu nombre
+          </div>
+        </div>
+      </div>
+      <div
+        style={{
+          marginTop: 14,
+          display: 'flex',
+          alignItems: 'center',
+          gap: 16,
+          padding: '20px 26px',
+          borderRadius: 20,
+          background: `${accent}12`,
+          border: `2px solid ${accent}40`,
+          opacity: done,
+          transform: `translateY(${(1 - done) * 22}px)`,
+        }}
+      >
+        <CheckMark progress={done} accent={accent} />
+        <div style={{fontSize: 28, fontWeight: 800}}>Ahí termina la transferencia</div>
+      </div>
+    </FieldShell>
+  );
+};
+
+const PURCHASE_STEPS = ['Buscar', 'Verificar', 'Negociar', 'Promesa', 'Escritura', 'Inscripción'];
+
+/**
+ * The whole road in one frame, filled in the order it was walked.
+ *
+ * Two rails of three so six steps stay readable on a phone: the rail grows,
+ * each step lights as the rail reaches it, and the chevron hands the movement
+ * over to the second column. The proof is the last card — the piece ends where
+ * the registry left it.
+ */
+export const PurchaseStepsSim: React.FC<SimulationProps> = ({frame, total, accent}) => {
+  const {fps} = useVideoConfig();
+  const span = Math.max(1, total ?? frame + 1);
+  const progress = frame / span;
+  const lift = spring({frame, fps, config: {damping: 18, mass: 0.85}});
+  // Six steps at one speed: the rail is the clock of the scene, so it has to
+  // keep growing until the proof card arrives.
+  const walked = pace(progress, 0.04, 0.78, 0, PURCHASE_STEPS.length);
+  const handover = smooth((walked - 3) / 0.6);
+  const keys = spring({frame: frame - span * 0.78, fps, config: {damping: 16, stiffness: 165}});
+  const drift = Math.sin(frame / 30) * 2;
+  return (
+    <FieldShell accent={accent} where="EL PROCESO COMPLETO" title="Seis pasos, en este orden" lift={lift} camera={progress}>
+      <div style={{position: 'relative', marginTop: 26, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 34, transform: `translateY(${drift}px)`}}>
+        {[0, 1].map((column) => {
+          const filled = smooth((walked - column * 3) / 3);
+          return (
+            <div key={column} style={{position: 'relative', paddingLeft: 6}}>
+              <div style={{position: 'absolute', left: 32, top: 30, bottom: 30, width: 5, borderRadius: 99, background: '#E4DBC8'}} />
+              <div style={{position: 'absolute', left: 32, top: 30, height: `calc((100% - 60px) * ${filled})`, width: 5, borderRadius: 99, background: accent}} />
+              {PURCHASE_STEPS.slice(column * 3, column * 3 + 3).map((label, row) => {
+                const index = column * 3 + row;
+                const on = smooth(walked - index);
+                return (
+                  <div
+                    key={label}
+                    style={{
+                      position: 'relative',
+                      marginTop: row ? 34 : 0,
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 16,
+                      opacity: 0.3 + on * 0.7,
+                      transform: `translateX(${(1 - on) * -10}px)`,
+                    }}
+                  >
+                    <div
+                      style={{
+                        width: 66,
+                        height: 66,
+                        borderRadius: 99,
+                        display: 'grid',
+                        placeItems: 'center',
+                        background: on > 0.5 ? accent : '#F1EADA',
+                        color: on > 0.5 ? '#FFFFFF' : '#9A8F79',
+                        border: `3px solid ${on > 0.5 ? accent : '#E4DBC8'}`,
+                        boxShadow: on > 0.5 ? `0 12px 26px ${accent}33` : 'none',
+                        fontSize: 28,
+                        fontWeight: 800,
+                        transform: `scale(${0.86 + on * 0.14})`,
+                      }}
+                    >
+                      {index + 1}
+                    </div>
+                    <div style={{fontSize: 31, fontWeight: 800, letterSpacing: '-.02em'}}>{label}</div>
+                  </div>
+                );
+              })}
+            </div>
+          );
+        })}
+        <div style={{position: 'absolute', left: '50%', top: '50%', marginLeft: -14, marginTop: -18, opacity: handover, transform: `translateX(${(1 - handover) * -14}px)`}}>
+          <svg width="28" height="36" viewBox="0 0 28 36">
+            <path d="M6 6 L20 18 L6 30" fill="none" stroke={accent} strokeWidth="7" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+        </div>
+      </div>
+      <div
+        style={{
+          marginTop: 22,
+          display: 'flex',
+          alignItems: 'center',
+          gap: 18,
+          padding: '22px 26px',
+          borderRadius: 20,
+          background: `${accent}12`,
+          border: `2px solid ${accent}40`,
+          opacity: keys,
+          transform: `translateY(${(1 - keys) * 26}px)`,
+        }}
+      >
+        <svg width="54" height="54" viewBox="0 0 54 54">
+          <path d="M8 26 L27 9 L46 26" fill="none" stroke={accent} strokeWidth="6" strokeLinecap="round" strokeLinejoin="round" />
+          <path d="M14 26 V44 H40 V26" fill="none" stroke={accent} strokeWidth="6" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+        <div>
+          <div style={{fontSize: 28, fontWeight: 800}}>Inscrita a tu nombre</div>
+          <div style={{marginTop: 4, fontSize: 23, fontWeight: 700, color: '#8A7F69'}}>Ahí termina la compra</div>
+        </div>
+      </div>
+    </FieldShell>
+  );
+};
+
+/**
+ * What the listing an owner published does carry. Three rows, none of which is
+ * the one the person writing actually needs.
+ */
+const LISTING_ROWS: Array<[string, string]> = [
+  ['Fotos', 'La casa, la sala y el patio'],
+  ['Precio', 'Publicado en la ficha'],
+  ['Descripción', '3 hab. · 2 baños'],
+];
+
+/** What arrives when the listing does not say where it is — and instead of it. */
+const ASKING = ['¿Dónde queda?', '¿Me manda la ubicación?'];
+const KNOWING = ['¿Sigue disponible?', '¿Podemos verla el sábado?'];
+
+/**
+ * The listing an owner already published, and the messages it produces.
+ *
+ * One component, two states, because the piece asks a question in its hook and
+ * answers it in its result: the same card, the same thread, and the only thing
+ * that changed is whether the location row is empty. Drawing the payoff as a
+ * different picture would have hidden that it is the same listing.
+ *
+ * The causality is the point and it is drawn, not implied: the rows are read at
+ * a constant pace, the location row answers in the middle of the scene, and the
+ * connector at the end ties the questions back to the row that produced them.
+ */
+const OwnerLocationAskSim: React.FC<SimulationProps & {resolved?: boolean}> = ({
+  frame,
+  total,
+  accent,
+  resolved = false,
+}) => {
+  const {fps} = useVideoConfig();
+  const span = Math.max(1, total ?? frame + 1);
+  const progress = frame / span;
+  const lift = spring({frame, fps, config: {damping: 18, mass: 0.85}});
+  // A hand going down the list, not a card that appeared and stopped.
+  const read = pace(progress, 0.06, 0.44, 0, LISTING_ROWS.length + 0.3);
+  // The state change, in the middle: the location row answers.
+  const answer = smooth((progress - 0.42) / 0.16);
+  const draw = pace(progress, 0.48, 0.72, 0, 1);
+  const messages = resolved ? KNOWING : ASKING;
+  const drift = ramp(progress, 0, 1, 0, 1);
+  const breath = Math.sin(frame / 31) * 2.4;
+  // Every message that lands hits the row that caused it: the reaction is the
+  // causality, and it cannot cover a word the way a drawn connector did.
+  const jolt = Math.min(
+    1,
+    Math.max(0, smooth((progress - 0.34) / 0.03) - smooth((progress - 0.42) / 0.07))
+      + Math.max(0, smooth((progress - 0.56) / 0.03) - smooth((progress - 0.64) / 0.07)),
+  );
+  const alarm = resolved ? 0 : 0.5 + Math.sin(frame / 7) * 0.5;
+  // Somebody is writing before each message lands, and stops when it does.
+  const typing = Math.min(
+    1,
+    Math.max(0, smooth((progress - 0.14) / 0.08) - smooth((progress - 0.3) / 0.05))
+      + Math.max(0, smooth((progress - 0.42) / 0.06) - smooth((progress - 0.52) / 0.05)),
+  );
+  return (
+    <PublishShell
+      accent={accent}
+      eyebrow={resolved ? 'TU ANUNCIO CON UBICACIÓN' : 'TU ANUNCIO PUBLICADO'}
+      title={resolved ? 'Con su punto en el mapa' : 'Fotos, precio y descripción'}
+      status={resolved ? 'Ubicación en el mapa' : 'Publicado'}
+      lift={lift}
+      camera={progress}
+    >
+      <div style={{position: 'relative', marginTop: 20, transform: `translateY(${breath - drift * 9}px)`}}>
+        <div style={{display: 'flex', gap: 18}}>
+          <div style={{position: 'relative', width: 236, height: 188, borderRadius: 18, overflow: 'hidden', border: '2px solid #E4EAF3', boxShadow: '0 14px 32px rgba(8,9,21,.12)'}}>
+            {/* The photo pans for the whole scene, not for its first two
+                seconds: a block this size holding still is most of what makes
+                the frame read as a photograph of a card. */}
+            <PropertyThumbnail variant={0} progress={progress} />
+            {/* The card carries invented facts, so it says so on screen. */}
+            <div style={{position: 'absolute', left: 10, top: 10, padding: '5px 11px', borderRadius: 8, background: 'rgba(8,9,21,.74)', color: '#FFFFFF', fontSize: 22, fontWeight: 800, letterSpacing: '.06em'}}>
+              EJEMPLO
+            </div>
+          </div>
+          <div style={{flex: 1}}>
+            {LISTING_ROWS.map(([label, detail], index) => {
+              const done = smooth(read - index);
+              return (
+                <div
+                  key={label}
+                  style={{
+                    marginTop: index ? 10 : 0,
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 14,
+                    padding: '10px 16px',
+                    borderRadius: 14,
+                    background: '#F4F7FB',
+                    border: `2px solid ${done > 0.5 ? `${accent}44` : '#E8EDF4'}`,
+                    opacity: 0.4 + done * 0.6,
+                    transform: `translateX(${(1 - done) * -16}px)`,
+                  }}
+                >
+                  <CheckMark progress={done} accent={accent} />
+                  <div style={{fontSize: 26, fontWeight: 800, letterSpacing: '-.02em'}}>{label}</div>
+                  <div style={{marginLeft: 'auto', fontSize: 22, fontWeight: 700, color: '#7B8598', whiteSpace: 'nowrap'}}>{detail}</div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* The row the whole piece is about. */}
+        <div
+          style={{
+            marginTop: 16,
+            display: 'flex',
+            alignItems: 'center',
+            gap: 18,
+            height: 104,
+            padding: '0 20px',
+            borderRadius: 18,
+            background: resolved ? `${accent}10` : '#FFF3F1',
+            border: `3px solid ${resolved ? `${accent}${answer > 0.5 ? '80' : '30'}` : `rgba(199,78,61,${Math.min(1, 0.25 + answer * 0.55 + jolt * 0.4)})`}`,
+            boxShadow: resolved
+              ? `0 16px ${38 + jolt * 26}px ${accent}${jolt > 0.4 ? '44' : '22'}`
+              : `0 0 0 ${jolt * 10}px rgba(199,78,61,${jolt * 0.12})`,
+            transform: resolved
+              ? `scale(${1 + jolt * 0.02})`
+              : `translateX(${Math.sin(frame / 1.5) * 7 * jolt}px)`,
+          }}
+        >
+          {resolved ? (
+            <div style={{width: 150, height: 76, borderRadius: 12, overflow: 'hidden', border: '2px solid #DCE4EE', background: '#E7EDF4'}}>
+              <svg width="100%" height="100%" viewBox="0 0 150 76">
+                <rect width="150" height="76" fill="#E7EDF4" />
+                <g stroke="#CDD7E4" strokeWidth="6" fill="none">
+                  <path d="M42 0V76" />
+                  <path d="M104 0V76" />
+                  <path d="M0 30H150" />
+                </g>
+                <path d="M0 58 C36 50 72 64 110 54 L150 50 V76 H0 Z" fill="#D8E8DE" />
+                <g transform="translate(75 40)" opacity={draw}>
+                  <circle r={22 * draw} fill={accent} opacity="0.16" />
+                  <path d="M0-17c9.4 0 17 7.2 17 16 0 11-17 25-17 25s-17-14-17-25c0-8.8 7.6-16 17-16Z" fill={accent} stroke="#FFFFFF" strokeWidth="3.4" />
+                  <circle cy="-1" r="5.4" fill="#FFFFFF" />
+                </g>
+              </svg>
+            </div>
+          ) : (
+            <div style={{width: 54, height: 54, display: 'grid', placeItems: 'center', borderRadius: 99, background: `rgba(199,78,61,${0.1 + alarm * 0.14})`}}>
+              <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#C64E3D" strokeWidth="2.3" strokeLinecap="round">
+                <path d="M12 21S5 16.2 5 10.5a7 7 0 0 1 14 0C19 16.2 12 21 12 21Z" />
+                <path d="M9.5 8.5l5 5m0-5l-5 5" />
+              </svg>
+            </div>
+          )}
+          <div>
+            <div style={{fontSize: 28, fontWeight: 800, letterSpacing: '-.02em'}}>Ubicación</div>
+            <div style={{marginTop: 3, fontSize: 24, fontWeight: 800, color: resolved ? accent : '#A74335'}}>
+              {resolved ? 'En el mapa, con su punto' : 'No indicada'}
+            </div>
+          </div>
+          <div style={{marginLeft: 'auto', width: 190, height: 10, borderRadius: 99, background: resolved ? `${accent}22` : '#F3D9D4', overflow: 'hidden'}}>
+            <div style={{width: `${(resolved ? draw : answer) * 100}%`, height: '100%', borderRadius: 99, background: resolved ? accent : '#C64E3D'}} />
+          </div>
+        </div>
+
+        {/* The consequence, arriving one message at a time. Somebody is typing
+            between them, so the half of the card that is waiting for the next
+            message is never a blank rectangle. */}
+        <div style={{position: 'relative', marginTop: 16, display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 12}}>
+          {messages.map((text, index) => {
+            const enter = spring({frame: frame - span * (0.34 + index * 0.22), fps, config: {damping: 17, mass: 0.82}});
+            return (
+              <div
+                key={text}
+                style={{
+                  position: 'relative',
+                  maxWidth: 560,
+                  padding: '16px 24px',
+                  borderRadius: '22px 22px 6px 22px',
+                  background: '#FFFFFF',
+                  border: '2px solid #E4EAF3',
+                  boxShadow: '0 16px 36px rgba(8,9,21,.16)',
+                  fontSize: 34,
+                  fontWeight: 800,
+                  letterSpacing: '-.02em',
+                  opacity: enter,
+                  transform: `translate(${(1 - enter) * 70}px, ${(1 - enter) * 14}px) scale(${0.94 + enter * 0.06})`,
+                }}
+              >
+                {text}
+              </div>
+            );
+          })}
+          <div
+            style={{
+              display: 'flex',
+              gap: 12,
+              padding: '22px 26px',
+              borderRadius: '22px 22px 6px 22px',
+              background: '#FFFFFF',
+              border: '2px solid #E4EAF3',
+              boxShadow: '0 12px 28px rgba(8,9,21,.12)',
+              opacity: typing,
+              transform: `scale(${0.9 + typing * 0.1})`,
+              transformOrigin: '100% 50%',
+            }}
+          >
+            {[0, 1, 2].map((dot) => (
+              <div key={dot} style={{width: 18, height: 18, borderRadius: 99, background: '#B6C0D0', transform: `translateY(${Math.sin(frame / 4 - dot) * 5}px)`}} />
+            ))}
+          </div>
+        </div>
+      </div>
+    </PublishShell>
+  );
+};
+
+export const OwnerLocationQuestionSim: React.FC<SimulationProps> = (props) => <OwnerLocationAskSim {...props} />;
+
+export const OwnerLocationAnsweredSim: React.FC<SimulationProps> = (props) => <OwnerLocationAskSim {...props} resolved />;
+
+/**
+ * The street grid of the zone scene. Dense enough that a block is a block: at
+ * the first pass the streets were 190 units apart and, once the camera closed
+ * in, four white bands crossed the frame and nothing read as a city.
+ */
+const STREETS_X = Array.from({length: 22}, (_, index) => ({
+  at: -400 + index * 96 + (index % 3) * 7,
+  major: index % 4 === 2,
+}));
+
+const STREETS_Y = Array.from({length: 30}, (_, index) => ({
+  at: -400 + index * 104 - (index % 3) * 6,
+  major: index % 5 === 3,
+}));
+
+/**
+ * Buildings inside the blocks. A street grid alone reads as graph paper: what
+ * makes a map look like a city at this zoom is that the ground between the
+ * streets is built on, unevenly.
+ */
+const CITY_BLOCKS: Array<[number, number, number, number]> = [];
+for (let row = 0; row < 9; row += 1) {
+  for (let column = 0; column < 11; column += 1) {
+    const x = -330 + column * 96;
+    const y = 130 + row * 104;
+    const seed = (row * 7 + column * 13) % 5;
+    CITY_BLOCKS.push([x + 16, y + 14, 30 + seed * 8, 24 + ((seed * 3) % 4) * 9]);
+    CITY_BLOCKS.push([x + 16, y + 52, 22 + ((seed * 5) % 4) * 7, 26 + (seed % 3) * 6]);
+    if (seed % 2 === 0) {
+      CITY_BLOCKS.push([x + 50 + seed * 4, y + 50, 24 + (seed % 3) * 8, 22 + ((seed + 1) % 3) * 8]);
+    }
+  }
+}
+
+/** The three listings that stop being a list and become places on the map. */
+const ZONE_MOVES: Array<{price: string; kind: string; target: [number, number]}> = [
+  // Left to right, and the targets keep that order: crossed paths meant a card
+  // in flight parked on top of a price that had already landed.
+  {price: '$68.000', kind: 'Casa', target: [372, 528]},
+  {price: '$54.000', kind: 'Departamento', target: [428, 712]},
+  {price: '$96.000', kind: 'Casa', target: [566, 616]},
+];
+
+/**
+ * Searching the other way round: the place first, the listings after it.
+ *
+ * The scene is one continuous move on one subject. The map is dragged — by a
+ * finger, so the camera has a cause — until the zone the person cares about is
+ * in frame; the zone is circled; and only then do the listings that were
+ * floating above as a list drop into it and become prices with a location.
+ * The last beat is the zone closing around them.
+ *
+ * The prices are an example of what a listing shows, which is why the badge is
+ * on screen: nothing here says anything about a market.
+ */
+export const SearchOrderSim: React.FC<SimulationProps> = ({frame, total, accent}) => {
+  const {fps} = useVideoConfig();
+  const span = Math.max(1, total ?? frame + 1);
+  const progress = frame / span;
+  // The camera is dragged for the first third and keeps closing in afterwards,
+  // so the frame is never parked.
+  const zoom = ramp(progress, 0.04, 0.92, 1.02, 1.5);
+  const centreX = ramp(progress, 0.04, 0.52, 690, 470);
+  const centreY = ramp(progress, 0.04, 0.52, 792, 640);
+  const width = 1080 / zoom;
+  const height = 1920 / zoom;
+  const viewX = centreX - width / 2;
+  const viewY = centreY - height * 0.36;
+  const unit = 1080 / width;
+  const project = (x: number, y: number) => ({left: (x - viewX) * unit, top: (y - viewY) * unit});
+  const ring = pace(progress, 0.22, 0.56, 0, 1);
+  const hand = smooth((progress - 0.04) / 0.1) * (1 - smooth((progress - 0.44) / 0.12));
+  const tap = smooth((progress - 0.3) / 0.06) * (1 - smooth((progress - 0.4) / 0.08));
+  const label = spring({frame: frame - span * 0.66, fps, config: {damping: 16, stiffness: 170}});
+  const close = smooth((progress - 0.84) / 0.16);
+  const touchAt = {
+    x: ramp(progress, 0.06, 0.34, 812, 556),
+    y: ramp(progress, 0.06, 0.34, 812, 648),
+  };
+  return (
+    <AbsoluteFill style={{backgroundColor: '#EDF1F7', fontFamily: font, color: palette.ink}}>
+      <svg width="1080" height="1920" viewBox={`${viewX} ${viewY} ${width} ${height}`} style={{position: 'absolute', inset: 0}}>
+        {/* A street map, drawn as a map is drawn: the ground is the blocks and
+            the streets are cut out of it in white. The shared `Grid` is built
+            for the country-wide shot of `sim:mapa`; at this zoom its pieces are
+            the size of a building and it reads as loose rectangles. */}
+        <rect x={-400} y={-400} width={2000} height={3000} fill="#D3DCE9" />
+        <path d="M-120 330 C40 300 190 316 268 372 C330 418 316 500 250 528 C160 566 20 552 -120 520 Z" fill="#BFDCC6" />
+        <path d="M700 700 C820 674 940 706 1060 690 L1060 880 C930 892 800 856 700 866 Z" fill="#B7D2E6" />
+        <g fill="#C4CEDE">
+          {CITY_BLOCKS.map(([x, y, w, h], index) => (
+            <rect key={index} x={x} y={y} width={w} height={h} rx={4} />
+          ))}
+        </g>
+        <g stroke="#F7F9FC" strokeLinecap="square" fill="none">
+          {STREETS_X.map(({at, major}) => (
+            <path key={`v-${at}`} d={`M${at} -400 V2600`} strokeWidth={major ? 34 : 15} />
+          ))}
+          {STREETS_Y.map(({at, major}) => (
+            <path key={`h-${at}`} d={`M-400 ${at} H1600`} strokeWidth={major ? 32 : 15} />
+          ))}
+        </g>
+        {/* The kerb line: without it the streets are gaps and the ground reads
+            as a grid of panels rather than as blocks with roads between them. */}
+        <g stroke="#AFBBCD" strokeWidth="3" fill="none" opacity="0.8">
+          {STREETS_X.map(({at, major}) => (
+            <React.Fragment key={`vc-${at}`}>
+              <path d={`M${at - (major ? 19 : 9)} -400 V2600`} />
+              <path d={`M${at + (major ? 19 : 9)} -400 V2600`} />
+            </React.Fragment>
+          ))}
+          {STREETS_Y.map(({at, major}) => (
+            <React.Fragment key={`hc-${at}`}>
+              <path d={`M-400 ${at - (major ? 18 : 9)} H1600`} />
+              <path d={`M-400 ${at + (major ? 18 : 9)} H1600`} />
+            </React.Fragment>
+          ))}
+        </g>
+        <g opacity={ring}>
+          <circle cx="470" cy="620" r="214" fill={accent} fillOpacity={0.06 + close * 0.08} />
+          <circle
+            cx="470"
+            cy="620"
+            r="214"
+            fill="none"
+            stroke={accent}
+            strokeWidth={7 / unit + 4}
+            strokeLinecap="round"
+            pathLength="1"
+            strokeDasharray="1"
+            strokeDashoffset={1 - ring}
+            transform="rotate(-90 470 620)"
+          />
+        </g>
+        {ZONE_MOVES.map((move, index) => {
+          const land = spring({frame: frame - span * (0.46 + index * 0.15), fps, config: {damping: 15, stiffness: 180}});
+          const settle = 1 + Math.sin(Math.max(0, progress - 0.86) * 34 - index) * 0.03 * close;
+          const [x, y] = move.target;
+          return (
+            <g key={move.price} transform={`translate(${x} ${y}) scale(${(land * settle) / unit})`} opacity={land}>
+              <circle r="46" fill={accent} opacity="0.14" />
+              <rect x="-84" y="-34" width="168" height="60" rx="30" fill="#FFFFFF" stroke={accent} strokeWidth="5" />
+              <text textAnchor="middle" y="8" fill={palette.ink} fontFamily={font} fontWeight={800} fontSize="34">
+                {move.price}
+              </text>
+              <path d="M0 26 L12 44 L-12 44 Z" fill="#FFFFFF" stroke={accent} strokeWidth="5" strokeLinejoin="round" />
+            </g>
+          );
+        })}
+      </svg>
+
+      {/* The list, before it becomes a place. */}
+      {ZONE_MOVES.map((move, index) => {
+        const travel = pace(progress, 0.22 + index * 0.15, 0.48 + index * 0.15, 0, 1);
+        // The card gives way before it reaches its pin: arriving on top of a
+        // price and then dissolving hides the very thing it turns into.
+        const fade = 1 - smooth((travel - 0.58) / 0.28);
+        const start = {left: 138 + index * 268, top: 318 + (index % 2) * 26};
+        const destination = project(...move.target);
+        const enter = spring({frame: frame - index * 5, fps, config: {damping: 18, mass: 0.8}});
+        return (
+          <div
+            key={move.price}
+            style={{
+              position: 'absolute',
+              left: start.left + (destination.left - 130 - start.left) * travel,
+              top: start.top + (destination.top - 78 - start.top) * travel,
+              width: 260,
+              borderRadius: 22,
+              overflow: 'hidden',
+              background: '#FFFFFF',
+              border: '2px solid #FFFFFF',
+              boxShadow: '0 26px 60px rgba(8,9,21,.22)',
+              opacity: Math.min(enter, fade) * (1 - travel * 0.3),
+              transform: `translateY(${(1 - enter) * 60}px) scale(${(0.94 + enter * 0.06) * (1 - travel * 0.66)}) rotate(${(index - 1) * 2.4 * (1 - travel)}deg)`,
+              transformOrigin: '50% 50%',
+            }}
+          >
+            <div style={{height: 118, overflow: 'hidden'}}>
+              <PropertyThumbnail variant={index + 1} progress={Math.min(1, frame / (fps * 1.5))} />
+            </div>
+            <div style={{padding: '12px 14px 14px'}}>
+              <div style={{fontSize: 30, fontWeight: 800, letterSpacing: '-.03em'}}>{move.price}</div>
+              <div style={{marginTop: 8, display: 'flex', alignItems: 'center', gap: 8, padding: '7px 10px', borderRadius: 12, background: '#FFF3F1', border: '1px solid #F7D9D3'}}>
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#C64E3D" strokeWidth="2.3" strokeLinecap="round">
+                  <path d="M12 21S5 16.2 5 10.5a7 7 0 0 1 14 0C19 16.2 12 21 12 21Z" />
+                  <path d="M9.5 8.5l5 5m0-5l-5 5" />
+                </svg>
+                <div style={{fontSize: 22, fontWeight: 800, color: '#A74335'}}>Sin lugar</div>
+              </div>
+            </div>
+          </div>
+        );
+      })}
+
+      {/* The touch that moved the map and then chose the zone. A drawn hand at
+          this size reads as a white blob; a contact point does not. */}
+      <div style={{position: 'absolute', left: touchAt.x, top: touchAt.y, opacity: hand}}>
+        <div style={{position: 'absolute', left: -60, top: -60, width: 120, height: 120, borderRadius: 999, border: `5px solid ${accent}`, opacity: tap * 0.8, transform: `scale(${0.45 + tap * 1.15})`}} />
+        <div style={{position: 'absolute', left: -38, top: -38, width: 76, height: 76, borderRadius: 999, background: 'rgba(8,9,21,.5)', border: '5px solid rgba(255,255,255,.9)', boxShadow: '0 12px 30px rgba(8,9,21,.34)'}} />
+      </div>
+
+      <div
+        style={{
+          position: 'absolute',
+          left: project(470, 620).left - 82,
+          top: project(470, 620).top - 214 * unit + 34,
+          padding: '13px 26px',
+          borderRadius: 99,
+          background: palette.ink,
+          color: '#FFFFFF',
+          fontSize: 30,
+          fontWeight: 800,
+          opacity: label,
+          transform: `translateY(${(1 - label) * -22}px) scale(${0.86 + label * 0.14})`,
+          boxShadow: '0 18px 40px rgba(8,9,21,.34)',
+        }}
+      >
+        Tu zona
+      </div>
+
+      <div style={{position: 'absolute', left: sideCrop, top: 862, padding: '6px 12px', borderRadius: 8, background: 'rgba(8,9,21,.72)', color: '#FFFFFF', fontSize: 22, fontWeight: 800, letterSpacing: '.06em'}}>
+        EJEMPLO
+      </div>
+
+      <AbsoluteFill style={{top: CLEAR, background: 'linear-gradient(180deg, rgba(8,9,21,0) 0%, rgba(8,9,21,.58) 16%, rgba(8,9,21,.96) 32%)'}} />
+    </AbsoluteFill>
+  );
+};
+
 export const SIMULATIONS: Record<string, React.FC<SimulationProps>> = {
   'sim:que-compras': WhatYouBuySim,
   'sim:propiedad-horizontal': HorizontalPropertySim,
@@ -4230,8 +6007,89 @@ export const SIMULATIONS: Record<string, React.FC<SimulationProps>> = {
   'sim:ya-estan': OwnerAlreadyThereSim,
   'sim:anuncio-en-mapa': OwnerListingOnMapSim,
   'sim:te-contactan': OwnerIncomingSim,
+  'sim:donde-queda': OwnerLocationQuestionSim,
+  'sim:ya-lo-saben': OwnerLocationAnsweredSim,
+  'sim:elige-zona': SearchOrderSim,
+  'sim:verificar': VerificationSim,
+  'sim:negociar': NegotiationSim,
+  'sim:promesa': PromiseContractSim,
+  'sim:escritura-publica': PublicDeedSim,
+  'sim:inscripcion': RegistrationSim,
+  'sim:pasos-compra': PurchaseStepsSim,
   'sim:aents-reveal': AentsRevealSim,
+  'sim:aents-idea': AentsIdeaSim,
+  'sim:aents-flujo': AentsWorkflowSim,
   'sim:aents-proceso': AentsProcessSim,
   'sim:aents-servicios': AentsServicesSim,
   'sim:aents-contacto': AentsContactSim,
+  'sim:aents-problema-software': AentsProblemToSoftwareSim,
+  'sim:aents-disperso': AentsScatteredSim,
+  'sim:aents-desconectado': AentsDisconnectedSim,
+  'sim:aents-entender': AentsUnderstandSim,
+  'sim:aents-soluciones': AentsSolutionsSim,
+  'sim:aents-etapas': AentsStagesSim,
+  'sim:aents-medida': AentsCustomFitSim,
+  'sim:aents-web-busqueda': AentsWebSearchSim,
+  'sim:aents-web-lenta': AentsWebSlowSim,
+  'sim:aents-web-nueva': AentsWebRebuildSim,
+  'sim:aents-web-conversion': AentsWebFunnelSim,
+  'sim:aents-web-cierre': AentsWebClosingSim,
+  'sim:aents-crecimiento': AentsGrowthSim,
+  'sim:aents-carga': AentsOverloadSim,
+  'sim:aents-giro': AentsTurnSim,
+  'sim:aents-arquitectura': AentsArchitectureSim,
+  'sim:aents-automatizacion': AentsAutomationSim,
+  'sim:aents-panel': AentsPanelSim,
+  'sim:aents-escala': AentsScaleSim,
+  'sim:aents-posicionamiento': AentsPositioningSim,
+  'sim:aents-cierre': AentsSignOffSim,
+  'sim:aents-busqueda': AentsQuerySim,
+  'sim:aents-lenta': AentsSlowSiteSim,
+  'sim:aents-rebote': AentsBounceSim,
+  'sim:aents-rearmado': AentsRebuildSim,
+  'sim:aents-prueba-web': AentsWebProofSim,
+  'sim:aents-antes': AentsWebDatedSim,
+  'sim:aents-contraste': AentsWebContrastSim,
+  'sim:aents-reconstruccion': AentsWebRebootSim,
+  'sim:aents-credibilidad': AentsWebCredibilitySim,
+  'sim:aents-cotizacion': AentsWebRequestSim,
+  'sim:aents-adaptacion': AentsWebResponsiveSim,
+  'sim:aents-comparacion': AentsWebBeforeAfterSim,
+  'sim:aents-seo-encontrar': AentsSeoFoundSim,
+  'sim:aents-seo-entender': AentsSeoUnderstandSim,
+  'sim:aents-seo-intencion': AentsSeoIntentSim,
+  'sim:aents-seo-senales': AentsSeoSignalsSim,
+  'sim:aents-seo-red': AentsSeoNetworkSim,
+  'sim:aents-seo-respuesta': AentsSeoAnswerSim,
+  'sim:aents-seo-sin-truco': AentsSeoNoTrickSim,
+  'sim:aents-seo-datos': AentsSeoDataSim,
+  'sim:aents-seo-entidad': AentsSeoEntitySim,
+  'sim:aents-seo-lectores': AentsSeoReadableSim,
+  'sim:aents-encoge': AentsMobileShrinkSim,
+  'sim:aents-sintomas': AentsMobileSymptomsSim,
+  'sim:aents-dos-caminos': AentsMobileTwoPathsSim,
+  'sim:aents-cabe': AentsMobileFitsSim,
+  'sim:aents-pregunta': AentsMobileQuestionSim,
+  'sim:aents-portal-escritorio': AentsMobilePortalDesktopSim,
+  'sim:aents-portal-movil': AentsMobilePortalPhoneSim,
+  'sim:aents-dedo': AentsMobileTouchSim,
+  'sim:aents-tarjetas': AentsMobileCardsSim,
+  'sim:aents-gestos': AentsMobileGesturesSim,
+  'sim:aents-peso': AentsMobileWeightSim,
+  'sim:aents-hacia-arriba': AentsMobileUpwardSim,
+  'sim:aents-usala': AentsMobileUseItSim,
+  'sim:aents-ia-funciona': AentsAiWorksSim,
+  'sim:aents-ia-contexto': AentsAiContextSim,
+  'sim:aents-ia-partes': AentsAiPartsSim,
+  'sim:aents-ia-reglas': AentsAiRulesSim,
+  'sim:aents-ia-camino-feliz': AentsAiHappyPathSim,
+  'sim:aents-ia-revision': AentsAiReviewSim,
+  'sim:aents-ia-dependencias': AentsAiDependenciesSim,
+  'sim:aents-ia-seguridad': AentsAiSecuritySim,
+  'sim:aents-ia-secretos': AentsAiSecretsSim,
+  'sim:aents-ia-pruebas': AentsAiTestsSim,
+  'sim:aents-ia-git': AentsAiGitSim,
+  'sim:aents-ia-orden': AentsAiOrderSim,
+  'sim:aents-ia-criterio': AentsAiJudgementSim,
+  'sim:aents-ia-cierre': AentsAiClosingSim,
 };

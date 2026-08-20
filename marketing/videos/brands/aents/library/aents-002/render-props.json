@@ -1,0 +1,1038 @@
+{
+  "brandId": "aents",
+  "brandName": "Aents",
+  "brandTagline": "Software for people.",
+  "brandSymbol": "brand/symbol-negative-512.png",
+  "title": "Que el sistema haga el trabajo",
+  "coverText": "Que el sistema haga el trabajo",
+  "cta": "Conversemos sobre tu negocio",
+  "url": "aents.net",
+  "brandTile": "brand/brand-tile-1024.png",
+  "kicker": null,
+  "musicFile": null,
+  "showSafeAreas": false,
+  "scenes": [
+    {
+      "purpose": "gancho",
+      "durationInFrames": 150,
+      "headline": "Tu negocio crece",
+      "captions": [
+        {
+          "text": "Tu negocio puede estar creciendo y,",
+          "start": 0.0,
+          "end": 1.963,
+          "words": [
+            {
+              "text": "Tu",
+              "start": 0.0,
+              "end": 0.168
+            },
+            {
+              "text": "negocio",
+              "start": 0.168,
+              "end": 0.617
+            },
+            {
+              "text": "puede",
+              "start": 0.617,
+              "end": 0.954
+            },
+            {
+              "text": "estar",
+              "start": 0.954,
+              "end": 1.29
+            },
+            {
+              "text": "creciendo",
+              "start": 1.29,
+              "end": 1.851
+            },
+            {
+              "text": "y,",
+              "start": 1.851,
+              "end": 1.963
+            }
+          ]
+        },
+        {
+          "text": "aun así,",
+          "start": 1.963,
+          "end": 2.412,
+          "words": [
+            {
+              "text": "aun",
+              "start": 0.0,
+              "end": 0.224
+            },
+            {
+              "text": "así,",
+              "start": 0.224,
+              "end": 0.449
+            }
+          ]
+        },
+        {
+          "text": "estar perdiendo tiempo todos",
+          "start": 2.412,
+          "end": 4.038,
+          "words": [
+            {
+              "text": "estar",
+              "start": 0.0,
+              "end": 0.337
+            },
+            {
+              "text": "perdiendo",
+              "start": 0.337,
+              "end": 0.897
+            },
+            {
+              "text": "tiempo",
+              "start": 0.897,
+              "end": 1.29
+            },
+            {
+              "text": "todos",
+              "start": 1.29,
+              "end": 1.627
+            }
+          ]
+        },
+        {
+          "text": "los días.",
+          "start": 4.038,
+          "end": 4.543,
+          "words": [
+            {
+              "text": "los",
+              "start": 0.0,
+              "end": 0.224
+            },
+            {
+              "text": "días.",
+              "start": 0.224,
+              "end": 0.505
+            }
+          ]
+        }
+      ],
+      "visualDirection": "El contador de clientes de un negocio de ejemplo salta de 47 a 384 mientras los canales por donde entra el trabajo aparecen alrededor y sus conexiones empiezan a cruzarse.",
+      "transition": "cut",
+      "asset": "sim:aents-crecimiento",
+      "assetType": "simulation",
+      "photo": null,
+      "voiceFile": "jobs/aents-002/audio/voice-01.mp3",
+      "assetStartInFrames": 0,
+      "assetTotalInFrames": 150,
+      "accent": "#22C55E"
+    },
+    {
+      "purpose": "problema",
+      "durationInFrames": 157,
+      "headline": "Todo se acumula",
+      "captions": [
+        {
+          "text": "Más clientes,",
+          "start": 0.0,
+          "end": 0.765,
+          "words": [
+            {
+              "text": "Más",
+              "start": 0.0,
+              "end": 0.235
+            },
+            {
+              "text": "clientes,",
+              "start": 0.235,
+              "end": 0.765
+            }
+          ]
+        },
+        {
+          "text": "más mensajes,",
+          "start": 0.765,
+          "end": 1.531,
+          "words": [
+            {
+              "text": "más",
+              "start": 0.0,
+              "end": 0.235
+            },
+            {
+              "text": "mensajes,",
+              "start": 0.235,
+              "end": 0.765
+            }
+          ]
+        },
+        {
+          "text": "más datos,",
+          "start": 1.531,
+          "end": 2.119,
+          "words": [
+            {
+              "text": "más",
+              "start": 0.0,
+              "end": 0.235
+            },
+            {
+              "text": "datos,",
+              "start": 0.235,
+              "end": 0.589
+            }
+          ]
+        },
+        {
+          "text": "más procesos que alguien tiene",
+          "start": 2.119,
+          "end": 3.944,
+          "words": [
+            {
+              "text": "más",
+              "start": 0.0,
+              "end": 0.235
+            },
+            {
+              "text": "procesos",
+              "start": 0.235,
+              "end": 0.765
+            },
+            {
+              "text": "que",
+              "start": 0.765,
+              "end": 1.001
+            },
+            {
+              "text": "alguien",
+              "start": 1.001,
+              "end": 1.472
+            },
+            {
+              "text": "tiene",
+              "start": 1.472,
+              "end": 1.825
+            }
+          ]
+        },
+        {
+          "text": "que controlar.",
+          "start": 3.944,
+          "end": 4.769,
+          "words": [
+            {
+              "text": "que",
+              "start": 0.0,
+              "end": 0.235
+            },
+            {
+              "text": "controlar.",
+              "start": 0.235,
+              "end": 0.824
+            }
+          ]
+        }
+      ],
+      "visualDirection": "Clientes, datos y procesos suben; el tiempo baja. La cola de tareas que pasa por una sola persona se llena y la escena se detiene en un error.",
+      "transition": "cut",
+      "asset": "sim:aents-carga",
+      "assetType": "simulation",
+      "photo": null,
+      "voiceFile": "jobs/aents-002/audio/voice-02.mp3",
+      "assetStartInFrames": 0,
+      "assetTotalInFrames": 157,
+      "accent": "#6B5CF6"
+    },
+    {
+      "purpose": "problema",
+      "durationInFrames": 75,
+      "headline": "Hay otra forma",
+      "captions": [
+        {
+          "text": "¿Y si el sistema hiciera",
+          "start": 0.0,
+          "end": 1.37,
+          "words": [
+            {
+              "text": "¿Y",
+              "start": 0.0,
+              "end": 0.114
+            },
+            {
+              "text": "si",
+              "start": 0.114,
+              "end": 0.285
+            },
+            {
+              "text": "el",
+              "start": 0.285,
+              "end": 0.457
+            },
+            {
+              "text": "sistema",
+              "start": 0.457,
+              "end": 0.913
+            },
+            {
+              "text": "hiciera",
+              "start": 0.913,
+              "end": 1.37
+            }
+          ]
+        },
+        {
+          "text": "ese trabajo?",
+          "start": 1.37,
+          "end": 2.055,
+          "words": [
+            {
+              "text": "ese",
+              "start": 0.0,
+              "end": 0.228
+            },
+            {
+              "text": "trabajo?",
+              "start": 0.228,
+              "end": 0.685
+            }
+          ]
+        }
+      ],
+      "visualDirection": "El enredo se apaga y queda la pregunta sola en pantalla; después entra el isotipo de Aents.",
+      "transition": "fade",
+      "asset": "sim:aents-giro",
+      "assetType": "simulation",
+      "photo": null,
+      "voiceFile": "jobs/aents-002/audio/voice-03.mp3",
+      "assetStartInFrames": 0,
+      "assetTotalInFrames": 75,
+      "accent": "#14B8A6"
+    },
+    {
+      "purpose": "prueba",
+      "durationInFrames": 154,
+      "headline": "Un sistema a medida",
+      "captions": [
+        {
+          "text": "En Aents diseñamos el software",
+          "start": 0.0,
+          "end": 1.833,
+          "words": [
+            {
+              "text": "En",
+              "start": 0.0,
+              "end": 0.177
+            },
+            {
+              "text": "Aents",
+              "start": 0.177,
+              "end": 0.532
+            },
+            {
+              "text": "diseñamos",
+              "start": 0.532,
+              "end": 1.123
+            },
+            {
+              "text": "el",
+              "start": 1.123,
+              "end": 1.301
+            },
+            {
+              "text": "software",
+              "start": 1.301,
+              "end": 1.833
+            }
+          ]
+        },
+        {
+          "text": "alrededor de cómo funciona",
+          "start": 1.833,
+          "end": 3.429,
+          "words": [
+            {
+              "text": "alrededor",
+              "start": 0.0,
+              "end": 0.591
+            },
+            {
+              "text": "de",
+              "start": 0.591,
+              "end": 0.769
+            },
+            {
+              "text": "cómo",
+              "start": 0.769,
+              "end": 1.064
+            },
+            {
+              "text": "funciona",
+              "start": 1.064,
+              "end": 1.596
+            }
+          ]
+        },
+        {
+          "text": "realmente tu negocio.",
+          "start": 3.429,
+          "end": 4.671,
+          "words": [
+            {
+              "text": "realmente",
+              "start": 0.0,
+              "end": 0.591
+            },
+            {
+              "text": "tu",
+              "start": 0.591,
+              "end": 0.769
+            },
+            {
+              "text": "negocio.",
+              "start": 0.769,
+              "end": 1.242
+            }
+          ]
+        }
+      ],
+      "visualDirection": "La arquitectura se construye de arriba abajo: clientes, web y app, el sistema a medida, sus módulos y la automatización. Cada conexión se enciende antes de que llegue la banda siguiente.",
+      "transition": "cut",
+      "asset": "sim:aents-arquitectura",
+      "assetType": "simulation",
+      "photo": null,
+      "voiceFile": "jobs/aents-002/audio/voice-04.mp3",
+      "assetStartInFrames": 0,
+      "assetTotalInFrames": 154,
+      "accent": "#A78BFA"
+    },
+    {
+      "purpose": "prueba",
+      "durationInFrames": 191,
+      "headline": "Tareas automatizadas",
+      "captions": [
+        {
+          "text": "Conectamos tus procesos,",
+          "start": 0.0,
+          "end": 1.367,
+          "words": [
+            {
+              "text": "Conectamos",
+              "start": 0.0,
+              "end": 0.627
+            },
+            {
+              "text": "tus",
+              "start": 0.627,
+              "end": 0.854
+            },
+            {
+              "text": "procesos,",
+              "start": 0.854,
+              "end": 1.367
+            }
+          ]
+        },
+        {
+          "text": "automatizamos las tareas",
+          "start": 1.367,
+          "end": 2.791,
+          "words": [
+            {
+              "text": "automatizamos",
+              "start": 0.0,
+              "end": 0.797
+            },
+            {
+              "text": "las",
+              "start": 0.797,
+              "end": 1.025
+            },
+            {
+              "text": "tareas",
+              "start": 1.025,
+              "end": 1.424
+            }
+          ]
+        },
+        {
+          "text": "repetitivas y hacemos",
+          "start": 2.791,
+          "end": 4.044,
+          "words": [
+            {
+              "text": "repetitivas",
+              "start": 0.0,
+              "end": 0.683
+            },
+            {
+              "text": "y",
+              "start": 0.683,
+              "end": 0.797
+            },
+            {
+              "text": "hacemos",
+              "start": 0.797,
+              "end": 1.253
+            }
+          ]
+        },
+        {
+          "text": "que la información se mueva sola.",
+          "start": 4.044,
+          "end": 5.923,
+          "words": [
+            {
+              "text": "que",
+              "start": 0.0,
+              "end": 0.228
+            },
+            {
+              "text": "la",
+              "start": 0.228,
+              "end": 0.399
+            },
+            {
+              "text": "información",
+              "start": 0.399,
+              "end": 1.082
+            },
+            {
+              "text": "se",
+              "start": 1.082,
+              "end": 1.253
+            },
+            {
+              "text": "mueva",
+              "start": 1.253,
+              "end": 1.595
+            },
+            {
+              "text": "sola.",
+              "start": 1.595,
+              "end": 1.88
+            }
+          ]
+        }
+      ],
+      "visualDirection": "Entra un pedido de ejemplo y el sistema va confirmando pago, inventario, factura, aviso al cliente y reporte, uno tras otro sobre la misma columna.",
+      "transition": "cut",
+      "asset": "sim:aents-automatizacion",
+      "assetType": "simulation",
+      "photo": null,
+      "voiceFile": "jobs/aents-002/audio/voice-05.mp3",
+      "assetStartInFrames": 0,
+      "assetTotalInFrames": 191,
+      "accent": "#22C55E"
+    },
+    {
+      "purpose": "prueba",
+      "durationInFrames": 178,
+      "headline": "Todo en un panel",
+      "captions": [
+        {
+          "text": "Y todo lo que pasa",
+          "start": 0.0,
+          "end": 1.051,
+          "words": [
+            {
+              "text": "Y",
+              "start": 0.0,
+              "end": 0.111
+            },
+            {
+              "text": "todo",
+              "start": 0.111,
+              "end": 0.387
+            },
+            {
+              "text": "lo",
+              "start": 0.387,
+              "end": 0.553
+            },
+            {
+              "text": "que",
+              "start": 0.553,
+              "end": 0.774
+            },
+            {
+              "text": "pasa",
+              "start": 0.774,
+              "end": 1.051
+            }
+          ]
+        },
+        {
+          "text": "en tu operación queda a",
+          "start": 1.051,
+          "end": 2.378,
+          "words": [
+            {
+              "text": "en",
+              "start": 0.0,
+              "end": 0.166
+            },
+            {
+              "text": "tu",
+              "start": 0.166,
+              "end": 0.332
+            },
+            {
+              "text": "operación",
+              "start": 0.332,
+              "end": 0.885
+            },
+            {
+              "text": "queda",
+              "start": 0.885,
+              "end": 1.216
+            },
+            {
+              "text": "a",
+              "start": 1.216,
+              "end": 1.327
+            }
+          ]
+        },
+        {
+          "text": "la vista,",
+          "start": 2.378,
+          "end": 2.875,
+          "words": [
+            {
+              "text": "la",
+              "start": 0.0,
+              "end": 0.166
+            },
+            {
+              "text": "vista,",
+              "start": 0.166,
+              "end": 0.498
+            }
+          ]
+        },
+        {
+          "text": "en un solo panel",
+          "start": 2.875,
+          "end": 3.815,
+          "words": [
+            {
+              "text": "en",
+              "start": 0.0,
+              "end": 0.166
+            },
+            {
+              "text": "un",
+              "start": 0.166,
+              "end": 0.332
+            },
+            {
+              "text": "solo",
+              "start": 0.332,
+              "end": 0.608
+            },
+            {
+              "text": "panel",
+              "start": 0.608,
+              "end": 0.94
+            }
+          ]
+        },
+        {
+          "text": "y con roles",
+          "start": 3.815,
+          "end": 4.479,
+          "words": [
+            {
+              "text": "y",
+              "start": 0.0,
+              "end": 0.111
+            },
+            {
+              "text": "con",
+              "start": 0.111,
+              "end": 0.332
+            },
+            {
+              "text": "roles",
+              "start": 0.332,
+              "end": 0.664
+            }
+          ]
+        },
+        {
+          "text": "para cada persona.",
+          "start": 4.479,
+          "end": 5.474,
+          "words": [
+            {
+              "text": "para",
+              "start": 0.0,
+              "end": 0.276
+            },
+            {
+              "text": "cada",
+              "start": 0.276,
+              "end": 0.553
+            },
+            {
+              "text": "persona.",
+              "start": 0.553,
+              "end": 0.995
+            }
+          ]
+        }
+      ],
+      "visualDirection": "El panel de un negocio de ejemplo responde qué necesita atención hoy, fila por fila, y abajo aparecen los roles del equipo.",
+      "transition": "cut",
+      "asset": "sim:aents-panel",
+      "assetType": "simulation",
+      "photo": null,
+      "voiceFile": "jobs/aents-002/audio/voice-06.mp3",
+      "assetStartInFrames": 0,
+      "assetTotalInFrames": 178,
+      "accent": "#6B5CF6"
+    },
+    {
+      "purpose": "resultado",
+      "durationInFrames": 172,
+      "headline": "Preparado para crecer",
+      "captions": [
+        {
+          "text": "Porque un buen sistema no resuelve",
+          "start": 0.0,
+          "end": 1.852,
+          "words": [
+            {
+              "text": "Porque",
+              "start": 0.0,
+              "end": 0.37
+            },
+            {
+              "text": "un",
+              "start": 0.37,
+              "end": 0.529
+            },
+            {
+              "text": "buen",
+              "start": 0.529,
+              "end": 0.794
+            },
+            {
+              "text": "sistema",
+              "start": 0.794,
+              "end": 1.217
+            },
+            {
+              "text": "no",
+              "start": 1.217,
+              "end": 1.376
+            },
+            {
+              "text": "resuelve",
+              "start": 1.376,
+              "end": 1.852
+            }
+          ]
+        },
+        {
+          "text": "solo el problema de hoy:",
+          "start": 1.852,
+          "end": 3.122,
+          "words": [
+            {
+              "text": "solo",
+              "start": 0.0,
+              "end": 0.265
+            },
+            {
+              "text": "el",
+              "start": 0.265,
+              "end": 0.423
+            },
+            {
+              "text": "problema",
+              "start": 0.423,
+              "end": 0.9
+            },
+            {
+              "text": "de",
+              "start": 0.9,
+              "end": 1.058
+            },
+            {
+              "text": "hoy:",
+              "start": 1.058,
+              "end": 1.27
+            }
+          ]
+        },
+        {
+          "text": "está preparado para lo que viene después.",
+          "start": 3.122,
+          "end": 5.292,
+          "words": [
+            {
+              "text": "está",
+              "start": 0.0,
+              "end": 0.265
+            },
+            {
+              "text": "preparado",
+              "start": 0.265,
+              "end": 0.794
+            },
+            {
+              "text": "para",
+              "start": 0.794,
+              "end": 1.058
+            },
+            {
+              "text": "lo",
+              "start": 1.058,
+              "end": 1.217
+            },
+            {
+              "text": "que",
+              "start": 1.217,
+              "end": 1.429
+            },
+            {
+              "text": "viene",
+              "start": 1.429,
+              "end": 1.746
+            },
+            {
+              "text": "después.",
+              "start": 1.746,
+              "end": 2.17
+            }
+          ]
+        }
+      ],
+      "visualDirection": "El número de clientes del ejemplo pasa de diez a diez mil y las columnas crecen, mientras la interfaz del panel se queda exactamente donde estaba.",
+      "transition": "cut",
+      "asset": "sim:aents-escala",
+      "assetType": "simulation",
+      "photo": null,
+      "voiceFile": "jobs/aents-002/audio/voice-07.mp3",
+      "assetStartInFrames": 0,
+      "assetTotalInFrames": 172,
+      "accent": "#14B8A6"
+    },
+    {
+      "purpose": "resultado",
+      "durationInFrames": 157,
+      "headline": "Sistemas, no software",
+      "captions": [
+        {
+          "text": "No hacemos software por hacer software:",
+          "start": 0.0,
+          "end": 2.138,
+          "words": [
+            {
+              "text": "No",
+              "start": 0.0,
+              "end": 0.164
+            },
+            {
+              "text": "hacemos",
+              "start": 0.164,
+              "end": 0.603
+            },
+            {
+              "text": "software",
+              "start": 0.603,
+              "end": 1.096
+            },
+            {
+              "text": "por",
+              "start": 1.096,
+              "end": 1.315
+            },
+            {
+              "text": "hacer",
+              "start": 1.315,
+              "end": 1.644
+            },
+            {
+              "text": "software:",
+              "start": 1.644,
+              "end": 2.138
+            }
+          ]
+        },
+        {
+          "text": "construimos sistemas que hacen",
+          "start": 2.138,
+          "end": 3.837,
+          "words": [
+            {
+              "text": "construimos",
+              "start": 0.0,
+              "end": 0.658
+            },
+            {
+              "text": "sistemas",
+              "start": 0.658,
+              "end": 1.151
+            },
+            {
+              "text": "que",
+              "start": 1.151,
+              "end": 1.37
+            },
+            {
+              "text": "hacen",
+              "start": 1.37,
+              "end": 1.699
+            }
+          ]
+        },
+        {
+          "text": "avanzar negocios.",
+          "start": 3.837,
+          "end": 4.768,
+          "words": [
+            {
+              "text": "avanzar",
+              "start": 0.0,
+              "end": 0.438
+            },
+            {
+              "text": "negocios.",
+              "start": 0.438,
+              "end": 0.932
+            }
+          ]
+        }
+      ],
+      "visualDirection": "La palabra software se tacha y se retira; en su lugar entra construimos sistemas que hacen avanzar negocios.",
+      "transition": "cut",
+      "asset": "sim:aents-posicionamiento",
+      "assetType": "simulation",
+      "photo": null,
+      "voiceFile": "jobs/aents-002/audio/voice-08.mp3",
+      "assetStartInFrames": 0,
+      "assetTotalInFrames": 157,
+      "accent": "#A78BFA"
+    },
+    {
+      "purpose": "cta",
+      "durationInFrames": 181,
+      "headline": "Conversemos",
+      "captions": [
+        {
+          "text": "Tu negocio ya sabe hacia dónde",
+          "start": 0.0,
+          "end": 1.77,
+          "words": [
+            {
+              "text": "Tu",
+              "start": 0.0,
+              "end": 0.171
+            },
+            {
+              "text": "negocio",
+              "start": 0.171,
+              "end": 0.628
+            },
+            {
+              "text": "ya",
+              "start": 0.628,
+              "end": 0.799
+            },
+            {
+              "text": "sabe",
+              "start": 0.799,
+              "end": 1.085
+            },
+            {
+              "text": "hacia",
+              "start": 1.085,
+              "end": 1.427
+            },
+            {
+              "text": "dónde",
+              "start": 1.427,
+              "end": 1.77
+            }
+          ]
+        },
+        {
+          "text": "quiere crecer.",
+          "start": 1.77,
+          "end": 2.569,
+          "words": [
+            {
+              "text": "quiere",
+              "start": 0.0,
+              "end": 0.4
+            },
+            {
+              "text": "crecer.",
+              "start": 0.4,
+              "end": 0.799
+            }
+          ]
+        },
+        {
+          "text": "Conversemos y construyamos",
+          "start": 2.569,
+          "end": 4.11,
+          "words": [
+            {
+              "text": "Conversemos",
+              "start": 0.0,
+              "end": 0.685
+            },
+            {
+              "text": "y",
+              "start": 0.685,
+              "end": 0.799
+            },
+            {
+              "text": "construyamos",
+              "start": 0.799,
+              "end": 1.541
+            }
+          ]
+        },
+        {
+          "text": "la tecnología para llegar.",
+          "start": 4.11,
+          "end": 5.594,
+          "words": [
+            {
+              "text": "la",
+              "start": 0.0,
+              "end": 0.171
+            },
+            {
+              "text": "tecnología",
+              "start": 0.171,
+              "end": 0.799
+            },
+            {
+              "text": "para",
+              "start": 0.799,
+              "end": 1.085
+            },
+            {
+              "text": "llegar.",
+              "start": 1.085,
+              "end": 1.484
+            }
+          ]
+        }
+      ],
+      "visualDirection": "Todo se apaga y queda la marca: isotipo, Aents, Software para personas, sus servicios y aents.net junto al botón de conversar.",
+      "transition": "fade",
+      "asset": "sim:aents-cierre",
+      "assetType": "simulation",
+      "photo": null,
+      "voiceFile": "jobs/aents-002/audio/voice-09.mp3",
+      "assetStartInFrames": 0,
+      "assetTotalInFrames": 181,
+      "accent": "#22C55E"
+    }
+  ]
+}

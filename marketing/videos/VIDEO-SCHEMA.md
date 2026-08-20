@@ -1,9 +1,12 @@
 # Estructura profesional de cada video
 
-Cada video es una unidad autosuficiente, numerada y auditable. La máquina crea esta estructura:
+Cada video es una unidad autosuficiente, numerada y auditable dentro de una
+marca. Geo usa `brands/geo/library/`; Aents usa `brands/aents/library/` con la misma
+estructura. El identificador y la carpeta incluyen siempre la marca: `geo-001`
+o `aents-001`.
 
 ```text
-library/video-001/
+brands/geo/library/geo-001/
 ├── brief.json            # intención original y duración solicitada
 ├── plan.json             # fuente estructurada para la máquina
 ├── lint.json             # resultado del control de calidad del plan
@@ -11,6 +14,7 @@ library/video-001/
 ├── storyboard.md         # escena por escena con tiempos
 ├── approval.json         # aprobación humana y hash del plan aprobado
 ├── caption.txt           # texto listo para la red
+├── texto-para-publicar.txt # caption + hashtags, generado dentro del paquete
 ├── subtitles.srt         # subtítulos con tiempos medidos del audio
 ├── assets/
 │   ├── input/            # capturas, clips y fotos aprobados
@@ -26,6 +30,7 @@ library/video-001/
 ├── production.json       # tiempos reales y configuración usada
 ├── review.json           # controles automáticos y firma humana
 ├── review/               # consola HTML y fotogramas críticos por escena
+├── .cache/scenes/        # escenas ya renderizadas, por huella; desechable
 ├── previews/             # renders parciales que no alteran el máster
 ├── experiment-decision.json # decisión determinista de una familia de variantes
 ├── learning.json         # evidencia usada por el ciclo de aprendizaje
@@ -38,12 +43,16 @@ Cuando el consejo multiagente participa, sus entregables viven bajo
 evidencia de proceso; no reemplazan `plan.json`, `approval.json`, `review.json`
 ni los demás registros autoritativos de la máquina.
 
-Ya no existen `scenes/`, `video-NNN.md`, `memory/video-catalog.jsonl` ni `memory/run-log.jsonl`. El catálogo canónico es `memory/catalog.json`.
+Ya no existen `scenes/`, `geo-NNN.md`, `memory/video-catalog.jsonl` ni
+`memory/run-log.jsonl`. Geo usa `memory/catalog.json`; cada perfil adicional
+usa su propio `brands/<marca>/memory/catalog.json`.
 
 ## Datos obligatorios
 
 ### 1. Identidad y estado
 
+- Marca explícita (`geo` o `aents`) en `brief.json` y en el catálogo. Los
+  planes antiguos sin ese campo pertenecen a Geo por compatibilidad.
 - Número y título.
 - Estado: `planned`, `approved`, `rendered`, `reviewed`, `signed`, `published`, `learned` o `archived`.
 - Fecha, responsable y notas cuando exista trabajo humano (`approval.json`, `review.json`).
@@ -66,6 +75,8 @@ Ya no existen `scenes/`, `video-NNN.md`, `memory/video-catalog.jsonl` ni `memory
 - Rótulos exactos; no simples indicaciones.
 - Portada de 3–6 palabras.
 - Caption.
+- Entre uno y cinco hashtags de publicación, sin espacios ni afirmaciones
+  nuevas. No forman parte de la voz ni de los subtítulos.
 
 ### 4. Escena por escena
 
@@ -79,6 +90,19 @@ Cada escena registra:
 - Transición de entrada (`cut` o `fade`).
 
 Los tiempos definitivos no salen del plan: se miden del audio sintetizado y quedan en `production.json` y `subtitles.srt`.
+
+El máster se arma escena por escena. Cada toma se renderiza como su propio rango
+de fotogramas de la misma composición —con el plan completo en las props, para
+que la barra de progreso, el índice de escena y una animación que cruza un corte
+salgan idénticos a un render de una sola pasada— y se guarda en `.cache/scenes/`
+bajo la huella de todo lo que podría cambiar sus píxeles: sus props, el resto de
+la pieza, su posición en la línea de tiempo, el código que la dibuja y los ajustes
+del codificador. Corregir una toma cuesta esa toma. El audio no se ensambla aquí:
+sale de un único render de la composición entera, así que ni la voz ni la música
+pueden desalinearse en una costura. Antes de aceptar el máster se comprueba que
+su duración coincida con el plan, y `production.json` registra qué escenas se
+volvieron a dibujar y cuáles se reutilizaron. `video render --fresh` ignora la
+caché.
 
 ### 5. Producción
 
@@ -101,8 +125,10 @@ Los tiempos definitivos no salen del plan: se miden del audio sintetizado y qued
 - Vistas, vistas a 3 s, finalizaciones, guardados, compartidos, visitas al perfil, clics y conversiones cuando estén disponibles.
 - Una métrica primaria explícita para interpretar el resultado.
 - Decisión: escalar, iterar, reutilizar, retirar.
-- Aprendizaje que alimenta `memory/lessons.json`.
+- Aprendizaje que alimenta exclusivamente el `memory/lessons.json` de la marca.
 
 ## Principio de continuidad
 
-`plan.json` es la fuente técnica de cada pieza; `script.md` y `storyboard.md` son su vista humana. `memory/catalog.json` resume todos los videos para que Claude pueda responder “qué falta” antes de crear el siguiente.
+`plan.json` es la fuente técnica de cada pieza; `script.md` y `storyboard.md` son
+su vista humana. El catálogo de la marca activa resume únicamente sus videos
+para que el planificador responda “qué falta” sin aprender de otra cuenta.

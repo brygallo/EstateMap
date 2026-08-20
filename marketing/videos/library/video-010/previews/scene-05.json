@@ -1,0 +1,222 @@
+{
+  "title": "Antes de comprar un departamento, revisa esto",
+  "coverText": "Antes de comprar un departamento",
+  "cta": "Encuentra tu futuro hogar",
+  "url": "geopropiedadesecuador.com",
+  "brandTile": "brand/aents-brand-tile-1024.png",
+  "kicker": null,
+  "musicFile": null,
+  "showSafeAreas": false,
+  "scenes": [
+    {
+      "purpose": "prueba",
+      "durationInFrames": 347,
+      "headline": "Léelo con abogado",
+      "captions": [
+        {
+          "text": "Las escrituras,",
+          "start": 0.0,
+          "end": 1.043,
+          "words": [
+            {
+              "text": "Las",
+              "start": 0.0,
+              "end": 0.278
+            },
+            {
+              "text": "escrituras,",
+              "start": 0.278,
+              "end": 1.043
+            }
+          ]
+        },
+        {
+          "text": "el certificado de gravámenes",
+          "start": 1.043,
+          "end": 3.06,
+          "words": [
+            {
+              "text": "el",
+              "start": 0.0,
+              "end": 0.209
+            },
+            {
+              "text": "certificado",
+              "start": 0.209,
+              "end": 1.043
+            },
+            {
+              "text": "de",
+              "start": 1.043,
+              "end": 1.252
+            },
+            {
+              "text": "gravámenes",
+              "start": 1.252,
+              "end": 2.017
+            }
+          ]
+        },
+        {
+          "text": "y el predial al día no",
+          "start": 3.06,
+          "end": 4.659,
+          "words": [
+            {
+              "text": "y",
+              "start": 0.0,
+              "end": 0.139
+            },
+            {
+              "text": "el",
+              "start": 0.139,
+              "end": 0.348
+            },
+            {
+              "text": "predial",
+              "start": 0.348,
+              "end": 0.904
+            },
+            {
+              "text": "al",
+              "start": 0.904,
+              "end": 1.113
+            },
+            {
+              "text": "día",
+              "start": 1.113,
+              "end": 1.391
+            },
+            {
+              "text": "no",
+              "start": 1.391,
+              "end": 1.599
+            }
+          ]
+        },
+        {
+          "text": "los revisas por encima.",
+          "start": 4.659,
+          "end": 6.259,
+          "words": [
+            {
+              "text": "los",
+              "start": 0.0,
+              "end": 0.278
+            },
+            {
+              "text": "revisas",
+              "start": 0.278,
+              "end": 0.834
+            },
+            {
+              "text": "por",
+              "start": 0.834,
+              "end": 1.113
+            },
+            {
+              "text": "encima.",
+              "start": 1.113,
+              "end": 1.599
+            }
+          ]
+        },
+        {
+          "text": "Que los lea un abogado,",
+          "start": 6.259,
+          "end": 7.858,
+          "words": [
+            {
+              "text": "Que",
+              "start": 0.0,
+              "end": 0.278
+            },
+            {
+              "text": "los",
+              "start": 0.278,
+              "end": 0.556
+            },
+            {
+              "text": "lea",
+              "start": 0.556,
+              "end": 0.834
+            },
+            {
+              "text": "un",
+              "start": 0.834,
+              "end": 1.043
+            },
+            {
+              "text": "abogado,",
+              "start": 1.043,
+              "end": 1.599
+            }
+          ]
+        },
+        {
+          "text": "línea por línea,",
+          "start": 7.858,
+          "end": 8.971,
+          "words": [
+            {
+              "text": "línea",
+              "start": 0.0,
+              "end": 0.417
+            },
+            {
+              "text": "por",
+              "start": 0.417,
+              "end": 0.695
+            },
+            {
+              "text": "línea,",
+              "start": 0.695,
+              "end": 1.113
+            }
+          ]
+        },
+        {
+          "text": "antes de firmar cualquier cosa.",
+          "start": 8.971,
+          "end": 11.126,
+          "words": [
+            {
+              "text": "antes",
+              "start": 0.0,
+              "end": 0.417
+            },
+            {
+              "text": "de",
+              "start": 0.417,
+              "end": 0.626
+            },
+            {
+              "text": "firmar",
+              "start": 0.626,
+              "end": 1.113
+            },
+            {
+              "text": "cualquier",
+              "start": 1.113,
+              "end": 1.808
+            },
+            {
+              "text": "cosa.",
+              "start": 1.808,
+              "end": 2.156
+            }
+          ]
+        }
+      ],
+      "visualDirection": "Se usa la animación aprobada del certificado de gravámenes y el predial leídos uno a uno, con su ritmo de lectura línea por línea. Mantener el panel de producto de la serie, su elevación y su tipografía; la cámara acompaña la lectura con un desplazamiento lento y el remate es el último documento cerrándose.",
+      "transition": "cut",
+      "asset": "sim:gravamenes-departamento",
+      "assetType": "simulation",
+      "photo": null,
+      "voiceFile": "jobs/video-010/audio/voice-05.mp3",
+      "assetStartInFrames": 0,
+      "assetTotalInFrames": 347,
+      "accent": "#22C55E"
+    }
+  ]
+}

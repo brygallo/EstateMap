@@ -1,0 +1,82 @@
+{
+  "title": "Así funciona la compraventa de una propiedad",
+  "coverText": "Comprar, paso a paso",
+  "cta": "Encuentra tu futuro hogar",
+  "url": "geopropiedadesecuador.com",
+  "brandTile": "brand/aents-brand-tile-1024.png",
+  "kicker": null,
+  "musicFile": null,
+  "showSafeAreas": false,
+  "scenes": [
+    {
+      "purpose": "resultado",
+      "durationInFrames": 82,
+      "headline": "Proceso completo",
+      "captions": [
+        {
+          "text": "Y ahora sí,",
+          "start": 0.0,
+          "end": 0.627,
+          "words": [
+            {
+              "text": "Y",
+              "start": 0.0,
+              "end": 0.114
+            },
+            {
+              "text": "ahora",
+              "start": 0.114,
+              "end": 0.456
+            },
+            {
+              "text": "sí,",
+              "start": 0.456,
+              "end": 0.627
+            }
+          ]
+        },
+        {
+          "text": "termina el proceso de compra.",
+          "start": 0.627,
+          "end": 2.279,
+          "words": [
+            {
+              "text": "termina",
+              "start": 0.0,
+              "end": 0.456
+            },
+            {
+              "text": "el",
+              "start": 0.456,
+              "end": 0.627
+            },
+            {
+              "text": "proceso",
+              "start": 0.627,
+              "end": 1.083
+            },
+            {
+              "text": "de",
+              "start": 1.083,
+              "end": 1.253
+            },
+            {
+              "text": "compra.",
+              "start": 1.253,
+              "end": 1.652
+            }
+          ]
+        }
+      ],
+      "visualDirection": "Los seis pasos se encienden en orden sobre dos rieles y el remate es la propiedad inscrita a nombre de quien compró.",
+      "transition": "cut",
+      "asset": "sim:pasos-compra",
+      "assetType": "simulation",
+      "photo": null,
+      "voiceFile": "jobs/video-012/audio/voice-08.mp3",
+      "assetStartInFrames": 0,
+      "assetTotalInFrames": 82,
+      "accent": "#A78BFA"
+    }
+  ]
+}

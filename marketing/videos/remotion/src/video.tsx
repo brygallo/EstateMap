@@ -3,7 +3,7 @@ import {AbsoluteFill, Audio, interpolate, Sequence, Series, spring, staticFile, 
 import {SceneCard} from './scene';
 import {SafeAreaOverlay} from './safe-areas';
 import {useFontReady} from './layout';
-import {palette, safe, stage} from './theme';
+import {palette, safe, stage, textFloor} from './theme';
 import type {VideoProps} from './types';
 
 const fontUrl = staticFile('fonts/PlusJakartaSans-ExtraBold.ttf');
@@ -19,9 +19,11 @@ const Progress: React.FC<{scenes: VideoProps['scenes']; accent: string}> = ({sce
         left: safe.left,
         right: safe.left,
         // TikTok paints its caption, username and audio controls over the
-        // bottom of the upload. Keep our progress cue at the edge of the safe
-        // canvas instead of underneath the platform chrome.
-        top: 1920 - safe.bottom - 8,
+        // bottom of the upload. The cue rides just under the last word rather
+        // than off `safe.bottom`: anchoring it to a second constant let the two
+        // drift apart, and lowering the text floor once put the bar straight
+        // through the second caption line.
+        top: textFloor + 12,
         height: 6,
         borderRadius: 99,
         backgroundColor: 'rgba(255,255,255,.16)',
@@ -50,6 +52,10 @@ export const EstateMapVideo: React.FC<VideoProps> = ({
   cta,
   url,
   brandTile,
+  brandId = 'geo',
+  brandName = 'Geo Propiedades Ecuador',
+  brandTagline = 'Un producto de Aents',
+  brandSymbol = 'brand/aents-symbol-negative.png',
   kicker,
   showSafeAreas,
 }) => {
@@ -76,6 +82,10 @@ export const EstateMapVideo: React.FC<VideoProps> = ({
               cta={cta}
               url={url}
               brandTile={brandTile}
+              brandId={brandId}
+              brandName={brandName}
+              brandTagline={brandTagline}
+              brandSymbol={brandSymbol}
               kicker={kicker ?? null}
               ready={ready}
             />

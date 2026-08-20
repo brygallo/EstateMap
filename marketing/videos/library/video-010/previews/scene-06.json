@@ -1,0 +1,266 @@
+{
+  "title": "Antes de comprar un departamento, revisa esto",
+  "coverText": "Antes de comprar un departamento",
+  "cta": "Encuentra tu futuro hogar",
+  "url": "geopropiedadesecuador.com",
+  "brandTile": "brand/aents-brand-tile-1024.png",
+  "kicker": null,
+  "musicFile": null,
+  "showSafeAreas": false,
+  "scenes": [
+    {
+      "purpose": "prueba",
+      "durationInFrames": 403,
+      "headline": "Compara metros útiles",
+      "captions": [
+        {
+          "text": "Divide el precio",
+          "start": 0.0,
+          "end": 1.119,
+          "words": [
+            {
+              "text": "Divide",
+              "start": 0.0,
+              "end": 0.461
+            },
+            {
+              "text": "el",
+              "start": 0.461,
+              "end": 0.658
+            },
+            {
+              "text": "precio",
+              "start": 0.658,
+              "end": 1.119
+            }
+          ]
+        },
+        {
+          "text": "para los metros",
+          "start": 1.119,
+          "end": 2.172,
+          "words": [
+            {
+              "text": "para",
+              "start": 0.0,
+              "end": 0.329
+            },
+            {
+              "text": "los",
+              "start": 0.329,
+              "end": 0.592
+            },
+            {
+              "text": "metros",
+              "start": 0.592,
+              "end": 1.053
+            }
+          ]
+        },
+        {
+          "text": "y compara.",
+          "start": 2.172,
+          "end": 2.831,
+          "words": [
+            {
+              "text": "y",
+              "start": 0.0,
+              "end": 0.132
+            },
+            {
+              "text": "compara.",
+              "start": 0.132,
+              "end": 0.658
+            }
+          ]
+        },
+        {
+          "text": "Pero fíjate qué metros te están contando:",
+          "start": 2.831,
+          "end": 5.53,
+          "words": [
+            {
+              "text": "Pero",
+              "start": 0.0,
+              "end": 0.329
+            },
+            {
+              "text": "fíjate",
+              "start": 0.329,
+              "end": 0.79
+            },
+            {
+              "text": "qué",
+              "start": 0.79,
+              "end": 1.053
+            },
+            {
+              "text": "metros",
+              "start": 1.053,
+              "end": 1.514
+            },
+            {
+              "text": "te",
+              "start": 1.514,
+              "end": 1.712
+            },
+            {
+              "text": "están",
+              "start": 1.712,
+              "end": 2.106
+            },
+            {
+              "text": "contando:",
+              "start": 2.106,
+              "end": 2.699
+            }
+          ]
+        },
+        {
+          "text": "hay anuncios que suman áreas comunes.",
+          "start": 5.53,
+          "end": 7.965,
+          "words": [
+            {
+              "text": "hay",
+              "start": 0.0,
+              "end": 0.263
+            },
+            {
+              "text": "anuncios",
+              "start": 0.263,
+              "end": 0.856
+            },
+            {
+              "text": "que",
+              "start": 0.856,
+              "end": 1.119
+            },
+            {
+              "text": "suman",
+              "start": 1.119,
+              "end": 1.514
+            },
+            {
+              "text": "áreas",
+              "start": 1.514,
+              "end": 1.909
+            },
+            {
+              "text": "comunes.",
+              "start": 1.909,
+              "end": 2.436
+            }
+          ]
+        },
+        {
+          "text": "Compara metros útiles",
+          "start": 7.965,
+          "end": 9.413,
+          "words": [
+            {
+              "text": "Compara",
+              "start": 0.0,
+              "end": 0.527
+            },
+            {
+              "text": "metros",
+              "start": 0.527,
+              "end": 0.987
+            },
+            {
+              "text": "útiles",
+              "start": 0.987,
+              "end": 1.448
+            }
+          ]
+        },
+        {
+          "text": "con metros útiles,",
+          "start": 9.413,
+          "end": 10.598,
+          "words": [
+            {
+              "text": "con",
+              "start": 0.0,
+              "end": 0.263
+            },
+            {
+              "text": "metros",
+              "start": 0.263,
+              "end": 0.724
+            },
+            {
+              "text": "útiles,",
+              "start": 0.724,
+              "end": 1.185
+            }
+          ]
+        },
+        {
+          "text": "del mismo tipo",
+          "start": 10.598,
+          "end": 11.586,
+          "words": [
+            {
+              "text": "del",
+              "start": 0.0,
+              "end": 0.263
+            },
+            {
+              "text": "mismo",
+              "start": 0.263,
+              "end": 0.658
+            },
+            {
+              "text": "tipo",
+              "start": 0.658,
+              "end": 0.987
+            }
+          ]
+        },
+        {
+          "text": "y en la misma ciudad.",
+          "start": 11.586,
+          "end": 12.968,
+          "words": [
+            {
+              "text": "y",
+              "start": 0.0,
+              "end": 0.132
+            },
+            {
+              "text": "en",
+              "start": 0.132,
+              "end": 0.329
+            },
+            {
+              "text": "la",
+              "start": 0.329,
+              "end": 0.527
+            },
+            {
+              "text": "misma",
+              "start": 0.527,
+              "end": 0.922
+            },
+            {
+              "text": "ciudad.",
+              "start": 0.922,
+              "end": 1.382
+            }
+          ]
+        }
+      ],
+      "visualDirection": "sim:metros-utiles, escrita para esta pieza porque la animación de terrenos comparaba dos lotes por tamaño y no distinguía nunca lo útil de lo común. Dos anuncios de departamento lado a lado con la misma escala de barra: uno declara su área sumando las comunes y el otro solo la útil. El toque parte la barra del primero en su tramo útil y su tramo común, y el precio por metro se recalcula delante de quien mira, de modo que el que «parece más barato» deja de serlo. Los valores llevan el rótulo EJEMPLO y son magnitudes de departamento; nunca se enuncian como precios de mercado.",
+      "transition": "cut",
+      "asset": "sim:metros-utiles",
+      "assetType": "simulation",
+      "photo": null,
+      "voiceFile": "jobs/video-010/audio/voice-06.mp3",
+      "assetStartInFrames": 0,
+      "assetTotalInFrames": 403,
+      "accent": "#6B5CF6"
+    }
+  ]
+}

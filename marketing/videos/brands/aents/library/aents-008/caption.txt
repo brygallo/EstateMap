@@ -1,0 +1,11 @@
+Si estás creando una página web, una app o un sistema completo con inteligencia artificial, esta clase es para ti.
+
+Una IA puede generar en minutos lo que antes tomaba horas. Pero hay una diferencia enorme entre lograr que escriba código y lograr que construya buen software.
+
+Dentro: dale contexto antes de pedir, divide el proyecto en partes, define las reglas del negocio antes del código, no confundas el caso perfecto con un producto terminado, revisa lo que genera, cuida las dependencias, piensa la seguridad desde la arquitectura, no pegues secretos en cualquier herramienta, haz que pruebe su propio trabajo, usa control de versiones y mantén el proyecto ordenado.
+
+Y lo que ninguna herramienta reemplaza: tu negocio.
+
+En Aents desarrollamos software a medida para empresas. Cuéntanos qué estás construyendo, revisamos el alcance contigo y te proponemos un plan de trabajo.
+
+Aents. Software para personas. aents.net

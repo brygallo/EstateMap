@@ -227,7 +227,7 @@ Comandos nuevos, todos sobre la estructura que ya existe:
 
 | Comando | Qué hace |
 | --- | --- |
-| `video lint <id>` | Ejecuta `quality-rules.json` sobre `plan.json` **antes** de aprobar: duración estimada, CTA dentro de la familia del público, rótulos ≤ 5 palabras, recursos existentes, vocabulario prohibido, gancho no repetido frente al catálogo. |
+| `video lint <id>` | Ejecuta `quality-rules.json` sobre `plan.json` **antes** de aprobar: CTA dentro de la familia del público, rótulos ≤ 5 palabras, recursos existentes, vocabulario prohibido, gancho no repetido frente al catálogo. |
 | `video variants <id> --hooks 3` | Mismo cuerpo, tres ganchos; registra los tres como hermanos con `experiment: hook`. Es lo que `strategy.md` pide y hoy no existe. |
 | `video batch <lote.yaml>` | Planifica y lintea las cuatro piezas de la semana con una sola aprobación. |
 | `video cover <id>` | Exporta la portada 1080 × 1920 que `VIDEO-SCHEMA.md` exige y Reels necesita. |

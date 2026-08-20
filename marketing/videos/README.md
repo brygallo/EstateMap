@@ -1,6 +1,20 @@
-# Fábrica automática de videos de Geo Propiedades Ecuador
+# Fábrica multimarca de videos de Aents
 
-Un solo motor convierte una idea en un MP4 vertical listo para publicar. La CLI es `factory.py`, invocada siempre a través del script `video`: Claude crea concepto, guion y storyboard; un linter revisa el plan antes de gastar voz o render; Kokoro sintetiza cada escena completa y mide su duración real; Remotion monta escenas, subtítulos karaoke, portada y audio. Está pensada para vender la plataforma —no propiedades específicas— a propietarios, compradores/inquilinos y profesionales inmobiliarios.
+Un solo motor convierte una idea en un MP4 vertical listo para publicar. Geo
+Propiedades es el perfil predeterminado por compatibilidad; Aents usa el mismo
+motor con verdad de producto, catálogo, memoria, publicaciones y biblioteca
+independientes. La marca nunca se deduce del guion o de una animación.
+
+```bash
+marketing/videos/video status                 # Geo Propiedades, compatible
+marketing/videos/video --brand geo status     # selección explícita equivalente
+marketing/videos/video --brand aents status   # espacio editorial de Aents
+marketing/videos/video --brand aents new "Presentar Geo Propiedades como producto de Aents"
+```
+
+Las opciones globales, como `--brand`, se escriben antes del comando. El motor,
+Remotion, perfiles de voz, caché técnica y controles de calidad se comparten. No
+se comparten numeración, resultados ni aprendizajes editoriales.
 
 Claude y Codex trabajan bajo el mismo contrato. [AGENTS.md](AGENTS.md) obliga a
 Codex a leer las reglas normativas de [CLAUDE.md](CLAUDE.md), y
@@ -38,9 +52,9 @@ Kokoro descarga sus pesos abiertos la primera vez y luego trabaja localmente.
 El guion se reescribe muchas veces y esas vueltas no cuestan nada:
 
 ```bash
-video render video-001            # borrador: Kokoro local, gratis, ilimitado
-video voice-cost video-001        # qué compraría el máster, sin comprarlo
-video render video-001 --final    # producción: compra la voz de ElevenLabs
+video render geo-001            # borrador: Kokoro local, gratis, ilimitado
+video voice-cost geo-001        # qué compraría el máster, sin comprarlo
+video render geo-001 --final    # producción: compra la voz de ElevenLabs
 ```
 
 `--final` es la única puerta al gasto: sin él, `render` usa la voz gratis aunque `.env` tenga ElevenLabs configurado. Antes de comprar muestra el importe y pide confirmación; si no hay terminal donde preguntar se niega, salvo que `--yes` lo autorice por adelantado.
@@ -55,9 +69,17 @@ Los perfiles viven en `system/voice-profiles.json`. Cada uno declara proveedor,
 nombre humano, descripción y ajustes de síntesis. Cuando llegue una nueva lista
 de voces se añade allí; las claves y secretos permanecen en `.env`.
 
-El perfil puede elegirse en estos niveles, de mayor a menor prioridad:
+Un máster final no elige su voz igual que un borrador. El orden es:
+`voice-lock.json` si la pieza ya compró su voz —y entonces esa es su voz para
+siempre—, después `--voice-profile`, y si nadie dijo nada, el turno que le toca
+en la rotación (`workflow.FinalVoiceRotation`): los perfiles pagados que
+declaran su propio `voice_id`, repartidos por número de video. Elijas lo que
+elijas, comprar la voz del video anterior se rechaza antes de gastar. El
+`voice_profile` del plan es el narrador del borrador y no decide el máster.
 
-1. `video render video-001 --voice-profile perfil`: fuerza una voz para todas las escenas.
+En un borrador, el perfil puede elegirse en estos niveles, de mayor a menor prioridad:
+
+1. `video render geo-001 --voice-profile perfil`: fuerza una voz para todas las escenas.
 2. `voice_profile` en la raíz del plan: narrador del video completo.
 3. `DRAFT_VOICE_PROFILE` o `FINAL_VOICE_PROFILE`: valor global de la etapa.
 4. `DRAFT_TTS_PROVIDER` o `FINAL_TTS_PROVIDER`: las variables antiguas, que
@@ -74,8 +96,8 @@ generación final crea `voice-lock.json` con el perfil y la firma exacta de sus
 ajustes; desde ese momento intentar cambiarla falla antes de gastar.
 
 ```bash
-marketing/videos/video voice-cost video-001 --voice-profile final-main
-marketing/videos/video render video-001 --voice-profile draft-paulina
+marketing/videos/video voice-cost geo-001 --voice-profile final-main
+marketing/videos/video render geo-001 --voice-profile draft-paulina
 marketing/videos/video voices
 ```
 
@@ -89,7 +111,7 @@ Las credenciales van en `.env`, ignorado por git; `.env.example` documenta las v
 Por defecto una pieza sale sin música. Solo se admite música gratuita para uso comercial de un autor identificable; nunca se compra ni se genera con créditos.
 
 ```bash
-video render video-001 --music /ruta/pista-gratuita.mp3
+video render geo-001 --music /ruta/pista-gratuita.mp3
 ```
 
 Junto al archivo debe existir `pista-gratuita.mp3.license.json` con `title`, `author`, `source_url`, `license`, `commercial_use: true` y `paid: false`. Sin esa evidencia el render se niega, y si no hay licencia verificable se usa silencio.
@@ -141,25 +163,33 @@ La duración editorial normal varía entre 18 y 45 segundos. Usa 18 s para una p
 
 Por encima de 45 segundos y hasta 120 la pieza pasa a **formato historia**, para un relato que haya que sostener: el origen del producto, un caso completo. El control de calidad le concede hasta nueve escenas en vez de cinco y hasta 10 segundos antes de mostrar el producto en vez de 3 (`quality.scene_budget` y `quality.product_reveal_deadline`). Todo lo demás sigue igual: un público, una idea y un CTA.
 
+Por encima de 120 y hasta 240 la pieza es una **clase**: catorce escenas y 25 segundos antes del producto. Es el formato de una materia que se enseña por pasos, no el de una historia que se alargó, y el tope de escenas sigue existiendo para que una clase no acabe siendo treinta láminas. Sigue teniendo un público, una idea y un CTA, y ninguna cifra entra sin fuente por durar más.
+
+Un número que el catálogo saltó puede reclamarse con `--number`, porque `next_number` solo cuenta hacia adelante y un plan descartado deja un hueco que nada más podría ocupar:
+
+```bash
+marketing/videos/video --brand aents new "…" --duration 210 --number 3
+```
+
 ### 2. Lintar y aprobar el plan
 
 ```bash
-marketing/videos/video lint video-001
-marketing/videos/video approve video-001 --by "nombre" --notes "Guion y afirmaciones revisados"
+marketing/videos/video lint geo-001
+marketing/videos/video approve geo-001 --by "nombre" --notes "Guion y afirmaciones revisados"
 ```
 
-`lint` corre sobre `plan.json`, antes de gastar síntesis de voz y render. Verifica: primera escena `gancho` y última `cta`, un solo CTA, rótulos de máximo 5 palabras y 28 caracteres, locución sin emoji/hashtags/URLs, duración estimada que no supere el objetivo en más del 20 %, vocabulario prohibido, cifras sin nota de verificación, CTA de la familia del público, recursos que existan en `assets/input/`, ganchos no repetidos frente al catálogo y clips que requieren autorización del anunciante. `approve` lo vuelve a ejecutar y lo exige; se puede saltar con `--force`, y esa decisión queda registrada en `approval.json`.
+`lint` corre sobre `plan.json`, antes de gastar síntesis de voz y render. Verifica: primera escena `gancho` y última `cta`, un solo CTA, rótulos de máximo 5 palabras y 28 caracteres, locución sin emoji/hashtags/URLs, vocabulario prohibido, cifras sin nota de verificación, CTA de la familia del público, recursos que existan en `assets/input/`, ganchos no repetidos frente al catálogo y clips que requieren autorización del anunciante. `approve` lo vuelve a ejecutar y lo exige; se puede saltar con `--force`, y esa decisión queda registrada en `approval.json`.
 
 ### 3. Renderizar
 
 ```bash
-marketing/videos/video render video-001
-marketing/videos/video render video-001 --music /ruta/pista-gratuita.mp3
+marketing/videos/video render geo-001
+marketing/videos/video render geo-001 --music /ruta/pista-gratuita.mp3
 ```
 
 Cada escena se sintetiza como una sola toma para que preguntas, comas y conectores conserven una entonación natural. Después, sin cortar el audio, el texto se divide en grupos legibles de 2 a 6 palabras y los tiempos se distribuyen sobre la duración medida de la toma; dentro de cada grupo el resaltado se reparte por peso de caracteres. Hay caché por hash en `.cache/voice`: re-renderizar sin cambiar el texto no vuelve a sintetizar. Los subtítulos quedan quemados en el MP4 y también en `subtitles.srt`.
 
-Por defecto no hay música; `--music` exige una pista gratuita para uso comercial y un sidecar con autor y licencia. El render exporta `exports/video.mp4` y también `exports/cover.png`; `video cover video-001` regenera solo la portada.
+Por defecto no hay música; `--music` exige una pista gratuita para uso comercial y un sidecar con autor y licencia. El render exporta `exports/geo-001.mp4` y `exports/geo-001-cover.png`; `video cover geo-001` regenera solo la portada. Aents usa el mismo patrón con el prefijo `aents-`.
 
 La futura biblioteca de fondos no admitirá archivos huérfanos: cada pista debe
 traer título, autor, URL de origen, licencia, `commercial_use: true` y
@@ -169,17 +199,17 @@ catálogo, sin debilitar esta validación.
 ### 4. Revisar técnicamente y firmar
 
 ```bash
-marketing/videos/video review video-001
-marketing/videos/video sign video-001 --by "nombre" --notes "MP4 revisado"
+marketing/videos/video review geo-001
+marketing/videos/video sign geo-001 --by "nombre" --notes "MP4 revisado"
 ```
 
-`review` verifica dimensiones 1080 × 1920, duración dentro de 8–120 s y cercana al objetivo, lint del plan, portada, subtítulos, recursos y aprobación. También extrae el fotograma central de cada escena y genera `review/index.html`: una consola local con el máster, checks, advertencias de legibilidad y overlays de TikTok/Reels y del recorte lateral del teléfono. `sign` registra la revisión humana explícita del MP4 final; sin firma no se puede empaquetar.
+`review` verifica dimensiones 1080 × 1920, duración dentro de 8–240 s y cercana al objetivo, lint del plan, portada, subtítulos, recursos y aprobación. También extrae el fotograma central de cada escena y genera `review/index.html`: una consola local con el máster, checks, advertencias de legibilidad y overlays de TikTok/Reels y del recorte lateral del teléfono. `sign` registra la revisión humana explícita del MP4 final; sin firma no se puede empaquetar.
 
 Para corregir una escena sin montar el video completo ni tocar el máster:
 
 ```bash
-marketing/videos/video preview video-010 --scene 3
-marketing/videos/video preview video-010 --scene 3 --overlay
+marketing/videos/video preview geo-010 --scene 3
+marketing/videos/video preview geo-010 --scene 3 --overlay
 ```
 
 Preview reutiliza la voz y las props del último borrador y escribe únicamente en
@@ -189,19 +219,28 @@ reemplaza el máster cuando video, portada, subtítulos y props terminaron.
 ### 5. Empaquetar y publicar
 
 ```bash
-marketing/videos/video pack video-001
+marketing/videos/video pack geo-001
 ```
 
-`pack` crea `library/_outbox/<nombre>/` con el MP4, la portada en JPG, el caption, el SRT y `publish.json`, con la convención de nombres `AAAA-MM-DD_audience_pillar_concept_hook-v01`.
+`pack` crea el outbox de la marca con el MP4, la portada en JPG, el caption, el
+SRT y `publish.json`, con la convención
+`AAAA-MM-DD_audience_pillar_concept_hook-v01`. También genera
+`texto-para-publicar.txt`: contiene el caption, una línea en blanco y los
+hashtags en un solo bloque listo para copiar y pegar. Los planes nuevos pueden
+declarar de uno a cinco `hashtags`; los anteriores usan los defaults del perfil.
 
-Cuando la persona responsable aprueba explícitamente el MP4 final, Claude abre TikTok, carga `exports/video.mp4`, coloca el contenido de `caption.txt`, verifica la cuenta y publica. La aprobación del plan del paso 2 no sirve como aprobación de publicación: debe haberse revisado el archivo renderizado.
+Cuando la persona responsable aprueba explícitamente el MP4 final, Claude abre
+TikTok, carga `exports/<marca>-NNN.mp4`, coloca el contenido de
+`texto-para-publicar.txt`, verifica la cuenta y publica. La aprobación del plan
+del paso 2 no sirve como aprobación de publicación: debe haberse revisado el
+archivo renderizado.
 
 La sesión de TikTok se maneja con `agent-browser` y se cierra al terminar. Si la plataforma exige login, CAPTCHA o 2FA, Claude deja el navegador visible para esa intervención sin pedir ni almacenar credenciales. Este flujo publica las piezas editoriales de Geo Propiedades; no cambia la regla `SOC-010` del producto ni publica por cuenta de los usuarios del portal.
 
 ### 6. Experimentar con ganchos
 
 ```bash
-marketing/videos/video variants video-001 --hooks 3
+marketing/videos/video variants geo-001 --hooks 3
 ```
 
 Crea videos hermanos con el mismo cuerpo y ganchos distintos (voz, rótulo y portada de la primera escena), registrados con `experiment: hook` y su video padre, para aislar una sola variable por experimento.
@@ -214,7 +253,7 @@ externa desde una lista JSON de `{video, platform, published_at, url, status}`:
 ```bash
 marketing/videos/video sync /ruta/publicaciones.json --dry-run
 marketing/videos/video sync /ruta/publicaciones.json
-marketing/videos/video results video-001 /ruta/resultados.csv
+marketing/videos/video results geo-001 /ruta/resultados.csv
 marketing/videos/video learn
 ```
 
@@ -224,12 +263,13 @@ desde métricas y los incorpora al contexto del siguiente video. Para resolver
 un experimento de gancho con muestra mínima:
 
 ```bash
-marketing/videos/video experiment video-001 --metric views_3s --minimum-views 100
+marketing/videos/video experiment geo-001 --metric views_3s --minimum-views 100
 ```
 
 La decisión queda como `inconclusive` hasta que control y variantes alcancen la
-muestra. Las piezas se clasifican como `demonstration`, `tutorial`, `story` o
-`education`; educación extensa ya no se etiqueta automáticamente como historia.
+muestra. Las piezas se clasifican como `demonstration`, `tutorial`, `story`,
+`lesson` o `education`; educación extensa ya no se etiqueta automáticamente como
+historia, y por encima de dos minutos la clasificación es `lesson`.
 
 ### Consultar estados
 
@@ -239,7 +279,10 @@ marketing/videos/video status
 
 Estados: `planned → approved → rendered → reviewed → signed → published → learned`, más `archived`.
 
-Cada video recibe un número estable y una carpeta autosuficiente en `library/`. El catálogo canónico es `memory/catalog.json`. La definición completa de carpetas y datos de cada pieza está en `VIDEO-SCHEMA.md`.
+Cada video recibe un número estable dentro de su marca. Geo usa
+`brands/geo/library/` y `brands/geo/memory/catalog.json`; Aents usa
+`brands/aents/library/` y `brands/aents/memory/catalog.json`. La definición completa está en
+`VIDEO-SCHEMA.md`.
 
 Sin recursos, el render es una pieza tipográfica de marca. No simula pantallas inexistentes.
 
@@ -260,16 +303,18 @@ obligatorio están definidos en [animation-standard.md](animation-standard.md).
 Cuando algo no quede bien, registra el problema y la regla concreta para la próxima generación:
 
 ```bash
-marketing/videos/video feedback \
-  video-001 \
+marketing/videos/video --brand geo feedback \
+  geo-001 \
   --problem "La voz suena demasiado española y el CTA aparece tarde" \
   --fix "Usar la voz ecuatoriana aprobada y comenzar el CTA antes del segundo 17" \
   --scope global
 ```
 
-El comando escribe en `memory/lessons.json` y regenera `memory/lessons.md`, que Claude lee en todos los videos siguientes. Usa `--scope audience`, `series` o `one-off` cuando la corrección no deba aplicarse a todo. El script `video-feedback` sigue funcionando y ejecuta este mismo comando.
+El comando escribe en la memoria de la marca seleccionada y el planificador solo
+la lee para los videos siguientes de esa misma marca. Usa `--scope audience`,
+`series` o `one-off` cuando la corrección no deba aplicarse a todo.
 
-Documentos vivos:
+Los documentos vivos de cada marca están en `brands/<marca>/memory/`:
 
 - `memory/lessons.json`: fuente de correcciones y aprendizajes; `memory/lessons.md` es su vista legible y no se edita a mano.
 - `memory/decisions.md`: decisiones estructurales y su motivo.
@@ -278,6 +323,11 @@ Documentos vivos:
 - `memory/publications.md`: qué pieza está terminada, dónde se publicó y con qué enlace.
 - `memory/content-gaps.json`: cobertura y huecos editoriales.
 - `CHANGELOG.md`: versiones de la fábrica.
+
+Y en `brands/<marca>/ideas/` viven las piezas todavía no producidas: guiones y
+ángulos guardados mientras falta algo para construirlos. No tienen entrada en el
+catálogo ni carpeta en `library/`, y la fábrica no las conoce hasta que alguien
+las lanza con `video new`.
 
 ## Material editorial auxiliar
 

@@ -1,0 +1,65 @@
+{
+  "passed": true,
+  "errors": 0,
+  "warnings": 11,
+  "findings": [
+    {
+      "level": "warning",
+      "rule": "scene_pace",
+      "detail": "Escena 1: 19 s en una sola toma; por encima de 6 s córtala donde la voz cambia de idea. Una animación continúa entre escenas, así que dividirla no la interrumpe"
+    },
+    {
+      "level": "warning",
+      "rule": "scene_pace",
+      "detail": "Escena 2: 18 s en una sola toma; por encima de 6 s córtala donde la voz cambia de idea. Una animación continúa entre escenas, así que dividirla no la interrumpe"
+    },
+    {
+      "level": "warning",
+      "rule": "scene_pace",
+      "detail": "Escena 3: 17 s en una sola toma; por encima de 6 s córtala donde la voz cambia de idea. Una animación continúa entre escenas, así que dividirla no la interrumpe"
+    },
+    {
+      "level": "warning",
+      "rule": "scene_pace",
+      "detail": "Escena 4: 20 s en una sola toma; por encima de 6 s córtala donde la voz cambia de idea. Una animación continúa entre escenas, así que dividirla no la interrumpe"
+    },
+    {
+      "level": "warning",
+      "rule": "scene_pace",
+      "detail": "Escena 5: 17 s en una sola toma; por encima de 6 s córtala donde la voz cambia de idea. Una animación continúa entre escenas, así que dividirla no la interrumpe"
+    },
+    {
+      "level": "warning",
+      "rule": "scene_pace",
+      "detail": "Escena 6: 16 s en una sola toma; por encima de 6 s córtala donde la voz cambia de idea. Una animación continúa entre escenas, así que dividirla no la interrumpe"
+    },
+    {
+      "level": "warning",
+      "rule": "scene_pace",
+      "detail": "Escena 7: 18 s en una sola toma; por encima de 6 s córtala donde la voz cambia de idea. Una animación continúa entre escenas, así que dividirla no la interrumpe"
+    },
+    {
+      "level": "warning",
+      "rule": "scene_pace",
+      "detail": "Escena 8: 20 s en una sola toma; por encima de 6 s córtala donde la voz cambia de idea. Una animación continúa entre escenas, así que dividirla no la interrumpe"
+    },
+    {
+      "level": "warning",
+      "rule": "scene_pace",
+      "detail": "Escena 9: 18 s en una sola toma; por encima de 6 s córtala donde la voz cambia de idea. Una animación continúa entre escenas, así que dividirla no la interrumpe"
+    },
+    {
+      "level": "warning",
+      "rule": "scene_pace",
+      "detail": "Escena 10: 24 s en una sola toma; por encima de 6 s córtala donde la voz cambia de idea. Una animación continúa entre escenas, así que dividirla no la interrumpe"
+    },
+    {
+      "level": "warning",
+      "rule": "scene_pace",
+      "detail": "Escena 11: 17 s en una sola toma; por encima de 6 s córtala donde la voz cambia de idea. Una animación continúa entre escenas, así que dividirla no la interrumpe"
+    }
+  ],
+  "estimated_seconds": 204.9,
+  "target_seconds": 210,
+  "checked_at": "2026-08-15T12:29:14.944527-05:00"
+}

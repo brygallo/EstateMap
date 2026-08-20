@@ -1,0 +1,4208 @@
+{
+  "brandId": "aents",
+  "brandName": "Aents",
+  "brandTagline": "Software for people.",
+  "brandSymbol": "brand/symbol-negative-512.png",
+  "title": "Estás creando software con inteligencia artificial",
+  "coverText": "Construyes software con IA",
+  "cta": "Cuéntanos qué estás construyendo",
+  "url": "aents.net",
+  "brandTile": "brand/brand-tile-1024.png",
+  "kicker": null,
+  "musicFile": null,
+  "showSafeAreas": false,
+  "scenes": [
+    {
+      "purpose": "gancho",
+      "durationInFrames": 389,
+      "headline": "¿Construyes con IA?",
+      "captions": [
+        {
+          "text": "¿Estás creando una página web,",
+          "start": 0.0,
+          "end": 1.621,
+          "words": [
+            {
+              "text": "¿Estás",
+              "start": 0.0,
+              "end": 0.335
+            },
+            {
+              "text": "creando",
+              "start": 0.335,
+              "end": 0.782
+            },
+            {
+              "text": "una",
+              "start": 0.782,
+              "end": 1.006
+            },
+            {
+              "text": "página",
+              "start": 1.006,
+              "end": 1.397
+            },
+            {
+              "text": "web,",
+              "start": 1.397,
+              "end": 1.621
+            }
+          ]
+        },
+        {
+          "text": "una aplicación o un sistema",
+          "start": 1.621,
+          "end": 3.185,
+          "words": [
+            {
+              "text": "una",
+              "start": 0.0,
+              "end": 0.224
+            },
+            {
+              "text": "aplicación",
+              "start": 0.224,
+              "end": 0.838
+            },
+            {
+              "text": "o",
+              "start": 0.838,
+              "end": 0.95
+            },
+            {
+              "text": "un",
+              "start": 0.95,
+              "end": 1.118
+            },
+            {
+              "text": "sistema",
+              "start": 1.118,
+              "end": 1.565
+            }
+          ]
+        },
+        {
+          "text": "completo usando inteligencia artificial?",
+          "start": 3.185,
+          "end": 5.421,
+          "words": [
+            {
+              "text": "completo",
+              "start": 0.0,
+              "end": 0.503
+            },
+            {
+              "text": "usando",
+              "start": 0.503,
+              "end": 0.894
+            },
+            {
+              "text": "inteligencia",
+              "start": 0.894,
+              "end": 1.621
+            },
+            {
+              "text": "artificial?",
+              "start": 1.621,
+              "end": 2.235
+            }
+          ]
+        },
+        {
+          "text": "Entonces esto es para ti.",
+          "start": 5.421,
+          "end": 6.818,
+          "words": [
+            {
+              "text": "Entonces",
+              "start": 0.0,
+              "end": 0.503
+            },
+            {
+              "text": "esto",
+              "start": 0.503,
+              "end": 0.782
+            },
+            {
+              "text": "es",
+              "start": 0.782,
+              "end": 0.95
+            },
+            {
+              "text": "para",
+              "start": 0.95,
+              "end": 1.229
+            },
+            {
+              "text": "ti.",
+              "start": 1.229,
+              "end": 1.397
+            }
+          ]
+        },
+        {
+          "text": "Porque hay una diferencia enorme",
+          "start": 6.818,
+          "end": 8.662,
+          "words": [
+            {
+              "text": "Porque",
+              "start": 0.0,
+              "end": 0.391
+            },
+            {
+              "text": "hay",
+              "start": 0.391,
+              "end": 0.615
+            },
+            {
+              "text": "una",
+              "start": 0.615,
+              "end": 0.838
+            },
+            {
+              "text": "diferencia",
+              "start": 0.838,
+              "end": 1.453
+            },
+            {
+              "text": "enorme",
+              "start": 1.453,
+              "end": 1.844
+            }
+          ]
+        },
+        {
+          "text": "entre lograr que escriba código,",
+          "start": 8.662,
+          "end": 10.451,
+          "words": [
+            {
+              "text": "entre",
+              "start": 0.0,
+              "end": 0.335
+            },
+            {
+              "text": "lograr",
+              "start": 0.335,
+              "end": 0.727
+            },
+            {
+              "text": "que",
+              "start": 0.727,
+              "end": 0.95
+            },
+            {
+              "text": "escriba",
+              "start": 0.95,
+              "end": 1.397
+            },
+            {
+              "text": "código,",
+              "start": 1.397,
+              "end": 1.788
+            }
+          ]
+        },
+        {
+          "text": "y lograr que construya buen software.",
+          "start": 10.451,
+          "end": 12.518,
+          "words": [
+            {
+              "text": "y",
+              "start": 0.0,
+              "end": 0.112
+            },
+            {
+              "text": "lograr",
+              "start": 0.112,
+              "end": 0.503
+            },
+            {
+              "text": "que",
+              "start": 0.503,
+              "end": 0.727
+            },
+            {
+              "text": "construya",
+              "start": 0.727,
+              "end": 1.285
+            },
+            {
+              "text": "buen",
+              "start": 1.285,
+              "end": 1.565
+            },
+            {
+              "text": "software.",
+              "start": 1.565,
+              "end": 2.068
+            }
+          ]
+        }
+      ],
+      "visualDirection": "Alguien escribe en un campo de mensaje «Créame un sistema de ventas». El código se escribe solo, línea sobre línea, y se pliega hasta formar una aplicación con su menú, su tabla y su botón. Un visto verde confirma «Funciona». La cámara se aleja y detrás de esa pantalla aparecen, en un segundo plano hasta entonces invisible, las capas que nadie pidió: seguridad, base de datos, errores, móvil, permisos, respaldos y pruebas, cada una con su casilla vacía. El visto se apaga y en su lugar queda la pregunta «¿Está bien construido?». El bloque de marca de Aents está desde el primer fotograma.",
+      "transition": "cut",
+      "asset": "sim:aents-ia-funciona",
+      "assetType": "simulation",
+      "photo": null,
+      "voiceFile": "jobs/aents-008/audio/voice-01.mp3",
+      "assetStartInFrames": 0,
+      "assetTotalInFrames": 389,
+      "accent": "#22C55E"
+    },
+    {
+      "purpose": "problema",
+      "durationInFrames": 451,
+      "headline": "Dale contexto",
+      "captions": [
+        {
+          "text": "Primero: no empieces diciendo solamente",
+          "start": 0.0,
+          "end": 2.222,
+          "words": [
+            {
+              "text": "Primero:",
+              "start": 0.0,
+              "end": 0.456
+            },
+            {
+              "text": "no",
+              "start": 0.456,
+              "end": 0.627
+            },
+            {
+              "text": "empieces",
+              "start": 0.627,
+              "end": 1.14
+            },
+            {
+              "text": "diciendo",
+              "start": 1.14,
+              "end": 1.653
+            },
+            {
+              "text": "solamente",
+              "start": 1.653,
+              "end": 2.222
+            }
+          ]
+        },
+        {
+          "text": "créame una aplicación.",
+          "start": 2.222,
+          "end": 3.476,
+          "words": [
+            {
+              "text": "créame",
+              "start": 0.0,
+              "end": 0.399
+            },
+            {
+              "text": "una",
+              "start": 0.399,
+              "end": 0.627
+            },
+            {
+              "text": "aplicación.",
+              "start": 0.627,
+              "end": 1.254
+            }
+          ]
+        },
+        {
+          "text": "Una inteligencia artificial",
+          "start": 3.476,
+          "end": 5.072,
+          "words": [
+            {
+              "text": "Una",
+              "start": 0.0,
+              "end": 0.228
+            },
+            {
+              "text": "inteligencia",
+              "start": 0.228,
+              "end": 0.969
+            },
+            {
+              "text": "artificial",
+              "start": 0.969,
+              "end": 1.596
+            }
+          ]
+        },
+        {
+          "text": "programa mucho mejor",
+          "start": 5.072,
+          "end": 6.269,
+          "words": [
+            {
+              "text": "programa",
+              "start": 0.0,
+              "end": 0.513
+            },
+            {
+              "text": "mucho",
+              "start": 0.513,
+              "end": 0.855
+            },
+            {
+              "text": "mejor",
+              "start": 0.855,
+              "end": 1.197
+            }
+          ]
+        },
+        {
+          "text": "cuando entiende qué estás construyendo.",
+          "start": 6.269,
+          "end": 8.491,
+          "words": [
+            {
+              "text": "cuando",
+              "start": 0.0,
+              "end": 0.399
+            },
+            {
+              "text": "entiende",
+              "start": 0.399,
+              "end": 0.912
+            },
+            {
+              "text": "qué",
+              "start": 0.912,
+              "end": 1.14
+            },
+            {
+              "text": "estás",
+              "start": 1.14,
+              "end": 1.482
+            },
+            {
+              "text": "construyendo.",
+              "start": 1.482,
+              "end": 2.222
+            }
+          ]
+        },
+        {
+          "text": "Explícale quién va a usarlo,",
+          "start": 8.491,
+          "end": 10.087,
+          "words": [
+            {
+              "text": "Explícale",
+              "start": 0.0,
+              "end": 0.57
+            },
+            {
+              "text": "quién",
+              "start": 0.57,
+              "end": 0.912
+            },
+            {
+              "text": "va",
+              "start": 0.912,
+              "end": 1.083
+            },
+            {
+              "text": "a",
+              "start": 1.083,
+              "end": 1.197
+            },
+            {
+              "text": "usarlo,",
+              "start": 1.197,
+              "end": 1.596
+            }
+          ]
+        },
+        {
+          "text": "qué problema resuelve,",
+          "start": 10.087,
+          "end": 11.34,
+          "words": [
+            {
+              "text": "qué",
+              "start": 0.0,
+              "end": 0.228
+            },
+            {
+              "text": "problema",
+              "start": 0.228,
+              "end": 0.741
+            },
+            {
+              "text": "resuelve,",
+              "start": 0.741,
+              "end": 1.254
+            }
+          ]
+        },
+        {
+          "text": "qué puede hacer cada usuario",
+          "start": 11.34,
+          "end": 12.993,
+          "words": [
+            {
+              "text": "qué",
+              "start": 0.0,
+              "end": 0.228
+            },
+            {
+              "text": "puede",
+              "start": 0.228,
+              "end": 0.57
+            },
+            {
+              "text": "hacer",
+              "start": 0.57,
+              "end": 0.912
+            },
+            {
+              "text": "cada",
+              "start": 0.912,
+              "end": 1.197
+            },
+            {
+              "text": "usuario",
+              "start": 1.197,
+              "end": 1.653
+            }
+          ]
+        },
+        {
+          "text": "y qué nunca debería ocurrir.",
+          "start": 12.993,
+          "end": 14.589,
+          "words": [
+            {
+              "text": "y",
+              "start": 0.0,
+              "end": 0.114
+            },
+            {
+              "text": "qué",
+              "start": 0.114,
+              "end": 0.342
+            },
+            {
+              "text": "nunca",
+              "start": 0.342,
+              "end": 0.684
+            },
+            {
+              "text": "debería",
+              "start": 0.684,
+              "end": 1.14
+            },
+            {
+              "text": "ocurrir.",
+              "start": 1.14,
+              "end": 1.596
+            }
+          ]
+        }
+      ],
+      "visualDirection": "Un mensaje corto —«Hazme un sistema de inventario»— entra en el campo y devuelve una estructura genérica: cajas iguales, sin nombres, que se desmorona y se descarta. Alrededor del mismo campo empiezan a colocarse fichas de contexto: usuarios, roles, productos, bodegas, movimientos, permisos, reglas y tecnología. Cada ficha entra escalonada y traza su conector hacia el centro. Con el contexto puesto, la estructura se vuelve a construir: ahora las cajas tienen nombre, orden y jerarquía, y las relaciones entre ellas son visibles.",
+      "transition": "cut",
+      "asset": "sim:aents-ia-contexto",
+      "assetType": "simulation",
+      "photo": null,
+      "voiceFile": "jobs/aents-008/audio/voice-02.mp3",
+      "assetStartInFrames": 0,
+      "assetTotalInFrames": 451,
+      "accent": "#6B5CF6"
+    },
+    {
+      "purpose": "prueba",
+      "durationInFrames": 446,
+      "headline": "Por partes",
+      "captions": [
+        {
+          "text": "Segundo: no le pidas el sistema completo",
+          "start": 0.0,
+          "end": 2.237,
+          "words": [
+            {
+              "text": "Segundo:",
+              "start": 0.0,
+              "end": 0.447
+            },
+            {
+              "text": "no",
+              "start": 0.447,
+              "end": 0.615
+            },
+            {
+              "text": "le",
+              "start": 0.615,
+              "end": 0.783
+            },
+            {
+              "text": "pidas",
+              "start": 0.783,
+              "end": 1.118
+            },
+            {
+              "text": "el",
+              "start": 1.118,
+              "end": 1.286
+            },
+            {
+              "text": "sistema",
+              "start": 1.286,
+              "end": 1.733
+            },
+            {
+              "text": "completo",
+              "start": 1.733,
+              "end": 2.237
+            }
+          ]
+        },
+        {
+          "text": "en un solo mensaje.",
+          "start": 2.237,
+          "end": 3.299,
+          "words": [
+            {
+              "text": "en",
+              "start": 0.0,
+              "end": 0.168
+            },
+            {
+              "text": "un",
+              "start": 0.168,
+              "end": 0.335
+            },
+            {
+              "text": "solo",
+              "start": 0.335,
+              "end": 0.615
+            },
+            {
+              "text": "mensaje.",
+              "start": 0.615,
+              "end": 1.062
+            }
+          ]
+        },
+        {
+          "text": "Ver aparecer cientos de archivos",
+          "start": 3.299,
+          "end": 5.144,
+          "words": [
+            {
+              "text": "Ver",
+              "start": 0.0,
+              "end": 0.224
+            },
+            {
+              "text": "aparecer",
+              "start": 0.224,
+              "end": 0.727
+            },
+            {
+              "text": "cientos",
+              "start": 0.727,
+              "end": 1.174
+            },
+            {
+              "text": "de",
+              "start": 1.174,
+              "end": 1.342
+            },
+            {
+              "text": "archivos",
+              "start": 1.342,
+              "end": 1.845
+            }
+          ]
+        },
+        {
+          "text": "impresiona,",
+          "start": 5.144,
+          "end": 5.759,
+          "words": [
+            {
+              "text": "impresiona,",
+              "start": 0.0,
+              "end": 0.615
+            }
+          ]
+        },
+        {
+          "text": "hasta que buscas dónde está",
+          "start": 5.759,
+          "end": 7.325,
+          "words": [
+            {
+              "text": "hasta",
+              "start": 0.0,
+              "end": 0.335
+            },
+            {
+              "text": "que",
+              "start": 0.335,
+              "end": 0.559
+            },
+            {
+              "text": "buscas",
+              "start": 0.559,
+              "end": 0.951
+            },
+            {
+              "text": "dónde",
+              "start": 0.951,
+              "end": 1.286
+            },
+            {
+              "text": "está",
+              "start": 1.286,
+              "end": 1.566
+            }
+          ]
+        },
+        {
+          "text": "el error. Divide:",
+          "start": 7.325,
+          "end": 8.22,
+          "words": [
+            {
+              "text": "el",
+              "start": 0.0,
+              "end": 0.168
+            },
+            {
+              "text": "error.",
+              "start": 0.168,
+              "end": 0.503
+            },
+            {
+              "text": "Divide:",
+              "start": 0.503,
+              "end": 0.895
+            }
+          ]
+        },
+        {
+          "text": "primero la arquitectura,",
+          "start": 8.22,
+          "end": 9.562,
+          "words": [
+            {
+              "text": "primero",
+              "start": 0.0,
+              "end": 0.447
+            },
+            {
+              "text": "la",
+              "start": 0.447,
+              "end": 0.615
+            },
+            {
+              "text": "arquitectura,",
+              "start": 0.615,
+              "end": 1.342
+            }
+          ]
+        },
+        {
+          "text": "después el acceso,",
+          "start": 9.562,
+          "end": 10.568,
+          "words": [
+            {
+              "text": "después",
+              "start": 0.0,
+              "end": 0.447
+            },
+            {
+              "text": "el",
+              "start": 0.447,
+              "end": 0.615
+            },
+            {
+              "text": "acceso,",
+              "start": 0.615,
+              "end": 1.006
+            }
+          ]
+        },
+        {
+          "text": "después una funcionalidad.",
+          "start": 10.568,
+          "end": 12.022,
+          "words": [
+            {
+              "text": "después",
+              "start": 0.0,
+              "end": 0.447
+            },
+            {
+              "text": "una",
+              "start": 0.447,
+              "end": 0.671
+            },
+            {
+              "text": "funcionalidad.",
+              "start": 0.671,
+              "end": 1.454
+            }
+          ]
+        },
+        {
+          "text": "La pruebas,",
+          "start": 12.022,
+          "end": 12.637,
+          "words": [
+            {
+              "text": "La",
+              "start": 0.0,
+              "end": 0.168
+            },
+            {
+              "text": "pruebas,",
+              "start": 0.168,
+              "end": 0.615
+            }
+          ]
+        },
+        {
+          "text": "la corriges y recién ahí sigues.",
+          "start": 12.637,
+          "end": 14.426,
+          "words": [
+            {
+              "text": "la",
+              "start": 0.0,
+              "end": 0.168
+            },
+            {
+              "text": "corriges",
+              "start": 0.168,
+              "end": 0.671
+            },
+            {
+              "text": "y",
+              "start": 0.671,
+              "end": 0.783
+            },
+            {
+              "text": "recién",
+              "start": 0.783,
+              "end": 1.174
+            },
+            {
+              "text": "ahí",
+              "start": 1.174,
+              "end": 1.398
+            },
+            {
+              "text": "sigues.",
+              "start": 1.398,
+              "end": 1.789
+            }
+          ]
+        }
+      ],
+      "visualDirection": "Un mensaje enorme ocupa media pantalla y de él salen disparados decenas de archivos que llenan el cuadro. Uno se pone rojo. Una línea intenta seguir sus conexiones y se pierde entre las demás, dos veces, hasta quedarse sin camino. El cuadro se limpia y vuelve a empezar: cinco bloques en fila —arquitectura, acceso, usuarios, inventario, reportes—. Cada bloque se construye, se prueba, recibe su visto y solo entonces se enciende el siguiente. El bloque en curso es el único iluminado.",
+      "transition": "cut",
+      "asset": "sim:aents-ia-partes",
+      "assetType": "simulation",
+      "photo": null,
+      "voiceFile": "jobs/aents-008/audio/voice-03.mp3",
+      "assetStartInFrames": 0,
+      "assetTotalInFrames": 446,
+      "accent": "#14B8A6"
+    },
+    {
+      "purpose": "prueba",
+      "durationInFrames": 460,
+      "headline": "Primero las reglas",
+      "captions": [
+        {
+          "text": "Tercero: define las reglas del negocio",
+          "start": 0.0,
+          "end": 2.182,
+          "words": [
+            {
+              "text": "Tercero:",
+              "start": 0.0,
+              "end": 0.459
+            },
+            {
+              "text": "define",
+              "start": 0.459,
+              "end": 0.861
+            },
+            {
+              "text": "las",
+              "start": 0.861,
+              "end": 1.091
+            },
+            {
+              "text": "reglas",
+              "start": 1.091,
+              "end": 1.493
+            },
+            {
+              "text": "del",
+              "start": 1.493,
+              "end": 1.722
+            },
+            {
+              "text": "negocio",
+              "start": 1.722,
+              "end": 2.182
+            }
+          ]
+        },
+        {
+          "text": "antes de pedir código.",
+          "start": 2.182,
+          "end": 3.444,
+          "words": [
+            {
+              "text": "antes",
+              "start": 0.0,
+              "end": 0.344
+            },
+            {
+              "text": "de",
+              "start": 0.344,
+              "end": 0.517
+            },
+            {
+              "text": "pedir",
+              "start": 0.517,
+              "end": 0.861
+            },
+            {
+              "text": "código.",
+              "start": 0.861,
+              "end": 1.263
+            }
+          ]
+        },
+        {
+          "text": "Imagina un sistema de citas.",
+          "start": 3.444,
+          "end": 5.052,
+          "words": [
+            {
+              "text": "Imagina",
+              "start": 0.0,
+              "end": 0.459
+            },
+            {
+              "text": "un",
+              "start": 0.459,
+              "end": 0.631
+            },
+            {
+              "text": "sistema",
+              "start": 0.631,
+              "end": 1.091
+            },
+            {
+              "text": "de",
+              "start": 1.091,
+              "end": 1.263
+            },
+            {
+              "text": "citas.",
+              "start": 1.263,
+              "end": 1.607
+            }
+          ]
+        },
+        {
+          "text": "No basta con decir necesito",
+          "start": 5.052,
+          "end": 6.659,
+          "words": [
+            {
+              "text": "No",
+              "start": 0.0,
+              "end": 0.172
+            },
+            {
+              "text": "basta",
+              "start": 0.172,
+              "end": 0.517
+            },
+            {
+              "text": "con",
+              "start": 0.517,
+              "end": 0.746
+            },
+            {
+              "text": "decir",
+              "start": 0.746,
+              "end": 1.091
+            },
+            {
+              "text": "necesito",
+              "start": 1.091,
+              "end": 1.607
+            }
+          ]
+        },
+        {
+          "text": "reservar citas.",
+          "start": 6.659,
+          "end": 7.52,
+          "words": [
+            {
+              "text": "reservar",
+              "start": 0.0,
+              "end": 0.517
+            },
+            {
+              "text": "citas.",
+              "start": 0.517,
+              "end": 0.861
+            }
+          ]
+        },
+        {
+          "text": "¿Qué pasa si dos personas piden",
+          "start": 7.52,
+          "end": 9.3,
+          "words": [
+            {
+              "text": "¿Qué",
+              "start": 0.0,
+              "end": 0.23
+            },
+            {
+              "text": "pasa",
+              "start": 0.23,
+              "end": 0.517
+            },
+            {
+              "text": "si",
+              "start": 0.517,
+              "end": 0.689
+            },
+            {
+              "text": "dos",
+              "start": 0.689,
+              "end": 0.919
+            },
+            {
+              "text": "personas",
+              "start": 0.919,
+              "end": 1.435
+            },
+            {
+              "text": "piden",
+              "start": 1.435,
+              "end": 1.78
+            }
+          ]
+        },
+        {
+          "text": "el mismo horario?",
+          "start": 9.3,
+          "end": 10.276,
+          "words": [
+            {
+              "text": "el",
+              "start": 0.0,
+              "end": 0.172
+            },
+            {
+              "text": "mismo",
+              "start": 0.172,
+              "end": 0.517
+            },
+            {
+              "text": "horario?",
+              "start": 0.517,
+              "end": 0.976
+            }
+          ]
+        },
+        {
+          "text": "¿Quién puede cancelar,",
+          "start": 10.276,
+          "end": 11.482,
+          "words": [
+            {
+              "text": "¿Quién",
+              "start": 0.0,
+              "end": 0.344
+            },
+            {
+              "text": "puede",
+              "start": 0.344,
+              "end": 0.689
+            },
+            {
+              "text": "cancelar,",
+              "start": 0.689,
+              "end": 1.206
+            }
+          ]
+        },
+        {
+          "text": "y hasta cuándo?",
+          "start": 11.482,
+          "end": 12.343,
+          "words": [
+            {
+              "text": "y",
+              "start": 0.0,
+              "end": 0.115
+            },
+            {
+              "text": "hasta",
+              "start": 0.115,
+              "end": 0.459
+            },
+            {
+              "text": "cuándo?",
+              "start": 0.459,
+              "end": 0.861
+            }
+          ]
+        },
+        {
+          "text": "Eso pesa mucho más",
+          "start": 12.343,
+          "end": 13.434,
+          "words": [
+            {
+              "text": "Eso",
+              "start": 0.0,
+              "end": 0.23
+            },
+            {
+              "text": "pesa",
+              "start": 0.23,
+              "end": 0.517
+            },
+            {
+              "text": "mucho",
+              "start": 0.517,
+              "end": 0.861
+            },
+            {
+              "text": "más",
+              "start": 0.861,
+              "end": 1.091
+            }
+          ]
+        },
+        {
+          "text": "que el color de un botón.",
+          "start": 13.434,
+          "end": 14.869,
+          "words": [
+            {
+              "text": "que",
+              "start": 0.0,
+              "end": 0.23
+            },
+            {
+              "text": "el",
+              "start": 0.23,
+              "end": 0.402
+            },
+            {
+              "text": "color",
+              "start": 0.402,
+              "end": 0.746
+            },
+            {
+              "text": "de",
+              "start": 0.746,
+              "end": 0.919
+            },
+            {
+              "text": "un",
+              "start": 0.919,
+              "end": 1.091
+            },
+            {
+              "text": "botón.",
+              "start": 1.091,
+              "end": 1.435
+            }
+          ]
+        }
+      ],
+      "visualDirection": "Una agenda semanal de ejemplo, rotulada EJEMPLO. Una cita entra y se acomoda en el martes a las diez. Una segunda cita viaja hacia la misma casilla, choca contra la primera, rebota y queda en rojo sin lugar donde caer. Alrededor del choque aparecen las preguntas sin responder: duplicados, cancelaciones, disponibilidad, permisos, límites. Cada pregunta se voltea sobre sí misma y se convierte en una regla escrita. Con las reglas puestas, la segunda cita vuelve a intentarlo: el sistema la rechaza con un mensaje claro y le ofrece el siguiente horario libre, que sí acepta.",
+      "transition": "cut",
+      "asset": "sim:aents-ia-reglas",
+      "assetType": "simulation",
+      "photo": null,
+      "voiceFile": "jobs/aents-008/audio/voice-04.mp3",
+      "assetStartInFrames": 0,
+      "assetTotalInFrames": 460,
+      "accent": "#A78BFA"
+    },
+    {
+      "purpose": "problema",
+      "durationInFrames": 463,
+      "headline": "Que funcione no basta",
+      "captions": [
+        {
+          "text": "Y este es el error más importante.",
+          "start": 0.0,
+          "end": 1.951,
+          "words": [
+            {
+              "text": "Y",
+              "start": 0.0,
+              "end": 0.115
+            },
+            {
+              "text": "este",
+              "start": 0.115,
+              "end": 0.402
+            },
+            {
+              "text": "es",
+              "start": 0.402,
+              "end": 0.574
+            },
+            {
+              "text": "el",
+              "start": 0.574,
+              "end": 0.746
+            },
+            {
+              "text": "error",
+              "start": 0.746,
+              "end": 1.09
+            },
+            {
+              "text": "más",
+              "start": 1.09,
+              "end": 1.319
+            },
+            {
+              "text": "importante.",
+              "start": 1.319,
+              "end": 1.951
+            }
+          ]
+        },
+        {
+          "text": "Ejecutas la aplicación,",
+          "start": 1.951,
+          "end": 3.27,
+          "words": [
+            {
+              "text": "Ejecutas",
+              "start": 0.0,
+              "end": 0.516
+            },
+            {
+              "text": "la",
+              "start": 0.516,
+              "end": 0.688
+            },
+            {
+              "text": "aplicación,",
+              "start": 0.688,
+              "end": 1.319
+            }
+          ]
+        },
+        {
+          "text": "presionas el botón, funciona,",
+          "start": 3.27,
+          "end": 4.876,
+          "words": [
+            {
+              "text": "presionas",
+              "start": 0.0,
+              "end": 0.574
+            },
+            {
+              "text": "el",
+              "start": 0.574,
+              "end": 0.746
+            },
+            {
+              "text": "botón,",
+              "start": 0.746,
+              "end": 1.09
+            },
+            {
+              "text": "funciona,",
+              "start": 1.09,
+              "end": 1.606
+            }
+          ]
+        },
+        {
+          "text": "y piensas que ya está.",
+          "start": 4.876,
+          "end": 6.138,
+          "words": [
+            {
+              "text": "y",
+              "start": 0.0,
+              "end": 0.115
+            },
+            {
+              "text": "piensas",
+              "start": 0.115,
+              "end": 0.574
+            },
+            {
+              "text": "que",
+              "start": 0.574,
+              "end": 0.803
+            },
+            {
+              "text": "ya",
+              "start": 0.803,
+              "end": 0.975
+            },
+            {
+              "text": "está.",
+              "start": 0.975,
+              "end": 1.262
+            }
+          ]
+        },
+        {
+          "text": "Pero funcionar en el caso perfecto",
+          "start": 6.138,
+          "end": 8.146,
+          "words": [
+            {
+              "text": "Pero",
+              "start": 0.0,
+              "end": 0.287
+            },
+            {
+              "text": "funcionar",
+              "start": 0.287,
+              "end": 0.861
+            },
+            {
+              "text": "en",
+              "start": 0.861,
+              "end": 1.033
+            },
+            {
+              "text": "el",
+              "start": 1.033,
+              "end": 1.205
+            },
+            {
+              "text": "caso",
+              "start": 1.205,
+              "end": 1.492
+            },
+            {
+              "text": "perfecto",
+              "start": 1.492,
+              "end": 2.008
+            }
+          ]
+        },
+        {
+          "text": "solo demuestra eso.",
+          "start": 8.146,
+          "end": 9.236,
+          "words": [
+            {
+              "text": "solo",
+              "start": 0.0,
+              "end": 0.287
+            },
+            {
+              "text": "demuestra",
+              "start": 0.287,
+              "end": 0.861
+            },
+            {
+              "text": "eso.",
+              "start": 0.861,
+              "end": 1.09
+            }
+          ]
+        },
+        {
+          "text": "¿Qué pasa sin internet?",
+          "start": 9.236,
+          "end": 10.498,
+          "words": [
+            {
+              "text": "¿Qué",
+              "start": 0.0,
+              "end": 0.229
+            },
+            {
+              "text": "pasa",
+              "start": 0.229,
+              "end": 0.516
+            },
+            {
+              "text": "sin",
+              "start": 0.516,
+              "end": 0.746
+            },
+            {
+              "text": "internet?",
+              "start": 0.746,
+              "end": 1.262
+            }
+          ]
+        },
+        {
+          "text": "¿Si el usuario presiona dos veces?",
+          "start": 10.498,
+          "end": 12.392,
+          "words": [
+            {
+              "text": "¿Si",
+              "start": 0.0,
+              "end": 0.172
+            },
+            {
+              "text": "el",
+              "start": 0.172,
+              "end": 0.344
+            },
+            {
+              "text": "usuario",
+              "start": 0.344,
+              "end": 0.803
+            },
+            {
+              "text": "presiona",
+              "start": 0.803,
+              "end": 1.319
+            },
+            {
+              "text": "dos",
+              "start": 1.319,
+              "end": 1.549
+            },
+            {
+              "text": "veces?",
+              "start": 1.549,
+              "end": 1.893
+            }
+          ]
+        },
+        {
+          "text": "¿Si intenta algo para lo",
+          "start": 12.392,
+          "end": 13.768,
+          "words": [
+            {
+              "text": "¿Si",
+              "start": 0.0,
+              "end": 0.172
+            },
+            {
+              "text": "intenta",
+              "start": 0.172,
+              "end": 0.631
+            },
+            {
+              "text": "algo",
+              "start": 0.631,
+              "end": 0.918
+            },
+            {
+              "text": "para",
+              "start": 0.918,
+              "end": 1.205
+            },
+            {
+              "text": "lo",
+              "start": 1.205,
+              "end": 1.377
+            }
+          ]
+        },
+        {
+          "text": "que no tiene permiso?",
+          "start": 13.768,
+          "end": 14.973,
+          "words": [
+            {
+              "text": "que",
+              "start": 0.0,
+              "end": 0.229
+            },
+            {
+              "text": "no",
+              "start": 0.229,
+              "end": 0.402
+            },
+            {
+              "text": "tiene",
+              "start": 0.402,
+              "end": 0.746
+            },
+            {
+              "text": "permiso?",
+              "start": 0.746,
+              "end": 1.205
+            }
+          ]
+        }
+      ],
+      "visualDirection": "Un teléfono con un formulario corto. El recorrido perfecto se cumple entero: se toca el campo, se escribe, se pulsa enviar y entra la confirmación verde. Todo el cuadro se tiñe de confirmación. Entonces el mismo recorrido se repite en condiciones distintas, una tras otra dentro del mismo teléfono: sin conexión, y la confirmación no llega; dos toques seguidos, y se crean dos registros iguales; una petición sin permiso, y la pantalla la deja pasar. Cada intento deja su equis al costado, hasta que la fila de vistos del principio queda debajo de una fila de equis.",
+      "transition": "cut",
+      "asset": "sim:aents-ia-camino-feliz",
+      "assetType": "simulation",
+      "photo": null,
+      "voiceFile": "jobs/aents-008/audio/voice-05.mp3",
+      "assetStartInFrames": 0,
+      "assetTotalInFrames": 463,
+      "accent": "#22C55E"
+    },
+    {
+      "purpose": "prueba",
+      "durationInFrames": 409,
+      "headline": "Revisa lo que genera",
+      "captions": [
+        {
+          "text": "Otro consejo:",
+          "start": 0.0,
+          "end": 0.752,
+          "words": [
+            {
+              "text": "Otro",
+              "start": 0.0,
+              "end": 0.289
+            },
+            {
+              "text": "consejo:",
+              "start": 0.289,
+              "end": 0.752
+            }
+          ]
+        },
+        {
+          "text": "no aceptes automáticamente todo",
+          "start": 0.752,
+          "end": 2.603,
+          "words": [
+            {
+              "text": "no",
+              "start": 0.0,
+              "end": 0.174
+            },
+            {
+              "text": "aceptes",
+              "start": 0.174,
+              "end": 0.636
+            },
+            {
+              "text": "automáticamente",
+              "start": 0.636,
+              "end": 1.562
+            },
+            {
+              "text": "todo",
+              "start": 1.562,
+              "end": 1.851
+            }
+          ]
+        },
+        {
+          "text": "el código que genera.",
+          "start": 2.603,
+          "end": 3.817,
+          "words": [
+            {
+              "text": "el",
+              "start": 0.0,
+              "end": 0.174
+            },
+            {
+              "text": "código",
+              "start": 0.174,
+              "end": 0.578
+            },
+            {
+              "text": "que",
+              "start": 0.578,
+              "end": 0.81
+            },
+            {
+              "text": "genera.",
+              "start": 0.81,
+              "end": 1.215
+            }
+          ]
+        },
+        {
+          "text": "Pregúntale por qué creó",
+          "start": 3.817,
+          "end": 5.205,
+          "words": [
+            {
+              "text": "Pregúntale",
+              "start": 0.0,
+              "end": 0.636
+            },
+            {
+              "text": "por",
+              "start": 0.636,
+              "end": 0.868
+            },
+            {
+              "text": "qué",
+              "start": 0.868,
+              "end": 1.099
+            },
+            {
+              "text": "creó",
+              "start": 1.099,
+              "end": 1.388
+            }
+          ]
+        },
+        {
+          "text": "ese archivo,",
+          "start": 5.205,
+          "end": 5.899,
+          "words": [
+            {
+              "text": "ese",
+              "start": 0.0,
+              "end": 0.231
+            },
+            {
+              "text": "archivo,",
+              "start": 0.231,
+              "end": 0.694
+            }
+          ]
+        },
+        {
+          "text": "por qué usó esa librería,",
+          "start": 5.899,
+          "end": 7.345,
+          "words": [
+            {
+              "text": "por",
+              "start": 0.0,
+              "end": 0.231
+            },
+            {
+              "text": "qué",
+              "start": 0.231,
+              "end": 0.463
+            },
+            {
+              "text": "usó",
+              "start": 0.463,
+              "end": 0.694
+            },
+            {
+              "text": "esa",
+              "start": 0.694,
+              "end": 0.925
+            },
+            {
+              "text": "librería,",
+              "start": 0.925,
+              "end": 1.446
+            }
+          ]
+        },
+        {
+          "text": "si hay una forma más simple.",
+          "start": 7.345,
+          "end": 8.965,
+          "words": [
+            {
+              "text": "si",
+              "start": 0.0,
+              "end": 0.174
+            },
+            {
+              "text": "hay",
+              "start": 0.174,
+              "end": 0.405
+            },
+            {
+              "text": "una",
+              "start": 0.405,
+              "end": 0.636
+            },
+            {
+              "text": "forma",
+              "start": 0.636,
+              "end": 0.983
+            },
+            {
+              "text": "más",
+              "start": 0.983,
+              "end": 1.215
+            },
+            {
+              "text": "simple.",
+              "start": 1.215,
+              "end": 1.619
+            }
+          ]
+        },
+        {
+          "text": "Úsala también para discutir",
+          "start": 8.965,
+          "end": 10.584,
+          "words": [
+            {
+              "text": "Úsala",
+              "start": 0.0,
+              "end": 0.347
+            },
+            {
+              "text": "también",
+              "start": 0.347,
+              "end": 0.81
+            },
+            {
+              "text": "para",
+              "start": 0.81,
+              "end": 1.099
+            },
+            {
+              "text": "discutir",
+              "start": 1.099,
+              "end": 1.619
+            }
+          ]
+        },
+        {
+          "text": "decisiones técnicas,",
+          "start": 10.584,
+          "end": 11.741,
+          "words": [
+            {
+              "text": "decisiones",
+              "start": 0.0,
+              "end": 0.636
+            },
+            {
+              "text": "técnicas,",
+              "start": 0.636,
+              "end": 1.157
+            }
+          ]
+        },
+        {
+          "text": "no solo para escribirlas.",
+          "start": 11.741,
+          "end": 13.187,
+          "words": [
+            {
+              "text": "no",
+              "start": 0.0,
+              "end": 0.174
+            },
+            {
+              "text": "solo",
+              "start": 0.174,
+              "end": 0.463
+            },
+            {
+              "text": "para",
+              "start": 0.463,
+              "end": 0.752
+            },
+            {
+              "text": "escribirlas.",
+              "start": 0.752,
+              "end": 1.446
+            }
+          ]
+        }
+      ],
+      "visualDirection": "Un panel de cambios con dos botones: «Aceptar todo» y «Revisar». El cursor va directo al primero, se detiene antes de tocarlo y se desvía al segundo. El código se abre y una línea concreta queda seleccionada; junto a ella entra una pregunta escrita y llega su respuesta. Como consecuencia visible: un bloque innecesario se retira del archivo, dos componentes casi iguales se juntan en uno solo, y una cadena de cuatro capas se acorta a dos. El contador de archivos del panel baja mientras ocurre.",
+      "transition": "cut",
+      "asset": "sim:aents-ia-revision",
+      "assetType": "simulation",
+      "photo": null,
+      "voiceFile": "jobs/aents-008/audio/voice-06.mp3",
+      "assetStartInFrames": 0,
+      "assetTotalInFrames": 409,
+      "accent": "#6B5CF6"
+    },
+    {
+      "purpose": "prueba",
+      "durationInFrames": 446,
+      "headline": "Cuidado con librerías",
+      "captions": [
+        {
+          "text": "Presta atención a las librerías.",
+          "start": 0.0,
+          "end": 1.839,
+          "words": [
+            {
+              "text": "Presta",
+              "start": 0.0,
+              "end": 0.402
+            },
+            {
+              "text": "atención",
+              "start": 0.402,
+              "end": 0.92
+            },
+            {
+              "text": "a",
+              "start": 0.92,
+              "end": 1.035
+            },
+            {
+              "text": "las",
+              "start": 1.035,
+              "end": 1.264
+            },
+            {
+              "text": "librerías.",
+              "start": 1.264,
+              "end": 1.839
+            }
+          ]
+        },
+        {
+          "text": "Puede recomendarte una dependencia",
+          "start": 1.839,
+          "end": 3.851,
+          "words": [
+            {
+              "text": "Puede",
+              "start": 0.0,
+              "end": 0.345
+            },
+            {
+              "text": "recomendarte",
+              "start": 0.345,
+              "end": 1.092
+            },
+            {
+              "text": "una",
+              "start": 1.092,
+              "end": 1.322
+            },
+            {
+              "text": "dependencia",
+              "start": 1.322,
+              "end": 2.012
+            }
+          ]
+        },
+        {
+          "text": "simplemente porque conoce",
+          "start": 3.851,
+          "end": 5.345,
+          "words": [
+            {
+              "text": "simplemente",
+              "start": 0.0,
+              "end": 0.69
+            },
+            {
+              "text": "porque",
+              "start": 0.69,
+              "end": 1.092
+            },
+            {
+              "text": "conoce",
+              "start": 1.092,
+              "end": 1.494
+            }
+          ]
+        },
+        {
+          "text": "una solución que la usa.",
+          "start": 5.345,
+          "end": 6.724,
+          "words": [
+            {
+              "text": "una",
+              "start": 0.0,
+              "end": 0.23
+            },
+            {
+              "text": "solución",
+              "start": 0.23,
+              "end": 0.747
+            },
+            {
+              "text": "que",
+              "start": 0.747,
+              "end": 0.977
+            },
+            {
+              "text": "la",
+              "start": 0.977,
+              "end": 1.149
+            },
+            {
+              "text": "usa.",
+              "start": 1.149,
+              "end": 1.379
+            }
+          ]
+        },
+        {
+          "text": "Antes de instalarla pregúntate",
+          "start": 6.724,
+          "end": 8.506,
+          "words": [
+            {
+              "text": "Antes",
+              "start": 0.0,
+              "end": 0.345
+            },
+            {
+              "text": "de",
+              "start": 0.345,
+              "end": 0.517
+            },
+            {
+              "text": "instalarla",
+              "start": 0.517,
+              "end": 1.149
+            },
+            {
+              "text": "pregúntate",
+              "start": 1.149,
+              "end": 1.782
+            }
+          ]
+        },
+        {
+          "text": "si de verdad la necesitas,",
+          "start": 8.506,
+          "end": 10.0,
+          "words": [
+            {
+              "text": "si",
+              "start": 0.0,
+              "end": 0.172
+            },
+            {
+              "text": "de",
+              "start": 0.172,
+              "end": 0.345
+            },
+            {
+              "text": "verdad",
+              "start": 0.345,
+              "end": 0.747
+            },
+            {
+              "text": "la",
+              "start": 0.747,
+              "end": 0.92
+            },
+            {
+              "text": "necesitas,",
+              "start": 0.92,
+              "end": 1.494
+            }
+          ]
+        },
+        {
+          "text": "si sigue mantenida",
+          "start": 10.0,
+          "end": 11.092,
+          "words": [
+            {
+              "text": "si",
+              "start": 0.0,
+              "end": 0.172
+            },
+            {
+              "text": "sigue",
+              "start": 0.172,
+              "end": 0.517
+            },
+            {
+              "text": "mantenida",
+              "start": 0.517,
+              "end": 1.092
+            }
+          ]
+        },
+        {
+          "text": "y si estás sumando algo enorme",
+          "start": 11.092,
+          "end": 12.874,
+          "words": [
+            {
+              "text": "y",
+              "start": 0.0,
+              "end": 0.115
+            },
+            {
+              "text": "si",
+              "start": 0.115,
+              "end": 0.287
+            },
+            {
+              "text": "estás",
+              "start": 0.287,
+              "end": 0.632
+            },
+            {
+              "text": "sumando",
+              "start": 0.632,
+              "end": 1.092
+            },
+            {
+              "text": "algo",
+              "start": 1.092,
+              "end": 1.379
+            },
+            {
+              "text": "enorme",
+              "start": 1.379,
+              "end": 1.782
+            }
+          ]
+        },
+        {
+          "text": "para resolver algo pequeño.",
+          "start": 12.874,
+          "end": 14.426,
+          "words": [
+            {
+              "text": "para",
+              "start": 0.0,
+              "end": 0.287
+            },
+            {
+              "text": "resolver",
+              "start": 0.287,
+              "end": 0.805
+            },
+            {
+              "text": "algo",
+              "start": 0.805,
+              "end": 1.092
+            },
+            {
+              "text": "pequeño.",
+              "start": 1.092,
+              "end": 1.552
+            }
+          ]
+        }
+      ],
+      "visualDirection": "Una aplicación pequeña y clara en el centro. Empiezan a acoplarse paquetes a su alrededor, uno tras otro, cada vez más grandes; el último es un bloque enorme que solo aporta una función diminuta. La aplicación queda enterrada y su silueta ya no se distingue. La cámara retrocede, y cada paquete pasa por tres comprobaciones —¿la necesito?, ¿está mantenida?, ¿es proporcional?—. Los que no pasan se desprenden y salen del cuadro. Quedan dos, acoplados donde deben, y la aplicación vuelve a verse entera.",
+      "transition": "cut",
+      "asset": "sim:aents-ia-dependencias",
+      "assetType": "simulation",
+      "photo": null,
+      "voiceFile": "jobs/aents-008/audio/voice-07.mp3",
+      "assetStartInFrames": 0,
+      "assetTotalInFrames": 446,
+      "accent": "#14B8A6"
+    },
+    {
+      "purpose": "problema",
+      "durationInFrames": 478,
+      "headline": "Ocultar no es proteger",
+      "captions": [
+        {
+          "text": "Y esto es especialmente importante:",
+          "start": 0.0,
+          "end": 1.917,
+          "words": [
+            {
+              "text": "Y",
+              "start": 0.0,
+              "end": 0.11
+            },
+            {
+              "text": "esto",
+              "start": 0.11,
+              "end": 0.383
+            },
+            {
+              "text": "es",
+              "start": 0.383,
+              "end": 0.548
+            },
+            {
+              "text": "especialmente",
+              "start": 0.548,
+              "end": 1.314
+            },
+            {
+              "text": "importante:",
+              "start": 1.314,
+              "end": 1.917
+            }
+          ]
+        },
+        {
+          "text": "no dejes la seguridad",
+          "start": 1.917,
+          "end": 3.121,
+          "words": [
+            {
+              "text": "no",
+              "start": 0.0,
+              "end": 0.164
+            },
+            {
+              "text": "dejes",
+              "start": 0.164,
+              "end": 0.493
+            },
+            {
+              "text": "la",
+              "start": 0.493,
+              "end": 0.657
+            },
+            {
+              "text": "seguridad",
+              "start": 0.657,
+              "end": 1.205
+            }
+          ]
+        },
+        {
+          "text": "para el final.",
+          "start": 3.121,
+          "end": 3.888,
+          "words": [
+            {
+              "text": "para",
+              "start": 0.0,
+              "end": 0.274
+            },
+            {
+              "text": "el",
+              "start": 0.274,
+              "end": 0.438
+            },
+            {
+              "text": "final.",
+              "start": 0.438,
+              "end": 0.767
+            }
+          ]
+        },
+        {
+          "text": "El acceso,",
+          "start": 3.888,
+          "end": 4.436,
+          "words": [
+            {
+              "text": "El",
+              "start": 0.0,
+              "end": 0.164
+            },
+            {
+              "text": "acceso,",
+              "start": 0.164,
+              "end": 0.548
+            }
+          ]
+        },
+        {
+          "text": "los permisos,",
+          "start": 4.436,
+          "end": 5.148,
+          "words": [
+            {
+              "text": "los",
+              "start": 0.0,
+              "end": 0.219
+            },
+            {
+              "text": "permisos,",
+              "start": 0.219,
+              "end": 0.712
+            }
+          ]
+        },
+        {
+          "text": "la validación y las credenciales",
+          "start": 5.148,
+          "end": 6.955,
+          "words": [
+            {
+              "text": "la",
+              "start": 0.0,
+              "end": 0.164
+            },
+            {
+              "text": "validación",
+              "start": 0.164,
+              "end": 0.767
+            },
+            {
+              "text": "y",
+              "start": 0.767,
+              "end": 0.876
+            },
+            {
+              "text": "las",
+              "start": 0.876,
+              "end": 1.095
+            },
+            {
+              "text": "credenciales",
+              "start": 1.095,
+              "end": 1.807
+            }
+          ]
+        },
+        {
+          "text": "se deciden desde la arquitectura.",
+          "start": 6.955,
+          "end": 8.762,
+          "words": [
+            {
+              "text": "se",
+              "start": 0.0,
+              "end": 0.164
+            },
+            {
+              "text": "deciden",
+              "start": 0.164,
+              "end": 0.602
+            },
+            {
+              "text": "desde",
+              "start": 0.602,
+              "end": 0.931
+            },
+            {
+              "text": "la",
+              "start": 0.931,
+              "end": 1.095
+            },
+            {
+              "text": "arquitectura.",
+              "start": 1.095,
+              "end": 1.807
+            }
+          ]
+        },
+        {
+          "text": "Nunca asumas que por esconder",
+          "start": 8.762,
+          "end": 10.405,
+          "words": [
+            {
+              "text": "Nunca",
+              "start": 0.0,
+              "end": 0.329
+            },
+            {
+              "text": "asumas",
+              "start": 0.329,
+              "end": 0.712
+            },
+            {
+              "text": "que",
+              "start": 0.712,
+              "end": 0.931
+            },
+            {
+              "text": "por",
+              "start": 0.931,
+              "end": 1.15
+            },
+            {
+              "text": "esconder",
+              "start": 1.15,
+              "end": 1.643
+            }
+          ]
+        },
+        {
+          "text": "un botón en la pantalla alguien",
+          "start": 10.405,
+          "end": 12.157,
+          "words": [
+            {
+              "text": "un",
+              "start": 0.0,
+              "end": 0.164
+            },
+            {
+              "text": "botón",
+              "start": 0.164,
+              "end": 0.493
+            },
+            {
+              "text": "en",
+              "start": 0.493,
+              "end": 0.657
+            },
+            {
+              "text": "la",
+              "start": 0.657,
+              "end": 0.821
+            },
+            {
+              "text": "pantalla",
+              "start": 0.821,
+              "end": 1.314
+            },
+            {
+              "text": "alguien",
+              "start": 1.314,
+              "end": 1.752
+            }
+          ]
+        },
+        {
+          "text": "ya no puede hacer esa acción:",
+          "start": 12.157,
+          "end": 13.745,
+          "words": [
+            {
+              "text": "ya",
+              "start": 0.0,
+              "end": 0.164
+            },
+            {
+              "text": "no",
+              "start": 0.164,
+              "end": 0.329
+            },
+            {
+              "text": "puede",
+              "start": 0.329,
+              "end": 0.657
+            },
+            {
+              "text": "hacer",
+              "start": 0.657,
+              "end": 0.986
+            },
+            {
+              "text": "esa",
+              "start": 0.986,
+              "end": 1.205
+            },
+            {
+              "text": "acción:",
+              "start": 1.205,
+              "end": 1.588
+            }
+          ]
+        },
+        {
+          "text": "eso se comprueba en el servidor.",
+          "start": 13.745,
+          "end": 15.498,
+          "words": [
+            {
+              "text": "eso",
+              "start": 0.0,
+              "end": 0.219
+            },
+            {
+              "text": "se",
+              "start": 0.219,
+              "end": 0.383
+            },
+            {
+              "text": "comprueba",
+              "start": 0.383,
+              "end": 0.931
+            },
+            {
+              "text": "en",
+              "start": 0.931,
+              "end": 1.095
+            },
+            {
+              "text": "el",
+              "start": 1.095,
+              "end": 1.26
+            },
+            {
+              "text": "servidor.",
+              "start": 1.26,
+              "end": 1.752
+            }
+          ]
+        }
+      ],
+      "visualDirection": "Una pantalla con un botón de administrador. El botón se retira de la interfaz y la pantalla queda aparentemente segura. Entonces, desde fuera de la interfaz, una petición viaja directamente hasta el servidor por debajo de la pantalla, y el servidor la acepta: el dato sale. La alarma se enciende sobre el servidor, no sobre el botón. La escena se rehace: alrededor del servidor se cierran, en orden, las capas de acceso, permisos y validación. La misma petición vuelve a viajar por el mismo camino y esta vez rebota contra la capa de permisos, con el motivo escrito.",
+      "transition": "cut",
+      "asset": "sim:aents-ia-seguridad",
+      "assetType": "simulation",
+      "photo": null,
+      "voiceFile": "jobs/aents-008/audio/voice-08.mp3",
+      "assetStartInFrames": 0,
+      "assetTotalInFrames": 478,
+      "accent": "#A78BFA"
+    },
+    {
+      "purpose": "problema",
+      "durationInFrames": 449,
+      "headline": "No pegues secretos",
+      "captions": [
+        {
+          "text": "Ten cuidado con lo que compartes",
+          "start": 0.0,
+          "end": 1.873,
+          "words": [
+            {
+              "text": "Ten",
+              "start": 0.0,
+              "end": 0.227
+            },
+            {
+              "text": "cuidado",
+              "start": 0.227,
+              "end": 0.681
+            },
+            {
+              "text": "con",
+              "start": 0.681,
+              "end": 0.908
+            },
+            {
+              "text": "lo",
+              "start": 0.908,
+              "end": 1.079
+            },
+            {
+              "text": "que",
+              "start": 1.079,
+              "end": 1.306
+            },
+            {
+              "text": "compartes",
+              "start": 1.306,
+              "end": 1.873
+            }
+          ]
+        },
+        {
+          "text": "con cualquier herramienta",
+          "start": 1.873,
+          "end": 3.349,
+          "words": [
+            {
+              "text": "con",
+              "start": 0.0,
+              "end": 0.227
+            },
+            {
+              "text": "cualquier",
+              "start": 0.227,
+              "end": 0.795
+            },
+            {
+              "text": "herramienta",
+              "start": 0.795,
+              "end": 1.476
+            }
+          ]
+        },
+        {
+          "text": "de inteligencia artificial.",
+          "start": 3.349,
+          "end": 4.882,
+          "words": [
+            {
+              "text": "de",
+              "start": 0.0,
+              "end": 0.17
+            },
+            {
+              "text": "inteligencia",
+              "start": 0.17,
+              "end": 0.908
+            },
+            {
+              "text": "artificial.",
+              "start": 0.908,
+              "end": 1.533
+            }
+          ]
+        },
+        {
+          "text": "No pegues contraseñas,",
+          "start": 4.882,
+          "end": 6.131,
+          "words": [
+            {
+              "text": "No",
+              "start": 0.0,
+              "end": 0.17
+            },
+            {
+              "text": "pegues",
+              "start": 0.17,
+              "end": 0.568
+            },
+            {
+              "text": "contraseñas,",
+              "start": 0.568,
+              "end": 1.249
+            }
+          ]
+        },
+        {
+          "text": "claves de acceso,",
+          "start": 6.131,
+          "end": 7.096,
+          "words": [
+            {
+              "text": "claves",
+              "start": 0.0,
+              "end": 0.397
+            },
+            {
+              "text": "de",
+              "start": 0.397,
+              "end": 0.568
+            },
+            {
+              "text": "acceso,",
+              "start": 0.568,
+              "end": 0.965
+            }
+          ]
+        },
+        {
+          "text": "datos privados de tus clientes",
+          "start": 7.096,
+          "end": 8.856,
+          "words": [
+            {
+              "text": "datos",
+              "start": 0.0,
+              "end": 0.341
+            },
+            {
+              "text": "privados",
+              "start": 0.341,
+              "end": 0.852
+            },
+            {
+              "text": "de",
+              "start": 0.852,
+              "end": 1.022
+            },
+            {
+              "text": "tus",
+              "start": 1.022,
+              "end": 1.249
+            },
+            {
+              "text": "clientes",
+              "start": 1.249,
+              "end": 1.76
+            }
+          ]
+        },
+        {
+          "text": "ni archivos internos",
+          "start": 8.856,
+          "end": 10.048,
+          "words": [
+            {
+              "text": "ni",
+              "start": 0.0,
+              "end": 0.17
+            },
+            {
+              "text": "archivos",
+              "start": 0.17,
+              "end": 0.681
+            },
+            {
+              "text": "internos",
+              "start": 0.681,
+              "end": 1.192
+            }
+          ]
+        },
+        {
+          "text": "sin entender antes cómo funciona",
+          "start": 10.048,
+          "end": 11.922,
+          "words": [
+            {
+              "text": "sin",
+              "start": 0.0,
+              "end": 0.227
+            },
+            {
+              "text": "entender",
+              "start": 0.227,
+              "end": 0.738
+            },
+            {
+              "text": "antes",
+              "start": 0.738,
+              "end": 1.079
+            },
+            {
+              "text": "cómo",
+              "start": 1.079,
+              "end": 1.362
+            },
+            {
+              "text": "funciona",
+              "start": 1.362,
+              "end": 1.873
+            }
+          ]
+        },
+        {
+          "text": "esa herramienta y qué permite",
+          "start": 11.922,
+          "end": 13.625,
+          "words": [
+            {
+              "text": "esa",
+              "start": 0.0,
+              "end": 0.227
+            },
+            {
+              "text": "herramienta",
+              "start": 0.227,
+              "end": 0.908
+            },
+            {
+              "text": "y",
+              "start": 0.908,
+              "end": 1.022
+            },
+            {
+              "text": "qué",
+              "start": 1.022,
+              "end": 1.249
+            },
+            {
+              "text": "permite",
+              "start": 1.249,
+              "end": 1.703
+            }
+          ]
+        },
+        {
+          "text": "tu organización.",
+          "start": 13.625,
+          "end": 14.533,
+          "words": [
+            {
+              "text": "tu",
+              "start": 0.0,
+              "end": 0.17
+            },
+            {
+              "text": "organización.",
+              "start": 0.17,
+              "end": 0.908
+            }
+          ]
+        }
+      ],
+      "visualDirection": "Cuatro archivos viajan arrastrados hacia una ventana de conversación: una contraseña, una clave de acceso, una hoja de clientes y una copia de la base de datos. Antes de entrar, una barrera se levanta y los detiene en seco; los archivos se acumulan contra ella. Uno por uno se transforman: la contraseña y la clave se convierten en variables de entorno con su valor oculto, la hoja de clientes queda con sus datos tapados y la copia de la base de datos se retira del cuadro. Solo entonces la barrera baja y pasa lo que quedó: el código sin secretos dentro.",
+      "transition": "cut",
+      "asset": "sim:aents-ia-secretos",
+      "assetType": "simulation",
+      "photo": null,
+      "voiceFile": "jobs/aents-008/audio/voice-09.mp3",
+      "assetStartInFrames": 0,
+      "assetTotalInFrames": 449,
+      "accent": "#22C55E"
+    },
+    {
+      "purpose": "prueba",
+      "durationInFrames": 429,
+      "headline": "Que pruebe su trabajo",
+      "captions": [
+        {
+          "text": "Después de pedirle",
+          "start": 0.0,
+          "end": 1.047,
+          "words": [
+            {
+              "text": "Después",
+              "start": 0.0,
+              "end": 0.441
+            },
+            {
+              "text": "de",
+              "start": 0.441,
+              "end": 0.606
+            },
+            {
+              "text": "pedirle",
+              "start": 0.606,
+              "end": 1.047
+            }
+          ]
+        },
+        {
+          "text": "que implemente algo,",
+          "start": 1.047,
+          "end": 2.15,
+          "words": [
+            {
+              "text": "que",
+              "start": 0.0,
+              "end": 0.22
+            },
+            {
+              "text": "implemente",
+              "start": 0.22,
+              "end": 0.827
+            },
+            {
+              "text": "algo,",
+              "start": 0.827,
+              "end": 1.102
+            }
+          ]
+        },
+        {
+          "text": "pídele que lo pruebe.",
+          "start": 2.15,
+          "end": 3.307,
+          "words": [
+            {
+              "text": "pídele",
+              "start": 0.0,
+              "end": 0.386
+            },
+            {
+              "text": "que",
+              "start": 0.386,
+              "end": 0.606
+            },
+            {
+              "text": "lo",
+              "start": 0.606,
+              "end": 0.772
+            },
+            {
+              "text": "pruebe.",
+              "start": 0.772,
+              "end": 1.158
+            }
+          ]
+        },
+        {
+          "text": "Que intente romper lo que acaba",
+          "start": 3.307,
+          "end": 5.071,
+          "words": [
+            {
+              "text": "Que",
+              "start": 0.0,
+              "end": 0.22
+            },
+            {
+              "text": "intente",
+              "start": 0.22,
+              "end": 0.661
+            },
+            {
+              "text": "romper",
+              "start": 0.661,
+              "end": 1.047
+            },
+            {
+              "text": "lo",
+              "start": 1.047,
+              "end": 1.213
+            },
+            {
+              "text": "que",
+              "start": 1.213,
+              "end": 1.433
+            },
+            {
+              "text": "acaba",
+              "start": 1.433,
+              "end": 1.764
+            }
+          ]
+        },
+        {
+          "text": "de construir.",
+          "start": 5.071,
+          "end": 5.788,
+          "words": [
+            {
+              "text": "de",
+              "start": 0.0,
+              "end": 0.165
+            },
+            {
+              "text": "construir.",
+              "start": 0.165,
+              "end": 0.717
+            }
+          ]
+        },
+        {
+          "text": "Y cuando aparezca un error,",
+          "start": 5.788,
+          "end": 7.276,
+          "words": [
+            {
+              "text": "Y",
+              "start": 0.0,
+              "end": 0.11
+            },
+            {
+              "text": "cuando",
+              "start": 0.11,
+              "end": 0.496
+            },
+            {
+              "text": "aparezca",
+              "start": 0.496,
+              "end": 0.992
+            },
+            {
+              "text": "un",
+              "start": 0.992,
+              "end": 1.158
+            },
+            {
+              "text": "error,",
+              "start": 1.158,
+              "end": 1.488
+            }
+          ]
+        },
+        {
+          "text": "no le digas solamente arréglalo:",
+          "start": 7.276,
+          "end": 9.04,
+          "words": [
+            {
+              "text": "no",
+              "start": 0.0,
+              "end": 0.165
+            },
+            {
+              "text": "le",
+              "start": 0.165,
+              "end": 0.331
+            },
+            {
+              "text": "digas",
+              "start": 0.331,
+              "end": 0.661
+            },
+            {
+              "text": "solamente",
+              "start": 0.661,
+              "end": 1.213
+            },
+            {
+              "text": "arréglalo:",
+              "start": 1.213,
+              "end": 1.764
+            }
+          ]
+        },
+        {
+          "text": "haz que primero explique por qué ocurrió.",
+          "start": 9.04,
+          "end": 11.299,
+          "words": [
+            {
+              "text": "haz",
+              "start": 0.0,
+              "end": 0.22
+            },
+            {
+              "text": "que",
+              "start": 0.22,
+              "end": 0.441
+            },
+            {
+              "text": "primero",
+              "start": 0.441,
+              "end": 0.882
+            },
+            {
+              "text": "explique",
+              "start": 0.882,
+              "end": 1.378
+            },
+            {
+              "text": "por",
+              "start": 1.378,
+              "end": 1.598
+            },
+            {
+              "text": "qué",
+              "start": 1.598,
+              "end": 1.819
+            },
+            {
+              "text": "ocurrió.",
+              "start": 1.819,
+              "end": 2.26
+            }
+          ]
+        },
+        {
+          "text": "Tapar el síntoma crea otro",
+          "start": 11.299,
+          "end": 12.788,
+          "words": [
+            {
+              "text": "Tapar",
+              "start": 0.0,
+              "end": 0.331
+            },
+            {
+              "text": "el",
+              "start": 0.331,
+              "end": 0.496
+            },
+            {
+              "text": "síntoma",
+              "start": 0.496,
+              "end": 0.937
+            },
+            {
+              "text": "crea",
+              "start": 0.937,
+              "end": 1.213
+            },
+            {
+              "text": "otro",
+              "start": 1.213,
+              "end": 1.488
+            }
+          ]
+        },
+        {
+          "text": "problema más abajo.",
+          "start": 12.788,
+          "end": 13.835,
+          "words": [
+            {
+              "text": "problema",
+              "start": 0.0,
+              "end": 0.496
+            },
+            {
+              "text": "más",
+              "start": 0.496,
+              "end": 0.717
+            },
+            {
+              "text": "abajo.",
+              "start": 0.717,
+              "end": 1.047
+            }
+          ]
+        }
+      ],
+      "visualDirection": "Una funcionalidad terminada, con su visto. La misma pieza cambia de papel: el rótulo pasa de «construir» a «probar» y empieza a lanzar casos contra ella —vacío, negativo, duplicado, muy largo, sin permiso—. Cuatro pasan; uno se pone rojo. En lugar de tapar el error donde apareció, la cámara baja siguiendo la línea que falló hasta la función de origen, y allí se ve la causa. Se corrige en el origen, la batería completa se vuelve a lanzar y los cinco casos quedan en verde, incluido el que había fallado.",
+      "transition": "cut",
+      "asset": "sim:aents-ia-pruebas",
+      "assetType": "simulation",
+      "photo": null,
+      "voiceFile": "jobs/aents-008/audio/voice-10.mp3",
+      "assetStartInFrames": 0,
+      "assetTotalInFrames": 429,
+      "accent": "#6B5CF6"
+    },
+    {
+      "purpose": "prueba",
+      "durationInFrames": 447,
+      "headline": "Usa Git",
+      "captions": [
+        {
+          "text": "Y por favor,",
+          "start": 0.0,
+          "end": 0.675,
+          "words": [
+            {
+              "text": "Y",
+              "start": 0.0,
+              "end": 0.113
+            },
+            {
+              "text": "por",
+              "start": 0.113,
+              "end": 0.338
+            },
+            {
+              "text": "favor,",
+              "start": 0.338,
+              "end": 0.675
+            }
+          ]
+        },
+        {
+          "text": "usa control de versiones.",
+          "start": 0.675,
+          "end": 2.082,
+          "words": [
+            {
+              "text": "usa",
+              "start": 0.0,
+              "end": 0.225
+            },
+            {
+              "text": "control",
+              "start": 0.225,
+              "end": 0.675
+            },
+            {
+              "text": "de",
+              "start": 0.675,
+              "end": 0.844
+            },
+            {
+              "text": "versiones.",
+              "start": 0.844,
+              "end": 1.407
+            }
+          ]
+        },
+        {
+          "text": "Puede cambiar muchísimo código",
+          "start": 2.082,
+          "end": 3.826,
+          "words": [
+            {
+              "text": "Puede",
+              "start": 0.0,
+              "end": 0.338
+            },
+            {
+              "text": "cambiar",
+              "start": 0.338,
+              "end": 0.788
+            },
+            {
+              "text": "muchísimo",
+              "start": 0.788,
+              "end": 1.35
+            },
+            {
+              "text": "código",
+              "start": 1.35,
+              "end": 1.744
+            }
+          ]
+        },
+        {
+          "text": "en segundos,",
+          "start": 3.826,
+          "end": 4.501,
+          "words": [
+            {
+              "text": "en",
+              "start": 0.0,
+              "end": 0.169
+            },
+            {
+              "text": "segundos,",
+              "start": 0.169,
+              "end": 0.675
+            }
+          ]
+        },
+        {
+          "text": "hasta que toca veinte archivos",
+          "start": 4.501,
+          "end": 6.245,
+          "words": [
+            {
+              "text": "hasta",
+              "start": 0.0,
+              "end": 0.338
+            },
+            {
+              "text": "que",
+              "start": 0.338,
+              "end": 0.563
+            },
+            {
+              "text": "toca",
+              "start": 0.563,
+              "end": 0.844
+            },
+            {
+              "text": "veinte",
+              "start": 0.844,
+              "end": 1.238
+            },
+            {
+              "text": "archivos",
+              "start": 1.238,
+              "end": 1.744
+            }
+          ]
+        },
+        {
+          "text": "y rompe algo que ayer funcionaba.",
+          "start": 6.245,
+          "end": 8.102,
+          "words": [
+            {
+              "text": "y",
+              "start": 0.0,
+              "end": 0.113
+            },
+            {
+              "text": "rompe",
+              "start": 0.113,
+              "end": 0.45
+            },
+            {
+              "text": "algo",
+              "start": 0.45,
+              "end": 0.731
+            },
+            {
+              "text": "que",
+              "start": 0.731,
+              "end": 0.956
+            },
+            {
+              "text": "ayer",
+              "start": 0.956,
+              "end": 1.238
+            },
+            {
+              "text": "funcionaba.",
+              "start": 1.238,
+              "end": 1.857
+            }
+          ]
+        },
+        {
+          "text": "Guarda cambios pequeños,",
+          "start": 8.102,
+          "end": 9.452,
+          "words": [
+            {
+              "text": "Guarda",
+              "start": 0.0,
+              "end": 0.394
+            },
+            {
+              "text": "cambios",
+              "start": 0.394,
+              "end": 0.844
+            },
+            {
+              "text": "pequeños,",
+              "start": 0.844,
+              "end": 1.35
+            }
+          ]
+        },
+        {
+          "text": "deja un punto estable antes",
+          "start": 9.452,
+          "end": 11.027,
+          "words": [
+            {
+              "text": "deja",
+              "start": 0.0,
+              "end": 0.281
+            },
+            {
+              "text": "un",
+              "start": 0.281,
+              "end": 0.45
+            },
+            {
+              "text": "punto",
+              "start": 0.45,
+              "end": 0.788
+            },
+            {
+              "text": "estable",
+              "start": 0.788,
+              "end": 1.238
+            },
+            {
+              "text": "antes",
+              "start": 1.238,
+              "end": 1.575
+            }
+          ]
+        },
+        {
+          "text": "de una modificación grande",
+          "start": 11.027,
+          "end": 12.546,
+          "words": [
+            {
+              "text": "de",
+              "start": 0.0,
+              "end": 0.169
+            },
+            {
+              "text": "una",
+              "start": 0.169,
+              "end": 0.394
+            },
+            {
+              "text": "modificación",
+              "start": 0.394,
+              "end": 1.125
+            },
+            {
+              "text": "grande",
+              "start": 1.125,
+              "end": 1.519
+            }
+          ]
+        },
+        {
+          "text": "y asegúrate de poder volver atrás.",
+          "start": 12.546,
+          "end": 14.459,
+          "words": [
+            {
+              "text": "y",
+              "start": 0.0,
+              "end": 0.113
+            },
+            {
+              "text": "asegúrate",
+              "start": 0.113,
+              "end": 0.675
+            },
+            {
+              "text": "de",
+              "start": 0.675,
+              "end": 0.844
+            },
+            {
+              "text": "poder",
+              "start": 0.844,
+              "end": 1.181
+            },
+            {
+              "text": "volver",
+              "start": 1.181,
+              "end": 1.575
+            },
+            {
+              "text": "atrás.",
+              "start": 1.575,
+              "end": 1.913
+            }
+          ]
+        }
+      ],
+      "visualDirection": "El contador de archivos modificados sube deprisa mientras el código se reescribe solo: diez, veinticinco, cuarenta y ocho. La pantalla se pone en rojo y la aplicación deja de abrir. Debajo aparece la línea de tiempo del proyecto con sus puntos guardados; el último punto estable está lejos. El estado actual se descarta y el proyecto vuelve a ese punto: la aplicación abre otra vez. La misma línea se rehace desde el principio, esta vez con puntos pequeños y seguidos, y el mismo fallo solo obliga a retroceder un paso.",
+      "transition": "cut",
+      "asset": "sim:aents-ia-git",
+      "assetType": "simulation",
+      "photo": null,
+      "voiceFile": "jobs/aents-008/audio/voice-11.mp3",
+      "assetStartInFrames": 0,
+      "assetTotalInFrames": 447,
+      "accent": "#14B8A6"
+    },
+    {
+      "purpose": "prueba",
+      "durationInFrames": 483,
+      "headline": "Generar es fácil",
+      "captions": [
+        {
+          "text": "Aparece otro problema:",
+          "start": 0.0,
+          "end": 1.305,
+          "words": [
+            {
+              "text": "Aparece",
+              "start": 0.0,
+              "end": 0.475
+            },
+            {
+              "text": "otro",
+              "start": 0.475,
+              "end": 0.771
+            },
+            {
+              "text": "problema:",
+              "start": 0.771,
+              "end": 1.305
+            }
+          ]
+        },
+        {
+          "text": "como generar código es facilísimo,",
+          "start": 1.305,
+          "end": 3.322,
+          "words": [
+            {
+              "text": "como",
+              "start": 0.0,
+              "end": 0.297
+            },
+            {
+              "text": "generar",
+              "start": 0.297,
+              "end": 0.771
+            },
+            {
+              "text": "código",
+              "start": 0.771,
+              "end": 1.186
+            },
+            {
+              "text": "es",
+              "start": 1.186,
+              "end": 1.364
+            },
+            {
+              "text": "facilísimo,",
+              "start": 1.364,
+              "end": 2.017
+            }
+          ]
+        },
+        {
+          "text": "generamos demasiado.",
+          "start": 3.322,
+          "end": 4.508,
+          "words": [
+            {
+              "text": "generamos",
+              "start": 0.0,
+              "end": 0.593
+            },
+            {
+              "text": "demasiado.",
+              "start": 0.593,
+              "end": 1.186
+            }
+          ]
+        },
+        {
+          "text": "Una función nueva,",
+          "start": 4.508,
+          "end": 5.576,
+          "words": [
+            {
+              "text": "Una",
+              "start": 0.0,
+              "end": 0.237
+            },
+            {
+              "text": "función",
+              "start": 0.237,
+              "end": 0.712
+            },
+            {
+              "text": "nueva,",
+              "start": 0.712,
+              "end": 1.068
+            }
+          ]
+        },
+        {
+          "text": "y otra que hace casi",
+          "start": 5.576,
+          "end": 6.822,
+          "words": [
+            {
+              "text": "y",
+              "start": 0.0,
+              "end": 0.119
+            },
+            {
+              "text": "otra",
+              "start": 0.119,
+              "end": 0.415
+            },
+            {
+              "text": "que",
+              "start": 0.415,
+              "end": 0.653
+            },
+            {
+              "text": "hace",
+              "start": 0.653,
+              "end": 0.949
+            },
+            {
+              "text": "casi",
+              "start": 0.949,
+              "end": 1.246
+            }
+          ]
+        },
+        {
+          "text": "lo mismo.",
+          "start": 6.822,
+          "end": 7.356,
+          "words": [
+            {
+              "text": "lo",
+              "start": 0.0,
+              "end": 0.178
+            },
+            {
+              "text": "mismo.",
+              "start": 0.178,
+              "end": 0.534
+            }
+          ]
+        },
+        {
+          "text": "Seis semanas después ni tú",
+          "start": 7.356,
+          "end": 8.958,
+          "words": [
+            {
+              "text": "Seis",
+              "start": 0.0,
+              "end": 0.297
+            },
+            {
+              "text": "semanas",
+              "start": 0.297,
+              "end": 0.771
+            },
+            {
+              "text": "después",
+              "start": 0.771,
+              "end": 1.246
+            },
+            {
+              "text": "ni",
+              "start": 1.246,
+              "end": 1.424
+            },
+            {
+              "text": "tú",
+              "start": 1.424,
+              "end": 1.602
+            }
+          ]
+        },
+        {
+          "text": "ni la inteligencia artificial",
+          "start": 8.958,
+          "end": 10.737,
+          "words": [
+            {
+              "text": "ni",
+              "start": 0.0,
+              "end": 0.178
+            },
+            {
+              "text": "la",
+              "start": 0.178,
+              "end": 0.356
+            },
+            {
+              "text": "inteligencia",
+              "start": 0.356,
+              "end": 1.127
+            },
+            {
+              "text": "artificial",
+              "start": 1.127,
+              "end": 1.78
+            }
+          ]
+        },
+        {
+          "text": "entienden el proyecto.",
+          "start": 10.737,
+          "end": 12.042,
+          "words": [
+            {
+              "text": "entienden",
+              "start": 0.0,
+              "end": 0.593
+            },
+            {
+              "text": "el",
+              "start": 0.593,
+              "end": 0.771
+            },
+            {
+              "text": "proyecto.",
+              "start": 0.771,
+              "end": 1.305
+            }
+          ]
+        },
+        {
+          "text": "Cada cierto tiempo detente,",
+          "start": 12.042,
+          "end": 13.644,
+          "words": [
+            {
+              "text": "Cada",
+              "start": 0.0,
+              "end": 0.297
+            },
+            {
+              "text": "cierto",
+              "start": 0.297,
+              "end": 0.712
+            },
+            {
+              "text": "tiempo",
+              "start": 0.712,
+              "end": 1.127
+            },
+            {
+              "text": "detente,",
+              "start": 1.127,
+              "end": 1.602
+            }
+          ]
+        },
+        {
+          "text": "elimina lo duplicado y simplifica.",
+          "start": 13.644,
+          "end": 15.661,
+          "words": [
+            {
+              "text": "elimina",
+              "start": 0.0,
+              "end": 0.475
+            },
+            {
+              "text": "lo",
+              "start": 0.475,
+              "end": 0.653
+            },
+            {
+              "text": "duplicado",
+              "start": 0.653,
+              "end": 1.246
+            },
+            {
+              "text": "y",
+              "start": 1.246,
+              "end": 1.364
+            },
+            {
+              "text": "simplifica.",
+              "start": 1.364,
+              "end": 2.017
+            }
+          ]
+        }
+      ],
+      "visualDirection": "Un proyecto limpio de seis archivos. Empiezan a añadirse archivos nuevos, cada vez más rápido, y entre ellos se tienden conexiones hasta formar una maraña; dos pares quedan marcados como casi idénticos. Una lectura intenta recorrer el proyecto y se pierde dos veces. Todo se detiene y entra el modo de reordenar: los duplicados se funden de dos en uno, los archivos sueltos se agrupan por carpetas y las conexiones que sobran se apagan. Queda una estructura de tres grupos que se lee de una sola pasada.",
+      "transition": "cut",
+      "asset": "sim:aents-ia-orden",
+      "assetType": "simulation",
+      "photo": null,
+      "voiceFile": "jobs/aents-008/audio/voice-12.mp3",
+      "assetStartInFrames": 0,
+      "assetTotalInFrames": 483,
+      "accent": "#A78BFA"
+    },
+    {
+      "purpose": "resultado",
+      "durationInFrames": 444,
+      "headline": "No conoce tu negocio",
+      "captions": [
+        {
+          "text": "Y recuerda algo fundamental.",
+          "start": 0.0,
+          "end": 1.59,
+          "words": [
+            {
+              "text": "Y",
+              "start": 0.0,
+              "end": 0.114
+            },
+            {
+              "text": "recuerda",
+              "start": 0.114,
+              "end": 0.625
+            },
+            {
+              "text": "algo",
+              "start": 0.625,
+              "end": 0.908
+            },
+            {
+              "text": "fundamental.",
+              "start": 0.908,
+              "end": 1.59
+            }
+          ]
+        },
+        {
+          "text": "Puede saber muchísimo",
+          "start": 1.59,
+          "end": 2.839,
+          "words": [
+            {
+              "text": "Puede",
+              "start": 0.0,
+              "end": 0.341
+            },
+            {
+              "text": "saber",
+              "start": 0.341,
+              "end": 0.681
+            },
+            {
+              "text": "muchísimo",
+              "start": 0.681,
+              "end": 1.249
+            }
+          ]
+        },
+        {
+          "text": "de programación,",
+          "start": 2.839,
+          "end": 3.747,
+          "words": [
+            {
+              "text": "de",
+              "start": 0.0,
+              "end": 0.17
+            },
+            {
+              "text": "programación,",
+              "start": 0.17,
+              "end": 0.908
+            }
+          ]
+        },
+        {
+          "text": "pero no conoce tu negocio.",
+          "start": 3.747,
+          "end": 5.223,
+          "words": [
+            {
+              "text": "pero",
+              "start": 0.0,
+              "end": 0.284
+            },
+            {
+              "text": "no",
+              "start": 0.284,
+              "end": 0.454
+            },
+            {
+              "text": "conoce",
+              "start": 0.454,
+              "end": 0.852
+            },
+            {
+              "text": "tu",
+              "start": 0.852,
+              "end": 1.022
+            },
+            {
+              "text": "negocio.",
+              "start": 1.022,
+              "end": 1.476
+            }
+          ]
+        },
+        {
+          "text": "Puede crear un botón",
+          "start": 5.223,
+          "end": 6.415,
+          "words": [
+            {
+              "text": "Puede",
+              "start": 0.0,
+              "end": 0.341
+            },
+            {
+              "text": "crear",
+              "start": 0.341,
+              "end": 0.681
+            },
+            {
+              "text": "un",
+              "start": 0.681,
+              "end": 0.852
+            },
+            {
+              "text": "botón",
+              "start": 0.852,
+              "end": 1.192
+            }
+          ]
+        },
+        {
+          "text": "que diga aprobar,",
+          "start": 6.415,
+          "end": 7.381,
+          "words": [
+            {
+              "text": "que",
+              "start": 0.0,
+              "end": 0.227
+            },
+            {
+              "text": "diga",
+              "start": 0.227,
+              "end": 0.511
+            },
+            {
+              "text": "aprobar,",
+              "start": 0.511,
+              "end": 0.965
+            }
+          ]
+        },
+        {
+          "text": "pero no sabe quién debería aprobar.",
+          "start": 7.381,
+          "end": 9.368,
+          "words": [
+            {
+              "text": "pero",
+              "start": 0.0,
+              "end": 0.284
+            },
+            {
+              "text": "no",
+              "start": 0.284,
+              "end": 0.454
+            },
+            {
+              "text": "sabe",
+              "start": 0.454,
+              "end": 0.738
+            },
+            {
+              "text": "quién",
+              "start": 0.738,
+              "end": 1.079
+            },
+            {
+              "text": "debería",
+              "start": 1.079,
+              "end": 1.533
+            },
+            {
+              "text": "aprobar.",
+              "start": 1.533,
+              "end": 1.987
+            }
+          ]
+        },
+        {
+          "text": "Bien usada acelera todo;",
+          "start": 9.368,
+          "end": 10.73,
+          "words": [
+            {
+              "text": "Bien",
+              "start": 0.0,
+              "end": 0.284
+            },
+            {
+              "text": "usada",
+              "start": 0.284,
+              "end": 0.625
+            },
+            {
+              "text": "acelera",
+              "start": 0.625,
+              "end": 1.079
+            },
+            {
+              "text": "todo;",
+              "start": 1.079,
+              "end": 1.363
+            }
+          ]
+        },
+        {
+          "text": "el problema empieza",
+          "start": 10.73,
+          "end": 11.866,
+          "words": [
+            {
+              "text": "el",
+              "start": 0.0,
+              "end": 0.17
+            },
+            {
+              "text": "problema",
+              "start": 0.17,
+              "end": 0.681
+            },
+            {
+              "text": "empieza",
+              "start": 0.681,
+              "end": 1.135
+            }
+          ]
+        },
+        {
+          "text": "cuando le entregamos también",
+          "start": 11.866,
+          "end": 13.512,
+          "words": [
+            {
+              "text": "cuando",
+              "start": 0.0,
+              "end": 0.397
+            },
+            {
+              "text": "le",
+              "start": 0.397,
+              "end": 0.568
+            },
+            {
+              "text": "entregamos",
+              "start": 0.568,
+              "end": 1.192
+            },
+            {
+              "text": "también",
+              "start": 1.192,
+              "end": 1.646
+            }
+          ]
+        },
+        {
+          "text": "las decisiones.",
+          "start": 13.512,
+          "end": 14.364,
+          "words": [
+            {
+              "text": "las",
+              "start": 0.0,
+              "end": 0.227
+            },
+            {
+              "text": "decisiones.",
+              "start": 0.227,
+              "end": 0.852
+            }
+          ]
+        }
+      ],
+      "visualDirection": "Tres piezas bien construidas —código, interfaz y base de datos— se colocan en su sitio alrededor de un hueco central vacío rotulado «negocio». Sobre la interfaz aparece un botón que dice aprobar; al pulsarlo, la pregunta «¿quién aprueba?» queda sin respuesta y el flujo se detiene. Una persona coloca en el hueco lo que faltaba: reglas, roles, proceso y objetivo. Las tres piezas se conectan por fin al centro y el flujo termina su recorrido. Al final, un volante: la inteligencia artificial acelera desde el asiento del copiloto y la mano humana sigue en la dirección.",
+      "transition": "cut",
+      "asset": "sim:aents-ia-criterio",
+      "assetType": "simulation",
+      "photo": null,
+      "voiceFile": "jobs/aents-008/audio/voice-13.mp3",
+      "assetStartInFrames": 0,
+      "assetTotalInFrames": 444,
+      "accent": "#22C55E"
+    },
+    {
+      "purpose": "cta",
+      "durationInFrames": 605,
+      "headline": "Cuéntanos tu proyecto",
+      "captions": [
+        {
+          "text": "Así que dale contexto,",
+          "start": 0.0,
+          "end": 1.232,
+          "words": [
+            {
+              "text": "Así",
+              "start": 0.0,
+              "end": 0.224
+            },
+            {
+              "text": "que",
+              "start": 0.224,
+              "end": 0.448
+            },
+            {
+              "text": "dale",
+              "start": 0.448,
+              "end": 0.728
+            },
+            {
+              "text": "contexto,",
+              "start": 0.728,
+              "end": 1.232
+            }
+          ]
+        },
+        {
+          "text": "divide el problema,",
+          "start": 1.232,
+          "end": 2.296,
+          "words": [
+            {
+              "text": "divide",
+              "start": 0.0,
+              "end": 0.392
+            },
+            {
+              "text": "el",
+              "start": 0.392,
+              "end": 0.56
+            },
+            {
+              "text": "problema,",
+              "start": 0.56,
+              "end": 1.064
+            }
+          ]
+        },
+        {
+          "text": "define las reglas,",
+          "start": 2.296,
+          "end": 3.304,
+          "words": [
+            {
+              "text": "define",
+              "start": 0.0,
+              "end": 0.392
+            },
+            {
+              "text": "las",
+              "start": 0.392,
+              "end": 0.616
+            },
+            {
+              "text": "reglas,",
+              "start": 0.616,
+              "end": 1.008
+            }
+          ]
+        },
+        {
+          "text": "revisa el código,",
+          "start": 3.304,
+          "end": 4.256,
+          "words": [
+            {
+              "text": "revisa",
+              "start": 0.0,
+              "end": 0.392
+            },
+            {
+              "text": "el",
+              "start": 0.392,
+              "end": 0.56
+            },
+            {
+              "text": "código,",
+              "start": 0.56,
+              "end": 0.952
+            }
+          ]
+        },
+        {
+          "text": "piensa en la seguridad",
+          "start": 4.256,
+          "end": 5.544,
+          "words": [
+            {
+              "text": "piensa",
+              "start": 0.0,
+              "end": 0.392
+            },
+            {
+              "text": "en",
+              "start": 0.392,
+              "end": 0.56
+            },
+            {
+              "text": "la",
+              "start": 0.56,
+              "end": 0.728
+            },
+            {
+              "text": "seguridad",
+              "start": 0.728,
+              "end": 1.288
+            }
+          ]
+        },
+        {
+          "text": "desde el principio",
+          "start": 5.544,
+          "end": 6.608,
+          "words": [
+            {
+              "text": "desde",
+              "start": 0.0,
+              "end": 0.336
+            },
+            {
+              "text": "el",
+              "start": 0.336,
+              "end": 0.504
+            },
+            {
+              "text": "principio",
+              "start": 0.504,
+              "end": 1.064
+            }
+          ]
+        },
+        {
+          "text": "y mantén tu proyecto ordenado.",
+          "start": 6.608,
+          "end": 8.288,
+          "words": [
+            {
+              "text": "y",
+              "start": 0.0,
+              "end": 0.112
+            },
+            {
+              "text": "mantén",
+              "start": 0.112,
+              "end": 0.504
+            },
+            {
+              "text": "tu",
+              "start": 0.504,
+              "end": 0.672
+            },
+            {
+              "text": "proyecto",
+              "start": 0.672,
+              "end": 1.176
+            },
+            {
+              "text": "ordenado.",
+              "start": 1.176,
+              "end": 1.68
+            }
+          ]
+        },
+        {
+          "text": "La velocidad sirve solamente",
+          "start": 8.288,
+          "end": 9.912,
+          "words": [
+            {
+              "text": "La",
+              "start": 0.0,
+              "end": 0.168
+            },
+            {
+              "text": "velocidad",
+              "start": 0.168,
+              "end": 0.728
+            },
+            {
+              "text": "sirve",
+              "start": 0.728,
+              "end": 1.064
+            },
+            {
+              "text": "solamente",
+              "start": 1.064,
+              "end": 1.624
+            }
+          ]
+        },
+        {
+          "text": "si sabes hacia dónde estás construyendo.",
+          "start": 9.912,
+          "end": 12.152,
+          "words": [
+            {
+              "text": "si",
+              "start": 0.0,
+              "end": 0.168
+            },
+            {
+              "text": "sabes",
+              "start": 0.168,
+              "end": 0.504
+            },
+            {
+              "text": "hacia",
+              "start": 0.504,
+              "end": 0.84
+            },
+            {
+              "text": "dónde",
+              "start": 0.84,
+              "end": 1.176
+            },
+            {
+              "text": "estás",
+              "start": 1.176,
+              "end": 1.512
+            },
+            {
+              "text": "construyendo.",
+              "start": 1.512,
+              "end": 2.24
+            }
+          ]
+        },
+        {
+          "text": "Y si tu proyecto está creciendo,",
+          "start": 12.152,
+          "end": 13.944,
+          "words": [
+            {
+              "text": "Y",
+              "start": 0.0,
+              "end": 0.112
+            },
+            {
+              "text": "si",
+              "start": 0.112,
+              "end": 0.28
+            },
+            {
+              "text": "tu",
+              "start": 0.28,
+              "end": 0.448
+            },
+            {
+              "text": "proyecto",
+              "start": 0.448,
+              "end": 0.952
+            },
+            {
+              "text": "está",
+              "start": 0.952,
+              "end": 1.232
+            },
+            {
+              "text": "creciendo,",
+              "start": 1.232,
+              "end": 1.792
+            }
+          ]
+        },
+        {
+          "text": "en Aents desarrollamos software",
+          "start": 13.944,
+          "end": 15.736,
+          "words": [
+            {
+              "text": "en",
+              "start": 0.0,
+              "end": 0.168
+            },
+            {
+              "text": "Aents",
+              "start": 0.168,
+              "end": 0.504
+            },
+            {
+              "text": "desarrollamos",
+              "start": 0.504,
+              "end": 1.288
+            },
+            {
+              "text": "software",
+              "start": 1.288,
+              "end": 1.792
+            }
+          ]
+        },
+        {
+          "text": "a medida.",
+          "start": 15.736,
+          "end": 16.24,
+          "words": [
+            {
+              "text": "a",
+              "start": 0.0,
+              "end": 0.112
+            },
+            {
+              "text": "medida.",
+              "start": 0.112,
+              "end": 0.504
+            }
+          ]
+        },
+        {
+          "text": "Cuéntanos qué estás construyendo. Aents.",
+          "start": 16.24,
+          "end": 18.425,
+          "words": [
+            {
+              "text": "Cuéntanos",
+              "start": 0.0,
+              "end": 0.56
+            },
+            {
+              "text": "qué",
+              "start": 0.56,
+              "end": 0.784
+            },
+            {
+              "text": "estás",
+              "start": 0.784,
+              "end": 1.12
+            },
+            {
+              "text": "construyendo.",
+              "start": 1.12,
+              "end": 1.848
+            },
+            {
+              "text": "Aents.",
+              "start": 1.848,
+              "end": 2.184
+            }
+          ]
+        },
+        {
+          "text": "Software para personas.",
+          "start": 18.425,
+          "end": 19.713,
+          "words": [
+            {
+              "text": "Software",
+              "start": 0.0,
+              "end": 0.504
+            },
+            {
+              "text": "para",
+              "start": 0.504,
+              "end": 0.784
+            },
+            {
+              "text": "personas.",
+              "start": 0.784,
+              "end": 1.288
+            }
+          ]
+        }
+      ],
+      "visualDirection": "Los conceptos de toda la clase están dispersos por el cuadro. Se ordenan formando un camino ascendente: contexto, reglas, arquitectura, desarrollo, pruebas, seguridad y, al final, producto. Cada paso enciende el siguiente con su conector. Cuando el camino llega al producto, el cuadro se despeja y entra el isotipo de Aents con su nombre, la línea «Cuéntanos qué estás construyendo», el dominio aents dot net y el cierre «Software para personas». El último tramo queda quieto y legible.",
+      "transition": "fade",
+      "asset": "sim:aents-ia-cierre",
+      "assetType": "simulation",
+      "photo": null,
+      "voiceFile": "jobs/aents-008/audio/voice-14.mp3",
+      "assetStartInFrames": 0,
+      "assetTotalInFrames": 605,
+      "accent": "#6B5CF6"
+    }
+  ]
+}

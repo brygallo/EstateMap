@@ -9,7 +9,7 @@
 - Subtítulos: quemados, máximo dos líneas y alto contraste. La sincronía no se estima: cada grupo de palabras se sintetiza por separado y su duración medida es su tiempo en pantalla.
 - Zona segura: no pongas texto esencial en los 240 px superiores (pestañas), los 460 px inferiores (caption, usuario y ticker de música; TikTok sube más que Instagram), los 240 px del lateral derecho por debajo de y = 820 (columna de acciones) ni los 64 px del lateral izquierdo. Las cifras anteriores de esta guía (120/220/140) eran una plantilla conservadora que la interfaz real de TikTok y Reels desborda; las vigentes están medidas contra esa interfaz y viven en `remotion/src/theme.ts`, de modo que renderer y documentación no pueden divergir. Para comprobar un montaje, renderiza la composición `SafeAreas` en Remotion Studio: dibuja las zonas encima del video.
 - Tipografía: los rótulos y el CTA se miden con la fuente real en el navegador de render (`remotion/src/layout.ts`) y bajan de cuerpo antes que desbordar. Un CTA largo ya no puede salirse del cuadro.
-- Portada: rostro, mapa o pantalla reconocible; 3–6 palabras, legibles en miniatura. `video render` la exporta como `exports/cover.png` y `video cover` la regenera.
+- Portada: rostro, mapa o pantalla reconocible; 3–6 palabras, legibles en miniatura. `video render` la exporta como `exports/<marca>-NNN-cover.png` y `video cover` la regenera.
 
 ## Lenguaje de edición
 

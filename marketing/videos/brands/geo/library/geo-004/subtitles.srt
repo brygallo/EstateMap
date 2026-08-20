@@ -1,0 +1,63 @@
+1
+00:00:00,000 --> 00:00:01,579
+Mandas diez fotos por chat
+
+2
+00:00:01,579 --> 00:00:03,567
+y siempre llega la misma pregunta.
+
+3
+00:00:04,033 --> 00:00:06,235
+Aquí entra Geo Propiedades Ecuador:
+
+4
+00:00:06,235 --> 00:00:08,249
+publicas y cada propiedad queda
+
+5
+00:00:08,249 --> 00:00:09,444
+ubicada en el mapa.
+
+6
+00:00:09,900 --> 00:00:11,993
+Publicas todas las que trabajas:
+
+7
+00:00:11,993 --> 00:00:13,302
+publicar no se paga
+
+8
+00:00:13,302 --> 00:00:15,068
+y no cobramos comisión por
+
+9
+00:00:15,068 --> 00:00:15,657
+la venta.
+
+10
+00:00:16,100 --> 00:00:18,527
+Cada ficha trae su enlace corto
+
+11
+00:00:18,527 --> 00:00:19,438
+y su código:
+
+12
+00:00:19,438 --> 00:00:20,879
+tu cliente lo abre
+
+13
+00:00:20,879 --> 00:00:21,713
+y ve fotos,
+
+14
+00:00:21,713 --> 00:00:23,154
+precio y ubicación.
+
+15
+00:00:23,600 --> 00:00:24,473
+Prueba el flujo
+
+16
+00:00:24,473 --> 00:00:25,728
+con una propiedad tuya.

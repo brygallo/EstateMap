@@ -1,0 +1,535 @@
+{
+  "brandId": "geo",
+  "brandName": "Geo Propiedades Ecuador",
+  "brandTagline": "Un producto de Aents",
+  "brandSymbol": "brand/aents-symbol-negative.png",
+  "title": "Publica tu propiedad por $0",
+  "coverText": "Publica por $0, sin comisión",
+  "cta": "Publica tu propiedad gratis",
+  "url": "geopropiedadesecuador.com",
+  "brandTile": "brand/aents-brand-tile-1024.png",
+  "kicker": null,
+  "musicFile": null,
+  "showSafeAreas": false,
+  "scenes": [
+    {
+      "purpose": "gancho",
+      "durationInFrames": 144,
+      "headline": "Publica por $0",
+      "captions": [
+        {
+          "text": "¿Vas a vender",
+          "start": 0.0,
+          "end": 0.867,
+          "words": [
+            {
+              "text": "¿Vas",
+              "start": 0.0,
+              "end": 0.267
+            },
+            {
+              "text": "a",
+              "start": 0.267,
+              "end": 0.4
+            },
+            {
+              "text": "vender",
+              "start": 0.4,
+              "end": 0.867
+            }
+          ]
+        },
+        {
+          "text": "o alquilar una propiedad?",
+          "start": 0.867,
+          "end": 2.534,
+          "words": [
+            {
+              "text": "o",
+              "start": 0.0,
+              "end": 0.133
+            },
+            {
+              "text": "alquilar",
+              "start": 0.133,
+              "end": 0.733
+            },
+            {
+              "text": "una",
+              "start": 0.733,
+              "end": 1.0
+            },
+            {
+              "text": "propiedad?",
+              "start": 1.0,
+              "end": 1.667
+            }
+          ]
+        },
+        {
+          "text": "Publícala por cero dólares.",
+          "start": 2.534,
+          "end": 4.334,
+          "words": [
+            {
+              "text": "Publícala",
+              "start": 0.0,
+              "end": 0.667
+            },
+            {
+              "text": "por",
+              "start": 0.667,
+              "end": 0.933
+            },
+            {
+              "text": "cero",
+              "start": 0.933,
+              "end": 1.267
+            },
+            {
+              "text": "dólares.",
+              "start": 1.267,
+              "end": 1.8
+            }
+          ]
+        }
+      ],
+      "visualDirection": "Arranca en movimiento: la columna de pasos de publicación se dibuja de arriba abajo sobre navy y el primer paso se marca en verde. A la derecha, una etiqueta de precio del anuncio con el valor tachado y un cero grande en teal. El producto se reconoce en el primer cuadro. Rótulo en una sola fila en la banda inferior, dentro de la zona segura; marca superior con dominio y tile desde y=205.",
+      "transition": "cut",
+      "asset": "sim:publicar-gratis",
+      "assetType": "simulation",
+      "photo": null,
+      "voiceFile": "jobs/geo-003/audio/voice-01.mp3",
+      "assetStartInFrames": 0,
+      "assetTotalInFrames": 144,
+      "accent": "#22C55E"
+    },
+    {
+      "purpose": "problema",
+      "durationInFrames": 220,
+      "headline": "Formulario guiado",
+      "captions": [
+        {
+          "text": "Primero elige el tipo de propiedad",
+          "start": 0.0,
+          "end": 2.115,
+          "words": [
+            {
+              "text": "Primero",
+              "start": 0.0,
+              "end": 0.483
+            },
+            {
+              "text": "elige",
+              "start": 0.483,
+              "end": 0.846
+            },
+            {
+              "text": "el",
+              "start": 0.846,
+              "end": 1.027
+            },
+            {
+              "text": "tipo",
+              "start": 1.027,
+              "end": 1.33
+            },
+            {
+              "text": "de",
+              "start": 1.33,
+              "end": 1.511
+            },
+            {
+              "text": "propiedad",
+              "start": 1.511,
+              "end": 2.115
+            }
+          ]
+        },
+        {
+          "text": "y si está en venta",
+          "start": 2.115,
+          "end": 3.264,
+          "words": [
+            {
+              "text": "y",
+              "start": 0.0,
+              "end": 0.121
+            },
+            {
+              "text": "si",
+              "start": 0.121,
+              "end": 0.302
+            },
+            {
+              "text": "está",
+              "start": 0.302,
+              "end": 0.604
+            },
+            {
+              "text": "en",
+              "start": 0.604,
+              "end": 0.786
+            },
+            {
+              "text": "venta",
+              "start": 0.786,
+              "end": 1.148
+            }
+          ]
+        },
+        {
+          "text": "o alquiler.",
+          "start": 3.264,
+          "end": 3.928,
+          "words": [
+            {
+              "text": "o",
+              "start": 0.0,
+              "end": 0.121
+            },
+            {
+              "text": "alquiler.",
+              "start": 0.121,
+              "end": 0.665
+            }
+          ]
+        },
+        {
+          "text": "Tu avance se guarda",
+          "start": 3.928,
+          "end": 5.137,
+          "words": [
+            {
+              "text": "Tu",
+              "start": 0.0,
+              "end": 0.181
+            },
+            {
+              "text": "avance",
+              "start": 0.181,
+              "end": 0.604
+            },
+            {
+              "text": "se",
+              "start": 0.604,
+              "end": 0.786
+            },
+            {
+              "text": "guarda",
+              "start": 0.786,
+              "end": 1.209
+            }
+          ]
+        },
+        {
+          "text": "mientras completas cada paso.",
+          "start": 5.137,
+          "end": 6.89,
+          "words": [
+            {
+              "text": "mientras",
+              "start": 0.0,
+              "end": 0.544
+            },
+            {
+              "text": "completas",
+              "start": 0.544,
+              "end": 1.148
+            },
+            {
+              "text": "cada",
+              "start": 1.148,
+              "end": 1.45
+            },
+            {
+              "text": "paso.",
+              "start": 1.45,
+              "end": 1.753
+            }
+          ]
+        }
+      ],
+      "visualDirection": "Entra la marca apartando el desorden: los papeles y trámites acumulados salen de cuadro y aparece el formulario del portal con su cabecera, el indicador de pasos y los primeros campos reales del alta, tipo de propiedad y operación. Jerarquía y etiquetas siguen las del formulario de publicación, simplificadas solo lo necesario para leerse en vertical. Cursor bajando por los campos, sin saltos.",
+      "transition": "cut",
+      "asset": "sim:formulario",
+      "assetType": "simulation",
+      "photo": null,
+      "voiceFile": "jobs/geo-003/audio/voice-02.mp3",
+      "assetStartInFrames": 0,
+      "assetTotalInFrames": 220,
+      "accent": "#6B5CF6"
+    },
+    {
+      "purpose": "prueba",
+      "durationInFrames": 142,
+      "headline": "Forma del terreno",
+      "captions": [
+        {
+          "text": "Después marca la ubicación en",
+          "start": 0.0,
+          "end": 1.894,
+          "words": [
+            {
+              "text": "Después",
+              "start": 0.0,
+              "end": 0.505
+            },
+            {
+              "text": "marca",
+              "start": 0.505,
+              "end": 0.884
+            },
+            {
+              "text": "la",
+              "start": 0.884,
+              "end": 1.073
+            },
+            {
+              "text": "ubicación",
+              "start": 1.073,
+              "end": 1.704
+            },
+            {
+              "text": "en",
+              "start": 1.704,
+              "end": 1.894
+            }
+          ]
+        },
+        {
+          "text": "el mapa o dibuja la Forma",
+          "start": 1.894,
+          "end": 3.535,
+          "words": [
+            {
+              "text": "el",
+              "start": 0.0,
+              "end": 0.189
+            },
+            {
+              "text": "mapa",
+              "start": 0.189,
+              "end": 0.505
+            },
+            {
+              "text": "o",
+              "start": 0.505,
+              "end": 0.631
+            },
+            {
+              "text": "dibuja",
+              "start": 0.631,
+              "end": 1.073
+            },
+            {
+              "text": "la",
+              "start": 1.073,
+              "end": 1.263
+            },
+            {
+              "text": "Forma",
+              "start": 1.263,
+              "end": 1.641
+            }
+          ]
+        },
+        {
+          "text": "del terreno.",
+          "start": 3.535,
+          "end": 4.293,
+          "words": [
+            {
+              "text": "del",
+              "start": 0.0,
+              "end": 0.253
+            },
+            {
+              "text": "terreno.",
+              "start": 0.253,
+              "end": 0.758
+            }
+          ]
+        }
+      ],
+      "visualDirection": "El mapa ocupa la franja superior, limpio y sin texto encima. Un toque deja caer el pin sobre una manzana y el pin se asienta con rebote corto. Después el control cambia al segundo modo y una mano traza cuatro vértices que cierran un polígono en verde translúcido, etiquetado Forma del terreno igual que en la interfaz. Movimiento continuo, sin congelar la imagen. Todo el texto en la banda inferior.",
+      "transition": "cut",
+      "asset": "sim:ubicacion-publicacion",
+      "assetType": "simulation",
+      "photo": null,
+      "voiceFile": "jobs/geo-003/audio/voice-03.mp3",
+      "assetStartInFrames": 0,
+      "assetTotalInFrames": 142,
+      "accent": "#14B8A6"
+    },
+    {
+      "purpose": "resultado",
+      "durationInFrames": 131,
+      "headline": "Precio y fotos",
+      "captions": [
+        {
+          "text": "Agrega el precio,",
+          "start": 0.0,
+          "end": 1.088,
+          "words": [
+            {
+              "text": "Agrega",
+              "start": 0.0,
+              "end": 0.448
+            },
+            {
+              "text": "el",
+              "start": 0.448,
+              "end": 0.64
+            },
+            {
+              "text": "precio,",
+              "start": 0.64,
+              "end": 1.088
+            }
+          ]
+        },
+        {
+          "text": "sube tus fotos",
+          "start": 1.088,
+          "end": 2.047,
+          "words": [
+            {
+              "text": "sube",
+              "start": 0.0,
+              "end": 0.32
+            },
+            {
+              "text": "tus",
+              "start": 0.32,
+              "end": 0.576
+            },
+            {
+              "text": "fotos",
+              "start": 0.576,
+              "end": 0.96
+            }
+          ]
+        },
+        {
+          "text": "y elige cuál aparece primero.",
+          "start": 2.047,
+          "end": 3.903,
+          "words": [
+            {
+              "text": "y",
+              "start": 0.0,
+              "end": 0.128
+            },
+            {
+              "text": "elige",
+              "start": 0.128,
+              "end": 0.512
+            },
+            {
+              "text": "cuál",
+              "start": 0.512,
+              "end": 0.832
+            },
+            {
+              "text": "aparece",
+              "start": 0.832,
+              "end": 1.344
+            },
+            {
+              "text": "primero.",
+              "start": 1.344,
+              "end": 1.855
+            }
+          ]
+        }
+      ],
+      "visualDirection": "El campo de precio se completa dígito a dígito con separador de miles y etiqueta de moneda. Debajo, miniaturas entrando en la cuadrícula y una arrastrándose a la primera posición, como el reordenamiento del cargador de imágenes. Al terminar, las piezas se acomodan y forman la ficha con foto, precio y características, en el mismo orden que la tarjeta del portal.",
+      "transition": "cut",
+      "asset": "sim:fotos-publicacion",
+      "assetType": "simulation",
+      "photo": null,
+      "voiceFile": "jobs/geo-003/audio/voice-04.mp3",
+      "assetStartInFrames": 0,
+      "assetTotalInFrames": 131,
+      "accent": "#A78BFA"
+    },
+    {
+      "purpose": "cta",
+      "durationInFrames": 105,
+      "headline": "Publica gratis",
+      "captions": [
+        {
+          "text": "Completa el formulario",
+          "start": 0.0,
+          "end": 1.327,
+          "words": [
+            {
+              "text": "Completa",
+              "start": 0.0,
+              "end": 0.519
+            },
+            {
+              "text": "el",
+              "start": 0.519,
+              "end": 0.692
+            },
+            {
+              "text": "formulario",
+              "start": 0.692,
+              "end": 1.327
+            }
+          ]
+        },
+        {
+          "text": "y publica gratis,",
+          "start": 1.327,
+          "end": 2.307,
+          "words": [
+            {
+              "text": "y",
+              "start": 0.0,
+              "end": 0.115
+            },
+            {
+              "text": "publica",
+              "start": 0.115,
+              "end": 0.577
+            },
+            {
+              "text": "gratis,",
+              "start": 0.577,
+              "end": 0.981
+            }
+          ]
+        },
+        {
+          "text": "sin comisión.",
+          "start": 2.307,
+          "end": 3.057,
+          "words": [
+            {
+              "text": "sin",
+              "start": 0.0,
+              "end": 0.231
+            },
+            {
+              "text": "comisión.",
+              "start": 0.231,
+              "end": 0.75
+            }
+          ]
+        }
+      ],
+      "visualDirection": "Tarjeta de marca común de la serie, sin cambios: tile violeta, Geo Propiedades Ecuador, el dominio geopropiedadesecuador.com, el CTA Publica tu propiedad gratis y la firma de Aents. Fondo navy con acento teal en el CTA para acompañar la portada. Un solo CTA en toda la pieza.",
+      "transition": "fade",
+      "asset": null,
+      "assetType": null,
+      "photo": null,
+      "voiceFile": "jobs/geo-003/audio/voice-05.mp3",
+      "assetStartInFrames": 0,
+      "assetTotalInFrames": 105,
+      "accent": "#22C55E"
+    }
+  ]
+}

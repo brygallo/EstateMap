@@ -28,7 +28,7 @@ export const font = '"EstateMap Display", "Avenir Next", system-ui, sans-serif';
  * brand block, not a card border. Backgrounds and gradients still bleed to the
  * full 1080: they are meant to be cut.
  *
- * This was measured, not guessed: with the 19.5:9 crop applied to video-003 the
+ * This was measured, not guessed: with the 19.5:9 crop applied to geo-003 the
  * domain pill read "opropiedadesecuador.com", the brand tile was sliced in half
  * and "¿Cómo quieres ubicarla?" lost its opening sign.
  */
@@ -73,10 +73,13 @@ export const panel = {
 };
 
 // Words end here: below this line TikTok paints its own caption and username.
-// Keep every spoken word above TikTok's 460 px bottom UI reservation. The
-// previous 1580 px floor let the second caption line fall behind the username
-// and post caption on smaller devices.
-export const textFloor = 1440;
+// The reservation is 380 px by product decision: 460 pushed the block so high
+// that the scrim needed to cover the lower half of the stage to keep it
+// readable, which darkened the interface the piece exists to show. 1580 was
+// once tried and let the second caption line fall behind the username on small
+// devices; 1580 is the floor by product decision, with the progress cue
+// pinned to it so the two can no longer drift apart.
+export const textFloor = 1580;
 
 /**
  * The headline rests on the last stretch of the stage over a short gradient —

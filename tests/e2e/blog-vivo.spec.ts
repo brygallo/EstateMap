@@ -73,8 +73,14 @@ test.describe('Living blog pages', () => {
   });
 
   /** SPEC:LIVE-008 — they live inside the blog, told apart by one category. */
-  test('the category lists them and the blog links to the category', async ({ page }) => {
+  test('the category lists them and the blog links to the category', async ({ page, request }) => {
     test.slow();
+    // The category only exists while some ranking does: on an environment
+    // whose catalogue is a handful of fixtures, no scope reaches the
+    // threshold and the page is a 404 by design, not a regression.
+    const slug = await anyLivePage(request);
+    test.skip(slug === null, 'no city holds enough inventory in this environment');
+
     await page.goto('/blog/categoria/rankings-en-vivo');
     await expect(page.getByRole('heading', { name: 'Rankings en vivo', level: 1 })).toBeVisible();
     const entries = page.locator('a[href^="/blog/"]');

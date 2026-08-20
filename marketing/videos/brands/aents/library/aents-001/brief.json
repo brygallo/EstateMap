@@ -1,0 +1,9 @@
+{
+  "brand": "aents",
+  "brief": "Reescribir el primer video de Aents desde el guion entregado por la persona responsable: del problema empresarial al software a medida, sin cifras ni capacidades no verificadas.",
+  "automatic_selection": false,
+  "target_duration_seconds": 51,
+  "duration_reason": "Historia de 51 s: la pieza sostiene un relato completo —el problema disperso, el diagnóstico, la oferta, el proceso y el posicionamiento— y comprimirlo a formato corto obligaría a elegir entre explicar el problema o explicar la solución. Ocho escenas dentro de las nueve que el formato concede.",
+  "created_at": "2026-08-14T22:41:20.279472-05:00",
+  "updated_at": "2026-08-15T00:00:00-05:00"
+}

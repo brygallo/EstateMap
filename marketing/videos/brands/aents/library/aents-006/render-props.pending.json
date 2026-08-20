@@ -1,0 +1,856 @@
+{
+  "brandId": "aents",
+  "brandName": "Aents",
+  "brandTagline": "Software for people.",
+  "brandSymbol": "brand/symbol-negative-512.png",
+  "title": "Así se vería tu empresa",
+  "coverText": "Así se vería tu empresa",
+  "cta": "Cuéntanos tu proyecto",
+  "url": "aents.net",
+  "brandTile": "brand/brand-tile-1024.png",
+  "kicker": null,
+  "musicFile": null,
+  "showSafeAreas": false,
+  "scenes": [
+    {
+      "purpose": "gancho",
+      "durationInFrames": 118,
+      "headline": "Antes",
+      "captions": [
+        {
+          "text": "Tu empresa puede ser excelente",
+          "start": 0.0,
+          "end": 1.707,
+          "words": [
+            {
+              "text": "Tu",
+              "start": 0.0,
+              "end": 0.165
+            },
+            {
+              "text": "empresa",
+              "start": 0.165,
+              "end": 0.606
+            },
+            {
+              "text": "puede",
+              "start": 0.606,
+              "end": 0.936
+            },
+            {
+              "text": "ser",
+              "start": 0.936,
+              "end": 1.156
+            },
+            {
+              "text": "excelente",
+              "start": 1.156,
+              "end": 1.707
+            }
+          ]
+        },
+        {
+          "text": "y aun así verse así",
+          "start": 1.707,
+          "end": 2.808,
+          "words": [
+            {
+              "text": "y",
+              "start": 0.0,
+              "end": 0.11
+            },
+            {
+              "text": "aun",
+              "start": 0.11,
+              "end": 0.33
+            },
+            {
+              "text": "así",
+              "start": 0.33,
+              "end": 0.551
+            },
+            {
+              "text": "verse",
+              "start": 0.551,
+              "end": 0.881
+            },
+            {
+              "text": "así",
+              "start": 0.881,
+              "end": 1.101
+            }
+          ]
+        },
+        {
+          "text": "en internet.",
+          "start": 2.808,
+          "end": 3.468,
+          "words": [
+            {
+              "text": "en",
+              "start": 0.0,
+              "end": 0.165
+            },
+            {
+              "text": "internet.",
+              "start": 0.165,
+              "end": 0.661
+            }
+          ]
+        }
+      ],
+      "visualDirection": "La ficha de una constructora de ejemplo muestra sus credenciales; la cámara se aleja y esa ficha resulta ser su web antigua, con texto pequeño, botones genéricos y un menú que no cabe. El rótulo ANTES se queda en la esquina.",
+      "transition": "cut",
+      "asset": "sim:aents-antes",
+      "assetType": "simulation",
+      "photo": null,
+      "voiceFile": "jobs/aents-006/audio/voice-01.mp3",
+      "assetStartInFrames": 0,
+      "assetTotalInFrames": 118,
+      "accent": "#22C55E"
+    },
+    {
+      "purpose": "problema",
+      "durationInFrames": 121,
+      "headline": "¿Ves el problema?",
+      "captions": [
+        {
+          "text": "El problema no siempre es",
+          "start": 0.0,
+          "end": 1.462,
+          "words": [
+            {
+              "text": "El",
+              "start": 0.0,
+              "end": 0.169
+            },
+            {
+              "text": "problema",
+              "start": 0.169,
+              "end": 0.675
+            },
+            {
+              "text": "no",
+              "start": 0.675,
+              "end": 0.844
+            },
+            {
+              "text": "siempre",
+              "start": 0.844,
+              "end": 1.294
+            },
+            {
+              "text": "es",
+              "start": 1.294,
+              "end": 1.462
+            }
+          ]
+        },
+        {
+          "text": "tu negocio.",
+          "start": 1.462,
+          "end": 2.081,
+          "words": [
+            {
+              "text": "tu",
+              "start": 0.0,
+              "end": 0.169
+            },
+            {
+              "text": "negocio.",
+              "start": 0.169,
+              "end": 0.619
+            }
+          ]
+        },
+        {
+          "text": "Es cómo lo estás mostrando.",
+          "start": 2.081,
+          "end": 3.599,
+          "words": [
+            {
+              "text": "Es",
+              "start": 0.0,
+              "end": 0.169
+            },
+            {
+              "text": "cómo",
+              "start": 0.169,
+              "end": 0.45
+            },
+            {
+              "text": "lo",
+              "start": 0.45,
+              "end": 0.619
+            },
+            {
+              "text": "estás",
+              "start": 0.619,
+              "end": 0.956
+            },
+            {
+              "text": "mostrando.",
+              "start": 0.956,
+              "end": 1.519
+            }
+          ]
+        }
+      ],
+      "visualDirection": "Pantalla partida. A la izquierda la empresa de ejemplo con sus años, sus proyectos y su equipo; a la derecha su presencia digital: web antigua, mala experiencia móvil, sin una propuesta clara. La partición se sostiene y cierra con la pregunta.",
+      "transition": "cut",
+      "asset": "sim:aents-contraste",
+      "assetType": "simulation",
+      "photo": null,
+      "voiceFile": "jobs/aents-006/audio/voice-02.mp3",
+      "assetStartInFrames": 0,
+      "assetTotalInFrames": 121,
+      "accent": "#6B5CF6"
+    },
+    {
+      "purpose": "prueba",
+      "durationInFrames": 187,
+      "headline": "Reconstruyámosla",
+      "captions": [
+        {
+          "text": "Así la reconstruiríamos en Aents. Primero,",
+          "start": 0.0,
+          "end": 2.198,
+          "words": [
+            {
+              "text": "Así",
+              "start": 0.0,
+              "end": 0.214
+            },
+            {
+              "text": "la",
+              "start": 0.214,
+              "end": 0.375
+            },
+            {
+              "text": "reconstruiríamos",
+              "start": 0.375,
+              "end": 1.287
+            },
+            {
+              "text": "en",
+              "start": 1.287,
+              "end": 1.447
+            },
+            {
+              "text": "Aents.",
+              "start": 1.447,
+              "end": 1.769
+            },
+            {
+              "text": "Primero,",
+              "start": 1.769,
+              "end": 2.198
+            }
+          ]
+        },
+        {
+          "text": "que en segundos se entienda",
+          "start": 2.198,
+          "end": 3.699,
+          "words": [
+            {
+              "text": "que",
+              "start": 0.0,
+              "end": 0.214
+            },
+            {
+              "text": "en",
+              "start": 0.214,
+              "end": 0.375
+            },
+            {
+              "text": "segundos",
+              "start": 0.375,
+              "end": 0.858
+            },
+            {
+              "text": "se",
+              "start": 0.858,
+              "end": 1.019
+            },
+            {
+              "text": "entienda",
+              "start": 1.019,
+              "end": 1.501
+            }
+          ]
+        },
+        {
+          "text": "quiénes son y por qué confiar",
+          "start": 3.699,
+          "end": 5.307,
+          "words": [
+            {
+              "text": "quiénes",
+              "start": 0.0,
+              "end": 0.429
+            },
+            {
+              "text": "son",
+              "start": 0.429,
+              "end": 0.643
+            },
+            {
+              "text": "y",
+              "start": 0.643,
+              "end": 0.751
+            },
+            {
+              "text": "por",
+              "start": 0.751,
+              "end": 0.965
+            },
+            {
+              "text": "qué",
+              "start": 0.965,
+              "end": 1.179
+            },
+            {
+              "text": "confiar",
+              "start": 1.179,
+              "end": 1.608
+            }
+          ]
+        },
+        {
+          "text": "en ellos.",
+          "start": 5.307,
+          "end": 5.79,
+          "words": [
+            {
+              "text": "en",
+              "start": 0.0,
+              "end": 0.161
+            },
+            {
+              "text": "ellos.",
+              "start": 0.161,
+              "end": 0.482
+            }
+          ]
+        }
+      ],
+      "visualDirection": "El cursor selecciona la página entera y la borra. Queda el negro un instante y entra «Reconstruyámosla». La página nueva se arma pieza por pieza —retícula, logo, navegación, imagen, título, botones— hasta quedar el titular, la línea de trayectoria y las dos acciones.",
+      "transition": "cut",
+      "asset": "sim:aents-reconstruccion",
+      "assetType": "simulation",
+      "photo": null,
+      "voiceFile": "jobs/aents-006/audio/voice-03.mp3",
+      "assetStartInFrames": 0,
+      "assetTotalInFrames": 187,
+      "accent": "#14B8A6"
+    },
+    {
+      "purpose": "prueba",
+      "durationInFrames": 126,
+      "headline": "Su trabajo, primero",
+      "captions": [
+        {
+          "text": "Después mostramos lo que de verdad",
+          "start": 0.0,
+          "end": 1.849,
+          "words": [
+            {
+              "text": "Después",
+              "start": 0.0,
+              "end": 0.423
+            },
+            {
+              "text": "mostramos",
+              "start": 0.423,
+              "end": 0.951
+            },
+            {
+              "text": "lo",
+              "start": 0.951,
+              "end": 1.109
+            },
+            {
+              "text": "que",
+              "start": 1.109,
+              "end": 1.321
+            },
+            {
+              "text": "de",
+              "start": 1.321,
+              "end": 1.479
+            },
+            {
+              "text": "verdad",
+              "start": 1.479,
+              "end": 1.849
+            }
+          ]
+        },
+        {
+          "text": "hace fuerte a la empresa:",
+          "start": 1.849,
+          "end": 3.17,
+          "words": [
+            {
+              "text": "hace",
+              "start": 0.0,
+              "end": 0.264
+            },
+            {
+              "text": "fuerte",
+              "start": 0.264,
+              "end": 0.634
+            },
+            {
+              "text": "a",
+              "start": 0.634,
+              "end": 0.74
+            },
+            {
+              "text": "la",
+              "start": 0.74,
+              "end": 0.898
+            },
+            {
+              "text": "empresa:",
+              "start": 0.898,
+              "end": 1.321
+            }
+          ]
+        },
+        {
+          "text": "su trabajo.",
+          "start": 3.17,
+          "end": 3.751,
+          "words": [
+            {
+              "text": "su",
+              "start": 0.0,
+              "end": 0.158
+            },
+            {
+              "text": "trabajo.",
+              "start": 0.158,
+              "end": 0.581
+            }
+          ]
+        }
+      ],
+      "visualDirection": "Recorrido continuo hacia abajo por la página nueva: primero las cifras de la empresa de ejemplo, después sus proyectos por tipo, residencial, comercial e industrial. El rótulo EJEMPLO acompaña las cifras mientras están en pantalla.",
+      "transition": "cut",
+      "asset": "sim:aents-credibilidad",
+      "assetType": "simulation",
+      "photo": null,
+      "voiceFile": "jobs/aents-006/audio/voice-04.mp3",
+      "assetStartInFrames": 0,
+      "assetTotalInFrames": 126,
+      "accent": "#A78BFA"
+    },
+    {
+      "purpose": "prueba",
+      "durationInFrames": 120,
+      "headline": "De visita a solicitud",
+      "captions": [
+        {
+          "text": "Y hacemos fácil",
+          "start": 0.0,
+          "end": 0.872,
+          "words": [
+            {
+              "text": "Y",
+              "start": 0.0,
+              "end": 0.109
+            },
+            {
+              "text": "hacemos",
+              "start": 0.109,
+              "end": 0.545
+            },
+            {
+              "text": "fácil",
+              "start": 0.545,
+              "end": 0.872
+            }
+          ]
+        },
+        {
+          "text": "que un visitante se convierta",
+          "start": 0.872,
+          "end": 2.508,
+          "words": [
+            {
+              "text": "que",
+              "start": 0.0,
+              "end": 0.218
+            },
+            {
+              "text": "un",
+              "start": 0.218,
+              "end": 0.382
+            },
+            {
+              "text": "visitante",
+              "start": 0.382,
+              "end": 0.927
+            },
+            {
+              "text": "se",
+              "start": 0.927,
+              "end": 1.09
+            },
+            {
+              "text": "convierta",
+              "start": 1.09,
+              "end": 1.635
+            }
+          ]
+        },
+        {
+          "text": "en una oportunidad.",
+          "start": 2.508,
+          "end": 3.543,
+          "words": [
+            {
+              "text": "en",
+              "start": 0.0,
+              "end": 0.164
+            },
+            {
+              "text": "una",
+              "start": 0.164,
+              "end": 0.382
+            },
+            {
+              "text": "oportunidad.",
+              "start": 0.382,
+              "end": 1.036
+            }
+          ]
+        }
+      ],
+      "visualDirection": "El visitante entra a un proyecto de ejemplo, recorre la galería y la información, y el botón de solicitar cotización lo acompaña. Pulsa, y del otro lado aparece la solicitud recibida.",
+      "transition": "cut",
+      "asset": "sim:aents-cotizacion",
+      "assetType": "simulation",
+      "photo": null,
+      "voiceFile": "jobs/aents-006/audio/voice-05.mp3",
+      "assetStartInFrames": 0,
+      "assetTotalInFrames": 120,
+      "accent": "#22C55E"
+    },
+    {
+      "purpose": "prueba",
+      "durationInFrames": 115,
+      "headline": "También en el teléfono",
+      "captions": [
+        {
+          "text": "Todo pensado para funcionar",
+          "start": 0.0,
+          "end": 1.509,
+          "words": [
+            {
+              "text": "Todo",
+              "start": 0.0,
+              "end": 0.269
+            },
+            {
+              "text": "pensado",
+              "start": 0.269,
+              "end": 0.701
+            },
+            {
+              "text": "para",
+              "start": 0.701,
+              "end": 0.97
+            },
+            {
+              "text": "funcionar",
+              "start": 0.97,
+              "end": 1.509
+            }
+          ]
+        },
+        {
+          "text": "donde de verdad están",
+          "start": 1.509,
+          "end": 2.694,
+          "words": [
+            {
+              "text": "donde",
+              "start": 0.0,
+              "end": 0.323
+            },
+            {
+              "text": "de",
+              "start": 0.323,
+              "end": 0.485
+            },
+            {
+              "text": "verdad",
+              "start": 0.485,
+              "end": 0.862
+            },
+            {
+              "text": "están",
+              "start": 0.862,
+              "end": 1.186
+            }
+          ]
+        },
+        {
+          "text": "tus clientes.",
+          "start": 2.694,
+          "end": 3.395,
+          "words": [
+            {
+              "text": "tus",
+              "start": 0.0,
+              "end": 0.216
+            },
+            {
+              "text": "clientes.",
+              "start": 0.216,
+              "end": 0.701
+            }
+          ]
+        }
+      ],
+      "visualDirection": "El marco de escritorio se estrecha con fluidez a tableta y a teléfono, y el contenido se reordena en lugar de encogerse. El pulgar recorre la página y llega al botón sin estorbos.",
+      "transition": "cut",
+      "asset": "sim:aents-adaptacion",
+      "assetType": "simulation",
+      "photo": null,
+      "voiceFile": "jobs/aents-006/audio/voice-06.mp3",
+      "assetStartInFrames": 0,
+      "assetTotalInFrames": 115,
+      "accent": "#6B5CF6"
+    },
+    {
+      "purpose": "resultado",
+      "durationInFrames": 115,
+      "headline": "La misma empresa",
+      "captions": [
+        {
+          "text": "La misma empresa.",
+          "start": 0.0,
+          "end": 1.043,
+          "words": [
+            {
+              "text": "La",
+              "start": 0.0,
+              "end": 0.184
+            },
+            {
+              "text": "misma",
+              "start": 0.184,
+              "end": 0.552
+            },
+            {
+              "text": "empresa.",
+              "start": 0.552,
+              "end": 1.043
+            }
+          ]
+        },
+        {
+          "text": "Una percepción completamente distinta.",
+          "start": 1.043,
+          "end": 3.375,
+          "words": [
+            {
+              "text": "Una",
+              "start": 0.0,
+              "end": 0.245
+            },
+            {
+              "text": "percepción",
+              "start": 0.245,
+              "end": 0.92
+            },
+            {
+              "text": "completamente",
+              "start": 0.92,
+              "end": 1.78
+            },
+            {
+              "text": "distinta.",
+              "start": 1.78,
+              "end": 2.332
+            }
+          ]
+        }
+      ],
+      "visualDirection": "Pantalla partida con la web antigua y la nueva. La división se desplaza despacio hasta que la nueva ocupa el cuadro entero.",
+      "transition": "cut",
+      "asset": "sim:aents-comparacion",
+      "assetType": "simulation",
+      "photo": null,
+      "voiceFile": "jobs/aents-006/audio/voice-07.mp3",
+      "assetStartInFrames": 0,
+      "assetTotalInFrames": 115,
+      "accent": "#14B8A6"
+    },
+    {
+      "purpose": "cta",
+      "durationInFrames": 232,
+      "headline": "Cuéntanos tu proyecto",
+      "captions": [
+        {
+          "text": "Tu empresa ya hizo el trabajo",
+          "start": 0.0,
+          "end": 1.724,
+          "words": [
+            {
+              "text": "Tu",
+              "start": 0.0,
+              "end": 0.172
+            },
+            {
+              "text": "empresa",
+              "start": 0.172,
+              "end": 0.632
+            },
+            {
+              "text": "ya",
+              "start": 0.632,
+              "end": 0.805
+            },
+            {
+              "text": "hizo",
+              "start": 0.805,
+              "end": 1.092
+            },
+            {
+              "text": "el",
+              "start": 1.092,
+              "end": 1.264
+            },
+            {
+              "text": "trabajo",
+              "start": 1.264,
+              "end": 1.724
+            }
+          ]
+        },
+        {
+          "text": "de construir su reputación.",
+          "start": 1.724,
+          "end": 3.276,
+          "words": [
+            {
+              "text": "de",
+              "start": 0.0,
+              "end": 0.172
+            },
+            {
+              "text": "construir",
+              "start": 0.172,
+              "end": 0.747
+            },
+            {
+              "text": "su",
+              "start": 0.747,
+              "end": 0.92
+            },
+            {
+              "text": "reputación.",
+              "start": 0.92,
+              "end": 1.552
+            }
+          ]
+        },
+        {
+          "text": "Que su presencia digital esté",
+          "start": 3.276,
+          "end": 5.0,
+          "words": [
+            {
+              "text": "Que",
+              "start": 0.0,
+              "end": 0.23
+            },
+            {
+              "text": "su",
+              "start": 0.23,
+              "end": 0.402
+            },
+            {
+              "text": "presencia",
+              "start": 0.402,
+              "end": 0.977
+            },
+            {
+              "text": "digital",
+              "start": 0.977,
+              "end": 1.437
+            },
+            {
+              "text": "esté",
+              "start": 1.437,
+              "end": 1.724
+            }
+          ]
+        },
+        {
+          "text": "a la misma altura.",
+          "start": 5.0,
+          "end": 6.034,
+          "words": [
+            {
+              "text": "a",
+              "start": 0.0,
+              "end": 0.115
+            },
+            {
+              "text": "la",
+              "start": 0.115,
+              "end": 0.287
+            },
+            {
+              "text": "misma",
+              "start": 0.287,
+              "end": 0.632
+            },
+            {
+              "text": "altura.",
+              "start": 0.632,
+              "end": 1.034
+            }
+          ]
+        },
+        {
+          "text": "Cuéntanos tu proyecto.",
+          "start": 6.034,
+          "end": 7.299,
+          "words": [
+            {
+              "text": "Cuéntanos",
+              "start": 0.0,
+              "end": 0.575
+            },
+            {
+              "text": "tu",
+              "start": 0.575,
+              "end": 0.747
+            },
+            {
+              "text": "proyecto.",
+              "start": 0.747,
+              "end": 1.264
+            }
+          ]
+        }
+      ],
+      "visualDirection": "Todo se apaga y queda la marca: isotipo, Aents, Software para personas, sus servicios y aents.net junto al botón de conversar.",
+      "transition": "fade",
+      "asset": "sim:aents-cierre",
+      "assetType": "simulation",
+      "photo": null,
+      "voiceFile": "jobs/aents-006/audio/voice-08.mp3",
+      "assetStartInFrames": 0,
+      "assetTotalInFrames": 232,
+      "accent": "#A78BFA"
+    }
+  ]
+}

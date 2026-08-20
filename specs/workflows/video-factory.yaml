@@ -268,3 +268,92 @@ rules:
     cases:
       - name: Dos procesos renderizan el mismo video
         expected: el segundo falla antes de tocar archivos
+
+  - id: VFACT-014
+    name: La fábrica nunca limpia másteres ni voces canónicas
+    status: implemented
+    summary: >-
+      Sin importar si una pieza está en borrador, revisada, firmada o publicada,
+      la limpieza automática del render solo acepta archivos cuyo nombre incluye
+      `.pending.`. Un MP4 canónico o un `voice-*.mp3` provoca un error antes de
+      cualquier eliminación.
+    rationale: >-
+      Los artefactos locales no son temporales. Una recuperación o un nuevo
+      render puede sustituirlos de forma explícita, pero una rutina de limpieza
+      nunca debe interpretarlos como residuos.
+    evidence:
+      - file: marketing/videos/workflow.py
+        symbol: class RenderCleanupPolicy
+      - file: marketing/videos/factory.py
+        symbol: "def cmd_render"
+    tests: {unit: true}
+    cases:
+      - name: La limpieza recibe video.mp4 o voice-01.mp3
+        expected: rechaza la eliminación y conserva el archivo
+      - name: La limpieza recibe geo-001.pending.mp4
+        expected: elimina únicamente el temporal
+
+  - id: VFACT-015
+    name: Las marcas comparten motor pero no estado editorial
+    status: implemented
+    summary: >-
+      Geo Propiedades sigue siendo el perfil predeterminado. Cada marca tiene
+      catálogo, numeración, biblioteca, publicaciones, brechas y aprendizajes
+      propios; cada identificador y carpeta lleva el prefijo de la marca, la
+      identidad viaja en las props, el MP4 y la portada exportados conservan ese
+      identificador, y las animaciones se validan contra la marca.
+    rationale: >-
+      Duplicar el motor produciría dos fábricas divergentes, mientras que
+      compartir memoria o numeración mezclaría evidencia, publicaciones y
+      decisiones de marcas distintas.
+    evidence:
+      - file: marketing/videos/brand.py
+        symbol: class BrandProfile
+      - file: marketing/videos/catalog.py
+        symbol: "def configure"
+      - file: marketing/videos/catalog.py
+        symbol: "def video_id"
+      - file: marketing/videos/factory.py
+        symbol: "def main"
+      - file: marketing/videos/factory.py
+        symbol: "def master_path"
+      - file: marketing/videos/quality.py
+        symbol: "def configure"
+      - file: marketing/videos/renderer.py
+        symbol: "def job_name"
+    tests: {unit: true}
+    cases:
+      - name: Un comando sin marca consulta el catálogo de Geo Propiedades
+        expected: usa Geo Propiedades y genera identificadores geo-NNN
+      - name: Aents y Geo crean su primera pieza
+        expected: crean aents-001 y geo-001 en catálogos, bibliotecas y staging separados
+      - name: Un plan Aents pide una simulación exclusiva de Geo
+        expected: error de lint antes de aprobar o renderizar
+
+  - id: VFACT-016
+    name: El paquete incluye el texto exacto para publicar
+    status: implemented
+    summary: >-
+      Pack genera globalmente `texto-para-publicar.txt` con el caption, una línea
+      en blanco y entre uno y cinco hashtags válidos. Los hashtags propios del
+      plan tienen prioridad y los videos anteriores usan los defaults de su
+      marca; `publish.json` conserva la lista y el nombre del archivo.
+    rationale: >-
+      La persona que publica debe poder copiar un solo bloque sin reconstruir el
+      caption ni buscar hashtags, pero esos metadatos no deben entrar en la
+      locución o los subtítulos.
+    evidence:
+      - file: marketing/videos/workflow.py
+        symbol: class PublishingCopy
+      - file: marketing/videos/factory.py
+        symbol: "def cmd_pack"
+      - file: marketing/videos/brand.py
+        symbol: default_hashtags
+    tests: {unit: true}
+    cases:
+      - name: Un plan nuevo declara hashtags propios
+        expected: el archivo contiene caption, línea vacía y hashtags listos para copiar
+      - name: Un video anterior no tiene el campo hashtags
+        expected: pack usa los hashtags predeterminados de la marca activa
+      - name: Un hashtag contiene espacios
+        expected: pack lo rechaza antes de crear el paquete

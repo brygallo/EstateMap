@@ -1,0 +1,1139 @@
+{
+  "brandId": "geo",
+  "brandName": "Geo Propiedades Ecuador",
+  "brandTagline": "Un producto de Aents",
+  "brandSymbol": "brand/aents-symbol-negative.png",
+  "title": "Esta web la hizo Aents",
+  "coverText": "Esta web la hizo Aents",
+  "cta": "Escríbenos y agenda tu idea",
+  "url": "geopropiedadesecuador.com",
+  "brandTile": "brand/aents-brand-tile-1024.png",
+  "kicker": null,
+  "musicFile": null,
+  "showSafeAreas": false,
+  "scenes": [
+    {
+      "purpose": "gancho",
+      "durationInFrames": 117,
+      "headline": "La hizo Aents",
+      "captions": [
+        {
+          "text": "Esta es Geo Propiedades Ecuador.",
+          "start": 0.0,
+          "end": 1.936,
+          "words": [
+            {
+              "text": "Esta",
+              "start": 0.0,
+              "end": 0.302
+            },
+            {
+              "text": "es",
+              "start": 0.302,
+              "end": 0.484
+            },
+            {
+              "text": "Geo",
+              "start": 0.484,
+              "end": 0.726
+            },
+            {
+              "text": "Propiedades",
+              "start": 0.726,
+              "end": 1.452
+            },
+            {
+              "text": "Ecuador.",
+              "start": 1.452,
+              "end": 1.936
+            }
+          ]
+        },
+        {
+          "text": "Y esta web la hizo Aents.",
+          "start": 1.936,
+          "end": 3.448,
+          "words": [
+            {
+              "text": "Y",
+              "start": 0.0,
+              "end": 0.121
+            },
+            {
+              "text": "esta",
+              "start": 0.121,
+              "end": 0.423
+            },
+            {
+              "text": "web",
+              "start": 0.423,
+              "end": 0.665
+            },
+            {
+              "text": "la",
+              "start": 0.665,
+              "end": 0.847
+            },
+            {
+              "text": "hizo",
+              "start": 0.847,
+              "end": 1.149
+            },
+            {
+              "text": "Aents.",
+              "start": 1.149,
+              "end": 1.512
+            }
+          ]
+        }
+      ],
+      "visualDirection": "Cámara ya en movimiento en el primer cuadro: el mapa de Geo Propiedades entra desde la derecha con su marca sobre el fondo claro de la serie, ocupando de y=250 a y=900 como sujeto único. Al segundo 2,5 el tile violeta de Aents se posa sobre la esquina del panel de producto con la misma elevación y bordes de la serie, como una firma de autor. Rótulo en la banda inferior, marca superior desde y=205 y margen lateral de 120 px.",
+      "transition": "cut",
+      "asset": "sim:aents-reveal",
+      "assetType": "simulation",
+      "photo": null,
+      "voiceFile": "jobs/geo-007/audio/voice-01.mp3",
+      "assetStartInFrames": 0,
+      "assetTotalInFrames": 117,
+      "accent": "#22C55E"
+    },
+    {
+      "purpose": "prueba",
+      "durationInFrames": 182,
+      "headline": "Mapa público real",
+      "captions": [
+        {
+          "text": "No es solo una página:",
+          "start": 0.0,
+          "end": 1.385,
+          "words": [
+            {
+              "text": "No",
+              "start": 0.0,
+              "end": 0.189
+            },
+            {
+              "text": "es",
+              "start": 0.189,
+              "end": 0.378
+            },
+            {
+              "text": "solo",
+              "start": 0.378,
+              "end": 0.692
+            },
+            {
+              "text": "una",
+              "start": 0.692,
+              "end": 0.944
+            },
+            {
+              "text": "página:",
+              "start": 0.944,
+              "end": 1.385
+            }
+          ]
+        },
+        {
+          "text": "es un mapa público del Ecuador",
+          "start": 1.385,
+          "end": 3.336,
+          "words": [
+            {
+              "text": "es",
+              "start": 0.0,
+              "end": 0.189
+            },
+            {
+              "text": "un",
+              "start": 0.189,
+              "end": 0.378
+            },
+            {
+              "text": "mapa",
+              "start": 0.378,
+              "end": 0.692
+            },
+            {
+              "text": "público",
+              "start": 0.692,
+              "end": 1.196
+            },
+            {
+              "text": "del",
+              "start": 1.196,
+              "end": 1.448
+            },
+            {
+              "text": "Ecuador",
+              "start": 1.448,
+              "end": 1.951
+            }
+          ]
+        },
+        {
+          "text": "donde cada propiedad tiene",
+          "start": 3.336,
+          "end": 5.036,
+          "words": [
+            {
+              "text": "donde",
+              "start": 0.0,
+              "end": 0.378
+            },
+            {
+              "text": "cada",
+              "start": 0.378,
+              "end": 0.692
+            },
+            {
+              "text": "propiedad",
+              "start": 0.692,
+              "end": 1.322
+            },
+            {
+              "text": "tiene",
+              "start": 1.322,
+              "end": 1.7
+            }
+          ]
+        },
+        {
+          "text": "su lugar.",
+          "start": 5.036,
+          "end": 5.602,
+          "words": [
+            {
+              "text": "su",
+              "start": 0.0,
+              "end": 0.189
+            },
+            {
+              "text": "lugar.",
+              "start": 0.189,
+              "end": 0.567
+            }
+          ]
+        }
+      ],
+      "visualDirection": "Recorrido continuo y sin saltos: del mapa del país a una zona reconocible, las burbujas de ciudad se abren en barrios y luego en casas con su precio. Un solo sujeto grande y centrado, valores de precio a 56 px y etiquetas nunca menores a 22 px. El tile violeta de Aents queda pequeño y fijo en la esquina del panel, sin competir con el mapa.",
+      "transition": "cut",
+      "asset": "sim:mapa",
+      "assetType": "simulation",
+      "photo": null,
+      "voiceFile": "jobs/geo-007/audio/voice-02.mp3",
+      "assetStartInFrames": 0,
+      "assetTotalInFrames": 182,
+      "accent": "#6B5CF6"
+    },
+    {
+      "purpose": "prueba",
+      "durationInFrames": 148,
+      "headline": "Filtra y decide",
+      "captions": [
+        {
+          "text": "Quien busca filtra por precio",
+          "start": 0.0,
+          "end": 1.724,
+          "words": [
+            {
+              "text": "Quien",
+              "start": 0.0,
+              "end": 0.345
+            },
+            {
+              "text": "busca",
+              "start": 0.345,
+              "end": 0.69
+            },
+            {
+              "text": "filtra",
+              "start": 0.69,
+              "end": 1.092
+            },
+            {
+              "text": "por",
+              "start": 1.092,
+              "end": 1.322
+            },
+            {
+              "text": "precio",
+              "start": 1.322,
+              "end": 1.724
+            }
+          ]
+        },
+        {
+          "text": "y zona,",
+          "start": 1.724,
+          "end": 2.126,
+          "words": [
+            {
+              "text": "y",
+              "start": 0.0,
+              "end": 0.115
+            },
+            {
+              "text": "zona,",
+              "start": 0.115,
+              "end": 0.402
+            }
+          ]
+        },
+        {
+          "text": "y quedan solo las opciones",
+          "start": 2.126,
+          "end": 3.677,
+          "words": [
+            {
+              "text": "y",
+              "start": 0.0,
+              "end": 0.115
+            },
+            {
+              "text": "quedan",
+              "start": 0.115,
+              "end": 0.517
+            },
+            {
+              "text": "solo",
+              "start": 0.517,
+              "end": 0.804
+            },
+            {
+              "text": "las",
+              "start": 0.804,
+              "end": 1.034
+            },
+            {
+              "text": "opciones",
+              "start": 1.034,
+              "end": 1.551
+            }
+          ]
+        },
+        {
+          "text": "que le sirven.",
+          "start": 3.677,
+          "end": 4.482,
+          "words": [
+            {
+              "text": "que",
+              "start": 0.0,
+              "end": 0.23
+            },
+            {
+              "text": "le",
+              "start": 0.23,
+              "end": 0.402
+            },
+            {
+              "text": "sirven.",
+              "start": 0.402,
+              "end": 0.804
+            }
+          ]
+        }
+      ],
+      "visualDirection": "El control de precio se arrastra con velocidad humana sobre el mapa y las propiedades fuera del rango se desvanecen una a una, no de golpe. La cámara acompaña con un leve empuje hacia el grupo que sobrevive. Se conserva la jerarquía real del filtro del producto: etiqueta, rango y contador de resultados.",
+      "transition": "cut",
+      "asset": "sim:filtros",
+      "assetType": "simulation",
+      "photo": null,
+      "voiceFile": "jobs/geo-007/audio/voice-03.mp3",
+      "assetStartInFrames": 0,
+      "assetTotalInFrames": 148,
+      "accent": "#14B8A6"
+    },
+    {
+      "purpose": "prueba",
+      "durationInFrames": 170,
+      "headline": "Ficha completa",
+      "captions": [
+        {
+          "text": "Abre una ficha y ve fotos, precio,",
+          "start": 0.0,
+          "end": 2.204,
+          "words": [
+            {
+              "text": "Abre",
+              "start": 0.0,
+              "end": 0.334
+            },
+            {
+              "text": "una",
+              "start": 0.334,
+              "end": 0.601
+            },
+            {
+              "text": "ficha",
+              "start": 0.601,
+              "end": 1.002
+            },
+            {
+              "text": "y",
+              "start": 1.002,
+              "end": 1.135
+            },
+            {
+              "text": "ve",
+              "start": 1.135,
+              "end": 1.335
+            },
+            {
+              "text": "fotos,",
+              "start": 1.335,
+              "end": 1.736
+            },
+            {
+              "text": "precio,",
+              "start": 1.736,
+              "end": 2.204
+            }
+          ]
+        },
+        {
+          "text": "características y ubicación en",
+          "start": 2.204,
+          "end": 4.273,
+          "words": [
+            {
+              "text": "características",
+              "start": 0.0,
+              "end": 1.068
+            },
+            {
+              "text": "y",
+              "start": 1.068,
+              "end": 1.202
+            },
+            {
+              "text": "ubicación",
+              "start": 1.202,
+              "end": 1.87
+            },
+            {
+              "text": "en",
+              "start": 1.87,
+              "end": 2.07
+            }
+          ]
+        },
+        {
+          "text": "un solo lugar.",
+          "start": 4.273,
+          "end": 5.208,
+          "words": [
+            {
+              "text": "un",
+              "start": 0.0,
+              "end": 0.2
+            },
+            {
+              "text": "solo",
+              "start": 0.2,
+              "end": 0.534
+            },
+            {
+              "text": "lugar.",
+              "start": 0.534,
+              "end": 0.935
+            }
+          ]
+        }
+      ],
+      "visualDirection": "Un pin del mapa se toca y la ficha sube en una sola toma, ocupando el centro del cuadro: foto grande, precio destacado y fila de características con sus etiquetas reales. Nada de datos de contacto, contadores de visitas ni información de una propiedad identificable; los valores son ilustrativos.",
+      "transition": "cut",
+      "asset": "sim:ficha",
+      "assetType": "simulation",
+      "photo": null,
+      "voiceFile": "jobs/geo-007/audio/voice-04.mp3",
+      "assetStartInFrames": 0,
+      "assetTotalInFrames": 170,
+      "accent": "#A78BFA"
+    },
+    {
+      "purpose": "prueba",
+      "durationInFrames": 170,
+      "headline": "Precio con contexto",
+      "captions": [
+        {
+          "text": "Hasta el precio por metro cuadrado",
+          "start": 0.0,
+          "end": 1.982,
+          "words": [
+            {
+              "text": "Hasta",
+              "start": 0.0,
+              "end": 0.34
+            },
+            {
+              "text": "el",
+              "start": 0.34,
+              "end": 0.51
+            },
+            {
+              "text": "precio",
+              "start": 0.51,
+              "end": 0.906
+            },
+            {
+              "text": "por",
+              "start": 0.906,
+              "end": 1.132
+            },
+            {
+              "text": "metro",
+              "start": 1.132,
+              "end": 1.472
+            },
+            {
+              "text": "cuadrado",
+              "start": 1.472,
+              "end": 1.982
+            }
+          ]
+        },
+        {
+          "text": "se compara con inventario activo",
+          "start": 1.982,
+          "end": 3.85,
+          "words": [
+            {
+              "text": "se",
+              "start": 0.0,
+              "end": 0.17
+            },
+            {
+              "text": "compara",
+              "start": 0.17,
+              "end": 0.623
+            },
+            {
+              "text": "con",
+              "start": 0.623,
+              "end": 0.849
+            },
+            {
+              "text": "inventario",
+              "start": 0.849,
+              "end": 1.472
+            },
+            {
+              "text": "activo",
+              "start": 1.472,
+              "end": 1.869
+            }
+          ]
+        },
+        {
+          "text": "del mismo tipo",
+          "start": 3.85,
+          "end": 4.7,
+          "words": [
+            {
+              "text": "del",
+              "start": 0.0,
+              "end": 0.226
+            },
+            {
+              "text": "mismo",
+              "start": 0.226,
+              "end": 0.566
+            },
+            {
+              "text": "tipo",
+              "start": 0.566,
+              "end": 0.849
+            }
+          ]
+        },
+        {
+          "text": "y ciudad.",
+          "start": 4.7,
+          "end": 5.209,
+          "words": [
+            {
+              "text": "y",
+              "start": 0.0,
+              "end": 0.113
+            },
+            {
+              "text": "ciudad.",
+              "start": 0.113,
+              "end": 0.51
+            }
+          ]
+        }
+      ],
+      "visualDirection": "El precio por metro cuadrado sube y se coloca dentro del rango de comparables activos del mismo tipo, operación y ciudad, con el número de comparables visible. Cifra a 64 px, rango dibujado como banda ancha y clara. La cámara hace un empuje lento hacia la banda; el rótulo no se solapa con el número.",
+      "transition": "cut",
+      "asset": "sim:precio-area",
+      "assetType": "simulation",
+      "photo": null,
+      "voiceFile": "jobs/geo-007/audio/voice-05.mp3",
+      "assetStartInFrames": 0,
+      "assetTotalInFrames": 170,
+      "accent": "#22C55E"
+    },
+    {
+      "purpose": "prueba",
+      "durationInFrames": 155,
+      "headline": "Publicar y gestionar",
+      "captions": [
+        {
+          "text": "Y los propietarios publican",
+          "start": 0.0,
+          "end": 1.654,
+          "words": [
+            {
+              "text": "Y",
+              "start": 0.0,
+              "end": 0.118
+            },
+            {
+              "text": "los",
+              "start": 0.118,
+              "end": 0.354
+            },
+            {
+              "text": "propietarios",
+              "start": 0.354,
+              "end": 1.122
+            },
+            {
+              "text": "publican",
+              "start": 1.122,
+              "end": 1.654
+            }
+          ]
+        },
+        {
+          "text": "sin costo y gestionan",
+          "start": 1.654,
+          "end": 2.953,
+          "words": [
+            {
+              "text": "sin",
+              "start": 0.0,
+              "end": 0.236
+            },
+            {
+              "text": "costo",
+              "start": 0.236,
+              "end": 0.591
+            },
+            {
+              "text": "y",
+              "start": 0.591,
+              "end": 0.709
+            },
+            {
+              "text": "gestionan",
+              "start": 0.709,
+              "end": 1.299
+            }
+          ]
+        },
+        {
+          "text": "su inventario desde su cuenta.",
+          "start": 2.953,
+          "end": 4.725,
+          "words": [
+            {
+              "text": "su",
+              "start": 0.0,
+              "end": 0.177
+            },
+            {
+              "text": "inventario",
+              "start": 0.177,
+              "end": 0.827
+            },
+            {
+              "text": "desde",
+              "start": 0.827,
+              "end": 1.181
+            },
+            {
+              "text": "su",
+              "start": 1.181,
+              "end": 1.358
+            },
+            {
+              "text": "cuenta.",
+              "start": 1.358,
+              "end": 1.772
+            }
+          ]
+        }
+      ],
+      "visualDirection": "El flujo de publicación avanza junto al distintivo de costo cero y sin comisión, y al final las propiedades publicadas se ordenan como tarjetas propias con sus acciones de editar y desactivar. Solo la vista del propio dueño: ningún panel administrativo, ninguna métrica privada en pantalla.",
+      "transition": "cut",
+      "asset": "sim:inventario-agente",
+      "assetType": "simulation",
+      "photo": null,
+      "voiceFile": "jobs/geo-007/audio/voice-06.mp3",
+      "assetStartInFrames": 0,
+      "assetTotalInFrames": 155,
+      "accent": "#6B5CF6"
+    },
+    {
+      "purpose": "resultado",
+      "durationInFrames": 326,
+      "headline": "Estudio ecuatoriano",
+      "captions": [
+        {
+          "text": "Todo esto lo hicimos nosotros: estrategia,",
+          "start": 0.0,
+          "end": 3.168,
+          "words": [
+            {
+              "text": "Todo",
+              "start": 0.0,
+              "end": 0.386
+            },
+            {
+              "text": "esto",
+              "start": 0.386,
+              "end": 0.773
+            },
+            {
+              "text": "lo",
+              "start": 0.773,
+              "end": 1.005
+            },
+            {
+              "text": "hicimos",
+              "start": 1.005,
+              "end": 1.623
+            },
+            {
+              "text": "nosotros:",
+              "start": 1.623,
+              "end": 2.318
+            },
+            {
+              "text": "estrategia,",
+              "start": 2.318,
+              "end": 3.168
+            }
+          ]
+        },
+        {
+          "text": "diseño,",
+          "start": 3.168,
+          "end": 3.709,
+          "words": [
+            {
+              "text": "diseño,",
+              "start": 0.0,
+              "end": 0.541
+            }
+          ]
+        },
+        {
+          "text": "desarrollo y lanzamiento.",
+          "start": 3.709,
+          "end": 5.641,
+          "words": [
+            {
+              "text": "desarrollo",
+              "start": 0.0,
+              "end": 0.85
+            },
+            {
+              "text": "y",
+              "start": 0.85,
+              "end": 1.005
+            },
+            {
+              "text": "lanzamiento.",
+              "start": 1.005,
+              "end": 1.932
+            }
+          ]
+        },
+        {
+          "text": "Somos Aents,",
+          "start": 5.641,
+          "end": 6.569,
+          "words": [
+            {
+              "text": "Somos",
+              "start": 0.0,
+              "end": 0.464
+            },
+            {
+              "text": "Aents,",
+              "start": 0.464,
+              "end": 0.927
+            }
+          ]
+        },
+        {
+          "text": "estudio de software ecuatoriano,",
+          "start": 6.569,
+          "end": 9.042,
+          "words": [
+            {
+              "text": "estudio",
+              "start": 0.0,
+              "end": 0.618
+            },
+            {
+              "text": "de",
+              "start": 0.618,
+              "end": 0.85
+            },
+            {
+              "text": "software",
+              "start": 0.85,
+              "end": 1.546
+            },
+            {
+              "text": "ecuatoriano,",
+              "start": 1.546,
+              "end": 2.473
+            }
+          ]
+        },
+        {
+          "text": "desde la Amazonía.",
+          "start": 9.042,
+          "end": 10.433,
+          "words": [
+            {
+              "text": "desde",
+              "start": 0.0,
+              "end": 0.464
+            },
+            {
+              "text": "la",
+              "start": 0.464,
+              "end": 0.696
+            },
+            {
+              "text": "Amazonía.",
+              "start": 0.696,
+              "end": 1.391
+            }
+          ]
+        }
+      ],
+      "visualDirection": "Escena tipográfica de marca Aents sobre navy: el panel de producto se aleja y se convierte en un bloque violeta que ocupa el centro. Cuatro etapas se encienden en línea con movimiento continuo, estrategia, diseño, desarrollo y lanzamiento, y debajo entra el tile violeta con el nombre Aents y la palabra Amazonía. Tipografía Plus Jakarta Sans ExtraBold, valores de 56 a 70 px, cámara siempre en deriva lenta.",
+      "transition": "fade",
+      "asset": "sim:aents-proceso",
+      "assetType": "simulation",
+      "photo": null,
+      "voiceFile": "jobs/geo-007/audio/voice-07.mp3",
+      "assetStartInFrames": 0,
+      "assetTotalInFrames": 326,
+      "accent": "#14B8A6"
+    },
+    {
+      "purpose": "resultado",
+      "durationInFrames": 229,
+      "headline": "Web, apps, sistemas",
+      "captions": [
+        {
+          "text": "Hacemos sitios web,",
+          "start": 0.0,
+          "end": 1.221,
+          "words": [
+            {
+              "text": "Hacemos",
+              "start": 0.0,
+              "end": 0.514
+            },
+            {
+              "text": "sitios",
+              "start": 0.514,
+              "end": 0.964
+            },
+            {
+              "text": "web,",
+              "start": 0.964,
+              "end": 1.221
+            }
+          ]
+        },
+        {
+          "text": "aplicaciones para iPhone",
+          "start": 1.221,
+          "end": 2.828,
+          "words": [
+            {
+              "text": "aplicaciones",
+              "start": 0.0,
+              "end": 0.836
+            },
+            {
+              "text": "para",
+              "start": 0.836,
+              "end": 1.157
+            },
+            {
+              "text": "iPhone",
+              "start": 1.157,
+              "end": 1.607
+            }
+          ]
+        },
+        {
+          "text": "y Android,",
+          "start": 2.828,
+          "end": 3.471,
+          "words": [
+            {
+              "text": "y",
+              "start": 0.0,
+              "end": 0.129
+            },
+            {
+              "text": "Android,",
+              "start": 0.129,
+              "end": 0.643
+            }
+          ]
+        },
+        {
+          "text": "sistemas para tu empresa,",
+          "start": 3.471,
+          "end": 5.078,
+          "words": [
+            {
+              "text": "sistemas",
+              "start": 0.0,
+              "end": 0.578
+            },
+            {
+              "text": "para",
+              "start": 0.578,
+              "end": 0.9
+            },
+            {
+              "text": "tu",
+              "start": 0.9,
+              "end": 1.093
+            },
+            {
+              "text": "empresa,",
+              "start": 1.093,
+              "end": 1.607
+            }
+          ]
+        },
+        {
+          "text": "automatizaciones e integraciones.",
+          "start": 5.078,
+          "end": 7.199,
+          "words": [
+            {
+              "text": "automatizaciones",
+              "start": 0.0,
+              "end": 1.093
+            },
+            {
+              "text": "e",
+              "start": 1.093,
+              "end": 1.221
+            },
+            {
+              "text": "integraciones.",
+              "start": 1.221,
+              "end": 2.121
+            }
+          ]
+        }
+      ],
+      "visualDirection": "Cuatro tarjetas grandes de la serie entran de una en una, nunca simultáneas ni en rejilla densa: sitio web, aplicación móvil, sistema empresarial y automatización con integraciones. Cada tarjeta ocupa casi todo el ancho útil, con su etiqueta a 40 px, y al entrar la siguiente la anterior se recoge hacia el fondo con la elevación de marca.",
+      "transition": "cut",
+      "asset": "sim:aents-servicios",
+      "assetType": "simulation",
+      "photo": null,
+      "voiceFile": "jobs/geo-007/audio/voice-08.mp3",
+      "assetStartInFrames": 0,
+      "assetTotalInFrames": 229,
+      "accent": "#A78BFA"
+    },
+    {
+      "purpose": "cta",
+      "durationInFrames": 349,
+      "headline": "Agenda tu idea",
+      "captions": [
+        {
+          "text": "¿Tienes una idea? Construyámosla.",
+          "start": 0.0,
+          "end": 2.566,
+          "words": [
+            {
+              "text": "¿Tienes",
+              "start": 0.0,
+              "end": 0.579
+            },
+            {
+              "text": "una",
+              "start": 0.579,
+              "end": 0.91
+            },
+            {
+              "text": "idea?",
+              "start": 0.91,
+              "end": 1.324
+            },
+            {
+              "text": "Construyámosla.",
+              "start": 1.324,
+              "end": 2.566
+            }
+          ]
+        },
+        {
+          "text": "Escríbenos por WhatsApp al cero",
+          "start": 2.566,
+          "end": 5.214,
+          "words": [
+            {
+              "text": "Escríbenos",
+              "start": 0.0,
+              "end": 0.91
+            },
+            {
+              "text": "por",
+              "start": 0.91,
+              "end": 1.242
+            },
+            {
+              "text": "WhatsApp",
+              "start": 1.242,
+              "end": 1.986
+            },
+            {
+              "text": "al",
+              "start": 1.986,
+              "end": 2.235
+            },
+            {
+              "text": "cero",
+              "start": 2.235,
+              "end": 2.649
+            }
+          ]
+        },
+        {
+          "text": "nueve ocho,",
+          "start": 5.214,
+          "end": 6.125,
+          "words": [
+            {
+              "text": "nueve",
+              "start": 0.0,
+              "end": 0.497
+            },
+            {
+              "text": "ocho,",
+              "start": 0.497,
+              "end": 0.91
+            }
+          ]
+        },
+        {
+          "text": "tres siete tres,",
+          "start": 6.125,
+          "end": 7.449,
+          "words": [
+            {
+              "text": "tres",
+              "start": 0.0,
+              "end": 0.414
+            },
+            {
+              "text": "siete",
+              "start": 0.414,
+              "end": 0.91
+            },
+            {
+              "text": "tres,",
+              "start": 0.91,
+              "end": 1.324
+            }
+          ]
+        },
+        {
+          "text": "ocho uno cinco uno,",
+          "start": 7.449,
+          "end": 9.022,
+          "words": [
+            {
+              "text": "ocho",
+              "start": 0.0,
+              "end": 0.414
+            },
+            {
+              "text": "uno",
+              "start": 0.414,
+              "end": 0.745
+            },
+            {
+              "text": "cinco",
+              "start": 0.745,
+              "end": 1.242
+            },
+            {
+              "text": "uno,",
+              "start": 1.242,
+              "end": 1.573
+            }
+          ]
+        },
+        {
+          "text": "o entra a aents punto net.",
+          "start": 9.022,
+          "end": 11.174,
+          "words": [
+            {
+              "text": "o",
+              "start": 0.0,
+              "end": 0.166
+            },
+            {
+              "text": "entra",
+              "start": 0.166,
+              "end": 0.662
+            },
+            {
+              "text": "a",
+              "start": 0.662,
+              "end": 0.828
+            },
+            {
+              "text": "aents",
+              "start": 0.828,
+              "end": 1.324
+            },
+            {
+              "text": "punto",
+              "start": 1.324,
+              "end": 1.821
+            },
+            {
+              "text": "net.",
+              "start": 1.821,
+              "end": 2.152
+            }
+          ]
+        }
+      ],
+      "visualDirection": "Tarjeta de cierre de la serie con acento violeta: tile de Aents, la frase Construyamos tu software, el dominio aents.net y el WhatsApp 098 373 8151 en una sola columna dentro de la zona segura. Un único CTA, sin datos de Geo Propiedades ni segundas llamadas a la acción. El número se muestra agrupado igual que se pronuncia y el bloque cierra con la firma de Aents.",
+      "transition": "fade",
+      "asset": "sim:aents-contacto",
+      "assetType": "simulation",
+      "photo": null,
+      "voiceFile": "jobs/geo-007/audio/voice-09.mp3",
+      "assetStartInFrames": 0,
+      "assetTotalInFrames": 349,
+      "accent": "#22C55E"
+    }
+  ]
+}

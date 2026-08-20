@@ -1,0 +1,834 @@
+<!DOCTYPE html>
+<html lang="es" data-brand="{{ active_brand.id }}">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Fábrica de videos · {{ active_brand.name }}</title>
+{{ requirements|json_script:"requirements-data" }}
+<style>
+:root {
+  color-scheme: light dark;
+  --primary: #65558f;
+  --on-primary: #ffffff;
+  --primary-container: #e9ddff;
+  --on-primary-container: #21005d;
+  --secondary-container: #e8def8;
+  --on-secondary-container: #1d192b;
+  --surface: #fdf7ff;
+  --surface-container-low: #f7f2fa;
+  --surface-container: #f3edf7;
+  --surface-container-high: #ece6f0;
+  --surface-container-highest: #e6e0e9;
+  --on-surface: #1d1b20;
+  --on-surface-variant: #49454f;
+  --outline: #79747e;
+  --outline-variant: #cac4d0;
+  --error: #b3261e;
+  --on-error-container: #410e0b;
+  --error-container: #f9dedc;
+  --success: #2e6b46;
+  --success-container: #c8f0d6;
+  --on-success-container: #0a2717;
+  --shadow: 0 1px 2px rgba(0,0,0,.14), 0 1px 3px 1px rgba(0,0,0,.06);
+  --shadow-2: 0 2px 6px 2px rgba(0,0,0,.10), 0 1px 2px rgba(0,0,0,.14);
+  --radius-l: 16px;
+  --radius-m: 12px;
+  --radius-s: 8px;
+  --font: "Roboto", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+:root[data-theme="dark"], :root:not([data-theme="light"]) {
+  --primary: #cfbdfe;
+  --on-primary: #362364;
+  --primary-container: #4d3d75;
+  --on-primary-container: #e9ddff;
+  --secondary-container: #4a4458;
+  --on-secondary-container: #e8def8;
+  --surface: #141218;
+  --surface-container-low: #1d1b20;
+  --surface-container: #211f26;
+  --surface-container-high: #2b2930;
+  --surface-container-highest: #36343b;
+  --on-surface: #e6e0e9;
+  --on-surface-variant: #cac4d0;
+  --outline: #938f99;
+  --outline-variant: #49454f;
+  --error: #f2b8b5;
+  --error-container: #8c1d18;
+  --on-error-container: #f9dedc;
+  --success: #7fd8a4;
+  --success-container: #21503a;
+  --on-success-container: #c8f0d6;
+  --shadow: 0 1px 3px rgba(0,0,0,.5);
+  --shadow-2: 0 4px 12px rgba(0,0,0,.55);
+}
+:root[data-theme="light"] {
+  --primary: #65558f;
+  --on-primary: #ffffff;
+  --primary-container: #e9ddff;
+  --on-primary-container: #21005d;
+  --secondary-container: #e8def8;
+  --on-secondary-container: #1d192b;
+  --surface: #fdf7ff;
+  --surface-container-low: #f7f2fa;
+  --surface-container: #f3edf7;
+  --surface-container-high: #ece6f0;
+  --surface-container-highest: #e6e0e9;
+  --on-surface: #1d1b20;
+  --on-surface-variant: #49454f;
+  --outline: #79747e;
+  --outline-variant: #cac4d0;
+  --error: #b3261e;
+  --error-container: #f9dedc;
+  --on-error-container: #410e0b;
+  --success: #2e6b46;
+  --success-container: #c8f0d6;
+  --on-success-container: #0a2717;
+  --shadow: 0 1px 2px rgba(0,0,0,.14), 0 1px 3px 1px rgba(0,0,0,.06);
+  --shadow-2: 0 2px 6px 2px rgba(0,0,0,.10), 0 1px 2px rgba(0,0,0,.14);
+}
+* { box-sizing: border-box; }
+html, body { height: 100%; }
+body {
+  margin: 0;
+  font-family: var(--font);
+  background: var(--surface);
+  color: var(--on-surface);
+  font-size: 14px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+.icon { width: 20px; height: 20px; flex: none; fill: currentColor; }
+
+.app-bar {
+  height: 64px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 0 16px 0 24px;
+  background: var(--surface-container);
+  border-bottom: 1px solid var(--outline-variant);
+  position: sticky;
+  top: 0;
+  z-index: 20;
+}
+.app-bar h1 { font-size: 20px; font-weight: 500; margin: 0; letter-spacing: .1px; }
+.app-bar .spacer { flex: 1; }
+.app-sub { color: var(--on-surface-variant); font-size: 12px; }
+
+.segmented { display: inline-flex; border: 1px solid var(--outline); border-radius: 100px; overflow: hidden; }
+.segmented a {
+  padding: 7px 16px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--on-surface);
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: background .15s;
+}
+.segmented a + a { border-left: 1px solid var(--outline); }
+.segmented a:hover { background: color-mix(in srgb, var(--on-surface) 8%, transparent); }
+.segmented a[aria-selected="true"] { background: var(--secondary-container); color: var(--on-secondary-container); }
+
+.icon-button {
+  width: 40px; height: 40px;
+  display: grid; place-items: center;
+  border: none; border-radius: 100px;
+  background: transparent; color: var(--on-surface-variant);
+  cursor: pointer; transition: background .15s;
+}
+.icon-button:hover { background: color-mix(in srgb, var(--on-surface) 8%, transparent); }
+
+.btn {
+  display: inline-flex; align-items: center; gap: 8px;
+  height: 40px; padding: 0 24px;
+  border: none; border-radius: 100px;
+  font-family: inherit; font-size: 14px; font-weight: 500; letter-spacing: .1px;
+  cursor: pointer; transition: box-shadow .15s, background .15s;
+}
+.btn:disabled { opacity: .38; cursor: not-allowed; }
+.btn-filled { background: var(--primary); color: var(--on-primary); }
+.btn-filled:hover:not(:disabled) { box-shadow: var(--shadow); }
+.btn-tonal { background: var(--secondary-container); color: var(--on-secondary-container); }
+.btn-tonal:hover:not(:disabled) { box-shadow: var(--shadow); }
+.btn-outlined { background: transparent; color: var(--primary); border: 1px solid var(--outline); }
+.btn-outlined:hover:not(:disabled) { background: color-mix(in srgb, var(--primary) 8%, transparent); }
+.btn-text { background: transparent; color: var(--primary); padding: 0 12px; }
+.btn-text:hover:not(:disabled) { background: color-mix(in srgb, var(--primary) 8%, transparent); }
+
+.layout { display: grid; grid-template-columns: 380px 1fr; height: calc(100vh - 64px); }
+@media (max-width: 1100px) { .layout { grid-template-columns: 320px 1fr; } }
+@media (max-width: 860px) { .layout { grid-template-columns: 1fr; } .list-pane { display: none; } }
+
+.list-pane {
+  border-right: 1px solid var(--outline-variant);
+  overflow-y: auto;
+  background: var(--surface-container-low);
+  padding: 12px;
+}
+.list-head { display: flex; align-items: center; gap: 8px; padding: 4px 8px 12px; }
+.list-head h2 { font-size: 13px; font-weight: 500; text-transform: uppercase; letter-spacing: .8px; color: var(--on-surface-variant); margin: 0; }
+.count-badge {
+  background: var(--primary-container); color: var(--on-primary-container);
+  border-radius: 100px; padding: 1px 8px; font-size: 11px; font-weight: 600;
+}
+
+.filters { display: flex; flex-wrap: wrap; gap: 6px; padding: 0 4px 12px; }
+.chip {
+  display: inline-flex; align-items: center; gap: 6px;
+  height: 30px; padding: 0 12px;
+  border: 1px solid var(--outline); border-radius: 8px;
+  background: transparent; color: var(--on-surface-variant);
+  font-family: inherit; font-size: 12px; cursor: pointer; transition: background .15s;
+}
+.chip:hover { background: color-mix(in srgb, var(--on-surface) 8%, transparent); }
+.chip[aria-pressed="true"] { background: var(--secondary-container); color: var(--on-secondary-container); border-color: transparent; }
+
+.video-item {
+  display: block; width: 100%; text-align: left;
+  background: var(--surface-container); color: inherit;
+  border: 1px solid transparent; border-radius: var(--radius-m);
+  padding: 12px 14px; margin-bottom: 8px;
+  font-family: inherit; cursor: pointer;
+  transition: background .15s, border-color .15s;
+}
+.video-item:hover { background: var(--surface-container-high); }
+.video-item[aria-selected="true"] { border-color: var(--primary); background: var(--surface-container-high); }
+.video-item .row { display: flex; align-items: center; gap: 8px; }
+.video-item .vid { font-family: var(--mono); font-size: 11px; color: var(--on-surface-variant); }
+.video-item .title { font-size: 14px; font-weight: 500; margin: 4px 0 8px; line-height: 1.35; }
+.video-item .meta { display: flex; align-items: center; gap: 8px; font-size: 11px; color: var(--on-surface-variant); }
+
+.state-chip {
+  display: inline-flex; align-items: center; gap: 5px;
+  border-radius: 100px; padding: 2px 10px;
+  font-size: 11px; font-weight: 600; letter-spacing: .2px;
+  background: var(--surface-container-highest); color: var(--on-surface-variant);
+}
+.state-chip::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+.state-planned { background: var(--surface-container-highest); color: var(--on-surface-variant); }
+.state-approved { background: var(--secondary-container); color: var(--on-secondary-container); }
+.state-rendered { background: var(--primary-container); color: var(--on-primary-container); }
+.state-reviewed { background: var(--primary-container); color: var(--on-primary-container); }
+.state-signed { background: var(--success-container); color: var(--on-success-container); }
+.state-published { background: var(--success-container); color: var(--on-success-container); }
+.state-learned { background: var(--success-container); color: var(--on-success-container); }
+.state-archived { background: var(--surface-container-highest); color: var(--on-surface-variant); }
+
+.live-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--success); flex: none; }
+.live-dot.busy { animation: pulse 1.4s ease-in-out infinite; }
+.live-dot.idle { background: var(--outline); }
+@keyframes pulse { 0%,100% { opacity: 1; transform: scale(1); } 50% { opacity: .35; transform: scale(.75); } }
+
+.progress-track { height: 4px; border-radius: 100px; background: var(--surface-container-highest); overflow: hidden; margin-top: 8px; }
+.progress-fill { height: 100%; background: var(--primary); border-radius: 100px; transition: width .4s ease; }
+
+.detail-pane { overflow-y: auto; display: flex; flex-direction: column; }
+.detail-head { padding: 24px 32px 0; }
+.detail-head .eyebrow { display: flex; align-items: center; gap: 10px; color: var(--on-surface-variant); font-size: 12px; font-family: var(--mono); }
+.detail-head h2 { font-size: 26px; font-weight: 400; margin: 8px 0 4px; line-height: 1.25; }
+.detail-head .hook { color: var(--on-surface-variant); font-size: 15px; margin: 0 0 16px; max-width: 70ch; }
+
+.tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--outline-variant); padding: 0 32px; position: sticky; top: 0; background: var(--surface); z-index: 10; }
+.tab {
+  position: relative; border: none; background: transparent;
+  padding: 14px 16px; font-family: inherit; font-size: 14px; font-weight: 500;
+  color: var(--on-surface-variant); cursor: pointer;
+}
+.tab:hover { color: var(--on-surface); }
+.tab[aria-selected="true"] { color: var(--primary); }
+.tab[aria-selected="true"]::after { content: ""; position: absolute; left: 12px; right: 12px; bottom: 0; height: 3px; border-radius: 3px 3px 0 0; background: var(--primary); }
+.tab .dot { display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: var(--success); margin-left: 6px; vertical-align: middle; }
+
+.tab-body { padding: 24px 32px 48px; flex: 1; }
+.tab-body[hidden] { display: none; }
+.terminal-body { padding: 0; display: flex; flex-direction: column; min-height: 0; }
+
+.card { background: var(--surface-container-low); border: 1px solid var(--outline-variant); border-radius: var(--radius-l); padding: 20px; margin-bottom: 16px; }
+.card h3 { font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: .8px; color: var(--on-surface-variant); margin: 0 0 14px; }
+
+.facts { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 16px 24px; }
+.fact .label { font-size: 11px; text-transform: uppercase; letter-spacing: .5px; color: var(--on-surface-variant); }
+.fact .value { font-size: 14px; margin-top: 2px; word-break: break-word; }
+.fact .value.mono { font-family: var(--mono); font-size: 12px; }
+
+.stepper { display: flex; flex-wrap: wrap; gap: 0; }
+.step { display: flex; align-items: center; gap: 8px; padding-right: 8px; }
+.step .bead {
+  width: 26px; height: 26px; border-radius: 50%;
+  display: grid; place-items: center; flex: none;
+  border: 2px solid var(--outline-variant); color: var(--outline);
+  font-size: 11px; font-weight: 700;
+}
+.step.reached .bead { background: var(--primary); border-color: var(--primary); color: var(--on-primary); }
+.step.current .bead { box-shadow: 0 0 0 4px color-mix(in srgb, var(--primary) 24%, transparent); }
+.step .name { font-size: 12px; color: var(--on-surface-variant); }
+.step.reached .name { color: var(--on-surface); font-weight: 500; }
+.step .bar { width: 26px; height: 2px; background: var(--outline-variant); margin: 0 4px; }
+.step.reached .bar { background: var(--primary); }
+
+.timeline { display: flex; flex-direction: column; gap: 2px; }
+.event { display: grid; grid-template-columns: 74px 24px 1fr; gap: 10px; align-items: start; padding: 7px 0; border-bottom: 1px solid color-mix(in srgb, var(--outline-variant) 50%, transparent); }
+.event:last-child { border-bottom: none; }
+.event .when { font-family: var(--mono); font-size: 11px; color: var(--on-surface-variant); padding-top: 2px; }
+.event .kind { display: grid; place-items: center; width: 24px; height: 24px; border-radius: 50%; background: var(--surface-container-high); color: var(--on-surface-variant); }
+.event.kind-prompt .kind { background: var(--primary-container); color: var(--on-primary-container); }
+.event.kind-say .kind { background: var(--secondary-container); color: var(--on-secondary-container); }
+.event.kind-edit .kind { background: var(--success-container); color: var(--on-success-container); }
+.event .what .title { font-size: 13px; font-weight: 500; }
+.event .what .detail { font-size: 12.5px; color: var(--on-surface-variant); word-break: break-word; }
+.event .what .detail.mono { font-family: var(--mono); font-size: 11.5px; }
+
+pre.doc {
+  font-family: var(--mono); font-size: 12.5px; line-height: 1.65;
+  white-space: pre-wrap; word-break: break-word; margin: 0;
+  color: var(--on-surface);
+}
+.json { font-family: var(--mono); font-size: 12px; line-height: 1.6; white-space: pre-wrap; word-break: break-word; margin: 0; color: var(--on-surface-variant); }
+
+table.data { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+table.data th, table.data td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--outline-variant); vertical-align: top; }
+table.data th { font-size: 11px; text-transform: uppercase; letter-spacing: .5px; color: var(--on-surface-variant); font-weight: 600; }
+.table-scroll { overflow-x: auto; }
+
+.terminal-bar { display: flex; align-items: center; gap: 12px; padding: 14px 32px; border-bottom: 1px solid var(--outline-variant); background: var(--surface-container-low); flex-wrap: wrap; }
+.terminal-frame { flex: 1; min-height: 520px; border: none; width: 100%; background: #101418; }
+.terminal-empty { padding: 56px 32px; text-align: center; color: var(--on-surface-variant); }
+.terminal-empty .big { font-size: 17px; color: var(--on-surface); margin-bottom: 6px; }
+
+.banner { display: flex; gap: 10px; align-items: flex-start; padding: 12px 16px; border-radius: var(--radius-m); background: var(--error-container); color: var(--on-error-container); margin-bottom: 16px; font-size: 13px; }
+.empty { color: var(--on-surface-variant); font-size: 13px; padding: 8px 0; }
+.media-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; }
+.media-grid video, .media-grid img { width: 100%; border-radius: var(--radius-m); background: #000; display: block; }
+.media-caption { font-family: var(--mono); font-size: 11px; color: var(--on-surface-variant); margin-top: 6px; }
+</style>
+</head>
+<body>
+<svg style="display:none" aria-hidden="true">
+  <symbol id="i-movie" viewBox="0 0 24 24"><path d="M4 4h16a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2Zm0 2v2h3V6H4Zm5 0v2h6V6H9Zm8 0v2h3V6h-3ZM4 10v8h16v-8H4Z"/></symbol>
+  <symbol id="i-terminal" viewBox="0 0 24 24"><path d="M3 4h18a1 1 0 0 1 1 1v14a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1Zm1 3v11h16V7H4Zm2.7 2.3 3.6 3.2-3.6 3.2-1-1.1 2.3-2.1-2.3-2.1 1-1.1ZM12 15h5v1.5h-5V15Z"/></symbol>
+  <symbol id="i-play" viewBox="0 0 24 24"><path d="M8 5v14l11-7L8 5Z"/></symbol>
+  <symbol id="i-stop" viewBox="0 0 24 24"><path d="M6 6h12v12H6z"/></symbol>
+  <symbol id="i-theme" viewBox="0 0 24 24"><path d="M12 3a9 9 0 1 0 9 9 7 7 0 0 1-9-9Z"/></symbol>
+  <symbol id="i-user" viewBox="0 0 24 24"><path d="M12 12a4 4 0 1 0-4-4 4 4 0 0 0 4 4Zm0 2c-3.3 0-8 1.7-8 4v2h16v-2c0-2.3-4.7-4-8-4Z"/></symbol>
+  <symbol id="i-chat" viewBox="0 0 24 24"><path d="M4 3h16a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H8l-4 4V5a2 2 0 0 1 2-2Z"/></symbol>
+  <symbol id="i-tool" viewBox="0 0 24 24"><path d="M21 6.5 17.5 10 14 6.5 17.5 3a5 5 0 0 0-6 6.4l-8 8a2 2 0 0 0 2.8 2.8l8-8A5 5 0 0 0 21 6.5Z"/></symbol>
+  <symbol id="i-edit" viewBox="0 0 24 24"><path d="M3 17.25V21h3.75L17.8 9.94l-3.75-3.75L3 17.25ZM20.7 7.04a1 1 0 0 0 0-1.41l-2.34-2.34a1 1 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83Z"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><path d="M9 16.2 4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4L9 16.2Z"/></symbol>
+  <symbol id="i-warn" viewBox="0 0 24 24"><path d="M1 21h22L12 2 1 21Zm12-3h-2v-2h2v2Zm0-4h-2v-4h2v4Z"/></symbol>
+</svg>
+
+<header class="app-bar">
+  <svg class="icon" style="color:var(--primary)"><use href="#i-movie"/></svg>
+  <div>
+    <h1>Fábrica de videos</h1>
+    <div class="app-sub">{{ active_brand.name }} · {{ active_brand.domain }}</div>
+  </div>
+  <div class="spacer"></div>
+  <nav class="segmented" aria-label="Marca">
+    {% for item in brands %}
+    <a href="/{{ item.id }}/" aria-selected="{% if item.id == active_brand.id %}true{% else %}false{% endif %}">{{ item.name }}</a>
+    {% endfor %}
+  </nav>
+  <button class="icon-button" id="theme-toggle" title="Cambiar tema" aria-label="Cambiar tema">
+    <svg class="icon"><use href="#i-theme"/></svg>
+  </button>
+</header>
+
+<div class="layout">
+  <aside class="list-pane">
+    <div class="list-head">
+      <h2>Videos</h2>
+      <span class="count-badge" id="video-count">0</span>
+    </div>
+    <div class="filters" id="filters"></div>
+    <div id="video-list"></div>
+  </aside>
+  <main class="detail-pane" id="detail-pane">
+    <div class="terminal-empty"><div class="big">Elige un video</div><div>Cada pieza abre su ficha, su guion y su propia terminal.</div></div>
+  </main>
+</div>
+
+<script>{% verbatim %}
+const BRAND = document.documentElement.dataset.brand;
+const REQUIREMENTS = JSON.parse(document.getElementById("requirements-data").textContent);
+const STATE_LABELS = {
+  planned: "Planificado", approved: "Aprobado", rendered: "Renderizado",
+  reviewed: "Revisado", signed: "Firmado", published: "Publicado",
+  learned: "Aprendido", archived: "Archivado"
+};
+const TABS = [
+  { id: "ficha", label: "Ficha" },
+  { id: "guion", label: "Guion" },
+  { id: "artefactos", label: "Artefactos" },
+  { id: "proceso", label: "Proceso" },
+  { id: "terminal", label: "Terminal" }
+];
+
+let videos = [];
+let filter = null;
+let selectedId = null;
+let detail = null;
+let activeTab = "ficha";
+let terminalMounted = null;
+let lastListPaint = null;
+let lastDetailPaint = null;
+
+const el = (tag, props, children) => {
+  const node = document.createElement(tag);
+  Object.assign(node, props || {});
+  if (props && props.dataset) Object.assign(node.dataset, props.dataset);
+  if (props && props.attrs) for (const [k, v] of Object.entries(props.attrs)) node.setAttribute(k, v);
+  (children || []).forEach(child => node.append(child));
+  return node;
+};
+const icon = name => {
+  const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+  svg.setAttribute("class", "icon");
+  const use = document.createElementNS("http://www.w3.org/2000/svg", "use");
+  use.setAttribute("href", "#" + name);
+  svg.append(use);
+  return svg;
+};
+const clock = value => {
+  if (!value) return "";
+  const date = new Date(value);
+  if (isNaN(date)) return "";
+  return date.toLocaleTimeString("es-EC", { hour: "2-digit", minute: "2-digit" });
+};
+const day = value => {
+  if (!value) return "—";
+  const date = new Date(value);
+  if (isNaN(date)) return "—";
+  return date.toLocaleDateString("es-EC", { day: "2-digit", month: "short", year: "numeric" });
+};
+const seconds = value => (value || value === 0) ? Number(value).toFixed(1).replace(".0", "") + " s" : "—";
+const weight = bytes => bytes > 1048576 ? (bytes / 1048576).toFixed(1) + " MB" : Math.round(bytes / 1024) + " KB";
+
+function stateChip(state) {
+  return el("span", { className: "state-chip state-" + state, textContent: STATE_LABELS[state] || state });
+}
+
+async function loadVideos() {
+  const response = await fetch("/api/" + BRAND + "/videos");
+  const payload = await response.json();
+  videos = payload.videos;
+  const paint = JSON.stringify([videos, filter, selectedId]);
+  if (paint !== lastListPaint) {
+    lastListPaint = paint;
+    renderFilters();
+    renderList();
+  }
+  if (!selectedId && videos.length) select(videos[0].id);
+}
+
+function renderFilters() {
+  const box = document.getElementById("filters");
+  const counts = {};
+  videos.forEach(video => { counts[video.state] = (counts[video.state] || 0) + 1; });
+  box.replaceChildren();
+  const all = el("button", { className: "chip", textContent: "Todos", onclick: () => { filter = null; renderFilters(); renderList(); } });
+  all.setAttribute("aria-pressed", filter === null);
+  box.append(all);
+  Object.keys(STATE_LABELS).forEach(state => {
+    if (!counts[state]) return;
+    const chip = el("button", {
+      className: "chip",
+      textContent: STATE_LABELS[state] + " · " + counts[state],
+      onclick: () => { filter = filter === state ? null : state; renderFilters(); renderList(); }
+    });
+    chip.setAttribute("aria-pressed", filter === state);
+    box.append(chip);
+  });
+}
+
+function renderList() {
+  const list = document.getElementById("video-list");
+  const shown = videos.filter(video => !filter || video.state === filter);
+  document.getElementById("video-count").textContent = shown.length;
+  list.replaceChildren();
+  shown.forEach(video => {
+    const head = el("div", { className: "row" }, [
+      el("span", { className: "vid", textContent: video.id }),
+      stateChip(video.state)
+    ]);
+    if (video.terminal && video.terminal.alive) {
+      head.append(el("span", { className: "spacer", style: "flex:1" }));
+      head.append(el("span", { className: "live-dot busy", attrs: { title: "Terminal abierta" } }));
+    }
+    const meta = el("div", { className: "meta" }, [
+      el("span", { textContent: video.audience || "—" }),
+      el("span", { textContent: "·" }),
+      el("span", { textContent: seconds(video.duration_seconds || video.target_duration_seconds) })
+    ]);
+    if (video.has_export) meta.append(el("span", { textContent: "·" }), el("span", { textContent: "MP4" }));
+    const bar = el("div", { className: "progress-track" }, [
+      el("div", { className: "progress-fill", style: "width:" + video.progress + "%" })
+    ]);
+    const item = el("button", {
+      className: "video-item",
+      onclick: () => select(video.id)
+    }, [head, el("div", { className: "title", textContent: video.title }), meta, bar]);
+    item.setAttribute("aria-selected", video.id === selectedId);
+    list.append(item);
+  });
+  if (!shown.length) list.append(el("div", { className: "empty", textContent: "No hay videos en ese estado." }));
+  lastListPaint = JSON.stringify([videos, filter, selectedId]);
+}
+
+async function select(videoId) {
+  if (selectedId !== videoId) {
+    selectedId = videoId;
+    terminalMounted = null;
+    detail = null;
+    lastDetailPaint = null;
+  }
+  renderList();
+  await loadDetail();
+}
+
+async function loadDetail() {
+  if (!selectedId) return;
+  const response = await fetch("/api/" + BRAND + "/" + selectedId);
+  if (!response.ok) return;
+  const fresh = await response.json();
+  if (fresh.id !== selectedId) return;
+  detail = fresh;
+  renderDetail();
+}
+
+function renderDetail() {
+  const pane = document.getElementById("detail-pane");
+  if (!detail) return;
+  const paint = JSON.stringify([detail, activeTab]);
+  if (paint === lastDetailPaint) return;
+  lastDetailPaint = paint;
+  const scroll = pane.scrollTop;
+  pane.replaceChildren();
+
+  const eyebrow = el("div", { className: "eyebrow" }, [
+    el("span", { textContent: detail.id }),
+    stateChip(detail.state)
+  ]);
+  if (detail.series) eyebrow.append(el("span", { textContent: "serie: " + detail.series }));
+  if (detail.experiment) eyebrow.append(el("span", { textContent: "gancho de " + detail.parent }));
+
+  pane.append(el("div", { className: "detail-head" }, [
+    eyebrow,
+    el("h2", { textContent: detail.title }),
+    el("p", { className: "hook", textContent: detail.hook })
+  ]));
+
+  const tabs = el("div", { className: "tabs", attrs: { role: "tablist" } });
+  TABS.forEach(tab => {
+    const button = el("button", { className: "tab", textContent: tab.label, onclick: () => { activeTab = tab.id; renderDetail(); } });
+    button.setAttribute("aria-selected", tab.id === activeTab);
+    if (tab.id === "terminal" && detail.terminal && detail.terminal.alive) button.append(el("span", { className: "dot" }));
+    if (tab.id === "proceso" && detail.terminal && detail.terminal.process && detail.terminal.process.busy) button.append(el("span", { className: "dot" }));
+    tabs.append(button);
+  });
+  pane.append(tabs);
+
+  const body = el("div", { className: activeTab === "terminal" ? "tab-body terminal-body" : "tab-body" });
+  if (activeTab === "ficha") renderFicha(body);
+  if (activeTab === "guion") renderGuion(body);
+  if (activeTab === "artefactos") renderArtefactos(body);
+  if (activeTab === "proceso") renderProceso(body);
+  if (activeTab === "terminal") renderTerminal(body);
+  pane.append(body);
+  pane.scrollTop = scroll;
+}
+
+function fact(label, value, mono) {
+  return el("div", { className: "fact" }, [
+    el("div", { className: "label", textContent: label }),
+    el("div", { className: "value" + (mono ? " mono" : ""), textContent: (value === null || value === undefined || value === "") ? "—" : String(value) })
+  ]);
+}
+
+function renderFicha(body) {
+  const steps = el("div", { className: "stepper" });
+  detail.stages.forEach((stage, index) => {
+    const classes = ["step"];
+    if (stage.reached) classes.push("reached");
+    if (stage.current) classes.push("current");
+    const bead = el("div", { className: "bead" });
+    if (stage.reached) bead.append(icon("i-check")); else bead.textContent = String(index + 1);
+    const step = el("div", { className: classes.join(" ") }, [bead, el("span", { className: "name", textContent: stage.label })]);
+    if (index < detail.stages.length - 1) step.append(el("div", { className: "bar" }));
+    steps.append(step);
+  });
+  body.append(el("div", { className: "card" }, [el("h3", { textContent: "Recorrido" }), steps]));
+
+  const facts = el("div", { className: "facts" }, [
+    fact("Público", detail.audience),
+    fact("Etapa del embudo", detail.funnel_stage),
+    fact("Pilar", detail.pillar),
+    fact("Serie", detail.series),
+    fact("Formato editorial", detail.editorial_format),
+    fact("Duración real", seconds(detail.duration_seconds)),
+    fact("Duración objetivo", seconds(detail.target_duration_seconds)),
+    fact("Revisión automática", detail.automated_review_passed === true ? "Aprobada" : detail.automated_review_passed === false ? "Falló" : "—"),
+    fact("Creado", day(detail.created_at)),
+    fact("Actualizado", day(detail.updated_at)),
+    fact("Carpeta", detail.relative_directory, true)
+  ]);
+  body.append(el("div", { className: "card" }, [el("h3", { textContent: "Ficha" }), facts]));
+
+  body.append(el("div", { className: "card" }, [
+    el("h3", { textContent: "Concepto" }),
+    el("p", { style: "margin:0 0 14px", textContent: detail.concept || "—" }),
+    el("div", { className: "facts" }, [fact("Gancho", detail.hook), fact("Llamada a la acción", detail.cta)])
+  ]));
+
+  if (detail.exports.length) {
+    const grid = el("div", { className: "media-grid" });
+    detail.exports.forEach(file => {
+      const source = "/media/" + BRAND + "/" + detail.id + "/" + encodeURIComponent(file.name);
+      let media = null;
+      if (file.is_video) media = el("video", { src: source, controls: true, preload: "metadata" });
+      else if (file.is_image) media = el("img", { src: source, alt: file.name });
+      const cell = el("div", {}, media ? [media] : []);
+      cell.append(el("div", { className: "media-caption", textContent: file.name + " · " + weight(file.size_bytes) }));
+      grid.append(cell);
+    });
+    body.append(el("div", { className: "card" }, [el("h3", { textContent: "Entregables" }), grid]));
+  }
+}
+
+function artefact(name) {
+  return detail.artefacts.find(item => item.name === name);
+}
+
+function renderGuion(body) {
+  [["script.md", "Guion"], ["storyboard.md", "Storyboard"], ["caption.txt", "Caption"], ["subtitles.srt", "Subtítulos"]].forEach(pair => {
+    const item = artefact(pair[0]);
+    const card = el("div", { className: "card" }, [el("h3", { textContent: pair[1] })]);
+    if (item && item.present && item.content) card.append(el("pre", { className: "doc", textContent: item.content }));
+    else card.append(el("div", { className: "empty", textContent: "Todavía no existe " + pair[0] + "." }));
+    body.append(card);
+  });
+}
+
+function renderArtefactos(body) {
+  const plan = artefact("plan.json");
+  if (plan && plan.present && plan.content && Array.isArray(plan.content.scenes)) {
+    const table = el("table", { className: "data" });
+    table.append(el("thead", {}, [el("tr", {}, ["#", "Propósito", "Duración", "Voz", "En pantalla", "Dirección visual"].map(head => el("th", { textContent: head })))]));
+    const rows = el("tbody");
+    plan.content.scenes.forEach((scene, index) => {
+      rows.append(el("tr", {}, [
+        el("td", { textContent: String(index + 1) }),
+        el("td", { textContent: scene.purpose || "" }),
+        el("td", { textContent: seconds(scene.duration) }),
+        el("td", { textContent: scene.voice || "" }),
+        el("td", { textContent: scene.on_screen_text || "" }),
+        el("td", { textContent: scene.visual_direction || "" })
+      ]));
+    });
+    table.append(rows);
+    body.append(el("div", { className: "card" }, [
+      el("h3", { textContent: "Escenas del plan · " + plan.content.scenes.length }),
+      el("div", { className: "table-scroll" }, [table])
+    ]));
+  }
+
+  detail.artefacts.forEach(item => {
+    if (["script.md", "storyboard.md", "caption.txt", "subtitles.srt"].includes(item.name)) return;
+    const card = el("div", { className: "card" }, [
+      el("h3", { textContent: item.label + " · " + item.name + (item.modified_at ? " · " + day(item.modified_at) : "") })
+    ]);
+    if (!item.present) {
+      card.append(el("div", { className: "empty", textContent: "Todavía no existe." }));
+    } else if (item.kind === "csv") {
+      const content = item.content || { header: [], rows: [] };
+      if (!content.rows.length) {
+        card.append(el("div", { className: "empty", textContent: "Sin filas." }));
+      } else {
+        const table = el("table", { className: "data" });
+        table.append(el("thead", {}, [el("tr", {}, content.header.map(head => el("th", { textContent: head })))]));
+        const rows = el("tbody");
+        content.rows.forEach(row => rows.append(el("tr", {}, row.map(cell => el("td", { textContent: cell })))));
+        table.append(rows);
+        card.append(el("div", { className: "table-scroll" }, [table]));
+      }
+    } else {
+      let body_text = item.content;
+      if (item.kind === "json") {
+        if (item.name === "plan.json" && body_text && body_text.scenes) {
+          body_text = Object.fromEntries(Object.entries(body_text).filter(entry => entry[0] !== "scenes"));
+        }
+        body_text = JSON.stringify(body_text, null, 2);
+      }
+      card.append(el("pre", { className: "json", textContent: body_text || "" }));
+    }
+    body.append(card);
+  });
+}
+
+const EVENT_ICONS = { prompt: "i-user", say: "i-chat", tool: "i-tool", edit: "i-edit", done: "i-check" };
+
+function renderProceso(body) {
+  const terminal = detail.terminal;
+  if (!terminal) {
+    body.append(el("div", { className: "empty", textContent: "Este video no tiene una terminal abierta, así que no hay proceso que seguir. Ábrela desde la pestaña Terminal." }));
+    return;
+  }
+  const process = terminal.process || { steps: [], busy: false };
+  const head = el("div", { className: "card" }, [
+    el("h3", { textContent: "Agente" }),
+    el("div", { className: "facts" }, [
+      fact("Herramienta", terminal.cli_label),
+      fact("Estado", process.busy ? "Trabajando" : "En espera"),
+      fact("Abierta hace", terminal.uptime_minutes + " min"),
+      fact("Última señal", clock(process.last_activity) || "—")
+    ])
+  ]);
+  body.append(head);
+
+  const card = el("div", { className: "card" }, [el("h3", { textContent: "Proceso" })]);
+  if (!process.steps.length) {
+    card.append(el("div", { className: "empty", textContent: "Todavía no hay pasos registrados. Escribe algo en la terminal y aparecerán aquí." }));
+  } else {
+    const timeline = el("div", { className: "timeline" });
+    process.steps.slice().reverse().forEach(step => {
+      timeline.append(el("div", { className: "event kind-" + step.kind }, [
+        el("div", { className: "when", textContent: clock(step.at) }),
+        el("div", { className: "kind" }, [icon(EVENT_ICONS[step.kind] || "i-tool")]),
+        el("div", { className: "what" }, [
+          el("div", { className: "title", textContent: step.title }),
+          step.detail ? el("div", { className: "detail" + (step.kind === "tool" || step.kind === "edit" ? " mono" : ""), textContent: step.detail }) : el("span")
+        ])
+      ]));
+    });
+    card.append(timeline);
+  }
+  body.append(card);
+}
+
+async function terminalAction(path, options) {
+  const response = await fetch("/api/" + BRAND + "/" + detail.id + "/terminal" + path, options || { method: "POST" });
+  if (!response.ok) {
+    const payload = await response.json().catch(() => ({}));
+    alertBanner(payload.error || "No se pudo completar la acción");
+  }
+  terminalMounted = null;
+  lastDetailPaint = null;
+  await loadDetail();
+}
+
+function renderTerminal(body) {
+  const terminal = detail.terminal;
+  const missing = Object.entries(REQUIREMENTS).filter(entry => !entry[1]).map(entry => entry[0]);
+  const bar = el("div", { className: "terminal-bar" });
+
+  if (terminal && terminal.alive) {
+    bar.append(el("span", { className: "live-dot busy" }));
+    bar.append(el("strong", { textContent: terminal.cli_label }));
+    bar.append(el("span", {
+      style: "color:var(--on-surface-variant);font-size:12px",
+      textContent: terminal.viewing ? "puerto " + terminal.port + " · " + detail.id : "en segundo plano · " + detail.id
+    }));
+    bar.append(el("span", { style: "flex:1" }));
+    if (terminal.viewing) {
+      bar.append(el("button", {
+        className: "btn btn-text",
+        onclick: () => terminalAction("/detach")
+      }, [document.createTextNode("Cerrar vista")]));
+    } else {
+      bar.append(el("button", {
+        className: "btn btn-tonal",
+        onclick: () => terminalAction("", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ cli: terminal.cli })
+        })
+      }, [icon("i-play"), document.createTextNode("Reabrir vista")]));
+    }
+    bar.append(el("button", {
+      className: "btn btn-outlined",
+      onclick: () => terminalAction("/stop")
+    }, [icon("i-stop"), document.createTextNode("Terminar agente")]));
+    body.append(bar);
+
+    if (terminal.viewing) {
+      body.append(el("iframe", { className: "terminal-frame", src: terminal.url, attrs: { title: "Terminal de " + detail.id } }));
+      terminalMounted = detail.id;
+    } else {
+      body.append(el("div", { className: "terminal-empty" }, [
+        el("div", { className: "big", textContent: "El agente sigue trabajando" }),
+        el("div", { textContent: "Su sesión vive en tmux, así que no se perdió nada al cerrar la vista. Reábrela para volver a escribirle." })
+      ]));
+    }
+    return;
+  }
+
+  bar.append(el("span", { style: "color:var(--on-surface-variant)", textContent: "Una terminal por video." }));
+  bar.append(el("span", { style: "flex:1" }));
+  ["claude", "codex"].forEach(cli => {
+    const button = el("button", {
+      className: cli === "claude" ? "btn btn-filled" : "btn btn-tonal",
+      disabled: missing.includes("ttyd") || missing.includes(cli),
+      onclick: async event => {
+        const target = event.currentTarget;
+        target.disabled = true;
+        target.textContent = "Abriendo…";
+        const response = await fetch("/api/" + BRAND + "/" + detail.id + "/terminal", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ cli: cli })
+        });
+        if (!response.ok) {
+          const payload = await response.json();
+          alertBanner(payload.error || "No se pudo abrir la terminal");
+        }
+        await loadDetail();
+      }
+    }, [icon("i-play"), document.createTextNode(cli === "claude" ? "Abrir con Claude" : "Abrir con Codex")]);
+    bar.append(button);
+  });
+  body.append(bar);
+
+  const empty = el("div", { className: "terminal-empty" }, [
+    el("div", { className: "big", textContent: "Sin terminal abierta para " + detail.id }),
+    el("div", { textContent: "Se abre en marketing/videos con el contexto de esta pieza, y desde ahí puedes pedir cambios reales al guion, al plan o al código." })
+  ]);
+  if (missing.length) {
+    empty.prepend(el("div", { className: "banner", style: "text-align:left;max-width:640px;margin:0 auto 20px" }, [
+      icon("i-warn"),
+      el("div", { textContent: "Falta instalar: " + missing.join(", ") + ". Sin eso no se puede abrir una terminal." })
+    ]));
+  }
+  body.append(empty);
+}
+
+function alertBanner(message) {
+  const pane = document.getElementById("detail-pane");
+  const banner = el("div", { className: "banner", style: "margin:16px 32px" }, [icon("i-warn"), el("div", { textContent: message })]);
+  pane.prepend(banner);
+  setTimeout(() => banner.remove(), 6000);
+}
+
+const themeToggle = document.getElementById("theme-toggle");
+const storedTheme = localStorage.getItem("panel-theme");
+if (storedTheme) document.documentElement.dataset.theme = storedTheme;
+themeToggle.onclick = () => {
+  const current = document.documentElement.dataset.theme
+    || (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+  const next = current === "dark" ? "light" : "dark";
+  document.documentElement.dataset.theme = next;
+  localStorage.setItem("panel-theme", next);
+};
+
+loadVideos();
+setInterval(loadVideos, 6000);
+setInterval(() => {
+  if (!selectedId) return;
+  if (activeTab === "terminal" && terminalMounted === selectedId) return;
+  loadDetail();
+}, 3000);
+{% endverbatim %}</script>
+</body>
+</html>

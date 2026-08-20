@@ -1,0 +1,94 @@
+{
+  "rendered_at": "2026-08-14T23:27:03.012951-05:00",
+  "renderer": "remotion",
+  "remotion_version": "4.0.509",
+  "encoder_flags": [
+    "--crf",
+    "16",
+    "--x264-preset",
+    "slow",
+    "--pixel-format",
+    "yuv420p"
+  ],
+  "supersample_scale": "2",
+  "delivery_flags": [
+    "-vf",
+    "scale=1080:1920:flags=lanczos,format=yuv420p",
+    "-c:v",
+    "libx264",
+    "-preset",
+    "slow",
+    "-profile:v",
+    "high",
+    "-b:v",
+    "12M",
+    "-maxrate",
+    "14M",
+    "-bufsize",
+    "24M",
+    "-color_range",
+    "tv",
+    "-c:a",
+    "aac",
+    "-b:a",
+    "192k",
+    "-ar",
+    "44100",
+    "-movflags",
+    "+faststart"
+  ],
+  "tts_provider": "elevenlabs",
+  "voice_profiles": [
+    "final-main"
+  ],
+  "is_final_voice": true,
+  "music": null,
+  "music_license": null,
+  "duration_seconds": 16.426,
+  "target_duration_seconds": 18,
+  "caption_count": 12,
+  "scene_timings": [
+    {
+      "scene": 1,
+      "voice_file": "/Users/usuario/gad/EstateMap/marketing/videos/brands/geo/library/geo-002/audio/voice-01.mp3",
+      "voice_seconds": 2.013,
+      "voice_profile": "final-main",
+      "tts_provider": "elevenlabs",
+      "render_seconds": 2.466666666666667
+    },
+    {
+      "scene": 2,
+      "voice_file": "/Users/usuario/gad/EstateMap/marketing/videos/brands/geo/library/geo-002/audio/voice-02.mp3",
+      "voice_seconds": 3.05,
+      "voice_profile": "final-main",
+      "tts_provider": "elevenlabs",
+      "render_seconds": 3.5
+    },
+    {
+      "scene": 3,
+      "voice_file": "/Users/usuario/gad/EstateMap/marketing/videos/brands/geo/library/geo-002/audio/voice-03.mp3",
+      "voice_seconds": 4.549,
+      "voice_profile": "final-main",
+      "tts_provider": "elevenlabs",
+      "render_seconds": 5.0
+    },
+    {
+      "scene": 4,
+      "voice_file": "/Users/usuario/gad/EstateMap/marketing/videos/brands/geo/library/geo-002/audio/voice-04.mp3",
+      "voice_seconds": 3.124,
+      "voice_profile": "final-main",
+      "tts_provider": "elevenlabs",
+      "render_seconds": 3.566666666666667
+    },
+    {
+      "scene": 5,
+      "voice_file": "/Users/usuario/gad/EstateMap/marketing/videos/brands/geo/library/geo-002/audio/voice-05.mp3",
+      "voice_seconds": 1.412,
+      "voice_profile": "final-main",
+      "tts_provider": "elevenlabs",
+      "render_seconds": 1.8666666666666667
+    }
+  ],
+  "output": "exports/geo-002.mp4",
+  "cover": "exports/geo-002-cover.png"
+}

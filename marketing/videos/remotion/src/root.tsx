@@ -19,6 +19,10 @@ const sampleCaptions = (text: string, seconds: number) => {
 };
 
 const defaultProps: VideoProps = {
+  brandId: 'geo',
+  brandName: 'Geo Propiedades Ecuador',
+  brandTagline: 'Un producto de Aents',
+  brandSymbol: 'brand/aents-symbol-negative.png',
   title: 'Geo Propiedades Ecuador',
   coverText: 'Busca por zona',
   cta: 'Explora el mapa',
@@ -62,6 +66,10 @@ const defaultProps: VideoProps = {
 };
 
 const coverProps: CoverProps = {
+  brandId: 'geo',
+  brandName: 'Geo Propiedades Ecuador',
+  brandTagline: 'Un producto de Aents',
+  brandSymbol: 'brand/aents-symbol-negative.png',
   coverText: 'Busca por zona',
   cta: 'Explora el mapa',
   audience: 'comprador',

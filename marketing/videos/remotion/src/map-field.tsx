@@ -94,7 +94,10 @@ export const MapField: React.FC<{accent: string; frame: number}> = ({accent, fra
       <AbsoluteFill
         style={{
           background:
-            'linear-gradient(180deg, rgba(8,9,21,.86) 0%, rgba(8,9,21,.30) 22%, rgba(8,9,21,.22) 52%, rgba(8,9,21,.88) 100%)',
+            // The shade rides the last fifth only. It used to reach .88 from
+            // the midpoint down, which darkened half the map — the thing the
+            // piece exists to show — long before any word needed a backing.
+            'linear-gradient(180deg, rgba(8,9,21,.86) 0%, rgba(8,9,21,.30) 22%, rgba(8,9,21,.18) 80%, rgba(8,9,21,.52) 100%)',
         }}
       />
     </AbsoluteFill>

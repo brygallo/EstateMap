@@ -1,0 +1,80 @@
+{
+  "title": "Tu web decide en tres segundos",
+  "audience": "empresa",
+  "funnel_stage": "descubrimiento",
+  "objective": "Vender sitios web de Aents a empresas y abrir una conversación por WhatsApp",
+  "conversion_event": "whatsapp_contact",
+  "pillar": "Sitios web",
+  "series": "Conoce Aents",
+  "concept": "La primera impresión de tu empresa en internet",
+  "promise": "Aents construye sitios web rápidos y adaptables, pensados para los objetivos de la empresa",
+  "cta": "Conversemos tu página web",
+  "hypothesis": "Mostrar la decisión de los primeros segundos y luego la página reconstruida convierte mejor que describir el servicio",
+  "cover_text": "Tres segundos para decidir",
+  "caption": "Alguien busca tu empresa y decide en segundos si sigue contigo o vuelve al buscador. Una web lenta, antigua o difícil de usar habla por tu empresa antes que tú. En Aents creamos sitios web rápidos y adaptables, pensados para los objetivos de tu empresa: que una búsqueda se convierta en visita y una visita en una oportunidad. Conversemos tu página web.",
+  "hashtags": [
+    "#Aents",
+    "#SitiosWeb",
+    "#DisenoWeb",
+    "#SoftwareEcuador"
+  ],
+  "narration": "Alguien acaba de buscar tu empresa en internet. Y en segundos va a decidir si confía en ti, o sigue buscando. Una web lenta, antigua o difícil de usar no solo se ve mal. También habla por tu empresa. Tu página debería hacer exactamente lo contrario. En Aents creamos sitios web rápidos, adaptables y pensados para los objetivos de tu empresa. Pero una buena página no termina en el diseño. Debe convertir una búsqueda en una visita, y una visita en una oportunidad. Tu página web trabaja por tu empresa incluso cuando tú no estás trabajando. Haz que la primera impresión de tu empresa esté a su altura: conversemos.",
+  "voice_profile": null,
+  "music": null,
+  "verification_notes": [
+    "Oferta de sitios web verificada en ../Aents/apps/web/src/i18n.ts:367-370: «Webs que venden y crecen», experiencias rápidas y adaptables, diseñadas para posicionar tu marca, generar oportunidades y crecer con tu negocio.",
+    "Sitios web y landings figuran como servicio declarado en ../Aents/apps/web/src/i18n.ts:392-393.",
+    "Contacto y CTA verificados en ../Aents/apps/web/src/i18n.ts:366 y 398-399: WhatsApp +593 98 373 8151.",
+    "Los rótulos posicionamiento, velocidad y móvil se limitan a esa misma frase publicada. Se omiten analítica, seguridad y formularios porque no hay evidencia aprobada de esas capacidades.",
+    "Empresa XYZ y su sitio son una ilustración inventada; no reproducen la web de ningún cliente ni llevan marcas de terceros.",
+    "Los avisos del cierre llevan el rótulo EJEMPLO en pantalla: ilustran lo que hace una página web y no afirman resultados de ninguna pieza real.",
+    "No se afirma ningún plazo de entrega, precio, resultado comercial ni cifra de tráfico."
+  ],
+  "scenes": [
+    {
+      "purpose": "gancho",
+      "duration": 7,
+      "voice": "Alguien acaba de buscar tu empresa en internet. Y en segundos va a decidir si confía en ti, o sigue buscando.",
+      "on_screen_text": "Te acaban de buscar",
+      "asset": "sim:aents-web-busqueda",
+      "visual_direction": "Se escribe el nombre de una empresa en un buscador, se abre su web y pasan tres segundos contados en pantalla; la decisión se abre en dos caminos: confía en ti o sigue buscando.",
+      "transition": "cut"
+    },
+    {
+      "purpose": "problema",
+      "duration": 6,
+      "voice": "Una web lenta, antigua o difícil de usar no solo se ve mal. También habla por tu empresa.",
+      "on_screen_text": "Habla por tu empresa",
+      "asset": "sim:aents-web-lenta",
+      "visual_direction": "Una web antigua se queda cargando; al pasar al teléfono conserva su ancho de escritorio y deja el botón fuera de pantalla. El cursor cierra la pestaña y queda el rastro de que se fue.",
+      "transition": "cut"
+    },
+    {
+      "purpose": "solucion",
+      "duration": 9,
+      "voice": "Tu página debería hacer exactamente lo contrario. En Aents creamos sitios web rápidos, adaptables y pensados para los objetivos de tu empresa.",
+      "on_screen_text": "Rápida y adaptable",
+      "asset": "sim:aents-web-nueva",
+      "visual_direction": "Un barrido de luz recorre la misma página y cada bloque suelto se convierte en su componente terminado; después se recorre por secciones y se estrecha hasta el teléfono, donde el diseño se reacomoda en lugar de recortarse.",
+      "transition": "cut"
+    },
+    {
+      "purpose": "prueba",
+      "duration": 8,
+      "voice": "Pero una buena página no termina en el diseño. Debe convertir una búsqueda en una visita, y una visita en una oportunidad.",
+      "on_screen_text": "De búsqueda a cliente",
+      "asset": "sim:aents-web-conversion",
+      "visual_direction": "Tres estaciones encadenadas: la búsqueda lleva a la visita, bajo la página se encienden posicionamiento, velocidad y móvil, se pulsa Solicitar información y llega una solicitud.",
+      "transition": "cut"
+    },
+    {
+      "purpose": "cta",
+      "duration": 10,
+      "voice": "Tu página web trabaja por tu empresa incluso cuando tú no estás trabajando. Haz que la primera impresión de tu empresa esté a su altura: conversemos.",
+      "on_screen_text": "Conversemos tu página",
+      "asset": "sim:aents-web-cierre",
+      "visual_direction": "Un reloj recorre el día completo mientras llegan avisos rotulados como ejemplo; la escena se asienta en la marca Aents, el WhatsApp y aents.net.",
+      "transition": "cut"
+    }
+  ]
+}

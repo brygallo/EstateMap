@@ -1,0 +1,286 @@
+{
+  "title": "Antes de comprar un departamento, revisa esto",
+  "coverText": "Antes de comprar un departamento",
+  "cta": "Encuentra tu futuro hogar",
+  "url": "geopropiedadesecuador.com",
+  "brandTile": "brand/aents-brand-tile-1024.png",
+  "kicker": null,
+  "musicFile": null,
+  "showSafeAreas": false,
+  "scenes": [
+    {
+      "purpose": "prueba",
+      "durationInFrames": 423,
+      "headline": "Qué dice la escritura",
+      "captions": [
+        {
+          "text": "Pide la declaratoria de propiedad",
+          "start": 0.0,
+          "end": 2.219,
+          "words": [
+            {
+              "text": "Pide",
+              "start": 0.0,
+              "end": 0.326
+            },
+            {
+              "text": "la",
+              "start": 0.326,
+              "end": 0.522
+            },
+            {
+              "text": "declaratoria",
+              "start": 0.522,
+              "end": 1.37
+            },
+            {
+              "text": "de",
+              "start": 1.37,
+              "end": 1.566
+            },
+            {
+              "text": "propiedad",
+              "start": 1.566,
+              "end": 2.219
+            }
+          ]
+        },
+        {
+          "text": "horizontal y el reglamento interno.",
+          "start": 2.219,
+          "end": 4.502,
+          "words": [
+            {
+              "text": "horizontal",
+              "start": 0.0,
+              "end": 0.718
+            },
+            {
+              "text": "y",
+              "start": 0.718,
+              "end": 0.848
+            },
+            {
+              "text": "el",
+              "start": 0.848,
+              "end": 1.044
+            },
+            {
+              "text": "reglamento",
+              "start": 1.044,
+              "end": 1.762
+            },
+            {
+              "text": "interno.",
+              "start": 1.762,
+              "end": 2.284
+            }
+          ]
+        },
+        {
+          "text": "Ahí dice qué es tuyo",
+          "start": 4.502,
+          "end": 5.873,
+          "words": [
+            {
+              "text": "Ahí",
+              "start": 0.0,
+              "end": 0.261
+            },
+            {
+              "text": "dice",
+              "start": 0.261,
+              "end": 0.587
+            },
+            {
+              "text": "qué",
+              "start": 0.587,
+              "end": 0.848
+            },
+            {
+              "text": "es",
+              "start": 0.848,
+              "end": 1.044
+            },
+            {
+              "text": "tuyo",
+              "start": 1.044,
+              "end": 1.37
+            }
+          ]
+        },
+        {
+          "text": "y qué es común.",
+          "start": 5.873,
+          "end": 6.851,
+          "words": [
+            {
+              "text": "y",
+              "start": 0.0,
+              "end": 0.131
+            },
+            {
+              "text": "qué",
+              "start": 0.131,
+              "end": 0.392
+            },
+            {
+              "text": "es",
+              "start": 0.392,
+              "end": 0.587
+            },
+            {
+              "text": "común.",
+              "start": 0.587,
+              "end": 0.979
+            }
+          ]
+        },
+        {
+          "text": "Y revisa que el parqueadero",
+          "start": 6.851,
+          "end": 8.678,
+          "words": [
+            {
+              "text": "Y",
+              "start": 0.0,
+              "end": 0.131
+            },
+            {
+              "text": "revisa",
+              "start": 0.131,
+              "end": 0.587
+            },
+            {
+              "text": "que",
+              "start": 0.587,
+              "end": 0.848
+            },
+            {
+              "text": "el",
+              "start": 0.848,
+              "end": 1.044
+            },
+            {
+              "text": "parqueadero",
+              "start": 1.044,
+              "end": 1.827
+            }
+          ]
+        },
+        {
+          "text": "y la bodega consten en",
+          "start": 8.678,
+          "end": 10.179,
+          "words": [
+            {
+              "text": "y",
+              "start": 0.0,
+              "end": 0.131
+            },
+            {
+              "text": "la",
+              "start": 0.131,
+              "end": 0.326
+            },
+            {
+              "text": "bodega",
+              "start": 0.326,
+              "end": 0.783
+            },
+            {
+              "text": "consten",
+              "start": 0.783,
+              "end": 1.305
+            },
+            {
+              "text": "en",
+              "start": 1.305,
+              "end": 1.501
+            }
+          ]
+        },
+        {
+          "text": "la escritura,",
+          "start": 10.179,
+          "end": 11.027,
+          "words": [
+            {
+              "text": "la",
+              "start": 0.0,
+              "end": 0.196
+            },
+            {
+              "text": "escritura,",
+              "start": 0.196,
+              "end": 0.848
+            }
+          ]
+        },
+        {
+          "text": "no que te los hayan asignado",
+          "start": 11.027,
+          "end": 12.92,
+          "words": [
+            {
+              "text": "no",
+              "start": 0.0,
+              "end": 0.196
+            },
+            {
+              "text": "que",
+              "start": 0.196,
+              "end": 0.457
+            },
+            {
+              "text": "te",
+              "start": 0.457,
+              "end": 0.653
+            },
+            {
+              "text": "los",
+              "start": 0.653,
+              "end": 0.914
+            },
+            {
+              "text": "hayan",
+              "start": 0.914,
+              "end": 1.305
+            },
+            {
+              "text": "asignado",
+              "start": 1.305,
+              "end": 1.892
+            }
+          ]
+        },
+        {
+          "text": "de palabra.",
+          "start": 12.92,
+          "end": 13.637,
+          "words": [
+            {
+              "text": "de",
+              "start": 0.0,
+              "end": 0.196
+            },
+            {
+              "text": "palabra.",
+              "start": 0.196,
+              "end": 0.718
+            }
+          ]
+        }
+      ],
+      "visualDirection": "sim:propiedad-horizontal, construida y registrada. Un juego de documentos en papel sobre una mesa, dibujados como papeles reales con sello y firma, entrando escalonados. El primero se abre y sobre el corte del edificio se pintan en dos tonos lo privado y lo común, con etiquetas grandes de al menos 24 px. A la mitad ocurre el cambio de estado: el papel pasa la página y aparecen dos renglones, parqueadero y bodega, que se marcan como parte del documento; al lado, un cartel de parqueadero apenas dibujado con tiza se borra para mostrar la diferencia entre constar y estar asignado de palabra.",
+      "transition": "cut",
+      "asset": "sim:propiedad-horizontal",
+      "assetType": "simulation",
+      "photo": null,
+      "voiceFile": "jobs/video-010/audio/voice-02.mp3",
+      "assetStartInFrames": 0,
+      "assetTotalInFrames": 423,
+      "accent": "#6B5CF6"
+    }
+  ]
+}

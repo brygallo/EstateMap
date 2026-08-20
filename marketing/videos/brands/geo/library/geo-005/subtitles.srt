@@ -1,0 +1,83 @@
+1
+00:00:00,000 --> 00:00:01,320
+¿Te gustó una propiedad?
+
+2
+00:00:01,320 --> 00:00:02,813
+Espera antes de contactar.
+
+3
+00:00:03,267 --> 00:00:05,307
+Primero revisa todas las fotos
+
+4
+00:00:05,307 --> 00:00:07,677
+y los datos declarados: habitaciones,
+
+5
+00:00:07,677 --> 00:00:08,533
+baños y área.
+
+6
+00:00:08,967 --> 00:00:10,502
+Luego abre el análisis
+
+7
+00:00:10,502 --> 00:00:11,303
+del anuncio.
+
+8
+00:00:11,303 --> 00:00:13,105
+La ficha calcula el precio
+
+9
+00:00:13,105 --> 00:00:14,373
+por metro cuadrado.
+
+10
+00:00:14,373 --> 00:00:16,709
+Lo compara con propiedades activas
+
+11
+00:00:16,709 --> 00:00:17,710
+del mismo tipo,
+
+12
+00:00:17,710 --> 00:00:18,978
+operación y ciudad,
+
+13
+00:00:18,978 --> 00:00:20,847
+y muestra el rango habitual
+
+14
+00:00:20,847 --> 00:00:22,849
+y cuántos comparables existen.
+
+15
+00:00:23,300 --> 00:00:25,059
+Después revisa la ubicación
+
+16
+00:00:25,059 --> 00:00:26,504
+y la Forma del terreno,
+
+17
+00:00:26,504 --> 00:00:27,949
+cuando esté disponible.
+
+18
+00:00:28,400 --> 00:00:29,845
+Mira bien hoy el lugar
+
+19
+00:00:29,845 --> 00:00:31,856
+que mañana podrías llamar hogar.
+
+20
+00:00:31,856 --> 00:00:33,489
+Encuentra tu futuro hogar
+
+21
+00:00:33,489 --> 00:00:35,186
+en Geo Propiedades Ecuador.

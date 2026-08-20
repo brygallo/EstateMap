@@ -251,6 +251,27 @@ def speak_scene(text: str, target: Path, provider: tts.VoiceProvider) -> list[di
 # script written for ninety seconds came out at sixty-nine.
 CHARACTERS_PER_SECOND = 16.2
 
+# Each narrator reads at its own pace, and the difference is not a rounding
+# error. `aents-001` was planned at 64.5 seconds against the draft voice and
+# came out at 83.2 when ElevenLabs `voice-03` read the same 1065 characters —
+# 13.9 characters per second against the draft's 16.2. Six of its scenes went
+# past the six-second ceiling and its hook stretched from 4.5 s to 5.7 s, which
+# diluted the opening below the density gate and failed the master.
+#
+# Nothing warned, because the estimate scaled by the profile's `speed` setting
+# and `voice-03` declares 1.02 — a speed multiplier is not a reading rate.
+# These numbers are measured from finished masters; a new provider gets the
+# default until one of its pieces has been rendered and can be measured.
+PROVIDER_CHARACTERS_PER_SECOND = {
+    "kokoro": 16.2,
+    "macos": 16.2,
+    "elevenlabs": 13.9,
+}
+
+
+def characters_per_second(provider: tts.VoiceProvider) -> float:
+    return PROVIDER_CHARACTERS_PER_SECOND.get(provider.name, CHARACTERS_PER_SECOND)
+
 
 def estimate_seconds(text: str, provider: tts.VoiceProvider | None = None) -> float:
     """Cheap pre-render duration estimate used by the linter.
@@ -259,6 +280,6 @@ def estimate_seconds(text: str, provider: tts.VoiceProvider | None = None) -> fl
     unless a caller is asking about a different one. This measures speech only:
     the render also holds `renderer.SCENE_TAIL_SECONDS` after each scene.
     """
-    speed = (provider or tts.draft()).speed()
+    narrator = provider or tts.draft()
     characters = len(" ".join(text.split()))
-    return round(characters / (CHARACTERS_PER_SECOND * speed), 2)
+    return round(characters / (characters_per_second(narrator) * narrator.speed()), 2)

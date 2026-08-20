@@ -1,0 +1,271 @@
+1
+00:00:00,000 --> 00:00:01,509
+Quería comprar un terreno
+
+2
+00:00:01,509 --> 00:00:03,308
+y nadie me decía dónde quedaba.
+
+3
+00:00:03,767 --> 00:00:05,351
+Busqué en Facebook,
+
+4
+00:00:05,351 --> 00:00:06,185
+en grupos,
+
+5
+00:00:06,185 --> 00:00:07,769
+en páginas sueltas.
+
+6
+00:00:07,769 --> 00:00:09,186
+Siempre lo mismo:
+
+7
+00:00:09,186 --> 00:00:10,103
+unas fotos,
+
+8
+00:00:10,103 --> 00:00:12,104
+un precio y un teléfono.
+
+9
+00:00:12,567 --> 00:00:13,814
+De la ubicación,
+
+10
+00:00:13,814 --> 00:00:14,983
+ni una palabra.
+
+11
+00:00:14,983 --> 00:00:16,074
+Y la pregunta
+
+12
+00:00:16,074 --> 00:00:18,256
+que nadie me contestaba era
+
+13
+00:00:18,256 --> 00:00:20,048
+la más simple de todas:
+
+14
+00:00:20,048 --> 00:00:21,373
+¿esto queda cerca
+
+15
+00:00:21,373 --> 00:00:22,854
+o lejos de mi vida?
+
+16
+00:00:22,854 --> 00:00:23,789
+Del trabajo,
+
+17
+00:00:23,789 --> 00:00:24,880
+de la escuela,
+
+18
+00:00:24,880 --> 00:00:25,971
+de mi familia.
+
+19
+00:00:25,971 --> 00:00:27,919
+Y ahí se me ocurrió algo:
+
+20
+00:00:27,919 --> 00:00:30,179
+ponerlas todas sobre un mapa.
+
+21
+00:00:30,633 --> 00:00:33,267
+Así nació Geo Propiedades Ecuador.
+
+22
+00:00:33,267 --> 00:00:35,437
+Bajas a la zona que conoces,
+
+23
+00:00:35,437 --> 00:00:37,529
+esa que recorres caminando,
+
+24
+00:00:37,529 --> 00:00:38,846
+y ves lo que hay
+
+25
+00:00:38,846 --> 00:00:40,008
+a tu alrededor:
+
+26
+00:00:40,008 --> 00:00:42,255
+cada propiedad con su precio,
+
+27
+00:00:42,255 --> 00:00:43,185
+en el lugar
+
+28
+00:00:43,185 --> 00:00:44,812
+donde de verdad está.
+
+29
+00:00:45,267 --> 00:00:46,997
+Y no siempre es un punto.
+
+30
+00:00:46,997 --> 00:00:48,934
+Cuando quien publica dibuja
+
+31
+00:00:48,934 --> 00:00:49,695
+el terreno,
+
+32
+00:00:49,695 --> 00:00:51,564
+ves su forma sobre el mapa:
+
+33
+00:00:51,564 --> 00:00:52,809
+hasta dónde llega
+
+34
+00:00:52,809 --> 00:00:54,331
+y con qué está pegado.
+
+35
+00:00:54,331 --> 00:00:55,784
+No es un plano legal
+
+36
+00:00:55,784 --> 00:00:56,891
+ni una medición,
+
+37
+00:00:56,891 --> 00:00:58,690
+pero ya te haces una idea.
+
+38
+00:00:59,133 --> 00:01:00,547
+Tocas la propiedad
+
+39
+00:01:00,547 --> 00:01:02,632
+y se abre su ficha completa:
+
+40
+00:01:02,632 --> 00:01:03,376
+las fotos,
+
+41
+00:01:03,376 --> 00:01:03,972
+el área,
+
+42
+00:01:03,972 --> 00:01:05,237
+las habitaciones,
+
+43
+00:01:05,237 --> 00:01:07,024
+los baños y lo que pide
+
+44
+00:01:07,024 --> 00:01:08,066
+el anunciante.
+
+45
+00:01:08,066 --> 00:01:10,597
+Todo eso que en aquellos anuncios
+
+46
+00:01:10,597 --> 00:01:12,235
+yo tenía que adivinar.
+
+47
+00:01:12,700 --> 00:01:13,969
+Y si te interesa,
+
+48
+00:01:13,969 --> 00:01:16,059
+le escribes directo a quien
+
+49
+00:01:16,059 --> 00:01:16,880
+la publicó.
+
+50
+00:01:16,880 --> 00:01:19,045
+El mensaje ya viene empezado;
+
+51
+00:01:19,045 --> 00:01:22,106
+tú solo preguntas lo que necesitas saber,
+
+52
+00:01:22,106 --> 00:01:23,300
+sin dar vueltas.
+
+53
+00:01:23,733 --> 00:01:25,728
+Eso es lo que nos distingue.
+
+54
+00:01:25,728 --> 00:01:27,509
+Aquí una propiedad no es
+
+55
+00:01:27,509 --> 00:01:28,649
+una foto suelta
+
+56
+00:01:28,649 --> 00:01:30,216
+que hay que perseguir:
+
+57
+00:01:30,216 --> 00:01:31,071
+es un lugar
+
+58
+00:01:31,071 --> 00:01:33,351
+que puedes ver antes de moverte
+
+59
+00:01:33,351 --> 00:01:34,134
+de tu casa.
+
+60
+00:01:34,134 --> 00:01:35,488
+El mapa no te dice
+
+61
+00:01:35,488 --> 00:01:36,556
+si te conviene;
+
+62
+00:01:36,556 --> 00:01:37,981
+te dice dónde queda,
+
+63
+00:01:37,981 --> 00:01:39,834
+y esa decisión ya es tuya.
+
+64
+00:01:40,300 --> 00:01:41,205
+Yo hice esto
+
+65
+00:01:41,205 --> 00:01:43,083
+porque me hacía falta a mí.
+
+66
+00:01:43,083 --> 00:01:44,614
+Hoy está aquí para ti.
+
+67
+00:01:44,614 --> 00:01:46,423
+Encuentra tu futuro hogar
+
+68
+00:01:46,423 --> 00:01:48,998
+en geo propiedades ecuador punto com.

@@ -68,7 +68,11 @@ export default async function BlogCategoryPage({ params }: CategoryPageProps) {
   // rankings without scrolling through all of them.
   if (isLiveCategory(slug)) {
     const livePages = await listLivePages();
-    if (!livePages.length) notFound();
+    // No 404 when the list comes back empty. It can mean there are no rankings
+    // yet, and it can also mean the API was briefly unreachable — during a
+    // deploy the frontend is built before the new backend is up, and baking a
+    // 404 into a URL the blog links to is far worse than an honest empty page.
+    // The metadata above already keeps it out of the index while it is empty.
     return (
       <LiveCategoryPage
         pages={livePages}
@@ -269,8 +273,9 @@ function LiveCategoryPage({
         </h1>
         <p className="mt-4 text-base leading-7 text-textSecondary">{LIVE_CATEGORY.description}</p>
         <p className="mt-2 text-sm text-textSecondary">
-          {pages.length} listas activas. Cada una existe solo mientras haya inventario suficiente
-          para sostenerla, y desaparece del índice si deja de haberlo.
+          {pages.length
+            ? `${pages.length} listas activas. Cada una existe solo mientras haya inventario suficiente para sostenerla, y desaparece del índice si deja de haberlo.`
+            : 'Ahora mismo no hay ninguna lista activa: se publican solas en cuanto una zona acumula inventario suficiente para sostener un ranking.'}
         </p>
       </header>
 

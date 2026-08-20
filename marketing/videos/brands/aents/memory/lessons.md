@@ -1,0 +1,55 @@
+# Aprendizajes activos
+
+Claude lee este archivo antes de cada generación. **No lo edites a mano**: se
+regenera desde `memory/lessons.json`. Para añadir una corrección usa
+`marketing/videos/video feedback`.
+
+## Reglas permanentes
+
+- Si no hay material real del producto, declarar el resultado como video
+  tipográfico de marca; no fingir una captura de pantalla.
+- La voz no debe leer hashtags, instrucciones de edición ni emojis.
+- Una corrección humana explícita tiene prioridad sobre una heurística general
+  de la estrategia.
+
+## Aprendizajes registrados
+
+### 2026-08-15 · global · toda la cuenta
+
+- Observación (corrección humana): El rótulo «AUTOMATIZACIÓN» de sim:aents-idea se imprimía por encima de los bordes de su tarjeta: el tamaño estaba fijado a ojo en vez de medido contra el ancho disponible.
+- Regla: Ningún texto sale de la caja a la que pertenece salvo que la salida sea deliberada y forme parte de la animación. Todo rótulo dentro de una tarjeta, píldora o panel se ajusta con fit() de layout.ts contra el ancho interior real de su contenedor; nunca con un tamaño fijo ni con un condicional sobre la longitud de la cadena.
+
+### 2026-08-15 · global · toda la cuenta
+
+- Observación (corrección humana): Cada marca estaba construyendo sus propias animaciones desde cero, con el panel, el fondo y la retícula copiados y sus colores escritos a mano dentro de cada composición.
+- Regla: El panel, el fondo, la retícula, el texto contenido y las funciones de ritmo viven en remotion/src/system-kit.tsx y toman su paleta de tokensFor(brandId, brandName); las animaciones reciben la marca por props. Antes de crear una animación se busca en el registro una que demuestre literalmente la voz, y solo se crea una nueva cuando ninguna lo hace.
+
+### 2026-08-15 · global · toda la cuenta
+
+- Observación (corrección humana): Las animaciones se construían con opacidades e interpolaciones lineales: los elementos aparecían en su sitio, todos a la vez, sin peso, sin profundidad y sin luz, y la revisión las marcaba quietas.
+- Regla: Toda composición nueva usa el vocabulario de movimiento de system-kit.tsx documentado en animation-standard.md §10 bis: land() para las llegadas, glide()/settle() para lo que viaja, stagger() para los grupos, Halo detrás del sujeto, glass()/lit() para las superficies, Reveal para el texto, Trace para los conectores y push={p} en Panel y Field para el empuje continuo. La profundidad se declara por plano y un cambio de estado ocurre sobre un movimiento, nunca sobre un fundido.
+
+### 2026-08-15 · global · toda la cuenta
+
+- Observación (corrección humana): El gancho de aents-001 medía 0,5 eventos por segundo y repetía la misma imagen el 89 % de su duración: una apertura plana, sin planos de profundidad, con el producto dibujado como tres rectángulos y sin un solo momento que se recuerde. Es la única escena que ve todo el mundo y la que congela el feed, y en una empresa que vende software es la muestra del trabajo.
+- Regla: La escena 1 se construye sobre remotion/src/hero-stage.tsx (cámara única, planos declarados, luz con fuente, impacto y cadencia) y su interfaz sobre remotion/src/interface-kit.tsx (espaciado, jerarquía, estados y objetivos táctiles reales). Se registra en renderer.HERO_STAGINGS con su movimiento de cámara, y dos aperturas seguidas no pueden rodarse igual. review_tools.HeroSceneAudit lo mide sobre el máster: mínimo tres eventos por segundo y máximo 12 % de imagen repetida, con el listón subiendo hasta el mejor gancho de la marca. La regla completa está en animation-standard.md §0.
+
+### 2026-08-15 · global · toda la cuenta
+
+- Observación (corrección humana): En sim:aents-soluciones las cuatro tarjetas de opción se solapaban con la tarjeta central 28 x 11 px cada una, y como la elipse giraba el solape aparecía y desaparecía. Además la central era más pequeña que las otras y la elegida crecía un 4 %, así que los cuadros se veían de tamaños distintos. Lo vio una persona en pantalla; ninguna comprobación lo detectó.
+- Regla: La geometría que puede chocar se declara como datos (CHOICE, NEED, SOLUTIONS con x e y) en vez de calcularse sobre una elipse en movimiento, y tests.DeclaredLayoutTests recorre los rectángulos y falla si dos se acercan a menos de 16 px o si alguno se sale del panel. Todo lo que compite por la misma decisión usa el mismo tamaño; lo elegido se señala con luz, nunca creciendo. Reglas en animation-standard.md §10 bis.
+
+### 2026-08-15 · global · toda la cuenta
+
+- Observación (corrección humana): sim:aents-etapas afirmaba cuatro etapas —estrategia, diseño, desarrollo y lanzamiento— dibujando el mismo rectángulo gris en las cuatro, solo cambiando su opacidad. Quien lo vio lo describió como «solo salen cuadros random», y tenía razón: el riel decía que algo había cambiado, pero nada en cuadro decía qué pasa en cada etapa.
+- Regla: Una afirmación sobre N pasos enseña N cosas distintas. Cada etapa dibuja lo que sale de ella: el flujo del negocio trazado, el wireframe, el producto construido con su navegación y sus filas con estado, y el producto en uso en escritorio y teléfono. El riel además nombra qué se hace en la etapa activa. Regla en animation-standard.md §10 bis y prueba en tests.DeclaredLayoutTests.
+
+### 2026-08-15 · global · toda la cuenta
+
+- Observación (corrección humana): sim:aents-reveal se titula CASO REAL y señala un producto que existe de verdad, pero pintaba tres precios inventados en los pines del mapa sin marcarlos. En esa tarjeta y con ese rótulo se leen como precios reales de un mercado que nadie verificó. Ni el linter ni la auditoría de cifras lo detectan: solo miran el plan y las cifras animadas, no las constantes de una composición.
+- Regla: Toda cifra inventada lleva el sello EJEMPLO en pantalla mientras esté visible, y con más razón dentro de una tarjeta que dice CASO REAL. Añadido a BrowserMap en aents-simulations.tsx. Al revisar una animación que nunca se ha visto renderizada, mirar sus cifras antes de meterla en un plan.
+
+### 2026-08-15 · global · toda la cuenta
+
+- Observación (corrección humana): sim:aents-reveal se quedaba con la misma imagen el 77 % de su toma. La causa no era la escena: Shell, el panel donde se dibujan las composiciones antiguas de Aents, es una copia a mano de Panel hecha antes de que existiera el kit compartido. Cuando Field ganó la capa de ambiente que mantiene viva una toma en reposo, todas las composiciones del kit la recibieron y estas no.
+- Regla: Se le cableó la capa de ambiente a Shell como arreglo inmediato. La reparación de verdad es borrar Shell y que esas escenas usen Panel: mientras siga siendo una copia, cada mejora del kit tendrá que aplicarse dos veces y alguna se olvidará. Lo que se comparte se parametriza; lo que se duplica se pudre.

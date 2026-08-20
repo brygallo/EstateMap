@@ -1,0 +1,7 @@
+{
+  "brand": "aents",
+  "brief": "Tercer guion de Aents entregado por el usuario, sobre la diferencia entre responsive y mobile first. Clase de 210 s: la duracion la decide la materia, no el guion recibido. El original trae diecisiete escenas y aqui se condensa a catorce sin perder ningun paso: los dos bloques que repetian que empezar por escritorio falla se funden en uno, y la conclusion no vuelve a definir lo que la escena 3 ya definio. El ejemplo del buscador de propiedades deja de ser hipotetico: se dibuja el comportamiento movil real de Geo Propiedades Ecuador, plataforma construida por Aents, con sus datos de propiedades rotulados EJEMPLO. Se retira del cierre cualquier promesa de metodologia: la pieza ensena mobile first, no afirma que Aents lo practique, porque eso no consta en la identidad publicada.",
+  "automatic_selection": false,
+  "target_duration_seconds": 210,
+  "created_at": "2026-08-15T10:49:00.626250-05:00"
+}
