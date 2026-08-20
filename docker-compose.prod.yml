@@ -147,6 +147,15 @@ services:
       NEXT_PUBLIC_GOOGLE_CLIENT_ID: ${NEXT_PUBLIC_GOOGLE_CLIENT_ID}
       REVALIDATE_SECRET: ${REVALIDATE_SECRET}
 
+    # The API hostname is proxied through Cloudflare, so resolving it normally
+    # would send every server-rendered page out to an edge and back before it
+    # could read its own database. Pinning it to the host gateway keeps the URL
+    # identical — same TLS, same certificate, same nginx vhost — while the
+    # request never leaves the machine. It also means a CDN incident degrades
+    # visitors, not rendering.
+    extra_hosts:
+      - "api.geopropiedadesecuador.com:host-gateway"
+
     ports:
       - "127.0.0.1:3000:3000"
 

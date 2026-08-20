@@ -74,6 +74,12 @@ if ! git fetch origin main; then
 fi
 git reset --hard origin/main
 
+# Re-assert the host configuration the CDN depends on. It lives in deploy/ and
+# is applied from there on every deploy, so a hand-made edit on the box is
+# never what keeps rate limiting working.
+echo "🌐 Applying edge configuration..."
+bash deploy/install-edge-config.sh || echo "   ⚠ edge config no aplicada (no bloquea el despliegue)"
+
 echo "🔨 Building Docker images while the current services stay online..."
 # Keep the running containers available during the slow part of the deploy.
 # Docker's layer cache also avoids reinstalling unchanged Python/Node packages.

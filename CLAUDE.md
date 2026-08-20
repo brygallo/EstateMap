@@ -21,6 +21,7 @@ modificar comportamiento.
 | Entender por qué está hecho así          | `docs/business-rules/`, `docs/decisions/` |
 | Arquitectura, caché, Celery, Redis       | `docs/technical/`                        |
 | De dónde salen las métricas y las visitas | `docs/technical/activity-metrics.md`    |
+| Qué pasa por el CDN y qué no             | `docs/technical/cdn-cloudflare.md`      |
 | Quién puede hacer qué                    | `docs/permissions/matrix.md`             |
 | Qué devuelve la API cuando falla         | `docs/errors/api-errors.md`              |
 | Cómo se publica o se importa una propiedad | `docs/workflows/`                      |
