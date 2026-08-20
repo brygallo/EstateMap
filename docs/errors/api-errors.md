@@ -162,7 +162,7 @@ auditoría `admin_audit action=incident.resolve`. En el frontend lo pinta
 | **409** | Ingesta: cancelar un run ya terminado | `{"error": "El run #<id> ya está <estado>."}` | `ingesta/api.py:170-172` | Nada que cancelar |
 | **413** | La carga supera el máximo de Django | `{"detail": "La carga completa supera el tamaño máximo permitido de 50MB."}` | `estate_map/upload_errors.py:14-18` | **Leer §6.2 y §6.3**: en producción es probable que el 413 lo emita nginx, en HTML |
 | **429** | Se supera una tasa de `DEFAULT_THROTTLE_RATES` | `{"detail": "..."}` (`Throttled` de DRF) + cabecera `Retry-After` en segundos | `settings.py:172-183`; scopes en `views.py:285-299`, `views.py:896-901`, `views.py:948-953` | Esperar lo que indique `Retry-After` (§5.3) |
-| **429** | nginx corta antes que Django | HTML o el JSON que se configure en el host (**no** es DRF) | `deploy/nginx-rate-limit.conf.example` (plantilla, no aplicada desde el repo) | Ver §5.3 |
+| **429** | nginx corta antes que Django (10 r/s en la API, 5 r/s en `map_points`) | `{"detail": "Se realizaron demasiados intentos. Espera un momento y vuelve a intentar."}` + `Retry-After: 60`. Misma forma que DRF, pero **sin** `X-Request-ID` ni `X-Release`: nunca llega a Django | `deploy/nginx-ratelimit-zones.conf`, `deploy/nginx-ratelimit-api.conf`, aplicados por `deploy/install-edge-config.sh` | Ver §5.3 |
 | **500** | Excepción no controlada en cualquier vista | Página HTML de error 500 de Django (**no JSON**), con `X-Request-ID` | Convertida por Django antes de llegar al middleware; el incidente lo registra `observability.py:74-79` | Buscar por `X-Request-ID` (§10) |
 | **500** | Login con Google falla por causa no prevista | `{"error": "No se pudo procesar el inicio de sesión."}` (JSON) | `views.py:1032-1037` (con `logger.exception('google_login_failed')`) | Revisar logs por `google_login_failed` |
 | **500** | No se puede enviar el correo de verificación de cambio de email | `{"error": "Error al enviar el correo de verificación"}` (JSON) | `views.py:1339-1346` | Revisar SMTP (§7.4) |
@@ -374,11 +374,38 @@ faltan. **El frontend no lee `Retry-After`**: `frontend/lib/form-errors.ts:8` ma
 un texto fijo, `'Se realizaron demasiados intentos. Espera un momento y vuelve a intentar.'`,
 sin reintento automático ni cuenta atrás.
 
-Ojo con el otro 429 posible: `deploy/nginx-rate-limit.conf.example` define zonas
-(`api_general` 10 r/s, `api_map` 5 r/s) con `limit_req_status 429`. Es un **ejemplo que debe
-fusionarse a mano en el nginx nativo del host** (lo dice su propia cabecera); si está
-aplicado, ese 429 lo genera nginx y **no tiene el formato JSON de DRF ni las cabeceras
-`X-Request-ID` / `X-Release`**, porque nunca llega a Django.
+### 5.4 El otro 429: el que emite nginx
+
+Desde el 20 de agosto de 2026 hay un segundo muro, por delante de Django, en el vhost
+de la API: 10 r/s con ráfaga de 30 para todo `/api/`, y 5 r/s con ráfaga de 20 para
+`GET /api/properties/map_points/`. Lo aplica `deploy/install-edge-config.sh` desde el
+repositorio en cada despliegue, no a mano.
+
+Está cinco veces por encima de los techos de Django a propósito. Los de Django son los
+precisos; estos son los baratos: cortan un bucle de scraping en el borde de la máquina,
+antes de que ocupe un worker de gunicorn, una ida a Redis y la decodificación del JWT.
+Una persona navegando nunca los alcanza —una ficha dispara ocho llamadas simultáneas y
+las ocho pasan— y un rastreador educado tampoco.
+
+**Devuelve la misma forma que DRF**: `{"detail": "Se realizaron demasiados intentos.
+Espera un momento y vuelve a intentar."}` con `Content-Type: application/json` y
+`Retry-After: 60`, que es el texto exacto que `frontend/lib/form-errors.ts:8` ya muestra
+para un 429. Lo que **no** trae son `X-Request-ID` ni `X-Release`, porque la petición
+nunca llega a Django: si estás depurando un 429 y no encuentras el `request_id`, es este.
+
+Dos exenciones, y las dos importan:
+
+- **El render de servidor.** Llega desde el contenedor de Next.js por el puente de
+  Docker, con dirección privada, y el bloque `geo` lo deja fuera. Es el mismo criterio
+  que `_is_internal_client` en `throttling.py`. Comprobado con 60 peticiones simultáneas
+  desde el contenedor: 60 de 60 en 200.
+- **El vhost del frontend no tiene ningún límite.** Sirve 16.949 URLs cuyo objetivo es
+  que las rastreen, y la velocidad de Googlebot no es algo con lo que apostar en un
+  negocio que vive del buscador. La extracción masiva se hace por la API —una llamada a
+  `map_points` devuelve miles de puntos—, así que el muro está donde se usa.
+
+Detrás del CDN el límite cuenta por persona, no por edge, porque `real_ip` reescribe la
+dirección antes (ver `docs/technical/cdn-cloudflare.md`).
 
 ---
 

@@ -18,6 +18,10 @@ set -uo pipefail
 SNIPPET=/etc/nginx/snippets/cloudflare-realip.conf
 REFRESH=/usr/local/sbin/cloudflare-ips-refresh.sh
 CRON=/etc/cron.d/cloudflare-ips
+ZONES=/etc/nginx/conf.d/estatemap-ratelimit.conf
+API_PROXY=/etc/nginx/snippets/estatemap-api-proxy.conf
+API_LIMIT=/etc/nginx/snippets/estatemap-ratelimit-api.conf
+API_VHOST=/etc/nginx/sites-available/geopropiedades-api.conf
 VHOSTS=(
     /etc/nginx/sites-available/geopropiedades-frontend.conf
     /etc/nginx/sites-available/geopropiedades-api.conf
@@ -83,6 +87,46 @@ for vhost in "${VHOSTS[@]}"; do
         echo "   ⚠ nginx rechazó el include en $(basename "$vhost"); revertido"
     fi
 done
+
+# 5. Rate limiting. The zones go in `http` (inert until a server block spends
+#    one) and the limit itself in a snippet the API vhost includes, so the
+#    certbot-managed file gains exactly one line. The frontend vhost gets no
+#    limit on purpose: it serves the pages that have to be crawled.
+for pair in \
+    "nginx-ratelimit-zones.conf:$ZONES" \
+    "nginx-api-proxy.conf:$API_PROXY" \
+    "nginx-ratelimit-api.conf:$API_LIMIT"
+do
+    src="$REPO_DIR/${pair%%:*}"
+    dst="${pair##*:}"
+    [ -f "$src" ] || continue
+    cmp -s "$src" "$dst" && continue
+    cp -a "$dst" "$dst.bak" 2>/dev/null || true
+    install -m 644 "$src" "$dst"
+    if nginx -t >/dev/null 2>&1; then
+        changed=1
+        echo "   ✓ $(basename "$dst") actualizado"
+    else
+        if [ -f "$dst.bak" ]; then mv "$dst.bak" "$dst"; else rm -f "$dst"; fi
+        echo "   ⚠ nginx rechazó $(basename "$dst"); revertido"
+    fi
+done
+
+if [ -f "$API_VHOST" ] && [ -f "$API_LIMIT" ] && ! grep -q "estatemap-ratelimit-api.conf" "$API_VHOST"; then
+    if grep -q "cloudflare-realip.conf" "$API_VHOST"; then
+        cp -a "$API_VHOST" "$API_VHOST.bak"
+        sed -i "0,/cloudflare-realip.conf;/s//cloudflare-realip.conf;\n    include ${API_LIMIT//\//\\/};/" "$API_VHOST"
+        if nginx -t >/dev/null 2>&1; then
+            changed=1
+            echo "   ✓ límite de tasa activado en la API"
+        else
+            mv "$API_VHOST.bak" "$API_VHOST"
+            echo "   ⚠ nginx rechazó el límite de tasa; revertido"
+        fi
+    else
+        echo "   ⚠ $API_VHOST sin el ancla esperada; incluir el límite a mano"
+    fi
+fi
 
 if [ "$changed" -eq 1 ] && nginx -t >/dev/null 2>&1; then
     systemctl reload nginx && echo "   ✓ nginx recargado"

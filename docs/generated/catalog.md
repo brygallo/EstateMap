@@ -46,7 +46,7 @@ Qué devuelve el sistema cuando algo falla, y qué garantías acompañan a esa r
 | [`ERR-003`](#err-003--toda-pantalla-de-error-debería-mostrar-el-identificador) | Toda pantalla de error debería mostrar el identificador | 📝 Propuesta (sin código) |
 | [`ERR-004`](#err-004--los-incidentes-se-agregan-por-huella-y-no-guardan-datos-de-la-petición) | Los incidentes se agregan por huella y no guardan datos de la petición | ✅ Implementada |
 | [`ERR-005`](#err-005--las-subidas-que-rompen-los-topes-del-parser-responden-json) | Las subidas que rompen los topes del parser responden JSON | ✅ Implementada |
-| [`ERR-006`](#err-006--el-contrato-json-para-errores-de-nginx-está-versionado-pero-requiere-despliegue) | El contrato JSON para errores de nginx está versionado pero requiere despliegue | 🟡 Parcial |
+| [`ERR-006`](#err-006--solo-el-429-de-nginx-respeta-el-contrato-json-el-413-sigue-en-html) | Solo el 429 de nginx respeta el contrato JSON; el 413 sigue en HTML | 🟡 Parcial |
 | [`ERR-007`](#err-007--el-límite-de-ritmo-responde-429-con-retry-after) | El límite de ritmo responde 429 con Retry-After | ✅ Implementada |
 | [`ERR-008`](#err-008--con-la-caché-caída-el-sistema-sirve-no-falla) | Con la caché caída el sistema sirve, no falla | ✅ Implementada |
 | [`ERR-009`](#err-009--el-mensaje-de-subida-excesiva-anuncia-un-límite-que-no-es-el-real) | El mensaje de subida excesiva anuncia un límite que no es el real | ✅ Implementada |
@@ -165,25 +165,28 @@ El middleware sigue en su sitio como red para las capas que se parsean fuera de 
 
 - `backend/real_estate/tests/test_property_image_validation.py`
 
-### ERR-006 — El contrato JSON para errores de nginx está versionado pero requiere despliegue
+### ERR-006 — Solo el 429 de nginx respeta el contrato JSON; el 413 sigue en HTML
 
 **Estado:** 🟡 Parcial
 
-El ejemplo de nginx fija client_max_body_size en 50 MB y convierte 413 y 429 en JSON con X-Request-ID, pero el nginx de producción es nativo y el repositorio no puede demostrar que el fragmento esté desplegado.
+Cuando nginx corta antes que Django, el 429 sale con el mismo cuerpo que DRF -{"detail": ...}- y con Retry-After, porque el vhost de la API incluye un error_page que lo construye. El 413 no: nginx lo sigue respondiendo en HTML. Ninguno de los dos lleva X-Request-ID ni X-Release, porque la petición nunca llega a Django.
 
 
-> **Por qué:** Es el error más confuso de diagnosticar del sistema: mismo síntoma, dos orígenes, y solo uno de ellos deja huella. Queda registrado hasta que la configuración de nginx se versione junto al resto del despliegue.
+> **Por qué:** Es el error más confuso de diagnosticar del sistema: mismo síntoma, dos orígenes, y solo uno de ellos deja huella. La mitad del 429 se cerró al versionar la configuración del host: install-edge-config.sh la aplica en cada despliegue, así que ahora el repositorio sí puede demostrar que está puesta. La del 413 sigue abierta, y se queda registrada como tal en vez de declarar el contrato entero cumplido.
 
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `deploy/nginx-rate-limit.conf.example:35-75` (`client_max_body_size 50m`)
+- `deploy/nginx-ratelimit-api.conf` (`location @estatemap_rate_limited`) — El 429 que emite nginx con la forma de DRF.
+- `deploy/install-edge-config.sh` (`límite de tasa activado en la API`) — Lo que lo pone en el host en cada despliegue.
+- `deploy/nginx-rate-limit.conf.example:35-75` (`client_max_body_size 50m`) — La parte del 413 que nunca se aplicó; sigue siendo solo un ejemplo.
 
 **Casos**
 
 | Caso | Rol | Estado previo | Cuerpo | Esperado |
 | --- | --- | --- | --- | --- |
-| Subida que supera el límite de nginx | — | `origen`=nginx | — | HTML sin X-Request-ID |
+| Ráfaga que supera el límite de nginx | — | `origen`=nginx, `codigo`=429 | — | JSON sin X-Request-ID |
+| Subida que supera el límite de nginx | — | `origen`=nginx, `codigo`=413 | — | HTML sin X-Request-ID |
 | Subida que supera el límite de Django | — | `origen`=django | — | JSON con X-Request-ID |
 
 ### ERR-007 — El límite de ritmo responde 429 con Retry-After

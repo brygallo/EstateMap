@@ -264,23 +264,38 @@ rules:
         expected: "413 con detail, nunca un error sobre uploaded_images"
 
   - id: ERR-006
-    name: El contrato JSON para errores de nginx está versionado pero requiere despliegue
+    name: Solo el 429 de nginx respeta el contrato JSON; el 413 sigue en HTML
     status: partial
     summary: >
-      El ejemplo de nginx fija client_max_body_size en 50 MB y convierte 413 y
-      429 en JSON con X-Request-ID, pero el nginx de producción es nativo y el
-      repositorio no puede demostrar que el fragmento esté desplegado.
+      Cuando nginx corta antes que Django, el 429 sale con el mismo cuerpo que
+      DRF -{"detail": ...}- y con Retry-After, porque el vhost de la API incluye
+      un error_page que lo construye. El 413 no: nginx lo sigue respondiendo en
+      HTML. Ninguno de los dos lleva X-Request-ID ni X-Release, porque la
+      petición nunca llega a Django.
     rationale: >
       Es el error más confuso de diagnosticar del sistema: mismo síntoma, dos
-      orígenes, y solo uno de ellos deja huella. Queda registrado hasta que la
-      configuración de nginx se versione junto al resto del despliegue.
+      orígenes, y solo uno de ellos deja huella. La mitad del 429 se cerró al
+      versionar la configuración del host: install-edge-config.sh la aplica en
+      cada despliegue, así que ahora el repositorio sí puede demostrar que está
+      puesta. La del 413 sigue abierta, y se queda registrada como tal en vez de
+      declarar el contrato entero cumplido.
     evidence:
+      - file: deploy/nginx-ratelimit-api.conf
+        symbol: "location @estatemap_rate_limited"
+        note: El 429 que emite nginx con la forma de DRF.
+      - file: deploy/install-edge-config.sh
+        symbol: "límite de tasa activado en la API"
+        note: Lo que lo pone en el host en cada despliegue.
       - file: deploy/nginx-rate-limit.conf.example
         lines: "35-75"
         symbol: "client_max_body_size 50m"
+        note: La parte del 413 que nunca se aplicó; sigue siendo solo un ejemplo.
     cases:
+      - name: Ráfaga que supera el límite de nginx
+        given: {origen: nginx, codigo: 429}
+        expected: JSON sin X-Request-ID
       - name: Subida que supera el límite de nginx
-        given: {origen: nginx}
+        given: {origen: nginx, codigo: 413}
         expected: HTML sin X-Request-ID
       - name: Subida que supera el límite de Django
         given: {origen: django}

@@ -21,8 +21,8 @@ El rasgo definitorio del despliegue es que **solo las aplicaciones corren en
 Docker**. Postgres, Redis, MinIO y nginx son servicios nativos del host, y ese
 host de 8 GB / 4 vCPU está compartido con otros sistemas (Aents y el stack de
 correo) — así lo declara el propio `docker-compose.prod.yml:80-82` al justificar
-los límites del worker, y `deploy/nginx-rate-limit.conf.example:9`
-("Nginx native (not Docker) runs on the Contabo prod host").
+los límites del worker, y lo asume toda la configuración de `deploy/`, que se
+instala en el host y no en un contenedor.
 
 ```
                           Internet (navegador, Googlebot, Bingbot)
@@ -34,7 +34,7 @@ los límites del worker, y `deploy/nginx-rate-limit.conf.example:9`
         |                                                                      |
         |   +--------------------------------------------------------------+   |
         |   |  nginx  (NATIVO en el host, TLS + rate limiting)             |   |
-        |   |  deploy/nginx-rate-limit.conf.example:9,17-34                |   |
+        |   |  deploy/install-edge-config.sh lo aplica en cada despliegue   |   |
         |   +----------------+---------------------------+-----------------+   |
         |                    |                           |                     |
         |        127.0.0.1:3000            127.0.0.1:8000                      |
@@ -583,8 +583,8 @@ una configuración de SPA estática (`root /usr/share/nginx/html`,
 Ningún `Dockerfile`, `Dockerfile.prod` ni compose los referencia — el único
 `nginx` que aparece en los compose es una mención en un comentario
 (`docker-compose.prod.yml:81`). Son restos de la etapa SPA previa. El nginx real
-es el nativo del host; su fragmento de configuración versionado es
-`deploy/nginx-rate-limit.conf.example`.
+es el nativo del host; su configuración versionada vive en `deploy/` y la aplica
+`deploy/install-edge-config.sh` en cada despliegue.
 
 Las cabeceras de seguridad del frontend, por tanto, las pone el propio Next:
 `next.config.js:62-74` aplica HSTS de 2 años con preload, `X-Content-Type-Options`,
@@ -733,12 +733,25 @@ entero** desde los secrets del repositorio (`:86-135`) y ejecuta
   `estatemap_frontend` reporten `healthy` (`:104-116`) y confirma con dos curls
   contra `/api/health/` y `/robots.txt` (`:118-119`).
 
-**`deploy/`** contiene un único archivo: `nginx-rate-limit.conf.example`. Es un
-**ejemplo que hay que fusionar a mano** en el server block real del host
-(`:3-5`); no se despliega tal cual. Define dos zonas — `api_general` 10 r/s y
-`api_map` 5 r/s — y un `geo`/`map` que asigna clave vacía (y por tanto exención)
-a loopback y a los rangos privados 10/8, 172.16/12 y 192.168/16, precisamente
-para que el SSR de Next desde Docker no consuma cuota (`:20-34`, `:110-111`).
+**`deploy/`** guarda la configuración del host que sí se despliega desde el
+repositorio. `install-edge-config.sh` la aplica en cada despliegue —lo llama
+`scripts/deploy.sh` justo después del `git reset`— y es idempotente: valida con
+`nginx -t` antes de recargar y revierte cualquier edición que nginx rechace.
+Instala cuatro cosas: los rangos de Cloudflare para `real_ip`
+(`cloudflare-ips-refresh.sh`, refrescado los lunes por cron), y el rate limiting
+(`nginx-ratelimit-zones.conf` en `http`, `nginx-ratelimit-api.conf` incluido en
+el vhost de la API, y `nginx-api-proxy.conf` para no duplicar el `proxy_pass`).
+
+Las zonas son `estatemap_api` a 10 r/s y `estatemap_map` a 5 r/s, con un
+`geo`/`map` que asigna clave vacía —y por tanto exención— a loopback y a los
+rangos privados 10/8, 172.16/12 y 192.168/16, precisamente para que el SSR de
+Next desde Docker no consuma cuota. El vhost del frontend no lleva límite a
+propósito: sirve las páginas que existen para ser rastreadas.
+
+`nginx-rate-limit.conf.example` sigue en la carpeta como referencia histórica de
+la parte que **no** se aplicó: el 413 en JSON. Ese sigue saliendo en HTML.
+Detalles en [`../errors/api-errors.md`](../errors/api-errors.md) §5.4 y en
+[`cdn-cloudflare.md`](cdn-cloudflare.md).
 
 **`rebuild-frontend.sh`** es una utilidad **solo de desarrollo**: hace
 `docker-compose down -v`, borra la imagen del frontend, reconstruye con
@@ -811,7 +824,8 @@ sin uso. Se listan para evitar que alguien los tome como configuración vigente.
    react-leaflet y el mapa es `maplibre-gl` (`package.json:38`,
    `components/maps/MapLibreMap.tsx`).
 3. **`README.md:152` remite a `nginx/estatemap.conf`**, archivo que no existe.
-   La configuración nginx versionada es `deploy/nginx-rate-limit.conf.example`.
+   La configuración nginx versionada vive en `deploy/` y la aplica
+   `deploy/install-edge-config.sh`.
 4. **`frontend/nginx.conf` y `frontend/nginx/conf.d/`** son restos de la etapa
    SPA: el directorio está vacío y el archivo describe un sitio estático
    (`try_files … /index.html`) que nada construye ni monta.
