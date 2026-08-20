@@ -90,6 +90,9 @@ jobs:
           # already built. The timeout has to sit above the worst deploy, not
           # above the average one.
           command_timeout: 30m
+          # Forwarded to the remote session as environment variables so the
+          # values never appear in the command line the server can list.
+          envs: RELEASE_SHA,DJANGO_SECRET_KEY,ALLOWED_HOSTS,CORS_ALLOWED_ORIGINS,CSRF_TRUSTED_ORIGINS,DB_HOST,DB_USER,DB_PASSWORD,DB_NAME,SERVER_IP,MINIO_ENDPOINT,MINIO_ACCESS_KEY,MINIO_SECRET_KEY,MINIO_USE_SSL,MINIO_BUCKET_NAME,MINIO_PUBLIC_ENDPOINT,NEXT_PUBLIC_API_URL,NEXT_PUBLIC_FRONTEND_URL,NEXT_PUBLIC_GTM_ID,NEXT_PUBLIC_GA_MEASUREMENT_ID,GOOGLE_CLIENT_ID,GOOGLE_CLIENT_SECRET,NEXT_PUBLIC_GOOGLE_CLIENT_ID,EMAIL_BACKEND,EMAIL_HOST,EMAIL_PORT,EMAIL_USE_TLS,EMAIL_HOST_USER,EMAIL_HOST_PASSWORD,DEFAULT_FROM_EMAIL,FRONTEND_URL,REVALIDATE_SECRET
           script: |
             set -e
             echo "📂 Navigating to project directory..."
@@ -97,65 +100,105 @@ jobs:
 
             echo "📝 Creating .env.prod file..."
 
-            # Django/Backend Configuration
-            echo "DJANGO_SECRET_KEY=${{ secrets.DJANGO_SECRET_KEY }}" > .env.prod
-            echo "DEBUG=False" >> .env.prod
-            echo "ALLOWED_HOSTS=${{ secrets.ALLOWED_HOSTS }}" >> .env.prod
-            echo "CORS_ALLOWED_ORIGINS=${{ secrets.CORS_ALLOWED_ORIGINS }}" >> .env.prod
-            echo "CSRF_TRUSTED_ORIGINS=${{ secrets.CSRF_TRUSTED_ORIGINS }}" >> .env.prod
-            echo "SECURE_SSL_REDIRECT=True" >> .env.prod
-            echo "ENVIRONMENT=production" >> .env.prod
-            echo "RELEASE_SHA=${{ github.sha }}" >> .env.prod
-            echo "OBSERVABILITY_LOG_LEVEL=INFO" >> .env.prod
-            echo "SLOW_ENDPOINT_MS=1000" >> .env.prod
-            echo "THROTTLE_EXEMPT_IPS=" >> .env.prod
-            echo "IMAGE_UPLOAD_TEMP_MAX_AGE_HOURS=48" >> .env.prod
-            echo "INDEXNOW_ENABLED=True" >> .env.prod
-            echo "BACKUP_VERIFICATION_FILE=/tmp/estate-backup-verified.json" >> .env.prod
+            # Values arrive as environment variables, not interpolated into the
+            # command. Interpolating them put every production secret on the
+            # remote command line, where `ps` shows it to anything running on
+            # the box for as long as the deploy lasts. Inside double quotes the
+            # expansion is not re-expanded, so a value containing $ or @ — the
+            # MinIO key does — is written verbatim.
+            umask 077
+            {
+              echo "DJANGO_SECRET_KEY=$DJANGO_SECRET_KEY"
+              echo "DEBUG=False"
+              echo "ALLOWED_HOSTS=$ALLOWED_HOSTS"
+              echo "CORS_ALLOWED_ORIGINS=$CORS_ALLOWED_ORIGINS"
+              echo "CSRF_TRUSTED_ORIGINS=$CSRF_TRUSTED_ORIGINS"
+              echo "SECURE_SSL_REDIRECT=True"
+              echo "ENVIRONMENT=production"
+              echo "RELEASE_SHA=$RELEASE_SHA"
+              echo "OBSERVABILITY_LOG_LEVEL=INFO"
+              echo "SLOW_ENDPOINT_MS=1000"
+              echo "THROTTLE_EXEMPT_IPS="
+              echo "IMAGE_UPLOAD_TEMP_MAX_AGE_HOURS=48"
+              echo "INDEXNOW_ENABLED=True"
+              echo "BACKUP_VERIFICATION_FILE=/tmp/estate-backup-verified.json"
 
-            # Database Configuration (pre-installed on server)
-            echo "DB_HOST=${{ secrets.DB_HOST }}" >> .env.prod
-            echo "DB_USER=${{ secrets.DB_USER }}" >> .env.prod
-            echo "DB_PASSWORD=${{ secrets.DB_PASSWORD }}" >> .env.prod
-            echo "DB_NAME=${{ secrets.DB_NAME }}" >> .env.prod
+              # Database (native on the host)
+              echo "DB_HOST=$DB_HOST"
+              echo "DB_USER=$DB_USER"
+              echo "DB_PASSWORD=$DB_PASSWORD"
+              echo "DB_NAME=$DB_NAME"
+              echo "SERVER_IP=$SERVER_IP"
 
-            echo "SERVER_IP=${{ secrets.SERVER_IP }}" >> .env.prod
+              # MinIO (native on the host)
+              echo "MINIO_ENDPOINT=$MINIO_ENDPOINT"
+              echo "MINIO_ACCESS_KEY=$MINIO_ACCESS_KEY"
+              echo "MINIO_SECRET_KEY=$MINIO_SECRET_KEY"
+              echo "MINIO_USE_SSL=$MINIO_USE_SSL"
+              echo "MINIO_BUCKET_NAME=$MINIO_BUCKET_NAME"
+              echo "MINIO_PUBLIC_ENDPOINT=$MINIO_PUBLIC_ENDPOINT"
 
-            # MinIO Configuration (pre-installed on server)
-            echo "MINIO_ENDPOINT=${{ secrets.MINIO_ENDPOINT }}" >> .env.prod
-            echo "MINIO_ACCESS_KEY=${{ secrets.MINIO_ACCESS_KEY }}" >> .env.prod
-            echo "MINIO_SECRET_KEY=${{ secrets.MINIO_SECRET_KEY }}" >> .env.prod
-            echo "MINIO_USE_SSL=${{ secrets.MINIO_USE_SSL }}" >> .env.prod
-            echo "MINIO_BUCKET_NAME=${{ secrets.MINIO_BUCKET_NAME }}" >> .env.prod
-            echo "MINIO_PUBLIC_ENDPOINT=${{ secrets.MINIO_PUBLIC_ENDPOINT }}" >> .env.prod
+              # Next.js: only NEXT_PUBLIC_* reaches the browser
+              echo "NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL"
+              echo "NEXT_PUBLIC_FRONTEND_URL=$NEXT_PUBLIC_FRONTEND_URL"
+              echo "NEXT_PUBLIC_GTM_ID=$NEXT_PUBLIC_GTM_ID"
+              echo "NEXT_PUBLIC_GA_MEASUREMENT_ID=$NEXT_PUBLIC_GA_MEASUREMENT_ID"
 
-            # Next.js Frontend Configuration
-            # IMPORTANT: Variables must start with NEXT_PUBLIC_ to be available in browser
-            echo "NEXT_PUBLIC_API_URL=${{ secrets.NEXT_PUBLIC_API_URL }}" >> .env.prod
-            echo "NEXT_PUBLIC_FRONTEND_URL=${{ secrets.NEXT_PUBLIC_FRONTEND_URL }}" >> .env.prod
-            echo "NEXT_PUBLIC_GTM_ID=${{ secrets.NEXT_PUBLIC_GTM_ID }}" >> .env.prod
-            echo "NEXT_PUBLIC_GA_MEASUREMENT_ID=${{ secrets.NEXT_PUBLIC_GA_MEASUREMENT_ID }}" >> .env.prod
+              # Google OAuth
+              echo "GOOGLE_CLIENT_ID=$GOOGLE_CLIENT_ID"
+              echo "GOOGLE_CLIENT_SECRET=$GOOGLE_CLIENT_SECRET"
+              echo "NEXT_PUBLIC_GOOGLE_CLIENT_ID=$NEXT_PUBLIC_GOOGLE_CLIENT_ID"
 
-            # Google OAuth Configuration
-            echo "GOOGLE_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID }}" >> .env.prod
-            echo "GOOGLE_CLIENT_SECRET=${{ secrets.GOOGLE_CLIENT_SECRET }}" >> .env.prod
-            echo "NEXT_PUBLIC_GOOGLE_CLIENT_ID=${{ secrets.NEXT_PUBLIC_GOOGLE_CLIENT_ID }}" >> .env.prod
+              # Email
+              echo "EMAIL_BACKEND=$EMAIL_BACKEND"
+              echo "EMAIL_HOST=$EMAIL_HOST"
+              echo "EMAIL_PORT=$EMAIL_PORT"
+              echo "EMAIL_USE_TLS=$EMAIL_USE_TLS"
+              echo "EMAIL_HOST_USER=$EMAIL_HOST_USER"
+              echo "EMAIL_HOST_PASSWORD=$EMAIL_HOST_PASSWORD"
+              echo "DEFAULT_FROM_EMAIL=$DEFAULT_FROM_EMAIL"
 
-            # Email Configuration
-            echo "EMAIL_BACKEND=${{ secrets.EMAIL_BACKEND }}" >> .env.prod
-            echo "EMAIL_HOST=${{ secrets.EMAIL_HOST }}" >> .env.prod
-            echo "EMAIL_PORT=${{ secrets.EMAIL_PORT }}" >> .env.prod
-            echo "EMAIL_USE_TLS=${{ secrets.EMAIL_USE_TLS }}" >> .env.prod
-            echo "EMAIL_HOST_USER=${{ secrets.EMAIL_HOST_USER }}" >> .env.prod
-            echo "EMAIL_HOST_PASSWORD=${{ secrets.EMAIL_HOST_PASSWORD }}" >> .env.prod
-            echo "DEFAULT_FROM_EMAIL=${{ secrets.DEFAULT_FROM_EMAIL }}" >> .env.prod
-
-            # Frontend URL for backend (email links, etc.)
-            echo "FRONTEND_URL=${{ secrets.FRONTEND_URL }}" >> .env.prod
-            echo "REVALIDATE_SECRET=${{ secrets.REVALIDATE_SECRET }}" >> .env.prod
-            echo "NEXT_REVALIDATE_URL=http://frontend:3000/api/revalidate" >> .env.prod
+              # Frontend URL for backend links and revalidation
+              echo "FRONTEND_URL=$FRONTEND_URL"
+              echo "REVALIDATE_SECRET=$REVALIDATE_SECRET"
+              echo "NEXT_REVALIDATE_URL=http://frontend:3000/api/revalidate"
+            } > .env.prod
+            chmod 600 .env.prod
 
             echo "🔄 Running deploy script..."
             ./scripts/deploy.sh
+        env:
+          RELEASE_SHA: ${{ github.sha }}
+          DJANGO_SECRET_KEY: ${{ secrets.DJANGO_SECRET_KEY }}
+          ALLOWED_HOSTS: ${{ secrets.ALLOWED_HOSTS }}
+          CORS_ALLOWED_ORIGINS: ${{ secrets.CORS_ALLOWED_ORIGINS }}
+          CSRF_TRUSTED_ORIGINS: ${{ secrets.CSRF_TRUSTED_ORIGINS }}
+          DB_HOST: ${{ secrets.DB_HOST }}
+          DB_USER: ${{ secrets.DB_USER }}
+          DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+          DB_NAME: ${{ secrets.DB_NAME }}
+          SERVER_IP: ${{ secrets.SERVER_IP }}
+          MINIO_ENDPOINT: ${{ secrets.MINIO_ENDPOINT }}
+          MINIO_ACCESS_KEY: ${{ secrets.MINIO_ACCESS_KEY }}
+          MINIO_SECRET_KEY: ${{ secrets.MINIO_SECRET_KEY }}
+          MINIO_USE_SSL: ${{ secrets.MINIO_USE_SSL }}
+          MINIO_BUCKET_NAME: ${{ secrets.MINIO_BUCKET_NAME }}
+          MINIO_PUBLIC_ENDPOINT: ${{ secrets.MINIO_PUBLIC_ENDPOINT }}
+          NEXT_PUBLIC_API_URL: ${{ secrets.NEXT_PUBLIC_API_URL }}
+          NEXT_PUBLIC_FRONTEND_URL: ${{ secrets.NEXT_PUBLIC_FRONTEND_URL }}
+          NEXT_PUBLIC_GTM_ID: ${{ secrets.NEXT_PUBLIC_GTM_ID }}
+          NEXT_PUBLIC_GA_MEASUREMENT_ID: ${{ secrets.NEXT_PUBLIC_GA_MEASUREMENT_ID }}
+          GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
+          GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
+          NEXT_PUBLIC_GOOGLE_CLIENT_ID: ${{ secrets.NEXT_PUBLIC_GOOGLE_CLIENT_ID }}
+          EMAIL_BACKEND: ${{ secrets.EMAIL_BACKEND }}
+          EMAIL_HOST: ${{ secrets.EMAIL_HOST }}
+          EMAIL_PORT: ${{ secrets.EMAIL_PORT }}
+          EMAIL_USE_TLS: ${{ secrets.EMAIL_USE_TLS }}
+          EMAIL_HOST_USER: ${{ secrets.EMAIL_HOST_USER }}
+          EMAIL_HOST_PASSWORD: ${{ secrets.EMAIL_HOST_PASSWORD }}
+          DEFAULT_FROM_EMAIL: ${{ secrets.DEFAULT_FROM_EMAIL }}
+          FRONTEND_URL: ${{ secrets.FRONTEND_URL }}
+          REVALIDATE_SECRET: ${{ secrets.REVALIDATE_SECRET }}
 
             echo "✅ Deployment completed!"
