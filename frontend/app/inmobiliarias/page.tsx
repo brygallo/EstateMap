@@ -7,7 +7,7 @@ import { Card } from '@/components/ui/card';
 import { buildWhatsAppUrl } from '@/lib/constants';
 
 export const metadata: Metadata = {
-  title: 'Para inmobiliarias y corredores | Geo Propiedades Ecuador',
+  title: 'Para inmobiliarias y corredores',
   description:
     'Publica tus propiedades en el mapa de Ecuador, recibe contactos directos por WhatsApp y gestiona tus leads desde un panel. Planes para inmobiliarias y corredores independientes.',
   alternates: { canonical: '/inmobiliarias' },

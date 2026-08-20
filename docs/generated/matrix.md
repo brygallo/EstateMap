@@ -2299,7 +2299,7 @@ No hay DEFAULT_THROTTLE_CLASSES global, así que toda vista que no implemente ge
 
 No existe middleware.ts en el frontend, los tokens viven en localStorage y el rol staff se lee decodificando el JWT sin verificar la firma.
 
-> **Por qué:** Toda ruta privada es un bundle público que solo se protege tras hidratar en el navegador, y las peticiones de las páginas de administración salen antes de que el guard emita su veredicto. Lo único que impide la fuga es la autorización del backend, es decir las reglas de esta spec.
+> **Por qué:** Toda ruta privada es un bundle público que solo se protege tras hidratar en el navegador. El layout administrativo evita montar sus páginas antes de que el guard emita su veredicto, pero ese guard todavía confía en datos manipulables del cliente. Lo único que impide una operación no autorizada es la autorización del backend, es decir las reglas de esta spec.
 
 **Permisos exigidos:** `admin.metrics_read`
 
@@ -2313,6 +2313,7 @@ No existe middleware.ts en el frontend, los tokens viven en localStorage y el ro
 
 - `frontend/lib/auth-context.tsx` (`is_staff`) — El rol se deriva del payload del JWT decodificado en cliente, sin verificar la firma.
 - `frontend/components/AdminRoute.tsx` — Decide qué se pinta, nunca qué se puede hacer.
+- `frontend/app/admin/layout.tsx` (`AdminRoute`) — El guard envuelve el layout para que las páginas denegadas no ejecuten sus efectos.
 
 **Casos**
 

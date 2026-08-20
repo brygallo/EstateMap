@@ -54,6 +54,16 @@ test.describe('Catalogue', () => {
 
     const properties = page.locator('a[href^="/propiedad/"]');
     expect(await properties.count()).toBeGreaterThan(0);
+    await expect(properties.locator('button')).toHaveCount(0);
+  });
+
+  test('city links expose readable publication counts', async ({ page }) => {
+    await page.goto('/propiedades');
+
+    const cityLink = page.locator('a[href^="/propiedades/"]').first();
+    await expect(cityLink).toHaveAccessibleName(
+      /Propiedades en .+, \d+ publicaci(?:ón|ones)/
+    );
   });
 
   test('detail page shows the essential information', async ({ page }) => {
@@ -102,6 +112,20 @@ test.describe('SEO', () => {
     expect(() => JSON.parse(raw)).not.toThrow();
     const parsed = JSON.parse(raw);
     expect(parsed['@context']).toContain('schema.org');
+  });
+
+  test('public page titles include the brand exactly once', async ({ page }) => {
+    for (const route of ['/inmobiliarias', '/ayuda']) {
+      await page.goto(route);
+      const title = await page.title();
+      expect(title.match(/Geo Propiedades Ecuador/g)).toHaveLength(1);
+    }
+  });
+
+  test('registration has its own page title', async ({ page }) => {
+    await page.goto('/registro');
+    await expect(page).toHaveTitle(/Crea tu cuenta para publicar propiedades/);
+    await expect(page).not.toHaveTitle(/Accede a tu cuenta/);
   });
 
   test('robots.txt does not block the whole site', async ({ request }) => {

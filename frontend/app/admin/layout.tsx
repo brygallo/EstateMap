@@ -1,5 +1,6 @@
 import { Metadata } from 'next';
 import BrandAtmosphere from '@/components/aents/BrandAtmosphere';
+import AdminRoute from '@/components/AdminRoute';
 import { Suspense } from 'react';
 
 export const metadata: Metadata = {
@@ -18,7 +19,11 @@ export default function AdminLayout({
   return (
     <div className="aents-page-shell relative min-h-[calc(100dvh-var(--app-header-height))] w-full min-w-0 max-w-full overflow-x-clip">
       <BrandAtmosphere className="opacity-50" />
-      <div className="relative w-full min-w-0 max-w-full"><Suspense fallback={null}>{children}</Suspense></div>
+      <div className="relative w-full min-w-0 max-w-full">
+        <AdminRoute>
+          <Suspense fallback={null}>{children}</Suspense>
+        </AdminRoute>
+      </div>
     </div>
   );
 }

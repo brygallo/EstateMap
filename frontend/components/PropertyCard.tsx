@@ -356,7 +356,6 @@ export default function PropertyCard({
             {badgeLabel}
           </Badge>
         </div>
-        <FavoriteButton propertyId={property.id} />
         <div className="absolute inset-x-0 bottom-0 z-[2] flex items-end justify-between gap-2 p-3">
           <div className="aents-price-glass rounded-lg px-2.5 py-1.5 text-white">
             {hasPrice ? (
@@ -402,7 +401,8 @@ export default function PropertyCard({
   );
 
   return (
-    <article className="aents-property-card group overflow-hidden rounded-card border border-line bg-surface">
+    <article className="aents-property-card group relative overflow-hidden rounded-card border border-line bg-surface">
+      <FavoriteButton propertyId={property.id} />
       {href ? (
         <Link href={href} className="block">
           {body}

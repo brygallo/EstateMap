@@ -8,7 +8,7 @@ const siteUrl = (
 ).replace(/\/+$/, '');
 
 export const metadata: Metadata = {
-  title: 'Ayuda y Preguntas Frecuentes | Geo Propiedades Ecuador',
+  title: 'Ayuda y Preguntas Frecuentes',
   description:
     'Centro de ayuda para publicar propiedades en Ecuador. Aprende cómo usar nuestros mapas interactivos, sigue la guía para publicar gratis y encuentra respuestas a las preguntas más frecuentes.',
   keywords: [

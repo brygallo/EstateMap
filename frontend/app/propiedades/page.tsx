@@ -218,6 +218,7 @@ export default async function PropiedadesPage() {
               <Link
                 key={city.slug}
                 href={`/propiedades/${city.slug}`}
+                aria-label={`Propiedades en ${city.name}, ${city.count} ${city.count === 1 ? 'publicación' : 'publicaciones'}`}
                 className="group flex min-h-14 items-center justify-between gap-3 px-3 py-2.5 transition-colors hover:bg-primaryLight sm:rounded-card sm:border sm:border-line sm:bg-white sm:p-4 sm:shadow-card sm:hover:border-primary"
               >
                 <span className="min-w-0">
