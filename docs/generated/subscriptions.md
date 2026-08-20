@@ -95,7 +95,7 @@ Los topes de imágenes y de peso son constantes de configuración iguales para t
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/estate_map/settings.py:399-401` (`MAX_IMAGES_PER_PROPERTY`) — La línea 367 es el comentario "User-specific limits can be introduced here when subscription plans are implemented".
+- `backend/estate_map/settings.py:414-416` (`MAX_IMAGES_PER_PROPERTY`) — La línea 367 es el comentario "User-specific limits can be introduced here when subscription plans are implemented".
 
 
 **Casos**
@@ -115,7 +115,7 @@ Una cuenta puede publicar tantas propiedades como quiera. El único freno es el 
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/estate_map/settings.py:198-206` (`'property_write': '30/hour'`) — Los cinco scopes de throttling. Ninguno cuenta propiedades existentes; todos miden peticiones por ventana de tiempo.
+- `backend/estate_map/settings.py:221-228` (`'property_write': '30/hour'`) — Los cinco scopes de throttling. Ninguno cuenta propiedades existentes; todos miden peticiones por ventana de tiempo.
 
 
 **Casos**

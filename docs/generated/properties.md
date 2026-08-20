@@ -408,7 +408,7 @@ La escritura sobre una propiedad existente exige ser su owner; cualquier otro us
 
 - `backend/real_estate/permissions.py:4-15` (`IsOwnerOrReadOnly`) — Permite cualquier método seguro y compara obj.owner == request.user para el resto.
 - `backend/real_estate/views.py:356-358` (`IsOwnerOrReadOnly`) — permission_classes = [IsAuthenticatedOrReadOnly, IsOwnerOrReadOnly] en PropertyViewSet.
-- `backend/real_estate/views.py:2630-2632` (`PATCH_ALLOWED_FIELDS`) — El panel admin puede tocar propiedades ajenas, pero solo status, title, price, city y description.
+- `backend/real_estate/views.py:2635-2637` (`PATCH_ALLOWED_FIELDS`) — El panel admin puede tocar propiedades ajenas, pero solo status, title, price, city y description.
 
 **Casos**
 
@@ -651,8 +651,8 @@ Como máximo 10 imágenes por propiedad, cada una de hasta 10 MB y entre 200x200
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/estate_map/settings.py:401-403` (`MAX_PROPERTY_UPLOAD_MB`) — MAX_IMAGES_PER_PROPERTY = 10, MAX_IMAGE_SIZE_MB = 10, MAX_PROPERTY_UPLOAD_MB = 50.
-- `backend/estate_map/settings.py:384-386` (`ALLOWED_IMAGE_TYPES`) — image/jpeg, image/jpg, image/png y image/webp.
+- `backend/estate_map/settings.py:416-418` (`MAX_PROPERTY_UPLOAD_MB`) — MAX_IMAGES_PER_PROPERTY = 10, MAX_IMAGE_SIZE_MB = 10, MAX_PROPERTY_UPLOAD_MB = 50.
+- `backend/estate_map/settings.py:399-401` (`ALLOWED_IMAGE_TYPES`) — image/jpeg, image/jpg, image/png y image/webp.
 - `backend/real_estate/serializers.py:253-308` (`validate_uploaded_images`) — Aplica en orden el tope por propiedad, el tope combinado y los tres validadores por imagen.
 - `backend/real_estate/validators.py:8-44` (`validate_image_dimensions`) — Tamaño máximo, dimensiones mínimas y máximas, y extensión permitida.
 - `backend/real_estate/exception_handlers.py:59-64` (`def api_exception_handler`) — Cuando el cuerpo supera los topes del parser de Django, el rechazo ocurre antes del serializador y Django respondería con una página HTML. Este manejador lo devuelve como error de campo sobre `uploaded_images`, que es lo que el formulario necesita para abrir el paso de fotos y lo que deja rastro del campo en el registro de actividad.
@@ -806,7 +806,7 @@ La normalización vive en `save()` porque todos los caminos de escritura pasan p
 - `backend/real_estate/models.py:204-211` (`closed_reason = models`)
 - `backend/real_estate/models.py:324-336` (`if self.closed_reason:`) — Cerrar pone inactive y sella la fecha; abrir la borra.
 - `backend/real_estate/serializers.py:38-50` (`def reopen_on_reactivation`) — Volver a poner el anuncio en venta lo reabre; si no, el cambio parece aceptado y se deshace solo.
-- `backend/real_estate/views.py:2819-2821` (`changes['closed_reason'] = ''`) — El cambio de estado en lote escribe con .update(), que nunca llega a save(), así que reabre a mano.
+- `backend/real_estate/views.py:2824-2826` (`changes['closed_reason'] = ''`) — El cambio de estado en lote escribe con .update(), que nunca llega a save(), así que reabre a mano.
 
 **Casos**
 

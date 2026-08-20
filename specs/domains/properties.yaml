@@ -595,7 +595,7 @@ rules:
         symbol: IsOwnerOrReadOnly
         note: permission_classes = [IsAuthenticatedOrReadOnly, IsOwnerOrReadOnly] en PropertyViewSet.
       - file: backend/real_estate/views.py
-        lines: "2630-2632"
+        lines: "2635-2637"
         symbol: PATCH_ALLOWED_FIELDS
         note: El panel admin puede tocar propiedades ajenas, pero solo status, title, price, city y description.
     backend:
@@ -1020,11 +1020,11 @@ rules:
       imposible.
     evidence:
       - file: backend/estate_map/settings.py
-        lines: "401-403"
+        lines: "416-418"
         symbol: MAX_PROPERTY_UPLOAD_MB
         note: MAX_IMAGES_PER_PROPERTY = 10, MAX_IMAGE_SIZE_MB = 10, MAX_PROPERTY_UPLOAD_MB = 50.
       - file: backend/estate_map/settings.py
-        lines: "384-386"
+        lines: "399-401"
         symbol: ALLOWED_IMAGE_TYPES
         note: image/jpeg, image/jpg, image/png y image/webp.
       - file: backend/real_estate/serializers.py
@@ -1311,7 +1311,7 @@ rules:
           Volver a poner el anuncio en venta lo reabre; si no, el cambio parece
           aceptado y se deshace solo.
       - file: backend/real_estate/views.py
-        lines: "2819-2821"
+        lines: "2824-2826"
         symbol: "changes['closed_reason'] = ''"
         note: >-
           El cambio de estado en lote escribe con .update(), que nunca llega a

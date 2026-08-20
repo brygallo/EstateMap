@@ -18,6 +18,8 @@ El mapa prioriza los puntos sobre datos secundarios, conserva las rutas de cach�
 | [`MPERF-001`](#mperf-001--las-lecturas-públicas-del-mapa-no-dependen-de-la-sesión) | Las lecturas públicas del mapa no dependen de la sesión | ✅ Implementada |
 | [`MPERF-002`](#mperf-002--una-selección-produce-una-sola-transición-de-cámara) | Una selección produce una sola transición de cámara | ✅ Implementada |
 | [`MPERF-003`](#mperf-003--la-conexión-lenta-prioriza-puntos-sobre-fichas-e-imágenes) | La conexión lenta prioriza puntos sobre fichas e imágenes | ✅ Implementada |
+| [`MPERF-005`](#mperf-005--un-payload-caducado-se-sigue-sirviendo-mientras-uno-solo-lo-recalcula) | Un payload caducado se sigue sirviendo mientras uno solo lo recalcula | ✅ Implementada |
+| [`MPERF-006`](#mperf-006--la-conexión-a-la-base-se-reutiliza-entre-peticiones) | La conexión a la base se reutiliza entre peticiones | ✅ Implementada |
 
 ### MPERF-004 — Cada nivel territorial reutiliza una sola respuesta cacheada
 
@@ -102,3 +104,52 @@ Cuando el navegador comunica ahorro de datos o una conexión 2g, el mapa reduce 
 | Caso | Rol | Estado previo | Cuerpo | Esperado |
 | --- | --- | --- | --- | --- |
 | Navegador con saveData activo | — | — | — | los puntos se solicitan antes que las fichas con imágenes |
+
+### MPERF-005 — Un payload caducado se sigue sirviendo mientras uno solo lo recalcula
+
+**Estado:** ✅ Implementada
+
+Las estadísticas de mercado se guardan con una fecha de frescura y un margen posterior. Pasada la frescura, la respuesta se sigue entregando mientras el primer worker que toma el cerrojo la recalcula; los demás reciben la copia anterior en lugar de repetir el cálculo.
+
+> **Por qué:** El patrón corriente —leer, fallar, calcular, escribir— cobra dos veces cuando hay tráfico. La petición que encuentra la entrada vencida espera el cálculo entero, y todas las que llegan mientras tanto lo repiten. En estas estadísticas eso son catorce mil filas viajando a Python varias veces a la vez, en una máquina de cuatro núcleos compartida con otros servicios.
+Servir lo viejo unos segundos es preferible a que nadie reciba nada durante el cálculo: son promedios de mercado, no saldos de una cuenta.
+
+**Evidencia en el código** (verificada por `tools/specs/validate.py`)
+
+- `backend/real_estate/cache_utils.py` (`def cached_or_stale`)
+- `backend/real_estate/cache_utils.py` (`REFRESH_LOCK_SECONDS`)
+- `backend/real_estate/views.py` (`payload = cached_or_stale(cache_key, CACHE_TTL_MARKET_STATS, compute)`)
+- `backend/real_estate/tests/test_cache_refresh.py` (`def test_only_one_worker_recomputes_a_stale_entry`)
+
+**Casos**
+
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| Segunda petición dentro de la frescura | — | — | — | se sirve de caché sin recalcular |
+| Petición con la entrada vencida y sin nadie recalculando | — | — | — | este worker recalcula y guarda |
+| Cinco peticiones con la entrada vencida y el cerrojo tomado | — | — | — | las cinco reciben la copia anterior; no se recalcula cinco veces |
+
+**Cobertura exigida:** api
+
+- `backend/real_estate/tests/test_cache_refresh.py`
+
+### MPERF-006 — La conexión a la base se reutiliza entre peticiones
+
+**Estado:** ✅ Implementada
+
+Las conexiones viven sesenta segundos y se comprueban antes de reutilizarse, en vez de abrirse y cerrarse en cada petición.
+
+> **Por qué:** Postgres corre en el mismo host, así que un saludo cuesta poco; a quince peticiones por segundo son quince saludos por segundo pagados a cambio de nada. El comprobante de salud es lo que evita el otro extremo: heredar un descriptor muerto tras reiniciar la base y fallar la petición que lo toque.
+El techo queda acotado a propósito: tres workers de cuatro hilos más el worker de Celery son como mucho trece conexiones vivas.
+
+**Evidencia en el código** (verificada por `tools/specs/validate.py`)
+
+- `backend/estate_map/settings.py` (`DATABASES[_alias].setdefault('CONN_MAX_AGE'`)
+- `backend/estate_map/settings.py` (`DATABASES[_alias].setdefault('CONN_HEALTH_CHECKS', True)`)
+
+**Casos**
+
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| Dos peticiones seguidas al mismo worker | — | — | — | comparten conexión |
+| La base se reinicia dentro de la ventana | — | — | — | la conexión muerta se descarta antes de usarse |

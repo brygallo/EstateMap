@@ -198,11 +198,11 @@ rules:
       y máximas por imagen, vive en specs/domains/properties.yaml (PROP-026).
     evidence:
       - file: backend/estate_map/settings.py
-        lines: "401-403"
+        lines: "416-418"
         symbol: MAX_PROPERTY_UPLOAD_MB
         note: MAX_IMAGES_PER_PROPERTY=10, MAX_IMAGE_SIZE_MB=10, MAX_PROPERTY_UPLOAD_MB=50.
       - file: backend/estate_map/settings.py
-        lines: "384-386"
+        lines: "399-401"
         symbol: ALLOWED_IMAGE_TYPES
       - file: backend/real_estate/serializers.py
         lines: "253-308"
@@ -318,7 +318,7 @@ rules:
         symbol: "class AntiScraperScopedThrottle(ScopedRateThrottle)"
         note: Exime staff e IPs internas; solo se usa en map_points y list.
       - file: backend/estate_map/settings.py
-        lines: "206-208"
+        lines: "221-223"
         symbol: "'property_write': '30/hour'"
     cases:
       - name: Staff publica más de 30 veces en una hora

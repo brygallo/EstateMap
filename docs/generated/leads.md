@@ -326,7 +326,7 @@ PendingPublicationViewSet.get_throttles aplica ScopedRateThrottle con throttle_s
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
 - `backend/real_estate/views.py:1344-1346` (`throttle_scope = 'pending_create'`) — Solo el POST público se limita; el resto de acciones ya exige staff y no lleva throttle.
-- `backend/estate_map/settings.py:192-194` (`'pending_create': '10/min'`)
+- `backend/estate_map/settings.py:207-209` (`'pending_create': '10/min'`)
 
 **Casos**
 
@@ -423,7 +423,7 @@ ActivityEventViewSet.get_throttles aplica ScopedRateThrottle con throttle_scope=
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
 - `backend/real_estate/views.py:1594-1596` (`throttle_scope = 'activity_create'`)
-- `backend/estate_map/settings.py:191-193` (`'activity_create': '30/min'`)
+- `backend/estate_map/settings.py:206-208` (`'activity_create': '30/min'`)
 
 **Casos**
 

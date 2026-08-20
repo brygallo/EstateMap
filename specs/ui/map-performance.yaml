@@ -107,3 +107,65 @@ rules:
       - name: Navegador con saveData activo
         expected: los puntos se solicitan antes que las fichas con imágenes
     tests: {}
+
+  - id: MPERF-005
+    name: Un payload caducado se sigue sirviendo mientras uno solo lo recalcula
+    status: implemented
+    summary: >-
+      Las estadísticas de mercado se guardan con una fecha de frescura y un
+      margen posterior. Pasada la frescura, la respuesta se sigue entregando
+      mientras el primer worker que toma el cerrojo la recalcula; los demás
+      reciben la copia anterior en lugar de repetir el cálculo.
+    rationale: >-
+      El patrón corriente —leer, fallar, calcular, escribir— cobra dos veces
+      cuando hay tráfico. La petición que encuentra la entrada vencida espera el
+      cálculo entero, y todas las que llegan mientras tanto lo repiten. En estas
+      estadísticas eso son catorce mil filas viajando a Python varias veces a la
+      vez, en una máquina de cuatro núcleos compartida con otros servicios.
+
+      Servir lo viejo unos segundos es preferible a que nadie reciba nada
+      durante el cálculo: son promedios de mercado, no saldos de una cuenta.
+    evidence:
+      - file: backend/real_estate/cache_utils.py
+        symbol: def cached_or_stale
+      - file: backend/real_estate/cache_utils.py
+        symbol: REFRESH_LOCK_SECONDS
+      - file: backend/real_estate/views.py
+        symbol: "payload = cached_or_stale(cache_key, CACHE_TTL_MARKET_STATS, compute)"
+      - file: backend/real_estate/tests/test_cache_refresh.py
+        symbol: def test_only_one_worker_recomputes_a_stale_entry
+    tests:
+      api: true
+    cases:
+      - name: Segunda petición dentro de la frescura
+        expected: se sirve de caché sin recalcular
+      - name: Petición con la entrada vencida y sin nadie recalculando
+        expected: este worker recalcula y guarda
+      - name: Cinco peticiones con la entrada vencida y el cerrojo tomado
+        expected: las cinco reciben la copia anterior; no se recalcula cinco veces
+
+  - id: MPERF-006
+    name: La conexión a la base se reutiliza entre peticiones
+    status: implemented
+    summary: >-
+      Las conexiones viven sesenta segundos y se comprueban antes de
+      reutilizarse, en vez de abrirse y cerrarse en cada petición.
+    rationale: >-
+      Postgres corre en el mismo host, así que un saludo cuesta poco; a quince
+      peticiones por segundo son quince saludos por segundo pagados a cambio de
+      nada. El comprobante de salud es lo que evita el otro extremo: heredar un
+      descriptor muerto tras reiniciar la base y fallar la petición que lo toque.
+
+      El techo queda acotado a propósito: tres workers de cuatro hilos más el
+      worker de Celery son como mucho trece conexiones vivas.
+    evidence:
+      - file: backend/estate_map/settings.py
+        symbol: "DATABASES[_alias].setdefault('CONN_MAX_AGE'"
+      - file: backend/estate_map/settings.py
+        symbol: "DATABASES[_alias].setdefault('CONN_HEALTH_CHECKS', True)"
+    tests: {}
+    cases:
+      - name: Dos peticiones seguidas al mismo worker
+        expected: comparten conexión
+      - name: La base se reinicia dentro de la ventana
+        expected: la conexión muerta se descarta antes de usarse

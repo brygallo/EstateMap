@@ -88,11 +88,20 @@ def list_sectors(city: str | None = None, minimum: int = MIN_SECTOR_LISTINGS) ->
     if not keys:
         return []
 
+    # Grouped, not row by row. Reading one row per listing to pick a spelling
+    # meant pulling the whole catalogue of a city — 8.500 rows for Quito — to
+    # end up with two or three distinct strings per zone. Postgres counts them.
     labels: dict[tuple[str, str], list[str]] = {}
-    for city_name, key, label in queryset.filter(
-        sector_key__in=[key for _, key in keys]
-    ).values_list("city", "sector_key", "sector_label"):
-        labels.setdefault((city_name, key), []).append(label)
+    spellings = (
+        queryset.filter(sector_key__in=[key for _, key in keys])
+        .values("city", "sector_key", "sector_label")
+        .annotate(times=Count("id"))
+    )
+    for row in spellings:
+        bucket = labels.setdefault((row["city"], row["sector_key"]), [])
+        # `sector_display` counts occurrences, so the spelling is repeated as
+        # many times as it appears — cheap, since a zone has a handful.
+        bucket.extend([row["sector_label"]] * row["times"])
 
     averages: dict[tuple[str, str], float] = {}
     for row in (

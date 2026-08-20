@@ -556,7 +556,7 @@ El bloque demand de /intelligence/ debe servirse solo al propietario de la propi
 
 - `backend/real_estate/views.py:876-889` (`def map_points`)
 - `backend/real_estate/throttling.py:24-39` (`def _is_internal_client`)
-- `backend/estate_map/settings.py:187-197` (`DEFAULT_THROTTLE_RATES`)
+- `backend/estate_map/settings.py:205-214` (`DEFAULT_THROTTLE_RATES`)
 
 **Casos**
 
@@ -1005,7 +1005,7 @@ Cualquiera puede registrar una solicitud de publicación sin tener cuenta, con u
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
 - `backend/real_estate/views.py:1344-1346` (`self.throttle_scope = 'pending_create'`)
-- `backend/estate_map/settings.py:184-194` (`'pending_create': '10/min',`)
+- `backend/estate_map/settings.py:207-216` (`'pending_create': '10/min',`)
 
 **Casos**
 
@@ -1252,7 +1252,7 @@ Cualquiera puede registrarse sin autenticación, y la cuenta se crea con is_acti
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/estate_map/settings.py:220-222` (`'BLACKLIST_AFTER_ROTATION': True,`)
+- `backend/estate_map/settings.py:235-237` (`'BLACKLIST_AFTER_ROTATION': True,`)
 - `backend/real_estate/urls.py:45-47` (`name='token_refresh'`)
 
 **Casos**
@@ -1526,8 +1526,8 @@ Solicitar el cambio de correo requiere autenticación, invalida las solicitudes 
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/real_estate/views.py:2284-2286` (`class AdminDashboardView`)
-- `backend/real_estate/views.py:2373-2375` (`AdminMetricsService(now=now).build()`)
+- `backend/real_estate/views.py:2289-2291` (`class AdminDashboardView`)
+- `backend/real_estate/views.py:2378-2380` (`AdminMetricsService(now=now).build()`)
 - `backend/real_estate/permissions.py:46-50` (`class IsAdminUser`)
 
 **Casos**
@@ -1561,8 +1561,8 @@ Leer el estado operativo y marcar incidencias como resueltas exige is_staff.
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/real_estate/views.py:2392-2394` (`class AdminSystemStatusView`)
-- `backend/real_estate/views.py:2502-2504` (`admin_audit action=incident.resolve`)
+- `backend/real_estate/views.py:2397-2399` (`class AdminSystemStatusView`)
+- `backend/real_estate/views.py:2507-2509` (`admin_audit action=incident.resolve`)
 
 **Casos**
 
@@ -1594,8 +1594,8 @@ El POST de /admin/system-status/ marca una incidencia como resuelta y está cubi
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/real_estate/views.py:2500-2502` (`incident.save(update_fields=["resolved", "last_seen_at"])`)
-- `backend/real_estate/views.py:2286-2288` (`permission_classes = [IsAuthenticated, IsAdminUser]`)
+- `backend/real_estate/views.py:2505-2507` (`incident.save(update_fields=["resolved", "last_seen_at"])`)
+- `backend/real_estate/views.py:2291-2293` (`permission_classes = [IsAuthenticated, IsAdminUser]`)
 
 **Casos**
 
@@ -1627,7 +1627,7 @@ Listar cuentas desde el panel exige is_staff; un usuario autenticado normal reci
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/real_estate/views.py:2508-2510` (`class AdminUserViewSet`)
+- `backend/real_estate/views.py:2513-2515` (`class AdminUserViewSet`)
 
 **Casos**
 
@@ -1721,7 +1721,7 @@ Borrar una cuenta desde el panel exige is_staff y nada más; la única salvaguar
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/real_estate/views.py:2611-2613` (`admin_audit action=user.delete`)
+- `backend/real_estate/views.py:2616-2618` (`admin_audit action=user.delete`)
 
 **Casos**
 
@@ -1782,8 +1782,8 @@ El borrado de cuentas de usuario debe requerir is_superuser y responder 403 a un
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/real_estate/views.py:2617-2619` (`class AdminPropertyViewSet`)
-- `backend/real_estate/views.py:2634-2636` (`Property.objects.select_related('owner', 'source')`)
+- `backend/real_estate/views.py:2622-2624` (`class AdminPropertyViewSet`)
+- `backend/real_estate/views.py:2639-2641` (`Property.objects.select_related('owner', 'source')`)
 
 **Casos**
 
@@ -1816,7 +1816,7 @@ El borrado de cuentas de usuario debe requerir is_superuser y responder 403 a un
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/real_estate/views.py:2829-2831` (`def stats`)
+- `backend/real_estate/views.py:2834-2836` (`def stats`)
 - `backend/real_estate/urls.py:83-85` (`name='admin_properties_stats'`)
 
 **Casos**
@@ -1848,7 +1848,7 @@ Staff puede editar cualquier propiedad desde el panel, pero solo status, title, 
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/real_estate/views.py:2630-2632` (`PATCH_ALLOWED_FIELDS = {'status', 'title', 'price', 'city', 'description'}`)
+- `backend/real_estate/views.py:2635-2637` (`PATCH_ALLOWED_FIELDS = {'status', 'title', 'price', 'city', 'description'}`)
 - `backend/real_estate/views.py:2686-2692` (`admin_audit action=property.update`)
 
 **Casos**
@@ -1881,7 +1881,7 @@ Staff puede eliminar cualquier propiedad desde el panel, incluidas las creadas p
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/real_estate/views.py:2774-2776` (`admin_audit action=property.delete`)
+- `backend/real_estate/views.py:2779-2781` (`admin_audit action=property.delete`)
 
 **Casos**
 
@@ -1913,7 +1913,7 @@ Staff puede eliminar cualquier propiedad desde el panel, incluidas las creadas p
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
 - `backend/real_estate/views.py:2780-2788` (`def bulk_status`)
-- `backend/real_estate/views.py:2823-2825` (`admin_audit action=property.bulk_status`)
+- `backend/real_estate/views.py:2828-2830` (`admin_audit action=property.bulk_status`)
 
 **Casos**
 
@@ -2233,7 +2233,7 @@ DEFAULT_AUTHENTICATION_CLASSES contiene únicamente JWTAuthentication, así que 
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/estate_map/settings.py:172-174` (`rest_framework_simplejwt.authentication.JWTAuthentication`)
+- `backend/estate_map/settings.py:187-189` (`rest_framework_simplejwt.authentication.JWTAuthentication`)
 
 **Casos**
 
@@ -2284,7 +2284,7 @@ No hay DEFAULT_THROTTLE_CLASSES global, así que toda vista que no implemente ge
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/estate_map/settings.py:204-219` (`'property_write': '30/hour',`) — Se declaran las tasas, nunca las clases por defecto.
+- `backend/estate_map/settings.py:221-235` (`'property_write': '30/hour',`) — Se declaran las tasas, nunca las clases por defecto.
 - `backend/real_estate/views.py:385-396` (`def get_throttles`)
 
 **Casos**
@@ -2372,7 +2372,7 @@ DRF se configura con NUM_PROXIES=1, de modo que la identidad de un cliente anón
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/estate_map/settings.py:168-180` (`'NUM_PROXIES': 1,`)
+- `backend/estate_map/settings.py:195-206` (`'NUM_PROXIES': 1,`)
 - `backend/real_estate/throttling.py:24-39` (`def _is_internal_client`) — Sigue apoyándose en la ausencia de la cabecera, no en su contenido.
 
 **Casos**

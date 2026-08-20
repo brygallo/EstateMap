@@ -136,6 +136,21 @@ else:
         }
     }
 
+# Keep the connection between requests instead of opening one per view.
+#
+# Django's default is to connect and disconnect on every request. Postgres runs
+# natively on the same host, so a handshake is cheap — but at fifteen requests a
+# second it is fifteen handshakes a second bought for nothing. Sixty seconds is
+# short enough that a restarted database does not leave workers holding dead
+# handles for long, and the health check catches the ones that die inside the
+# window rather than failing the request that inherits them.
+#
+# The ceiling this implies is bounded: three gunicorn workers of four threads
+# plus the Celery worker, so at most thirteen connections held at once.
+for _alias in DATABASES:
+    DATABASES[_alias].setdefault('CONN_MAX_AGE', int(os.getenv('DB_CONN_MAX_AGE', '60')))
+    DATABASES[_alias].setdefault('CONN_HEALTH_CHECKS', True)
+
 AUTH_PASSWORD_VALIDATORS = [
     {
         'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',

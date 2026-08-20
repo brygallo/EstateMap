@@ -25,7 +25,7 @@ from django.utils import timezone
 from django.utils.cache import patch_cache_control
 from .bot_detection import is_bot_request
 from .throttling import AntiScraperScopedThrottle
-from .cache_utils import versioned_key
+from .cache_utils import cached_or_stale, versioned_key
 from .services.short_codes import normalize_code
 from .models import (
     ActivityEvent, Property, PropertyImage, Province, City, Lead,
@@ -2146,138 +2146,143 @@ class MarketStatsView(generics.GenericAPIView):
             _query_signature(request.query_params),
             scope='market_stats',
         )
-        if _is_public_read(request):
-            cached = cache.get(cache_key)
-            if cached is not None:
-                return _public_response(cached, request, s_maxage=CACHE_TTL_MARKET_STATS)
+        # Stale-while-revalidate: past its freshness the payload is still
+        # served while exactly one worker recomputes it. Without that, the
+        # first request after the TTL waits for fourteen thousand rows to
+        # travel into Python, and every request arriving meanwhile repeats
+        # the same work on a box with four cores.
+        def compute():
+            all_base = Property.objects.exclude(status='inactive').filter(
+                area__gt=0,
+                price__gt=0,
+                is_duplicate=False,
+            ).annotate(
+                price_per_m2=ExpressionWrapper(F('price') / F('area'), output_field=FloatField())
+            ).filter(price_per_m2__gt=1, price_per_m2__lt=10000)
+            # Optional city scope so the frontend can server-render one stats page
+            # per city; every metric below narrows naturally through this filter.
+            city_scope = (request.query_params.get('city') or '').strip()
+            if city_scope:
+                all_base = all_base.filter(city__iexact=city_scope)
+            # Venta y alquiler usan escalas distintas (precio total vs. mensual).
+            # Las métricas principales se limitan a venta para que $/m² sea comparable.
+            base = all_base.filter(status='for_sale')
 
-        all_base = Property.objects.exclude(status='inactive').filter(
-            area__gt=0,
-            price__gt=0,
-            is_duplicate=False,
-        ).annotate(
-            price_per_m2=ExpressionWrapper(F('price') / F('area'), output_field=FloatField())
-        ).filter(price_per_m2__gt=1, price_per_m2__lt=10000)
-        # Optional city scope so the frontend can server-render one stats page
-        # per city; every metric below narrows naturally through this filter.
-        city_scope = (request.query_params.get('city') or '').strip()
-        if city_scope:
-            all_base = all_base.filter(city__iexact=city_scope)
-        # Venta y alquiler usan escalas distintas (precio total vs. mensual).
-        # Las métricas principales se limitan a venta para que $/m² sea comparable.
-        base = all_base.filter(status='for_sale')
+            raw_values = sorted(float(value) for value in base.values_list('price_per_m2', flat=True))
+            def percentile(values, ratio):
+                if not values:
+                    return 0
+                position = (len(values) - 1) * ratio
+                low = int(position)
+                high = min(low + 1, len(values) - 1)
+                return values[low] + (values[high] - values[low]) * (position - low)
+            q1, q3 = percentile(raw_values, .25), percentile(raw_values, .75)
+            iqr = q3 - q1
+            lower, upper = max(1, q1 - 1.5 * iqr), min(10000, q3 + 1.5 * iqr)
+            outliers_excluded = base.exclude(price_per_m2__gte=lower, price_per_m2__lte=upper).count()
+            base = base.filter(price_per_m2__gte=lower, price_per_m2__lte=upper)
 
-        raw_values = sorted(float(value) for value in base.values_list('price_per_m2', flat=True))
-        def percentile(values, ratio):
-            if not values:
-                return 0
-            position = (len(values) - 1) * ratio
-            low = int(position)
-            high = min(low + 1, len(values) - 1)
-            return values[low] + (values[high] - values[low]) * (position - low)
-        q1, q3 = percentile(raw_values, .25), percentile(raw_values, .75)
-        iqr = q3 - q1
-        lower, upper = max(1, q1 - 1.5 * iqr), min(10000, q3 + 1.5 * iqr)
-        outliers_excluded = base.exclude(price_per_m2__gte=lower, price_per_m2__lte=upper).count()
-        base = base.filter(price_per_m2__gte=lower, price_per_m2__lte=upper)
-
-        overall = base.aggregate(
-            count=Count('id'),
-            avg_price_m2=Avg('price_per_m2'),
-            avg_price=Avg('price'),
-            avg_area=Avg('area'),
-            min_price_m2=Min('price_per_m2'),
-            max_price_m2=Max('price_per_m2'),
-            updated_at=Max('updated_at'),
-        )
-
-        def grouped(*fields, limit=12):
-            rows = (
-                base.values(*fields)
-                .annotate(
-                    count=Count('id'),
-                    avg_price_m2=Avg('price_per_m2'),
-                    avg_price=Avg('price'),
-                    avg_area=Avg('area'),
-                )
-                .filter(count__gte=3)
-                .order_by('-count')[:limit]
+            overall = base.aggregate(
+                count=Count('id'),
+                avg_price_m2=Avg('price_per_m2'),
+                avg_price=Avg('price'),
+                avg_area=Avg('area'),
+                min_price_m2=Min('price_per_m2'),
+                max_price_m2=Max('price_per_m2'),
+                updated_at=Max('updated_at'),
             )
-            return list(rows)
 
-        now = timezone.now()
-        active_rows = list(base.values(
-            'id', 'city', 'address', 'property_type', 'created_at', 'last_seen_at',
-            'price_per_m2',
-        ))
-        market_days = []
-        city_periods = defaultdict(lambda: {'recent': [], 'previous': []})
-        # Sectors come from free-text addresses, so the same place arrives
-        # written several ways: "PUEMBO", "Puembo", "Cumbaya", "Cumbayá".
-        # Grouping by casefold alone split the accented spellings into separate
-        # sectors — Cumbayá held 42 listings and Cumbaya another 47, each with
-        # its own average — so the key drops diacritics too.
-        sector_stats = defaultdict(lambda: {'names': Counter(), 'values': []})
-        for row in active_rows:
-            # Active catalog entries remain available through the current day.
-            market_days.append(max(0, (now - row['created_at']).days))
-            city = (row['city'] or 'Sin ciudad').strip()
-            age = now - row['created_at']
-            if age <= timedelta(days=90):
-                city_periods[city]['recent'].append(row['price_per_m2'])
-            elif age <= timedelta(days=180):
-                city_periods[city]['previous'].append(row['price_per_m2'])
-            # `address` is currently the finest available geographic level.
-            sector = (row['address'] or '').split(',')[0].strip()
-            if sector and _fold(sector) != _fold(city):
-                entry = sector_stats[(city, _fold(sector))]
-                entry['names'][sector] += 1
-                entry['values'].append(row['price_per_m2'])
+            def grouped(*fields, limit=12):
+                rows = (
+                    base.values(*fields)
+                    .annotate(
+                        count=Count('id'),
+                        avg_price_m2=Avg('price_per_m2'),
+                        avg_price=Avg('price'),
+                        avg_area=Avg('area'),
+                    )
+                    .filter(count__gte=3)
+                    .order_by('-count')[:limit]
+                )
+                return list(rows)
 
-        evolution = []
-        for city, periods in city_periods.items():
-            if len(periods['recent']) < 2 or len(periods['previous']) < 2:
-                continue
-            recent = sum(periods['recent']) / len(periods['recent'])
-            previous = sum(periods['previous']) / len(periods['previous'])
-            evolution.append({'city': city, 'current_price_m2': recent, 'previous_price_m2': previous,
-                              'change_pct': round((recent - previous) / previous * 100, 1) if previous else 0})
-        evolution.sort(key=lambda row: row['change_pct'], reverse=True)
-        by_sector = [
-            {
-                'city': city,
-                'sector': _display_name(entry['names']),
-                # The key the zone page is addressed by, so the table can link
-                # to it without folding the name a second time.
-                'sector_key': _sector_key,
-                'count': len(entry['values']),
-                'avg_price_m2': sum(entry['values']) / len(entry['values']),
+            now = timezone.now()
+            active_rows = list(base.values(
+                'id', 'city', 'address', 'property_type', 'created_at', 'last_seen_at',
+                'price_per_m2',
+            ))
+            market_days = []
+            city_periods = defaultdict(lambda: {'recent': [], 'previous': []})
+            # Sectors come from free-text addresses, so the same place arrives
+            # written several ways: "PUEMBO", "Puembo", "Cumbaya", "Cumbayá".
+            # Grouping by casefold alone split the accented spellings into separate
+            # sectors — Cumbayá held 42 listings and Cumbaya another 47, each with
+            # its own average — so the key drops diacritics too.
+            sector_stats = defaultdict(lambda: {'names': Counter(), 'values': []})
+            for row in active_rows:
+                # Active catalog entries remain available through the current day.
+                market_days.append(max(0, (now - row['created_at']).days))
+                city = (row['city'] or 'Sin ciudad').strip()
+                age = now - row['created_at']
+                if age <= timedelta(days=90):
+                    city_periods[city]['recent'].append(row['price_per_m2'])
+                elif age <= timedelta(days=180):
+                    city_periods[city]['previous'].append(row['price_per_m2'])
+                # `address` is currently the finest available geographic level.
+                sector = (row['address'] or '').split(',')[0].strip()
+                if sector and _fold(sector) != _fold(city):
+                    entry = sector_stats[(city, _fold(sector))]
+                    entry['names'][sector] += 1
+                    entry['values'].append(row['price_per_m2'])
+
+            evolution = []
+            for city, periods in city_periods.items():
+                if len(periods['recent']) < 2 or len(periods['previous']) < 2:
+                    continue
+                recent = sum(periods['recent']) / len(periods['recent'])
+                previous = sum(periods['previous']) / len(periods['previous'])
+                evolution.append({'city': city, 'current_price_m2': recent, 'previous_price_m2': previous,
+                                  'change_pct': round((recent - previous) / previous * 100, 1) if previous else 0})
+            evolution.sort(key=lambda row: row['change_pct'], reverse=True)
+            by_sector = [
+                {
+                    'city': city,
+                    'sector': _display_name(entry['names']),
+                    # The key the zone page is addressed by, so the table can link
+                    # to it without folding the name a second time.
+                    'sector_key': _sector_key,
+                    'count': len(entry['values']),
+                    'avg_price_m2': sum(entry['values']) / len(entry['values']),
+                }
+                for (city, _sector_key), entry in sector_stats.items() if len(entry['values']) >= 2
+            ]
+            by_sector.sort(key=lambda row: (-row['count'], row['city'], row['sector']))
+
+            payload = {
+                'overall': overall,
+                'by_city': grouped('city', 'province', limit=15),
+                'by_property_type': grouped('property_type', limit=8),
+                'by_operation': list(
+                    all_base.values('status').annotate(
+                        count=Count('id'),
+                        avg_price_m2=Avg('price_per_m2'),
+                        avg_price=Avg('price'),
+                        avg_area=Avg('area'),
+                    ).order_by('-count')
+                ),
+                'by_sector': by_sector[:20],
+                'evolution': evolution[:15],
+                'growth_zones': [row for row in evolution if row['change_pct'] > 0][:8],
+                'estimated_market_days': round(sum(market_days) / len(market_days)) if market_days else 0,
+                'outliers_excluded': outliers_excluded,
+                'methodology': 'Propiedades en venta activas con precio y área válidos. Los extremos se excluyen con el método IQR; evolución compara altas de los últimos 90 días con los 90 anteriores.',
             }
-            for (city, _sector_key), entry in sector_stats.items() if len(entry['values']) >= 2
-        ]
-        by_sector.sort(key=lambda row: (-row['count'], row['city'], row['sector']))
+            return payload
 
-        payload = {
-            'overall': overall,
-            'by_city': grouped('city', 'province', limit=15),
-            'by_property_type': grouped('property_type', limit=8),
-            'by_operation': list(
-                all_base.values('status').annotate(
-                    count=Count('id'),
-                    avg_price_m2=Avg('price_per_m2'),
-                    avg_price=Avg('price'),
-                    avg_area=Avg('area'),
-                ).order_by('-count')
-            ),
-            'by_sector': by_sector[:20],
-            'evolution': evolution[:15],
-            'growth_zones': [row for row in evolution if row['change_pct'] > 0][:8],
-            'estimated_market_days': round(sum(market_days) / len(market_days)) if market_days else 0,
-            'outliers_excluded': outliers_excluded,
-            'methodology': 'Propiedades en venta activas con precio y área válidos. Los extremos se excluyen con el método IQR; evolución compara altas de los últimos 90 días con los 90 anteriores.',
-        }
-        if _is_public_read(request):
-            cache.set(cache_key, payload, CACHE_TTL_MARKET_STATS)
+        if not _is_public_read(request):
+            return _public_response(compute(), request, s_maxage=CACHE_TTL_MARKET_STATS)
+
+        payload = cached_or_stale(cache_key, CACHE_TTL_MARKET_STATS, compute)
         return _public_response(payload, request, s_maxage=CACHE_TTL_MARKET_STATS)
 
 

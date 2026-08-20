@@ -156,6 +156,14 @@ jobs:
             echo "FRONTEND_URL=$FRONTEND_URL" >> .env.prod
             echo "REVALIDATE_SECRET=$REVALIDATE_SECRET" >> .env.prod
             echo "NEXT_REVALIDATE_URL=http://frontend:3000/api/revalidate" >> .env.prod
+            # Whatever else the session writes to this file — the deploy of
+            # 2026-08-20 landed the script's own closing `echo` between two
+            # variables, twice, and no reading of the shell explains it — only
+            # well-formed KEY=VALUE lines survive. Compose refuses to read the
+            # file over a single stray line, and that refusal aborts the deploy
+            # after the images are built.
+            grep -E '^[A-Za-z_][A-Za-z0-9_]*=' .env.prod > .env.prod.clean
+            mv .env.prod.clean .env.prod
             chmod 600 .env.prod
 
             echo "🔄 Running deploy script..."

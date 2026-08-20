@@ -778,7 +778,7 @@ rules:
         lines: 24-39
         symbol: def _is_internal_client
       - file: backend/estate_map/settings.py
-        lines: "187-197"
+        lines: "205-214"
         symbol: DEFAULT_THROTTLE_RATES
     permissions:
       required: [map.read_points]
@@ -1298,7 +1298,7 @@ rules:
         lines: "1344-1346"
         symbol: "self.throttle_scope = 'pending_create'"
       - file: backend/estate_map/settings.py
-        lines: "184-194"
+        lines: "207-216"
         symbol: "'pending_create': '10/min',"
     permissions:
       required: [pending_publications.create_public]
@@ -1610,7 +1610,7 @@ rules:
       refresh reutilizado deja de servir. La app token_blacklist está instalada.
     evidence:
       - file: backend/estate_map/settings.py
-        lines: "220-222"
+        lines: "235-237"
         symbol: "'BLACKLIST_AFTER_ROTATION': True,"
       - file: backend/real_estate/urls.py
         lines: "45-47"
@@ -1910,10 +1910,10 @@ rules:
       recibe 403.
     evidence:
       - file: backend/real_estate/views.py
-        lines: "2284-2286"
+        lines: "2289-2291"
         symbol: class AdminDashboardView
       - file: backend/real_estate/views.py
-        lines: "2373-2375"
+        lines: "2378-2380"
         symbol: AdminMetricsService(now=now).build()
       - file: backend/real_estate/permissions.py
         lines: "46-50"
@@ -1955,10 +1955,10 @@ rules:
       queda registrada en el log de auditoría con el actor.
     evidence:
       - file: backend/real_estate/views.py
-        lines: "2392-2394"
+        lines: "2397-2399"
         symbol: class AdminSystemStatusView
       - file: backend/real_estate/views.py
-        lines: "2502-2504"
+        lines: "2507-2509"
         symbol: admin_audit action=incident.resolve
     permissions:
       required: [admin.system_status_read, admin.system_status_write]
@@ -1992,10 +1992,10 @@ rules:
       la misma vista y podría haberse quedado sin cubrir.
     evidence:
       - file: backend/real_estate/views.py
-        lines: "2500-2502"
+        lines: "2505-2507"
         symbol: incident.save(update_fields=["resolved", "last_seen_at"])
       - file: backend/real_estate/views.py
-        lines: "2286-2288"
+        lines: "2291-2293"
         symbol: "permission_classes = [IsAuthenticated, IsAdminUser]"
     permissions:
       required: [admin.system_status_write]
@@ -2034,7 +2034,7 @@ rules:
       actividad de cada cuenta.
     evidence:
       - file: backend/real_estate/views.py
-        lines: "2508-2510"
+        lines: "2513-2515"
         symbol: class AdminUserViewSet
     permissions:
       required: [admin.users_read]
@@ -2147,7 +2147,7 @@ rules:
       auditoría con el actor y el objetivo. PERM-052 enuncia la corrección.
     evidence:
       - file: backend/real_estate/views.py
-        lines: "2611-2613"
+        lines: "2616-2618"
         symbol: admin_audit action=user.delete
     permissions:
       required: [admin.users_delete]
@@ -2208,10 +2208,10 @@ rules:
       incluido su propietario.
     evidence:
       - file: backend/real_estate/views.py
-        lines: "2617-2619"
+        lines: "2622-2624"
         symbol: class AdminPropertyViewSet
       - file: backend/real_estate/views.py
-        lines: "2634-2636"
+        lines: "2639-2641"
         symbol: "Property.objects.select_related('owner', 'source')"
     permissions:
       required: [admin.properties_read]
@@ -2247,7 +2247,7 @@ rules:
       conviene verificar que hereda el permission_classes de la clase.
     evidence:
       - file: backend/real_estate/views.py
-        lines: "2829-2831"
+        lines: "2834-2836"
         symbol: def stats
       - file: backend/real_estate/urls.py
         lines: "83-85"
@@ -2282,7 +2282,7 @@ rules:
       serializer.
     evidence:
       - file: backend/real_estate/views.py
-        lines: "2630-2632"
+        lines: "2635-2637"
         symbol: "PATCH_ALLOWED_FIELDS = {'status', 'title', 'price', 'city', 'description'}"
       - file: backend/real_estate/views.py
         lines: "2686-2692"
@@ -2325,7 +2325,7 @@ rules:
       única ruta por la que se puede borrar la propiedad de otra persona.
     evidence:
       - file: backend/real_estate/views.py
-        lines: "2774-2776"
+        lines: "2779-2781"
         symbol: admin_audit action=property.delete
     permissions:
       required: [admin.properties_delete]
@@ -2359,7 +2359,7 @@ rules:
         lines: "2780-2788"
         symbol: def bulk_status
       - file: backend/real_estate/views.py
-        lines: "2823-2825"
+        lines: "2828-2830"
         symbol: admin_audit action=property.bulk_status
     permissions:
       required: [admin.properties_bulk_status]
@@ -2740,7 +2740,7 @@ rules:
       admin.
     evidence:
       - file: backend/estate_map/settings.py
-        lines: "172-174"
+        lines: "187-189"
         symbol: rest_framework_simplejwt.authentication.JWTAuthentication
     permissions:
       required: [auth.login]
@@ -2796,7 +2796,7 @@ rules:
       de DEFAULT_THROTTLE_RATES sugiere lo contrario.
     evidence:
       - file: backend/estate_map/settings.py
-        lines: "204-219"
+        lines: "221-235"
         symbol: "'property_write': '30/hour',"
         note: Se declaran las tasas, nunca las clases por defecto.
       - file: backend/real_estate/views.py
@@ -2913,7 +2913,7 @@ rules:
       _is_internal_client.
     evidence:
       - file: backend/estate_map/settings.py
-        lines: "168-180"
+        lines: "195-206"
         symbol: "'NUM_PROXIES': 1,"
       - file: backend/real_estate/throttling.py
         lines: "24-39"

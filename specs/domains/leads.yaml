@@ -378,7 +378,7 @@ rules:
         symbol: "throttle_scope = 'pending_create'"
         note: Solo el POST público se limita; el resto de acciones ya exige staff y no lleva throttle.
       - file: backend/estate_map/settings.py
-        lines: "192-194"
+        lines: "207-209"
         symbol: "'pending_create': '10/min'"
     backend:
       enforce: true
@@ -507,7 +507,7 @@ rules:
         lines: "1594-1596"
         symbol: "throttle_scope = 'activity_create'"
       - file: backend/estate_map/settings.py
-        lines: "191-193"
+        lines: "206-208"
         symbol: "'activity_create': '30/min'"
     backend:
       enforce: true

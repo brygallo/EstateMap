@@ -110,7 +110,7 @@ rules:
         symbol: "response[\"X-Request-ID\"] = request_id"
         note: Generación o propagación del identificador y escritura de las tres cabeceras.
       - file: backend/estate_map/settings.py
-        lines: "253-255"
+        lines: "268-270"
         symbol: CORS_EXPOSE_HEADERS
         note: >
           Sin exponerlas por CORS el navegador no puede leerlas, así que la
@@ -302,7 +302,7 @@ rules:
       exención menos visible de las tres y la de mayor alcance.
     evidence:
       - file: backend/estate_map/settings.py
-        lines: "187-196"
+        lines: "205-213"
         symbol: DEFAULT_THROTTLE_RATES
         note: Los cinco scopes con sus tasas.
       - file: backend/real_estate/throttling.py
@@ -316,7 +316,7 @@ rules:
         symbol: 'getattr(user, "is_staff", False)'
         note: La exención de staff, sin tope y evaluada antes que la IP.
       - file: backend/estate_map/settings.py
-        lines: "212-214"
+        lines: "227-229"
         symbol: THROTTLE_EXEMPT_IPS
         note: Lista adicional de direcciones nunca limitadas.
     cases:
@@ -344,11 +344,11 @@ rules:
       throttling de DRF deja de ser compartido entre procesos.
     evidence:
       - file: backend/estate_map/settings.py
-        lines: "500-502"
+        lines: "515-517"
         symbol: IGNORE_EXCEPTIONS
         note: Los errores del cliente de caché no se propagan.
       - file: backend/estate_map/settings.py
-        lines: "521-523"
+        lines: "536-538"
         symbol: DJANGO_REDIS_LOG_IGNORED_EXCEPTIONS
         note: Pero sí se registran, para que la caída no pase inadvertida.
     cases:
