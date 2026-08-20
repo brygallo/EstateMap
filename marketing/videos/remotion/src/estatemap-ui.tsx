@@ -416,7 +416,8 @@ export const EmRankRow: React.FC<{
   enter?: number;
   raised?: boolean;
   width: number;
-  /** Which of the palettes this row's illustration uses. */
+  /** Which illustration this row draws. Defaults to its own position, so a
+      list never shows the same picture twice by omission. */
   tint?: number;
   /** What is being sold, so the drawing is of that. */
   kind?: PropertyKind;
@@ -435,7 +436,7 @@ export const EmRankRow: React.FC<{
   enter = 1,
   raised = false,
   width,
-  tint = 0,
+  tint,
   kind = 'land',
   measureLive = true,
 }) => (
@@ -450,7 +451,7 @@ export const EmRankRow: React.FC<{
   >
     <div style={{display: 'flex', gap: 22, alignItems: 'flex-start'}}>
       <EmRank place={place} />
-      <EmThumb size={182} height={140} tint={tint} kind={kind} />
+      <EmThumb size={208} height={96} tint={tint ?? place} kind={kind} />
       <div style={{flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 10}}>
         <div style={{display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 20}}>
           <span

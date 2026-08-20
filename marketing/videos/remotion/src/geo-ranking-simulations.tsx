@@ -513,6 +513,8 @@ export const GeoOrderedPageSim: React.FC<SimulationProps> = ({frame, total}) => 
             raised={index === 0 && actions > 0.3}
             enter={rows[index]}
             width={CONTENT.width}
+            tint={item.place}
+            kind="land"
           />
         ))}
       </div>
@@ -751,7 +753,7 @@ export const GeoReasonSim: React.FC<SimulationProps> = ({frame, total}) => {
   // Two rows, not three. The scene is about the reason and about the map, and
   // three rows with a two-line pill each ran straight into the headline. A shot
   // shows one thing; the list was already established two scenes ago.
-  const shown = BY_PRICE.slice(0, 2);
+  const shown = BY_PRICE.slice(0, 1);
 
   const enter = land(p, 0, 0.09);
   const push = glide(p, 0, 1);
@@ -762,7 +764,7 @@ export const GeoReasonSim: React.FC<SimulationProps> = ({frame, total}) => {
 
   return (
     <EmStage enter={enter} push={push}>
-      <EmPageHead title="Cada anuncio dice su motivo" note="Y en qué parte del mapa queda" enter={enter} height={440} />
+      <EmPageHead title="Cada anuncio dice su motivo" enter={enter} height={440} />
 
       <div
         style={{
@@ -814,7 +816,7 @@ export const GeoReasonSim: React.FC<SimulationProps> = ({frame, total}) => {
           style={{
             position: 'absolute',
             left: CONTENT.left + CONTENT.width - 108,
-            top: 566 + Math.sin(touch * Math.PI) * 16,
+            top: 528 + Math.sin(touch * Math.PI) * 16,
             opacity: (1 - travel) * Math.min(1, touch * 2),
             transform: `scale(${0.9 + Math.sin(touch * Math.PI) * 0.35})`,
             filter: 'drop-shadow(0 8px 14px rgba(15,23,42,.35))',
