@@ -463,6 +463,12 @@ CELERY_TASK_TIME_LIMIT = 900
 # files nobody claims. Embedded beat (-B) is fine because there is exactly one
 # worker per system; with several, each would fire its own copy.
 CELERY_BEAT_SCHEDULE = {
+    # Weekly is the right cadence for an editorial review list: the figures
+    # inside an article move with the market, not with the hour.
+    "flag-stale-blog-figures": {
+        "task": "blog.tasks.flag_stale_figures",
+        "schedule": 60 * 60 * 24 * 7,
+    },
     "system-worker-heartbeat": {
         "task": "real_estate.tasks.system_worker_heartbeat",
         "schedule": 60,

@@ -344,11 +344,11 @@ rules:
       throttling de DRF deja de ser compartido entre procesos.
     evidence:
       - file: backend/estate_map/settings.py
-        lines: "494-496"
+        lines: "500-502"
         symbol: IGNORE_EXCEPTIONS
         note: Los errores del cliente de caché no se propagan.
       - file: backend/estate_map/settings.py
-        lines: "515-517"
+        lines: "521-523"
         symbol: DJANGO_REDIS_LOG_IGNORED_EXCEPTIONS
         note: Pero sí se registran, para que la caída no pase inadvertida.
     cases:

@@ -29,6 +29,7 @@ La API pública es de solo lectura. La escritura se realiza desde el escritorio 
 | [`BLOG-008`](#blog-008--cada-autor-con-nombre-público-tiene-una-página-enlazable) | Cada autor con nombre público tiene una página enlazable | ✅ Implementada |
 | [`BLOG-009`](#blog-009--un-artículo-de-ciudad-entrega-el-precio-del-m²-y-el-inventario-de-esa-ciudad) | Un artículo de ciudad entrega el precio del m² y el inventario de esa ciudad | ✅ Implementada |
 | [`BLOG-012`](#blog-012--un-artículo-programado-no-declara-que-se-modificó-antes-de-publicarse) | Un artículo programado no declara que se modificó antes de publicarse | ✅ Implementada |
+| [`BLOG-013`](#blog-013--un-artículo-con-cifras-escritas-a-mano-se-revisa-cada-trimestre) | Un artículo con cifras escritas a mano se revisa cada trimestre | ✅ Implementada |
 
 ### BLOG-001 — Un post es público desde que su fecha de publicación queda en el pasado
 
@@ -375,3 +376,31 @@ El umbral es la otra mitad de la regla. Publicar un promedio calculado sobre tre
 **Cobertura exigida:** unit
 
 - `frontend/lib/blog.test.ts`
+
+### BLOG-013 — Un artículo con cifras escritas a mano se revisa cada trimestre
+
+**Estado:** ✅ Implementada
+
+Una tarea semanal lista los artículos publicados que llevan más de noventa días sin tocarse y contienen una cifra escrita en el texto. Solo informa: no reescribe nada.
+
+> **Por qué:** Los bloques que la página renderiza —el precio del m², el ranking vivo— se recalculan solos, pero un número tecleado dentro de un párrafo no, y nada en el sistema sabía qué artículos llevaban uno. Sin esa lista, la corrección depende de que alguien recuerde qué escribió en julio.
+Informa y no edita a propósito. Reescribir un párrafo publicado sin que lo lea una persona es la forma más rápida de que un artículo contradiga al bloque de datos que tiene justo debajo.
+
+**Evidencia en el código** (verificada por `tools/specs/validate.py`)
+
+- `backend/blog/tasks.py` (`def flag_stale_figures`)
+- `backend/blog/tasks.py` (`STALE_AFTER_DAYS`)
+- `backend/estate_map/settings.py` (`flag-stale-blog-figures`)
+- `backend/blog/tests/test_scheduling.py` (`def test_an_old_article_with_typed_figures_is_flagged`)
+
+**Casos**
+
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| Artículo de hace 200 días con "$776" en el cuerpo | — | — | — | aparece en la lista |
+| Artículo de hace 200 días sin ninguna cifra | — | — | — | no aparece |
+| Artículo revisado esta semana | — | — | — | no aparece |
+
+**Cobertura exigida:** api
+
+- `backend/blog/tests/test_scheduling.py`

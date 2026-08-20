@@ -1,5 +1,5 @@
 """
-Scheduled publishing.
+Scheduled publishing and editorial upkeep.
 
 The beat task below is not what makes a post public — the date is (see
 ``blog.models``). What it does is fire the side effects a publication needs and
@@ -9,8 +9,11 @@ out the ISR window.
 """
 
 import logging
+import re
+from datetime import timedelta
 
 from celery import shared_task
+from django.utils import timezone
 
 from real_estate.cache_utils import bump_props_version
 from real_estate.services.indexnow import submit_urls
@@ -52,3 +55,42 @@ def publish_scheduled_posts():
 
     logger.info("publish_scheduled_posts: %s posts published", len(due))
     return {"published": len(due), "slugs": [post.slug for post in due]}
+
+
+# An article that quotes a figure in its own text stops being true the day the
+# market moves. The blocks the page renders — the price per m², the live
+# ranking — recalculate themselves, but a number typed into a paragraph does
+# not, and nothing in the system knew which articles carried one.
+STALE_AFTER_DAYS = 90
+FIGURE_PATTERN = re.compile(r"\$\s?\d[\d.,]{2,}|\d[\d.,]*\s?(?:m²|USD|dólares)")
+
+
+@shared_task
+def flag_stale_figures():
+    """Report published articles whose typed figures are older than a quarter.
+
+    Reports, never edits. Rewriting a published paragraph without a person
+    reading it is how a portal ends up publishing a sentence that contradicts
+    the block right below it. What this gives the editor is the list worth
+    reviewing, which is the part nobody was going to compile by hand.
+    """
+    cutoff = timezone.now() - timedelta(days=STALE_AFTER_DAYS)
+    candidates = Post.objects.filter(
+        status=Post.Status.PUBLISHED, updated_at__lt=cutoff
+    ).only("id", "slug", "updated_at", "body", "city")
+
+    stale = [
+        {
+            "slug": post.slug,
+            "city": post.city,
+            "updated_at": post.updated_at.isoformat(),
+            "figures": len(FIGURE_PATTERN.findall(post.body or "")),
+        }
+        for post in candidates
+        if FIGURE_PATTERN.search(post.body or "")
+    ]
+    if stale:
+        logger.warning(
+            "blog.stale_figures", extra={"count": len(stale), "posts": stale}
+        )
+    return {"stale": len(stale), "checked_after_days": STALE_AFTER_DAYS}

@@ -149,3 +149,48 @@ class TestScheduleDailyAction:
 
         dates = list(Post.objects.values_list("published_at", flat=True))
         assert len(set(dates)) == len(dates), "dos posts programados a la misma hora"
+
+
+@pytest.mark.django_db
+def test_an_old_article_with_typed_figures_is_flagged():
+    """SPEC:BLOG-013 — a number typed into a paragraph does not recalculate.
+
+    The blocks the page renders refresh themselves; a figure inside the text
+    does not, and until now nothing knew which articles carried one.
+    """
+    from datetime import timedelta
+
+    from blog.tasks import STALE_AFTER_DAYS, flag_stale_figures
+
+    old = Post.objects.create(
+        title="Con cifras escritas", slug="con-cifras-escritas",
+        body="El metro cuadrado en Quito promedia $776 según el inventario.",
+        status=Post.Status.PUBLISHED, published_at=timezone.now() - timedelta(days=200),
+    )
+    fresh_text = Post.objects.create(
+        title="Sin cifras", slug="sin-cifras",
+        body="Una guía sobre cómo elegir barrio, sin ninguna cifra en el texto.",
+        status=Post.Status.PUBLISHED, published_at=timezone.now() - timedelta(days=200),
+    )
+    # `updated_at` is auto_now, so the age has to be written past the model.
+    Post.objects.filter(id__in=[old.id, fresh_text.id]).update(
+        updated_at=timezone.now() - timedelta(days=STALE_AFTER_DAYS + 10)
+    )
+
+    result = flag_stale_figures()
+
+    assert result["stale"] == 1
+
+
+@pytest.mark.django_db
+def test_a_recent_article_is_not_flagged():
+    """SPEC:BLOG-013 — the list is for what nobody has looked at in a quarter."""
+    from blog.tasks import flag_stale_figures
+
+    Post.objects.create(
+        title="Recién revisada", slug="recien-revisada",
+        body="El metro cuadrado en Quito promedia $776.",
+        status=Post.Status.PUBLISHED, published_at=timezone.now(),
+    )
+
+    assert flag_stale_figures()["stale"] == 0

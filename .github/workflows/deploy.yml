@@ -100,69 +100,62 @@ jobs:
 
             echo "📝 Creating .env.prod file..."
 
-            # Values arrive as environment variables, not interpolated into the
-            # command. Interpolating them put every production secret on the
-            # remote command line, where `ps` shows it to anything running on
-            # the box for as long as the deploy lasts. Inside double quotes the
-            # expansion is not re-expanded, so a value containing $ or @ — the
-            # MinIO key does — is written verbatim.
+            # One command per line, never a multi-line group. This script
+            # reaches the server over stdin and bash reads it incrementally:
+            # a forty-line `{ ... } > file` block had its own closing brace
+            # interleaved with the lines that follow, and the deploy of
+            # 2026-08-20 wrote `echo "Deployment completed"` into .env.prod.
+            # Same reason deploy.sh wraps itself in braces, opposite remedy.
+            #
+            # The values arrive as environment variables rather than
+            # interpolated by Actions: interpolation put every production
+            # secret on the remote command line, where `ps` shows it to
+            # anything on the box for as long as the deploy runs. Inside
+            # double quotes an expansion is not re-expanded, so a value
+            # carrying $ or @ — the MinIO key does — is written verbatim.
             umask 077
-            {
-              echo "DJANGO_SECRET_KEY=$DJANGO_SECRET_KEY"
-              echo "DEBUG=False"
-              echo "ALLOWED_HOSTS=$ALLOWED_HOSTS"
-              echo "CORS_ALLOWED_ORIGINS=$CORS_ALLOWED_ORIGINS"
-              echo "CSRF_TRUSTED_ORIGINS=$CSRF_TRUSTED_ORIGINS"
-              echo "SECURE_SSL_REDIRECT=True"
-              echo "ENVIRONMENT=production"
-              echo "RELEASE_SHA=$RELEASE_SHA"
-              echo "OBSERVABILITY_LOG_LEVEL=INFO"
-              echo "SLOW_ENDPOINT_MS=1000"
-              echo "THROTTLE_EXEMPT_IPS="
-              echo "IMAGE_UPLOAD_TEMP_MAX_AGE_HOURS=48"
-              echo "INDEXNOW_ENABLED=True"
-              echo "BACKUP_VERIFICATION_FILE=/tmp/estate-backup-verified.json"
-
-              # Database (native on the host)
-              echo "DB_HOST=$DB_HOST"
-              echo "DB_USER=$DB_USER"
-              echo "DB_PASSWORD=$DB_PASSWORD"
-              echo "DB_NAME=$DB_NAME"
-              echo "SERVER_IP=$SERVER_IP"
-
-              # MinIO (native on the host)
-              echo "MINIO_ENDPOINT=$MINIO_ENDPOINT"
-              echo "MINIO_ACCESS_KEY=$MINIO_ACCESS_KEY"
-              echo "MINIO_SECRET_KEY=$MINIO_SECRET_KEY"
-              echo "MINIO_USE_SSL=$MINIO_USE_SSL"
-              echo "MINIO_BUCKET_NAME=$MINIO_BUCKET_NAME"
-              echo "MINIO_PUBLIC_ENDPOINT=$MINIO_PUBLIC_ENDPOINT"
-
-              # Next.js: only NEXT_PUBLIC_* reaches the browser
-              echo "NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL"
-              echo "NEXT_PUBLIC_FRONTEND_URL=$NEXT_PUBLIC_FRONTEND_URL"
-              echo "NEXT_PUBLIC_GTM_ID=$NEXT_PUBLIC_GTM_ID"
-              echo "NEXT_PUBLIC_GA_MEASUREMENT_ID=$NEXT_PUBLIC_GA_MEASUREMENT_ID"
-
-              # Google OAuth
-              echo "GOOGLE_CLIENT_ID=$GOOGLE_CLIENT_ID"
-              echo "GOOGLE_CLIENT_SECRET=$GOOGLE_CLIENT_SECRET"
-              echo "NEXT_PUBLIC_GOOGLE_CLIENT_ID=$NEXT_PUBLIC_GOOGLE_CLIENT_ID"
-
-              # Email
-              echo "EMAIL_BACKEND=$EMAIL_BACKEND"
-              echo "EMAIL_HOST=$EMAIL_HOST"
-              echo "EMAIL_PORT=$EMAIL_PORT"
-              echo "EMAIL_USE_TLS=$EMAIL_USE_TLS"
-              echo "EMAIL_HOST_USER=$EMAIL_HOST_USER"
-              echo "EMAIL_HOST_PASSWORD=$EMAIL_HOST_PASSWORD"
-              echo "DEFAULT_FROM_EMAIL=$DEFAULT_FROM_EMAIL"
-
-              # Frontend URL for backend links and revalidation
-              echo "FRONTEND_URL=$FRONTEND_URL"
-              echo "REVALIDATE_SECRET=$REVALIDATE_SECRET"
-              echo "NEXT_REVALIDATE_URL=http://frontend:3000/api/revalidate"
-            } > .env.prod
+            echo "DJANGO_SECRET_KEY=$DJANGO_SECRET_KEY" > .env.prod
+            echo "DEBUG=False" >> .env.prod
+            echo "ALLOWED_HOSTS=$ALLOWED_HOSTS" >> .env.prod
+            echo "CORS_ALLOWED_ORIGINS=$CORS_ALLOWED_ORIGINS" >> .env.prod
+            echo "CSRF_TRUSTED_ORIGINS=$CSRF_TRUSTED_ORIGINS" >> .env.prod
+            echo "SECURE_SSL_REDIRECT=True" >> .env.prod
+            echo "ENVIRONMENT=production" >> .env.prod
+            echo "RELEASE_SHA=$RELEASE_SHA" >> .env.prod
+            echo "OBSERVABILITY_LOG_LEVEL=INFO" >> .env.prod
+            echo "SLOW_ENDPOINT_MS=1000" >> .env.prod
+            echo "THROTTLE_EXEMPT_IPS=" >> .env.prod
+            echo "IMAGE_UPLOAD_TEMP_MAX_AGE_HOURS=48" >> .env.prod
+            echo "INDEXNOW_ENABLED=True" >> .env.prod
+            echo "BACKUP_VERIFICATION_FILE=/tmp/estate-backup-verified.json" >> .env.prod
+            echo "DB_HOST=$DB_HOST" >> .env.prod
+            echo "DB_USER=$DB_USER" >> .env.prod
+            echo "DB_PASSWORD=$DB_PASSWORD" >> .env.prod
+            echo "DB_NAME=$DB_NAME" >> .env.prod
+            echo "SERVER_IP=$SERVER_IP" >> .env.prod
+            echo "MINIO_ENDPOINT=$MINIO_ENDPOINT" >> .env.prod
+            echo "MINIO_ACCESS_KEY=$MINIO_ACCESS_KEY" >> .env.prod
+            echo "MINIO_SECRET_KEY=$MINIO_SECRET_KEY" >> .env.prod
+            echo "MINIO_USE_SSL=$MINIO_USE_SSL" >> .env.prod
+            echo "MINIO_BUCKET_NAME=$MINIO_BUCKET_NAME" >> .env.prod
+            echo "MINIO_PUBLIC_ENDPOINT=$MINIO_PUBLIC_ENDPOINT" >> .env.prod
+            echo "NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL" >> .env.prod
+            echo "NEXT_PUBLIC_FRONTEND_URL=$NEXT_PUBLIC_FRONTEND_URL" >> .env.prod
+            echo "NEXT_PUBLIC_GTM_ID=$NEXT_PUBLIC_GTM_ID" >> .env.prod
+            echo "NEXT_PUBLIC_GA_MEASUREMENT_ID=$NEXT_PUBLIC_GA_MEASUREMENT_ID" >> .env.prod
+            echo "GOOGLE_CLIENT_ID=$GOOGLE_CLIENT_ID" >> .env.prod
+            echo "GOOGLE_CLIENT_SECRET=$GOOGLE_CLIENT_SECRET" >> .env.prod
+            echo "NEXT_PUBLIC_GOOGLE_CLIENT_ID=$NEXT_PUBLIC_GOOGLE_CLIENT_ID" >> .env.prod
+            echo "EMAIL_BACKEND=$EMAIL_BACKEND" >> .env.prod
+            echo "EMAIL_HOST=$EMAIL_HOST" >> .env.prod
+            echo "EMAIL_PORT=$EMAIL_PORT" >> .env.prod
+            echo "EMAIL_USE_TLS=$EMAIL_USE_TLS" >> .env.prod
+            echo "EMAIL_HOST_USER=$EMAIL_HOST_USER" >> .env.prod
+            echo "EMAIL_HOST_PASSWORD=$EMAIL_HOST_PASSWORD" >> .env.prod
+            echo "DEFAULT_FROM_EMAIL=$DEFAULT_FROM_EMAIL" >> .env.prod
+            echo "FRONTEND_URL=$FRONTEND_URL" >> .env.prod
+            echo "REVALIDATE_SECRET=$REVALIDATE_SECRET" >> .env.prod
+            echo "NEXT_REVALIDATE_URL=http://frontend:3000/api/revalidate" >> .env.prod
             chmod 600 .env.prod
 
             echo "🔄 Running deploy script..."

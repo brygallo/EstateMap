@@ -20,6 +20,8 @@ import { jsonLd, SITE_URL, SITE_NAME } from '@/lib/properties';
 import { generatePageMetadata } from '@/lib/metadata';
 import { PostCard } from '@/components/blog/PostCard';
 import CityPriceBlock, { getCityPriceFacts } from '@/components/blog/CityPriceBlock';
+import CityRankingBlock from '@/components/blog/CityRankingBlock';
+import { getSectors, sectorSlug } from '@/lib/sectors';
 import SponsorSlotBlock from '@/components/blog/SponsorSlot';
 import { money } from '@/lib/market-stats';
 import { slugify } from '@/lib/properties';
@@ -154,6 +156,37 @@ export default async function BlogPostPage({ params }: PostPageProps) {
   // Fetched once for both the visible block and the schema below, so the
   // structured data can never assert a figure the page does not show.
   const cityFacts = post.city ? await getCityPriceFacts(post.city) : null;
+
+  // Related links, derived rather than written by hand. An article about a city
+  // should always reach that city's catalogue, its price index and its zones;
+  // asking every author to remember four links per post is how they end up
+  // missing. What the post declares wins, and the derived ones fill in behind,
+  // deduplicated by href.
+  const derivedLinks = post.city
+    ? await (async () => {
+        const citySlug = slugify(post.city);
+        const zones = (await getSectors(post.city)).slice(0, 3);
+        return [
+          { label: `Propiedades en ${post.city}`, href: `/propiedades/${citySlug}` },
+          ...(cityFacts
+            ? [
+                {
+                  label: `Precio del metro cuadrado en ${post.city}`,
+                  href: `/estadisticas-inmobiliarias/${citySlug}`,
+                },
+              ]
+            : []),
+          ...zones.map((zone) => ({
+            label: `Propiedades en ${zone.name}`,
+            href: `/propiedades/${citySlug}/${sectorSlug(zone)}`,
+          })),
+        ];
+      })()
+    : [];
+
+  const relatedLinks = [...post.related_links, ...derivedLinks].filter(
+    (link, index, all) => all.findIndex((other) => other.href === link.href) === index
+  );
 
   const structuredData = {
     '@context': 'https://schema.org',
@@ -396,6 +429,7 @@ export default async function BlogPostPage({ params }: PostPageProps) {
             use the number, and it sits above the fold of the answer block that
             AI crawlers tend to lift. */}
         {post.city && <CityPriceBlock city={post.city} />}
+        {post.city && <CityRankingBlock city={post.city} />}
 
         {post.faqs.length > 0 && (
           <section className="mt-10">
@@ -446,11 +480,11 @@ export default async function BlogPostPage({ params }: PostPageProps) {
         )}
       </article>
 
-      {post.related_links.length > 0 && (
+      {relatedLinks.length > 0 && (
         <nav aria-label="Contenido relacionado" className="mt-10">
           <h2 className="text-lg font-semibold text-textPrimary">Sigue explorando</h2>
           <div className="mt-4 flex flex-wrap gap-2">
-            {post.related_links.map((link) => (
+            {relatedLinks.map((link) => (
               <Link
                 key={link.href}
                 href={link.href}

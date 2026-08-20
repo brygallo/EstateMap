@@ -30,7 +30,7 @@ export type CityPriceFacts = {
   pricePerM2: number;
   listings: number;
   changePct: number | null;
-  sectors: Array<{ sector: string; avg_price_m2: number }>;
+  sectors: Array<{ sector: string; sectorKey: string; avg_price_m2: number }>;
 };
 
 /**
@@ -67,7 +67,11 @@ export async function getCityPriceFacts(city: string): Promise<CityPriceFacts | 
     sectors: stats.by_sector
       .filter((entry) => slugify(entry.city || '') === slugify(city))
       .slice(0, 3)
-      .map((entry) => ({ sector: entry.sector, avg_price_m2: entry.avg_price_m2 })),
+      .map((entry) => ({
+        sector: entry.sector,
+        sectorKey: entry.sector_key,
+        avg_price_m2: entry.avg_price_m2,
+      })),
   };
 }
 
@@ -127,10 +131,21 @@ export default async function CityPriceBlock({ city }: CityPriceBlockProps) {
 
       {facts.sectors.length > 0 && (
         <dl className="mt-4 grid gap-3 sm:grid-cols-3">
+          {/* Each zone has a page of its own now: naming it without linking it
+              would leave the reader at the end of the road. */}
           {facts.sectors.map((sector) => (
             <div key={sector.sector} className="rounded-lg border border-line bg-white p-3">
               <dt className="text-xs font-medium uppercase tracking-wide text-textSecondary">
-                {sector.sector}
+                {sector.sectorKey ? (
+                  <Link
+                    href={`/propiedades/${facts.citySlug}/${slugify(sector.sectorKey)}`}
+                    className="text-primary hover:underline"
+                  >
+                    {sector.sector}
+                  </Link>
+                ) : (
+                  sector.sector
+                )}
               </dt>
               <dd className="mt-1 font-geo text-base font-semibold text-textPrimary">
                 {money(sector.avg_price_m2)}/m²

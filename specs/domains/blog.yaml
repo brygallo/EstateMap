@@ -444,3 +444,38 @@ rules:
         expected: dateModified es el 19, no el 11
       - name: Artículo sin fecha de modificación
         expected: dateModified es la fecha de publicación
+
+  - id: BLOG-013
+    name: Un artículo con cifras escritas a mano se revisa cada trimestre
+    status: implemented
+    summary: >-
+      Una tarea semanal lista los artículos publicados que llevan más de noventa
+      días sin tocarse y contienen una cifra escrita en el texto. Solo informa:
+      no reescribe nada.
+    rationale: >-
+      Los bloques que la página renderiza —el precio del m², el ranking vivo— se
+      recalculan solos, pero un número tecleado dentro de un párrafo no, y nada
+      en el sistema sabía qué artículos llevaban uno. Sin esa lista, la
+      corrección depende de que alguien recuerde qué escribió en julio.
+
+      Informa y no edita a propósito. Reescribir un párrafo publicado sin que lo
+      lea una persona es la forma más rápida de que un artículo contradiga al
+      bloque de datos que tiene justo debajo.
+    evidence:
+      - file: backend/blog/tasks.py
+        symbol: def flag_stale_figures
+      - file: backend/blog/tasks.py
+        symbol: STALE_AFTER_DAYS
+      - file: backend/estate_map/settings.py
+        symbol: "flag-stale-blog-figures"
+      - file: backend/blog/tests/test_scheduling.py
+        symbol: def test_an_old_article_with_typed_figures_is_flagged
+    tests:
+      api: true
+    cases:
+      - name: Artículo de hace 200 días con "$776" en el cuerpo
+        expected: aparece en la lista
+      - name: Artículo de hace 200 días sin ninguna cifra
+        expected: no aparece
+      - name: Artículo revisado esta semana
+        expected: no aparece

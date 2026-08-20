@@ -224,8 +224,8 @@ El cliente de Redis ignora los errores de conexión, de modo que una caché inac
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/estate_map/settings.py:494-496` (`IGNORE_EXCEPTIONS`) — Los errores del cliente de caché no se propagan.
-- `backend/estate_map/settings.py:515-517` (`DJANGO_REDIS_LOG_IGNORED_EXCEPTIONS`) — Pero sí se registran, para que la caída no pase inadvertida.
+- `backend/estate_map/settings.py:500-502` (`IGNORE_EXCEPTIONS`) — Los errores del cliente de caché no se propagan.
+- `backend/estate_map/settings.py:521-523` (`DJANGO_REDIS_LOG_IGNORED_EXCEPTIONS`) — Pero sí se registran, para que la caída no pase inadvertida.
 
 **Casos**
 

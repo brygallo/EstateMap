@@ -88,7 +88,7 @@ Un token de continuación deja de servir 14 días después de emitirse, y a part
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/estate_map/settings.py:549-551` (`PUBLICATION_RESUME_TOKEN_EXPIRY_DAYS`)
+- `backend/estate_map/settings.py:555-557` (`PUBLICATION_RESUME_TOKEN_EXPIRY_DAYS`)
 - `backend/real_estate/models.py:709-711` (`def is_valid`)
 - `backend/real_estate/views.py:1555-1559` (`def invalid_resume_token_response`)
 
@@ -383,7 +383,7 @@ Una tarea periódica elimina del almacén las imágenes temporales de borradores
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
 - `backend/real_estate/tasks.py:223-262` (`def sweep_stale_draft_images`)
-- `backend/estate_map/settings.py:477-480` (`"sweep-stale-draft-images": {`)
+- `backend/estate_map/settings.py:483-485` (`"sweep-stale-draft-images": {`)
 
 **Casos**
 
