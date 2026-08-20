@@ -4,7 +4,7 @@ import {DEPTH, HeroImpact, HeroPlane, HeroStage, HERO_MOVES} from './hero-stage'
 import {PropertyArt} from './property-art';
 import type {SimulationProps} from './simulations';
 import {beat, figures, glide, land, tokensFor} from './system-kit';
-import {font, sideCrop} from './theme';
+import {font, palette, sideCrop} from './theme';
 
 const SOURCE = 'BIESS · información verificada al 20 ago 2026';
 const LEGAL = 'Contenido informativo · verifica condiciones vigentes con BIESS';
@@ -17,32 +17,78 @@ const RED = '#B42318';
 
 const progress = ({frame, total}: SimulationProps) => Math.max(0, Math.min(1, frame / Math.max(1, total - 1)));
 
+// The words of the piece live between 1348 and 1580, and they are white. A
+// light board underneath them is not a style choice: it is the caption
+// disappearing. Every light Geo simulation therefore fades into the ink before
+// the headline starts, the same way the ranking page does, and the class board
+// stops above that fade instead of being swallowed by it.
+const BOARD_BOTTOM = 790;
+const FADE_TOP = 1130;
+
 const Canvas: React.FC<{children: React.ReactNode; footer?: string; dark?: boolean}> = ({children, footer = SOURCE, dark = false}) => (
   <div style={{position: 'absolute', inset: 0, overflow: 'hidden', background: dark ? '#09291D' : '#E9F3ED', color: dark ? '#FFFFFF' : INK, fontFamily: font}}>
-    <div style={{position: 'absolute', inset: '285px 120px 610px'}}>{children}</div>
-    <div style={{position: 'absolute', left: sideCrop, right: sideCrop, top: 1250, borderTop: `2px solid ${dark ? '#FFFFFF55' : '#64748B55'}`, paddingTop: 16, fontSize: 27, lineHeight: 1.25, fontWeight: 800, textAlign: 'center', color: dark ? '#ECFDF5' : '#475569'}}>{footer}</div>
+    <div style={{position: 'absolute', inset: `285px 120px ${BOARD_BOTTOM}px`}}>{children}</div>
+    <div style={{position: 'absolute', left: sideCrop, right: sideCrop, top: 1136, borderTop: `2px solid ${dark ? '#FFFFFF55' : '#64748B55'}`, paddingTop: 14, fontSize: 26, lineHeight: 1.2, fontWeight: 800, textAlign: 'center', color: dark ? '#ECFDF5' : '#475569'}}>{footer}</div>
+    <div style={{position: 'absolute', left: 0, right: 0, top: FADE_TOP, bottom: 0, pointerEvents: 'none', background: `linear-gradient(180deg, rgba(233,243,237,0) 0%, rgba(30,34,52,.12) 8%, rgba(20,23,40,.55) 22%, rgba(12,14,26,.92) 34%, ${palette.ink} 46%)`}} />
   </div>
 );
 
 const Folder: React.FC<{children: React.ReactNode; p: number; stamp?: string; tone?: 'green'|'amber'|'red'}> = ({children, p, stamp, tone = 'green'}) => {
   const color = tone === 'green' ? GREEN : tone === 'amber' ? AMBER : RED;
   return <div style={{position:'absolute', inset:'70px 0 0', borderRadius:30, background:PAPER, border:`4px solid ${LINE}`, boxShadow:'0 28px 70px rgba(15,35,28,.2)', padding:'72px 54px 48px', boxSizing:'border-box', transform:`translateY(${(1-land(p,0,.12))*70}px)`}}>
-    <div style={{position:'absolute',left:36,top:-54,width:330,height:70,borderRadius:'22px 22px 0 0',background:'#D8B76C',border:`4px solid #B38C3C`,borderBottom:0,fontSize:30,fontWeight:900,display:'grid',placeItems:'center'}}>EXPEDIENTE HIPOTECARIO</div>
-    {children}
+    <div style={{position:'absolute',left:36,top:-54,width:470,height:70,borderRadius:'22px 22px 0 0',background:'#D8B76C',border:`4px solid #B38C3C`,borderBottom:0,fontSize:27,fontWeight:900,letterSpacing:'.02em',whiteSpace:'nowrap',display:'grid',placeItems:'center'}}>EXPEDIENTE HIPOTECARIO</div>
+    {/* The board is taller than most of its contents. Top-aligning them left
+        a third of the card empty, which reads as a slide that failed to load. */}
+    <div style={{height:'100%',display:'flex',flexDirection:'column',justifyContent:'center'}}>{children}</div>
     {stamp ? <div style={{position:'absolute',right:40,bottom:35,padding:'14px 22px',border:`7px solid ${color}`,borderRadius:16,color,fontSize:34,fontWeight:900,letterSpacing:'.035em',transform:`rotate(-6deg) scale(${land(p,.5,.64)})`,background:'#FFFFFFDD'}}>{stamp}</div> : null}
   </div>;
 };
 
-const BigFact: React.FC<{label:string; value:string; active?:boolean; p?:number}> = ({label,value,active=true,p=1}) => <div style={{flex:1,minHeight:190,borderRadius:24,border:`4px solid ${active?GREEN:LINE}`,background:active?'#E7F8EE':'#F8FAFC',padding:28,display:'flex',flexDirection:'column',justifyContent:'center',opacity:.35+.65*p,transform:`scale(${.94+.06*p})`,boxSizing:'border-box'}}><div style={{fontSize:36,fontWeight:800,color:'#475569',marginBottom:12}}>{label}</div><div style={{fontSize:58,lineHeight:1,fontWeight:900,color:active?GREEN:INK,...figures}}>{value}</div></div>;
+const BigFact: React.FC<{label:string; value:string; active?:boolean; p?:number}> = ({label,value,active=true,p=1}) => <div style={{flex:1,minHeight:210,borderRadius:24,border:`4px solid ${active?GREEN:LINE}`,background:active?'#E7F8EE':'#F8FAFC',padding:28,display:'flex',flexDirection:'column',justifyContent:'center',opacity:.35+.65*p,transform:`scale(${.94+.06*p})`,boxSizing:'border-box'}}><div style={{fontSize:36,fontWeight:800,color:'#475569',marginBottom:12}}>{label}</div><div style={{fontSize:58,lineHeight:1,fontWeight:900,color:active?GREEN:INK,...figures}}>{value}</div></div>;
 const Stamp: React.FC<{text:string; ok?:boolean; p?:number}> = ({text,ok=true,p=1}) => <div style={{padding:'18px 24px',border:`6px solid ${ok?GREEN:RED}`,borderRadius:16,color:ok?GREEN:RED,fontSize:38,fontWeight:900,background:'#FFFFFF',transform:`rotate(-3deg) scale(${land(p,0,.2)})`,textAlign:'center'}}>{text}</div>;
 const Heading: React.FC<{children:React.ReactNode}> = ({children}) => <div style={{fontSize:48,lineHeight:1.08,fontWeight:900,letterSpacing:'-.025em',marginBottom:28}}>{children}</div>;
 
-export const CredicasaHeroSim: React.FC<SimulationProps> = (props) => { const p=progress(props); const tokens=tokensFor(props.brandId,props.brandName); const camera=HERO_MOVES['pull-back'](p); return <HeroStage tokens={tokens} progress={p} camera={camera}>{rig=><>
-  <HeroPlane camera={rig} depth={DEPTH.subject}><div style={{position:'absolute',left:120,top:315,width:840,height:600,borderRadius:34,overflow:'hidden',border:'5px solid #FFFFFF',boxShadow:'0 34px 90px rgba(0,0,0,.5)'}}><PropertyArt kind="house" variant={17} progress={p} style={{width:'100%',height:'100%'}} /></div></HeroPlane>
-  <HeroPlane camera={rig} depth={DEPTH.context}><div style={{position:'absolute',left:130,top:330,display:'flex',gap:16}}><BigFact label="TASA NOMINAL" value="2,99%" p={beat(p,.02,.12)}/><BigFact label="FINANCIAMIENTO" value="HASTA 100%" p={beat(p,.1,.2)}/></div><div style={{position:'absolute',left:330,top:760,width:420}}><BigFact label="MONTO" value="HASTA $65.000" p={beat(p,.18,.28)}/></div></HeroPlane>
-  <HeroPlane camera={rig} depth={DEPTH.foreground}><div style={{position:'absolute',left:120,right:120,top:950,display:'flex',gap:14}}>{['PERSONA','VIVIENDA','COSTO'].map((x,i)=><Stamp key={x} text={x} p={beat(p,.48+i*.07,.58+i*.07)} />)}</div></HeroPlane>
-  <div style={{position:'absolute',left:690,top:285,display:'flex',alignItems:'center',gap:10,fontSize:34,fontWeight:900,color:'#FFFFFF'}}><EmGlyph icon="pin" size={36} color="#FFFFFF"/> ECUADOR</div><div style={{position:'absolute',left:sideCrop,right:sideCrop,top:1165,borderTop:'2px solid #FFFFFF66',paddingTop:14,textAlign:'center',fontSize:27,fontWeight:800,color:'#ECFDF5'}}>{SOURCE}</div><HeroImpact progress={p} at={.48} x={540} y={975} color={tokens.alert}/>
-  </>}</HeroStage> };
+// The opening shot stacks three layers that never touch: the house on its own
+// plane, the three published figures on a rail underneath it, and the three
+// checks the class is about in front. The earlier version dropped the amount
+// card over the door of the house and pushed the country badge past the crop
+// margin, which is exactly what the two rules it broke exist to prevent.
+const HeroFact: React.FC<{label:string; value:string; p?:number}> = ({label,value,p=1}) => (
+  <div style={{flex:1,minHeight:186,borderRadius:22,border:`4px solid ${GREEN}`,background:'#E7F8EEF2',padding:'22px 24px',display:'flex',flexDirection:'column',justifyContent:'center',boxSizing:'border-box',opacity:.25+.75*p,transform:`translateY(${(1-p)*26}px) scale(${.95+.05*p})`,boxShadow:'0 18px 44px rgba(0,0,0,.34)'}}>
+    <div style={{fontSize:26,fontWeight:800,color:'#475569',marginBottom:10,letterSpacing:'.01em'}}>{label}</div>
+    <div style={{fontSize:44,lineHeight:1.02,fontWeight:900,color:GREEN,...figures}}>{value}</div>
+  </div>
+);
+
+export const CredicasaHeroSim: React.FC<SimulationProps> = (props) => {
+  const p = progress(props);
+  const tokens = tokensFor(props.brandId, props.brandName);
+  const camera = HERO_MOVES['pull-back'](p);
+  return <HeroStage tokens={tokens} progress={p} camera={camera}>{rig => <>
+    <HeroPlane camera={rig} depth={DEPTH.subject}>
+      <div style={{position:'absolute',left:120,top:300,width:840,height:470,borderRadius:34,overflow:'hidden',border:'5px solid #FFFFFF',boxShadow:'0 34px 90px rgba(0,0,0,.5)'}}>
+        <PropertyArt kind="house" variant={17} progress={p} style={{width:'100%',height:'100%'}} />
+      </div>
+      <div style={{position:'absolute',left:636,top:322,display:'flex',alignItems:'center',gap:10,padding:'12px 22px',borderRadius:999,background:'rgba(8,9,21,.72)',border:'2px solid rgba(255,255,255,.22)',fontSize:30,fontWeight:900,color:'#FFFFFF'}}>
+        <EmGlyph icon="pin" size={32} color="#FFFFFF" /> ECUADOR
+      </div>
+    </HeroPlane>
+    <HeroPlane camera={rig} depth={DEPTH.context}>
+      <div style={{position:'absolute',left:120,right:120,top:800,display:'flex',gap:14}}>
+        <HeroFact label="TASA NOMINAL" value="2,99%" p={beat(p,.02,.14)} />
+        <HeroFact label="FINANCIA" value="HASTA 100%" p={beat(p,.1,.22)} />
+        <HeroFact label="MONTO" value="HASTA $65.000" p={beat(p,.18,.3)} />
+      </div>
+    </HeroPlane>
+    <HeroPlane camera={rig} depth={DEPTH.foreground}>
+      <div style={{position:'absolute',left:120,right:120,top:1010,display:'flex',gap:14}}>
+        {['PERSONA','VIVIENDA','COSTO'].map((x,i) => <Stamp key={x} text={x} p={beat(p,.48+i*.07,.58+i*.07)} />)}
+      </div>
+    </HeroPlane>
+    <div style={{position:'absolute',left:sideCrop,right:sideCrop,top:1165,borderTop:'2px solid #FFFFFF66',paddingTop:14,textAlign:'center',fontSize:27,fontWeight:800,color:'#ECFDF5'}}>{SOURCE}</div>
+    <HeroImpact progress={p} at={.48} x={540} y={1052} color={tokens.alert} />
+  </>}</HeroStage>;
+};
 
 export const CredicasaFactCardSim: React.FC<SimulationProps> = (props) => { const p=progress(props); const phase=p<.3?0:p<.78?1:2; return <Canvas><Folder p={p} stamp={phase===0?'DOS TASAS':phase===1?'SON MÁXIMOS':'DEPENDE DE TU EDAD'}>
   {phase===0?<><Heading>La tasa tiene dos lecturas</Heading><div style={{display:'flex',gap:22}}><BigFact label="NOMINAL" value="2,99%"/><BigFact label="EFECTIVA" value="3,03%"/></div></>:phase===1?<><Heading>Tres máximos publicados</Heading><div style={{display:'grid',gap:18}}><BigFact label="FINANCIAMIENTO" value="HASTA 100%"/><div style={{display:'flex',gap:18}}><BigFact label="MONTO" value="$65.000"/><BigFact label="PLAZO" value="30 AÑOS"/></div></div></>:<><Heading>El plazo real cambia con el perfil</Heading><div style={{display:'flex',alignItems:'center',gap:28}}><div style={{fontSize:96,fontWeight:900,color:GREEN}}>360</div><div style={{fontSize:42,fontWeight:900}}>MESES<br/><span style={{color:'#64748B'}}>como máximo</span></div></div><div style={{marginTop:36,height:18,borderRadius:99,background:LINE}}><div style={{width:`${70+20*glide(p,.78,1)}%`,height:'100%',background:GREEN,borderRadius:99}}/></div></>}

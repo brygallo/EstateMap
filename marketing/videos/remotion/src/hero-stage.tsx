@@ -1,7 +1,7 @@
 import React from 'react';
 import {AbsoluteFill} from 'remotion';
 import {BrandTokens, beat, glide, settle} from './system-kit';
-import {palette, sideCrop} from './theme';
+import {font, palette, sideCrop} from './theme';
 
 /**
  * The stage the opening scene of every video is built on.
@@ -418,7 +418,7 @@ export const HeroStage: React.FC<{
 }> = ({tokens, progress, camera, keyLight, children}) => {
   const rig = camera ?? heroCamera(progress);
   return (
-    <AbsoluteFill style={{background: palette.ink, overflow: 'hidden'}}>
+    <AbsoluteFill style={{background: palette.ink, overflow: 'hidden', fontFamily: font}}>
       <HeroGround tokens={tokens} camera={rig} progress={progress} keyLight={keyLight} />
       {children(rig)}
       <HeroVignette />
