@@ -1,9 +1,12 @@
 /**
- * The promotion laminas: one route, seven formats.
+ * The promotion laminas: one route, eight formats.
  *
- * Five of them describe a listing and can always be drawn. The last two —
- * `price-drop` and `sold` — assert that something happened to it, and the route
- * refuses to draw them when it did not: see the guard in `GET`. SOC-102.
+ * Six of them describe a listing and can always be drawn. Two — `price-drop`
+ * and `sold` — assert that something happened to it, and the route refuses to
+ * draw them when it did not: see the guard in `GET`. SOC-102. The carousel is
+ * the one format that is not a single image; how many frames a listing actually
+ * gets is `carouselFrames`, and asking for one past that is the same 404 for
+ * the same reason.
  *
  * Public on purpose. A lamina's whole job is to be fetched by Facebook for a
  * link preview, served by Instagram and looked at by strangers, so putting a
@@ -12,16 +15,17 @@
  * here is what the public listing already shows.
  *
  * Runs on the Node runtime rather than the edge because it reads the brand mark
- * off disk and transcodes the listing photo with sharp.
+ * off disk and does real work on the photographs with sharp.
  *
  * Three constraints shape every decision below, and none is negotiable:
  *
  * 1. These images are forwarded through WhatsApp, which recompresses them.
  *    Thin type over a photograph, low-contrast gradients and hairlines are the
  *    first things to die. Text therefore sits on solid panels, not on washes.
- * 2. Satori does not synthesise font weights. The route therefore registers
- *    the project's regular and extra-bold Plus Jakarta Sans faces explicitly,
- *    keeping the hierarchy intentional in every exported format.
+ * 2. Satori does not synthesise font weights, and it will not say what it
+ *    measured. The route registers the two real faces and reads their advance
+ *    widths itself, so every fit below is arithmetic rather than a guess about
+ *    how wide a character usually is. See `lib/text-metrics.ts`.
  * 3. The strings come from listings somebody typed and from importers that
  *    shout: emoji Satori cannot draw, titles in block capitals, a city that
  *    repeats its own province. `plainText`, `softenShouting` and `buildPlace`
@@ -29,10 +33,17 @@
  *    correction, so it has to be right the first time.
  *
  * The composition is one idea repeated across every format: a full-bleed
- * photograph and a single floating card that carries the whole commercial
- * argument. Everything a reader needs is inside one rounded panel with a
- * high-contrast ground — price first, proof second, address and QR last — and
- * the photograph is never cut in half by a bar. See `InfoCard`.
+ * photograph, cut to that format's exact shape and graded to its own histogram,
+ * and a single floating card that carries the whole commercial argument.
+ * Everything a reader needs is inside one rounded panel — price first, proof
+ * second, address and QR last — and the photograph is never cut in half by a
+ * bar. See `InfoCard`.
+ *
+ * Two tones, not one. Most laminas are drawn on navy, but the 4:5 — the format
+ * Instagram gives the most screen to — is drawn on paper with navy type, which
+ * is the same information printed rather than lit. Seven identical dark cards
+ * is a template; the same seven with a printed edition among them is a kit. See
+ * `NIGHT` and `DAYLIGHT`.
  */
 
 /* eslint-disable @next/next/no-img-element --
@@ -40,6 +51,7 @@
    meaning inside an ImageResponse, where there is no browser, no layout pass
    and no srcset to negotiate. */
 
+import { createHash } from 'node:crypto';
 import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 import { ImageResponse } from 'next/og';
@@ -51,11 +63,14 @@ import { getProperty } from '@/lib/properties';
 import { getPropertyTypeLabel, getStatusLabel } from '@/lib/property-labels';
 import {
   CLOSURE_STAMP,
+  LAMINA_MIME,
+  LAMINA_REVISION,
   SOCIAL_FORMATS,
   buildArtworkHeadline,
   buildFacts,
   buildPlace,
   buildPriceLine,
+  carouselFrames,
   closureKind,
   closureLabel,
   priceDrop,
@@ -76,6 +91,13 @@ import {
   shiftCenter,
   type LatLng,
 } from '@/lib/static-map';
+import {
+  fitToWidth,
+  measureText,
+  readFontMetrics,
+  truncateToWidth,
+  type FontMetrics,
+} from '@/lib/text-metrics';
 import type { Property } from '@/lib/types';
 
 export const runtime = 'nodejs';
@@ -84,7 +106,6 @@ const tokens = aentsTokens.light;
 const NAVY = tokens['--navy'];
 const GREEN = tokens['--primary-strong'];
 const TEAL = tokens['--accent-alt-strong'];
-const FOG = tokens['--fog'];
 /** The same two hues at full saturation: legible as type on navy, unlike the
  *  `-strong` pair, which is tuned for white text sitting on top of it. */
 const MINT = tokens['--primary'];
@@ -92,7 +113,7 @@ const AQUA = tokens['--teal'];
 
 /** The one hue in the system that reads as "tag", for the price-drop badge. */
 const AMBER = tokens['--amber'];
-/** Warm paper, kept for the one lamina whose type is the subject: the stamp. */
+/** Warm paper: the ground of the printed edition, and of the sold stamp. */
 const PAPER = '#F3F0E8';
 
 /** `NAVY` as channels, so a gradient can fade to exactly the panel colour. */
@@ -113,6 +134,66 @@ const CARD_SHADOW = '0 28px 64px rgba(0,0,0,0.46)';
 const STRIPE = 9;
 
 /**
+ * A card's whole colour scheme, resolved once and handed down.
+ *
+ * Every piece that draws type takes one of these instead of hard-coding white,
+ * which is what makes the printed edition possible at all: the same `Eyebrow`,
+ * the same price, the same address, on cream instead of navy, without a second
+ * copy of the layout to keep in sync.
+ *
+ * `sale` and `rent` belong to the tone rather than to the module because an
+ * accent has to earn its contrast against the ground it sits on. `#22C55E` is
+ * bright on navy and nearly invisible on cream; `#16A34A` is the reverse.
+ */
+type CardTone = {
+  ground: string;
+  /** Painted over `ground` to lift its top edge. Omitted on paper. */
+  sheen?: string;
+  ink: string;
+  inkSoft: string;
+  inkFaint: string;
+  /** The footer band, one step off the ground. */
+  band: string;
+  /** The hairline along the card's very top edge. */
+  edge: string;
+  qrTile: string;
+  qrBorder: string;
+  sale: string;
+  rent: string;
+};
+
+const NIGHT: CardTone = {
+  ground: NAVY,
+  sheen: 'linear-gradient(180deg, rgba(255,255,255,0.055) 0%, rgba(255,255,255,0) 58%)',
+  ink: '#FFFFFF',
+  inkSoft: 'rgba(255,255,255,0.74)',
+  inkFaint: 'rgba(255,255,255,0.52)',
+  band: 'rgba(255,255,255,0.07)',
+  edge: 'rgba(255,255,255,0.12)',
+  qrTile: '#FFFFFF',
+  qrBorder: 'rgba(15,16,32,0)',
+  sale: MINT,
+  rent: AQUA,
+};
+
+const DAYLIGHT: CardTone = {
+  ground: PAPER,
+  ink: NAVY,
+  inkSoft: 'rgba(15,16,32,0.66)',
+  inkFaint: 'rgba(15,16,32,0.46)',
+  band: 'rgba(15,16,32,0.055)',
+  edge: 'rgba(255,255,255,0.55)',
+  qrTile: '#FFFFFF',
+  qrBorder: 'rgba(15,16,32,0.08)',
+  sale: GREEN,
+  rent: TEAL,
+};
+
+function accentOn(property: Property, tone: CardTone): string {
+  return property.status === 'for_rent' ? tone.rent : tone.sale;
+}
+
+/**
  * How big the QR is drawn on each lamina.
  *
  * Requested from the encoder at these exact sizes rather than rendered once at
@@ -125,13 +206,33 @@ const STRIPE = 9;
  * encoder returned and never the number written here.
  */
 const QR_TARGET: Record<SocialFormat, number> = {
-  feed: 128,
-  portrait: 140,
-  story: 168,
-  map: 138,
-  og: 104,
-  'price-drop': 148,
-  sold: 148,
+  feed: 124,
+  portrait: 136,
+  story: 164,
+  map: 134,
+  og: 102,
+  carousel: 136,
+  'price-drop': 144,
+  sold: 144,
+};
+
+type PhotoBox = { width: number; height: number };
+
+/**
+ * The exact frame each format wants its photograph cut to.
+ *
+ * Handing sharp the final shape is what replaced a centre crop with a framed
+ * one: see `renderPhoto`. `map` is absent because that lamina draws tiles, and
+ * the branded lamina it falls back to draws no photograph at all.
+ */
+const PHOTO_BOX: Partial<Record<SocialFormat, PhotoBox>> = {
+  feed: { width: 1080, height: 1080 },
+  portrait: { width: 1080, height: 1350 },
+  story: { width: 1080, height: 1920 },
+  og: { width: 476, height: 630 },
+  carousel: { width: 1080, height: 1350 },
+  'price-drop': { width: 1080, height: 1350 },
+  sold: { width: 1080, height: 1350 },
 };
 
 /**
@@ -155,12 +256,7 @@ function brandTile(): Promise<string> {
 }
 
 /**
- * The brand face, in the two weights the laminas actually use.
- *
- * Satori does not synthesise weights: it registers the faces it is handed and
- * picks the nearest one, so a `fontWeight: 800` with only a regular loaded is a
- * decoration. Two static faces are therefore the whole difference between a
- * price that looks like a price and one that looks like a caption.
+ * The two faces, read once and used for two different things.
  *
  * They are static on purpose. Plus Jakarta Sans ships as a variable font, and
  * the site loads it through `next/font/google`, which emits woff2 — a format
@@ -173,6 +269,27 @@ function brandTile(): Promise<string> {
  * characters this file happens to print, because the strings that go through
  * here are listing titles somebody typed, and a missing glyph is a blank box
  * baked into an image that gets forwarded.
+ */
+let faceFilesPromise: Promise<{ regular: Buffer; extraBold: Buffer } | null> | null = null;
+function faceFiles() {
+  if (!faceFilesPromise) {
+    faceFilesPromise = Promise.all([
+      readFile(path.join(process.cwd(), 'public', 'fonts', 'PlusJakartaSans-Regular.ttf')),
+      readFile(path.join(process.cwd(), 'public', 'fonts', 'PlusJakartaSans-ExtraBold.ttf')),
+    ])
+      .then(([regular, extraBold]) => ({ regular, extraBold }))
+      .catch(() => null);
+  }
+  return faceFilesPromise;
+}
+
+/**
+ * The faces handed to Satori.
+ *
+ * Satori does not synthesise weights: it registers the faces it is handed and
+ * picks the nearest one, so a `fontWeight: 800` with only a regular loaded is a
+ * decoration. Two static faces are therefore the whole difference between a
+ * price that looks like a price and one that looks like a caption.
  *
  * Falling back to `undefined` rather than throwing, for the same reason
  * `brandTile` swallows its error: an unreadable font is a plainer lamina, and a
@@ -182,54 +299,222 @@ function brandTile(): Promise<string> {
  * option is what leaves `next/og` free to use the Geist face it bundles.
  */
 type PromotionFont = { name: string; data: Buffer; weight: 400 | 800 };
-let promotionFontsPromise: Promise<PromotionFont[] | undefined> | null = null;
-function promotionFonts() {
-  if (!promotionFontsPromise) {
-    promotionFontsPromise = Promise.all([
-      readFile(path.join(process.cwd(), 'public', 'fonts', 'PlusJakartaSans-Regular.ttf')),
-      readFile(path.join(process.cwd(), 'public', 'fonts', 'PlusJakartaSans-ExtraBold.ttf')),
-    ])
-      .then(([regular, extraBold]): PromotionFont[] => [
-        { name: 'Plus Jakarta Sans', data: regular, weight: 400 },
-        { name: 'Plus Jakarta Sans', data: extraBold, weight: 800 },
-      ])
-      .catch(() => undefined);
-  }
-  return promotionFontsPromise;
+async function promotionFonts(): Promise<PromotionFont[] | undefined> {
+  const files = await faceFiles();
+  if (!files) return undefined;
+  return [
+    { name: 'Plus Jakarta Sans', data: files.regular, weight: 400 },
+    { name: 'Plus Jakarta Sans', data: files.extraBold, weight: 800 },
+  ];
 }
 
 /**
- * The listing's main photo, re-encoded as a JPEG data URI.
+ * The advance widths of those same two faces.
  *
- * The transcode is not an optimisation, it is the only way the photo appears at
- * all: the image pipeline stores every upload as WebP, and Satori cannot decode
- * WebP — it fails the whole render with "Unsupported image type". Handing it
- * bytes it understands is the fix.
- *
- * Downscaling on the way through is a happy side effect. A lamina is at most
- * 1080 wide, so a 4000px original would spend its extra pixels being thrown
- * away, having first been base64-encoded into the layout.
- *
- * Returns null on any failure, which is what routes the caller to the branded
- * fallback rather than to a 500. A listing whose photo host is briefly down
- * still gets a kit.
+ * Process-wide constants — the fonts never change — so they live in a module
+ * variable rather than being threaded through fifteen components as a prop.
+ * `GET` resolves them before it builds a single element; until then, and if the
+ * files cannot be parsed, every measurement falls back to the per-character
+ * estimate in `lib/text-metrics.ts`, which is worse but never blank.
  */
-async function transcodePhoto(source?: string): Promise<string | null> {
+let FACES: { body: FontMetrics | null; display: FontMetrics | null } = {
+  body: null,
+  display: null,
+};
+let metricsPromise: Promise<void> | null = null;
+function loadMetrics(): Promise<void> {
+  if (!metricsPromise) {
+    metricsPromise = faceFiles().then((files) => {
+      if (!files) return;
+      FACES = { body: readFontMetrics(files.regular), display: readFontMetrics(files.extraBold) };
+    });
+  }
+  return metricsPromise;
+}
+
+// --- Photographs -----------------------------------------------------------
+
+/**
+ * A listing photograph, fetched and decoded once.
+ *
+ * Every format wants the same picture in a different shape, and a burst of
+ * scrapers on a freshly posted link wants it again a second later. Pulling it
+ * out of the object store and decoding a four-megapixel JPEG for each of those
+ * is the most expensive thing this route does and the easiest to stop doing:
+ * the master is kept, and only the per-format crop is recomputed.
+ *
+ * The grade travels with it because it is derived from the same statistics, and
+ * those cost a full decode to measure.
+ */
+type PhotoMaster = {
+  data: Buffer;
+  grade: { contrast: number; lift: number; saturation: number };
+  /** Only ever compared against another frame of the same listing. */
+  score: number;
+  usable: boolean;
+};
+
+/**
+ * Small on purpose. Each entry is a JPEG of at most 1920px — a couple of
+ * hundred kilobytes — and this process shares eight gigabytes with the rest of
+ * the stack. Twelve is one listing's whole carousel plus the last one somebody
+ * looked at.
+ */
+const MASTER_LIMIT = 12;
+const masters = new Map<string, Promise<PhotoMaster | null>>();
+
+/**
+ * What the grade does to one photograph, decided by that photograph.
+ *
+ * A fixed curve is the wrong tool here: the inventory is half phone snaps taken
+ * against the sky and half interiors shot in the dark, and the same +6% of
+ * contrast either rescues one or blows out the other. This aims the midpoint at
+ * 128 and the spread at 58, clamped hard on both sides — a grade, not a filter.
+ * The house has to look like itself when somebody arrives at the door.
+ */
+function gradeFor(mean: number, stdev: number) {
+  const lift = Math.max(-14, Math.min(20, (128 - mean) * 0.42));
+  const contrast = Math.max(1, Math.min(1.16, 1 + (58 - stdev) * 0.004));
+  // A flat photograph is usually flat in colour too; a vivid one needs nothing.
+  const saturation = stdev < 50 ? 1.1 : stdev > 70 ? 1.02 : 1.06;
+  return { contrast, lift, saturation };
+}
+
+/**
+ * Whether a frame is fit to be the face of a listing.
+ *
+ * Deliberately a rejection test and not a beauty contest. Ranking photographs
+ * by exposure and detail sounds better than it is: on a listing it reliably
+ * promotes a well-lit bathroom over a backlit façade, and the façade is the
+ * picture that tells somebody what is being sold. What can be judged without
+ * understanding the subject is whether a frame is usable at all — a black
+ * rectangle, a blown white one, a smear — and that is all this decides.
+ */
+function isUsable(mean: number, stdev: number, sharpness: number): boolean {
+  return mean > 45 && mean < 225 && stdev > 12 && sharpness > 0.35;
+}
+
+async function photoMaster(source?: string): Promise<PhotoMaster | null> {
   if (!source?.startsWith('http')) return null;
 
-  try {
-    // Imported here rather than at the top of the module so that a build
-    // without a usable native binary degrades to the branded lamina instead of
-    // failing the route outright. sharp is declared as a direct dependency,
-    // but it ships as platform-specific binaries and an install can skip one.
-    const { default: sharp } = await import('sharp');
+  const cached = masters.get(source);
+  if (cached) return cached;
 
-    const response = await fetch(source);
-    if (!response.ok) return null;
-    const jpeg = await sharp(Buffer.from(await response.arrayBuffer()))
-      .rotate() // Honour EXIF orientation; phone photos arrive sideways otherwise.
-      .resize(1280, 1920, { fit: 'inside', withoutEnlargement: true })
-      .jpeg({ quality: 82 })
+  const pending = (async (): Promise<PhotoMaster | null> => {
+    try {
+      // Imported here rather than at the top of the module so that a build
+      // without a usable native binary degrades to the branded lamina instead
+      // of failing the route outright. sharp is declared as a direct
+      // dependency, but it ships as platform-specific binaries and an install
+      // can skip one.
+      const { default: sharp } = await import('sharp');
+
+      const response = await fetch(source);
+      if (!response.ok) return null;
+      const data = await sharp(Buffer.from(await response.arrayBuffer()))
+        .rotate() // Honour EXIF orientation; phone photos arrive sideways otherwise.
+        .resize(1920, 1920, { fit: 'inside', withoutEnlargement: true })
+        .jpeg({ quality: 92 })
+        .toBuffer();
+
+      const stats = await sharp(data).stats();
+      const channels = stats.channels.slice(0, 3);
+      const mean = channels.reduce((total, channel) => total + channel.mean, 0) / channels.length;
+      const stdev = channels.reduce((total, channel) => total + channel.stdev, 0) / channels.length;
+      const sharpness = stats.sharpness ?? 1;
+      const entropy = stats.entropy ?? 7;
+
+      return {
+        data,
+        grade: gradeFor(mean, stdev),
+        score:
+          0.45 * (1 - Math.min(1, Math.abs(mean - 128) / 90)) +
+          0.35 * Math.max(0, Math.min(1, (entropy - 6) / 2)) +
+          0.2 * Math.min(1, sharpness / 3),
+        usable: isUsable(mean, stdev, sharpness),
+      };
+    } catch {
+      return null;
+    }
+  })();
+
+  masters.set(source, pending);
+  // A failure must not be remembered: the object store being briefly down is no
+  // reason to draw the branded lamina for the rest of this process's life.
+  void pending.then((value) => {
+    if (!value) masters.delete(source);
+  });
+  while (masters.size > MASTER_LIMIT) {
+    const oldest = masters.keys().next().value;
+    if (oldest === undefined) break;
+    masters.delete(oldest);
+  }
+  return pending;
+}
+
+/** How many frames are inspected before settling on a cover. */
+const CANDIDATES = 4;
+/** How much better a later frame has to be before it displaces the first. */
+const DISPLACE_MARGIN = 0.25;
+
+/**
+ * The listing's photographs, in the order they should be drawn, decoded once.
+ *
+ * The order a listing arrives in is mostly right: the first frame is the façade
+ * on an imported listing and the one the owner picked on a published one, and
+ * neither is a coincidence worth overriding. So the order is kept, and only two
+ * things move it:
+ *
+ * - An unusable frame is dropped. A cover that is a black rectangle is the one
+ *   failure that is never a matter of taste.
+ * - A frame that beats the first by a wide margin takes its place. The margin
+ *   is wide precisely so this fires on "the first one is a dark blur and the
+ *   third is a proper exterior" and never on two decent photographs.
+ */
+async function chooseMasters(property: Property, limit: number): Promise<PhotoMaster[]> {
+  const images = property.images ?? [];
+  const ordered = [...images].sort((a, b) => Number(Boolean(b.is_main)) - Number(Boolean(a.is_main)));
+  const pool = ordered.slice(0, Math.max(limit, CANDIDATES));
+
+  const loaded = (await Promise.all(pool.map((image) => photoMaster(image.image)))).filter(
+    (master): master is PhotoMaster => Boolean(master)
+  );
+  if (loaded.length === 0) return [];
+
+  const usable = loaded.filter((master) => master.usable);
+  // Everything failed the test, which means the test is not the useful signal
+  // here — a listing photographed at dusk is still that listing. Draw it.
+  const candidates = usable.length > 0 ? usable : loaded;
+
+  const best = candidates.reduce((top, master) => (master.score > top.score ? master : top));
+  if (best !== candidates[0] && best.score - candidates[0].score > DISPLACE_MARGIN) {
+    return [best, ...candidates.filter((master) => master !== best)].slice(0, limit);
+  }
+  return candidates.slice(0, limit);
+}
+
+/**
+ * One master, cut and graded into the shape a format asked for.
+ *
+ * The crop is made with sharp's attention strategy — it keeps the region of
+ * highest entropy, which on a listing photograph is the building rather than
+ * the sky. Leaving it to `object-fit: cover` meant a centre crop against a
+ * frame the photo had never been composed for, and a 9:16 story cut out of a
+ * landscape photograph lost the house on both sides.
+ *
+ * The re-encode is not an optimisation, it is the only way the photo appears at
+ * all: the image pipeline stores every upload as WebP, and Satori cannot decode
+ * WebP — it fails the whole render with "Unsupported image type".
+ */
+async function renderPhoto(master: PhotoMaster, box: PhotoBox): Promise<string | null> {
+  try {
+    const { default: sharp } = await import('sharp');
+    const jpeg = await sharp(master.data)
+      .resize(box.width, box.height, { fit: 'cover', position: sharp.strategy.attention })
+      .linear(master.grade.contrast, master.grade.lift)
+      .modulate({ saturation: master.grade.saturation })
+      .sharpen({ sigma: 0.7 })
+      .jpeg({ quality: 86, chromaSubsampling: '4:4:4' })
       .toBuffer();
     return `data:image/jpeg;base64,${jpeg.toString('base64')}`;
   } catch {
@@ -237,14 +522,24 @@ async function transcodePhoto(source?: string): Promise<string | null> {
   }
 }
 
-async function marketingPhotos(property: Property, limit = 3): Promise<string[]> {
-  const ordered = [...(property.images || [])].sort((a, b) => Number(Boolean(b.is_main)) - Number(Boolean(a.is_main)));
-  const photos = await Promise.all(ordered.slice(0, limit).map((image) => transcodePhoto(image.image)));
-  return photos.filter((photo): photo is string => Boolean(photo));
+/**
+ * Up to `limit` photographs, ready to draw.
+ *
+ * Keeps a null in place of a photograph that could not be prepared rather than
+ * dropping it, so a carousel keeps its frame numbering and falls back to the
+ * branded ground on the one frame that failed. SOC-004.
+ */
+async function marketingPhotos(
+  property: Property,
+  box: PhotoBox,
+  limit = 3
+): Promise<(string | null)[]> {
+  const chosen = await chooseMasters(property, limit);
+  return Promise.all(chosen.map((master) => renderPhoto(master, box)));
 }
 
-async function mainPhoto(property: Property): Promise<string | null> {
-  return (await marketingPhotos(property, 1))[0] ?? null;
+async function mainPhoto(property: Property, box: PhotoBox): Promise<string | null> {
+  return (await marketingPhotos(property, box, 1))[0] ?? null;
 }
 
 /** Dark enough to carry white text on top of it. */
@@ -252,7 +547,7 @@ function statusChipColor(property: Property): string {
   return property.status === 'for_rent' ? TEAL : GREEN;
 }
 
-/** Bright enough to be read as text on navy. */
+/** Bright enough to be read as type over a darkened photograph. */
 function accentColor(property: Property): string {
   return property.status === 'for_rent' ? AQUA : MINT;
 }
@@ -300,7 +595,7 @@ function softenShouting(text: string): string {
     .split(' ')
     .map((word, index) => {
       // Anything with a digit in it is a measurement or a model, and those are
-      // written the way they are written: "3", "142 M²", "II".
+      // written the way they are written: "3", "142 m²", "II".
       if (/\d/.test(word)) return word.toLowerCase().replace(/m²/g, 'm²');
       const lower = word.toLowerCase();
       if (index > 0 && MINOR_WORDS.has(lower.replace(/[^\p{L}]/gu, ''))) return lower;
@@ -309,72 +604,129 @@ function softenShouting(text: string): string {
     .join(' ');
 }
 
-/**
- * A hard character cap, cut on a word boundary when one is close enough.
- *
- * Satori does not truncate. A string wider than its box gets no ellipsis and no
- * wrap opportunity it did not already have: it runs off the frame and is
- * guillotined by the edge of the raster. Every value that comes from a listing
- * has to be cut here or not at all — a title someone typed, a province called
- * "Santo Domingo de los Tsáchilas", a price line that carries both a sale and a
- * rent figure.
- */
-function clamp(text: string, max: number): string {
-  const clean = plainText(text);
-  if (clean.length <= max) return clean;
-  const cut = clean.slice(0, max - 1);
-  const space = cut.lastIndexOf(' ');
-  return `${(space > max * 0.6 ? cut.slice(0, space) : cut).replace(/[\s·,—-]+$/, '')}…`;
-}
+type Box = { size: number; min?: number; width: number; tracking?: number; bold?: boolean };
 
-/** The listing's own words, cleaned and cut to one line. */
-function listingTitle(property: Property, max: number): string {
-  return clamp(softenShouting(plainText(property.title)), max);
+/** The face a piece of type is actually set in, so it is measured in that one. */
+function faceFor(bold?: boolean): FontMetrics | null {
+  return bold ? FACES.display : FACES.body;
 }
 
 /**
- * A font size that keeps a known string inside a known box.
+ * The largest size that keeps a string inside its box.
  *
- * Satori exposes no way to measure text, so the estimate is by character count:
- * past `comfortable` characters the size shrinks in proportion, with a floor so
- * a long string ends up small rather than invisible. Crude, and it has to be —
- * but the overflow it prevents is not hypothetical. "$85.000" is seven
- * characters; "Precio a consultar" is eighteen and "$1.700.000 venta ·
- * $14.000/mes arriendo" is thirty-nine, and all three land in the same box.
+ * Satori does not truncate and does not wrap where there is no opportunity: a
+ * string wider than its box runs off the frame and is guillotined by the edge
+ * of the raster. Every value that comes from a listing is therefore fitted or
+ * cut here, against the width it actually has rather than a character budget.
  */
-function fitSize(text: string, base: number, comfortable: number, min: number): number {
-  if (text.length <= comfortable) return base;
-  return Math.max(min, Math.round((base * comfortable) / text.length));
+function fit(text: string, { size, min, width, tracking = 0, bold }: Box): number {
+  return fitToWidth(text, {
+    font: faceFor(bold),
+    fontSize: size,
+    letterSpacing: tracking,
+    width,
+    min: min ?? Math.round(size * 0.6),
+  });
+}
+
+/** The same string, cut to the box, with an ellipsis when anything was dropped. */
+function cut(text: string, { size, width, tracking = 0, bold }: Omit<Box, 'min'>): string {
+  return truncateToWidth(plainText(text), {
+    font: faceFor(bold),
+    fontSize: size,
+    letterSpacing: tracking,
+    width,
+  });
+}
+
+/** How wide a string will be drawn, for the rows that have to be shared. */
+function span(text: string, { size, tracking = 0, bold }: Omit<Box, 'min' | 'width'>): number {
+  return measureText(text, { font: faceFor(bold), fontSize: size, letterSpacing: tracking });
+}
+
+/** The listing's own words, cleaned, calmed and cut to its box. */
+function listingTitle(property: Property, box: Omit<Box, 'min'>): string {
+  return cut(softenShouting(plainText(property.title)), box);
 }
 
 // --- Shared pieces --------------------------------------------------------
 
 /**
- * High-contrast card holding the QR, and nothing else.
+ * The QR, on its own tile, with the brand mark set into the middle of it.
  *
- * The bare code used to sit under it. It came out because an identifier
- * stranded in the artwork sells nothing on its own: read off a photo it is five
- * characters with nowhere to type them. What the fallback actually needs is the
- * address, and that is where it lives now — `VerifyLine` prints the full
- * `/p/<code>` path, so whoever gets an image WhatsApp recompressed until the
- * modules stopped resolving still has something they can type. SOC-002.
+ * The mark is not decoration. A bare code is an anonymous black square that
+ * could take you anywhere, and pointing a phone at one is an act of trust; the
+ * same square with a known mark at its centre is a code from somebody.
+ *
+ * The badge is 24% of the code's width, so it covers under six per cent of its
+ * area, against the thirty per cent that the level H the encoder uses is
+ * specified to survive. That margin is the whole justification for putting
+ * anything on top of a QR at all: grow the badge and the budget goes with it.
+ *
+ * `route.test.ts` decodes the rendered image, as drawn and after a hard
+ * recompression, which is what turns that budget into something enforced rather
+ * than asserted. There is a lot of headroom at 24% — the decode only starts
+ * failing somewhere past half the width — so the tests are a floor, not a
+ * licence: this is a signature, and a mark that covers a third of a code has
+ * stopped being one.
+ *
+ * The bare short code used to sit under the tile. It came out because an
+ * identifier stranded in the artwork sells nothing on its own: read off a photo
+ * it is five characters with nowhere to type them. What the fallback actually
+ * needs is the address, and that is where it lives now — `VerifyLine` prints
+ * the full `/p/<code>` path. SOC-002.
  */
-function QrCard({ qr, size }: { qr: string; size: number }) {
+function QrCard({
+  qr,
+  size,
+  tile,
+  tone = NIGHT,
+}: {
+  qr: string;
+  size: number;
+  tile?: string;
+  tone?: CardTone;
+}) {
+  const PAD = 12;
+  const badge = Math.round(size * 0.24);
+  const mark = Math.round(size * 0.16);
   return (
     <div
       style={{
         display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        padding: 12,
+        position: 'relative',
+        padding: PAD,
         borderRadius: 20,
-        backgroundColor: '#FFFFFF',
+        backgroundColor: tone.qrTile,
+        border: `1px solid ${tone.qrBorder}`,
       }}
     >
       {/* Drawn at the width it was encoded at; see QR_TARGET. */}
       <img src={qr} width={size} height={size} alt="" />
+      {tile ? (
+        <div
+          style={{
+            position: 'absolute',
+            left: PAD + Math.round((size - badge) / 2),
+            top: PAD + Math.round((size - badge) / 2),
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            width: badge,
+            height: badge,
+            borderRadius: 7,
+            backgroundColor: '#FFFFFF',
+          }}
+        >
+          <img src={tile} width={mark} height={mark} alt="" />
+        </div>
+      ) : null}
     </div>
   );
+}
+
+function verifyAddress(code: string): string {
+  return code ? `geopropiedadesecuador.com/p/${code}` : 'geopropiedadesecuador.com';
 }
 
 /**
@@ -393,18 +745,18 @@ function VerifyLine({
   code,
   fontSize,
   variant = 'stacked',
+  tone = NIGHT,
 }: {
   code: string;
   fontSize: number;
   variant?: 'stacked' | 'inline';
+  tone?: CardTone;
 }) {
-  const address = code ? `geopropiedadesecuador.com/p/${code}` : 'geopropiedadesecuador.com';
+  const address = verifyAddress(code);
 
   if (variant === 'inline') {
     return (
-      <div style={{ display: 'flex', fontSize, fontWeight: 800, color: 'rgba(255,255,255,0.94)' }}>
-        {address}
-      </div>
+      <div style={{ display: 'flex', fontSize, fontWeight: 800, color: tone.ink }}>{address}</div>
     );
   }
 
@@ -415,23 +767,29 @@ function VerifyLine({
           display: 'flex',
           fontSize: Math.round(fontSize * 0.78),
           letterSpacing: 1.6,
-          color: 'rgba(255,255,255,0.58)',
+          color: tone.inkFaint,
         }}
       >
         ESCANEA EL QR O VISITA
       </div>
-      <div style={{ display: 'flex', fontSize, fontWeight: 800, color: 'rgba(255,255,255,0.95)' }}>
-        {address}
-      </div>
+      <div style={{ display: 'flex', fontSize, fontWeight: 800, color: tone.ink }}>{address}</div>
     </div>
   );
 }
 
-function BrandRow({ tile, fontSize }: { tile: string; fontSize: number }) {
+function BrandRow({
+  tile,
+  fontSize,
+  tone = NIGHT,
+}: {
+  tile: string;
+  fontSize: number;
+  tone?: CardTone;
+}) {
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
       {tile ? <img src={tile} width={fontSize * 1.65} height={fontSize * 1.65} alt="" /> : null}
-      <div style={{ display: 'flex', fontSize, fontWeight: 800, letterSpacing: 0.2, color: '#FFFFFF' }}>
+      <div style={{ display: 'flex', fontSize, fontWeight: 800, letterSpacing: 0.2, color: tone.ink }}>
         Geo Propiedades Ecuador
       </div>
     </div>
@@ -439,7 +797,7 @@ function BrandRow({ tile, fontSize }: { tile: string; fontSize: number }) {
 }
 
 /**
- * The brand mark as it appears over a photograph rather than on navy.
+ * The brand mark as it appears over a photograph rather than on a card.
  *
  * A word set straight onto a picture is at the mercy of whatever is behind it,
  * and the top of a listing photo is usually sky. The pill gives it its own
@@ -501,28 +859,31 @@ function SalesCallout({
   property,
   fontSize,
   message,
-  maxChars = 34,
+  width,
+  tone = NIGHT,
 }: {
   property: Property;
   fontSize: number;
   message?: string;
-  maxChars?: number;
+  width: number;
+  tone?: CardTone;
 }) {
-  const headline = clamp(message || buildArtworkHeadline(property), maxChars).toUpperCase();
-  const accent = accentColor(property);
+  const accent = accentOn(property, tone);
+  const marker = 22; // the accent square and the gap after it
+  const room = Math.max(80, width - marker);
+  const headline = (message || buildArtworkHeadline(property)).toUpperCase();
+  const size = fit(headline, {
+    size: fontSize,
+    min: Math.round(fontSize * 0.76),
+    width: room,
+    tracking: 1.6,
+    bold: true,
+  });
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
       <div style={{ display: 'flex', width: 10, height: 10, borderRadius: 3, backgroundColor: accent }} />
-      <div
-        style={{
-          display: 'flex',
-          fontSize: fitSize(headline, fontSize, maxChars, Math.round(fontSize * 0.76)),
-          fontWeight: 800,
-          letterSpacing: 1.6,
-          color: accent,
-        }}
-      >
-        {headline}
+      <div style={{ display: 'flex', fontSize: size, fontWeight: 800, letterSpacing: 1.6, color: accent }}>
+        {cut(headline, { size, width: room, tracking: 1.6, bold: true })}
       </div>
     </div>
   );
@@ -540,7 +901,19 @@ function SalesCallout({
  * before it knows how tall its siblings ended up, and a bar that guesses is a
  * bar that overshoots the card.
  */
-function SurveyLine({ property, height }: { property: Property; height: number }) {
+function SurveyLine({
+  property,
+  height,
+  color,
+  tone = NIGHT,
+}: {
+  property: Property;
+  height: number;
+  /** Overridden only by the price-drop lamina, whose news is amber, not the
+   *  operation's colour. */
+  color?: string;
+  tone?: CardTone;
+}) {
   return (
     <div
       style={{
@@ -548,7 +921,7 @@ function SurveyLine({ property, height }: { property: Property; height: number }
         width: STRIPE,
         height,
         borderRadius: 999,
-        backgroundColor: accentColor(property),
+        backgroundColor: color ?? accentOn(property, tone),
       }}
     />
   );
@@ -560,25 +933,33 @@ function SurveyLine({ property, height }: { property: Property; height: number }
  * One shape, every format. A photograph cut in half by a full-width bar reads
  * as a screenshot; the same information inside a card with a margin around it
  * reads as something that was designed, and the photograph survives whole
- * underneath. The ground is opaque navy rather than a wash for the reason at
- * the top of this file: type over a recompressed photograph is the first thing
- * to go.
+ * underneath. The ground is opaque rather than a wash for the reason at the top
+ * of this file: type over a recompressed photograph is the first thing to go.
  *
- * `footer` is optional and gets its own slightly lighter band, which is where
- * the address and the kicker live. Two bands beat six stacked lines: the eye
- * reads the card as price-then-proof instead of as a list.
+ * Three layers make it a card rather than a rectangle: the ground, a sheen that
+ * lifts its top third, and a hairline along the very top edge. All three are
+ * broad and low in contrast, which is what survives recompression — the one
+ * thing a card must not do is develop a visible seam halfway down.
+ *
+ * The footer is a band one step off the ground, and it is where the address and
+ * the kicker live. Two bands beat six stacked lines: the eye reads the card as
+ * price-then-proof instead of as a list.
  */
 function InfoCard({
   children,
-  footer,
+  footerLeft,
+  footerRight,
   padding = '34px 38px',
   footerPadding = '18px 38px',
+  tone = NIGHT,
   style,
 }: {
   children: React.ReactNode;
-  footer?: React.ReactNode;
+  footerLeft?: React.ReactNode;
+  footerRight?: React.ReactNode;
   padding?: string;
   footerPadding?: string;
+  tone?: CardTone;
   style?: React.CSSProperties;
 }) {
   return (
@@ -587,46 +968,119 @@ function InfoCard({
         display: 'flex',
         flexDirection: 'column',
         borderRadius: CARD_RADIUS,
-        backgroundColor: NAVY,
+        backgroundColor: tone.ground,
+        ...(tone.sheen ? { backgroundImage: tone.sheen } : {}),
         boxShadow: CARD_SHADOW,
         ...style,
       }}
     >
-      <div style={{ display: 'flex', alignItems: 'center', padding }}>{children}</div>
-      {footer ? (
+      <div
+        style={{
+          display: 'flex',
+          width: '100%',
+          height: 2,
+          backgroundColor: tone.edge,
+          borderTopLeftRadius: CARD_RADIUS,
+          borderTopRightRadius: CARD_RADIUS,
+        }}
+      />
+      <div style={{ display: 'flex', width: '100%', alignItems: 'center', padding }}>{children}</div>
+      {footerLeft || footerRight ? (
         <div
           style={{
             display: 'flex',
+            width: '100%',
             alignItems: 'center',
-            justifyContent: 'space-between',
-            gap: 24,
+            gap: 28,
             padding: footerPadding,
-            backgroundColor: 'rgba(255,255,255,0.07)',
+            backgroundColor: tone.band,
             borderBottomLeftRadius: CARD_RADIUS,
             borderBottomRightRadius: CARD_RADIUS,
           }}
         >
-          {footer}
+          {footerLeft}
+          {/* An auto margin rather than `space-between`: Satori honours the
+              margin on a row whose width it already knows and quietly ignores
+              the justification, which is how the kicker ended up welded to the
+              address. */}
+          <div style={{ display: 'flex', marginLeft: 'auto' }}>{footerRight}</div>
         </div>
       ) : null}
     </div>
   );
 }
 
-/** One restrained proof line; the artwork is an ad, not the full listing. */
-function EditorialFacts({ facts, fontSize }: { facts: string[]; fontSize: number }) {
-  const visible = facts.slice(0, 3).map((fact) => clamp(fact, 24));
+/**
+ * The declared attributes, set as figures rather than as a sentence.
+ *
+ * "216 m² · 198 m² construidos · 5 habitaciones" in a single weight is a
+ * caption nobody reads. The number is the part that answers the question, so
+ * the number carries the weight and the unit stays quiet beside it, with the
+ * dot between groups instead of inside them.
+ *
+ * Groups are dropped from the end until the row fits, rather than each one
+ * being cut short: "5 habitac…" tells nobody anything, and the third fact is
+ * always the least important one on the lamina.
+ */
+function EditorialFacts({
+  facts,
+  fontSize,
+  width,
+  tone = NIGHT,
+}: {
+  facts: string[];
+  fontSize: number;
+  width: number;
+  tone?: CardTone;
+}) {
+  const unitSize = Math.round(fontSize * 0.94);
+  const groups = facts.slice(0, 3).map((fact) => {
+    const [value, ...rest] = fact.split(' ');
+    const unit = rest.join(' ');
+    return {
+      value,
+      unit,
+      width:
+        span(value, { size: fontSize, bold: true }) + (unit ? span(unit, { size: unitSize }) + 5 : 0),
+    };
+  });
+
+  const visible: typeof groups = [];
+  let used = 0;
+  for (const group of groups) {
+    const cost = group.width + (visible.length ? 28 : 0); // the dot and its margins
+    if (used + cost > width) break;
+    visible.push(group);
+    used += cost;
+  }
   if (visible.length === 0) return null;
+
   return (
-    <div
-      style={{
-        display: 'flex',
-        fontSize,
-        letterSpacing: 0.3,
-        color: 'rgba(255,255,255,0.74)',
-      }}
-    >
-      {visible.join('  ·  ')}
+    <div style={{ display: 'flex', alignItems: 'center' }}>
+      {visible.map((group, index) => (
+        <div key={group.value + group.unit} style={{ display: 'flex', alignItems: 'center' }}>
+          {index > 0 ? (
+            <div
+              style={{
+                display: 'flex',
+                width: 4,
+                height: 4,
+                borderRadius: 999,
+                margin: '0 12px',
+                backgroundColor: tone.inkFaint,
+              }}
+            />
+          ) : null}
+          <div style={{ display: 'flex', fontSize, fontWeight: 800, color: tone.ink }}>
+            {group.value}
+          </div>
+          {group.unit ? (
+            <div style={{ display: 'flex', marginLeft: 5, fontSize: unitSize, color: tone.inkSoft }}>
+              {group.unit}
+            </div>
+          ) : null}
+        </div>
+      ))}
     </div>
   );
 }
@@ -645,70 +1099,169 @@ function EditorialFacts({ facts, fontSize }: { facts: string[]; fontSize: number
 function Eyebrow({
   property,
   fontSize,
-  maxChars,
+  width,
+  tone = NIGHT,
 }: {
   property: Property;
   fontSize: number;
-  maxChars: number;
+  width: number;
+  tone?: CardTone;
 }) {
   const text = [getPropertyTypeLabel(property.property_type), buildPlace(property)]
     .filter(Boolean)
     .join(' · ')
     .toUpperCase();
+  const size = fit(text, {
+    size: fontSize,
+    min: Math.round(fontSize * 0.72),
+    width,
+    tracking: 2,
+    bold: true,
+  });
   return (
     <div
       style={{
         display: 'flex',
-        fontSize: fitSize(text, fontSize, maxChars, Math.round(fontSize * 0.72)),
         // Bold now that there is a bold: at this size, letterspaced caps in the
         // regular face read as a whisper next to the price they introduce.
+        fontSize: size,
         fontWeight: 800,
         letterSpacing: 2,
-        color: accentColor(property),
+        color: accentOn(property, tone),
       }}
     >
-      {clamp(text, Math.round(maxChars * 1.35))}
+      {cut(text, { size, width, tracking: 2, bold: true })}
     </div>
   );
 }
 
-/** The price, at the one size on the lamina nothing else is allowed to reach. */
-function PriceLine({ price, base, min }: { price: string; base: number; min: number }) {
+/**
+ * The price, at the one size on the lamina nothing else is allowed to reach.
+ *
+ * Set as a lockup rather than as a string. A dollar sign at the size of the
+ * figure is a character competing with the number it qualifies, and "/mes" at
+ * that size reads as part of the amount; both drop to about half and hang off
+ * the figure, which is how a price is set anywhere it matters.
+ *
+ * Which is also why the lockup is measured as three pieces rather than fitted
+ * as one string: fitting "$885.000" whole would shrink the figure to make room
+ * for a symbol that is not drawn at that size, and the figure is the one thing
+ * on the lamina that should be as large as its box allows.
+ *
+ * The plain branch is not a fallback so much as the honest answer for the
+ * strings that are not a single figure — "Precio a consultar", or a listing
+ * that is for sale and for rent at once and carries two.
+ */
+function PriceLine({
+  price,
+  base,
+  min,
+  width,
+  tone = NIGHT,
+}: {
+  price: string;
+  base: number;
+  min: number;
+  width: number;
+  tone?: CardTone;
+}) {
+  const parts = price.match(/^\$([\d.,]+)(\/mes)?$/);
+
+  if (!parts) {
+    const size = fit(price, { size: base, min, width, bold: true });
+    return (
+      <div
+        style={{
+          display: 'flex',
+          fontSize: size,
+          fontWeight: 800,
+          lineHeight: 1,
+          letterSpacing: -2,
+          color: tone.ink,
+        }}
+      >
+        {cut(price, { size, width, bold: true })}
+      </div>
+    );
+  }
+
+  const [, figure, suffix = ''] = parts;
+  // Measured at one em, so the sum is "ems of lockup per em of figure".
+  const ems =
+    span('$', { size: 0.52, bold: true }) +
+    span(figure, { size: 1, bold: true }) +
+    (suffix ? span(suffix, { size: 0.38, bold: true }) : 0);
+  const size = Math.max(min, Math.min(base, Math.floor(width / (ems || 1))));
+
   return (
-    <div
-      style={{
-        display: 'flex',
-        fontSize: fitSize(price, base, 13, min),
-        fontWeight: 800,
-        lineHeight: 1,
-        letterSpacing: -2,
-        color: '#FFFFFF',
-      }}
-    >
-      {price}
+    <div style={{ display: 'flex', alignItems: 'flex-start', color: tone.ink }}>
+      <div
+        style={{
+          display: 'flex',
+          marginTop: Math.round(size * 0.1),
+          marginRight: Math.round(size * 0.05),
+          fontSize: Math.round(size * 0.52),
+          fontWeight: 800,
+          lineHeight: 1,
+          color: tone.inkSoft,
+        }}
+      >
+        $
+      </div>
+      <div style={{ display: 'flex', fontSize: size, fontWeight: 800, lineHeight: 1, letterSpacing: -2 }}>
+        {figure}
+      </div>
+      {suffix ? (
+        <div
+          style={{
+            display: 'flex',
+            marginTop: Math.round(size * 0.54),
+            marginLeft: Math.round(size * 0.06),
+            fontSize: Math.round(size * 0.38),
+            fontWeight: 800,
+            lineHeight: 1,
+            color: tone.inkSoft,
+          }}
+        >
+          {suffix}
+        </div>
+      ) : null}
     </div>
   );
 }
 
 /** The listing's own words, kept quiet: proof that a person wrote this. */
-function TitleLine({ title, fontSize }: { title: string; fontSize: number }) {
+function TitleLine({
+  title,
+  fontSize,
+  tone = NIGHT,
+}: {
+  title: string;
+  fontSize: number;
+  tone?: CardTone;
+}) {
   if (!title) return null;
   return (
-    <div style={{ display: 'flex', fontSize, lineHeight: 1.24, color: 'rgba(255,255,255,0.56)' }}>
-      {title}
-    </div>
+    <div style={{ display: 'flex', fontSize, lineHeight: 1.24, color: tone.inkFaint }}>{title}</div>
   );
 }
 
 /**
  * The declared attributes, one chip each.
  *
- * A dot-joined sentence is a single long line that either fits or runs off the
- * frame; chips wrap, and each one carries its own contrast box, which is what
- * survives a WhatsApp recompression. Capped at three so the sales message and
- * price remain the primary hierarchy on small screens.
+ * Only the link card uses these. There the panel is 700 pixels wide and the
+ * facts have to sit under a title that has already wrapped, so a row that wraps
+ * beats a line that either fits or runs off the frame.
  */
-function FactChips({ facts, fontSize }: { facts: string[]; fontSize: number }) {
+function FactChips({
+  facts,
+  fontSize,
+  tone = NIGHT,
+}: {
+  facts: string[];
+  fontSize: number;
+  tone?: CardTone;
+}) {
   if (facts.length === 0) return null;
   return (
     <div style={{ display: 'flex', flexWrap: 'wrap', gap: 9 }}>
@@ -721,10 +1274,10 @@ function FactChips({ facts, fontSize }: { facts: string[]; fontSize: number }) {
             borderRadius: 10,
             backgroundColor: 'rgba(255,255,255,0.11)',
             fontSize,
-            color: 'rgba(255,255,255,0.88)',
+            color: tone.inkSoft,
           }}
         >
-          {clamp(fact, 22)}
+          {fact}
         </div>
       ))}
     </div>
@@ -872,35 +1425,30 @@ async function mapLamina(
 
   const tile = await brandTile();
   const price = buildPriceLine(property);
-  const place = clamp(buildPlace(property), 34) || 'Ecuador';
   const facts = buildFacts(property);
 
   const MARGIN = 40;
   const CARD_BODY = 190;
+  const cardWidth = width - MARGIN * 2;
+  const textWidth = cardWidth - 76 - STRIPE - 22 - qrSize - 24 - 30;
+  // Fitted before it is cut, and in that order: a place name shrinks to fit its
+  // box, and only what still does not fit gets an ellipsis. Cutting first threw
+  // away half of "Santo Domingo de los Tsáchilas" at a size it never needed.
+  const placeName = buildPlace(property) || 'Ecuador';
+  const placeSize = fit(placeName, { size: 58, min: 34, width: textWidth, bold: true });
+  const place = cut(placeName, { size: placeSize, width: textWidth, bold: true });
 
   const card = (
     <div style={{ position: 'absolute', left: MARGIN, right: MARGIN, bottom: MARGIN, display: 'flex' }}>
       <InfoCard
-        style={{ width: width - MARGIN * 2 }}
-        footer={
-          <>
-            <div style={{ display: 'flex', fontSize: 17, color: 'rgba(255,255,255,0.6)' }}>
-              {ATTRIBUTION}
-            </div>
-            <VerifyLine code={code} fontSize={19} variant="inline" />
-          </>
+        style={{ width: cardWidth }}
+        footerLeft={
+          <div style={{ display: 'flex', fontSize: 17, color: NIGHT.inkFaint }}>{ATTRIBUTION}</div>
         }
+        footerRight={<VerifyLine code={code} fontSize={19} variant="inline" />}
       >
         <SurveyLine property={property} height={CARD_BODY - 68} />
-        <div
-          style={{
-            display: 'flex',
-            flexDirection: 'column',
-            gap: 10,
-            marginLeft: 22,
-            maxWidth: width - MARGIN * 2 - 76 - STRIPE - 22 - qrSize - 24 - 30,
-          }}
-        >
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginLeft: 22, maxWidth: textWidth }}>
           {/* Only the type, not `Eyebrow`: the place is the headline right
               below, and printing it twice reads as a bug. */}
           <div
@@ -917,22 +1465,28 @@ async function mapLamina(
           <div
             style={{
               display: 'flex',
-              fontSize: fitSize(place, 58, 18, 34),
+              fontSize: placeSize,
               fontWeight: 800,
               lineHeight: 1.04,
               letterSpacing: -1,
-              color: '#FFFFFF',
+              color: NIGHT.ink,
             }}
           >
             {place}
           </div>
-          <div style={{ display: 'flex', fontSize: fitSize(price, 30, 24, 21), color: FOG }}>
+          <div
+            style={{
+              display: 'flex',
+              fontSize: fit(price, { size: 30, min: 21, width: textWidth }),
+              color: NIGHT.inkSoft,
+            }}
+          >
             {price}
           </div>
-          <EditorialFacts facts={facts} fontSize={19} />
+          <EditorialFacts facts={facts} fontSize={19} width={textWidth} />
         </div>
         <div style={{ display: 'flex', marginLeft: 'auto' }}>
-          <QrCard qr={qr} size={qrSize} />
+          <QrCard qr={qr} size={qrSize} tile={tile} />
         </div>
       </InfoCard>
     </div>
@@ -975,7 +1529,7 @@ async function mapLamina(
   // 40-metre polygon on its own is a smudge.
   const marker = markerOverlay(point, mosaic, width, height, {
     color: strong,
-    radius: outline.length >= 3 ? 22 : 30,
+    radius: outline.length >= 3 ? 24 : 34,
   });
 
   return (
@@ -1009,16 +1563,21 @@ async function mapLamina(
 /**
  * Square and 4:5: one decisive photograph and one commercial reading path.
  *
- * The photograph is full bleed and the card floats over its bottom edge with a
- * margin all the way round. That margin is the difference between an image that
- * looks composed and one that looks like a screenshot with a bar stuck to it,
- * and it costs nothing: the card is as tall as its content and no taller, so
- * the picture keeps every pixel the type does not need.
+ * The photograph is full bleed, cut to this exact shape and graded to its own
+ * histogram, and the card floats over its bottom edge with a margin all the way
+ * round. That margin is the difference between an image that looks composed and
+ * one that looks like a screenshot with a bar stuck to it, and it costs nothing:
+ * the card is as tall as its content and no taller, so the picture keeps every
+ * pixel the type does not need.
  *
- * The reading path is fixed and the same on every format: what and where, then
- * the price, then the proof, then — in the footer band — the argument and the
- * address. Secondary photographs belong in the listing and in future carousel
- * frames, not in the cover. SOC-013.
+ * The reading path is fixed and the same on both: what and where, then the
+ * price, then the proof, then — in the footer band — the argument and the
+ * address. The remaining photographs go to the carousel, which is the format
+ * built to hold them. SOC-013.
+ *
+ * The 4:5 is the printed edition. Same layout, same reading path, cream ground
+ * and navy type: it is the format Instagram gives the most screen to, and dark
+ * type on paper is the one combination a chat app cannot degrade at all.
  */
 async function photoLamina(
   property: Property,
@@ -1027,22 +1586,33 @@ async function photoLamina(
   qrSize: number,
   width: number,
   height: number,
-  message?: string
+  box: PhotoBox,
+  message?: string,
+  /** Passed in by the carousel, which has already prepared its photographs. */
+  photo?: string | null
 ) {
   const withTitle = height >= 1200;
-  const [tile, photo] = await Promise.all([brandTile(), mainPhoto(property)]);
+  const tone = withTitle ? DAYLIGHT : NIGHT;
+  const [tile, cover] = await Promise.all([
+    brandTile(),
+    photo === undefined ? mainPhoto(property, box) : Promise.resolve(photo),
+  ]);
   const facts = buildFacts(property);
   const price = buildPriceLine(property);
-  const title = withTitle ? listingTitle(property, 58) : '';
 
   const MARGIN = 40;
   const cardWidth = width - MARGIN * 2;
   const body = withTitle ? 224 : 186;
   const textWidth = cardWidth - 76 - STRIPE - 22 - qrSize - 24 - 30;
+  const title = withTitle ? listingTitle(property, { size: 20, width: textWidth }) : '';
+
+  // The band is one row: what is left after the address is what the kicker has.
+  const bandInner = cardWidth - 76;
+  const addressWidth = span(verifyAddress(code), { size: 20, bold: true });
 
   return (
     <div style={{ display: 'flex', position: 'relative', width: '100%', height: '100%', backgroundColor: NAVY, fontFamily: 'Plus Jakarta Sans' }}>
-      <PhotoLayer photo={photo} width="100%" height={height} tile={tile} />
+      <PhotoLayer photo={cover} width="100%" height={height} tile={tile} />
 
       <TopScrim height={200} />
       <TopRow property={property} tile={tile} fontSize={withTitle ? 24 : 23} padding="38px 40px" />
@@ -1053,23 +1623,28 @@ async function photoLamina(
 
       <div style={{ position: 'absolute', left: MARGIN, right: MARGIN, bottom: MARGIN, display: 'flex' }}>
         <InfoCard
+          tone={tone}
           style={{ width: cardWidth }}
-          footer={
-            <>
-              <SalesCallout property={property} fontSize={20} message={message} maxChars={32} />
-              <VerifyLine code={code} fontSize={20} variant="inline" />
-            </>
+          footerLeft={
+            <SalesCallout
+              property={property}
+              fontSize={20}
+              message={message}
+              width={bandInner - addressWidth - 28}
+              tone={tone}
+            />
           }
+          footerRight={<VerifyLine code={code} fontSize={20} variant="inline" tone={tone} />}
         >
-          <SurveyLine property={property} height={body - 68} />
+          <SurveyLine property={property} height={body - 68} tone={tone} />
           <div style={{ display: 'flex', flexDirection: 'column', gap: 11, marginLeft: 22, maxWidth: textWidth }}>
-            <Eyebrow property={property} fontSize={22} maxChars={34} />
-            <PriceLine price={price} base={withTitle ? 94 : 88} min={38} />
-            <EditorialFacts facts={facts} fontSize={21} />
-            <TitleLine title={title} fontSize={20} />
+            <Eyebrow property={property} fontSize={22} width={textWidth} tone={tone} />
+            <PriceLine price={price} base={withTitle ? 94 : 88} min={38} width={textWidth} tone={tone} />
+            <EditorialFacts facts={facts} fontSize={21} width={textWidth} tone={tone} />
+            <TitleLine title={title} fontSize={20} tone={tone} />
           </div>
           <div style={{ display: 'flex', marginLeft: 'auto' }}>
-            <QrCard qr={qr} size={qrSize} />
+            <QrCard qr={qr} size={qrSize} tile={tile} tone={tone} />
           </div>
         </InfoCard>
       </div>
@@ -1083,12 +1658,26 @@ async function photoLamina(
  * The card is lifted well off the bottom edge because the last ~250px of a
  * story sit under the app's own reply bar on every phone, and the address is
  * the one thing on the lamina that must never end up under it.
+ *
+ * It is the one format that gets the commercial message set large and over the
+ * photograph rather than as a kicker in the footer band. A story is nine
+ * sixteenths of a phone screen watched for two seconds: there is room for a
+ * sentence here that there is not on a square, and leaving that space empty
+ * over a photograph is not restraint, it is a gap. The survey line runs down
+ * its left edge for exactly as many lines as the message turned out to need,
+ * which is a number this can compute now that the type is measured.
  */
-async function storyLamina(property: Property, qr: string, code: string, qrSize: number, message?: string) {
-  const [tile, photo] = await Promise.all([brandTile(), mainPhoto(property)]);
+async function storyLamina(
+  property: Property,
+  qr: string,
+  code: string,
+  qrSize: number,
+  box: PhotoBox,
+  message?: string
+) {
+  const [tile, photo] = await Promise.all([brandTile(), mainPhoto(property, box)]);
   const facts = buildFacts(property);
   const price = buildPriceLine(property);
-  const title = listingTitle(property, 62);
 
   const WIDTH = 1080;
   const MARGIN = 52;
@@ -1096,6 +1685,26 @@ async function storyLamina(property: Property, qr: string, code: string, qrSize:
   const body = 268;
   const cardWidth = WIDTH - MARGIN * 2;
   const textWidth = cardWidth - 84 - STRIPE - 24 - qrSize - 24 - 32;
+  const title = listingTitle(property, { size: 21, width: textWidth });
+
+  // The card's own height, measured rather than guessed: the headline above it
+  // and the ramp behind it both hang off this number, and a card that is taller
+  // than the layout believes puts the headline on top of its own top edge.
+  const cardHeight = 354;
+  const headlineSize = 58;
+  const headlineWidth = cardWidth - 40;
+  // Two lines of room, and the survey line beside it is drawn for however many
+  // of those the message actually used.
+  const headline = cut(message || buildArtworkHeadline(property), {
+    size: headlineSize,
+    width: headlineWidth * 2,
+    bold: true,
+  });
+  const headlineLines = Math.max(
+    1,
+    Math.min(2, Math.ceil(span(headline, { size: headlineSize, bold: true }) / headlineWidth))
+  );
+  const headlineHeight = Math.round(headlineSize * 1.08 * headlineLines);
 
   return (
     <div style={{ display: 'flex', position: 'relative', width: '100%', height: '100%', backgroundColor: NAVY, fontFamily: 'Plus Jakarta Sans' }}>
@@ -1105,7 +1714,34 @@ async function storyLamina(property: Property, qr: string, code: string, qrSize:
       <TopRow property={property} tile={tile} fontSize={26} padding="64px 52px" />
 
       <div style={{ position: 'absolute', left: 0, right: 0, bottom: 0, display: 'flex', flexDirection: 'column' }}>
-        <PanelRamp height={body + 66 + SAFE_BOTTOM + 120} />
+        <PanelRamp height={cardHeight + SAFE_BOTTOM + 260} />
+      </div>
+
+      <div
+        style={{
+          position: 'absolute',
+          left: MARGIN + 6,
+          right: MARGIN + 6,
+          bottom: SAFE_BOTTOM + cardHeight + 78,
+          display: 'flex',
+          alignItems: 'flex-start',
+          gap: 24,
+        }}
+      >
+        <SurveyLine property={property} height={headlineHeight} />
+        <div
+          style={{
+            display: 'flex',
+            maxWidth: headlineWidth,
+            fontSize: headlineSize,
+            fontWeight: 800,
+            lineHeight: 1.08,
+            letterSpacing: -0.5,
+            color: '#FFFFFF',
+          }}
+        >
+          {headline}
+        </div>
       </div>
 
       <div style={{ position: 'absolute', left: MARGIN, right: MARGIN, bottom: SAFE_BOTTOM, display: 'flex' }}>
@@ -1113,26 +1749,205 @@ async function storyLamina(property: Property, qr: string, code: string, qrSize:
           style={{ width: cardWidth }}
           padding="40px 42px"
           footerPadding="20px 42px"
-          footer={
-            <>
-              <SalesCallout property={property} fontSize={22} message={message} maxChars={30} />
-              <VerifyLine code={code} fontSize={22} variant="inline" />
-            </>
+          footerLeft={
+            <div style={{ display: 'flex', fontSize: 21, color: NIGHT.inkFaint }}>
+              ESCANEA EL QR O VISITA
+            </div>
           }
+          footerRight={<VerifyLine code={code} fontSize={22} variant="inline" />}
         >
           <SurveyLine property={property} height={body - 80} />
           <div style={{ display: 'flex', flexDirection: 'column', gap: 13, marginLeft: 24, maxWidth: textWidth }}>
-            <Eyebrow property={property} fontSize={25} maxChars={30} />
-            <PriceLine price={price} base={104} min={44} />
-            <EditorialFacts facts={facts} fontSize={23} />
+            <Eyebrow property={property} fontSize={25} width={textWidth} />
+            <PriceLine price={price} base={104} min={44} width={textWidth} />
+            <EditorialFacts facts={facts} fontSize={23} width={textWidth} />
             <TitleLine title={title} fontSize={21} />
           </div>
           <div style={{ display: 'flex', marginLeft: 'auto' }}>
-            <QrCard qr={qr} size={qrSize} />
+            <QrCard qr={qr} size={qrSize} tile={tile} />
           </div>
         </InfoCard>
       </div>
     </div>
+  );
+}
+
+// --- The carousel ---------------------------------------------------------
+
+/**
+ * A middle frame: one photograph, one fact, and the pair that makes it
+ * checkable.
+ *
+ * The cover already made the argument, so these are free to be what a carousel
+ * is actually for — the second and third look at the place. A caption plate
+ * rather than a card: the frame is about the picture, and a full card here
+ * would be the cover again with a different photograph behind it.
+ *
+ * The QR and the address are not optional even here, and the reason is the same
+ * one that puts the counter in the corner: a carousel frame gets saved and
+ * reposted on its own. At that point it is a photograph of somebody's house
+ * with this portal's mark on it and no way to check where it came from, which
+ * is precisely the thing SOC-002 exists to prevent.
+ */
+function CarouselFrame({
+  property,
+  photo,
+  tile,
+  caption,
+  code,
+  qr,
+  qrSize,
+  frame,
+  frames,
+  height,
+}: {
+  property: Property;
+  photo: string | null;
+  tile: string;
+  caption: string;
+  code: string;
+  qr: string;
+  qrSize: number;
+  frame: number;
+  frames: number;
+  height: number;
+}) {
+  const accent = accentColor(property);
+  const [value, ...rest] = caption.split(' ');
+  const unit = rest.join(' ');
+
+  return (
+    <div style={{ display: 'flex', position: 'relative', width: '100%', height: '100%', backgroundColor: NAVY, fontFamily: 'Plus Jakarta Sans' }}>
+      <PhotoLayer photo={photo} width="100%" height={height} tile={tile} />
+
+      <TopScrim height={190} />
+      <div
+        style={{
+          position: 'absolute',
+          left: 0,
+          top: 0,
+          right: 0,
+          display: 'flex',
+          alignItems: 'flex-start',
+          justifyContent: 'space-between',
+          padding: '38px 40px',
+        }}
+      >
+        <div
+          style={{
+            display: 'flex',
+            padding: '10px 20px',
+            borderRadius: 999,
+            backgroundColor: 'rgba(15,16,32,0.62)',
+            color: '#FFFFFF',
+            fontSize: 23,
+            fontWeight: 800,
+            letterSpacing: 1.4,
+          }}
+        >
+          {frame} / {frames}
+        </div>
+        <BrandPill tile={tile} fontSize={23} />
+      </div>
+
+      <div style={{ position: 'absolute', left: 0, right: 0, bottom: 0, display: 'flex', flexDirection: 'column' }}>
+        <PanelRamp height={300} />
+      </div>
+
+      <div
+        style={{
+          position: 'absolute',
+          left: 40,
+          right: 40,
+          bottom: 40,
+          display: 'flex',
+          alignItems: 'flex-end',
+        }}
+      >
+        <div
+          style={{
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 14,
+            padding: '22px 30px 22px 24px',
+            borderRadius: 24,
+            backgroundColor: NAVY,
+            boxShadow: CARD_SHADOW,
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: 18 }}>
+            <div style={{ display: 'flex', width: STRIPE, height: 34, borderRadius: 999, backgroundColor: accent }} />
+            <div style={{ display: 'flex', alignItems: 'baseline' }}>
+              <div style={{ display: 'flex', fontSize: 34, fontWeight: 800, color: '#FFFFFF' }}>{value}</div>
+              {unit ? (
+                <div style={{ display: 'flex', marginLeft: 8, fontSize: 28, color: NIGHT.inkSoft }}>
+                  {unit}
+                </div>
+              ) : null}
+            </div>
+          </div>
+          <VerifyLine code={code} fontSize={20} />
+        </div>
+        <div style={{ display: 'flex', marginLeft: 'auto' }}>
+          <QrCard qr={qr} size={qrSize} tile={tile} />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/**
+ * The carousel, one frame per request.
+ *
+ * Frame 1 is the cover, which is the printed 4:5 exactly as it is published on
+ * its own — same picture, same price, same card. The last frame is the map,
+ * because a carousel that never says where the place is has wasted the swipe
+ * somebody gave it. Everything between is a photograph.
+ *
+ * The frames share one set of decoded photographs: `photoMaster` caches them,
+ * so the four requests that make up a carousel cost one listing's worth of
+ * fetching rather than four.
+ */
+async function carouselLamina(
+  property: Property,
+  frame: number,
+  frames: number,
+  qr: string,
+  code: string,
+  qrSize: number,
+  width: number,
+  height: number,
+  box: PhotoBox,
+  message?: string
+) {
+  if (frame >= frames) {
+    return mapLamina(property, qr, code, qrSize, width, height);
+  }
+
+  const photos = await marketingPhotos(property, box, frames - 1);
+
+  if (frame === 1) {
+    return photoLamina(property, qr, code, qrSize, width, height, box, message, photos[0] ?? null);
+  }
+
+  const tile = await brandTile();
+  const facts = buildFacts(property);
+  // Frame two takes the second fact, three the third: the first is already on
+  // the cover, and a carousel that repeats itself is one nobody swipes through.
+  const caption = facts[frame - 1] ?? facts[0] ?? buildPlace(property);
+  return (
+    <CarouselFrame
+      property={property}
+      photo={photos[frame - 1] ?? null}
+      tile={tile}
+      caption={caption}
+      code={code}
+      qr={qr}
+      qrSize={qrSize}
+      frame={frame}
+      frames={frames}
+      height={height}
+    />
   );
 }
 
@@ -1145,15 +1960,24 @@ async function storyLamina(property: Property, qr: string, code: string, qrSize:
  * third of the composition rather than the whole of it, because at the size
  * Facebook renders a link card the text is the only part that survives.
  */
-async function ogLamina(property: Property, qr: string, code: string, qrSize: number, message?: string) {
-  const [tile, photo] = await Promise.all([brandTile(), mainPhoto(property)]);
+async function ogLamina(
+  property: Property,
+  qr: string,
+  code: string,
+  qrSize: number,
+  box: PhotoBox,
+  message?: string
+) {
+  const [tile, photo] = await Promise.all([brandTile(), mainPhoto(property, box)]);
   const facts = buildFacts(property);
   const price = buildPriceLine(property);
-  const title = listingTitle(property, 74);
 
   const PHOTO_WIDTH = 476;
   const EDGE = 7;
   const PANEL_WIDTH = 1200 - PHOTO_WIDTH - EDGE;
+  const textWidth = PANEL_WIDTH - 80;
+  // Two lines of title at this width, and the second one has to end somewhere.
+  const title = listingTitle(property, { size: 23, width: textWidth * 2 });
 
   return (
     <div style={{ display: 'flex', width: '100%', height: '100%', backgroundColor: NAVY, fontFamily: 'Plus Jakarta Sans' }}>
@@ -1191,24 +2015,25 @@ async function ogLamina(property: Property, qr: string, code: string, qrSize: nu
       >
         <BrandRow tile={tile} fontSize={22} />
 
-        <div style={{ display: 'flex', alignItems: 'flex-start', gap: 20 }}>
-          <SurveyLine property={property} height={196} />
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 11, maxWidth: PANEL_WIDTH - 80 - STRIPE - 20 }}>
-            <Eyebrow property={property} fontSize={20} maxChars={34} />
-            <PriceLine price={price} base={62} min={30} />
-            {title ? (
-              <div style={{ display: 'flex', fontSize: 23, lineHeight: 1.26, color: 'rgba(255,255,255,0.82)' }}>
-                {title}
-              </div>
-            ) : null}
-            <FactChips facts={facts} fontSize={19} />
-            <SalesCallout property={property} fontSize={19} message={message} maxChars={38} />
-          </div>
+        {/* No survey line down this one. The accent edge between the photo and
+            the panel is already the full height of the frame, and a second
+            vertical rule forty pixels from it is one mark too many at the size
+            a link card is actually rendered. */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 12, maxWidth: textWidth }}>
+          <Eyebrow property={property} fontSize={20} width={textWidth} />
+          <PriceLine price={price} base={66} min={30} width={textWidth} />
+          {title ? (
+            <div style={{ display: 'flex', fontSize: 23, lineHeight: 1.26, color: 'rgba(255,255,255,0.82)' }}>
+              {title}
+            </div>
+          ) : null}
+          <FactChips facts={facts} fontSize={19} />
+          <SalesCallout property={property} fontSize={19} message={message} width={textWidth} />
         </div>
 
         <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between' }}>
           <VerifyLine code={code} fontSize={19} />
-          <QrCard qr={qr} size={qrSize} />
+          <QrCard qr={qr} size={qrSize} tile={tile} />
         </div>
       </div>
     </div>
@@ -1246,9 +2071,10 @@ async function priceDropLamina(
   code: string,
   qrSize: number,
   width: number,
-  height: number
+  height: number,
+  box: PhotoBox
 ) {
-  const [tile, photo] = await Promise.all([brandTile(), mainPhoto(property)]);
+  const [tile, photo] = await Promise.all([brandTile(), mainPhoto(property, box)]);
 
   const MARGIN = 40;
   const cardWidth = width - MARGIN * 2;
@@ -1307,21 +2133,19 @@ async function priceDropLamina(
       <div style={{ position: 'absolute', left: MARGIN, right: MARGIN, bottom: MARGIN, display: 'flex' }}>
         <InfoCard
           style={{ width: cardWidth }}
-          footer={
-            <>
-              <div style={{ display: 'flex', fontSize: 18, color: 'rgba(255,255,255,0.6)' }}>
-                Precio actualizado el {drop.changedLabel}
-              </div>
-              <VerifyLine code={code} fontSize={20} variant="inline" />
-            </>
+          footerLeft={
+            <div style={{ display: 'flex', fontSize: 18, color: NIGHT.inkSoft }}>
+              Precio actualizado el {drop.changedLabel}
+            </div>
           }
+          footerRight={<VerifyLine code={code} fontSize={20} variant="inline" />}
         >
-          <div style={{ display: 'flex', width: STRIPE, height: body - 68, borderRadius: 999, backgroundColor: AMBER }} />
+          <SurveyLine property={property} height={body - 68} color={AMBER} />
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginLeft: 22, maxWidth: textWidth }}>
-            <Eyebrow property={property} fontSize={22} maxChars={32} />
+            <Eyebrow property={property} fontSize={22} width={textWidth} />
 
             <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-              <div style={{ display: 'flex', fontSize: 20, fontWeight: 800, letterSpacing: 2.6, color: 'rgba(255,255,255,0.5)' }}>
+              <div style={{ display: 'flex', fontSize: 20, fontWeight: 800, letterSpacing: 2.6, color: NIGHT.inkFaint }}>
                 ANTES
               </div>
               <div style={{ display: 'flex', position: 'relative' }}>
@@ -1341,10 +2165,10 @@ async function priceDropLamina(
               </div>
             </div>
 
-            <PriceLine price={drop.currentLabel} base={98} min={44} />
+            <PriceLine price={drop.currentLabel} base={98} min={44} width={textWidth} />
           </div>
           <div style={{ display: 'flex', marginLeft: 'auto' }}>
-            <QrCard qr={qr} size={qrSize} />
+            <QrCard qr={qr} size={qrSize} tile={tile} />
           </div>
         </InfoCard>
       </div>
@@ -1363,7 +2187,7 @@ async function priceDropLamina(
  * land in front of people who have never heard of it. SOC-102.
  *
  * The stamp is set in type rather than dropped into a coloured plate. A slab
- * of green with a word in it is a sticker; the same word at 140 points over a
+ * of green with a word in it is a sticker; the same word at 138 points over a
  * darkened photograph, with the survey line drawn under it, is a poster — and
  * the scrim already does everything the plate was there to do for contrast.
  *
@@ -1383,23 +2207,25 @@ async function soldLamina(
   code: string,
   qrSize: number,
   width: number,
-  height: number
+  height: number,
+  box: PhotoBox
 ) {
-  const [tile, photo] = await Promise.all([brandTile(), mainPhoto(property)]);
+  const [tile, photo] = await Promise.all([brandTile(), mainPhoto(property, box)]);
   const stamp = CLOSURE_STAMP[closure];
   const when = closureLabel(property);
   const accent = closure === 'rented' ? AQUA : MINT;
-  const subject = clamp(
-    [getPropertyTypeLabel(property.property_type), buildPlace(property)]
-      .filter(Boolean)
-      .join(' · ')
-      .toUpperCase(),
-    38
-  );
 
   const MARGIN = 40;
   const cardWidth = width - MARGIN * 2;
   const body = 168;
+  const stageWidth = width - 120;
+  const subject = cut(
+    [getPropertyTypeLabel(property.property_type), buildPlace(property)]
+      .filter(Boolean)
+      .join(' · ')
+      .toUpperCase(),
+    { size: 26, width: stageWidth, tracking: 4, bold: true }
+  );
 
   return (
     <div style={{ display: 'flex', position: 'relative', width: '100%', height: '100%', backgroundColor: NAVY, fontFamily: 'Plus Jakarta Sans' }}>
@@ -1416,7 +2242,7 @@ async function soldLamina(
           bottom: 0,
           display: 'flex',
           backgroundImage:
-            `linear-gradient(180deg, rgba(${NAVY_RGB},0.80) 0%, rgba(${NAVY_RGB},0.60) 42%,` +
+            `linear-gradient(180deg, rgba(${NAVY_RGB},0.80) 0%, rgba(${NAVY_RGB},0.70) 42%,` +
             ` rgba(${NAVY_RGB},0.94) 100%)`,
         }}
       />
@@ -1444,7 +2270,7 @@ async function soldLamina(
         <div
           style={{
             display: 'flex',
-            fontSize: fitSize(stamp, 148, 8, 96),
+            fontSize: fit(stamp, { size: 138, min: 92, width: stageWidth, tracking: 4, bold: true }),
             fontWeight: 800,
             letterSpacing: 4,
             lineHeight: 1.08,
@@ -1472,7 +2298,7 @@ async function soldLamina(
             <VerifyLine code={code} fontSize={22} />
           </div>
           <div style={{ display: 'flex', marginLeft: 'auto' }}>
-            <QrCard qr={qr} size={qrSize} />
+            <QrCard qr={qr} size={qrSize} tile={tile} />
           </div>
         </InfoCard>
       </div>
@@ -1481,6 +2307,53 @@ async function soldLamina(
 }
 
 // --- Route ----------------------------------------------------------------
+
+/**
+ * How long a lamina may be kept.
+ *
+ * A versioned address — one carrying `v`, which `laminaPath` builds out of the
+ * listing's `updated_at` and the artwork revision — describes one immutable
+ * image: edit the listing or redraw the artwork and the URL moves. Those can be
+ * held for a month, which on a link every network scrapes the moment it is
+ * posted is the difference between rendering a lamina once and rendering it
+ * every minute.
+ *
+ * A month rather than a year, and not `immutable`, because `LAMINA_REVISION` is
+ * bumped by hand: a cache entry nobody can reach should expire on its own
+ * rather than need somebody to purge it.
+ */
+const VERSIONED_CACHE = 'public, max-age=3600, s-maxage=2592000, stale-while-revalidate=86400';
+/** Hand-typed and unversioned: correct quickly, never cheap. */
+const ROLLING_CACHE = 'public, max-age=0, s-maxage=60, stale-while-revalidate=86400';
+
+/**
+ * The bytes that actually go out.
+ *
+ * `next/og` rasterises to PNG and offers no way to ask for anything else, which
+ * for a lamina that is mostly photograph is the wrong container by a factor of
+ * five — the 1080x1920 story is 2.7 MB as a PNG and around 300 KB as a JPEG
+ * that nobody can tell apart once Instagram has had it. On a phone paying for
+ * data, that difference is the download.
+ *
+ * The map is the exception and stays lossless: flat colour and thin type is the
+ * one thing PNG encodes better and JPEG smears. `LAMINA_MIME` is shared with
+ * the kit screen so the downloaded file's extension matches its contents.
+ *
+ * Falling back to the PNG on any failure, and saying so in the header rather
+ * than serving JPEG's name over PNG's bytes.
+ */
+async function encodeLamina(png: Buffer, format: SocialFormat) {
+  if (LAMINA_MIME[format] === 'image/png') return { body: png, type: 'image/png' };
+  try {
+    const { default: sharp } = await import('sharp');
+    const jpeg = await sharp(png)
+      .jpeg({ quality: 88, chromaSubsampling: '4:4:4', mozjpeg: true })
+      .toBuffer();
+    return { body: jpeg, type: 'image/jpeg' };
+  } catch {
+    return { body: png, type: 'image/png' };
+  }
+}
 
 export async function GET(
   request: NextRequest,
@@ -1522,36 +2395,80 @@ export async function GET(
     return new Response('This listing is not closed as sold or rented', { status: 404 });
   }
 
+  // A carousel frame is the same kind of claim, and `carouselFrames` is the
+  // same kind of predicate: what the kit screen asks before it draws a card.
+  const frames = carouselFrames(property);
+  const frame = Math.max(
+    1,
+    Number.parseInt(request.nextUrl.searchParams.get('lamina') ?? '1', 10) || 1
+  );
+  if (format === 'carousel' && frame > frames) {
+    return new Response('This listing has no such carousel frame', { status: 404 });
+  }
+
+  const cacheControl = request.nextUrl.searchParams.has('v') ? VERSIONED_CACHE : ROLLING_CACHE;
+
+  // Everything that can change what is drawn, and nothing else. Answering 304
+  // here is what makes a re-fetch free: the alternative is pulling three
+  // photographs out of the object store and rasterising a tree to produce bytes
+  // the caller already has.
+  const etag = `"${createHash('sha1')
+    .update(
+      [
+        LAMINA_REVISION,
+        property.id,
+        property.updated_at ?? '',
+        format,
+        frame,
+        network,
+        customMessage ?? '',
+      ].join('|')
+    )
+    .digest('base64url')
+    .slice(0, 20)}"`;
+  if (request.headers.get('if-none-match') === etag) {
+    return new Response(null, {
+      status: 304,
+      headers: { ETag: etag, 'Cache-Control': cacheControl },
+    });
+  }
+
   const code = property.short_code ?? '';
   const target = trackedUrl(property, network);
   const qrSize = qrPixelSize(target, QR_TARGET[format as SocialFormat]);
-  const [qr, fonts] = await Promise.all([qrDataUri(target, qrSize), promotionFonts()]);
+  const [qr, fonts] = await Promise.all([qrDataUri(target, qrSize), promotionFonts(), loadMetrics()]);
+  const box = PHOTO_BOX[format as SocialFormat] ?? { width: spec.width, height: spec.height };
 
   let element;
   if (format === 'map') {
     element = await mapLamina(property, qr, code, qrSize, spec.width, spec.height);
   } else if (format === 'story') {
-    element = await storyLamina(property, qr, code, qrSize, customMessage);
+    element = await storyLamina(property, qr, code, qrSize, box, customMessage);
   } else if (format === 'og') {
-    element = await ogLamina(property, qr, code, qrSize, customMessage);
+    element = await ogLamina(property, qr, code, qrSize, box, customMessage);
+  } else if (format === 'carousel') {
+    element = await carouselLamina(
+      property, frame, frames, qr, code, qrSize, spec.width, spec.height, box, customMessage
+    );
   } else if (format === 'price-drop') {
-    element = await priceDropLamina(property, drop!, qr, code, qrSize, spec.width, spec.height);
+    element = await priceDropLamina(property, drop!, qr, code, qrSize, spec.width, spec.height, box);
   } else if (format === 'sold') {
-    element = await soldLamina(property, closure!, qr, code, qrSize, spec.width, spec.height);
+    element = await soldLamina(property, closure!, qr, code, qrSize, spec.width, spec.height, box);
   } else {
-    element = await photoLamina(property, qr, code, qrSize, spec.width, spec.height, customMessage);
+    element = await photoLamina(property, qr, code, qrSize, spec.width, spec.height, box, customMessage);
   }
 
-  return new ImageResponse(element, {
-    width: spec.width,
-    height: spec.height,
-    fonts,
+  const png = Buffer.from(
+    await new ImageResponse(element, { width: spec.width, height: spec.height, fonts }).arrayBuffer()
+  );
+  const { body, type } = await encodeLamina(png, format as SocialFormat);
+
+  return new Response(new Uint8Array(body), {
     headers: {
-      // Short enough that an edited price stops being served almost at once —
-      // `getProperty` is tag-invalidated by the Django side, so the only stale
-      // window is this one. Long enough to absorb the burst of scrapers that
-      // hit a link the moment it is posted.
-      'Cache-Control': 'public, max-age=0, s-maxage=60, stale-while-revalidate=86400',
+      'Content-Type': type,
+      'Content-Length': String(body.length),
+      ETag: etag,
+      'Cache-Control': cacheControl,
     },
   });
 }

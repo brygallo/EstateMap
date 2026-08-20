@@ -33,14 +33,36 @@ export type SocialFormat =
   | 'story'
   | 'map'
   | 'og'
+  | 'carousel'
   | 'price-drop'
   | 'sold';
 
 export type CopyTone = 'cercano' | 'formal' | 'urgente';
 
+/**
+ * Bumped by hand whenever the artwork changes.
+ *
+ * It rides in the `v` of every lamina URL, which is what lets those URLs be
+ * cached for a month at the edge: a listing's own `updated_at` covers an edited
+ * price, and this covers a redrawn card. Forget to bump it after changing the
+ * route and the old artwork keeps being served from Cloudflare until the entry
+ * ages out — which is exactly why the TTL is a month and not a year.
+ */
+export const LAMINA_REVISION = 2;
+
+/**
+ * The ceiling on a carousel, and it is a judgement rather than a limit of the
+ * networks — Instagram takes twenty. Four is a cover, two rooms and a map: past
+ * that a carousel stops being an advert somebody swipes through and becomes the
+ * listing itself, which is the page the last frame is there to send them to.
+ */
+export const CAROUSEL_MAX_FRAMES = 4;
+
 export interface FormatSpec {
   width: number;
   height: number;
+  /** Present only on the carousel: how many images the format can produce. */
+  frames?: number;
   /** Shown on the kit screen, in Spanish, because a person reads it. */
   label: string;
   hint: string;
@@ -84,6 +106,16 @@ export const SOCIAL_FORMATS: Record<SocialFormat, FormatSpec> = {
     label: 'Vista previa del enlace',
     hint: 'Lo que se ve al pegar el enlace en una publicación',
   },
+  // The one format that is not a single image. Four frames at most, and how
+  // many a listing actually gets is a fact about the listing: see
+  // `carouselFrames`.
+  carousel: {
+    width: 1080,
+    height: 1350,
+    label: 'Carrusel',
+    hint: 'Varias imágenes en una sola publicación',
+    frames: CAROUSEL_MAX_FRAMES,
+  },
   // The two moment laminas. Both are 4:5 for the same reason the portrait is:
   // they are made to be posted once, on the day the thing happened, and 4:5 is
   // the tallest shape a feed shows without cropping.
@@ -112,6 +144,25 @@ export const SOCIAL_FORMATS: Record<SocialFormat, FormatSpec> = {
  */
 export const MOMENT_FORMATS = ['price-drop', 'sold'] as const satisfies readonly SocialFormat[];
 
+/**
+ * How many frames this listing's carousel actually has.
+ *
+ * The same shape of question `momentFormats` answers, and for the same reason:
+ * the kit screen must never offer a frame the route would refuse to draw. A
+ * carousel is a cover, then one frame per spare photograph up to two, then the
+ * closing frame with the map and the code. A listing with a single photo gets
+ * two frames — which is still a carousel, and still better than one image.
+ *
+ * The closing frame is unconditional. It is the one that carries the address,
+ * and a listing with no coordinates draws the branded lamina there rather than
+ * inventing a location.
+ */
+export function carouselFrames(property: Property): number {
+  const photos = property.images?.length ?? 0;
+  const spare = Math.min(CAROUSEL_MAX_FRAMES - 2, Math.max(0, photos - 1));
+  return 2 + spare;
+}
+
 export const NETWORK_LABELS: Record<SocialNetwork, string> = {
   facebook: 'Facebook',
   instagram: 'Instagram',
@@ -127,8 +178,8 @@ export const COPY_TONES: Record<CopyTone, string> = {
 
 /** Which laminas are worth offering for each network, best first. */
 export const NETWORK_FORMATS: Record<SocialNetwork, SocialFormat[]> = {
-  facebook: ['feed', 'map', 'og'],
-  instagram: ['portrait', 'story', 'map', 'feed'],
+  facebook: ['feed', 'carousel', 'map', 'og'],
+  instagram: ['portrait', 'carousel', 'story', 'map', 'feed'],
   // TikTok wants video. The 9:16 works as a cover or inside its photo mode,
   // and saying so is more useful than pretending a PNG is a post.
   tiktok: ['story', 'map'],
@@ -211,15 +262,36 @@ export function trackedUrl(
  * has to work on whatever host it is being served from, and `SITE_URL` is the
  * canonical production address even in development.
  */
+/**
+ * The path a lamina is fetched from.
+ *
+ * `v` is the listing's own `updated_at`, and it is what makes these images
+ * cacheable at all. A lamina is expensive — it fetches photographs, crops and
+ * grades them and rasterises a tree — and it changes only when the listing
+ * does. Without a version in the URL the only safe answer is a short TTL and a
+ * re-render every minute; with one, the address of a given version of a lamina
+ * never changes its contents, so it can be cached until the listing is edited
+ * and the URL moves. See the `Cache-Control` the route answers with.
+ *
+ * A hand-typed URL with no `v` still works and still gets the short TTL: these
+ * addresses get pasted and edited, and refusing one would be worse than
+ * re-rendering it.
+ */
 export function laminaPath(
-  property: Pick<Property, 'id'>,
+  property: Pick<Property, 'id' | 'updated_at'>,
   format: SocialFormat,
   network: SocialNetwork = 'facebook',
-  artworkMessage?: string
+  artworkMessage?: string,
+  frame?: number
 ): string {
   const params = new URLSearchParams({ red: network });
   const message = artworkMessage?.trim();
   if (message) params.set('mensaje', message.slice(0, 72));
+  if (frame && frame > 1) params.set('lamina', String(frame));
+  const version = property.updated_at ? Date.parse(property.updated_at) : NaN;
+  if (Number.isFinite(version)) {
+    params.set('v', `${LAMINA_REVISION}.${Math.floor(version / 1000)}`);
+  }
   return `/api/social/${property.id}/${format}?${params.toString()}`;
 }
 
@@ -230,19 +302,45 @@ export function laminaPath(
  * so the `og:image` has to spell the host out.
  */
 export function laminaUrl(
-  property: Pick<Property, 'id'>,
+  property: Pick<Property, 'id' | 'updated_at'>,
   format: SocialFormat,
   network: SocialNetwork = 'facebook'
 ): string {
   return `${SITE_URL}${laminaPath(property, format, network)}`;
 }
 
+/**
+ * What the route encodes each lamina as.
+ *
+ * JPEG everywhere a photograph is the subject, because that is what a
+ * photograph costs least in: the same 1080x1920 story is 2.7 MB as a PNG and
+ * about 300 KB as a JPEG, and the networks recompress it either way. The map is
+ * the exception and stays lossless — it is flat colour and thin type, which is
+ * the one thing PNG encodes better and JPEG smears.
+ *
+ * Shared rather than decided inside the route because the download filename has
+ * to agree with the bytes: a `.png` full of JPEG is a file some viewers refuse.
+ */
+export const LAMINA_MIME: Record<SocialFormat, 'image/jpeg' | 'image/png'> = {
+  feed: 'image/jpeg',
+  portrait: 'image/jpeg',
+  story: 'image/jpeg',
+  map: 'image/png',
+  og: 'image/jpeg',
+  carousel: 'image/jpeg',
+  'price-drop': 'image/jpeg',
+  sold: 'image/jpeg',
+};
+
 /** The file someone ends up with in their downloads folder. */
 export function laminaFilename(
   property: Pick<Property, 'id' | 'short_code'>,
-  format: SocialFormat
+  format: SocialFormat,
+  frame?: number
 ): string {
-  return `geopropiedades-${property.short_code ?? property.id}-${format}.png`;
+  const extension = LAMINA_MIME[format] === 'image/png' ? 'png' : 'jpg';
+  const name = frame ? `${format}-${frame}` : format;
+  return `geopropiedades-${property.short_code ?? property.id}-${name}.${extension}`;
 }
 
 // --- Copy -----------------------------------------------------------------

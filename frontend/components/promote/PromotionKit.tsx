@@ -16,7 +16,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { toast } from 'sonner';
-import { Check, Copy, Download, ExternalLink, Loader2, RotateCcw, Share2 } from 'lucide-react';
+import { Check, Copy, Download, ExternalLink, Layers, Loader2, RotateCcw, Share2 } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -27,6 +27,7 @@ import { useAuth } from '@/lib/auth-context';
 import { haptic } from '@/lib/haptics';
 import {
   COPY_TONES,
+  LAMINA_MIME,
   NETWORK_FORMATS,
   NETWORK_LABELS,
   NETWORK_STEPS,
@@ -34,6 +35,7 @@ import {
   buildArtworkHeadline,
   buildCopy,
   buildHeadline,
+  carouselFrames,
   closureKind,
   laminaFilename,
   laminaPath,
@@ -85,12 +87,19 @@ type KitEventHandler = (
   payload?: Record<string, string | number | boolean>
 ) => void;
 
-async function fetchLamina(path: string, filename: string): Promise<File | null> {
+async function fetchLamina(
+  path: string,
+  filename: string,
+  type: string
+): Promise<File | null> {
   try {
     const response = await fetch(path);
     if (!response.ok) return null;
     const blob = await response.blob();
-    return new File([blob], filename, { type: 'image/png' });
+    // The type is declared rather than taken from the blob because it is what
+    // the share sheet and the filename agree on: the route answers JPEG for
+    // every lamina that is mostly photograph and PNG for the map.
+    return new File([blob], filename, { type });
   } catch {
     return null;
   }
@@ -137,49 +146,80 @@ function LaminaCard({
 }) {
   const spec = SOCIAL_FORMATS[format];
   const title = label ?? spec.label;
-  const path = laminaPath(property, format, network, artworkMessage);
-  const filename = laminaFilename(property, format);
+  const type = LAMINA_MIME[format];
 
-  // The result is stored together with the path it came from, so switching
+  // Every format but one is a single image. The carousel is as many as this
+  // listing can fill, which is a fact about the listing: `carouselFrames` is
+  // the same predicate the route answers 404 with, so a card is never offered
+  // for a frame that would not render.
+  const frames = format === 'carousel' ? carouselFrames(property) : 1;
+  const paths = useMemo(
+    () =>
+      Array.from({ length: frames }, (_, index) =>
+        laminaPath(property, format, network, artworkMessage, index + 1)
+      ),
+    [property, format, network, artworkMessage, frames]
+  );
+  const key = paths.join('|');
+
+  // The result is stored together with the paths it came from, so switching
   // network or format derives "still preparing" from a mismatch instead of
   // resetting state inside the effect and forcing a second render.
-  const [loaded, setLoaded] = useState<{ path: string; file: File | null } | null>(null);
+  const [loaded, setLoaded] = useState<{ key: string; files: File[] } | null>(null);
   const [previewOpen, setPreviewOpen] = useState(false);
+  const [previewIndex, setPreviewIndex] = useState(0);
 
   useEffect(() => {
     let cancelled = false;
-    fetchLamina(path, filename).then((prepared) => {
-      if (!cancelled) setLoaded({ path, file: prepared });
+    Promise.all(
+      paths.map((path, index) =>
+        fetchLamina(
+          path,
+          laminaFilename(property, format, frames > 1 ? index + 1 : undefined),
+          type
+        )
+      )
+    ).then((prepared) => {
+      if (!cancelled) {
+        setLoaded({ key, files: prepared.filter((file): file is File => file !== null) });
+      }
     });
     return () => {
       cancelled = true;
     };
-  }, [path, filename]);
+  }, [key, paths, property, format, frames, type]);
 
-  const preparing = loaded?.path !== path;
-  const file = preparing ? null : (loaded?.file ?? null);
+  const preparing = loaded?.key !== key;
+  const files = preparing ? [] : (loaded?.files ?? []);
+  const ready = files.length > 0;
 
-  const shareable = file !== null && canShareFiles([file]);
+  const shareable = ready && canShareFiles(files);
+
+  const saveAll = () => {
+    // Staggered: a browser that sees three downloads inside one tick treats the
+    // second and third as a popup and blocks them.
+    files.forEach((file, index) => setTimeout(() => downloadFile(file), index * 350));
+  };
 
   const handleDownload = () => {
-    if (!file) return;
-    downloadFile(file);
-    onEvent('promotion_kit_downloaded', { network, format });
+    if (!ready) return;
+    saveAll();
+    onEvent('promotion_kit_downloaded', { network, format, frames });
   };
 
   const handleShare = () => {
-    if (!file) return;
+    if (!ready) return;
     haptic('impact');
-    attemptNativeShareFiles({ files: [file], text: caption }).then((outcome) => {
+    attemptNativeShareFiles({ files, text: caption }).then((outcome) => {
       // `dismissed` means the sheet opened and the person backed out, which is
       // not a share and must not be counted as one.
       if (outcome === 'shared') {
-        onEvent('promotion_kit_shared', { network, format, method: 'native' });
+        onEvent('promotion_kit_shared', { network, format, method: 'native', frames });
         return;
       }
       if (outcome === 'unsupported') {
-        downloadFile(file);
-        onEvent('promotion_kit_shared', { network, format, method: 'download' });
+        saveAll();
+        onEvent('promotion_kit_shared', { network, format, method: 'download', frames });
       }
     });
   };
@@ -191,18 +231,27 @@ function LaminaCard({
           otherwise the grid rows step up and down with the aspect ratio. */}
       <button
         type="button"
-        onClick={() => setPreviewOpen(true)}
-        className="flex h-64 items-center justify-center bg-muted p-3 focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary"
+        onClick={() => {
+          setPreviewIndex(0);
+          setPreviewOpen(true);
+        }}
+        className="relative flex h-64 items-center justify-center bg-muted p-3 focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary"
         aria-label={`Ampliar lámina ${title}`}
       >
-        {/* eslint-disable-next-line @next/next/no-img-element -- generated PNG, not a project asset */}
+        {/* eslint-disable-next-line @next/next/no-img-element -- generated image, not a project asset */}
         <img
-          src={path}
+          src={paths[0]}
           alt={`Lámina ${title} de la propiedad`}
           width={spec.width}
           height={spec.height}
           className="max-h-full w-auto rounded-input object-contain shadow-card"
         />
+        {frames > 1 ? (
+          <span className="absolute right-3 top-3 flex items-center gap-1 rounded-full bg-navy/70 px-2.5 py-1 text-xs font-semibold text-white">
+            <Layers className="size-3.5" aria-hidden />
+            {frames}
+          </span>
+        ) : null}
       </button>
       <div className="flex flex-1 flex-col gap-3 p-4">
         <div>
@@ -214,7 +263,7 @@ function LaminaCard({
             size="sm"
             variant="outline"
             className="flex-1"
-            disabled={preparing || !file}
+            disabled={preparing || !ready}
             onClick={handleDownload}
           >
             {preparing ? (
@@ -222,7 +271,7 @@ function LaminaCard({
             ) : (
               <Download aria-hidden />
             )}
-            Descargar
+            {frames > 1 ? `Descargar las ${frames}` : 'Descargar'}
           </Button>
           {shareable ? (
             <Button size="sm" className="flex-1" onClick={handleShare}>
@@ -235,9 +284,9 @@ function LaminaCard({
     </div>
       {previewOpen && (
         <GalleryViewer
-          images={[{ image: path }]}
-          index={0}
-          onIndexChange={() => undefined}
+          images={paths.map((path) => ({ image: path }))}
+          index={previewIndex}
+          onIndexChange={setPreviewIndex}
           onClose={() => setPreviewOpen(false)}
           title={`Lámina ${title}`}
         />

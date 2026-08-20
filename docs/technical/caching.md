@@ -413,6 +413,44 @@ solo las usan las grillas de destacados y el image sitemap.
 
 ---
 
+## 5 bis. Las láminas del kit de promoción
+
+`GET /api/social/[id]/[format]` no consulta Redis ni el Data Cache: compone una
+imagen. Es la ruta más cara del frontend —baja hasta cuatro fotografías del
+almacén de objetos, las decodifica, recorta y revela, y rasteriza un árbol— y la
+que más veces se pide de golpe, porque cada red social la raspa en cuanto
+alguien pega el enlace. Tiene tres capas propias.
+
+**1. La foto maestra, en memoria del proceso.** `photoMaster` guarda hasta doce
+fotografías ya decodificadas y normalizadas a 1920 px, junto con las
+estadísticas de las que sale su revelado. Los siete formatos de un mismo anuncio
+comparten ese trabajo: cada uno vuelve a recortar, ninguno vuelve a descargar.
+Un fallo no se memoriza —que MinIO esté un momento caído no es motivo para
+dibujar la lámina de marca el resto de la vida del proceso.
+
+**2. La clave de versión en la URL.** `laminaPath` firma cada dirección con
+`v=<revisión del arte>.<updated_at del anuncio>`. Con eso, una URL describe una
+imagen inmutable: si se edita el precio o se redibuja la tarjeta, la dirección
+cambia. Las versionadas salen con `s-maxage=2592000` (un mes) y las tecleadas a
+mano conservan los 60 segundos de siempre.
+
+El mes no es un año, y no lleva `immutable`, por una razón concreta:
+`LAMINA_REVISION` se sube a mano en `frontend/lib/social-kit.ts`. Si alguien
+cambia el arte y olvida subirla, la entrada caduca sola en treinta días en vez
+de necesitar una purga en Cloudflare.
+
+**3. El ETag.** Se calcula antes de dibujar nada, a partir de todo lo que puede
+cambiar la imagen (revisión, anuncio, `updated_at`, formato, fotograma, red y
+mensaje). Un `If-None-Match` que coincide responde 304 sin tocar el almacén de
+objetos.
+
+Sobre eso, el peso: la ruta reencoda a JPEG lo que `next/og` rasteriza como PNG
+(`LAMINA_MIME`). La historia 9:16 pasó de 2,7 MB a unos 430 KB. El mapa se queda
+en PNG porque es color plano y tipografía fina, que es justo lo que JPEG
+emborrona.
+
+---
+
 ## 6. Interacción con el throttling de DRF
 
 DRF construye sus contadores de rate limit sobre `caches['default']`. El

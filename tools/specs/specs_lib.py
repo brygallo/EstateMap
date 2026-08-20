@@ -59,6 +59,9 @@ TEST_SEARCH_DIRS = (
     REPO_ROOT / "marketing" / "videos" / "tests",
     REPO_ROOT / "frontend" / "components",
     REPO_ROOT / "frontend" / "lib",
+    # Route handlers keep their tests beside them, which is where a test that
+    # renders a promotion lamina and reads the QR back out of it lives.
+    REPO_ROOT / "frontend" / "app",
 )
 
 SPEC_MARKER_RE = re.compile(r"SPEC:([A-Z]{2,6}-[0-9]{3})")

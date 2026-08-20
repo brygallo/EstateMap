@@ -48,13 +48,13 @@ rules:
       cierto, esta regla necesita una tupla cerrada como la de VIS-001.
     evidence:
       - file: frontend/app/api/social/[id]/[format]/route.tsx
-        lines: "1023-1025"
+        lines: "1582-1584"
         symbol: photoLamina
         note: >-
           Toma el título, la ciudad, el precio y los hechos declarados. Ni
           views_count ni contact_phone ni contact_email entran en la lámina.
       - file: frontend/lib/social-kit.ts
-        lines: "431-433"
+        lines: "531-533"
         symbol: buildFacts
         note: Enumera solo atributos físicos declarados en el anuncio.
     tests: {}
@@ -102,15 +102,19 @@ rules:
       vez de una imagen suelta que cualquiera podría haber fabricado.
     evidence:
       - file: frontend/app/api/social/[id]/[format]/route.tsx
-        lines: "358-369"
+        lines: "676-685"
         symbol: VerifyLine
         note: >-
-          La dirección con la ruta del código, partida en dos filas para que no
-          se corte a mitad de URL.
+          La dirección con la ruta del código. En dos filas cuando va sola, y en
+          una sola línea dentro de la banda inferior de la tarjeta, donde el QR
+          está justo encima y repetir la instrucción sobra.
       - file: frontend/app/api/social/[id]/[format]/route.tsx
-        lines: "362-377"
+        lines: "679-692"
         symbol: QrCard
-        note: Solo el QR; el código suelto que llevaba debajo se retiró.
+        note: >-
+          El QR sobre su propia baldosa, con la marca del portal en el centro:
+          ocupa menos del 6 % del área del código, frente al 30 % que el nivel H
+          admite. El código suelto que llevaba debajo se retiró.
       - file: frontend/lib/qr.ts
         lines: "21-23"
         symbol: errorCorrectionLevel
@@ -246,7 +250,7 @@ rules:
       kit no tiene forma de saber que MinIO no contestó.
     evidence:
       - file: frontend/app/api/social/[id]/[format]/route.tsx
-        lines: "742-744"
+        lines: "1295-1297"
         symbol: PhotoLayer
         note: Degradado de marca cuando no hay foto utilizable.
     tests: {}
@@ -279,7 +283,7 @@ rules:
       pantallas distintas.
     evidence:
       - file: frontend/lib/social-kit.ts
-        lines: "569-571"
+        lines: "667-669"
         symbol: buildPriceLine
         note: >-
           Cuando el anuncio es venta y alquiler a la vez muestra los dos importes
@@ -321,7 +325,7 @@ rules:
         lines: "25"
         symbol: ATTRIBUTION
       - file: frontend/app/api/social/[id]/[format]/route.tsx
-        lines: "888-890"
+        lines: "1446-1448"
         symbol: ATTRIBUTION
         note: Impresa en la barra inferior de la lámina de mapa.
     tests:
@@ -353,17 +357,17 @@ rules:
       frase; no se escribe «0 habitaciones».
     evidence:
       - file: frontend/lib/social-kit.ts
-        lines: "854-856"
+        lines: "952-954"
         symbol: buildCopy
         note: >-
           Tres formas distintas y no un párrafo recortado: Facebook admite texto
           largo, Instagram va corto y con etiquetas, TikTok necesita un gancho.
       - file: frontend/lib/social-kit.ts
-        lines: "431-433"
+        lines: "531-533"
         symbol: buildFacts
         note: Cada atributo se añade solo si el anuncio lo declara.
       - file: frontend/components/promote/PromotionKit.tsx
-        lines: "227-280"
+        lines: "298-350"
         symbol: CopyBlock
         note: El texto sugerido se puede editar, copiar y restaurar a su base.
     tests:
@@ -402,7 +406,7 @@ rules:
       peor que no dar número.
     evidence:
       - file: frontend/lib/social-kit.ts
-        lines: "193-195"
+        lines: "246-248"
         symbol: trackedUrl
         note: >-
           utm_source por red, utm_medium=social y utm_campaign=owner_kit, tanto
@@ -424,6 +428,75 @@ rules:
       - name: El dueño ve cuántas visitas trajo cada red
         expected: presente
         note: Lo devuelve SOC-101; ver GET /api/properties/{id}/promotion-stats/.
+
+  - id: SOC-014
+    name: El carrusel usa las fotos que la portada deja fuera
+    status: implemented
+    summary: >-
+      Un anuncio con varias fotografías produce además un carrusel de hasta
+      cuatro imágenes: la portada, una fotografía por cada foto libre hasta dos,
+      y un cierre con el mapa, el precio y la dirección. Cuántos fotogramas
+      tiene es un hecho del anuncio, y pedir uno más allá devuelve 404.
+    rationale: >-
+      La portada elige una sola fotografía a propósito (SOC-013): varias
+      imágenes compitiendo en una misma pieza obligan a descifrarla antes de
+      entender la oferta. Pero un anuncio trae hasta nueve fotos y el kit usaba
+      una, y las ocho restantes son precisamente lo que alguien quiere ver antes
+      de escribir. El carrusel es el sitio donde caben sin competir: se pasan de
+      una en una, y cada una tiene la pantalla entera.
+
+      El último fotograma es el mapa y no otra fotografía. Un carrusel que
+      alguien terminó de pasar y que nunca dijo dónde queda el inmueble
+      desperdició el único gesto que esa persona regaló; el cierre lleva la
+      ubicación, el precio y la dirección que se puede teclear.
+
+      El número de fotogramas se calcula en `carouselFrames` y lo consultan las
+      dos partes: la pantalla del kit antes de dibujar la tarjeta y la ruta
+      antes de renderizar. Es la misma disciplina que `momentFormats` impone a
+      las láminas de novedad — la interfaz no ofrece una imagen que el servidor
+      se negaría a componer.
+    evidence:
+      - file: frontend/lib/social-kit.ts
+        lines: "140-160"
+        symbol: carouselFrames
+        note: >-
+          Portada, hasta dos fotografías libres y cierre. Un anuncio con una
+          sola foto da dos fotogramas, que siguen siendo un carrusel.
+      - file: frontend/app/api/social/[id]/[format]/route.tsx
+        lines: "1911-1929"
+        symbol: carouselLamina
+        note: >-
+          El primer fotograma es la portada 4:5 tal cual se publica sola; el
+          último es el mapa; los de en medio, una fotografía con un dato.
+      - file: frontend/app/api/social/[id]/[format]/route.tsx
+        lines: "1789-1808"
+        symbol: CarouselFrame
+        note: >-
+          Fotografía a sangre, contador, un solo dato en una placa y el par de
+          SOC-002: un fotograma se guarda y se reenvía suelto, y ahí tiene que
+          poder comprobarse igual que la portada.
+      - file: frontend/components/promote/PromotionKit.tsx
+        lines: "152-171"
+        symbol: carouselFrames
+        note: >-
+          La tarjeta descarga y comparte los fotogramas juntos, y el visor los
+          pasa uno a uno.
+    tests:
+      unit: true
+    cases:
+      - name: Un anuncio con tres fotos da cuatro fotogramas
+        given: {image_count: 3}
+        expected: 4
+      - name: Un anuncio con una sola foto sigue dando carrusel
+        given: {image_count: 1}
+        expected: 2
+        note: Portada y cierre; menos que eso no es un carrusel, es una imagen.
+      - name: Pedir un fotograma que no existe no devuelve otro
+        given: {image_count: 3, lamina: 5}
+        expected: 404
+      - name: El último fotograma lleva el mapa y la dirección
+        given: {image_count: 3, lamina: 4}
+        expected: presente
 
   - id: SOC-101
     name: El dueño ve cuántas visitas trajo cada red
@@ -577,29 +650,29 @@ rules:
       routes: ["/propiedad/{id}/promocionar"]
     evidence:
       - file: frontend/lib/social-kit.ts
-        lines: "686-690"
+        lines: "784-787"
         symbol: momentFormats
         note: >-
           El predicado único. Dos llamadas —la ruta y la pantalla del kit— para
           que la interfaz no pueda ofrecer lo que el servidor niega.
       - file: frontend/lib/social-kit.ts
-        lines: "629-631"
+        lines: "727-729"
         symbol: priceDrop
         note: >-
           Solo hay bajada si el precio anterior es fiable y además bajó; una
           subida no es una bajada y no reutiliza la lámina.
       - file: frontend/lib/social-kit.ts
-        lines: "662-664"
+        lines: "760-762"
         symbol: closureKind
         note: Vendido y arrendado sí; retirado no.
       - file: frontend/app/api/social/[id]/[format]/route.tsx
-        lines: "1242-1244"
+        lines: "2067-2069"
         symbol: priceDropLamina
       - file: frontend/app/api/social/[id]/[format]/route.tsx
-        lines: "1379-1381"
+        lines: "2203-2205"
         symbol: soldLamina
       - file: frontend/components/promote/PromotionKit.tsx
-        lines: "323-325"
+        lines: "372-374"
         symbol: momentFormats
         note: >-
           La sección «Novedades de este anuncio», delante del material fijo y
@@ -675,7 +748,7 @@ rules:
       test_id: promote-property-action
     evidence:
       - file: frontend/components/promote/PromotionKit.tsx
-        lines: "393-395"
+        lines: "442-444"
         symbol: isOwner
         note: Cortesía de interfaz, no frontera; el comentario del código lo dice.
       - file: frontend/app/mis-propiedades/[id]/page.tsx
@@ -754,7 +827,7 @@ rules:
       un minuto.
     evidence:
       - file: frontend/app/api/social/[id]/[format]/route.tsx
-        lines: "1554-1556"
+        lines: "2432-2434"
         symbol: Cache-Control
         note: >-
           s-maxage=60 con stale-while-revalidate: absorbe la ráfaga de scrapers
@@ -829,33 +902,65 @@ rules:
       ficha y en futuros carruseles, donde pueden respirar sin competir entre sí.
     evidence:
       - file: frontend/app/api/social/[id]/[format]/route.tsx
-        lines: "185-194"
+        lines: "302-309"
         symbol: promotionFonts
         note: Se registran Plus Jakarta Sans Regular y ExtraBold en ImageResponse.
       - file: frontend/app/api/social/[id]/[format]/route.tsx
-        lines: "240-242"
+        lines: "532-534"
         symbol: marketingPhotos
         note: La imagen principal se conserva primero y se preparan hasta tres fotos.
       - file: frontend/app/api/social/[id]/[format]/route.tsx
-        lines: "500-526"
-        symbol: SalesCallout
-        note: El argumento comercial cambia según venta, arriendo y tipo de inmueble.
+        lines: "225-244"
+        symbol: renderPhoto
+        note: >-
+          El recorte lo hace sharp contra la forma exacta del formato, con la
+          estrategia de atención: encuadra el inmueble en vez de quedarse con el
+          centro del original.
       - file: frontend/app/api/social/[id]/[format]/route.tsx
-        lines: "543-575"
+        lines: "375-394"
+        symbol: gradeFor
+        note: >-
+          El revelado sale del histograma de cada foto, no de una curva fija:
+          las importadas llegan planas y las de celular, quemadas contra el
+          cielo.
+      - file: frontend/app/api/social/[id]/[format]/route.tsx
+        lines: "393-412"
+        symbol: isUsable
+        note: >-
+          Se descarta el fotograma inservible —negro, quemado o borroso— y se
+          conserva el orden del anuncio: la primera foto es la fachada, y
+          ordenar por «calidad» asciende el baño bien iluminado.
+      - file: frontend/app/api/social/[id]/[format]/route.tsx
+        lines: "164-183"
+        symbol: DAYLIGHT
+        note: >-
+          La vertical 4:5 se compone sobre papel con tipografía azul; el resto
+          del kit va sobre azul. Siete tarjetas oscuras idénticas son una
+          plantilla, no un kit.
+      - file: frontend/app/api/social/[id]/[format]/route.tsx
+        lines: "858-882"
+        symbol: SalesCallout
+        note: >-
+          El argumento comercial cambia según venta, arriendo y tipo de
+          inmueble, y se dibuja como entradilla junto a la dirección: el precio
+          es el titular y dos titulares en una lámina son uno de más.
+      - file: frontend/app/api/social/[id]/[format]/route.tsx
+        lines: "904-934"
         symbol: SurveyLine
         note: >-
-          La línea inspirada en un plano topográfico conecta fotografía,
-          argumento y acción como firma propia del portal.
+          La línea inspirada en un plano topográfico recorre el canto de la
+          tarjeta con el color de la operación —verde en venta, turquesa en
+          arriendo— y es la firma que hace reconocible una lámina del portal.
       - file: frontend/app/api/social/[id]/[format]/route.tsx
-        lines: "617-635"
+        lines: "1025-1041"
         symbol: EditorialFacts
         note: La portada limita la prueba secundaria a dos atributos declarados.
       - file: frontend/app/api/social/[id]/[format]/route.tsx
-        lines: "1502-1504"
+        lines: "2375-2377"
         symbol: customMessage
         note: El mensaje opcional se normaliza y limita antes de dibujarlo.
       - file: frontend/components/promote/PromotionKit.tsx
-        lines: "479-506"
+        lines: "528-554"
         symbol: Mensaje dentro de la imagen
         note: El editor permite cambiar el gancho o restaurar la propuesta base.
     tests:
