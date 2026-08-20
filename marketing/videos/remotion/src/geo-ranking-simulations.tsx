@@ -208,9 +208,9 @@ const EmPageHead: React.FC<{
  * and the voice never turns one into a market fact.
  */
 const LOTS = [
-  {id: 'calderon', title: 'Terreno · Calderón', price: '$18.500', area: '240 m²', address: 'Calderón, Quito', perM2: '$77/m²', byPrice: 1, byArea: 3},
-  {id: 'carcelen', title: 'Terreno · Carcelén', price: '$24.900', area: '300 m²', address: 'Carcelén, Quito', perM2: '$83/m²', byPrice: 2, byArea: 2},
-  {id: 'chillogallo', title: 'Terreno · Chillogallo', price: '$31.200', area: '320 m²', address: 'Chillogallo, Quito', perM2: '$98/m²', byPrice: 3, byArea: 1},
+  {id: 'calderon', title: 'Calderón', price: '$18.500', area: '240 m²', address: 'Calderón, Quito', perM2: '$77/m²', byPrice: 1, byArea: 3},
+  {id: 'carcelen', title: 'Carcelén Alto', price: '$24.900', area: '300 m²', address: 'Carcelén, Quito', perM2: '$83/m²', byPrice: 2, byArea: 2},
+  {id: 'chillogallo', title: 'Chillogallo', price: '$31.200', area: '320 m²', address: 'Chillogallo, Quito', perM2: '$98/m²', byPrice: 3, byArea: 1},
 ];
 
 /** The list as the other scenes show it: cheapest first. */
@@ -586,7 +586,12 @@ export const GeoRecipeSim: React.FC<SimulationProps> = ({frame, total}) => {
           const slot = lot.byPrice + (lot.byArea - lot.byPrice) * resorted;
           const place = byArea ? lot.byArea : lot.byPrice;
           // Whichever row is overtaking crosses in front of the others.
-          const travelling = Math.abs(lot.byArea - lot.byPrice) > 0;
+          const moves = lot.byArea !== lot.byPrice;
+          // Two opaque cards cannot pass through each other: at the crossing
+          // point they land on the same slot and the list reads as broken. So
+          // the one overtaking leaves the column — it lifts, steps to the side
+          // and comes back — which is how an interface says «this one moved».
+          const lift = moves ? Math.sin(Math.min(1, Math.max(0, resorted)) * Math.PI) : 0;
           return (
             <div
               key={lot.id}
@@ -595,7 +600,9 @@ export const GeoRecipeSim: React.FC<SimulationProps> = ({frame, total}) => {
                 left: 0,
                 width: CONTENT.width,
                 top: (slot - 1) * (ROW_H + ROW_GAP),
-                zIndex: travelling && resorted > 0 && resorted < 1 ? 5 : place === 1 ? 3 : 1,
+                transform: `translateX(${lift * 46}px) scale(${1 + lift * 0.05})`,
+                filter: lift > 0.02 ? `drop-shadow(0 ${18 * lift}px ${34 * lift}px rgba(15,23,42,${0.28 * lift}))` : undefined,
+                zIndex: lift > 0.02 ? 9 : place === 1 ? 3 : 1,
               }}
             >
               <EmRankRow
@@ -608,6 +615,8 @@ export const GeoRecipeSim: React.FC<SimulationProps> = ({frame, total}) => {
                 actions={false}
                 raised={place === 1}
                 width={CONTENT.width}
+                tint={lot.byPrice}
+                kind="land"
               />
             </div>
           );
@@ -671,7 +680,7 @@ export const GeoRecipeSim: React.FC<SimulationProps> = ({frame, total}) => {
                   background: em.background,
                   border: emCard.border,
                   boxShadow: emCard.shadow,
-                  opacity: Math.min(1, rise * 2.6) * (1 - Math.max(0, rise - 0.9) * 8),
+                  opacity: Math.min(1, rise * 2.6),
                 }}
               >
                 <EmThumb size={w - 28} height={92} tint={index + 3} kind="land" />
@@ -696,15 +705,15 @@ export const GeoRecipeSim: React.FC<SimulationProps> = ({frame, total}) => {
                 style={{
                   position: 'absolute',
                   left: index === 0 ? 0 : CONTENT.width - 300,
-                  top: 330 - Math.min(1, hit * 2.2) * 168 + bounce + aside * 268,
+                  top: 300 - Math.min(1, hit * 2.2) * 150 + bounce + aside * 196,
                   width: 300,
                   boxSizing: 'border-box',
                   padding: '16px 20px',
                   borderRadius: emCard.radius,
-                  background: `${em.warning}1A`,
+                  background: `${em.warning}2E`,
                   border: `3px solid ${em.warning}${aside > 0.6 ? '55' : 'FF'}`,
-                  opacity: 1 - aside * 0.28,
-                  filter: aside > 0.6 ? 'saturate(.55)' : undefined,
+                  opacity: 1 - aside * 0.12,
+                  filter: aside > 0.6 ? 'saturate(.8)' : undefined,
                   transform: `rotate(${aside * (index === 0 ? -8 : 8)}deg)`,
                 }}
               >
@@ -770,10 +779,13 @@ export const GeoReasonSim: React.FC<SimulationProps> = ({frame, total}) => {
           <div
             key={item.place}
             style={{
-              opacity: index === 0 ? 1 - travel * 0.92 : 1,
-              transform: index === 0 ? `translateX(${travel * 300}px) translateY(${travel * 300}px) scale(${1 - travel * 0.52})` : undefined,
               position: 'relative',
               zIndex: index === 0 ? 4 : 1,
+              // A full-width card flying diagonally across another full-width
+              // card reads as a glitch, not as a journey, and it covered the
+              // row it flew over. The rows stay; the map rises under them.
+              transform: index === 0 ? `scale(${1 + travel * 0.02})` : undefined,
+              filter: index === 0 && travel > 0.05 ? `drop-shadow(0 ${16 * travel}px ${30 * travel}px rgba(15,23,42,.24))` : undefined,
             }}
           >
             <EmRankRow
@@ -828,6 +840,7 @@ export const GeoReasonSim: React.FC<SimulationProps> = ({frame, total}) => {
             border: emCard.border,
             boxShadow: emCard.shadowHover,
             opacity: Math.min(1, travel * 2.2),
+            transform: `translateY(${(1 - Math.min(1, travel * 1.6)) * 170}px)`,
           }}
         >
           {/* Blocks and streets, so it reads as a city and not as a grid. */}
@@ -946,6 +959,8 @@ export const GeoNoPromotedSim: React.FC<SimulationProps> = ({frame, total}) => {
               actions={false}
               raised={index === 0}
               width={CONTENT.width}
+              tint={index}
+              kind="land"
               measureLive={index !== 0 || confirm > 0.12}
             />
             {/* The first row is the one they try to buy.
