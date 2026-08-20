@@ -165,3 +165,48 @@ def test_serializer_serves_pending_images_from_staging(owned_property, settings,
     # immediately instead of rendering broken until the worker catches up.
     assert data["status"] == "pending"
     assert data["image"] == f"/api/pending-image/{image.pk}/"
+
+
+def test_pending_image_is_served_with_its_real_content_type(client, owned_property, settings, tmp_path):
+    """SPEC:PERM-023 — the staging view answers with an image type, not octet-stream."""
+    settings.IMAGE_UPLOAD_TEMP_DIR = str(tmp_path)
+    # The suffix comes from the upload name, which nobody validates: a WebP can
+    # arrive called ".bin" and mimetypes would give up on it.
+    buffer = BytesIO()
+    Image.new("RGB", (60, 40), (10, 20, 30)).save(buffer, format="WEBP")
+    from django.core.files.uploadedfile import SimpleUploadedFile
+
+    upload = SimpleUploadedFile("foto.bin", buffer.getvalue(), content_type="image/webp")
+    image = stage_property_image(owned_property, upload, 0, is_main=True)
+
+    response = client.get(f"/api/pending-image/{image.pk}/")
+
+    assert response.status_code == 200
+    assert response["Content-Type"] == "image/webp"
+    assert response["Cache-Control"] == "no-store"
+
+
+def test_storage_rejection_leaves_the_reason_on_the_pending_row(
+    owned_property, settings, tmp_path, monkeypatch
+):
+    """A 403 from the object store must be readable without tailing worker logs."""
+    from botocore.exceptions import ClientError
+
+    settings.IMAGE_UPLOAD_TEMP_DIR = str(tmp_path)
+    image = stage_property_image(owned_property, photo(), 0, is_main=True)
+    staged = Path(image.pending_path)
+
+    def refuse(*args, **kwargs):
+        raise ClientError({"Error": {"Code": "403", "Message": "Forbidden"}}, "HeadObject")
+
+    monkeypatch.setattr("django.db.models.fields.files.FieldFile.save", refuse)
+
+    with pytest.raises(ClientError):
+        optimize_property_image(image.pk)
+
+    image.refresh_from_db()
+    # Still PENDING with its file: the hourly sweep retries once someone fixes
+    # the credential. But the reason is now on the row for the status panel.
+    assert image.status == PropertyImage.Status.PENDING
+    assert staged.is_file()
+    assert "almacenamiento" in image.optimization_error

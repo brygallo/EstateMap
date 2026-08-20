@@ -124,6 +124,28 @@ done
 curl --fail --silent --show-error -H 'X-Forwarded-Proto: https' http://127.0.0.1:8000/api/health/ >/dev/null
 curl --fail --silent --show-error http://127.0.0.1:3000/robots.txt >/dev/null
 
+# The health endpoint answers `ok` with an object store that refuses every
+# write: nothing in a request path touches it. On 2026-08-20 a deploy shipped a
+# MinIO secret that did not match the server's and the portal kept serving for
+# five hours while every photo uploaded in that window stayed in staging, whole
+# but unpublished. A round trip is the only thing that tells them apart.
+echo "🗄️  Checking the object store accepts writes..."
+docker exec estatemap_backend python - <<'PYCHECK'
+import os
+
+import django
+
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", "estate_map.settings")
+django.setup()
+
+from django.core.files.base import ContentFile
+from django.core.files.storage import default_storage
+
+probe = default_storage.save("deploy-probe/.write-check", ContentFile(b"ok"))
+default_storage.delete(probe)
+print("object store writable")
+PYCHECK
+
 echo "📊 Services status:"
 docker-compose -f docker-compose.prod.yml ps
 

@@ -37,6 +37,8 @@ Invariantes del recorrido completo desde que alguien envía el formulario de pub
 | [`WFP-020`](#wfp-020--la-forma-dibujada-calcula-el-área-y-el-área-sigue-siendo-corregible) | La forma dibujada calcula el área, y el área sigue siendo corregible | ✅ Implementada |
 | [`WFP-021`](#wfp-021--subir-fotos-lentas-no-cancela-la-publicación) | Subir fotos lentas no cancela la publicación | ✅ Implementada |
 | [`WFP-022`](#wfp-022--el-preflight-cors-autoriza-la-cabecera-idempotency-key) | El preflight CORS autoriza la cabecera Idempotency-Key | ✅ Implementada |
+| [`WFP-023`](#wfp-023--un-rechazo-del-almacenamiento-queda-escrito-en-la-fila-no-solo-en-los-registros) | Un rechazo del almacenamiento queda escrito en la fila, no solo en los registros | ✅ Implementada |
+| [`WFP-024`](#wfp-024--una-foto-en-staging-no-pasa-por-el-optimizador-de-imágenes-del-portal) | Una foto en staging no pasa por el optimizador de imágenes del portal | ✅ Implementada |
 
 ### WFP-001 — Sin sesión, el envío nunca llega a crear la propiedad
 
@@ -227,7 +229,7 @@ Antes de procesar, `create` toma un candado en caché de 60 s por el mismo diges
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
 - `backend/real_estate/tasks.py:323-340` (`def enqueue_optimization`) — transaction.on_commit envuelve el intento asíncrono con fallback síncrono.
-- `backend/real_estate/tasks.py:352-357` (`optimize_property_image(image_id)`) — Llamada directa (no .delay) como fallback cuando el broker no responde.
+- `backend/real_estate/tasks.py:364-368` (`optimize_property_image(image_id)`) — Llamada directa (no .delay) como fallback cuando el broker no responde.
 - `backend/real_estate/tasks.py:113-126` (`def sweep_pending_images`) — Reintento horario si incluso el fallback síncrono falla.
 
 **Casos**
@@ -545,3 +547,46 @@ Ocurrió: entre el 3 de agosto de 2026, cuando WFP-006 añadió la cabecera, y e
 **Cobertura exigida:** api
 
 - `backend/real_estate/tests/test_cors_preflight.py`
+
+### WFP-023 — Un rechazo del almacenamiento queda escrito en la fila, no solo en los registros
+
+**Estado:** ✅ Implementada
+
+Si `optimize_property_image` recibe un error de boto al publicar en MinIO, la fila sigue `pending` con su archivo temporal —para que la barrida horaria la reintente— pero guarda el motivo en `optimization_error`. El panel de estado marca `error` en cuanto existe una fila pending con motivo, sin esperar el umbral de dos horas de antigüedad.
+
+> **Por qué:** Ocurrió el 20 de agosto de 2026: la credencial de MinIO del backend dejó de coincidir con la del servidor y cada `HeadObject` respondió 403. La excepción subía sin tocar la fila, así que las fotos quedaban `pending` —indistinguibles de una subida de hace un segundo— y el portal las mostraba desde el almacenamiento temporal. Nada en la interfaz decía que el almacén llevaba horas rechazando escrituras.
+Marcar la fila `failed` sería peor: la barrida solo reencola las `pending`, y una credencial se arregla desde fuera. Lo que faltaba no era cambiar de estado, era dejar por escrito por qué sigue pendiente.
+
+**Evidencia en el código** (verificada por `tools/specs/validate.py`)
+
+- `backend/real_estate/tasks.py` (`except (BotoCoreError, ClientError) as exc:`) — Escribe optimization_error y vuelve a lanzar; no cambia el estado.
+- `backend/real_estate/views.py` (`.exclude(optimization_error="")`) — El panel de estado cuenta las pending con motivo como error.
+
+**Casos**
+
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| El almacén responde 403 al publicar | — | `storage`=rechaza | — | la fila sigue pending con su archivo; optimization_error explica el rechazo |
+| Hay una fila pending con motivo | — | `pending_con_error`=1 | — | el componente de imágenes del panel de estado responde error |
+
+### WFP-024 — Una foto en staging no pasa por el optimizador de imágenes del portal
+
+**Estado:** ✅ Implementada
+
+`PropertyImage` marca `unoptimized` cuando el `src` apunta a `/pending-image/`, de modo que el navegador la pide directamente a la API en lugar de a `/_next/image`.
+
+> **Por qué:** El host de la API no está en `images.remotePatterns` y no debe estarlo: la URL de staging muere en cuanto el worker publica el WebP, así que no hay nada que optimizar ni que cachear un día. Pero mandarla igualmente al optimizador devuelve `400 "url" parameter is not allowed`, y entonces la ventana de staging —que existe precisamente para no pintar una imagen rota (PERM-023)— pinta una imagen rota.
+Se notó el 20 de agosto de 2026, cuando un fallo de credenciales alargó esa ventana de segundos a horas: la ficha salía sin fotos mientras la galería a pantalla completa, que usa `<img>` plano, las mostraba todas.
+
+**Evidencia en el código** (verificada por `tools/specs/validate.py`)
+
+- `frontend/components/ui/PropertyImage.tsx` (`function isStagedUpload`) — Detecta la URL de staging por su ruta, no por el host.
+- `frontend/components/ui/PropertyImage.tsx` (`unoptimized={unoptimized ?? isStagedUpload(props.src)}`) — El valor explícito de quien llama sigue teniendo prioridad.
+- `frontend/next.config.js` (`hostname: 'minio.geopropiedadesecuador.com'`) — Solo el almacén público está permitido; la API no.
+
+**Casos**
+
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| Foto recién subida, aún en staging | — | `src`=/api/pending-image/1/ | — | se pide directa a la API, sin pasar por /_next/image |
+| Foto ya publicada en el almacén | — | `src`=https://minio.geopropiedadesecuador.com/estatemap/properties/p1_0.webp | — | se pide optimizada por /_next/image |

@@ -408,7 +408,7 @@ La escritura sobre una propiedad existente exige ser su owner; cualquier otro us
 
 - `backend/real_estate/permissions.py:4-15` (`IsOwnerOrReadOnly`) — Permite cualquier método seguro y compara obj.owner == request.user para el resto.
 - `backend/real_estate/views.py:356-358` (`IsOwnerOrReadOnly`) — permission_classes = [IsAuthenticatedOrReadOnly, IsOwnerOrReadOnly] en PropertyViewSet.
-- `backend/real_estate/views.py:2643-2645` (`PATCH_ALLOWED_FIELDS`) — El panel admin puede tocar propiedades ajenas, pero solo status, title, price, city y description.
+- `backend/real_estate/views.py:2684-2686` (`PATCH_ALLOWED_FIELDS`) — El panel admin puede tocar propiedades ajenas, pero solo status, title, price, city y description.
 
 **Casos**
 
@@ -806,7 +806,7 @@ La normalización vive en `save()` porque todos los caminos de escritura pasan p
 - `backend/real_estate/models.py:204-211` (`closed_reason = models`)
 - `backend/real_estate/models.py:324-336` (`if self.closed_reason:`) — Cerrar pone inactive y sella la fecha; abrir la borra.
 - `backend/real_estate/serializers.py:38-50` (`def reopen_on_reactivation`) — Volver a poner el anuncio en venta lo reabre; si no, el cambio parece aceptado y se deshace solo.
-- `backend/real_estate/views.py:2832-2834` (`changes['closed_reason'] = ''`) — El cambio de estado en lote escribe con .update(), que nunca llega a save(), así que reabre a mano.
+- `backend/real_estate/views.py:2873-2875` (`changes['closed_reason'] = ''`) — El cambio de estado en lote escribe con .update(), que nunca llega a save(), así que reabre a mano.
 
 **Casos**
 

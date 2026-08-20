@@ -350,7 +350,7 @@ rules:
         symbol: def enqueue_optimization
         note: transaction.on_commit envuelve el intento asíncrono con fallback síncrono.
       - file: backend/real_estate/tasks.py
-        lines: "352-357"
+        lines: "364-368"
         symbol: "optimize_property_image(image_id)"
         note: Llamada directa (no .delay) como fallback cuando el broker no responde.
       - file: backend/real_estate/tasks.py
@@ -941,3 +941,83 @@ rules:
           origin: "https://geopropiedadesecuador.com"
           idempotency_key: "abc123"
         expected: "el navegador no bloquea la petición y el alta sigue su curso normal"
+
+  - id: WFP-023
+    name: Un rechazo del almacenamiento queda escrito en la fila, no solo en los registros
+    status: implemented
+    summary: >-
+      Si `optimize_property_image` recibe un error de boto al publicar en
+      MinIO, la fila sigue `pending` con su archivo temporal —para que la
+      barrida horaria la reintente— pero guarda el motivo en
+      `optimization_error`. El panel de estado marca `error` en cuanto existe
+      una fila pending con motivo, sin esperar el umbral de dos horas de
+      antigüedad.
+    rationale: >-
+      Ocurrió el 20 de agosto de 2026: la credencial de MinIO del backend dejó
+      de coincidir con la del servidor y cada `HeadObject` respondió 403. La
+      excepción subía sin tocar la fila, así que las fotos quedaban `pending`
+      —indistinguibles de una subida de hace un segundo— y el portal las
+      mostraba desde el almacenamiento temporal. Nada en la interfaz decía que
+      el almacén llevaba horas rechazando escrituras.
+
+      Marcar la fila `failed` sería peor: la barrida solo reencola las
+      `pending`, y una credencial se arregla desde fuera. Lo que faltaba no era
+      cambiar de estado, era dejar por escrito por qué sigue pendiente.
+    evidence:
+      - file: backend/real_estate/tasks.py
+        symbol: "except (BotoCoreError, ClientError) as exc:"
+        note: Escribe optimization_error y vuelve a lanzar; no cambia el estado.
+      - file: backend/real_estate/views.py
+        symbol: '.exclude(optimization_error="")'
+        note: El panel de estado cuenta las pending con motivo como error.
+    tests:
+      api: false
+    cases:
+      - name: El almacén responde 403 al publicar
+        given:
+          storage: rechaza
+        expected: "la fila sigue pending con su archivo; optimization_error explica el rechazo"
+      - name: Hay una fila pending con motivo
+        given:
+          pending_con_error: 1
+        expected: "el componente de imágenes del panel de estado responde error"
+
+  - id: WFP-024
+    name: Una foto en staging no pasa por el optimizador de imágenes del portal
+    status: implemented
+    summary: >-
+      `PropertyImage` marca `unoptimized` cuando el `src` apunta a
+      `/pending-image/`, de modo que el navegador la pide directamente a la
+      API en lugar de a `/_next/image`.
+    rationale: >-
+      El host de la API no está en `images.remotePatterns` y no debe estarlo:
+      la URL de staging muere en cuanto el worker publica el WebP, así que no
+      hay nada que optimizar ni que cachear un día. Pero mandarla igualmente
+      al optimizador devuelve `400 "url" parameter is not allowed`, y entonces
+      la ventana de staging —que existe precisamente para no pintar una imagen
+      rota (PERM-023)— pinta una imagen rota.
+
+      Se notó el 20 de agosto de 2026, cuando un fallo de credenciales alargó
+      esa ventana de segundos a horas: la ficha salía sin fotos mientras la
+      galería a pantalla completa, que usa `<img>` plano, las mostraba todas.
+    evidence:
+      - file: frontend/components/ui/PropertyImage.tsx
+        symbol: function isStagedUpload
+        note: Detecta la URL de staging por su ruta, no por el host.
+      - file: frontend/components/ui/PropertyImage.tsx
+        symbol: "unoptimized={unoptimized ?? isStagedUpload(props.src)}"
+        note: El valor explícito de quien llama sigue teniendo prioridad.
+      - file: frontend/next.config.js
+        symbol: "hostname: 'minio.geopropiedadesecuador.com'"
+        note: Solo el almacén público está permitido; la API no.
+    tests:
+      api: false
+    cases:
+      - name: Foto recién subida, aún en staging
+        given:
+          src: "/api/pending-image/1/"
+        expected: "se pide directa a la API, sin pasar por /_next/image"
+      - name: Foto ya publicada en el almacén
+        given:
+          src: "https://minio.geopropiedadesecuador.com/estatemap/properties/p1_0.webp"
+        expected: "se pide optimizada por /_next/image"

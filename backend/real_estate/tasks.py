@@ -13,6 +13,7 @@ import time
 from pathlib import Path
 
 import requests
+from botocore.exceptions import BotoCoreError, ClientError
 from celery import shared_task
 from django.conf import settings
 from django.core.files import File
@@ -96,6 +97,17 @@ def optimize_property_image(self, image_id):
         logger.warning("PropertyImage %s could not be optimized: %s", image_id, exc)
         _discard(source)
         return {"id": image_id, "status": "failed", "error": str(exc)}
+    except (BotoCoreError, ClientError) as exc:
+        # The object store refused the write. The row stays PENDING with its
+        # temp file so the hourly sweep keeps retrying -- a rejected credential
+        # is fixed by an operator, not by this task -- but the reason is written
+        # down, because a PENDING row with no explanation is indistinguishable
+        # from one uploaded a second ago, and that is how a broken bucket stayed
+        # invisible for hours.
+        instance.optimization_error = f"El almacenamiento rechazó la subida: {exc}"
+        instance.save(update_fields=["optimization_error"])
+        logger.error("PropertyImage %s could not be published to storage: %s", image_id, exc)
+        raise
 
     _discard(source)
     elapsed = time.monotonic() - started

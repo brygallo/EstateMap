@@ -114,56 +114,81 @@ jobs:
             # double quotes an expansion is not re-expanded, so a value
             # carrying $ or @ — the MinIO key does — is written verbatim.
             umask 077
-            echo "DJANGO_SECRET_KEY=$DJANGO_SECRET_KEY" > .env.prod
-            echo "DEBUG=False" >> .env.prod
-            echo "ALLOWED_HOSTS=$ALLOWED_HOSTS" >> .env.prod
-            echo "CORS_ALLOWED_ORIGINS=$CORS_ALLOWED_ORIGINS" >> .env.prod
-            echo "CSRF_TRUSTED_ORIGINS=$CSRF_TRUSTED_ORIGINS" >> .env.prod
-            echo "SECURE_SSL_REDIRECT=True" >> .env.prod
-            echo "ENVIRONMENT=production" >> .env.prod
-            echo "RELEASE_SHA=$RELEASE_SHA" >> .env.prod
-            echo "OBSERVABILITY_LOG_LEVEL=INFO" >> .env.prod
-            echo "SLOW_ENDPOINT_MS=1000" >> .env.prod
-            echo "THROTTLE_EXEMPT_IPS=" >> .env.prod
-            echo "IMAGE_UPLOAD_TEMP_MAX_AGE_HOURS=48" >> .env.prod
-            echo "INDEXNOW_ENABLED=True" >> .env.prod
-            echo "BACKUP_VERIFICATION_FILE=/tmp/estate-backup-verified.json" >> .env.prod
-            echo "DB_HOST=$DB_HOST" >> .env.prod
-            echo "DB_USER=$DB_USER" >> .env.prod
-            echo "DB_PASSWORD=$DB_PASSWORD" >> .env.prod
-            echo "DB_NAME=$DB_NAME" >> .env.prod
-            echo "SERVER_IP=$SERVER_IP" >> .env.prod
-            echo "MINIO_ENDPOINT=$MINIO_ENDPOINT" >> .env.prod
-            echo "MINIO_ACCESS_KEY=$MINIO_ACCESS_KEY" >> .env.prod
-            echo "MINIO_SECRET_KEY=$MINIO_SECRET_KEY" >> .env.prod
-            echo "MINIO_USE_SSL=$MINIO_USE_SSL" >> .env.prod
-            echo "MINIO_BUCKET_NAME=$MINIO_BUCKET_NAME" >> .env.prod
-            echo "MINIO_PUBLIC_ENDPOINT=$MINIO_PUBLIC_ENDPOINT" >> .env.prod
-            echo "NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL" >> .env.prod
-            echo "NEXT_PUBLIC_FRONTEND_URL=$NEXT_PUBLIC_FRONTEND_URL" >> .env.prod
-            echo "NEXT_PUBLIC_GTM_ID=$NEXT_PUBLIC_GTM_ID" >> .env.prod
-            echo "NEXT_PUBLIC_GA_MEASUREMENT_ID=$NEXT_PUBLIC_GA_MEASUREMENT_ID" >> .env.prod
-            echo "GOOGLE_CLIENT_ID=$GOOGLE_CLIENT_ID" >> .env.prod
-            echo "GOOGLE_CLIENT_SECRET=$GOOGLE_CLIENT_SECRET" >> .env.prod
-            echo "NEXT_PUBLIC_GOOGLE_CLIENT_ID=$NEXT_PUBLIC_GOOGLE_CLIENT_ID" >> .env.prod
-            echo "EMAIL_BACKEND=$EMAIL_BACKEND" >> .env.prod
-            echo "EMAIL_HOST=$EMAIL_HOST" >> .env.prod
-            echo "EMAIL_PORT=$EMAIL_PORT" >> .env.prod
-            echo "EMAIL_USE_TLS=$EMAIL_USE_TLS" >> .env.prod
-            echo "EMAIL_HOST_USER=$EMAIL_HOST_USER" >> .env.prod
-            echo "EMAIL_HOST_PASSWORD=$EMAIL_HOST_PASSWORD" >> .env.prod
-            echo "DEFAULT_FROM_EMAIL=$DEFAULT_FROM_EMAIL" >> .env.prod
-            echo "FRONTEND_URL=$FRONTEND_URL" >> .env.prod
-            echo "REVALIDATE_SECRET=$REVALIDATE_SECRET" >> .env.prod
-            echo "NEXT_REVALIDATE_URL=http://frontend:3000/api/revalidate" >> .env.prod
+            echo "DJANGO_SECRET_KEY=$DJANGO_SECRET_KEY" > .env.prod.candidate
+            echo "DEBUG=False" >> .env.prod.candidate
+            echo "ALLOWED_HOSTS=$ALLOWED_HOSTS" >> .env.prod.candidate
+            echo "CORS_ALLOWED_ORIGINS=$CORS_ALLOWED_ORIGINS" >> .env.prod.candidate
+            echo "CSRF_TRUSTED_ORIGINS=$CSRF_TRUSTED_ORIGINS" >> .env.prod.candidate
+            echo "SECURE_SSL_REDIRECT=True" >> .env.prod.candidate
+            echo "ENVIRONMENT=production" >> .env.prod.candidate
+            echo "RELEASE_SHA=$RELEASE_SHA" >> .env.prod.candidate
+            echo "OBSERVABILITY_LOG_LEVEL=INFO" >> .env.prod.candidate
+            echo "SLOW_ENDPOINT_MS=1000" >> .env.prod.candidate
+            echo "THROTTLE_EXEMPT_IPS=" >> .env.prod.candidate
+            echo "IMAGE_UPLOAD_TEMP_MAX_AGE_HOURS=48" >> .env.prod.candidate
+            echo "INDEXNOW_ENABLED=True" >> .env.prod.candidate
+            echo "BACKUP_VERIFICATION_FILE=/tmp/estate-backup-verified.json" >> .env.prod.candidate
+            echo "DB_HOST=$DB_HOST" >> .env.prod.candidate
+            echo "DB_USER=$DB_USER" >> .env.prod.candidate
+            echo "DB_PASSWORD=$DB_PASSWORD" >> .env.prod.candidate
+            echo "DB_NAME=$DB_NAME" >> .env.prod.candidate
+            echo "SERVER_IP=$SERVER_IP" >> .env.prod.candidate
+            echo "MINIO_ENDPOINT=$MINIO_ENDPOINT" >> .env.prod.candidate
+            echo "MINIO_ACCESS_KEY=$MINIO_ACCESS_KEY" >> .env.prod.candidate
+            echo "MINIO_SECRET_KEY=$MINIO_SECRET_KEY" >> .env.prod.candidate
+            echo "MINIO_USE_SSL=$MINIO_USE_SSL" >> .env.prod.candidate
+            echo "MINIO_BUCKET_NAME=$MINIO_BUCKET_NAME" >> .env.prod.candidate
+            echo "MINIO_PUBLIC_ENDPOINT=$MINIO_PUBLIC_ENDPOINT" >> .env.prod.candidate
+            echo "NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL" >> .env.prod.candidate
+            echo "NEXT_PUBLIC_FRONTEND_URL=$NEXT_PUBLIC_FRONTEND_URL" >> .env.prod.candidate
+            echo "NEXT_PUBLIC_GTM_ID=$NEXT_PUBLIC_GTM_ID" >> .env.prod.candidate
+            echo "NEXT_PUBLIC_GA_MEASUREMENT_ID=$NEXT_PUBLIC_GA_MEASUREMENT_ID" >> .env.prod.candidate
+            echo "GOOGLE_CLIENT_ID=$GOOGLE_CLIENT_ID" >> .env.prod.candidate
+            echo "GOOGLE_CLIENT_SECRET=$GOOGLE_CLIENT_SECRET" >> .env.prod.candidate
+            echo "NEXT_PUBLIC_GOOGLE_CLIENT_ID=$NEXT_PUBLIC_GOOGLE_CLIENT_ID" >> .env.prod.candidate
+            echo "EMAIL_BACKEND=$EMAIL_BACKEND" >> .env.prod.candidate
+            echo "EMAIL_HOST=$EMAIL_HOST" >> .env.prod.candidate
+            echo "EMAIL_PORT=$EMAIL_PORT" >> .env.prod.candidate
+            echo "EMAIL_USE_TLS=$EMAIL_USE_TLS" >> .env.prod.candidate
+            echo "EMAIL_HOST_USER=$EMAIL_HOST_USER" >> .env.prod.candidate
+            echo "EMAIL_HOST_PASSWORD=$EMAIL_HOST_PASSWORD" >> .env.prod.candidate
+            echo "DEFAULT_FROM_EMAIL=$DEFAULT_FROM_EMAIL" >> .env.prod.candidate
+            echo "FRONTEND_URL=$FRONTEND_URL" >> .env.prod.candidate
+            echo "REVALIDATE_SECRET=$REVALIDATE_SECRET" >> .env.prod.candidate
+            echo "NEXT_REVALIDATE_URL=http://frontend:3000/api/revalidate" >> .env.prod.candidate
             # Whatever else the session writes to this file — the deploy of
             # 2026-08-20 landed the script's own closing `echo` between two
             # variables, twice, and no reading of the shell explains it — only
             # well-formed KEY=VALUE lines survive. Compose refuses to read the
             # file over a single stray line, and that refusal aborts the deploy
             # after the images are built.
-            grep -E '^[A-Za-z_][A-Za-z0-9_]*=' .env.prod > .env.prod.clean
-            mv .env.prod.clean .env.prod
+            grep -E '^[A-Za-z_][A-Za-z0-9_]*=' .env.prod.candidate > .env.prod.clean
+            mv .env.prod.clean .env.prod.candidate
+            chmod 600 .env.prod.candidate
+
+            # Prove the MinIO credential before production adopts it. The
+            # deploy of 2026-08-20 was the first one whose .env.prod reached
+            # the server intact, and it carried a MINIO_SECRET_KEY that had
+            # never matched the server's root password: the portal kept
+            # answering while every photo uploaded for the next five hours
+            # stayed in staging. Nothing in a request path touches the object
+            # store, so no health check could have noticed.
+            #
+            # One command per line, like the block above, and the file travels
+            # by `docker cp`: no secret reaches a command line the box can
+            # list, and no multi-line construct can interleave. A failure here
+            # leaves the running .env.prod untouched, which is the point.
+            #
+            # The checkout on the server is still the previous revision at this
+            # point -- deploy.sh is what pulls -- so the first deploy that
+            # introduces the checker skips it and the next one runs it.
+            echo "🗄️  Checking the MinIO credential this deploy would install..."
+            test ! -f scripts/check_minio_credential.py && echo "⚠️  checker not in this checkout yet; skipping" || docker cp scripts/check_minio_credential.py estatemap_backend:/tmp/check_minio_credential.py
+            test ! -f scripts/check_minio_credential.py || docker cp .env.prod.candidate estatemap_backend:/tmp/env-candidate
+            test ! -f scripts/check_minio_credential.py || docker exec estatemap_backend python /tmp/check_minio_credential.py /tmp/env-candidate
+            test ! -f scripts/check_minio_credential.py || docker exec estatemap_backend rm -f /tmp/check_minio_credential.py /tmp/env-candidate
+
+            mv .env.prod.candidate .env.prod
             chmod 600 .env.prod
 
             echo "🔄 Running deploy script..."
@@ -201,5 +226,3 @@ jobs:
           DEFAULT_FROM_EMAIL: ${{ secrets.DEFAULT_FROM_EMAIL }}
           FRONTEND_URL: ${{ secrets.FRONTEND_URL }}
           REVALIDATE_SECRET: ${{ secrets.REVALIDATE_SECRET }}
-
-            echo "✅ Deployment completed!"

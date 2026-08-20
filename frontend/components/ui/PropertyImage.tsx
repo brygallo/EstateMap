@@ -11,6 +11,17 @@ type PropertyImageProps = Omit<ImageProps, 'onLoad'> & {
 };
 
 /**
+ * A photo that is still in staging is served by the API, not by the object
+ * store, and that host is deliberately absent from `images.remotePatterns`:
+ * the URL dies the moment the worker publishes the WebP, so there is nothing
+ * worth optimizing or caching. Routing it through `/_next/image` only earns a
+ * 400 and a broken image for the seconds the pending window lasts.
+ */
+function isStagedUpload(src: ImageProps['src']): boolean {
+  return typeof src === 'string' && src.includes('/pending-image/');
+}
+
+/**
  * Imagen de propiedad con skeleton mientras carga y fade-in al terminar.
  * Usa next/image. Soporta `fill` (el contenedor debe ser relative/dimensionado)
  * o width/height. Nunca deja un hueco vacío: muestra Skeleton hasta el onLoad.
@@ -20,6 +31,7 @@ export default function PropertyImage({
   wrapperClassName,
   fill,
   alt,
+  unoptimized,
   ...props
 }: PropertyImageProps) {
   const [loaded, setLoaded] = useState(false);
@@ -44,6 +56,7 @@ export default function PropertyImage({
           className
         )}
         onLoad={() => setLoaded(true)}
+        unoptimized={unoptimized ?? isStagedUpload(props.src)}
         {...props}
       />
     </div>

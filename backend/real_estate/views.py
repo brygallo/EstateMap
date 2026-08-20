@@ -1741,6 +1741,33 @@ class ImageProxyView(View):
             raise Http404("Image not found")
 
 
+MAGIC_IMAGE_TYPES = (
+    (b"\xff\xd8\xff", "image/jpeg"),
+    (b"\x89PNG\r\n\x1a\n", "image/png"),
+    (b"GIF8", "image/gif"),
+)
+
+
+def _sniff_image_type(path):
+    """
+    Derive the content type from the bytes, never from the file name.
+
+    The staged file keeps the suffix of an attacker-controlled upload name, so
+    `mimetypes` can answer `application/octet-stream` for a perfectly good WebP
+    -- and the API host sends `X-Content-Type-Options: nosniff`, which turns
+    that answer into an image the browser refuses to paint.
+    """
+    with path.open("rb") as handle:
+        head = handle.read(16)
+
+    for magic, content_type in MAGIC_IMAGE_TYPES:
+        if head.startswith(magic):
+            return content_type
+    if head[:4] == b"RIFF" and head[8:12] == b"WEBP":
+        return "image/webp"
+    return "application/octet-stream"
+
+
 class PendingImageView(View):
     """
     Serve a freshly uploaded image from local staging while the worker is still
@@ -1766,7 +1793,7 @@ class PendingImageView(View):
         if not path.is_file() or path.parent != Path(settings.IMAGE_UPLOAD_TEMP_DIR):
             raise Http404("Image not available")
 
-        response = FileResponse(path.open("rb"))
+        response = FileResponse(path.open("rb"), content_type=_sniff_image_type(path))
         # Deliberately not cached: this URL stops being valid the moment the
         # worker finishes, which is usually seconds away.
         response["Cache-Control"] = "no-store"
@@ -2448,11 +2475,25 @@ class AdminSystemStatusView(generics.GenericAPIView):
             status=PropertyImage.Status.PENDING,
             uploaded_at__lt=now - timedelta(hours=2),
         ).count()
+        # A pending row that already carries an error is not a photo uploaded a
+        # second ago: the worker reached the object store and was turned away.
+        # Waiting the two hours the age threshold needs would hide an outage
+        # that is already known.
+        rejected_images = (
+            PropertyImage.objects.filter(status=PropertyImage.Status.PENDING)
+            .exclude(optimization_error="")
+            .count()
+        )
         components["images"] = {
-            "status": "error" if failed_images else "stale" if old_pending_images else "healthy",
+            "status": "error"
+            if failed_images or rejected_images
+            else "stale"
+            if old_pending_images
+            else "healthy",
             "label": "Procesamiento de imágenes",
             "failed": failed_images,
             "pending_old": old_pending_images,
+            "pending_rejected": rejected_images,
         }
 
         stalled_runs = IngestaRun.objects.filter(

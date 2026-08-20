@@ -19,6 +19,7 @@ type ComponentState = {
   age_seconds?: number | null;
   failed?: number;
   pending_old?: number;
+  pending_rejected?: number;
   stalled?: number;
   failed_24h?: number;
 };
@@ -199,7 +200,7 @@ function ComponentCard({ component }: { component: ComponentState }) {
 
 function componentDetail(component: ComponentState) {
   if (component.age_seconds != null) return `Señal hace ${component.age_seconds} s`;
-  if (component.failed || component.pending_old) return `${component.failed || 0} fallidas · ${component.pending_old || 0} pendientes antiguas`;
+  if (component.failed || component.pending_old || component.pending_rejected) return `${component.failed || 0} fallidas · ${component.pending_rejected || 0} rechazadas por el almacenamiento · ${component.pending_old || 0} pendientes antiguas`;
   if (component.stalled || component.failed_24h) return `${component.stalled || 0} estancadas · ${component.failed_24h || 0} fallos en 24 h`;
   return component.status === 'healthy' ? 'Sin incidencias' : 'Requiere verificación';
 }
