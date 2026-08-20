@@ -36,6 +36,25 @@ esconder la IP no es el objetivo de esta instalación.
 
 ## Lo que no se debe hacer
 
+**No activar DNSSEC en GoDaddy.** Es el más peligroso de esta lista porque el
+panel lo ofrece gratis y suena a mejora de seguridad. DNSSEC funciona
+publicando en el registro de `.com` la huella de la clave con la que firma
+*quien sirve la zona*. Quien la sirve ahora es Cloudflare, no GoDaddy, así que
+un DS puesto desde GoDaddy apunta a una clave que ya no firma nada: cualquier
+resolver que valide —Google, Cloudflare, la mayoría de operadores— empieza a
+descartar todas las respuestas y el dominio deja de existir para media
+internet. No es una caída del sitio: es una caída del dominio entero, correo
+incluido, y con propagación lenta de deshacer.
+
+Comprobado el día del cambio: el registro tiene **cero registros DS**, así que
+hoy está apagado y así debe seguir. Si alguna vez se quiere DNSSEC, se activa
+desde Cloudflare —en su panel de DNS— y es él quien indica el DS a publicar; no
+se toca la sección de GoDaddy.
+
+    dig DS geopropiedadesecuador.com @l.gtld-servers.net +noall +answer
+    # cualquier salida distinta de vacío, sin haberlo activado en Cloudflare,
+    # es la causa de que el dominio no resuelva
+
 **No cerrar 80/443 a los rangos de Cloudflare en el firewall.** Es el consejo
 habitual y aquí apaga tres sitios: aents.net y miyomehabla.com conservan sus
 nameservers en GoDaddy y llegan directo al origen, igual que el correo y MinIO.
