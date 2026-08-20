@@ -19,6 +19,7 @@ import { NextRequest } from 'next/server';
 import jsQR from 'jsqr';
 import sharp from 'sharp';
 
+import { trackedUrl, type SocialNetwork } from '@/lib/social-kit';
 import type { Property } from '@/lib/types';
 
 const LISTING: Property = {
@@ -154,7 +155,18 @@ async function recompress(image: Buffer, width?: number): Promise<Buffer> {
   return (width ? pipeline.resize(width) : pipeline).jpeg({ quality: 25 }).toBuffer();
 }
 
-const TRACKED = 'https://geopropiedadesecuador.com/p/XK4T2';
+/**
+ * What the QR is supposed to carry, asked of the same helper the route asks.
+ *
+ * Not a literal. The origin comes from `NEXT_PUBLIC_FRONTEND_URL`, so a literal
+ * passes on a machine where that is unset and fails in CI, where it is
+ * localhost — which is exactly what happened. What is worth asserting is that
+ * the code resolves to this listing's tracked address with this network's tag
+ * on it, and that is a question `trackedUrl` answers in every environment. The
+ * path is checked separately so the comparison is not purely with itself.
+ */
+const CODE_PATH = '/p/XK4T2';
+const tracked = (network: SocialNetwork) => trackedUrl(LISTING, network);
 
 describe('the promotion laminas', () => {
   it('draws the square as a JPEG at the size the format declares', async () => {
@@ -177,8 +189,8 @@ describe('the promotion laminas', () => {
     'prints a QR on the %s that a scanner can read',
     async (format) => {
       const decoded = await scan(await bytes(await draw(format, '?red=instagram')));
-      expect(decoded).toContain(TRACKED);
-      expect(decoded).toContain('utm_source=instagram');
+      expect(decoded).toContain(CODE_PATH);
+      expect(decoded).toBe(tracked('instagram'));
     }
   );
 
@@ -187,12 +199,12 @@ describe('the promotion laminas', () => {
   // badge eats into the same error-correction budget this spends.
   it('prints a QR that survives being forwarded and recompressed', async () => {
     const decoded = await scan(await recompress(await bytes(await draw('feed'))));
-    expect(decoded).toContain(TRACKED);
+    expect(decoded).toBe(tracked('facebook'));
   });
 
   it('prints a QR that survives being re-shared a size smaller', async () => {
     const decoded = await scan(await recompress(await bytes(await draw('feed')), 900));
-    expect(decoded).toContain(TRACKED);
+    expect(decoded).toBe(tracked('facebook'));
   });
 
   it('weighs a fraction of what the same lamina cost as a PNG', async () => {
