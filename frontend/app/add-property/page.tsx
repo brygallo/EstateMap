@@ -1768,7 +1768,7 @@ const AddPropertyPage = () => {
               <p className="mt-1 text-sm text-textSecondary">
                 {isEditMode
                   ? 'Actualiza la información con el mismo flujo de publicación.'
-                  : 'Toma entre 5 y 8 minutos. Tu borrador se guarda solo y puedes pedir ayuda por WhatsApp.'}
+                  : 'Completa cinco pasos a tu ritmo. Tu borrador se guarda solo y puedes pedir ayuda por WhatsApp.'}
               </p>
             </div>
             <Button variant="outline" onClick={handleCancel} className="rounded-button border-line">

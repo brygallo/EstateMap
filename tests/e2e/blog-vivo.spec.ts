@@ -56,8 +56,8 @@ test.describe('Living blog pages', () => {
     test.skip(slug === null, 'no city holds enough inventory in this environment');
 
     await page.goto(`/blog/${slug}`);
-    await expect(page.getByRole('link', { name: 'Ver ficha completa' }).first()).toBeVisible();
-    await expect(page.getByRole('link', { name: 'Ver en el mapa' }).first()).toBeVisible();
+    await expect(page.getByRole('link', { name: 'Ver propiedad y contacto' }).first()).toBeVisible();
+    await expect(page.getByRole('link', { name: 'Ubicar en el mapa' }).first()).toBeVisible();
     await expect(page.getByText(/por (debajo|encima) del precio por m²/).first()).toBeVisible();
   });
 

@@ -109,7 +109,7 @@ rules:
       ver también lo que no es suyo.
     evidence:
       - file: backend/real_estate/views.py
-        lines: "1184-1186"
+        lines: "1192-1194"
         symbol: my_properties
         note: >-
           La acción declara permission_classes=[IsAuthenticated] y elige entre
@@ -150,7 +150,7 @@ rules:
         symbol: class InventoryPagination
         note: page_size 24, page_size_query_param 'page_size', máximo 100.
       - file: backend/real_estate/views.py
-        lines: "1184-1186"
+        lines: "1192-1194"
         symbol: def my_properties
         note: stats se calcula con queryset.aggregate antes de paginar.
       - file: frontend/app/my-properties/page.tsx
@@ -514,7 +514,7 @@ rules:
         symbol: ensure_polygon_center
         note: Solo rellena los huecos, nunca pisa unas coordenadas enviadas explícitamente.
       - file: backend/real_estate/serializers.py
-        lines: "364-366"
+        lines: "374-376"
         symbol: ensure_polygon_center
         note: En update, un polígono nuevo sin coordenadas nuevas anula las anteriores y las recalcula.
     cases:
@@ -595,7 +595,7 @@ rules:
         symbol: IsOwnerOrReadOnly
         note: permission_classes = [IsAuthenticatedOrReadOnly, IsOwnerOrReadOnly] en PropertyViewSet.
       - file: backend/real_estate/views.py
-        lines: "2635-2637"
+        lines: "2643-2645"
         symbol: PATCH_ALLOWED_FIELDS
         note: El panel admin puede tocar propiedades ajenas, pero solo status, title, price, city y description.
     backend:
@@ -1311,7 +1311,7 @@ rules:
           Volver a poner el anuncio en venta lo reabre; si no, el cambio parece
           aceptado y se deshace solo.
       - file: backend/real_estate/views.py
-        lines: "2824-2826"
+        lines: "2832-2834"
         symbol: "changes['closed_reason'] = ''"
         note: >-
           El cambio de estado en lote escribe con .update(), que nunca llega a
@@ -1384,7 +1384,7 @@ rules:
           Las acciones de detalle resuelven la fila por id, no por el catálogo
           público; el dueño entra siempre.
       - file: backend/real_estate/views.py
-        lines: "962-968"
+        lines: "970-975"
         symbol: "exclude(status='inactive', closed_reason='')"
         note: El código corto de un anuncio vendido sigue resolviendo.
     backend:

@@ -110,7 +110,7 @@ rules:
       rápido con un id que ya se puede mostrar.
     evidence:
       - file: backend/real_estate/serializers.py
-        lines: "362-367"
+        lines: "372-376"
         symbol: "def create(self, validated_data):"
         note: Crea Property y luego llama a stage_property_image por cada archivo.
       - file: backend/real_estate/serializers.py
@@ -441,7 +441,7 @@ rules:
         symbol: "exclude(status='inactive')"
         note: Único filtro que saca inactive del catálogo público; no toca la fila.
       - file: backend/real_estate/views.py
-        lines: "1184-1186"
+        lines: "1192-1194"
         symbol: def my_properties
         note: "including inactive: el dueño ve su propiedad inactiva, el público no."
       - file: backend/real_estate/models.py

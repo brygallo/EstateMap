@@ -176,7 +176,23 @@
       "status": "published",
       "source": "Marcado como publicado por Bryan el 2026-08-20; sin fecha ni red confirmadas",
       "recorded_at": "2026-08-20T03:27:54.984641-05:00"
+    },
+    {
+      "video": "geo-015",
+      "platform": "externo",
+      "published_at": "2026-08-20",
+      "status": "published",
+      "source": "Confirmado como publicado por la persona responsable en conversación el 2026-08-20; red y URL no informadas",
+      "recorded_at": "2026-08-20T12:56:20.993574-05:00"
+    },
+    {
+      "video": "geo-016",
+      "platform": "externo",
+      "published_at": "2026-08-20",
+      "status": "published",
+      "source": "Confirmado como publicado por la persona responsable en conversación el 2026-08-20; red y URL no informadas",
+      "recorded_at": "2026-08-20T12:56:20.994447-05:00"
     }
   ],
-  "updated_at": "2026-08-20T03:27:54.984895-05:00"
+  "updated_at": "2026-08-20T12:56:21.010128-05:00"
 }

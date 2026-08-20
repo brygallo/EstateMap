@@ -513,6 +513,56 @@
       "observation": "El rotulo de cada escena repetia palabra por palabra el subtitulo que tenia debajo -Ya esta hecha sobre ya esta hecha- asi que dos tercios del cuadro decian lo mismo",
       "rule": "El rotulo dice lo que la voz no esta diciendo en ese momento. Se escribe despues del guion y se compara linea por linea contra su locucion; solo el CTA puede repetir. Maximo cuatro palabras y veintidos caracteres, que ya comprueba el linter",
       "origin": "human"
+    },
+    {
+      "created_at": "2026-08-20T12:29:58.141280-05:00",
+      "status": "active",
+      "source": "geo-016",
+      "scope": "global",
+      "applies_to": null,
+      "observation": "La voz final sintetizada por escena reiniciaba intención, respiración y prosodia en cada corte; sonaba como frases pegadas.",
+      "rule": "Sintetizar la voz final como una sola toma continua, alinear escenas y subtítulos sobre esa toma y prohibir audio final fragmentado por escena.",
+      "origin": "human"
+    },
+    {
+      "created_at": "2026-08-20T12:29:58.618701-05:00",
+      "status": "active",
+      "source": "geo-016",
+      "scope": "global",
+      "applies_to": null,
+      "observation": "Cada fragmento de subtítulo volvía a entrar con desplazamiento y opacidad, haciendo saltar el bloque y restando naturalidad.",
+      "rule": "Mantener una caja fija de dos líneas y una línea base estable; cambiar solo el texto y el resaltado de palabras, sin reanimar el bloque en cada fragmento.",
+      "origin": "human"
+    },
+    {
+      "created_at": "2026-08-20T12:29:59.222176-05:00",
+      "status": "active",
+      "source": "geo-016",
+      "scope": "global",
+      "applies_to": null,
+      "observation": "El flujo compraba voz y comenzaba el render antes de revisar en Studio el timing real de la voz pagada.",
+      "rule": "Comprar o reutilizar la voz con studio --final-voice, recalcular props y subtítulos, exigir approve --final-voice sobre esos artefactos exactos y bloquear render --final hasta entonces.",
+      "origin": "human"
+    },
+    {
+      "created_at": "2026-08-20T12:29:59.563290-05:00",
+      "status": "active",
+      "source": "geo-016",
+      "scope": "global",
+      "applies_to": null,
+      "observation": "Cambiar una voz después de comprarla habría borrado la trazabilidad del voice-lock.",
+      "rule": "Conservar inmutable toda voz pagada; si se pide otra voz, crear una variante de producción enlazada al video original y comprar la nueva toma allí.",
+      "origin": "human"
+    },
+    {
+      "created_at": "2026-08-20T12:45:22.584083-05:00",
+      "status": "active",
+      "source": "geo-016",
+      "scope": "global",
+      "applies_to": null,
+      "observation": "Los contratos declaraban 14 o 24 escenas para una clase de hasta 240 segundos y 16 para una historia de hasta 120, mientras cada toma tiene un máximo de 6 segundos y el perfil vertical todavía declaraba 60 segundos.",
+      "rule": "Derivar presupuestos compatibles con duración máxima dividida para 6 segundos: 8 escenas en corto, 20 en historia y 40 en clase; alinear el perfil a 240 y convertir scene_pace y final_voice_pace en errores de lint con pruebas matemáticas de regresión.",
+      "origin": "human"
     }
   ]
 }

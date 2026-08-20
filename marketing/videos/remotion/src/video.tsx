@@ -49,6 +49,7 @@ const Progress: React.FC<{scenes: VideoProps['scenes']; accent: string}> = ({sce
 export const EstateMapVideo: React.FC<VideoProps> = ({
   scenes,
   musicFile,
+  narrationFile,
   cta,
   url,
   brandTile,
@@ -103,6 +104,7 @@ export const EstateMapVideo: React.FC<VideoProps> = ({
         ))}
       </Series>
       <Progress scenes={scenes} accent={scenes[active]?.accent ?? palette.green} />
+      {narrationFile ? <Audio src={staticFile(narrationFile)} /> : null}
       {musicFile ? (
         <Sequence from={0}>
           <Audio src={staticFile(musicFile)} volume={0.1} loop />

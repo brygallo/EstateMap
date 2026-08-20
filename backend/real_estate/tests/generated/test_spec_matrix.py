@@ -588,12 +588,12 @@ def test_perm_010_el_propietario_supera_la_barrera(spec_request):
     )
 
 
-# --- PERM-011: El informe comercial es público (comportamiento actual) ---
+# --- PERM-011: El contexto comercial no sensible permanece público ---
 
-def test_perm_011_un_visitante_anonimo_obtiene_el_informe_completo(spec_request):
+def test_perm_011_un_visitante_anonimo_obtiene_el_contexto_publico(spec_request):
     """
-    SPEC:PERM-011 — El informe comercial es público (comportamiento actual)
-    Case: un visitante anónimo obtiene el informe completo
+    SPEC:PERM-011 — El contexto comercial no sensible permanece público
+    Case: un visitante anónimo obtiene el contexto público
     """
     response = spec_request(
         method='GET',
@@ -607,13 +607,13 @@ def test_perm_011_un_visitante_anonimo_obtiene_el_informe_completo(spec_request)
         expected='allowed',
         denied_status=None,
         rule_id='PERM-011',
-        case_name='un visitante anónimo obtiene el informe completo',
+        case_name='un visitante anónimo obtiene el contexto público',
         expected_status=200,
     )
 
 def test_perm_011_un_tercero_autenticado_tambien(spec_request):
     """
-    SPEC:PERM-011 — El informe comercial es público (comportamiento actual)
+    SPEC:PERM-011 — El contexto comercial no sensible permanece público
     Case: un tercero autenticado también
     """
     response = spec_request(
@@ -630,6 +630,51 @@ def test_perm_011_un_tercero_autenticado_tambien(spec_request):
         rule_id='PERM-011',
         case_name='un tercero autenticado también',
         expected_status=200,
+    )
+
+
+# --- PERM-012: Las métricas de demanda son privadas ---
+
+def test_perm_012_un_anonimo_no_deberia_ver_el_contador_de_visitas(spec_request):
+    """
+    SPEC:PERM-012 — Las métricas de demanda son privadas
+    Case: un anónimo no debería ver el contador de visitas
+    """
+    response = spec_request(
+        method='GET',
+        path='/api/properties/{property_id}/intelligence/',
+        role='anonymous',
+        given=None,
+        body=None,
+    )
+    assert_outcome(
+        response,
+        expected='allowed',
+        denied_status=None,
+        rule_id='PERM-012',
+        case_name='un anónimo no debería ver el contador de visitas',
+        expected_status=200,
+    )
+
+def test_perm_012_el_propietario_si_deberia_verlo(spec_request):
+    """
+    SPEC:PERM-012 — Las métricas de demanda son privadas
+    Case: el propietario sí debería verlo
+    """
+    response = spec_request(
+        method='GET',
+        path='/api/properties/{property_id}/intelligence/',
+        role='owner',
+        given=None,
+        body=None,
+    )
+    assert_outcome(
+        response,
+        expected='allowed',
+        denied_status=None,
+        rule_id='PERM-012',
+        case_name='el propietario sí debería verlo',
+        expected_status=None,
     )
 
 

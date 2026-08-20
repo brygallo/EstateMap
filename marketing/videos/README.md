@@ -161,9 +161,9 @@ marketing/videos/video new \
 
 La duración editorial normal varía entre 18 y 45 segundos. Usa 18 s para una promesa y demostración simples, 20–30 s para un flujo con varios pasos, mecanismo, objeciones o contexto, y 31–45 s para un tutorial específico que enseñe una secuencia completa. El valor se fija con `--duration`; la fábrica valida el resultado contra ese objetivo y no exige que todas las piezas duren lo mismo. No se admiten pausas o repeticiones usadas como relleno.
 
-Por encima de 45 segundos y hasta 120 la pieza pasa a **formato historia**, para un relato que haya que sostener: el origen del producto, un caso completo. El control de calidad le concede hasta nueve escenas en vez de cinco y hasta 10 segundos antes de mostrar el producto en vez de 3 (`quality.scene_budget` y `quality.product_reveal_deadline`). Todo lo demás sigue igual: un público, una idea y un CTA.
+Por encima de 45 segundos y hasta 120 la pieza pasa a **formato historia**, para un relato que haya que sostener: el origen del producto, un caso completo. El control de calidad le concede hasta veinte escenas en vez de ocho y hasta 10 segundos antes de mostrar el producto en vez de 3 (`quality.scene_budget` y `quality.product_reveal_deadline`). Todo lo demás sigue igual: un público, una idea y un CTA.
 
-Por encima de 120 y hasta 240 la pieza es una **clase**: catorce escenas y 25 segundos antes del producto. Es el formato de una materia que se enseña por pasos, no el de una historia que se alargó, y el tope de escenas sigue existiendo para que una clase no acabe siendo treinta láminas. Sigue teniendo un público, una idea y un CTA, y ninguna cifra entra sin fuente por durar más.
+Por encima de 120 y hasta 240 la pieza es una **clase**: hasta cuarenta escenas y 25 segundos antes del producto. Ese techo permite cubrir 240 segundos sin superar seis segundos por toma; no obliga a agotarlo. Es el formato de una materia que se enseña por pasos, no el de una historia que se alargó. Sigue teniendo un público, una idea y un CTA, y ninguna cifra entra sin fuente por durar más.
 
 Un número que el catálogo saltó puede reclamarse con `--number`, porque `next_number` solo cuenta hacia adelante y un plan descartado deja un hueco que nada más podría ocupar:
 

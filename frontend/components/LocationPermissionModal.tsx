@@ -43,7 +43,7 @@ const LocationPermissionModal = ({
       {/* Non-blocking banner (no scrim, no scroll lock): a labelled region,
           not a dialog, so screen readers do not expect modal behavior. */}
       <div
-        className="pointer-events-auto w-full max-w-lg rounded-modal border border-line bg-surface p-3 shadow-cardHover"
+        className={`pointer-events-auto w-full rounded-modal border border-line bg-surface shadow-cardHover ${blocked ? 'max-w-lg p-3' : 'max-w-md p-2.5 sm:p-3'}`}
         role="region"
         aria-labelledby="location-permission-title"
       >
@@ -60,10 +60,10 @@ const LocationPermissionModal = ({
           <div className="min-w-0 flex-1">
             <div className="flex items-start justify-between gap-3">
               <div>
-                <h2 id="location-permission-title" className="text-base font-semibold text-textPrimary">
-                  {blocked ? 'Activa la ubicación para usar el mapa cerca de ti' : 'Ver propiedades cerca de ti'}
+                <h2 id="location-permission-title" className="text-sm font-semibold text-textPrimary sm:text-base">
+                  {blocked ? 'Activa la ubicación para usar el mapa cerca de ti' : 'Buscar propiedades cerca de mí'}
                 </h2>
-                <p className="mt-0.5 text-sm text-textSecondary">
+                <p className={`mt-0.5 text-sm text-textSecondary ${blocked ? '' : 'hidden sm:block'}`}>
                   {blocked
                     ? 'Tu iPhone o navegador está bloqueando el permiso. Cámbialo una vez y luego vuelve a tocar “Intentar de nuevo”.'
                     : 'Podemos centrar el mapa en tu zona. Tu ubicación no se comparte con terceros.'}
@@ -121,13 +121,13 @@ const LocationPermissionModal = ({
               </div>
             )}
 
-            <div className="mt-2.5 flex flex-col gap-1.5 sm:flex-row sm:justify-end">
+            <div className="mt-2 flex items-center justify-end gap-1.5 sm:mt-2.5">
               <Button
                 type="button"
-                variant="outline"
+                variant="ghost"
                 onClick={onDecline}
                 disabled={isLoading}
-                className="h-8 border-line px-3"
+                className="h-8 px-3"
               >
                 Ahora no
               </Button>

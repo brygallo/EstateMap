@@ -14,92 +14,97 @@
   "scenes": [
     {
       "purpose": "gancho",
-      "durationInFrames": 136,
-      "headline": "Y sigues sin saber",
+      "durationInFrames": 134,
+      "headline": "Uno por uno",
       "captions": [
         {
-          "text": "Llevas rato abriendo anuncios",
+          "text": "Abres anuncios uno por uno",
           "start": 0.0,
-          "end": 1.721,
+          "end": 1.595,
           "words": [
             {
-              "text": "Llevas",
+              "text": "Abres",
               "start": 0.0,
-              "end": 0.402
-            },
-            {
-              "text": "rato",
-              "start": 0.402,
-              "end": 0.688
-            },
-            {
-              "text": "abriendo",
-              "start": 0.688,
-              "end": 1.205
+              "end": 0.354
             },
             {
               "text": "anuncios",
-              "start": 1.205,
-              "end": 1.721
+              "start": 0.354,
+              "end": 0.886
+            },
+            {
+              "text": "uno",
+              "start": 0.886,
+              "end": 1.122
+            },
+            {
+              "text": "por",
+              "start": 1.122,
+              "end": 1.359
+            },
+            {
+              "text": "uno",
+              "start": 1.359,
+              "end": 1.595
             }
           ]
         },
         {
-          "text": "y todavía no sabes cuál es",
-          "start": 1.721,
-          "end": 3.27,
+          "text": "y sigues sin saber cuál es",
+          "start": 1.595,
+          "end": 3.19,
           "words": [
             {
               "text": "y",
               "start": 0.0,
-              "end": 0.115
+              "end": 0.118
             },
             {
-              "text": "todavía",
-              "start": 0.115,
-              "end": 0.574
+              "text": "sigues",
+              "start": 0.118,
+              "end": 0.532
             },
             {
-              "text": "no",
-              "start": 0.574,
-              "end": 0.746
+              "text": "sin",
+              "start": 0.532,
+              "end": 0.768
             },
             {
-              "text": "sabes",
-              "start": 0.746,
-              "end": 1.09
+              "text": "saber",
+              "start": 0.768,
+              "end": 1.122
             },
             {
               "text": "cuál",
-              "start": 1.09,
-              "end": 1.377
+              "start": 1.122,
+              "end": 1.418
             },
             {
               "text": "es",
-              "start": 1.377,
-              "end": 1.549
+              "start": 1.418,
+              "end": 1.595
             }
           ]
         },
         {
           "text": "el más barato.",
-          "start": 3.27,
-          "end": 4.073,
+          "start": 3.19,
+          "end": 4.016,
           "words": [
             {
               "text": "el",
               "start": 0.0,
-              "end": 0.172
+              "end": 0.177
             },
             {
               "text": "más",
-              "start": 0.172,
-              "end": 0.402
+              "start": 0.177,
+              "end": 0.413
             },
             {
               "text": "barato.",
-              "start": 0.402,
-              "end": 0.803
+              "start": 0.413,
+              "end": 0.827
             }
           ]
         }
@@ -111,48 +116,43 @@
       "photo": null,
       "voiceFile": "jobs/geo-015/audio/voice-01.mp3",
       "assetStartInFrames": 0,
-      "assetTotalInFrames": 136,
+      "assetTotalInFrames": 134,
       "accent": "#22C55E"
     },
     {
       "purpose": "problema",
-      "durationInFrames": 71,
-      "headline": "Ya está hecha",
+      "durationInFrames": 51,
+      "headline": "Ya no",
       "captions": [
         {
-          "text": "Respira. Esa lista ya está hecha.",
+          "text": "Ya no tienes que hacerlo.",
           "start": 0.0,
-          "end": 1.907,
+          "end": 1.251,
           "words": [
             {
-              "text": "Respira.",
+              "text": "Ya",
               "start": 0.0,
-              "end": 0.477
+              "end": 0.15
             },
             {
-              "text": "Esa",
-              "start": 0.477,
-              "end": 0.715
+              "text": "no",
+              "start": 0.15,
+              "end": 0.3
             },
             {
-              "text": "lista",
-              "start": 0.715,
-              "end": 1.073
+              "text": "tienes",
+              "start": 0.3,
+              "end": 0.65
             },
             {
-              "text": "ya",
-              "start": 1.073,
+              "text": "que",
+              "start": 0.65,
+              "end": 0.851
+            },
+            {
+              "text": "hacerlo.",
+              "start": 0.851,
               "end": 1.251
-            },
-            {
-              "text": "está",
-              "start": 1.251,
-              "end": 1.549
-            },
-            {
-              "text": "hecha.",
-              "start": 1.549,
-              "end": 1.907
             }
           ]
         }
@@ -164,104 +164,97 @@
       "photo": null,
       "voiceFile": "jobs/geo-015/audio/voice-02.mp3",
       "assetStartInFrames": 0,
-      "assetTotalInFrames": 71,
-      "accent": "#6B5CF6"
+      "assetTotalInFrames": 51,
+      "accent": "#14B8A6"
     },
     {
       "purpose": "prueba",
-      "durationInFrames": 125,
-      "headline": "Tú eliges",
+      "durationInFrames": 127,
+      "headline": "Los de tu ciudad",
       "captions": [
         {
-          "text": "Los terrenos más baratos de",
+          "text": "Aquí están los terrenos más",
           "start": 0.0,
-          "end": 1.578,
+          "end": 1.582,
           "words": [
             {
-              "text": "Los",
+              "text": "Aquí",
               "start": 0.0,
-              "end": 0.225
+              "end": 0.282
             },
             {
-              "text": "terrenos",
-              "start": 0.225,
-              "end": 0.733
-            },
-            {
-              "text": "más",
-              "start": 0.733,
-              "end": 0.958
-            },
-            {
-              "text": "baratos",
-              "start": 0.958,
-              "end": 1.409
-            },
-            {
-              "text": "de",
-              "start": 1.409,
-              "end": 1.578
-            }
-          ]
-        },
-        {
-          "text": "tu ciudad.",
-          "start": 1.578,
-          "end": 2.141,
-          "words": [
-            {
-              "text": "tu",
-              "start": 0.0,
-              "end": 0.169
-            },
-            {
-              "text": "ciudad.",
-              "start": 0.169,
-              "end": 0.564
-            }
-          ]
-        },
-        {
-          "text": "O los más grandes.",
-          "start": 2.141,
-          "end": 3.156,
-          "words": [
-            {
-              "text": "O",
-              "start": 0.0,
-              "end": 0.113
+              "text": "están",
+              "start": 0.282,
+              "end": 0.621
             },
             {
               "text": "los",
-              "start": 0.113,
-              "end": 0.338
+              "start": 0.621,
+              "end": 0.847
+            },
+            {
+              "text": "terrenos",
+              "start": 0.847,
+              "end": 1.356
             },
             {
               "text": "más",
-              "start": 0.338,
-              "end": 0.564
-            },
-            {
-              "text": "grandes.",
-              "start": 0.564,
-              "end": 1.014
+              "start": 1.356,
+              "end": 1.582
             }
           ]
         },
         {
-          "text": "Tú eliges.",
-          "start": 3.156,
-          "end": 3.719,
+          "text": "baratos y los más grandes",
+          "start": 1.582,
+          "end": 3.051,
           "words": [
             {
-              "text": "Tú",
+              "text": "baratos",
+              "start": 0.0,
+              "end": 0.452
+            },
+            {
+              "text": "y",
+              "start": 0.452,
+              "end": 0.565
+            },
+            {
+              "text": "los",
+              "start": 0.565,
+              "end": 0.791
+            },
+            {
+              "text": "más",
+              "start": 0.791,
+              "end": 1.017
+            },
+            {
+              "text": "grandes",
+              "start": 1.017,
+              "end": 1.469
+            }
+          ]
+        },
+        {
+          "text": "de tu ciudad.",
+          "start": 3.051,
+          "end": 3.785,
+          "words": [
+            {
+              "text": "de",
               "start": 0.0,
               "end": 0.169
             },
             {
-              "text": "eliges.",
+              "text": "tu",
               "start": 0.169,
-              "end": 0.564
+              "end": 0.339
+            },
+            {
+              "text": "ciudad.",
+              "start": 0.339,
+              "end": 0.734
             }
           ]
         }
@@ -273,97 +266,97 @@
       "photo": null,
       "voiceFile": "jobs/geo-015/audio/voice-03.mp3",
       "assetStartInFrames": 0,
-      "assetTotalInFrames": 236,
-      "accent": "#14B8A6"
+      "assetTotalInFrames": 283,
+      "accent": "#22C55E"
     },
     {
       "purpose": "prueba",
-      "durationInFrames": 111,
-      "headline": "No la escribió nadie",
+      "durationInFrames": 156,
+      "headline": "Nadie las escribe",
       "captions": [
         {
-          "text": "Y no la escribió nadie:",
+          "text": "Estas listas no las hace",
           "start": 0.0,
-          "end": 1.244,
+          "end": 1.719,
           "words": [
             {
-              "text": "Y",
+              "text": "Estas",
               "start": 0.0,
-              "end": 0.108
+              "end": 0.413
+            },
+            {
+              "text": "listas",
+              "start": 0.413,
+              "end": 0.894
             },
             {
               "text": "no",
-              "start": 0.108,
-              "end": 0.27
+              "start": 0.894,
+              "end": 1.1
             },
             {
-              "text": "la",
-              "start": 0.27,
-              "end": 0.433
+              "text": "las",
+              "start": 1.1,
+              "end": 1.375
             },
             {
-              "text": "escribió",
-              "start": 0.433,
-              "end": 0.92
-            },
-            {
-              "text": "nadie:",
-              "start": 0.92,
-              "end": 1.244
+              "text": "hace",
+              "start": 1.375,
+              "end": 1.719
             }
           ]
         },
         {
-          "text": "se arma con lo que hay",
-          "start": 1.244,
-          "end": 2.489,
+          "text": "una persona:",
+          "start": 1.719,
+          "end": 2.544,
+          "words": [
+            {
+              "text": "una",
+              "start": 0.0,
+              "end": 0.275
+            },
+            {
+              "text": "persona:",
+              "start": 0.275,
+              "end": 0.825
+            }
+          ]
+        },
+        {
+          "text": "se arman con lo publicado ahora.",
+          "start": 2.544,
+          "end": 4.744,
           "words": [
             {
               "text": "se",
               "start": 0.0,
-              "end": 0.162
+              "end": 0.206
             },
             {
-              "text": "arma",
-              "start": 0.162,
-              "end": 0.433
+              "text": "arman",
+              "start": 0.206,
+              "end": 0.619
             },
             {
               "text": "con",
-              "start": 0.433,
-              "end": 0.649
+              "start": 0.619,
+              "end": 0.894
             },
             {
               "text": "lo",
-              "start": 0.649,
-              "end": 0.811
+              "start": 0.894,
+              "end": 1.1
             },
-            {
-              "text": "que",
-              "start": 0.811,
-              "end": 1.028
-            },
-            {
-              "text": "hay",
-              "start": 1.028,
-              "end": 1.244
-            }
-          ]
-        },
-        {
-          "text": "publicado hoy.",
-          "start": 2.489,
-          "end": 3.246,
-          "words": [
             {
               "text": "publicado",
-              "start": 0.0,
-              "end": 0.541
+              "start": 1.1,
+              "end": 1.788
             },
             {
-              "text": "hoy.",
-              "start": 0.541,
-              "end": 0.757
+              "text": "ahora.",
+              "start": 1.788,
+              "end": 2.2
             }
           ]
         }
@@ -374,108 +367,108 @@
       "assetType": "simulation",
       "photo": null,
       "voiceFile": "jobs/geo-015/audio/voice-04.mp3",
-      "assetStartInFrames": 125,
-      "assetTotalInFrames": 236,
-      "accent": "#A78BFA"
+      "assetStartInFrames": 127,
+      "assetTotalInFrames": 283,
+      "accent": "#14B8A6"
     },
     {
       "purpose": "prueba",
-      "durationInFrames": 119,
-      "headline": "Te dice por qué",
+      "durationInFrames": 129,
+      "headline": "Y dónde queda",
       "captions": [
         {
-          "text": "Cada terreno te dice por qué",
+          "text": "Cada terreno dice por qué está",
           "start": 0.0,
-          "end": 1.503,
+          "end": 1.782,
           "words": [
             {
               "text": "Cada",
               "start": 0.0,
-              "end": 0.259
+              "end": 0.287
             },
             {
               "text": "terreno",
-              "start": 0.259,
-              "end": 0.674
-            },
-            {
-              "text": "te",
-              "start": 0.674,
-              "end": 0.829
+              "start": 0.287,
+              "end": 0.747
             },
             {
               "text": "dice",
-              "start": 0.829,
-              "end": 1.089
+              "start": 0.747,
+              "end": 1.035
             },
             {
               "text": "por",
-              "start": 1.089,
-              "end": 1.296
+              "start": 1.035,
+              "end": 1.265
             },
             {
               "text": "qué",
-              "start": 1.296,
-              "end": 1.503
+              "start": 1.265,
+              "end": 1.495
+            },
+            {
+              "text": "está",
+              "start": 1.495,
+              "end": 1.782
             }
           ]
         },
         {
-          "text": "está ahí y en qué parte",
-          "start": 1.503,
-          "end": 2.747,
+          "text": "en ese puesto,",
+          "start": 1.782,
+          "end": 2.587,
           "words": [
             {
-              "text": "está",
+              "text": "en",
               "start": 0.0,
-              "end": 0.259
+              "end": 0.172
             },
             {
-              "text": "ahí",
-              "start": 0.259,
-              "end": 0.467
+              "text": "ese",
+              "start": 0.172,
+              "end": 0.402
             },
+            {
+              "text": "puesto,",
+              "start": 0.402,
+              "end": 0.805
+            }
+          ]
+        },
+        {
+          "text": "y lo abres en el mapa.",
+          "start": 2.587,
+          "end": 3.852,
+          "words": [
             {
               "text": "y",
-              "start": 0.467,
-              "end": 0.57
+              "start": 0.0,
+              "end": 0.115
+            },
+            {
+              "text": "lo",
+              "start": 0.115,
+              "end": 0.287
+            },
+            {
+              "text": "abres",
+              "start": 0.287,
+              "end": 0.632
             },
             {
               "text": "en",
-              "start": 0.57,
-              "end": 0.726
+              "start": 0.632,
+              "end": 0.805
             },
             {
-              "text": "qué",
-              "start": 0.726,
-              "end": 0.933
+              "text": "el",
+              "start": 0.805,
+              "end": 0.977
             },
             {
-              "text": "parte",
-              "start": 0.933,
-              "end": 1.244
-            }
-          ]
-        },
-        {
-          "text": "del mapa queda.",
-          "start": 2.747,
-          "end": 3.525,
-          "words": [
-            {
-              "text": "del",
-              "start": 0.0,
-              "end": 0.207
-            },
-            {
-              "text": "mapa",
-              "start": 0.207,
-              "end": 0.467
-            },
-            {
-              "text": "queda.",
-              "start": 0.467,
-              "end": 0.778
+              "text": "mapa.",
+              "start": 0.977,
+              "end": 1.265
             }
           ]
         }
@@ -487,114 +480,92 @@
       "photo": null,
       "voiceFile": "jobs/geo-015/audio/voice-05.mp3",
       "assetStartInFrames": 0,
-      "assetTotalInFrames": 119,
+      "assetTotalInFrames": 129,
       "accent": "#22C55E"
     },
     {
       "purpose": "resultado",
-      "durationInFrames": 147,
+      "durationInFrames": 138,
       "headline": "No se compra",
       "captions": [
         {
-          "text": "Y lo mejor:",
+          "text": "El primer puesto no se compra.",
           "start": 0.0,
-          "end": 0.67,
+          "end": 2.04,
           "words": [
             {
-              "text": "Y",
+              "text": "El",
               "start": 0.0,
-              "end": 0.122
-            },
-            {
-              "text": "lo",
-              "start": 0.122,
-              "end": 0.305
-            },
-            {
-              "text": "mejor:",
-              "start": 0.305,
-              "end": 0.67
-            }
-          ]
-        },
-        {
-          "text": "ese primer puesto no se compra.",
-          "start": 0.67,
-          "end": 2.56,
-          "words": [
-            {
-              "text": "ese",
-              "start": 0.0,
-              "end": 0.244
+              "end": 0.204
             },
             {
               "text": "primer",
-              "start": 0.244,
-              "end": 0.67
+              "start": 0.204,
+              "end": 0.68
             },
             {
               "text": "puesto",
-              "start": 0.67,
-              "end": 1.097
+              "start": 0.68,
+              "end": 1.156
             },
             {
               "text": "no",
-              "start": 1.097,
-              "end": 1.28
+              "start": 1.156,
+              "end": 1.36
             },
             {
               "text": "se",
-              "start": 1.28,
-              "end": 1.463
+              "start": 1.36,
+              "end": 1.564
             },
             {
               "text": "compra.",
-              "start": 1.463,
-              "end": 1.889
+              "start": 1.564,
+              "end": 2.04
             }
           ]
         },
         {
           "text": "Ni con publicidad,",
-          "start": 2.56,
-          "end": 3.656,
+          "start": 2.04,
+          "end": 3.264,
           "words": [
             {
               "text": "Ni",
               "start": 0.0,
-              "end": 0.183
+              "end": 0.204
             },
             {
               "text": "con",
-              "start": 0.183,
-              "end": 0.427
+              "start": 0.204,
+              "end": 0.476
             },
             {
               "text": "publicidad,",
-              "start": 0.427,
-              "end": 1.097
+              "start": 0.476,
+              "end": 1.224
             }
           ]
         },
         {
           "text": "ni con clics.",
-          "start": 3.656,
-          "end": 4.449,
+          "start": 3.264,
+          "end": 4.148,
           "words": [
             {
               "text": "ni",
               "start": 0.0,
-              "end": 0.183
+              "end": 0.204
             },
             {
               "text": "con",
-              "start": 0.183,
-              "end": 0.427
+              "start": 0.204,
+              "end": 0.476
             },
             {
               "text": "clics.",
-              "start": 0.427,
-              "end": 0.792
+              "start": 0.476,
+              "end": 0.884
             }
           ]
         }
@@ -606,87 +577,77 @@
       "photo": null,
       "voiceFile": "jobs/geo-015/audio/voice-06.mp3",
       "assetStartInFrames": 0,
-      "assetTotalInFrames": 147,
-      "accent": "#6B5CF6"
+      "assetTotalInFrames": 138,
+      "accent": "#14B8A6"
     },
     {
       "purpose": "cta",
-      "durationInFrames": 137,
+      "durationInFrames": 158,
       "headline": "Encuentra el tuyo",
       "captions": [
         {
-          "text": "Solo con el precio.",
+          "text": "Aparece primero.",
           "start": 0.0,
-          "end": 1.082,
+          "end": 1.118,
           "words": [
             {
-              "text": "Solo",
+              "text": "Aparece",
               "start": 0.0,
-              "end": 0.285
+              "end": 0.559
             },
             {
-              "text": "con",
-              "start": 0.285,
-              "end": 0.513
-            },
-            {
-              "text": "el",
-              "start": 0.513,
-              "end": 0.684
-            },
-            {
-              "text": "precio.",
-              "start": 0.684,
-              "end": 1.082
+              "text": "primero.",
+              "start": 0.559,
+              "end": 1.118
             }
           ]
         },
         {
           "text": "Encuentra el tuyo",
-          "start": 1.082,
-          "end": 2.108,
+          "start": 1.118,
+          "end": 2.375,
           "words": [
             {
               "text": "Encuentra",
               "start": 0.0,
-              "end": 0.57
+              "end": 0.699
             },
             {
               "text": "el",
-              "start": 0.57,
-              "end": 0.741
+              "start": 0.699,
+              "end": 0.908
             },
             {
               "text": "tuyo",
-              "start": 0.741,
-              "end": 1.025
+              "start": 0.908,
+              "end": 1.257
             }
           ]
         },
         {
           "text": "en geopropiedadesecuador punto com.",
-          "start": 2.108,
-          "end": 4.101,
+          "start": 2.375,
+          "end": 4.82,
           "words": [
             {
               "text": "en",
               "start": 0.0,
-              "end": 0.171
+              "end": 0.21
             },
             {
               "text": "geopropiedadesecuador",
-              "start": 0.171,
-              "end": 1.424
+              "start": 0.21,
+              "end": 1.746
             },
             {
               "text": "punto",
-              "start": 1.424,
-              "end": 1.766
+              "start": 1.746,
+              "end": 2.165
             },
             {
               "text": "com.",
-              "start": 1.766,
-              "end": 1.994
+              "start": 2.165,
+              "end": 2.445
             }
           ]
         }
@@ -698,8 +659,8 @@
       "photo": null,
       "voiceFile": "jobs/geo-015/audio/voice-07.mp3",
       "assetStartInFrames": 0,
-      "assetTotalInFrames": 137,
-      "accent": "#14B8A6"
+      "assetTotalInFrames": 158,
+      "accent": "#22C55E"
     }
   ]
 }

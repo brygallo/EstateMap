@@ -1,0 +1,15 @@
+{
+  "passed": true,
+  "errors": 0,
+  "warnings": 0,
+  "findings": [
+    {
+      "level": "info",
+      "rule": "final_voice_duration",
+      "detail": "Con la voz final la pieza duraría unos 74.2 s (borrador: 63.7 s)"
+    }
+  ],
+  "estimated_seconds": 55.6,
+  "target_seconds": 90,
+  "checked_at": "2026-08-20T12:58:58.775711-05:00"
+}

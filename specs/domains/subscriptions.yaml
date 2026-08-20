@@ -140,56 +140,52 @@ rules:
     tests: {}
 
   - id: SUB-005
-    name: La página de inmobiliarias muestra precios pero no cobra
+    name: La página de inmobiliarias ofrece autogestión o ayuda, sin fingir planes
     status: implemented
     summary: >
-      La página comercial declara tres planes —Corredor (gratis), Inmobiliaria
-      (29 dólares al mes) y Empresa (a medida)— y sus botones son enlaces a
-      registro o a WhatsApp. No hay checkout,
-      no se persiste ninguna elección y el sistema nunca se entera de qué plan
-      miró alguien.
+      La página comercial presenta dos caminos que existen: publicar gratis con
+      el formulario o pedir publicación asistida. No declara cuotas mensuales,
+      prioridad ni límites asociados a un plan inexistente.
     rationale: >
-      Es marketing, y como tal es legítimo. Se especifica para que quede
-      explícito que la tabla de precios no describe ningún comportamiento del
-      sistema: quien lea la web y quien lea la base de datos ven cosas distintas.
+      La oferta pública debe describir el sistema actual. La autogestión enlaza
+      al formulario y la ayuda enlaza al flujo asistido que captura el borrador.
     evidence:
       - file: frontend/app/inmobiliarias/page.tsx
-        lines: "59-90"
-        symbol: "const PLANS"
-        note: Definición de los tres planes y de los destinos de sus botones.
-      - file: frontend/app/inmobiliarias/page.tsx
-        lines: "16"
-        symbol: WHATSAPP_URL
-        note: Destino real de los botones de contratación.
+        lines: "59-86"
+        symbol: "const PUBLISHING_OPTIONS"
+        note: Las dos opciones llevan a flujos que existen en el producto.
     frontend:
       routes: ["/inmobiliarias"]
       visible_when_allowed: true
       note: Página pública, sin sesión.
     cases:
-      - name: Pulsar el botón del plan de pago
-        given: {plan: inmobiliaria}
-        expected: abre WhatsApp
-      - name: Estado guardado tras elegir un plan
-        given: {plan: inmobiliaria}
-        expected: ninguno
+      - name: Elegir autogestión
+        given: {opcion: publica_por_tu_cuenta}
+        expected: abre el formulario de publicación
+      - name: Pedir ayuda
+        given: {opcion: publicacion_asistida}
+        expected: abre el flujo asistido
     tests: {}
 
   - id: SUB-006
-    name: El límite de 5 propiedades del plan gratuito no se aplica
-    status: not_implemented
+    name: La página ya no promete un límite gratuito inexistente
+    status: implemented
     summary: >
-      La tabla de precios anuncia "Hasta 5 propiedades" en el plan gratuito, pero
-      ningún punto del backend cuenta propiedades por usuario ni rechaza la sexta.
+      La opción gratuita declara que no existe límite por plan, en concordancia
+      con el backend, que solo limita el ritmo de escrituras.
     rationale: >
-      Es una promesa comercial sin contraparte técnica, y va en la dirección
-      peligrosa: la web promete una restricción que no existe. Si algún día se
-      implementa, esta regla pasa a implemented con su evidencia; mientras tanto
-      queda registrada para que nadie la dé por hecha al calcular capacidad.
+      Evita que la interfaz invente una diferencia entre cuentas que el sistema
+      no sabe representar. SUB-004 documenta el comportamiento del backend.
+    evidence:
+      - file: frontend/app/inmobiliarias/page.tsx
+        lines: "59-68"
+        symbol: "Sin límite de propiedades por plan"
+        note: La oferta gratuita dice lo mismo que aplica el servidor.
     cases:
       - name: Cuenta gratuita publica su sexta propiedad
         given: {plan: free, propiedades_existentes: 5}
         expected: allowed
-        note: Lo que ocurre hoy. Lo que la web insinúa es denied.
+        note: El backend y la oferta pública coinciden en que no existe ese tope.
     tests: {}
 
   - id: SUB-007

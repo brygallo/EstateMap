@@ -16,28 +16,27 @@ Reglas sobre la información que sale del servidor hacia una persona anónima. C
 
 | Id | Regla | Estado |
 | --- | --- | --- |
-| [`VIS-001`](#vis-001--el-payload-del-mapa-no-expone-contadores-de-visitas) | El payload del mapa no expone contadores de visitas | 🟡 Parcial |
+| [`VIS-001`](#vis-001--el-payload-del-mapa-no-expone-contadores-de-visitas) | El payload del mapa no expone contadores de visitas | ✅ Implementada |
 | [`VIS-002`](#vis-002--el-mapa-omite-también-título-imágenes-y-datos-del-anunciante) | El mapa omite también título, imágenes y datos del anunciante | ✅ Implementada |
 | [`VIS-003`](#vis-003--show_measurements-no-oculta-el-polígono) | show_measurements no oculta el polígono | ✅ Implementada |
 | [`VIS-004`](#vis-004--ocultar-la-forma-exacta-del-terreno-cuando-se-pide) | Ocultar la forma exacta del terreno cuando se pide | 📝 Propuesta (sin código) |
 
 ### VIS-001 — El payload del mapa no expone contadores de visitas
 
-**Estado:** 🟡 Parcial
+**Estado:** ✅ Implementada
 
-Los puntos del mapa se serializan desde una tupla cerrada de columnas, y views_count no está en ella. La regla se cumple en el mapa y NO se cumple en el resto de vistas públicas.
+Los puntos del mapa, el detalle público y el informe comercial anónimo omiten los contadores de visitas y contactos. El propietario y staff sí conservan esas métricas al consultar una propiedad autenticados.
 
 
 > **Por qué:** Es una decisión de producto, no una omisión técnica: enseñar cuántas visitas tiene un anuncio delata qué se mueve y qué no, tanto a la competencia como a quien publica. La tupla cerrada es lo que hace que la regla se sostenga sola en el mapa, porque añadir un campo exige tocarla a propósito.
-Está como `partial` y no como `implemented` porque hay dos fugas verificadas: el detalle público usa `fields = '__all__'`, y `views_count` está en `read_only_fields`, que no es lo mismo que oculto; y el endpoint `intelligence`, que es AllowAny, publica el contador dentro del bloque `demand`. Ver PERM-011 y PERM-012, que documentan esas dos fugas como defecto conocido.
+El serializer retira views_count salvo para el propietario o staff, y el informe comercial conserva públicamente solo el nivel cualitativo de demanda. Ver PERM-011 y PERM-012.
 
 
 **Backend**
 
-- Endpoint: `GET /api/properties/map_points/`
+- Endpoint: `GET /api/properties/{id}/`
 - ¿Lo aplica el servidor?: sí
-- Nota: Solo este endpoint lo garantiza. `GET /api/properties/{id}/` y `GET /api/properties/{id}/intelligence/` sí devuelven views_count.
-
+- Nota: El mapa, el detalle y el informe comercial aplican la misma frontera.
 
 **Frontend**
 
@@ -50,6 +49,8 @@ Está como `partial` y no como `implemented` porque hay dos fugas verificadas: e
 - `backend/real_estate/services/map_payload.py:7` (`POINT_FIELDS`) — Lista blanca de columnas que viajan al cliente. Lo que no está aquí no sale, y ese es el mecanismo que protege la regla.
 
 - `backend/real_estate/services/map_payload.py:145-147` (`queryset.values(*POINT_FIELDS)`) — Único punto donde se materializan los puntos del mapa.
+- `backend/real_estate/serializers.py:274-288` (`data.pop('views_count', None)`) — El detalle elimina el contador salvo para propietario o staff autenticado.
+- `backend/real_estate/views.py:727-750` (`demand = {'level': demand_level}`) — El informe público conserva el nivel cualitativo y añade métricas solo al dueño o staff.
 
 **Casos**
 
@@ -57,7 +58,7 @@ Está como `partial` y no como `implemented` porque hay dos fugas verificadas: e
 | --- | --- | --- | --- | --- |
 | Petición anónima al mapa | anonymous | — | — | allowed |
 | Campo views_count en el payload del mapa | — | `endpoint`=map_points | — | ausente |
-| Campo views_count en el detalle público | — | `endpoint`=properties/{id} | — | presente |
+| Campo views_count en el detalle público | — | `endpoint`=properties/{id} | — | ausente |
 
 **Ver también:** `specs/permissions/matrix.yaml`
 

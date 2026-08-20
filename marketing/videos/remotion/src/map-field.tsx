@@ -30,6 +30,7 @@ export const MapField: React.FC<{accent: string; frame: number}> = ({accent, fra
         style={{
           transform: `scale(${zoom}) translate(${-drift * 0.4}px, ${-drift * 0.25}px)`,
           transformOrigin: '50% 45%',
+          translate: "168.3px -9.6px"
         }}
       >
         <svg width="1080" height="1920" viewBox="0 0 1080 1920">

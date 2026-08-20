@@ -66,7 +66,7 @@ catalog:
         code: resume_token_invalid
       evidence:
         - file: backend/real_estate/views.py
-          lines: "1555-1559"
+          lines: "1563-1566"
           symbol: def invalid_resume_token_response
     - code: REQUEST_DATA_TOO_BIG
       http_status: 413

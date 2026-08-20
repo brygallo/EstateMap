@@ -208,8 +208,9 @@ rules:
     summary: >-
       Cada posición muestra su cifra y la distancia respecto al promedio del
       ámbito, medida sobre el precio por m² —o sobre el área en los rankings de
-      tamaño—, y enlaza a su ficha y a su ubicación en el mapa. La página enlaza
-      además al catálogo completo y a la estadística del m² de ese lugar.
+      tamaño—, y presenta acciones visibles para abrir la ficha con sus opciones
+      de contacto o ubicar el anuncio en el mapa. La página enlaza además al
+      catálogo completo y a la estadística del m² de ese lugar.
     rationale: >-
       Es lo que separa esta página del catálogo reordenado que ya existe. Y el
       eje de comparación importa: contrastar precios totales llamaría «la mejor
@@ -222,6 +223,8 @@ rules:
         symbol: "comparison: str = 'price_per_m2'"
       - file: frontend/components/blog/LiveRankingPage.tsx
         symbol: function reason
+      - file: frontend/components/blog/LiveRankingPage.tsx
+        symbol: "Ver propiedad y contacto"
       - file: backend/real_estate/tests/test_rankings.py
         symbol: def test_each_position_is_compared_on_price_per_square_metre
     tests:

@@ -30,6 +30,7 @@ const defaultProps: VideoProps = {
   brandTile: null,
   kicker: null,
   musicFile: null,
+  narrationFile: null,
   showSafeAreas: false,
   scenes: [
     {

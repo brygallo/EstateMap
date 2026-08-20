@@ -20,8 +20,8 @@ El sistema no tiene suscripciones. No existe modelo de plan, ni campo de plan en
 | [`SUB-002`](#sub-002--las-cuentas-no-tienen-plan-ni-estado-de-suscripción) | Las cuentas no tienen plan ni estado de suscripción | ✅ Implementada |
 | [`SUB-003`](#sub-003--los-límites-de-publicación-son-globales-no-por-usuario) | Los límites de publicación son globales, no por usuario | ✅ Implementada |
 | [`SUB-004`](#sub-004--no-hay-tope-de-propiedades-por-cuenta) | No hay tope de propiedades por cuenta | ✅ Implementada |
-| [`SUB-005`](#sub-005--la-página-de-inmobiliarias-muestra-precios-pero-no-cobra) | La página de inmobiliarias muestra precios pero no cobra | ✅ Implementada |
-| [`SUB-006`](#sub-006--el-límite-de-5-propiedades-del-plan-gratuito-no-se-aplica) | El límite de 5 propiedades del plan gratuito no se aplica | ⛔ No implementada |
+| [`SUB-005`](#sub-005--la-página-de-inmobiliarias-ofrece-autogestión-o-ayuda-sin-fingir-planes) | La página de inmobiliarias ofrece autogestión o ayuda, sin fingir planes | ✅ Implementada |
+| [`SUB-006`](#sub-006--la-página-ya-no-promete-un-límite-gratuito-inexistente) | La página ya no promete un límite gratuito inexistente | ✅ Implementada |
 | [`SUB-007`](#sub-007--no-se-procesan-ni-se-almacenan-pagos) | No se procesan ni se almacenan pagos | ✅ Implementada |
 
 ### SUB-001 — Importación exclusiva para Premium
@@ -124,14 +124,14 @@ Una cuenta puede publicar tantas propiedades como quiera. El único freno es el 
 | --- | --- | --- | --- | --- |
 | Cuenta con 500 propiedades publicadas intenta publicar otra | — | `propiedades_existentes`=500 | — | allowed |
 
-### SUB-005 — La página de inmobiliarias muestra precios pero no cobra
+### SUB-005 — La página de inmobiliarias ofrece autogestión o ayuda, sin fingir planes
 
 **Estado:** ✅ Implementada
 
-La página comercial declara tres planes —Corredor (gratis), Inmobiliaria (29 dólares al mes) y Empresa (a medida)— y sus botones son enlaces a registro o a WhatsApp. No hay checkout, no se persiste ninguna elección y el sistema nunca se entera de qué plan miró alguien.
+La página comercial presenta dos caminos que existen: publicar gratis con el formulario o pedir publicación asistida. No declara cuotas mensuales, prioridad ni límites asociados a un plan inexistente.
 
 
-> **Por qué:** Es marketing, y como tal es legítimo. Se especifica para que quede explícito que la tabla de precios no describe ningún comportamiento del sistema: quien lea la web y quien lea la base de datos ven cosas distintas.
+> **Por qué:** La oferta pública debe describir el sistema actual. La autogestión enlaza al formulario y la ayuda enlaza al flujo asistido que captura el borrador.
 
 
 **Frontend**
@@ -142,27 +142,28 @@ La página comercial declara tres planes —Corredor (gratis), Inmobiliaria (29 
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `frontend/app/inmobiliarias/page.tsx:59-90` (`const PLANS`) — Definición de los tres planes y de los destinos de sus botones.
-- `frontend/app/inmobiliarias/page.tsx:16` (`WHATSAPP_URL`) — Destino real de los botones de contratación.
+- `frontend/app/inmobiliarias/page.tsx:59-86` (`const PUBLISHING_OPTIONS`) — Las dos opciones llevan a flujos que existen en el producto.
 
 **Casos**
 
 | Caso | Rol | Estado previo | Cuerpo | Esperado |
 | --- | --- | --- | --- | --- |
-| Pulsar el botón del plan de pago | — | `plan`=inmobiliaria | — | abre WhatsApp |
-| Estado guardado tras elegir un plan | — | `plan`=inmobiliaria | — | ninguno |
+| Elegir autogestión | — | `opcion`=publica_por_tu_cuenta | — | abre el formulario de publicación |
+| Pedir ayuda | — | `opcion`=publicacion_asistida | — | abre el flujo asistido |
 
-### SUB-006 — El límite de 5 propiedades del plan gratuito no se aplica
+### SUB-006 — La página ya no promete un límite gratuito inexistente
 
-**Estado:** ⛔ No implementada
+**Estado:** ✅ Implementada
 
-La tabla de precios anuncia "Hasta 5 propiedades" en el plan gratuito, pero ningún punto del backend cuenta propiedades por usuario ni rechaza la sexta.
-
-
-> **Por qué:** Es una promesa comercial sin contraparte técnica, y va en la dirección peligrosa: la web promete una restricción que no existe. Si algún día se implementa, esta regla pasa a implemented con su evidencia; mientras tanto queda registrada para que nadie la dé por hecha al calcular capacidad.
+La opción gratuita declara que no existe límite por plan, en concordancia con el backend, que solo limita el ritmo de escrituras.
 
 
-**Evidencia en el código:** ninguna, y es lo esperado: no hay código que la implemente.
+> **Por qué:** Evita que la interfaz invente una diferencia entre cuentas que el sistema no sabe representar. SUB-004 documenta el comportamiento del backend.
+
+
+**Evidencia en el código** (verificada por `tools/specs/validate.py`)
+
+- `frontend/app/inmobiliarias/page.tsx:59-68` (`Sin límite de propiedades por plan`) — La oferta gratuita dice lo mismo que aplica el servidor.
 
 **Casos**
 

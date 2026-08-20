@@ -104,6 +104,11 @@ export default function MobilePropertyDrawer({
   }, []);
 
   useEffect(() => {
+    const node = drawerRef.current;
+    if (node) node.inert = !open;
+  }, [open]);
+
+  useEffect(() => {
     if (!open || !lockScroll) return;
     const previousOverflow = document.body.style.overflow;
     const previousOverscrollBehavior = document.body.style.overscrollBehavior;
@@ -285,6 +290,7 @@ export default function MobilePropertyDrawer({
 
       <motion.div
         ref={drawerRef}
+        aria-hidden={!open}
         style={{ y: drawerY }}
         drag="y"
         dragControls={dragControls}
@@ -301,7 +307,7 @@ export default function MobilePropertyDrawer({
           clearBodyDrag();
           settle(drawerY.get(), info.velocity.y);
         }}
-        className="property-sidebar-drawer fixed inset-x-0 bottom-0 z-panel flex h-[85dvh] flex-col overflow-hidden rounded-t-2xl bg-white text-textPrimary shadow-cardHover lg:hidden"
+        className={`property-sidebar-drawer fixed inset-x-0 bottom-0 z-panel flex h-[85dvh] flex-col overflow-hidden rounded-t-2xl bg-white text-textPrimary shadow-cardHover lg:hidden ${open ? '' : 'pointer-events-none'}`}
       >
         <button
           type="button"

@@ -197,7 +197,7 @@ teniendo un público, una idea y un CTA; el formato da aire para explicar, no
 permiso para prometer más.
 
 Por encima de 120 segundos y hasta 240 la pieza es una **clase**: una materia
-que se enseña por pasos, con hasta catorce escenas y hasta 25 segundos antes de
+que se enseña por pasos, con hasta cuarenta escenas y hasta 25 segundos antes de
 mostrar el producto. Se elige porque el tema lo exige, nunca porque el guion
 recibido venga largo: si se explica en noventa segundos, dura noventa. Las
 demás reglas no cambian.

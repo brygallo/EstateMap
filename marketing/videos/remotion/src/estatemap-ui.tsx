@@ -444,32 +444,45 @@ export const EmRankRow: React.FC<{
     width={width}
     raised={raised}
     style={{
-      padding: '26px 28px',
+      // `p-4 sm:p-5` on the page: 20 px, doubled.
+      padding: 32,
       opacity: Math.min(1, enter * 1.5),
       transform: `translateY(${(1 - enter) * 24}px)`,
     }}
   >
-    <div style={{display: 'flex', gap: 22, alignItems: 'flex-start'}}>
-      <EmRank place={place} />
-      <EmThumb size={208} height={96} tint={tint ?? place} kind={kind} />
-      <div style={{flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 10}}>
-        <div style={{display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 20}}>
+    {/*
+      Laid out exactly as `LiveRankingPage.tsx` lays it out, because a card that
+      is nearly the product's is not the product's: `flex gap-4`, and on the
+      left a `flex-none flex-col items-center gap-2` holding the badge above a
+      76 px square photograph. The first cut put the two side by side with a
+      wide landscape thumbnail, which is why the rows read as something else.
+      Every number here is the page's own, doubled for a canvas twice as wide.
+    */}
+    <div style={{display: 'flex', gap: 28}}>
+      <div style={{display: 'flex', width: 124, flexDirection: 'column', alignItems: 'center', gap: 14, flex: 'none'}}>
+        <EmRank place={place} size={78} />
+        <EmThumb size={118} height={118} tint={tint ?? place} kind={kind} />
+      </div>
+      <div style={{flex: 1, minWidth: 0}}>
+        <div style={{display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 28}}>
           <span
             style={{
-              fontSize: emType.body,
+              fontSize: 31,
               fontWeight: 700,
               color: em.text,
-              lineHeight: 1.18,
+              lineHeight: 1.14,
+              maxWidth: 470,
               overflow: 'hidden',
-              whiteSpace: 'nowrap',
-              textOverflow: 'ellipsis',
+              display: '-webkit-box',
+              WebkitLineClamp: 2,
+              WebkitBoxOrient: 'vertical',
             }}
           >
             {title}
           </span>
           <span
             style={{
-              fontSize: emType.price,
+              fontSize: 40,
               fontWeight: 900,
               flex: 'none',
               ...figures,
@@ -479,14 +492,19 @@ export const EmRankRow: React.FC<{
             {measure}
           </span>
         </div>
-        <div style={{display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '8px 20px'}}>
+        {/* `mt-1.5 … gap-x-4 gap-y-1`, doubled. */}
+        <div style={{marginTop: 12, display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '8px 32px'}}>
           <EmMeta icon="pin" text={address} />
           {area ? <EmMeta icon="ruler" text={area} /> : null}
           {perM2 ? <EmMeta icon="tag" text={perM2} /> : null}
         </div>
-        {reason ? <EmReason text={reason} enter={reasonEnter} /> : null}
+        {reason ? (
+          <div style={{marginTop: 16}}>
+            <EmReason text={reason} enter={reasonEnter} />
+          </div>
+        ) : null}
         {actions ? (
-          <div style={{display: 'flex', gap: 26, marginTop: 2}}>
+          <div style={{marginTop: 16, display: 'flex', gap: 32}}>
             <span style={{fontSize: emType.meta, fontWeight: 600, color: em.primaryStrong}}>Ver ficha completa</span>
             <span style={{fontSize: emType.meta, fontWeight: 600, color: em.primaryStrong}}>Ver en el mapa</span>
           </div>

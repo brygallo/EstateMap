@@ -14,11 +14,11 @@ see_also:
 rules:
   - id: VIS-001
     name: El payload del mapa no expone contadores de visitas
-    status: partial
+    status: implemented
     summary: >
-      Los puntos del mapa se serializan desde una tupla cerrada de columnas, y
-      views_count no está en ella. La regla se cumple en el mapa y NO se cumple
-      en el resto de vistas públicas.
+      Los puntos del mapa, el detalle público y el informe comercial anónimo
+      omiten los contadores de visitas y contactos. El propietario y staff sí
+      conservan esas métricas al consultar una propiedad autenticados.
     rationale: >
       Es una decisión de producto, no una omisión técnica: enseñar cuántas
       visitas tiene un anuncio delata qué se mueve y qué no, tanto a la
@@ -26,12 +26,9 @@ rules:
       regla se sostenga sola en el mapa, porque añadir un campo exige tocarla a
       propósito.
 
-      Está como `partial` y no como `implemented` porque hay dos fugas
-      verificadas: el detalle público usa `fields = '__all__'`, y `views_count`
-      está en `read_only_fields`, que no es lo mismo que oculto; y el endpoint
-      `intelligence`, que es AllowAny, publica el contador dentro del bloque
-      `demand`. Ver PERM-011 y PERM-012, que documentan esas dos fugas como
-      defecto conocido.
+      El serializer retira views_count salvo para el propietario o staff, y el
+      informe comercial conserva públicamente solo el nivel cualitativo de
+      demanda. Ver PERM-011 y PERM-012.
     evidence:
       - file: backend/real_estate/services/map_payload.py
         lines: "7"
@@ -43,16 +40,22 @@ rules:
         lines: "145-147"
         symbol: "queryset.values(*POINT_FIELDS)"
         note: Único punto donde se materializan los puntos del mapa.
+      - file: backend/real_estate/serializers.py
+        lines: "274-288"
+        symbol: "data.pop('views_count', None)"
+        note: El detalle elimina el contador salvo para propietario o staff autenticado.
+      - file: backend/real_estate/views.py
+        lines: "727-750"
+        symbol: "demand = {'level': demand_level}"
+        note: El informe público conserva el nivel cualitativo y añade métricas solo al dueño o staff.
     frontend:
       routes: ["/"]
       visible_when_allowed: false
       note: Ninguna pantalla pública renderiza el contador, aunque el dato viaje.
     backend:
-      endpoint: "GET /api/properties/map_points/"
+      endpoint: "GET /api/properties/{id}/"
       enforce: true
-      note: >
-        Solo este endpoint lo garantiza. `GET /api/properties/{id}/` y
-        `GET /api/properties/{id}/intelligence/` sí devuelven views_count.
+      note: El mapa, el detalle y el informe comercial aplican la misma frontera.
     # Sin tests: el caso que importa es una aserción sobre el payload, y el
     # generador de Playwright solo sabe navegar a una ruta. La comprobación real
     # está escrita a mano en tests/e2e/map.spec.ts, con su marcador SPEC:VIS-001.
@@ -67,8 +70,7 @@ rules:
         expected: ausente
       - name: Campo views_count en el detalle público
         given: {endpoint: "properties/{id}"}
-        expected: presente
-        note: Fuga verificada. Ver PERM-011.
+        expected: ausente
     see_also:
       - specs/permissions/matrix.yaml
 

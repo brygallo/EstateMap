@@ -8,9 +8,10 @@ memoria de la marca que produjo la evidencia.
 ## Formato invariable
 
 - Máster vertical 1080 × 1920, 30 fps, MP4 H.264 y audio AAC.
-- **Formato corto** hasta 45 s: una promesa y su demostración, máximo cinco escenas, y en piezas de comprador el producto en pantalla antes del segundo 3. La duración ordinaria es de 18 a 45 s según lo que haya que enseñar.
-- **Formato historia** por encima de 45 s y hasta 120 s: una pieza que cuenta de dónde viene algo antes de demostrarlo. Hasta nueve escenas y hasta 10 s para plantear antes de mostrar el producto. Se usa cuando hay un relato real que sostener —el origen del producto, un caso completo—, nunca para estirar una demostración. El brief declara la duración y por qué.
-- Ninguno de los dos formatos se rellena. Si el guion se acaba antes, el video dura menos.
+- **Formato corto** hasta 45 s: una promesa y su demostración, máximo ocho escenas, y en piezas de comprador el producto en pantalla antes del segundo 3. La duración ordinaria es de 18 a 45 s según lo que haya que enseñar.
+- **Formato historia** por encima de 45 s y hasta 120 s: una pieza que cuenta de dónde viene algo antes de demostrarlo. Hasta veinte escenas y hasta 10 s para plantear antes de mostrar el producto. Se usa cuando hay un relato real que sostener —el origen del producto, un caso completo—, nunca para estirar una demostración. El brief declara la duración y por qué.
+- **Formato clase** por encima de 120 s y hasta 240 s: una materia enseñada por pasos, con hasta cuarenta escenas y hasta 25 s antes de mostrar el producto. El techo técnico permite respetar seis segundos por escena y no obliga a utilizarlo completo.
+- Ninguno de los tres formatos se rellena. Si el guion se acaba antes, el video dura menos.
 - Gancho en 0–2 s, prueba/demostración en el cuerpo y un CTA al final.
 - Subtítulos en todas las piezas, máximo dos líneas, sincronizados con el audio medido.
 - Por defecto sin música. Si se añade, debe ser gratuita para uso comercial, con autor, URL y licencia archivados; nunca se compra ni se genera música con créditos.

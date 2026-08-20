@@ -45,6 +45,22 @@ VIDEO_SUFFIXES = {".mp4", ".mov", ".m4v", ".webm"}
 # Animated recreations drawn in Remotion. They are named as assets so a plan can
 # choose one the same way it chooses footage, but they have no file behind them.
 SIMULATIONS = {
+    "sim:geo-location-hero": "Una ficha clara se transforma en un lugar del mapa y responde dónde queda la propiedad",
+    "sim:geo-nearby-context": "Una propiedad seleccionada vuelve al mapa y revela opciones cercanas para comparar por ubicación",
+    "sim:credicasa-hero": "Una vivienda nueva sostiene 2,99 %, hasta 100 % y hasta $65.000 antes de que vivienda, ingresos y capacidad cierren como condiciones",
+    "sim:credicasa-fact-card": "Ficha fechada con tasa nominal, tasa efectiva, financiamiento máximo y plazo máximo publicados",
+    "sim:credicasa-home-gate": "Una vivienda ilustrada pasa por los requisitos de vivienda única, nueva, sin fin comercial y con una o más habitaciones",
+    "sim:credicasa-three-numbers": "Precio pedido, avalúo comercial máximo y monto máximo del crédito se separan como tres cifras distintas",
+    "sim:credicasa-entry-example": "Ejemplo de $60.000 compara una hipoteca 80/20 con financiamiento de hasta 100 %, sin presentarlo como aprobación",
+    "sim:credicasa-capacity": "Tres solicitudes de ejemplo reciben montos distintos y terminan en la precalificación",
+    "sim:credicasa-applicants-a": "Aportaciones publicadas para afiliación bajo relación de dependencia y afiliación voluntaria",
+    "sim:credicasa-applicants-b": "Condiciones publicadas para jubilación, discapacidad e ingreso familiar máximo",
+    "sim:credicasa-payment-example": "Ejemplo aproximado de capital e intereses añade seguros y gastos antes de remitir al simulador oficial",
+    "sim:credicasa-total-envelope": "Vivienda y gastos financiados comparten el mismo límite máximo de $65.000",
+    "sim:credicasa-rate-reset": "Una línea de tiempo marca revisiones cada 180 días y lleva a revisar el contrato",
+    "sim:credicasa-reservation": "Una reserva escrita comprueba aprobación del crédito, reembolso y falta de financiamiento",
+    "sim:credicasa-order-a": "Primeros cuatro pasos: requisitos, precalificación, presupuesto y vivienda elegible",
+    "sim:credicasa-order-b": "Últimos cuatro pasos: comparar, confirmar compatibilidad, avalúo y lectura antes de firmar",
     "sim:que-compras": "La cámara se abre desde el departamento encendido hasta el edificio entero, con sus reglas, sus vecinos y sus deudas",
     "sim:propiedad-horizontal": "El corte del edificio separa lo privado de lo común y la página siguiente muestra el parqueadero y la bodega marcados EN LA ESCRITURA, frente al cartel de tiza que se borra",
     "sim:alicuota": "Los meses de alícuota pagados, lo que cubre, y el certificado firmado de que el vendedor está al día",
@@ -192,6 +208,8 @@ SIMULATIONS = {
 # then flattens every piece to one look. Two consecutive hooks may not use the
 # same staging, and the same gate enforces that.
 HERO_STAGINGS = {
+    "sim:geo-location-hero": "track-side",
+    "sim:credicasa-hero": "pull-back",
     "sim:aents-problema-software": "push-in",
     # Geo's first registered opening, and the one move of the five that suits
     # it. `crane-down` was tried and the frame it produced is the argument
@@ -391,7 +409,10 @@ def scene_props(
     timeline: AssetTimeline,
 ) -> dict[str, Any]:
     voice_target = job / "audio" / f"voice-{index + 1:02}.mp3"
-    shutil.copy2(Path(timing["voice_file"]), voice_target)
+    voice_relative = ""
+    if timing.get("voice_file"):
+        shutil.copy2(Path(timing["voice_file"]), voice_target)
+        voice_relative = f"jobs/{name}/audio/{voice_target.name}"
     asset_relative, asset_type = stage_asset(directory, job, name, scene)
     span = frames(timing["render_seconds"])
     start = 0
@@ -412,7 +433,7 @@ def scene_props(
         # Remotion's card simulation can show a real listing photo; nothing
         # populates it yet, so the composition falls back to its drawn card.
         "photo": None,
-        "voiceFile": f"jobs/{name}/audio/{voice_target.name}",
+        "voiceFile": voice_relative,
         "assetStartInFrames": start,
         "assetTotalInFrames": timeline.total(scene.get("asset"), span),
         # The rotation exists so consecutive pieces do not look identical, and
@@ -430,6 +451,7 @@ def build_props(
     plan: dict[str, Any],
     timings: list[dict[str, Any]],
     music: Path | None,
+    narration: Path | None = None,
 ) -> dict[str, Any]:
     job = stage(directory)
     name = job_name(directory)
@@ -442,6 +464,10 @@ def build_props(
     if music:
         shutil.copy2(music, job / "audio/music.mp3")
         music_relative = f"jobs/{name}/audio/music.mp3"
+    narration_relative = None
+    if narration:
+        shutil.copy2(narration, job / "audio/narration.mp3")
+        narration_relative = f"jobs/{name}/audio/narration.mp3"
     return {
         "brandId": BRAND_ID,
         "brandName": BRAND_NAME,
@@ -454,6 +480,7 @@ def build_props(
         "brandTile": brand_tile_path(),
         "kicker": plan.get("kicker"),
         "musicFile": music_relative,
+        "narrationFile": narration_relative,
         "showSafeAreas": False,
         "scenes": scenes,
     }

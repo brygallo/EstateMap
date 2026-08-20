@@ -258,3 +258,28 @@ regenera desde `memory/lessons.json`. Para añadir una corrección usa
 
 - Observación (corrección humana): El rotulo de cada escena repetia palabra por palabra el subtitulo que tenia debajo -Ya esta hecha sobre ya esta hecha- asi que dos tercios del cuadro decian lo mismo
 - Regla: El rotulo dice lo que la voz no esta diciendo en ese momento. Se escribe despues del guion y se compara linea por linea contra su locucion; solo el CTA puede repetir. Maximo cuatro palabras y veintidos caracteres, que ya comprueba el linter
+
+### 2026-08-20 · global · toda la cuenta
+
+- Observación (corrección humana): La voz final sintetizada por escena reiniciaba intención, respiración y prosodia en cada corte; sonaba como frases pegadas.
+- Regla: Sintetizar la voz final como una sola toma continua, alinear escenas y subtítulos sobre esa toma y prohibir audio final fragmentado por escena.
+
+### 2026-08-20 · global · toda la cuenta
+
+- Observación (corrección humana): Cada fragmento de subtítulo volvía a entrar con desplazamiento y opacidad, haciendo saltar el bloque y restando naturalidad.
+- Regla: Mantener una caja fija de dos líneas y una línea base estable; cambiar solo el texto y el resaltado de palabras, sin reanimar el bloque en cada fragmento.
+
+### 2026-08-20 · global · toda la cuenta
+
+- Observación (corrección humana): El flujo compraba voz y comenzaba el render antes de revisar en Studio el timing real de la voz pagada.
+- Regla: Comprar o reutilizar la voz con studio --final-voice, recalcular props y subtítulos, exigir approve --final-voice sobre esos artefactos exactos y bloquear render --final hasta entonces.
+
+### 2026-08-20 · global · toda la cuenta
+
+- Observación (corrección humana): Cambiar una voz después de comprarla habría borrado la trazabilidad del voice-lock.
+- Regla: Conservar inmutable toda voz pagada; si se pide otra voz, crear una variante de producción enlazada al video original y comprar la nueva toma allí.
+
+### 2026-08-20 · global · toda la cuenta
+
+- Observación (corrección humana): Los contratos declaraban 14 o 24 escenas para una clase de hasta 240 segundos y 16 para una historia de hasta 120, mientras cada toma tiene un máximo de 6 segundos y el perfil vertical todavía declaraba 60 segundos.
+- Regla: Derivar presupuestos compatibles con duración máxima dividida para 6 segundos: 8 escenas en corto, 20 en historia y 40 en clase; alinear el perfil a 240 y convertir scene_pace y final_voice_pace en errores de lint con pruebas matemáticas de regresión.

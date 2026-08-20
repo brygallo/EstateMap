@@ -1,4 +1,5 @@
 import pytest
+from django.contrib.auth import get_user_model
 from django.utils import timezone
 from rest_framework.test import APIClient
 
@@ -9,6 +10,7 @@ pytestmark = pytest.mark.django_db
 
 
 def test_property_intelligence_compares_inventory_and_tracks_price_changes():
+    """SPEC:VIS-001 SPEC:PERM-012 — public context excludes raw demand metrics."""
     target = Property.objects.create(
         title="Target", city="Quito", address="Cumbayá, Quito", property_type="house",
         status="for_sale", price=300000, area=100, views_count=20,
@@ -31,8 +33,45 @@ def test_property_intelligence_compares_inventory_and_tracks_price_changes():
     assert response.data["price_alert"] == "above_range"
     assert response.data["available_supply"] == 7
     assert response.data["demand"]["level"] == "high"
+    assert set(response.data["demand"]) == {"level"}
     assert len(response.data["price_history"]) == 2
     assert response.data["publication_basis"] == "detected"
+
+
+def test_owner_can_read_private_property_performance_metrics():
+    """SPEC:VIS-001 SPEC:PERM-012 — owners retain their private metrics."""
+    owner = get_user_model().objects.create_user(
+        username="owner", email="owner@example.com", password="test-pass-123"
+    )
+    property_obj = Property.objects.create(
+        owner=owner, title="Owner listing", city="Quito", property_type="house",
+        status="for_sale", price=100000, area=100, views_count=12,
+    )
+    client = APIClient()
+    client.force_authenticate(owner)
+
+    detail = client.get(f"/api/properties/{property_obj.pk}/")
+    intelligence = client.get(f"/api/properties/{property_obj.pk}/intelligence/")
+
+    assert detail.status_code == 200
+    assert detail.data["views_count"] == 12
+    assert intelligence.status_code == 200
+    assert intelligence.data["demand"]["views"] == 12
+    assert "contacts" in intelligence.data["demand"]
+    assert "city_median_views" in intelligence.data["demand"]
+
+
+def test_anonymous_property_detail_hides_view_count():
+    """SPEC:VIS-001 — public property detail never exposes views_count."""
+    property_obj = Property.objects.create(
+        title="Public listing", city="Quito", property_type="house",
+        status="for_sale", price=100000, area=100, views_count=12,
+    )
+
+    response = APIClient().get(f"/api/properties/{property_obj.pk}/")
+
+    assert response.status_code == 200
+    assert "views_count" not in response.data
 
 
 def test_market_stats_city_filter_scopes_every_metric():

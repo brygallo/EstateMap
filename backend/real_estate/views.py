@@ -724,6 +724,15 @@ class PropertyViewSet(viewsets.ModelViewSet):
 
         publication_start = instance.source_published_at or instance.imported_at or instance.created_at
         publication_basis = 'source' if instance.source_published_at else ('detected' if instance.is_imported else 'platform')
+        demand = {'level': demand_level}
+        user = request.user
+        if user.is_authenticated and (user.is_staff or instance.owner_id == user.id):
+            demand.update({
+                'views': instance.views_count,
+                'contacts': contacts,
+                'city_median_views': demand_median,
+            })
+
         payload = {
             'property_id': instance.pk,
             'price_per_m2': own_price_m2,
@@ -739,8 +748,7 @@ class PropertyViewSet(viewsets.ModelViewSet):
             'source_updated_at': instance.source_updated_at,
             'detected_at': instance.imported_at or instance.created_at,
             'last_seen_at': instance.last_seen_at,
-            'demand': {'level': demand_level, 'views': instance.views_count, 'contacts': contacts,
-                       'city_median_views': demand_median},
+            'demand': demand,
             'methodology': 'Comparables activos del mismo tipo, operación y ciudad; rango habitual P25–P75 y alerta atípica mediante IQR.',
         }
         if _is_public_read(request):

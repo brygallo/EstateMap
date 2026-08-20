@@ -349,7 +349,7 @@ el primer segundo y le quedan cuatro.
   continúa su arco entre escenas porque `renderer.AssetTimeline` la reanuda
   donde iba. Se corta donde la voz cambia de idea.
 - **Más escenas antes que escenas más largas.** Los topes son ocho en formato
-  corto, dieciséis en historia y veinticuatro en clase. Un guion de 48 segundos
+  corto, veinte en historia y cuarenta en clase. Un guion de 48 segundos
   se cuenta mejor en catorce tomas que en nueve.
 - **El escalonado de un grupo es corto.** `stagger()` usa 0,045 por defecto:
   cuatro tarjetas entran en medio segundo, no en tres. Cuatro tarjetas repartidas
@@ -454,6 +454,11 @@ composición se lee como producto terminado y no como una presentación.
   lectura, el sujeto puede respirar con micro movimiento, pero no competir.
 - Una persona debe entender el cambio sin audio. La voz añade contexto; no
   repara una animación ambigua.
+- **Los subtítulos de una misma frase conservan una línea base estable.** Cada
+  fragmento reemplaza al anterior dentro de una caja fija con altura para dos
+  líneas; no vuelve a entrar con salto, resorte o fundido. El karaoke puede
+  resaltar palabras, pero no debe hacer que el bloque entero respire en cada
+  corte de lectura.
 
 ## 13. Revisión obligatoria
 

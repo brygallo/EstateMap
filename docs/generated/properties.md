@@ -120,7 +120,7 @@ Una propiedad con status='inactive' desaparece del listado, del mapa y de todos 
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/real_estate/views.py:1184-1186` (`my_properties`) — La acción declara permission_classes=[IsAuthenticated] y elige entre Property.objects.all() y filter(owner=request.user) sin tocar status.
+- `backend/real_estate/views.py:1192-1194` (`my_properties`) — La acción declara permission_classes=[IsAuthenticated] y elige entre Property.objects.all() y filter(owner=request.user) sin tocar status.
 
 **Casos**
 
@@ -149,7 +149,7 @@ my_properties responde con el sobre paginado de DRF (count, next, previous, resu
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
 - `backend/real_estate/views.py:273-281` (`class InventoryPagination`) — page_size 24, page_size_query_param 'page_size', máximo 100.
-- `backend/real_estate/views.py:1184-1186` (`def my_properties`) — stats se calcula con queryset.aggregate antes de paginar.
+- `backend/real_estate/views.py:1192-1194` (`def my_properties`) — stats se calcula con queryset.aggregate antes de paginar.
 - `frontend/app/my-properties/page.tsx:194-219` (`const fetchInventory`) — El cliente manda search, status y ordering y acumula páginas.
 
 **Casos**
@@ -360,7 +360,7 @@ Si un anuncio trae polígono pero no trae latitude/longitude, se guardan las del
 
 - `backend/real_estate/serializers.py:22-57` (`polygon_center_lat_lng`) — Acepta tanto el GeoJSON normalizado como el anillo [lat, lng] y descarta el punto de cierre.
 - `backend/real_estate/serializers.py:27-33` (`ensure_polygon_center`) — Solo rellena los huecos, nunca pisa unas coordenadas enviadas explícitamente.
-- `backend/real_estate/serializers.py:364-366` (`ensure_polygon_center`) — En update, un polígono nuevo sin coordenadas nuevas anula las anteriores y las recalcula.
+- `backend/real_estate/serializers.py:374-376` (`ensure_polygon_center`) — En update, un polígono nuevo sin coordenadas nuevas anula las anteriores y las recalcula.
 
 **Casos**
 
@@ -408,7 +408,7 @@ La escritura sobre una propiedad existente exige ser su owner; cualquier otro us
 
 - `backend/real_estate/permissions.py:4-15` (`IsOwnerOrReadOnly`) — Permite cualquier método seguro y compara obj.owner == request.user para el resto.
 - `backend/real_estate/views.py:356-358` (`IsOwnerOrReadOnly`) — permission_classes = [IsAuthenticatedOrReadOnly, IsOwnerOrReadOnly] en PropertyViewSet.
-- `backend/real_estate/views.py:2635-2637` (`PATCH_ALLOWED_FIELDS`) — El panel admin puede tocar propiedades ajenas, pero solo status, title, price, city y description.
+- `backend/real_estate/views.py:2643-2645` (`PATCH_ALLOWED_FIELDS`) — El panel admin puede tocar propiedades ajenas, pero solo status, title, price, city y description.
 
 **Casos**
 
@@ -806,7 +806,7 @@ La normalización vive en `save()` porque todos los caminos de escritura pasan p
 - `backend/real_estate/models.py:204-211` (`closed_reason = models`)
 - `backend/real_estate/models.py:324-336` (`if self.closed_reason:`) — Cerrar pone inactive y sella la fecha; abrir la borra.
 - `backend/real_estate/serializers.py:38-50` (`def reopen_on_reactivation`) — Volver a poner el anuncio en venta lo reabre; si no, el cambio parece aceptado y se deshace solo.
-- `backend/real_estate/views.py:2824-2826` (`changes['closed_reason'] = ''`) — El cambio de estado en lote escribe con .update(), que nunca llega a save(), así que reabre a mano.
+- `backend/real_estate/views.py:2832-2834` (`changes['closed_reason'] = ''`) — El cambio de estado en lote escribe con .update(), que nunca llega a save(), así que reabre a mano.
 
 **Casos**
 
@@ -842,7 +842,7 @@ Ese privilegio es de la ficha por id y solo de ella. La ruta por código corto n
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
 - `backend/real_estate/views.py:449-467` (`visible |= Q(is_duplicate=False) & ~Q(closed_reason='')`) — Las acciones de detalle resuelven la fila por id, no por el catálogo público; el dueño entra siempre.
-- `backend/real_estate/views.py:962-968` (`exclude(status='inactive', closed_reason='')`) — El código corto de un anuncio vendido sigue resolviendo.
+- `backend/real_estate/views.py:970-975` (`exclude(status='inactive', closed_reason='')`) — El código corto de un anuncio vendido sigue resolviendo.
 
 **Casos**
 

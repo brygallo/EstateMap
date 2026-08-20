@@ -242,6 +242,55 @@ def speak_scene(text: str, target: Path, provider: tts.VoiceProvider) -> list[di
     return timeline
 
 
+def speak_video(texts: list[str], target: Path, provider: tts.VoiceProvider) -> list[dict[str, Any]]:
+    """Synthesise one continuous take and derive scene-local caption timings.
+
+    Final narration must preserve intention and breathing across scene cuts.
+    Scenes remain editing units, but they no longer become synthesis units.
+    """
+    cleaned = [" ".join(text.split()) for text in texts if text.strip()]
+    if len(cleaned) != len(texts) or not cleaned:
+        raise RuntimeError("Every scene needs narration for a continuous final take")
+    narration = " ".join(cleaned)
+    clip = synthesize([narration], provider)[0]
+    target.parent.mkdir(parents=True, exist_ok=True)
+    shutil.copy2(clip, target)
+    spoken = media.probe_duration(clip)
+    scene_weights = [sum(len(word.strip(".,;:!?¿¡…")) + 1 for word in text.split()) for text in cleaned]
+    total_weight = sum(scene_weights) or 1
+    timings: list[dict[str, Any]] = []
+    cursor = 0.0
+    for scene_number, (text, scene_weight) in enumerate(zip(cleaned, scene_weights), 1):
+        scene_end = spoken if scene_number == len(cleaned) else cursor + spoken * scene_weight / total_weight
+        scene_seconds = scene_end - cursor
+        captions = split_captions(text)
+        caption_weights = [sum(len(word.strip(".,;:!?¿¡…")) + 1 for word in caption.split()) for caption in captions]
+        caption_total = sum(caption_weights) or 1
+        local_cursor = 0.0
+        timeline: list[dict[str, Any]] = []
+        for index, (caption, weight) in enumerate(zip(captions, caption_weights)):
+            end = scene_seconds if index == len(captions) - 1 else local_cursor + scene_seconds * weight / caption_total
+            duration = end - local_cursor
+            timeline.append({
+                "text": caption,
+                "start": round(local_cursor, 3),
+                "end": round(end, 3),
+                "words": word_timings(caption, duration),
+            })
+            local_cursor = end
+        timings.append({
+            "scene": scene_number,
+            "voice_file": "",
+            "voice_seconds": round(scene_seconds, 3),
+            "voice_profile": provider.profile_id,
+            "tts_provider": provider.name,
+            "render_seconds": scene_seconds,
+            "captions": timeline,
+        })
+        cursor = scene_end
+    return timings
+
+
 # Characters of narration spoken per second at speed 1.0, measured against the
 # renders of videos 001 to 007: they land between 16.1 and 18.3 characters per
 # second, so the rate below sits just under the slowest of them and the estimate

@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { ArrowRight, Home, MapPin, Ruler, Trophy } from 'lucide-react';
+import { ArrowRight, Eye, Home, MapPin, PhoneCall, Ruler, Trophy } from 'lucide-react';
 
 import PropertyImage from '@/components/ui/PropertyImage';
 import { integer, money } from '@/lib/market-stats';
@@ -316,49 +316,67 @@ export default function LiveRankingPage({
       </section>
 
       <div className="relative z-10 mx-auto -mt-6 max-w-7xl px-4 pb-12 sm:px-6 lg:px-8">
+        <section className="mb-5 rounded-card border border-primary/20 bg-white p-4 shadow-card sm:mb-6 sm:flex sm:items-center sm:justify-between sm:gap-6 sm:p-5">
+          <div>
+            <h2 className="text-lg font-bold text-textPrimary sm:text-xl">
+              Elige una propiedad y revisa cómo contactar
+            </h2>
+            <p className="mt-1 text-sm leading-6 text-textSecondary">
+              Abre la ficha para ver todas las fotos, la ubicación y las opciones de contacto disponibles.
+            </p>
+          </div>
+          <Link
+            href={mapHref}
+            className="mt-3 inline-flex min-h-11 shrink-0 items-center justify-center gap-2 rounded-full border border-primary px-4 py-2.5 text-sm font-semibold text-primary transition-colors hover:bg-primaryLight sm:mt-0"
+          >
+            Comparar en el mapa <MapPin className="h-4 w-4" aria-hidden />
+          </Link>
+        </section>
+
         <ol className="space-y-3">
           {ranking.items.map((item, index) => {
             const why = reason(item, ranking, place);
             return (
               <li
                 key={item.id}
-                className="rounded-card border border-line bg-white p-4 shadow-card transition-shadow hover:shadow-cardHover sm:p-5"
+                className="group overflow-hidden rounded-card border border-line bg-white shadow-card transition-all hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-cardHover"
               >
-                <div className="flex gap-3 sm:gap-4">
-                  <div className="flex flex-none flex-col items-center gap-2">
-                    <span
-                      aria-hidden
-                      className="flex h-9 w-9 items-center justify-center rounded-full bg-primaryLight text-sm font-black text-primary sm:h-11 sm:w-11 sm:text-base"
-                    >
-                      {index + 1}
-                    </span>
-                    {item.image && (
-                      <Link
-                        href={`/propiedad/${item.id}`}
-                        tabIndex={-1}
-                        aria-hidden
-                        className="relative hidden h-[76px] w-[76px] overflow-hidden rounded-lg sm:block"
-                      >
-                        <PropertyImage
-                          src={item.image}
-                          alt=""
-                          fill
-                          sizes="76px"
-                          className="object-cover"
-                          wrapperClassName="absolute inset-0"
-                        />
-                      </Link>
+                <div className="grid sm:grid-cols-[180px_minmax(0,1fr)]">
+                  <Link
+                    href={`/propiedad/${item.id}`}
+                    aria-label={`Ver ${item.title}`}
+                    className="relative block aspect-[16/9] overflow-hidden bg-primaryLight sm:aspect-auto sm:min-h-[190px]"
+                  >
+                    {item.image ? (
+                      <PropertyImage
+                        src={item.image}
+                        alt={`Foto de ${item.title}`}
+                        fill
+                        sizes="(max-width: 640px) 100vw, 180px"
+                        className="object-cover transition-transform duration-300 group-hover:scale-[1.03]"
+                        wrapperClassName="absolute inset-0"
+                      />
+                    ) : (
+                      <span className="absolute inset-0 flex items-center justify-center text-primary">
+                        <Home className="h-10 w-10" strokeWidth={1.4} aria-hidden />
+                      </span>
                     )}
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
+                    <span
+                      className="absolute left-3 top-3 flex h-10 min-w-10 items-center justify-center rounded-full bg-primary px-2 text-sm font-black text-white shadow-cardHover"
+                      aria-label={`Posición ${index + 1}`}
+                    >
+                      #{index + 1}
+                    </span>
+                  </Link>
+                  <div className="min-w-0 p-4 sm:p-5">
+                    <div className="flex flex-col gap-1 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
                       <Link
                         href={`/propiedad/${item.id}`}
                         className="text-base font-bold text-textPrimary hover:text-primary sm:text-lg"
                       >
                         {item.title}
                       </Link>
-                      <span className="text-lg font-black tabular-nums text-primary sm:text-xl">
+                      <span className="shrink-0 text-xl font-black tabular-nums text-primary sm:text-2xl">
                         {measure(item, recipe)}
                       </span>
                     </div>
@@ -385,17 +403,26 @@ export default function LiveRankingPage({
                     </div>
 
                     {why && (
-                      <p className="mt-2 inline-flex rounded-full bg-primaryLight px-3 py-1 text-xs font-semibold text-primary sm:text-sm">
-                        {why}
+                      <p className="mt-3 flex items-start gap-2 rounded-lg bg-primaryLight px-3 py-2 text-xs font-semibold leading-5 text-primary sm:text-sm">
+                        <Trophy className="mt-0.5 h-4 w-4 flex-none" strokeWidth={1.8} aria-hidden />
+                        <span>{why}</span>
                       </p>
                     )}
 
-                    <div className="mt-3 flex flex-wrap gap-4 text-sm font-semibold">
-                      <Link href={`/propiedad/${item.id}`} className="text-primary hover:underline">
-                        Ver ficha completa
+                    <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:flex-wrap">
+                      <Link
+                        href={`/propiedad/${item.id}`}
+                        className="inline-flex min-h-11 items-center justify-center gap-2 rounded-full bg-primary px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-primaryHover"
+                      >
+                        <PhoneCall className="h-4 w-4" aria-hidden />
+                        Ver propiedad y contacto
                       </Link>
-                      <Link href={`/?property=${item.id}`} className="text-primary hover:underline">
-                        Ver en el mapa
+                      <Link
+                        href={`/?property=${item.id}`}
+                        className="inline-flex min-h-11 items-center justify-center gap-2 rounded-full border border-line px-4 py-2.5 text-sm font-semibold text-textPrimary transition-colors hover:border-primary hover:bg-primaryLight hover:text-primary"
+                      >
+                        <Eye className="h-4 w-4" aria-hidden />
+                        Ubicar en el mapa
                       </Link>
                     </div>
                   </div>

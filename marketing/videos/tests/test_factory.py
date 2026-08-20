@@ -280,6 +280,41 @@ class PaidVoiceCacheTests(unittest.TestCase):
 
 
 class DraftVersusFinalVoiceTests(unittest.TestCase):
+    def test_caption_fragments_keep_one_stable_two_line_box(self):
+        """Caption changes must not jump the whole text block on every phrase."""
+        source = (Path(__file__).resolve().parents[1] / "remotion/src/captions.tsx").read_text(encoding="utf-8")
+        self.assertIn("height: 132", source)
+        self.assertNotIn("translateY(${rise}px)", source)
+        self.assertNotIn("opacity: appear", source)
+
+    def test_final_render_requires_approval_of_the_exact_studio_voice_timing(self):
+        """SPEC:VFACT-017 — paid timing is reviewed before Remotion renders."""
+        source = (Path(__file__).resolve().parents[1] / "factory.py").read_text(encoding="utf-8")
+        render = source.split("def cmd_render")[1].split("def cmd_review")[0]
+        gate = render.index("final-voice-approval.json")
+        draw = render.index("cache.build")
+        self.assertLess(gate, draw)
+        self.assertIn("file_sha(studio_props)", render)
+        self.assertIn("providers[0].signature()", render)
+
+    def test_final_voice_studio_writes_props_from_bought_audio_before_approval(self):
+        """SPEC:VFACT-017 — Studio owns final timing; render does not discover it."""
+        source = (Path(__file__).resolve().parents[1] / "factory.py").read_text(encoding="utf-8")
+        studio = source.split("def cmd_studio")[1].split("def cmd_render")[0]
+        self.assertIn("final_voice_providers", studio)
+        self.assertIn("voice.speak_scene", studio)
+        self.assertIn('final-voice-preview.json', studio)
+        self.assertIn("subtitles.write_srt", studio)
+
+    def test_final_voice_is_one_continuous_take_across_all_scenes(self):
+        """SPEC:VFACT-017 — scene cuts must not restart final voice prosody."""
+        source = (Path(__file__).resolve().parents[1] / "factory.py").read_text(encoding="utf-8")
+        studio = source.split("def cmd_studio")[1].split("def cmd_render")[0]
+        render = source.split("def cmd_render")[1].split("def cmd_review")[0]
+        self.assertIn("voice.speak_video", studio)
+        self.assertIn("voice.speak_video", render)
+        self.assertIn("narration-final.mp3", studio)
+
     def test_header_only_audio_is_rejected_before_cache_reuse(self):
         """SPEC:VFACT-012"""
         with tempfile.TemporaryDirectory() as temporary:
@@ -479,9 +514,11 @@ class LintTests(unittest.TestCase):
 
     def test_narration_longer_than_the_target_is_accepted(self):
         # Duration is an editorial decision, not a gate: a piece that runs past
-        # its declared target is not a defect.
+        # its declared target is not a defect when every individual take still
+        # respects the six-second pace contract.
         broken = plan()
-        broken["scenes"][1]["voice"] = "Palabras de relleno para alargar la locución mucho más allá. " * 8
+        middle = broken["scenes"][1]
+        broken["scenes"] = broken["scenes"][:1] + [dict(middle) for _ in range(5)] + broken["scenes"][-1:]
         report = self.lint(broken, target=15)
         self.assertTrue(report["passed"])
         self.assertFalse(any(item["rule"] == "duration" for item in report["findings"]))
@@ -530,10 +567,34 @@ class LintTests(unittest.TestCase):
         self.assertTrue(any(item["rule"] == "scene_count" for item in report["findings"]))
 
     def test_the_scene_budget_grows_once_per_threshold(self):
+        """SPEC:VFACT-018 — every duration band has compatible scene capacity."""
         self.assertEqual(quality.scene_budget(45), quality.MAX_SCENES)
         self.assertEqual(quality.scene_budget(46), quality.MAX_STORY_SCENES)
         self.assertEqual(quality.scene_budget(120), quality.MAX_STORY_SCENES)
         self.assertEqual(quality.scene_budget(121), quality.MAX_LESSON_SCENES)
+        self.assertEqual(
+            (quality.MAX_SCENES, quality.MAX_STORY_SCENES, quality.MAX_LESSON_SCENES),
+            (8, 20, 40),
+        )
+        self.assertGreaterEqual(quality.MAX_SCENES * quality.MAX_SCENE_SECONDS, 45)
+        self.assertGreaterEqual(quality.MAX_STORY_SCENES * quality.MAX_SCENE_SECONDS, 120)
+        self.assertGreaterEqual(quality.MAX_LESSON_SCENES * quality.MAX_SCENE_SECONDS, 240)
+
+    def test_a_scene_over_six_seconds_blocks_lint(self):
+        """SPEC:VFACT-018 — a long take is an error, not advice."""
+        broken = plan()
+        broken["scenes"][0]["duration"] = quality.MAX_SCENE_SECONDS + 0.01
+        report = self.lint(broken)
+        self.assertFalse(report["passed"])
+        self.assertTrue(any(item["rule"] == "scene_pace" for item in report["findings"]))
+
+    def test_vertical_render_profile_accepts_the_factory_maximum(self):
+        """SPEC:VFACT-018 — the declared renderer cannot cap a valid plan."""
+        profile_path = Path(__file__).resolve().parents[1] / "system/render-profiles.json"
+        profiles = json.loads(profile_path.read_text(encoding="utf-8"))
+        vertical = profiles["profiles"]["vertical-organic"]
+        self.assertEqual(vertical["minimum_duration_seconds"], 8)
+        self.assertEqual(vertical["maximum_duration_seconds"], quality.MAX_DURATION_SECONDS)
 
     def test_a_lesson_is_not_a_story(self):
         self.assertTrue(quality.is_story(120))
@@ -657,6 +718,15 @@ class LintTests(unittest.TestCase):
         report = self.lint(plan())
         self.assertFalse(report["passed"])
         self.assertTrue(any(item["rule"] == "repeated_hook" for item in report["findings"]))
+
+    def test_a_voice_only_variant_keeps_the_same_hook_and_camera(self):
+        candidate = plan()
+        catalog = {"videos": [
+            {"id": "geo-015", "hook": candidate["scenes"][0]["voice"], "hero_staging": "hold-in"},
+            {"id": "geo-016", "experiment": "voice"},
+        ]}
+        self.assertEqual(quality.check_repetition(candidate, catalog, "geo-016"), [])
+        self.assertEqual(quality.check_hero_scene(candidate, catalog, "geo-016"), [])
 
 
 class PropertyArtTests(unittest.TestCase):
@@ -817,6 +887,38 @@ class AnimationRegistryTests(unittest.TestCase):
         import renderer
 
         self.assertTrue(quality.PRODUCT_ASSETS <= set(renderer.SIMULATIONS))
+
+    def test_credicasa_story_animations_are_registered_end_to_end(self):
+        identifiers = {
+            "sim:credicasa-hero",
+            "sim:credicasa-fact-card",
+            "sim:credicasa-home-gate",
+            "sim:credicasa-three-numbers",
+            "sim:credicasa-entry-example",
+            "sim:credicasa-capacity",
+            "sim:credicasa-applicants-a",
+            "sim:credicasa-applicants-b",
+            "sim:credicasa-payment-example",
+            "sim:credicasa-total-envelope",
+            "sim:credicasa-rate-reset",
+            "sim:credicasa-reservation",
+            "sim:credicasa-order-a",
+            "sim:credicasa-order-b",
+        }
+        remotion = self.remotion_animations()
+        for identifier in identifiers:
+            self.assertIn(identifier, planner.SIMULATIONS, identifier)
+            self.assertIn(identifier, renderer.SIMULATIONS, identifier)
+            self.assertIn(identifier, remotion, identifier)
+
+    def test_credicasa_hero_uses_the_geo_visual_contract(self):
+        source = (
+            Path(__file__).resolve().parents[1]
+            / "remotion/src/credicasa-simulations.tsx"
+        ).read_text(encoding="utf-8")
+        for primitive in ("HeroStage", "HERO_MOVES", "EmPage", "EmGlyph", "PropertyArt"):
+            self.assertIn(primitive, source, primitive)
+        self.assertEqual(renderer.HERO_STAGINGS["sim:credicasa-hero"], "pull-back")
 
     def test_listing_gallery_freezes_after_the_fourth_photo(self):
         source = (Path(__file__).resolve().parents[1] / "remotion/src/simulations.tsx").read_text(encoding="utf-8")

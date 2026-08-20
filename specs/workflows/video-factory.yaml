@@ -8,6 +8,42 @@ summary: >-
   producto ni autorizan publicar en redes.
 
 rules:
+  - id: VFACT-018
+    name: Duración, ritmo y perfil de render comparten un contrato compatible
+    status: implemented
+    summary: >-
+      La fábrica admite objetivos de 8 a 240 segundos. El lint permite hasta
+      ocho escenas en formato corto, veinte en historia y cuarenta en clase;
+      ninguna escena planificada o estimada con la voz final puede superar seis
+      segundos. El perfil vertical admite el mismo máximo de 240 segundos.
+    rationale: >-
+      Un techo de catorce o veinticuatro escenas no puede cubrir cuatro minutos
+      respetando tomas de seis segundos. Alinear los límites evita que una pieza
+      aprobada por el planificador falle recién al preparar el máster.
+    evidence:
+      - file: marketing/videos/quality.py
+        symbol: MAX_DURATION_SECONDS
+      - file: marketing/videos/quality.py
+        symbol: MAX_LESSON_SCENES
+      - file: marketing/videos/quality.py
+        symbol: scene_budget
+      - file: marketing/videos/quality.py
+        symbol: check_structure
+      - file: marketing/videos/quality.py
+        symbol: check_final_voice_pace
+      - file: marketing/videos/planner.py
+        symbol: PLAN_SCHEMA
+      - file: marketing/videos/system/render-profiles.json
+        symbol: maximum_duration_seconds
+    tests: {unit: true}
+    cases:
+      - name: Historia de dos minutos con veinte escenas de seis segundos
+        expected: permitida por perfil, esquema y lint
+      - name: Clase de cuatro minutos con cuarenta escenas de seis segundos
+        expected: permitida por perfil, esquema y lint
+      - name: Una escena planificada o estimada supera seis segundos
+        expected: error de lint antes de aprobar
+
   - id: VFACT-001
     name: Un estado publicado no puede retroceder
     status: implemented
@@ -185,6 +221,32 @@ rules:
     cases:
       - name: Asset registrado con nota todavía no existe
         expected: error de lint
+
+  - id: VFACT-017
+    name: La voz final y su timing se aprueban en Studio antes del render
+    status: implemented
+    summary: >-
+      La voz pagada se compra o reutiliza desde Studio, que recalcula cada escena
+      y los subtítulos desde una sola toma continua con la duración real. El render final se niega hasta que
+      una persona aprueba exactamente el plan, la firma de voz y los props que
+      revisó allí.
+    rationale: >-
+      El máster es la operación más lenta del flujo. Descubrir durante el render
+      que la voz final cambió cortes, pausas o duración desperdicia máquina y
+      convierte el render en una herramienta de revisión.
+    evidence:
+      - file: marketing/videos/factory.py
+        symbol: def cmd_studio
+      - file: marketing/videos/factory.py
+        symbol: def cmd_render
+    tests: {unit: true}
+    cases:
+      - name: Voz final comprada pero timing todavía no aprobado
+        expected: el render se niega antes de abrir Remotion
+      - name: Props de Studio cambian después de la aprobación final
+        expected: el render exige una nueva revisión y aprobación
+      - name: El guion tiene siete escenas
+        expected: la voz final se compra como una sola toma, no como siete clips
 
   - id: VFACT-010
     name: Un experimento declara su métrica antes de elegir ganador

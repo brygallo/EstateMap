@@ -1,8 +1,8 @@
 {
-  "approved_at": "2026-08-20T10:47:47.258661-05:00",
+  "approved_at": "2026-08-20T12:17:40.993283-05:00",
   "approved_by": "human",
-  "notes": "",
+  "notes": "Explicitly approved in chat on 2026-08-20 to purchase the final voice and review the resulting master.",
   "lint_passed": true,
   "forced": false,
-  "plan_sha": "db737f1d8f08537ccf61f3926b1f1134e8a2519ab66b89db4b2585cc483b0391"
+  "plan_sha": "48d45957ad87cf365edf377d9817fb568bc080b89ac766425b8556fa0a4e4b0f"
 }

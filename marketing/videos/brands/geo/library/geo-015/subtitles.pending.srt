@@ -1,83 +1,75 @@
 1
-00:00:00,000 --> 00:00:01,721
-Llevas rato abriendo anuncios
+00:00:00,000 --> 00:00:01,595
+Abres anuncios uno por uno
 
 2
-00:00:01,721 --> 00:00:03,270
-y todavía no sabes cuál es
+00:00:01,595 --> 00:00:03,190
+y sigues sin saber cuál es
 
 3
-00:00:03,270 --> 00:00:04,073
+00:00:03,190 --> 00:00:04,016
 el más barato.
 
 4
-00:00:04,533 --> 00:00:06,440
-Respira. Esa lista ya está hecha.
+00:00:04,467 --> 00:00:05,718
+Ya no tienes que hacerlo.
 
 5
-00:00:06,900 --> 00:00:08,478
-Los terrenos más baratos de
+00:00:06,167 --> 00:00:07,749
+Aquí están los terrenos más
 
 6
-00:00:08,478 --> 00:00:09,041
-tu ciudad.
+00:00:07,749 --> 00:00:09,218
+baratos y los más grandes
 
 7
-00:00:09,041 --> 00:00:10,056
-O los más grandes.
+00:00:09,218 --> 00:00:09,952
+de tu ciudad.
 
 8
-00:00:10,056 --> 00:00:10,619
-Tú eliges.
+00:00:10,400 --> 00:00:12,119
+Estas listas no las hace
 
 9
-00:00:11,067 --> 00:00:12,311
-Y no la escribió nadie:
+00:00:12,119 --> 00:00:12,944
+una persona:
 
 10
-00:00:12,311 --> 00:00:13,556
-se arma con lo que hay
+00:00:12,944 --> 00:00:15,144
+se arman con lo publicado ahora.
 
 11
-00:00:13,556 --> 00:00:14,313
-publicado hoy.
+00:00:15,600 --> 00:00:17,382
+Cada terreno dice por qué está
 
 12
-00:00:14,767 --> 00:00:16,270
-Cada terreno te dice por qué
+00:00:17,382 --> 00:00:18,187
+en ese puesto,
 
 13
-00:00:16,270 --> 00:00:17,514
-está ahí y en qué parte
+00:00:18,187 --> 00:00:19,452
+y lo abres en el mapa.
 
 14
-00:00:17,514 --> 00:00:18,292
-del mapa queda.
+00:00:19,900 --> 00:00:21,940
+El primer puesto no se compra.
 
 15
-00:00:18,733 --> 00:00:19,403
-Y lo mejor:
-
-16
-00:00:19,403 --> 00:00:21,293
-ese primer puesto no se compra.
-
-17
-00:00:21,293 --> 00:00:22,389
+00:00:21,940 --> 00:00:23,164
 Ni con publicidad,
 
-18
-00:00:22,389 --> 00:00:23,182
+16
+00:00:23,164 --> 00:00:24,048
 ni con clics.
 
-19
-00:00:23,633 --> 00:00:24,715
-Solo con el precio.
+17
+00:00:24,500 --> 00:00:25,618
+Aparece primero.
 
-20
-00:00:24,715 --> 00:00:25,741
+18
+00:00:25,618 --> 00:00:26,875
 Encuentra el tuyo
 
-21
-00:00:25,741 --> 00:00:27,734
+19
+00:00:26,875 --> 00:00:29,320
 en geopropiedadesecuador punto com.

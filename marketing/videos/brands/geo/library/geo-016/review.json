@@ -1,0 +1,139 @@
+{
+  "reviewed_at": "2026-08-20T12:52:58.290326-05:00",
+  "passed": true,
+  "checks": {
+    "vertical_1080x1920": true,
+    "duration_8_to_240_seconds": true,
+    "plan_lint_passed": true,
+    "cover_exists": true,
+    "subtitles_exist": true,
+    "all_assets_resolve": true,
+    "approval_exists": true,
+    "text_minimum_declared": true,
+    "no_interpolated_figures": true,
+    "hero_scene_holds_attention": true
+  },
+  "measured_duration_seconds": 29.733,
+  "target_duration_seconds": 28.0,
+  "human_review": null,
+  "notes": "",
+  "visual_review": {
+    "overlay_geometry_version": 1,
+    "critical_frames": [
+      {
+        "scene": 1,
+        "timestamp": 2.333,
+        "path": "frames/scene-01.jpg"
+      },
+      {
+        "scene": 2,
+        "timestamp": 5.533,
+        "path": "frames/scene-02.jpg"
+      },
+      {
+        "scene": 3,
+        "timestamp": 8.7,
+        "path": "frames/scene-03.jpg"
+      },
+      {
+        "scene": 4,
+        "timestamp": 13.367,
+        "path": "frames/scene-04.jpg"
+      },
+      {
+        "scene": 5,
+        "timestamp": 18.033,
+        "path": "frames/scene-05.jpg"
+      },
+      {
+        "scene": 6,
+        "timestamp": 22.433,
+        "path": "frames/scene-06.jpg"
+      },
+      {
+        "scene": 7,
+        "timestamp": 27.125,
+        "path": "frames/scene-07.jpg"
+      }
+    ],
+    "motion_strips": [
+      {
+        "scene": 1,
+        "samples": 9,
+        "from": 0.0,
+        "to": 4.667,
+        "path": "strips/scene-01.jpg"
+      },
+      {
+        "scene": 2,
+        "samples": 4,
+        "from": 4.667,
+        "to": 6.4,
+        "path": "strips/scene-02.jpg"
+      },
+      {
+        "scene": 3,
+        "samples": 9,
+        "from": 6.4,
+        "to": 11.0,
+        "path": "strips/scene-03.jpg"
+      },
+      {
+        "scene": 4,
+        "samples": 9,
+        "from": 11.0,
+        "to": 15.733,
+        "path": "strips/scene-04.jpg"
+      },
+      {
+        "scene": 5,
+        "samples": 9,
+        "from": 15.733,
+        "to": 20.333,
+        "path": "strips/scene-05.jpg"
+      },
+      {
+        "scene": 6,
+        "samples": 8,
+        "from": 20.333,
+        "to": 24.533,
+        "path": "strips/scene-06.jpg"
+      },
+      {
+        "scene": 7,
+        "samples": 10,
+        "from": 24.533,
+        "to": 29.717,
+        "path": "strips/scene-07.jpg"
+      }
+    ],
+    "text": {
+      "declared_floor_px": 22,
+      "editorial_minimum_literal_px": 28,
+      "simulation_minimum_literal_px": 18,
+      "simulation_small_literal_count": 21,
+      "passed": true,
+      "note": "Simulation microcopy and dynamic fitted text are verified in the critical-frame contact sheet."
+    },
+    "animated_figures": {
+      "passed": true,
+      "findings": [],
+      "note": "Una cifra interpolada afirma un valor falso en cada fotograma menos el último."
+    },
+    "hero_scene": {
+      "measured": true,
+      "scene_seconds": 4.667,
+      "events": 14,
+      "events_per_second": 3.0,
+      "required_events_per_second": 3.0,
+      "still_seconds": 0,
+      "still_ratio": 0.0,
+      "max_still_ratio": 0.12,
+      "passed": true,
+      "findings": []
+    },
+    "warnings": [
+      "Scene 4 is still for 2.3 s of its 4.7 s (49%)"
+    ]
+  }
+}

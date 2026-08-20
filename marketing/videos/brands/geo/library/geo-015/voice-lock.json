@@ -1,0 +1,6 @@
+{
+  "locked_at": "2026-08-20T12:17:41.218583-05:00",
+  "voice_profile": "voice-01",
+  "tts_provider": "elevenlabs",
+  "signature": "elevenlabs|profile=voice-01|model_id=eleven_multilingual_v2|output_format=mp3_44100_128|similarity_boost=0.55|speed=1.02|stability=0.62|voice_id=452WrNT9o8dphaYW5YGU"
+}

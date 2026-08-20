@@ -81,8 +81,10 @@ export default function PropertySidebar({
 }: PropertySidebarProps) {
   // Resalte local del listado (funciona aunque el mapa aún no sincronice hover).
   const [localHoverId, setLocalHoverId] = useState<number | null>(null);
-  const [sortMode, setSortMode] = useState<SortMode>('distance');
+  const [sortMode, setSortMode] = useState<SortMode>('recent');
   const [visibleCardCount, setVisibleCardCount] = useState(INITIAL_CARD_COUNT);
+  const sortWasChosenRef = useRef(false);
+  const hadUserLocationRef = useRef(false);
   const activeHoverId = hoveredPropertyId ?? localHoverId;
   const activeSortMode: SortMode = selectedProperty ? 'distance' : sortMode;
 
@@ -146,6 +148,12 @@ export default function PropertySidebar({
   }, [activeSortMode, filters, visibleProperties]);
 
   useEffect(() => {
+    const locationJustArrived = Boolean(userLocation) && !hadUserLocationRef.current;
+    hadUserLocationRef.current = Boolean(userLocation);
+    if (locationJustArrived && !sortWasChosenRef.current) setSortMode('distance');
+  }, [userLocation]);
+
+  useEffect(() => {
     const id = selectedProperty?.id;
     if (id == null) return;
     const index = sortedProperties.findIndex(({ property }) => property.id === id);
@@ -199,6 +207,7 @@ export default function PropertySidebar({
   };
 
   const handleSortChange = (nextSortMode: SortMode) => {
+    sortWasChosenRef.current = true;
     trackEvent('map_results_sorted', {
       sort_mode: nextSortMode,
       visible_count: visibleProperties.length,

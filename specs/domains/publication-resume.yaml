@@ -35,7 +35,7 @@ rules:
         lines: "1381-1406"
         symbol: def resume_link
       - file: backend/real_estate/views.py
-        lines: "1339-1341"
+        lines: "1347-1349"
         symbol: "return [IsAuthenticated(), IsAdminUser()]"
         note: Toda acción del viewset que no sea `create` exige staff.
       - file: backend/real_estate/email_utils.py
@@ -91,7 +91,7 @@ rules:
         lines: "709-711"
         symbol: def is_valid
       - file: backend/real_estate/views.py
-        lines: "1555-1559"
+        lines: "1563-1566"
         symbol: def invalid_resume_token_response
     backend:
       enforce: true
@@ -126,7 +126,7 @@ rules:
       guardado fallido deja el enlace gastado.
     evidence:
       - file: backend/real_estate/views.py
-        lines: "1419-1424"
+        lines: "1427-1431"
         symbol: redeemed_at__isnull=True
         note: UPDATE condicional dentro de la transacción que crea la propiedad.
       - file: backend/real_estate/email_utils.py
@@ -196,7 +196,7 @@ rules:
       silencio lo que ve quien tiene el enlace.
     evidence:
       - file: backend/real_estate/serializers.py
-        lines: "619-631"
+        lines: "636-647"
         symbol: class PublicationDraftSerializer
       - file: backend/real_estate/views.py
         lines: "1429-1445"
@@ -235,7 +235,7 @@ rules:
         symbol: "class PendingPublicationImage"
         note: Archivos temporales ordenados y ligados al borrador pendiente.
       - file: backend/real_estate/serializers.py
-        lines: "637-644"
+        lines: "654-660"
         symbol: "get_temporary_images"
         note: El enlace devuelve las fotos que debe reconstruir el formulario.
       - file: frontend/app/continuar-publicacion/[token]/page.tsx
@@ -343,10 +343,10 @@ rules:
         lines: "637-639"
         symbol: related_name="pending_publications"
       - file: backend/real_estate/views.py
-        lines: "1517-1519"
+        lines: "1525-1527"
         symbol: pending.status = 'converted'
       - file: backend/real_estate/views.py
-        lines: "1394-1396"
+        lines: "1402-1404"
         symbol: "'Esta solicitud ya se convirtió en un anuncio.'"
     tests:
       api: true
@@ -414,7 +414,7 @@ rules:
         lines: "114-152"
         symbol: def validate_image_batch
       - file: backend/real_estate/serializers.py
-        lines: "567-569"
+        lines: "577-579"
         symbol: "def validate_uploaded_images(self, value):"
         note: PendingPublicationSerializer delega en el validador compartido.
     backend:

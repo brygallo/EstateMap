@@ -176,7 +176,7 @@ rules:
           Solo se asigna cuando está vacío, que es lo que lo hace estable frente
           a cualquier edición posterior.
       - file: backend/real_estate/views.py
-        lines: "937-939"
+        lines: "945-947"
         symbol: by_code
         note: Resolución pública, sin distinguir mayúsculas y excluyendo inactivas.
       - file: backend/real_estate/serializers.py
@@ -562,7 +562,7 @@ rules:
           Frontera de verdad, en el servidor. A diferencia de las láminas
           (SOC-009), este dato es del dueño.
       - file: backend/real_estate/serializers.py
-        lines: "664-675"
+        lines: "681-691"
         symbol: PROPERTY_PATH_RE
         note: >-
           La visita a una ficha se atribuye a su anuncio leyendo el id de la

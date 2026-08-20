@@ -1,0 +1,9 @@
+{
+  "approved_at": "2026-08-20T12:29:08.822727-05:00",
+  "approved_by": "human",
+  "notes": "Human reviewed and approved the continuous voice, licensed music, subtitles, and 29.7-second timing in Studio.",
+  "prepared_at": "2026-08-20T12:27:45.548458-05:00",
+  "plan_sha": "30ce9c6d3ad9ab8cf663fb057873e52b4d2c570499e49241c42c4ab943ab8fe3",
+  "props_sha": "0ed8f37fc64c4be99dce736f537bae51a8cd92564ad86375f9e19d6d3623fe1e",
+  "voice_signature": "elevenlabs|profile=voice-02|model_id=eleven_multilingual_v2|output_format=mp3_44100_128|similarity_boost=0.55|speed=1.02|stability=0.62|voice_id=qRUgOhnxGASxirG4fKjv"
+}

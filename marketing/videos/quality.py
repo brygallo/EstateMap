@@ -76,7 +76,7 @@ MAX_DURATION_SECONDS = 240
 # take, nothing was. An animation carries on across a cut — `renderer.AssetTimeline`
 # continues its arc — so more scenes buy rhythm without inventing content.
 MAX_SCENES = 8
-MAX_STORY_SCENES = 16
+MAX_STORY_SCENES = 20
 # A lesson is not a longer story: it is a subject cut into steps, and each step
 # needs its own animation.
 #
@@ -127,6 +127,7 @@ def product_reveal_deadline(target: int) -> float:
 
 
 PRODUCT_ASSETS = {
+    "sim:geo-location-hero", "sim:geo-nearby-context",
     "sim:alrededor", "sim:entorno-mapa", "sim:forma-dibujada", "sim:medidas", "sim:metros-utiles",
     "sim:mapa", "sim:llegada", "sim:zona", "sim:filtros", "sim:ficha",
     "sim:publicar-gratis", "sim:formulario", "sim:ubicacion-publicacion",
@@ -209,7 +210,7 @@ def check_structure(plan: dict[str, Any], target: int) -> list[dict[str, str]]:
         duration = float(scene.get("duration") or 0)
         if duration > MAX_SCENE_SECONDS:
             findings.append(finding(
-                "warning",
+                "error",
                 "scene_pace",
                 f"Escena {index}: {duration:.0f} s en una sola toma; por encima de {MAX_SCENE_SECONDS:.0f} s "
                 f"córtala donde la voz cambia de idea. Una animación continúa entre escenas, así que dividirla no la interrumpe",
@@ -242,7 +243,7 @@ def check_final_voice_pace(plan: dict[str, Any]) -> list[dict[str, str]]:
     ]
     if long_scenes:
         findings.append(finding(
-            "warning",
+            "error",
             "final_voice_pace",
             f"Con la voz final, las escenas {long_scenes} pasan de {MAX_SCENE_SECONDS:.0f} s. "
             f"La voz de pago lee más lento que el borrador y no se puede cambiar una vez comprada: "
@@ -513,6 +514,9 @@ def check_hero_scene(plan: dict[str, Any], catalog: dict[str, Any], identifier: 
     """
     if identifier in HERO_EXEMPT:
         return []
+    current = next((item for item in catalog.get("videos", []) if item.get("id") == identifier), {})
+    if current.get("experiment") == "voice":
+        return []
     scenes = plan.get("scenes") or []
     if not scenes:
         return []
@@ -546,6 +550,9 @@ def check_hero_scene(plan: dict[str, Any], catalog: dict[str, Any], identifier: 
 def check_repetition(plan: dict[str, Any], catalog: dict[str, Any], identifier: str) -> list[dict[str, str]]:
     scenes = plan.get("scenes") or []
     if not scenes:
+        return []
+    current = next((item for item in catalog.get("videos", []) if item.get("id") == identifier), {})
+    if current.get("experiment") == "voice":
         return []
     hook = " ".join(text_of(scenes[0], "voice").lower().split())
     findings = []

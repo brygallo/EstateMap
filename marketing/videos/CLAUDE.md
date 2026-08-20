@@ -123,6 +123,24 @@ dibujada con el kit oscuro enseña un producto que no existe.
   dos. Con una sola cara, toda la interfaz sale al mismo peso y pierde la
   jerarquía que la hace legible como interfaz.
 
+## Una propiedad en el mapa nunca está sobre la calle
+
+Cuando una pieza pone una propiedad sobre un mapa, el pin y su recuadro caen en
+**una manzana, no en una vía**. Un anuncio dibujado encima del asfalto dice que
+la casa está en mitad de la calle, y quien conoce la ciudad lo lee así al
+instante.
+
+- El mapa se dibuja primero: manzanas con holgura entre ellas y las calles que
+  las separan. Después se coloca la propiedad **dentro de una manzana**, con
+  espacio a los cuatro lados.
+- La zona que se ilumina bajo el pin es la manzana, no un rectángulo cualquiera:
+  tiene que encajar con las calles que la rodean.
+- El pin con el precio se ancla al borde superior de esa manzana, como en el
+  mapa del producto, y nunca tapa una vía completa.
+- Si no cabe con holgura, el mapa se dibuja con menos manzanas y más grandes.
+  Apretar la propiedad contra una calle para que quepa es el error que esta
+  regla existe para impedir.
+
 ## Los iconos son los del producto, no dibujos
 
 EstateMap usa `lucide-react`, y la fábrica instala **el mismo paquete en la
@@ -188,9 +206,13 @@ guardado en un segundo.
   la voz de borrador —gratis, local—, escribe `studio-props.json` y levanta el
   estudio en `http://localhost:3210/EstateMapVideo`. Ahí se ve el video entero,
   se salta de escena a escena y se corrige en caliente.
-- **El render solo ocurre después de dos cosas: que una persona apruebe lo que
-  vio en el estudio, y que la voz esté comprada.** No antes, y no para revisar.
-  `video render <id>` sin `--final` se niega y lo dice.
+- **La voz final se revisa en Studio antes del render.** Cuando una persona
+  autoriza el gasto, `video studio <id> --final-voice` compra o reutiliza la voz
+  bloqueada, recalcula cada escena y los subtítulos con la duración real y carga
+  esos props en Studio. La voz final es una sola toma continua: los cortes de
+  escena nunca reinician intención, respiración ni prosodia. Después de verla completa, la persona registra esa
+  versión exacta con `video approve <id> --final-voice`. `render --final` se
+  niega si cambió el plan, la voz o los props desde esa aprobación.
 - **`--draft` existe para depurar el renderer**, no para mirar la pieza. Si lo
   que se está arreglando es una animación, se arregla en el estudio.
 - Antes de dar una escena por hecha se miran sus fotogramas —`npx remotion still
@@ -206,9 +228,9 @@ Esto vale igual para Claude y para Codex.
 El guion se reescribe muchas veces antes de que quede bien. Esas vueltas no cuestan nada y no deben costarlo.
 
 - **Por defecto la voz es gratis.** `video render <id>` usa siempre Kokoro local, aunque `.env` tenga configurado ElevenLabs. Renderiza los borradores que hagan falta.
-- **La voz pagada solo entra cuando una persona dice que el video va a producción**, con `video render <id> --final`. Ningún otro comando la toca.
+- **La voz pagada solo entra cuando una persona autoriza el gasto**, con `video studio <id> --final-voice`. Ese comando compra y prepara la revisión; no renderiza.
 - **Nunca lances `--final` por iniciativa propia.** Es la única puerta al gasto: espera la orden explícita.
-- Antes de gastar, `video voice-cost <id>` dice cuántos caracteres se comprarían. `--final` lo repite y pide confirmación por terminal. Sin terminal se niega: el silencio no es un sí. Solo `--yes` autoriza por adelantado, y no lo uses sin que te lo pidan.
+- Antes de gastar, `video voice-cost <id>` dice cuántos caracteres se comprarían. `studio --final-voice` lo repite y pide confirmación por terminal. Sin terminal se niega: el silencio no es un sí. Solo `--yes` autoriza por adelantado, y no lo uses sin que te lo pidan.
 - Cada línea comprada queda cacheada por su texto exacto en `.cache/voice/paid/`. Volver a renderizar un guion sin cambios no cuesta nada; si editas una frase, solo se compra esa frase.
 - Los perfiles de voz viven en `system/voice-profiles.json`. Cada video elige una sola voz y todas sus escenas la conservan. `--voice-profile` fuerza esa voz en la pieza completa y tiene prioridad sobre el plan.
 - **La voz final rota, y la máquina lo comprueba.** Un máster no se compra con la voz de la pieza anterior. `workflow.FinalVoiceRotation` reparte los perfiles pagados que declaran su propio `voice_id` por número de video, así que se sabe de antemano qué voz le toca a cada pieza; `--voice-profile` puede elegir otra, pero repetir la voz del video anterior se rechaza antes de gastar un solo carácter. Esto estuvo escrito solo como aprendizaje y se incumplió once másters seguidos.
@@ -227,14 +249,14 @@ El guion se reescribe muchas veces antes de que quede bien. Esas vueltas no cues
 - Video vertical 9:16, 1080 × 1920, ritmo móvil y texto en zona segura.
 - **El ritmo se mide en cosas que pasan por segundo, no en duración.** Al menos
   dos eventos visibles cada segundo, ninguna escena por encima de seis segundos,
-  y más escenas antes que escenas más largas: ocho en formato corto, dieciséis
-  en historia, veinticuatro en clase. Cortar una escena en dos no interrumpe su
+  y más escenas antes que escenas más largas: ocho en formato corto, veinte
+  en historia y cuarenta en clase. Cortar una escena en dos no interrumpe su
   animación, porque `renderer.AssetTimeline` continúa el arco entre cortes. Las
   reglas completas están en `animation-standard.md` §10 pre y §10 bis, y valen
   igual para Geo y para Aents.
 - La duración se decide por la carga explicativa. En formato corto, entre 18 y 45 segundos: 18 s para una promesa y demostración simples; 20–30 s para varios pasos, mecanismo, objeciones o contexto; y 31–45 s únicamente para un tutorial específico que necesite enseñar una secuencia completa. Nunca estires una pieza con relleno ni comprimas una explicación hasta volverla ilegible.
-- Por encima de 45 segundos y hasta 120 la pieza es una **historia**, y el control de calidad le cambia las reglas: hasta nueve escenas y hasta 10 segundos para plantear antes de mostrar el producto. Se reserva para un relato real que haya que sostener —el origen del producto, un caso completo—, y el brief declara la duración y el motivo. Una historia gana aire para explicar, no permiso para prometer más: sigue teniendo un público, una idea y un CTA.
-- Por encima de 120 segundos y hasta 240 la pieza es una **clase**: hasta catorce escenas y hasta 25 segundos antes de mostrar el producto. Nadie ve cuatro minutos por un arco narrativo; los ve porque está aprendiendo algo que vino a aprender, así que cada escena enseña un paso que la anterior no enseñó. La duración no la decide el guion recibido sino la materia: si el tema se explica en noventa segundos, la pieza dura noventa. Una clase no relaja ninguna otra regla —un público, una idea, un CTA, y ninguna afirmación sin fuente—, y su tope de 25 segundos existe porque una pieza que llega al producto en los últimos diez segundos enseñó gratis y no vendió nada.
+- Por encima de 45 segundos y hasta 120 la pieza es una **historia**, y el control de calidad le cambia las reglas: hasta veinte escenas y hasta 10 segundos para plantear antes de mostrar el producto. Se reserva para un relato real que haya que sostener —el origen del producto, un caso completo—, y el brief declara la duración y el motivo. Una historia gana aire para explicar, no permiso para prometer más: sigue teniendo un público, una idea y un CTA.
+- Por encima de 120 segundos y hasta 240 la pieza es una **clase**: hasta cuarenta escenas y hasta 25 segundos antes de mostrar el producto. Cuarenta es el techo técnico que permite cubrir cuatro minutos sin superar seis segundos por toma, no una invitación a crear cuarenta diapositivas. Nadie ve cuatro minutos por un arco narrativo; los ve porque está aprendiendo algo que vino a aprender, así que cada escena enseña un paso que la anterior no enseñó. La duración no la decide el guion recibido sino la materia: si el tema se explica en noventa segundos, la pieza dura noventa. Una clase no relaja ninguna otra regla —un público, una idea, un CTA, y ninguna afirmación sin fuente—, y su tope de 25 segundos existe porque una pieza que llega al producto en los últimos diez segundos enseñó gratis y no vendió nada.
 - La promesa o tensión aparece en 0–2 s. La marca o el producto debe ser reconocible antes de 3 s.
 - La producción es asistida por IA: Claude analiza cada guion y crea las animaciones nuevas que hagan falta en Remotion, reutilizando componentes, paleta, tipografía, profundidad y reglas de movimiento de la marca. No sustituuyas una escena necesaria por otra existente que solo se parezca.
 - Antes de diseñar una animación, inspecciona los componentes reales de EstateMap relacionados. Usa como referencia su jerarquía, etiquetas, estados y comportamiento; tradúcelos al renderer aislado sin importar código del frontend ni fingir una captura.
@@ -336,13 +358,13 @@ Cuando escribas un guion, devuelve siempre: objetivo, hipótesis, público, dura
 
 1. Lee `memory/lessons.md`, el catálogo, el contexto de producto y los componentes reales de EstateMap relacionados con el tema.
 2. Si la pieza se usará como anuncio pagado, usa `$ad-copy` para clasificar tráfico, conciencia, estrategia y placement antes del guion. Si conduce a una landing nueva o reescrita, usa primero `$copywriting` para fijar la promesa y el CTA de destino. Ninguna de las dos skills puede introducir hechos que no estén respaldaldos por specs, código o una fuente aprobada.
-3. Elige la duración objetivo por la carga explicativa y regístrala en el brief: 18–45 s en formato corto (máximo cinco escenas, producto antes del segundo 3), 46–120 s si es una historia (nueve escenas, 10 s) y 121–240 s si es una clase (catorce escenas, 25 s). Una audiencia y un CTA en cualquiera de los tres.
+3. Elige la duración objetivo por la carga explicativa y regístrala en el brief: 18–45 s en formato corto (máximo ocho escenas, producto antes del segundo 3), 46–120 s si es una historia (veinte escenas, 10 s) y 121–240 s si es una clase (cuarenta escenas, 25 s). Ninguna escena supera seis segundos. Una audiencia y un CTA en cualquiera de los tres.
 4. Decide escena por escena si una animación existente demuestra literalmente la voz. Si no, crea una nueva en Remotion, basada en los estados y componentes reales del producto, regístrala y añade una prueba.
 5. Diseña una portada específica para el concepto. Mantén la firma visual y el CTA global, pero no recicles la ilustración ni los datos del video anterior.
 6. Sintetiza una sola toma por escena y usa las divisiones únicamente para subtítulos.
 7. Abre la pieza con `video --brand <marca> studio <id>` y revísala ahí: escena por escena, con su voz, comprobando acabado, solapamientos, zonas seguras de TikTok y fidelidad con el producto. Corrige y vuelve a mirar. **No renderices para revisar.**
 8. Enseña el estudio a la persona responsable y espera su aprobación explícita sobre lo que ve ahí.
-9. Solo entonces cotiza la voz con `voice-cost`, cómprala y renderiza **una sola vez** con `render --final`. Una aprobación del estudio no autoriza publicación.
+9. Solo entonces cotiza la voz con `voice-cost`, cárgala con `studio --final-voice`, revisa el timing completo y registra `approve --final-voice`. Después renderiza **una sola vez** con `render --final`. Ninguna de estas aprobaciones autoriza publicación.
 
 ## Piezas publicadas son inmutables
 

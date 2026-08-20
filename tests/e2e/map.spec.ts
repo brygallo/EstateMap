@@ -38,7 +38,7 @@ test.describe('Map', () => {
     // Let the first viewport settle. Moving the camera aborts whatever request
     // is in flight, and an aborted request never produces a response for the
     // assertion below to catch.
-    await page.waitForLoadState('networkidle');
+    await page.waitForTimeout(1_000);
 
     const nextRequest = page.waitForResponse(
       (response) => response.url().includes('map_points') && response.status() === 200,
@@ -102,6 +102,30 @@ test.describe('Map', () => {
     for (const field of forbidden) {
       expect(raw, `field ${field} must not travel in the public map payload`).not.toContain(field);
     }
+  });
+
+  test('public detail and intelligence payloads hide performance counters', async ({ request }) => {
+    const listing = await request.get(`${API_URL}/properties/`, { params: { page_size: '1' } });
+    const listingBody = listing.ok() ? await listing.json() : null;
+    const property = (Array.isArray(listingBody) ? listingBody : (listingBody?.results ?? []))[0];
+    test.skip(!property?.id, 'no published inventory');
+
+    const detail = await request.get(`${API_URL}/properties/${property.id}/`);
+    const intelligence = await request.get(`${API_URL}/properties/${property.id}/intelligence/`);
+
+    expect(detail.ok()).toBeTruthy();
+    expect(intelligence.ok()).toBeTruthy();
+    expect(await detail.text()).not.toContain('views_count');
+    const demand = (await intelligence.json()).demand;
+    expect(Object.keys(demand)).toEqual(['level']);
+  });
+
+  test('closed mobile results stay outside keyboard navigation', async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.goto('/');
+
+    const drawer = page.locator('.property-sidebar-drawer');
+    await expect(drawer).toHaveAttribute('inert', '');
   });
 
   test('map endpoint answers with the expected shape', async ({ request }) => {

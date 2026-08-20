@@ -9,7 +9,7 @@ import { buildWhatsAppUrl } from '@/lib/constants';
 export const metadata: Metadata = {
   title: 'Para inmobiliarias y corredores',
   description:
-    'Publica tus propiedades en el mapa de Ecuador, recibe contactos directos por WhatsApp y gestiona tus leads desde un panel. Planes para inmobiliarias y corredores independientes.',
+    'Publica tus propiedades en el mapa de Ecuador, recibe contactos directos por WhatsApp y gestiona tus leads desde un panel.',
   alternates: { canonical: '/inmobiliarias' },
 };
 
@@ -35,7 +35,7 @@ const BENEFITS = [
   },
   {
     title: 'Publicación asistida',
-    desc: 'Sube fotos, dibuja el terreno y completa los datos con un flujo guiado, en minutos.',
+    desc: 'Sube fotos, dibuja el terreno y completa los datos con un flujo guiado de cinco pasos.',
     icon: Plus,
   },
   {
@@ -56,36 +56,27 @@ const STEPS = [
   { n: 3, title: 'Recibe contactos', desc: 'Los interesados te escriben directo por WhatsApp o teléfono.' },
 ];
 
-const PLANS = [
+const PUBLISHING_OPTIONS = [
   {
-    name: 'Corredor',
+    name: 'Publica por tu cuenta',
     price: 'Gratis',
-    highlight: false,
-    features: ['Hasta 5 propiedades', 'Contacto por WhatsApp', 'Ubicación en el mapa', 'Leads básicos'],
-    cta: 'Empezar gratis',
-    href: '/registro',
-  },
-  {
-    name: 'Inmobiliaria',
-    price: '$29/mes',
     highlight: true,
-    features: [
-      'Propiedades ilimitadas',
-      'Panel de gestión de leads',
-      'Métricas de vistas y contactos',
-      'Prioridad en el mapa y SEO',
-      'Soporte por WhatsApp',
-    ],
-    cta: 'Hablar con ventas',
-    href: WHATSAPP_URL,
+    features: ['Sin límite de propiedades por plan', 'Contacto directo por WhatsApp', 'Ubicación en el mapa', 'Panel de contactos'],
+    cta: 'Publicar mi primera propiedad',
+    href: '/publicar-propiedad',
   },
   {
-    name: 'Empresa',
-    price: 'A medida',
+    name: 'Publicación asistida',
+    price: 'Por WhatsApp',
     highlight: false,
-    features: ['Todo lo de Inmobiliaria', 'Varios usuarios/agentes', 'Marca destacada', 'Integraciones a medida'],
-    cta: 'Contactar',
-    href: WHATSAPP_URL,
+    features: [
+      'Te ayudamos a completar el borrador',
+      'Revisión de datos y ubicación',
+      'Continuación mediante enlace seguro',
+      'Soporte directo por WhatsApp',
+    ],
+    cta: 'Pedir ayuda para publicar',
+    href: '/publicar-asistido',
   },
 ];
 
@@ -100,7 +91,7 @@ export default function InmobiliariasPage() {
               Para inmobiliarias y corredores
             </span>
             <h1 className="mt-4 text-3xl font-bold leading-tight sm:text-5xl">
-              Centraliza tu inventario, mide qué propiedades generan intención y asigna contactos a tus agentes
+              Publica tu inventario en el mapa y da seguimiento a cada contacto
             </h1>
             <p className="mt-5 text-base leading-7 text-white/80 sm:text-lg">
               Publica en el mapa, compara el rendimiento de cada inmueble y gestiona desde un
@@ -213,22 +204,22 @@ export default function InmobiliariasPage() {
         </div>
       </section>
 
-      {/* Planes */}
+      {/* Opciones de publicación */}
       <section className="bg-white">
         <div className="mx-auto max-w-6xl px-4 py-16 sm:px-6 lg:px-8">
-          <h2 className="text-center text-2xl font-bold text-textPrimary sm:text-3xl">Planes</h2>
+          <h2 className="text-center text-2xl font-bold text-textPrimary sm:text-3xl">Elige cómo publicar</h2>
           <p className="mt-2 text-center text-sm text-textSecondary">
-            Empieza gratis y escala cuando lo necesites.
+            Usa el formulario gratis o pídenos ayuda para completar la publicación.
           </p>
-          <div className="mt-10 grid gap-6 lg:grid-cols-3">
-            {PLANS.map((plan) => (
+          <div className="mx-auto mt-10 grid max-w-4xl gap-6 md:grid-cols-2">
+            {PUBLISHING_OPTIONS.map((plan) => (
               <Card
                 key={plan.name}
                 className={`rounded-card p-6 shadow-card ${
                   plan.highlight ? 'border-primary ring-2 ring-primary' : 'border-line'
                 }`}
               >
-                {plan.highlight && <Badge className="bg-primary text-white hover:bg-primary">Más popular</Badge>}
+                {plan.highlight && <Badge className="bg-primary text-white hover:bg-primary">Disponible ahora</Badge>}
                 <h3 className="mt-3 text-lg font-bold text-textPrimary">{plan.name}</h3>
                 <p className="mt-1 text-2xl font-bold text-primary">{plan.price}</p>
                 <ul className="mt-5 space-y-2">
@@ -267,7 +258,7 @@ export default function InmobiliariasPage() {
           </p>
           <div className="mt-8 flex flex-wrap justify-center gap-3">
             <Button asChild size="lg" className="bg-secondary text-white hover:bg-secondaryHover">
-              <Link href="/registro">Crear cuenta gratis</Link>
+              <Link href="/publicar-propiedad">Publicar una propiedad</Link>
             </Button>
             <Button asChild size="lg" variant="outline" className="border-white/30 bg-transparent text-white hover:bg-white/10">
               <a href={WHATSAPP_URL} target="_blank" rel="noopener noreferrer">

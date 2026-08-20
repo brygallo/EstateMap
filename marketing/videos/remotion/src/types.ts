@@ -41,6 +41,7 @@ export type VideoProps = {
   brandTile: string | null;
   kicker: string | null;
   musicFile: string | null;
+  narrationFile?: string | null;
   showSafeAreas: boolean;
   scenes: Scene[];
 };

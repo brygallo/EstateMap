@@ -54,7 +54,7 @@ Un usuario staff genera, para un PendingPublication concreto, un enlace de conti
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
 - `backend/real_estate/views.py:1381-1406` (`def resume_link`)
-- `backend/real_estate/views.py:1339-1341` (`return [IsAuthenticated(), IsAdminUser()]`) — Toda acción del viewset que no sea `create` exige staff.
+- `backend/real_estate/views.py:1347-1349` (`return [IsAuthenticated(), IsAdminUser()]`) — Toda acción del viewset que no sea `create` exige staff.
 - `backend/real_estate/email_utils.py:381-404` (`def create_publication_resume_token`)
 
 **Casos**
@@ -90,7 +90,7 @@ Un token de continuación deja de servir 14 días después de emitirse, y a part
 
 - `backend/estate_map/settings.py:574-576` (`PUBLICATION_RESUME_TOKEN_EXPIRY_DAYS`)
 - `backend/real_estate/models.py:709-711` (`def is_valid`)
-- `backend/real_estate/views.py:1555-1559` (`def invalid_resume_token_response`)
+- `backend/real_estate/views.py:1563-1566` (`def invalid_resume_token_response`)
 
 **Casos**
 
@@ -122,7 +122,7 @@ Canjear un token crea la propiedad y marca el token como consumido; un segundo c
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/real_estate/views.py:1419-1424` (`redeemed_at__isnull=True`) — UPDATE condicional dentro de la transacción que crea la propiedad.
+- `backend/real_estate/views.py:1427-1431` (`redeemed_at__isnull=True`) — UPDATE condicional dentro de la transacción que crea la propiedad.
 - `backend/real_estate/email_utils.py:388-396` (`revoked_at__isnull=True`) — Emitir un enlace nuevo retira el anterior, para que nunca haya dos vivos.
 
 **Casos**
@@ -186,7 +186,7 @@ La respuesta del token contiene el JSON del borrador y los datos de contacto que
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/real_estate/serializers.py:619-631` (`class PublicationDraftSerializer`)
+- `backend/real_estate/serializers.py:636-647` (`class PublicationDraftSerializer`)
 - `backend/real_estate/views.py:1429-1445` (`class PublicationDraftView`)
 
 **Casos**
@@ -212,7 +212,7 @@ Retomar restaura título, descripción, tipo, operación, precio, dirección, ci
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
 - `backend/real_estate/models.py:654-665` (`class PendingPublicationImage`) — Archivos temporales ordenados y ligados al borrador pendiente.
-- `backend/real_estate/serializers.py:637-644` (`get_temporary_images`) — El enlace devuelve las fotos que debe reconstruir el formulario.
+- `backend/real_estate/serializers.py:654-660` (`get_temporary_images`) — El enlace devuelve las fotos que debe reconstruir el formulario.
 - `frontend/app/continuar-publicacion/[token]/page.tsx:40-51` (`PROPERTY_DRAFT_STORAGE_KEY`) — El borrador y las URLs temporales se dejan donde el formulario ya los busca.
 
 **Casos**
@@ -302,8 +302,8 @@ Al completarse el canje, el PendingPublication pasa a converted y guarda una ref
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
 - `backend/real_estate/models.py:637-639` (`related_name="pending_publications"`)
-- `backend/real_estate/views.py:1517-1519` (`pending.status = 'converted'`)
-- `backend/real_estate/views.py:1394-1396` (`'Esta solicitud ya se convirtió en un anuncio.'`)
+- `backend/real_estate/views.py:1525-1527` (`pending.status = 'converted'`)
+- `backend/real_estate/views.py:1402-1404` (`'Esta solicitud ya se convirtió en un anuncio.'`)
 
 **Casos**
 
@@ -360,7 +360,7 @@ POST /api/pending-publications/ valida uploaded_images con el mismo lote de comp
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
 - `backend/real_estate/serializers.py:114-152` (`def validate_image_batch`)
-- `backend/real_estate/serializers.py:567-569` (`def validate_uploaded_images(self, value):`) — PendingPublicationSerializer delega en el validador compartido.
+- `backend/real_estate/serializers.py:577-579` (`def validate_uploaded_images(self, value):`) — PendingPublicationSerializer delega en el validador compartido.
 
 **Casos**
 

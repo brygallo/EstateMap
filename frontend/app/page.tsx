@@ -456,20 +456,18 @@ export default async function HomePage() {
               )}
 
               {extendedCities.length > 0 && (
-                <div>
-                  <h2 className="text-xl font-semibold text-textPrimary">
-                    Más ciudades y cantones
-                  </h2>
-                  <p className="mt-2 text-sm leading-6 text-textSecondary">
-                    También indexamos búsquedas locales en ciudades menos
-                    cubiertas, sin dejar fuera los mercados grandes.
-                  </p>
-                  <div className="mt-4 flex flex-wrap gap-2.5">
+                <details className="group rounded-card border border-line bg-white shadow-card">
+                  <summary className="flex min-h-12 cursor-pointer list-none items-center justify-between gap-3 px-4 py-3 text-base font-semibold text-textPrimary marker:hidden hover:text-primary [&::-webkit-details-marker]:hidden">
+                    Ver más ciudades y cantones
+                    <span className="text-sm font-medium text-primary group-open:hidden">{extendedCities.length} más</span>
+                    <span className="hidden text-sm font-medium text-primary group-open:inline">Ocultar</span>
+                  </summary>
+                  <div className="flex flex-wrap gap-2.5 border-t border-line px-4 py-4">
                     {extendedCities.map((city) => (
                       <Link
                         key={city.slug}
                         href={`/propiedades/${city.slug}`}
-                        className="inline-flex items-center gap-1.5 rounded-full border border-line bg-white px-4 py-2 text-sm font-medium text-textPrimary shadow-card transition-colors hover:border-primary hover:bg-primaryLight hover:text-primary"
+                        className="inline-flex items-center gap-1.5 rounded-full border border-line bg-white px-3 py-2 text-sm font-medium text-textPrimary transition-colors hover:border-primary hover:bg-primaryLight hover:text-primary"
                       >
                         <MapPin className="h-3.5 w-3.5 text-primary" aria-hidden />
                         {city.name}
@@ -477,7 +475,7 @@ export default async function HomePage() {
                       </Link>
                     ))}
                   </div>
-                </div>
+                </details>
               )}
 
               {provinces.length > 0 && (

@@ -198,6 +198,20 @@ def ask(prompt: str, schema: dict[str, Any], system: str | None = None) -> dict[
 
 
 SIMULATIONS = {
+    "sim:credicasa-hero": "gancho educativo: las tres cifras conocidas quedan detrás de las condiciones que realmente deciden el crédito",
+    "sim:credicasa-fact-card": "educación Credicasa: tasas, monto y plazo publicados con fecha y fuente",
+    "sim:credicasa-home-gate": "educación Credicasa: condiciones que debe cumplir la vivienda",
+    "sim:credicasa-three-numbers": "educación Credicasa: precio, avalúo y crédito no son la misma cifra",
+    "sim:credicasa-entry-example": "ejemplo Credicasa: entrada tradicional frente a financiamiento de hasta 100 %",
+    "sim:credicasa-capacity": "ejemplo Credicasa: el monto aprobado depende de la capacidad de endeudamiento",
+    "sim:credicasa-applicants-a": "educación Credicasa: aportaciones de afiliados dependientes y voluntarios",
+    "sim:credicasa-applicants-b": "educación Credicasa: jubilados, discapacidad y límite de ingreso familiar",
+    "sim:credicasa-payment-example": "ejemplo Credicasa: cuota aproximada, seguros, gastos y simulación oficial",
+    "sim:credicasa-total-envelope": "educación Credicasa: vivienda y gastos dentro del mismo límite de $65.000",
+    "sim:credicasa-rate-reset": "educación Credicasa: reajuste publicado cada 180 días y revisión contractual",
+    "sim:credicasa-reservation": "educación de compra: condiciones escritas de una reserva dependiente del financiamiento",
+    "sim:credicasa-order-a": "proceso Credicasa: requisitos, precalificación, presupuesto y vivienda elegible",
+    "sim:credicasa-order-b": "proceso Credicasa: comparar, confirmar, avaluar y leer antes de firmar",
     "sim:que-compras": "animación educativa: comprar un departamento es comprar una parte de un edificio",
     "sim:propiedad-horizontal": "animación educativa: qué consta en la escritura y qué es área común",
     "sim:alicuota": "animación educativa: la alícuota mensual y el certificado de estar al día",

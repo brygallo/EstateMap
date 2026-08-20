@@ -57,6 +57,7 @@ geopropiedadesecuador.com-audit/
 test-results/
 playwright-report/
 dogfood-output/
+.pnpm-store/
 coverage/
 htmlcov/
 detail_state.png

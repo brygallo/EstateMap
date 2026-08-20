@@ -43,6 +43,23 @@ import {
   GeoReasonSim,
   GeoRecipeSim,
 } from './geo-ranking-simulations';
+import {GeoLocationHeroSim, GeoNearbyContextSim} from './geo-intro-simulations';
+import {
+  CredicasaApplicantsASim,
+  CredicasaApplicantsBSim,
+  CredicasaCapacitySim,
+  CredicasaEntryExampleSim,
+  CredicasaFactCardSim,
+  CredicasaHeroSim,
+  CredicasaHomeGateSim,
+  CredicasaOrderASim,
+  CredicasaOrderBSim,
+  CredicasaPaymentExampleSim,
+  CredicasaRateResetSim,
+  CredicasaReservationSim,
+  CredicasaThreeNumbersSim,
+  CredicasaTotalEnvelopeSim,
+} from './credicasa-simulations';
 import {
   AentsBounceSim,
   AentsQuerySim,
@@ -5973,6 +5990,22 @@ export const SearchOrderSim: React.FC<SimulationProps> = ({frame, total, accent}
 };
 
 export const SIMULATIONS: Record<string, React.FC<SimulationProps>> = {
+  'sim:geo-location-hero': GeoLocationHeroSim,
+  'sim:geo-nearby-context': GeoNearbyContextSim,
+  'sim:credicasa-hero': CredicasaHeroSim,
+  'sim:credicasa-fact-card': CredicasaFactCardSim,
+  'sim:credicasa-home-gate': CredicasaHomeGateSim,
+  'sim:credicasa-three-numbers': CredicasaThreeNumbersSim,
+  'sim:credicasa-entry-example': CredicasaEntryExampleSim,
+  'sim:credicasa-capacity': CredicasaCapacitySim,
+  'sim:credicasa-applicants-a': CredicasaApplicantsASim,
+  'sim:credicasa-applicants-b': CredicasaApplicantsBSim,
+  'sim:credicasa-payment-example': CredicasaPaymentExampleSim,
+  'sim:credicasa-total-envelope': CredicasaTotalEnvelopeSim,
+  'sim:credicasa-rate-reset': CredicasaRateResetSim,
+  'sim:credicasa-reservation': CredicasaReservationSim,
+  'sim:credicasa-order-a': CredicasaOrderASim,
+  'sim:credicasa-order-b': CredicasaOrderBSim,
   'sim:que-compras': WhatYouBuySim,
   'sim:propiedad-horizontal': HorizontalPropertySim,
   'sim:alicuota': ServiceChargeSim,

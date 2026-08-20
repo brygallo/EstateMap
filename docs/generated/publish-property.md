@@ -98,7 +98,7 @@ Crear una propiedad sigue siempre el mismo orden: validar el payload, crear la f
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/real_estate/serializers.py:362-367` (`def create(self, validated_data):`) — Crea Property y luego llama a stage_property_image por cada archivo.
+- `backend/real_estate/serializers.py:372-376` (`def create(self, validated_data):`) — Crea Property y luego llama a stage_property_image por cada archivo.
 - `backend/real_estate/serializers.py:61-95` (`def stage_property_image`) — Escribe el original en disco (stash_upload), crea la fila PENDING y llama a enqueue_optimization.
 - `backend/real_estate/tasks.py:44-109` (`def optimize_property_image`) — Único punto que sube imagen y miniatura a MinIO y marca READY.
 
@@ -272,7 +272,7 @@ Cada `post_save`/`post_delete` de `Property` encadena, por señal: una fila de `
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
 - `backend/real_estate/views.py:457-459` (`exclude(status='inactive')`) — Único filtro que saca inactive del catálogo público; no toca la fila.
-- `backend/real_estate/views.py:1184-1186` (`def my_properties`) — including inactive: el dueño ve su propiedad inactiva, el público no.
+- `backend/real_estate/views.py:1192-1194` (`def my_properties`) — including inactive: el dueño ve su propiedad inactiva, el público no.
 - `backend/real_estate/models.py:383-385` (`on_delete=models.CASCADE`) — PropertyImage.property cae en cascada con la Property.
 - `frontend/app/my-properties/page.tsx:250-270` (`const handleDelete`) — DELETE /properties/<id>/ tras window.confirm; PropertyViewSet no sobrescribe destroy.
 

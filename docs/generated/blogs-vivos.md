@@ -179,7 +179,7 @@ El título, el H1 y la descripción declaran la cantidad real de anuncios mostra
 
 **Estado:** ✅ Implementada
 
-Cada posición muestra su cifra y la distancia respecto al promedio del ámbito, medida sobre el precio por m² —o sobre el área en los rankings de tamaño—, y enlaza a su ficha y a su ubicación en el mapa. La página enlaza además al catálogo completo y a la estadística del m² de ese lugar.
+Cada posición muestra su cifra y la distancia respecto al promedio del ámbito, medida sobre el precio por m² —o sobre el área en los rankings de tamaño—, y presenta acciones visibles para abrir la ficha con sus opciones de contacto o ubicar el anuncio en el mapa. La página enlaza además al catálogo completo y a la estadística del m² de ese lugar.
 
 > **Por qué:** Es lo que separa esta página del catálogo reordenado que ya existe. Y el eje de comparación importa: contrastar precios totales llamaría «la mejor oferta» al lote más pequeño. El precio por metro es el eje donde alguien distingue una ganga de un terreno chico.
 
@@ -188,6 +188,7 @@ Cada posición muestra su cifra y la distancia respecto al promedio del ámbito,
 - `backend/real_estate/services/rankings.py` (`def _benchmark`)
 - `backend/real_estate/services/rankings.py` (`comparison: str = 'price_per_m2'`)
 - `frontend/components/blog/LiveRankingPage.tsx` (`function reason`)
+- `frontend/components/blog/LiveRankingPage.tsx` (`Ver propiedad y contacto`)
 - `backend/real_estate/tests/test_rankings.py` (`def test_each_position_is_compared_on_price_per_square_metre`)
 
 **Casos**

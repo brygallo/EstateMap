@@ -13,6 +13,7 @@ Reglas internas que mantienen coherentes producción, publicación, revisión y 
 
 | Id | Regla | Estado |
 | --- | --- | --- |
+| [`VFACT-018`](#vfact-018--duración-ritmo-y-perfil-de-render-comparten-un-contrato-compatible) | Duración, ritmo y perfil de render comparten un contrato compatible | ✅ Implementada |
 | [`VFACT-001`](#vfact-001--un-estado-publicado-no-puede-retroceder) | Un estado publicado no puede retroceder | ✅ Implementada |
 | [`VFACT-002`](#vfact-002--medir-no-equivale-a-publicar) | Medir no equivale a publicar | ✅ Implementada |
 | [`VFACT-003`](#vfact-003--learned-conserva-la-evidencia-procesada) | Learned conserva la evidencia procesada | ✅ Implementada |
@@ -22,6 +23,7 @@ Reglas internas que mantienen coherentes producción, publicación, revisión y 
 | [`VFACT-008`](#vfact-008--las-publicaciones-externas-se-sincronizan-de-forma-idempotente) | Las publicaciones externas se sincronizan de forma idempotente | ✅ Implementada |
 | [`VFACT-007`](#vfact-007--render-y-paquete-se-promueven-solo-cuando-están-completos) | Render y paquete se promueven solo cuando están completos | ✅ Implementada |
 | [`VFACT-009`](#vfact-009--el-plan-no-puede-negar-un-recurso-que-utiliza) | El plan no puede negar un recurso que utiliza | ✅ Implementada |
+| [`VFACT-017`](#vfact-017--la-voz-final-y-su-timing-se-aprueban-en-studio-antes-del-render) | La voz final y su timing se aprueban en Studio antes del render | ✅ Implementada |
 | [`VFACT-010`](#vfact-010--un-experimento-declara-su-métrica-antes-de-elegir-ganador) | Un experimento declara su métrica antes de elegir ganador | ✅ Implementada |
 | [`VFACT-011`](#vfact-011--educación-extensa-no-se-disfraza-de-historia) | Educación extensa no se disfraza de historia | ✅ Implementada |
 | [`VFACT-012`](#vfact-012--una-voz-solo-entra-al-caché-cuando-contiene-audio-válido) | Una voz solo entra al caché cuando contiene audio válido | ✅ Implementada |
@@ -29,6 +31,36 @@ Reglas internas que mantienen coherentes producción, publicación, revisión y 
 | [`VFACT-014`](#vfact-014--la-fábrica-nunca-limpia-másteres-ni-voces-canónicas) | La fábrica nunca limpia másteres ni voces canónicas | ✅ Implementada |
 | [`VFACT-015`](#vfact-015--las-marcas-comparten-motor-pero-no-estado-editorial) | Las marcas comparten motor pero no estado editorial | ✅ Implementada |
 | [`VFACT-016`](#vfact-016--el-paquete-incluye-el-texto-exacto-para-publicar) | El paquete incluye el texto exacto para publicar | ✅ Implementada |
+
+### VFACT-018 — Duración, ritmo y perfil de render comparten un contrato compatible
+
+**Estado:** ✅ Implementada
+
+La fábrica admite objetivos de 8 a 240 segundos. El lint permite hasta ocho escenas en formato corto, veinte en historia y cuarenta en clase; ninguna escena planificada o estimada con la voz final puede superar seis segundos. El perfil vertical admite el mismo máximo de 240 segundos.
+
+> **Por qué:** Un techo de catorce o veinticuatro escenas no puede cubrir cuatro minutos respetando tomas de seis segundos. Alinear los límites evita que una pieza aprobada por el planificador falle recién al preparar el máster.
+
+**Evidencia en el código** (verificada por `tools/specs/validate.py`)
+
+- `marketing/videos/quality.py` (`MAX_DURATION_SECONDS`)
+- `marketing/videos/quality.py` (`MAX_LESSON_SCENES`)
+- `marketing/videos/quality.py` (`scene_budget`)
+- `marketing/videos/quality.py` (`check_structure`)
+- `marketing/videos/quality.py` (`check_final_voice_pace`)
+- `marketing/videos/planner.py` (`PLAN_SCHEMA`)
+- `marketing/videos/system/render-profiles.json` (`maximum_duration_seconds`)
+
+**Casos**
+
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| Historia de dos minutos con veinte escenas de seis segundos | — | — | — | permitida por perfil, esquema y lint |
+| Clase de cuatro minutos con cuarenta escenas de seis segundos | — | — | — | permitida por perfil, esquema y lint |
+| Una escena planificada o estimada supera seis segundos | — | — | — | error de lint antes de aprobar |
+
+**Cobertura exigida:** unit
+
+- `marketing/videos/tests/test_factory.py`
 
 ### VFACT-001 — Un estado publicado no puede retroceder
 
@@ -230,6 +262,31 @@ El lint falla cuando una nota afirma que una simulación registrada no existe mi
 | Caso | Rol | Estado previo | Cuerpo | Esperado |
 | --- | --- | --- | --- | --- |
 | Asset registrado con nota todavía no existe | — | — | — | error de lint |
+
+**Cobertura exigida:** unit
+
+- `marketing/videos/tests/test_factory.py`
+
+### VFACT-017 — La voz final y su timing se aprueban en Studio antes del render
+
+**Estado:** ✅ Implementada
+
+La voz pagada se compra o reutiliza desde Studio, que recalcula cada escena y los subtítulos desde una sola toma continua con la duración real. El render final se niega hasta que una persona aprueba exactamente el plan, la firma de voz y los props que revisó allí.
+
+> **Por qué:** El máster es la operación más lenta del flujo. Descubrir durante el render que la voz final cambió cortes, pausas o duración desperdicia máquina y convierte el render en una herramienta de revisión.
+
+**Evidencia en el código** (verificada por `tools/specs/validate.py`)
+
+- `marketing/videos/factory.py` (`def cmd_studio`)
+- `marketing/videos/factory.py` (`def cmd_render`)
+
+**Casos**
+
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| Voz final comprada pero timing todavía no aprobado | — | — | — | el render se niega antes de abrir Remotion |
+| Props de Studio cambian después de la aprobación final | — | — | — | el render exige una nueva revisión y aprobación |
+| El guion tiene siete escenas | — | — | — | la voz final se compra como una sola toma, no como siete clips |
 
 **Cobertura exigida:** unit
 

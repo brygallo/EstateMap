@@ -15,9 +15,11 @@ Dos reglas de ese contrato se repiten aquí porque son las que más cuestan
 cuando se saltan, y las dos se aplican igual a Codex:
 
 - **Una pieza se revisa en Remotion Studio, no renderizando.** `video --brand
-  <marca> studio <id>` levanta el video entero con su voz de borrador. El render
-  se hace **una sola vez**, después de que una persona apruebe lo que vio ahí y
-  con la voz ya comprada: `render --final`. Sin `--final`, el render se niega.
+  <marca> studio <id>` levanta el borrador gratuito. Cuando una persona autoriza
+  la compra, `studio <id> --final-voice` compra la voz, recalcula escenas y
+  subtítulos con su timing real y vuelve a abrir Studio. Esa versión exacta se
+  aprueba con `approve <id> --final-voice`; solo entonces `render --final` puede
+  empezar. El render se hace **una sola vez** y nunca sirve para ajustar timing.
 - **La voz pagada nunca se lanza por iniciativa propia.** Es la única puerta al
   gasto y espera una orden explícita.
 - **Cada marca dibuja su interfaz con su kit.** `estatemap-ui.tsx` para Geo,
@@ -25,6 +27,8 @@ cuando se saltan, y las dos se aplican igual a Codex:
   no se aproximan.
 - **Una propiedad se dibuja con `property-art.tsx`**, nunca con un marcador de
   posición ni una caja de color.
+- **En un mapa, una propiedad cae dentro de una manzana, nunca sobre una
+  calle**, y con espacio a los cuatro lados.
 - **Todo lo que pueda ser un icono sale de `lucide-react`**, el mismo paquete
   que usa el producto, a través de `EmGlyph`. Solo se dibuja a mano lo que un
   icono no puede representar.

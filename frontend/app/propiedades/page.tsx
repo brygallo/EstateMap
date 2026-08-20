@@ -54,6 +54,8 @@ export default async function PropiedadesPage() {
   const summary = await getPropertySummary();
   const cities = citiesFromSummary(summary).sort((a, b) => b.count - a.count || a.name.localeCompare(b.name));
   const topCities = cities.slice(0, 24);
+  const primaryCities = topCities.slice(0, 12);
+  const additionalCities = topCities.slice(12);
   const combos = generateCombosFromGroups(summary.groups).slice(0, 36);
   const totalCities = cities.length;
 
@@ -214,7 +216,7 @@ export default async function PropiedadesPage() {
         <section className="mx-auto max-w-7xl px-4 pb-8 sm:px-6 sm:pb-10 lg:px-8">
           <h2 className="text-xl font-bold text-textPrimary sm:text-2xl">Ciudades con propiedades</h2>
           <div className="mt-4 divide-y divide-line overflow-hidden rounded-card border border-line bg-white shadow-card sm:mt-5 sm:grid sm:grid-cols-2 sm:gap-3 sm:divide-y-0 sm:overflow-visible sm:border-0 sm:bg-transparent sm:shadow-none lg:grid-cols-3">
-            {topCities.map((city) => (
+            {primaryCities.map((city) => (
               <Link
                 key={city.slug}
                 href={`/propiedades/${city.slug}`}
@@ -233,6 +235,27 @@ export default async function PropiedadesPage() {
               </Link>
             ))}
           </div>
+          {additionalCities.length > 0 && (
+            <details className="mt-3 rounded-card border border-line bg-white shadow-card">
+              <summary className="flex min-h-12 cursor-pointer list-none items-center justify-between gap-3 px-4 py-3 text-sm font-semibold text-textPrimary marker:hidden hover:text-primary [&::-webkit-details-marker]:hidden">
+                Ver más ciudades
+                <span className="text-primary">{additionalCities.length} más</span>
+              </summary>
+              <div className="grid gap-2 border-t border-line p-3 sm:grid-cols-2 lg:grid-cols-3">
+                {additionalCities.map((city) => (
+                  <Link
+                    key={city.slug}
+                    href={`/propiedades/${city.slug}`}
+                    aria-label={`Propiedades en ${city.name}, ${city.count} ${city.count === 1 ? 'publicación' : 'publicaciones'}`}
+                    className="flex min-h-12 items-center justify-between gap-3 rounded-card border border-line px-3 py-2.5 hover:border-primary hover:bg-primaryLight"
+                  >
+                    <span className="text-sm font-semibold text-textPrimary">{city.name}</span>
+                    <span className="text-xs text-textSecondary">{city.count}</span>
+                  </Link>
+                ))}
+              </div>
+            </details>
+          )}
         </section>
       )}
 

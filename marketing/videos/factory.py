@@ -159,6 +159,11 @@ def plan_sha(directory: Path) -> str:
     return hashlib.sha256((directory / "plan.json").read_bytes()).hexdigest()
 
 
+def file_sha(path: Path) -> str:
+    """Return the digest used to bind a human approval to exact preview props."""
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
 def run_lint(directory: Path, item: dict[str, Any], catalog: dict[str, Any]) -> dict[str, Any]:
     plan = catalog_store.load_json(directory / "plan.json")
     if plan is None:
@@ -268,15 +273,16 @@ def agree_to_spend(question: str, assumed: bool) -> None:
 
 def confirm_voice_spend(plan: dict[str, Any], providers: list[tts.VoiceProvider], assumed: bool) -> None:
     """Show what this master will buy and let a person stop it."""
-    reports = [(provider, voice.quote(texts, provider)) for provider, texts in provider_batches(plan, providers)]
+    narration = " ".join(scene["voice"].strip() for scene in plan["scenes"])
+    reports = [(provider, voice.quote([narration], provider)) for provider in list(dict.fromkeys(providers))]
     billable = [(provider, report) for provider, report in reports if report["billable_characters"]]
     if not billable:
-        print("Final voice: every line is already paid for and cached; this costs nothing.")
+        print("Final voice: the continuous take is already paid for and cached; this costs nothing.")
         return
     for provider, report in billable:
         print(
-            f"Final voice {provider.profile_id}: {report['billable_captions']} of "
-            f"{report['captions']} lines are new, {report['billable_characters']} characters to buy."
+            f"Final voice {provider.profile_id}: {report['billable_captions']} continuous take is new, "
+            f"{report['billable_characters']} characters to buy."
         )
     agree_to_spend("Buy them?", assumed)
 
@@ -344,8 +350,9 @@ def cmd_voice_cost(args: argparse.Namespace) -> None:
         raise RuntimeError("plan.json is missing")
     providers = scene_providers(plan, final_master=True, override=args.voice_profile)
     print(f"{item['id']}:")
-    for provider, captions in provider_batches(plan, providers):
-        report = voice.quote(captions, provider)
+    for provider in list(dict.fromkeys(providers)):
+        narration = " ".join(scene["voice"].strip() for scene in plan["scenes"])
+        report = voice.quote([narration], provider)
         print(f"  {provider.profile_id} ({report['provider']})")
         print(f"    captions          {report['captions']}")
         print(f"    already cached    {report['cached']}")
@@ -382,6 +389,26 @@ def music_license(track: Path) -> dict[str, Any]:
 
 def cmd_approve(args: argparse.Namespace) -> None:
     directory, item, catalog = catalog_store.find(args.video)
+    if getattr(args, "final_voice", False):
+        preview = catalog_store.load_json(directory / "final-voice-preview.json")
+        props_path = directory / "studio-props.json"
+        locked = catalog_store.load_json(directory / "voice-lock.json")
+        if not preview or not props_path.is_file() or not locked:
+            raise RuntimeError("Open `video studio --final-voice` before approving final timing")
+        if preview.get("plan_sha") != plan_sha(directory):
+            raise RuntimeError("plan.json changed after the final-voice Studio preview")
+        if preview.get("props_sha") != file_sha(props_path):
+            raise RuntimeError("Studio props changed after the final-voice preview")
+        if preview.get("voice_signature") != locked.get("signature"):
+            raise RuntimeError("The locked voice does not match the Studio preview")
+        catalog_store.write_json(directory / "final-voice-approval.json", {
+            "approved_at": catalog_store.now(),
+            "approved_by": args.by,
+            "notes": args.notes,
+            **preview,
+        })
+        print(f"{item['id']}: final voice timing approved")
+        return
     workflow.ApprovalPolicy.require_approvable(item["state"])
     plan = catalog_store.load_json(directory / "plan.json")
     if plan is None:
@@ -417,9 +444,10 @@ def cmd_studio(args: argparse.Namespace) -> None:
     file in a second — so that is where a piece is judged, and a render happens
     once, at the end, with the narration already bought.
 
-    The voice it synthesises is the free local one. It exists so the timing is
-    real while the piece is being looked at; the paid narration is a separate,
-    later, deliberate act (`render --final`).
+    The default voice is free and local. `--final-voice` is the deliberate
+    spending gate: it buys or reuses the locked final voice, recalculates every
+    scene from that audio, and writes the exact props a person must approve
+    before the expensive render is allowed to start.
     """
     media.require_tool("node")
     directory, item, catalog = catalog_store.find(args.video)
@@ -427,32 +455,70 @@ def cmd_studio(args: argparse.Namespace) -> None:
     if plan is None:
         raise RuntimeError("plan.json is missing")
 
-    providers = scene_providers(plan, final_master=False, override=args.voice_profile)
+    final_preview = bool(getattr(args, "final_voice", False))
+    providers = (
+        final_voice_providers(directory, plan, item, catalog, args.voice_profile)
+        if final_preview
+        else scene_providers(plan, final_master=False, override=args.voice_profile)
+    )
     for provider, _ in provider_batches(plan, providers):
         provider.check_ready()
+    if final_preview:
+        locked = catalog_store.load_json(directory / "voice-lock.json")
+        if locked and locked.get("signature") != providers[0].signature():
+            raise RuntimeError(
+                f"This video is locked to voice profile {locked.get('voice_profile')}; "
+                "create a new video or variant instead of buying another voice"
+            )
+        confirm_voice_spend(plan, providers, args.yes)
+        enforce_voice_lock(directory, providers[0])
 
-    timings = []
-    for index, (scene, provider) in enumerate(zip(plan["scenes"], providers)):
-        target = directory / "audio" / f"voice-{index + 1:02}.mp3"
-        captions = voice.speak_scene(scene["voice"], target, provider)
-        spoken = captions[-1]["end"] if captions else 0.0
-        timings.append({
-            "scene": index + 1,
-            "voice_file": str(target),
-            "voice_seconds": round(spoken, 3),
-            "voice_profile": provider.profile_id,
-            "tts_provider": provider.name,
-            "render_seconds": renderer.frames(spoken + renderer.SCENE_TAIL_SECONDS) / renderer.FPS,
-            "captions": captions,
-        })
+    narration = None
+    if final_preview:
+        narration = directory / "audio" / "narration-final.mp3"
+        timings = voice.speak_video([scene["voice"] for scene in plan["scenes"]], narration, providers[0])
+        for timing in timings:
+            timing["render_seconds"] = renderer.frames(timing["voice_seconds"]) / renderer.FPS
+        timings[-1]["render_seconds"] += renderer.SCENE_TAIL_SECONDS
+    else:
+        timings = []
+        for index, (scene, provider) in enumerate(zip(plan["scenes"], providers)):
+            target = directory / "audio" / f"voice-{index + 1:02}.mp3"
+            captions = voice.speak_scene(scene["voice"], target, provider)
+            spoken = captions[-1]["end"] if captions else 0.0
+            timings.append({
+                "scene": index + 1,
+                "voice_file": str(target),
+                "voice_seconds": round(spoken, 3),
+                "voice_profile": provider.profile_id,
+                "tts_provider": provider.name,
+                "render_seconds": renderer.frames(spoken + renderer.SCENE_TAIL_SECONDS) / renderer.FPS,
+                "captions": captions,
+            })
 
-    props = renderer.build_props(directory, plan, timings, None)
+    music = Path(args.music).expanduser().resolve() if args.music else None
+    if music and not music.is_file():
+        raise RuntimeError(f"Music track not found: {music}")
+    if music:
+        music_license(music)
+    props = renderer.build_props(directory, plan, timings, music, narration=narration)
     props_path = directory / "studio-props.json"
     catalog_store.write_json(props_path, props)
+    if final_preview:
+        subtitles.write_srt(timings, directory / "subtitles.pending.srt")
+        catalog_store.write_json(directory / "final-voice-preview.json", {
+            "prepared_at": catalog_store.now(),
+            "plan_sha": plan_sha(directory),
+            "props_sha": file_sha(props_path),
+            "voice_signature": providers[0].signature(),
+        })
+        (directory / "final-voice-approval.json").unlink(missing_ok=True)
 
     total = sum(scene["durationInFrames"] for scene in props["scenes"])
     print(f"{item['id']}: {len(props['scenes'])} escenas · {total / renderer.FPS:.1f} s")
     print(f"props: {props_path}")
+    if final_preview:
+        print("Final voice timing loaded. Approve it only after watching the whole piece in Studio.")
     if args.props_only:
         return
 
@@ -506,32 +572,53 @@ def cmd_render(args: argparse.Namespace) -> None:
                 f"This video is locked to voice profile {locked.get('voice_profile')}; "
                 f"create a new video or variant instead of buying another voice"
             )
+        final_approval = catalog_store.load_json(directory / "final-voice-approval.json")
+        preview = catalog_store.load_json(directory / "final-voice-preview.json")
+        studio_props = directory / "studio-props.json"
+        if (
+            not final_approval
+            or not preview
+            or not studio_props.is_file()
+            or final_approval.get("plan_sha") != plan_sha(directory)
+            or final_approval.get("props_sha") != file_sha(studio_props)
+            or final_approval.get("voice_signature") != providers[0].signature()
+        ):
+            raise RuntimeError(
+                "Review the bought voice with `video studio --final-voice`, then record "
+                "human approval with `video approve --final-voice` before rendering"
+            )
         confirm_voice_spend(plan, providers, args.yes)
         enforce_voice_lock(directory, providers[0])
-    timings = []
-    for index, (scene, provider) in enumerate(zip(plan["scenes"], providers)):
-        target = directory / "audio" / f"voice-{index + 1:02}.mp3"
-        captions = voice.speak_scene(scene["voice"], target, provider)
-        spoken = captions[-1]["end"] if captions else 0.0
-        # Remotion works in whole frames; rounding here too keeps the burned
-        # captions and subtitles.srt from drifting apart across scenes.
-        render_seconds = renderer.frames(spoken + renderer.SCENE_TAIL_SECONDS) / renderer.FPS
-        timings.append({
-            "scene": index + 1,
-            "voice_file": str(target),
-            "voice_seconds": round(spoken, 3),
-            "voice_profile": provider.profile_id,
-            "tts_provider": provider.name,
-            "render_seconds": render_seconds,
-            "captions": captions,
-        })
+    narration = None
+    if args.final:
+        narration = directory / "audio" / "narration-final.mp3"
+        timings = voice.speak_video([scene["voice"] for scene in plan["scenes"]], narration, providers[0])
+        for timing in timings:
+            timing["render_seconds"] = renderer.frames(timing["voice_seconds"]) / renderer.FPS
+        timings[-1]["render_seconds"] += renderer.SCENE_TAIL_SECONDS
+    else:
+        timings = []
+        for index, (scene, provider) in enumerate(zip(plan["scenes"], providers)):
+            target = directory / "audio" / f"voice-{index + 1:02}.mp3"
+            captions = voice.speak_scene(scene["voice"], target, provider)
+            spoken = captions[-1]["end"] if captions else 0.0
+            render_seconds = renderer.frames(spoken + renderer.SCENE_TAIL_SECONDS) / renderer.FPS
+            timings.append({
+                "scene": index + 1,
+                "voice_file": str(target),
+                "voice_seconds": round(spoken, 3),
+                "voice_profile": provider.profile_id,
+                "tts_provider": provider.name,
+                "render_seconds": render_seconds,
+                "captions": captions,
+            })
     pending_subtitles = directory / "subtitles.pending.srt"
     subtitles.write_srt(timings, pending_subtitles)
     music = Path(args.music).expanduser().resolve() if args.music else None
     if music and not music.is_file():
         raise RuntimeError(f"Music track not found: {music}")
     license_data = music_license(music) if music else None
-    props = renderer.build_props(directory, plan, timings, music)
+    props = renderer.build_props(directory, plan, timings, music, narration=narration)
     props_path = directory / "render-props.pending.json"
     catalog_store.write_json(props_path, props)
     pending_final = directory / "exports" / f"{directory.name}.pending.mp4"
@@ -773,6 +860,27 @@ def cmd_variants(args: argparse.Namespace) -> None:
     catalog_store.update(item, catalog, variants=sorted(set(item.get("variants", []) + created)))
 
 
+def cmd_voice_variant(args: argparse.Namespace) -> None:
+    """Create an exact production variant when a paid voice must change."""
+    directory, item, catalog = catalog_store.find(args.video)
+    plan = catalog_store.load_json(directory / "plan.json")
+    if plan is None:
+        raise RuntimeError("plan.json is missing")
+    variant = copy.deepcopy(plan)
+    variant["title"] = f"{plan['title']} · voz continua"
+    child_directory, child = create_video(catalog, VideoRequest(
+        plan=variant,
+        brief=f"Variante de voz continua de {item['id']}",
+        duration=int(item.get("target_duration_seconds", 20)),
+        assets_from=directory / "assets/input",
+        extra={"experiment": "voice", "parent": item["id"], "voice_variant": True},
+    ))
+    report = run_lint(child_directory, child, catalog)
+    catalog_store.update(item, catalog, variants=sorted(set(item.get("variants", []) + [child["id"]])))
+    print(f"{child['id']}: continuous-voice variant of {item['id']}")
+    print_lint(child["id"], report)
+
+
 def cmd_batch(args: argparse.Namespace) -> None:
     media.require_tool("claude")
     entries = catalog_store.load_json(args.file)
@@ -936,12 +1044,28 @@ def parser() -> argparse.ArgumentParser:
     approve.add_argument("--by", default="human")
     approve.add_argument("--notes", default="")
     approve.add_argument("--force", action="store_true", help="Approve despite lint errors")
+    approve.add_argument(
+        "--final-voice",
+        action="store_true",
+        help="Approve the exact bought voice timing currently loaded in Studio",
+    )
     approve.set_defaults(handler=cmd_approve)
 
     studio = commands.add_parser("studio", help="Open the piece in Remotion Studio before rendering")
     studio.add_argument("video")
     studio.add_argument("--port", type=int, default=3210)
     studio.add_argument("--voice-profile")
+    studio.add_argument("--music", help="Licensed music track to audition with the final voice")
+    studio.add_argument(
+        "--final-voice",
+        action="store_true",
+        help="Buy/reuse final voice and load its exact timing in Studio before rendering",
+    )
+    studio.add_argument(
+        "--yes",
+        action="store_true",
+        help="Confirm final-voice spend in advance when no terminal can ask",
+    )
     studio.add_argument("--props-only", action="store_true", help="Write the props and stop")
     studio.set_defaults(handler=cmd_studio)
 
@@ -1000,6 +1124,10 @@ def parser() -> argparse.ArgumentParser:
     variants.add_argument("video")
     variants.add_argument("--hooks", type=int, default=3, choices=range(1, 6), metavar="1-5")
     variants.set_defaults(handler=cmd_variants)
+
+    voice_variant = commands.add_parser("voice-variant", help="Create an exact variant for a different paid voice")
+    voice_variant.add_argument("video")
+    voice_variant.set_defaults(handler=cmd_voice_variant)
 
     batch = commands.add_parser("batch", help="Plan a whole week from a JSON list")
     batch.add_argument("file", type=Path)

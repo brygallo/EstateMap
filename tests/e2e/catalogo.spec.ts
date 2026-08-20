@@ -32,6 +32,17 @@ async function openFirstProperty(page: import('@playwright/test').Page): Promise
 }
 
 test.describe('Catalogue', () => {
+  test('primary navigation opens the map instead of the SEO directory', async ({ page }) => {
+    await page.goto('/propiedades');
+
+    if (await page.getByRole('button', { name: 'Abrir menú' }).isVisible()) {
+      await page.getByRole('button', { name: 'Abrir menú' }).click();
+    }
+
+    const explore = page.getByRole('link', { name: 'Explorar mapa' }).first();
+    await expect(explore).toHaveAttribute('href', '/');
+  });
+
   test('the city index lists cities that lead to listings', async ({ page }) => {
     await page.goto('/propiedades');
 
@@ -49,8 +60,9 @@ test.describe('Catalogue', () => {
     const cityLink = page.locator('a[href^="/propiedades/"]').first();
     test.skip((await cityLink.count()) === 0, 'no cities published in this environment');
 
-    await cityLink.click();
-    await page.waitForURL(/\/propiedades\/[^/]+/);
+    const href = await cityLink.getAttribute('href');
+    expect(href).toMatch(/^\/propiedades\/[^/]+/);
+    await page.goto(href!, { waitUntil: 'domcontentloaded' });
 
     const properties = page.locator('a[href^="/propiedad/"]');
     expect(await properties.count()).toBeGreaterThan(0);
@@ -64,6 +76,22 @@ test.describe('Catalogue', () => {
     await expect(cityLink).toHaveAccessibleName(
       /Propiedades en .+, \d+ publicaci(?:ón|ones)/
     );
+  });
+
+  test('long city lists start collapsed', async ({ page }) => {
+    await page.goto('/');
+
+    const moreCities = page.locator('details').filter({ hasText: 'Ver más ciudades y cantones' });
+    await expect(moreCities).not.toHaveAttribute('open', '');
+  });
+
+  test('the business page only offers capabilities that exist', async ({ page }) => {
+    await page.goto('/inmobiliarias');
+
+    await expect(page.getByRole('heading', { name: 'Elige cómo publicar' })).toBeVisible();
+    await expect(page.getByText('Sin límite de propiedades por plan')).toBeVisible();
+    await expect(page.getByText('$29/mes')).toHaveCount(0);
+    await expect(page.getByText('Hasta 5 propiedades')).toHaveCount(0);
   });
 
   test('detail page shows the essential information', async ({ page }) => {

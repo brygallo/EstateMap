@@ -39,7 +39,7 @@ rules:
       es exactamente lo que se quiere: un anuncio sin precio no vota.
     evidence:
       - file: backend/real_estate/views.py
-        lines: "2154-2156"
+        lines: "2163-2165"
         symbol: "all_base = Property.objects.exclude(status='inactive')"
         note: >
           Queryset base de MarketStatsView. Los cuatro filtros (no inactive,
@@ -81,7 +81,7 @@ rules:
       ambas existen y difieren.
     evidence:
       - file: backend/real_estate/views.py
-        lines: "2159-2161"
+        lines: "2168-2170"
         symbol: "price_per_m2=ExpressionWrapper(F('price') / F('area'), output_field=FloatField())"
         note: Anotación de MarketStatsView, evaluada en SQL como FloatField.
       - file: backend/real_estate/views.py
@@ -117,7 +117,7 @@ rules:
       es siempre menor que los anuncios realmente descartados.
     evidence:
       - file: backend/real_estate/views.py
-        lines: "2160-2162"
+        lines: "2169-2171"
         symbol: "price_per_m2__gt=1, price_per_m2__lt=10000"
         note: Filtro aplicado sobre all_base, es decir sobre venta y alquiler.
       - file: backend/real_estate/views.py
@@ -159,7 +159,7 @@ rules:
       for_sale justo después del filtro de ciudad.
     evidence:
       - file: backend/real_estate/views.py
-        lines: "2168-2170"
+        lines: "2177-2179"
         symbol: "base = all_base.filter(status='for_sale')"
         note: >
           Las dos líneas anteriores son el comentario que justifica la
@@ -191,13 +191,13 @@ rules:
       único anuncio sobrevive.
     evidence:
       - file: backend/real_estate/views.py
-        lines: "2181-2183"
+        lines: "2190-2192"
         symbol: "outliers_excluded = base.exclude(price_per_m2__gte=lower, price_per_m2__lte=upper).count()"
         note: >
           Cálculo de la muestra ordenada, los percentiles, los límites y el
           recorte final del queryset.
       - file: backend/real_estate/views.py
-        lines: "2171-2173"
+        lines: "2180-2182"
         symbol: "def percentile(values, ratio):"
         note: >
           Percentil con interpolación lineal. Devuelve 0 cuando la lista está
@@ -239,13 +239,13 @@ rules:
       para que nadie lo descubra comparando cifras que no deberían coincidir.
     evidence:
       - file: backend/real_estate/views.py
-        lines: "2186-2188"
+        lines: "2195-2197"
         symbol: "avg_price_m2=Avg('price_per_m2')"
         note: >
           Agregado overall: count, media de $/m², media de precio, media de área,
           y mínimo y máximo de $/m², todos sobre la muestra ya recortada.
       - file: backend/real_estate/views.py
-        lines: "2277-2279"
+        lines: "2286-2288"
         symbol: "Los extremos se excluyen con el método IQR"
         note: >
           Texto de metodología que se sirve en el payload y se muestra en las
@@ -281,7 +281,7 @@ rules:
       "$0/m²" es el umbral de indexación de PRC-020, no el cálculo.
     evidence:
       - file: backend/real_estate/views.py
-        lines: "2185-2187"
+        lines: "2194-2196"
         symbol: "count=Count('id'),"
         note: >
           El único campo garantizado como número es count; el resto son
@@ -308,13 +308,13 @@ rules:
       de filas se pasa en cada llamada.
     evidence:
       - file: backend/real_estate/views.py
-        lines: "2194-2196"
+        lines: "2203-2205"
         symbol: "def grouped(*fields, limit=12):"
         note: >
           Agrupa, agrega las tres medias, filtra por count>=3 y ordena por
           -count.
       - file: backend/real_estate/views.py
-        lines: "2262-2264"
+        lines: "2271-2273"
         symbol: "'by_city': grouped('city', 'province', limit=15),"
         note: >
           by_city agrupa por ciudad y provincia a la vez; by_property_type se
@@ -371,13 +371,13 @@ rules:
       - file: backend/real_estate/tests/test_market_intelligence.py
         symbol: def test_the_same_sector_written_with_and_without_accents_is_one_sector
       - file: backend/real_estate/views.py
-        lines: "2246-2248"
+        lines: "2255-2257"
         symbol: "by_sector = ["
         note: >
           Construcción de la tabla: grafía más común, conteo, media aritmética de
           $/m², umbral de 2 y orden por número de anuncios.
       - file: backend/real_estate/views.py
-        lines: "2272-2274"
+        lines: "2281-2283"
         symbol: "'by_sector': by_sector[:20],"
         note: Se publican como mucho 20 sectores.
     cases:
@@ -420,7 +420,7 @@ rules:
       números distintos y creerá que hay un fallo.
     evidence:
       - file: backend/real_estate/views.py
-        lines: "2264-2266"
+        lines: "2273-2275"
         symbol: "'by_operation': list("
         note: >
           Se agrupa por status partiendo de all_base, no de base: sin filtro de
@@ -462,7 +462,7 @@ rules:
           Definición y comentario del campo: solo se puebla cuando el anuncio es
           venta Y alquiler.
       - file: backend/real_estate/views.py
-        lines: "2159-2161"
+        lines: "2168-2170"
         symbol: "F('price') / F('area')"
         note: >
           El único campo monetario que toca MarketStatsView es price; rent_price
@@ -496,17 +496,17 @@ rules:
       de publicación en el portal de origen.
     evidence:
       - file: backend/real_estate/views.py
-        lines: "2227-2229"
+        lines: "2236-2238"
         symbol: "city_periods[city]['recent'].append(row['price_per_m2'])"
         note: Reparto en cohortes de 0-90 y 90-180 días por created_at.
       - file: backend/real_estate/views.py
-        lines: "2243-2245"
+        lines: "2252-2254"
         symbol: "evolution.append("
         note: >
           Medias de cada cohorte, variación porcentual redondeada a un decimal y
           orden descendente por variación.
       - file: backend/real_estate/views.py
-        lines: "2273-2275"
+        lines: "2282-2284"
         symbol: "'evolution': evolution[:15],"
         note: Se publican como mucho 15 ciudades.
     cases:
@@ -534,7 +534,7 @@ rules:
       evolution con change_pct mayor que cero, cortadas a las ocho primeras.
     evidence:
       - file: backend/real_estate/views.py
-        lines: "2274-2276"
+        lines: "2283-2285"
         symbol: "'growth_zones': [row for row in evolution if row['change_pct'] > 0][:8],"
         note: >
           Reutiliza la lista ya ordenada por variación descendente, así que las
@@ -568,13 +568,13 @@ rules:
       el reloj de miles de anuncios a la vez.
     evidence:
       - file: backend/real_estate/views.py
-        lines: "2223-2225"
+        lines: "2232-2234"
         symbol: "market_days.append(max(0, (now - row['created_at']).days))"
         note: >
           Se recorre el inventario ya filtrado a venta y recortado por IQR; el
           max(0, ...) impide días negativos si una fecha viniera en el futuro.
       - file: backend/real_estate/views.py
-        lines: "2275-2277"
+        lines: "2284-2286"
         symbol: "'estimated_market_days'"
         note: Media redondeada, con 0 como valor por defecto sin muestra.
     cases:
@@ -604,7 +604,7 @@ rules:
       pierde anuncios por ser cara respecto al país.
     evidence:
       - file: backend/real_estate/views.py
-        lines: "2163-2165"
+        lines: "2172-2174"
         symbol: "city_scope = (request.query_params.get('city') or '').strip()"
         note: Filtro city__iexact aplicado sobre all_base.
     backend:
@@ -644,7 +644,7 @@ rules:
           Percentiles sobre la lista ordenada de comparables; pct devuelve None
           con la lista vacía.
       - file: backend/real_estate/views.py
-        lines: "731-733"
+        lines: "740-742"
         symbol: "'zone_range': {'low': q1, 'median': median, 'high': q3}"
         note: >
           Cómo se publican, junto con el tamaño de muestra en

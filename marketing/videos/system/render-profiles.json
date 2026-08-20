@@ -11,7 +11,7 @@
       "renderer": "remotion",
       "renderer_version": "4.0.509",
       "minimum_duration_seconds": 8,
-      "maximum_duration_seconds": 60
+      "maximum_duration_seconds": 240
     }
   }
 }

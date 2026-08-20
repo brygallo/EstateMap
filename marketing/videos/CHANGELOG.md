@@ -1,5 +1,13 @@
 # Historial de cambios
 
+## 2026-08-20 — Un solo límite para duración y ritmo
+
+- El perfil vertical, el planificador y el lint aceptan piezas de 8 a 240 segundos.
+- Los presupuestos quedan en 8 escenas para formato corto, 20 para historia y
+  40 para clase; ninguna escena puede superar 6 segundos.
+- El lint convierte en error una toma demasiado larga, incluida la estimación
+  de la voz final, para detenerla antes de comprar voz o renderizar.
+
 ## 2026-08-15 — Arco de inteligencia artificial de Aents
 
 - Nuevo `remotion/src/aents-ia-simulations.tsx` con catorce animaciones para la

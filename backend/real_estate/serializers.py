@@ -272,8 +272,18 @@ class PropertySerializer(serializers.ModelSerializer):
         return changed_at
 
     def to_representation(self, instance):
-        """Convert polygon from GeoJSON to simple array format for frontend"""
+        """Convert geometry and keep private performance metrics owner-only."""
         data = super().to_representation(instance)
+
+        request = self.context.get('request')
+        user = getattr(request, 'user', None)
+        can_view_metrics = bool(
+            user
+            and user.is_authenticated
+            and (user.is_staff or instance.owner_id == user.id)
+        )
+        if not can_view_metrics:
+            data.pop('views_count', None)
 
         # Convert polygon from GeoJSON to [[lat, lng], ...] format
         if data.get('polygon') and isinstance(data['polygon'], dict):

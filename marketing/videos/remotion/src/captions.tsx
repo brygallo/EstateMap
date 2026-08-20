@@ -1,5 +1,5 @@
 import React from 'react';
-import {interpolate, useVideoConfig} from 'remotion';
+import {useVideoConfig} from 'remotion';
 import {captionBox, font, palette} from './theme';
 import {fit} from './layout';
 import type {Caption} from './types';
@@ -26,8 +26,6 @@ export const Captions: React.FC<{captions: Caption[]; frame: number; accent: str
   if (!current || !ready) return null;
 
   const local = seconds - current.start;
-  const appear = interpolate(local, [0, 0.16], [0, 1], {extrapolateLeft: 'clamp', extrapolateRight: 'clamp'});
-  const rise = interpolate(local, [0, 0.22], [26, 0], {extrapolateLeft: 'clamp', extrapolateRight: 'clamp'});
   const {fontSize, lines} = fit(current.text, {
     maxWidth: MAX_WIDTH,
     maxLines: 2,
@@ -48,14 +46,19 @@ export const Captions: React.FC<{captions: Caption[]; frame: number; accent: str
     <div
       style={{
         width: MAX_WIDTH,
-        minHeight: fontSize * 1.85,
+        // Keep one fixed two-line box for every caption. Recomputing the box
+        // from each fitted font size moves the headline above it whenever a
+        // longer fragment arrives, which reads as a cut in the whole scene.
+        height: 132,
         fontFamily: font,
         fontWeight: 800,
         fontSize,
         lineHeight: 1.1,
         letterSpacing: '-0.02em',
-        opacity: appear,
-        transform: `translateY(${rise}px)`,
+        // A caption replaces text on a stable baseline. Making every fragment
+        // rise and fade repeats an entrance every few words and fights the
+        // natural continuity of one spoken sentence.
+        overflow: 'visible',
       }}
     >
       {lines.map((line, lineNumber) => (

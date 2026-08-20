@@ -99,9 +99,9 @@ const NavBar = () => {
         <div className="hidden items-center gap-1 lg:flex">
           {token ? (
             <>
-              <Link href="/propiedades" className={navLinkClass('/propiedades')}>
+              <Link href="/" className={navLinkClass('/')}>
                 <MapPinned className="h-4 w-4" />
-                Explorar
+                Explorar mapa
               </Link>
               <Link href="/mis-propiedades" className={navLinkClass('/mis-propiedades')}>
                 <FolderKanban className="h-4 w-4" />
@@ -175,9 +175,9 @@ const NavBar = () => {
             </>
           ) : (
             <>
-              <Link href="/propiedades" className={navLinkClass('/propiedades')}>
+              <Link href="/" className={navLinkClass('/')}>
                 <MapPinned className="h-4 w-4" />
-                Explorar
+                Explorar mapa
               </Link>
               {/* Secondary links join only when the complete bar has enough room. */}
               <div className="hidden items-center gap-1 xl:flex">
@@ -268,10 +268,10 @@ const NavBar = () => {
                     </span>
                   </div>
 
-                  <Button asChild variant="ghost" className={mobileNavClass('/propiedades')} onClick={closeMobileMenu}>
-                    <Link href="/propiedades" aria-current={mobileAriaCurrent('/propiedades')}>
+                  <Button asChild variant="ghost" className={mobileNavClass('/')} onClick={closeMobileMenu}>
+                    <Link href="/" aria-current={mobileAriaCurrent('/')}>
                       <MapPinned className="h-4 w-4" />
-                      Explorar propiedades
+                      Explorar mapa
                     </Link>
                   </Button>
                   <Button asChild variant="ghost" className={mobileNavClass('/mis-propiedades')} onClick={closeMobileMenu}>
@@ -349,10 +349,10 @@ const NavBar = () => {
                 </>
               ) : (
                 <>
-                  <Button asChild variant="ghost" className={mobileNavClass('/propiedades')} onClick={closeMobileMenu}>
-                    <Link href="/propiedades" aria-current={mobileAriaCurrent('/propiedades')}>
+                  <Button asChild variant="ghost" className={mobileNavClass('/')} onClick={closeMobileMenu}>
+                    <Link href="/" aria-current={mobileAriaCurrent('/')}>
                       <MapPinned className="h-4 w-4" />
-                      Explorar propiedades
+                      Explorar mapa
                     </Link>
                   </Button>
                   <Button

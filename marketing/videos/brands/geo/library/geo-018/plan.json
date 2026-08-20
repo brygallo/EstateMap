@@ -1,0 +1,83 @@
+{
+  "title": "Antes de imaginarte viviendo ahí",
+  "audience": "comprador",
+  "funnel_stage": "descubrimiento",
+  "objective": "Presentar Geo Propiedades Ecuador demostrando que el mapa permite evaluar una propiedad dentro de su ubicación.",
+  "conversion_event": "Visita a geopropiedadesecuador.com y apertura del mapa de propiedades",
+  "pillar": "Mapa primero",
+  "series": "El lugar cambia todo",
+  "concept": "Una ficha atractiva pierde sentido sin contexto y se transforma físicamente en un lugar del mapa. La persona explora una zona, abre una opción y vuelve al mapa para compararla con propiedades cercanas.",
+  "promise": "Puedes entender una propiedad dentro de su ubicación antes de decidir si quieres conocerla mejor.",
+  "cta": "Encuentra tu futuro hogar",
+  "hypothesis": "Si una ficha atractiva se convierte visualmente en un lugar del mapa durante los primeros tres segundos, una persona que todavía no conoce Geo entenderá su diferencia sin una explicación corporativa y visitará el mapa.",
+  "cover_text": "¿Dónde queda?",
+  "cover_art": "pregunta",
+  "caption": "Una foto puede hacer que te guste una propiedad. El mapa te ayuda a entender dónde está y qué otras opciones hay alrededor. En Geo Propiedades Ecuador empiezas por la zona, abres la propiedad que te interesa y vuelves al mapa para comparar. Encuentra tu futuro hogar en geopropiedadesecuador.com #GeoPropiedadesEcuador #BienesRaicesEcuador #PropiedadesEcuador #Mapa",
+  "narration": "Antes de imaginarte viviendo ahí, pregunta: ¿dónde queda? En Geo Propiedades Ecuador, el mapa va primero. Muévete a la zona que te interesa y mira qué propiedades hay alrededor. Abre una opción, revisa sus datos y compárala con otras cercanas. Entiende cada propiedad en su ubicación. Encuentra tu futuro hogar.",
+  "voice_profile": "draft-dora",
+  "music": "assets/music/mixkit-curiosity.mp3",
+  "hashtags": ["#GeoPropiedadesEcuador", "#BienesRaicesEcuador", "#PropiedadesEcuador", "#Mapa"],
+  "verification_notes": [
+    "La pieza tiene una sola audiencia y un solo CTA. Publicar gratis y el contenido educativo del texto original se reservan para otras piezas.",
+    "El mapa, los filtros por zona, la selección de una propiedad, la ficha pública y las propiedades cercanas están implementados y respaldados por MCLUS-001/002/003/007, MPERF-001/004 y PROP-028/029/038/039/040/041.",
+    "Fotos, precio, características y ubicación pueden faltar en un anuncio; la voz conserva el matiz 'cuando el anuncio los incluye' y no promete ubicación exacta.",
+    "No se afirma inventario, seguridad, rentabilidad, demanda ni precio de mercado. Todo precio o área ilustrativos llevan EJEMPLO mientras sean visibles.",
+    "Los pines se dibujan dentro de manzanas y nunca sobre calles. Las propiedades ilustradas usan PropertyArt y la interfaz clara usa estatemap-ui.tsx.",
+    "mixkit-curiosity.mp3 tiene autor, URL y licencia comercial gratuita archivados en su sidecar individual.",
+    "draft-dora es una voz local gratuita. GEO-018 rota a voice-04 para la voz final, pero no se compra ni se bloquea hasta que una persona lo autorice después de revisar el borrador.",
+    "No se autoriza voz pagada, render final, firma, publicación ni pauta."
+  ],
+  "scenes": [
+    {
+      "purpose": "gancho",
+      "duration": 5,
+      "voice": "Antes de imaginarte viviendo ahí, pregunta: ¿dónde queda?",
+      "on_screen_text": "La foto no basta",
+      "asset": "sim:geo-location-hero",
+      "visual_direction": "Hero track-side: una ficha clara con PropertyArt entra completa, la cámara descubre que su ubicación está sin contexto y un toque transforma la ficha en una manzana del mapa con su pin. Producto reconocible antes del segundo tres y al menos tres eventos por segundo.",
+      "transition": "cut",
+      "accent": "#22C55E"
+    },
+    {
+      "purpose": "mecanismo",
+      "duration": 4.5,
+      "voice": "En Geo Propiedades Ecuador, el mapa va primero.",
+      "on_screen_text": "Empieza por la zona",
+      "asset": "sim:elige-zona",
+      "visual_direction": "Una mano mueve el mapa hasta una zona; el encuadre y el mapa continúan el viaje lateral del hero sin reiniciar el movimiento.",
+      "transition": "cut",
+      "accent": "#14B8A6"
+    },
+    {
+      "purpose": "prueba",
+      "duration": 5.5,
+      "voice": "Muévete a la zona que te interesa y mira qué propiedades hay alrededor.",
+      "on_screen_text": "Mira antes de ir",
+      "asset": "sim:revisar-fotos",
+      "visual_direction": "Un pin dentro de una manzana abre una ficha clara con galería y características. Los datos ilustrativos permanecen rotulados EJEMPLO.",
+      "transition": "cut",
+      "accent": "#6B5CF6"
+    },
+    {
+      "purpose": "resultado",
+      "duration": 6,
+      "voice": "Abre una opción, revisa sus datos y compárala con otras cercanas.",
+      "on_screen_text": "Todo en contexto",
+      "asset": "sim:geo-nearby-context",
+      "visual_direction": "La ficha se reduce hasta su pin y el mapa revela dos opciones cercanas con PropertyArt diferentes, sin ranking ni conteos. Una sola selección conserva el foco.",
+      "transition": "cut",
+      "accent": "#A78BFA"
+    },
+    {
+      "purpose": "cta",
+      "duration": 5.5,
+      "voice": "Entiende cada propiedad en su ubicación. Encuentra tu futuro hogar.",
+      "on_screen_text": "Encuentra tu hogar",
+      "asset": null,
+      "visual_direction": "Cierre global aprobado con tile, nombre, dominio, CTA y firma de Aents; el mapa vivo permanece como continuidad visual.",
+      "transition": "fade",
+      "accent": "#22C55E"
+    }
+  ],
+  "target_duration_seconds": 28
+}
