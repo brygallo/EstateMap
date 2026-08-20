@@ -169,3 +169,64 @@ rules:
         expected: comparten conexión
       - name: La base se reinicia dentro de la ventana
         expected: la conexión muerta se descarta antes de usarse
+
+  - id: MPERF-007
+    name: Solo lo que se declara público puede guardarlo una caché compartida
+    status: implemented
+    summary: >-
+      Las lecturas públicas envían `public` con `s-maxage`; cualquier respuesta
+      que no declare cabecera de caché sale marcada como `private, no-store`.
+    rationale: >-
+      Una caché compartida decide con las cabeceras que recibe, y hasta ahora
+      todo lo que no era una lectura pública no enviaba ninguna. Con un CDN
+      delante y una regla que cubra `/api/`, esa ausencia basta para que el
+      inventario de un propietario acabe servido a otro visitante: el `Vary` de
+      esta API lista `Accept` y `origin`, no `Authorization`, así que dos
+      cuentas distintas le parecen la misma petición.
+
+      Invertir el valor por defecto es una línea y se sostiene sea cual sea la
+      configuración del panel del CDN. Una garantía de este tipo no debe vivir
+      en un interruptor que alguien puede cambiar sin darse cuenta.
+    evidence:
+      - file: backend/real_estate/middleware_cache.py
+        symbol: class PrivateByDefaultCacheMiddleware
+      - file: backend/estate_map/settings.py
+        symbol: "real_estate.middleware_cache.PrivateByDefaultCacheMiddleware"
+      - file: backend/real_estate/tests/test_cache_headers.py
+        symbol: def test_an_authenticated_read_never_becomes_shared
+    tests:
+      api: true
+    cases:
+      - name: Listado público de propiedades
+        expected: public con s-maxage
+      - name: Inventario de una cuenta autenticada
+        expected: private o no-store, nunca public
+      - name: Respuesta 401
+        expected: no-store; una caché no puede dejar a todos fuera
+
+  - id: MPERF-008
+    name: Detrás de un CDN, la identidad del visitante se restaura en nginx
+    status: proposed
+    summary: >-
+      Con un CDN delante, nginx reemplaza la dirección observada por la que
+      reporta el CDN (`CF-Connecting-IP`) y solo dentro de sus rangos, de modo
+      que el último salto de `X-Forwarded-For` vuelve a ser el visitante. El
+      origen deja de responder al público directamente.
+    rationale: >-
+      El límite de peticiones identifica por el último salto de la cadena,
+      porque es el único que un cliente no puede falsificar (PERM-072). Con un
+      CDN delante ese salto pasa a ser el edge, y como una región entera sale
+      por unas pocas direcciones, cientos de visitantes compartirían cubo y
+      recibirían 429 en una tarde normal.
+
+      Restringirlo a los rangos del CDN es lo que impide que cualquiera se
+      asigne una dirección enviando la cabecera. Y cerrar el acceso directo al
+      origen es la otra mitad: sin eso, quien vaya a la IP se salta el CDN, el
+      límite y la caché.
+    cases:
+      - name: Dos visitantes detrás del mismo edge
+        expected: dos cubos distintos
+      - name: Cabecera CF-Connecting-IP desde una IP que no es del CDN
+        expected: se ignora
+      - name: Petición directa a la IP del origen
+        expected: rechazada en el cortafuegos

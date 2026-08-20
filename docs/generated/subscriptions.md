@@ -95,7 +95,7 @@ Los topes de imágenes y de peso son constantes de configuración iguales para t
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/estate_map/settings.py:414-416` (`MAX_IMAGES_PER_PROPERTY`) — La línea 367 es el comentario "User-specific limits can be introduced here when subscription plans are implemented".
+- `backend/estate_map/settings.py:418-420` (`MAX_IMAGES_PER_PROPERTY`) — La línea 367 es el comentario "User-specific limits can be introduced here when subscription plans are implemented".
 
 
 **Casos**

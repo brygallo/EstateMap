@@ -101,7 +101,7 @@ rules:
       es la única señal en todo el código de que alguna vez se pensó en ello.
     evidence:
       - file: backend/estate_map/settings.py
-        lines: "414-416"
+        lines: "418-420"
         symbol: MAX_IMAGES_PER_PROPERTY
         note: >
           La línea 367 es el comentario "User-specific limits can be introduced

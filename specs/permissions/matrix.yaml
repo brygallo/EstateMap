@@ -1472,7 +1472,7 @@ rules:
         lines: "1631-1633"
         symbol: class CustomTokenObtainPairView
       - file: backend/estate_map/settings.py
-        lines: "213-232"
+        lines: "235-253"
         symbol: SIMPLE_JWT
       - file: backend/real_estate/serializers.py
         lines: "754-756"
@@ -1610,7 +1610,7 @@ rules:
       refresh reutilizado deja de servir. La app token_blacklist está instalada.
     evidence:
       - file: backend/estate_map/settings.py
-        lines: "235-237"
+        lines: "239-241"
         symbol: "'BLACKLIST_AFTER_ROTATION': True,"
       - file: backend/real_estate/urls.py
         lines: "45-47"
@@ -2740,7 +2740,7 @@ rules:
       admin.
     evidence:
       - file: backend/estate_map/settings.py
-        lines: "187-189"
+        lines: "191-193"
         symbol: rest_framework_simplejwt.authentication.JWTAuthentication
     permissions:
       required: [auth.login]

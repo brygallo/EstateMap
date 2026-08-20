@@ -1020,11 +1020,11 @@ rules:
       imposible.
     evidence:
       - file: backend/estate_map/settings.py
-        lines: "416-418"
+        lines: "420-422"
         symbol: MAX_PROPERTY_UPLOAD_MB
         note: MAX_IMAGES_PER_PROPERTY = 10, MAX_IMAGE_SIZE_MB = 10, MAX_PROPERTY_UPLOAD_MB = 50.
       - file: backend/estate_map/settings.py
-        lines: "399-401"
+        lines: "403-405"
         symbol: ALLOWED_IMAGE_TYPES
         note: image/jpeg, image/jpg, image/png y image/webp.
       - file: backend/real_estate/serializers.py

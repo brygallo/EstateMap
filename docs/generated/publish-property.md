@@ -143,8 +143,8 @@ Antes de crear la propiedad, cada lote de imágenes se valida completo: máximo 
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/estate_map/settings.py:416-418` (`MAX_PROPERTY_UPLOAD_MB`) — MAX_IMAGES_PER_PROPERTY=10, MAX_IMAGE_SIZE_MB=10, MAX_PROPERTY_UPLOAD_MB=50.
-- `backend/estate_map/settings.py:399-401` (`ALLOWED_IMAGE_TYPES`)
+- `backend/estate_map/settings.py:420-422` (`MAX_PROPERTY_UPLOAD_MB`) — MAX_IMAGES_PER_PROPERTY=10, MAX_IMAGE_SIZE_MB=10, MAX_PROPERTY_UPLOAD_MB=50.
+- `backend/estate_map/settings.py:403-405` (`ALLOWED_IMAGE_TYPES`)
 - `backend/real_estate/serializers.py:253-308` (`def validate_uploaded_images`) — Cuenta existentes menos images_to_delete, valida suma del lote y cada imagen, antes de llegar a create/update.
 
 **Casos**
@@ -208,7 +208,7 @@ Antes de procesar, `create` toma un candado en caché de 60 s por el mismo diges
 
 - `backend/real_estate/views.py:397-408` (`self.throttle_scope = 'property_write'`) — ScopedRateThrottle, no AntiScraperScopedThrottle, para create/update/partial_update.
 - `backend/real_estate/throttling.py:42-51` (`class AntiScraperScopedThrottle(ScopedRateThrottle)`) — Exime staff e IPs internas; solo se usa en map_points y list.
-- `backend/estate_map/settings.py:221-223` (`'property_write': '30/hour'`)
+- `backend/estate_map/settings.py:225-227` (`'property_write': '30/hour'`)
 
 **Casos**
 

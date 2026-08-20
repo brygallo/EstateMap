@@ -1,0 +1,83 @@
+# Restoring the visitor's address behind a CDN
+# ============================================================
+# EXAMPLE snippet for the prod host. Merge it into the real nginx config,
+# check with `nginx -t`, reload with `systemctl reload nginx`.
+#
+# WHY THIS IS NOT OPTIONAL
+#
+# Anonymous rate limiting identifies a visitor by the last hop of
+# X-Forwarded-For, because that is the only entry a client cannot forge: nginx
+# appends it (see REST_FRAMEWORK NUM_PROXIES=1 and PERM-072).
+#
+# Put a CDN in front and the chain becomes «visitor, edge». The last hop is
+# then the edge, and since one region is served by a handful of edge
+# addresses, hundreds of unrelated visitors would share a single throttle
+# bucket and start collecting 429s on a normal afternoon.
+#
+# `real_ip` fixes it before Django ever sees the request: nginx replaces the
+# address it observed with the one the CDN reports, so the hop it appends is
+# the visitor again and every rate limit keeps working per person.
+#
+# THE TRUST BOUNDARY
+#
+# CF-Connecting-IP is only meaningful when the connection really comes from the
+# CDN. `set_real_ip_from` is what enforces that: outside those ranges the
+# header is ignored, so nobody can hand you an address by sending the header
+# themselves. Keep the list current — Cloudflare publishes it at
+# https://www.cloudflare.com/ips-v4 and /ips-v6 — and refresh it from a cron
+# job rather than by hand, because a stale range fails closed: those visitors
+# get identified by the edge address again.
+#
+# AND CLOSE THE BACK DOOR
+#
+# With the CDN in front, the origin must stop answering the public directly.
+# Otherwise anyone hitting 212.47.65.135 bypasses the CDN, the WAF and the
+# cache, and — worse — arrives without CF-Connecting-IP, which puts them back
+# in the shared bucket they could have been throttled out of. Restrict 80/443
+# to the CDN ranges at the firewall, or terminate them with a `deny all`.
+
+# --- Cloudflare IPv4 (verify against https://www.cloudflare.com/ips-v4) ---
+set_real_ip_from 173.245.48.0/20;
+set_real_ip_from 103.21.244.0/22;
+set_real_ip_from 103.22.200.0/22;
+set_real_ip_from 103.31.4.0/22;
+set_real_ip_from 141.101.64.0/18;
+set_real_ip_from 108.162.192.0/18;
+set_real_ip_from 190.93.240.0/20;
+set_real_ip_from 188.114.96.0/20;
+set_real_ip_from 197.234.240.0/22;
+set_real_ip_from 198.41.128.0/17;
+set_real_ip_from 162.158.0.0/15;
+set_real_ip_from 104.16.0.0/13;
+set_real_ip_from 104.24.0.0/14;
+set_real_ip_from 172.64.0.0/13;
+set_real_ip_from 131.0.72.0/22;
+
+# --- Cloudflare IPv6 (verify against https://www.cloudflare.com/ips-v6) ---
+set_real_ip_from 2400:cb00::/32;
+set_real_ip_from 2606:4700::/32;
+set_real_ip_from 2803:f800::/32;
+set_real_ip_from 2405:b500::/32;
+set_real_ip_from 2405:8100::/32;
+set_real_ip_from 2a06:98c0::/29;
+set_real_ip_from 2c0f:f248::/32;
+
+real_ip_header CF-Connecting-IP;
+real_ip_recursive on;
+
+# HOW TO VERIFY IT WORKED
+#
+# 1. From two different networks — a phone on mobile data and a laptop on
+#    wifi — request an endpoint and read the access log. Two different
+#    addresses must appear. One repeated Cloudflare address means the header
+#    is not being trusted and the throttle is now shared.
+#
+#      tail -f /var/log/nginx/access.log | awk '{print $1}'
+#
+# 2. Confirm the app sees the same thing, not just nginx:
+#
+#      curl -s https://api.geopropiedadesecuador.com/api/health/ -o /dev/null -w '%{http_code}\n'
+#      docker logs --tail 20 estatemap_backend | grep http_request
+#
+# 3. Only then enable caching rules at the CDN. Cache before you have verified
+#    identity and you will be debugging two problems at once.

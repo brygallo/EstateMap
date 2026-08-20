@@ -40,3 +40,48 @@ def test_internal_ssr_clients_keep_their_exemption():
 
     assert _is_internal_client(internal)
     assert not _is_internal_client(proxied)
+
+
+def test_a_cdn_edge_must_not_become_everybody_s_bucket():
+    """SPEC:PERM-072 — the identity is the visitor, never the proxy in front.
+
+    With a CDN proxying the site, the chain that reaches nginx already carries
+    the visitor, and nginx appends the edge it saw. Taking the last hop would
+    then key hundreds of visitors from one region onto the handful of edge
+    addresses that serve it, and legitimate traffic would start collecting 429s.
+
+    The fix is in nginx, not here: `real_ip_header CF-Connecting-IP` restricted
+    to the CDN ranges makes the address nginx observes — and therefore appends —
+    the visitor again. This pins the shape that must reach Django once that is
+    configured: two visitors behind the same edge, two buckets.
+    """
+    factory = APIRequestFactory()
+    throttle = AntiScraperScopedThrottle()
+
+    first = factory.get(
+        '/', REMOTE_ADDR='172.18.0.5',
+        HTTP_X_FORWARDED_FOR='1.2.3.4',
+        HTTP_CF_CONNECTING_IP='1.2.3.4',
+    )
+    second = factory.get(
+        '/', REMOTE_ADDR='172.18.0.5',
+        HTTP_X_FORWARDED_FOR='5.6.7.8',
+        HTTP_CF_CONNECTING_IP='5.6.7.8',
+    )
+
+    assert throttle.get_ident(first) == '1.2.3.4'
+    assert throttle.get_ident(second) == '5.6.7.8'
+    assert throttle.get_ident(first) != throttle.get_ident(second)
+
+
+def test_a_request_through_the_cdn_is_still_a_visitor():
+    """SPEC:PERM-072 — the exemption is for the internal network, not the CDN."""
+    factory = APIRequestFactory()
+
+    through_cdn = factory.get(
+        '/', REMOTE_ADDR='172.18.0.5',
+        HTTP_X_FORWARDED_FOR='1.2.3.4',
+        HTTP_CF_CONNECTING_IP='1.2.3.4',
+    )
+
+    assert _is_internal_client(through_cdn) is False

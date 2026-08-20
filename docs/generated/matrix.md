@@ -1135,7 +1135,7 @@ Listar o consultar eventos de actividad exige is_staff; un usuario autenticado n
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
 - `backend/real_estate/views.py:1631-1633` (`class CustomTokenObtainPairView`)
-- `backend/estate_map/settings.py:213-232` (`SIMPLE_JWT`)
+- `backend/estate_map/settings.py:235-253` (`SIMPLE_JWT`)
 - `backend/real_estate/serializers.py:754-756` (`token["is_staff"] = user.is_staff`)
 
 **Casos**
@@ -1252,7 +1252,7 @@ Cualquiera puede registrarse sin autenticación, y la cuenta se crea con is_acti
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/estate_map/settings.py:235-237` (`'BLACKLIST_AFTER_ROTATION': True,`)
+- `backend/estate_map/settings.py:239-241` (`'BLACKLIST_AFTER_ROTATION': True,`)
 - `backend/real_estate/urls.py:45-47` (`name='token_refresh'`)
 
 **Casos**
@@ -2233,7 +2233,7 @@ DEFAULT_AUTHENTICATION_CLASSES contiene únicamente JWTAuthentication, así que 
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/estate_map/settings.py:187-189` (`rest_framework_simplejwt.authentication.JWTAuthentication`)
+- `backend/estate_map/settings.py:191-193` (`rest_framework_simplejwt.authentication.JWTAuthentication`)
 
 **Casos**
 

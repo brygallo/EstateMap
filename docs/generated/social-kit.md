@@ -45,7 +45,7 @@ La garantía es por construcción y no por lista blanca, que es más débil de l
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `frontend/app/api/social/[id]/[format]/route.tsx:792-794` (`photoLamina`) — Toma el título, la ciudad, el precio y los hechos declarados. Ni views_count ni contact_phone ni contact_email entran en la lámina.
+- `frontend/app/api/social/[id]/[format]/route.tsx:1023-1025` (`photoLamina`) — Toma el título, la ciudad, el precio y los hechos declarados. Ni views_count ni contact_phone ni contact_email entran en la lámina.
 - `frontend/lib/social-kit.ts:431-433` (`buildFacts`) — Enumera solo atributos físicos declarados en el anuncio.
 
 **Casos**
@@ -69,8 +69,8 @@ Llevar el par —QR y dirección— es lo que convierte la lámina en una promes
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `frontend/app/api/social/[id]/[format]/route.tsx:302-314` (`VerifyLine`) — La dirección con la ruta del código, partida en dos filas para que no se corte a mitad de URL.
-- `frontend/app/api/social/[id]/[format]/route.tsx:276-292` (`QrCard`) — Solo el QR; el código suelto que llevaba debajo se retiró.
+- `frontend/app/api/social/[id]/[format]/route.tsx:358-369` (`VerifyLine`) — La dirección con la ruta del código, partida en dos filas para que no se corte a mitad de URL.
+- `frontend/app/api/social/[id]/[format]/route.tsx:362-377` (`QrCard`) — Solo el QR; el código suelto que llevaba debajo se retiró.
 - `frontend/lib/qr.ts:21-23` (`errorCorrectionLevel`) — Nivel H: el código sobrevive a la recompresión de las redes, que es lo que decide si sigue escaneando tras un reenvío.
 
 **Casos**
@@ -138,7 +138,7 @@ El mismo camino cubre un fallo temporal del almacén de imágenes: una lámina c
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `frontend/app/api/social/[id]/[format]/route.tsx:510-512` (`PhotoLayer`) — Degradado de marca cuando no hay foto utilizable.
+- `frontend/app/api/social/[id]/[format]/route.tsx:742-744` (`PhotoLayer`) — Degradado de marca cuando no hay foto utilizable.
 
 **Casos**
 
@@ -186,7 +186,7 @@ No es un adorno legal: es la condición bajo la que el portal puede usar esos ti
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
 - `frontend/lib/static-map.ts:25` (`ATTRIBUTION`)
-- `frontend/app/api/social/[id]/[format]/route.tsx:764-766` (`ATTRIBUTION`) — Impresa en la barra inferior de la lámina de mapa.
+- `frontend/app/api/social/[id]/[format]/route.tsx:888-890` (`ATTRIBUTION`) — Impresa en la barra inferior de la lámina de mapa.
 
 **Casos**
 
@@ -323,8 +323,8 @@ Descansa sobre lo que el servidor ya distingue: un anuncio vendido de uno retira
 - `frontend/lib/social-kit.ts:686-690` (`momentFormats`) — El predicado único. Dos llamadas —la ruta y la pantalla del kit— para que la interfaz no pueda ofrecer lo que el servidor niega.
 - `frontend/lib/social-kit.ts:629-631` (`priceDrop`) — Solo hay bajada si el precio anterior es fiable y además bajó; una subida no es una bajada y no reutiliza la lámina.
 - `frontend/lib/social-kit.ts:662-664` (`closureKind`) — Vendido y arrendado sí; retirado no.
-- `frontend/app/api/social/[id]/[format]/route.tsx:1075-1077` (`priceDropLamina`)
-- `frontend/app/api/social/[id]/[format]/route.tsx:1246-1248` (`soldLamina`)
+- `frontend/app/api/social/[id]/[format]/route.tsx:1242-1244` (`priceDropLamina`)
+- `frontend/app/api/social/[id]/[format]/route.tsx:1379-1381` (`soldLamina`)
 - `frontend/components/promote/PromotionKit.tsx:323-325` (`momentFormats`) — La sección «Novedades de este anuncio», delante del material fijo y ausente mientras no haya noticia.
 
 **Casos**
@@ -409,7 +409,7 @@ Y caducarla al editar no es opcional: la lámina lleva el precio impreso. Si alg
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `frontend/app/api/social/[id]/[format]/route.tsx:1447-1449` (`Cache-Control`) — s-maxage=60 con stale-while-revalidate: absorbe la ráfaga de scrapers que llega al publicar un enlace sin congelar un precio corregido.
+- `frontend/app/api/social/[id]/[format]/route.tsx:1554-1556` (`Cache-Control`) — s-maxage=60 con stale-while-revalidate: absorbe la ráfaga de scrapers que llega al publicar un enlace sin congelar un precio corregido.
 - `frontend/lib/properties.ts:302-304` (`getProperty`) — Lectura etiquetada; /api/revalidate purga property-<id> cuando Django avisa de un cambio.
 
 **Casos**
@@ -456,12 +456,12 @@ Las portadas usan una fotografía protagonista, la tipografía de marca con peso
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `frontend/app/api/social/[id]/[format]/route.tsx:150-160` (`promotionFonts`) — Se registran Plus Jakarta Sans Regular y ExtraBold en ImageResponse.
-- `frontend/app/api/social/[id]/[format]/route.tsx:210-212` (`marketingPhotos`) — La imagen principal se conserva primero y se preparan hasta tres fotos.
-- `frontend/app/api/social/[id]/[format]/route.tsx:350-377` (`SalesCallout`) — El argumento comercial cambia según venta, arriendo y tipo de inmueble.
-- `frontend/app/api/social/[id]/[format]/route.tsx:376-409` (`SurveyLine`) — La línea inspirada en un plano topográfico conecta fotografía, argumento y acción como firma propia del portal.
-- `frontend/app/api/social/[id]/[format]/route.tsx:411-430` (`EditorialFacts`) — La portada limita la prueba secundaria a dos atributos declarados.
-- `frontend/app/api/social/[id]/[format]/route.tsx:1395-1397` (`customMessage`) — El mensaje opcional se normaliza y limita antes de dibujarlo.
+- `frontend/app/api/social/[id]/[format]/route.tsx:185-194` (`promotionFonts`) — Se registran Plus Jakarta Sans Regular y ExtraBold en ImageResponse.
+- `frontend/app/api/social/[id]/[format]/route.tsx:240-242` (`marketingPhotos`) — La imagen principal se conserva primero y se preparan hasta tres fotos.
+- `frontend/app/api/social/[id]/[format]/route.tsx:500-526` (`SalesCallout`) — El argumento comercial cambia según venta, arriendo y tipo de inmueble.
+- `frontend/app/api/social/[id]/[format]/route.tsx:543-575` (`SurveyLine`) — La línea inspirada en un plano topográfico conecta fotografía, argumento y acción como firma propia del portal.
+- `frontend/app/api/social/[id]/[format]/route.tsx:617-635` (`EditorialFacts`) — La portada limita la prueba secundaria a dos atributos declarados.
+- `frontend/app/api/social/[id]/[format]/route.tsx:1502-1504` (`customMessage`) — El mensaje opcional se normaliza y limita antes de dibujarlo.
 - `frontend/components/promote/PromotionKit.tsx:479-506` (`Mensaje dentro de la imagen`) — El editor permite cambiar el gancho o restaurar la propuesta base.
 
 **Casos**

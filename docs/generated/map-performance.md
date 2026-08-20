@@ -20,6 +20,8 @@ El mapa prioriza los puntos sobre datos secundarios, conserva las rutas de cach�
 | [`MPERF-003`](#mperf-003--la-conexión-lenta-prioriza-puntos-sobre-fichas-e-imágenes) | La conexión lenta prioriza puntos sobre fichas e imágenes | ✅ Implementada |
 | [`MPERF-005`](#mperf-005--un-payload-caducado-se-sigue-sirviendo-mientras-uno-solo-lo-recalcula) | Un payload caducado se sigue sirviendo mientras uno solo lo recalcula | ✅ Implementada |
 | [`MPERF-006`](#mperf-006--la-conexión-a-la-base-se-reutiliza-entre-peticiones) | La conexión a la base se reutiliza entre peticiones | ✅ Implementada |
+| [`MPERF-007`](#mperf-007--solo-lo-que-se-declara-público-puede-guardarlo-una-caché-compartida) | Solo lo que se declara público puede guardarlo una caché compartida | ✅ Implementada |
+| [`MPERF-008`](#mperf-008--detrás-de-un-cdn-la-identidad-del-visitante-se-restaura-en-nginx) | Detrás de un CDN, la identidad del visitante se restaura en nginx | 📝 Propuesta (sin código) |
 
 ### MPERF-004 — Cada nivel territorial reutiliza una sola respuesta cacheada
 
@@ -153,3 +155,49 @@ El techo queda acotado a propósito: tres workers de cuatro hilos más el worker
 | --- | --- | --- | --- | --- |
 | Dos peticiones seguidas al mismo worker | — | — | — | comparten conexión |
 | La base se reinicia dentro de la ventana | — | — | — | la conexión muerta se descarta antes de usarse |
+
+### MPERF-007 — Solo lo que se declara público puede guardarlo una caché compartida
+
+**Estado:** ✅ Implementada
+
+Las lecturas públicas envían `public` con `s-maxage`; cualquier respuesta que no declare cabecera de caché sale marcada como `private, no-store`.
+
+> **Por qué:** Una caché compartida decide con las cabeceras que recibe, y hasta ahora todo lo que no era una lectura pública no enviaba ninguna. Con un CDN delante y una regla que cubra `/api/`, esa ausencia basta para que el inventario de un propietario acabe servido a otro visitante: el `Vary` de esta API lista `Accept` y `origin`, no `Authorization`, así que dos cuentas distintas le parecen la misma petición.
+Invertir el valor por defecto es una línea y se sostiene sea cual sea la configuración del panel del CDN. Una garantía de este tipo no debe vivir en un interruptor que alguien puede cambiar sin darse cuenta.
+
+**Evidencia en el código** (verificada por `tools/specs/validate.py`)
+
+- `backend/real_estate/middleware_cache.py` (`class PrivateByDefaultCacheMiddleware`)
+- `backend/estate_map/settings.py` (`real_estate.middleware_cache.PrivateByDefaultCacheMiddleware`)
+- `backend/real_estate/tests/test_cache_headers.py` (`def test_an_authenticated_read_never_becomes_shared`)
+
+**Casos**
+
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| Listado público de propiedades | — | — | — | public con s-maxage |
+| Inventario de una cuenta autenticada | — | — | — | private o no-store, nunca public |
+| Respuesta 401 | — | — | — | no-store; una caché no puede dejar a todos fuera |
+
+**Cobertura exigida:** api
+
+- `backend/real_estate/tests/test_cache_headers.py`
+
+### MPERF-008 — Detrás de un CDN, la identidad del visitante se restaura en nginx
+
+**Estado:** 📝 Propuesta (sin código)
+
+Con un CDN delante, nginx reemplaza la dirección observada por la que reporta el CDN (`CF-Connecting-IP`) y solo dentro de sus rangos, de modo que el último salto de `X-Forwarded-For` vuelve a ser el visitante. El origen deja de responder al público directamente.
+
+> **Por qué:** El límite de peticiones identifica por el último salto de la cadena, porque es el único que un cliente no puede falsificar (PERM-072). Con un CDN delante ese salto pasa a ser el edge, y como una región entera sale por unas pocas direcciones, cientos de visitantes compartirían cubo y recibirían 429 en una tarde normal.
+Restringirlo a los rangos del CDN es lo que impide que cualquiera se asigne una dirección enviando la cabecera. Y cerrar el acceso directo al origen es la otra mitad: sin eso, quien vaya a la IP se salta el CDN, el límite y la caché.
+
+**Evidencia en el código:** ninguna, y es lo esperado: no hay código que la implemente.
+
+**Casos**
+
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| Dos visitantes detrás del mismo edge | — | — | — | dos cubos distintos |
+| Cabecera CF-Connecting-IP desde una IP que no es del CDN | — | — | — | se ignora |
+| Petición directa a la IP del origen | — | — | — | rechazada en el cortafuegos |

@@ -52,6 +52,10 @@ SITE_ID = 1
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'estate_map.crawlers.NoIndexMiddleware',
+    # Outermost of the app's own middleware, so it sees the final response of
+    # every view: what did not declare itself publicly cacheable leaves marked
+    # private. Required before a CDN can sit in front of the API.
+    'real_estate.middleware_cache.PrivateByDefaultCacheMiddleware',
     'estate_map.upload_errors.UploadErrorMiddleware',
     'estate_map.observability.ObservabilityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',

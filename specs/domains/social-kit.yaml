@@ -48,7 +48,7 @@ rules:
       cierto, esta regla necesita una tupla cerrada como la de VIS-001.
     evidence:
       - file: frontend/app/api/social/[id]/[format]/route.tsx
-        lines: "792-794"
+        lines: "1023-1025"
         symbol: photoLamina
         note: >-
           Toma el título, la ciudad, el precio y los hechos declarados. Ni
@@ -102,13 +102,13 @@ rules:
       vez de una imagen suelta que cualquiera podría haber fabricado.
     evidence:
       - file: frontend/app/api/social/[id]/[format]/route.tsx
-        lines: "302-314"
+        lines: "358-369"
         symbol: VerifyLine
         note: >-
           La dirección con la ruta del código, partida en dos filas para que no
           se corte a mitad de URL.
       - file: frontend/app/api/social/[id]/[format]/route.tsx
-        lines: "276-292"
+        lines: "362-377"
         symbol: QrCard
         note: Solo el QR; el código suelto que llevaba debajo se retiró.
       - file: frontend/lib/qr.ts
@@ -246,7 +246,7 @@ rules:
       kit no tiene forma de saber que MinIO no contestó.
     evidence:
       - file: frontend/app/api/social/[id]/[format]/route.tsx
-        lines: "510-512"
+        lines: "742-744"
         symbol: PhotoLayer
         note: Degradado de marca cuando no hay foto utilizable.
     tests: {}
@@ -321,7 +321,7 @@ rules:
         lines: "25"
         symbol: ATTRIBUTION
       - file: frontend/app/api/social/[id]/[format]/route.tsx
-        lines: "764-766"
+        lines: "888-890"
         symbol: ATTRIBUTION
         note: Impresa en la barra inferior de la lámina de mapa.
     tests:
@@ -593,10 +593,10 @@ rules:
         symbol: closureKind
         note: Vendido y arrendado sí; retirado no.
       - file: frontend/app/api/social/[id]/[format]/route.tsx
-        lines: "1075-1077"
+        lines: "1242-1244"
         symbol: priceDropLamina
       - file: frontend/app/api/social/[id]/[format]/route.tsx
-        lines: "1246-1248"
+        lines: "1379-1381"
         symbol: soldLamina
       - file: frontend/components/promote/PromotionKit.tsx
         lines: "323-325"
@@ -754,7 +754,7 @@ rules:
       un minuto.
     evidence:
       - file: frontend/app/api/social/[id]/[format]/route.tsx
-        lines: "1447-1449"
+        lines: "1554-1556"
         symbol: Cache-Control
         note: >-
           s-maxage=60 con stale-while-revalidate: absorbe la ráfaga de scrapers
@@ -829,29 +829,29 @@ rules:
       ficha y en futuros carruseles, donde pueden respirar sin competir entre sí.
     evidence:
       - file: frontend/app/api/social/[id]/[format]/route.tsx
-        lines: "150-160"
+        lines: "185-194"
         symbol: promotionFonts
         note: Se registran Plus Jakarta Sans Regular y ExtraBold en ImageResponse.
       - file: frontend/app/api/social/[id]/[format]/route.tsx
-        lines: "210-212"
+        lines: "240-242"
         symbol: marketingPhotos
         note: La imagen principal se conserva primero y se preparan hasta tres fotos.
       - file: frontend/app/api/social/[id]/[format]/route.tsx
-        lines: "350-377"
+        lines: "500-526"
         symbol: SalesCallout
         note: El argumento comercial cambia según venta, arriendo y tipo de inmueble.
       - file: frontend/app/api/social/[id]/[format]/route.tsx
-        lines: "376-409"
+        lines: "543-575"
         symbol: SurveyLine
         note: >-
           La línea inspirada en un plano topográfico conecta fotografía,
           argumento y acción como firma propia del portal.
       - file: frontend/app/api/social/[id]/[format]/route.tsx
-        lines: "411-430"
+        lines: "617-635"
         symbol: EditorialFacts
         note: La portada limita la prueba secundaria a dos atributos declarados.
       - file: frontend/app/api/social/[id]/[format]/route.tsx
-        lines: "1395-1397"
+        lines: "1502-1504"
         symbol: customMessage
         note: El mensaje opcional se normaliza y limita antes de dibujarlo.
       - file: frontend/components/promote/PromotionKit.tsx
