@@ -44,7 +44,7 @@ export const GeoLocationHeroSim: React.FC<SimulationProps> = ({frame, total}) =>
       <AbsoluteFill style={{background: `radial-gradient(90% 42% at 70% 22%, ${em.primaryLight}, transparent 68%), linear-gradient(180deg, ${em.background}, ${em.surface})`}} />
       <HeroPlane camera={camera} depth={DEPTH.context}><MapBlocks progress={mapReveal} selected={1} /></HeroPlane>
       <HeroPlane camera={camera} depth={DEPTH.subject}>
-        <div style={{position: 'absolute', left: sideCrop + 24 - mapReveal * 230, top: 360 - mapReveal * 70, width: 720, opacity: cardIn * (1 - mapReveal * 0.78), transform: `scale(${0.88 + cardIn * 0.12 - mapReveal * 0.18}) rotateY(${mapReveal * -8}deg)`}}>
+        <div style={{position: 'absolute', left: sideCrop + 24 - mapReveal * 920, top: 360 - mapReveal * 70, width: 720, opacity: cardIn, transform: `scale(${0.88 + cardIn * 0.12 - mapReveal * 0.12}) rotateY(${mapReveal * -8}deg)`}}>
           <EmCard raised style={{padding: 28}}>
             <EmExample />
             <PropertyArt kind="house" variant={18} progress={p} style={{height: 270, marginTop: 18, borderRadius: 14, overflow: 'hidden'}} />
@@ -55,8 +55,8 @@ export const GeoLocationHeroSim: React.FC<SimulationProps> = ({frame, total}) =>
         </div>
       </HeroPlane>
       <HeroPlane camera={camera} depth={DEPTH.foreground}>
-        <div style={{position: 'absolute', left: 610 + mapReveal * 210, top: 810 - tap * 20, opacity: question * (1 - mapReveal), transform: `scale(${0.8 + question * 0.2 + tap * 0.16})`, padding: '22px 30px', borderRadius: 999, background: em.navy, color: em.white, fontSize: 38, fontWeight: 900, boxShadow: '0 24px 54px rgba(15,16,32,.3)'}}>¿Dónde queda?</div>
-        <div style={{position: 'absolute', left: 790, top: 900 - tap * 26, opacity: question * (1 - mapReveal)}}><EmGlyph icon="cursor" size={62} color={em.text} /></div>
+        <div style={{position: 'absolute', left: 610 + mapReveal * 760, top: 810 - tap * 20, opacity: question, transform: `scale(${0.8 + question * 0.2 + tap * 0.16})`, padding: '22px 30px', borderRadius: 999, background: em.navy, color: em.white, fontSize: 38, fontWeight: 900, boxShadow: '0 24px 54px rgba(15,16,32,.3)'}}>¿Dónde queda?</div>
+        <div style={{position: 'absolute', left: 790 + mapReveal * 760, top: 900 - tap * 26, opacity: question}}><EmGlyph icon="cursor" size={62} color={em.text} /></div>
       </HeroPlane>
       <HeroImpact progress={p} at={0.51} x={720} y={760} color={em.primary} reach={690} />
       <CaptionShade />
@@ -74,7 +74,31 @@ export const GeoNearbyContextSim: React.FC<SimulationProps> = ({frame, total}) =
       <div style={{position: 'absolute', left: sideCrop + 18, top: 340, width: 430, transform: `translateX(${(1 - selected) * -520 - compare * 160}px) scale(${1 - compare * 0.12})`, opacity: selected}}>
         <EmCard raised style={{padding: 22}}><EmExample /><PropertyArt kind="house" variant={21} progress={p} style={{height: 190, marginTop: 14, borderRadius: 12, overflow: 'hidden'}} /><div style={{fontSize: 31, fontWeight: 900, marginTop: 12}}>Tu opción</div><div style={{display: 'flex', alignItems: 'center', gap: 12, marginTop: 10, color: em.primaryStrong, fontSize: 26, fontWeight: 800}}><EmGlyph icon="pin" size={28} color={em.primaryStrong} />En el mapa</div></EmCard>
       </div>
-      <div style={{position: 'absolute', left: 525, top: 350, opacity: compare, transform: `translateY(${(1 - compare) * 80}px)`}}><div style={{fontSize: 30, fontWeight: 900, color: em.text}}>PROPIEDADES CERCANAS</div><div style={{marginTop: 14, padding: '14px 20px', borderRadius: 999, background: em.primaryLight, color: em.primaryStrong, fontSize: 26, fontWeight: 800}}>Compara por ubicación</div></div>
+      <div style={{position: 'absolute', left: 545, top: 270, opacity: compare, transform: `translateY(${(1 - compare) * 80}px)`}}><div style={{fontSize: 30, fontWeight: 900, color: em.text}}>PROPIEDADES CERCANAS</div><div style={{marginTop: 14, padding: '14px 20px', borderRadius: 999, background: em.primaryLight, color: em.primaryStrong, fontSize: 26, fontWeight: 800}}>Compara por ubicación</div></div>
+      <div style={{position: 'absolute', left: 594, top: 430, width: 280, opacity: compare, transform: `translateY(${(1 - compare) * 70}px) scale(${0.9 + compare * 0.1})`}}><EmCard raised style={{padding: 14}}><EmExample /><PropertyArt kind="apartment" variant={24} progress={p} style={{height: 120, marginTop: 8, borderRadius: 10, overflow: 'hidden'}} /><div style={{fontSize: 25, fontWeight: 900, marginTop: 8}}>Departamento</div><div style={{fontSize: 22, color: em.textMuted, marginTop: 4}}>Cerca de tu opción</div></EmCard></div>
+      <div style={{position: 'absolute', left: 610, top: 760, width: 260, opacity: settle(p, 0.55, 0.9), transform: `translateX(${(1 - compare) * 90}px)`}}><EmCard style={{padding: 12}}><EmExample /><PropertyArt kind="house" variant={27} progress={p} style={{height: 105, marginTop: 7, borderRadius: 10, overflow: 'hidden'}} /><div style={{fontSize: 24, fontWeight: 900, marginTop: 7}}>Casa</div><div style={{fontSize: 22, color: em.textMuted}}>Otra ubicación</div></EmCard></div>
+      <CaptionShade />
+    </AbsoluteFill>
+  );
+};
+
+export const GeoPropertyDetailSim: React.FC<SimulationProps> = ({frame, total}) => {
+  const p = frame / Math.max(1, total);
+  const map = glide(p, 0, 0.3);
+  const open = land(p, 0.2, 0.52);
+  const details = settle(p, 0.48, 0.88);
+  return (
+    <AbsoluteFill style={{background: em.surfaceAlt, overflow: 'hidden', fontFamily: font}}>
+      <MapBlocks progress={map} selected={1} />
+      <div style={{position: 'absolute', left: sideCrop + 18, top: 300, width: 840, transform: `translateY(${(1 - open) * 180}px) scale(${0.82 + open * 0.18})`, opacity: open}}>
+        <EmCard raised style={{padding: 26}}>
+          <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}><div style={{fontSize: 27, fontWeight: 900, color: em.primaryStrong}}>FICHA PÚBLICA</div><EmExample /></div>
+          <PropertyArt kind="house" variant={22} progress={p} style={{height: 260, marginTop: 18, borderRadius: 14, overflow: 'hidden'}} />
+          <div style={{fontSize: 42, fontWeight: 900, marginTop: 18}}>Casa en venta</div>
+          <div style={{display: 'flex', gap: 24, marginTop: 14, opacity: details}}><EmMeta icon="home" text="3 habitaciones" /><EmMeta icon="pin" text="Ubicación en mapa" /></div>
+          <div style={{height: 64, marginTop: 20, borderRadius: emCard.radius, background: em.primary, color: em.white, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 12, fontSize: 28, fontWeight: 900, transform: `scale(${0.96 + details * 0.04})`}}><EmGlyph icon="pin" size={30} color={em.white} />Ver ubicación</div>
+        </EmCard>
+      </div>
       <CaptionShade />
     </AbsoluteFill>
   );

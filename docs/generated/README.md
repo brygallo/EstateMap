@@ -4,12 +4,12 @@
 
 Vista legible de `specs/`. Cada regla marcada como implementada apunta a las líneas de código que la aplican, y `tools/specs/validate.py` comprueba que ese código siga existiendo, así que esta página no puede quedarse desfasada en silencio.
 
-**Total de reglas: 367**
+**Total de reglas: 368**
 
 | Estado | Reglas |
 | --- | --- |
 | 🗑️ Obsoleta | 2 |
-| ✅ Implementada | 329 |
+| ✅ Implementada | 330 |
 | ⛔ No implementada | 15 |
 | 🟡 Parcial | 8 |
 | 📝 Propuesta (sin código) | 13 |
@@ -35,4 +35,4 @@ Vista legible de `specs/`. Cada regla marcada como implementada apunta a las lí
 | visibility-rules | `specs/ui/visibility-rules.yaml` | 4 | [visibility-rules.md](./visibility-rules.md) |
 | import-properties | `specs/workflows/import-properties.yaml` | 14 | [import-properties.md](./import-properties.md) |
 | publish-property | `specs/workflows/publish-property.yaml` | 22 | [publish-property.md](./publish-property.md) |
-| video-factory | `specs/workflows/video-factory.yaml` | 18 | [video-factory.md](./video-factory.md) |
+| video-factory | `specs/workflows/video-factory.yaml` | 19 | [video-factory.md](./video-factory.md) |

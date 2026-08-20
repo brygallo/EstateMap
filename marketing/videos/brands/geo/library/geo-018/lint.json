@@ -1,15 +1,105 @@
 {
-  "passed": true,
-  "errors": 0,
-  "warnings": 0,
+  "passed": false,
+  "errors": 16,
+  "warnings": 2,
   "findings": [
+    {
+      "level": "error",
+      "rule": "audience",
+      "detail": "La audiencia «compradores, propietarios y personas que quieren aprender» no pertenece a la marca activa: ['comprador', 'profesional', 'propietario']"
+    },
+    {
+      "level": "error",
+      "rule": "single_cta",
+      "detail": "Hay 3 escenas de CTA; solo se permite una"
+    },
+    {
+      "level": "error",
+      "rule": "scene_count",
+      "detail": "Hay 35 escenas; máximo 8 para un video de 28 s"
+    },
+    {
+      "level": "error",
+      "rule": "final_voice_pace",
+      "detail": "Con la voz final, las escenas [3, 4, 8, 9, 21, 23] pasan de 6 s. La voz de pago lee más lento que el borrador y no se puede cambiar una vez comprada: acorta el texto ahora, no después"
+    },
     {
       "level": "info",
       "rule": "final_voice_duration",
-      "detail": "Con la voz final la pieza duraría unos 23.9 s (borrador: 20.5 s)"
+      "detail": "Con la voz final la pieza duraría unos 159.1 s (borrador: 136.4 s)"
+    },
+    {
+      "level": "error",
+      "rule": "headline_width",
+      "detail": "Escena 15: el rótulo tiene 23 caracteres; máximo 22 para que quepa en una fila"
+    },
+    {
+      "level": "error",
+      "rule": "headline_width",
+      "detail": "Escena 28: el rótulo tiene 23 caracteres; máximo 22 para que quepa en una fila"
+    },
+    {
+      "level": "error",
+      "rule": "headline_width",
+      "detail": "Escena 32: el rótulo tiene 23 caracteres; máximo 22 para que quepa en una fila"
+    },
+    {
+      "level": "warning",
+      "rule": "message_duplication",
+      "detail": "Escena 33: rótulo y voz repiten casi el mismo mensaje"
+    },
+    {
+      "level": "warning",
+      "rule": "message_duplication",
+      "detail": "Escena 35: rótulo y voz repiten casi el mismo mensaje"
+    },
+    {
+      "level": "error",
+      "rule": "animation_missing",
+      "detail": "Escena 1: la animación sim:geo-hello-hero fue propuesta pero todavía no está implementada y registrada"
+    },
+    {
+      "level": "error",
+      "rule": "animation_missing",
+      "detail": "Escena 4: la animación sim:geo-hello-hero fue propuesta pero todavía no está implementada y registrada"
+    },
+    {
+      "level": "error",
+      "rule": "animation_missing",
+      "detail": "Escena 20: la animación sim:geo-content-hub fue propuesta pero todavía no está implementada y registrada"
+    },
+    {
+      "level": "error",
+      "rule": "animation_missing",
+      "detail": "Escena 21: la animación sim:geo-content-hub fue propuesta pero todavía no está implementada y registrada"
+    },
+    {
+      "level": "error",
+      "rule": "animation_missing",
+      "detail": "Escena 22: la animación sim:geo-content-hub fue propuesta pero todavía no está implementada y registrada"
+    },
+    {
+      "level": "error",
+      "rule": "animation_missing",
+      "detail": "Escena 28: la animación sim:geo-content-hub fue propuesta pero todavía no está implementada y registrada"
+    },
+    {
+      "level": "error",
+      "rule": "animation_missing",
+      "detail": "Escena 30: la animación sim:geo-hello-hero fue propuesta pero todavía no está implementada y registrada"
+    },
+    {
+      "level": "error",
+      "rule": "animation_missing",
+      "detail": "Escena 32: la animación sim:geo-content-hub fue propuesta pero todavía no está implementada y registrada"
+    },
+    {
+      "level": "error",
+      "rule": "hero_missing",
+      "detail": "La escena 1 usa «sim:geo-hello-hero», que no es una animación de gancho. Una apertura se construye sobre hero-stage.tsx y se registra en renderer.HERO_STAGINGS: ['sim:aents-problema-software', 'sim:credicasa-hero', 'sim:geo-location-hero', 'sim:geo-ranking-hero']"
     }
   ],
-  "estimated_seconds": 18.2,
+  "estimated_seconds": 120.7,
   "target_seconds": 28,
-  "checked_at": "2026-08-20T13:04:17.212072-05:00"
+  "checked_at": "2026-08-20T13:18:42.381748-05:00"
 }

@@ -283,3 +283,13 @@ regenera desde `memory/lessons.json`. Para añadir una corrección usa
 
 - Observación (corrección humana): Los contratos declaraban 14 o 24 escenas para una clase de hasta 240 segundos y 16 para una historia de hasta 120, mientras cada toma tiene un máximo de 6 segundos y el perfil vertical todavía declaraba 60 segundos.
 - Regla: Derivar presupuestos compatibles con duración máxima dividida para 6 segundos: 8 escenas en corto, 20 en historia y 40 en clase; alinear el perfil a 240 y convertir scene_pace y final_voice_pace en errores de lint con pruebas matemáticas de regresión.
+
+### 2026-08-20 · global · toda la cuenta
+
+- Observación (corrección humana): Las animaciones Credicasa se aprobaron por código y una sola captura, pero en Studio casi no se veía nada: sujetos pequeños, blur en el primer cuadro, grandes zonas vacías, texto fuente diminuto y escenas con apariencia de diagrama o diapositiva.
+- Regla: Toda escena se revisa a escala de teléfono en fotogramas de inicio, centro y cierre antes de mostrarla. El sujeto ocupa al menos dos tercios del escenario, permanece nítido desde el primer cuadro útil, usa texto visible de 36 px o más salvo pies de fuente de 26 px, elimina blur decorativo y no deja más de un tercio del escenario vacío. Un PASS exige revisar todas las escenas, no una sola captura.
+
+### 2026-08-20 · global · toda la cuenta
+
+- Observación (corrección humana): La fábrica reescribió y recortó un guion entregado por la persona responsable, cambiando el video y su gancho
+- Regla: La persona responsable entrega el guion final; la fábrica solo puede segmentarlo sin cambiar palabras y se limita a producción técnica: timing, visuales, animación, voz, música, Studio y render

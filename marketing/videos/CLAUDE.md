@@ -183,6 +183,13 @@ cuatro palabras y veintidós caracteres, que ya comprueba el linter.
 
 ## Contrato obligatorio
 
+- **La persona responsable escribe el guion; la fábrica es técnica.** Cuando
+  entrega un texto, se guarda como `script-source.txt` y sus palabras quedan
+  bloqueadas. La fábrica puede segmentarlo entre escenas para timing, pero no
+  reescribe el guion, no crea ganchos, no cambia el enfoque y no toma decisiones
+  de marketing. Su trabajo empieza después: dirección visual, animación, voz,
+  música, legibilidad, sincronización, Studio y render aprobado.
+
 - Escribe para Ecuador, en español claro y natural. No uses jerga de marketing en la pieza final.
 - **Una cifra que afirma un hecho necesita fuente fechada.** Quedan prohibidas las cantidades sobre el mercado o sobre la plataforma —inventario, demanda, porcentajes, alcance, ahorros, retorno de inversión, disponibilidad, precios de mercado, seguridad de zonas— y los testimonios. Solo entran citando su fuente en `verification_notes`.
 - **Un dato de ejemplo se inventa a propósito, y es la forma correcta de enseñar un cálculo.** El precio, el área o las características de una propiedad ilustrativa no afirman nada del mercado: son el ejemplo de un anuncio, igual que la foto de una casa que no existe. Se permiten con tres condiciones: que la pieza los marque como `EJEMPLO` en pantalla, que sean verosímiles para el sujeto de la pieza —un departamento no mide 400 m²— y que la voz no los convierta en dato. «Divide el precio para los metros» es válido; «el metro cuadrado está en $303» es una afirmación de mercado y está prohibida. Antes de bloquear una pieza por una cifra, comprueba el rótulo en pantalla: un ejemplo marcado no es un hallazgo.

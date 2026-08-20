@@ -127,7 +127,7 @@ def product_reveal_deadline(target: int) -> float:
 
 
 PRODUCT_ASSETS = {
-    "sim:geo-location-hero", "sim:geo-nearby-context",
+    "sim:geo-location-hero", "sim:geo-nearby-context", "sim:geo-property-detail",
     "sim:alrededor", "sim:entorno-mapa", "sim:forma-dibujada", "sim:medidas", "sim:metros-utiles",
     "sim:mapa", "sim:llegada", "sim:zona", "sim:filtros", "sim:ficha",
     "sim:publicar-gratis", "sim:formulario", "sim:ubicacion-publicacion",
@@ -574,8 +574,30 @@ def shared_ratio(first: str, second: str) -> float:
     return len(left & right) / len(left | right)
 
 
+def normalize_locked_script(text: str) -> str:
+    """Normalize layout only; a supplied script's words remain immutable."""
+    return " ".join(text.split())
+
+
+def check_locked_script(plan: dict[str, Any], directory: Path) -> list[dict[str, str]]:
+    """Reject any spoken copy that differs from the human-supplied source."""
+    source = directory / "script-source.txt"
+    if not source.is_file():
+        return []
+    expected = normalize_locked_script(source.read_text(encoding="utf-8"))
+    actual = normalize_locked_script(" ".join(text_of(scene, "voice") for scene in plan.get("scenes") or []))
+    if actual == expected:
+        return []
+    return [finding(
+        "error",
+        "script_locked",
+        "La locución difiere de script-source.txt; producción puede segmentar el guion, pero no reescribirlo",
+    )]
+
+
 def lint(plan: dict[str, Any], directory: Path, target: int, catalog: dict[str, Any], identifier: str) -> dict[str, Any]:
     findings: list[dict[str, str]] = []
+    findings += check_locked_script(plan, directory)
     findings += check_structure(plan, target)
     findings += check_product_reveal(plan, target)
     findings += check_final_voice_pace(plan)

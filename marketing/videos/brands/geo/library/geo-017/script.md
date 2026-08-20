@@ -20,7 +20,7 @@ Estado: `planificado`
 
 | Escena | Tiempo | Función | Visual | Voz | Rótulo | Recurso | Transición |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| 1 | 0.0–5.0 s | gancho | Hero de tres planos: vivienda nueva, cifras completas y una pregunta que rompe la conclusión automática. Geo es reconocible antes del segundo tres. | Ves 2,99% y hasta 100%. Y piensas: ya puedo comprar. | ¿Ya puedo comprar? | sim:credicasa-hero | cut |
+| 1 | 0.0–5.0 s | gancho | Hero de tres planos: vivienda nueva, cifras completas y una pregunta que rompe la conclusión automática. Geo es reconocible antes del segundo tres. | ¿Quieres comprar casa en Ecuador? Antes de buscar, necesitas saber esto. | ¿Casa al 2,99%? | sim:credicasa-hero | cut |
 | 2 | 5.0–10.0 s | problema | Tres tarjetas numeradas sustituyen la conclusión del gancho: persona, vivienda y costo. | Pero antes de buscar, necesitas entender tres límites. | Tres límites | sim:credicasa-fact-card | cut |
 | 3 | 10.0–15.0 s | prueba | La tarjeta separa tasa nominal 2,99% y efectiva 3,03%; ambas aparecen completas. | Credicasa publica 2,99% nominal y 3,03% efectivo. | Dos tasas | sim:credicasa-fact-card | cut |
 | 4 | 15.0–20.0 s | prueba | La tarjeta cambia a un calendario que llega hasta 360 meses sin prometer ese plazo a todos. | También ofrece hasta treinta años de plazo. | Hasta 30 años | sim:credicasa-fact-card | cut |
@@ -41,7 +41,7 @@ Estado: `planificado`
 
 ## Voz completa
 
-Ves 2,99% y hasta 100%. Y piensas: ya puedo comprar. Pero antes de buscar, necesitas entender tres límites. Credicasa publica 2,99% nominal y 3,03% efectivo. También ofrece hasta treinta años de plazo. Y hasta 65.000 dólares, incluidos los gastos financiados. Ese máximo no es automático. Depende de tu capacidad. El ingreso familiar máximo publicado es 1.527,94 dólares. Dependientes y voluntarios tienen reglas distintas de aportes. La vivienda debe ser única, nueva y de primer uso. Precio, avalúo y crédito son números distintos. El avalúo máximo publicado es 71.504,70 dólares. La cuota no cuenta toda la historia. También hay seguros y gastos del trámite. En agosto, el tarifario mantiene el reajuste cada 180 días. Primero, revisa requisitos y haz la precalificación oficial. Después, define una cuota que puedas pagar con calma. Usa ese presupuesto para comparar propiedades en el mapa. El mismo precio cambia de lugar. Encuentra tu futuro hogar.
+¿Quieres comprar casa en Ecuador? Antes de buscar, necesitas saber esto. Pero antes de buscar, necesitas entender tres límites. Credicasa publica 2,99% nominal y 3,03% efectivo. También ofrece hasta treinta años de plazo. Y hasta 65.000 dólares, incluidos los gastos financiados. Ese máximo no es automático. Depende de tu capacidad. El ingreso familiar máximo publicado es 1.527,94 dólares. Dependientes y voluntarios tienen reglas distintas de aportes. La vivienda debe ser única, nueva y de primer uso. Precio, avalúo y crédito son números distintos. El avalúo máximo publicado es 71.504,70 dólares. La cuota no cuenta toda la historia. También hay seguros y gastos del trámite. En agosto, el tarifario mantiene el reajuste cada 180 días. Primero, revisa requisitos y haz la precalificación oficial. Después, define una cuota que puedas pagar con calma. Usa ese presupuesto para comparar propiedades en el mapa. El mismo precio cambia de lugar. Encuentra tu futuro hogar.
 
 ## Caption
 

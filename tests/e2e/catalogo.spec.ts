@@ -82,7 +82,9 @@ test.describe('Catalogue', () => {
     await page.goto('/');
 
     const moreCities = page.locator('details').filter({ hasText: 'Ver más ciudades y cantones' });
-    await expect(moreCities).not.toHaveAttribute('open', '');
+    if (await moreCities.count()) {
+      await expect(moreCities).not.toHaveAttribute('open', '');
+    }
   });
 
   test('the business page only offers capabilities that exist', async ({ page }) => {

@@ -1,0 +1,445 @@
+{
+  "brandId": "geo",
+  "brandName": "Geo Propiedades Ecuador",
+  "brandTagline": "Un producto de Aents",
+  "brandSymbol": "brand/aents-symbol-negative.png",
+  "title": "Antes de imaginarte viviendo ahí",
+  "coverText": "¿Dónde queda?",
+  "cta": "Encuentra tu futuro hogar",
+  "url": "geopropiedadesecuador.com",
+  "brandTile": "brand/aents-brand-tile-1024.png",
+  "kicker": null,
+  "musicFile": null,
+  "narrationFile": null,
+  "showSafeAreas": false,
+  "scenes": [
+    {
+      "purpose": "gancho",
+      "durationInFrames": 106,
+      "headline": "La foto no basta",
+      "captions": [
+        {
+          "text": "Antes de imaginarte viviendo ahí,",
+          "start": 0.0,
+          "end": 1.879,
+          "words": [
+            {
+              "text": "Antes",
+              "start": 0.0,
+              "end": 0.342
+            },
+            {
+              "text": "de",
+              "start": 0.342,
+              "end": 0.512
+            },
+            {
+              "text": "imaginarte",
+              "start": 0.512,
+              "end": 1.139
+            },
+            {
+              "text": "viviendo",
+              "start": 1.139,
+              "end": 1.651
+            },
+            {
+              "text": "ahí,",
+              "start": 1.651,
+              "end": 1.879
+            }
+          ]
+        },
+        {
+          "text": "pregunta:",
+          "start": 1.879,
+          "end": 2.391,
+          "words": [
+            {
+              "text": "pregunta:",
+              "start": 0.0,
+              "end": 0.512
+            }
+          ]
+        },
+        {
+          "text": "¿dónde queda?",
+          "start": 2.391,
+          "end": 3.074,
+          "words": [
+            {
+              "text": "¿dónde",
+              "start": 0.0,
+              "end": 0.342
+            },
+            {
+              "text": "queda?",
+              "start": 0.342,
+              "end": 0.683
+            }
+          ]
+        }
+      ],
+      "visualDirection": "Hero track-side: una ficha clara con PropertyArt entra completa, la cámara descubre que su ubicación está sin contexto y un toque transforma la ficha en una manzana del mapa con su pin. Producto reconocible antes del segundo tres y al menos tres eventos por segundo.",
+      "transition": "cut",
+      "asset": "sim:geo-location-hero",
+      "assetType": "simulation",
+      "photo": null,
+      "voiceFile": "jobs/geo-018/audio/voice-01.mp3",
+      "assetStartInFrames": 0,
+      "assetTotalInFrames": 106,
+      "accent": "#22C55E"
+    },
+    {
+      "purpose": "mecanismo",
+      "durationInFrames": 94,
+      "headline": "Empieza por la zona",
+      "captions": [
+        {
+          "text": "En Geo Propiedades Ecuador,",
+          "start": 0.0,
+          "end": 1.571,
+          "words": [
+            {
+              "text": "En",
+              "start": 0.0,
+              "end": 0.175
+            },
+            {
+              "text": "Geo",
+              "start": 0.175,
+              "end": 0.407
+            },
+            {
+              "text": "Propiedades",
+              "start": 0.407,
+              "end": 1.105
+            },
+            {
+              "text": "Ecuador,",
+              "start": 1.105,
+              "end": 1.571
+            }
+          ]
+        },
+        {
+          "text": "el mapa va primero.",
+          "start": 1.571,
+          "end": 2.676,
+          "words": [
+            {
+              "text": "el",
+              "start": 0.0,
+              "end": 0.175
+            },
+            {
+              "text": "mapa",
+              "start": 0.175,
+              "end": 0.465
+            },
+            {
+              "text": "va",
+              "start": 0.465,
+              "end": 0.64
+            },
+            {
+              "text": "primero.",
+              "start": 0.64,
+              "end": 1.105
+            }
+          ]
+        }
+      ],
+      "visualDirection": "Una mano mueve el mapa hasta una zona; el encuadre y el mapa continúan el viaje lateral del hero sin reiniciar el movimiento.",
+      "transition": "cut",
+      "asset": "sim:elige-zona",
+      "assetType": "simulation",
+      "photo": null,
+      "voiceFile": "jobs/geo-018/audio/voice-02.mp3",
+      "assetStartInFrames": 0,
+      "assetTotalInFrames": 94,
+      "accent": "#14B8A6"
+    },
+    {
+      "purpose": "prueba",
+      "durationInFrames": 126,
+      "headline": "Mira antes de ir",
+      "captions": [
+        {
+          "text": "Muévete a la zona",
+          "start": 0.0,
+          "end": 0.95,
+          "words": [
+            {
+              "text": "Muévete",
+              "start": 0.0,
+              "end": 0.422
+            },
+            {
+              "text": "a",
+              "start": 0.422,
+              "end": 0.528
+            },
+            {
+              "text": "la",
+              "start": 0.528,
+              "end": 0.686
+            },
+            {
+              "text": "zona",
+              "start": 0.686,
+              "end": 0.95
+            }
+          ]
+        },
+        {
+          "text": "que te interesa",
+          "start": 0.95,
+          "end": 1.795,
+          "words": [
+            {
+              "text": "que",
+              "start": 0.0,
+              "end": 0.211
+            },
+            {
+              "text": "te",
+              "start": 0.211,
+              "end": 0.37
+            },
+            {
+              "text": "interesa",
+              "start": 0.37,
+              "end": 0.845
+            }
+          ]
+        },
+        {
+          "text": "y mira qué propiedades hay alrededor.",
+          "start": 1.795,
+          "end": 3.748,
+          "words": [
+            {
+              "text": "y",
+              "start": 0.0,
+              "end": 0.106
+            },
+            {
+              "text": "mira",
+              "start": 0.106,
+              "end": 0.37
+            },
+            {
+              "text": "qué",
+              "start": 0.37,
+              "end": 0.581
+            },
+            {
+              "text": "propiedades",
+              "start": 0.581,
+              "end": 1.214
+            },
+            {
+              "text": "hay",
+              "start": 1.214,
+              "end": 1.425
+            },
+            {
+              "text": "alrededor.",
+              "start": 1.425,
+              "end": 1.953
+            }
+          ]
+        }
+      ],
+      "visualDirection": "Un pin dentro de una manzana abre una ficha clara con galería y características. Los datos ilustrativos permanecen rotulados EJEMPLO.",
+      "transition": "cut",
+      "asset": "sim:revisar-fotos",
+      "assetType": "simulation",
+      "photo": null,
+      "voiceFile": "jobs/geo-018/audio/voice-03.mp3",
+      "assetStartInFrames": 0,
+      "assetTotalInFrames": 126,
+      "accent": "#6B5CF6"
+    },
+    {
+      "purpose": "resultado",
+      "durationInFrames": 126,
+      "headline": "Todo en contexto",
+      "captions": [
+        {
+          "text": "Abre una opción,",
+          "start": 0.0,
+          "end": 0.935,
+          "words": [
+            {
+              "text": "Abre",
+              "start": 0.0,
+              "end": 0.292
+            },
+            {
+              "text": "una",
+              "start": 0.292,
+              "end": 0.526
+            },
+            {
+              "text": "opción,",
+              "start": 0.526,
+              "end": 0.935
+            }
+          ]
+        },
+        {
+          "text": "revisa sus datos",
+          "start": 0.935,
+          "end": 1.928,
+          "words": [
+            {
+              "text": "revisa",
+              "start": 0.0,
+              "end": 0.409
+            },
+            {
+              "text": "sus",
+              "start": 0.409,
+              "end": 0.643
+            },
+            {
+              "text": "datos",
+              "start": 0.643,
+              "end": 0.993
+            }
+          ]
+        },
+        {
+          "text": "y compárala con otras cercanas.",
+          "start": 1.928,
+          "end": 3.74,
+          "words": [
+            {
+              "text": "y",
+              "start": 0.0,
+              "end": 0.117
+            },
+            {
+              "text": "compárala",
+              "start": 0.117,
+              "end": 0.701
+            },
+            {
+              "text": "con",
+              "start": 0.701,
+              "end": 0.935
+            },
+            {
+              "text": "otras",
+              "start": 0.935,
+              "end": 1.285
+            },
+            {
+              "text": "cercanas.",
+              "start": 1.285,
+              "end": 1.811
+            }
+          ]
+        }
+      ],
+      "visualDirection": "La ficha se reduce hasta su pin y el mapa revela dos opciones cercanas con PropertyArt diferentes, sin ranking ni conteos. Una sola selección conserva el foco.",
+      "transition": "cut",
+      "asset": "sim:geo-nearby-context",
+      "assetType": "simulation",
+      "photo": null,
+      "voiceFile": "jobs/geo-018/audio/voice-04.mp3",
+      "assetStartInFrames": 0,
+      "assetTotalInFrames": 126,
+      "accent": "#A78BFA"
+    },
+    {
+      "purpose": "cta",
+      "durationInFrames": 129,
+      "headline": "Encuentra tu hogar",
+      "captions": [
+        {
+          "text": "Entiende cada propiedad en",
+          "start": 0.0,
+          "end": 1.575,
+          "words": [
+            {
+              "text": "Entiende",
+              "start": 0.0,
+              "end": 0.525
+            },
+            {
+              "text": "cada",
+              "start": 0.525,
+              "end": 0.816
+            },
+            {
+              "text": "propiedad",
+              "start": 0.816,
+              "end": 1.4
+            },
+            {
+              "text": "en",
+              "start": 1.4,
+              "end": 1.575
+            }
+          ]
+        },
+        {
+          "text": "su ubicación.",
+          "start": 1.575,
+          "end": 2.333,
+          "words": [
+            {
+              "text": "su",
+              "start": 0.0,
+              "end": 0.175
+            },
+            {
+              "text": "ubicación.",
+              "start": 0.175,
+              "end": 0.758
+            }
+          ]
+        },
+        {
+          "text": "Encuentra tu futuro hogar.",
+          "start": 2.333,
+          "end": 3.849,
+          "words": [
+            {
+              "text": "Encuentra",
+              "start": 0.0,
+              "end": 0.583
+            },
+            {
+              "text": "tu",
+              "start": 0.583,
+              "end": 0.758
+            },
+            {
+              "text": "futuro",
+              "start": 0.758,
+              "end": 1.166
+            },
+            {
+              "text": "hogar.",
+              "start": 1.166,
+              "end": 1.516
+            }
+          ]
+        }
+      ],
+      "visualDirection": "Cierre global aprobado con tile, nombre, dominio, CTA y firma de Aents; el mapa vivo permanece como continuidad visual.",
+      "transition": "fade",
+      "asset": null,
+      "assetType": null,
+      "photo": null,
+      "voiceFile": "jobs/geo-018/audio/voice-05.mp3",
+      "assetStartInFrames": 0,
+      "assetTotalInFrames": 129,
+      "accent": "#22C55E"
+    }
+  ]
+}

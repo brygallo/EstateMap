@@ -45,6 +45,25 @@ class SharedAgentContractTests(unittest.TestCase):
         self.assertIn("`CLAUDE.md` es normativo también para Codex", contract)
 
 
+class LockedScriptTests(unittest.TestCase):
+    """SPEC:VFACT-019 — production segments supplied scripts but never rewrites them."""
+
+    def test_locked_script_accepts_words_split_across_scenes(self):
+        with tempfile.TemporaryDirectory() as folder:
+            directory = Path(folder)
+            (directory / "script-source.txt").write_text("Hola, somos Geo. Busca aquí.\n", encoding="utf-8")
+            candidate = {"scenes": [{"voice": "Hola, somos Geo."}, {"voice": "Busca aquí."}]}
+            self.assertEqual(quality.check_locked_script(candidate, directory), [])
+
+    def test_locked_script_rejects_rewritten_words(self):
+        with tempfile.TemporaryDirectory() as folder:
+            directory = Path(folder)
+            (directory / "script-source.txt").write_text("Hola, somos Geo.", encoding="utf-8")
+            candidate = {"scenes": [{"voice": "Conoce Geo."}]}
+            findings = quality.check_locked_script(candidate, directory)
+            self.assertEqual(findings[0]["rule"], "script_locked")
+
+
 class BrandWorkspaceTests(unittest.TestCase):
     """SPEC:VFACT-015 — brands share an engine, never editorial state."""
 
@@ -302,7 +321,7 @@ class DraftVersusFinalVoiceTests(unittest.TestCase):
         source = (Path(__file__).resolve().parents[1] / "factory.py").read_text(encoding="utf-8")
         studio = source.split("def cmd_studio")[1].split("def cmd_render")[0]
         self.assertIn("final_voice_providers", studio)
-        self.assertIn("voice.speak_scene", studio)
+        self.assertIn("voice.speak_video", studio)
         self.assertIn('final-voice-preview.json', studio)
         self.assertIn("subtitles.write_srt", studio)
 
@@ -918,6 +937,10 @@ class AnimationRegistryTests(unittest.TestCase):
         ).read_text(encoding="utf-8")
         for primitive in ("HeroStage", "HERO_MOVES", "EmPage", "EmGlyph", "PropertyArt"):
             self.assertIn(primitive, source, primitive)
+        for required_copy in ("2,99%", "HASTA 100%", "HASTA $65.000", "ECUADOR", "Fuente oficial BIESS"):
+            self.assertIn(required_copy, source, required_copy)
+        self.assertIn("width: 796", source)
+        self.assertIn("top: 1015", source)
         self.assertEqual(renderer.HERO_STAGINGS["sim:credicasa-hero"], "pull-back")
 
     def test_listing_gallery_freezes_after_the_fourth_photo(self):

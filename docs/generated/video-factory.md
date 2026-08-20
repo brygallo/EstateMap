@@ -13,6 +13,7 @@ Reglas internas que mantienen coherentes producción, publicación, revisión y 
 
 | Id | Regla | Estado |
 | --- | --- | --- |
+| [`VFACT-019`](#vfact-019--el-guion-humano-es-inmutable-y-la-fábrica-solo-hace-producción-técnica) | El guion humano es inmutable y la fábrica solo hace producción técnica | ✅ Implementada |
 | [`VFACT-018`](#vfact-018--duración-ritmo-y-perfil-de-render-comparten-un-contrato-compatible) | Duración, ritmo y perfil de render comparten un contrato compatible | ✅ Implementada |
 | [`VFACT-001`](#vfact-001--un-estado-publicado-no-puede-retroceder) | Un estado publicado no puede retroceder | ✅ Implementada |
 | [`VFACT-002`](#vfact-002--medir-no-equivale-a-publicar) | Medir no equivale a publicar | ✅ Implementada |
@@ -31,6 +32,30 @@ Reglas internas que mantienen coherentes producción, publicación, revisión y 
 | [`VFACT-014`](#vfact-014--la-fábrica-nunca-limpia-másteres-ni-voces-canónicas) | La fábrica nunca limpia másteres ni voces canónicas | ✅ Implementada |
 | [`VFACT-015`](#vfact-015--las-marcas-comparten-motor-pero-no-estado-editorial) | Las marcas comparten motor pero no estado editorial | ✅ Implementada |
 | [`VFACT-016`](#vfact-016--el-paquete-incluye-el-texto-exacto-para-publicar) | El paquete incluye el texto exacto para publicar | ✅ Implementada |
+
+### VFACT-019 — El guion humano es inmutable y la fábrica solo hace producción técnica
+
+**Estado:** ✅ Implementada
+
+Cuando una pieza contiene script-source.txt, el lint compara ese texto con toda la locución del plan y rechaza cualquier cambio de palabras. La fábrica puede segmentar el guion entre escenas, pero no reescribirlo, crear ganchos, cambiar el enfoque ni tomar decisiones de marketing.
+
+> **Por qué:** La persona responsable eligió otra herramienta para escribir sus guiones y reservó a esta fábrica el trabajo técnico: timing, visuales, animación, audio, Studio y render. Separar autoría de producción evita que una mejora aparente convierta el encargo en otro video.
+
+**Evidencia en el código** (verificada por `tools/specs/validate.py`)
+
+- `marketing/videos/quality.py` (`check_locked_script`)
+- `marketing/videos/quality.py` (`normalize_locked_script`)
+
+**Casos**
+
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| La locución conserva las palabras del guion fuente repartidas entre escenas | — | — | — | permitida |
+| Producción elimina, añade o reescribe una palabra | — | — | — | error de lint antes de Studio, voz o render |
+
+**Cobertura exigida:** unit
+
+- `marketing/videos/tests/test_factory.py`
 
 ### VFACT-018 — Duración, ritmo y perfil de render comparten un contrato compatible
 

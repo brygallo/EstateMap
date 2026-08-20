@@ -37,3 +37,8 @@ código, se detiene la promesa afectada y se registra el hallazgo; no se elige l
 versión más conveniente.
 
 CONTRACT: VIDEO_COUNCIL_V1
+
+La persona responsable entrega el guion final. La fábrica de video actúa solo
+como producción técnica: no reescribe, no crea ganchos ni decide marketing. Si
+existe `script-source.txt`, el lint exige que la locución conserve exactamente
+sus palabras; solo se permite repartirlas entre escenas.

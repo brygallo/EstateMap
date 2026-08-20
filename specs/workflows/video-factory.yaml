@@ -8,6 +8,31 @@ summary: >-
   producto ni autorizan publicar en redes.
 
 rules:
+  - id: VFACT-019
+    name: El guion humano es inmutable y la fábrica solo hace producción técnica
+    status: implemented
+    summary: >-
+      Cuando una pieza contiene script-source.txt, el lint compara ese texto con
+      toda la locución del plan y rechaza cualquier cambio de palabras. La fábrica
+      puede segmentar el guion entre escenas, pero no reescribirlo, crear ganchos,
+      cambiar el enfoque ni tomar decisiones de marketing.
+    rationale: >-
+      La persona responsable eligió otra herramienta para escribir sus guiones y
+      reservó a esta fábrica el trabajo técnico: timing, visuales, animación,
+      audio, Studio y render. Separar autoría de producción evita que una mejora
+      aparente convierta el encargo en otro video.
+    evidence:
+      - file: marketing/videos/quality.py
+        symbol: check_locked_script
+      - file: marketing/videos/quality.py
+        symbol: normalize_locked_script
+    tests: {unit: true}
+    cases:
+      - name: La locución conserva las palabras del guion fuente repartidas entre escenas
+        expected: permitida
+      - name: Producción elimina, añade o reescribe una palabra
+        expected: error de lint antes de Studio, voz o render
+
   - id: VFACT-018
     name: Duración, ritmo y perfil de render comparten un contrato compatible
     status: implemented

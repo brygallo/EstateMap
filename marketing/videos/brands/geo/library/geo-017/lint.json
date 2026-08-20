@@ -1,15 +1,65 @@
 {
-  "passed": true,
-  "errors": 0,
-  "warnings": 0,
+  "passed": false,
+  "errors": 7,
+  "warnings": 3,
   "findings": [
+    {
+      "level": "error",
+      "rule": "scene_count",
+      "detail": "Hay 41 escenas; máximo 20 para un video de 90 s"
+    },
     {
       "level": "info",
       "rule": "final_voice_duration",
-      "detail": "Con la voz final la pieza duraría unos 74.2 s (borrador: 63.7 s)"
+      "detail": "Con la voz final la pieza duraría unos 182.8 s (borrador: 156.8 s)"
+    },
+    {
+      "level": "error",
+      "rule": "headline_length",
+      "detail": "Escena 36: el rótulo tiene 6 palabras ('1 · Revisa  2 · Simula'); máximo 4, y en una sola línea"
+    },
+    {
+      "level": "error",
+      "rule": "headline_length",
+      "detail": "Escena 37: el rótulo tiene 6 palabras ('3 · Presupuesto  4 · Busca'); máximo 4, y en una sola línea"
+    },
+    {
+      "level": "error",
+      "rule": "headline_width",
+      "detail": "Escena 37: el rótulo tiene 26 caracteres; máximo 22 para que quepa en una fila"
+    },
+    {
+      "level": "error",
+      "rule": "headline_length",
+      "detail": "Escena 38: el rótulo tiene 6 palabras ('5 · Compara  6 · Verifica'); máximo 4, y en una sola línea"
+    },
+    {
+      "level": "error",
+      "rule": "headline_width",
+      "detail": "Escena 38: el rótulo tiene 25 caracteres; máximo 22 para que quepa en una fila"
+    },
+    {
+      "level": "error",
+      "rule": "headline_length",
+      "detail": "Escena 39: el rótulo tiene 6 palabras ('7 · Tramita  8 · Lee'); máximo 4, y en una sola línea"
+    },
+    {
+      "level": "warning",
+      "rule": "narration_matches",
+      "detail": "El campo narration no coincide con la suma de las locuciones por escena"
+    },
+    {
+      "level": "warning",
+      "rule": "unsourced_number",
+      "detail": "Cifra «80%» sin nota de verificación"
+    },
+    {
+      "level": "warning",
+      "rule": "unsourced_number",
+      "detail": "Cifra «20%» sin nota de verificación"
     }
   ],
-  "estimated_seconds": 55.6,
+  "estimated_seconds": 138.3,
   "target_seconds": 90,
-  "checked_at": "2026-08-20T12:58:58.775711-05:00"
+  "checked_at": "2026-08-20T13:19:11.560175-05:00"
 }

@@ -4,9 +4,9 @@
 
 - Visual: Hero de tres planos: vivienda nueva, cifras completas y una pregunta que rompe la conclusión automática. Geo es reconocible antes del segundo tres.
 - Recurso: sim:credicasa-hero
-- Rótulo: ¿Ya puedo comprar?
-- Voz: Ves 2,99% y hasta 100%. Y piensas: ya puedo comprar.
-- Subtítulos: Ves 2,99% y hasta 100%. / Y piensas: / ya puedo comprar.
+- Rótulo: ¿Casa al 2,99%?
+- Voz: ¿Quieres comprar casa en Ecuador? Antes de buscar, necesitas saber esto.
+- Subtítulos: ¿Quieres comprar casa en Ecuador? / Antes de buscar, / necesitas saber esto.
 - Entrada: cut
 
 

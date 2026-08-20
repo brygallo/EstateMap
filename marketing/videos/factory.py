@@ -473,28 +473,11 @@ def cmd_studio(args: argparse.Namespace) -> None:
         confirm_voice_spend(plan, providers, args.yes)
         enforce_voice_lock(directory, providers[0])
 
-    narration = None
-    if final_preview:
-        narration = directory / "audio" / "narration-final.mp3"
-        timings = voice.speak_video([scene["voice"] for scene in plan["scenes"]], narration, providers[0])
-        for timing in timings:
-            timing["render_seconds"] = renderer.frames(timing["voice_seconds"]) / renderer.FPS
-        timings[-1]["render_seconds"] += renderer.SCENE_TAIL_SECONDS
-    else:
-        timings = []
-        for index, (scene, provider) in enumerate(zip(plan["scenes"], providers)):
-            target = directory / "audio" / f"voice-{index + 1:02}.mp3"
-            captions = voice.speak_scene(scene["voice"], target, provider)
-            spoken = captions[-1]["end"] if captions else 0.0
-            timings.append({
-                "scene": index + 1,
-                "voice_file": str(target),
-                "voice_seconds": round(spoken, 3),
-                "voice_profile": provider.profile_id,
-                "tts_provider": provider.name,
-                "render_seconds": renderer.frames(spoken + renderer.SCENE_TAIL_SECONDS) / renderer.FPS,
-                "captions": captions,
-            })
+    narration = directory / "audio" / ("narration-final.mp3" if final_preview else "narration-draft.mp3")
+    timings = voice.speak_video([scene["voice"] for scene in plan["scenes"]], narration, providers[0])
+    for timing in timings:
+        timing["render_seconds"] = renderer.frames(timing["voice_seconds"]) / renderer.FPS
+    timings[-1]["render_seconds"] += renderer.SCENE_TAIL_SECONDS
 
     music = Path(args.music).expanduser().resolve() if args.music else None
     if music and not music.is_file():

@@ -37,29 +37,32 @@ export const CredicasaHeroSim: React.FC<SimulationProps> = (props) => {
   const tokens = tokensFor(props.brandId, props.brandName);
   const camera = HERO_MOVES['pull-back'](p);
   const terms = [
-    {text: '2,99%', x: 132, y: 360, at: .04},
-    {text: 'Hasta 100%', x: 650, y: 410, at: .13},
-    {text: 'Hasta $65.000', x: 355, y: 850, at: .22},
+    {text: '2,99%', x: 126, y: 345, at: .02, size: 58},
+    {text: 'HASTA 100%', x: 650, y: 505, at: .11, size: 42},
+    {text: 'HASTA $65.000', x: 344, y: 728, at: .2, size: 43},
   ];
   const gates = ['VIVIENDA', 'INGRESOS', 'CAPACIDAD'];
   return (
     <HeroStage tokens={tokens} progress={p} camera={camera}>
       {(rig) => <>
         <HeroPlane camera={rig} depth={DEPTH.subject}>
-          <div style={{position: 'absolute', left: 250, top: 520, width: 580, height: 260, borderRadius: 28, overflow: 'hidden', border: `3px solid ${em.primary}`, boxShadow: '0 30px 80px rgba(0,0,0,.45)'}}>
+          <div style={{position: 'absolute', left: 142, top: 390, width: 796, height: 390, borderRadius: 32, overflow: 'hidden', border: `4px solid ${em.primary}`, boxShadow: '0 34px 90px rgba(0,0,0,.5)', background: '#E8F4F7'}}>
             <PropertyArt kind="house" variant={17} progress={p} style={{width: '100%', height: '100%'}} />
           </div>
         </HeroPlane>
         <HeroPlane camera={rig} depth={DEPTH.context}>
-          {terms.map((term) => { const enter = land(p, term.at, term.at + .1); return <Pill key={term.text} active style={{position: 'absolute', left: term.x, top: term.y, transform: `scale(${.7 + enter * .3})`, opacity: enter}}>{term.text}</Pill>; })}
+          <div style={{position: 'absolute', left: 702, top: 320, display: 'flex', alignItems: 'center', gap: 10, padding: '10px 18px', borderRadius: 999, background: '#FFFFFF', border: `3px solid ${em.primary}`, color: em.primaryStrong, fontSize: 28, fontWeight: 900, boxShadow: '0 16px 40px rgba(0,0,0,.35)'}}>
+            <EmGlyph icon="pin" size={30} /> ECUADOR
+          </div>
+          {terms.map((term) => { const enter = land(p, term.at, term.at + .1); return <div key={term.text} style={{position: 'absolute', left: term.x, top: term.y, padding: '18px 28px', borderRadius: 999, border: `4px solid ${em.primary}`, background: '#FFFFFF', color: em.primaryStrong, fontSize: term.size, lineHeight: 1, fontWeight: 900, letterSpacing: '-.025em', whiteSpace: 'nowrap', boxShadow: '0 20px 54px rgba(0,0,0,.42)', transform: `scale(${.7 + enter * .3})`, opacity: enter, ...figures}}>{term.text}</div>; })}
         </HeroPlane>
         <HeroPlane camera={rig} depth={DEPTH.foreground}>
-          <div style={{position: 'absolute', left: 132, right: 132, top: 900, display: 'flex', gap: 12}}>
+          <div style={{position: 'absolute', left: 126, right: 126, top: 820, display: 'flex', gap: 12}}>
             {gates.map((gate, i) => { const enter = land(p, .48 + i * .08, .58 + i * .08); return <div key={gate} style={{flex: 1, padding: '22px 8px', textAlign: 'center', borderRadius: 16, background: '#101827', border: `2px solid ${tokens.alert}`, color: '#fff', fontSize: 23, fontWeight: 900, transform: `translateY(${(1 - enter) * -100}px)`, opacity: enter}}>{gate}</div>; })}
           </div>
         </HeroPlane>
-        <div style={{position: 'absolute', left: sideCrop, top: 1160, color: '#D1FAE5', fontSize: 22, fontWeight: 700}}>{source}</div>
-        <HeroImpact progress={p} at={.48} x={HERO_CENTRE.x} y={850} color={tokens.alert} />
+        <div style={{position: 'absolute', left: sideCrop, right: sideCrop, top: 1015, paddingTop: 16, borderTop: '2px solid rgba(209,250,229,.35)', color: '#ECFDF5', fontSize: 27, lineHeight: 1.2, fontWeight: 800, textAlign: 'center'}}>{source}</div>
+        <HeroImpact progress={p} at={.48} x={HERO_CENTRE.x} y={865} color={tokens.alert} />
       </>}
     </HeroStage>
   );

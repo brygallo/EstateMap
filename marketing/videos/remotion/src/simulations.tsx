@@ -43,7 +43,7 @@ import {
   GeoReasonSim,
   GeoRecipeSim,
 } from './geo-ranking-simulations';
-import {GeoLocationHeroSim, GeoNearbyContextSim} from './geo-intro-simulations';
+import {GeoLocationHeroSim, GeoNearbyContextSim, GeoPropertyDetailSim} from './geo-intro-simulations';
 import {
   CredicasaApplicantsASim,
   CredicasaApplicantsBSim,
@@ -5992,6 +5992,7 @@ export const SearchOrderSim: React.FC<SimulationProps> = ({frame, total, accent}
 export const SIMULATIONS: Record<string, React.FC<SimulationProps>> = {
   'sim:geo-location-hero': GeoLocationHeroSim,
   'sim:geo-nearby-context': GeoNearbyContextSim,
+  'sim:geo-property-detail': GeoPropertyDetailSim,
   'sim:credicasa-hero': CredicasaHeroSim,
   'sim:credicasa-fact-card': CredicasaFactCardSim,
   'sim:credicasa-home-gate': CredicasaHomeGateSim,

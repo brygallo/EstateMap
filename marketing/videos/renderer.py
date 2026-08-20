@@ -47,6 +47,7 @@ VIDEO_SUFFIXES = {".mp4", ".mov", ".m4v", ".webm"}
 SIMULATIONS = {
     "sim:geo-location-hero": "Una ficha clara se transforma en un lugar del mapa y responde dónde queda la propiedad",
     "sim:geo-nearby-context": "Una propiedad seleccionada vuelve al mapa y revela opciones cercanas para comparar por ubicación",
+    "sim:geo-property-detail": "Un pin dentro de una manzana abre la ficha pública clara con imagen y datos declarados",
     "sim:credicasa-hero": "Una vivienda nueva sostiene 2,99 %, hasta 100 % y hasta $65.000 antes de que vivienda, ingresos y capacidad cierren como condiciones",
     "sim:credicasa-fact-card": "Ficha fechada con tasa nominal, tasa efectiva, financiamiento máximo y plazo máximo publicados",
     "sim:credicasa-home-gate": "Una vivienda ilustrada pasa por los requisitos de vivienda única, nueva, sin fin comercial y con una o más habitaciones",
