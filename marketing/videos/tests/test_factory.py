@@ -768,6 +768,143 @@ class AnimationRegistryTests(unittest.TestCase):
         self.assertIn("Software para personas.", source)
         self.assertNotIn("BUILD WHAT", source.upper())
 
+    RANKING_ARC = (
+        "sim:geo-ranking-hero",
+        "sim:pagina-ordenada",
+        "sim:recetas-ranking",
+        "sim:razon-posicion",
+        "sim:sin-destacado",
+    )
+
+    def ranking_source(self):
+        return (
+            Path(__file__).resolve().parents[1] / "remotion/src/geo-ranking-simulations.tsx"
+        ).read_text(encoding="utf-8")
+
+    def test_the_ranking_arc_is_registered_in_both_halves(self):
+        """A scene of «El orden no lo compra nadie» must not lint clean and render blank."""
+        import renderer
+
+        source = (Path(__file__).resolve().parents[1] / "remotion/src/simulations.tsx").read_text(encoding="utf-8")
+        for identifier in self.RANKING_ARC:
+            self.assertIn(identifier, planner.SIMULATIONS, identifier)
+            self.assertIn(identifier, renderer.SIMULATIONS, identifier)
+            self.assertIn(f"'{identifier}':", source, identifier)
+
+    def test_the_geo_hook_declares_its_staging_and_does_not_repeat_the_previous_one(self):
+        """The standard forbids two consecutive hooks being shot the same way,
+        and Geo had no registered opening at all before this one."""
+        import renderer
+
+        self.assertIn("sim:geo-ranking-hero", renderer.HERO_STAGINGS)
+        self.assertNotEqual(
+            renderer.HERO_STAGINGS["sim:geo-ranking-hero"],
+            renderer.HERO_STAGINGS["sim:aents-problema-software"],
+        )
+
+    def test_the_geo_hook_is_built_on_the_hero_rig(self):
+        """An opening drawn without the rig is a slide with a caption on it.
+
+        What the standard asks for is one camera, declared depth planes, a light
+        with a source and an impact. `HeroStage` bundles those with a black
+        ground, and a white product standing on a black ground comes out grey —
+        so this hook takes the rig and lights its own set. The parts that matter
+        are checked; the wrapper is not one of them."""
+        source = self.ranking_source()
+        block = source.split("export const GeoRankingHookSim")[1].split("export const")[0]
+        for primitive in ("<HeroPlane", "<HeroImpact", "HERO_MOVES[", "DEPTH.subject", "heroBeats("):
+            self.assertIn(primitive, block, primitive)
+
+    def test_the_geo_hook_camera_is_the_one_it_registered(self):
+        """`HERO_STAGINGS` is what the linter reads and what the next piece is
+        compared against, so it has to name the move the code actually uses."""
+        import renderer
+
+        staging = renderer.HERO_STAGINGS["sim:geo-ranking-hero"]
+        block = self.ranking_source().split("export const GeoRankingHookSim")[1].split("export const")[0]
+        self.assertIn(f"HERO_MOVES['{staging}']", block)
+        moves = (
+            Path(__file__).resolve().parents[1] / "remotion/src/hero-stage.tsx"
+        ).read_text(encoding="utf-8")
+        self.assertIn(f"'{staging}':", moves, "the move has to exist in the shared kit")
+
+    def test_every_invented_figure_in_the_ranking_arc_carries_the_example_badge(self):
+        """The rows show a made-up listing's price and area, and the brief only
+        allows that while the screen says EJEMPLO next to it.
+
+        Two ways a scene can satisfy it: the hook draws the badge on the card
+        itself, and the four page scenes get it from `EmPageHead`, which carries
+        it unconditionally — which is the point of putting it there rather than
+        leaving each scene to remember."""
+        source = self.ranking_source()
+        head = source.split("const EmPageHead")[1].split("/* ---")[0]
+        self.assertIn("<EmExample", head, "EmPageHead must always carry the badge")
+        for component in (
+            "GeoRankingHookSim",
+            "GeoOrderedPageSim",
+            "GeoRecipeSim",
+            "GeoReasonSim",
+            "GeoNoPromotedSim",
+        ):
+            block = source.split(f"export const {component}")[1].split("export const")[0]
+            carries = "<EmExample" in block or "<EmPageHead" in block
+            self.assertTrue(carries, f"{component} shows figures with no EJEMPLO badge")
+
+    def test_the_ranking_arc_is_drawn_with_the_product_kit_and_not_the_aents_one(self):
+        """EstateMap is a light product. Drawing it in `interface-kit.tsx` — the
+        dark glass surface the Aents pieces are built on — shows a product that
+        does not exist, which is exactly what the first cut of this piece did."""
+        source = self.ranking_source()
+        self.assertIn("from './estatemap-ui'", source)
+        self.assertNotIn("from './interface-kit'", source)
+        # `Panel` is the dark card of the shared kit; the page has its own stage.
+        self.assertNotIn("<Panel", source)
+
+    def test_the_product_kit_reads_its_values_from_the_running_product(self):
+        """Every colour, radius and shadow in `estatemap-ui.tsx` is the one the
+        portal ships. A value matched by eye drifts the first time the product
+        changes and nobody notices until a piece is already published."""
+        kit = (
+            Path(__file__).resolve().parents[1] / "remotion/src/estatemap-ui.tsx"
+        ).read_text(encoding="utf-8")
+        tokens = (
+            Path(__file__).resolve().parents[3] / "frontend/app/aents-tokens.css"
+        ).read_text(encoding="utf-8")
+        # --primary-rgb: 34 197 94 -> #22C55E, and the strong green for text.
+        self.assertIn("--primary-rgb: 34 197 94", tokens)
+        self.assertIn("--primary-strong-rgb: 27 134 72", tokens)
+        self.assertIn("#22C55E", kit)
+        self.assertIn("#1B8648", kit)
+        # The dark surface of the other brand has no business in here.
+        self.assertNotIn("#6B5CF6", kit)
+
+    def test_the_ranking_arc_never_puts_a_view_count_on_screen(self):
+        """LIVE-009: no public ranking is ordered by views. «Lo más visto»
+        appears once, as a label being refused, and never as a number.
+
+        Measured on the code with the comments stripped: the prose above these
+        components explains the rule and naturally uses the words the rule
+        forbids on screen, so checking the whole file would only ever catch the
+        explanation."""
+        import re
+
+        source = self.ranking_source()
+        drawn = re.sub(r"/\*.*?\*/", "", source, flags=re.S)
+        drawn = re.sub(r"//.*", "", drawn)
+        self.assertEqual(drawn.count("Lo más visto"), 1)
+        for forbidden in ("visitas", "vistas", "views"):
+            self.assertNotIn(forbidden, drawn.lower(), forbidden)
+
+    def test_the_ranking_arc_names_no_colour_of_its_own(self):
+        """Every colour comes from `estatemap-ui.tsx`, which takes them from the
+        running product. A hex written into a composition is a colour that stops
+        agreeing with the portal the first time the portal changes — and one of
+        the other brand's hexes written in here is worse than that."""
+        source = self.ranking_source()
+        self.assertIn("from './estatemap-ui'", source)
+        for hardcoded in ("#22C55E", "#6B5CF6", "#14B8A6", "#A78BFA"):
+            self.assertNotIn(hardcoded, source, hardcoded)
+
     def test_the_search_arc_is_registered_in_both_halves_and_in_the_aents_profile(self):
         """A scene of the search piece must not lint clean and render blank."""
         source = (Path(__file__).resolve().parents[1] / "remotion/src/simulations.tsx").read_text(encoding="utf-8")

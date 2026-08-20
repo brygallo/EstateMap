@@ -70,7 +70,17 @@ export const EstateMapVideo: React.FC<VideoProps> = ({
   const active = offsets.reduce((found, offset, index) => (frame >= offset ? index : found), 0);
   return (
     <AbsoluteFill style={{backgroundColor: palette.ink}}>
+      {/* Two real weights, not one.
+          The portal loads Plus Jakarta Sans as a variable face and uses 400 for
+          meta lines, 600 for the reason pill, 700 for a title and 900 for a
+          price. The factory shipped only the ExtraBold static, so every word in
+          a product scene came out at the same weight and the interface lost the
+          hierarchy that makes it read as an interface. `Regular` is the same
+          family, from the same OFL licence the portal ships beside it, and with
+          both declared the browser resolves 600 and 700 to the nearest real
+          face instead of faking one. */}
       <style>{`@font-face { font-family: 'EstateMap Display'; src: url('${fontUrl}') format('truetype'); font-weight: 800; font-style: normal; font-display: block; }`}</style>
+      <style>{`@font-face { font-family: 'EstateMap Display'; src: url('${staticFile('fonts/PlusJakartaSans-Regular.ttf')}') format('truetype'); font-weight: 400; font-style: normal; font-display: block; }`}</style>
       <Series>
         {scenes.map((scene, index) => (
           <Series.Sequence key={`${index}-${scene.headline}`} durationInFrames={scene.durationInFrames}>

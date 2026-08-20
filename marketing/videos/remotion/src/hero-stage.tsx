@@ -143,6 +143,18 @@ export const HERO_MOVES = {
   'track-side': (p: number) => heroCamera(p, {dolly: 0.1, drift: 210, tilt: 1.6}),
   /** Descends onto the subject. For something being assembled below. */
   'crane-down': (p: number) => heroCamera(p, {dolly: 0.18, drift: 26, tilt: 9}),
+  /**
+   * Barely moves, and what movement there is belongs to the camera.
+   *
+   * For a hook whose subject must stay legible in every single frame — an
+   * interface being read, a price being compared. The other four are built for
+   * a subject that survives being skewed and travelled past; a white card with
+   * type on it does not, and the version of `sim:geo-ranking-hero` shot on
+   * `crane-down` came out as a tilted lozenge with its title cut off. The push
+   * is still there, so the frame is never static; it is just not the thing the
+   * viewer is asked to look at.
+   */
+  'hold-in': (p: number) => heroCamera(p, {dolly: 0.1, drift: 14, tilt: 1.2}),
 } as const;
 
 export type HeroMove = keyof typeof HERO_MOVES;

@@ -408,12 +408,81 @@ def cmd_approve(args: argparse.Namespace) -> None:
 
 
 @workflow.RenderLock.serialized
+def cmd_studio(args: argparse.Namespace) -> None:
+    """Open the piece in Remotion Studio, with its voice, before anything is rendered.
+
+    A master takes half an hour and buys nothing you can act on: by the time it
+    exists the mistakes are already in it. The studio plays the same
+    composition, with the same props and the same voice, and reacts to a saved
+    file in a second — so that is where a piece is judged, and a render happens
+    once, at the end, with the narration already bought.
+
+    The voice it synthesises is the free local one. It exists so the timing is
+    real while the piece is being looked at; the paid narration is a separate,
+    later, deliberate act (`render --final`).
+    """
+    media.require_tool("node")
+    directory, item, catalog = catalog_store.find(args.video)
+    plan = catalog_store.load_json(directory / "plan.json")
+    if plan is None:
+        raise RuntimeError("plan.json is missing")
+
+    providers = scene_providers(plan, final_master=False, override=args.voice_profile)
+    for provider, _ in provider_batches(plan, providers):
+        provider.check_ready()
+
+    timings = []
+    for index, (scene, provider) in enumerate(zip(plan["scenes"], providers)):
+        target = directory / "audio" / f"voice-{index + 1:02}.mp3"
+        captions = voice.speak_scene(scene["voice"], target, provider)
+        spoken = captions[-1]["end"] if captions else 0.0
+        timings.append({
+            "scene": index + 1,
+            "voice_file": str(target),
+            "voice_seconds": round(spoken, 3),
+            "voice_profile": provider.profile_id,
+            "tts_provider": provider.name,
+            "render_seconds": renderer.frames(spoken + renderer.SCENE_TAIL_SECONDS) / renderer.FPS,
+            "captions": captions,
+        })
+
+    props = renderer.build_props(directory, plan, timings, None)
+    props_path = directory / "studio-props.json"
+    catalog_store.write_json(props_path, props)
+
+    total = sum(scene["durationInFrames"] for scene in props["scenes"])
+    print(f"{item['id']}: {len(props['scenes'])} escenas · {total / renderer.FPS:.1f} s")
+    print(f"props: {props_path}")
+    if args.props_only:
+        return
+
+    root = Path(__file__).resolve().parent / "remotion"
+    command = [
+        "npx", "remotion", "studio", "src/index.ts",
+        f"--props={props_path}",
+        f"--port={args.port}",
+    ]
+    print(f"\nhttp://localhost:{args.port}/EstateMapVideo\n")
+    print("Míralo entero. El render se hace después de que una persona lo apruebe aquí.")
+    subprocess.run(command, cwd=root, check=False)
+
+
 def cmd_render(args: argparse.Namespace) -> None:
     media.require_tool("node")
     media.require_tool("ffmpeg")
     directory, item, catalog = catalog_store.find(args.video)
     if item["state"] not in catalog_store.RENDERABLE:
         raise RuntimeError("Approve the video before rendering it")
+    # A master costs half an hour of machine time, so it is not where a piece
+    # gets looked at any more: `video studio` is. A draft render is still there
+    # for debugging the renderer itself, and it has to be asked for by name.
+    if not args.final and not getattr(args, "draft", False):
+        raise RuntimeError(
+            "El borrador ya no es parte del ciclo: mira la pieza con `video studio "
+            f"{item['id']}`, y cuando una persona la apruebe ahí, compra la voz y "
+            f"renderiza una sola vez con `video render {item['id']} --final`. "
+            "Para depurar el renderer, `--draft`."
+        )
     plan = catalog_store.load_json(directory / "plan.json")
     if plan is None:
         raise RuntimeError("plan.json is missing")
@@ -869,8 +938,20 @@ def parser() -> argparse.ArgumentParser:
     approve.add_argument("--force", action="store_true", help="Approve despite lint errors")
     approve.set_defaults(handler=cmd_approve)
 
+    studio = commands.add_parser("studio", help="Open the piece in Remotion Studio before rendering")
+    studio.add_argument("video")
+    studio.add_argument("--port", type=int, default=3210)
+    studio.add_argument("--voice-profile")
+    studio.add_argument("--props-only", action="store_true", help="Write the props and stop")
+    studio.set_defaults(handler=cmd_studio)
+
     render = commands.add_parser("render", help="Render an approved video")
     render.add_argument("video")
+    render.add_argument(
+        "--draft",
+        action="store_true",
+        help="Render with the free voice. For debugging the renderer; the studio is where a piece is judged",
+    )
     render.add_argument("--voice-profile", help="Override the video voice profile for every scene")
     render.add_argument("--music", help="Free commercial-use track with a .license.json sidecar")
     render.add_argument(

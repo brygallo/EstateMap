@@ -1,0 +1,182 @@
+{
+  "version": 1,
+  "publications": [
+    {
+      "video": "geo-001",
+      "platform": "facebook",
+      "published_at": "2026-08-13",
+      "status": "published",
+      "source": "memory/publications.md",
+      "recorded_at": "2026-08-20T03:27:33.228079-05:00"
+    },
+    {
+      "video": "geo-001",
+      "platform": "tiktok",
+      "published_at": "2026-08-13",
+      "status": "published",
+      "source": "memory/publications.md",
+      "recorded_at": "2026-08-20T03:27:33.228056-05:00"
+    },
+    {
+      "video": "geo-002",
+      "platform": "facebook",
+      "published_at": "2026-08-13",
+      "status": "published",
+      "source": "memory/publications.md",
+      "recorded_at": "2026-08-20T03:27:33.228097-05:00"
+    },
+    {
+      "video": "geo-002",
+      "platform": "tiktok",
+      "published_at": "2026-08-13",
+      "status": "published",
+      "source": "memory/publications.md",
+      "recorded_at": "2026-08-20T03:27:33.228089-05:00"
+    },
+    {
+      "video": "geo-003",
+      "platform": "facebook",
+      "published_at": "2026-08-13",
+      "status": "published",
+      "source": "memory/publications.md",
+      "recorded_at": "2026-08-20T03:27:33.228118-05:00"
+    },
+    {
+      "video": "geo-003",
+      "platform": "tiktok",
+      "published_at": "2026-08-13",
+      "status": "published",
+      "source": "memory/publications.md",
+      "recorded_at": "2026-08-20T03:27:33.228109-05:00"
+    },
+    {
+      "video": "geo-004",
+      "platform": "externo",
+      "published_at": "2026-08-20",
+      "status": "published",
+      "source": "Marcado como publicado por Bryan el 2026-08-20; sin fecha ni red confirmadas",
+      "recorded_at": "2026-08-20T03:27:54.984574-05:00"
+    },
+    {
+      "video": "geo-005",
+      "platform": "facebook",
+      "published_at": "2026-08-13",
+      "status": "published",
+      "source": "memory/publications.md",
+      "recorded_at": "2026-08-20T03:27:33.228134-05:00"
+    },
+    {
+      "video": "geo-005",
+      "platform": "tiktok",
+      "published_at": "2026-08-13",
+      "status": "published",
+      "source": "memory/publications.md",
+      "recorded_at": "2026-08-20T03:27:33.228126-05:00"
+    },
+    {
+      "video": "geo-006",
+      "platform": "facebook",
+      "published_at": "2026-08-13",
+      "status": "published",
+      "source": "memory/publications.md",
+      "recorded_at": "2026-08-20T03:27:33.228149-05:00"
+    },
+    {
+      "video": "geo-006",
+      "platform": "tiktok",
+      "published_at": "2026-08-13",
+      "status": "published",
+      "source": "memory/publications.md",
+      "recorded_at": "2026-08-20T03:27:33.228141-05:00"
+    },
+    {
+      "video": "geo-007",
+      "platform": "facebook",
+      "published_at": "2026-08-13",
+      "status": "published",
+      "source": "memory/publications.md",
+      "recorded_at": "2026-08-20T03:27:33.228168-05:00"
+    },
+    {
+      "video": "geo-007",
+      "platform": "tiktok",
+      "published_at": "2026-08-13",
+      "status": "published",
+      "source": "memory/publications.md",
+      "recorded_at": "2026-08-20T03:27:33.228157-05:00"
+    },
+    {
+      "video": "geo-008",
+      "platform": "facebook",
+      "published_at": "2026-08-14",
+      "status": "pending",
+      "source": "memory/publications.md: Facebook figura Pendiente",
+      "recorded_at": "2026-08-20T03:27:33.228187-05:00"
+    },
+    {
+      "video": "geo-008",
+      "platform": "tiktok",
+      "published_at": "2026-08-14",
+      "status": "published",
+      "source": "memory/publications.md",
+      "recorded_at": "2026-08-20T03:27:33.228177-05:00"
+    },
+    {
+      "video": "geo-009",
+      "platform": "facebook",
+      "published_at": "2026-08-14",
+      "status": "published",
+      "source": "memory/publications.md",
+      "recorded_at": "2026-08-20T03:27:33.228202-05:00"
+    },
+    {
+      "video": "geo-009",
+      "platform": "tiktok",
+      "published_at": "2026-08-14",
+      "status": "published",
+      "source": "memory/publications.md",
+      "recorded_at": "2026-08-20T03:27:33.228195-05:00"
+    },
+    {
+      "video": "geo-010",
+      "platform": "externo",
+      "published_at": "2026-08-20",
+      "status": "published",
+      "source": "Marcado como publicado por Bryan el 2026-08-20; sin fecha ni red confirmadas",
+      "recorded_at": "2026-08-20T03:27:54.984600-05:00"
+    },
+    {
+      "video": "geo-011",
+      "platform": "externo",
+      "published_at": "2026-08-20",
+      "status": "published",
+      "source": "Marcado como publicado por Bryan el 2026-08-20; sin fecha ni red confirmadas",
+      "recorded_at": "2026-08-20T03:27:54.984615-05:00"
+    },
+    {
+      "video": "geo-012",
+      "platform": "externo",
+      "published_at": "2026-08-20",
+      "status": "published",
+      "source": "Marcado como publicado por Bryan el 2026-08-20; sin fecha ni red confirmadas",
+      "recorded_at": "2026-08-20T03:27:54.984625-05:00"
+    },
+    {
+      "video": "geo-013",
+      "platform": "externo",
+      "published_at": "2026-08-20",
+      "status": "published",
+      "source": "Marcado como publicado por Bryan el 2026-08-20; sin fecha ni red confirmadas",
+      "recorded_at": "2026-08-20T03:27:54.984633-05:00"
+    },
+    {
+      "video": "geo-014",
+      "platform": "externo",
+      "published_at": "2026-08-20",
+      "status": "published",
+      "source": "Marcado como publicado por Bryan el 2026-08-20; sin fecha ni red confirmadas",
+      "recorded_at": "2026-08-20T03:27:54.984641-05:00"
+    }
+  ],
+  "updated_at": "2026-08-20T03:27:54.984895-05:00"
+}

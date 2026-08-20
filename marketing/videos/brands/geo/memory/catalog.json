@@ -1,12 +1,12 @@
 {
   "version": 1,
-  "updated_at": "2026-08-15T10:47:35.869700-05:00",
+  "updated_at": "2026-08-20T10:47:47.259593-05:00",
   "videos": [
     {
       "id": "geo-001",
       "number": 1,
       "title": "¿Comprarías una casa sin saber dónde queda?",
-      "state": "reviewed",
+      "state": "published",
       "directory": "brands/geo/library/geo-001",
       "audience": "comprador",
       "funnel_stage": "consideración",
@@ -17,16 +17,21 @@
       "cta": "Encuentra tu futuro hogar",
       "target_duration_seconds": 18,
       "created_at": "2026-08-13T08:34:26.758901-05:00",
-      "updated_at": "2026-08-15T09:56:25.169899-05:00",
+      "updated_at": "2026-08-20T03:27:54.984674-05:00",
       "duration_seconds": 14.933,
       "automated_review_passed": true,
-      "signed_by": "bryan"
+      "signed_by": "bryan",
+      "published_at": "2026-08-13",
+      "published_platforms": [
+        "facebook",
+        "tiktok"
+      ]
     },
     {
       "id": "geo-002",
       "number": 2,
       "title": "Deja de buscar propiedades a ciegas",
-      "state": "reviewed",
+      "state": "published",
       "directory": "brands/geo/library/geo-002",
       "audience": "comprador",
       "funnel_stage": "descubrimiento",
@@ -37,18 +42,23 @@
       "cta": "Encuentra tu futuro hogar",
       "target_duration_seconds": 18,
       "created_at": "2026-08-13T12:05:19.277412-05:00",
-      "updated_at": "2026-08-15T09:56:35.785329-05:00",
+      "updated_at": "2026-08-20T03:27:54.984694-05:00",
       "duration_seconds": 16.426,
       "automated_review_passed": true,
       "signed_by": "bryan",
       "packed_at": "2026-08-13T12:41:54.256057-05:00",
-      "package": "brands/geo/library/_outbox/2026-08-13_comprador_mapa-primero_buscar-sin-ubicacion_gancho-v01"
+      "package": "brands/geo/library/_outbox/2026-08-13_comprador_mapa-primero_buscar-sin-ubicacion_gancho-v01",
+      "published_at": "2026-08-13",
+      "published_platforms": [
+        "facebook",
+        "tiktok"
+      ]
     },
     {
       "id": "geo-003",
       "number": 3,
       "title": "Publica tu propiedad por $0",
-      "state": "reviewed",
+      "state": "published",
       "directory": "brands/geo/library/geo-003",
       "audience": "propietario",
       "funnel_stage": "conversión",
@@ -59,18 +69,23 @@
       "cta": "Publica tu propiedad gratis",
       "target_duration_seconds": 24,
       "created_at": "2026-08-13T12:50:45.517868-05:00",
-      "updated_at": "2026-08-15T09:56:54.230571-05:00",
+      "updated_at": "2026-08-20T03:27:54.984712-05:00",
       "duration_seconds": 24.768,
       "automated_review_passed": true,
       "signed_by": "bryan",
       "packed_at": "2026-08-13T14:43:53.799570-05:00",
-      "package": "brands/geo/library/_outbox/2026-08-13_propietario_publicar-sin_mini-tutorial-para_gancho-v01"
+      "package": "brands/geo/library/_outbox/2026-08-13_propietario_publicar-sin_mini-tutorial-para_gancho-v01",
+      "published_at": "2026-08-13",
+      "published_platforms": [
+        "facebook",
+        "tiktok"
+      ]
     },
     {
       "id": "geo-004",
       "number": 4,
       "title": "Manda la ficha, no diez fotos",
-      "state": "reviewed",
+      "state": "published",
       "directory": "brands/geo/library/geo-004",
       "audience": "profesional",
       "funnel_stage": "consideración",
@@ -81,15 +96,19 @@
       "cta": "Prueba el flujo con una propiedad",
       "target_duration_seconds": 24,
       "created_at": "2026-08-13T14:19:25.584529-05:00",
-      "updated_at": "2026-08-15T09:57:14.108137-05:00",
+      "updated_at": "2026-08-20T03:27:54.984731-05:00",
       "duration_seconds": 26.176,
-      "automated_review_passed": true
+      "automated_review_passed": true,
+      "published_at": "2026-08-20",
+      "published_platforms": [
+        "externo"
+      ]
     },
     {
       "id": "geo-005",
       "number": 5,
       "title": "Tres cosas que revisar antes de contactar",
-      "state": "reviewed",
+      "state": "published",
       "directory": "brands/geo/library/geo-005",
       "audience": "comprador",
       "funnel_stage": "consideración",
@@ -100,15 +119,20 @@
       "cta": "Encuentra tu futuro hogar",
       "target_duration_seconds": 34,
       "created_at": "2026-08-13T14:47:30.767179-05:00",
-      "updated_at": "2026-08-15T09:57:39.145632-05:00",
+      "updated_at": "2026-08-20T03:27:54.984745-05:00",
       "automated_review_passed": true,
-      "duration_seconds": 35.669
+      "duration_seconds": 35.669,
+      "published_at": "2026-08-13",
+      "published_platforms": [
+        "facebook",
+        "tiktok"
+      ]
     },
     {
       "id": "geo-006",
       "number": 6,
       "title": "Cómo nació Geo Propiedades Ecuador",
-      "state": "reviewed",
+      "state": "published",
       "directory": "brands/geo/library/geo-006",
       "audience": "comprador",
       "funnel_stage": "descubrimiento",
@@ -119,18 +143,23 @@
       "cta": "Encuentra tu futuro hogar",
       "target_duration_seconds": 90,
       "created_at": "2026-08-13T15:43:19.509709-05:00",
-      "updated_at": "2026-08-15T09:58:43.981478-05:00",
+      "updated_at": "2026-08-20T03:27:54.984759-05:00",
       "duration_seconds": 109.461,
       "automated_review_passed": true,
       "signed_by": "bryan",
       "packed_at": "2026-08-13T17:22:55.254880-05:00",
-      "package": "brands/geo/library/_outbox/2026-08-13_comprador_confianza-y_el-fundador-cuenta_gancho-v01"
+      "package": "brands/geo/library/_outbox/2026-08-13_comprador_confianza-y_el-fundador-cuenta_gancho-v01",
+      "published_at": "2026-08-13",
+      "published_platforms": [
+        "facebook",
+        "tiktok"
+      ]
     },
     {
       "id": "geo-007",
       "number": 7,
       "title": "Esta web la hizo Aents",
-      "state": "reviewed",
+      "state": "published",
       "directory": "brands/geo/library/geo-007",
       "audience": "profesional",
       "funnel_stage": "consideración",
@@ -141,15 +170,20 @@
       "cta": "Escríbenos y agenda tu idea",
       "target_duration_seconds": 60,
       "created_at": "2026-08-13T15:40:56.617142-05:00",
-      "updated_at": "2026-08-15T09:59:31.333236-05:00",
+      "updated_at": "2026-08-20T03:27:54.984772-05:00",
       "duration_seconds": 61.568,
-      "automated_review_passed": true
+      "automated_review_passed": true,
+      "published_at": "2026-08-13",
+      "published_platforms": [
+        "facebook",
+        "tiktok"
+      ]
     },
     {
       "id": "geo-008",
       "number": 8,
       "title": "Catorce mil ya están en el mapa. La tuya no.",
-      "state": "reviewed",
+      "state": "published",
       "directory": "brands/geo/library/geo-008",
       "audience": "propietario",
       "funnel_stage": "conversión",
@@ -160,18 +194,22 @@
       "cta": "Publica tu propiedad gratis",
       "target_duration_seconds": 45,
       "created_at": "2026-08-14T08:20:49.948602-05:00",
-      "updated_at": "2026-08-15T10:01:04.696618-05:00",
+      "updated_at": "2026-08-20T03:27:54.984785-05:00",
       "duration_seconds": 42.581,
       "automated_review_passed": true,
       "signed_by": "bryan",
       "packed_at": "2026-08-14T10:50:45.330634-05:00",
-      "package": "brands/geo/library/_outbox/2026-08-14_propietario_publicar-sin_pieza-de-venta_gancho-v01"
+      "package": "brands/geo/library/_outbox/2026-08-14_propietario_publicar-sin_pieza-de-venta_gancho-v01",
+      "published_at": "2026-08-14",
+      "published_platforms": [
+        "tiktok"
+      ]
     },
     {
       "id": "geo-009",
       "number": 9,
       "title": "Antes de ir a ver un terreno, revisa esto en la ficha",
-      "state": "reviewed",
+      "state": "published",
       "directory": "brands/geo/library/geo-009",
       "audience": "comprador",
       "funnel_stage": "consideración",
@@ -182,18 +220,23 @@
       "cta": "Encuentra tu futuro hogar",
       "target_duration_seconds": 90,
       "created_at": "2026-08-14T11:01:44.958307-05:00",
-      "updated_at": "2026-08-15T10:01:49.885263-05:00",
+      "updated_at": "2026-08-20T03:27:54.984799-05:00",
       "duration_seconds": 89.664,
       "automated_review_passed": true,
       "signed_by": "bryan",
       "packed_at": "2026-08-14T15:07:50.090105-05:00",
-      "package": "brands/geo/library/_outbox/2026-08-14_comprador_educacion-inmobiliaria_pieza-educativa-que_gancho-v01"
+      "package": "brands/geo/library/_outbox/2026-08-14_comprador_educacion-inmobiliaria_pieza-educativa-que_gancho-v01",
+      "published_at": "2026-08-14",
+      "published_platforms": [
+        "facebook",
+        "tiktok"
+      ]
     },
     {
       "id": "geo-010",
       "number": 10,
       "title": "Antes de comprar un departamento, revisa esto",
-      "state": "reviewed",
+      "state": "published",
       "directory": "brands/geo/library/geo-010",
       "audience": "comprador",
       "funnel_stage": "consideración",
@@ -204,16 +247,20 @@
       "cta": "Encuentra tu futuro hogar",
       "target_duration_seconds": 90,
       "created_at": "2026-08-14T15:07:24.229639-05:00",
-      "updated_at": "2026-08-15T10:02:32.200199-05:00",
+      "updated_at": "2026-08-20T03:27:54.984812-05:00",
       "duration_seconds": 98.432,
       "automated_review_passed": true,
-      "editorial_format": "education"
+      "editorial_format": "education",
+      "published_at": "2026-08-20",
+      "published_platforms": [
+        "externo"
+      ]
     },
     {
       "id": "geo-011",
       "number": 11,
       "title": "Tres revisiones antes de decidir",
-      "state": "reviewed",
+      "state": "published",
       "directory": "brands/geo/library/geo-011",
       "audience": "comprador",
       "funnel_stage": "consideración",
@@ -225,18 +272,22 @@
       "target_duration_seconds": 27,
       "editorial_format": "demonstration",
       "created_at": "2026-08-14T18:33:05.330116-05:00",
-      "updated_at": "2026-08-15T10:02:51.535081-05:00",
+      "updated_at": "2026-08-20T03:27:54.984826-05:00",
       "duration_seconds": 25.194,
-      "automated_review_passed": true
+      "automated_review_passed": true,
+      "published_at": "2026-08-20",
+      "published_platforms": [
+        "externo"
+      ]
     },
     {
       "id": "geo-012",
       "number": 12,
-      "state": "reviewed",
+      "state": "published",
       "directory": "brands/geo/library/geo-012",
       "target_duration_seconds": 48,
       "created_at": "2026-08-14T20:22:44.284023-05:00",
-      "updated_at": "2026-08-15T10:03:25.865415-05:00",
+      "updated_at": "2026-08-20T03:27:54.984839-05:00",
       "title": "Así funciona la compraventa de una propiedad",
       "audience": "comprador",
       "funnel_stage": "descubrimiento",
@@ -247,16 +298,20 @@
       "cta": "Encuentra tu futuro hogar",
       "editorial_format": "education",
       "duration_seconds": 46.186,
-      "automated_review_passed": true
+      "automated_review_passed": true,
+      "published_at": "2026-08-20",
+      "published_platforms": [
+        "externo"
+      ]
     },
     {
       "id": "geo-013",
       "number": 13,
-      "state": "reviewed",
+      "state": "published",
       "directory": "brands/geo/library/geo-013",
       "target_duration_seconds": 33,
       "created_at": "2026-08-14T22:01:11.933538-05:00",
-      "updated_at": "2026-08-15T10:09:47.172741-05:00",
+      "updated_at": "2026-08-20T03:27:54.984858-05:00",
       "title": "Te van a preguntar dónde queda",
       "audience": "propietario",
       "funnel_stage": "consideración",
@@ -267,16 +322,20 @@
       "cta": "Publica tu propiedad gratis",
       "editorial_format": "tutorial",
       "duration_seconds": 41.792,
-      "automated_review_passed": true
+      "automated_review_passed": true,
+      "published_at": "2026-08-20",
+      "published_platforms": [
+        "externo"
+      ]
     },
     {
       "id": "geo-014",
       "number": 14,
-      "state": "reviewed",
+      "state": "published",
       "directory": "brands/geo/library/geo-014",
       "target_duration_seconds": 25,
       "created_at": "2026-08-14T22:01:11.947096-05:00",
-      "updated_at": "2026-08-15T10:05:20.762771-05:00",
+      "updated_at": "2026-08-20T03:27:54.984872-05:00",
       "title": "Empieza por el lugar, no por la lista",
       "audience": "comprador",
       "funnel_stage": "descubrimiento",
@@ -287,7 +346,31 @@
       "cta": "Encuentra tu futuro hogar",
       "editorial_format": "demonstration",
       "duration_seconds": 26.624,
-      "automated_review_passed": true
+      "automated_review_passed": true,
+      "published_at": "2026-08-20",
+      "published_platforms": [
+        "externo"
+      ]
+    },
+    {
+      "brand": "geo",
+      "id": "geo-015",
+      "number": 15,
+      "state": "approved",
+      "directory": "brands/geo/library/geo-015",
+      "target_duration_seconds": 28,
+      "created_at": "2026-08-20T03:10:33.603698-05:00",
+      "updated_at": "2026-08-20T10:47:47.259314-05:00",
+      "title": "El orden no se compra",
+      "audience": "comprador",
+      "funnel_stage": "descubrimiento",
+      "pillar": "Mapa primero",
+      "series": "La pregunta ya está respondida",
+      "concept": "Quien busca abre un anuncio tras otro y termina sin saber cuál era el más barato, porque abrirlos de uno en uno no es comparar. La pieza enseña que esa lista ya está hecha en el blog: se arma con las propiedades publicadas hoy, cada una dice por qué está donde está y se abre en el mapa. La objeción va al final y es lo que diferencia: ese orden no se compra.",
+      "hook": "Llevas rato abriendo anuncios y todavía no sabes cuál es el más barato.",
+      "cta": "Encuentra tu futuro hogar",
+      "editorial_format": "demonstration",
+      "hero_staging": "hold-in"
     }
   ]
 }

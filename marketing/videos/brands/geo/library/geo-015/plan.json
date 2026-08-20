@@ -1,0 +1,145 @@
+{
+  "title": "El orden no se compra",
+  "audience": "comprador",
+  "funnel_stage": "descubrimiento",
+  "objective": "Dar a conocer a quien busca casa, departamento o terreno que en el blog de Geo Propiedades Ecuador existen páginas ordenadas que nacen del inventario publicado, y llevarlo al portal a buscar desde ahí en vez de abrir anuncio por anuncio.",
+  "conversion_event": "Visita a geopropiedadesecuador.com desde el perfil y apertura de una propiedad en el mapa",
+  "pillar": "Mapa primero",
+  "series": "La pregunta ya está respondida",
+  "concept": "Quien busca abre un anuncio tras otro y termina sin saber cuál era el más barato, porque abrirlos de uno en uno no es comparar. La pieza enseña que esa lista ya está hecha en el blog: se arma con las propiedades publicadas hoy, cada una dice por qué está donde está y se abre en el mapa. La objeción va al final y es lo que diferencia: ese orden no se compra.",
+  "promise": "La lista de lo más barato ya está hecha, y nadie pagó por estar primero.",
+  "cta": "Encuentra tu futuro hogar",
+  "hypothesis": "Si el gancho muestra el esfuerzo inútil de abrir anuncios uno por uno y la pieza responde con una lista ya ordenada cuyo criterio es visible y no comprable, quien busca entrará al portal por la vía del ranking en vez de por el listado suelto, y la retención sostendrá el segundo 20 donde vive la objeción de confianza.",
+  "cover_text": "La pregunta ya está respondida",
+  "caption": "Llevas rato abriendo anuncios, uno por uno, y todavía no sabes cuál era el más barato. Respira: esa lista ya está hecha. En el blog de Geo Propiedades Ecuador están los terrenos más baratos de tu ciudad, y los más grandes. Y no la escribió nadie: se arma con lo que hay publicado hoy, cada terreno te dice por qué está ahí y lo abres en el mapa para ver en qué parte queda. Y lo mejor: ese primer puesto no se compra. Ni con publicidad, ni con clics. Solo con el precio. Encuentra el tuyo en geopropiedadesecuador.com",
+  "narration": "Llevas rato abriendo anuncios y todavía no sabes cuál es el más barato. Respira. Esa lista ya está hecha. Los terrenos más baratos de tu ciudad. O los más grandes. Tú eliges. Y no la escribió nadie: se arma con lo que hay publicado hoy. Cada terreno te dice por qué está ahí y en qué parte del mapa queda. Y lo mejor: ese primer puesto no se compra. Ni con publicidad, ni con clics. Solo con el precio. Encuentra el tuyo en geopropiedadesecuador punto com.",
+  "voice_profile": null,
+  "music": "Bed instrumental minimalista y cálido bajo la voz: pulso suave de sintetizador sobre una nota grave sostenida y marimba muy espaciada marcando los cortes, sin percusión fuerte y sin voces. Entre noventa y cien pulsos por minuto, ánimo de claridad y orden, con un leve crecimiento en el cierre.",
+  "hashtags": [
+    "#GeoPropiedadesEcuador",
+    "#ComprarCasaEcuador",
+    "#Terrenos",
+    "#Ecuador",
+    "#BuscarPropiedad"
+  ],
+  "verification_notes": [
+    "Todas las afirmaciones salen de specs/domains/blogs-vivos.yaml, reglas en estado implemented: LIVE-002 (las páginas nacen de recetas aplicadas al inventario), LIVE-003 (el orden lo calcula el servidor y descarta valores imposibles), LIVE-004 y LIVE-017 (una página solo existe con inventario que la sostenga), LIVE-005 (un ranking no promete más elementos de los que tiene), LIVE-006 (cada anuncio dice por qué está en esa posición y se abre en el mapa), LIVE-007 (la fecha es la del inventario) y LIVE-009 (ningún ranking público se ordena por visitas).",
+    "La pieza no dice ni pinta ninguna cantidad sobre el mercado ni sobre la plataforma: ni número de páginas, ni de anuncios, ni de ciudades, ni porcentajes, ni demanda ni plusvalía. El 'cincuenta anuncios' del gancho describe la conducta de quien busca, no el inventario, y por eso el rótulo en pantalla dice 'Abriste uno por uno' sin cifra.",
+    "Ningún rótulo llama a una zona barata, segura o rentable. La voz nunca convierte un precio de ejemplo en dato de mercado: dice qué posición ocupa un anuncio, no cuánto vale el metro en una ciudad.",
+    "Todo precio, área y precio por metro que aparezca en pantalla es de un anuncio ilustrativo y lleva el rótulo EJEMPLO visible mientras la cifra esté en cuadro, con magnitudes verosímiles para el tipo de propiedad mostrada. Ninguna cifra se anima contando desde cero: entra ya en su valor final.",
+    "La pieza no muestra ni insinúa el kit social: nada de láminas para redes, textos editables, QR, URL corta ni reporte de visitas por red. Tampoco aparece ningún contador público de visitas; la escena 6 usa 'lo más visto' solo como etiqueta rechazada, nunca como número.",
+    "La escena 1 es una animación de gancho nueva, sim:geo-ranking-hero, porque Geo no tiene ninguna registrada. Debe construirse sobre remotion/src/hero-stage.tsx e interface-kit.tsx, registrarse en renderer.HERO_STAGINGS con el movimiento de cámara 'descenso lateral con empuje', declararse en el registro de Remotion y recibir prueba. review_tools.HeroSceneAudit tiene que medirla sobre el máster: mínimo tres eventos por segundo y máximo doce por ciento de imagen repetida.",
+    "Animaciones nuevas que hay que implementar, registrar en planner.py, renderer.py y el registro de Remotion, y probar antes del render: sim:geo-ranking-hero, sim:pagina-ordenada, sim:recetas-ranking (compartida por las escenas 3 y 4, con el arco continuado por renderer.AssetTimeline), sim:razon-posicion y sim:sin-destacado. Ninguna animación existente demuestra literalmente una página de ranking, así que no se reutiliza una parecida.",
+    "Toda interfaz recreada sale de interface-kit.tsx y refleja la jerarquía real del blog vivo del portal; no se presenta como captura de pantalla, y en la ficha se dice 'Forma del terreno' si aparece.",
+    "El CTA es único y de la familia de comprador: 'Encuentra tu futuro hogar'. No se mezcla con publicar ni con contactar.",
+    "voice_profile queda vacío para que el render use la voz de borrador gratuita. La voz pagada solo se cotiza y se compra tras aprobación humana explícita del borrador, respetando la rotación de perfiles y sin repetir la voz del video anterior.",
+    "La música descrita solo se mezcla si existe una pista gratuita para uso comercial con autor, URL y licencia archivados en su sidecar; sin esa evidencia, la pieza se entrega en silencio."
+  ],
+  "scenes": [
+    {
+      "purpose": "gancho",
+      "duration": 3.9,
+      "voice": "Llevas rato abriendo anuncios y todavía no sabes cuál es el más barato.",
+      "on_screen_text": "Uno por uno",
+      "asset": "sim:geo-ranking-hero",
+      "visual_direction": "Escenario hero nuevo sobre hero-stage.tsx, cámara única con el movimiento 'descenso lateral con empuje': arranca desplazada a la izquierda y baja mientras se acerca al plano medio; se registra en HERO_STAGINGS. Tres planos declarados: al fondo una retícula de la marca derivando en contra del empuje (push), en el medio una ventana de interface-kit.tsx con la ficha de un anuncio abierta —foto, precio con el rótulo EJEMPLO y una fila de características—, y delante un cursor real con su sombra. Estado inicial: una sola ficha abierta y ningún criterio de comparación en pantalla. Acción: el cursor toca 'volver', la ficha se pliega con anticipate() y cae a una pila desenfocada del plano trasero mientras otra sube a ocupar su sitio con land(); el gesto se repite acelerando, cuatro veces, y cada plegado suelta un pulso de luz que recorre la pila. Respuesta visible: la pila crece hasta tapar el horizonte, y dos precios EJEMPLO que quedaron a la vista se sitúan a la misma altura sin que ninguno suba por encima del otro: el ojo pierde cuál era el más barato. Prueba resuelta: la quinta ficha que sube es idéntica a la primera, el cursor se detiene sobre ella y en el lugar donde debería ir la posición queda un hueco vacío, iluminado, que el fondo empuja hacia el centro del cuadro. Densidad mínima tres eventos por segundo: apertura, plegado, apilado y pulso.",
+      "transition": "cut",
+      "voiceover": "Llevas rato abriendo anuncios y todavía no sabes cuál es el más barato.",
+      "headline": "Uno por uno",
+      "captions": [
+        "Llevas rato abriendo anuncios y todavía no sabes cuál es el más barato."
+      ],
+      "accent": "#22C55E"
+    },
+    {
+      "purpose": "problema",
+      "duration": 4.1,
+      "voice": "Respira. Esa lista ya está hecha.",
+      "on_screen_text": "Respira",
+      "asset": "sim:pagina-ordenada",
+      "visual_direction": "Continuidad de objeto: la pila de fichas de la escena anterior sigue en cuadro y se desliza fuera por la izquierda con glide(), dejando el fondo limpio. Estado inicial: el hueco iluminado del gancho, ahora solo. Acción: sobre él aterriza el encabezado de una página del blog dentro de un panel glass() —título 'Lo más barato en Quito' con la píldora EJEMPLO a su derecha— y debajo entran tres filas de anuncio escalonadas con stagger(), cada una con miniatura, precio EJEMPLO y su número de posición uno, dos y tres. Respuesta visible: al aterrizar, cada fila enciende su número y la primera queda con superficie lit() y un halo detrás; las otras dos bajan un punto de contraste. Prueba resuelta: la fila uno conserva el precio más bajo de las tres y el tile de la marca entra en la esquina superior con el dominio, dejando la lista completa, ordenada y legible sin que nadie la haya tocado.",
+      "transition": "cut",
+      "voiceover": "Respira. Esa lista ya está hecha.",
+      "headline": "Respira",
+      "captions": [
+        "Respira. Esa lista ya está hecha."
+      ],
+      "accent": "#14B8A6"
+    },
+    {
+      "purpose": "prueba",
+      "duration": 3.5,
+      "voice": "Los terrenos más baratos de tu ciudad. O los más grandes. Tú eliges.",
+      "on_screen_text": "Cambia la pregunta",
+      "asset": "sim:recetas-ranking",
+      "visual_direction": "Misma página en cuadro, cámara con empuje lento continuo. Estado inicial: el título 'Lo más barato en Quito' y sus tres filas ordenadas por precio EJEMPLO. Acción: el título se voltea sobre su eje horizontal —cambio de estado sobre un movimiento, nunca un fundido— y sale 'Los terrenos más grandes'; al terminar el giro, las mismas tres filas se reordenan físicamente: la que estaba tercera sube al primer puesto cruzando por delante con settle() y las otras dos ceden su sitio. Respuesta visible: el dato que decide cambia con el título, del precio al área en metros cuadrados, y la columna que manda queda resaltada en cada fila. Prueba resuelta: la lista termina ordenada de mayor a menor área, con la primera fila iluminada y su número uno encendido, demostrando que la misma materia prima produce dos órdenes distintos según la receta.",
+      "transition": "cut",
+      "voiceover": "Los terrenos más baratos de tu ciudad. O los más grandes. Tú eliges.",
+      "headline": "Cambia la pregunta",
+      "captions": [
+        "Los terrenos más baratos de tu ciudad. O los más grandes. Tú eliges."
+      ],
+      "accent": "#22C55E"
+    },
+    {
+      "purpose": "prueba",
+      "duration": 3.8,
+      "voice": "Y no la escribió nadie: se arma con lo que hay publicado hoy.",
+      "on_screen_text": "Se arma sola",
+      "asset": "sim:recetas-ranking",
+      "visual_direction": "El arco de sim:recetas-ranking continúa sin interrupción tras el corte. La cámara retrocede y descubre, por debajo de la página, el origen: anuncios publicados que suben en fila desde el borde inferior, cada uno con su foto, su precio EJEMPLO y su área. Acción: los anuncios cruzan una banda de la receta trazada con Trace, y ahí se decide su destino: la mayoría continúa y encaja en la lista, mientras dos con valores imposibles —un precio de un dólar y un área desproporcionada— chocan contra la banda, rebotan y son apartados a un lado con una etiqueta 'descartado'; el primero lo intenta dos veces antes de quedar fuera. Respuesta visible: la lista de arriba se recompone en tiempo real cada vez que un anuncio encaja, sin dejar huecos ni prometer filas que no existan. Prueba resuelta: la página queda armada con exactamente los anuncios que pasaron, los descartados apagados a un costado, y una píldora bajo el título que dice 'según el inventario publicado' sin ninguna cifra.",
+      "transition": "cut",
+      "voiceover": "Y no la escribió nadie: se arma con lo que hay publicado hoy.",
+      "headline": "Se arma sola",
+      "captions": [
+        "Y no la escribió nadie: se arma con lo que hay publicado hoy."
+      ],
+      "accent": "#14B8A6"
+    },
+    {
+      "purpose": "prueba",
+      "duration": 4.3,
+      "voice": "Cada terreno te dice por qué está ahí y en qué parte del mapa queda.",
+      "on_screen_text": "Y dónde queda",
+      "asset": "sim:razon-posicion",
+      "visual_direction": "Zoom dirigido sobre la fila uno de la lista, que crece hasta ocupar el centro del cuadro. Estado inicial: la fila con su miniatura, su precio EJEMPLO y su número de posición. Acción: la fila se despliega hacia abajo y saca su razón en una tira propia —'el precio por metro más bajo de este listado', con las cifras del anuncio de ejemplo rotuladas EJEMPLO—; enseguida la fila dos y la fila tres hacen lo mismo escalonadas, cada una con su motivo distinto, y ninguna razón nombra visitas ni destacados. Respuesta visible: un dedo toca la fila uno, la tira se pliega y la miniatura sale de la lista viajando hacia la derecha. Prueba resuelta: cae sobre el mapa de la marca como un pin que aterriza con land(), la zona se ilumina bajo él y la ficha queda anclada a un lugar concreto, cerrando el recorrido de la posición al mapa.",
+      "transition": "cut",
+      "voiceover": "Cada terreno te dice por qué está ahí y en qué parte del mapa queda.",
+      "headline": "Y dónde queda",
+      "captions": [
+        "Cada terreno te dice por qué está ahí y en qué parte del mapa queda."
+      ],
+      "accent": "#22C55E"
+    },
+    {
+      "purpose": "resultado",
+      "duration": 4.1,
+      "voice": "Y lo mejor: ese primer puesto no se compra. Ni con publicidad, ni con clics.",
+      "on_screen_text": "El primer puesto",
+      "asset": "sim:sin-destacado",
+      "visual_direction": "La cámara vuelve a la lista completa, ahora quieta y con las tres posiciones resueltas. Estado inicial: el orden establecido en las escenas anteriores. Acción: tres etiquetas entran desde el borde derecho intentando pegarse a la fila uno —'Destacado', 'Publicidad' y 'Lo más visto'—; cada una se acerca dos veces, empuja la fila y es rechazada: la fila no se mueve de su sitio y la etiqueta rebota, se apaga y sale del cuadro tachada. Respuesta visible: tras cada rechazo, la columna del dato que ordena la lista —el precio por metro EJEMPLO— parpadea encendida, confirmando quién decide. Prueba resuelta: las tres etiquetas quedan fuera del panel, apagadas, y el orden original permanece idéntico al del principio con la fila uno iluminada; el criterio se lee dentro de una píldora: 'ordenado por el dato'.",
+      "transition": "cut",
+      "voiceover": "Y lo mejor: ese primer puesto no se compra. Ni con publicidad, ni con clics.",
+      "headline": "El primer puesto",
+      "captions": [
+        "Y lo mejor: ese primer puesto no se compra. Ni con publicidad, ni con clics."
+      ],
+      "accent": "#14B8A6"
+    },
+    {
+      "purpose": "cta",
+      "duration": 4.8,
+      "voice": "Solo con el precio. Encuentra el tuyo en geopropiedadesecuador punto com.",
+      "on_screen_text": "Encuentra el tuyo",
+      "asset": null,
+      "visual_direction": "Cierre de marca común de la serie, sin cambios: la lista ordenada se aleja y se funde en el fondo claro de la marca mientras el tile de Geo Propiedades Ecuador aterriza en el centro con land() y su halo detrás. Debajo, el nombre completo y el dominio geopropiedadesecuador.com se destapan con Reveal de izquierda a derecha, dentro de la zona segura y por encima de textFloor. Después entra el CTA 'Encuentra tu futuro hogar' en una sola fila, y al pie la firma 'Un producto de Aents'. La cámara conserva un empuje mínimo hasta el último fotograma y el cuadro queda resuelto y estático solo al final, con todo el bloque legible en miniatura.",
+      "transition": "fade",
+      "voiceover": "Solo con el precio. Encuentra el tuyo en geopropiedadesecuador punto com.",
+      "headline": "Encuentra el tuyo",
+      "captions": [
+        "Solo con el precio. Encuentra el tuyo en geopropiedadesecuador punto com."
+      ],
+      "accent": "#22C55E"
+    }
+  ]
+}

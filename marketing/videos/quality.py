@@ -136,6 +136,14 @@ PRODUCT_ASSETS = {
     "sim:ya-estan", "sim:anuncio-en-mapa", "sim:te-contactan",
     "sim:donde-queda", "sim:ya-lo-saben", "sim:elige-zona", "sim:aents-reveal", "sim:aents-proceso", "sim:aents-servicios", "sim:aents-contacto",
     "sim:aents-arquitectura", "sim:aents-automatizacion", "sim:aents-panel", "sim:aents-escala", "sim:aents-cierre",
+    # The living ranking pages. Each of these draws the portal's own interface
+    # rather than a symbol of it: the hook opens the listing card with its
+    # price and its characteristics, the three page scenes draw the ranking as
+    # `LiveRankingPage.tsx` lays it out — numbered badge, thumbnail, measure in
+    # tabular figures, reason underneath — and `sim:razon-posicion` ends with
+    # the row landing on the map as a priced pin.
+    "sim:geo-ranking-hero", "sim:pagina-ordenada", "sim:recetas-ranking",
+    "sim:razon-posicion", "sim:sin-destacado",
 }
 
 # From creative-system.md and the "No prometer" section of product-context.md.

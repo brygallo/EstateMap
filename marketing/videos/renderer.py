@@ -88,6 +88,11 @@ SIMULATIONS = {
     "sim:te-contactan": "El teléfono del anunciante: entra la llamada del interesado y después su mensaje",
     "sim:donde-queda": "El anuncio publicado con fotos, precio y descripción, la fila de ubicación vacía y los mensajes que preguntan dónde queda",
     "sim:ya-lo-saben": "El mismo anuncio con su ubicación en el mapa, y los mensajes que ahora preguntan por la propiedad",
+    "sim:geo-ranking-hero": "Se abre un anuncio, se pliega a una pila y entra el siguiente; los precios visibles quedan a la misma altura y el lugar de la posición se queda vacío e iluminado",
+    "sim:pagina-ordenada": "Una página del blog aterriza ya armada: título, nota de recálculo y tres anuncios numerados del más barato al más caro",
+    "sim:recetas-ranking": "El título gira a otra receta y las filas se reordenan por área; luego la cámara retrocede y los anuncios publicados suben a una banda que aparta los precios y áreas imposibles",
+    "sim:razon-posicion": "Cada fila abre el motivo de su posición y la primera viaja fuera de la lista para caer sobre el mapa convertida en un pin con su precio",
+    "sim:sin-destacado": "Destacado, publicidad y lo más visto empujan la primera fila dos veces y salen tachadas; la lista queda igual y el criterio se lee en una píldora",
     "sim:elige-zona": "El mapa se arrastra hasta la zona, se traza el círculo y los anuncios sueltos caen dentro convertidos en precios ubicados",
     "sim:verificar": "La lupa recorre propietario, documentos y gravámenes, y cada fila queda comprobada cuando pasa por ella",
     "sim:negociar": "El precio publicado se tacha, entra la oferta y las dos partes llegan a un acuerdo",
@@ -188,6 +193,13 @@ SIMULATIONS = {
 # same staging, and the same gate enforces that.
 HERO_STAGINGS = {
     "sim:aents-problema-software": "push-in",
+    # Geo's first registered opening, and the one move of the five that suits
+    # it. `crane-down` was tried and the frame it produced is the argument
+    # against it: the subject here is a white card with a price on it, and a
+    # camera that tilts nine degrees while travelling past turns that into a
+    # skewed lozenge with its title cut off. `hold-in` keeps the push — the
+    # frame is never static — and spends none of it on the thing being read.
+    "sim:geo-ranking-hero": "hold-in",
 }
 
 # How long a single frame may take before Remotion gives up on it.

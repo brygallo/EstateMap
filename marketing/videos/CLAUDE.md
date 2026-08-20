@@ -110,6 +110,30 @@ De ahí salen dos reglas que no se negocian por prisa:
 - Una pieza tiene un público, una idea y un CTA. No combines “buscar”, “publicar” y “contactarnos” en el mismo video.
 - Usa persuasión ética: claridad, demostración y reducción de fricción. No fabriques escasez ni prueba social.
 
+## El render se hace una sola vez, al final
+
+Un máster cuesta media hora de máquina y no compra nada accionable: cuando
+existe, los errores ya están dentro. La revisión se hace en Remotion Studio, que
+toca el mismo código con las mismas props y la misma voz y responde a un archivo
+guardado en un segundo.
+
+- **`video --brand <marca> studio <id>` es donde se juzga una pieza.** Sintetiza
+  la voz de borrador —gratis, local—, escribe `studio-props.json` y levanta el
+  estudio en `http://localhost:3210/EstateMapVideo`. Ahí se ve el video entero,
+  se salta de escena a escena y se corrige en caliente.
+- **El render solo ocurre después de dos cosas: que una persona apruebe lo que
+  vio en el estudio, y que la voz esté comprada.** No antes, y no para revisar.
+  `video render <id>` sin `--final` se niega y lo dice.
+- **`--draft` existe para depurar el renderer**, no para mirar la pieza. Si lo
+  que se está arreglando es una animación, se arregla en el estudio.
+- Antes de dar una escena por hecha se miran sus fotogramas —`npx remotion still
+  … --frame=N`— y se comprueba que se reconozca sin leyenda, que nada tape ni
+  choque con otra cosa, que ningún texto baje de 22 px y que la escena no esté
+  medio vacía. El estudio enseña el movimiento; el fotograma enseña lo que
+  congela la plataforma.
+
+Esto vale igual para Claude y para Codex.
+
 ## La voz se paga una sola vez, y al final
 
 El guion se reescribe muchas veces antes de que quede bien. Esas vueltas no cuestan nada y no deben costarlo.
@@ -249,9 +273,9 @@ Cuando escribas un guion, devuelve siempre: objetivo, hipótesis, público, dura
 4. Decide escena por escena si una animación existente demuestra literalmente la voz. Si no, crea una nueva en Remotion, basada en los estados y componentes reales del producto, regístrala y añade una prueba.
 5. Diseña una portada específica para el concepto. Mantén la firma visual y el CTA global, pero no recicles la ilustración ni los datos del video anterior.
 6. Sintetiza una sola toma por escena y usa las divisiones únicamente para subtítulos.
-7. Renderiza primero con Kokoro local. Usa música solo cuando el brief o la dirección de producción la elijan y exista una licencia comercial gratuita archivada. Nunca uses `--final` en esta fase.
-8. Revisa el MP4, la portada, la sincronía, las zonas seguras de TikTok y la fidelidad con el producto. Corrige y vuelve a renderizar hasta que el borrador esté listo para revisión humana.
-9. Solo después de una aprobación humana explícita cotiza y genera la voz pagada. Una aprobación del borrador no autoriza publicación.
+7. Abre la pieza con `video --brand <marca> studio <id>` y revísala ahí: escena por escena, con su voz, comprobando acabado, solapamientos, zonas seguras de TikTok y fidelidad con el producto. Corrige y vuelve a mirar. **No renderices para revisar.**
+8. Enseña el estudio a la persona responsable y espera su aprobación explícita sobre lo que ve ahí.
+9. Solo entonces cotiza la voz con `voice-cost`, cómprala y renderiza **una sola vez** con `render --final`. Una aprobación del estudio no autoriza publicación.
 
 ## Piezas publicadas son inmutables
 

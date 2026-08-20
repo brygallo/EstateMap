@@ -37,6 +37,13 @@ import {
   AentsUnderstandSim,
 } from './aents-system-simulations';
 import {
+  GeoNoPromotedSim,
+  GeoOrderedPageSim,
+  GeoRankingHookSim,
+  GeoReasonSim,
+  GeoRecipeSim,
+} from './geo-ranking-simulations';
+import {
   AentsBounceSim,
   AentsQuerySim,
   AentsRebuildSim,
@@ -6022,6 +6029,11 @@ export const SIMULATIONS: Record<string, React.FC<SimulationProps>> = {
   'sim:aents-proceso': AentsProcessSim,
   'sim:aents-servicios': AentsServicesSim,
   'sim:aents-contacto': AentsContactSim,
+  'sim:geo-ranking-hero': GeoRankingHookSim,
+  'sim:pagina-ordenada': GeoOrderedPageSim,
+  'sim:recetas-ranking': GeoRecipeSim,
+  'sim:razon-posicion': GeoReasonSim,
+  'sim:sin-destacado': GeoNoPromotedSim,
   'sim:aents-problema-software': AentsProblemToSoftwareSim,
   'sim:aents-disperso': AentsScatteredSim,
   'sim:aents-desconectado': AentsDisconnectedSim,
