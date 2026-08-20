@@ -19,6 +19,16 @@ tumbar el correo de la empresa.
 | `console` | **DNS only** | Consola de MinIO, mismo motivo y sin tráfico público. |
 | `MX`, `SPF`, `DKIM`, `DMARC` | **DNS only** | Registros de correo: proxiar cualquiera de ellos rompe la entrega. |
 
+**El correo de aents.net también depende de esta zona.** Su MX apunta a
+`mail.geopropiedadesecuador.com` y su SPF autoriza
+`a:mail.geopropiedadesecuador.com`. Proxiar ese registro no apagaría solo el
+correo del portal: dejaría a Aents sin recibir nada y haría que todo su correo
+saliente fallase SPF, porque el registro pasaría a resolver a direcciones de
+Cloudflare en vez de a la del servidor. Comprobado tras mover los nameservers:
+`mail` sigue en DNS only, resuelve a 212.47.65.135 y el servidor SMTP contesta
+`220 mail.geopropiedadesecuador.com ESMTP`. (`miyomehabla.com` no tiene MX ni
+SPF: no usa correo.)
+
 El panel de Cloudflare insiste con una recomendación —«tu IP de origen está
 parcialmente expuesta, proxia todos los registros que comparten IP»— que **hay
 que ignorar**. Los tres registros que no están proxiados no pueden estarlo, y
