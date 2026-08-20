@@ -61,7 +61,7 @@ Solo entra en las estadísticas el inventario activo, no duplicado y con price m
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/real_estate/views.py:2010-2012` (`all_base = Property.objects.exclude(status='inactive')`) — Queryset base de MarketStatsView. Los cuatro filtros (no inactive, area>0, price>0, is_duplicate=False) se aplican antes de la anotación.
+- `backend/real_estate/views.py:2154-2156` (`all_base = Property.objects.exclude(status='inactive')`) — Queryset base de MarketStatsView. Los cuatro filtros (no inactive, area>0, price>0, is_duplicate=False) se aplican antes de la anotación.
 
 
 **Casos**
@@ -87,8 +87,8 @@ price_per_m2 se calcula en la base de datos como price / area sobre el área tot
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/real_estate/views.py:2015-2017` (`price_per_m2=ExpressionWrapper(F('price') / F('area'), output_field=FloatField())`) — Anotación de MarketStatsView, evaluada en SQL como FloatField.
-- `backend/real_estate/views.py:631-633` (`price_per_m2=ExpressionWrapper(F('price') / F('area'), output_field=FloatField())`) — La misma expresión en el endpoint intelligence, sobre los comparables.
+- `backend/real_estate/views.py:2159-2161` (`price_per_m2=ExpressionWrapper(F('price') / F('area'), output_field=FloatField())`) — Anotación de MarketStatsView, evaluada en SQL como FloatField.
+- `backend/real_estate/views.py:683-685` (`price_per_m2=ExpressionWrapper(F('price') / F('area'), output_field=FloatField())`) — La misma expresión en el endpoint intelligence, sobre los comparables.
 
 **Casos**
 
@@ -110,8 +110,8 @@ Antes de cualquier estadística se descartan las filas cuyo precio por metro cua
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/real_estate/views.py:2016-2018` (`price_per_m2__gt=1, price_per_m2__lt=10000`) — Filtro aplicado sobre all_base, es decir sobre venta y alquiler.
-- `backend/real_estate/views.py:632-634` (`).filter(price_per_m2__gt=1, price_per_m2__lt=10000)`) — La misma banda para los comparables del endpoint intelligence.
+- `backend/real_estate/views.py:2160-2162` (`price_per_m2__gt=1, price_per_m2__lt=10000`) — Filtro aplicado sobre all_base, es decir sobre venta y alquiler.
+- `backend/real_estate/views.py:684-686` (`).filter(price_per_m2__gt=1, price_per_m2__lt=10000)`) — La misma banda para los comparables del endpoint intelligence.
 
 **Casos**
 
@@ -135,7 +135,7 @@ overall, by_city, by_property_type, by_sector, evolution, growth_zones y estimat
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/real_estate/views.py:2024-2026` (`base = all_base.filter(status='for_sale')`) — Las dos líneas anteriores son el comentario que justifica la separación de escalas.
+- `backend/real_estate/views.py:2168-2170` (`base = all_base.filter(status='for_sale')`) — Las dos líneas anteriores son el comentario que justifica la separación de escalas.
 
 
 **Casos**
@@ -157,9 +157,9 @@ Sobre la muestra de venta se calculan P25 y P75, y se descartan los valores fuer
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/real_estate/views.py:2037-2039` (`outliers_excluded = base.exclude(price_per_m2__gte=lower, price_per_m2__lte=upper).count()`) — Cálculo de la muestra ordenada, los percentiles, los límites y el recorte final del queryset.
+- `backend/real_estate/views.py:2181-2183` (`outliers_excluded = base.exclude(price_per_m2__gte=lower, price_per_m2__lte=upper).count()`) — Cálculo de la muestra ordenada, los percentiles, los límites y el recorte final del queryset.
 
-- `backend/real_estate/views.py:2027-2029` (`def percentile(values, ratio):`) — Percentil con interpolación lineal. Devuelve 0 cuando la lista está vacía, que es lo que hace inocuo el filtro en un catálogo sin datos.
+- `backend/real_estate/views.py:2171-2173` (`def percentile(values, ratio):`) — Percentil con interpolación lineal. Devuelve 0 cuando la lista está vacía, que es lo que hace inocuo el filtro en un catálogo sin datos.
 
 
 **Casos**
@@ -189,9 +189,9 @@ Todo lo que la web publica como "precio promedio" es una media aritmética calcu
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/real_estate/views.py:2042-2044` (`avg_price_m2=Avg('price_per_m2')`) — Agregado overall: count, media de $/m², media de precio, media de área, y mínimo y máximo de $/m², todos sobre la muestra ya recortada.
+- `backend/real_estate/views.py:2186-2188` (`avg_price_m2=Avg('price_per_m2')`) — Agregado overall: count, media de $/m², media de precio, media de área, y mínimo y máximo de $/m², todos sobre la muestra ya recortada.
 
-- `backend/real_estate/views.py:2127-2129` (`Los extremos se excluyen con el método IQR`) — Texto de metodología que se sirve en el payload y se muestra en las páginas de estadísticas.
+- `backend/real_estate/views.py:2277-2279` (`Los extremos se excluyen con el método IQR`) — Texto de metodología que se sirve en el payload y se muestra en las páginas de estadísticas.
 
 
 **Casos**
@@ -214,7 +214,7 @@ Cuando no queda ninguna fila tras los filtros, el agregado devuelve count 0 y av
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/real_estate/views.py:2041-2043` (`count=Count('id'),`) — El único campo garantizado como número es count; el resto son agregados que devuelven None sin filas.
+- `backend/real_estate/views.py:2185-2187` (`count=Count('id'),`) — El único campo garantizado como número es count; el resto son agregados que devuelven None sin filas.
 
 
 **Casos**
@@ -236,9 +236,9 @@ by_city y by_property_type solo publican grupos con tres o más anuncios de vent
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/real_estate/views.py:2050-2052` (`def grouped(*fields, limit=12):`) — Agrupa, agrega las tres medias, filtra por count>=3 y ordena por -count.
+- `backend/real_estate/views.py:2194-2196` (`def grouped(*fields, limit=12):`) — Agrupa, agrega las tres medias, filtra por count>=3 y ordena por -count.
 
-- `backend/real_estate/views.py:2112-2114` (`'by_city': grouped('city', 'province', limit=15),`) — by_city agrupa por ciudad y provincia a la vez; by_property_type se queda en 8 filas.
+- `backend/real_estate/views.py:2262-2264` (`'by_city': grouped('city', 'province', limit=15),`) — by_city agrupa por ciudad y provincia a la vez; by_property_type se queda en 8 filas.
 
 
 **Casos**
@@ -253,25 +253,31 @@ by_city y by_property_type solo publican grupos con tres o más anuncios de vent
 
 **Estado:** ✅ Implementada
 
-El sector es el primer segmento de address antes de la coma; se agrupa ignorando mayúsculas y acentos de caja, se descarta si coincide con la ciudad y solo se publica con dos o más anuncios.
+El sector es el primer segmento de address antes de la coma; se agrupa ignorando mayúsculas y acentos, se descarta si coincide con la ciudad y solo se publica con dos o más anuncios. El nombre que se muestra es la grafía más frecuente del grupo, salvo que exista una variante con tildes que llegue a la mitad de esa frecuencia: entonces gana la acentuada.
 
 
-> **Por qué:** No existe un catálogo de barrios: address es texto libre y la misma zona llega escrita de varias formas ("Cumbayá", "CUMBAYÁ"). El agrupado usa casefold como clave y muestra la grafía más frecuente del grupo. El umbral aquí es 2, más laxo que el 3 de ciudades y tipos, porque a nivel de sector casi nunca hay tres anuncios.
+> **Por qué:** No existe un catálogo de barrios: address es texto libre y la misma zona llega escrita de varias formas ("Cumbayá", "CUMBAYÁ", "Cumbaya"). El umbral aquí es 2, más laxo que el 3 de ciudades y tipos, porque a nivel de sector casi nunca hay tres anuncios.
+La clave ignora los acentos, y no siempre lo hizo: con `casefold` a secas, «Cumbayá» y «Cumbaya» eran dos sectores distintos —42 y 47 anuncios en producción— cada uno publicando su propio promedio como si fueran barrios diferentes. La mitad del inventario del sector más caro de Quito no se veía desde ninguna de las dos filas.
+Para el nombre visible, la frecuencia sola tampoco basta: la grafía sin tilde suele ganar porque se escribe más rápido, no porque sea el nombre. Por eso una variante acentuada que llegue a la mitad de la frecuencia de la más común se prefiere.
 
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/real_estate/views.py:2069-2077` (`sector_stats = defaultdict(lambda: {'names': Counter(), 'values': []})`) — Extracción del sector, clave insensible a mayúsculas y recuento de las grafías vistas.
+- `backend/real_estate/views.py` (`sector_stats = defaultdict(lambda: {'names': Counter(), 'values': []})`) — Extracción del sector y recuento de las grafías vistas.
 
-- `backend/real_estate/views.py:2099-2101` (`by_sector = [`) — Construcción de la tabla: grafía más común, conteo, media aritmética de $/m², umbral de 2 y orden por número de anuncios.
+- `backend/real_estate/views.py` (`def _fold`) — Clave insensible a mayúsculas y acentos.
+- `backend/real_estate/views.py` (`def _display_name`) — Elige la grafía a mostrar, con preferencia por la acentuada.
+- `backend/real_estate/tests/test_market_intelligence.py` (`def test_the_same_sector_written_with_and_without_accents_is_one_sector`)
+- `backend/real_estate/views.py:2246-2248` (`by_sector = [`) — Construcción de la tabla: grafía más común, conteo, media aritmética de $/m², umbral de 2 y orden por número de anuncios.
 
-- `backend/real_estate/views.py:2122-2124` (`'by_sector': by_sector[:20],`) — Se publican como mucho 20 sectores.
+- `backend/real_estate/views.py:2272-2274` (`'by_sector': by_sector[:20],`) — Se publican como mucho 20 sectores.
 
 **Casos**
 
 | Caso | Rol | Estado previo | Cuerpo | Esperado |
 | --- | --- | --- | --- | --- |
 | Misma zona con dos grafías distintas | — | `addresses`=Cumbayá, Quito, CUMBAYÁ, Quito, Cumbayá, Quito, CUMBAYÁ, Quito | — | `rows`=1, `count`=4 |
+| Misma zona escrita con y sin tilde | — | `addresses`=Cumbayá, Quito, Cumbayá, Quito, Cumbayá, Quito, CUMBAYA, Quito, CUMBAYA, Quito | — | `rows`=1, `count`=5, `sector`=Cumbayá |
 | Sector con un único anuncio | — | `addresses`=El Vergel, Cuenca | — | `rows`=0 |
 | Dirección cuyo primer segmento es la propia ciudad | — | `city`=Macas, `addresses`=Macas, Morona Santiago, Macas, Morona Santiago | — | `rows`=0 |
 | Dirección vacía | — | `addresses`=,  | — | `rows`=0 |
@@ -288,7 +294,7 @@ El corte por operación se calcula sobre all_base, es decir antes de limitar a v
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/real_estate/views.py:2114-2116` (`'by_operation': list(`) — Se agrupa por status partiendo de all_base, no de base: sin filtro de operación y sin recorte de extremos.
+- `backend/real_estate/views.py:2264-2266` (`'by_operation': list(`) — Se agrupa por status partiendo de all_base, no de base: sin filtro de operación y sin recorte de extremos.
 
 
 **Casos**
@@ -311,9 +317,9 @@ Ninguna estadística lee rent_price: todas las expresiones de precio parten de p
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/real_estate/models.py:167-171` (`rent_price = models.DecimalField`) — Definición y comentario del campo: solo se puebla cuando el anuncio es venta Y alquiler.
+- `backend/real_estate/models.py:198-201` (`rent_price = models.DecimalField`) — Definición y comentario del campo: solo se puebla cuando el anuncio es venta Y alquiler.
 
-- `backend/real_estate/views.py:2015-2017` (`F('price') / F('area')`) — El único campo monetario que toca MarketStatsView es price; rent_price no aparece en el archivo.
+- `backend/real_estate/views.py:2159-2161` (`F('price') / F('area')`) — El único campo monetario que toca MarketStatsView es price; rent_price no aparece en el archivo.
 
 
 **Casos**
@@ -335,10 +341,10 @@ evolution compara la media de $/m² de los anuncios activos creados en los últi
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/real_estate/views.py:2080-2082` (`city_periods[city]['recent'].append(row['price_per_m2'])`) — Reparto en cohortes de 0-90 y 90-180 días por created_at.
-- `backend/real_estate/views.py:2096-2098` (`evolution.append(`) — Medias de cada cohorte, variación porcentual redondeada a un decimal y orden descendente por variación.
+- `backend/real_estate/views.py:2227-2229` (`city_periods[city]['recent'].append(row['price_per_m2'])`) — Reparto en cohortes de 0-90 y 90-180 días por created_at.
+- `backend/real_estate/views.py:2243-2245` (`evolution.append(`) — Medias de cada cohorte, variación porcentual redondeada a un decimal y orden descendente por variación.
 
-- `backend/real_estate/views.py:2123-2125` (`'evolution': evolution[:15],`) — Se publican como mucho 15 ciudades.
+- `backend/real_estate/views.py:2273-2275` (`'evolution': evolution[:15],`) — Se publican como mucho 15 ciudades.
 
 **Casos**
 
@@ -358,7 +364,7 @@ Las "zonas en crecimiento" no son un cálculo aparte: son las filas de evolution
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/real_estate/views.py:2124-2126` (`'growth_zones': [row for row in evolution if row['change_pct'] > 0][:8],`) — Reutiliza la lista ya ordenada por variación descendente, así que las ocho primeras son las de mayor subida.
+- `backend/real_estate/views.py:2274-2276` (`'growth_zones': [row for row in evolution if row['change_pct'] > 0][:8],`) — Reutiliza la lista ya ordenada por variación descendente, así que las ocho primeras son las de mayor subida.
 
 
 **Casos**
@@ -381,9 +387,9 @@ El "tiempo estimado en el mercado" es la media, redondeada a entero, de los día
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/real_estate/views.py:2076-2078` (`market_days.append(max(0, (now - row['created_at']).days))`) — Se recorre el inventario ya filtrado a venta y recortado por IQR; el max(0, ...) impide días negativos si una fecha viniera en el futuro.
+- `backend/real_estate/views.py:2223-2225` (`market_days.append(max(0, (now - row['created_at']).days))`) — Se recorre el inventario ya filtrado a venta y recortado por IQR; el max(0, ...) impide días negativos si una fecha viniera en el futuro.
 
-- `backend/real_estate/views.py:2125-2127` (`'estimated_market_days'`) — Media redondeada, con 0 como valor por defecto sin muestra.
+- `backend/real_estate/views.py:2275-2277` (`'estimated_market_days'`) — Media redondeada, con 0 como valor por defecto sin muestra.
 
 **Casos**
 
@@ -409,7 +415,7 @@ El filtro de ciudad se aplica sobre el queryset base sin distinguir mayúsculas,
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/real_estate/views.py:2019-2021` (`city_scope = (request.query_params.get('city') or '').strip()`) — Filtro city__iexact aplicado sobre all_base.
+- `backend/real_estate/views.py:2163-2165` (`city_scope = (request.query_params.get('city') or '').strip()`) — Filtro city__iexact aplicado sobre all_base.
 
 **Casos**
 
@@ -435,9 +441,9 @@ El endpoint intelligence describe la zona con P25, mediana y P75 del precio por 
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/real_estate/views.py:643-647` (`q1, median, q3 = pct(.25), pct(.5), pct(.75)`) — Percentiles sobre la lista ordenada de comparables; pct devuelve None con la lista vacía.
+- `backend/real_estate/views.py:694-696` (`q1, median, q3 = pct(.25), pct(.5), pct(.75)`) — Percentiles sobre la lista ordenada de comparables; pct devuelve None con la lista vacía.
 
-- `backend/real_estate/views.py:679-681` (`'zone_range': {'low': q1, 'median': median, 'high': q3}`) — Cómo se publican, junto con el tamaño de muestra en comparison.sample_size.
+- `backend/real_estate/views.py:731-733` (`'zone_range': {'low': q1, 'median': median, 'high': q3}`) — Cómo se publican, junto con el tamaño de muestra en comparison.sample_size.
 
 
 **Casos**
@@ -460,7 +466,7 @@ Se marca el anuncio como above_range o below_range solo si su precio por metro c
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/real_estate/views.py:653-655` (`alert = 'above_range'`) — Desviación respecto a la mediana y clasificación de la alerta, con la guarda len(values) >= 4.
+- `backend/real_estate/views.py:705-707` (`alert = 'above_range'`) — Desviación respecto a la mediana y clasificación de la alerta, con la guarda len(values) >= 4.
 
 
 **Casos**
@@ -484,7 +490,7 @@ own_price_m2 se calcula siempre que el anuncio tenga price y area mayor que cero
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/real_estate/views.py:643-645` (`own_price_m2 = (`) — Solo comprueba que price sea verdadero y que area sea mayor que cero; redondea a dos decimales.
+- `backend/real_estate/views.py:695-697` (`own_price_m2 = (`) — Solo comprueba que price sea verdadero y que area sea mayor que cero; redondea a dos decimales.
 
 
 **Casos**
@@ -512,7 +518,7 @@ El conjunto de comparables de un anuncio son los anuncios activos, no duplicados
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/real_estate/views.py:618-624` (`comparable = Property.objects.exclude(status='inactive').filter(`) — Filtros de comparabilidad más la exclusión del propio pk y la banda de $/m².
+- `backend/real_estate/views.py:675-677` (`comparable = Property.objects.exclude(status='inactive').filter(`) — Filtros de comparabilidad más la exclusión del propio pk y la banda de $/m².
 
 
 **Casos**
@@ -541,7 +547,7 @@ La página de estadísticas de una ciudad muestra cifras y entra en el índice s
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `frontend/lib/market-stats.ts:63-69` (`export const MIN_LISTINGS_FOR_INDEX = 3;`) — Junto a MIN_LISTINGS_FOR_PROMOTION = 5, el umbral de las superficies de descubrimiento.
+- `frontend/lib/market-stats.ts:73-77` (`export const MIN_LISTINGS_FOR_INDEX = 3;`) — Junto a MIN_LISTINGS_FOR_PROMOTION = 5, el umbral de las superficies de descubrimiento.
 
 - `frontend/app/estadisticas-inmobiliarias/[ciudad]/page.tsx:88-90` (`const hasData = Boolean(stats && stats.overall.count >= MIN_LISTINGS_FOR_INDEX);`) — La misma condición se evalúa en generateMetadata para decidir el noindex.
 
@@ -571,7 +577,7 @@ El formateador de moneda del frontend convierte null y undefined en 0 antes de f
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `frontend/lib/market-stats.ts:49-57` (`}).format(Number(value || 0));`) — Mismo fallback en money y en integer; el operador || también convierte el 0 legítimo, sin consecuencia práctica.
+- `frontend/lib/market-stats.ts:62-69` (`}).format(Number(value || 0));`) — Mismo fallback en money y en integer; el operador || también convierte el 0 legítimo, sin consecuencia práctica.
 
 
 **Casos**
@@ -603,9 +609,9 @@ El texto "precios desde X hasta Y" de las páginas de aterrizaje toma el mínimo
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `frontend/components/SeoLanding.tsx:91-104` (`const priceFloor = medianPrice * 0.02;`) — Cálculo del piso y de min/max limpios para la copy y el JSON-LD de la landing.
+- `frontend/components/SeoLanding.tsx:106-118` (`const priceFloor = medianPrice * 0.02;`) — Cálculo del piso y de min/max limpios para la copy y el JSON-LD de la landing.
 
-- `frontend/components/SeoLanding.tsx:142-152` (`offerCount: priceValues.length,`) — AggregateOffer: lowPrice y highPrice salen de la lista filtrada, offerCount de la lista sin filtrar.
+- `frontend/components/SeoLanding.tsx:154-163` (`offerCount: priceValues.length,`) — AggregateOffer: lowPrice y highPrice salen de la lista filtrada, offerCount de la lista sin filtrar.
 
 - `frontend/components/SeoLanding.tsx:470-485` (`export function priceRangeText(properties: Property[]): string {`) — Misma lógica, reutilizada por las landings de ciudad, provincia, tipo y combinaciones.
 
@@ -653,7 +659,7 @@ PropertyPriceHistory solo se lee para devolver la línea temporal de un anuncio 
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/real_estate/views.py:669-671` (`history = list(instance.price_history.values('price', 'recorded_at'))`) — Único acceso de lectura al historial en toda la capa de vistas, más el respaldo sintético cuando no hay filas.
+- `backend/real_estate/views.py:721-723` (`history = list(instance.price_history.values('price', 'recorded_at'))`) — Único acceso de lectura al historial en toda la capa de vistas, más el respaldo sintético cuando no hay filas.
 
 
 **Casos**

@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test';
+import { API_URL } from '../playwright.config';
 
 /**
  * Advertising slots, checked in a browser because that is the only place the
@@ -30,6 +31,25 @@ async function openFirstProperty(page: import('@playwright/test').Page): Promise
   return true;
 }
 
+/**
+ * True when the API offers a campaign for that placement.
+ *
+ * A slot with no campaign does not render at all — house signs are campaigns
+ * too, created explicitly by staff — so a test that needs the slot on screen
+ * has to skip where nobody sold that space, instead of failing on an element
+ * the environment was never going to paint.
+ */
+async function placementIsOffered(
+  request: import('@playwright/test').APIRequestContext,
+  placement: string
+): Promise<boolean> {
+  const response = await request.get(`${API_URL}/ads/`, { params: { placement } });
+  if (!response.ok()) return false;
+  const body = await response.json();
+  const campaigns = Array.isArray(body) ? body : (body.results ?? []);
+  return campaigns.length > 0;
+}
+
 test('an empty slot stays hidden', async ({ page }) => {
   // SPEC:ADS-016 — selling a placement is explicit: staff creates a promo
   // campaign when the house sign should be visible.
@@ -38,10 +58,14 @@ test('an empty slot stays hidden', async ({ page }) => {
   await expect(page.getByLabel('Espacio publicitario disponible')).toHaveCount(0);
 });
 
-test('the house sign opens WhatsApp carrying the space and the city', async ({ page }) => {
+test('the house sign opens WhatsApp carrying the space and the city', async ({ page, request }) => {
   test.slow();
   // SPEC:ADS-018 — a «hola, quiero publicidad» costs three questions before
   // anyone can answer; this one is answered with a price.
+  test.skip(
+    !(await placementIsOffered(request, 'property_sidebar')),
+    'the sidebar placement is not on sale in this environment'
+  );
   const opened = await openFirstProperty(page);
   test.skip(!opened, 'No published inventory in this environment');
 
@@ -103,9 +127,13 @@ test('nothing is painted over the map canvas', async ({ page }) => {
   }
 });
 
-test('the contact block of a listing is not for sale', async ({ page }) => {
+test('the contact block of a listing is not for sale', async ({ page, request }) => {
   test.slow();
   // SPEC:ADS-004 — that click belongs to whoever published the property.
+  test.skip(
+    !(await placementIsOffered(request, 'property_sidebar')),
+    'the sidebar placement is not on sale in this environment'
+  );
   const opened = await openFirstProperty(page);
   test.skip(!opened, 'No published inventory in this environment');
 

@@ -27,6 +27,7 @@ Quien empieza a publicar y abandona deja un PendingPublication con su borrador c
 | [`RSM-010`](#rsm-010--staff-puede-corregir-y-publicar-el-borrador-a-nombre-de-la-persona) | Staff puede corregir y publicar el borrador a nombre de la persona | ✅ Implementada |
 | [`RSM-011`](#rsm-011--las-fotos-de-un-borrador-anónimo-pasan-las-mismas-validaciones-que-las-autenticadas) | Las fotos de un borrador anónimo pasan las mismas validaciones que las autenticadas | ✅ Implementada |
 | [`RSM-012`](#rsm-012--las-fotos-de-borradores-abandonados-se-barren) | Las fotos de borradores abandonados se barren | ✅ Implementada |
+| [`RSM-013`](#rsm-013--el-canje-no-espera-al-correo-ni-a-la-limpieza-de-fotos) | El canje no espera al correo ni a la limpieza de fotos | ✅ Implementada |
 
 ### RSM-001 — Staff emite el enlace desde la bandeja de pendientes
 
@@ -52,8 +53,8 @@ Un usuario staff genera, para un PendingPublication concreto, un enlace de conti
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/real_estate/views.py:1226-1252` (`def resume_link`)
-- `backend/real_estate/views.py:1188-1190` (`return [IsAuthenticated(), IsAdminUser()]`) — Toda acción del viewset que no sea `create` exige staff.
+- `backend/real_estate/views.py:1381-1404` (`def resume_link`)
+- `backend/real_estate/views.py:1339-1341` (`return [IsAuthenticated(), IsAdminUser()]`) — Toda acción del viewset que no sea `create` exige staff.
 - `backend/real_estate/email_utils.py:381-404` (`def create_publication_resume_token`)
 
 **Casos**
@@ -87,9 +88,9 @@ Un token de continuación deja de servir 14 días después de emitirse, y a part
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/estate_map/settings.py:540-542` (`PUBLICATION_RESUME_TOKEN_EXPIRY_DAYS`)
-- `backend/real_estate/models.py:670-672` (`def is_valid`)
-- `backend/real_estate/views.py:1407-1413` (`def invalid_resume_token_response`)
+- `backend/estate_map/settings.py:549-551` (`PUBLICATION_RESUME_TOKEN_EXPIRY_DAYS`)
+- `backend/real_estate/models.py:709-711` (`def is_valid`)
+- `backend/real_estate/views.py:1555-1557` (`def invalid_resume_token_response`)
 
 **Casos**
 
@@ -121,7 +122,7 @@ Canjear un token crea la propiedad y marca el token como consumido; un segundo c
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/real_estate/views.py:1264-1270` (`redeemed_at__isnull=True`) — UPDATE condicional dentro de la transacción que crea la propiedad.
+- `backend/real_estate/views.py:1419-1422` (`redeemed_at__isnull=True`) — UPDATE condicional dentro de la transacción que crea la propiedad.
 - `backend/real_estate/email_utils.py:388-396` (`revoked_at__isnull=True`) — Emitir un enlace nuevo retira el anterior, para que nunca haya dos vivos.
 
 **Casos**
@@ -153,7 +154,7 @@ Un usuario staff invalida los tokens vigentes de una solicitud en cualquier mome
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/real_estate/views.py:1258-1267` (`def revoke_resume_link`)
+- `backend/real_estate/views.py:1413-1419` (`def revoke_resume_link`)
 
 **Casos**
 
@@ -186,7 +187,7 @@ La respuesta del token contiene el JSON del borrador y los datos de contacto que
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
 - `backend/real_estate/serializers.py:619-631` (`class PublicationDraftSerializer`)
-- `backend/real_estate/views.py:1262-1279` (`class PublicationDraftView`)
+- `backend/real_estate/views.py:1429-1443` (`class PublicationDraftView`)
 
 **Casos**
 
@@ -210,7 +211,7 @@ Retomar restaura título, descripción, tipo, operación, precio, dirección, ci
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/real_estate/models.py:615-627` (`class PendingPublicationImage`) — Archivos temporales ordenados y ligados al borrador pendiente.
+- `backend/real_estate/models.py:654-665` (`class PendingPublicationImage`) — Archivos temporales ordenados y ligados al borrador pendiente.
 - `backend/real_estate/serializers.py:637-644` (`get_temporary_images`) — El enlace devuelve las fotos que debe reconstruir el formulario.
 - `frontend/app/continuar-publicacion/[token]/page.tsx:40-51` (`PROPERTY_DRAFT_STORAGE_KEY`) — El borrador y las URLs temporales se dejan donde el formulario ya los busca.
 
@@ -244,7 +245,7 @@ El canje crea la propiedad y, a partir del correo del borrador, una cuenta a la 
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/real_estate/views.py:1297-1363` (`class PublicationDraftRedeemView`)
+- `backend/real_estate/views.py:1452-1516` (`class PublicationDraftRedeemView`)
 - `backend/real_estate/services/accounts.py:19-40` (`def get_or_create_by_email`)
 - `frontend/app/add-property/page.tsx:1092-1094` (`!resumeToken`) — El enlace hace de sesión, así que el formulario no abre el modal de cuenta.
 
@@ -300,9 +301,9 @@ Al completarse el canje, el PendingPublication pasa a converted y guarda una ref
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/real_estate/models.py:598-600` (`related_name="pending_publications"`)
-- `backend/real_estate/views.py:1366-1368` (`pending.status = 'converted'`)
-- `backend/real_estate/views.py:1243-1245` (`'Esta solicitud ya se convirtió en un anuncio.'`)
+- `backend/real_estate/models.py:637-639` (`related_name="pending_publications"`)
+- `backend/real_estate/views.py:1517-1519` (`pending.status = 'converted'`)
+- `backend/real_estate/views.py:1394-1396` (`'Esta solicitud ya se convirtió en un anuncio.'`)
 
 **Casos**
 
@@ -331,7 +332,7 @@ Desde la bandeja, staff abre el mismo formulario recuperado, corrige los campos 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
 - `frontend/app/admin/pending-publications/page.tsx:224-243` (`resolveAndPublish`) — Prepara el enlace si hace falta y abre el borrador recuperado para corregirlo.
-- `backend/real_estate/views.py:1365-1379` (`serializer.save(owner=owner)`) — La propiedad queda a nombre del correo del pendiente y se notifica tanto a cuentas nuevas como existentes.
+- `backend/real_estate/views.py:1516-1527` (`serializer.save(owner=owner)`) — La propiedad queda a nombre del correo del pendiente y se notifica tanto a cuentas nuevas como existentes.
 - `backend/real_estate/email_utils.py:406-450` (`send_account_claim_email`) — La cuenta nueva recibe el enlace de definición de contraseña y el enlace público del anuncio.
 
 **Casos**
@@ -359,7 +360,7 @@ POST /api/pending-publications/ valida uploaded_images con el mismo lote de comp
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
 - `backend/real_estate/serializers.py:114-152` (`def validate_image_batch`)
-- `backend/real_estate/serializers.py:560-562` (`def validate_uploaded_images(self, value):`) — PendingPublicationSerializer delega en el validador compartido.
+- `backend/real_estate/serializers.py:567-569` (`def validate_uploaded_images(self, value):`) — PendingPublicationSerializer delega en el validador compartido.
 
 **Casos**
 
@@ -381,8 +382,8 @@ Una tarea periódica elimina del almacén las imágenes temporales de borradores
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/real_estate/tasks.py:150-190` (`def sweep_stale_draft_images`)
-- `backend/estate_map/settings.py:468-472` (`"sweep-stale-draft-images": {`)
+- `backend/real_estate/tasks.py:223-262` (`def sweep_stale_draft_images`)
+- `backend/estate_map/settings.py:477-480` (`"sweep-stale-draft-images": {`)
 
 **Casos**
 
@@ -394,3 +395,30 @@ Una tarea periódica elimina del almacén las imágenes temporales de borradores
 **Cobertura exigida:** api
 
 - `backend/real_estate/tests/test_pending_publication_drafts.py`
+
+### RSM-013 — El canje no espera al correo ni a la limpieza de fotos
+
+**Estado:** ✅ Implementada
+
+La respuesta del canje se emite en cuanto la propiedad está creada. El correo de reclamación o de traspaso y el borrado de las fotos temporales del borrador se encolan en Celery tras el commit, no dentro de la petición.
+
+> **Por qué:** Ninguno de los dos resultados lo lee quien publica, y los dos son lentos por naturaleza: el correo es un viaje de ida y vuelta a un relé SMTP externo, y el borrado es una petición HTTPS al almacén de objetos por cada foto. Un canje medido en producción tardó 26,2 s, a cuatro segundos del `--timeout` de gunicorn, que habría matado al worker con la propiedad ya creada.
+El correo conserva un reintento en línea si el broker no responde, porque es el único mensaje que lleva el enlace para definir la contraseña (RSM-008) y perderlo deja la cuenta inaccesible; la latencia vieja es mejor que el silencio. La limpieza no lo necesita: las fotos ya están copiadas en el anuncio y su borrador se queda sin ningún token vivo, así que el barrido de RSM-012 las recoge de todos modos. Por eso las filas se borran en la tarea y no en la petición: si la tarea se pierde, queda el rastro que el barrido sabe encontrar.
+
+**Evidencia en el código** (verificada por `tools/specs/validate.py`)
+
+- `backend/real_estate/services/publication_redeem.py` (`class PublicationRedeemSideEffectsService`) — Encola ambas tras el commit; el correo cae a envío en línea si el broker falla.
+- `backend/real_estate/tasks.py` (`def notify_publication_redeemed`) — El token de contraseña se acuña aquí, no viaja por la cola.
+- `backend/real_estate/tasks.py` (`def discard_redeemed_draft_images`)
+- `backend/real_estate/views.py` (`PublicationRedeemSideEffectsService().schedule(`)
+
+**Casos**
+
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| el canje responde y luego llega el correo con el enlace de contraseña | — | — | — | 201 inmediato; el correo se envía al ejecutar los callbacks de on_commit |
+| las fotos temporales del borrador canjeado se borran en la tarea | — | — | — | tras ejecutar los callbacks, temporary_images queda vacío y el anuncio conserva su copia |
+
+**Cobertura exigida:** api
+
+- `backend/real_estate/tests/test_publication_resume.py`

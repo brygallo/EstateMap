@@ -1,5 +1,7 @@
 from django.contrib.auth.models import AbstractUser
 from django.core.validators import MaxValueValidator, MinValueValidator
+import unicodedata
+
 from django.db import models
 from django.db.models.functions import Upper
 from django.conf import settings
@@ -73,6 +75,29 @@ class City(models.Model):
         return f"{self.name} ({self.province.name})"
 
 
+def sector_key(address: str, city: str = "") -> str:
+    """Stable key for the named zone a listing sits in.
+
+    `address` is free text and the first segment before the comma is the finest
+    geographic level the catalogue has — a neighbourhood («Cumbayá»), a gated
+    development («Urb. Mocolí Golf Club»), sometimes an avenue. The key folds
+    case and accents because the same zone arrives written every way, and comes
+    back empty when the segment is just the city again: «el sector Macas de la
+    ciudad de Macas» is not a place, it is a repetition (PRC-009).
+    """
+    first = (address or "").split(",")[0].strip()
+    if not first:
+        return ""
+    folded = _fold_place(first)
+    return "" if folded == _fold_place(city) else folded
+
+
+def _fold_place(text: str) -> str:
+    normalized = unicodedata.normalize("NFD", (text or "").strip())
+    stripped = "".join(ch for ch in normalized if unicodedata.category(ch) != "Mn")
+    return " ".join(stripped.casefold().split())
+
+
 class Property(models.Model):
     # --- General Information ---
     PROPERTY_TYPE_CHOICES = [
@@ -123,6 +148,11 @@ class Property(models.Model):
 
     # --- Location ---
     address = models.CharField(max_length=255, blank=True, default="")
+    # Derived from `address` on every save so the zone can be filtered and
+    # paginated in SQL. Recomputing it in Python per request was fine for a
+    # table of averages and is not enough for a page that lists a zone.
+    sector_key = models.CharField(max_length=120, blank=True, default="", db_index=True)
+    sector_label = models.CharField(max_length=120, blank=True, default="")
     city = models.CharField(max_length=100, blank=True, default="Macas")
     province = models.CharField(max_length=100, blank=True, default="Morona Santiago")
     latitude = models.FloatField(null=True, blank=True)
@@ -303,6 +333,15 @@ class Property(models.Model):
             update_fields = kwargs.get('update_fields')
             if update_fields is not None:
                 kwargs['update_fields'] = set(update_fields) | {'closed_at'}
+
+        computed_key = sector_key(self.address, self.city)
+        computed_label = (self.address or "").split(",")[0].strip() if computed_key else ""
+        if (self.sector_key, self.sector_label) != (computed_key, computed_label):
+            self.sector_key = computed_key
+            self.sector_label = computed_label
+            update_fields = kwargs.get('update_fields')
+            if update_fields is not None:
+                kwargs['update_fields'] = set(update_fields) | {'sector_key', 'sector_label'}
 
         if not self.short_code:
             self.short_code = unique_code(type(self))

@@ -53,6 +53,9 @@ Reglas de negocio del inventario: qué es una propiedad publicable, cómo se int
 | [`PROP-036`](#prop-036--un-precio-o-una-superficie-negativos-no-se-guardan) | Un precio o una superficie negativos no se guardan | ✅ Implementada |
 | [`PROP-037`](#prop-037--la-descripción-tiene-un-tope-de-caracteres) | La descripción tiene un tope de caracteres | ✅ Implementada |
 | [`PROP-038`](#prop-038--la-ficha-completa-prioriza-contenido-y-acciones-móviles) | La ficha completa prioriza contenido y acciones móviles | ✅ Implementada |
+| [`PROP-039`](#prop-039--la-propiedad-de-la-ficha-queda-centrada-junto-a-sus-vecinas) | La propiedad de la ficha queda centrada junto a sus vecinas | ✅ Implementada |
+| [`PROP-040`](#prop-040--el-mapa-de-la-ficha-nunca-pierde-las-vecinas-que-ya-tenía) | El mapa de la ficha nunca pierde las vecinas que ya tenía | ✅ Implementada |
+| [`PROP-041`](#prop-041--un-anuncio-sin-ubicación-no-muestra-mapa) | Un anuncio sin ubicación no muestra mapa | ✅ Implementada |
 
 ### PROP-001 — Semántica de price y rent_price
 
@@ -64,9 +67,9 @@ price es siempre el precio principal de la operación del anuncio, y rent_price 
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/real_estate/models.py:158-162` (`rent_price`) — La semántica está escrita como comentario junto a la definición de ambos campos.
+- `backend/real_estate/models.py:188-191` (`rent_price`) — La semántica está escrita como comentario junto a la definición de ambos campos.
 - `backend/ingesta/pipeline/upsert.py:48-50` (`prop.rent_price`) — La ingesta escribe ambos campos por separado desde el dict canónico del scraper.
-- `frontend/app/property/[id]/page.tsx:439-441` (`hasRentPrice`) — La ficha pública muestra el precio principal y, solo si hay rent_price > 0, la línea "Alquiler .../mes".
+- `frontend/app/property/[id]/page.tsx:448-450` (`hasRentPrice`) — La ficha pública muestra el precio principal y, solo si hay rent_price > 0, la línea "Alquiler .../mes".
 
 **Casos**
 
@@ -91,8 +94,8 @@ Una propiedad con status='inactive' desaparece del listado, del mapa y de todos 
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/real_estate/views.py:414-416` (`exclude(status='inactive')`) — Base de get_queryset en PropertyViewSet; de aquí derivan list, map_points y summary.
-- `backend/real_estate/models.py:85-87` (`STATUS_CHOICES`) — Los tres estados posibles son for_sale, for_rent e inactive.
+- `backend/real_estate/views.py:457-459` (`exclude(status='inactive')`) — Base de get_queryset en PropertyViewSet; de aquí derivan list, map_points y summary.
+- `backend/real_estate/models.py:111-113` (`STATUS_CHOICES`) — Los tres estados posibles son for_sale, for_rent e inactive.
 
 **Casos**
 
@@ -117,7 +120,7 @@ Una propiedad con status='inactive' desaparece del listado, del mapa y de todos 
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/real_estate/views.py:1033-1035` (`my_properties`) — La acción declara permission_classes=[IsAuthenticated] y elige entre Property.objects.all() y filter(owner=request.user) sin tocar status.
+- `backend/real_estate/views.py:1184-1186` (`my_properties`) — La acción declara permission_classes=[IsAuthenticated] y elige entre Property.objects.all() y filter(owner=request.user) sin tocar status.
 
 **Casos**
 
@@ -145,8 +148,8 @@ my_properties responde con el sobre paginado de DRF (count, next, previous, resu
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/real_estate/views.py:257-266` (`class InventoryPagination`) — page_size 24, page_size_query_param 'page_size', máximo 100.
-- `backend/real_estate/views.py:1033-1035` (`def my_properties`) — stats se calcula con queryset.aggregate antes de paginar.
+- `backend/real_estate/views.py:273-281` (`class InventoryPagination`) — page_size 24, page_size_query_param 'page_size', máximo 100.
+- `backend/real_estate/views.py:1184-1186` (`def my_properties`) — stats se calcula con queryset.aggregate antes de paginar.
 - `frontend/app/my-properties/page.tsx:194-219` (`const fetchInventory`) — El cliente manda search, status y ordering y acumula páginas.
 
 **Casos**
@@ -167,8 +170,8 @@ Una propiedad puede publicarse sin price y sin area, porque los anuncios importa
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/real_estate/models.py:164-166` (`price = models.DecimalField`) — null=True con help_text que justifica el "a consultar" de los importados.
-- `backend/real_estate/models.py:138-140` (`area = models.FloatField`) — null=True, "opcional en anuncios importados".
+- `backend/real_estate/models.py:195-197` (`price = models.DecimalField`) — null=True con help_text que justifica el "a consultar" de los importados.
+- `backend/real_estate/models.py:169-171` (`area = models.FloatField`) — null=True, "opcional en anuncios importados".
 - `backend/ingesta/pipeline/normalize.py:50-88` (`parse_price`) — Devuelve None en lugar de fallar cuando el texto no contiene un número usable.
 
 **Casos**
@@ -195,7 +198,7 @@ PropertySerializer no declara ningún campo obligatorio, así que un POST autent
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
 - `backend/real_estate/serializers.py:224-232` (`fields = '__all__'`) — Verificado por introspección del serializer en el contenedor: la lista de campos con required=True está vacía.
-- `backend/real_estate/models.py:111-117` (`property_type = models.CharField`) — Defaults que rellenan el hueco - property_type='land', status='for_sale', city='Macas', province='Morona Santiago'.
+- `backend/real_estate/models.py:142-147` (`property_type = models.CharField`) — Defaults que rellenan el hueco - property_type='land', status='for_sale', city='Macas', province='Morona Santiago'.
 
 **Casos**
 
@@ -376,9 +379,9 @@ owner se toma siempre de request.user al crear desde el API, y las propiedades q
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/real_estate/views.py:558-560` (`perform_create`) — serializer.save(owner=self.request.user), ignorando cualquier owner del payload.
+- `backend/real_estate/views.py:610-612` (`perform_create`) — serializer.save(owner=self.request.user), ignorando cualquier owner del payload.
 - `backend/real_estate/serializers.py:195-197` (`owner = serializers.PrimaryKeyRelatedField(read_only=True)`)
-- `backend/real_estate/models.py:183-185` (`owner = models.ForeignKey`) — on_delete=SET_NULL, null=True - borrar la cuenta no borra el anuncio.
+- `backend/real_estate/models.py:214-216` (`owner = models.ForeignKey`) — on_delete=SET_NULL, null=True - borrar la cuenta no borra el anuncio.
 - `backend/ingesta/pipeline/upsert.py:23-53` (`_apply_fields`) — Escribe todos los campos del anuncio importado y no toca owner en ningún momento.
 
 **Casos**
@@ -404,8 +407,8 @@ La escritura sobre una propiedad existente exige ser su owner; cualquier otro us
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
 - `backend/real_estate/permissions.py:4-15` (`IsOwnerOrReadOnly`) — Permite cualquier método seguro y compara obj.owner == request.user para el resto.
-- `backend/real_estate/views.py:311-313` (`IsOwnerOrReadOnly`) — permission_classes = [IsAuthenticatedOrReadOnly, IsOwnerOrReadOnly] en PropertyViewSet.
-- `backend/real_estate/views.py:2480-2482` (`PATCH_ALLOWED_FIELDS`) — El panel admin puede tocar propiedades ajenas, pero solo status, title, price, city y description.
+- `backend/real_estate/views.py:356-358` (`IsOwnerOrReadOnly`) — permission_classes = [IsAuthenticatedOrReadOnly, IsOwnerOrReadOnly] en PropertyViewSet.
+- `backend/real_estate/views.py:2630-2632` (`PATCH_ALLOWED_FIELDS`) — El panel admin puede tocar propiedades ajenas, pero solo status, title, price, city y description.
 
 **Casos**
 
@@ -434,7 +437,7 @@ Sin dueño al que escribir, el contacto de un anuncio importado cae en cascada: 
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/real_estate/models.py:185-197` (`source_url`) — El comentario del bloque de origen declara la cascada, y source_url la cierra como contacto de último recurso.
+- `backend/real_estate/models.py:226-237` (`source_url`) — El comentario del bloque de origen declara la cascada, y source_url la cierra como contacto de último recurso.
 - `frontend/app/property/[id]/page.tsx:657-688` (`sourceUrl`) — Ficha pública - WhatsApp si hay teléfono, "Contactar en {agencia}" si hay enlace, aviso si no hay ninguno.
 - `frontend/components/PropertyModal.tsx:907-978` (`sourceUrl`) — Modal del mapa - misma cascada, con "Llamar" y "WhatsApp" cuando hay teléfono.
 
@@ -477,7 +480,7 @@ La pareja (source, external_id) es única, pero solo para las filas con is_impor
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/real_estate/models.py:264-266` (`uniq_source_external_when_imported`) — UniqueConstraint con condition=Q(is_imported=True).
+- `backend/real_estate/models.py:294-296` (`uniq_source_external_when_imported`) — UniqueConstraint con condition=Q(is_imported=True).
 - `backend/ingesta/pipeline/upsert.py:151-168` (`IntegrityError`) — Savepoint alrededor del save para que el choque de una carrera no envenene la transacción exterior.
 
 **Casos**
@@ -520,7 +523,7 @@ Property no tiene un campo duplicate_of: el pipeline conserva una sola fila y no
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/real_estate/models.py:200-230` (`is_duplicate = models.BooleanField`) — Los campos de ingesta saltan de is_duplicate a imported_at, sin duplicate_of.
+- `backend/real_estate/models.py:245-274` (`is_duplicate = models.BooleanField`) — Los campos de ingesta saltan de is_duplicate a imported_at, sin duplicate_of.
 - `backend/real_estate/migrations/0033_remove_obsolete_dedup_fields.py:1-12` (`name="duplicate_of"`)
 
 **Casos**
@@ -576,7 +579,7 @@ Al guardar una propiedad con precio se crea una fila en PropertyPriceHistory si 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
 - `backend/real_estate/signals.py:48-54` (`PropertyPriceHistory.objects.create`) — Compara con la última fila por recorded_at y solo escribe si el precio cambió.
-- `backend/real_estate/models.py:341-343` (`class PropertyPriceHistory`) — FK en cascada, precio, recorded_at e índice por (property, recorded_at).
+- `backend/real_estate/models.py:380-382` (`class PropertyPriceHistory`) — FK en cascada, precio, recorded_at e índice por (property, recorded_at).
 
 **Casos**
 
@@ -602,8 +605,8 @@ views_count se incrementa al consultar el detalle únicamente cuando el request 
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/real_estate/views.py:597-603` (`is_bot_request`) — Property.objects.filter(pk=...).update(views_count=F('views_count') + 1) solo si no es bot.
-- `backend/real_estate/models.py:243-245` (`views_count`) — PositiveIntegerField con default 0.
+- `backend/real_estate/views.py:654-656` (`is_bot_request`) — Property.objects.filter(pk=...).update(views_count=F('views_count') + 1) solo si no es bot.
+- `backend/real_estate/models.py:260-262` (`views_count`) — PositiveIntegerField con default 0.
 - `backend/real_estate/serializers.py:228-231` (`views_count`) — Está en read_only_fields, así que un cliente no puede inflarlo desde el payload.
 
 **Casos**
@@ -624,7 +627,7 @@ Una PropertyImage nace en pending con el original en disco local, pasa a ready c
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/real_estate/models.py:359-361` (`FAILED = "failed"`) — TextChoices con pending, ready y failed; el default del campo es ready.
+- `backend/real_estate/models.py:398-400` (`FAILED = "failed"`) — TextChoices con pending, ready y failed; el default del campo es ready.
 - `backend/real_estate/serializers.py:61-95` (`stage_property_image`) — Crea la fila en pending con pending_path y encola la optimización; ante OSError devuelve None sin lanzar.
 - `backend/real_estate/tasks.py:44-109` (`optimize_property_image`) — Publica imagen y miniatura, pasa a ready y limpia el temporal; ante ValueError deja failed con optimization_error.
 - `backend/real_estate/serializers.py:173-191` (`_pending_url`) — Una fila pending devuelve una URL servida desde el staging local.
@@ -648,8 +651,8 @@ Como máximo 10 imágenes por propiedad, cada una de hasta 10 MB y entre 200x200
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/estate_map/settings.py:391-393` (`MAX_PROPERTY_UPLOAD_MB`) — MAX_IMAGES_PER_PROPERTY = 10, MAX_IMAGE_SIZE_MB = 10, MAX_PROPERTY_UPLOAD_MB = 50.
-- `backend/estate_map/settings.py:374-376` (`ALLOWED_IMAGE_TYPES`) — image/jpeg, image/jpg, image/png y image/webp.
+- `backend/estate_map/settings.py:401-403` (`MAX_PROPERTY_UPLOAD_MB`) — MAX_IMAGES_PER_PROPERTY = 10, MAX_IMAGE_SIZE_MB = 10, MAX_PROPERTY_UPLOAD_MB = 50.
+- `backend/estate_map/settings.py:384-386` (`ALLOWED_IMAGE_TYPES`) — image/jpeg, image/jpg, image/png y image/webp.
 - `backend/real_estate/serializers.py:253-308` (`validate_uploaded_images`) — Aplica en orden el tope por propiedad, el tope combinado y los tres validadores por imagen.
 - `backend/real_estate/validators.py:8-44` (`validate_image_dimensions`) — Tamaño máximo, dimensiones mínimas y máximas, y extensión permitida.
 - `backend/real_estate/exception_handlers.py:59-64` (`def api_exception_handler`) — Cuando el cuerpo supera los topes del parser de Django, el rechazo ocurre antes del serializador y Django respondería con una página HTML. Este manejador lo devuelve como error de campo sobre `uploaded_images`, que es lo que el formulario necesita para abrir el paso de fotos y lo que deja rastro del campo en el registro de actividad.
@@ -675,10 +678,10 @@ La posición de una propiedad es su par latitude/longitude cuando existe y cae d
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
 - `backend/real_estate/geo.py:230-267` (`polygon_center_lat_lng`) — Centroide del anillo, aceptando GeoJSON o [[lat, lng], ...] y descartando el punto de cierre repetido.
-- `backend/real_estate/models.py:266-289` (`save`) — Rellena el centro al guardar cualquier propiedad con polígono y sin coordenadas, y añade los dos campos a update_fields para que se persistan.
+- `backend/real_estate/models.py:301-323` (`save`) — Rellena el centro al guardar cualquier propiedad con polígono y sin coordenadas, y añade los dos campos a update_fields para que se persistan.
 - `backend/real_estate/migrations/0027_backfill_polygon_centers.py:6-29` (`backfill_centers`) — Backfill de las filas anteriores a la garantía; corre solo en el deploy.
 - `frontend/lib/geo.ts:29-61` (`getPropertyPoint`) — Mismo criterio en el cliente, que además valida el punto contra los límites de Ecuador antes de aceptarlo.
-- `backend/real_estate/views.py:492-498` (`bbox`) — El filtro por bbox aún deja pasar incondicionalmente las propiedades con lat/lng nulas y polígono; tras la migración esa rama no empareja ninguna fila y queda como red de seguridad.
+- `backend/real_estate/views.py:546-549` (`bbox`) — El filtro por bbox aún deja pasar incondicionalmente las propiedades con lat/lng nulas y polígono; tras la migración esa rama no empareja ninguna fila y queda como red de seguridad.
 
 **Casos**
 
@@ -699,7 +702,7 @@ La sección "Publicaciones cercanas" de una ficha lista las propiedades ordenada
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
 - `frontend/lib/properties.ts:267-301` (`getNearbyProperties`) — Punto de referencia vía getPropertyPoint, candidatos sin ubicación descartados, orden ascendente por distanceKm y recorte a limit.
-- `frontend/app/property/[id]/page.tsx:280-282` (`getNearbyProperties`) — La ficha pide 4 y solo pinta la sección si hay al menos una.
+- `frontend/app/property/[id]/page.tsx:284-286` (`getNearbyProperties`) — La ficha pide 4 y solo pinta la sección si hay al menos una.
 
 **Casos**
 
@@ -718,7 +721,7 @@ La ficha envía su centro como origen y el backend ordena por proximidad antes d
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/real_estate/views.py:467-493` (`distance_score`) — La expresión de distancia se aplica al queryset antes de que DRF lo pagine.
+- `backend/real_estate/views.py:529-553` (`distance_score`) — La expresión de distancia se aplica al queryset antes de que DRF lo pagine.
 - `frontend/lib/properties.ts:286-294` (`origin_lat`) — La ficha envía el centro efectivo de la propiedad junto con su ventana bbox.
 
 **Casos**
@@ -746,7 +749,7 @@ El listado lateral es un feed paginado del catálogo filtrado completo, ordenado
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/real_estate/views.py:467-493` (`distance_score`) — El listado ordena el catálogo filtrado por distancia aproximada y deja coordenadas ausentes al final.
+- `backend/real_estate/views.py:529-553` (`distance_score`) — El listado ordena el catálogo filtrado por distancia aproximada y deja coordenadas ausentes al final.
 - `frontend/hooks/usePropertyFilters.ts:427-473` (`fetchCardsPage`) — Las tarjetas omiten bbox, envían el centro del mapa y anexan cada página sin duplicados.
 - `frontend/components/map/PropertySidebar.tsx:162-188` (`IntersectionObserver`) — El sentinel solicita automáticamente la página siguiente al acercarse al final del scroll.
 
@@ -799,11 +802,11 @@ La normalización vive en `save()` porque todos los caminos de escritura pasan p
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/real_estate/models.py:104-125` (`CLOSED_REASON_CHOICES`) — Por qué no son dos valores más de STATUS_CHOICES.
-- `backend/real_estate/models.py:173-181` (`closed_reason = models`)
-- `backend/real_estate/models.py:294-307` (`if self.closed_reason:`) — Cerrar pone inactive y sella la fecha; abrir la borra.
+- `backend/real_estate/models.py:130-150` (`CLOSED_REASON_CHOICES`) — Por qué no son dos valores más de STATUS_CHOICES.
+- `backend/real_estate/models.py:204-211` (`closed_reason = models`)
+- `backend/real_estate/models.py:324-336` (`if self.closed_reason:`) — Cerrar pone inactive y sella la fecha; abrir la borra.
 - `backend/real_estate/serializers.py:38-50` (`def reopen_on_reactivation`) — Volver a poner el anuncio en venta lo reabre; si no, el cambio parece aceptado y se deshace solo.
-- `backend/real_estate/views.py:2669-2671` (`changes['closed_reason'] = ''`) — El cambio de estado en lote escribe con .update(), que nunca llega a save(), así que reabre a mano.
+- `backend/real_estate/views.py:2819-2821` (`changes['closed_reason'] = ''`) — El cambio de estado en lote escribe con .update(), que nunca llega a save(), así que reabre a mano.
 
 **Casos**
 
@@ -838,8 +841,8 @@ Ese privilegio es de la ficha por id y solo de ella. La ruta por código corto n
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/real_estate/views.py:406-425` (`visible |= Q(is_duplicate=False) & ~Q(closed_reason='')`) — Las acciones de detalle resuelven la fila por id, no por el catálogo público; el dueño entra siempre.
-- `backend/real_estate/views.py:801-811` (`exclude(status='inactive', closed_reason='')`) — El código corto de un anuncio vendido sigue resolviendo.
+- `backend/real_estate/views.py:449-467` (`visible |= Q(is_duplicate=False) & ~Q(closed_reason='')`) — Las acciones de detalle resuelven la fila por id, no por el catálogo público; el dueño entra siempre.
+- `backend/real_estate/views.py:962-968` (`exclude(status='inactive', closed_reason='')`) — El código corto de un anuncio vendido sigue resolviendo.
 
 **Casos**
 
@@ -977,3 +980,88 @@ En celular, la ficha completa presenta galería, identidad, precio, característ
 | --- | --- | --- | --- | --- |
 | Persona consulta una ficha completa en celular | — | — | — | ve los datos clave compactos y una sola superficie persistente de acciones |
 | Persona consulta la misma ficha en escritorio | — | — | — | conserva la tarjeta lateral sticky y el espaciado amplio |
+
+### PROP-039 — La propiedad de la ficha queda centrada junto a sus vecinas
+
+**Estado:** ✅ Implementada
+
+Al abrir el mapa de una ficha, la propiedad seleccionada ocupa el centro de la cámara. El encuadre se extiende de forma simétrica hasta incluir las publicaciones cercanas disponibles y limita el acercamiento inicial para que el anuncio no aparezca aislado cuando todavía hay inventario alrededor. La cantidad objetivo depende del área real del mapa (ancho por alto): tres en un mapa compacto, cinco en uno mediano y siete en uno grande. La cámara se aleja por bandas de 2, 5, 12 y hasta 30 km; nunca incluye inventario más lejano solo para llenar. Ese encuadre es el definitivo: el mapa de la ficha no aplica el acercamiento automático que el mapa general usa al seleccionar un anuncio.
+
+> **Por qué:** Ajustar límites directamente entre todos los puntos centra el rectángulo geográfico, no necesariamente la propiedad que la persona está revisando. Un encuadre simétrico conserva esa referencia y deja opciones visibles a ambos lados para continuar explorando.
+
+**Evidencia en el código** (verificada por `tools/specs/validate.py`)
+
+- `frontend/lib/geo.ts` (`getPropertyMapCamera`) — Calcula límites simétricos alrededor de la propiedad y conserva un zoom de contexto cuando no hay vecinas.
+- `frontend/components/maps/PropertyNearbyMap.tsx` (`getPropertyMapCamera`) — Aplica el encuadre al iniciar el mapa de la ficha completa.
+- `frontend/components/maps/PropertyNearbyMap.tsx` (`autoCenterSelected`) — La ficha desactiva el acercamiento automático para conservar su encuadre.
+- `frontend/components/maps/MapLibreMap.tsx` (`if (!autoCenterSelected) return;`) — Sin esta salida el mapa volaba al polígono seleccionado y dejaba la ficha con una sola propiedad.
+- `tests/e2e/ficha-map.spec.ts` (`opens wide enough to show the area, not the lot`) — Comprueba en escritorio y en celular que la ficha no supera el zoom de contexto y que el encuadre no cambia después.
+- `tests/e2e/map.spec.ts` (`selecting a listing zooms the general map onto it`) — El mapa general conserva el acercamiento automático; la excepción es solo de la ficha.
+- `frontend/lib/geo.test.ts` (`describe('getPropertyMapCamera'`) — Cubre varias vecinas, coordenadas coincidentes y ausencia de inventario cercano.
+
+**Casos**
+
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| Ficha con varias publicaciones cercanas | — | — | — | propiedad seleccionada centrada y vecinas visibles alrededor |
+| Ficha con una sola publicación cercana | — | — | — | ambas visibles con la propiedad seleccionada en el centro |
+| Ficha sin publicaciones cercanas | — | — | — | propiedad centrada con un zoom de contexto, no con acercamiento máximo |
+| Ficha con mapas de distinto ancho y alto | — | — | — | busca tres vecinas en un mapa compacto, cinco en uno mediano y siete en uno grande sin superar 30 km |
+| Ficha completa en celular | — | — | — | conserva el encuadre de contexto y no se acerca al polígono de la propiedad |
+| Persona abre el mapa general con un anuncio seleccionado | — | — | — | el mapa general sí se acerca al anuncio |
+
+**Cobertura exigida:** unit
+
+- `frontend/lib/geo.test.ts`
+- `tests/e2e/ficha-map.spec.ts`
+- `tests/e2e/map.spec.ts`
+
+### PROP-040 — El mapa de la ficha nunca pierde las vecinas que ya tenía
+
+**Estado:** ✅ Implementada
+
+El mapa de la ficha pinta el anuncio, lo que devuelve la consulta del área visible y las vecinas que el servidor ya había resuelto para esa ficha. Ninguna publicación aparece dos veces, y cuando la respuesta viene agrupada las vecinas no se añaden porque los agrupadores ya las cuentan.
+
+> **Por qué:** La consulta del área visible tiene tope de puntos y puede agrupar: en una zona densa devuelve menos inventario del que la ficha ya recibió. Sin esta fusión, la persona terminaba viendo su anuncio solo en pantalla justo donde más oferta hay alrededor.
+
+**Evidencia en el código** (verificada por `tools/specs/validate.py`)
+
+- `frontend/lib/geo.ts` (`mergeNearbyIntoViewport`) — Fusiona anuncio, área visible y vecinas del servidor sin duplicar ni contradecir a los agrupadores.
+- `frontend/components/maps/PropertyNearbyMap.tsx` (`mergeNearbyIntoViewport`) — El mapa de la ficha pinta exactamente esa lista.
+- `frontend/lib/geo.test.ts` (`describe('mergeNearbyIntoViewport'`) — Cubre vecinas recuperadas, fuera del área, duplicadas, agrupadas y sin ubicación.
+- `tests/e2e/ficha-map.spec.ts` (`paints neighbouring listings alongside the selected one`) — En escritorio y en celular la ficha muestra más de un marcador y uno solo marcado como seleccionado.
+
+**Casos**
+
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| La consulta del área visible devuelve menos vecinas de las que la ficha ya tenía | — | — | — | las vecinas conocidas siguen visibles si caen dentro del área |
+| La vecina ya viene en la respuesta del área visible | — | — | — | se pinta una sola vez |
+| La respuesta del área visible viene agrupada | — | — | — | no se añaden vecinas sueltas sobre los agrupadores |
+
+**Cobertura exigida:** unit
+
+- `frontend/lib/geo.test.ts`
+- `tests/e2e/ficha-map.spec.ts`
+
+### PROP-041 — Un anuncio sin ubicación no muestra mapa
+
+**Estado:** ✅ Implementada
+
+La sección «Ubicación y propiedades cercanas» solo aparece cuando el anuncio tiene una posición: coordenadas propias o un polígono del que derivarla. Sin ella la ficha no dibuja mapa, y el botón «Ver en mapa» lleva a las propiedades de la ciudad, igual que en un anuncio cerrado.
+
+> **Por qué:** Sin posición no hay nada que encuadrar: la cámara se quedaba en su zoom inicial y la ficha abría un mapa de todo el país bajo un título que promete la ubicación de esa propiedad. La dirección en texto ya se muestra más arriba, así que no se pierde información.
+
+**Evidencia en el código** (verificada por `tools/specs/validate.py`)
+
+- `frontend/app/property/[id]/page.tsx` (`const mapPoint = getPropertyPoint(property);`) — La sección del mapa se renderiza solo con una posición resuelta.
+- `frontend/app/property/[id]/page.tsx` (`const showsOnMap = !isClosed && Boolean(mapPoint);`) — Solo un anuncio activo y ubicado enlaza al mapa general.
+- `tests/e2e/ficha-map.spec.ts` (`leaves the map out when the listing has no position`) — Un anuncio sin coordenadas ni polígono no renderiza el título ni el lienzo del mapa, ni ofrece «Ver en mapa».
+
+**Casos**
+
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| Anuncio publicado sin coordenadas ni polígono | — | — | — | la ficha no muestra la sección del mapa |
+| Anuncio con polígono dibujado | — | — | — | la ficha muestra el mapa centrado en el centroide del polígono |
+| Anuncio sin ubicación con botón de mapa | — | — | — | el botón lleva a las propiedades de la ciudad, no al mapa general |

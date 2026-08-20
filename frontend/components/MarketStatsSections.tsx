@@ -135,6 +135,8 @@ export default function MarketStatsSections({
             `${money(row.current_price_m2)}/m²`,
           ])}
         />
+        {/* Each zone now has a page of its own, and this table is the only
+            place in the site that already names them. */}
         <StatsTable
           title="Sectores con inventario"
           rows={data.by_sector.map((row) => [
@@ -142,20 +144,40 @@ export default function MarketStatsSections({
             `${row.count} anuncios`,
             `${money(row.avg_price_m2)}/m²`,
           ])}
+          hrefs={data.by_sector.map((row) =>
+            row.city && row.sector_key
+              ? `/propiedades/${slugify(row.city)}/${slugify(row.sector_key)}`
+              : null
+          )}
         />
       </section>
     </>
   );
 }
 
-function StatsTable({ title, rows }: { title: string; rows: string[][] }) {
+function StatsTable({
+  title,
+  rows,
+  hrefs,
+}: {
+  title: string;
+  rows: string[][];
+  /** Optional destination per row, aligned by index. */
+  hrefs?: (string | null)[];
+}) {
   return (
     <div className="rounded-card border border-line bg-white p-5 shadow-card">
       <h2 className="text-lg font-bold text-textPrimary">{title}</h2>
       <div className="mt-3 divide-y divide-line">
         {rows.slice(0, 8).map((row, index) => (
           <div key={`${row[0]}-${index}`} className="grid grid-cols-[1fr_auto] gap-x-3 py-3 text-sm">
-            <span className="font-semibold text-textPrimary">{row[0]}</span>
+            {hrefs?.[index] ? (
+              <Link href={hrefs[index]!} className="font-semibold text-primary hover:underline">
+                {row[0]}
+              </Link>
+            ) : (
+              <span className="font-semibold text-textPrimary">{row[0]}</span>
+            )}
             <span className="font-geo font-bold text-primary">{row[2]}</span>
             <span className="col-span-2 text-xs text-textSecondary">{row[1]}</span>
           </div>

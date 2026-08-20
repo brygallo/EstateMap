@@ -402,3 +402,45 @@ rules:
         expected: sin cifras, solo el enlace al catálogo
       - name: Un artículo sin ciudad
         expected: no se añade bloque de ciudad
+
+  - id: BLOG-012
+    name: Un artículo programado no declara que se modificó antes de publicarse
+    status: implemented
+    summary: >-
+      `dateModified` —en el schema Article, en Open Graph, en el sitemap y en la
+      línea «Actualizado el…» de la página— es la más tardía entre la fecha de
+      modificación y la de publicación. Nunca una fecha anterior a la
+      publicación.
+    rationale: >-
+      El calendario editorial escribe los artículos días antes de publicarlos
+      (BLOG-001: manda la fecha, no una tarea), así que `updated_at` queda por
+      detrás de un `published_at` futuro. Entregando ambos campos tal cual, ocho
+      de los quince artículos vivos afirmaban haberse modificado antes de
+      existir. Es una contradicción en la señal que más pesa en las respuestas
+      generadas por IA, donde lo reciente se cita mucho más. Un artículo no se
+      modifica antes de publicarse: la fecha posterior es la única respuesta
+      honesta.
+    evidence:
+      - file: frontend/lib/blog.ts
+        symbol: export function articleModifiedAt
+        note: Única fuente de la fecha de modificación de un artículo.
+      - file: frontend/app/blog/[slug]/page.tsx
+        symbol: "dateModified: articleModifiedAt(post)"
+        note: El schema, Open Graph y la fecha visible leen el mismo valor.
+      - file: frontend/app/sitemap.ts
+        symbol: "new Date(articleModifiedAt(post))"
+        note: El `lastmod` del artículo usa la misma regla que su schema (SEO-006).
+      - file: frontend/lib/blog.test.ts
+        symbol: describe('articleModifiedAt'
+        note: Cubre edición real, post programado, fechas iguales y fechas ausentes.
+    frontend:
+      routes: ["/blog/[slug]"]
+    tests:
+      unit: true
+    cases:
+      - name: Artículo editado un mes después de publicarse
+        expected: dateModified es la fecha de edición
+      - name: Artículo escrito el día 11 y programado para el 19
+        expected: dateModified es el 19, no el 11
+      - name: Artículo sin fecha de modificación
+        expected: dateModified es la fecha de publicación

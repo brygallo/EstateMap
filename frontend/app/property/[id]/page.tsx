@@ -39,7 +39,7 @@ import {
   formatDate,
   type ClosedReason,
 } from '@/lib/property-labels';
-import { formatDistance } from '@/lib/geo';
+import { formatDistance, getPropertyPoint } from '@/lib/geo';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import AnimatedNumber from '@/components/ui/AnimatedNumber';
@@ -279,7 +279,14 @@ export default async function PropertyPage({ params }: PropertyPageProps) {
     notFound();
   }
 
-  const nearbyProperties = await getNearbyProperties(property, 4);
+  // The cards need four results, while the map needs a wider candidate set so
+  // it can choose a useful zoom for the actual viewport.
+  const mapNearbyProperties = await getNearbyProperties(property, 12);
+  const nearbyProperties = mapNearbyProperties.slice(0, 4);
+  // A listing published without coordinates and without a drawn shape has
+  // nothing to put on a map: the camera would open over the whole country under
+  // a heading promising this location. The section stays out in that case.
+  const mapPoint = getPropertyPoint(property);
 
   const mapUrl = `/?property=${resolvedParams.id}`;
   const propertyTypeLabel = getPropertyTypeLabel(property.property_type);
@@ -454,6 +461,9 @@ export default async function PropertyPage({ params }: PropertyPageProps) {
   // Where an interested visitor goes instead: the same city, still available.
   const similarUrl = property.city ? `/propiedades/${slugify(property.city)}` : '/propiedades';
   const similarLabel = property.city ? `Ver propiedades en ${property.city}` : 'Ver propiedades disponibles';
+  // Only a listing that is both active and located can be pointed at on the
+  // general map; the rest send the visitor to the zone instead.
+  const showsOnMap = !isClosed && Boolean(mapPoint);
   // `previous_price` is the price asked before the current one — it can be a
   // rise, so only a real drop is announced.
   const previousPriceValue = Number.parseFloat(String(property.previous_price ?? ''));
@@ -679,14 +689,15 @@ export default async function PropertyPage({ params }: PropertyPageProps) {
                       Contactar anunciante
                     </TrackedContactLink>
                   ) : null}
-                  {/* A closed listing is off the map (it is `inactive`), so the
-                      map link would land on an empty viewport. The zone is what
-                      is still useful about it. */}
+                  {/* A closed listing is off the map (it is `inactive`), and one
+                      published without a position was never on it, so the map
+                      link would land on an empty viewport. The zone is what is
+                      still useful about them. */}
                   <Link
-                    href={isClosed ? similarUrl : mapUrl}
+                    href={showsOnMap ? mapUrl : similarUrl}
                     className="inline-flex items-center justify-center gap-2 rounded-button border border-line bg-white px-4 py-2.5 text-sm font-semibold text-textPrimary transition-colors hover:border-primary hover:text-primary"
                   >
-                    {isClosed ? similarLabel : 'Ver en mapa'}
+                    {showsOnMap ? 'Ver en mapa' : similarLabel}
                     <ArrowRight className="h-4 w-4" strokeWidth={2} aria-hidden />
                   </Link>
                 </div>
@@ -757,7 +768,7 @@ export default async function PropertyPage({ params }: PropertyPageProps) {
             <aside className="hidden lg:col-span-1 lg:block">
               {/* Sticks below the fixed header, not at the viewport edge: with
                   `top-6` the card parked underneath the bar. */}
-              <div className="rounded-card border border-line bg-surface p-6 shadow-card lg:sticky lg:top-[calc(var(--app-header-height)+1.5rem)]">
+              <div className="isolate z-10 rounded-card border border-line bg-surface p-6 shadow-card lg:sticky lg:top-[calc(var(--app-header-height)+1.5rem)]">
                 <div className="text-xs font-medium uppercase tracking-wide text-textSecondary">
                   {isClosed ? 'Último precio publicado' : 'Precio'}
                 </div>
@@ -933,6 +944,7 @@ export default async function PropertyPage({ params }: PropertyPageProps) {
 
           {/* The explorer spans the full viewport so locations can be compared
               without confining the map to the details text column. */}
+          {mapPoint && (
           <section className="relative left-1/2 mt-6 w-screen -translate-x-1/2 border-y border-line bg-surface sm:mt-10" aria-labelledby="property-map-title">
             <div className="mx-auto max-w-6xl px-3 py-3 sm:px-4 sm:py-4">
               <h2 id="property-map-title" className="text-base font-semibold text-textPrimary sm:text-lg">Ubicación y propiedades cercanas</h2>
@@ -950,8 +962,9 @@ export default async function PropertyPage({ params }: PropertyPageProps) {
                 Mueve el mapa para cargar esa zona. Selecciona un marcador para abrir su ficha completa.
               </p>
             </div>
-            <PropertyNearbyMap property={property} nearbyProperties={nearbyProperties} />
+            <PropertyNearbyMap property={property} nearbyProperties={mapNearbyProperties} />
           </section>
+          )}
 
           <AdSlot
             placement="property_footer"

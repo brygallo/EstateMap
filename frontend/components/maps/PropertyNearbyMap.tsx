@@ -4,7 +4,7 @@ import dynamic from 'next/dynamic';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import type { MapBounds, MapPropertyItem, Property } from '@/lib/types';
-import { getPropertyPoint } from '@/lib/geo';
+import { getPropertyMapCamera, getPropertyPoint, mergeNearbyIntoViewport } from '@/lib/geo';
 
 const GeneralMap = dynamic(() => import('./MapLibreMap'), {
   ssr: false,
@@ -30,12 +30,10 @@ export default function PropertyNearbyMap({ property, nearbyProperties }: Proper
     [property, nearbyProperties]
   );
   const [mapProperties, setMapProperties] = useState<MapPropertyItem[]>(initialProperties);
-  const properties = useMemo(() => {
-    const withoutCurrent = mapProperties.filter((item) =>
-      (item as any).is_cluster || String(item.id) !== String(property.id)
-    );
-    return [{ ...property, is_card_result: true }, ...withoutCurrent];
-  }, [mapProperties, property]);
+  const properties = useMemo(
+    () => mergeNearbyIntoViewport(property, mapProperties, nearbyProperties, bounds),
+    [bounds, mapProperties, nearbyProperties, property]
+  );
   const centerPoint = getPropertyPoint(property) ?? getPropertyPoint(nearbyProperties[0]);
   const center: [number, number] = centerPoint ? [centerPoint.lat, centerPoint.lng] : [-1.8312, -78.1834];
 
@@ -81,18 +79,33 @@ export default function PropertyNearbyMap({ property, nearbyProperties }: Proper
 
   const handleMapReady = useCallback((map: any) => {
     mapRef.current = map;
-    const points = properties.map(getPropertyPoint).filter(Boolean) as Array<{ lat: number; lng: number }>;
-    if (points.length === 0) return;
-    if (points.length === 1) {
-      map.jumpTo({ center: [points[0].lng, points[0].lat], zoom: 16 });
+    const selectedPoint = getPropertyPoint(property);
+    if (!selectedPoint) return;
+    const nearbyPoints = properties
+      .filter((item) => String(item.id) !== String(property.id))
+      .map(getPropertyPoint)
+      .filter(Boolean) as Array<{ lat: number; lng: number }>;
+    const mapContainer = map.getContainer?.();
+    const viewportWidth = mapContainer?.clientWidth ?? window.innerWidth;
+    const viewportHeight = mapContainer?.clientHeight ?? window.innerHeight * 0.52;
+    const camera = getPropertyMapCamera(
+      selectedPoint,
+      nearbyPoints,
+      viewportWidth,
+      viewportHeight
+    );
+
+    if (camera.mode === 'center') {
+      map.jumpTo({ center: camera.center, zoom: camera.zoom });
       return;
     }
-    const bounds: [[number, number], [number, number]] = [
-      [Math.min(...points.map((point) => point.lng)), Math.min(...points.map((point) => point.lat))],
-      [Math.max(...points.map((point) => point.lng)), Math.max(...points.map((point) => point.lat))],
-    ];
-    map.fitBounds(bounds, { padding: 54, maxZoom: 16, duration: 0 });
-  }, [properties]);
+
+    map.fitBounds(camera.bounds, {
+      padding: 64,
+      maxZoom: camera.maxZoom,
+      duration: 0,
+    });
+  }, [properties, property]);
 
   const handleLocate = useCallback(() => {
     if (!navigator.geolocation) {
@@ -131,6 +144,7 @@ export default function PropertyNearbyMap({ property, nearbyProperties }: Proper
             router.push(`/propiedad/${selected.id}`);
           }
         }}
+        autoCenterSelected={false}
         onLocate={handleLocate}
         locating={locating}
         locationBlocked={locationBlocked}

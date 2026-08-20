@@ -74,7 +74,7 @@ El modelo User solo añade correo único, verificación de correo y campos de OA
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/real_estate/models.py:17-25` (`class User(AbstractUser)`) — Definición completa del usuario. Los únicos campos propios son email, is_email_verified y los tres de OAuth.
+- `backend/real_estate/models.py:26-33` (`class User(AbstractUser)`) — Definición completa del usuario. Los únicos campos propios son email, is_email_verified y los tres de OAuth.
 
 
 **Casos**
@@ -95,7 +95,7 @@ Los topes de imágenes y de peso son constantes de configuración iguales para t
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/estate_map/settings.py:389-391` (`MAX_IMAGES_PER_PROPERTY`) — La línea 367 es el comentario "User-specific limits can be introduced here when subscription plans are implemented".
+- `backend/estate_map/settings.py:399-401` (`MAX_IMAGES_PER_PROPERTY`) — La línea 367 es el comentario "User-specific limits can be introduced here when subscription plans are implemented".
 
 
 **Casos**

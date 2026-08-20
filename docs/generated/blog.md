@@ -28,6 +28,7 @@ La API pública es de solo lectura. La escritura se realiza desde el escritorio 
 | [`BLOG-007`](#blog-007--programar-un-lote-no-pisa-lo-que-ya-está-en-el-calendario) | Programar un lote no pisa lo que ya está en el calendario | ✅ Implementada |
 | [`BLOG-008`](#blog-008--cada-autor-con-nombre-público-tiene-una-página-enlazable) | Cada autor con nombre público tiene una página enlazable | ✅ Implementada |
 | [`BLOG-009`](#blog-009--un-artículo-de-ciudad-entrega-el-precio-del-m²-y-el-inventario-de-esa-ciudad) | Un artículo de ciudad entrega el precio del m² y el inventario de esa ciudad | ✅ Implementada |
+| [`BLOG-012`](#blog-012--un-artículo-programado-no-declara-que-se-modificó-antes-de-publicarse) | Un artículo programado no declara que se modificó antes de publicarse | ✅ Implementada |
 
 ### BLOG-001 — Un post es público desde que su fecha de publicación queda en el pasado
 
@@ -343,3 +344,34 @@ El umbral es la otra mitad de la regla. Publicar un promedio calculado sobre tre
 **Cobertura exigida:** api
 
 - `backend/blog/tests/test_blog_seo.py`
+
+### BLOG-012 — Un artículo programado no declara que se modificó antes de publicarse
+
+**Estado:** ✅ Implementada
+
+`dateModified` —en el schema Article, en Open Graph, en el sitemap y en la línea «Actualizado el…» de la página— es la más tardía entre la fecha de modificación y la de publicación. Nunca una fecha anterior a la publicación.
+
+> **Por qué:** El calendario editorial escribe los artículos días antes de publicarlos (BLOG-001: manda la fecha, no una tarea), así que `updated_at` queda por detrás de un `published_at` futuro. Entregando ambos campos tal cual, ocho de los quince artículos vivos afirmaban haberse modificado antes de existir. Es una contradicción en la señal que más pesa en las respuestas generadas por IA, donde lo reciente se cita mucho más. Un artículo no se modifica antes de publicarse: la fecha posterior es la única respuesta honesta.
+
+**Frontend**
+
+- Ruta: `/blog/[slug]`
+
+**Evidencia en el código** (verificada por `tools/specs/validate.py`)
+
+- `frontend/lib/blog.ts` (`export function articleModifiedAt`) — Única fuente de la fecha de modificación de un artículo.
+- `frontend/app/blog/[slug]/page.tsx` (`dateModified: articleModifiedAt(post)`) — El schema, Open Graph y la fecha visible leen el mismo valor.
+- `frontend/app/sitemap.ts` (`new Date(articleModifiedAt(post))`) — El `lastmod` del artículo usa la misma regla que su schema (SEO-006).
+- `frontend/lib/blog.test.ts` (`describe('articleModifiedAt'`) — Cubre edición real, post programado, fechas iguales y fechas ausentes.
+
+**Casos**
+
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| Artículo editado un mes después de publicarse | — | — | — | dateModified es la fecha de edición |
+| Artículo escrito el día 11 y programado para el 19 | — | — | — | dateModified es el 19, no el 11 |
+| Artículo sin fecha de modificación | — | — | — | dateModified es la fecha de publicación |
+
+**Cobertura exigida:** unit
+
+- `frontend/lib/blog.test.ts`

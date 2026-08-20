@@ -1,0 +1,162 @@
+version: 1
+domain: blogs-vivos-siguientes
+title: Lo que falta de las páginas vivas del blog
+status: proposed
+summary: >-
+  El sistema de rankings vivos ya está construido y descrito en
+  `specs/domains/blogs-vivos.yaml`. Aquí queda lo que todavía no se implementa:
+  más recetas, y las reglas que evitan que multiplicarlas produzca basura.
+
+# ---------------------------------------------------------------------------
+# Por qué esto no es «generar páginas»
+#
+# El portal ya tiene tres capas programáticas: las landings de tipo + operación
+# + ubicación (`[combo]`, SEO-001), las páginas de ciudad y las 65 de precio del
+# m². Añadir una cuarta solo se justifica si responde una pregunta que ninguna
+# de las otras responde. «Terrenos en venta en Quito» es un catálogo: todo,
+# paginado, filtrable. «Los terrenos más baratos de Quito» es una respuesta:
+# diez, ordenados, con el motivo de por qué cada uno está ahí y contra qué se
+# compara. Si la página nueva acaba siendo el catálogo reordenado, canibaliza a
+# la que ya posiciona y entra de lleno en lo que Google llama abuso de contenido
+# a escala. Toda esta propuesta está escrita alrededor de esa diferencia.
+#
+# El dato que la sostiene ya existe y no lo tiene ningún competidor: precios,
+# áreas y ubicaciones reales del inventario activo, con muestra y método.
+# ---------------------------------------------------------------------------
+
+rules:
+  - id: LIVE-010
+    name: La recomendación se calcula con datos públicos
+    status: proposed
+    summary: >-
+      La receta «la mejor recomendación» ordena por distancia del precio por m²
+      respecto al promedio de su sector, entre anuncios que además estén
+      completos —con área, fotos y ubicación—. No usa señales privadas.
+    rationale: >-
+      Es la versión de «lo mejor de la plataforma» que se puede publicar y
+      defender: cada posición se explica con una cifra que el visitante puede
+      comprobar en la misma página, y no expone lo que VIS-001 protege.
+    cases:
+      - name: Anuncio barato para su sector, con área y fotos
+        expected: entra en la recomendación
+      - name: Anuncio sin área declarada
+        expected: fuera, no se puede calcular su precio por m²
+
+  - id: LIVE-011
+    name: Catálogo de recetas publicables con el dato que ya existe
+    status: proposed
+    summary: >-
+      Cada criterio de esta lista se puede calcular hoy con las columnas del
+      inventario y las estadísticas del portal, y multiplica por tipo, operación
+      y ámbito. Ninguno necesita datos que no tengamos ni afirma nada que la
+      página no pueda demostrar en su propia tabla.
+    rationale: >-
+      La lista es el sistema. Añadir un criterio nuevo debe ser declarar una
+      receta, no escribir una página: por eso cada uno se define por la columna
+      que ordena, el filtro que aplica y la comparación que muestra.
+    cases:
+      - name: "Más baratos — precio ascendente"
+        expected: "terrenos-mas-baratos-en-quito · el más buscado; compara contra el promedio del ámbito"
+      - name: "Más caros — precio descendente"
+        expected: "casas-mas-caras-en-cuenca · la gama alta se busca por curiosidad y por comparación"
+      - name: "Más grandes — área descendente"
+        expected: "terrenos-mas-grandes-del-pais · funciona a nivel nacional, donde casi ningún otro criterio lo hace"
+      - name: "Más pequeños — área ascendente sobre un mínimo válido"
+        expected: "terrenos-mas-pequenos-en-manta · sirve a quien busca lote mínimo para construir"
+      - name: "Mejor precio por m² — distancia bajo el promedio del sector"
+        expected: "la mejor recomendación de LIVE-010, por ciudad y por tipo"
+      - name: "Más recientes — fecha de publicación descendente"
+        expected: "lo-ultimo-en-terrenos-en-quito · la única receta que cambia a diario en ciudades activas"
+      - name: "Bajadas de precio — variación negativa sobre el histórico"
+        expected: "necesita el histórico de precio que ya registra la ficha; alto valor comercial"
+      - name: "Por presupuesto — bandas de precio"
+        expected: "casas-de-menos-de-100000-en-quito · cortes fijos: 50k, 100k, 150k, 200k, 300k, 500k"
+      - name: "Por precio del m² — bandas"
+        expected: "terrenos-por-menos-de-50-dolares-el-metro-en-guayas"
+      - name: "Por tamaño — bandas de área"
+        expected: "terrenos-de-mas-de-1000-metros-en-daule · cortes: 300, 500, 1000, 5000, 10000 m²"
+      - name: "Por habitaciones"
+        expected: "casas-de-3-habitaciones-en-quito · una de las búsquedas más frecuentes del sector"
+      - name: "Por sector dentro de una ciudad"
+        expected: "los sectores ya existen en las estadísticas del m²; permite bajar de ciudad a barrio"
+      - name: "Sectores con más oferta"
+        expected: "donde-hay-mas-terrenos-en-quito · agregado por zona, sin señalar anuncios"
+      - name: "Ciudades más baratas de una provincia"
+        expected: "las-ciudades-mas-baratas-de-pichincha · ranking de ámbitos, no de anuncios"
+      - name: "Alquiler, todas las anteriores donde aplique"
+        expected: "departamentos-en-alquiler-mas-baratos-en-quito · el inventario de alquiler es pequeño, el umbral decide"
+      - name: "Cerca de un punto conocido"
+        expected: "requiere una lista de referencias por ciudad; queda fuera de la primera entrega"
+
+  - id: LIVE-012
+    name: Dos recetas no publican el mismo conjunto
+    status: proposed
+    summary: >-
+      Antes de generar una página se comprueba que su ranking no coincida casi
+      por completo con el de otra receta ya publicada del mismo ámbito. Cuando
+      dos coinciden, se publica la más específica y la otra no se genera.
+    rationale: >-
+      En una ciudad con doce terrenos, «los más baratos», «los de menos de
+      50.000» y «mejor precio por m²» devuelven casi la misma lista. Publicar
+      las tres es duplicar contenido con tres URL distintas, que es exactamente
+      lo que penaliza el rastreo a escala. El inventario grande las separa solo;
+      el pequeño hay que separarlo con esta regla.
+    cases:
+      - name: Dos recetas con más del 80 % de anuncios en común
+        expected: se publica la más específica; la otra queda sin generar
+      - name: Ciudad grande donde cada receta devuelve conjuntos distintos
+        expected: se publican todas
+
+  - id: LIVE-013
+    name: Cada ciudad tiene un centro desde el que se llega a todo lo suyo
+    status: proposed
+    summary: >-
+      Las páginas vivas de una misma ciudad se enlazan entre sí y con su
+      catálogo, su estadística del m² y los artículos del blog sobre esa ciudad.
+      La estadística de la ciudad actúa como centro.
+    rationale: >-
+      Miles de páginas sueltas a cinco saltos del inicio no se rastrean. Un
+      centro por ciudad convierte el volumen en profundidad y, para quien lee,
+      en una sección con sentido en vez de una lista infinita.
+    cases:
+      - name: Visita a un ranking de Quito
+        expected: enlaces a las demás recetas de Quito, a su catálogo y a su estadística
+      - name: Visita a la estadística de Quito
+        expected: enlaces a los rankings vivos de Quito
+
+  - id: LIVE-014
+    name: Las bandas son cortes fijos y redondos
+    status: proposed
+    summary: >-
+      Las recetas por presupuesto, área o precio por m² usan una lista corta de
+      cortes declarada en el código —50.000, 100.000, 150.000…— nunca cortes
+      derivados de los datos de cada ciudad.
+    rationale: >-
+      Un corte calculado por percentiles cambia con el inventario, y con él la
+      URL: la página que ayer era «menos de 87.400» hoy es otra. Un corte fijo
+      es estable, se busca tal cual —la gente escribe «casas de menos de 100 mil»—
+      y permite comparar la misma banda entre ciudades.
+    cases:
+      - name: Banda de 100.000 en dos ciudades
+        expected: misma URL y mismo significado en ambas
+      - name: Corte derivado del percentil del inventario
+        expected: no se usa
+
+  - id: LIVE-015
+    name: Una comparativa entre ciudades exige inventario en las dos
+    status: proposed
+    summary: >-
+      Las páginas del tipo «dónde está más barato el m², Quito o Guayaquil» solo
+      se generan para pares donde ambos lados superan el umbral, y muestran las
+      dos muestras y las dos fechas.
+    rationale: >-
+      El par es la forma más rápida de multiplicar páginas y la más fácil de
+      convertir en basura: sesenta y cinco ciudades dan más de dos mil pares, y
+      la mayoría compararía cuarenta anuncios contra ocho. Con umbral en los dos
+      lados quedan pocas decenas, que son justo las que alguien buscaría.
+    cases:
+      - name: Quito contra Guayaquil
+        expected: se genera, con muestra y fecha de cada lado
+      - name: Quito contra una ciudad con nueve anuncios
+        expected: no se genera
+

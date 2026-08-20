@@ -1,5 +1,6 @@
 import { expect, test } from '@playwright/test';
 import { API_URL } from '../playwright.config';
+import { readMapState } from './support/markers';
 
 /**
  * The map is the product. If it does not paint, nothing else matters.
@@ -22,32 +23,74 @@ test.describe('Map', () => {
     expect(box?.height ?? 0).toBeGreaterThan(200);
   });
 
-  test('panning the map fetches fresh data', async ({ page }) => {
+  /**
+   * SPEC:MPERF-004 — the aggregate levels are cached, the point level is not.
+   *
+   * Below zoom 9.2 a completed response covers the whole world for that level,
+   * so a closer look at a loaded zone is answered from memory. Crossing into
+   * individual points is what puts the visible area back in the key, and what
+   * must reach the network.
+   */
+  test('moving the map loads the zone it lands on', async ({ page }) => {
     await page.goto('/');
     await expect(page.locator('canvas.maplibregl-canvas')).toBeVisible({ timeout: 30_000 });
 
+    // Let the first viewport settle. Moving the camera aborts whatever request
+    // is in flight, and an aborted request never produces a response for the
+    // assertion below to catch.
+    await page.waitForLoadState('networkidle');
+
     const nextRequest = page.waitForResponse(
       (response) => response.url().includes('map_points') && response.status() === 200,
-      { timeout: 20_000 },
+      { timeout: 25_000 },
     );
 
-    // Zoom in over the canvas centre. The wheel event is what MapLibre listens
-    // to; clicking would risk hitting a marker and opening the detail modal.
-    const canvas = page.locator('canvas.maplibregl-canvas');
-    await canvas.hover();
-    await page.mouse.wheel(0, -600);
+    // Zoom past 9.2, where the map stops asking for aggregates and starts
+    // asking for individual points. Anything shallower is answered from the
+    // viewport cache on purpose: below that zoom a completed request covers the
+    // whole world, so a closer look at a loaded zone must not hit the network
+    // (MCLUS-004). The pointer is moved rather than hovered, and it stays in the
+    // upper band because the geolocation invitation covers the lower centre.
+    const box = (await page.locator('canvas.maplibregl-canvas').boundingBox())!;
+    expect(box).not.toBeNull();
+    await page.mouse.move(box.x + box.width * 0.6, box.y + box.height * 0.25);
+    for (let step = 0; step < 10; step += 1) {
+      const zoom = await page.evaluate(() => (window as any)._main_map_ref?.getZoom() ?? 0);
+      if (zoom > 9.6) break;
+      await page.mouse.wheel(0, -600);
+      await page.waitForTimeout(250);
+    }
 
     const response = await nextRequest;
     expect(response.ok()).toBeTruthy();
   });
 
   /**
-   * SPEC:VIS-001 — the public map payload never exposes view counters.
+   * SPEC:PROP-039 — the general map keeps zooming onto whatever is selected.
    *
-   * This is an explicit business rule: how many times a listing has been viewed
-   * is never shown publicly. Its absence from the payload today is deliberate,
-   * and this test stops it from creeping back in with a new field.
+   * The ficha map switches that behaviour off so it can hold its own framing.
+   * The switch defaults to on, and this is what proves the general map never
+   * inherited the exception. `?property=<id>` is the link the ficha offers as
+   * "Explorar en el mapa", so it is also the deterministic way to select one.
    */
+  test('selecting a listing zooms the general map onto it', async ({ page, request }) => {
+    const listing = await request.get(`${API_URL}/properties/`, {
+      params: { bbox: '-78.60,-0.35,-78.35,-0.05', page_size: '1' },
+    });
+    const body = listing.ok() ? await listing.json() : null;
+    const property = (Array.isArray(body) ? body : (body?.results ?? []))[0];
+    test.skip(!property?.id, 'no published inventory in Quito');
+
+    await page.goto(`/?property=${property.id}`);
+    await expect(page.locator('canvas.maplibregl-canvas')).toBeVisible({ timeout: 30_000 });
+
+    // The camera lands on the listing itself: a single lot, well past the
+    // contextual zoom the ficha map stops at.
+    await expect
+      .poll(async () => (await readMapState(page))?.zoom ?? 0, { timeout: 30_000 })
+      .toBeGreaterThan(15);
+  });
+
   test('map payload leaks no private metrics', async ({ request }) => {
     const response = await request.get(`${API_URL}/properties/map_points/`, {
       params: { zoom: '12', bbox: '-79.5,-3.5,-77.5,-1.5' },

@@ -2,7 +2,8 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { ArrowRight, BookOpen, CalendarDays, Clock3, Compass, Map, Rss, ShieldCheck } from 'lucide-react';
 
-import { formatPostDate, getBlogCategories, getBlogPosts } from '@/lib/blog';
+import { formatPostDate, getBlogCategories, getBlogPosts, LIVE_CATEGORY } from '@/lib/blog';
+import { listLivePages } from '@/lib/live-resolve';
 import { jsonLd, SITE_URL, SITE_NAME } from '@/lib/properties';
 import { generatePageMetadata } from '@/lib/metadata';
 import { PostCard } from '@/components/blog/PostCard';
@@ -27,10 +28,18 @@ export const metadata: Metadata = {
 };
 
 export default async function BlogPage() {
-  const [{ results: posts }, categories] = await Promise.all([
+  const [{ results: posts }, categories, livePages] = await Promise.all([
     getBlogPosts({ limit: 30 }),
     getBlogCategories(),
+    listLivePages(),
   ]);
+
+  // The living pages are part of the blog, not a section beside it. They enter
+  // through their own category so a reader can tell a recalculated ranking
+  // from something a person wrote, which is the only distinction that matters.
+  const allCategories = livePages.length
+    ? [...categories, { ...LIVE_CATEGORY, post_count: livePages.length }]
+    : categories;
 
   const featured = posts.find((post) => post.is_featured) ?? posts[0] ?? null;
   const rest = posts.filter((post) => post.slug !== featured?.slug);
@@ -100,7 +109,7 @@ export default async function BlogPage() {
       </section>
 
       <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6 sm:py-10 lg:px-8">
-        {categories.length > 0 && <CategoryNav categories={categories} />}
+        {categories.length > 0 && <CategoryNav categories={allCategories} />}
 
         <SponsorSlotBlock placement="index_top" seed="blog-index" className="mt-8" />
 

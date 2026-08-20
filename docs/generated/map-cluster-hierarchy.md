@@ -71,7 +71,7 @@ El catálogo de ubicaciones debe entregar un centro para cada ciudad con inventa
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/real_estate/views.py:841-880` (`centers.setdefault`) — El catálogo calcula el centro medio de las propiedades activas de cada ciudad.
+- `backend/real_estate/views.py:1027-1064` (`centers.setdefault`) — El catálogo calcula el centro medio de las propiedades activas de cada ciudad.
 - `frontend/components/map/MapFilters.tsx:297-313` (`onCitySelect`) — Elegir una ciudad entrega su centro al contenedor del mapa.
 - `frontend/components/MapPageClient.tsx:160-172` (`handleCityFilterSelect`) — La cámara viaja al centro recibido con zoom de ciudad.
 
@@ -128,7 +128,7 @@ En móvil existe una sola instancia del panel del mapa. El panel cambia su conte
 - `frontend/components/MapPageClient.tsx:371-408` (`embeddedInMobilePanel`) — La única instancia de MobilePropertyDrawer alterna entre PropertySidebar y PropertyModal según el modo actual.
 - `frontend/components/map/MobilePropertyDrawer.tsx:31-223` (`MobilePropertyDrawer`) — Un solo componente posee posiciones, resorte, manija, scroll, arrastre, backdrop y bloqueo del documento.
 - `frontend/components/PropertyModal.tsx:128-145` (`embeddedInMobilePanel`) — El detalle puede entregar solo su contenido al panel móvil compartido; conserva su panel lateral independiente únicamente en escritorio.
-- `frontend/components/maps/MapLibreMap.tsx:480-520` (`onMapBackgroundClickRef`) — Un toque sin propiedades ni agrupadores debajo se comunica al único panel móvil para cerrarlo.
+- `frontend/components/maps/MapLibreMap.tsx:521-560` (`onMapBackgroundClickRef`) — Un toque sin propiedades ni agrupadores debajo se comunica al único panel móvil para cerrarlo.
 - `frontend/components/maps/MapLibreMap.tsx` (`onPolygonClickRef`) — La capa rellena de cada polígono resuelve la propiedad tocada y entrega el mismo callback que los marcadores de precio.
 
 **Casos**

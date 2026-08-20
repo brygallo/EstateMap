@@ -31,6 +31,9 @@ rules:
       - file: frontend/hooks/usePropertyFilters.ts
         symbol: mapRequestKey
         note: La memoria del navegador usa los mismos tres niveles y no añade debounce a sus peticiones.
+      - file: tests/e2e/map.spec.ts
+        symbol: "moving the map loads the zone it lands on"
+        note: Acercarse dentro de un nivel agregado no pide red; cruzar al nivel de puntos sí.
     cases:
       - name: La persona mueve el mapa sin salir del nivel de provincias
         expected: reutiliza la misma respuesta de Redis sin recalcular Pichincha ni las demás provincias
@@ -67,7 +70,7 @@ rules:
       inicia otra transición.
     evidence:
       - file: frontend/components/maps/MapLibreMap.tsx
-        lines: "294-310"
+        lines: "311-326"
         symbol: centeredSelectionRef.current
         note: El id seleccionado impide repetir el centrado.
       - file: frontend/components/MapPageClient.tsx

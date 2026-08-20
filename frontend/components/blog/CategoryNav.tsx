@@ -7,6 +7,7 @@ import {
   KeyRound,
   Landmark,
   MapPin,
+  Trophy,
   type LucideProps,
 } from 'lucide-react';
 
@@ -26,6 +27,7 @@ const categoryIcons: Record<string, ComponentType<LucideProps>> = {
   financiamiento: Landmark,
   'impuestos-y-tramites': FileCheck2,
   'donde-vivir': MapPin,
+  'rankings-en-vivo': Trophy,
 };
 
 export function CategoryNav({

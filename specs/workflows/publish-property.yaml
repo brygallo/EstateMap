@@ -42,11 +42,11 @@ rules:
         symbol: "if (!token && !isEditMode && !resumeToken) {"
         note: Guarda el borrador, envía la solicitud pendiente y abre el modal, sin llamar a /properties/.
       - file: backend/real_estate/models.py
-        lines: "560-562"
+        lines: "599-601"
         symbol: "class PendingPublication(models.Model)"
         note: "Docstring: no se muestra en el mapa; sirve para seguimiento comercial."
       - file: backend/real_estate/views.py
-        lines: "311-313"
+        lines: "356-358"
         symbol: "permission_classes = [IsAuthenticatedOrReadOnly, IsOwnerOrReadOnly]"
         note: Respaldo del servidor si la petición llega sin pasar por el frontend.
     backend:
@@ -198,11 +198,11 @@ rules:
       y máximas por imagen, vive en specs/domains/properties.yaml (PROP-026).
     evidence:
       - file: backend/estate_map/settings.py
-        lines: "391-393"
+        lines: "401-403"
         symbol: MAX_PROPERTY_UPLOAD_MB
         note: MAX_IMAGES_PER_PROPERTY=10, MAX_IMAGE_SIZE_MB=10, MAX_PROPERTY_UPLOAD_MB=50.
       - file: backend/estate_map/settings.py
-        lines: "374-376"
+        lines: "384-386"
         symbol: ALLOWED_IMAGE_TYPES
       - file: backend/real_estate/serializers.py
         lines: "253-308"
@@ -242,14 +242,14 @@ rules:
       editar.
     evidence:
       - file: backend/real_estate/views.py
-        lines: "564-568"
+        lines: "615-617"
         symbol: "idempotency_key = (request.headers.get('Idempotency-Key')"
         note: Sin cabecera, se comporta como un create normal.
       - file: backend/real_estate/views.py
-        lines: "577-579"
+        lines: "629-631"
         symbol: "response['X-Idempotent-Replay'] = 'true'"
       - file: backend/real_estate/views.py
-        lines: "589-591"
+        lines: "641-643"
         symbol: "cache.set(result_key, response.data['id'], 60 * 60 * 24)"
       - file: frontend/app/add-property/page.tsx
         lines: "1170-1172"
@@ -278,10 +278,10 @@ rules:
       la petición falla, para no dejar la clave bloqueada 60 s de más.
     evidence:
       - file: backend/real_estate/views.py
-        lines: "580-582"
+        lines: "632-634"
         symbol: "lock_acquired = cache.add(lock_key, '1', 60)"
       - file: backend/real_estate/views.py
-        lines: "594-596"
+        lines: "646-648"
         symbol: "if lock_acquired:"
         note: cache.delete(lock_key) en el finally, se ejecute o no la creación.
     cases:
@@ -310,7 +310,7 @@ rules:
       cuenta. El techo aplica igual a todos.
     evidence:
       - file: backend/real_estate/views.py
-        lines: "349-362"
+        lines: "397-408"
         symbol: "self.throttle_scope = 'property_write'"
         note: ScopedRateThrottle, no AntiScraperScopedThrottle, para create/update/partial_update.
       - file: backend/real_estate/throttling.py
@@ -318,7 +318,7 @@ rules:
         symbol: "class AntiScraperScopedThrottle(ScopedRateThrottle)"
         note: Exime staff e IPs internas; solo se usa en map_points y list.
       - file: backend/estate_map/settings.py
-        lines: "203-205"
+        lines: "206-208"
         symbol: "'property_write': '30/hour'"
     cases:
       - name: Staff publica más de 30 veces en una hora
@@ -346,11 +346,11 @@ rules:
       en disco para que la barrida horaria la reintente.
     evidence:
       - file: backend/real_estate/tasks.py
-        lines: "250-268"
+        lines: "323-340"
         symbol: def enqueue_optimization
         note: transaction.on_commit envuelve el intento asíncrono con fallback síncrono.
       - file: backend/real_estate/tasks.py
-        lines: "279-285"
+        lines: "352-357"
         symbol: "optimize_property_image(image_id)"
         note: Llamada directa (no .delay) como fallback cuando el broker no responde.
       - file: backend/real_estate/tasks.py
@@ -437,15 +437,15 @@ rules:
       "eliminar" con `window.confirm` como acción irreversible.
     evidence:
       - file: backend/real_estate/views.py
-        lines: "414-416"
+        lines: "457-459"
         symbol: "exclude(status='inactive')"
         note: Único filtro que saca inactive del catálogo público; no toca la fila.
       - file: backend/real_estate/views.py
-        lines: "1033-1035"
+        lines: "1184-1186"
         symbol: def my_properties
         note: "including inactive: el dueño ve su propiedad inactiva, el público no."
       - file: backend/real_estate/models.py
-        lines: "344-346"
+        lines: "383-385"
         symbol: "on_delete=models.CASCADE"
         note: PropertyImage.property cae en cascada con la Property.
       - file: frontend/app/my-properties/page.tsx
@@ -892,3 +892,52 @@ rules:
         expected: "se informa el fallo de red; el borrador local sigue guardado"
       - name: Reintentar tras un fallo con la misma Idempotency-Key
         expected: "si el primer intento llegó a crear el anuncio, se devuelve ese mismo (WFP-006)"
+
+  - id: WFP-022
+    name: El preflight CORS autoriza la cabecera Idempotency-Key
+    status: implemented
+    summary: >-
+      `CORS_ALLOW_HEADERS` incluye `idempotency-key` además de la lista por
+      defecto de django-cors-headers. Sin ella, la respuesta al `OPTIONS`
+      previo no cubre la cabecera que el formulario envía al crear y el
+      navegador descarta el `POST /api/properties/` antes de enviarlo.
+    rationale: >-
+      El portal y la API son orígenes distintos
+      (`geopropiedadesecuador.com` contra `api.geopropiedadesecuador.com`), así
+      que toda cabecera fuera de la allowlist convierte la petición en un
+      preflight fallido. Ese fallo es el peor de los posibles: no deja rastro
+      en el servidor —la petición nunca llega— y el navegador solo entrega un
+      `TypeError` sin motivo, de modo que el formulario únicamente puede decir
+      «no se pudo comunicar con el servidor» y la persona culpa a su conexión.
+
+      Ocurrió: entre el 3 de agosto de 2026, cuando WFP-006 añadió la
+      cabecera, y el 16 del mismo mes, ninguna publicación hecha desde el
+      formulario llegó a crearse. Quedaron 39 `publication_create_failed` con
+      `status_code: "network"` y una sola propiedad creada en todo ese periodo,
+      por el canje de un enlace de continuación (WFP-019), que es el único
+      camino que no manda la cabecera. Por eso la regla es explícita y tiene
+      test propio: la allowlist por defecto no la contiene, y añadir una
+      cabecera al cliente sin añadirla aquí vuelve a romper el alta entera sin
+      un solo error en los registros.
+    evidence:
+      - file: backend/estate_map/settings.py
+        symbol: "CORS_ALLOW_HEADERS = (*default_headers, 'idempotency-key')"
+        note: La lista por defecto no incluye idempotency-key; hay que añadirla.
+      - file: frontend/app/add-property/page.tsx
+        symbol: "'Idempotency-Key': publicationRequestId"
+        note: La cabecera que obliga al preflight, solo en la creación.
+    tests:
+      api: true
+    cases:
+      - name: Preflight del alta declarando Idempotency-Key
+        given:
+          origin: "https://geopropiedadesecuador.com"
+          access_control_request_headers: "idempotency-key"
+        expected:
+          http_status: 200
+          header: "Access-Control-Allow-Headers incluye idempotency-key"
+      - name: Alta con la cabecera desde el origen del portal
+        given:
+          origin: "https://geopropiedadesecuador.com"
+          idempotency_key: "abc123"
+        expected: "el navegador no bloquea la petición y el alta sigue su curso normal"

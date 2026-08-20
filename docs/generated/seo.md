@@ -20,6 +20,10 @@ Reglas que deciden qué páginas públicas merecen entrar en el índice y qué s
 | [`SEO-003`](#seo-003--solo-se-declaran-como-perfiles-oficiales-las-cuentas-que-existen) | Solo se declaran como perfiles oficiales las cuentas que existen | ✅ Implementada |
 | [`SEO-004`](#seo-004--la-verificación-en-buscadores-se-configura-por-entorno) | La verificación en buscadores se configura por entorno | ✅ Implementada |
 | [`SEO-005`](#seo-005--el-host-de-la-api-no-se-indexa) | El host de la API no se indexa | ✅ Implementada |
+| [`SEO-006`](#seo-006--el-lastmod-del-sitemap-sale-de-fechas-reales-o-no-se-declara) | El `lastmod` del sitemap sale de fechas reales o no se declara | ✅ Implementada |
+| [`SEC-001`](#sec-001--la-zona-de-un-anuncio-se-deriva-de-su-dirección-y-se-guarda) | La zona de un anuncio se deriva de su dirección y se guarda | ✅ Implementada |
+| [`SEC-002`](#sec-002--una-zona-necesita-inventario-para-tener-página) | Una zona necesita inventario para tener página | ✅ Implementada |
+| [`SEC-003`](#sec-003--la-página-de-una-zona-filtra-en-sql) | La página de una zona filtra en SQL | ✅ Implementada |
 
 ### SEO-001 — Las landings locales necesitan cinco anuncios para entrar al índice
 
@@ -151,3 +155,125 @@ Son dos capas porque fallan distinto. `robots.txt` evita la descarga, pero una U
 **Cobertura exigida:** api
 
 - `backend/real_estate/tests/test_crawler_directives.py`
+
+### SEO-006 — El `lastmod` del sitemap sale de fechas reales o no se declara
+
+**Estado:** ✅ Implementada
+
+Cada URL del sitemap declara como `lastmod` la fecha real del contenido que representa: la modificación de la propiedad en su ficha, la más reciente de la zona en una landing local, la del artículo en el blog. Cuando no existe ninguna fecha real, el campo se omite en lugar de declarar la hora de renderizado.
+
+> **Por qué:** Es la misma razón de SEO-002 aplicada al sitemap. El listado público no entregaba `updated_at`, así que las 16.000 URL declaraban el instante del render: un sitemap que dice que todo cambió hace un segundo no prioriza nada, y buscadores y motores de IA descartan el campo. Omitirlo cuando no se sabe es preferible a rellenarlo, porque una fecha inventada además contradice al `dateModified` que sí es real en la propia página.
+
+**Backend**
+
+- Endpoint: `GET /api/properties/`
+
+**Evidencia en el código** (verificada por `tools/specs/validate.py`)
+
+- `backend/real_estate/serializers.py` (`'updated_at',`) — El payload liviano del listado incluye la fecha justo para esto.
+- `frontend/app/sitemap.ts` (`function latestDate`) — Devuelve null cuando no hay ninguna fecha real, en vez de la hora actual.
+- `frontend/app/sitemap.ts` (`lastModified: property.updated_at || property.created_at || undefined`) — Cada ficha declara su propia fecha; sin ella, ninguna.
+- `backend/real_estate/tests/test_sitemap_freshness.py` (`test_property_listing_carries_the_modification_date`) — Fija el contrato del que depende el sitemap.
+
+**Casos**
+
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| Ficha de una propiedad modificada ayer | — | — | — | lastmod igual a esa modificación |
+| Visita a una ficha | — | — | — | la fecha de modificación no se mueve |
+| Listado sin fechas | — | — | — | el sitemap omite lastmod en vez de declarar la hora actual |
+
+**Cobertura exigida:** api
+
+- `backend/real_estate/tests/test_sitemap_freshness.py`
+
+### SEC-001 — La zona de un anuncio se deriva de su dirección y se guarda
+
+**Estado:** ✅ Implementada
+
+El primer segmento de `address` antes de la coma es la zona: un barrio («Cumbayá»), una urbanización («Urb. Mocolí Golf Club») o a veces una avenida. Se guarda en dos columnas al grabar el anuncio: una clave sin mayúsculas ni acentos y la grafía tal como venía. La clave queda vacía cuando el segmento repite el nombre de la ciudad. El nombre que se publica es la grafía más frecuente del grupo, salvo que exista una acentuada que llegue a la mitad de esa frecuencia.
+
+> **Por qué:** Hasta ahora la zona se recalculaba en Python en cada petición de estadísticas. Eso basta para una tabla de promedios y no para una página que lista, pagina y filtra una zona: sin columna no hay índice, y sin índice cada visita recorre el texto libre de todo el catálogo.
+Guardarla además obliga a decidir qué es la misma zona. Con `casefold` a secas —lo que hacía la tabla— «Cumbayá» y «Cumbaya» eran dos zonas con 42 y 47 anuncios y dos promedios distintos; con la clave sin acentos son una de 90. Y para el nombre visible la frecuencia sola falla, porque la grafía sin tilde gana por comodidad de teclado, no porque sea el nombre.
+
+**Evidencia en el código** (verificada por `tools/specs/validate.py`)
+
+- `backend/real_estate/models.py` (`def sector_key`)
+- `backend/real_estate/models.py` (`sector_key = models.CharField`)
+- `backend/real_estate/services/sectors.py` (`def sector_display`)
+- `backend/real_estate/migrations/0035_property_sector.py` (`def fill_sectors`) — Backfill por lotes con update, para no mover `updated_at` de 16.000 anuncios.
+- `backend/real_estate/tests/test_sectors.py` (`def test_accents_and_case_do_not_split_a_zone`)
+
+**Casos**
+
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| Dirección "Cumbayá, Quito" | — | — | — | clave "cumbaya", grafía "Cumbayá" |
+| Dirección "CUMBAYA, Quito" | — | — | — | la misma clave que la anterior |
+| Dirección "Macas, Morona Santiago" en la ciudad de Macas | — | — | — | sin zona |
+| Diez anuncios escriben "Cumbaya" y uno "Cumbayá" | — | — | — | se publica "Cumbaya"; la variante acentuada no llega a la mitad |
+
+**Cobertura exigida:** api
+
+- `backend/real_estate/tests/test_sectors.py`
+
+### SEC-002 — Una zona necesita inventario para tener página
+
+**Estado:** ✅ Implementada
+
+Una zona se lista, entra al sitemap y se indexa desde cinco anuncios, el mismo umbral que una landing local. Por debajo, la página responde 200 con `noindex, follow`. El precio por m² de la zona solo se publica con tres anuncios o más que tengan precio y área válidos.
+
+> **Por qué:** Es SEO-001 aplicado un nivel más abajo. El segundo umbral es aparte porque responde a otra pregunta: cinco anuncios bastan para que la página sirva de listado, y un promedio calculado sobre dos no es una lectura de mercado, es una anécdota con dos decimales.
+
+**Backend**
+
+- Endpoint: `GET /api/properties/sectors/`
+
+**Frontend**
+
+- Ruta: `/propiedades/[ciudad]/[sector]`
+
+**Evidencia en el código** (verificada por `tools/specs/validate.py`)
+
+- `backend/real_estate/services/sectors.py` (`MIN_SECTOR_LISTINGS`)
+- `backend/real_estate/services/sectors.py` (`if row["sample"] >= 3:`)
+- `frontend/app/propiedades/[ciudad]/[sector]/page.tsx` (`if (sector.count < MIN_SECTOR_LISTINGS)`)
+- `frontend/app/sitemap.ts` (`const sectorRoutes: MetadataRoute.Sitemap`)
+- `backend/real_estate/tests/test_sectors.py` (`def test_a_zone_needs_inventory_to_be_listed`)
+
+**Casos**
+
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| Zona con cuatro anuncios | — | — | — | no se lista ni entra al sitemap |
+| Zona con cinco anuncios | — | — | — | se lista, se indexa y entra al sitemap |
+| Zona con cinco anuncios pero solo dos con precio y área | — | — | — | se publica el listado sin precio por m² |
+
+**Cobertura exigida:** api
+
+- `backend/real_estate/tests/test_sectors.py`
+
+### SEC-003 — La página de una zona filtra en SQL
+
+**Estado:** ✅ Implementada
+
+El listado público acepta `sector` y resuelve contra la columna indexada, no contra el texto de la dirección. La página de la zona y su cuadrícula destacada usan ese mismo filtro.
+
+> **Por qué:** Sin filtro en el servidor, una página de zona tendría que descargar el catálogo de la ciudad y recortarlo en el cliente: en Quito son miles de filas para mostrar noventa. Y la cuadrícula destacada tiene que usar el mismo filtro, o la página promete Cumbayá y enseña anuncios de otra parte de Quito.
+
+**Evidencia en el código** (verificada por `tools/specs/validate.py`)
+
+- `backend/real_estate/views.py` (`queryset = queryset.filter(sector_key=sector_key_for(sector))`)
+- `frontend/lib/sectors.ts` (`export async function getSectorProperties`)
+- `frontend/lib/properties.ts` (`if (sector) params.set('sector', sector);`) — La cuadrícula destacada se queda dentro de la zona.
+- `backend/real_estate/tests/test_sectors.py` (`def test_the_listing_endpoint_filters_by_zone`)
+
+**Casos**
+
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| Listado con sector=CUMBAYA | — | — | — | solo los anuncios de esa zona, sin importar cómo se escribió |
+
+**Cobertura exigida:** api
+
+- `backend/real_estate/tests/test_sectors.py`

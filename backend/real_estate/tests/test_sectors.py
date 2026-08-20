@@ -1,0 +1,113 @@
+"""Named zones: the finest geography the catalogue has.
+
+The zone is derived from free text, so everything here is about the same
+question: when do two strings name the same place, and when does a place hold
+enough to deserve a page.
+"""
+
+import pytest
+from rest_framework.test import APIClient
+
+from real_estate.models import Property, sector_key
+from real_estate.services.sectors import MIN_SECTOR_LISTINGS, list_sectors, sector_display
+
+
+pytestmark = pytest.mark.django_db
+
+
+def listing(address, *, city="Quito", price=200_000, area=100, title=None):
+    return Property.objects.create(
+        title=title or f"Propiedad en {address}",
+        city=city,
+        province="Pichincha",
+        address=address,
+        property_type="house",
+        status="for_sale",
+        price=price,
+        area=area,
+    )
+
+
+def test_the_zone_is_derived_on_save():
+    """SPEC:SEC-001 — the key is a column, not a computation per request."""
+    prop = listing("Cumbayá, Quito")
+
+    assert prop.sector_key == "cumbaya"
+    assert prop.sector_label == "Cumbayá"
+
+
+def test_accents_and_case_do_not_split_a_zone():
+    """SPEC:SEC-001 — «CUMBAYA» and «Cumbayá» are one place."""
+    assert sector_key("Cumbayá, Quito") == sector_key("CUMBAYA, Quito") == "cumbaya"
+
+
+def test_a_zone_that_repeats_its_own_city_is_not_a_zone():
+    """SPEC:SEC-001 — «el sector Macas de la ciudad de Macas» is a repetition."""
+    assert sector_key("Macas, Morona Santiago", "Macas") == ""
+    prop = listing("Macas, Morona Santiago", city="Macas")
+    assert prop.sector_key == ""
+
+
+def test_the_published_name_prefers_the_accented_spelling():
+    """SPEC:SEC-001 — people drop accents when typing, not when naming."""
+    assert sector_display(["Cumbaya", "Cumbaya", "Cumbayá"]) == "Cumbayá"
+    # But a spelling nobody else uses does not get to rename the zone.
+    assert sector_display(["Cumbaya"] * 10 + ["Cumbayá"]) == "Cumbaya"
+
+
+def test_a_zone_needs_inventory_to_be_listed():
+    """SPEC:SEC-002 — the same bar a local landing needs (SEO-001)."""
+    for index in range(MIN_SECTOR_LISTINGS - 1):
+        listing("Tumbaco, Quito", title=f"Casa {index}")
+
+    assert list_sectors(city="Quito") == []
+
+    listing("Tumbaco, Quito", title="La que completa el umbral")
+    zones = list_sectors(city="Quito")
+    assert [zone["name"] for zone in zones] == ["Tumbaco"]
+    assert zones[0]["count"] == MIN_SECTOR_LISTINGS
+
+
+def test_the_price_per_metre_needs_a_sample_of_its_own():
+    """SPEC:SEC-002 — an average over two listings is not a market reading."""
+    for index in range(MIN_SECTOR_LISTINGS):
+        # Only two of them carry a usable price and area.
+        usable = index < 2
+        listing(
+            "Puembo, Quito",
+            title=f"Casa {index}",
+            price=200_000 if usable else None,
+            area=100 if usable else None,
+        )
+
+    zone = list_sectors(city="Quito")[0]
+    assert zone["count"] == MIN_SECTOR_LISTINGS
+    assert zone["avg_price_m2"] is None
+
+
+@pytest.mark.api
+def test_the_listing_endpoint_filters_by_zone():
+    """SPEC:SEC-003 — the zone page paginates in SQL, not in Python."""
+    for index in range(3):
+        listing("Cumbayá, Quito", title=f"En la zona {index}")
+    listing("Conocoto, Quito", title="Fuera de la zona")
+
+    response = APIClient().get("/api/properties/", {"city": "Quito", "sector": "CUMBAYA"})
+
+    assert response.status_code == 200
+    titles = [row["title"] for row in response.data["results"]]
+    assert len(titles) == 3
+    assert "Fuera de la zona" not in titles
+
+
+@pytest.mark.api
+def test_the_zones_endpoint_answers_with_names_and_counts():
+    """SPEC:SEC-002 — one request answers for every zone of a city."""
+    for index in range(MIN_SECTOR_LISTINGS):
+        listing("Kennedy Norte, Guayaquil", city="Guayaquil", title=f"Casa {index}")
+
+    response = APIClient().get("/api/properties/sectors/", {"city": "Guayaquil"})
+
+    assert response.status_code == 200
+    assert response.data["sectors"][0]["name"] == "Kennedy Norte"
+    assert response.data["sectors"][0]["sector_key"] == "kennedy norte"

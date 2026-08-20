@@ -25,7 +25,14 @@ export type MarketStats = {
   by_city: StatRow[];
   by_property_type: StatRow[];
   by_operation: StatRow[];
-  by_sector: Array<{ city: string; sector: string; count: number; avg_price_m2: number }>;
+  by_sector: Array<{
+    city: string;
+    sector: string;
+    /** Normalized key, the address the zone page answers at. */
+    sector_key: string;
+    count: number;
+    avg_price_m2: number;
+  }>;
   evolution: Array<{ city: string; current_price_m2: number; previous_price_m2: number; change_pct: number }>;
   growth_zones: Array<{ city: string; change_pct: number }>;
   estimated_market_days: number;

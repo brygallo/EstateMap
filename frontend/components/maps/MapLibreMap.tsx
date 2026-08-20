@@ -46,6 +46,13 @@ interface MapLibreMapProps {
   hasActiveFilters?: boolean;
   onClearFilters?: () => void;
   onResetView?: () => void;
+  /**
+   * When false the map keeps whatever camera `onMapReady` set instead of
+   * zooming onto the selected listing. The property ficha needs this: its
+   * camera is framed around the neighbours, and flying to the selection would
+   * leave the listing alone on screen.
+   */
+  autoCenterSelected?: boolean;
   center: [number, number];
 }
 
@@ -210,6 +217,7 @@ export default function MapLibreMap({
   hasActiveFilters,
   onClearFilters,
   onResetView,
+  autoCenterSelected = true,
   center,
 }: MapLibreMapProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
@@ -305,6 +313,7 @@ export default function MapLibreMap({
     }
     if (centeredSelectionRef.current === selectedId) return;
     centeredSelectionRef.current = selectedId;
+    if (!autoCenterSelected) return;
     // Wait one frame so a newly opened desktop detail panel has already
     // resized the map. The selected property then lands in the centre of the
     // actual visible canvas instead of underneath a panel.
@@ -314,7 +323,7 @@ export default function MapLibreMap({
       flyToProperty(map, selectedProperty);
     });
     return () => window.cancelAnimationFrame(frame);
-  }, [loaded, selectedProperty]);
+  }, [autoCenterSelected, loaded, selectedProperty]);
 
   const clearHtmlMarkers = useCallback(() => {
     markerRefs.current.forEach((record) => record.marker.remove());

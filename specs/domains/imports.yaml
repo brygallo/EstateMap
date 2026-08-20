@@ -33,7 +33,7 @@ rules:
         lines: "55-57"
         symbol: prop.is_imported = True
       - file: backend/real_estate/models.py
-        lines: "183-185"
+        lines: "214-216"
         symbol: owner = models.ForeignKey
         note: FK nullable; el comentario del bloque de origen documenta la regla.
     cases:
@@ -66,7 +66,7 @@ rules:
         symbol: Property.objects.filter(source=fuente, external_id=external_id)
         note: Búsqueda previa; si existe, la operación se convierte en UPDATE.
       - file: backend/real_estate/models.py
-        lines: "264-266"
+        lines: "294-296"
         symbol: uniq_source_external_when_imported
         note: UniqueConstraint condicionada a is_imported=True.
       - file: backend/ingesta/pipeline/upsert.py
@@ -222,11 +222,11 @@ rules:
       fuente que sí lo traiga, el escalón intermedio faltaría.
     evidence:
       - file: backend/real_estate/models.py
-        lines: "207-209"
+        lines: "238-240"
         symbol: Enlace al anuncio original (contacto fallback)
         note: El modelo declara `source_url` como contacto de último recurso.
       - file: frontend/app/property/[id]/page.tsx
-        lines: "451-453"
+        lines: "459-461"
         symbol: "typeof property.source_url === 'string' ? property.source_url.trim()"
         note: >-
           El escalón de último recurso de la cascada. Desde el rediseño de la

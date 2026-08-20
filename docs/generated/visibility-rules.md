@@ -95,7 +95,7 @@ El campo show_measurements cambia las etiquetas que dibuja la interfaz, pero el 
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/real_estate/models.py:130-132` (`show_measurements`) — El help_text dice "Show exact measurements on map or just reference figure", que es lo que induce a error.
+- `backend/real_estate/models.py:161-163` (`show_measurements`) — El help_text dice "Show exact measurements on map or just reference figure", que es lo que induce a error.
 
 
 **Casos**

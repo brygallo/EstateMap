@@ -4,12 +4,12 @@
 
 Vista legible de `specs/`. Cada regla marcada como implementada apunta a las líneas de código que la aplican, y `tools/specs/validate.py` comprueba que ese código siga existiendo, así que esta página no puede quedarse desfasada en silencio.
 
-**Total de reglas: 335**
+**Total de reglas: 359**
 
 | Estado | Reglas |
 | --- | --- |
 | 🗑️ Obsoleta | 2 |
-| ✅ Implementada | 295 |
+| ✅ Implementada | 319 |
 | ⛔ No implementada | 16 |
 | 🟡 Parcial | 9 |
 | 📝 Propuesta (sin código) | 13 |
@@ -18,13 +18,14 @@ Vista legible de `specs/`. Cada regla marcada como implementada apunta a las lí
 | --- | --- | --- | --- |
 | pricing | `specs/calculations/pricing.yaml` | 27 | [pricing.md](./pricing.md) |
 | advertising | `specs/domains/advertising.yaml` | 25 | [advertising.md](./advertising.md) |
-| blog | `specs/domains/blog.yaml` | 11 | [blog.md](./blog.md) |
+| blog | `specs/domains/blog.yaml` | 12 | [blog.md](./blog.md) |
+| blogs-vivos | `specs/domains/blogs-vivos.yaml` | 11 | [blogs-vivos.md](./blogs-vivos.md) |
 | imports | `specs/domains/imports.yaml` | 23 | [imports.md](./imports.md) |
 | leads | `specs/domains/leads.yaml` | 19 | [leads.md](./leads.md) |
 | owner-transfer | `specs/domains/owner-transfer.yaml` | 8 | [owner-transfer.md](./owner-transfer.md) |
-| properties | `specs/domains/properties.yaml` | 38 | [properties.md](./properties.md) |
-| publication-resume | `specs/domains/publication-resume.yaml` | 12 | [publication-resume.md](./publication-resume.md) |
-| seo | `specs/domains/seo.yaml` | 5 | [seo.md](./seo.md) |
+| properties | `specs/domains/properties.yaml` | 41 | [properties.md](./properties.md) |
+| publication-resume | `specs/domains/publication-resume.yaml` | 13 | [publication-resume.md](./publication-resume.md) |
+| seo | `specs/domains/seo.yaml` | 9 | [seo.md](./seo.md) |
 | social-kit | `specs/domains/social-kit.yaml` | 15 | [social-kit.md](./social-kit.md) |
 | subscriptions | `specs/domains/subscriptions.yaml` | 7 | [subscriptions.md](./subscriptions.md) |
 | catalog | `specs/errors/catalog.yaml` | 9 | [catalog.md](./catalog.md) |
@@ -33,5 +34,5 @@ Vista legible de `specs/`. Cada regla marcada como implementada apunta a las lí
 | map-performance | `specs/ui/map-performance.yaml` | 4 | [map-performance.md](./map-performance.md) |
 | visibility-rules | `specs/ui/visibility-rules.yaml` | 4 | [visibility-rules.md](./visibility-rules.md) |
 | import-properties | `specs/workflows/import-properties.yaml` | 14 | [import-properties.md](./import-properties.md) |
-| publish-property | `specs/workflows/publish-property.yaml` | 21 | [publish-property.md](./publish-property.md) |
-| video-factory | `specs/workflows/video-factory.yaml` | 13 | [video-factory.md](./video-factory.md) |
+| publish-property | `specs/workflows/publish-property.yaml` | 22 | [publish-property.md](./publish-property.md) |
+| video-factory | `specs/workflows/video-factory.yaml` | 16 | [video-factory.md](./video-factory.md) |

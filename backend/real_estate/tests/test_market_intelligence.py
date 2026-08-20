@@ -68,3 +68,33 @@ def test_market_stats_city_filter_scopes_every_metric():
     # traffic numbers on a public page undermine trust.
     assert "supply_demand" not in scoped.data
     assert "views" not in str(scoped.data)
+
+
+@pytest.mark.api
+def test_the_same_sector_written_with_and_without_accents_is_one_sector():
+    """SPEC:PRC-009 — «Cumbaya» and «Cumbayá» are the same place.
+
+    Grouping by casefold alone split them in production: Cumbayá held 42
+    listings and Cumbaya another 47, each publishing its own average as if they
+    were different neighbourhoods. Half the inventory of the most expensive
+    sector in Quito was invisible from either row.
+    """
+    for index in range(3):
+        Property.objects.create(
+            title=f"Casa acentuada {index}", city="Quito", address="Cumbayá, Quito",
+            property_type="house", status="for_sale", price=200000, area=100,
+        )
+    for index in range(2):
+        Property.objects.create(
+            title=f"Casa sin tilde {index}", city="Quito", address="CUMBAYA, Quito",
+            property_type="house", status="for_sale", price=200000, area=100,
+        )
+
+    response = APIClient().get("/api/market-stats/", {"city": "Quito"})
+
+    assert response.status_code == 200
+    sectors = [row for row in response.data["by_sector"] if row["sector"].lower().startswith("cumbay")]
+    assert len(sectors) == 1, f"expected one sector, got {[row['sector'] for row in sectors]}"
+    assert sectors[0]["count"] == 5
+    # The accented spelling is the name; the bare one is how it gets typed.
+    assert sectors[0]["sector"] == "Cumbayá"
