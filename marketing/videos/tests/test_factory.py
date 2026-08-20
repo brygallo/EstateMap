@@ -917,12 +917,21 @@ class AnimationRegistryTests(unittest.TestCase):
             "sim:credicasa-capacity",
             "sim:credicasa-applicants-a",
             "sim:credicasa-applicants-b",
+            "sim:credicasa-suite",
+            "sim:credicasa-age-term",
             "sim:credicasa-payment-example",
+            "sim:credicasa-insurance-costs",
+            "sim:credicasa-process-costs",
+            "sim:credicasa-expense-request",
+            "sim:credicasa-ended-process",
             "sim:credicasa-total-envelope",
             "sim:credicasa-rate-reset",
             "sim:credicasa-reservation",
+            "sim:credicasa-reservation-checks",
             "sim:credicasa-order-a",
             "sim:credicasa-order-b",
+            "sim:credicasa-budget-map",
+            "sim:credicasa-recap",
         }
         remotion = self.remotion_animations()
         for identifier in identifiers:
@@ -935,13 +944,35 @@ class AnimationRegistryTests(unittest.TestCase):
             Path(__file__).resolve().parents[1]
             / "remotion/src/credicasa-simulations.tsx"
         ).read_text(encoding="utf-8")
-        for primitive in ("HeroStage", "HERO_MOVES", "EmPage", "EmGlyph", "PropertyArt"):
+        for primitive in ("HeroStage", "HERO_MOVES", "EmGlyph", "PropertyArt"):
             self.assertIn(primitive, source, primitive)
-        for required_copy in ("2,99%", "HASTA 100%", "HASTA $65.000", "ECUADOR", "Fuente oficial BIESS"):
+        for required_copy in ("2,99%", "HASTA 100%", "HASTA $65.000", "ECUADOR", "BIESS · información verificada"):
             self.assertIn(required_copy, source, required_copy)
-        self.assertIn("width: 796", source)
-        self.assertIn("top: 1015", source)
+        self.assertIn("width:840", source)
+        self.assertIn("top:1165", source)
         self.assertEqual(renderer.HERO_STAGINGS["sim:credicasa-hero"], "pull-back")
+
+    def test_credicasa_class_uses_mobile_first_type_and_full_scale_subjects(self):
+        source = (
+            Path(__file__).resolve().parents[1]
+            / "remotion/src/credicasa-simulations.tsx"
+        ).read_text(encoding="utf-8")
+        self.assertIn("fontSize:48", source)
+        self.assertIn("fontSize:58", source)
+        self.assertIn("fontSize:27", source)
+        self.assertNotIn("filter:'blur", source)
+        for subject in (
+            "CredicasaSuiteSim",
+            "CredicasaAgeTermSim",
+            "CredicasaInsuranceCostsSim",
+            "CredicasaProcessCostsSim",
+            "CredicasaExpenseRequestSim",
+            "CredicasaEndedProcessSim",
+            "CredicasaBudgetMapSim",
+            "CredicasaRecapSim",
+        ):
+            self.assertIn(f"export const {subject}", source, subject)
+        self.assertIn("sim:credicasa-budget-map", quality.PRODUCT_ASSETS)
 
     def test_listing_gallery_freezes_after_the_fourth_photo(self):
         source = (Path(__file__).resolve().parents[1] / "remotion/src/simulations.tsx").read_text(encoding="utf-8")

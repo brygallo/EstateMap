@@ -1,122 +1,91 @@
 import React from 'react';
-import {EmCard, EmExample, EmGlyph, EmPage, em, emCard, emType} from './estatemap-ui';
-import {DEPTH, HERO_CENTRE, HeroImpact, HeroPlane, HeroStage, HERO_MOVES} from './hero-stage';
+import {EmExample, EmGlyph, em} from './estatemap-ui';
+import {DEPTH, HeroImpact, HeroPlane, HeroStage, HERO_MOVES} from './hero-stage';
 import {PropertyArt} from './property-art';
 import type {SimulationProps} from './simulations';
 import {beat, figures, glide, land, tokensFor} from './system-kit';
 import {font, sideCrop} from './theme';
 
-const pOf = ({frame, total}: SimulationProps) => Math.min(1, Math.max(0, frame / Math.max(1, total - 1)));
-const source = 'Fuente oficial BIESS · 20 ago 2026';
+const SOURCE = 'BIESS · información verificada al 20 ago 2026';
+const LEGAL = 'Contenido informativo · verifica condiciones vigentes con BIESS';
+const INK = '#102137';
+const PAPER = '#FFFDF7';
+const LINE = '#CBD5E1';
+const GREEN = '#16834B';
+const AMBER = '#D97706';
+const RED = '#B42318';
 
-const Stage: React.FC<{children: React.ReactNode; footer?: string}> = ({children, footer = source}) => (
-  <EmPage>
-    <div style={{position: 'absolute', inset: '250px 120px 470px', fontFamily: font}}>{children}</div>
-    <div style={{position: 'absolute', left: sideCrop, bottom: 432, color: em.textMuted, fontSize: 22, fontWeight: 600}}>{footer}</div>
-  </EmPage>
+const progress = ({frame, total}: SimulationProps) => Math.max(0, Math.min(1, frame / Math.max(1, total - 1)));
+
+const Canvas: React.FC<{children: React.ReactNode; footer?: string; dark?: boolean}> = ({children, footer = SOURCE, dark = false}) => (
+  <div style={{position: 'absolute', inset: 0, overflow: 'hidden', background: dark ? '#09291D' : '#E9F3ED', color: dark ? '#FFFFFF' : INK, fontFamily: font}}>
+    <div style={{position: 'absolute', inset: '285px 120px 610px'}}>{children}</div>
+    <div style={{position: 'absolute', left: sideCrop, right: sideCrop, top: 1250, borderTop: `2px solid ${dark ? '#FFFFFF55' : '#64748B55'}`, paddingTop: 16, fontSize: 27, lineHeight: 1.25, fontWeight: 800, textAlign: 'center', color: dark ? '#ECFDF5' : '#475569'}}>{footer}</div>
+  </div>
 );
 
-const Title: React.FC<{children: React.ReactNode}> = ({children}) => (
-  <div style={{fontSize: emType.title, fontWeight: 900, color: em.text, lineHeight: 1.08, marginBottom: 30}}>{children}</div>
-);
-
-const Pill: React.FC<{children: React.ReactNode; active?: boolean; warning?: boolean; style?: React.CSSProperties}> = ({children, active, warning, style}) => (
-  <div style={{padding: '16px 22px', borderRadius: 999, border: `2px solid ${active ? em.primary : warning ? em.warning : em.line}`, background: active ? em.primaryLight : warning ? '#FFF6DE' : em.white, color: active ? em.primaryStrong : em.textSecondary, fontSize: 27, fontWeight: 800, boxShadow: emCard.shadow, ...style}}>{children}</div>
-);
-
-const Row: React.FC<{label: string; value: string; progress: number; icon?: 'home' | 'check' | 'reject' | 'ruler' | 'tag'}> = ({label, value, progress, icon = 'check'}) => (
-  <EmCard style={{display: 'flex', alignItems: 'center', gap: 20, padding: 24, marginBottom: 18, transform: `translateX(${(1 - land(progress, 0, .28)) * 70}px)`, opacity: progress}}>
-    <EmGlyph icon={icon} size={34} color={progress > .65 ? em.primary : em.textMuted} />
-    <div style={{flex: 1, color: em.textSecondary, fontSize: 28, fontWeight: 700}}>{label}</div>
-    <div style={{color: em.text, fontSize: 32, fontWeight: 900, ...figures}}>{value}</div>
-  </EmCard>
-);
-
-export const CredicasaHeroSim: React.FC<SimulationProps> = (props) => {
-  const p = pOf(props);
-  const tokens = tokensFor(props.brandId, props.brandName);
-  const camera = HERO_MOVES['pull-back'](p);
-  const terms = [
-    {text: '2,99%', x: 126, y: 345, at: .02, size: 58},
-    {text: 'HASTA 100%', x: 650, y: 505, at: .11, size: 42},
-    {text: 'HASTA $65.000', x: 344, y: 728, at: .2, size: 43},
-  ];
-  const gates = ['VIVIENDA', 'INGRESOS', 'CAPACIDAD'];
-  return (
-    <HeroStage tokens={tokens} progress={p} camera={camera}>
-      {(rig) => <>
-        <HeroPlane camera={rig} depth={DEPTH.subject}>
-          <div style={{position: 'absolute', left: 142, top: 390, width: 796, height: 390, borderRadius: 32, overflow: 'hidden', border: `4px solid ${em.primary}`, boxShadow: '0 34px 90px rgba(0,0,0,.5)', background: '#E8F4F7'}}>
-            <PropertyArt kind="house" variant={17} progress={p} style={{width: '100%', height: '100%'}} />
-          </div>
-        </HeroPlane>
-        <HeroPlane camera={rig} depth={DEPTH.context}>
-          <div style={{position: 'absolute', left: 702, top: 320, display: 'flex', alignItems: 'center', gap: 10, padding: '10px 18px', borderRadius: 999, background: '#FFFFFF', border: `3px solid ${em.primary}`, color: em.primaryStrong, fontSize: 28, fontWeight: 900, boxShadow: '0 16px 40px rgba(0,0,0,.35)'}}>
-            <EmGlyph icon="pin" size={30} /> ECUADOR
-          </div>
-          {terms.map((term) => { const enter = land(p, term.at, term.at + .1); return <div key={term.text} style={{position: 'absolute', left: term.x, top: term.y, padding: '18px 28px', borderRadius: 999, border: `4px solid ${em.primary}`, background: '#FFFFFF', color: em.primaryStrong, fontSize: term.size, lineHeight: 1, fontWeight: 900, letterSpacing: '-.025em', whiteSpace: 'nowrap', boxShadow: '0 20px 54px rgba(0,0,0,.42)', transform: `scale(${.7 + enter * .3})`, opacity: enter, ...figures}}>{term.text}</div>; })}
-        </HeroPlane>
-        <HeroPlane camera={rig} depth={DEPTH.foreground}>
-          <div style={{position: 'absolute', left: 126, right: 126, top: 820, display: 'flex', gap: 12}}>
-            {gates.map((gate, i) => { const enter = land(p, .48 + i * .08, .58 + i * .08); return <div key={gate} style={{flex: 1, padding: '22px 8px', textAlign: 'center', borderRadius: 16, background: '#101827', border: `2px solid ${tokens.alert}`, color: '#fff', fontSize: 23, fontWeight: 900, transform: `translateY(${(1 - enter) * -100}px)`, opacity: enter}}>{gate}</div>; })}
-          </div>
-        </HeroPlane>
-        <div style={{position: 'absolute', left: sideCrop, right: sideCrop, top: 1015, paddingTop: 16, borderTop: '2px solid rgba(209,250,229,.35)', color: '#ECFDF5', fontSize: 27, lineHeight: 1.2, fontWeight: 800, textAlign: 'center'}}>{source}</div>
-        <HeroImpact progress={p} at={.48} x={HERO_CENTRE.x} y={865} color={tokens.alert} />
-      </>}
-    </HeroStage>
-  );
+const Folder: React.FC<{children: React.ReactNode; p: number; stamp?: string; tone?: 'green'|'amber'|'red'}> = ({children, p, stamp, tone = 'green'}) => {
+  const color = tone === 'green' ? GREEN : tone === 'amber' ? AMBER : RED;
+  return <div style={{position:'absolute', inset:'70px 0 0', borderRadius:30, background:PAPER, border:`4px solid ${LINE}`, boxShadow:'0 28px 70px rgba(15,35,28,.2)', padding:'72px 54px 48px', boxSizing:'border-box', transform:`translateY(${(1-land(p,0,.12))*70}px)`}}>
+    <div style={{position:'absolute',left:36,top:-54,width:330,height:70,borderRadius:'22px 22px 0 0',background:'#D8B76C',border:`4px solid #B38C3C`,borderBottom:0,fontSize:30,fontWeight:900,display:'grid',placeItems:'center'}}>EXPEDIENTE HIPOTECARIO</div>
+    {children}
+    {stamp ? <div style={{position:'absolute',right:40,bottom:35,padding:'14px 22px',border:`7px solid ${color}`,borderRadius:16,color,fontSize:34,fontWeight:900,letterSpacing:'.035em',transform:`rotate(-6deg) scale(${land(p,.5,.64)})`,background:'#FFFFFFDD'}}>{stamp}</div> : null}
+  </div>;
 };
 
-export const CredicasaFactCardSim: React.FC<SimulationProps> = (props) => {
-  const p = pOf(props); const facts = [['Tasa nominal', '2,99%'], ['Tasa efectiva', '3,03%'], ['Financiamiento', 'Hasta $65.000'], ['Plazo', 'Hasta 30 años']];
-  return <Stage><Title>Los números publicados</Title>{facts.map((f, i) => <Row key={f[0]} label={f[0]} value={f[1]} progress={beat(p, .08 + i * .12, .28 + i * .12)} />)}</Stage>;
-};
+const BigFact: React.FC<{label:string; value:string; active?:boolean; p?:number}> = ({label,value,active=true,p=1}) => <div style={{flex:1,minHeight:190,borderRadius:24,border:`4px solid ${active?GREEN:LINE}`,background:active?'#E7F8EE':'#F8FAFC',padding:28,display:'flex',flexDirection:'column',justifyContent:'center',opacity:.35+.65*p,transform:`scale(${.94+.06*p})`,boxSizing:'border-box'}}><div style={{fontSize:36,fontWeight:800,color:'#475569',marginBottom:12}}>{label}</div><div style={{fontSize:58,lineHeight:1,fontWeight:900,color:active?GREEN:INK,...figures}}>{value}</div></div>;
+const Stamp: React.FC<{text:string; ok?:boolean; p?:number}> = ({text,ok=true,p=1}) => <div style={{padding:'18px 24px',border:`6px solid ${ok?GREEN:RED}`,borderRadius:16,color:ok?GREEN:RED,fontSize:38,fontWeight:900,background:'#FFFFFF',transform:`rotate(-3deg) scale(${land(p,0,.2)})`,textAlign:'center'}}>{text}</div>;
+const Heading: React.FC<{children:React.ReactNode}> = ({children}) => <div style={{fontSize:48,lineHeight:1.08,fontWeight:900,letterSpacing:'-.025em',marginBottom:28}}>{children}</div>;
 
-export const CredicasaHomeGateSim: React.FC<SimulationProps> = (props) => {
-  const p = pOf(props); const checks = ['Única', 'Nueva / primer uso', 'Sin fin comercial', 'Una o más habitaciones'];
-  return <Stage><Title>No entra cualquier vivienda</Title><EmCard raised style={{height: 310, overflow: 'hidden', marginBottom: 24}}><PropertyArt kind="house" variant={9} progress={p} style={{width: '100%', height: '100%'}} /></EmCard><div style={{display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14}}>{checks.map((x, i) => <Pill key={x} active={p > .18 + i * .12}><span style={{display:'inline-flex', gap: 10, alignItems:'center'}}><EmGlyph icon="check" />{x}</span></Pill>)}</div></Stage>;
-};
+export const CredicasaHeroSim: React.FC<SimulationProps> = (props) => { const p=progress(props); const tokens=tokensFor(props.brandId,props.brandName); const camera=HERO_MOVES['pull-back'](p); return <HeroStage tokens={tokens} progress={p} camera={camera}>{rig=><>
+  <HeroPlane camera={rig} depth={DEPTH.subject}><div style={{position:'absolute',left:120,top:315,width:840,height:600,borderRadius:34,overflow:'hidden',border:'5px solid #FFFFFF',boxShadow:'0 34px 90px rgba(0,0,0,.5)'}}><PropertyArt kind="house" variant={17} progress={p} style={{width:'100%',height:'100%'}} /></div></HeroPlane>
+  <HeroPlane camera={rig} depth={DEPTH.context}><div style={{position:'absolute',left:130,top:330,display:'flex',gap:16}}><BigFact label="TASA NOMINAL" value="2,99%" p={beat(p,.02,.12)}/><BigFact label="FINANCIAMIENTO" value="HASTA 100%" p={beat(p,.1,.2)}/></div><div style={{position:'absolute',left:330,top:760,width:420}}><BigFact label="MONTO" value="HASTA $65.000" p={beat(p,.18,.28)}/></div></HeroPlane>
+  <HeroPlane camera={rig} depth={DEPTH.foreground}><div style={{position:'absolute',left:120,right:120,top:950,display:'flex',gap:14}}>{['PERSONA','VIVIENDA','COSTO'].map((x,i)=><Stamp key={x} text={x} p={beat(p,.48+i*.07,.58+i*.07)} />)}</div></HeroPlane>
+  <div style={{position:'absolute',left:690,top:285,display:'flex',alignItems:'center',gap:10,fontSize:34,fontWeight:900,color:'#FFFFFF'}}><EmGlyph icon="pin" size={36} color="#FFFFFF"/> ECUADOR</div><div style={{position:'absolute',left:sideCrop,right:sideCrop,top:1165,borderTop:'2px solid #FFFFFF66',paddingTop:14,textAlign:'center',fontSize:27,fontWeight:800,color:'#ECFDF5'}}>{SOURCE}</div><HeroImpact progress={p} at={.48} x={540} y={975} color={tokens.alert}/>
+  </>}</HeroStage> };
 
-export const CredicasaThreeNumbersSim: React.FC<SimulationProps> = (props) => {
-  const p = pOf(props); const items = [['Precio del vendedor', 'No lo fija el BIESS'], ['Avalúo máximo', '$71.504,70'], ['Crédito máximo', '$65.000 incl. gastos']];
-  return <Stage><Title>Son tres números distintos</Title>{items.map((x, i) => <Row key={x[0]} label={x[0]} value={x[1]} icon={i === 0 ? 'tag' : i === 1 ? 'ruler' : 'home'} progress={beat(p, i * .18, .3 + i * .18)} />)}<div style={{height: 10, borderRadius: 99, background: em.lineSubtle, marginTop: 40, overflow:'hidden'}}><div style={{height:'100%', width:`${glide(p,.42,.9)*91}%`, background:em.primary}} /></div></Stage>;
-};
+export const CredicasaFactCardSim: React.FC<SimulationProps> = (props) => { const p=progress(props); const phase=p<.3?0:p<.78?1:2; return <Canvas><Folder p={p} stamp={phase===0?'DOS TASAS':phase===1?'SON MÁXIMOS':'DEPENDE DE TU EDAD'}>
+  {phase===0?<><Heading>La tasa tiene dos lecturas</Heading><div style={{display:'flex',gap:22}}><BigFact label="NOMINAL" value="2,99%"/><BigFact label="EFECTIVA" value="3,03%"/></div></>:phase===1?<><Heading>Tres máximos publicados</Heading><div style={{display:'grid',gap:18}}><BigFact label="FINANCIAMIENTO" value="HASTA 100%"/><div style={{display:'flex',gap:18}}><BigFact label="MONTO" value="$65.000"/><BigFact label="PLAZO" value="30 AÑOS"/></div></div></>:<><Heading>El plazo real cambia con el perfil</Heading><div style={{display:'flex',alignItems:'center',gap:28}}><div style={{fontSize:96,fontWeight:900,color:GREEN}}>360</div><div style={{fontSize:42,fontWeight:900}}>MESES<br/><span style={{color:'#64748B'}}>como máximo</span></div></div><div style={{marginTop:36,height:18,borderRadius:99,background:LINE}}><div style={{width:`${70+20*glide(p,.78,1)}%`,height:'100%',background:GREEN,borderRadius:99}}/></div></>}
+  </Folder></Canvas> };
 
-export const CredicasaEntryExampleSim: React.FC<SimulationProps> = (props) => {
-  const p = pOf(props); const shift = glide(p, .45, .72);
-  return <Stage footer="Ejemplo matemático · no constituye aprobación"><div style={{display:'flex', justifyContent:'space-between', alignItems:'center'}}><Title>¿Qué cambia sin entrada?</Title><EmExample /></div><EmCard raised style={{padding:32}}><div style={{fontSize:28, fontWeight:800, marginBottom:25}}>Vivienda de ejemplo: $60.000</div><div style={{display:'flex', height:130, borderRadius:18, overflow:'hidden'}}><div style={{width:`${20*(1-shift)}%`, background:em.warning, display:'grid', placeItems:'center', fontWeight:900, fontSize:28, overflow:'hidden'}}>$12.000</div><div style={{flex:1, background:em.primary, color:'#fff', display:'grid', placeItems:'center', fontWeight:900, fontSize:34}}>{shift>.8 ? 'Hasta 100%' : '$48.000'}</div></div><div style={{display:'flex', justifyContent:'space-between', marginTop:20, fontSize:25, color:em.textSecondary}}><span>Entrada tradicional</span><span>Monto financiado</span></div></EmCard></Stage>;
-};
+export const CredicasaHomeGateSim: React.FC<SimulationProps> = (props) => { const p=progress(props); const phase=p<.34?0:p<.7?1:2; return <Canvas><div style={{position:'absolute',left:0,right:0,top:20,height:560,borderRadius:32,overflow:'hidden',boxShadow:'0 26px 60px rgba(15,35,28,.22)'}}><PropertyArt kind="house" variant={8} progress={p} style={{width:'100%',height:'100%'}}/></div><div style={{position:'absolute',left:24,right:24,top:500,background:PAPER,border:`4px solid ${LINE}`,borderRadius:26,padding:30}}>{phase===0?<><Heading>Un solo tope</Heading><BigFact label="VIVIENDA + GASTOS FINANCIADOS" value="$65.000"/></>:phase===1?<><Heading>La vivienda cruza tres sellos</Heading><div style={{display:'flex',gap:14}}>{['ÚNICA','NUEVA','PRIMER USO'].map((x,i)=><Stamp key={x} text={x} p={beat(p,.34+i*.08,.44+i*.08)}/>)}</div></>:<><Heading>Dos límites al financiar gastos</Heading><div style={{display:'flex',gap:18}}><BigFact label="NO SUPERAR" value="AVALÚO"/><BigFact label="NO SUPERAR" value="$65.000"/></div></>}</div></Canvas> };
 
-export const CredicasaCapacitySim: React.FC<SimulationProps> = (props) => {
-  const p=pOf(props); const values=['$38.000','$52.000','$65.000'];
-  return <Stage footer="Montos ilustrativos · la aprobación depende del análisis BIESS"><div style={{display:'flex', justifyContent:'space-between'}}><Title>El máximo no es automático</Title><EmExample /></div>{values.map((v,i)=><Row key={v} label={`Solicitud ${i+1}`} value={v} progress={beat(p,.08+i*.16,.3+i*.16)} />)}<Pill active style={{textAlign:'center', marginTop:28, transform:`scale(${.9+.1*land(p,.62,.8)})`}}>PRECALIFÍCATE PRIMERO</Pill></Stage>;
-};
+export const CredicasaSuiteSim: React.FC<SimulationProps> = (props) => { const p=progress(props); return <Canvas><div style={{position:'absolute',inset:'20px 0 90px',borderRadius:34,overflow:'hidden',background:'#DCEAF2',border:`4px solid ${LINE}`}}><PropertyArt kind="apartment" variant={12} progress={p} style={{width:'100%',height:'58%'}}/><div style={{position:'absolute',left:30,right:30,bottom:28,background:PAPER,borderRadius:24,padding:30,display:'flex',alignItems:'center',gap:26}}><div style={{fontSize:94,fontWeight:900,color:GREEN}}>1</div><div style={{fontSize:42,fontWeight:900}}>HABITACIÓN<br/><span style={{fontSize:36,color:'#475569'}}>Una suite también puede aplicar</span></div><Stamp text="MISMAS CONDICIONES" p={beat(p,.42,.62)}/></div></div></Canvas> };
 
-const ApplicantGrid: React.FC<{p:number; rows:Array<[string,string]>}> = ({p,rows}) => <>{rows.map((x,i)=><Row key={x[0]} label={x[0]} value={x[1]} progress={beat(p,.08+i*.2,.34+i*.2)} />)}</>;
-export const CredicasaApplicantsASim: React.FC<SimulationProps> = (props) => { const p=pOf(props); return <Stage><Title>Aportaciones requeridas</Title><ApplicantGrid p={p} rows={[["Relación de dependencia","36 total · últimas 13 seguidas"],["Afiliación voluntaria","36 consecutivas"]]} /></Stage>; };
-export const CredicasaApplicantsBSim: React.FC<SimulationProps> = (props) => { const p=pOf(props); return <Stage><Title>Otros límites publicados</Title><ApplicantGrid p={p} rows={[["Jubilado","Pensión jubilar"],["Discapacidad","18 aportaciones"],["Ingreso familiar","Hasta $1.527,94 / mes"]]} /></Stage>; };
+export const CredicasaThreeNumbersSim: React.FC<SimulationProps> = (props) => { const p=progress(props); const phase=p<.38?0:p<.76?1:2; return <Canvas><Folder p={p} stamp={phase===1?'AVALÚO BIESS':phase===2?'NO SON IGUALES':'SEPARAR'}><Heading>{phase===2?'El vendedor no fija el avalúo':'Tres números, tres decisiones'}</Heading><div style={{display:'grid',gap:18}}><BigFact label="PRECIO · lo pide el vendedor" value={phase===2?'VENDEDOR':'PRECIO'} active={phase!==1}/><BigFact label="AVALÚO · lo determina BIESS" value={phase===1?'$71.504,70':'AVALÚO'} active={phase>=1}/><BigFact label="CRÉDITO · lo aprueban" value="HASTA $65.000" active={phase===0}/></div></Folder></Canvas> };
 
-export const CredicasaPaymentExampleSim: React.FC<SimulationProps> = (props) => {
-  const p=pOf(props); const extras=beat(p,.5,.78);
-  return <Stage footer="Ejemplo aproximado · usa la simulación oficial"><div style={{display:'flex',justifyContent:'space-between'}}><Title>La cuota no es solo tasa</Title><EmExample /></div><EmCard raised style={{padding:34,textAlign:'center'}}><div style={{fontSize:28,color:em.textSecondary}}>$60.000 · 30 años · 2,99%</div><div style={{fontSize:72,fontWeight:900,color:em.primaryStrong,margin:'18px 0',...figures}}>$253 <span style={{fontSize:28}}>aprox.</span></div><div style={{display:'flex',gap:12,justifyContent:'center',transform:`translateY(${(1-extras)*50}px)`,opacity:extras}}><Pill warning>Seguros</Pill><Pill warning>Gastos</Pill></div></EmCard><Pill active style={{textAlign:'center',marginTop:28}}>SIMULA EN BIESS</Pill></Stage>;
-};
+export const CredicasaEntryExampleSim: React.FC<SimulationProps> = (props) => { const p=progress(props); const phase=p<.34?0:p<.68?1:2; return <Canvas footer="EJEMPLO pedagógico · no es aprobación"><div style={{position:'absolute',right:0,top:0}}><EmExample scale={1.5}/></div><div style={{position:'absolute',left:0,right:0,top:70,height:490,borderRadius:32,overflow:'hidden'}}><PropertyArt kind="house" variant={5} progress={p} style={{width:'100%',height:'100%'}}/></div><div style={{position:'absolute',left:18,right:18,top:510,background:PAPER,border:`4px solid ${LINE}`,borderRadius:28,padding:30}}>{phase===0?<BigFact label="VIVIENDA DE EJEMPLO" value="$60.000"/>:phase===1?<><Heading>Hipoteca al 80%</Heading><div style={{display:'flex',gap:18}}><BigFact label="FINANCIA" value="$48.000"/><BigFact label="ENTRADA 20%" value="$12.000"/></div></>:<><Heading>Credicasa</Heading><BigFact label="SI CALIFICAS" value="HASTA 100%"/><Stamp text="NO ES APROBACIÓN" ok={false} p={beat(p,.78,.9)}/></>}</div></Canvas> };
 
-export const CredicasaTotalEnvelopeSim: React.FC<SimulationProps> = (props) => {
-  const p=pOf(props); const parts=[['Vivienda',78,em.primary],['Avalúo y legales',10,em.teal],['Notaría y registro',12,em.warning]];
-  return <Stage><Title>Todo cabe en el mismo límite</Title><div style={{fontSize:64,fontWeight:900,...figures}}>$65.000</div><div style={{fontSize:26,color:em.textSecondary,marginBottom:35}}>incluidos los gastos financiados</div><div style={{display:'flex',height:180,borderRadius:22,overflow:'hidden',border:emCard.border}}>{parts.map((x,i)=><div key={String(x[0])} style={{width:`${Number(x[1])*glide(p,.08+i*.12,.38+i*.12)}%`,background:String(x[2]),color:i===0?'#fff':em.text,display:'grid',placeItems:'center',fontSize:24,fontWeight:900,textAlign:'center',padding:8,boxSizing:'border-box'}}>{x[0]}</div>)}</div><Pill warning style={{marginTop:30,textAlign:'center'}}>NO SON $65.000 + GASTOS</Pill></Stage>;
-};
+export const CredicasaCapacitySim: React.FC<SimulationProps> = (props) => { const p=progress(props); const phase=p<.34?0:p<.72?1:2; return <Canvas footer="Montos de ejemplo · la precalificación oficial define el monto"><Folder p={p} stamp={phase===2?'PRECALIFICA':'NO AUTOMÁTICO'}><Heading>Tu capacidad decide</Heading>{phase===0?<><div style={{fontSize:92,fontWeight:900,color:'#94A3B8',textDecoration:'line-through'}}>$65.000</div><div style={{fontSize:40,fontWeight:900}}>no se aprueban automáticamente</div></>:phase===1?<><div style={{position:'absolute',right:42,top:42}}><EmExample scale={1.4}/></div><div style={{display:'grid',gap:20}}>{['$38.000','$52.000','$65.000'].map((x,i)=><BigFact key={x} label={`PERFIL ${i+1}`} value={x} p={beat(p,.34+i*.08,.46+i*.08)}/>)}</div></>:<div style={{display:'grid',placeItems:'center',height:520}}><div style={{fontSize:64,fontWeight:900,textAlign:'center',color:GREEN}}>PRECALIFICACIÓN<br/>OFICIAL</div><EmGlyph icon="check" size={120}/></div>}</Folder></Canvas> };
 
-export const CredicasaRateResetSim: React.FC<SimulationProps> = (props) => {
-  const p=pOf(props); const current=Math.min(5,Math.floor(p*6));
-  return <Stage><Title>La tasa se revisa cada 180 días</Title><div style={{position:'relative',marginTop:130,height:160}}><div style={{position:'absolute',left:20,right:20,top:56,height:8,background:em.line}} />{Array.from({length:6},(_,i)=><div key={i} style={{position:'absolute',left:`${i*18}%`,top:25,width:70,textAlign:'center'}}><div style={{width:28,height:28,borderRadius:'50%',margin:'18px auto',background:i<=current?em.warning:em.line}}/><div style={{fontSize:22,fontWeight:800}}>180 d</div></div>)}</div><EmCard raised style={{padding:28,display:'flex',justifyContent:'space-between',alignItems:'center'}}><span style={{fontSize:28,fontWeight:800}}>2,99% publicado</span><Pill warning>REVISA EL CONTRATO</Pill></EmCard></Stage>;
-};
+export const CredicasaApplicantsASim: React.FC<SimulationProps> = (props) => { const p=progress(props); const income=p>.58; return <Canvas><Folder p={p} stamp={income?'LÍMITE FAMILIAR':'APORTACIONES'}>{income?<><Heading>Ingreso familiar máximo</Heading><BigFact label="PUBLICADO" value="$1.527,94 / MES"/><div style={{fontSize:40,fontWeight:800,marginTop:28}}>Se evalúa el ingreso de la familia.</div></>:<><Heading>Afiliado dependiente</Heading><div style={{display:'flex',alignItems:'end',gap:24}}><BigFact label="TOTAL" value="36 APORTES"/><BigFact label="ÚLTIMOS" value="13 SEGUIDOS"/></div><div style={{display:'flex',gap:7,marginTop:35}}>{Array.from({length:13},(_,i)=><div key={i} style={{height:70,width:42,borderRadius:8,background:i<Math.floor(beat(p,.18,.5)*13)?GREEN:LINE}}/>)}</div></>}</Folder></Canvas> };
 
-export const CredicasaReservationSim: React.FC<SimulationProps> = (props) => {
-  const p=pOf(props); const checked=beat(p,.44,.68);
-  return <Stage footer="Antes de entregar dinero, busca asesoría jurídica"><Title>La reserva debe decir qué pasa</Title><EmCard raised style={{padding:34}}><div style={{fontSize:34,fontWeight:900,marginBottom:30}}>Reserva / promesa</div>{['Sujeta a aprobación del crédito','Cuándo es reembolsable','Qué ocurre si no se financia'].map((x,i)=><div key={x} style={{display:'flex',gap:18,alignItems:'center',fontSize:28,fontWeight:700,padding:'18px 0',borderBottom:`2px solid ${em.lineSubtle}`,opacity:beat(p,.08+i*.1,.28+i*.1)}}><EmGlyph icon={checked>.2+i*.2?'check':'reject'} color={checked>.2+i*.2?em.primary:em.warning}/>{x}</div>)}</EmCard></Stage>;
-};
+export const CredicasaApplicantsBSim: React.FC<SimulationProps> = (props) => { const p=progress(props); const phase=p<.5?0:1; return <Canvas><Folder p={p} stamp={phase===0?'DOS RUTAS':'18 EN TOTAL'}>{phase===0?<><Heading>Voluntario o jubilado</Heading><div style={{display:'flex',gap:22}}><BigFact label="VOLUNTARIO" value="36 SEGUIDOS"/><BigFact label="JUBILADO" value="CON PENSIÓN"/></div></>:<><Heading>Persona con discapacidad</Heading><BigFact label="APORTACIONES" value="18 EN TOTAL"/><div style={{fontSize:40,fontWeight:800,marginTop:28}}>No se presentan como consecutivas.</div></>}</Folder></Canvas> };
 
-const Process: React.FC<{p:number; steps:string[]; start:number}> = ({p,steps,start}) => <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:18}}>{steps.map((x,i)=>{const n=start+i;const enter=beat(p,.06+i*.12,.28+i*.12);return <EmCard key={x} style={{padding:24,display:'flex',gap:18,alignItems:'center',opacity:enter,transform:`translateY(${(1-enter)*35}px)`}}><div style={{width:52,height:52,borderRadius:'50%',background:em.primaryLight,color:em.primaryStrong,display:'grid',placeItems:'center',fontSize:26,fontWeight:900}}>{n}</div><div style={{fontSize:25,fontWeight:800}}>{x}</div></EmCard>})}</div>;
-export const CredicasaOrderASim: React.FC<SimulationProps> = (props) => {const p=pOf(props);return <Stage><Title>Primero ordena tus números</Title><Process p={p} start={1} steps={['Revisa requisitos','Precalifícate','Fija tu presupuesto','Busca vivienda elegible']} /></Stage>};
-export const CredicasaOrderBSim: React.FC<SimulationProps> = (props) => {const p=pOf(props);return <Stage><Title>Después compara y verifica</Title><Process p={p} start={5} steps={['Compara ubicación','Confirma compatibilidad','Avalúo y revisión','Lee antes de firmar']} /></Stage>};
+export const CredicasaAgeTermSim: React.FC<SimulationProps> = (props) => { const p=progress(props); return <Canvas><Folder p={p} stamp="LÍMITE OFICIAL" tone="amber"><Heading>Edad y plazo se cruzan</Heading><div style={{display:'flex',alignItems:'center',gap:32}}><div style={{fontSize:54,fontWeight:900}}>EDAD<br/><span style={{fontSize:38,color:'#64748B'}}>del solicitante</span></div><div style={{fontSize:74}}>＋</div><div style={{fontSize:54,fontWeight:900}}>PLAZO<br/><span style={{fontSize:38,color:'#64748B'}}>solicitado</span></div></div><div style={{marginTop:55,height:28,borderRadius:99,background:LINE,position:'relative'}}><div style={{width:`${glide(p,.1,.62)*78}%`,height:'100%',borderRadius:99,background:GREEN}}/><div style={{position:'absolute',left:'78%',top:-34,width:10,height:96,background:AMBER}}/></div><div style={{fontSize:38,fontWeight:900,marginTop:45}}>No supera la esperanza de vida oficial aplicable.</div></Folder></Canvas> };
+
+export const CredicasaPaymentExampleSim: React.FC<SimulationProps> = (props) => { const p=progress(props); const phase=p<.34?0:p<.7?1:2; return <Canvas footer="EJEMPLO aproximado · usa la simulación oficial BIESS"><div style={{position:'absolute',right:0}}><EmExample scale={1.5}/></div><Folder p={p} stamp={phase===2?'NO ES CUOTA FINAL':'EJEMPLO'}>{phase===0?<><Heading>Tres supuestos</Heading><div style={{display:'grid',gap:18}}><BigFact label="CRÉDITO" value="$60.000"/><div style={{display:'flex',gap:18}}><BigFact label="NOMINAL" value="2,99%"/><BigFact label="PLAZO" value="30 AÑOS"/></div></div></>:phase===1?<><Heading>Solo capital e intereses</Heading><div style={{fontSize:126,fontWeight:900,color:GREEN,...figures}}>≈ $253</div><div style={{fontSize:48,fontWeight:900}}>AL MES</div></>:<><Heading>Esta cifra no demuestra</Heading><Stamp text="CUOTA FINAL" ok={false}/><Stamp text="INGRESO SUFICIENTE" ok={false} p={beat(p,.76,.9)}/></>}</Folder></Canvas> };
+
+export const CredicasaInsuranceCostsSim: React.FC<SimulationProps> = (props) => { const p=progress(props); return <Canvas><Folder p={p} stamp="SEGUROS"><Heading>El crédito suma coberturas</Heading><div style={{display:'grid',gap:24}}><BigFact label="SEGURO" value="DESGRAVAMEN" p={beat(p,.06,.2)}/><BigFact label="SEGURO" value="DEL INMUEBLE" p={beat(p,.18,.32)}/></div><div style={{fontSize:38,fontWeight:800,marginTop:32}}>El costo mensual puede diferir de una calculadora simple.</div></Folder></Canvas> };
+
+export const CredicasaProcessCostsSim: React.FC<SimulationProps> = (props) => { const p=progress(props); const excluded=p>.55; return <Canvas><Folder p={p} stamp={excluded?'NO SALEN AL INICIO':'COSTO DEL PROCESO'} tone="amber"><Heading>{excluded?'La simulación inicial está incompleta':'Gastos del trámite'}</Heading>{excluded?<div style={{display:'flex',gap:22}}><BigFact label="SIMULACIÓN INICIAL" value="CAPACIDAD"/><div style={{fontSize:80,fontWeight:900,color:RED,alignSelf:'center'}}>≠</div><BigFact label="DESPUÉS" value="GASTOS"/></div>:<div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:20}}>{['AVALÚO','LEGALES','NOTARÍA','REGISTRO'].map((x,i)=><BigFact key={x} label={`RUBRO ${i+1}`} value={x} p={beat(p,.05+i*.08,.18+i*.08)}/>)}</div>}</Folder></Canvas> };
+
+export const CredicasaExpenseRequestSim: React.FC<SimulationProps> = (props) => { const p=progress(props); return <Canvas><Folder p={p} stamp="A PETICIÓN"><Heading>Los gastos no entran solos</Heading><div style={{display:'flex',alignItems:'center',gap:20}}><BigFact label="SOLICITANTE" value="LO PIDE"/><div style={{fontSize:72,fontWeight:900}}>→</div><BigFact label="CRÉDITO" value="PUEDE INCLUIRLOS"/></div><div style={{display:'flex',gap:20,marginTop:26}}><Stamp text="≤ AVALÚO" p={beat(p,.38,.52)}/><Stamp text="≤ $65.000" p={beat(p,.5,.64)}/></div></Folder></Canvas> };
+
+export const CredicasaEndedProcessSim: React.FC<SimulationProps> = (props) => { const p=progress(props); const collection=p>.52; return <Canvas><Folder p={p} stamp={collection?'PUEDE HABER COBRO':'TRÁMITE TERMINADO'} tone="red">{collection?<><Heading>Los gastos incurridos pueden cobrarse</Heading><div style={{display:'flex',gap:22}}><BigFact label="COBRO" value="PLANILLA"/><BigFact label="COBRO" value="PAGO DIRECTO"/></div><div style={{display:'flex',gap:18,marginTop:26}}><Stamp text="MORA" ok={false}/><Stamp text="BLOQUEO DE OTRO PRÉSTAMO" ok={false} p={beat(p,.68,.82)}/></div></>:<><Heading>Cuatro finales con riesgo</Heading><div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:20}}>{['DESISTE','ANULA','CADUCA','RECHAZADA'].map((x,i)=><Stamp key={x} text={x} ok={false} p={beat(p,.04+i*.08,.17+i*.08)}/>)}</div><div style={{fontSize:44,fontWeight:900,marginTop:42}}>Los gastos ya generados no desaparecen.</div></>}</Folder></Canvas> };
+
+export const CredicasaRateResetSim: React.FC<SimulationProps> = (props) => { const p=progress(props); return <Canvas><Folder p={p} stamp="REVISAR" tone="amber"><Heading>La tasa se reajusta</Heading><div style={{fontSize:118,fontWeight:900,color:AMBER,...figures}}>180 DÍAS</div><div style={{height:30,borderRadius:99,background:LINE,margin:'42px 0'}}><div style={{height:'100%',width:`${glide(p,.08,.7)*100}%`,background:AMBER,borderRadius:99}}/></div><BigFact label="TARIFARIO DE AGOSTO 2026" value="REVISAR CONTRATO"/></Folder></Canvas> };
+
+export const CredicasaReservationSim: React.FC<SimulationProps> = (props) => { const p=progress(props); const checks=p>.48; return <Canvas footer="Antes de entregar dinero, busca asesoría jurídica"><Folder p={p} stamp={checks?'TODO POR ESCRITO':'ESPERA'} tone={checks?'green':'amber'}>{checks?<><Heading>Checklist antes de pagar</Heading><div style={{display:'grid',gap:16}}>{['DEVOLUCIÓN','GRAVÁMENES','REGISTRO','PROMESA + ASESORÍA'].map((x,i)=><Stamp key={x} text={x} p={beat(p,.48+i*.07,.58+i*.07)}/>)}</div></>:<><Heading>La reserva espera dos confirmaciones</Heading><BigFact label="PERSONA" value="SÍ CALIFICA"/><BigFact label="INMUEBLE" value="SÍ APLICA"/></>}</Folder></Canvas> };
+
+const Steps: React.FC<{p:number; items:Array<[number,string]>}> = ({p,items}) => <div style={{display:'grid',gap:22}}>{items.map(([n,x],i)=><div key={n} style={{display:'flex',alignItems:'center',gap:24,background:PAPER,border:`4px solid ${GREEN}`,borderRadius:24,padding:24,transform:`translateX(${(1-land(p,.06+i*.15,.2+i*.15))*80}px)`}}><div style={{width:78,height:78,borderRadius:'50%',background:GREEN,color:'#fff',display:'grid',placeItems:'center',fontSize:42,fontWeight:900}}>{n}</div><div style={{fontSize:42,fontWeight:900}}>{x}</div></div>)}</div>;
+export const CredicasaOrderASim: React.FC<SimulationProps> = (props) => {const p=progress(props);const late=p>.5;return <Canvas><Folder p={p} stamp="EN ORDEN"><Heading>Antes de buscar</Heading><Steps p={p} items={late?[[3,'DEFINE PRESUPUESTO'],[4,'BUSCA ELEGIBLES']]:[[1,'REVISA REQUISITOS'],[2,'PRECALIFÍCATE']]}/></Folder></Canvas>};
+export const CredicasaOrderBSim: React.FC<SimulationProps> = (props) => {const p=progress(props);const late=p>.5;return <Canvas><Folder p={p} stamp="ANTES DE FIRMAR"><Heading>Antes de comprometer dinero</Heading><Steps p={p} items={late?[[7,'AVALÚO Y REVISIÓN'],[8,'LEE CONDICIONES']]:[[5,'COMPARA OPCIONES'],[6,'VERIFICA ANTES DE PAGAR']]}/></Folder></Canvas>};
+
+export const CredicasaBudgetMapSim: React.FC<SimulationProps> = (props) => { const p=progress(props); const pins=[{x:180,y:300,v:'$52k',ok:true},{x:590,y:240,v:'$68k',ok:false},{x:520,y:590,v:'$59k',ok:true}]; return <Canvas footer="Propiedades ilustrativas · compara precio y ubicación en Geo"><div style={{position:'absolute',inset:'20px 0 30px',background:'#DCE9E2',borderRadius:32,border:`4px solid ${LINE}`,overflow:'hidden'}}><div style={{position:'absolute',inset:0,backgroundImage:'linear-gradient(25deg,transparent 46%,#FFFFFF 47%,#FFFFFF 53%,transparent 54%),linear-gradient(115deg,transparent 46%,#FFFFFF 47%,#FFFFFF 53%,transparent 54%)',backgroundSize:'260px 220px'}}/><div style={{position:'absolute',left:32,right:32,top:28,background:PAPER,borderRadius:22,padding:24,fontSize:42,fontWeight:900}}>PRESUPUESTO MÁXIMO <span style={{color:GREEN}}>$60.000</span></div>{pins.map((pin,i)=><div key={pin.v} style={{position:'absolute',left:pin.x,top:pin.y,opacity:pin.ok?1:1-beat(p,.42,.58),transform:pin.ok?'none':`translateY(${-60*beat(p,.42,.58)}px)`,padding:'16px 24px',borderRadius:999,background:pin.ok?GREEN:'#64748B',color:'#fff',fontSize:40,fontWeight:900,boxShadow:'0 12px 28px rgba(0,0,0,.25)'}}><EmGlyph icon="pin" size={34} color="#fff"/> {pin.v}</div>)}</div></Canvas> };
+
+export const CredicasaRecapSim: React.FC<SimulationProps> = (props) => { const p=progress(props); return <Canvas footer={LEGAL}><Folder p={p} stamp="VERIFICA CON BIESS"><Heading>Antes de buscar, recuerda</Heading><div style={{display:'grid',gap:18}}>{[['TASA PUBLICADA','2,99%'],['FINANCIAMIENTO','HASTA 100%'],['TOPE CON GASTOS','$65.000'],['DECIDE TU MONTO','PRECALIFICACIÓN']].map((x,i)=><BigFact key={x[0]} label={x[0]} value={x[1]} p={beat(p,.04+i*.08,.16+i*.08)}/>)}</div></Folder></Canvas> };
+
+// Compatibility exports kept registered while the 40-scene plan moves to the
+// semantically exact IDs above.
+export const CredicasaTotalEnvelopeSim = CredicasaProcessCostsSim;

@@ -414,18 +414,18 @@
       "number": 17,
       "state": "planned",
       "directory": "brands/geo/library/geo-017",
-      "target_duration_seconds": 90,
+      "target_duration_seconds": 240,
       "created_at": "2026-08-20T15:00:00-05:00",
       "updated_at": "2026-08-20T15:00:00-05:00",
-      "title": "Credicasa: antes de buscar",
+      "title": "Credicasa: la guía completa antes de buscar",
       "audience": "comprador",
       "funnel_stage": "consideración",
       "pillar": "Educación inmobiliaria",
       "series": "Antes de comprar",
-      "concept": "La persona empieza creyendo que 2,99% y hasta 100% significan que ya puede comprar. La historia corrige esa lectura mediante tres límites: capacidad del solicitante, condiciones de la vivienda y costo completo. Con el presupuesto real definido, la búsqueda pasa al mapa.",
-      "hook": "¿Quieres comprar casa en Ecuador? Antes de buscar, necesitas saber esto.",
+      "concept": "Clase completa sobre términos, elegibilidad, capacidad, aportes, cuota ilustrativa, seguros, gastos, riesgos del trámite, avalúo, reserva y el proceso de ocho pasos antes de buscar con presupuesto real en el mapa.",
+      "hook": "¿Quieres comprar casa en Ecuador? Antes de buscar, necesitas saber todo esto.",
       "cta": "Encuentra tu futuro hogar",
-      "editorial_format": "story"
+      "editorial_format": "class"
     },
     {
       "brand": "geo",

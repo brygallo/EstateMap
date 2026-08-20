@@ -3,682 +3,507 @@
   "brandName": "Geo Propiedades Ecuador",
   "brandTagline": "Un producto de Aents",
   "brandSymbol": "brand/aents-symbol-negative.png",
-  "title": "Credicasa: antes de buscar",
-  "coverText": "2,99%: antes de buscar",
+  "title": "Credicasa: la guía completa antes de buscar",
+  "coverText": "Credicasa: guía completa",
   "cta": "Encuentra tu futuro hogar",
   "url": "geopropiedadesecuador.com",
   "brandTile": "brand/aents-brand-tile-1024.png",
   "kicker": null,
   "musicFile": null,
-  "narrationFile": null,
+  "narrationFile": "jobs/geo-017/audio/narration.mp3",
   "showSafeAreas": false,
   "scenes": [
     {
       "purpose": "gancho",
-      "durationInFrames": 154,
+      "durationInFrames": 152,
       "headline": "¿Casa al 2,99%?",
       "captions": [
         {
           "text": "¿Quieres comprar casa en Ecuador?",
           "start": 0.0,
-          "end": 2.173,
+          "end": 2.196,
           "words": [
             {
               "text": "¿Quieres",
               "start": 0.0,
-              "end": 0.543
+              "end": 0.549
             },
             {
               "text": "comprar",
-              "start": 0.543,
-              "end": 1.087
+              "start": 0.549,
+              "end": 1.098
             },
             {
               "text": "casa",
-              "start": 1.087,
-              "end": 1.426
+              "start": 1.098,
+              "end": 1.441
             },
             {
               "text": "en",
-              "start": 1.426,
-              "end": 1.63
+              "start": 1.441,
+              "end": 1.647
             },
             {
               "text": "Ecuador?",
-              "start": 1.63,
-              "end": 2.173
+              "start": 1.647,
+              "end": 2.196
             }
           ]
         },
         {
           "text": "Antes de buscar,",
-          "start": 2.173,
-          "end": 3.26,
+          "start": 2.196,
+          "end": 3.294,
           "words": [
             {
               "text": "Antes",
               "start": 0.0,
-              "end": 0.407
+              "end": 0.412
             },
             {
               "text": "de",
-              "start": 0.407,
-              "end": 0.611
+              "start": 0.412,
+              "end": 0.618
             },
             {
               "text": "buscar,",
-              "start": 0.611,
-              "end": 1.087
+              "start": 0.618,
+              "end": 1.098
             }
           ]
         },
         {
-          "text": "necesitas saber esto.",
-          "start": 3.26,
-          "end": 4.686,
+          "text": "necesitas saber todo esto.",
+          "start": 3.294,
+          "end": 5.078,
           "words": [
             {
               "text": "necesitas",
               "start": 0.0,
-              "end": 0.679
+              "end": 0.686
             },
             {
               "text": "saber",
-              "start": 0.679,
-              "end": 1.087
+              "start": 0.686,
+              "end": 1.098
+            },
+            {
+              "text": "todo",
+              "start": 1.098,
+              "end": 1.441
             },
             {
               "text": "esto.",
-              "start": 1.087,
-              "end": 1.426
+              "start": 1.441,
+              "end": 1.784
             }
           ]
         }
       ],
-      "visualDirection": "Hero de tres planos: vivienda nueva, cifras completas y una pregunta que rompe la conclusión automática. Geo es reconocible antes del segundo tres.",
+      "visualDirection": "Hero Credicasa registrado; casa nueva, 2,99%, 100% y USD 65.000 abren la pregunta.",
       "transition": "cut",
       "asset": "sim:credicasa-hero",
       "assetType": "simulation",
       "photo": null,
-      "voiceFile": "jobs/geo-017/audio/voice-01.mp3",
+      "voiceFile": "",
       "assetStartInFrames": 0,
-      "assetTotalInFrames": 154,
+      "assetTotalInFrames": 152,
       "accent": "#22C55E"
     },
     {
-      "purpose": "problema",
-      "durationInFrames": 121,
-      "headline": "Tres límites",
-      "captions": [
-        {
-          "text": "Pero antes de buscar,",
-          "start": 0.0,
-          "end": 1.419,
-          "words": [
-            {
-              "text": "Pero",
-              "start": 0.0,
-              "end": 0.338
-            },
-            {
-              "text": "antes",
-              "start": 0.338,
-              "end": 0.743
-            },
-            {
-              "text": "de",
-              "start": 0.743,
-              "end": 0.946
-            },
-            {
-              "text": "buscar,",
-              "start": 0.946,
-              "end": 1.419
-            }
-          ]
-        },
-        {
-          "text": "necesitas entender tres límites.",
-          "start": 1.419,
-          "end": 3.582,
-          "words": [
-            {
-              "text": "necesitas",
-              "start": 0.0,
-              "end": 0.676
-            },
-            {
-              "text": "entender",
-              "start": 0.676,
-              "end": 1.284
-            },
-            {
-              "text": "tres",
-              "start": 1.284,
-              "end": 1.622
-            },
-            {
-              "text": "límites.",
-              "start": 1.622,
-              "end": 2.163
-            }
-          ]
-        }
-      ],
-      "visualDirection": "Tres tarjetas numeradas sustituyen la conclusión del gancho: persona, vivienda y costo.",
-      "transition": "cut",
-      "asset": "sim:credicasa-fact-card",
-      "assetType": "simulation",
-      "photo": null,
-      "voiceFile": "jobs/geo-017/audio/voice-02.mp3",
-      "assetStartInFrames": 0,
-      "assetTotalInFrames": 410,
-      "accent": "#14B8A6"
-    },
-    {
       "purpose": "prueba",
-      "durationInFrames": 198,
-      "headline": "Dos tasas",
+      "durationInFrames": 121,
+      "headline": "Nominal y efectiva",
       "captions": [
         {
-          "text": "Credicasa publica 2,99% nominal",
+          "text": "Credicasa del BIESS publica 2,99%",
           "start": 0.0,
-          "end": 4.013,
+          "end": 2.333,
           "words": [
             {
               "text": "Credicasa",
               "start": 0.0,
-              "end": 1.254
+              "end": 0.686
+            },
+            {
+              "text": "del",
+              "start": 0.686,
+              "end": 0.961
+            },
+            {
+              "text": "BIESS",
+              "start": 0.961,
+              "end": 1.373
             },
             {
               "text": "publica",
-              "start": 1.254,
-              "end": 2.257
+              "start": 1.373,
+              "end": 1.922
             },
             {
               "text": "2,99%",
-              "start": 2.257,
-              "end": 3.01
-            },
-            {
-              "text": "nominal",
-              "start": 3.01,
-              "end": 4.013
+              "start": 1.922,
+              "end": 2.333
             }
           ]
         },
         {
-          "text": "y 3,03% efectivo.",
-          "start": 4.013,
-          "end": 6.144,
+          "text": "nominal y 3,03% efectivo.",
+          "start": 2.333,
+          "end": 4.049,
           "words": [
             {
-              "text": "y",
+              "text": "nominal",
               "start": 0.0,
-              "end": 0.251
+              "end": 0.549
+            },
+            {
+              "text": "y",
+              "start": 0.549,
+              "end": 0.686
             },
             {
               "text": "3,03%",
-              "start": 0.251,
-              "end": 1.003
+              "start": 0.686,
+              "end": 1.098
             },
             {
               "text": "efectivo.",
-              "start": 1.003,
-              "end": 2.132
+              "start": 1.098,
+              "end": 1.716
             }
           ]
         }
       ],
-      "visualDirection": "La tarjeta separa tasa nominal 2,99% y efectiva 3,03%; ambas aparecen completas.",
+      "visualDirection": "Tarjeta de producto BIESS; ambas tasas aparecen completas y diferenciadas.",
       "transition": "cut",
       "asset": "sim:credicasa-fact-card",
       "assetType": "simulation",
       "photo": null,
-      "voiceFile": "jobs/geo-017/audio/voice-03.mp3",
-      "assetStartInFrames": 121,
-      "assetTotalInFrames": 410,
+      "voiceFile": "",
+      "assetStartInFrames": 0,
+      "assetTotalInFrames": 220,
       "accent": "#6B5CF6"
     },
     {
       "purpose": "prueba",
-      "durationInFrames": 91,
-      "headline": "Hasta 30 años",
+      "durationInFrames": 99,
+      "headline": "Tres máximos",
       "captions": [
         {
-          "text": "También ofrece hasta treinta años",
+          "text": "Ofrece hasta 100%,",
           "start": 0.0,
-          "end": 2.044,
+          "end": 1.235,
           "words": [
             {
-              "text": "También",
+              "text": "Ofrece",
               "start": 0.0,
-              "end": 0.481
-            },
-            {
-              "text": "ofrece",
-              "start": 0.481,
-              "end": 0.902
+              "end": 0.48
             },
             {
               "text": "hasta",
-              "start": 0.902,
-              "end": 1.262
+              "start": 0.48,
+              "end": 0.892
             },
             {
-              "text": "treinta",
-              "start": 1.262,
-              "end": 1.743
-            },
-            {
-              "text": "años",
-              "start": 1.743,
-              "end": 2.044
+              "text": "100%,",
+              "start": 0.892,
+              "end": 1.235
             }
           ]
         },
         {
-          "text": "de plazo.",
-          "start": 2.044,
-          "end": 2.585,
+          "text": "65.000 dólares y treinta años.",
+          "start": 1.235,
+          "end": 3.294,
           "words": [
             {
-              "text": "de",
+              "text": "65.000",
               "start": 0.0,
-              "end": 0.18
+              "end": 0.48
             },
             {
-              "text": "plazo.",
-              "start": 0.18,
-              "end": 0.541
+              "text": "dólares",
+              "start": 0.48,
+              "end": 1.029
+            },
+            {
+              "text": "y",
+              "start": 1.029,
+              "end": 1.167
+            },
+            {
+              "text": "treinta",
+              "start": 1.167,
+              "end": 1.716
+            },
+            {
+              "text": "años.",
+              "start": 1.716,
+              "end": 2.059
             }
           ]
         }
       ],
-      "visualDirection": "La tarjeta cambia a un calendario que llega hasta 360 meses sin prometer ese plazo a todos.",
+      "visualDirection": "Tres máximos; nunca se presentan como aprobación.",
       "transition": "cut",
       "asset": "sim:credicasa-fact-card",
       "assetType": "simulation",
       "photo": null,
-      "voiceFile": "jobs/geo-017/audio/voice-04.mp3",
-      "assetStartInFrames": 319,
-      "assetTotalInFrames": 410,
-      "accent": "#A78BFA"
-    },
-    {
-      "purpose": "prueba",
-      "durationInFrames": 141,
-      "headline": "Tope con gastos",
-      "captions": [
-        {
-          "text": "Y hasta 65.000 dólares,",
-          "start": 0.0,
-          "end": 1.748,
-          "words": [
-            {
-              "text": "Y",
-              "start": 0.0,
-              "end": 0.152
-            },
-            {
-              "text": "hasta",
-              "start": 0.152,
-              "end": 0.608
-            },
-            {
-              "text": "65.000",
-              "start": 0.608,
-              "end": 1.14
-            },
-            {
-              "text": "dólares,",
-              "start": 1.14,
-              "end": 1.748
-            }
-          ]
-        },
-        {
-          "text": "incluidos los gastos financiados.",
-          "start": 1.748,
-          "end": 4.256,
-          "words": [
-            {
-              "text": "incluidos",
-              "start": 0.0,
-              "end": 0.76
-            },
-            {
-              "text": "los",
-              "start": 0.76,
-              "end": 1.064
-            },
-            {
-              "text": "gastos",
-              "start": 1.064,
-              "end": 1.596
-            },
-            {
-              "text": "financiados.",
-              "start": 1.596,
-              "end": 2.508
-            }
-          ]
-        }
-      ],
-      "visualDirection": "Vivienda y gastos financiados comparten el mismo sobre de USD 65.000; nada se presenta como dinero adicional fuera del tope.",
-      "transition": "cut",
-      "asset": "sim:credicasa-total-envelope",
-      "assetType": "simulation",
-      "photo": null,
-      "voiceFile": "jobs/geo-017/audio/voice-05.mp3",
-      "assetStartInFrames": 0,
-      "assetTotalInFrames": 301,
-      "accent": "#22C55E"
-    },
-    {
-      "purpose": "problema",
-      "durationInFrames": 127,
-      "headline": "Tu capacidad",
-      "captions": [
-        {
-          "text": "Ese máximo no es automático.",
-          "start": 0.0,
-          "end": 2.03,
-          "words": [
-            {
-              "text": "Ese",
-              "start": 0.0,
-              "end": 0.29
-            },
-            {
-              "text": "máximo",
-              "start": 0.29,
-              "end": 0.797
-            },
-            {
-              "text": "no",
-              "start": 0.797,
-              "end": 1.015
-            },
-            {
-              "text": "es",
-              "start": 1.015,
-              "end": 1.232
-            },
-            {
-              "text": "automático.",
-              "start": 1.232,
-              "end": 2.03
-            }
-          ]
-        },
-        {
-          "text": "Depende de tu capacidad.",
-          "start": 2.03,
-          "end": 3.769,
-          "words": [
-            {
-              "text": "Depende",
-              "start": 0.0,
-              "end": 0.58
-            },
-            {
-              "text": "de",
-              "start": 0.58,
-              "end": 0.797
-            },
-            {
-              "text": "tu",
-              "start": 0.797,
-              "end": 1.015
-            },
-            {
-              "text": "capacidad.",
-              "start": 1.015,
-              "end": 1.74
-            }
-          ]
-        }
-      ],
-      "visualDirection": "Un medidor recibe ingresos y obligaciones y se detiene antes del máximo, sin inventar aprobación.",
-      "transition": "cut",
-      "asset": "sim:credicasa-capacity",
-      "assetType": "simulation",
-      "photo": null,
-      "voiceFile": "jobs/geo-017/audio/voice-06.mp3",
-      "assetStartInFrames": 0,
-      "assetTotalInFrames": 127,
+      "voiceFile": "",
+      "assetStartInFrames": 121,
+      "assetTotalInFrames": 220,
       "accent": "#14B8A6"
     },
     {
       "purpose": "prueba",
-      "durationInFrames": 199,
-      "headline": "Ingreso familiar",
+      "durationInFrames": 121,
+      "headline": "Incluye gastos",
       "captions": [
         {
-          "text": "El ingreso familiar máximo",
+          "text": "Ese tope incluye los gastos",
           "start": 0.0,
-          "end": 2.924,
+          "end": 1.922,
           "words": [
             {
-              "text": "El",
+              "text": "Ese",
               "start": 0.0,
-              "end": 0.325
+              "end": 0.275
             },
             {
-              "text": "ingreso",
-              "start": 0.325,
-              "end": 1.191
+              "text": "tope",
+              "start": 0.275,
+              "end": 0.618
             },
             {
-              "text": "familiar",
-              "start": 1.191,
-              "end": 2.166
+              "text": "incluye",
+              "start": 0.618,
+              "end": 1.167
             },
             {
-              "text": "máximo",
-              "start": 2.166,
-              "end": 2.924
+              "text": "los",
+              "start": 1.167,
+              "end": 1.441
+            },
+            {
+              "text": "gastos",
+              "start": 1.441,
+              "end": 1.922
             }
           ]
         },
         {
-          "text": "publicado es 1.527,94 dólares.",
-          "start": 2.924,
-          "end": 6.173,
+          "text": "financiados dentro del crédito.",
+          "start": 1.922,
+          "end": 4.049,
           "words": [
             {
-              "text": "publicado",
+              "text": "financiados",
               "start": 0.0,
-              "end": 1.083
+              "end": 0.824
             },
             {
-              "text": "es",
-              "start": 1.083,
-              "end": 1.408
+              "text": "dentro",
+              "start": 0.824,
+              "end": 1.304
             },
             {
-              "text": "1.527,94",
-              "start": 1.408,
-              "end": 2.383
+              "text": "del",
+              "start": 1.304,
+              "end": 1.578
             },
             {
-              "text": "dólares.",
-              "start": 2.383,
-              "end": 3.249
+              "text": "crédito.",
+              "start": 1.578,
+              "end": 2.127
             }
           ]
         }
       ],
-      "visualDirection": "La cifra familiar entra completa junto a jubilación y discapacidad, sin contar desde cero.",
+      "visualDirection": "Casa y gastos financiados quedan dentro del mismo límite total de USD 65.000.",
       "transition": "cut",
-      "asset": "sim:credicasa-applicants-b",
+      "asset": "sim:credicasa-expense-request",
       "assetType": "simulation",
       "photo": null,
-      "voiceFile": "jobs/geo-017/audio/voice-07.mp3",
+      "voiceFile": "",
       "assetStartInFrames": 0,
-      "assetTotalInFrames": 199,
-      "accent": "#6B5CF6"
-    },
-    {
-      "purpose": "prueba",
-      "durationInFrames": 126,
-      "headline": "Revisa tu perfil",
-      "captions": [
-        {
-          "text": "Dependientes y voluntarios tienen",
-          "start": 0.0,
-          "end": 2.054,
-          "words": [
-            {
-              "text": "Dependientes",
-              "start": 0.0,
-              "end": 0.785
-            },
-            {
-              "text": "y",
-              "start": 0.785,
-              "end": 0.906
-            },
-            {
-              "text": "voluntarios",
-              "start": 0.906,
-              "end": 1.631
-            },
-            {
-              "text": "tienen",
-              "start": 1.631,
-              "end": 2.054
-            }
-          ]
-        },
-        {
-          "text": "reglas distintas de aportes.",
-          "start": 2.054,
-          "end": 3.746,
-          "words": [
-            {
-              "text": "reglas",
-              "start": 0.0,
-              "end": 0.423
-            },
-            {
-              "text": "distintas",
-              "start": 0.423,
-              "end": 1.027
-            },
-            {
-              "text": "de",
-              "start": 1.027,
-              "end": 1.208
-            },
-            {
-              "text": "aportes.",
-              "start": 1.208,
-              "end": 1.692
-            }
-          ]
-        }
-      ],
-      "visualDirection": "Las rutas de afiliación dependiente y voluntaria muestran sus aportaciones publicadas como condiciones distintas.",
-      "transition": "cut",
-      "asset": "sim:credicasa-applicants-a",
-      "assetType": "simulation",
-      "photo": null,
-      "voiceFile": "jobs/geo-017/audio/voice-08.mp3",
-      "assetStartInFrames": 0,
-      "assetTotalInFrames": 126,
+      "assetTotalInFrames": 405,
       "accent": "#A78BFA"
     },
     {
       "purpose": "prueba",
-      "durationInFrames": 110,
-      "headline": "Vivienda elegible",
+      "durationInFrames": 101,
+      "headline": "Vivienda nueva",
       "captions": [
         {
           "text": "La vivienda debe ser única,",
           "start": 0.0,
-          "end": 1.764,
+          "end": 1.853,
           "words": [
             {
               "text": "La",
               "start": 0.0,
-              "end": 0.196
+              "end": 0.206
             },
             {
               "text": "vivienda",
-              "start": 0.196,
-              "end": 0.784
+              "start": 0.206,
+              "end": 0.824
             },
             {
               "text": "debe",
-              "start": 0.784,
-              "end": 1.11
+              "start": 0.824,
+              "end": 1.167
             },
             {
               "text": "ser",
-              "start": 1.11,
-              "end": 1.372
+              "start": 1.167,
+              "end": 1.441
             },
             {
               "text": "única,",
-              "start": 1.372,
-              "end": 1.764
+              "start": 1.441,
+              "end": 1.853
             }
           ]
         },
         {
           "text": "nueva y de primer uso.",
-          "start": 1.764,
-          "end": 3.2,
+          "start": 1.853,
+          "end": 3.363,
           "words": [
             {
               "text": "nueva",
               "start": 0.0,
-              "end": 0.392
+              "end": 0.412
             },
             {
               "text": "y",
-              "start": 0.392,
-              "end": 0.523
+              "start": 0.412,
+              "end": 0.549
             },
             {
               "text": "de",
-              "start": 0.523,
-              "end": 0.718
+              "start": 0.549,
+              "end": 0.755
             },
             {
               "text": "primer",
-              "start": 0.718,
-              "end": 1.176
+              "start": 0.755,
+              "end": 1.235
             },
             {
               "text": "uso.",
-              "start": 1.176,
-              "end": 1.437
+              "start": 1.235,
+              "end": 1.51
             }
           ]
         }
       ],
-      "visualDirection": "La puerta acepta una vivienda con las etiquetas única, nueva y primer uso; una opción comercial queda fuera.",
+      "visualDirection": "La puerta valida única, nueva y primer uso; excluye fin comercial.",
       "transition": "cut",
       "asset": "sim:credicasa-home-gate",
       "assetType": "simulation",
       "photo": null,
-      "voiceFile": "jobs/geo-017/audio/voice-09.mp3",
+      "voiceFile": "",
       "assetStartInFrames": 0,
-      "assetTotalInFrames": 110,
+      "assetTotalInFrames": 101,
       "accent": "#22C55E"
     },
     {
+      "purpose": "prueba",
+      "durationInFrames": 134,
+      "headline": "Desde una habitación",
+      "captions": [
+        {
+          "text": "Puede tener una habitación o más;",
+          "start": 0.0,
+          "end": 2.265,
+          "words": [
+            {
+              "text": "Puede",
+              "start": 0.0,
+              "end": 0.412
+            },
+            {
+              "text": "tener",
+              "start": 0.412,
+              "end": 0.824
+            },
+            {
+              "text": "una",
+              "start": 0.824,
+              "end": 1.098
+            },
+            {
+              "text": "habitación",
+              "start": 1.098,
+              "end": 1.853
+            },
+            {
+              "text": "o",
+              "start": 1.853,
+              "end": 1.99
+            },
+            {
+              "text": "más;",
+              "start": 1.99,
+              "end": 2.265
+            }
+          ]
+        },
+        {
+          "text": "una suite también puede aplicar.",
+          "start": 2.265,
+          "end": 4.461,
+          "words": [
+            {
+              "text": "una",
+              "start": 0.0,
+              "end": 0.275
+            },
+            {
+              "text": "suite",
+              "start": 0.275,
+              "end": 0.686
+            },
+            {
+              "text": "también",
+              "start": 0.686,
+              "end": 1.235
+            },
+            {
+              "text": "puede",
+              "start": 1.235,
+              "end": 1.647
+            },
+            {
+              "text": "aplicar.",
+              "start": 1.647,
+              "end": 2.196
+            }
+          ]
+        }
+      ],
+      "visualDirection": "Una suite de una habitación cruza las mismas condiciones de vivienda; no se afirma que toda suite aplique.",
+      "transition": "cut",
+      "asset": "sim:credicasa-suite",
+      "assetType": "simulation",
+      "photo": null,
+      "voiceFile": "",
+      "assetStartInFrames": 0,
+      "assetTotalInFrames": 134,
+      "accent": "#6B5CF6"
+    },
+    {
       "purpose": "problema",
-      "durationInFrames": 108,
+      "durationInFrames": 105,
       "headline": "Tres números",
       "captions": [
         {
-          "text": "Precio, avalúo y crédito son números distintos.",
+          "text": "Precio, avalúo y crédito son tres números",
           "start": 0.0,
-          "end": 3.157,
+          "end": 2.814,
           "words": [
             {
               "text": "Precio,",
@@ -706,623 +531,2684 @@
               "end": 1.922
             },
             {
-              "text": "números",
+              "text": "tres",
               "start": 1.922,
-              "end": 2.471
+              "end": 2.265
             },
             {
-              "text": "distintos.",
-              "start": 2.471,
-              "end": 3.157
-            }
-          ]
-        }
-      ],
-      "visualDirection": "Tres columnas rotuladas PRECIO, AVALÚO y CRÉDITO se separan físicamente.",
-      "transition": "cut",
-      "asset": "sim:credicasa-three-numbers",
-      "assetType": "simulation",
-      "photo": null,
-      "voiceFile": "jobs/geo-017/audio/voice-10.mp3",
-      "assetStartInFrames": 0,
-      "assetTotalInFrames": 290,
-      "accent": "#14B8A6"
-    },
-    {
-      "purpose": "prueba",
-      "durationInFrames": 182,
-      "headline": "Avalúo máximo",
-      "captions": [
-        {
-          "text": "El avalúo máximo publicado es",
-          "start": 0.0,
-          "end": 3.51,
-          "words": [
-            {
-              "text": "El",
-              "start": 0.0,
-              "end": 0.351
-            },
-            {
-              "text": "avalúo",
-              "start": 0.351,
-              "end": 1.17
-            },
-            {
-              "text": "máximo",
-              "start": 1.17,
-              "end": 1.989
-            },
-            {
-              "text": "publicado",
-              "start": 1.989,
-              "end": 3.159
-            },
-            {
-              "text": "es",
-              "start": 3.159,
-              "end": 3.51
+              "text": "números",
+              "start": 2.265,
+              "end": 2.814
             }
           ]
         },
         {
-          "text": "71.504,70 dólares.",
-          "start": 3.51,
-          "end": 5.615,
+          "text": "distintos.",
+          "start": 2.814,
+          "end": 3.5,
           "words": [
             {
-              "text": "71.504,70",
+              "text": "distintos.",
               "start": 0.0,
-              "end": 1.17
-            },
-            {
-              "text": "dólares.",
-              "start": 1.17,
-              "end": 2.106
+              "end": 0.686
             }
           ]
         }
       ],
-      "visualDirection": "La columna AVALÚO toma el foco y muestra la cifra completa; precio y crédito siguen diferenciados.",
+      "visualDirection": "Precio, avalúo y crédito se separan físicamente.",
       "transition": "cut",
       "asset": "sim:credicasa-three-numbers",
       "assetType": "simulation",
       "photo": null,
-      "voiceFile": "jobs/geo-017/audio/voice-11.mp3",
-      "assetStartInFrames": 108,
-      "assetTotalInFrames": 290,
+      "voiceFile": "",
+      "assetStartInFrames": 0,
+      "assetTotalInFrames": 339,
+      "accent": "#14B8A6"
+    },
+    {
+      "purpose": "prueba",
+      "durationInFrames": 119,
+      "headline": "Avalúo máximo",
+      "captions": [
+        {
+          "text": "El avalúo comercial máximo",
+          "start": 0.0,
+          "end": 1.853,
+          "words": [
+            {
+              "text": "El",
+              "start": 0.0,
+              "end": 0.206
+            },
+            {
+              "text": "avalúo",
+              "start": 0.206,
+              "end": 0.686
+            },
+            {
+              "text": "comercial",
+              "start": 0.686,
+              "end": 1.373
+            },
+            {
+              "text": "máximo",
+              "start": 1.373,
+              "end": 1.853
+            }
+          ]
+        },
+        {
+          "text": "publicado es 71.504,70 dólares.",
+          "start": 1.853,
+          "end": 3.98,
+          "words": [
+            {
+              "text": "publicado",
+              "start": 0.0,
+              "end": 0.686
+            },
+            {
+              "text": "es",
+              "start": 0.686,
+              "end": 0.892
+            },
+            {
+              "text": "71.504,70",
+              "start": 0.892,
+              "end": 1.578
+            },
+            {
+              "text": "dólares.",
+              "start": 1.578,
+              "end": 2.127
+            }
+          ]
+        }
+      ],
+      "visualDirection": "Foco en avalúo; cifra completa sin interpolación.",
+      "transition": "cut",
+      "asset": "sim:credicasa-three-numbers",
+      "assetType": "simulation",
+      "photo": null,
+      "voiceFile": "",
+      "assetStartInFrames": 105,
+      "assetTotalInFrames": 339,
+      "accent": "#A78BFA"
+    },
+    {
+      "purpose": "prueba",
+      "durationInFrames": 80,
+      "headline": "Ejemplo: $60.000",
+      "captions": [
+        {
+          "text": "Imagina una vivienda de 60.000 dólares.",
+          "start": 0.0,
+          "end": 2.676,
+          "words": [
+            {
+              "text": "Imagina",
+              "start": 0.0,
+              "end": 0.549
+            },
+            {
+              "text": "una",
+              "start": 0.549,
+              "end": 0.824
+            },
+            {
+              "text": "vivienda",
+              "start": 0.824,
+              "end": 1.441
+            },
+            {
+              "text": "de",
+              "start": 1.441,
+              "end": 1.647
+            },
+            {
+              "text": "60.000",
+              "start": 1.647,
+              "end": 2.127
+            },
+            {
+              "text": "dólares.",
+              "start": 2.127,
+              "end": 2.676
+            }
+          ]
+        }
+      ],
+      "visualDirection": "Propiedad ilustrativa rotulada EJEMPLO.",
+      "transition": "cut",
+      "asset": "sim:credicasa-entry-example",
+      "assetType": "simulation",
+      "photo": null,
+      "voiceFile": "",
+      "assetStartInFrames": 0,
+      "assetTotalInFrames": 311,
+      "accent": "#22C55E"
+    },
+    {
+      "purpose": "prueba",
+      "durationInFrames": 103,
+      "headline": "20% = $12.000",
+      "captions": [
+        {
+          "text": "Con 80% financiado,",
+          "start": 0.0,
+          "end": 1.304,
+          "words": [
+            {
+              "text": "Con",
+              "start": 0.0,
+              "end": 0.275
+            },
+            {
+              "text": "80%",
+              "start": 0.275,
+              "end": 0.549
+            },
+            {
+              "text": "financiado,",
+              "start": 0.549,
+              "end": 1.304
+            }
+          ]
+        },
+        {
+          "text": "necesitarías 12.000 de entrada.",
+          "start": 1.304,
+          "end": 3.431,
+          "words": [
+            {
+              "text": "necesitarías",
+              "start": 0.0,
+              "end": 0.892
+            },
+            {
+              "text": "12.000",
+              "start": 0.892,
+              "end": 1.373
+            },
+            {
+              "text": "de",
+              "start": 1.373,
+              "end": 1.578
+            },
+            {
+              "text": "entrada.",
+              "start": 1.578,
+              "end": 2.127
+            }
+          ]
+        }
+      ],
+      "visualDirection": "Comparación 80/20 con EJEMPLO visible.",
+      "transition": "cut",
+      "asset": "sim:credicasa-entry-example",
+      "assetType": "simulation",
+      "photo": null,
+      "voiceFile": "",
+      "assetStartInFrames": 80,
+      "assetTotalInFrames": 311,
+      "accent": "#6B5CF6"
+    },
+    {
+      "purpose": "resultado",
+      "durationInFrames": 128,
+      "headline": "Hasta 100%",
+      "captions": [
+        {
+          "text": "Hasta 100%,",
+          "start": 0.0,
+          "end": 0.755,
+          "words": [
+            {
+              "text": "Hasta",
+              "start": 0.0,
+              "end": 0.412
+            },
+            {
+              "text": "100%,",
+              "start": 0.412,
+              "end": 0.755
+            }
+          ]
+        },
+        {
+          "text": "si calificas y el avalúo",
+          "start": 0.755,
+          "end": 2.471,
+          "words": [
+            {
+              "text": "si",
+              "start": 0.0,
+              "end": 0.206
+            },
+            {
+              "text": "calificas",
+              "start": 0.206,
+              "end": 0.892
+            },
+            {
+              "text": "y",
+              "start": 0.892,
+              "end": 1.029
+            },
+            {
+              "text": "el",
+              "start": 1.029,
+              "end": 1.235
+            },
+            {
+              "text": "avalúo",
+              "start": 1.235,
+              "end": 1.716
+            }
+          ]
+        },
+        {
+          "text": "y los límites lo permiten.",
+          "start": 2.471,
+          "end": 4.255,
+          "words": [
+            {
+              "text": "y",
+              "start": 0.0,
+              "end": 0.137
+            },
+            {
+              "text": "los",
+              "start": 0.137,
+              "end": 0.412
+            },
+            {
+              "text": "límites",
+              "start": 0.412,
+              "end": 0.961
+            },
+            {
+              "text": "lo",
+              "start": 0.961,
+              "end": 1.167
+            },
+            {
+              "text": "permiten.",
+              "start": 1.167,
+              "end": 1.784
+            }
+          ]
+        }
+      ],
+      "visualDirection": "La entrada tradicional desaparece, pero quedan visibles las condiciones de aprobación, avalúo y límites.",
+      "transition": "cut",
+      "asset": "sim:credicasa-entry-example",
+      "assetType": "simulation",
+      "photo": null,
+      "voiceFile": "",
+      "assetStartInFrames": 183,
+      "assetTotalInFrames": 311,
+      "accent": "#14B8A6"
+    },
+    {
+      "purpose": "problema",
+      "durationInFrames": 109,
+      "headline": "No es automático",
+      "captions": [
+        {
+          "text": "Pero 65.000 no significa 65.000",
+          "start": 0.0,
+          "end": 2.196,
+          "words": [
+            {
+              "text": "Pero",
+              "start": 0.0,
+              "end": 0.343
+            },
+            {
+              "text": "65.000",
+              "start": 0.343,
+              "end": 0.824
+            },
+            {
+              "text": "no",
+              "start": 0.824,
+              "end": 1.029
+            },
+            {
+              "text": "significa",
+              "start": 1.029,
+              "end": 1.716
+            },
+            {
+              "text": "65.000",
+              "start": 1.716,
+              "end": 2.196
+            }
+          ]
+        },
+        {
+          "text": "aprobados para todos.",
+          "start": 2.196,
+          "end": 3.637,
+          "words": [
+            {
+              "text": "aprobados",
+              "start": 0.0,
+              "end": 0.686
+            },
+            {
+              "text": "para",
+              "start": 0.686,
+              "end": 1.029
+            },
+            {
+              "text": "todos.",
+              "start": 1.029,
+              "end": 1.441
+            }
+          ]
+        }
+      ],
+      "visualDirection": "El máximo queda separado del monto aprobado.",
+      "transition": "cut",
+      "asset": "sim:credicasa-capacity",
+      "assetType": "simulation",
+      "photo": null,
+      "voiceFile": "",
+      "assetStartInFrames": 0,
+      "assetTotalInFrames": 337,
+      "accent": "#A78BFA"
+    },
+    {
+      "purpose": "prueba",
+      "durationInFrames": 113,
+      "headline": "Depende de tu perfil",
+      "captions": [
+        {
+          "text": "Tu capacidad podría permitir 38.000,",
+          "start": 0.0,
+          "end": 2.471,
+          "words": [
+            {
+              "text": "Tu",
+              "start": 0.0,
+              "end": 0.206
+            },
+            {
+              "text": "capacidad",
+              "start": 0.206,
+              "end": 0.892
+            },
+            {
+              "text": "podría",
+              "start": 0.892,
+              "end": 1.373
+            },
+            {
+              "text": "permitir",
+              "start": 1.373,
+              "end": 1.99
+            },
+            {
+              "text": "38.000,",
+              "start": 1.99,
+              "end": 2.471
+            }
+          ]
+        },
+        {
+          "text": "52.000 o el máximo.",
+          "start": 2.471,
+          "end": 3.774,
+          "words": [
+            {
+              "text": "52.000",
+              "start": 0.0,
+              "end": 0.48
+            },
+            {
+              "text": "o",
+              "start": 0.48,
+              "end": 0.618
+            },
+            {
+              "text": "el",
+              "start": 0.618,
+              "end": 0.824
+            },
+            {
+              "text": "máximo.",
+              "start": 0.824,
+              "end": 1.304
+            }
+          ]
+        }
+      ],
+      "visualDirection": "Tres resultados rotulados EJEMPLO aparecen completos.",
+      "transition": "cut",
+      "asset": "sim:credicasa-capacity",
+      "assetType": "simulation",
+      "photo": null,
+      "voiceFile": "",
+      "assetStartInFrames": 109,
+      "assetTotalInFrames": 337,
+      "accent": "#22C55E"
+    },
+    {
+      "purpose": "resultado",
+      "durationInFrames": 115,
+      "headline": "Primero, precalifica",
+      "captions": [
+        {
+          "text": "Son ejemplos:",
+          "start": 0.0,
+          "end": 0.892,
+          "words": [
+            {
+              "text": "Son",
+              "start": 0.0,
+              "end": 0.275
+            },
+            {
+              "text": "ejemplos:",
+              "start": 0.275,
+              "end": 0.892
+            }
+          ]
+        },
+        {
+          "text": "la precalificación oficial define",
+          "start": 0.892,
+          "end": 3.225,
+          "words": [
+            {
+              "text": "la",
+              "start": 0.0,
+              "end": 0.206
+            },
+            {
+              "text": "precalificación",
+              "start": 0.206,
+              "end": 1.304
+            },
+            {
+              "text": "oficial",
+              "start": 1.304,
+              "end": 1.853
+            },
+            {
+              "text": "define",
+              "start": 1.853,
+              "end": 2.333
+            }
+          ]
+        },
+        {
+          "text": "tu monto.",
+          "start": 3.225,
+          "end": 3.843,
+          "words": [
+            {
+              "text": "tu",
+              "start": 0.0,
+              "end": 0.206
+            },
+            {
+              "text": "monto.",
+              "start": 0.206,
+              "end": 0.618
+            }
+          ]
+        }
+      ],
+      "visualDirection": "Los ejemplos ceden el foco a PRECALIFICACIÓN OFICIAL.",
+      "transition": "cut",
+      "asset": "sim:credicasa-capacity",
+      "assetType": "simulation",
+      "photo": null,
+      "voiceFile": "",
+      "assetStartInFrames": 222,
+      "assetTotalInFrames": 337,
+      "accent": "#6B5CF6"
+    },
+    {
+      "purpose": "prueba",
+      "durationInFrames": 107,
+      "headline": "Afiliado dependiente",
+      "captions": [
+        {
+          "text": "Dependientes: 36 aportes;",
+          "start": 0.0,
+          "end": 1.647,
+          "words": [
+            {
+              "text": "Dependientes:",
+              "start": 0.0,
+              "end": 0.892
+            },
+            {
+              "text": "36",
+              "start": 0.892,
+              "end": 1.098
+            },
+            {
+              "text": "aportes;",
+              "start": 1.098,
+              "end": 1.647
+            }
+          ]
+        },
+        {
+          "text": "los últimos 13, consecutivos.",
+          "start": 1.647,
+          "end": 3.569,
+          "words": [
+            {
+              "text": "los",
+              "start": 0.0,
+              "end": 0.275
+            },
+            {
+              "text": "últimos",
+              "start": 0.275,
+              "end": 0.824
+            },
+            {
+              "text": "13,",
+              "start": 0.824,
+              "end": 1.029
+            },
+            {
+              "text": "consecutivos.",
+              "start": 1.029,
+              "end": 1.922
+            }
+          ]
+        }
+      ],
+      "visualDirection": "Línea de aportes dependiente con 36 y últimos 13 consecutivos.",
+      "transition": "cut",
+      "asset": "sim:credicasa-applicants-a",
+      "assetType": "simulation",
+      "photo": null,
+      "voiceFile": "",
+      "assetStartInFrames": 0,
+      "assetTotalInFrames": 243,
+      "accent": "#14B8A6"
+    },
+    {
+      "purpose": "prueba",
+      "durationInFrames": 136,
+      "headline": "Voluntario o jubilado",
+      "captions": [
+        {
+          "text": "Voluntarios: 36 consecutivos.",
+          "start": 0.0,
+          "end": 1.922,
+          "words": [
+            {
+              "text": "Voluntarios:",
+              "start": 0.0,
+              "end": 0.824
+            },
+            {
+              "text": "36",
+              "start": 0.824,
+              "end": 1.029
+            },
+            {
+              "text": "consecutivos.",
+              "start": 1.029,
+              "end": 1.922
+            }
+          ]
+        },
+        {
+          "text": "Jubilados con pensión también aplican.",
+          "start": 1.922,
+          "end": 4.529,
+          "words": [
+            {
+              "text": "Jubilados",
+              "start": 0.0,
+              "end": 0.686
+            },
+            {
+              "text": "con",
+              "start": 0.686,
+              "end": 0.961
+            },
+            {
+              "text": "pensión",
+              "start": 0.961,
+              "end": 1.51
+            },
+            {
+              "text": "también",
+              "start": 1.51,
+              "end": 2.059
+            },
+            {
+              "text": "aplican.",
+              "start": 2.059,
+              "end": 2.608
+            }
+          ]
+        }
+      ],
+      "visualDirection": "Rutas separadas para voluntario con 36 consecutivos y jubilado con pensión.",
+      "transition": "cut",
+      "asset": "sim:credicasa-applicants-a",
+      "assetType": "simulation",
+      "photo": null,
+      "voiceFile": "",
+      "assetStartInFrames": 107,
+      "assetTotalInFrames": 243,
+      "accent": "#A78BFA"
+    },
+    {
+      "purpose": "prueba",
+      "durationInFrames": 115,
+      "headline": "18 aportaciones",
+      "captions": [
+        {
+          "text": "Personas con discapacidad",
+          "start": 0.0,
+          "end": 1.784,
+          "words": [
+            {
+              "text": "Personas",
+              "start": 0.0,
+              "end": 0.618
+            },
+            {
+              "text": "con",
+              "start": 0.618,
+              "end": 0.892
+            },
+            {
+              "text": "discapacidad",
+              "start": 0.892,
+              "end": 1.784
+            }
+          ]
+        },
+        {
+          "text": "necesitan 18 aportes en total.",
+          "start": 1.784,
+          "end": 3.843,
+          "words": [
+            {
+              "text": "necesitan",
+              "start": 0.0,
+              "end": 0.686
+            },
+            {
+              "text": "18",
+              "start": 0.686,
+              "end": 0.892
+            },
+            {
+              "text": "aportes",
+              "start": 0.892,
+              "end": 1.441
+            },
+            {
+              "text": "en",
+              "start": 1.441,
+              "end": 1.647
+            },
+            {
+              "text": "total.",
+              "start": 1.647,
+              "end": 2.059
+            }
+          ]
+        }
+      ],
+      "visualDirection": "Perfil discapacidad muestra 18 aportes totales.",
+      "transition": "cut",
+      "asset": "sim:credicasa-applicants-b",
+      "assetType": "simulation",
+      "photo": null,
+      "voiceFile": "",
+      "assetStartInFrames": 0,
+      "assetTotalInFrames": 232,
+      "accent": "#22C55E"
+    },
+    {
+      "purpose": "prueba",
+      "durationInFrames": 117,
+      "headline": "Ingreso familiar",
+      "captions": [
+        {
+          "text": "El ingreso familiar máximo",
+          "start": 0.0,
+          "end": 1.853,
+          "words": [
+            {
+              "text": "El",
+              "start": 0.0,
+              "end": 0.206
+            },
+            {
+              "text": "ingreso",
+              "start": 0.206,
+              "end": 0.755
+            },
+            {
+              "text": "familiar",
+              "start": 0.755,
+              "end": 1.373
+            },
+            {
+              "text": "máximo",
+              "start": 1.373,
+              "end": 1.853
+            }
+          ]
+        },
+        {
+          "text": "publicado es 1.527,94 dólares.",
+          "start": 1.853,
+          "end": 3.912,
+          "words": [
+            {
+              "text": "publicado",
+              "start": 0.0,
+              "end": 0.686
+            },
+            {
+              "text": "es",
+              "start": 0.686,
+              "end": 0.892
+            },
+            {
+              "text": "1.527,94",
+              "start": 0.892,
+              "end": 1.51
+            },
+            {
+              "text": "dólares.",
+              "start": 1.51,
+              "end": 2.059
+            }
+          ]
+        }
+      ],
+      "visualDirection": "Cifra fija junto al grupo familiar.",
+      "transition": "cut",
+      "asset": "sim:credicasa-applicants-b",
+      "assetType": "simulation",
+      "photo": null,
+      "voiceFile": "",
+      "assetStartInFrames": 115,
+      "assetTotalInFrames": 232,
+      "accent": "#6B5CF6"
+    },
+    {
+      "purpose": "prueba",
+      "durationInFrames": 84,
+      "headline": "Edad y plazo",
+      "captions": [
+        {
+          "text": "El plazo real también depende",
+          "start": 0.0,
+          "end": 2.059,
+          "words": [
+            {
+              "text": "El",
+              "start": 0.0,
+              "end": 0.206
+            },
+            {
+              "text": "plazo",
+              "start": 0.206,
+              "end": 0.618
+            },
+            {
+              "text": "real",
+              "start": 0.618,
+              "end": 0.961
+            },
+            {
+              "text": "también",
+              "start": 0.961,
+              "end": 1.51
+            },
+            {
+              "text": "depende",
+              "start": 1.51,
+              "end": 2.059
+            }
+          ]
+        },
+        {
+          "text": "de tu edad.",
+          "start": 2.059,
+          "end": 2.814,
+          "words": [
+            {
+              "text": "de",
+              "start": 0.0,
+              "end": 0.206
+            },
+            {
+              "text": "tu",
+              "start": 0.206,
+              "end": 0.412
+            },
+            {
+              "text": "edad.",
+              "start": 0.412,
+              "end": 0.755
+            }
+          ]
+        }
+      ],
+      "visualDirection": "El plazo disponible responde visualmente a la edad del solicitante.",
+      "transition": "cut",
+      "asset": "sim:credicasa-age-term",
+      "assetType": "simulation",
+      "photo": null,
+      "voiceFile": "",
+      "assetStartInFrames": 0,
+      "assetTotalInFrames": 220,
+      "accent": "#14B8A6"
+    },
+    {
+      "purpose": "prueba",
+      "durationInFrames": 136,
+      "headline": "Límite de edad",
+      "captions": [
+        {
+          "text": "Al solicitar,",
+          "start": 0.0,
+          "end": 0.892,
+          "words": [
+            {
+              "text": "Al",
+              "start": 0.0,
+              "end": 0.206
+            },
+            {
+              "text": "solicitar,",
+              "start": 0.206,
+              "end": 0.892
+            }
+          ]
+        },
+        {
+          "text": "tu edad no debe superar",
+          "start": 0.892,
+          "end": 2.539,
+          "words": [
+            {
+              "text": "tu",
+              "start": 0.0,
+              "end": 0.206
+            },
+            {
+              "text": "edad",
+              "start": 0.206,
+              "end": 0.549
+            },
+            {
+              "text": "no",
+              "start": 0.549,
+              "end": 0.755
+            },
+            {
+              "text": "debe",
+              "start": 0.755,
+              "end": 1.098
+            },
+            {
+              "text": "superar",
+              "start": 1.098,
+              "end": 1.647
+            }
+          ]
+        },
+        {
+          "text": "la esperanza de vida oficial.",
+          "start": 2.539,
+          "end": 4.529,
+          "words": [
+            {
+              "text": "la",
+              "start": 0.0,
+              "end": 0.206
+            },
+            {
+              "text": "esperanza",
+              "start": 0.206,
+              "end": 0.892
+            },
+            {
+              "text": "de",
+              "start": 0.892,
+              "end": 1.098
+            },
+            {
+              "text": "vida",
+              "start": 1.098,
+              "end": 1.441
+            },
+            {
+              "text": "oficial.",
+              "start": 1.441,
+              "end": 1.99
+            }
+          ]
+        }
+      ],
+      "visualDirection": "La edad del solicitante se compara con la referencia poblacional oficial, sin fijar una edad universal.",
+      "transition": "cut",
+      "asset": "sim:credicasa-age-term",
+      "assetType": "simulation",
+      "photo": null,
+      "voiceFile": "",
+      "assetStartInFrames": 84,
+      "assetTotalInFrames": 220,
+      "accent": "#A78BFA"
+    },
+    {
+      "purpose": "prueba",
+      "durationInFrames": 91,
+      "headline": "Ejemplo de cuota",
+      "captions": [
+        {
+          "text": "Ejemplo: 60.000 dólares,",
+          "start": 0.0,
+          "end": 1.578,
+          "words": [
+            {
+              "text": "Ejemplo:",
+              "start": 0.0,
+              "end": 0.549
+            },
+            {
+              "text": "60.000",
+              "start": 0.549,
+              "end": 1.029
+            },
+            {
+              "text": "dólares,",
+              "start": 1.029,
+              "end": 1.578
+            }
+          ]
+        },
+        {
+          "text": "2,99% y treinta años.",
+          "start": 1.578,
+          "end": 3.02,
+          "words": [
+            {
+              "text": "2,99%",
+              "start": 0.0,
+              "end": 0.412
+            },
+            {
+              "text": "y",
+              "start": 0.412,
+              "end": 0.549
+            },
+            {
+              "text": "treinta",
+              "start": 0.549,
+              "end": 1.098
+            },
+            {
+              "text": "años.",
+              "start": 1.098,
+              "end": 1.441
+            }
+          ]
+        }
+      ],
+      "visualDirection": "Tres supuestos visibles con rótulo EJEMPLO.",
+      "transition": "cut",
+      "asset": "sim:credicasa-payment-example",
+      "assetType": "simulation",
+      "photo": null,
+      "voiceFile": "",
+      "assetStartInFrames": 0,
+      "assetTotalInFrames": 307,
+      "accent": "#22C55E"
+    },
+    {
+      "purpose": "prueba",
+      "durationInFrames": 107,
+      "headline": "≈ $253 al mes",
+      "captions": [
+        {
+          "text": "Capital e intereses rondarían 253",
+          "start": 0.0,
+          "end": 2.333,
+          "words": [
+            {
+              "text": "Capital",
+              "start": 0.0,
+              "end": 0.549
+            },
+            {
+              "text": "e",
+              "start": 0.549,
+              "end": 0.686
+            },
+            {
+              "text": "intereses",
+              "start": 0.686,
+              "end": 1.373
+            },
+            {
+              "text": "rondarían",
+              "start": 1.373,
+              "end": 2.059
+            },
+            {
+              "text": "253",
+              "start": 2.059,
+              "end": 2.333
+            }
+          ]
+        },
+        {
+          "text": "dólares mensuales.",
+          "start": 2.333,
+          "end": 3.569,
+          "words": [
+            {
+              "text": "dólares",
+              "start": 0.0,
+              "end": 0.549
+            },
+            {
+              "text": "mensuales.",
+              "start": 0.549,
+              "end": 1.235
+            }
+          ]
+        }
+      ],
+      "visualDirection": "USD 253 fijo; solo capital e intereses.",
+      "transition": "cut",
+      "asset": "sim:credicasa-payment-example",
+      "assetType": "simulation",
+      "photo": null,
+      "voiceFile": "",
+      "assetStartInFrames": 91,
+      "assetTotalInFrames": 307,
       "accent": "#6B5CF6"
     },
     {
       "purpose": "problema",
-      "durationInFrames": 75,
-      "headline": "No es solo cuota",
+      "durationInFrames": 109,
+      "headline": "No es cuota final",
       "captions": [
         {
-          "text": "La cuota no cuenta toda",
+          "text": "No es cuota final ni significa",
           "start": 0.0,
-          "end": 1.36,
+          "end": 2.127,
           "words": [
             {
-              "text": "La",
+              "text": "No",
               "start": 0.0,
-              "end": 0.17
+              "end": 0.206
+            },
+            {
+              "text": "es",
+              "start": 0.206,
+              "end": 0.412
             },
             {
               "text": "cuota",
-              "start": 0.17,
-              "end": 0.51
+              "start": 0.412,
+              "end": 0.824
             },
             {
-              "text": "no",
-              "start": 0.51,
-              "end": 0.68
+              "text": "final",
+              "start": 0.824,
+              "end": 1.235
             },
             {
-              "text": "cuenta",
-              "start": 0.68,
-              "end": 1.076
+              "text": "ni",
+              "start": 1.235,
+              "end": 1.441
             },
             {
-              "text": "toda",
-              "start": 1.076,
-              "end": 1.36
+              "text": "significa",
+              "start": 1.441,
+              "end": 2.127
             }
           ]
         },
         {
-          "text": "la historia.",
-          "start": 1.36,
-          "end": 2.04,
-          "words": [
-            {
-              "text": "la",
-              "start": 0.0,
-              "end": 0.17
-            },
-            {
-              "text": "historia.",
-              "start": 0.17,
-              "end": 0.68
-            }
-          ]
-        }
-      ],
-      "visualDirection": "La cuota entra al centro de un sobre todavía incompleto.",
-      "transition": "cut",
-      "asset": "sim:credicasa-total-envelope",
-      "assetType": "simulation",
-      "photo": null,
-      "voiceFile": "jobs/geo-017/audio/voice-12.mp3",
-      "assetStartInFrames": 141,
-      "assetTotalInFrames": 301,
-      "accent": "#A78BFA"
-    },
-    {
-      "purpose": "prueba",
-      "durationInFrames": 85,
-      "headline": "Costo completo",
-      "captions": [
-        {
-          "text": "También hay seguros",
-          "start": 0.0,
-          "end": 1.157,
-          "words": [
-            {
-              "text": "También",
-              "start": 0.0,
-              "end": 0.463
-            },
-            {
-              "text": "hay",
-              "start": 0.463,
-              "end": 0.694
-            },
-            {
-              "text": "seguros",
-              "start": 0.694,
-              "end": 1.157
-            }
-          ]
-        },
-        {
-          "text": "y gastos del trámite.",
-          "start": 1.157,
-          "end": 2.371,
-          "words": [
-            {
-              "text": "y",
-              "start": 0.0,
-              "end": 0.116
-            },
-            {
-              "text": "gastos",
-              "start": 0.116,
-              "end": 0.52
-            },
-            {
-              "text": "del",
-              "start": 0.52,
-              "end": 0.752
-            },
-            {
-              "text": "trámite.",
-              "start": 0.752,
-              "end": 1.214
-            }
-          ]
-        }
-      ],
-      "visualDirection": "Seguros y gastos se acoplan al sobre para formar COSTO COMPLETO, sin montos inventados.",
-      "transition": "cut",
-      "asset": "sim:credicasa-total-envelope",
-      "assetType": "simulation",
-      "photo": null,
-      "voiceFile": "jobs/geo-017/audio/voice-13.mp3",
-      "assetStartInFrames": 216,
-      "assetTotalInFrames": 301,
-      "accent": "#22C55E"
-    },
-    {
-      "purpose": "prueba",
-      "durationInFrames": 149,
-      "headline": "Cada 180 días",
-      "captions": [
-        {
-          "text": "En agosto,",
-          "start": 0.0,
-          "end": 0.78,
-          "words": [
-            {
-              "text": "En",
-              "start": 0.0,
-              "end": 0.234
-            },
-            {
-              "text": "agosto,",
-              "start": 0.234,
-              "end": 0.78
-            }
-          ]
-        },
-        {
-          "text": "el tarifario mantiene el reajuste",
-          "start": 0.78,
-          "end": 3.433,
-          "words": [
-            {
-              "text": "el",
-              "start": 0.0,
-              "end": 0.234
-            },
-            {
-              "text": "tarifario",
-              "start": 0.234,
-              "end": 1.014
-            },
-            {
-              "text": "mantiene",
-              "start": 1.014,
-              "end": 1.717
-            },
-            {
-              "text": "el",
-              "start": 1.717,
-              "end": 1.951
-            },
-            {
-              "text": "reajuste",
-              "start": 1.951,
-              "end": 2.653
-            }
-          ]
-        },
-        {
-          "text": "cada 180 días.",
-          "start": 3.433,
-          "end": 4.525,
-          "words": [
-            {
-              "text": "cada",
-              "start": 0.0,
-              "end": 0.39
-            },
-            {
-              "text": "180",
-              "start": 0.39,
-              "end": 0.702
-            },
-            {
-              "text": "días.",
-              "start": 0.702,
-              "end": 1.092
-            }
-          ]
-        }
-      ],
-      "visualDirection": "El calendario completa 180 días y la tasa cambia al estado REVISAR sin insinuar dirección del ajuste.",
-      "transition": "cut",
-      "asset": "sim:credicasa-rate-reset",
-      "assetType": "simulation",
-      "photo": null,
-      "voiceFile": "jobs/geo-017/audio/voice-14.mp3",
-      "assetStartInFrames": 0,
-      "assetTotalInFrames": 149,
-      "accent": "#14B8A6"
-    },
-    {
-      "purpose": "resultado",
-      "durationInFrames": 130,
-      "headline": "Primero, revisa",
-      "captions": [
-        {
-          "text": "Primero, revisa requisitos y haz",
-          "start": 0.0,
-          "end": 2.107,
-          "words": [
-            {
-              "text": "Primero,",
-              "start": 0.0,
-              "end": 0.527
-            },
-            {
-              "text": "revisa",
-              "start": 0.527,
-              "end": 0.988
-            },
-            {
-              "text": "requisitos",
-              "start": 0.988,
-              "end": 1.712
-            },
-            {
-              "text": "y",
-              "start": 1.712,
-              "end": 1.844
-            },
-            {
-              "text": "haz",
-              "start": 1.844,
-              "end": 2.107
-            }
-          ]
-        },
-        {
-          "text": "la precalificación oficial.",
-          "start": 2.107,
-          "end": 3.885,
-          "words": [
-            {
-              "text": "la",
-              "start": 0.0,
-              "end": 0.198
-            },
-            {
-              "text": "precalificación",
-              "start": 0.198,
-              "end": 1.251
-            },
-            {
-              "text": "oficial.",
-              "start": 1.251,
-              "end": 1.778
-            }
-          ]
-        }
-      ],
-      "visualDirection": "Requisitos validados conducen a PRECALIFICACIÓN OFICIAL; la búsqueda espera apagada.",
-      "transition": "cut",
-      "asset": "sim:credicasa-order-a",
-      "assetType": "simulation",
-      "photo": null,
-      "voiceFile": "jobs/geo-017/audio/voice-15.mp3",
-      "assetStartInFrames": 0,
-      "assetTotalInFrames": 130,
-      "accent": "#6B5CF6"
-    },
-    {
-      "purpose": "resultado",
-      "durationInFrames": 118,
-      "headline": "Define tu cuota",
-      "captions": [
-        {
-          "text": "Después, define una cuota",
-          "start": 0.0,
-          "end": 1.669,
-          "words": [
-            {
-              "text": "Después,",
-              "start": 0.0,
-              "end": 0.534
-            },
-            {
-              "text": "define",
-              "start": 0.534,
-              "end": 1.001
-            },
-            {
-              "text": "una",
-              "start": 1.001,
-              "end": 1.268
-            },
-            {
-              "text": "cuota",
-              "start": 1.268,
-              "end": 1.669
-            }
-          ]
-        },
-        {
-          "text": "que puedas pagar",
-          "start": 1.669,
-          "end": 2.804,
+          "text": "que ese ingreso baste.",
+          "start": 2.127,
+          "end": 3.637,
           "words": [
             {
               "text": "que",
               "start": 0.0,
-              "end": 0.267
+              "end": 0.275
             },
             {
-              "text": "puedas",
-              "start": 0.267,
-              "end": 0.734
+              "text": "ese",
+              "start": 0.275,
+              "end": 0.549
             },
             {
-              "text": "pagar",
-              "start": 0.734,
-              "end": 1.135
+              "text": "ingreso",
+              "start": 0.549,
+              "end": 1.098
+            },
+            {
+              "text": "baste.",
+              "start": 1.098,
+              "end": 1.51
+            }
+          ]
+        }
+      ],
+      "visualDirection": "La cifra recibe dos advertencias claras.",
+      "transition": "cut",
+      "asset": "sim:credicasa-payment-example",
+      "assetType": "simulation",
+      "photo": null,
+      "voiceFile": "",
+      "assetStartInFrames": 198,
+      "assetTotalInFrames": 307,
+      "accent": "#14B8A6"
+    },
+    {
+      "purpose": "prueba",
+      "durationInFrames": 130,
+      "headline": "También hay seguros",
+      "captions": [
+        {
+          "text": "Hay seguro de desgravamen",
+          "start": 0.0,
+          "end": 1.784,
+          "words": [
+            {
+              "text": "Hay",
+              "start": 0.0,
+              "end": 0.275
+            },
+            {
+              "text": "seguro",
+              "start": 0.275,
+              "end": 0.755
+            },
+            {
+              "text": "de",
+              "start": 0.755,
+              "end": 0.961
+            },
+            {
+              "text": "desgravamen",
+              "start": 0.961,
+              "end": 1.784
             }
           ]
         },
         {
-          "text": "con calma.",
-          "start": 2.804,
-          "end": 3.472,
+          "text": "y seguro relacionado",
+          "start": 1.784,
+          "end": 3.225,
+          "words": [
+            {
+              "text": "y",
+              "start": 0.0,
+              "end": 0.137
+            },
+            {
+              "text": "seguro",
+              "start": 0.137,
+              "end": 0.618
+            },
+            {
+              "text": "relacionado",
+              "start": 0.618,
+              "end": 1.441
+            }
+          ]
+        },
+        {
+          "text": "con el inmueble.",
+          "start": 3.225,
+          "end": 4.323,
           "words": [
             {
               "text": "con",
               "start": 0.0,
-              "end": 0.267
+              "end": 0.275
             },
             {
-              "text": "calma.",
-              "start": 0.267,
-              "end": 0.668
+              "text": "el",
+              "start": 0.275,
+              "end": 0.48
+            },
+            {
+              "text": "inmueble.",
+              "start": 0.48,
+              "end": 1.098
             }
           ]
         }
       ],
-      "visualDirection": "El resultado de precalificación se combina con una decisión personal de cuota cómoda.",
+      "visualDirection": "Las dos coberturas aparecen sin inventar primas ni porcentajes.",
       "transition": "cut",
-      "asset": "sim:credicasa-order-b",
+      "asset": "sim:credicasa-insurance-costs",
       "assetType": "simulation",
       "photo": null,
-      "voiceFile": "jobs/geo-017/audio/voice-16.mp3",
+      "voiceFile": "",
       "assetStartInFrames": 0,
-      "assetTotalInFrames": 118,
+      "assetTotalInFrames": 130,
       "accent": "#A78BFA"
     },
     {
-      "purpose": "resultado",
-      "durationInFrames": 118,
-      "headline": "Compara en el mapa",
+      "purpose": "prueba",
+      "durationInFrames": 101,
+      "headline": "Gastos del proceso",
       "captions": [
         {
-          "text": "Usa ese presupuesto",
+          "text": "También avalúo,",
           "start": 0.0,
-          "end": 1.22,
+          "end": 1.029,
           "words": [
             {
-              "text": "Usa",
+              "text": "También",
               "start": 0.0,
-              "end": 0.244
+              "end": 0.549
             },
             {
-              "text": "ese",
-              "start": 0.244,
-              "end": 0.488
-            },
-            {
-              "text": "presupuesto",
-              "start": 0.488,
-              "end": 1.22
+              "text": "avalúo,",
+              "start": 0.549,
+              "end": 1.029
             }
           ]
         },
         {
-          "text": "para comparar propiedades en",
-          "start": 1.22,
-          "end": 2.989,
+          "text": "gastos legales,",
+          "start": 1.029,
+          "end": 2.059,
           "words": [
             {
-              "text": "para",
+              "text": "gastos",
               "start": 0.0,
-              "end": 0.305
+              "end": 0.48
             },
             {
-              "text": "comparar",
-              "start": 0.305,
-              "end": 0.854
-            },
-            {
-              "text": "propiedades",
-              "start": 0.854,
-              "end": 1.586
-            },
-            {
-              "text": "en",
-              "start": 1.586,
-              "end": 1.769
+              "text": "legales,",
+              "start": 0.48,
+              "end": 1.029
             }
           ]
         },
         {
-          "text": "el mapa.",
-          "start": 2.989,
-          "end": 3.477,
+          "text": "notaría y registro.",
+          "start": 2.059,
+          "end": 3.363,
           "words": [
             {
-              "text": "el",
+              "text": "notaría",
               "start": 0.0,
-              "end": 0.183
+              "end": 0.549
             },
             {
-              "text": "mapa.",
-              "start": 0.183,
-              "end": 0.488
+              "text": "y",
+              "start": 0.549,
+              "end": 0.686
+            },
+            {
+              "text": "registro.",
+              "start": 0.686,
+              "end": 1.304
             }
           ]
         }
       ],
-      "visualDirection": "El presupuesto alimenta el filtro de precio y las opciones fuera del rango desaparecen del mapa.",
+      "visualDirection": "Los cuatro rubros aparecen como categorías, sin proporciones inventadas.",
       "transition": "cut",
-      "asset": "sim:filtros",
+      "asset": "sim:credicasa-process-costs",
       "assetType": "simulation",
       "photo": null,
-      "voiceFile": "jobs/geo-017/audio/voice-17.mp3",
+      "voiceFile": "",
       "assetStartInFrames": 0,
-      "assetTotalInFrames": 118,
+      "assetTotalInFrames": 257,
       "accent": "#22C55E"
     },
     {
-      "purpose": "cta",
-      "durationInFrames": 123,
-      "headline": "Encuentra tu hogar",
+      "purpose": "problema",
+      "durationInFrames": 156,
+      "headline": "No entran al inicio",
       "captions": [
         {
-          "text": "El mismo precio cambia de lugar.",
+          "text": "Avalúo y gastos legales no entran",
           "start": 0.0,
-          "end": 2.007,
+          "end": 2.333,
+          "words": [
+            {
+              "text": "Avalúo",
+              "start": 0.0,
+              "end": 0.48
+            },
+            {
+              "text": "y",
+              "start": 0.48,
+              "end": 0.618
+            },
+            {
+              "text": "gastos",
+              "start": 0.618,
+              "end": 1.098
+            },
+            {
+              "text": "legales",
+              "start": 1.098,
+              "end": 1.647
+            },
+            {
+              "text": "no",
+              "start": 1.647,
+              "end": 1.853
+            },
+            {
+              "text": "entran",
+              "start": 1.853,
+              "end": 2.333
+            }
+          ]
+        },
+        {
+          "text": "en la simulación web inicial",
+          "start": 2.333,
+          "end": 4.323,
+          "words": [
+            {
+              "text": "en",
+              "start": 0.0,
+              "end": 0.206
+            },
+            {
+              "text": "la",
+              "start": 0.206,
+              "end": 0.412
+            },
+            {
+              "text": "simulación",
+              "start": 0.412,
+              "end": 1.167
+            },
+            {
+              "text": "web",
+              "start": 1.167,
+              "end": 1.441
+            },
+            {
+              "text": "inicial",
+              "start": 1.441,
+              "end": 1.99
+            }
+          ]
+        },
+        {
+          "text": "de capacidad.",
+          "start": 4.323,
+          "end": 5.216,
+          "words": [
+            {
+              "text": "de",
+              "start": 0.0,
+              "end": 0.206
+            },
+            {
+              "text": "capacidad.",
+              "start": 0.206,
+              "end": 0.892
+            }
+          ]
+        }
+      ],
+      "visualDirection": "Solo avalúo y gastos legales quedan fuera de la simulación web inicial.",
+      "transition": "cut",
+      "asset": "sim:credicasa-process-costs",
+      "assetType": "simulation",
+      "photo": null,
+      "voiceFile": "",
+      "assetStartInFrames": 101,
+      "assetTotalInFrames": 257,
+      "accent": "#6B5CF6"
+    },
+    {
+      "purpose": "prueba",
+      "durationInFrames": 144,
+      "headline": "Debes solicitarlo",
+      "captions": [
+        {
+          "text": "Los gastos elegibles se financian",
+          "start": 0.0,
+          "end": 2.333,
+          "words": [
+            {
+              "text": "Los",
+              "start": 0.0,
+              "end": 0.275
+            },
+            {
+              "text": "gastos",
+              "start": 0.275,
+              "end": 0.755
+            },
+            {
+              "text": "elegibles",
+              "start": 0.755,
+              "end": 1.441
+            },
+            {
+              "text": "se",
+              "start": 1.441,
+              "end": 1.647
+            },
+            {
+              "text": "financian",
+              "start": 1.647,
+              "end": 2.333
+            }
+          ]
+        },
+        {
+          "text": "si los solicitas dentro",
+          "start": 2.333,
+          "end": 3.98,
+          "words": [
+            {
+              "text": "si",
+              "start": 0.0,
+              "end": 0.206
+            },
+            {
+              "text": "los",
+              "start": 0.206,
+              "end": 0.48
+            },
+            {
+              "text": "solicitas",
+              "start": 0.48,
+              "end": 1.167
+            },
+            {
+              "text": "dentro",
+              "start": 1.167,
+              "end": 1.647
+            }
+          ]
+        },
+        {
+          "text": "del crédito.",
+          "start": 3.98,
+          "end": 4.804,
+          "words": [
+            {
+              "text": "del",
+              "start": 0.0,
+              "end": 0.275
+            },
+            {
+              "text": "crédito.",
+              "start": 0.275,
+              "end": 0.824
+            }
+          ]
+        }
+      ],
+      "visualDirection": "Los gastos elegibles entran al crédito únicamente tras una solicitud expresa.",
+      "transition": "cut",
+      "asset": "sim:credicasa-expense-request",
+      "assetType": "simulation",
+      "photo": null,
+      "voiceFile": "",
+      "assetStartInFrames": 121,
+      "assetTotalInFrames": 405,
+      "accent": "#14B8A6"
+    },
+    {
+      "purpose": "problema",
+      "durationInFrames": 140,
+      "headline": "Dos límites",
+      "captions": [
+        {
+          "text": "El total financiado no puede",
+          "start": 0.0,
+          "end": 1.99,
           "words": [
             {
               "text": "El",
               "start": 0.0,
-              "end": 0.188
+              "end": 0.206
             },
             {
-              "text": "mismo",
-              "start": 0.188,
-              "end": 0.565
+              "text": "total",
+              "start": 0.206,
+              "end": 0.618
             },
             {
-              "text": "precio",
-              "start": 0.565,
-              "end": 1.004
+              "text": "financiado",
+              "start": 0.618,
+              "end": 1.373
             },
             {
-              "text": "cambia",
-              "start": 1.004,
-              "end": 1.443
+              "text": "no",
+              "start": 1.373,
+              "end": 1.578
             },
             {
-              "text": "de",
-              "start": 1.443,
-              "end": 1.631
-            },
-            {
-              "text": "lugar.",
-              "start": 1.631,
-              "end": 2.007
+              "text": "puede",
+              "start": 1.578,
+              "end": 1.99
             }
           ]
         },
         {
-          "text": "Encuentra tu futuro hogar.",
-          "start": 2.007,
-          "end": 3.638,
+          "text": "superar el avalúo ni el tope",
+          "start": 1.99,
+          "end": 3.98,
           "words": [
             {
-              "text": "Encuentra",
+              "text": "superar",
               "start": 0.0,
-              "end": 0.627
+              "end": 0.549
             },
             {
-              "text": "tu",
-              "start": 0.627,
-              "end": 0.815
+              "text": "el",
+              "start": 0.549,
+              "end": 0.755
             },
             {
-              "text": "futuro",
-              "start": 0.815,
-              "end": 1.255
+              "text": "avalúo",
+              "start": 0.755,
+              "end": 1.235
             },
             {
-              "text": "hogar.",
-              "start": 1.255,
-              "end": 1.631
+              "text": "ni",
+              "start": 1.235,
+              "end": 1.441
+            },
+            {
+              "text": "el",
+              "start": 1.441,
+              "end": 1.647
+            },
+            {
+              "text": "tope",
+              "start": 1.647,
+              "end": 1.99
+            }
+          ]
+        },
+        {
+          "text": "de 65.000.",
+          "start": 3.98,
+          "end": 4.667,
+          "words": [
+            {
+              "text": "de",
+              "start": 0.0,
+              "end": 0.206
+            },
+            {
+              "text": "65.000.",
+              "start": 0.206,
+              "end": 0.686
             }
           ]
         }
       ],
-      "visualDirection": "Cierre común sobre mapa de marca con dominio, CTA y aviso informativo; no añade una segunda acción.",
-      "transition": "fade",
-      "asset": null,
-      "assetType": null,
+      "visualDirection": "El total financiado atraviesa los límites de avalúo y USD 65.000.",
+      "transition": "cut",
+      "asset": "sim:credicasa-expense-request",
+      "assetType": "simulation",
       "photo": null,
-      "voiceFile": "jobs/geo-017/audio/voice-18.mp3",
+      "voiceFile": "",
+      "assetStartInFrames": 265,
+      "assetTotalInFrames": 405,
+      "accent": "#A78BFA"
+    },
+    {
+      "purpose": "problema",
+      "durationInFrames": 128,
+      "headline": "El gasto no desaparece",
+      "captions": [
+        {
+          "text": "Desistir, anular,",
+          "start": 0.0,
+          "end": 1.098,
+          "words": [
+            {
+              "text": "Desistir,",
+              "start": 0.0,
+              "end": 0.618
+            },
+            {
+              "text": "anular,",
+              "start": 0.618,
+              "end": 1.098
+            }
+          ]
+        },
+        {
+          "text": "caducar o recibir rechazo no borra",
+          "start": 1.098,
+          "end": 3.5,
+          "words": [
+            {
+              "text": "caducar",
+              "start": 0.0,
+              "end": 0.549
+            },
+            {
+              "text": "o",
+              "start": 0.549,
+              "end": 0.686
+            },
+            {
+              "text": "recibir",
+              "start": 0.686,
+              "end": 1.235
+            },
+            {
+              "text": "rechazo",
+              "start": 1.235,
+              "end": 1.784
+            },
+            {
+              "text": "no",
+              "start": 1.784,
+              "end": 1.99
+            },
+            {
+              "text": "borra",
+              "start": 1.99,
+              "end": 2.402
+            }
+          ]
+        },
+        {
+          "text": "los gastos.",
+          "start": 3.5,
+          "end": 4.255,
+          "words": [
+            {
+              "text": "los",
+              "start": 0.0,
+              "end": 0.275
+            },
+            {
+              "text": "gastos.",
+              "start": 0.275,
+              "end": 0.755
+            }
+          ]
+        }
+      ],
+      "visualDirection": "Cuatro estados finales convergen en los gastos ya incurridos.",
+      "transition": "cut",
+      "asset": "sim:credicasa-ended-process",
+      "assetType": "simulation",
+      "photo": null,
+      "voiceFile": "",
       "assetStartInFrames": 0,
-      "assetTotalInFrames": 123,
+      "assetTotalInFrames": 276,
+      "accent": "#22C55E"
+    },
+    {
+      "purpose": "prueba",
+      "durationInFrames": 148,
+      "headline": "Mora y bloqueo",
+      "captions": [
+        {
+          "text": "Cobro por planilla o directo;",
+          "start": 0.0,
+          "end": 1.99,
+          "words": [
+            {
+              "text": "Cobro",
+              "start": 0.0,
+              "end": 0.412
+            },
+            {
+              "text": "por",
+              "start": 0.412,
+              "end": 0.686
+            },
+            {
+              "text": "planilla",
+              "start": 0.686,
+              "end": 1.304
+            },
+            {
+              "text": "o",
+              "start": 1.304,
+              "end": 1.441
+            },
+            {
+              "text": "directo;",
+              "start": 1.441,
+              "end": 1.99
+            }
+          ]
+        },
+        {
+          "text": "no pagar causa mora",
+          "start": 1.99,
+          "end": 3.363,
+          "words": [
+            {
+              "text": "no",
+              "start": 0.0,
+              "end": 0.206
+            },
+            {
+              "text": "pagar",
+              "start": 0.206,
+              "end": 0.618
+            },
+            {
+              "text": "causa",
+              "start": 0.618,
+              "end": 1.029
+            },
+            {
+              "text": "mora",
+              "start": 1.029,
+              "end": 1.373
+            }
+          ]
+        },
+        {
+          "text": "y bloquea otro crédito.",
+          "start": 3.363,
+          "end": 4.941,
+          "words": [
+            {
+              "text": "y",
+              "start": 0.0,
+              "end": 0.137
+            },
+            {
+              "text": "bloquea",
+              "start": 0.137,
+              "end": 0.686
+            },
+            {
+              "text": "otro",
+              "start": 0.686,
+              "end": 1.029
+            },
+            {
+              "text": "crédito.",
+              "start": 1.029,
+              "end": 1.578
+            }
+          ]
+        }
+      ],
+      "visualDirection": "Planilla y pago directo conducen a la alerta de mora y bloqueo por impago de instrumentación.",
+      "transition": "cut",
+      "asset": "sim:credicasa-ended-process",
+      "assetType": "simulation",
+      "photo": null,
+      "voiceFile": "",
+      "assetStartInFrames": 128,
+      "assetTotalInFrames": 276,
+      "accent": "#6B5CF6"
+    },
+    {
+      "purpose": "prueba",
+      "durationInFrames": 119,
+      "headline": "Cada 180 días",
+      "captions": [
+        {
+          "text": "El tarifario de agosto mantiene",
+          "start": 0.0,
+          "end": 2.196,
+          "words": [
+            {
+              "text": "El",
+              "start": 0.0,
+              "end": 0.206
+            },
+            {
+              "text": "tarifario",
+              "start": 0.206,
+              "end": 0.892
+            },
+            {
+              "text": "de",
+              "start": 0.892,
+              "end": 1.098
+            },
+            {
+              "text": "agosto",
+              "start": 1.098,
+              "end": 1.578
+            },
+            {
+              "text": "mantiene",
+              "start": 1.578,
+              "end": 2.196
+            }
+          ]
+        },
+        {
+          "text": "el reajuste cada 180 días.",
+          "start": 2.196,
+          "end": 3.98,
+          "words": [
+            {
+              "text": "el",
+              "start": 0.0,
+              "end": 0.206
+            },
+            {
+              "text": "reajuste",
+              "start": 0.206,
+              "end": 0.824
+            },
+            {
+              "text": "cada",
+              "start": 0.824,
+              "end": 1.167
+            },
+            {
+              "text": "180",
+              "start": 1.167,
+              "end": 1.441
+            },
+            {
+              "text": "días.",
+              "start": 1.441,
+              "end": 1.784
+            }
+          ]
+        }
+      ],
+      "visualDirection": "Calendario completa 180 días y cambia a REVISAR.",
+      "transition": "cut",
+      "asset": "sim:credicasa-rate-reset",
+      "assetType": "simulation",
+      "photo": null,
+      "voiceFile": "",
+      "assetStartInFrames": 0,
+      "assetTotalInFrames": 119,
       "accent": "#14B8A6"
+    },
+    {
+      "purpose": "problema",
+      "durationInFrames": 115,
+      "headline": "Precio no es avalúo",
+      "captions": [
+        {
+          "text": "El vendedor pone un precio;",
+          "start": 0.0,
+          "end": 1.853,
+          "words": [
+            {
+              "text": "El",
+              "start": 0.0,
+              "end": 0.206
+            },
+            {
+              "text": "vendedor",
+              "start": 0.206,
+              "end": 0.824
+            },
+            {
+              "text": "pone",
+              "start": 0.824,
+              "end": 1.167
+            },
+            {
+              "text": "un",
+              "start": 1.167,
+              "end": 1.373
+            },
+            {
+              "text": "precio;",
+              "start": 1.373,
+              "end": 1.853
+            }
+          ]
+        },
+        {
+          "text": "el BIESS determina el avalúo.",
+          "start": 1.853,
+          "end": 3.843,
+          "words": [
+            {
+              "text": "el",
+              "start": 0.0,
+              "end": 0.206
+            },
+            {
+              "text": "BIESS",
+              "start": 0.206,
+              "end": 0.618
+            },
+            {
+              "text": "determina",
+              "start": 0.618,
+              "end": 1.304
+            },
+            {
+              "text": "el",
+              "start": 1.304,
+              "end": 1.51
+            },
+            {
+              "text": "avalúo.",
+              "start": 1.51,
+              "end": 1.99
+            }
+          ]
+        }
+      ],
+      "visualDirection": "Vendedor y BIESS alimentan columnas distintas.",
+      "transition": "cut",
+      "asset": "sim:credicasa-three-numbers",
+      "assetType": "simulation",
+      "photo": null,
+      "voiceFile": "",
+      "assetStartInFrames": 224,
+      "assetTotalInFrames": 339,
+      "accent": "#A78BFA"
+    },
+    {
+      "purpose": "problema",
+      "durationInFrames": 136,
+      "headline": "Antes de reservar",
+      "captions": [
+        {
+          "text": "Antes de reservar,",
+          "start": 0.0,
+          "end": 1.235,
+          "words": [
+            {
+              "text": "Antes",
+              "start": 0.0,
+              "end": 0.412
+            },
+            {
+              "text": "de",
+              "start": 0.412,
+              "end": 0.618
+            },
+            {
+              "text": "reservar,",
+              "start": 0.618,
+              "end": 1.235
+            }
+          ]
+        },
+        {
+          "text": "confirma que calificas",
+          "start": 1.235,
+          "end": 2.814,
+          "words": [
+            {
+              "text": "confirma",
+              "start": 0.0,
+              "end": 0.618
+            },
+            {
+              "text": "que",
+              "start": 0.618,
+              "end": 0.892
+            },
+            {
+              "text": "calificas",
+              "start": 0.892,
+              "end": 1.578
+            }
+          ]
+        },
+        {
+          "text": "y que el inmueble aplica.",
+          "start": 2.814,
+          "end": 4.529,
+          "words": [
+            {
+              "text": "y",
+              "start": 0.0,
+              "end": 0.137
+            },
+            {
+              "text": "que",
+              "start": 0.137,
+              "end": 0.412
+            },
+            {
+              "text": "el",
+              "start": 0.412,
+              "end": 0.618
+            },
+            {
+              "text": "inmueble",
+              "start": 0.618,
+              "end": 1.235
+            },
+            {
+              "text": "aplica.",
+              "start": 1.235,
+              "end": 1.716
+            }
+          ]
+        }
+      ],
+      "visualDirection": "La reserva espera hasta validar persona e inmueble.",
+      "transition": "cut",
+      "asset": "sim:credicasa-reservation-checks",
+      "assetType": "simulation",
+      "photo": null,
+      "voiceFile": "",
+      "assetStartInFrames": 0,
+      "assetTotalInFrames": 268,
+      "accent": "#22C55E"
+    },
+    {
+      "purpose": "prueba",
+      "durationInFrames": 132,
+      "headline": "Todo por escrito",
+      "captions": [
+        {
+          "text": "Revisa devolución, gravámenes,",
+          "start": 0.0,
+          "end": 1.99,
+          "words": [
+            {
+              "text": "Revisa",
+              "start": 0.0,
+              "end": 0.48
+            },
+            {
+              "text": "devolución,",
+              "start": 0.48,
+              "end": 1.235
+            },
+            {
+              "text": "gravámenes,",
+              "start": 1.235,
+              "end": 1.99
+            }
+          ]
+        },
+        {
+          "text": "registro y la promesa",
+          "start": 1.99,
+          "end": 3.5,
+          "words": [
+            {
+              "text": "registro",
+              "start": 0.0,
+              "end": 0.618
+            },
+            {
+              "text": "y",
+              "start": 0.618,
+              "end": 0.755
+            },
+            {
+              "text": "la",
+              "start": 0.755,
+              "end": 0.961
+            },
+            {
+              "text": "promesa",
+              "start": 0.961,
+              "end": 1.51
+            }
+          ]
+        },
+        {
+          "text": "con asesoría.",
+          "start": 3.5,
+          "end": 4.392,
+          "words": [
+            {
+              "text": "con",
+              "start": 0.0,
+              "end": 0.275
+            },
+            {
+              "text": "asesoría.",
+              "start": 0.275,
+              "end": 0.892
+            }
+          ]
+        }
+      ],
+      "visualDirection": "Checklist legal completo antes de entregar dinero.",
+      "transition": "cut",
+      "asset": "sim:credicasa-reservation-checks",
+      "assetType": "simulation",
+      "photo": null,
+      "voiceFile": "",
+      "assetStartInFrames": 136,
+      "assetTotalInFrames": 268,
+      "accent": "#6B5CF6"
+    },
+    {
+      "purpose": "resultado",
+      "durationInFrames": 128,
+      "headline": "Pasos 1 al 4",
+      "captions": [
+        {
+          "text": "Pasos 1 a 4: requisitos, precalificación,",
+          "start": 0.0,
+          "end": 2.676,
+          "words": [
+            {
+              "text": "Pasos",
+              "start": 0.0,
+              "end": 0.412
+            },
+            {
+              "text": "1",
+              "start": 0.412,
+              "end": 0.549
+            },
+            {
+              "text": "a",
+              "start": 0.549,
+              "end": 0.686
+            },
+            {
+              "text": "4:",
+              "start": 0.686,
+              "end": 0.824
+            },
+            {
+              "text": "requisitos,",
+              "start": 0.824,
+              "end": 1.578
+            },
+            {
+              "text": "precalificación,",
+              "start": 1.578,
+              "end": 2.676
+            }
+          ]
+        },
+        {
+          "text": "presupuesto y vivienda.",
+          "start": 2.676,
+          "end": 4.255,
+          "words": [
+            {
+              "text": "presupuesto",
+              "start": 0.0,
+              "end": 0.824
+            },
+            {
+              "text": "y",
+              "start": 0.824,
+              "end": 0.961
+            },
+            {
+              "text": "vivienda.",
+              "start": 0.961,
+              "end": 1.578
+            }
+          ]
+        }
+      ],
+      "visualDirection": "Los primeros cuatro pasos avanzan en orden, con foco en el paso narrado.",
+      "transition": "cut",
+      "asset": "sim:credicasa-order-a",
+      "assetType": "simulation",
+      "photo": null,
+      "voiceFile": "",
+      "assetStartInFrames": 0,
+      "assetTotalInFrames": 128,
+      "accent": "#14B8A6"
+    },
+    {
+      "purpose": "resultado",
+      "durationInFrames": 107,
+      "headline": "Pasos 5 al 8",
+      "captions": [
+        {
+          "text": "Pasos 5 a 8: compara, verifica,",
+          "start": 0.0,
+          "end": 1.99,
+          "words": [
+            {
+              "text": "Pasos",
+              "start": 0.0,
+              "end": 0.412
+            },
+            {
+              "text": "5",
+              "start": 0.412,
+              "end": 0.549
+            },
+            {
+              "text": "a",
+              "start": 0.549,
+              "end": 0.686
+            },
+            {
+              "text": "8:",
+              "start": 0.686,
+              "end": 0.824
+            },
+            {
+              "text": "compara,",
+              "start": 0.824,
+              "end": 1.373
+            },
+            {
+              "text": "verifica,",
+              "start": 1.373,
+              "end": 1.99
+            }
+          ]
+        },
+        {
+          "text": "avalúo y lectura final.",
+          "start": 1.99,
+          "end": 3.569,
+          "words": [
+            {
+              "text": "avalúo",
+              "start": 0.0,
+              "end": 0.48
+            },
+            {
+              "text": "y",
+              "start": 0.48,
+              "end": 0.618
+            },
+            {
+              "text": "lectura",
+              "start": 0.618,
+              "end": 1.167
+            },
+            {
+              "text": "final.",
+              "start": 1.167,
+              "end": 1.578
+            }
+          ]
+        }
+      ],
+      "visualDirection": "Los últimos cuatro pasos avanzan en orden hasta la firma informada.",
+      "transition": "cut",
+      "asset": "sim:credicasa-order-b",
+      "assetType": "simulation",
+      "photo": null,
+      "voiceFile": "",
+      "assetStartInFrames": 0,
+      "assetTotalInFrames": 107,
+      "accent": "#A78BFA"
+    },
+    {
+      "purpose": "resultado",
+      "durationInFrames": 124,
+      "headline": "Filtra por precio",
+      "captions": [
+        {
+          "text": "Filtra tu presupuesto",
+          "start": 0.0,
+          "end": 1.51,
+          "words": [
+            {
+              "text": "Filtra",
+              "start": 0.0,
+              "end": 0.48
+            },
+            {
+              "text": "tu",
+              "start": 0.48,
+              "end": 0.686
+            },
+            {
+              "text": "presupuesto",
+              "start": 0.686,
+              "end": 1.51
+            }
+          ]
+        },
+        {
+          "text": "y compara viviendas en el mapa",
+          "start": 1.51,
+          "end": 3.637,
+          "words": [
+            {
+              "text": "y",
+              "start": 0.0,
+              "end": 0.137
+            },
+            {
+              "text": "compara",
+              "start": 0.137,
+              "end": 0.686
+            },
+            {
+              "text": "viviendas",
+              "start": 0.686,
+              "end": 1.373
+            },
+            {
+              "text": "en",
+              "start": 1.373,
+              "end": 1.578
+            },
+            {
+              "text": "el",
+              "start": 1.578,
+              "end": 1.784
+            },
+            {
+              "text": "mapa",
+              "start": 1.784,
+              "end": 2.127
+            }
+          ]
+        },
+        {
+          "text": "de Geo.",
+          "start": 3.637,
+          "end": 4.118,
+          "words": [
+            {
+              "text": "de",
+              "start": 0.0,
+              "end": 0.206
+            },
+            {
+              "text": "Geo.",
+              "start": 0.206,
+              "end": 0.48
+            }
+          ]
+        }
+      ],
+      "visualDirection": "Un filtro real de precio elimina propiedades EJEMPLO fuera de presupuesto y conserva opciones ubicadas.",
+      "transition": "cut",
+      "asset": "sim:credicasa-budget-map",
+      "assetType": "simulation",
+      "photo": null,
+      "voiceFile": "",
+      "assetStartInFrames": 0,
+      "assetTotalInFrames": 124,
+      "accent": "#22C55E"
+    },
+    {
+      "purpose": "prueba",
+      "durationInFrames": 134,
+      "headline": "Tasa y máximos",
+      "captions": [
+        {
+          "text": "2,99% nominal;",
+          "start": 0.0,
+          "end": 0.961,
+          "words": [
+            {
+              "text": "2,99%",
+              "start": 0.0,
+              "end": 0.412
+            },
+            {
+              "text": "nominal;",
+              "start": 0.412,
+              "end": 0.961
+            }
+          ]
+        },
+        {
+          "text": "3,03% efectiva;",
+          "start": 0.961,
+          "end": 1.99,
+          "words": [
+            {
+              "text": "3,03%",
+              "start": 0.0,
+              "end": 0.412
+            },
+            {
+              "text": "efectiva;",
+              "start": 0.412,
+              "end": 1.029
+            }
+          ]
+        },
+        {
+          "text": "65.000 con gastos; 100%;",
+          "start": 1.99,
+          "end": 3.569,
+          "words": [
+            {
+              "text": "65.000",
+              "start": 0.0,
+              "end": 0.48
+            },
+            {
+              "text": "con",
+              "start": 0.48,
+              "end": 0.755
+            },
+            {
+              "text": "gastos;",
+              "start": 0.755,
+              "end": 1.235
+            },
+            {
+              "text": "100%;",
+              "start": 1.235,
+              "end": 1.578
+            }
+          ]
+        },
+        {
+          "text": "treinta años.",
+          "start": 3.569,
+          "end": 4.461,
+          "words": [
+            {
+              "text": "treinta",
+              "start": 0.0,
+              "end": 0.549
+            },
+            {
+              "text": "años.",
+              "start": 0.549,
+              "end": 0.892
+            }
+          ]
+        }
+      ],
+      "visualDirection": "Primera página del resumen final, con cifras completas y la palabra HASTA dominante.",
+      "transition": "cut",
+      "asset": "sim:credicasa-recap",
+      "assetType": "simulation",
+      "photo": null,
+      "voiceFile": "",
+      "assetStartInFrames": 0,
+      "assetTotalInFrames": 417,
+      "accent": "#6B5CF6"
+    },
+    {
+      "purpose": "prueba",
+      "durationInFrames": 117,
+      "headline": "Ingreso y avalúo",
+      "captions": [
+        {
+          "text": "Ingreso: 1.527,94.",
+          "start": 0.0,
+          "end": 1.167,
+          "words": [
+            {
+              "text": "Ingreso:",
+              "start": 0.0,
+              "end": 0.549
+            },
+            {
+              "text": "1.527,94.",
+              "start": 0.549,
+              "end": 1.167
+            }
+          ]
+        },
+        {
+          "text": "Vivienda única y nueva. Avalúo: 71.504,70.",
+          "start": 1.167,
+          "end": 3.912,
+          "words": [
+            {
+              "text": "Vivienda",
+              "start": 0.0,
+              "end": 0.618
+            },
+            {
+              "text": "única",
+              "start": 0.618,
+              "end": 1.029
+            },
+            {
+              "text": "y",
+              "start": 1.029,
+              "end": 1.167
+            },
+            {
+              "text": "nueva.",
+              "start": 1.167,
+              "end": 1.578
+            },
+            {
+              "text": "Avalúo:",
+              "start": 1.578,
+              "end": 2.059
+            },
+            {
+              "text": "71.504,70.",
+              "start": 2.059,
+              "end": 2.745
+            }
+          ]
+        }
+      ],
+      "visualDirection": "Segunda página del resumen final con los tres filtros principales.",
+      "transition": "cut",
+      "asset": "sim:credicasa-recap",
+      "assetType": "simulation",
+      "photo": null,
+      "voiceFile": "",
+      "assetStartInFrames": 134,
+      "assetTotalInFrames": 417,
+      "accent": "#14B8A6"
+    },
+    {
+      "purpose": "cta",
+      "durationInFrames": 166,
+      "headline": "Verifica y compara",
+      "captions": [
+        {
+          "text": "Aprobación y reajuste cada 180 días.",
+          "start": 0.0,
+          "end": 2.471,
+          "words": [
+            {
+              "text": "Aprobación",
+              "start": 0.0,
+              "end": 0.755
+            },
+            {
+              "text": "y",
+              "start": 0.755,
+              "end": 0.892
+            },
+            {
+              "text": "reajuste",
+              "start": 0.892,
+              "end": 1.51
+            },
+            {
+              "text": "cada",
+              "start": 1.51,
+              "end": 1.853
+            },
+            {
+              "text": "180",
+              "start": 1.853,
+              "end": 2.127
+            },
+            {
+              "text": "días.",
+              "start": 2.127,
+              "end": 2.471
+            }
+          ]
+        },
+        {
+          "text": "Verifica con BIESS.",
+          "start": 2.471,
+          "end": 3.774,
+          "words": [
+            {
+              "text": "Verifica",
+              "start": 0.0,
+              "end": 0.618
+            },
+            {
+              "text": "con",
+              "start": 0.618,
+              "end": 0.892
+            },
+            {
+              "text": "BIESS.",
+              "start": 0.892,
+              "end": 1.304
+            }
+          ]
+        },
+        {
+          "text": "Encuentra tu hogar.",
+          "start": 3.774,
+          "end": 5.078,
+          "words": [
+            {
+              "text": "Encuentra",
+              "start": 0.0,
+              "end": 0.686
+            },
+            {
+              "text": "tu",
+              "start": 0.686,
+              "end": 0.892
+            },
+            {
+              "text": "hogar.",
+              "start": 0.892,
+              "end": 1.304
+            }
+          ]
+        }
+      ],
+      "visualDirection": "Aviso informativo, fuente BIESS y CTA único de Geo sobre una vivienda EJEMPLO.",
+      "transition": "fade",
+      "asset": "sim:credicasa-recap",
+      "assetType": "simulation",
+      "photo": null,
+      "voiceFile": "",
+      "assetStartInFrames": 251,
+      "assetTotalInFrames": 417,
+      "accent": "#A78BFA"
     }
   ]
 }

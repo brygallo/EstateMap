@@ -127,6 +127,7 @@ def product_reveal_deadline(target: int) -> float:
 
 
 PRODUCT_ASSETS = {
+    "sim:credicasa-budget-map",
     "sim:geo-location-hero", "sim:geo-nearby-context", "sim:geo-property-detail",
     "sim:alrededor", "sim:entorno-mapa", "sim:forma-dibujada", "sim:medidas", "sim:metros-utiles",
     "sim:mapa", "sim:llegada", "sim:zona", "sim:filtros", "sim:ficha",
