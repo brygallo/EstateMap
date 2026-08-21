@@ -319,3 +319,25 @@ describe('midArticleIndex', () => {
     expect(midArticleIndex(body)).toBe(-1);
   });
 });
+
+describe('sponsored links', () => {
+  it('marks outbound links in a sponsored article with rel="sponsored"', () => {
+    /** SPEC:BLOG-014 — paid placement has to be marked where it is read. */
+    const { container } = render(
+      <>{renderMarkdown('Ver [Aents](https://aents.net) para más.', { sponsored: true })}</>
+    );
+    const link = container.querySelector('a[href="https://aents.net"]');
+
+    expect(link?.getAttribute('rel')).toContain('sponsored');
+    expect(link?.getAttribute('rel')).toContain('nofollow');
+  });
+
+  it('leaves an editorial article alone', () => {
+    const { container } = render(
+      <>{renderMarkdown('Ver [Aents](https://aents.net) para más.')}</>
+    );
+    const link = container.querySelector('a[href="https://aents.net"]');
+
+    expect(link?.getAttribute('rel')).not.toContain('sponsored');
+  });
+});

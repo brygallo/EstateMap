@@ -30,6 +30,7 @@ La API pública es de solo lectura. La escritura se realiza desde el escritorio 
 | [`BLOG-009`](#blog-009--un-artículo-de-ciudad-entrega-el-precio-del-m²-y-el-inventario-de-esa-ciudad) | Un artículo de ciudad entrega el precio del m² y el inventario de esa ciudad | ✅ Implementada |
 | [`BLOG-012`](#blog-012--un-artículo-programado-no-declara-que-se-modificó-antes-de-publicarse) | Un artículo programado no declara que se modificó antes de publicarse | ✅ Implementada |
 | [`BLOG-013`](#blog-013--un-artículo-con-cifras-escritas-a-mano-se-revisa-cada-trimestre) | Un artículo con cifras escritas a mano se revisa cada trimestre | ✅ Implementada |
+| [`BLOG-014`](#blog-014--un-artículo-publicitario-se-identifica-donde-se-lee) | Un artículo publicitario se identifica donde se lee | ✅ Implementada |
 
 ### BLOG-001 — Un post es público desde que su fecha de publicación queda en el pasado
 
@@ -404,3 +405,33 @@ Informa y no edita a propósito. Reescribir un párrafo publicado sin que lo lea
 **Cobertura exigida:** api
 
 - `backend/blog/tests/test_scheduling.py`
+
+### BLOG-014 — Un artículo publicitario se identifica donde se lee
+
+**Estado:** ✅ Implementada
+
+Un post con anunciante lleva un aviso visible antes del título que nombra quién lo paga y si lo paga, la tarjeta del listado lo marca como «Publicidad», y todos sus enlaces salientes salen con `rel="sponsored nofollow"`. Sin anunciante nada de eso aparece.
+
+> **Por qué:** La regla de Google es que la colocación pagada se declare y sus enlaces se marquen, pero la razón que importa aquí es más estrecha: este portal publica cifras de mercado, y el día que un lector no pueda distinguir lo que el portal midió de lo que alguien compró, las cifras dejan de valer la pena citarse. Por eso el aviso no es una nota al pie ni un color: es una línea que se lee antes del texto. «Del grupo» se dice tal cual —Aents y Geo Propiedades comparten dueños y no media dinero— porque disimularlo sería el mismo fallo en tamaño pequeño.
+
+**Frontend**
+
+- Ruta: `/blog/[slug]`
+- Ruta: `/blog/categoria/[slug]`
+
+**Evidencia en el código** (verificada por `tools/specs/validate.py`)
+
+- `backend/blog/models.py` (`def is_sponsored`)
+- `backend/blog/models.py` (`SponsorKind`) — Reutiliza el vocabulario de las campañas en vez de inventar otro.
+- `backend/blog/serializers.py` (`def get_sponsor`) — La etiqueta viaja con cada representación del artículo, no solo en el admin.
+- `frontend/components/blog/SponsoredNotice.tsx` (`export default function SponsoredNotice`)
+- `frontend/lib/markdown.tsx` (`sponsored ? 'sponsored noopener noreferrer nofollow'`)
+- `frontend/components/blog/PostCard.tsx` (`post.sponsor &&`) — El aviso también viaja en la tarjeta, antes de que se abra el artículo.
+- `frontend/lib/markdown.test.tsx` (`describe('sponsored links'`) — Un caso comprueba que se marca y otro que un editorial se queda intacto.
+
+**Casos**
+
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| Artículo con anunciante | — | — | — | aviso visible, etiqueta en la tarjeta y rel="sponsored nofollow" |
+| Artículo editorial | — | — | — | sin aviso y sin sponsored en los enlaces |

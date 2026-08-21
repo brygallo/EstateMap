@@ -1,0 +1,614 @@
+{
+  "categories": [
+    {
+      "slug": "decidir",
+      "name": "Cómo decidir",
+      "order": 8,
+      "description": "Criterio para elegir, comparar y no equivocarse. Lo que los precios no te dicen."
+    },
+    {
+      "slug": "publicidad",
+      "name": "Publicidad",
+      "order": 9,
+      "description": "Contenido pagado o publicado por acuerdo con un anunciante. Siempre va identificado como tal."
+    }
+  ],
+  "posts": [
+    {
+      "slug": "como-leer-un-anuncio-inmobiliario-metraje",
+      "title": "Cómo leer un anuncio: qué metro cuadrado te están vendiendo",
+      "excerpt": "Área total, construida y útil no son lo mismo, y el precio por metro cambia según cuál uses. Cómo saber qué estás comparando antes de decidir.",
+      "category": "decidir",
+      "tags": [
+        "Comparar",
+        "Precio por m²",
+        "Antes de comprar"
+      ],
+      "city": "",
+      "is_featured": true,
+      "status": "published",
+      "published_at": "2026-08-21T13:00:00Z",
+      "author_name": "Equipo Geo Propiedades Ecuador",
+      "author_role": "Redacción",
+      "faqs": [
+        {
+          "q": "¿Qué es el área útil?",
+          "a": "Lo que puedes pisar dentro de tu vivienda, sin contar paredes, ductos ni áreas comunes. Es el número más honesto para saber cuánto espacio vas a tener, y casi nunca es el que aparece en el titular del anuncio."
+        },
+        {
+          "q": "¿Por qué dos departamentos del mismo precio por m² pueden ser muy distintos?",
+          "a": "Porque uno puede estar midiendo área total con balcón y estacionamiento incluidos, y el otro solo el interior. Antes de comparar, verifica que ambos midan lo mismo."
+        },
+        {
+          "q": "¿El precio por m² sirve para terrenos y departamentos por igual?",
+          "a": "No. Un terreno se paga por suelo y un departamento por construcción; mezclarlos en la misma comparación da un número sin sentido. Compara siempre dentro del mismo tipo."
+        }
+      ],
+      "related_links": [
+        {
+          "label": "Cómo calculamos el precio por metro cuadrado",
+          "href": "/metodologia"
+        },
+        {
+          "label": "Precio del metro cuadrado por ciudad",
+          "href": "/estadisticas-inmobiliarias"
+        }
+      ],
+      "body": "Un anuncio dice «120 m²» y tú imaginas 120 metros de piso. Casi nunca lo son. En Ecuador conviven al menos tres formas de medir la misma vivienda, y quien publica elige la que le conviene sin estar mintiendo.\n\n## Las tres medidas que verás\n\n**Área total.** Todo lo que la escritura atribuye a esa unidad: interior, paredes, balcón, terraza, a veces el estacionamiento y la bodega. Es el número más grande, y por eso es el que suele encabezar el anuncio.\n\n**Área construida.** El interior más las paredes y los muros que le corresponden. Queda a medio camino.\n\n**Área útil.** Lo que puedes pisar. Sin paredes, sin ductos, sin áreas comunes. Es el número que de verdad describe cómo vas a vivir ahí, y el que menos aparece publicado.\n\nLa diferencia entre la primera y la tercera puede pasar del 20 %. Un departamento anunciado como 120 m² puede tener 95 m² pisables. Ninguno de los dos números es falso; describen cosas distintas.\n\n## Por qué esto rompe el precio por metro\n\nEl precio por metro cuadrado es la herramienta más útil para comparar dos propiedades, y también la más fácil de romper. Si divides el precio entre el área total de una y entre el área útil de otra, el resultado no compara nada.\n\nAntes de usar ese número, haz una sola pregunta al anunciante: **¿ese metraje incluye balcón, estacionamiento y bodega?** La respuesta cambia la cuenta.\n\n## Qué hacer con la respuesta\n\nSi el anuncio incluye estacionamiento dentro del metraje, réstalo mentalmente: un puesto ocupa entre 12 y 15 m² y no es superficie habitable. Lo mismo con la bodega.\n\nUna vez que tengas dos propiedades midiendo lo mismo, el precio por metro sí te sirve, y puedes contrastarlo con lo que se pide en esa zona. En este portal publicamos el precio mediano por metro de cada ciudad y de las zonas con inventario suficiente, con la [metodología abierta](/metodologia) para que sepas exactamente qué entra en ese cálculo.\n\n## Tres señales de que el metraje no cuadra\n\n- **El plano no coincide con el número.** Si te pasan plano, mide las habitaciones: sumadas rara vez llegan al área total anunciada, y esa diferencia debería explicarse.\n- **El precio por metro está muy por debajo de su zona.** A veces es una oportunidad. Muchas veces es un metraje inflado o un área que incluye algo que no vas a usar.\n- **Nadie sabe responder.** Si quien publica no distingue área útil de área total, probablemente copió el dato de otro anuncio.\n\n## Lo que sí puedes hacer en cinco minutos\n\nAntes de agendar una visita, pide por escrito el área útil y confirma si incluye o no estacionamiento. Es una pregunta corta, se responde por mensaje, y descarta la mitad de las comparaciones que no llevaban a ningún lado."
+    },
+    {
+      "slug": "que-revisar-en-una-visita-a-una-propiedad",
+      "title": "La visita: qué revisar, en qué orden y a qué hora volver",
+      "excerpt": "Cuando la casa te gusta se te olvida mirar lo importante. Una lista corta, ordenada por lo que cuesta más caro arreglar después.",
+      "category": "decidir",
+      "tags": [
+        "Visitas",
+        "Antes de comprar",
+        "Checklist"
+      ],
+      "city": "",
+      "is_featured": false,
+      "status": "published",
+      "published_at": "2026-08-21T15:00:00Z",
+      "author_name": "Equipo Geo Propiedades Ecuador",
+      "author_role": "Redacción",
+      "faqs": [
+        {
+          "q": "¿Cuántas veces debería visitar antes de decidir?",
+          "a": "Al menos dos, y a horas distintas. Una vivienda no suena, no huele ni se ilumina igual un martes a las 11 que un viernes a las 19."
+        },
+        {
+          "q": "¿Qué es lo más caro de arreglar después?",
+          "a": "Humedad y problemas estructurales. Pintura, pisos y cocina son caros pero previsibles; una filtración puede volver varias veces."
+        },
+        {
+          "q": "¿Puedo ir solo a la visita?",
+          "a": "Sí, pero avisa a alguien dónde estás y con quién, y prefiere horarios de día. Es una recomendación básica de seguridad, no de desconfianza."
+        }
+      ],
+      "related_links": [
+        {
+          "label": "Cómo leer un anuncio y su metraje",
+          "href": "/blog/como-leer-un-anuncio-inmobiliario-metraje"
+        },
+        {
+          "label": "Explorar propiedades en el mapa",
+          "href": "/"
+        }
+      ],
+      "body": "Hay un momento, a los diez minutos de entrar, en que la casa te empieza a gustar. A partir de ahí dejas de revisar y empiezas a imaginar dónde va el sofá. Esta lista existe para los minutos anteriores.\n\n## Primero lo que no se arregla barato\n\n**Humedad.** Mira los rincones bajos de las paredes exteriores, detrás de las puertas y debajo de las ventanas. Busca pintura abombada, manchas más claras que el resto o un olor a encierro que no se va. Una pared recién pintada en una sola habitación merece una pregunta.\n\n**Grietas.** Las finas y superficiales son normales. Las que cruzan una pared en diagonal, se repiten en el mismo punto en dos pisos o dejan pasar luz, no.\n\n**Techos y losas.** En el último piso, mira el cielo raso de cada habitación. Las filtraciones dejan cercos.\n\n## Luego lo que vas a sufrir todos los días\n\n**Presión de agua.** Abre la ducha y el lavabo a la vez. Tira la cadena mientras corre la ducha. Es de mala educación y es exactamente lo que hay que hacer.\n\n**Orientación y luz.** Pregunta por dónde sale el sol. Una sala que solo recibe luz a las seis de la tarde es una sala oscura once meses al año.\n\n**Ruido.** Abre una ventana y quédate callado un minuto. Ruido de vía rápida, discoteca, colegio o generador no aparece en las fotos.\n\n**Enchufes y medidores.** Cuenta los tomacorrientes de la sala y del dormitorio principal. Pregunta si el medidor de luz y agua es independiente.\n\n## Lo que solo se ve volviendo\n\nUna segunda visita, a otra hora, cambia lo que sabes:\n\n- **Un día de semana a las 18:30**, para ver el tráfico de entrada y si hay dónde estacionar.\n- **Un fin de semana por la mañana**, para oír a los vecinos y ver si el edificio se llena.\n- **Si puedes, un día de lluvia.** Media hora de aguacero revela más que tres visitas con sol.\n\n## Preguntas que se hacen en la puerta, no después\n\n- ¿Cuánto se paga de alícuota y qué incluye?\n- ¿Cuándo se hizo la última reparación grande en el edificio?\n- ¿Hay algún arreglo pendiente aprobado por la asamblea?\n- ¿Por qué se vende?\n\nLa última suele responderse con una frase incómoda o con una demasiado pulida. Ambas dicen algo.\n\n## Sal con esto anotado\n\nMetraje útil confirmado, alícuota, orientación, y una foto de cada cosa rara que viste. Si vuelves a casa sin esos cuatro datos, la visita fue un paseo."
+    },
+    {
+      "slug": "senales-de-que-un-anuncio-no-es-lo-que-parece",
+      "title": "Señales de que un anuncio inmobiliario no es lo que parece",
+      "excerpt": "El precio fuera de rango, las fotos que no encajan y la prisa. Cómo usar los datos públicos de tu zona para detectar un anuncio dudoso antes de moverte.",
+      "category": "decidir",
+      "tags": [
+        "Seguridad",
+        "Antes de comprar",
+        "Comparar"
+      ],
+      "city": "",
+      "is_featured": false,
+      "status": "published",
+      "published_at": "2026-08-22T13:00:00Z",
+      "author_name": "Equipo Geo Propiedades Ecuador",
+      "author_role": "Redacción",
+      "faqs": [
+        {
+          "q": "¿Un precio muy bajo siempre es sospechoso?",
+          "a": "No siempre, pero merece una explicación. Una herencia con prisa, un inmueble que necesita obra o un remate bancario explican un precio bajo; si nadie sabe explicarlo, desconfía."
+        },
+        {
+          "q": "¿Es normal que pidan un anticipo para reservar?",
+          "a": "Reservar existe, pero siempre con documento firmado, identificación de ambas partes y condiciones de devolución por escrito. Nunca contra una promesa verbal ni antes de conocer el inmueble."
+        },
+        {
+          "q": "¿Cómo sé si el precio encaja con la zona?",
+          "a": "Compara el precio por metro cuadrado con el de su ciudad y su sector. Publicamos esas cifras y la metodología con la que se calculan."
+        }
+      ],
+      "related_links": [
+        {
+          "label": "Precio del metro cuadrado por ciudad",
+          "href": "/estadisticas-inmobiliarias"
+        },
+        {
+          "label": "Cómo calculamos esas cifras",
+          "href": "/metodologia"
+        }
+      ],
+      "body": "La mayoría de los anuncios son de gente que quiere vender su casa. Unos pocos no. Estas son las señales que se pueden revisar desde el teléfono, antes de gastar un sábado o, peor, un anticipo.\n\n## El precio que no encaja con su zona\n\nEs la señal más útil porque es la más difícil de disimular. Si un departamento en un sector donde el metro cuadrado ronda cierto valor se ofrece a la mitad, hay tres explicaciones posibles: necesita obra, hay urgencia real, o el anuncio no corresponde a esa propiedad.\n\nLas tres son verificables con una pregunta directa. La diferencia está en si la respuesta es concreta —«se vende por herencia, hay tres hermanos y quieren cerrar»— o evasiva.\n\nPuedes contrastar el precio con el [precio por metro cuadrado de la ciudad y del sector](/estadisticas-inmobiliarias). No es un veredicto: es un punto de referencia que convierte una corazonada en una pregunta.\n\n## Las fotos\n\n- **Fotos que no comparten luz ni piso entre sí.** Suele significar que vienen de más de una propiedad.\n- **Ninguna foto del exterior ni del acceso.** El interior se puede prestar; la fachada no.\n- **Fotos con marca de agua de otro portal o de otra ciudad.** Una búsqueda inversa de imagen toma treinta segundos.\n- **Solo renders.** En obra nueva es legítimo, pero entonces el anuncio debería decir en qué etapa está.\n\n## La forma de conversar\n\nVale la pena prestar atención a esto más que a las fotos:\n\n- **Prisa desproporcionada.** «Hay otro interesado, necesito el depósito hoy» es la frase que más dinero ha costado.\n- **Se niegan a una visita presencial** o solo ofrecen videollamada por motivos que cambian.\n- **Piden dinero antes de que veas el inmueble**, en cualquier concepto: reserva, gestión, comisión de separación.\n- **No quieren dar la dirección exacta** hasta que confirmes interés económico.\n- **La persona que muestra no es la que aparece en los documentos** y no hay poder que lo explique.\n\n## Antes de entregar un solo dólar\n\nPide el certificado de gravámenes actualizado del Registro de la Propiedad correspondiente y la cédula de quien firma. Verifica que el nombre del certificado y el de la cédula coincidan. Si hay un poder de por medio, léelo: revisa que autorice específicamente a vender y que siga vigente.\n\nNo hace falta ser abogado para hacer esas tres comparaciones. Sí hace falta hacerlas antes, no después.\n\n## Si algo no cuadra\n\nRetírate. En un mercado con miles de propiedades publicadas, ninguna oportunidad justifica saltarse una verificación. La que era buena de verdad seguirá ahí mañana; la que no, es exactamente la que te metía prisa."
+    },
+    {
+      "slug": "que-documentos-pedir-antes-de-entregar-dinero",
+      "title": "Qué documentos pedir antes de entregar dinero, y dónde verificarlos",
+      "excerpt": "Cuatro documentos y tres comprobaciones que puedes hacer tú mismo. Qué mira cada uno y a qué oficina se pide.",
+      "category": "decidir",
+      "tags": [
+        "Antes de comprar",
+        "Documentos",
+        "Seguridad"
+      ],
+      "city": "",
+      "is_featured": false,
+      "status": "scheduled",
+      "published_at": "2026-08-23T13:00:00Z",
+      "author_name": "Equipo Geo Propiedades Ecuador",
+      "author_role": "Redacción",
+      "faqs": [
+        {
+          "q": "¿Necesito un abogado para revisar esto?",
+          "a": "Para firmar sí conviene. Para las comprobaciones previas de esta lista no: son consultas que cualquiera puede pedir y comparar."
+        },
+        {
+          "q": "¿Qué es el certificado de gravámenes?",
+          "a": "El documento del Registro de la Propiedad que dice quién es el dueño inscrito y si el inmueble tiene hipotecas, embargos o prohibiciones de enajenar."
+        },
+        {
+          "q": "¿Sirve un certificado de hace seis meses?",
+          "a": "No para decidir. Un gravamen puede inscribirse en cualquier momento, así que pide uno reciente antes de comprometer dinero."
+        }
+      ],
+      "related_links": [
+        {
+          "label": "Señales de que un anuncio no es lo que parece",
+          "href": "/blog/senales-de-que-un-anuncio-no-es-lo-que-parece"
+        },
+        {
+          "label": "Escrituración paso a paso",
+          "href": "/blog/escrituracion-paso-a-paso-de-la-promesa-de-compraventa-al-registro"
+        }
+      ],
+      "body": "Esta lista no reemplaza a un abogado. Sirve para lo de antes: para saber si vale la pena llegar a la etapa en la que necesitas uno.\n\n## 1. Certificado de gravámenes\n\n**Qué dice.** Quién consta como dueño inscrito y qué cargas pesan sobre el inmueble: hipotecas, embargos, prohibiciones de enajenar, litigios anotados.\n\n**Dónde se pide.** En el Registro de la Propiedad del cantón donde está el inmueble. Varios cantones permiten solicitarlo en línea.\n\n**Qué comparar.** Que el nombre del propietario coincida exactamente con la cédula de quien te está vendiendo. Si no coinciden, tiene que haber un poder que lo explique.\n\n## 2. Cédula de quien firma, y el poder si lo hay\n\nSuena obvio y es donde más se falla. Pide la cédula física, no una foto, y compárala con el certificado. Si quien vende actúa por otra persona, lee el poder completo: tiene que autorizar la venta de ese inmueble concreto y estar vigente.\n\n## 3. Certificado de no adeudar al municipio\n\n**Qué dice.** Que el predial y las tasas municipales están al día.\n\n**Por qué importa.** Las deudas municipales siguen al inmueble, no a la persona. Si están pendientes, terminas pagándolas tú.\n\n**Dónde se pide.** En el municipio del cantón.\n\n## 4. Estado de la alícuota, si es propiedad horizontal\n\nPide al administrador del edificio o conjunto un certificado de que el propietario está al día. Pregunta también si hay alguna contribución extraordinaria aprobada y todavía no cobrada: una fachada o un ascensor acordados en asamblea son una factura que llega después de que tú ya firmaste.\n\n## Las tres comprobaciones que puedes hacer tú\n\n1. **Nombre del certificado = nombre de la cédula.** Sin excepciones.\n2. **Fecha del certificado de gravámenes = de esta semana.** No de hace meses.\n3. **Dirección del certificado = dirección de la propiedad que visitaste.** Parece absurdo verificarlo y no lo es.\n\n## Cuándo entra el abogado\n\nCuando pases de verificar a comprometerte: promesa de compraventa, condiciones, plazos, penalidades y forma de pago. Ahí el dinero que ahorres eligiendo no tener abogado es el más caro que vas a ahorrar en tu vida.\n\nY una regla que no cuesta nada: **ningún dinero cambia de manos sin documento firmado por ambas partes**, con montos, plazos y qué pasa si la operación no se cierra."
+    },
+    {
+      "slug": "por-que-tu-anuncio-no-recibe-visitas",
+      "title": "Por qué tu anuncio no recibe visitas",
+      "excerpt": "Casi siempre es una de cuatro cosas, y tres se arreglan la misma tarde. Cómo diagnosticar el tuyo antes de bajar el precio.",
+      "category": "vender",
+      "tags": [
+        "Vender",
+        "Publicar",
+        "Precio"
+      ],
+      "city": "",
+      "is_featured": true,
+      "status": "published",
+      "published_at": "2026-08-22T15:00:00Z",
+      "author_name": "Equipo Geo Propiedades Ecuador",
+      "author_role": "Redacción",
+      "faqs": [
+        {
+          "q": "¿Cuánto tiempo debo esperar antes de preocuparme?",
+          "a": "Si en dos semanas nadie escribió, el problema no es el mercado: es el anuncio. Revisa precio, fotos y ubicación antes de tocar nada más."
+        },
+        {
+          "q": "¿Bajar el precio es siempre la solución?",
+          "a": "Es la última, no la primera. Un anuncio con tres fotos oscuras y sin ubicación no vende ni con descuento, y bajar el precio dos veces seguidas hace que quien mira piense que algo pasa."
+        },
+        {
+          "q": "¿Cómo sé si mi precio está fuera de mercado?",
+          "a": "Compara tu precio por metro cuadrado con el de tu sector y tu ciudad. Publicamos ambas cifras y cómo se calculan."
+        }
+      ],
+      "related_links": [
+        {
+          "label": "Cómo poner precio con lo que ya está publicado",
+          "href": "/blog/como-poner-precio-a-tu-propiedad"
+        },
+        {
+          "label": "Publicar una propiedad",
+          "href": "/publicar-propiedad"
+        }
+      ],
+      "body": "Publicaste hace tres semanas y no ha escrito nadie. Antes de bajar el precio, revisa en este orden: son cuatro causas y solo una cuesta dinero.\n\n## 1. La ubicación está mal puesta\n\nEs la más común y la que menos se sospecha. Si el pin del mapa cayó en el centro del cantón en vez de en tu calle, tu propiedad no aparece cuando alguien busca por tu zona. Los compradores buscan por barrio, no por ciudad.\n\nRevisa que el marcador esté donde está la casa, y que la dirección escrita empiece por el nombre del sector —«Cumbayá», «Kennedy Norte»— y no por «Casa en venta». Ese primer tramo de la dirección es lo que agrupa tu anuncio con los de tu zona.\n\n## 2. Las fotos\n\nQuien busca ve primero una foto de portada del tamaño de un sello. Si esa foto es oscura, está torcida o muestra un pasillo, tu anuncio se pasa de largo.\n\nTres arreglos de una tarde:\n\n- **Luz de día, cortinas abiertas, luces encendidas.** Nunca de noche.\n- **Ordena antes.** Un mesón despejado hace la cocina 20 % más grande.\n- **La portada es la mejor foto del espacio más amplio.** No el baño, no el garaje.\n\n## 3. La descripción no dice nada\n\n«Hermosa casa en excelente sector, oportunidad única» no contiene un solo dato. Quien lee quiere saber en la primera línea: cuántos dormitorios, cuántos metros útiles, en qué piso, si tiene estacionamiento, cuánto es la alícuota.\n\nEscribe eso primero. Los adjetivos, si sobra espacio.\n\n## 4. Ahora sí, el precio\n\nSi arreglaste lo anterior y sigue sin moverse, el precio es el problema. Compáralo con lo que se pide en tu sector, no con lo que te dijeron que valía hace tres años.\n\nUn anuncio bien puesto empieza a recibir mensajes en la primera semana. Uno que no recibe ninguno en dos suele estar entre un 10 % y un 20 % por encima de su zona.\n\n## Cómo revisar si estás caro\n\nDivide tu precio entre los metros útiles y compara ese número con el precio mediano por metro de tu ciudad y, si existe, de tu sector. Están publicados en el portal junto con la [metodología](/metodologia).\n\nSi estás por encima, no significa que estés equivocado: significa que tienes que poder explicar por qué. Terraza, remodelación reciente, piso alto con vista, estacionamiento doble. Si no encuentras la razón, el mercado tampoco la va a encontrar.\n\n## Lo que no funciona\n\nRepublicar el mismo anuncio para que «suba». Bajar el precio de mil en mil. Poner el precio en el título con signos de exclamación. Escribir en mayúsculas.\n\nLo que funciona es aburrido: ubicación exacta, ocho fotos con luz, primera línea con datos, precio que resiste la comparación."
+    },
+    {
+      "slug": "como-fotografiar-tu-propiedad-con-el-telefono",
+      "title": "Cómo fotografiar tu propiedad con el teléfono",
+      "excerpt": "No necesitas cámara ni fotógrafo. Necesitas luz de día, media hora de orden y saber en qué esquina pararte.",
+      "category": "vender",
+      "tags": [
+        "Vender",
+        "Fotos",
+        "Publicar"
+      ],
+      "city": "",
+      "is_featured": false,
+      "status": "scheduled",
+      "published_at": "2026-08-24T13:00:00Z",
+      "author_name": "Equipo Geo Propiedades Ecuador",
+      "author_role": "Redacción",
+      "faqs": [
+        {
+          "q": "¿Cuántas fotos debería subir?",
+          "a": "Entre ocho y diez, cubriendo todos los ambientes. Menos deja dudas; muchas más y se repiten espacios sin aportar."
+        },
+        {
+          "q": "¿Sirve el gran angular del teléfono?",
+          "a": "Con cuidado. Agranda la sensación de espacio pero deforma las esquinas, y quien llega a la visita nota la diferencia. Úsalo solo si el ambiente es muy pequeño."
+        },
+        {
+          "q": "¿Debo mostrar los defectos?",
+          "a": "No hace falta fotografiarlos, pero tampoco escóndelos. Un comprador que descubre en la visita algo que las fotos ocultaban se va, y con razón."
+        }
+      ],
+      "related_links": [
+        {
+          "label": "Por qué tu anuncio no recibe visitas",
+          "href": "/blog/por-que-tu-anuncio-no-recibe-visitas"
+        },
+        {
+          "label": "Publicar una propiedad",
+          "href": "/publicar-propiedad"
+        }
+      ],
+      "body": "La foto de portada decide si alguien abre tu anuncio. Con un teléfono actual y media mañana alcanza para que deje de ser el motivo por el que no lo abren.\n\n## Antes de sacar el teléfono: media hora de orden\n\nEs lo que más cambia el resultado, y no cuesta nada.\n\n- Despeja mesones, mesas y repisas. Deja lo mínimo.\n- Guarda toallas, cepillos, jabones, trapos de cocina, tendederos.\n- Saca los tachos de basura de cuadro.\n- Abre todas las cortinas y persianas.\n- Enciende todas las luces, incluso de día: iguala el color y quita sombras duras.\n- Baja las tapas de los inodoros.\n\n## La hora\n\nMedia mañana o media tarde, con día claro. Nunca de noche, nunca a contraluz de mediodía. Si una habitación solo recibe sol a cierta hora, fotografíala a esa hora.\n\n## Dónde pararte\n\n**En una esquina, de espaldas a la pared.** Es la regla que más metros hace ganar. Desde el centro del cuarto solo se ve una pared; desde la esquina se ve la profundidad.\n\n**El teléfono a la altura del pecho, no de los ojos.** Un poco más abajo de lo natural hace que el techo respire.\n\n**Horizontal, y recto.** Activa la cuadrícula del teléfono y alinea las líneas verticales de puertas y ventanas. Una foto torcida se lee como descuido.\n\n## Qué fotografiar y en qué orden\n\n1. **Fachada o acceso.** Da contexto y confianza.\n2. **Sala**, desde la esquina más lejana.\n3. **Comedor y cocina.**\n4. **Dormitorio principal**, luego los demás.\n5. **Baños**, uno por foto.\n6. **Balcón, terraza o patio.**\n7. **Vista desde la ventana**, si la hay.\n8. **Estacionamiento y bodega.**\n\nLa portada es la mejor de las tres primeras. No pongas el baño de portada aunque sea la foto más bonita.\n\n## Lo que arruina una foto buena\n\n- Filtros y saturación. La casa tiene que verse como es.\n- Personas y mascotas en cuadro.\n- El reflejo de quien fotografía en un espejo.\n- Fotos verticales mezcladas con horizontales.\n- Documentos, fotos familiares o cualquier cosa con datos personales visibles.\n\n## Una prueba antes de publicar\n\nMíralas en el teléfono, pequeñas, sin ampliarlas. Es el tamaño en que las va a ver quien busca. Si a ese tamaño no se entiende qué habitación es, esa foto no sirve."
+    },
+    {
+      "slug": "como-poner-precio-a-tu-propiedad",
+      "title": "Cómo poner precio a tu propiedad usando lo que ya está publicado",
+      "excerpt": "Un método en cuatro pasos con datos que puedes consultar hoy. Y qué hacer cuando en tu zona no hay con qué comparar.",
+      "category": "vender",
+      "tags": [
+        "Vender",
+        "Precio",
+        "Precio por m²"
+      ],
+      "city": "",
+      "is_featured": false,
+      "status": "scheduled",
+      "published_at": "2026-08-25T13:00:00Z",
+      "author_name": "Equipo Geo Propiedades Ecuador",
+      "author_role": "Redacción",
+      "faqs": [
+        {
+          "q": "¿Los precios publicados son precios de venta?",
+          "a": "No. Son precios pedidos por quien vende. La venta real suele cerrarse por debajo, y cuánto por debajo no lo publica nadie de forma abierta en Ecuador."
+        },
+        {
+          "q": "¿Y si en mi sector hay muy pocos anuncios?",
+          "a": "Sube un nivel: compara con la ciudad y con el tipo de inmueble. Un promedio sobre dos anuncios no es una referencia, es una coincidencia."
+        },
+        {
+          "q": "¿Debo dejar margen para negociar?",
+          "a": "Un margen pequeño y explicable. Un precio muy inflado no atrae ofertas bajas: atrae silencio, porque quien busca filtra por rango y ni siquiera te ve."
+        }
+      ],
+      "related_links": [
+        {
+          "label": "Precio del metro cuadrado por ciudad",
+          "href": "/estadisticas-inmobiliarias"
+        },
+        {
+          "label": "Cómo calculamos esas cifras",
+          "href": "/metodologia"
+        },
+        {
+          "label": "Por qué tu anuncio no recibe visitas",
+          "href": "/blog/por-que-tu-anuncio-no-recibe-visitas"
+        }
+      ],
+      "body": "Poner precio no es adivinar cuánto vale tu casa. Es averiguar cuánto piden por casas parecidas y decidir dónde te pones tú dentro de ese rango.\n\n## Paso 1: encuentra tu referencia por metro\n\nBusca el precio mediano por metro cuadrado de tu ciudad y, si existe, de tu sector. Usa la **mediana**, no el promedio: la mediana deja la mitad de los anuncios arriba y la mitad abajo, y no se mueve porque una hacienda entre en la muestra.\n\nEn este portal esas cifras están publicadas por ciudad y por zona, con la [metodología abierta](/metodologia): qué anuncios entran, qué extremos se descartan y qué no pueden decir.\n\n## Paso 2: multiplica por tus metros útiles\n\nMetros útiles, no área total. Si comparas tu área total contra un precio por metro calculado sobre otra medida, el número que sale no significa nada. Eso está explicado en detalle en [cómo leer un anuncio](/blog/como-leer-un-anuncio-inmobiliario-metraje).\n\nEse resultado es tu punto de partida. No es tu precio todavía.\n\n## Paso 3: ajusta, y que cada ajuste tenga nombre\n\nSube o baja desde ahí, pero solo por razones que puedas decir en voz alta a quien pregunte:\n\n**Suman:** piso alto con vista, remodelación de menos de tres años, dos estacionamientos, terraza propia, edificio con ascensor cuando la zona no lo tiene.\n\n**Restan:** planta baja a la calle, sin estacionamiento, cocina y baños originales de hace veinte años, edificio sin ascensor a partir del cuarto piso, humedad visible.\n\nSi no encuentras el nombre del ajuste, el ajuste no existe.\n\n## Paso 4: mira el rango, no solo tu número\n\nAntes de publicar, busca en el portal tres o cuatro propiedades parecidas a la tuya en tu zona y compara. No para copiarlas: para saber en qué parte del rango quedas y si eso es lo que querías.\n\nSi quedas arriba del todo, prepárate para esperar más. Si quedas al final, espera mensajes rápido.\n\n## Cuando no hay con qué comparar\n\nEn zonas con poco inventario no vas a encontrar referencia fina. Entonces:\n\n- Usa la cifra de la **ciudad** en lugar de la del sector.\n- Compara dentro del **mismo tipo**: un terreno no se compara con un departamento.\n- Acepta que el rango va a ser ancho y decide con eso, en vez de fingir una precisión que no tienes.\n\n## El error que más caro sale\n\nPublicar alto «por si acaso» y bajar de a poco. Quien busca filtra por rango de precio: si estás fuera del suyo, no te ve, y las dos primeras semanas —las de más movimiento— se van sin que nadie mire tu anuncio. Después, cada bajada le dice al mercado que todavía puede haber otra."
+    },
+    {
+      "slug": "como-escribir-la-descripcion-de-tu-anuncio",
+      "title": "Cómo escribir la descripción de tu anuncio para que la encuentren",
+      "excerpt": "Los adjetivos no ayudan a nadie a encontrarte. La primera línea, la dirección y cinco datos concretos, sí.",
+      "category": "vender",
+      "tags": [
+        "Vender",
+        "Publicar",
+        "Buscar"
+      ],
+      "city": "",
+      "is_featured": false,
+      "status": "scheduled",
+      "published_at": "2026-08-26T13:00:00Z",
+      "author_name": "Equipo Geo Propiedades Ecuador",
+      "author_role": "Redacción",
+      "faqs": [
+        {
+          "q": "¿Por qué importa tanto cómo escribo la dirección?",
+          "a": "Porque el primer tramo de la dirección es lo que agrupa tu anuncio con los de tu zona. Si escribes «Casa en venta» en vez del nombre del sector, tu propiedad no entra en la página de su barrio."
+        },
+        {
+          "q": "¿Conviene repetir palabras clave?",
+          "a": "No. Repetir «casa en venta Quito casa venta Quito» no mejora nada y hace la descripción ilegible para la persona que sí llegó."
+        },
+        {
+          "q": "¿Cuánto debe medir la descripción?",
+          "a": "Lo suficiente para responder las preguntas obvias. Entre ocho y quince líneas suele bastar."
+        }
+      ],
+      "related_links": [
+        {
+          "label": "Por qué tu anuncio no recibe visitas",
+          "href": "/blog/por-que-tu-anuncio-no-recibe-visitas"
+        },
+        {
+          "label": "Publicar una propiedad",
+          "href": "/publicar-propiedad"
+        }
+      ],
+      "body": "Quien busca tiene treinta anuncios abiertos y va descartando. Tu descripción tiene una línea para evitar que te descarte.\n\n## La primera línea son datos, no adjetivos\n\nCompara estas dos:\n\n> Hermosa casa en excelente sector, oportunidad única, no te la pierdas.\n\n> Casa de 3 dormitorios y 145 m² útiles en Cumbayá, con dos estacionamientos y patio.\n\nLa segunda responde en un renglón lo que la primera no responde nunca. Los adjetivos van después, si sobra sitio.\n\n## La dirección es lo más importante que vas a escribir\n\nEl primer tramo de la dirección, antes de la coma, es el que agrupa tu propiedad con las de su zona. Escribe ahí **el nombre del sector**: «Cumbayá», «Kennedy Norte», «Puerto Santa Ana», «Urb. Ciudad Celeste».\n\nLo que no debe ir ahí: «Casa en venta», «Vendo departamento», «Oportunidad». Cuando el sector se reemplaza por un titular, tu anuncio deja de pertenecer a un barrio y desaparece de la página que reúne a los de tu zona. Es el error más caro y el más fácil de arreglar.\n\n## Los cinco datos que se preguntan siempre\n\nSi no están, te van a escribir para preguntarlos, y muchos no escribirán:\n\n1. Metros **útiles** y, si quieres, el área total aparte.\n2. Dormitorios y baños.\n3. Piso y si hay ascensor.\n4. Estacionamientos y bodega.\n5. Alícuota mensual, si es propiedad horizontal.\n\n## Lo que sí conviene contar\n\n- **Qué hay caminando.** Colegio, mercado, parada, supermercado.\n- **Orientación.** «La sala recibe sol en la mañana» vale más que «muy iluminada».\n- **Qué se hizo y cuándo.** «Baños remodelados en 2024» es verificable; «impecable» no.\n- **Por qué se vende**, si es una razón normal. Da confianza.\n\n## Lo que resta\n\n- Mayúsculas sostenidas y signos de exclamación.\n- «Precio negociable» en el título: invita a negociar antes de que la casa guste.\n- Prometer lo que no se puede sostener en la visita.\n- Copiar la descripción de otro anuncio. Se nota, y describe otra casa.\n\n## Una prueba de un minuto\n\nLéela en voz alta imaginando que se la cuentas a alguien por teléfono. Si suena a folleto, reescríbela. Si suena a alguien describiendo su casa, está lista."
+    },
+    {
+      "slug": "la-alicuota-y-los-gastos-que-no-estan-en-el-precio",
+      "title": "La alícuota y los gastos que no están en el precio",
+      "excerpt": "El precio de la vivienda es el número grande. Los que deciden si puedes vivir ahí son los pequeños que se pagan todos los meses.",
+      "category": "decidir",
+      "tags": [
+        "Antes de comprar",
+        "Gastos",
+        "Alícuota"
+      ],
+      "city": "",
+      "is_featured": false,
+      "status": "scheduled",
+      "published_at": "2026-08-27T13:00:00Z",
+      "author_name": "Equipo Geo Propiedades Ecuador",
+      "author_role": "Redacción",
+      "faqs": [
+        {
+          "q": "¿Qué es exactamente la alícuota?",
+          "a": "La cuota mensual que cada propietario paga para sostener las áreas comunes de un edificio o conjunto: administración, seguridad, limpieza, ascensores, bombas de agua, áreas verdes y el fondo de reserva."
+        },
+        {
+          "q": "¿La alícuota puede subir?",
+          "a": "Sí, la fija la asamblea de copropietarios. Por eso conviene preguntar no solo cuánto es hoy, sino si hay algo aprobado y todavía no cobrado."
+        },
+        {
+          "q": "¿Una alícuota baja siempre es mejor?",
+          "a": "No. Muy baja para un edificio con ascensor, piscina y guardia suele significar que no hay fondo de reserva, y que la primera reparación grande llega como contribución extraordinaria."
+        }
+      ],
+      "related_links": [
+        {
+          "label": "Qué revisar en una visita",
+          "href": "/blog/que-revisar-en-una-visita-a-una-propiedad"
+        },
+        {
+          "label": "Qué documentos pedir antes de entregar dinero",
+          "href": "/blog/que-documentos-pedir-antes-de-entregar-dinero"
+        }
+      ],
+      "body": "Dos departamentos al mismo precio pueden costar muy distinto vivirlos. La diferencia no está en la escritura: está en lo que se paga cada mes y en lo que llega una vez cada tantos años.\n\n## Qué cubre la alícuota\n\nEn un edificio o conjunto, la alícuota sostiene lo que nadie usa solo: administración, guardianía, limpieza, luz de áreas comunes, mantenimiento de ascensores, bombas de agua, jardines y —cuando está bien llevado— un fondo de reserva para reparaciones futuras.\n\nSe reparte entre los propietarios según el porcentaje que a cada unidad le corresponde en la propiedad horizontal, que suele ir con los metros. Por eso el departamento grande paga más que el pequeño aunque vivan los mismos.\n\n## Las tres preguntas que hay que hacer\n\n1. **¿Cuánto es hoy?** Y pide ver un recibo, no una cifra de memoria.\n2. **¿Qué incluye?** En algunos conjuntos incluye el agua; en otros no. La diferencia es real.\n3. **¿Hay algo aprobado y no cobrado?** Una fachada, un ascensor o un tanque acordados en asamblea son una factura que ya existe aunque todavía no haya llegado.\n\nEsa tercera pregunta es la que casi nadie hace y la que más sorpresas evita.\n\n## La alícuota barata que sale cara\n\nUn edificio con ascensor, bombas, guardia 24 horas y piscina, con una alícuota llamativamente baja, casi siempre significa una de dos cosas: que se está postergando mantenimiento, o que no hay fondo de reserva.\n\nEn ambos casos el dinero no desapareció; solo cambió de forma. Va a volver como contribución extraordinaria, y esa se cobra de una vez.\n\n## Lo que tampoco está en el precio\n\nAdemás de la alícuota, antes de decidir conviene poner sobre la mesa:\n\n- **Impuesto predial**, que se paga al municipio cada año.\n- **Servicios básicos** y si el medidor es independiente o se reparte.\n- **Internet**, y si el edificio tiene fibra o hay que pelearla.\n- **Estacionamiento**, si es propio o alquilado a otro propietario.\n- **Lo que hay que arreglar antes de mudarse.** Pintura, cerraduras, un calefón viejo.\n\n## Cómo usar esto al comparar\n\nSuma la alícuota a lo que pagarías de cuota o arriendo y compara ese número, no el otro. Un departamento cien dólares más barato con una alícuota ciento cincuenta más alta es, todos los meses, el caro.\n\nPide el certificado de que el propietario está al día antes de firmar: las deudas de alícuota pesan sobre la unidad, no sobre quien se fue."
+    },
+    {
+      "slug": "como-elegir-zona-segun-como-vives",
+      "title": "Cómo elegir zona según cómo vives, no según el ranking",
+      "excerpt": "La zona más cara no es la mejor para ti. Cinco preguntas sobre tu vida diaria que estrechan el mapa más que cualquier lista.",
+      "category": "donde-vivir",
+      "tags": [
+        "Dónde vivir",
+        "Decidir",
+        "Zonas"
+      ],
+      "city": "",
+      "is_featured": false,
+      "status": "scheduled",
+      "published_at": "2026-08-28T13:00:00Z",
+      "author_name": "Equipo Geo Propiedades Ecuador",
+      "author_role": "Redacción",
+      "faqs": [
+        {
+          "q": "¿La zona más cara es la mejor?",
+          "a": "Es la más demandada, que no es lo mismo. El precio recoge lo que mucha gente quiere; tu decisión depende de lo que necesitas tú los días de semana."
+        },
+        {
+          "q": "¿Cómo mido el tiempo de traslado de verdad?",
+          "a": "Haciéndolo. Un martes a la hora en que te tocaría, en el medio en que irías. Un mapa te dice la distancia; el martes te dice el costo."
+        },
+        {
+          "q": "¿Conviene mudarse lejos para pagar menos?",
+          "a": "Depende de cuánto vale tu tiempo y cuánto cuesta el traslado. Dos horas diarias son diez a la semana: conviene ponerles precio antes de decidir."
+        }
+      ],
+      "related_links": [
+        {
+          "label": "Explorar propiedades en el mapa",
+          "href": "/"
+        },
+        {
+          "label": "Precio del metro cuadrado por ciudad",
+          "href": "/estadisticas-inmobiliarias"
+        }
+      ],
+      "body": "Las listas de «mejores zonas» ordenan por precio, y el precio ordena por demanda. Ninguna de las dos cosas sabe cómo es tu semana.\n\nEstas cinco preguntas estrechan el mapa más rápido que cualquier ranking.\n\n## 1. ¿A dónde vas todos los días, y a qué hora?\n\nNo la distancia: el trayecto real, en el medio en que lo harías, el día y la hora que te tocaría. Hazlo una vez antes de decidir. Un trayecto que en el mapa son quince minutos puede ser cincuenta un martes a las siete y media.\n\nY cuenta la vuelta, que suele ser peor.\n\n## 2. ¿Tienes auto, o dependes de que no haga falta?\n\nCambia todo. Sin auto, la pregunta deja de ser el barrio y pasa a ser la manzana: qué hay a diez minutos caminando, si hay vereda, si hay parada cerca, si de noche está iluminado.\n\nCon auto, la pregunta es dónde se estaciona, si el estacionamiento es propio y si sales del conjunto en hora pico sin perder veinte minutos.\n\n## 3. ¿Quién más vive contigo?\n\n**Con niños**: colegio y cuánto se tarda en llegar, parque, y si se puede salir a la vereda.\n\n**Con adultos mayores**: escaleras, ascensor, farmacia y centro médico cerca, veredas sin obstáculos.\n\n**Solo o en pareja sin hijos**: probablemente pesa más lo que hay caminando que los metros.\n\n## 4. ¿Qué haces los sábados?\n\nSuena frívolo y no lo es. Si tu vida de fin de semana está en un lado de la ciudad y te mudas al otro, o cambias de vida o pasas el sábado manejando. Cualquiera de las dos está bien si la eliges a propósito.\n\n## 5. ¿Cuánto tiempo piensas quedarte?\n\nMenos de tres años cambia la pregunta: pesa más poder revender o rearrendar rápido, y eso favorece zonas con mucho movimiento aunque no sean tus favoritas. Más de diez, pesa más cómo se vive y menos cómo se vende.\n\n## Y entonces sí, mira los precios\n\nCon dos o tres zonas que aguanten esas cinco preguntas, compara el precio por metro de cada una. Ahí el dato ayuda: te dice cuánto cuesta la que prefieres frente a la alternativa, y si esa diferencia paga lo que ganas.\n\nAl revés —elegir por precio y después intentar que la vida encaje— es como se llega a vivir en un lugar barato que sale carísimo en horas."
+    },
+    {
+      "slug": "que-preguntar-por-whatsapp-antes-de-visitar",
+      "title": "Qué preguntar por WhatsApp antes de perder un sábado",
+      "excerpt": "Seis preguntas que se responden en dos minutos y descartan la mitad de las visitas que no llevaban a ningún lado.",
+      "category": "decidir",
+      "tags": [
+        "Visitas",
+        "Antes de comprar",
+        "Contacto"
+      ],
+      "city": "",
+      "is_featured": false,
+      "status": "scheduled",
+      "published_at": "2026-08-29T13:00:00Z",
+      "author_name": "Equipo Geo Propiedades Ecuador",
+      "author_role": "Redacción",
+      "faqs": [
+        {
+          "q": "¿No es mejor ver la propiedad y preguntar allá?",
+          "a": "Ver siempre es mejor, pero una visita cuesta dos horas. Estas preguntas evitan las visitas a propiedades que ya sabías que no ibas a comprar."
+        },
+        {
+          "q": "¿Qué hago si no responden las preguntas?",
+          "a": "Es una respuesta en sí misma. Quien vende su propia casa sabe estos datos; quien no los sabe está intermediando sin información o no tiene interés."
+        },
+        {
+          "q": "¿Puedo pedir más fotos por mensaje?",
+          "a": "Sí, y conviene: pide específicamente lo que el anuncio no muestra, que suele ser cocina, baños, lavandería y la vista real desde la ventana."
+        }
+      ],
+      "related_links": [
+        {
+          "label": "Qué revisar en una visita",
+          "href": "/blog/que-revisar-en-una-visita-a-una-propiedad"
+        },
+        {
+          "label": "Señales de que un anuncio no es lo que parece",
+          "href": "/blog/senales-de-que-un-anuncio-no-es-lo-que-parece"
+        }
+      ],
+      "body": "Una visita cuesta dos horas entre ir, ver y volver. Estas seis preguntas caben en un mensaje y descartan las que no valían el viaje.\n\n## 1. ¿Cuántos metros útiles tiene?\n\nNo el área total. Si la respuesta es el mismo número que el del anuncio, pregunta si incluye balcón y estacionamiento. Es la pregunta que más comparaciones falsas evita.\n\n## 2. ¿Cuánto es la alícuota y qué incluye?\n\nDos minutos de conversación que cambian la cuenta mensual. Si es un conjunto, pregunta también si hay alguna contribución extraordinaria aprobada.\n\n## 3. ¿En qué piso está y hay ascensor?\n\nParece obvio y falta en la mitad de los anuncios. Un cuarto piso sin ascensor es otra propiedad.\n\n## 4. ¿La foto de la vista es desde esta unidad?\n\nMuchos anuncios de edificios usan la vista de la terraza común o de un piso más alto. No es engaño necesariamente, pero conviene saberlo antes de enamorarte de una ventana.\n\n## 5. ¿Está habitada, arrendada o vacía?\n\nCambia los tiempos. Si está arrendada, pregunta hasta cuándo va el contrato: puedes estar comprando una propiedad que no vas a poder usar en meses.\n\n## 6. ¿Por qué se vende?\n\nLa respuesta importa menos que la forma. «Nos mudamos a otra ciudad», «es una herencia entre hermanos», «compramos algo más grande» son razones normales. Una evasiva sostenida, no.\n\n## Lo que también conviene pedir por mensaje\n\n- **Fotos de lo que no está**: cocina completa, baños, lavandería, y la vista real por la ventana.\n- **La dirección aproximada**, si el anuncio solo dice la ciudad. No hace falta el número exacto, sí el sector.\n- **Un video corto caminando** por la vivienda. Quien vende de verdad suele mandarlo sin problema.\n\n## Y algo que no se pregunta: se comprueba\n\nAntes de ir, mira el precio por metro de esa zona y compáralo con el del anuncio. Si está muy por debajo, lleva preparada la pregunta de por qué. Si está muy por encima, ya sabes que vas a negociar o a perder el viaje.\n\n## Cuando sí vale la pena ir igual\n\nSi la propiedad te encaja y las respuestas son razonables, ve. Ninguna conversación reemplaza pararse en la sala a las seis de la tarde y oír lo que se oye."
+    },
+    {
+      "slug": "comprar-entre-dos-que-acordar-antes",
+      "title": "Comprar entre dos: qué acordar antes de firmar",
+      "excerpt": "Pareja, hermanos o socios. Cuatro cosas que conviene dejar por escrito cuando todo va bien, porque después ya no se puede.",
+      "category": "decidir",
+      "tags": [
+        "Antes de comprar",
+        "Decidir",
+        "Copropiedad"
+      ],
+      "city": "",
+      "is_featured": false,
+      "status": "scheduled",
+      "published_at": "2026-08-30T13:00:00Z",
+      "author_name": "Equipo Geo Propiedades Ecuador",
+      "author_role": "Redacción",
+      "faqs": [
+        {
+          "q": "¿Hace falta un documento si somos pareja?",
+          "a": "Conviene igual. No por desconfianza, sino porque los porcentajes aportados se olvidan y las circunstancias cambian. Un papel de una página evita una discusión de años."
+        },
+        {
+          "q": "¿Se puede vender si el otro no quiere?",
+          "a": "Vender tu parte sí, pero vender el inmueble entero requiere acuerdo. Por eso conviene pactar de antemano qué pasa si uno quiere salir."
+        },
+        {
+          "q": "¿Esto reemplaza a un abogado?",
+          "a": "No. Es la conversación que hay que tener antes de ir donde el abogado, para que lo que redacte sea lo que ustedes ya decidieron."
+        }
+      ],
+      "related_links": [
+        {
+          "label": "Qué documentos pedir antes de entregar dinero",
+          "href": "/blog/que-documentos-pedir-antes-de-entregar-dinero"
+        },
+        {
+          "label": "Escrituración paso a paso",
+          "href": "/blog/escrituracion-paso-a-paso-de-la-promesa-de-compraventa-al-registro"
+        }
+      ],
+      "body": "Comprar entre dos es más fácil que comprar solo, hasta que deja de serlo. Estas cuatro conversaciones se tienen cuando todo va bien, que es la única vez que se pueden tener.\n\n## 1. Quién pone cuánto, y qué significa eso\n\nNo es lo mismo aportar mitad y mitad que aportar 70/30. Y no es lo mismo aportar la entrada que pagar la cuota todos los meses.\n\nDejen escrito:\n\n- Cuánto pone cada uno para la entrada y los gastos de cierre.\n- Quién paga la cuota mensual y en qué proporción.\n- Si eso se refleja en el porcentaje de la escritura o se compensa de otra forma.\n\nLa escritura puede decir 50/50 aunque uno haya puesto más, y eso es una decisión válida —siempre que sea una decisión y no un descuido.\n\n## 2. Qué pasa si uno quiere salir\n\nLa conversación incómoda y la más útil. Pacten de antemano:\n\n- Si uno quiere vender su parte, ¿el otro tiene preferencia para comprarla?\n- ¿A qué precio? ¿Avalúo de un tercero, o el promedio de dos avalúos?\n- ¿Cuánto tiempo tiene el otro para decidir?\n\nSin esto acordado, la salida de uno se convierte en una negociación en el peor momento posible.\n\n## 3. Quién paga qué mientras tanto\n\nAlícuota, predial, seguros, reparaciones. Y sobre todo: **quién decide** una reparación grande y a partir de qué monto hace falta acuerdo de los dos.\n\nUn calefón se cambia sin consultar. Un techo, no.\n\n## 4. Qué pasa si uno deja de pagar\n\nEs la que nadie quiere escribir. Pero si uno no puede pagar tres meses, la deuda es de los dos frente al banco, y sin acuerdo previo la solución se improvisa cuando ya hay tensión.\n\nBasta con dejar claro qué se hace: si el otro cubre y eso se anota como deuda, si se ajusta el porcentaje, o si se vende.\n\n## Dónde se pone esto\n\nPuede ir en la escritura, en un documento privado firmado o en ambos. Lo importante es que exista antes de firmar la compra, no después.\n\nUn abogado lo redacta en poco tiempo si ustedes llegan con las cuatro respuestas decididas. La parte cara no es redactarlo: es discutirlo cuando ya hay un problema."
+    },
+    {
+      "slug": "quien-construyo-este-portal-aents",
+      "title": "Quién construyó este portal, y qué más hace",
+      "excerpt": "Geo Propiedades Ecuador lo desarrolló Aents. Qué construyen, para quién, y en qué se parece a lo que podrías necesitar en tu negocio.",
+      "category": "publicidad",
+      "tags": [
+        "Aents",
+        "Software",
+        "Publicidad"
+      ],
+      "city": "",
+      "is_featured": false,
+      "status": "published",
+      "published_at": "2026-08-23T15:00:00Z",
+      "author_name": "Aents",
+      "author_role": "Anunciante",
+      "sponsor": "aents",
+      "sponsor_kind": "partner",
+      "faqs": [
+        {
+          "q": "¿Este artículo es publicidad?",
+          "a": "Sí. Aents desarrolló este portal y forma parte del mismo grupo, así que no hubo pago de por medio, pero es contenido publicitario y va identificado como tal en la parte superior."
+        },
+        {
+          "q": "¿Aents solo hace portales inmobiliarios?",
+          "a": "No. Desarrolla webs, tiendas en línea, aplicaciones móviles y sistemas de gestión. Este portal es uno de sus productos, junto a Aents Shop y Aents BG."
+        },
+        {
+          "q": "¿Cómo se contrata?",
+          "a": "Por WhatsApp o desde su sitio. La primera conversación es para entender el problema; si no hay software que lo resuelva mejor que lo que ya haces, lo dicen."
+        }
+      ],
+      "related_links": [
+        {
+          "label": "Sitio de Aents",
+          "href": "https://aents.net/?utm_source=geopropiedadesecuador&utm_medium=blog&utm_campaign=advertorial"
+        },
+        {
+          "label": "Para inmobiliarias y corredores",
+          "href": "/inmobiliarias"
+        }
+      ],
+      "body": "Este portal no salió de un proveedor contratado por horas. Lo construyó **[Aents](https://aents.net/?utm_source=geopropiedadesecuador&utm_medium=blog&utm_campaign=advertorial)**, y sigue construyéndolo. Si estás leyendo esto es porque creemos que vale la pena decir quién está detrás de lo que usas, y qué más hacemos.\n\n## Qué es Aents\n\nAents desarrolla software para empresas del Ecuador: webs, tiendas en línea, aplicaciones móviles y sistemas de gestión. La idea que ordena todo lo demás cabe en una frase: **software simple para personas reales, privado por diseño**.\n\nSimple significa lo justo para resolver el problema, sin capas que estorben. Privado por diseño significa que los datos de tu empresa son de tu empresa, y que eso se decide cuando se diseña el sistema, no después.\n\n## Qué construimos, y qué se puede ver\n\nGeo Propiedades Ecuador es uno de nuestros productos. Hay otros: **Aents Shop** y **Aents BG**. Y hay desarrollo a medida, que es la mayor parte del trabajo: webs, comercio electrónico, aplicaciones para iOS y Android, automatización de procesos e integración con los servicios que ya usas.\n\nEste portal sirve como muestra honesta de cómo trabajamos, porque está a la vista y se puede revisar:\n\n- **Un mapa con miles de propiedades** que carga rápido en un teléfono con datos móviles.\n- **Estadísticas de mercado** calculadas sobre el inventario real, con la [metodología publicada](/metodologia) para que cualquiera vea qué se cuenta y qué se descarta.\n- **Páginas por ciudad y por zona** que se generan solas a partir de los datos, y desaparecen cuando no hay inventario que las sostenga.\n- **Un panel** donde quien publica ve cuánta gente abrió su anuncio y desde qué red llegó.\n\nNada de eso es una plantilla comprada. Es lo mismo que hacemos para un cliente que necesita ordenar su operación.\n\n## En qué se parece a tu negocio\n\nCasi todos los proyectos que llegan empiezan igual: la información existe, pero está repartida entre WhatsApp, un Excel, un cuaderno y la cabeza de dos personas. Funciona hasta que crece.\n\nLo que hacemos ahí es concreto:\n\n- **Ordenar lo que ya tienes** en un sistema donde se pueda buscar, filtrar y ver.\n- **Automatizar lo que se repite**, que suele ser copiar datos de un lado a otro.\n- **Conectar lo que ya usas** en vez de reemplazarlo todo de golpe.\n- **Mostrarlo en un panel** que se entienda sin que nadie lo explique.\n\n## Cómo empieza\n\nCon una conversación, no con una cotización. Nos cuentas qué haces hoy y dónde se traba; te decimos si hay algo que valga la pena construir. **Si no lo hay, te lo decimos también** — es más barato para los dos que un proyecto que nadie va a usar.\n\nPuedes escribirnos por [WhatsApp](https://wa.me/593983738151?text=Hola%20Aents%2C%20los%20le%C3%AD%20en%20el%20blog%20de%20Geo%20Propiedades%20y%20quiero%20conversar%20sobre%20un%20proyecto) o mirar primero [qué hacemos](https://aents.net/?utm_source=geopropiedadesecuador&utm_medium=blog&utm_campaign=advertorial).\n\nY si tienes una inmobiliaria, hay una página específica sobre cómo funciona publicar aquí: [para inmobiliarias y corredores](/inmobiliarias)."
+    },
+    {
+      "slug": "inmobiliaria-whatsapp-y-hojas-de-calculo",
+      "title": "Si tu inmobiliaria funciona con WhatsApp y hojas de cálculo",
+      "excerpt": "Funciona, hasta que son cuarenta propiedades y tres personas. Qué se puede ordenar, en qué orden, y qué no vale la pena automatizar todavía.",
+      "category": "publicidad",
+      "tags": [
+        "Aents",
+        "Inmobiliarias",
+        "Publicidad"
+      ],
+      "city": "",
+      "is_featured": false,
+      "status": "scheduled",
+      "published_at": "2026-08-31T13:00:00Z",
+      "author_name": "Aents",
+      "author_role": "Anunciante",
+      "sponsor": "aents",
+      "sponsor_kind": "partner",
+      "faqs": [
+        {
+          "q": "¿Este artículo es publicidad?",
+          "a": "Sí. Lo publica Aents, que desarrolló este portal y pertenece al mismo grupo. No hubo pago de por medio y va identificado como contenido publicitario."
+        },
+        {
+          "q": "¿Hace falta cambiar todo el sistema de golpe?",
+          "a": "No, y casi nunca conviene. Lo habitual es empezar por una sola cosa: el catálogo o el seguimiento de contactos, no ambos."
+        },
+        {
+          "q": "¿Y si somos dos personas y veinte propiedades?",
+          "a": "Probablemente todavía no necesitas un sistema. Vale más ordenar cómo publicas y cómo respondes. Lo decimos aunque nos deje sin proyecto."
+        }
+      ],
+      "related_links": [
+        {
+          "label": "Sitio de Aents",
+          "href": "https://aents.net/?utm_source=geopropiedadesecuador&utm_medium=blog&utm_campaign=advertorial"
+        },
+        {
+          "label": "Para inmobiliarias y corredores",
+          "href": "/inmobiliarias"
+        }
+      ],
+      "body": "WhatsApp y una hoja de cálculo son un sistema perfectamente válido. Lo son hasta un punto bastante concreto: cuando ya no cabe en la cabeza de una persona.\n\nEste texto lo publica **[Aents](https://aents.net/?utm_source=geopropiedadesecuador&utm_medium=blog&utm_campaign=advertorial)**, que desarrolló este portal. Va identificado como publicidad arriba, así que digamos algo más útil que un catálogo de servicios: en qué orden conviene ordenar, y cuándo no conviene todavía.\n\n## Las tres señales de que se quedó chico\n\n**1. Nadie sabe cuál es la versión buena.** El precio de una propiedad está en tres lugares distintos y no coinciden. Alguien manda al cliente el precio viejo.\n\n**2. Las respuestas dependen de quién esté.** Si la persona que lleva ese cliente está de vacaciones, el negocio se detiene, porque el historial está en su teléfono.\n\n**3. Nadie sabe qué pasó con los contactos del mes pasado.** No porque no se atendieran, sino porque no quedó registro de quién preguntó por qué y en qué quedó.\n\nSi te reconoces en dos de las tres, ordenar deja de ser un lujo.\n\n## Por dónde se empieza, y por dónde no\n\nLo que casi siempre conviene primero es **el catálogo**: una sola lista de propiedades, con fotos, precio y estado, donde todos miren lo mismo. Es lo más barato de construir y lo que más discusiones elimina.\n\nDespués, **el seguimiento de contactos**: quién preguntó, por qué propiedad, qué se le respondió, cuándo hay que volver a escribirle.\n\nLo que conviene dejar para más tarde es casi todo lo demás: firmas digitales, portales para clientes, integraciones contables. Se pueden hacer, pero rara vez son el cuello de botella real.\n\n## Lo que no vale la pena automatizar todavía\n\nSi son dos personas y veinte propiedades, un sistema probablemente te va a estorbar. Lo que rinde a esa escala es más simple: publicar bien —fotos con luz, ubicación exacta, precio que resiste comparación— y responder rápido.\n\nLo decimos aunque signifique no vender un proyecto. Un sistema que nadie usa es peor que la hoja de cálculo que sí se usaba.\n\n## Qué hacemos cuando sí toca\n\nConstruimos a medida: sistemas de gestión, automatización de lo que se repite e integración con lo que ya usas. También webs, tiendas en línea y aplicaciones para iOS y Android. Todo hecho en Ecuador.\n\nEste portal es una muestra de cómo trabajamos y se puede revisar entero, incluida la [metodología con la que calculamos las estadísticas](/metodologia).\n\n## Cómo saber si tiene sentido\n\nEscríbenos por [WhatsApp](https://wa.me/593983738151?text=Hola%20Aents%2C%20los%20le%C3%AD%20en%20el%20blog%20de%20Geo%20Propiedades%20y%20quiero%20conversar%20sobre%20un%20proyecto) y cuéntanos cómo trabajan hoy. La primera conversación es para entender el problema; si no hay nada que valga la pena construir, te lo decimos y no pasa nada.\n\nY si lo que buscas es publicar tus propiedades aquí, eso es gratis y está explicado en [para inmobiliarias y corredores](/inmobiliarias)."
+    }
+  ]
+}

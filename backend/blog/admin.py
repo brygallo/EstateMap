@@ -92,13 +92,17 @@ class PostAdmin(admin.ModelAdmin):
         "author_name",
         "reading_minutes",
         "is_featured",
+        "sponsor_badge",
     ]
-    list_filter = ["status", "category", "city", "is_featured", "published_at"]
+    # `sponsor` first: "which of these did somebody pay for" is the question an
+    # editor needs answered fastest, and the one a reader is entitled to have
+    # answered on the page itself.
+    list_filter = ["sponsor", "status", "category", "city", "is_featured", "published_at"]
     search_fields = ["title", "excerpt", "body", "slug"]
     prepopulated_fields = {"slug": ("title",)}
     date_hierarchy = "published_at"
     ordering = ["-published_at", "-created_at"]
-    autocomplete_fields = ["category"]
+    autocomplete_fields = ["category", "sponsor"]
     readonly_fields = ["reading_minutes", "created_at", "updated_at", "public_url"]
     actions = ["schedule_daily", "publish_now", "move_to_draft"]
 
@@ -123,6 +127,17 @@ class PostAdmin(admin.ModelAdmin):
             },
         ),
         ("Publicación", {"fields": ("status", "published_at", "is_featured", "public_url")}),
+        (
+            "Publicidad",
+            {
+                "fields": ("sponsor", "sponsor_kind"),
+                "description": (
+                    "Dejar vacío para contenido editorial. Con anunciante, el artículo se "
+                    "publica con la etiqueta «Contenido publicitario» visible y sus enlaces "
+                    "salientes llevan rel=\"sponsored nofollow\"."
+                ),
+            },
+        ),
         ("Clasificación", {"fields": ("category", "tags", "city")}),
         ("Autoría (E-E-A-T)", {"fields": ("author", "author_name", "author_role")}),
         ("Portada", {"fields": ("cover_image", "cover_image_alt")}),
@@ -140,6 +155,18 @@ class PostAdmin(admin.ModelAdmin):
                 obj.published_at.strftime("%d/%m %H:%M"),
             )
         return format_html('<span style="color:#6b7280">{}</span>', obj.get_status_display())
+
+    @admin.display(description="Publicidad", ordering="sponsor")
+    def sponsor_badge(self, obj):
+        if not obj.sponsor_id:
+            return format_html('<span style="color:#6b7280">Editorial</span>')
+        paid = obj.sponsor_kind == SponsorKind.PAID
+        return format_html(
+            '<span style="color:{};font-weight:600">◆ {}</span> {}',
+            "#b45309" if paid else "#6d28d9",
+            "Pagada" if paid else "Del grupo",
+            obj.sponsor.name,
+        )
 
     @admin.display(description="URL pública")
     def public_url(self, obj):

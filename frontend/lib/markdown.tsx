@@ -58,7 +58,11 @@ const INLINE = [
   { type: 'em', re: /(?<!\*)\*([^*\n]+)\*(?!\*)/ },
 ] as const;
 
-function renderInline(text: string, keyPrefix: string): React.ReactNode[] {
+function renderInline(
+  text: string,
+  keyPrefix: string,
+  sponsored = false
+): React.ReactNode[] {
   const nodes: React.ReactNode[] = [];
   let rest = text;
   let index = 0;
@@ -103,7 +107,10 @@ function renderInline(text: string, keyPrefix: string): React.ReactNode[] {
             key={key}
             href={href}
             target="_blank"
-            rel="noopener noreferrer nofollow"
+            // `sponsored` is Google's own word for a link that exists because
+            // somebody paid for it. Marking it is what lets the rest of the
+            // portal's links keep meaning something.
+            rel={sponsored ? 'sponsored noopener noreferrer nofollow' : 'noopener noreferrer nofollow'}
             className="font-medium text-primary hover:underline"
           >
             {match[1]}
@@ -356,13 +363,16 @@ function ArticleImage({ block, index }: { block: Extract<Block, { kind: 'image' 
 }
 
 /** Render a post body. Returns React nodes; never raw HTML. */
-export function renderMarkdown(markdown: string): React.ReactNode[] {
+export function renderMarkdown(
+  markdown: string,
+  { sponsored = false }: { sponsored?: boolean } = {}
+): React.ReactNode[] {
   return parseBlocks(markdown).map((block, index) => {
     const key = `block-${index}`;
     switch (block.kind) {
       case 'heading': {
         const id = headingId(block.text);
-        const content = renderInline(block.text, key);
+        const content = renderInline(block.text, key, sponsored);
         if (block.level === 2) {
           return (
             <h2
@@ -394,13 +404,13 @@ export function renderMarkdown(markdown: string): React.ReactNode[] {
       case 'paragraph':
         return (
           <p key={key} className="mt-5 text-[1.05rem] leading-8 text-textSecondary">
-            {renderInline(block.text, key)}
+            {renderInline(block.text, key, sponsored)}
           </p>
         );
       case 'list': {
         const items = block.items.map((item, itemIndex) => (
           <li key={`${key}-${itemIndex}`} className="pl-1 leading-8 text-textSecondary">
-            {renderInline(item, `${key}-${itemIndex}`)}
+            {renderInline(item, `${key}-${itemIndex}`, sponsored)}
           </li>
         ));
         return block.ordered ? (
@@ -419,7 +429,7 @@ export function renderMarkdown(markdown: string): React.ReactNode[] {
             key={key}
             className="mt-8 border-l-4 border-primary/40 py-1 pl-5 text-lg italic leading-8 text-textPrimary"
           >
-            {renderInline(block.text, key)}
+            {renderInline(block.text, key, sponsored)}
             {block.attribution && (
               <cite className="mt-2 block text-sm not-italic text-textSecondary">
                 — {block.attribution}
@@ -442,7 +452,7 @@ export function renderMarkdown(markdown: string): React.ReactNode[] {
                 key={`${key}-${lineIndex}`}
                 className="mt-2 leading-7 text-textSecondary"
               >
-                {renderInline(line, `${key}-${lineIndex}`)}
+                {renderInline(line, `${key}-${lineIndex}`, sponsored)}
               </p>
             ))}
           </aside>
@@ -464,7 +474,7 @@ export function renderMarkdown(markdown: string): React.ReactNode[] {
                       scope="col"
                       className="px-3 py-2.5 font-semibold text-textPrimary"
                     >
-                      {renderInline(cell, `${key}-h-${cellIndex}`)}
+                      {renderInline(cell, `${key}-h-${cellIndex}`, sponsored)}
                     </th>
                   ))}
                 </tr>
@@ -477,7 +487,7 @@ export function renderMarkdown(markdown: string): React.ReactNode[] {
                         key={`${key}-r-${rowIndex}-${cellIndex}`}
                         className="px-3 py-2.5 align-top leading-6 text-textSecondary"
                       >
-                        {renderInline(cell, `${key}-r-${rowIndex}-${cellIndex}`)}
+                        {renderInline(cell, `${key}-r-${rowIndex}-${cellIndex}`, sponsored)}
                       </td>
                     ))}
                   </tr>

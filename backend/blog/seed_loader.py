@@ -37,8 +37,8 @@ def fields_available_on(model, values: dict) -> dict:
     return {name: value for name, value in values.items() if name in field_names}
 
 
-def load_seed() -> dict:
-    with SEED_FILE.open(encoding="utf-8") as handle:
+def load_seed(path: Path = SEED_FILE) -> dict:
+    with Path(path).open(encoding="utf-8") as handle:
         return json.load(handle)
 
 
@@ -94,13 +94,28 @@ def seed_sponsors(Advertiser, SponsorSlot) -> dict:
     return {"advertisers_created": created_advertisers, "slots_created": created_slots}
 
 
-def seed_blog(Category, Post, *, overwrite: bool = False) -> dict:
+def seed_blog(
+    Category,
+    Post,
+    *,
+    overwrite: bool = False,
+    path: Path = SEED_FILE,
+    Advertiser=None,
+) -> dict:
     """Create the seed categories and posts.
 
     ``Category`` and ``Post`` are passed in rather than imported so a data
     migration can hand over its historical models instead of the live ones.
+
+    ``path`` lets a second file add posts without touching the first: the seven
+    migrated guides are history and should stay byte-identical, while an
+    editorial batch is written, reviewed and loaded on its own.
+
+    ``Advertiser`` is only needed by files that carry advertising. Passing it
+    keeps the dependency opt-in, so a historical migration never has to know
+    that the advertising app exists.
     """
-    data = load_seed()
+    data = load_seed(path)
     created_categories = 0
     for entry in data["categories"]:
         _, was_created = Category.objects.get_or_create(
@@ -137,9 +152,21 @@ def seed_blog(Category, Post, *, overwrite: bool = False) -> dict:
             # custom save(), so the derived slug is written explicitly here.
             "author_slug": slugify(entry["author_name"])[:140],
             "published_at": published_at,
-            "status": "published",
+            # A dated batch is written ahead and released day by day, so the
+            # entry decides. `published` is the default because the migrated
+            # guides were already live when they got here.
+            "status": entry.get("status", "published"),
             "reading_minutes": max(1, round(len(entry["body"].split()) / 200) or 1),
         }
+        # Advertising is resolved by slug so the file names the advertiser once
+        # and never carries a database id.
+        sponsor_slug = entry.get("sponsor")
+        if sponsor_slug and Advertiser is not None:
+            sponsor = Advertiser.objects.filter(slug=sponsor_slug).first()
+            if sponsor is not None:
+                fields["sponsor"] = sponsor
+                fields["sponsor_kind"] = entry.get("sponsor_kind", "partner")
+
         fields = fields_available_on(Post, fields)
 
         post = Post.objects.filter(slug=entry["slug"]).first()

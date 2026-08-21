@@ -38,6 +38,21 @@ export type BlogPostSummary = {
   updated_at: string;
   reading_minutes: number;
   is_featured: boolean;
+  /**
+   * Who the article serves. `null` is editorial, which is almost everything.
+   *
+   * When it is set the page has to say so where it is read — a label, not a
+   * footnote — and every outbound link inside it carries
+   * `rel="sponsored nofollow"`. A portal that publishes market figures cannot
+   * blur the line between what it found and what somebody paid it to say.
+   */
+  sponsor: {
+    name: string;
+    slug: string;
+    website: string;
+    kind: 'paid' | 'partner' | 'promo';
+    paid: boolean;
+  } | null;
 };
 
 export type BlogPost = BlogPostSummary & {

@@ -30,11 +30,20 @@ export function PostCard({ post }: { post: BlogPostSummary }) {
   return (
     <article className="group flex h-full flex-col overflow-hidden rounded-card border border-line bg-white shadow-card transition-[transform,box-shadow,border-color] duration-300 hover:-translate-y-1 hover:border-primary/40 hover:shadow-cardHover">
       <div className="flex flex-1 flex-col p-5 sm:p-6">
-        {post.category && (
-          <p className="text-xs font-bold uppercase tracking-[0.12em] text-primary">
-            {post.category.name}
-          </p>
-        )}
+        <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+          {post.category && (
+            <p className="text-xs font-bold uppercase tracking-[0.12em] text-primary">
+              {post.category.name}
+            </p>
+          )}
+          {/* The disclosure travels with the card: a reader deciding what to
+              open is entitled to know it is advertising before they open it. */}
+          {post.sponsor && (
+            <span className="inline-flex items-center rounded-full bg-surface px-2 py-0.5 text-[0.65rem] font-bold uppercase tracking-[0.1em] text-textSecondary">
+              Publicidad
+            </span>
+          )}
+        </div>
         <h3 className="mt-2 text-lg font-bold leading-snug text-textPrimary">
           <Link href={`/blog/${post.slug}`} className="transition-colors hover:text-primary focus-visible:outline-none focus-visible:underline">
             {post.title}

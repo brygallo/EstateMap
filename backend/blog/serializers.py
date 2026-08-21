@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from .models import Category, Post, PostImage
+from .models import Category, Post, PostImage, SponsorKind
 
 # Every field below is safe to show a stranger. The blog has no private
 # counterpart to the property metrics, but the rule from the rest of the API
@@ -19,6 +19,9 @@ class PostListSerializer(serializers.ModelSerializer):
     category = CategorySerializer(read_only=True)
     cover_image = serializers.SerializerMethodField()
     author_name = serializers.SerializerMethodField()
+    # Advertising has to be disclosed where it is read, not only recorded in the
+    # admin, so the label travels with every representation of the article.
+    sponsor = serializers.SerializerMethodField()
 
     class Meta:
         model = Post
@@ -38,10 +41,23 @@ class PostListSerializer(serializers.ModelSerializer):
             "updated_at",
             "reading_minutes",
             "is_featured",
+            "sponsor",
         ]
 
     def get_cover_image(self, obj):
         return obj.cover_image.url if obj.cover_image else None
+
+    def get_sponsor(self, obj):
+        """Who this article serves, or null when it serves the reader."""
+        if not obj.sponsor_id:
+            return None
+        return {
+            "name": obj.sponsor.name,
+            "slug": obj.sponsor.slug,
+            "website": obj.sponsor.website,
+            "kind": obj.sponsor_kind or SponsorKind.PARTNER,
+            "paid": obj.sponsor_kind == SponsorKind.PAID,
+        }
 
     def get_author_name(self, obj):
         return obj.public_author_name

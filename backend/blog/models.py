@@ -21,6 +21,8 @@ import re
 
 from django.conf import settings
 from django.db import models
+
+from advertising.models import Advertiser, Campaign  # noqa: F401
 from django.utils import timezone
 from django.utils.text import slugify
 
@@ -81,6 +83,20 @@ class PostQuerySet(models.QuerySet):
             published_at__isnull=False,
             published_at__lte=timezone.now(),
         )
+
+    def sponsored(self):
+        """Articles that serve an advertiser rather than the reader."""
+        return self.filter(sponsor__isnull=False)
+
+    def editorial(self):
+        """Everything else, which is almost everything."""
+        return self.filter(sponsor__isnull=True)
+
+
+# Reuses the campaign vocabulary rather than inventing a parallel one: the same
+# three words already describe who a banner serves (ADS-016). `PROMO` is left
+# out on purpose — an article cannot be "space available".
+SponsorKind = Campaign.Kind
 
 
 class Post(models.Model):
@@ -223,6 +239,34 @@ class Post(models.Model):
         help_text="Se muestra en grande en la portada del blog.",
     )
 
+    # An article that is advertising is still an article: it is written, edited
+    # and read like the rest. What separates it is who it serves, and that has to
+    # be visible to the reader and knowable by the system — Google's own rule is
+    # that paid placement must be disclosed and its links marked, and a portal
+    # that publishes market figures cannot afford to blur the line between what
+    # it found and what somebody paid it to say.
+    #
+    # The advertiser and the kind live in `advertising`, so a sponsored article
+    # and a sponsored banner describe the same relationship with the same words
+    # (ADS-016). Empty means editorial, which is what almost every post is.
+    sponsor = models.ForeignKey(
+        "advertising.Advertiser",
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="sponsored_posts",
+        verbose_name="Anunciante",
+        help_text="Vacío = contenido editorial. Con anunciante = contenido publicitario.",
+    )
+    sponsor_kind = models.CharField(
+        max_length=10,
+        blank=True,
+        default="",
+        choices=SponsorKind.choices,
+        verbose_name="Tipo de publicidad",
+        help_text="Pagada por un tercero, o del grupo (Aents) sin coste.",
+    )
+
     meta_title = models.CharField(
         max_length=200,
         blank=True,
@@ -241,6 +285,11 @@ class Post(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     objects = PostQuerySet.as_manager()
+
+    @property
+    def is_sponsored(self) -> bool:
+        """Whether this article has to be labelled as advertising."""
+        return self.sponsor_id is not None
 
     class Meta:
         verbose_name = "Post"

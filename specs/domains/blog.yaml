@@ -479,3 +479,48 @@ rules:
         expected: no aparece
       - name: Artículo revisado esta semana
         expected: no aparece
+
+  - id: BLOG-014
+    name: Un artículo publicitario se identifica donde se lee
+    status: implemented
+    summary: >-
+      Un post con anunciante lleva un aviso visible antes del título que nombra
+      quién lo paga y si lo paga, la tarjeta del listado lo marca como
+      «Publicidad», y todos sus enlaces salientes salen con
+      `rel="sponsored nofollow"`. Sin anunciante nada de eso aparece.
+    rationale: >-
+      La regla de Google es que la colocación pagada se declare y sus enlaces se
+      marquen, pero la razón que importa aquí es más estrecha: este portal
+      publica cifras de mercado, y el día que un lector no pueda distinguir lo
+      que el portal midió de lo que alguien compró, las cifras dejan de valer la
+      pena citarse. Por eso el aviso no es una nota al pie ni un color: es una
+      línea que se lee antes del texto. «Del grupo» se dice tal cual —Aents y
+      Geo Propiedades comparten dueños y no media dinero— porque disimularlo
+      sería el mismo fallo en tamaño pequeño.
+    evidence:
+      - file: backend/blog/models.py
+        symbol: "def is_sponsored"
+      - file: backend/blog/models.py
+        symbol: SponsorKind
+        note: Reutiliza el vocabulario de las campañas en vez de inventar otro.
+      - file: backend/blog/serializers.py
+        symbol: def get_sponsor
+        note: La etiqueta viaja con cada representación del artículo, no solo en el admin.
+      - file: frontend/components/blog/SponsoredNotice.tsx
+        symbol: export default function SponsoredNotice
+      - file: frontend/lib/markdown.tsx
+        symbol: "sponsored ? 'sponsored noopener noreferrer nofollow'"
+      - file: frontend/components/blog/PostCard.tsx
+        symbol: "post.sponsor &&"
+        note: El aviso también viaja en la tarjeta, antes de que se abra el artículo.
+      - file: frontend/lib/markdown.test.tsx
+        symbol: "describe('sponsored links'"
+        note: Un caso comprueba que se marca y otro que un editorial se queda intacto.
+    frontend:
+      routes: ["/blog/[slug]", "/blog/categoria/[slug]"]
+    tests: {}
+    cases:
+      - name: Artículo con anunciante
+        expected: aviso visible, etiqueta en la tarjeta y rel="sponsored nofollow"
+      - name: Artículo editorial
+        expected: sin aviso y sin sponsored en los enlaces

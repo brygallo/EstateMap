@@ -1,7 +1,8 @@
 from django.core.management.base import BaseCommand
 
+from advertising.models import Advertiser
 from blog.models import Category, Post
-from blog.seed_loader import seed_blog
+from blog.seed_loader import SEED_FILE, seed_blog
 
 
 class Command(BaseCommand):
@@ -16,9 +17,23 @@ class Command(BaseCommand):
             action="store_true",
             help="Sobrescribe los posts que ya existen con el contenido del seed.",
         )
+        parser.add_argument(
+            "--file",
+            default=str(SEED_FILE),
+            help=(
+                "Archivo de seed a cargar. Por defecto las guías migradas; "
+                "un lote editorial nuevo va en su propio archivo."
+            ),
+        )
 
     def handle(self, *args, **options):
-        result = seed_blog(Category, Post, overwrite=options["overwrite"])
+        result = seed_blog(
+            Category,
+            Post,
+            overwrite=options["overwrite"],
+            path=options["file"],
+            Advertiser=Advertiser,
+        )
         self.stdout.write(
             self.style.SUCCESS(
                 "Blog seed: {categories_created} categorías nuevas, "

@@ -21,6 +21,7 @@ import { generatePageMetadata } from '@/lib/metadata';
 import { PostCard } from '@/components/blog/PostCard';
 import CityPriceBlock, { getCityPriceFacts } from '@/components/blog/CityPriceBlock';
 import CheapestNowBlock from '@/components/CheapestNowBlock';
+import SponsoredNotice from '@/components/blog/SponsoredNotice';
 import { getSectors, sectorSlug } from '@/lib/sectors';
 import SponsorSlotBlock from '@/components/blog/SponsorSlot';
 import { money } from '@/lib/market-stats';
@@ -146,7 +147,7 @@ export default async function BlogPostPage({ params }: PostPageProps) {
   const bodyImages = extractImages(post.body);
   // The in-article slot goes at a section break near the middle; short posts
   // get none, and the split is computed here so the body renders in one pass.
-  const bodyNodes = renderMarkdown(post.body);
+  const bodyNodes = renderMarkdown(post.body, { sponsored: Boolean(post.sponsor) });
   const slotIndex = midArticleIndex(post.body);
   const author = post.author_name || SITE_NAME;
   const authorPath = post.author_name
@@ -356,6 +357,7 @@ export default async function BlogPostPage({ params }: PostPageProps) {
       </nav>
 
       <article>
+        {post.sponsor && <SponsoredNotice sponsor={post.sponsor} />}
         <header>
           <h1 className="text-3xl font-bold leading-tight text-textPrimary sm:text-4xl">
             {post.title}
