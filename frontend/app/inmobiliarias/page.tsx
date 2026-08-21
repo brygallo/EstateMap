@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { Archive, Check, Mail, MapPin, Phone, Plus, Search } from 'lucide-react';
+import { Archive, Check, Eye, MapPin, Phone, Plus, Search } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
@@ -29,9 +29,9 @@ const BENEFITS = [
     icon: Phone,
   },
   {
-    title: 'Leads que sí puedes medir',
-    desc: 'Cada contacto queda registrado: nombre, teléfono, mensaje y propiedad de interés.',
-    icon: Mail,
+    title: 'Sabes cuánta gente lo vio',
+    desc: 'El informe de cada anuncio muestra cuántas personas lo abrieron y desde qué red llegaron. Los rastreadores no cuentan.',
+    icon: Eye,
   },
   {
     title: 'Publicación asistida',
@@ -45,7 +45,7 @@ const BENEFITS = [
   },
   {
     title: 'Panel de gestión',
-    desc: 'Administra tus publicaciones, revisa vistas y da seguimiento a los contactos recibidos.',
+    desc: 'Administra tus publicaciones, edítalas cuando cambie el precio y revisa el rendimiento de cada una.',
     icon: Archive,
   },
 ];
@@ -154,24 +154,24 @@ export default function InmobiliariasPage() {
         </div>
       </section>
 
-      {/* Panel de gestión + leads */}
+      {/* Informe por anuncio: lo que el panel sí sabe responder */}
       <section className="mx-auto max-w-6xl px-4 py-16 sm:px-6 lg:px-8">
         <div className="grid items-center gap-10 lg:grid-cols-2">
           <div>
             <h2 className="text-2xl font-bold text-textPrimary sm:text-3xl">
-              Un panel para gestionar tus contactos
+              Un panel para saber qué anuncio funciona
             </h2>
             <p className="mt-4 text-base leading-7 text-textSecondary">
-              Cada vez que alguien se interesa en una propiedad, su contacto queda registrado.
-              Da seguimiento, marca el estado (nuevo, contactado, cerrado) y mide qué inmuebles
-              generan más interés.
+              Cada publicación tiene su propio informe: cuánta gente la abrió, desde qué red
+              llegó y cuántas veces se compartió. Los rastreadores y los robots de búsqueda no
+              cuentan, así que el número que ves es de personas.
             </p>
             <ul className="mt-6 space-y-3">
               {[
-                'Bandeja de leads por propiedad',
-                'Estado de cada contacto',
-                'Métricas de vistas y contactos',
-                'Nombre, teléfono y mensaje del interesado',
+                'Visitantes reales por anuncio, sin robots',
+                'De qué red llegó cada visita',
+                'Cuántas veces se compartió el anuncio',
+                'Edición rápida cuando cambia el precio',
               ].map((item) => (
                 <li key={item} className="flex items-center gap-2 text-sm text-textPrimary">
                   <Check className="h-5 w-5 flex-shrink-0 text-success" strokeWidth={1.75} aria-hidden />
@@ -181,22 +181,18 @@ export default function InmobiliariasPage() {
             </ul>
           </div>
           <Card className="rounded-card border-line p-6 shadow-card">
-            <div className="mb-4 flex items-center justify-between">
-              <span className="text-sm font-semibold text-textPrimary">Contactos recientes</span>
-              <Badge className="bg-primary/10 text-primary hover:bg-primary/10">12 nuevos</Badge>
-            </div>
-            <div className="space-y-2">
+            <p className="text-sm font-semibold text-textPrimary">
+              Lo que responde el informe de cada anuncio
+            </p>
+            <div className="mt-4 space-y-2">
               {[
-                { name: 'María López', prop: 'Casa en Macas', tag: 'Nuevo' },
-                { name: 'Jorge Vera', prop: 'Terreno en Puyo', tag: 'Contactado' },
-                { name: 'Ana Ruiz', prop: 'Departamento en Cuenca', tag: 'Nuevo' },
-              ].map((l) => (
-                <div key={l.name} className="flex items-center justify-between rounded-lg bg-background p-3">
-                  <div>
-                    <p className="text-sm font-semibold text-textPrimary">{l.name}</p>
-                    <p className="text-xs text-textSecondary">{l.prop}</p>
-                  </div>
-                  <Badge className="bg-secondary/15 text-secondaryHover hover:bg-secondary/15">{l.tag}</Badge>
+                { q: '¿Cuántas personas lo abrieron?', a: 'Visitantes únicos, sin contar robots' },
+                { q: '¿Desde qué red llegaron?', a: 'WhatsApp, Facebook, búsqueda o directo' },
+                { q: '¿Cuántas veces se compartió?', a: 'Desde el kit de promoción del anuncio' },
+              ].map((row) => (
+                <div key={row.q} className="rounded-lg bg-background p-3">
+                  <p className="text-sm font-semibold text-textPrimary">{row.q}</p>
+                  <p className="mt-0.5 text-xs text-textSecondary">{row.a}</p>
                 </div>
               ))}
             </div>

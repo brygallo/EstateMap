@@ -39,7 +39,7 @@ import {
   formatDate,
   type ClosedReason,
 } from '@/lib/property-labels';
-import { formatDistance, getPropertyPoint } from '@/lib/geo';
+import { getPropertyPoint } from '@/lib/geo';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import AnimatedNumber from '@/components/ui/AnimatedNumber';
@@ -49,6 +49,7 @@ import AdminRefreshProperty from '@/components/AdminRefreshProperty';
 import PropertyIntelligence from '@/components/PropertyIntelligence';
 import AdSlot from '@/components/ads/AdSlot';
 import PropertyCard from '@/components/PropertyCard';
+import NearbyRail from '@/components/NearbyRail';
 import PropertyTitle from '@/components/PropertyTitle';
 import BrandAtmosphere from '@/components/aents/BrandAtmosphere';
 import RevealableDescription from '@/components/RevealableDescription';
@@ -281,8 +282,11 @@ export default async function PropertyPage({ params }: PropertyPageProps) {
 
   // The cards need four results, while the map needs a wider candidate set so
   // it can choose a useful zoom for the actual viewport.
-  const mapNearbyProperties = await getNearbyProperties(property, 12);
-  const nearbyProperties = mapNearbyProperties.slice(0, 4);
+  // The API hands back sixty candidates inside the same window whatever we ask
+  // for, so a longer rail costs no extra request. The map keeps twelve: more
+  // pins than that stop being a neighbourhood and start being noise.
+  const nearbyProperties = await getNearbyProperties(property, 30);
+  const mapNearbyProperties = nearbyProperties.slice(0, 12);
   // A listing published without coordinates and without a drawn shape has
   // nothing to put on a map: the camera would open over the whole country under
   // a heading promising this location. The section stays out in that case.
@@ -990,24 +994,13 @@ export default async function PropertyPage({ params }: PropertyPageProps) {
                     Ordenadas desde la propiedad más próxima. La distancia es aproximada en línea recta.
                   </p>
                 </div>
-                <Link
-                  href={isClosed ? similarUrl : mapUrl}
-                  className="text-sm font-semibold text-primary hover:underline"
-                >
-                  {isClosed ? similarLabel : 'Explorar en el mapa'}
-                </Link>
               </div>
 
-              <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-                {nearbyProperties.map((nearby) => (
-                  <PropertyCard
-                    key={nearby.id}
-                    property={nearby}
-                    href={`/propiedad/${nearby.id}`}
-                    distanceLabel={`${formatDistance(nearby.distanceKm)} de distancia`}
-                  />
-                ))}
-              </div>
+              <NearbyRail
+                properties={nearbyProperties}
+                mapHref={isClosed ? similarUrl : mapUrl}
+                mapLabel={isClosed ? similarLabel : 'Explorar en el mapa'}
+              />
             </section>
           )}
         </div>
