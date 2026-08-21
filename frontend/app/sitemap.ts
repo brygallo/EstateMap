@@ -87,6 +87,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     // The page every published figure points at: what was counted, what was
     // discarded and what the numbers cannot say.
     { url: `${SITE_URL}/metodologia`, lastModified: globalLatest, changeFrequency: 'monthly', priority: 0.6 },
+    // Advertising has a commercial page of its own so the rules it must follow
+    // are public, not something a reader has to infer from a disclosure notice.
+    { url: `${SITE_URL}/publicidad`, lastModified: globalLatest, changeFrequency: 'monthly', priority: 0.5 },
     ...TYPE_ROUTES.map((path) => ({
       url: `${SITE_URL}${path}`,
       lastModified: globalLatest,

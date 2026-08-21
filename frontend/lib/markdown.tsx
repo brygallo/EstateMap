@@ -50,7 +50,9 @@ export function extractHeadings(markdown: string): Heading[] {
 }
 
 // Inline patterns, tried in order. `code` comes first so backticks win over the
-// emphasis markers a snippet might contain.
+// emphasis markers a snippet might contain. Everything except `code` re-parses
+// its own content, so a link inside bold — or bold inside a link label — renders
+// as markup instead of leaking its brackets onto the page.
 const INLINE = [
   { type: 'code', re: /`([^`]+)`/ },
   { type: 'link', re: /\[([^\]]+)\]\(([^)\s]+)\)/ },
@@ -100,7 +102,7 @@ function renderInline(
       nodes.push(
         isInternal ? (
           <Link key={key} href={href} className="font-medium text-primary hover:underline">
-            {match[1]}
+            {renderInline(match[1], `${key}-label`, sponsored)}
           </Link>
         ) : (
           <a
@@ -113,18 +115,18 @@ function renderInline(
             rel={sponsored ? 'sponsored noopener noreferrer nofollow' : 'noopener noreferrer nofollow'}
             className="font-medium text-primary hover:underline"
           >
-            {match[1]}
+            {renderInline(match[1], `${key}-label`, sponsored)}
           </a>
         )
       );
     } else if (type === 'strong') {
       nodes.push(
         <strong key={key} className="font-semibold text-textPrimary">
-          {match[1]}
+          {renderInline(match[1], `${key}-in`, sponsored)}
         </strong>
       );
     } else {
-      nodes.push(<em key={key}>{match[1]}</em>);
+      nodes.push(<em key={key}>{renderInline(match[1], `${key}-in`, sponsored)}</em>);
     }
 
     rest = rest.slice(match.index + match[0].length);

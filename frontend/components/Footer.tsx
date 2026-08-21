@@ -41,6 +41,7 @@ const PLATFORM_LINKS = [
   { href: '/publicar-propiedad', label: 'Publicar propiedad' },
   { href: '/inmobiliarias', label: 'Inmobiliarias' },
   { href: '/blog', label: 'Blog inmobiliario' },
+  { href: '/publicidad', label: 'Anunciarse en el blog' },
   { href: '/ayuda', label: 'Centro de ayuda' },
 ];
 
