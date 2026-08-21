@@ -25,6 +25,17 @@ ARG NEXT_PUBLIC_FRONTEND_URL
 ARG NEXT_PUBLIC_GTM_ID
 ARG NEXT_PUBLIC_GA_MEASUREMENT_ID
 ARG NEXT_PUBLIC_GOOGLE_CLIENT_ID
+# Where prerendering reads the API. Not a NEXT_PUBLIC_ variable and never
+# reaches the browser: `getServerApiUrl()` prefers it on the server only.
+#
+# `next build` prerenders around a thousand routes, and each zone, combo and
+# featured grid is a distinct query, so the build makes hundreds of calls to
+# /api/properties/. Through the public hostname that is nginx, the anti-scraper
+# ceiling of 60/min, and a build that renders whatever fraction of the catalogue
+# it managed to read. That is how a sitemap full of URLs answering 404 was
+# produced. Compose gives this stage the host network so it can reach the
+# backend on loopback: no proxy, no forwarded-for header, no ceiling.
+ARG NEXT_INTERNAL_API_URL
 
 # Set environment variables for build
 ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
@@ -32,6 +43,7 @@ ENV NEXT_PUBLIC_FRONTEND_URL=$NEXT_PUBLIC_FRONTEND_URL
 ENV NEXT_PUBLIC_GTM_ID=$NEXT_PUBLIC_GTM_ID
 ENV NEXT_PUBLIC_GA_MEASUREMENT_ID=$NEXT_PUBLIC_GA_MEASUREMENT_ID
 ENV NEXT_PUBLIC_GOOGLE_CLIENT_ID=$NEXT_PUBLIC_GOOGLE_CLIENT_ID
+ENV NEXT_INTERNAL_API_URL=$NEXT_INTERNAL_API_URL
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
 
