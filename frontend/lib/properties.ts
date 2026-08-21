@@ -74,6 +74,13 @@ export async function getProperties({
 // catalogue is expected to reach.
 const MAX_PROPERTY_PAGES = 50;
 
+export class PartialCatalogError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'PartialCatalogError';
+  }
+}
+
 /**
  * Fetch the entire property catalogue, walking pages until the API stops
  * reporting a `next` link. `getProperties` caps out at one page (2000 rows
@@ -87,29 +94,52 @@ export async function getAllProperties({
   revalidate = 3600,
 }: GetPropertiesOptions = {}): Promise<Property[]> {
   const all: Property[] = [];
-  try {
-    for (let page = 1; page <= MAX_PROPERTY_PAGES; page++) {
-      const params = new URLSearchParams({
-        page: String(page),
-        page_size: String(pageSize),
-        include_images: includeImages ? '1' : '0',
-      });
-      const res = await fetch(`${API_URL}/properties/?${params.toString()}`, {
-        next: { revalidate, tags: ['properties'] },
-        headers: getServerApiHeaders(),
-      });
-      if (!res.ok) break;
-      const data = await res.json();
-      all.push(...normalizeList(data));
-      // A plain array response (no pagination) has no `next` to follow, so a
-      // single page is the whole answer.
-      const hasNext = Boolean(data && typeof data === 'object' && (data as any).next);
-      if (!hasNext) break;
+  for (let page = 1; page <= MAX_PROPERTY_PAGES; page++) {
+    const params = new URLSearchParams({
+      page: String(page),
+      page_size: String(pageSize),
+      include_images: includeImages ? '1' : '0',
+    });
+    const url = `${API_URL}/properties/?${params.toString()}`;
+    // One retry: a single refused page used to be enough to truncate the whole
+    // catalogue, and the throttle that caused it fired in bursts.
+    let res: Response | null = null;
+    for (let attempt = 0; attempt < 2; attempt++) {
+      try {
+        res = await fetch(url, {
+          next: { revalidate, tags: ['properties'] },
+          headers: getServerApiHeaders(),
+        });
+        if (res.ok) break;
+      } catch {
+        res = null;
+      }
     }
-  } catch (error) {
-    console.error('Error fetching all properties:', error);
+    if (!res || !res.ok) {
+      // Never return what was collected so far. Every caller here decides
+      // whether a page deserves to exist by counting listings — the sitemap,
+      // the city and sector landings, the combos, the market pages — so a short
+      // catalogue reads as "this zone has no inventory" and answers 404. Those
+      // 404s then get cached with the same `s-maxage` a real page would get,
+      // and the sitemap keeps advertising the URL. Roughly 60 live URLs were
+      // lost that way while the API was answering 429 to the renderer.
+      // Throwing instead lets Next keep serving the last good render.
+      throw new PartialCatalogError(
+        `Property catalogue incomplete: page ${page} answered ${res ? res.status : 'no response'} ` +
+          `after ${all.length} listings. Refusing to publish a partial catalogue.`,
+      );
+    }
+    const data = await res.json();
+    all.push(...normalizeList(data));
+    // A plain array response (no pagination) has no `next` to follow, so a
+    // single page is the whole answer.
+    const hasNext = Boolean(data && typeof data === 'object' && (data as any).next);
+    if (!hasNext) return all;
   }
-  return all;
+  throw new PartialCatalogError(
+    `Property catalogue exceeded ${MAX_PROPERTY_PAGES} pages of ${pageSize}. ` +
+      'Raise the cap deliberately rather than publishing a truncated catalogue.',
+  );
 }
 
 export type PropertyGroup = {
