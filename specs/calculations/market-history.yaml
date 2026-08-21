@@ -1,0 +1,142 @@
+version: 1
+domain: market-history
+title: Cortes históricos del mercado
+status: implemented
+summary: >
+  Cada madrugada se guarda una fila por cada corte del mercado que tenga
+  muestra suficiente: país, ciudad, tipo de inmueble y zona, cruzados con la
+  operación. La fila guarda conteo, mediana, promedio y área mediana, y nunca
+  se edita. El resto del portal responde "cuánto cuesta hoy"; esta tabla es lo
+  único que permitirá responder "cuánto se movió".
+rules:
+  - id: SNAP-001
+    name: Un corte sin muestra no se guarda
+    status: implemented
+    summary: >
+      Una porción del mercado con menos de cinco anuncios activos no genera
+      fila. El hueco en la serie queda visible en lugar de rellenarse.
+    rationale: >
+      Es el mismo criterio que gobierna las medianas públicas (PRC-028) y las
+      páginas de zona (SEC-002), aplicado a la historia. Una mediana sobre
+      cuatro anuncios guardada hoy se convierte dentro de un año en un punto de
+      una gráfica que alguien citará sin poder comprobar sobre qué se calculó.
+    evidence:
+      - file: backend/real_estate/services/snapshots.py
+        symbol: MIN_SNAPSHOT_LISTINGS
+      - file: backend/real_estate/services/snapshots.py
+        symbol: def _reading
+      - file: backend/real_estate/tests/test_market_snapshots.py
+        symbol: def test_a_slice_too_small_is_not_recorded
+    cases:
+      - name: Zona con cuatro anuncios activos
+        expected: no se guarda fila
+      - name: Zona con cinco anuncios activos
+        expected: se guarda con mediana
+    tests: {}
+
+  - id: SNAP-002
+    name: El día se guarda una sola vez
+    status: implemented
+    summary: >
+      La fila está identificada por día más dimensiones, y la captura
+      sobrescribe en lugar de insertar. Ejecutarla dos veces el mismo día deja
+      el mismo número de filas.
+    rationale: >
+      La tarea reintenta ante un fallo, y un relleno hacia atrás tiene que poder
+      repetirse sin miedo. Sin la restricción, un reintento duplicaría el día y
+      cualquier media móvil calculada después contaría ese día dos veces.
+    evidence:
+      - file: backend/real_estate/models.py
+        symbol: unique_market_snapshot_slice
+      - file: backend/real_estate/services/snapshots.py
+        symbol: MarketSnapshot.objects.update_or_create
+      - file: backend/real_estate/tests/test_market_snapshots.py
+        symbol: def test_the_day_is_recorded_once_however_often_it_runs
+    cases:
+      - name: La captura corre dos veces el mismo día
+        expected: el mismo número de filas
+    tests: {}
+
+  - id: SNAP-003
+    name: El corte guarda mediana además de promedio
+    status: implemented
+    summary: >
+      Cada fila guarda median_price y avg_price, median_price_m2 y
+      avg_price_m2, y median_area. La mediana es la cifra que resiste la mezcla.
+    rationale: >
+      Una serie histórica construida solo sobre promedios hereda su fragilidad:
+      un mes con tres haciendas publicadas produciría un salto que se leería
+      como una subida del mercado. Guardar ambas permite además detectar
+      justamente eso, comparando cuánto se separan.
+    evidence:
+      - file: backend/real_estate/models.py
+        symbol: class MarketSnapshot
+      - file: backend/real_estate/services/snapshots.py
+        symbol: def _median
+      - file: backend/real_estate/tests/test_market_snapshots.py
+        symbol: def test_the_reading_uses_the_median_not_the_average
+    cases:
+      - name: Ocho anuncios de 100.000 y uno de 900.000
+        expected: la mediana no se mueve, el promedio sí
+    tests: {}
+
+  - id: SNAP-004
+    name: El alquiler nunca guarda precio por metro cuadrado
+    status: implemented
+    summary: >
+      En las filas con status for_rent, median_price_m2 y avg_price_m2 son
+      nulos. Solo se guarda conteo, precio y área.
+    rationale: >
+      Misma razón que PRC-010: una mensualidad dividida entre un área no es un
+      precio por metro cuadrado. Guardarlo contaminaría la serie para siempre,
+      y una serie histórica no se puede recalcular hacia atrás.
+    evidence:
+      - file: backend/real_estate/services/snapshots.py
+        symbol: "_reading(slice_rows, with_ratio=status == \"for_sale\")"
+      - file: backend/real_estate/tests/test_market_snapshots.py
+        symbol: def test_a_rental_never_gets_a_price_per_square_metre
+    cases:
+      - name: Ocho alquileres de 600 al mes sobre 80 m2
+        expected: precio mediano 600, precio por m2 nulo
+    tests: {}
+
+  - id: SNAP-005
+    name: La historia agrupa las zonas igual que las páginas
+    status: implemented
+    summary: >
+      Antes de guardar, los cortes de zona aplican la misma absorción que las
+      páginas de zona: un rincón cuenta dentro de la zona que lo contiene.
+    rationale: >
+      Si la historia agrupara distinto que las páginas, una gráfica mostraría
+      una zona apareciendo de la nada el día que cambiara la regla de
+      agrupación, y nadie sabría si eso fue el mercado o el código.
+    evidence:
+      - file: backend/real_estate/services/snapshots.py
+        symbol: absorbed = absorptions(
+      - file: backend/real_estate/services/sectors.py
+        symbol: def absorptions
+    cases:
+      - name: Un rincón de una zona mayor
+        expected: sus anuncios cuentan en la zona que lo absorbe
+    tests: {}
+
+  - id: SNAP-006
+    name: La captura corre una vez al día, de madrugada
+    status: implemented
+    summary: >
+      La tarea está programada a las 04:30 y reintenta hasta dos veces con diez
+      minutos de espera.
+    rationale: >
+      Una lectura solo compara con la de ayer si se toma a una hora parecida, y
+      recorre el catálogo activo entero, que es trabajo que no debe competir con
+      el tráfico del día. El reintento existe porque un día perdido no se
+      recupera.
+    evidence:
+      - file: backend/estate_map/settings.py
+        symbol: capture-market-snapshot
+      - file: backend/real_estate/tasks.py
+        symbol: def capture_market_snapshot
+    cases:
+      - name: La captura falla por un error transitorio
+        expected: reintenta a los diez minutos
+    tests: {}

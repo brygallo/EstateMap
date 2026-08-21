@@ -368,3 +368,22 @@ def enqueue_optimization(image_id):
                 logger.exception("Inline fallback failed for PropertyImage %s", image_id)
 
     transaction.on_commit(dispatch)
+
+
+@shared_task(bind=True, max_retries=2)
+def capture_market_snapshot(self):
+    """Record what the market looked like today, once.
+
+    Scheduled at night because it reads the whole active catalogue, and because
+    a reading taken at a consistent hour is the only kind that compares with
+    yesterday's. Re-running the same day overwrites it, so a retry is safe.
+    """
+    from real_estate.services.snapshots import capture
+
+    try:
+        written = capture()
+    except Exception as exc:  # noqa: BLE001 - retried, then reported
+        logger.exception('Market snapshot failed')
+        raise self.retry(exc=exc, countdown=600)
+    logger.info('Market snapshot captured: %s slices', written)
+    return written

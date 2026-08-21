@@ -481,6 +481,8 @@ CELERY_TASK_TIME_LIMIT = 900
 # Hourly safety net: re-queue images whose message was lost and delete temp
 # files nobody claims. Embedded beat (-B) is fine because there is exactly one
 # worker per system; with several, each would fire its own copy.
+from celery.schedules import crontab
+
 CELERY_BEAT_SCHEDULE = {
     # Weekly is the right cadence for an editorial review list: the figures
     # inside an article move with the market, not with the hour.
@@ -509,6 +511,14 @@ CELERY_BEAT_SCHEDULE = {
     "publish-scheduled-posts": {
         "task": "blog.tasks.publish_scheduled_posts",
         "schedule": 60 * 60,
+    },
+    # Once a day, and only once: the row is keyed by the day, so a second run
+    # overwrites rather than duplicates. Nightly because the reading has to be
+    # taken at a comparable hour to be worth comparing, and because it walks the
+    # whole active catalogue.
+    "capture-market-snapshot": {
+        "task": "real_estate.tasks.capture_market_snapshot",
+        "schedule": crontab(hour=4, minute=30),
     },
 }
 
