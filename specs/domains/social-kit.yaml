@@ -170,13 +170,13 @@ rules:
         symbol: ALPHABET
         note: Sin 0, O, 1, I ni L.
       - file: backend/real_estate/models.py
-        lines: "410-412"
+        lines: "430-432"
         symbol: short_code
         note: >-
           Solo se asigna cuando está vacío, que es lo que lo hace estable frente
           a cualquier edición posterior.
       - file: backend/real_estate/views.py
-        lines: "949-951"
+        lines: "964-966"
         symbol: by_code
         note: Resolución pública, sin distinguir mayúsculas y excluyendo inactivas.
       - file: backend/real_estate/serializers.py
@@ -547,13 +547,13 @@ rules:
           Los tres estados que permiten distinguir «nadie lo compartió» de «se
           compartió y no trajo a nadie».
       - file: backend/real_estate/models.py
-        lines: "825-827"
+        lines: "845-847"
         symbol: activity_prop_human_idx
         note: >-
           (property, is_bot, created_at). Sin él la agregación recorre toda la
           tabla de eventos.
       - file: backend/real_estate/views.py
-        lines: "756-769"
+        lines: "774-786"
         symbol: def promotion_stats
       - file: backend/real_estate/permissions.py
         lines: "25-42"

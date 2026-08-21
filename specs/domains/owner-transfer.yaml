@@ -36,7 +36,7 @@ rules:
         lines: "2909-2952"
         symbol: def transfer_owner
       - file: backend/real_estate/views.py
-        lines: "2835-2837"
+        lines: "2850-2852"
         symbol: "PATCH_ALLOWED_FIELDS = {'status', 'title', 'price', 'city', 'description'}"
         note: owner no está, así que un PATCH que solo lo traiga se queda sin cuerpo y responde 400.
       - file: backend/real_estate/urls.py
@@ -146,7 +146,7 @@ rules:
       docs/decisions/0002-los-leads-siguen-a-la-propiedad.md.
     evidence:
       - file: backend/real_estate/views.py
-        lines: "1331-1333"
+        lines: "1346-1348"
         symbol: return qs.filter(property__owner=user)
         note: La bandeja se deriva del owner de la propiedad, así que la transferencia la mueve sola.
     tests:
@@ -176,7 +176,7 @@ rules:
         lines: "22-27"
         symbol: return obj.owner == request.user
       - file: backend/real_estate/views.py
-        lines: "2933-2935"
+        lines: "2948-2950"
         symbol: prop.owner = target
     permissions:
       required: [properties.edit_own]
@@ -209,7 +209,7 @@ rules:
       leads. Desvincularlo es lo que convierte la reclamación en definitiva.
     evidence:
       - file: backend/real_estate/views.py
-        lines: "2940-2942"
+        lines: "2955-2957"
         symbol: prop.is_imported = False
       - file: backend/ingesta/pipeline/retirement.py
         lines: "36"
@@ -240,7 +240,7 @@ rules:
       por hecha.
     evidence:
       - file: backend/real_estate/views.py
-        lines: "2953-2955"
+        lines: "2968-2970"
         symbol: action=property.transfer_owner
       - file: backend/real_estate/services/notifications.py
         lines: "54-72"
@@ -279,7 +279,7 @@ rules:
         lines: 64-69
         symbol: def property_cache_saved
       - file: backend/real_estate/views.py
-        lines: "2942-2944"
+        lines: "2957-2959"
         symbol: prop.save(update_fields=updated_fields)
     tests:
       api: true
@@ -303,7 +303,7 @@ rules:
       cambia y no toca ningún otro.
     evidence:
       - file: backend/real_estate/views.py
-        lines: "2934-2936"
+        lines: "2949-2951"
         symbol: updated_fields = ['owner']
     tests:
       api: true

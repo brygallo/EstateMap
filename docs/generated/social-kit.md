@@ -106,9 +106,9 @@ Se asigna en save() y no en el serializador porque todos los caminos de escritur
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
 - `backend/real_estate/services/short_codes.py:19` (`ALPHABET`) — Sin 0, O, 1, I ni L.
-- `backend/real_estate/models.py:384-386` (`short_code`) — Solo se asigna cuando está vacío, que es lo que lo hace estable frente a cualquier edición posterior.
-- `backend/real_estate/views.py:945-947` (`by_code`) — Resolución pública, sin distinguir mayúsculas y excluyendo inactivas.
-- `backend/real_estate/serializers.py:233-235` (`short_code`) — Read-only bajo fields='__all__'. Sin esto un cliente podría fijarse su propio código y ocupar el de otro, porque la columna es única.
+- `backend/real_estate/models.py:430-432` (`short_code`) — Solo se asigna cuando está vacío, que es lo que lo hace estable frente a cualquier edición posterior.
+- `backend/real_estate/views.py:964-966` (`by_code`) — Resolución pública, sin distinguir mayúsculas y excluyendo inactivas.
+- `backend/real_estate/serializers.py:236-238` (`short_code`) — Read-only bajo fields='__all__'. Sin esto un cliente podría fijarse su propio código y ocupar el de otro, porque la columna es única.
 
 **Casos**
 
@@ -312,8 +312,8 @@ Y un visitante es un `session_id` distinto, no un evento: el navegador repite su
 - `backend/real_estate/services/promotion_stats.py:94-118` (`payload__attribution__campaign`) — Agrega en Postgres con lookups sobre JSONField; el filtro por propiedad y por is_bot va primero para que use el índice.
 - `backend/real_estate/services/promotion_stats.py:56-62` (`BOT_FLAGGING_SINCE`) — La ventana nunca alcanza los datos anteriores al marcado de bots.
 - `backend/real_estate/services/promotion_stats.py:64-70` (`STATE_NOT_SHARED`) — Los tres estados que permiten distinguir «nadie lo compartió» de «se compartió y no trajo a nadie».
-- `backend/real_estate/models.py:799-801` (`activity_prop_human_idx`) — (property, is_bot, created_at). Sin él la agregación recorre toda la tabla de eventos.
-- `backend/real_estate/views.py:756-769` (`def promotion_stats`)
+- `backend/real_estate/models.py:845-847` (`activity_prop_human_idx`) — (property, is_bot, created_at). Sin él la agregación recorre toda la tabla de eventos.
+- `backend/real_estate/views.py:774-786` (`def promotion_stats`)
 - `backend/real_estate/permissions.py:25-42` (`class IsPropertyOwnerOrStaff`) — Frontera de verdad, en el servidor. A diferencia de las láminas (SOC-009), este dato es del dueño.
 - `backend/real_estate/serializers.py:681-691` (`PROPERTY_PATH_RE`) — La visita a una ficha se atribuye a su anuncio leyendo el id de la ruta; el beacon genérico de page_view no manda property_id.
 
@@ -442,7 +442,7 @@ Y caducarla al editar no es opcional: la lámina lleva el precio impreso. Si alg
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
 - `frontend/app/api/social/[id]/[format]/route.tsx:2432-2434` (`Cache-Control`) — s-maxage=60 con stale-while-revalidate: absorbe la ráfaga de scrapers que llega al publicar un enlace sin congelar un precio corregido.
-- `frontend/lib/properties.ts:307-309` (`getProperty`) — Lectura etiquetada; /api/revalidate purga property-<id> cuando Django avisa de un cambio.
+- `frontend/lib/properties.ts:316-318` (`getProperty`) — Lectura etiquetada; /api/revalidate purga property-<id> cuando Django avisa de un cambio.
 
 **Casos**
 

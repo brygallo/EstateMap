@@ -53,8 +53,8 @@ Un usuario staff genera, para un PendingPublication concreto, un enlace de conti
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/real_estate/views.py:1381-1406` (`def resume_link`)
-- `backend/real_estate/views.py:1347-1349` (`return [IsAuthenticated(), IsAdminUser()]`) — Toda acción del viewset que no sea `create` exige staff.
+- `backend/real_estate/views.py:1408-1432` (`def resume_link`)
+- `backend/real_estate/views.py:1366-1368` (`return [IsAuthenticated(), IsAdminUser()]`) — Toda acción del viewset que no sea `create` exige staff.
 - `backend/real_estate/email_utils.py:381-404` (`def create_publication_resume_token`)
 
 **Casos**
@@ -88,9 +88,9 @@ Un token de continuación deja de servir 14 días después de emitirse, y a part
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/estate_map/settings.py:584-586` (`PUBLICATION_RESUME_TOKEN_EXPIRY_DAYS`)
-- `backend/real_estate/models.py:747-749` (`def is_valid`)
-- `backend/real_estate/views.py:1563-1566` (`def invalid_resume_token_response`)
+- `backend/estate_map/settings.py:603-605` (`PUBLICATION_RESUME_TOKEN_EXPIRY_DAYS`)
+- `backend/real_estate/models.py:793-795` (`def is_valid`)
+- `backend/real_estate/views.py:1582-1584` (`def invalid_resume_token_response`)
 
 **Casos**
 
@@ -122,7 +122,7 @@ Canjear un token crea la propiedad y marca el token como consumido; un segundo c
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/real_estate/views.py:1427-1431` (`redeemed_at__isnull=True`) — UPDATE condicional dentro de la transacción que crea la propiedad.
+- `backend/real_estate/views.py:1446-1448` (`redeemed_at__isnull=True`) — UPDATE condicional dentro de la transacción que crea la propiedad.
 - `backend/real_estate/email_utils.py:388-396` (`revoked_at__isnull=True`) — Emitir un enlace nuevo retira el anterior, para que nunca haya dos vivos.
 
 **Casos**
@@ -154,7 +154,7 @@ Un usuario staff invalida los tokens vigentes de una solicitud en cualquier mome
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/real_estate/views.py:1422-1429` (`def revoke_resume_link`)
+- `backend/real_estate/views.py:1440-1445` (`def revoke_resume_link`)
 
 **Casos**
 
@@ -187,7 +187,7 @@ La respuesta del token contiene el JSON del borrador y los datos de contacto que
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
 - `backend/real_estate/serializers.py:636-647` (`class PublicationDraftSerializer`)
-- `backend/real_estate/views.py:1429-1445` (`class PublicationDraftView`)
+- `backend/real_estate/views.py:1447-1462` (`class PublicationDraftView`)
 
 **Casos**
 
@@ -211,7 +211,7 @@ Retomar restaura título, descripción, tipo, operación, precio, dirección, ci
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/real_estate/models.py:692-702` (`class PendingPublicationImage`) — Archivos temporales ordenados y ligados al borrador pendiente.
+- `backend/real_estate/models.py:738-744` (`class PendingPublicationImage`) — Archivos temporales ordenados y ligados al borrador pendiente.
 - `backend/real_estate/serializers.py:654-660` (`get_temporary_images`) — El enlace devuelve las fotos que debe reconstruir el formulario.
 - `frontend/app/continuar-publicacion/[token]/page.tsx:40-51` (`PROPERTY_DRAFT_STORAGE_KEY`) — El borrador y las URLs temporales se dejan donde el formulario ya los busca.
 
@@ -301,9 +301,9 @@ Al completarse el canje, el PendingPublication pasa a converted y guarda una ref
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/real_estate/models.py:675-677` (`related_name="pending_publications"`)
-- `backend/real_estate/views.py:1525-1527` (`pending.status = 'converted'`)
-- `backend/real_estate/views.py:1402-1404` (`'Esta solicitud ya se convirtió en un anuncio.'`)
+- `backend/real_estate/models.py:721-723` (`related_name="pending_publications"`)
+- `backend/real_estate/views.py:1544-1546` (`pending.status = 'converted'`)
+- `backend/real_estate/views.py:1421-1423` (`'Esta solicitud ya se convirtió en un anuncio.'`)
 
 **Casos**
 
@@ -332,7 +332,7 @@ Desde la bandeja, staff abre el mismo formulario recuperado, corrige los campos 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
 - `frontend/app/admin/pending-publications/page.tsx:224-243` (`resolveAndPublish`) — Prepara el enlace si hace falta y abre el borrador recuperado para corregirlo.
-- `backend/real_estate/views.py:1516-1529` (`serializer.save(owner=owner)`) — La propiedad queda a nombre del correo del pendiente y se notifica tanto a cuentas nuevas como existentes.
+- `backend/real_estate/views.py:1534-1546` (`serializer.save(owner=owner)`) — La propiedad queda a nombre del correo del pendiente y se notifica tanto a cuentas nuevas como existentes.
 - `backend/real_estate/email_utils.py:406-450` (`send_account_claim_email`) — La cuenta nueva recibe el enlace de definición de contraseña y el enlace público del anuncio.
 
 **Casos**
@@ -360,7 +360,7 @@ POST /api/pending-publications/ valida uploaded_images con el mismo lote de comp
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
 - `backend/real_estate/serializers.py:114-152` (`def validate_image_batch`)
-- `backend/real_estate/serializers.py:577-579` (`def validate_uploaded_images(self, value):`) — PendingPublicationSerializer delega en el validador compartido.
+- `backend/real_estate/serializers.py:580-582` (`def validate_uploaded_images(self, value):`) — PendingPublicationSerializer delega en el validador compartido.
 
 **Casos**
 

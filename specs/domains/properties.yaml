@@ -35,7 +35,7 @@ rules:
         symbol: prop.rent_price
         note: La ingesta escribe ambos campos por separado desde el dict canónico del scraper.
       - file: frontend/app/property/[id]/page.tsx
-        lines: "448-450"
+        lines: "452-454"
         symbol: hasRentPrice
         note: La ficha pública muestra el precio principal y, solo si hay rent_price > 0, la línea "Alquiler .../mes".
     cases:
@@ -71,7 +71,7 @@ rules:
       los duplicados marcados.
     evidence:
       - file: backend/real_estate/views.py
-        lines: "463-465"
+        lines: "473-475"
         symbol: exclude(status='inactive')
         note: Base de get_queryset en PropertyViewSet; de aquí derivan list, map_points y summary.
       - file: backend/real_estate/models.py
@@ -109,7 +109,7 @@ rules:
       ver también lo que no es suyo.
     evidence:
       - file: backend/real_estate/views.py
-        lines: "1196-1198"
+        lines: "1211-1213"
         symbol: my_properties
         note: >-
           La acción declara permission_classes=[IsAuthenticated] y elige entre
@@ -146,11 +146,11 @@ rules:
       que ya se había descargado. Por eso ambos se resuelven en el servidor.
     evidence:
       - file: backend/real_estate/views.py
-        lines: "273-281"
+        lines: "284-291"
         symbol: class InventoryPagination
         note: page_size 24, page_size_query_param 'page_size', máximo 100.
       - file: backend/real_estate/views.py
-        lines: "1196-1198"
+        lines: "1211-1213"
         symbol: def my_properties
         note: stats se calcula con queryset.aggregate antes de paginar.
       - file: frontend/app/my-properties/page.tsx
@@ -548,7 +548,7 @@ rules:
       que hace que una importada no tenga dueño al que atribuirla.
     evidence:
       - file: backend/real_estate/views.py
-        lines: "614-616"
+        lines: "624-626"
         symbol: perform_create
         note: serializer.save(owner=self.request.user), ignorando cualquier owner del payload.
       - file: backend/real_estate/serializers.py
@@ -591,11 +591,11 @@ rules:
         symbol: IsOwnerOrReadOnly
         note: Permite cualquier método seguro y compara obj.owner == request.user para el resto.
       - file: backend/real_estate/views.py
-        lines: "362-364"
+        lines: "366-368"
         symbol: IsOwnerOrReadOnly
         note: permission_classes = [IsAuthenticatedOrReadOnly, IsOwnerOrReadOnly] en PropertyViewSet.
       - file: backend/real_estate/views.py
-        lines: "2835-2837"
+        lines: "2850-2852"
         symbol: PATCH_ALLOWED_FIELDS
         note: El panel admin puede tocar propiedades ajenas, pero solo status, title, price, city y description.
     backend:
@@ -724,7 +724,7 @@ rules:
       se degrada a actualización.
     evidence:
       - file: backend/real_estate/models.py
-        lines: "358-360"
+        lines: "378-380"
         symbol: uniq_source_external_when_imported
         note: UniqueConstraint con condition=Q(is_imported=True).
       - file: backend/ingesta/pipeline/upsert.py
@@ -888,7 +888,7 @@ rules:
         symbol: PropertyPriceHistory.objects.create
         note: Compara con la última fila por recorded_at y solo escribe si el precio cambió.
       - file: backend/real_estate/models.py
-        lines: "444-446"
+        lines: "464-466"
         symbol: class PropertyPriceHistory
         note: FK en cascada, precio, recorded_at e índice por (property, recorded_at).
     cases:
@@ -925,7 +925,7 @@ rules:
       simultáneos.
     evidence:
       - file: backend/real_estate/views.py
-        lines: "658-660"
+        lines: "668-670"
         symbol: is_bot_request
         note: Property.objects.filter(pk=...).update(views_count=F('views_count') + 1) solo si no es bot.
       - file: backend/real_estate/models.py
@@ -973,7 +973,7 @@ rules:
       pending, la API sirve la foto desde el staging local para que no se vea rota.
     evidence:
       - file: backend/real_estate/models.py
-        lines: "462-464"
+        lines: "482-484"
         symbol: FAILED = "failed"
         note: TextChoices con pending, ready y failed; el default del campo es ready.
       - file: backend/real_estate/serializers.py
@@ -1106,7 +1106,7 @@ rules:
         symbol: getPropertyPoint
         note: Mismo criterio en el cliente, que además valida el punto contra los límites de Ecuador antes de aceptarlo.
       - file: backend/real_estate/views.py
-        lines: "550-552"
+        lines: "560-562"
         symbol: bbox
         note: El filtro por bbox aún deja pasar incondicionalmente las propiedades con lat/lng nulas y polígono; tras la migración esa rama no empareja ninguna fila y queda como red de seguridad.
     cases:
@@ -1149,7 +1149,7 @@ rules:
         symbol: getNearbyProperties
         note: Punto de referencia vía getPropertyPoint, candidatos sin ubicación descartados, orden ascendente por distanceKm y recorte a limit.
       - file: frontend/app/property/[id]/page.tsx
-        lines: "284-286"
+        lines: "288-290"
         symbol: getNearbyProperties
         note: La ficha pide 4 y solo pinta la sección si hay al menos una.
     cases:
@@ -1301,7 +1301,7 @@ rules:
         lines: "268-272"
         symbol: closed_reason = models
       - file: backend/real_estate/models.py
-        lines: "388-396"
+        lines: "408-415"
         symbol: "if self.closed_reason:"
         note: Cerrar pone inactive y sella la fecha; abrir la borra.
       - file: backend/real_estate/serializers.py
@@ -1311,7 +1311,7 @@ rules:
           Volver a poner el anuncio en venta lo reabre; si no, el cambio parece
           aceptado y se deshace solo.
       - file: backend/real_estate/views.py
-        lines: "3102-3104"
+        lines: "3117-3119"
         symbol: "changes['closed_reason'] = ''"
         note: >-
           El cambio de estado en lote escribe con .update(), que nunca llega a
@@ -1384,7 +1384,7 @@ rules:
           Las acciones de detalle resuelven la fila por id, no por el catálogo
           público; el dueño entra siempre.
       - file: backend/real_estate/views.py
-        lines: "970-975"
+        lines: "989-992"
         symbol: "exclude(status='inactive', closed_reason='')"
         note: El código corto de un anuncio vendido sigue resolviendo.
     backend:

@@ -67,9 +67,9 @@ price es siempre el precio principal de la operación del anuncio, y rent_price 
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/real_estate/models.py:226-228` (`rent_price`) — La semántica está escrita como comentario junto a la definición de ambos campos.
+- `backend/real_estate/models.py:252-254` (`rent_price`) — La semántica está escrita como comentario junto a la definición de ambos campos.
 - `backend/ingesta/pipeline/upsert.py:48-50` (`prop.rent_price`) — La ingesta escribe ambos campos por separado desde el dict canónico del scraper.
-- `frontend/app/property/[id]/page.tsx:448-450` (`hasRentPrice`) — La ficha pública muestra el precio principal y, solo si hay rent_price > 0, la línea "Alquiler .../mes".
+- `frontend/app/property/[id]/page.tsx:452-454` (`hasRentPrice`) — La ficha pública muestra el precio principal y, solo si hay rent_price > 0, la línea "Alquiler .../mes".
 
 **Casos**
 
@@ -94,8 +94,8 @@ Una propiedad con status='inactive' desaparece del listado, del mapa y de todos 
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/real_estate/views.py:460-462` (`exclude(status='inactive')`) — Base de get_queryset en PropertyViewSet; de aquí derivan list, map_points y summary.
-- `backend/real_estate/models.py:149-151` (`STATUS_CHOICES`) — Los tres estados posibles son for_sale, for_rent e inactive.
+- `backend/real_estate/views.py:473-475` (`exclude(status='inactive')`) — Base de get_queryset en PropertyViewSet; de aquí derivan list, map_points y summary.
+- `backend/real_estate/models.py:175-177` (`STATUS_CHOICES`) — Los tres estados posibles son for_sale, for_rent e inactive.
 
 **Casos**
 
@@ -120,7 +120,7 @@ Una propiedad con status='inactive' desaparece del listado, del mapa y de todos 
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/real_estate/views.py:1192-1194` (`my_properties`) — La acción declara permission_classes=[IsAuthenticated] y elige entre Property.objects.all() y filter(owner=request.user) sin tocar status.
+- `backend/real_estate/views.py:1211-1213` (`my_properties`) — La acción declara permission_classes=[IsAuthenticated] y elige entre Property.objects.all() y filter(owner=request.user) sin tocar status.
 
 **Casos**
 
@@ -148,8 +148,8 @@ my_properties responde con el sobre paginado de DRF (count, next, previous, resu
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/real_estate/views.py:273-281` (`class InventoryPagination`) — page_size 24, page_size_query_param 'page_size', máximo 100.
-- `backend/real_estate/views.py:1192-1194` (`def my_properties`) — stats se calcula con queryset.aggregate antes de paginar.
+- `backend/real_estate/views.py:284-291` (`class InventoryPagination`) — page_size 24, page_size_query_param 'page_size', máximo 100.
+- `backend/real_estate/views.py:1211-1213` (`def my_properties`) — stats se calcula con queryset.aggregate antes de paginar.
 - `frontend/app/my-properties/page.tsx:194-219` (`const fetchInventory`) — El cliente manda search, status y ordering y acumula páginas.
 
 **Casos**
@@ -170,8 +170,8 @@ Una propiedad puede publicarse sin price y sin area, porque los anuncios importa
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/real_estate/models.py:233-235` (`price = models.DecimalField`) — null=True con help_text que justifica el "a consultar" de los importados.
-- `backend/real_estate/models.py:207-209` (`area = models.FloatField`) — null=True, "opcional en anuncios importados".
+- `backend/real_estate/models.py:259-261` (`price = models.DecimalField`) — null=True con help_text que justifica el "a consultar" de los importados.
+- `backend/real_estate/models.py:233-235` (`area = models.FloatField`) — null=True, "opcional en anuncios importados".
 - `backend/ingesta/pipeline/normalize.py:50-88` (`parse_price`) — Devuelve None en lugar de fallar cuando el texto no contiene un número usable.
 
 **Casos**
@@ -198,7 +198,7 @@ PropertySerializer no declara ningún campo obligatorio, así que un POST autent
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
 - `backend/real_estate/serializers.py:224-232` (`fields = '__all__'`) — Verificado por introspección del serializer en el contenedor: la lista de campos con required=True está vacía.
-- `backend/real_estate/models.py:180-184` (`property_type = models.CharField`) — Defaults que rellenan el hueco - property_type='land', status='for_sale', city='Macas', province='Morona Santiago'.
+- `backend/real_estate/models.py:206-208` (`property_type = models.CharField`) — Defaults que rellenan el hueco - property_type='land', status='for_sale', city='Macas', province='Morona Santiago'.
 
 **Casos**
 
@@ -360,7 +360,7 @@ Si un anuncio trae polígono pero no trae latitude/longitude, se guardan las del
 
 - `backend/real_estate/serializers.py:22-57` (`polygon_center_lat_lng`) — Acepta tanto el GeoJSON normalizado como el anillo [lat, lng] y descarta el punto de cierre.
 - `backend/real_estate/serializers.py:27-33` (`ensure_polygon_center`) — Solo rellena los huecos, nunca pisa unas coordenadas enviadas explícitamente.
-- `backend/real_estate/serializers.py:374-376` (`ensure_polygon_center`) — En update, un polígono nuevo sin coordenadas nuevas anula las anteriores y las recalcula.
+- `backend/real_estate/serializers.py:377-379` (`ensure_polygon_center`) — En update, un polígono nuevo sin coordenadas nuevas anula las anteriores y las recalcula.
 
 **Casos**
 
@@ -379,9 +379,9 @@ owner se toma siempre de request.user al crear desde el API, y las propiedades q
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/real_estate/views.py:610-612` (`perform_create`) — serializer.save(owner=self.request.user), ignorando cualquier owner del payload.
-- `backend/real_estate/serializers.py:195-197` (`owner = serializers.PrimaryKeyRelatedField(read_only=True)`)
-- `backend/real_estate/models.py:252-254` (`owner = models.ForeignKey`) — on_delete=SET_NULL, null=True - borrar la cuenta no borra el anuncio.
+- `backend/real_estate/views.py:624-626` (`perform_create`) — serializer.save(owner=self.request.user), ignorando cualquier owner del payload.
+- `backend/real_estate/serializers.py:198-200` (`owner = serializers.PrimaryKeyRelatedField(read_only=True)`)
+- `backend/real_estate/models.py:278-280` (`owner = models.ForeignKey`) — on_delete=SET_NULL, null=True - borrar la cuenta no borra el anuncio.
 - `backend/ingesta/pipeline/upsert.py:23-53` (`_apply_fields`) — Escribe todos los campos del anuncio importado y no toca owner en ningún momento.
 
 **Casos**
@@ -407,8 +407,8 @@ La escritura sobre una propiedad existente exige ser su owner; cualquier otro us
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
 - `backend/real_estate/permissions.py:4-15` (`IsOwnerOrReadOnly`) — Permite cualquier método seguro y compara obj.owner == request.user para el resto.
-- `backend/real_estate/views.py:359-361` (`IsOwnerOrReadOnly`) — permission_classes = [IsAuthenticatedOrReadOnly, IsOwnerOrReadOnly] en PropertyViewSet.
-- `backend/real_estate/views.py:2793-2795` (`PATCH_ALLOWED_FIELDS`) — El panel admin puede tocar propiedades ajenas, pero solo status, title, price, city y description.
+- `backend/real_estate/views.py:366-368` (`IsOwnerOrReadOnly`) — permission_classes = [IsAuthenticatedOrReadOnly, IsOwnerOrReadOnly] en PropertyViewSet.
+- `backend/real_estate/views.py:2850-2852` (`PATCH_ALLOWED_FIELDS`) — El panel admin puede tocar propiedades ajenas, pero solo status, title, price, city y description.
 
 **Casos**
 
@@ -437,7 +437,7 @@ Sin dueño al que escribir, el contacto de un anuncio importado cae en cascada: 
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/real_estate/models.py:264-274` (`source_url`) — El comentario del bloque de origen declara la cascada, y source_url la cierra como contacto de último recurso.
+- `backend/real_estate/models.py:290-299` (`source_url`) — El comentario del bloque de origen declara la cascada, y source_url la cierra como contacto de último recurso.
 - `frontend/app/property/[id]/page.tsx:657-688` (`sourceUrl`) — Ficha pública - WhatsApp si hay teléfono, "Contactar en {agencia}" si hay enlace, aviso si no hay ninguno.
 - `frontend/components/PropertyModal.tsx:907-978` (`sourceUrl`) — Modal del mapa - misma cascada, con "Llamar" y "WhatsApp" cuando hay teléfono.
 
@@ -480,7 +480,7 @@ La pareja (source, external_id) es única, pero solo para las filas con is_impor
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/real_estate/models.py:332-334` (`uniq_source_external_when_imported`) — UniqueConstraint con condition=Q(is_imported=True).
+- `backend/real_estate/models.py:378-380` (`uniq_source_external_when_imported`) — UniqueConstraint con condition=Q(is_imported=True).
 - `backend/ingesta/pipeline/upsert.py:151-168` (`IntegrityError`) — Savepoint alrededor del save para que el choque de una carrera no envenene la transacción exterior.
 
 **Casos**
@@ -579,7 +579,7 @@ Al guardar una propiedad con precio se crea una fila en PropertyPriceHistory si 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
 - `backend/real_estate/signals.py:48-54` (`PropertyPriceHistory.objects.create`) — Compara con la última fila por recorded_at y solo escribe si el precio cambió.
-- `backend/real_estate/models.py:418-420` (`class PropertyPriceHistory`) — FK en cascada, precio, recorded_at e índice por (property, recorded_at).
+- `backend/real_estate/models.py:464-466` (`class PropertyPriceHistory`) — FK en cascada, precio, recorded_at e índice por (property, recorded_at).
 
 **Casos**
 
@@ -605,8 +605,8 @@ views_count se incrementa al consultar el detalle únicamente cuando el request 
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/real_estate/views.py:654-656` (`is_bot_request`) — Property.objects.filter(pk=...).update(views_count=F('views_count') + 1) solo si no es bot.
-- `backend/real_estate/models.py:298-300` (`views_count`) — PositiveIntegerField con default 0.
+- `backend/real_estate/views.py:668-670` (`is_bot_request`) — Property.objects.filter(pk=...).update(views_count=F('views_count') + 1) solo si no es bot.
+- `backend/real_estate/models.py:324-326` (`views_count`) — PositiveIntegerField con default 0.
 - `backend/real_estate/serializers.py:228-231` (`views_count`) — Está en read_only_fields, así que un cliente no puede inflarlo desde el payload.
 
 **Casos**
@@ -627,7 +627,7 @@ Una PropertyImage nace en pending con el original en disco local, pasa a ready c
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/real_estate/models.py:436-438` (`FAILED = "failed"`) — TextChoices con pending, ready y failed; el default del campo es ready.
+- `backend/real_estate/models.py:482-484` (`FAILED = "failed"`) — TextChoices con pending, ready y failed; el default del campo es ready.
 - `backend/real_estate/serializers.py:61-95` (`stage_property_image`) — Crea la fila en pending con pending_path y encola la optimización; ante OSError devuelve None sin lanzar.
 - `backend/real_estate/tasks.py:44-109` (`optimize_property_image`) — Publica imagen y miniatura, pasa a ready y limpia el temporal; ante ValueError deja failed con optimization_error.
 - `backend/real_estate/serializers.py:173-191` (`_pending_url`) — Una fila pending devuelve una URL servida desde el staging local.
@@ -678,10 +678,10 @@ La posición de una propiedad es su par latitude/longitude cuando existe y cae d
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
 - `backend/real_estate/geo.py:230-267` (`polygon_center_lat_lng`) — Centroide del anillo, aceptando GeoJSON o [[lat, lng], ...] y descartando el punto de cierre repetido.
-- `backend/real_estate/models.py:339-360` (`save`) — Rellena el centro al guardar cualquier propiedad con polígono y sin coordenadas, y añade los dos campos a update_fields para que se persistan.
+- `backend/real_estate/models.py:365-385` (`save`) — Rellena el centro al guardar cualquier propiedad con polígono y sin coordenadas, y añade los dos campos a update_fields para que se persistan.
 - `backend/real_estate/migrations/0027_backfill_polygon_centers.py:6-29` (`backfill_centers`) — Backfill de las filas anteriores a la garantía; corre solo en el deploy.
 - `frontend/lib/geo.ts:29-61` (`getPropertyPoint`) — Mismo criterio en el cliente, que además valida el punto contra los límites de Ecuador antes de aceptarlo.
-- `backend/real_estate/views.py:546-549` (`bbox`) — El filtro por bbox aún deja pasar incondicionalmente las propiedades con lat/lng nulas y polígono; tras la migración esa rama no empareja ninguna fila y queda como red de seguridad.
+- `backend/real_estate/views.py:560-562` (`bbox`) — El filtro por bbox aún deja pasar incondicionalmente las propiedades con lat/lng nulas y polígono; tras la migración esa rama no empareja ninguna fila y queda como red de seguridad.
 
 **Casos**
 
@@ -702,7 +702,7 @@ La sección "Publicaciones cercanas" de una ficha lista las propiedades ordenada
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
 - `frontend/lib/properties.ts:303-336` (`getNearbyProperties`) — Punto de referencia vía getPropertyPoint, candidatos sin ubicación descartados, orden ascendente por distanceKm y recorte a limit.
-- `frontend/app/property/[id]/page.tsx:284-286` (`getNearbyProperties`) — La ficha pide 4 y solo pinta la sección si hay al menos una.
+- `frontend/app/property/[id]/page.tsx:288-290` (`getNearbyProperties`) — La ficha pide 4 y solo pinta la sección si hay al menos una.
 
 **Casos**
 
@@ -722,7 +722,7 @@ La ficha envía su centro como origen y el backend ordena por proximidad antes d
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
 - `backend/real_estate/views.py:529-553` (`distance_score`) — La expresión de distancia se aplica al queryset antes de que DRF lo pagine.
-- `frontend/lib/properties.ts:322-329` (`origin_lat`) — La ficha envía el centro efectivo de la propiedad junto con su ventana bbox.
+- `frontend/lib/properties.ts:331-337` (`origin_lat`) — La ficha envía el centro efectivo de la propiedad junto con su ventana bbox.
 
 **Casos**
 
@@ -802,11 +802,11 @@ La normalización vive en `save()` porque todos los caminos de escritura pasan p
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/real_estate/models.py:168-187` (`CLOSED_REASON_CHOICES`) — Por qué no son dos valores más de STATUS_CHOICES.
-- `backend/real_estate/models.py:242-248` (`closed_reason = models`)
-- `backend/real_estate/models.py:362-373` (`if self.closed_reason:`) — Cerrar pone inactive y sella la fecha; abrir la borra.
+- `backend/real_estate/models.py:194-212` (`CLOSED_REASON_CHOICES`) — Por qué no son dos valores más de STATUS_CHOICES.
+- `backend/real_estate/models.py:268-272` (`closed_reason = models`)
+- `backend/real_estate/models.py:408-415` (`if self.closed_reason:`) — Cerrar pone inactive y sella la fecha; abrir la borra.
 - `backend/real_estate/serializers.py:38-50` (`def reopen_on_reactivation`) — Volver a poner el anuncio en venta lo reabre; si no, el cambio parece aceptado y se deshace solo.
-- `backend/real_estate/views.py:2982-2984` (`changes['closed_reason'] = ''`) — El cambio de estado en lote escribe con .update(), que nunca llega a save(), así que reabre a mano.
+- `backend/real_estate/views.py:3117-3119` (`changes['closed_reason'] = ''`) — El cambio de estado en lote escribe con .update(), que nunca llega a save(), así que reabre a mano.
 
 **Casos**
 
@@ -842,7 +842,7 @@ Ese privilegio es de la ficha por id y solo de ella. La ruta por código corto n
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
 - `backend/real_estate/views.py:449-467` (`visible |= Q(is_duplicate=False) & ~Q(closed_reason='')`) — Las acciones de detalle resuelven la fila por id, no por el catálogo público; el dueño entra siempre.
-- `backend/real_estate/views.py:970-975` (`exclude(status='inactive', closed_reason='')`) — El código corto de un anuncio vendido sigue resolviendo.
+- `backend/real_estate/views.py:989-992` (`exclude(status='inactive', closed_reason='')`) — El código corto de un anuncio vendido sigue resolviendo.
 
 **Casos**
 
