@@ -32,6 +32,30 @@ const AI_CRAWLERS = [
   'cohere-ai',
 ];
 
+// Backlink and rank-tracking crawlers. They index nothing a person can search:
+// they resell the crawl to whoever pays. Over fifteen days of August 2026 they
+// asked for 180.297 pages here — AhrefsBot alone six times more than Googlebot —
+// against a host shared with three other projects. Blocking them costs no
+// visibility at all.
+//
+// This list is intent, not enforcement: none of these respects robots.txt
+// reliably, so the rule that actually stops them lives in Cloudflare. Keeping
+// both means the refusal is stated where a well-behaved crawler reads it.
+const SEO_TOOL_CRAWLERS = [
+  'AhrefsBot',
+  'SemrushBot',
+  'MJ12bot',
+  'DotBot',
+  'DataForSeoBot',
+  'SERankingBacklinksBot',
+  'Barkrowler',
+  'BLEXBot',
+  'SeekportBot',
+  'Serpstat',
+  'SEOkicks',
+  'ZoominfoBot',
+];
+
 export default function robots(): MetadataRoute.Robots {
   // The REST API carries no indexable content, but crawlers were spending about
   // a third of their budget on it (`/api/properties/`, `map_points`, and the
@@ -56,6 +80,8 @@ export default function robots(): MetadataRoute.Robots {
     '/verificar-correo',
     '/verify-email',
     '/admin',
+    // Draft-recovery URLs carry a token. Nothing here is meant to be found.
+    '/continuar-publicacion',
   ];
 
   return {
@@ -69,6 +95,10 @@ export default function robots(): MetadataRoute.Robots {
         userAgent,
         allow: '/',
         disallow: publicDisallow,
+      })),
+      ...SEO_TOOL_CRAWLERS.map((userAgent) => ({
+        userAgent,
+        disallow: '/',
       })),
     ],
     sitemap: [`${siteUrl}/sitemap.xml`, `${siteUrl}/image-sitemap.xml`],
