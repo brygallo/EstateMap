@@ -88,8 +88,8 @@ Un token de continuación deja de servir 14 días después de emitirse, y a part
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/estate_map/settings.py:574-576` (`PUBLICATION_RESUME_TOKEN_EXPIRY_DAYS`)
-- `backend/real_estate/models.py:709-711` (`def is_valid`)
+- `backend/estate_map/settings.py:584-586` (`PUBLICATION_RESUME_TOKEN_EXPIRY_DAYS`)
+- `backend/real_estate/models.py:747-749` (`def is_valid`)
 - `backend/real_estate/views.py:1563-1566` (`def invalid_resume_token_response`)
 
 **Casos**
@@ -154,7 +154,7 @@ Un usuario staff invalida los tokens vigentes de una solicitud en cualquier mome
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/real_estate/views.py:1413-1421` (`def revoke_resume_link`)
+- `backend/real_estate/views.py:1422-1429` (`def revoke_resume_link`)
 
 **Casos**
 
@@ -211,7 +211,7 @@ Retomar restaura título, descripción, tipo, operación, precio, dirección, ci
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/real_estate/models.py:654-665` (`class PendingPublicationImage`) — Archivos temporales ordenados y ligados al borrador pendiente.
+- `backend/real_estate/models.py:692-702` (`class PendingPublicationImage`) — Archivos temporales ordenados y ligados al borrador pendiente.
 - `backend/real_estate/serializers.py:654-660` (`get_temporary_images`) — El enlace devuelve las fotos que debe reconstruir el formulario.
 - `frontend/app/continuar-publicacion/[token]/page.tsx:40-51` (`PROPERTY_DRAFT_STORAGE_KEY`) — El borrador y las URLs temporales se dejan donde el formulario ya los busca.
 
@@ -301,7 +301,7 @@ Al completarse el canje, el PendingPublication pasa a converted y guarda una ref
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/real_estate/models.py:637-639` (`related_name="pending_publications"`)
+- `backend/real_estate/models.py:675-677` (`related_name="pending_publications"`)
 - `backend/real_estate/views.py:1525-1527` (`pending.status = 'converted'`)
 - `backend/real_estate/views.py:1402-1404` (`'Esta solicitud ya se convirtió en un anuncio.'`)
 

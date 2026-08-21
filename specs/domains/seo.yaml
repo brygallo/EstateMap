@@ -285,7 +285,7 @@ rules:
       - file: backend/real_estate/services/sectors.py
         symbol: MIN_SECTOR_LISTINGS
       - file: backend/real_estate/services/sectors.py
-        symbol: "if row[\"sample\"] >= 3:"
+        symbol: "if sample >= 3"
       - file: frontend/app/propiedades/[ciudad]/[sector]/page.tsx
         symbol: "if (sector.count < MIN_SECTOR_LISTINGS)"
       - file: frontend/app/sitemap.ts
@@ -334,3 +334,102 @@ rules:
     cases:
       - name: Listado con sector=CUMBAYA
         expected: solo los anuncios de esa zona, sin importar cómo se escribió
+
+  - id: SEC-004
+    name: El titular de un anuncio no es una zona
+    status: implemented
+    summary: >-
+      `sector_key` devuelve vacío cuando el primer tramo de la dirección
+      describe lo que se vende en lugar de dónde está: hace falta una palabra de
+      tipo de inmueble y una de operación, ambas como palabras completas. Sin
+      clave no hay zona, ni página, ni entrada en el sitemap, ni promedio.
+    rationale: >-
+      La dirección es texto libre y los importadores ponen ahí lo que tienen.
+      «Casa en Venta» llegó a ser un barrio de Guayaquil con 19 anuncios y un
+      precio por metro cuadrado publicado: una lectura de mercado para un lugar
+      que no existe. La prueba exige las dos palabras a propósito, porque
+      Ecuador tiene lugares llamados Villa Club, Villa Regina, La Venta y
+      Ventanas, y ninguno lleva palabra de operación.
+    evidence:
+      - file: backend/real_estate/models.py
+        symbol: def _looks_like_listing_title
+      - file: backend/real_estate/models.py
+        symbol: "return \"\" if _looks_like_listing_title(folded) else folded"
+      - file: backend/real_estate/migrations/0037_reject_headline_sectors.py
+        symbol: def clear_headline_sectors
+        note: La regla corre al guardar; el catálogo es importado y necesitaba relleno.
+      - file: backend/real_estate/tests/test_sectors.py
+        symbol: def test_a_listing_headline_is_not_a_zone
+    tests:
+      api: true
+    cases:
+      - name: Dirección «Casa en Venta, Guayaquil»
+        expected: sin zona
+      - name: Dirección «Villa Club, Daule»
+        expected: zona «villa club»
+      - name: Dirección «La Venta, Quito»
+        expected: zona «la venta»
+
+  - id: SEC-005
+    name: Una zona absorbe sus rincones
+    status: implemented
+    summary: >-
+      Cuando la clave de una zona empieza por la de otra seguida de un espacio y
+      la mayor tiene al menos el triple de anuncios, la menor desaparece del
+      listado y sus anuncios cuentan en la mayor. La clave absorbida sigue
+      resolviendo a la zona que la absorbió.
+    rationale: >-
+      «Cumbayá Sector La Viña» con siete anuncios no es una rival de Cumbayá con
+      doscientos catorce: es una esquina suya publicando su propia página fina y
+      su propio promedio, y partiendo la autoridad del nombre real. El factor de
+      tres existe para no tragarse vecinos legítimos: «Av. República» con cinco
+      anuncios no absorbe a «Av. República de El Salvador», que es otra avenida.
+      La clave vieja sigue resolviendo porque su URL ya está indexada.
+    evidence:
+      - file: backend/real_estate/services/sectors.py
+        symbol: PARENT_DOMINANCE
+      - file: backend/real_estate/services/sectors.py
+        symbol: def absorptions
+      - file: backend/real_estate/services/sectors.py
+        symbol: "if sector[\"sector_key\"] == key or key in sector[\"aliases\"]:"
+      - file: backend/real_estate/views.py
+        symbol: _absorbed = sector_absorptions(
+        note: Las estadísticas agrupan igual que las páginas.
+      - file: backend/real_estate/tests/test_sectors.py
+        symbol: def test_a_corner_of_a_zone_counts_towards_the_zone
+      - file: backend/real_estate/tests/test_sectors.py
+        symbol: def test_a_neighbour_of_similar_size_is_not_absorbed
+    tests:
+      api: true
+    cases:
+      - name: Cumbayá con 15 anuncios y su rincón con 3
+        expected: una sola zona con 18
+      - name: Dos avenidas de nombre parecido y tamaño parecido
+        expected: siguen siendo dos zonas
+      - name: URL de una clave absorbida
+        expected: resuelve a la zona que la absorbió
+
+  - id: SEC-006
+    name: El nombre gritado se publica en mayúscula inicial
+    status: implemented
+    summary: >-
+      Un nombre de zona escrito entero en mayúsculas se publica en formato
+      título, con las preposiciones en minúscula. Un nombre que ya mezcla
+      mayúsculas y minúsculas no se toca.
+    rationale: >-
+      Los importadores pasan tal cual la escritura de quien publica, así que
+      «PUERTO AZUL» aparecía gritando junto a «Kennedy Norte» en la misma tabla.
+      Solo se corrigen los nombres enteramente en mayúsculas porque un nombre
+      con mayúsculas y minúsculas se escribió a propósito.
+    evidence:
+      - file: backend/real_estate/services/sectors.py
+        symbol: def titlecase_place
+      - file: backend/real_estate/tests/test_sectors.py
+        symbol: def test_a_shouted_name_is_published_in_title_case
+    tests:
+      api: true
+    cases:
+      - name: Zona «PUERTO AZUL»
+        expected: se publica «Puerto Azul»
+      - name: Zona «Kennedy Norte»
+        expected: se publica igual

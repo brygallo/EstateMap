@@ -398,7 +398,7 @@ rules:
         symbol: user.is_authenticated and user.is_staff
         note: El atajo de staff precede a la comparación obj.owner == request.user.
       - file: backend/real_estate/views.py
-        lines: "356-358"
+        lines: "359-361"
         symbol: "IsOwnerOrReadOnly"
       - file: backend/real_estate/views.py
         lines: "426-434"
@@ -876,7 +876,7 @@ rules:
       saque del índice.
     evidence:
       - file: backend/real_estate/views.py
-        lines: "1044-1052"
+        lines: "1053-1060"
         symbol: def catalog
     permissions:
       required: [map.read_catalog]
@@ -1921,10 +1921,10 @@ rules:
       recibe 403.
     evidence:
       - file: backend/real_estate/views.py
-        lines: "2335-2337"
+        lines: "2433-2435"
         symbol: class AdminDashboardView
       - file: backend/real_estate/views.py
-        lines: "2424-2426"
+        lines: "2522-2524"
         symbol: AdminMetricsService(now=now).build()
       - file: backend/real_estate/permissions.py
         lines: "46-50"
@@ -1966,10 +1966,10 @@ rules:
       queda registrada en el log de auditoría con el actor.
     evidence:
       - file: backend/real_estate/views.py
-        lines: "2443-2445"
+        lines: "2541-2543"
         symbol: class AdminSystemStatusView
       - file: backend/real_estate/views.py
-        lines: "2567-2569"
+        lines: "2665-2667"
         symbol: admin_audit action=incident.resolve
     permissions:
       required: [admin.system_status_read, admin.system_status_write]
@@ -2003,10 +2003,10 @@ rules:
       la misma vista y podría haberse quedado sin cubrir.
     evidence:
       - file: backend/real_estate/views.py
-        lines: "2565-2567"
+        lines: "2663-2665"
         symbol: incident.save(update_fields=["resolved", "last_seen_at"])
       - file: backend/real_estate/views.py
-        lines: "2337-2339"
+        lines: "2435-2437"
         symbol: "permission_classes = [IsAuthenticated, IsAdminUser]"
     permissions:
       required: [admin.system_status_write]
@@ -2045,7 +2045,7 @@ rules:
       actividad de cada cuenta.
     evidence:
       - file: backend/real_estate/views.py
-        lines: "2573-2575"
+        lines: "2671-2673"
         symbol: class AdminUserViewSet
     permissions:
       required: [admin.users_read]
@@ -2082,7 +2082,7 @@ rules:
       la corrección.
     evidence:
       - file: backend/real_estate/views.py
-        lines: "2633-2638"
+        lines: "2731-2735"
         symbol: "allowed_fields = {'is_active', 'is_staff'}"
       - file: backend/real_estate/permissions.py
         lines: "52"
@@ -2158,7 +2158,7 @@ rules:
       auditoría con el actor y el objetivo. PERM-052 enuncia la corrección.
     evidence:
       - file: backend/real_estate/views.py
-        lines: "2676-2678"
+        lines: "2774-2776"
         symbol: admin_audit action=user.delete
     permissions:
       required: [admin.users_delete]
@@ -2219,10 +2219,10 @@ rules:
       incluido su propietario.
     evidence:
       - file: backend/real_estate/views.py
-        lines: "2682-2684"
+        lines: "2780-2782"
         symbol: class AdminPropertyViewSet
       - file: backend/real_estate/views.py
-        lines: "2699-2701"
+        lines: "2797-2799"
         symbol: "Property.objects.select_related('owner', 'source')"
     permissions:
       required: [admin.properties_read]
@@ -2258,7 +2258,7 @@ rules:
       conviene verificar que hereda el permission_classes de la clase.
     evidence:
       - file: backend/real_estate/views.py
-        lines: "2894-2896"
+        lines: "2992-2994"
         symbol: def stats
       - file: backend/real_estate/urls.py
         lines: "83-85"
@@ -2293,10 +2293,10 @@ rules:
       serializer.
     evidence:
       - file: backend/real_estate/views.py
-        lines: "2695-2697"
+        lines: "2793-2795"
         symbol: "PATCH_ALLOWED_FIELDS = {'status', 'title', 'price', 'city', 'description'}"
       - file: backend/real_estate/views.py
-        lines: "2751-2754"
+        lines: "2849-2851"
         symbol: admin_audit action=property.update
     permissions:
       required: [admin.properties_update]
@@ -2336,7 +2336,7 @@ rules:
       única ruta por la que se puede borrar la propiedad de otra persona.
     evidence:
       - file: backend/real_estate/views.py
-        lines: "2839-2841"
+        lines: "2937-2939"
         symbol: admin_audit action=property.delete
     permissions:
       required: [admin.properties_delete]
@@ -2367,10 +2367,10 @@ rules:
       auditada con los identificadores afectados.
     evidence:
       - file: backend/real_estate/views.py
-        lines: "2845-2850"
+        lines: "2943-2947"
         symbol: def bulk_status
       - file: backend/real_estate/views.py
-        lines: "2888-2890"
+        lines: "2986-2988"
         symbol: admin_audit action=property.bulk_status
     permissions:
       required: [admin.properties_bulk_status]

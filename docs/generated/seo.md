@@ -24,6 +24,9 @@ Reglas que deciden qué páginas públicas merecen entrar en el índice y qué s
 | [`SEC-001`](#sec-001--la-zona-de-un-anuncio-se-deriva-de-su-dirección-y-se-guarda) | La zona de un anuncio se deriva de su dirección y se guarda | ✅ Implementada |
 | [`SEC-002`](#sec-002--una-zona-necesita-inventario-para-tener-página) | Una zona necesita inventario para tener página | ✅ Implementada |
 | [`SEC-003`](#sec-003--la-página-de-una-zona-filtra-en-sql) | La página de una zona filtra en SQL | ✅ Implementada |
+| [`SEC-004`](#sec-004--el-titular-de-un-anuncio-no-es-una-zona) | El titular de un anuncio no es una zona | ✅ Implementada |
+| [`SEC-005`](#sec-005--una-zona-absorbe-sus-rincones) | Una zona absorbe sus rincones | ✅ Implementada |
+| [`SEC-006`](#sec-006--el-nombre-gritado-se-publica-en-mayúscula-inicial) | El nombre gritado se publica en mayúscula inicial | ✅ Implementada |
 
 ### SEO-001 — Las landings locales necesitan cinco anuncios para entrar al índice
 
@@ -236,7 +239,7 @@ Una zona se lista, entra al sitemap y se indexa desde cinco anuncios, el mismo u
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
 - `backend/real_estate/services/sectors.py` (`MIN_SECTOR_LISTINGS`)
-- `backend/real_estate/services/sectors.py` (`if row["sample"] >= 3:`)
+- `backend/real_estate/services/sectors.py` (`if sample >= 3`)
 - `frontend/app/propiedades/[ciudad]/[sector]/page.tsx` (`if (sector.count < MIN_SECTOR_LISTINGS)`)
 - `frontend/app/sitemap.ts` (`const sectorRoutes: MetadataRoute.Sitemap`)
 - `backend/real_estate/tests/test_sectors.py` (`def test_a_zone_needs_inventory_to_be_listed`)
@@ -273,6 +276,86 @@ El listado público acepta `sector` y resuelve contra la columna indexada, no co
 | Caso | Rol | Estado previo | Cuerpo | Esperado |
 | --- | --- | --- | --- | --- |
 | Listado con sector=CUMBAYA | — | — | — | solo los anuncios de esa zona, sin importar cómo se escribió |
+
+**Cobertura exigida:** api
+
+- `backend/real_estate/tests/test_sectors.py`
+
+### SEC-004 — El titular de un anuncio no es una zona
+
+**Estado:** ✅ Implementada
+
+`sector_key` devuelve vacío cuando el primer tramo de la dirección describe lo que se vende en lugar de dónde está: hace falta una palabra de tipo de inmueble y una de operación, ambas como palabras completas. Sin clave no hay zona, ni página, ni entrada en el sitemap, ni promedio.
+
+> **Por qué:** La dirección es texto libre y los importadores ponen ahí lo que tienen. «Casa en Venta» llegó a ser un barrio de Guayaquil con 19 anuncios y un precio por metro cuadrado publicado: una lectura de mercado para un lugar que no existe. La prueba exige las dos palabras a propósito, porque Ecuador tiene lugares llamados Villa Club, Villa Regina, La Venta y Ventanas, y ninguno lleva palabra de operación.
+
+**Evidencia en el código** (verificada por `tools/specs/validate.py`)
+
+- `backend/real_estate/models.py` (`def _looks_like_listing_title`)
+- `backend/real_estate/models.py` (`return "" if _looks_like_listing_title(folded) else folded`)
+- `backend/real_estate/migrations/0037_reject_headline_sectors.py` (`def clear_headline_sectors`) — La regla corre al guardar; el catálogo es importado y necesitaba relleno.
+- `backend/real_estate/tests/test_sectors.py` (`def test_a_listing_headline_is_not_a_zone`)
+
+**Casos**
+
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| Dirección «Casa en Venta, Guayaquil» | — | — | — | sin zona |
+| Dirección «Villa Club, Daule» | — | — | — | zona «villa club» |
+| Dirección «La Venta, Quito» | — | — | — | zona «la venta» |
+
+**Cobertura exigida:** api
+
+- `backend/real_estate/tests/test_sectors.py`
+
+### SEC-005 — Una zona absorbe sus rincones
+
+**Estado:** ✅ Implementada
+
+Cuando la clave de una zona empieza por la de otra seguida de un espacio y la mayor tiene al menos el triple de anuncios, la menor desaparece del listado y sus anuncios cuentan en la mayor. La clave absorbida sigue resolviendo a la zona que la absorbió.
+
+> **Por qué:** «Cumbayá Sector La Viña» con siete anuncios no es una rival de Cumbayá con doscientos catorce: es una esquina suya publicando su propia página fina y su propio promedio, y partiendo la autoridad del nombre real. El factor de tres existe para no tragarse vecinos legítimos: «Av. República» con cinco anuncios no absorbe a «Av. República de El Salvador», que es otra avenida. La clave vieja sigue resolviendo porque su URL ya está indexada.
+
+**Evidencia en el código** (verificada por `tools/specs/validate.py`)
+
+- `backend/real_estate/services/sectors.py` (`PARENT_DOMINANCE`)
+- `backend/real_estate/services/sectors.py` (`def absorptions`)
+- `backend/real_estate/services/sectors.py` (`if sector["sector_key"] == key or key in sector["aliases"]:`)
+- `backend/real_estate/views.py` (`_absorbed = sector_absorptions(`) — Las estadísticas agrupan igual que las páginas.
+- `backend/real_estate/tests/test_sectors.py` (`def test_a_corner_of_a_zone_counts_towards_the_zone`)
+- `backend/real_estate/tests/test_sectors.py` (`def test_a_neighbour_of_similar_size_is_not_absorbed`)
+
+**Casos**
+
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| Cumbayá con 15 anuncios y su rincón con 3 | — | — | — | una sola zona con 18 |
+| Dos avenidas de nombre parecido y tamaño parecido | — | — | — | siguen siendo dos zonas |
+| URL de una clave absorbida | — | — | — | resuelve a la zona que la absorbió |
+
+**Cobertura exigida:** api
+
+- `backend/real_estate/tests/test_sectors.py`
+
+### SEC-006 — El nombre gritado se publica en mayúscula inicial
+
+**Estado:** ✅ Implementada
+
+Un nombre de zona escrito entero en mayúsculas se publica en formato título, con las preposiciones en minúscula. Un nombre que ya mezcla mayúsculas y minúsculas no se toca.
+
+> **Por qué:** Los importadores pasan tal cual la escritura de quien publica, así que «PUERTO AZUL» aparecía gritando junto a «Kennedy Norte» en la misma tabla. Solo se corrigen los nombres enteramente en mayúsculas porque un nombre con mayúsculas y minúsculas se escribió a propósito.
+
+**Evidencia en el código** (verificada por `tools/specs/validate.py`)
+
+- `backend/real_estate/services/sectors.py` (`def titlecase_place`)
+- `backend/real_estate/tests/test_sectors.py` (`def test_a_shouted_name_is_published_in_title_case`)
+
+**Casos**
+
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| Zona «PUERTO AZUL» | — | — | — | se publica «Puerto Azul» |
+| Zona «Kennedy Norte» | — | — | — | se publica igual |
 
 **Cobertura exigida:** api
 

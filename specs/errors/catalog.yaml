@@ -179,11 +179,11 @@ rules:
       ampliando lo que se persiste.
     evidence:
       - file: backend/real_estate/models.py
-        lines: "449-473"
+        lines: "487-510"
         symbol: "class SystemIncident"
         note: Los campos existentes son la lista completa de lo que se guarda.
       - file: backend/real_estate/models.py
-        lines: "458-460"
+        lines: "496-498"
         symbol: fingerprint
         note: Clave única por la que se agregan las ocurrencias.
       - file: backend/estate_map/observability.py
@@ -359,11 +359,11 @@ rules:
       throttling de DRF deja de ser compartido entre procesos.
     evidence:
       - file: backend/estate_map/settings.py
-        lines: "519-521"
+        lines: "529-531"
         symbol: IGNORE_EXCEPTIONS
         note: Los errores del cliente de caché no se propagan.
       - file: backend/estate_map/settings.py
-        lines: "540-542"
+        lines: "550-552"
         symbol: DJANGO_REDIS_LOG_IGNORED_EXCEPTIONS
         note: Pero sí se registran, para que la caída no pase inadvertida.
     cases:

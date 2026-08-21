@@ -259,7 +259,7 @@ Lo que no cubre: quien recargue la misma ficha dos veces en la misma media hora 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
 - `frontend/lib/ads.ts:121-136` (`export function pickAd`)
-- `frontend/lib/ads.ts:112-115` (`export function rotationWindow`)
+- `frontend/lib/ads.ts:116-118` (`export function rotationWindow`)
 - `backend/advertising/views.py:30-36` (`CACHE_TTL_ADS`) — La franja del frontend y este TTL son el mismo número a propósito.
 
 **Casos**

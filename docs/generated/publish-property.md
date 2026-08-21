@@ -56,8 +56,8 @@ El formulario intercepta el submit antes de llamar a `POST /api/properties/`: si
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
 - `frontend/app/add-property/page.tsx:1092-1100` (`if (!token && !isEditMode && !resumeToken) {`) — Guarda el borrador, envía la solicitud pendiente y abre el modal, sin llamar a /properties/.
-- `backend/real_estate/models.py:599-601` (`class PendingPublication(models.Model)`) — Docstring: no se muestra en el mapa; sirve para seguimiento comercial.
-- `backend/real_estate/views.py:356-358` (`permission_classes = [IsAuthenticatedOrReadOnly, IsOwnerOrReadOnly]`) — Respaldo del servidor si la petición llega sin pasar por el frontend.
+- `backend/real_estate/models.py:637-639` (`class PendingPublication(models.Model)`) — Docstring: no se muestra en el mapa; sirve para seguimiento comercial.
+- `backend/real_estate/views.py:359-361` (`permission_classes = [IsAuthenticatedOrReadOnly, IsOwnerOrReadOnly]`) — Respaldo del servidor si la petición llega sin pasar por el frontend.
 
 **Casos**
 
@@ -273,9 +273,9 @@ Cada `post_save`/`post_delete` de `Property` encadena, por señal: una fila de `
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/real_estate/views.py:457-459` (`exclude(status='inactive')`) — Único filtro que saca inactive del catálogo público; no toca la fila.
+- `backend/real_estate/views.py:460-462` (`exclude(status='inactive')`) — Único filtro que saca inactive del catálogo público; no toca la fila.
 - `backend/real_estate/views.py:1192-1194` (`def my_properties`) — including inactive: el dueño ve su propiedad inactiva, el público no.
-- `backend/real_estate/models.py:383-385` (`on_delete=models.CASCADE`) — PropertyImage.property cae en cascada con la Property.
+- `backend/real_estate/models.py:421-423` (`on_delete=models.CASCADE`) — PropertyImage.property cae en cascada con la Property.
 - `frontend/app/my-properties/page.tsx:250-270` (`const handleDelete`) — DELETE /properties/<id>/ tras window.confirm; PropertyViewSet no sobrescribe destroy.
 
 **Casos**

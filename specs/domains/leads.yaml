@@ -101,7 +101,7 @@ rules:
       interesado.
     evidence:
       - file: backend/real_estate/models.py
-        lines: "567-569"
+        lines: "605-607"
         symbol: "STATUS_CHOICES = ["
         note: Los tres estados del ciclo de gestión de un lead.
       - file: backend/real_estate/serializers.py
@@ -136,7 +136,7 @@ rules:
       lo envía.
     evidence:
       - file: backend/real_estate/models.py
-        lines: "559-561"
+        lines: "597-599"
         symbol: "SOURCE_CHOICES = ["
         note: Los cinco orígenes válidos de un lead.
     cases:
@@ -264,7 +264,7 @@ rules:
       leads por canal de captación.
     evidence:
       - file: backend/real_estate/models.py
-        lines: "590-592"
+        lines: "628-630"
         symbol: lead_property_status_idx
         note: Los tres índices y las consultas que cubren.
     cases:
@@ -291,7 +291,7 @@ rules:
       consumir.
     evidence:
       - file: backend/real_estate/models.py
-        lines: "599-601"
+        lines: "637-639"
         symbol: "class PendingPublication(models.Model)"
         note: >
           Docstring: "Solicitud de publicación capturada antes de que el
@@ -311,7 +311,7 @@ rules:
       (abandonó el formulario), además de other como comodín.
     evidence:
       - file: backend/real_estate/models.py
-        lines: "559-561"
+        lines: "597-599"
         symbol: "SOURCE_CHOICES = ["
         note: Los cuatro orígenes de una solicitud pendiente.
       - file: backend/real_estate/serializers.py
@@ -571,7 +571,7 @@ rules:
       propiedad reales.
     evidence:
       - file: backend/real_estate/models.py
-        lines: "567-569"
+        lines: "605-607"
         symbol: "STATUS_CHOICES = ["
         note: Los cuatro estados de una solicitud pendiente.
       - file: backend/real_estate/serializers.py
@@ -617,7 +617,7 @@ rules:
         symbol: "def create(self, validated_data)"
         note: Busca por draft_key y actualiza la solicitud no convertida.
       - file: backend/real_estate/models.py
-        lines: "626-628"
+        lines: "664-666"
         symbol: draft_key
         note: La unicidad también protege frente a duplicados en la base de datos.
     tests:

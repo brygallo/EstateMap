@@ -112,7 +112,7 @@ Lead.status recorre new, contacted y closed, y PATCH /api/leads/{id}/ usa LeadSt
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/real_estate/models.py:567-569` (`STATUS_CHOICES = [`) — Los tres estados del ciclo de gestión de un lead.
+- `backend/real_estate/models.py:605-607` (`STATUS_CHOICES = [`) — Los tres estados del ciclo de gestión de un lead.
 - `backend/real_estate/serializers.py:544-546` (`class LeadStatusSerializer`) — fields = ['id', 'status'], sin acceso a name, phone, email ni message.
 
 **Casos**
@@ -131,7 +131,7 @@ Lead.source solo admite property_modal, property_page, whatsapp, phone u other, 
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/real_estate/models.py:559-561` (`SOURCE_CHOICES = [`) — Los cinco orígenes válidos de un lead.
+- `backend/real_estate/models.py:597-599` (`SOURCE_CHOICES = [`) — Los cinco orígenes válidos de un lead.
 
 **Casos**
 
@@ -228,7 +228,7 @@ Lead declara tres índices compuestos: (property, status) para la bandeja de una
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/real_estate/models.py:590-592` (`lead_property_status_idx`) — Los tres índices y las consultas que cubren.
+- `backend/real_estate/models.py:628-630` (`lead_property_status_idx`) — Los tres índices y las consultas que cubren.
 
 **Casos**
 
@@ -249,7 +249,7 @@ Es la solicitud de publicar una propiedad que alguien deja sin haber creado o ve
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/real_estate/models.py:599-601` (`class PendingPublication(models.Model)`) — Docstring: "Solicitud de publicación capturada antes de que el usuario cree o verifique su cuenta. No se muestra en el mapa".
+- `backend/real_estate/models.py:637-639` (`class PendingPublication(models.Model)`) — Docstring: "Solicitud de publicación capturada antes de que el usuario cree o verifique su cuenta. No se muestra en el mapa".
 
 
 **Casos**
@@ -267,7 +267,7 @@ El campo source admite account_required (intento de publicar sin cuenta), whatsa
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/real_estate/models.py:559-561` (`SOURCE_CHOICES = [`) — Los cuatro orígenes de una solicitud pendiente.
+- `backend/real_estate/models.py:597-599` (`SOURCE_CHOICES = [`) — Los cuatro orígenes de una solicitud pendiente.
 - `backend/real_estate/serializers.py:573-575` (`def validate_source`) — Cualquier valor fuera del catálogo se normaliza silenciosamente a "other" en vez de rechazar la petición.
 
 **Casos**
@@ -469,7 +469,7 @@ PendingPublication.status recorre new, contacted, converted y discarded: a difer
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/real_estate/models.py:567-569` (`STATUS_CHOICES = [`) — Los cuatro estados de una solicitud pendiente.
+- `backend/real_estate/models.py:605-607` (`STATUS_CHOICES = [`) — Los cuatro estados de una solicitud pendiente.
 - `backend/real_estate/serializers.py:629-631` (`class PendingPublicationStatusSerializer`) — fields = ['id', 'status'], igual patrón restrictivo que LeadStatusSerializer.
 
 **Casos**
@@ -491,7 +491,7 @@ El navegador conserva una clave UUID por borrador. Cada abandono, error de publi
 
 - `frontend/app/add-property/page.tsx:783-842` (`PENDING_PUBLICATION_KEY_STORAGE_KEY`) — La clave estable y las fotos se envían en cada guardado del borrador.
 - `backend/real_estate/serializers.py:584-614` (`def create(self, validated_data)`) — Busca por draft_key y actualiza la solicitud no convertida.
-- `backend/real_estate/models.py:626-628` (`draft_key`) — La unicidad también protege frente a duplicados en la base de datos.
+- `backend/real_estate/models.py:664-666` (`draft_key`) — La unicidad también protege frente a duplicados en la base de datos.
 
 **Casos**
 

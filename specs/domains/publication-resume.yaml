@@ -85,10 +85,10 @@ rules:
       remedio distinto del de pedir otro enlace.
     evidence:
       - file: backend/estate_map/settings.py
-        lines: "574-576"
+        lines: "584-586"
         symbol: PUBLICATION_RESUME_TOKEN_EXPIRY_DAYS
       - file: backend/real_estate/models.py
-        lines: "709-711"
+        lines: "747-749"
         symbol: def is_valid
       - file: backend/real_estate/views.py
         lines: "1563-1566"
@@ -161,7 +161,7 @@ rules:
       datos o el mensaje acabó en el chat equivocado.
     evidence:
       - file: backend/real_estate/views.py
-        lines: "1413-1421"
+        lines: "1422-1429"
         symbol: def revoke_resume_link
     permissions:
       required: [pending_publications.revoke_resume_link]
@@ -231,7 +231,7 @@ rules:
       enlace y se eliminan después de crear la propiedad definitiva.
     evidence:
       - file: backend/real_estate/models.py
-        lines: "654-665"
+        lines: "692-702"
         symbol: "class PendingPublicationImage"
         note: Archivos temporales ordenados y ligados al borrador pendiente.
       - file: backend/real_estate/serializers.py
@@ -340,7 +340,7 @@ rules:
       nadie podía comprobar.
     evidence:
       - file: backend/real_estate/models.py
-        lines: "637-639"
+        lines: "675-677"
         symbol: related_name="pending_publications"
       - file: backend/real_estate/views.py
         lines: "1525-1527"

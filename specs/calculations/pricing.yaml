@@ -245,7 +245,7 @@ rules:
           Agregado overall: count, media de $/m², media de precio, media de área,
           y mínimo y máximo de $/m², todos sobre la muestra ya recortada.
       - file: backend/real_estate/views.py
-        lines: "2318-2320"
+        lines: "2416-2418"
         symbol: "Los extremos se excluyen con el método IQR"
         note: >
           Texto de metodología que se sirve en el payload y se muestra en las
@@ -314,7 +314,7 @@ rules:
           Agrupa, agrega las tres medias, filtra por count>=3 y ordena por
           -count.
       - file: backend/real_estate/views.py
-        lines: "2298-2300"
+        lines: "2402-2404"
         symbol: "'by_city': grouped('city', 'province', limit=15),"
         note: >
           by_city agrupa por ciudad y provincia a la vez; by_property_type se
@@ -371,13 +371,13 @@ rules:
       - file: backend/real_estate/tests/test_market_intelligence.py
         symbol: def test_the_same_sector_written_with_and_without_accents_is_one_sector
       - file: backend/real_estate/views.py
-        lines: "2282-2284"
+        lines: "2351-2353"
         symbol: "by_sector = ["
         note: >
           Construcción de la tabla: grafía más común, conteo, media aritmética de
           $/m², umbral de 2 y orden por número de anuncios.
       - file: backend/real_estate/views.py
-        lines: "2308-2310"
+        lines: "2406-2408"
         symbol: "'by_sector': by_sector[:20],"
         note: Se publican como mucho 20 sectores.
     cases:
@@ -403,33 +403,31 @@ rules:
     tests: {}
 
   - id: PRC-010
-    name: by_operation es el único bloque que mezcla venta y alquiler
+    name: by_operation no publica precio por m2 para alquiler
     status: implemented
     summary: >
-      El corte por operación se calcula sobre all_base, es decir antes de
-      limitar a venta y antes de excluir extremos por IQR, así que su
-      avg_price_m2 mezcla precios totales de venta con mensualidades de alquiler
-      en la misma columna.
+      El corte por operacion se calcula sobre all_base, es decir antes de
+      limitar a venta y antes de excluir extremos por IQR. La fila for_rent
+      viene con avg_price_m2 nulo: solo conserva conteo, precio y area.
     rationale: >
-      Es correcto en tanto cada fila va etiquetada con su status, pero el nombre
-      del campo miente por omisión: en la fila for_rent, avg_price_m2 son dólares
-      por metro cuadrado AL MES, y no lleva ninguna unidad que lo diga. Además,
-      como no pasa por el recorte del IQR, un anuncio de venta descartado de
-      overall sigue contando aquí. Se deja escrito porque cualquiera que compare
-      overall.avg_price_m2 con la fila for_sale de by_operation encontrará dos
-      números distintos y creerá que hay un fallo.
+      Dividir una mensualidad de alquiler entre un area no da un precio por
+      metro cuadrado, da un numero sin unidad ni significado. Publicado en la
+      misma columna que la venta producia lecturas de 6,89 dolares por m2 junto
+      a 1.200, y cualquiera que las comparase concluiria que el alquiler es
+      doscientas veces mas barato que la compra. El resto del bloque sigue sin
+      pasar por el recorte del IQR, asi que la fila for_sale de by_operation y
+      overall.avg_price_m2 siguen sin coincidir, y eso es deliberado.
     evidence:
       - file: backend/real_estate/views.py
-        lines: "2300-2302"
-        symbol: "'by_operation': list("
+        symbol: "if row['status'] != 'for_sale':"
         note: >
-          Se agrupa por status partiendo de all_base, no de base: sin filtro de
-          operación y sin recorte de extremos.
+          El precio por m2 se anula para todo lo que no sea venta, justo antes
+          de devolver el bloque.
     cases:
-      - name: Alquiler de 400 dólares al mes sobre 40 m²
+      - name: Alquiler de 400 dolares al mes sobre 40 m2
         given: {status: for_rent, price: 400, area: 40}
-        expected: 10
-        note: Diez dólares por m² al mes, publicados en el mismo campo que la venta.
+        expected: null
+        note: No se publica precio por m2 para alquiler.
       - name: Venta descartada por el IQR
         given: {status: for_sale, excluded_from_overall: true}
         expected: incluida
@@ -456,7 +454,7 @@ rules:
       exclusivamente de alquiler.
     evidence:
       - file: backend/real_estate/models.py
-        lines: "198-201"
+        lines: "236-238"
         symbol: "rent_price = models.DecimalField"
         note: >
           Definición y comentario del campo: solo se puebla cuando el anuncio es
@@ -500,13 +498,13 @@ rules:
         symbol: "city_periods[city]['recent'].append(row['price_per_m2'])"
         note: Reparto en cohortes de 0-90 y 90-180 días por created_at.
       - file: backend/real_estate/views.py
-        lines: "2279-2281"
+        lines: "2337-2339"
         symbol: "evolution.append("
         note: >
           Medias de cada cohorte, variación porcentual redondeada a un decimal y
           orden descendente por variación.
       - file: backend/real_estate/views.py
-        lines: "2309-2311"
+        lines: "2407-2409"
         symbol: "'evolution': evolution[:15],"
         note: Se publican como mucho 15 ciudades.
     cases:
@@ -534,7 +532,7 @@ rules:
       evolution con change_pct mayor que cero, cortadas a las ocho primeras.
     evidence:
       - file: backend/real_estate/views.py
-        lines: "2310-2312"
+        lines: "2408-2410"
         symbol: "'growth_zones': [row for row in evolution if row['change_pct'] > 0][:8],"
         note: >
           Reutiliza la lista ya ordenada por variación descendente, así que las
@@ -574,7 +572,7 @@ rules:
           Se recorre el inventario ya filtrado a venta y recortado por IQR; el
           max(0, ...) impide días negativos si una fecha viniera en el futuro.
       - file: backend/real_estate/views.py
-        lines: "2311-2313"
+        lines: "2409-2411"
         symbol: "'estimated_market_days'"
         note: Media redondeada, con 0 como valor por defecto sin muestra.
     cases:
@@ -789,7 +787,7 @@ rules:
       promocionan desde el sitemap y los enlaces internos.
     evidence:
       - file: frontend/lib/market-stats.ts
-        lines: "73-77"
+        lines: "86-89"
         symbol: "export const MIN_LISTINGS_FOR_INDEX = 3;"
         note: >
           Junto a MIN_LISTINGS_FOR_PROMOTION = 5, el umbral de las superficies de
@@ -833,7 +831,7 @@ rules:
       payload que formatee con este ayudante publicará ceros creíbles.
     evidence:
       - file: frontend/lib/market-stats.ts
-        lines: "62-69"
+        lines: "75-81"
         symbol: "}).format(Number(value || 0));"
         note: >
           Mismo fallback en money y en integer; el operador || también convierte
@@ -883,7 +881,7 @@ rules:
           AggregateOffer: lowPrice y highPrice salen de la lista filtrada,
           offerCount de la lista sin filtrar.
       - file: frontend/components/SeoLanding.tsx
-        lines: "470-485"
+        lines: "487-501"
         symbol: "export function priceRangeText(properties: Property[]): string {"
         note: >
           Misma lógica, reutilizada por las landings de ciudad, provincia, tipo y
@@ -1055,4 +1053,63 @@ rules:
         note: >
           Comportamiento de hoy en by_operation: una sola fila basta para que
           salga una media.
+    tests: {}
+
+  - id: PRC-028
+    name: La mediana encabeza, el promedio queda debajo
+    status: implemented
+    summary: >
+      overall y by_property_type traen median_price, median_area y
+      median_price_m2 ademas de los promedios, y la interfaz muestra la mediana
+      como cifra principal cuando existe, con el promedio como nota. Una mediana
+      solo se calcula con cinco observaciones o mas; por debajo viene nula.
+    rationale: >
+      El promedio de un mercado que mezcla un departamento de 60 m2 con una
+      hacienda de 40 hectareas no describe a ninguno: Guayaquil publicaba un
+      area promedio de 4.571 m2 como indicador destacado. La mediana resiste esa
+      mezcla. El umbral de cinco existe porque una mediana sobre cuatro
+      anuncios es una anecdota, y es preferible un hueco a una cifra que nadie
+      deberia citar.
+    evidence:
+      - file: backend/real_estate/views.py
+        symbol: MIN_MEDIAN_SAMPLE
+      - file: backend/real_estate/views.py
+        symbol: def _summary
+      - file: frontend/components/MarketStatsSections.tsx
+        symbol: "label={data.overall.median_price_m2 ? 'Precio mediano por m²' : 'Precio promedio por m²'}"
+        note: El promedio no se oculta, deja de ser el titular.
+    cases:
+      - name: Cuatro anuncios en el corte
+        given: {sample: 4}
+        expected: null
+      - name: Nueve anuncios, uno muy caro
+        given: {prices: [100000, 100000, 100000, 100000, 100000, 100000, 100000, 100000, 900000]}
+        expected: 100000
+        note: La mediana no se mueve con el extremo; el promedio si.
+    tests: {}
+
+  - id: PRC-029
+    name: El cruce de tipo y operacion se publica aparte
+    status: implemented
+    summary: >
+      by_type_operation devuelve conteo, mediana, promedio y rango de precio por
+      cada combinacion de tipo de inmueble y operacion con al menos tres
+      anuncios. El precio por m2 solo se calcula para venta.
+    rationale: >
+      "Cuanto cuesta un departamento en Guayaquil" es la pregunta que la gente
+      hace, y hasta ahora la respuesta salia de un agregado que mezclaba casas,
+      terrenos y locales. El corte cruzado la responde con la muestra que le
+      corresponde, y deja fuera el precio por m2 del alquiler por la misma razon
+      que PRC-010.
+    evidence:
+      - file: backend/real_estate/views.py
+        symbol: by_type_operation
+      - file: backend/real_estate/views.py
+        symbol: "summary = _summary(rows, with_ratio=status == 'for_sale')"
+    cases:
+      - name: Dos departamentos en alquiler en la ciudad
+        given: {count: 2}
+        expected: no se publica la fila
+      - name: Departamentos en alquiler con muestra suficiente
+        expected: se publica conteo y precio, sin precio por m2
     tests: {}
