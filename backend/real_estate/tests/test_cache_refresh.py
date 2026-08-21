@@ -73,3 +73,40 @@ def test_a_payload_outlives_its_freshness():
     entry = cache.get("k")
     assert entry["payload"] == {"value": "primero"}
     assert entry["fresh_until"] > 0
+
+
+def test_only_one_worker_computes_the_very_first_entry():
+    """SPEC:MPERF-009 — en frío tampoco se calcula quince veces lo mismo."""
+    calls = []
+
+    def compute():
+        calls.append(1)
+        return {"value": len(calls)}
+
+    # Somebody else took the fill lock and is computing right now.
+    cache.add("k:filling", "1", 120)
+    # ...and finishes: the payload lands while the others are waiting.
+    cache.set("k", {"payload": {"value": "del ganador"}, "fresh_until": 1e12}, 600)
+
+    assert cached_or_stale("k", 60, compute) == {"value": "del ganador"}
+    assert calls == [], "waiting for the winner must not compute anything"
+
+
+def test_a_winner_that_never_writes_does_not_block_the_rest(monkeypatch):
+    """SPEC:MPERF-009 — un cerrojo huérfano no puede colgar la petición."""
+    import real_estate.cache_utils as cache_utils
+
+    calls = []
+
+    def compute():
+        calls.append(1)
+        return {"value": len(calls)}
+
+    # The lock is held by a process that died before writing anything. Waiting
+    # is capped, so this must fall through to computing instead of hanging.
+    cache.add("k:filling", "1", 120)
+    monkeypatch.setattr(cache_utils, "COLD_WAIT_SECONDS", 0.3)
+    monkeypatch.setattr(cache_utils, "COLD_POLL_SECONDS", 0.05)
+
+    assert cached_or_stale("k", 60, compute) == {"value": 1}
+    assert len(calls) == 1

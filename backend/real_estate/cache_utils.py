@@ -98,6 +98,13 @@ def versioned_key(name: str, *parts, scope: str = "properties") -> str:
 # does not freeze refreshes for the rest of the day.
 REFRESH_LOCK_SECONDS = 120
 
+# Cuánto espera un proceso a que otro termine de calcular la primera entrada, y
+# cada cuánto mira si ya está. Holgado sobre lo que tarda el cálculo más caro
+# del proyecto (el catálogo completo, nueve segundos) y muy por debajo del
+# `--timeout 120` de gunicorn, para que esperar nunca cueste la petición.
+COLD_WAIT_SECONDS = 20
+COLD_POLL_SECONDS = 0.1
+
 
 def cached_or_stale(key: str, fresh_for: int, compute, grace: int = 900):
     """Serve from cache, and let exactly one worker recompute a stale entry.
@@ -111,6 +118,16 @@ def cached_or_stale(key: str, fresh_for: int, compute, grace: int = 900):
     Here the payload outlives its freshness by `grace`. Past `fresh_for` the
     entry is stale but still served, and the first worker to take the lock is
     the only one that recomputes. Nobody waits, and the herd cannot form.
+
+    En frío —sin ninguna entrada— no hay nada viejo que servir, así que la
+    manada se forma igual: eso es exactamente lo que ocurre cuando un
+    despliegue vacía la caché y el renderizador manda todas las páginas del
+    sitio a regenerarse a la vez. Medido en este proyecto, el catálogo tardaba
+    **74 segundos** en contestar mientras quince procesos lo calculaban cada
+    uno por su cuenta; calculado una sola vez tarda nueve. Así que en frío
+    también hay cerrojo: uno calcula y los demás esperan su resultado un rato
+    acotado. Si el ganador se cae, los que esperan calculan por su cuenta en
+    vez de quedarse colgados de un cerrojo que ya no va a abrirse.
     """
     from django.utils import timezone
 
@@ -141,6 +158,39 @@ def cached_or_stale(key: str, fresh_for: int, compute, grace: int = 900):
             except Exception:  # pragma: no cover
                 pass
 
+    return _cold_compute(key, fresh_for, grace, compute)
+
+
+def _cold_compute(key: str, fresh_for: int, grace: int, compute):
+    """Primera entrada de todas: que la calcule uno solo y los demás la lean."""
+    import time
+
+    lock_key = f"{key}:filling"
+    try:
+        acquired = cache.add(lock_key, "1", REFRESH_LOCK_SECONDS)
+    except Exception:  # pragma: no cover - el cerrojo es mejor esfuerzo
+        acquired = True
+
+    if acquired:
+        try:
+            return _store(key, fresh_for, grace, compute())
+        finally:
+            try:
+                cache.delete(lock_key)
+            except Exception:  # pragma: no cover
+                pass
+
+    deadline = time.monotonic() + COLD_WAIT_SECONDS
+    while time.monotonic() < deadline:
+        time.sleep(COLD_POLL_SECONDS)
+        try:
+            entry = cache.get(key)
+        except Exception:  # pragma: no cover
+            entry = None
+        if isinstance(entry, dict) and "payload" in entry:
+            return entry["payload"]
+    # El ganador no ha aparecido: puede haber muerto a mitad. Calcular por su
+    # cuenta es peor que leer su resultado y mucho mejor que devolver un error.
     return _store(key, fresh_for, grace, compute())
 
 

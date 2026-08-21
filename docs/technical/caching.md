@@ -527,4 +527,70 @@ trae `REVALIDATE_SECRET`, así que el backend loguea y salta la llamada
 
 ---
 
-Ver también: [redis.md](./redis.md) · [celery.md](./celery.md)
+## 7. La estampida: cuando la caché está vacía y todo el mundo pregunta a la vez
+
+Una caché versionada resuelve la invalidación, no la concurrencia. El patrón
+evidente —leer, fallar, calcular, escribir— tiene un agujero que solo aparece
+bajo carga: mientras el primero calcula, los que llegan detrás también fallan al
+leer, y **todos calculan lo mismo**.
+
+No es teórico. Medido en este proyecto el 2026-08-21, con quince procesos
+pidiendo el catálogo a la vez y la caché recién vaciada:
+
+| Lectura | Antes | Después |
+| ------- | ----- | ------- |
+| `GET /api/properties/` (2.000 anuncios) | **74 s** | **5,7 s** |
+| `GET /api/properties/sectors/` (nacional) | **50 s** | **2,0 s** |
+| `GET /api/properties/map_points/?zoom=7` | **5,0 s** | **2,2 s** |
+| `GET /api/cities/` | **4,4 s** | **0,5 s** |
+
+Las dos primeras aparecieron rompiendo un build; las otras dos salieron al medir
+el resto de lecturas cacheadas con la misma prueba, que es lo que hay que hacer
+cuando encuentras un fallo de clase y no de sitio. El resto de endpoints
+cacheados —`catalog`, `summary`, `locations`, `rankings`, `ranking-scopes`,
+`market-stats`, el blog— se quedan por debajo del segundo con quince peticiones
+en frío y no llevan cerrojo: no todo lo que se cachea merece protegerse, solo lo
+que cuesta.
+
+Las causas y sus arreglos:
+
+**El catálogo era una estampida.** `cached_or_stale`
+(`backend/real_estate/cache_utils.py`) ya protegía el caso *templado* —entrada
+vencida pero servible— dejando que solo uno refresque. En frío no protegía
+nada, porque no hay nada viejo que servir, y en frío es justo como está la
+caché después de un despliegue. Ahora hay cerrojo también ahí: uno calcula y
+los demás esperan su resultado hasta 20 s; si el ganador muere, calculan por su
+cuenta en vez de colgarse. `PropertyViewSet.list` pasó a usarlo, que es la
+lectura más cara del portal y la que piden todas las páginas prerenderizadas.
+
+**El mapa y los cantones eran el mismo caso, más barato.** `map_points` es lo
+que pide todo el mundo al abrir la portada, siempre el mismo recuadro y el mismo
+zoom; `/api/cities/` es una tabla pequeña que solo cuesta serializar. Ninguno de
+los dos justifica cinco segundos, y con cerrojo no los cuestan. Ambos usan ahora
+`cached_or_stale`.
+
+**Las zonas eran cuadráticas.** `absorptions()` comparaba cada zona con todas
+las demás de su ciudad: 3.894 claves nacionales, 1,7 s de CPU con el GIL
+tomado, reteniendo una conexión a Postgres. Ahora se buscan por prefijos
+—«cumbaya sector la vina» solo puede ser esquina de «cumbaya sector» o de
+«cumbaya»— y son 14 ms, con el resultado byte a byte idéntico
+(`test_absorption_matches_the_pairwise_definition`).
+
+### Por qué importa fuera del build
+
+Las dos se descubrieron con `next build`, que manda todas las páginas del sitio
+a regenerarse a la vez. Pero **eso es exactamente lo que hace una purga de tags
+en producción**, que es la ráfaga contra la que el commit «Give the catalogue
+retry room to breathe» puso reintentos en el cliente. Los reintentos siguen
+siendo la red; esto quita el motivo de tener que usarla.
+
+Del lado del constructor, `frontend/next.config.js` acota cuántas páginas se
+prerenderizan a la vez. Los valores por defecto de Next —un worker por núcleo,
+ocho páginas en vuelo cada uno— son ciento veinte peticiones simultáneas en una
+máquina grande, contra un Postgres con `max_connections` a 100: la respuesta
+literal era `FATAL: sorry, too many clients already`.
+
+---
+
+Ver también: [redis.md](./redis.md) · [celery.md](./celery.md) ·
+[admin-panel.md](./admin-panel.md)

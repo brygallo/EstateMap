@@ -2,6 +2,34 @@
 const nextConfig = {
   reactStrictMode: true,
   output: 'standalone', // Enable standalone output for Docker
+
+  // Cuántas páginas se prerenderizan a la vez, y cuánto se les concede.
+  //
+  // El límite de este build no es la CPU del que compila: es el backend. En
+  // producción son tres workers de gunicorn con cuatro hilos —doce peticiones
+  // simultáneas— contra un Postgres con `max_connections` a 100, en un host de
+  // 8 GB compartido. Y cada página estática de este sitio no es una plantilla:
+  // pide el catálogo, su ranking o su zona.
+  //
+  // Next lanza un worker por núcleo y, por defecto, deja ocho páginas en vuelo
+  // en cada uno. En una máquina de quince núcleos eso son ciento veinte
+  // peticiones a la vez: Postgres contesta «sorry, too many clients already»,
+  // las páginas que dependen del catálogo reciben 500, y el build muere
+  // pidiendo rankings que aislados tardan medio segundo. Es la misma ráfaga
+  // que describe el commit «Give the catalogue retry room to breathe», vista
+  // desde el otro lado.
+  //
+  // Bajar la concurrencia a dos deja treinta páginas en vuelo, del orden de lo
+  // que el backend sabe servir. No hace el build más lento —el techo lo pone
+  // igualmente el backend— y las 759 páginas se generan en menos de tres
+  // minutos. El número de workers se deja en paz: es la fase de recolección la
+  // que los usa, y esa la sostiene ahora la caché del backend.
+  experimental: {
+    staticGenerationMaxConcurrency: 2,
+  },
+  // Dos minutos, el mismo número que el `--timeout` de gunicorn: una página que
+  // llega con la caché fría pide el catálogo entero antes de renderizar nada.
+  staticPageGenerationTimeout: 120,
   outputFileTracingRoot: __dirname,
   // Permite aislar la carpeta de build (evita que un `next dev` en el host y el
   // server en Docker compartan `.next` y se corrompan). Por defecto es `.next`.

@@ -19,6 +19,7 @@ El mapa prioriza los puntos sobre datos secundarios, conserva las rutas de cach�
 | [`MPERF-002`](#mperf-002--una-selección-produce-una-sola-transición-de-cámara) | Una selección produce una sola transición de cámara | ✅ Implementada |
 | [`MPERF-003`](#mperf-003--la-conexión-lenta-prioriza-puntos-sobre-fichas-e-imágenes) | La conexión lenta prioriza puntos sobre fichas e imágenes | ✅ Implementada |
 | [`MPERF-005`](#mperf-005--un-payload-caducado-se-sigue-sirviendo-mientras-uno-solo-lo-recalcula) | Un payload caducado se sigue sirviendo mientras uno solo lo recalcula | ✅ Implementada |
+| [`MPERF-009`](#mperf-009--la-primera-entrada-de-todas-también-la-calcula-uno-solo) | La primera entrada de todas también la calcula uno solo | ✅ Implementada |
 | [`MPERF-006`](#mperf-006--la-conexión-a-la-base-se-reutiliza-entre-peticiones) | La conexión a la base se reutiliza entre peticiones | ✅ Implementada |
 | [`MPERF-007`](#mperf-007--solo-lo-que-se-declara-público-puede-guardarlo-una-caché-compartida) | Solo lo que se declara público puede guardarlo una caché compartida | ✅ Implementada |
 | [`MPERF-008`](#mperf-008--detrás-de-un-cdn-la-identidad-del-visitante-se-restaura-en-nginx) | Detrás de un CDN, la identidad del visitante se restaura en nginx | 📝 Propuesta (sin código) |
@@ -130,6 +131,35 @@ Servir lo viejo unos segundos es preferible a que nadie reciba nada durante el c
 | Segunda petición dentro de la frescura | — | — | — | se sirve de caché sin recalcular |
 | Petición con la entrada vencida y sin nadie recalculando | — | — | — | este worker recalcula y guarda |
 | Cinco peticiones con la entrada vencida y el cerrojo tomado | — | — | — | las cinco reciben la copia anterior; no se recalcula cinco veces |
+
+**Cobertura exigida:** api
+
+- `backend/real_estate/tests/test_cache_refresh.py`
+
+### MPERF-009 — La primera entrada de todas también la calcula uno solo
+
+**Estado:** ✅ Implementada
+
+Cuando no hay ninguna entrada en caché, el primer proceso que toma el cerrojo la calcula y los demás esperan su resultado hasta veinte segundos antes de calcularlo por su cuenta. Lo usan el catálogo, el mapa y la tabla de cantones, además de las estadísticas de mercado.
+
+> **Por qué:** MPERF-005 protegía la entrada *vencida*, que es el caso templado: hay algo viejo que servir mientras uno refresca. En frío no hay nada, y en frío es justo como queda la caché después de cada despliegue —o de cualquier purga de tags que mande todas las páginas a regenerarse a la vez—. Sin cerrojo, los quince procesos calculan lo mismo y se serializan contra el GIL reteniendo cada uno su conexión a Postgres: medido el 2026-08-21, el catálogo pasaba de nueve segundos a **setenta y cuatro**, y con cien conexiones de tope la base empezaba a responder «sorry, too many clients already».
+Esperar tiene un límite y un plan B a propósito: si el que calcula muere, los que esperan calculan en vez de quedarse colgados de un cerrojo que ya no va a abrirse. Y el tope está muy por debajo del `--timeout 120` de gunicorn, para que esperar nunca cueste la petición.
+
+**Evidencia en el código** (verificada por `tools/specs/validate.py`)
+
+- `backend/real_estate/cache_utils.py` (`def _cold_compute`)
+- `backend/real_estate/cache_utils.py` (`COLD_WAIT_SECONDS`)
+- `backend/real_estate/views.py` (`data = cached_or_stale(cache_key, CACHE_TTL_PROPERTY_LIST, compute)`)
+- `backend/real_estate/views.py` (`payload = cached_or_stale(cache_key, cache_ttl, compute)`) — El mapa, que es lo que pide todo el mundo al abrir la portada.
+- `backend/real_estate/tests/test_cache_refresh.py` (`def test_only_one_worker_computes_the_very_first_entry`)
+
+**Casos**
+
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| Dos peticiones en frío con el cerrojo ya tomado | — | — | — | esperan el resultado del ganador; no se calcula dos veces |
+| El cerrojo está tomado pero el ganador nunca escribe | — | — | — | pasado el tope, quien espera calcula por su cuenta |
+| Petición en frío sin nadie más | — | — | — | calcula, guarda y devuelve |
 
 **Cobertura exigida:** api
 

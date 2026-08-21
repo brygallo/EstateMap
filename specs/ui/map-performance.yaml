@@ -144,6 +144,51 @@ rules:
       - name: Cinco peticiones con la entrada vencida y el cerrojo tomado
         expected: las cinco reciben la copia anterior; no se recalcula cinco veces
 
+  - id: MPERF-009
+    name: La primera entrada de todas también la calcula uno solo
+    status: implemented
+    summary: >-
+      Cuando no hay ninguna entrada en caché, el primer proceso que toma el
+      cerrojo la calcula y los demás esperan su resultado hasta veinte segundos
+      antes de calcularlo por su cuenta. Lo usan el catálogo, el mapa y la
+      tabla de cantones, además de las estadísticas de mercado.
+    rationale: >-
+      MPERF-005 protegía la entrada *vencida*, que es el caso templado: hay algo
+      viejo que servir mientras uno refresca. En frío no hay nada, y en frío es
+      justo como queda la caché después de cada despliegue —o de cualquier purga
+      de tags que mande todas las páginas a regenerarse a la vez—. Sin cerrojo,
+      los quince procesos calculan lo mismo y se serializan contra el GIL
+      reteniendo cada uno su conexión a Postgres: medido el 2026-08-21, el
+      catálogo pasaba de nueve segundos a **setenta y cuatro**, y con cien
+      conexiones de tope la base empezaba a responder «sorry, too many clients
+      already».
+
+      Esperar tiene un límite y un plan B a propósito: si el que calcula muere,
+      los que esperan calculan en vez de quedarse colgados de un cerrojo que ya
+      no va a abrirse. Y el tope está muy por debajo del `--timeout 120` de
+      gunicorn, para que esperar nunca cueste la petición.
+    evidence:
+      - file: backend/real_estate/cache_utils.py
+        symbol: def _cold_compute
+      - file: backend/real_estate/cache_utils.py
+        symbol: COLD_WAIT_SECONDS
+      - file: backend/real_estate/views.py
+        symbol: "data = cached_or_stale(cache_key, CACHE_TTL_PROPERTY_LIST, compute)"
+      - file: backend/real_estate/views.py
+        symbol: "payload = cached_or_stale(cache_key, cache_ttl, compute)"
+        note: El mapa, que es lo que pide todo el mundo al abrir la portada.
+      - file: backend/real_estate/tests/test_cache_refresh.py
+        symbol: def test_only_one_worker_computes_the_very_first_entry
+    tests:
+      api: true
+    cases:
+      - name: Dos peticiones en frío con el cerrojo ya tomado
+        expected: esperan el resultado del ganador; no se calcula dos veces
+      - name: El cerrojo está tomado pero el ganador nunca escribe
+        expected: pasado el tope, quien espera calcula por su cuenta
+      - name: Petición en frío sin nadie más
+        expected: calcula, guarda y devuelve
+
   - id: MPERF-006
     name: La conexión a la base se reutiliza entre peticiones
     status: implemented
