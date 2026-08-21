@@ -43,10 +43,34 @@ export default function MarketStatsSections({
   return (
     <>
       <section className="grid grid-cols-2 gap-3 lg:grid-cols-3 lg:gap-4">
-        <Kpi icon={Ruler} label="Precio promedio por m²" value={`${money(data.overall.avg_price_m2)}/m²`} />
+        {/* The median leads where there is one. An average over a market that
+            pools a 60 m² flat with a 40 ha farm describes neither: Guayaquil
+            published an average area of 4.571 m² that way. The average stays
+            visible underneath, so nothing is hidden — it is just no longer the
+            headline. */}
+        <Kpi
+          icon={Ruler}
+          label={data.overall.median_price_m2 ? 'Precio mediano por m²' : 'Precio promedio por m²'}
+          value={`${money(data.overall.median_price_m2 ?? data.overall.avg_price_m2)}/m²`}
+          note={
+            data.overall.median_price_m2
+              ? `Promedio ${money(data.overall.avg_price_m2)}/m²`
+              : undefined
+          }
+        />
         <Kpi icon={Building2} label="Propiedades analizadas" value={integer(data.overall.count)} />
-        <Kpi icon={TrendingUp} label="Precio promedio" value={money(data.overall.avg_price)} />
-        <Kpi icon={BarChart3} label="Área promedio" value={`${integer(data.overall.avg_area)} m²`} />
+        <Kpi
+          icon={TrendingUp}
+          label={data.overall.median_price ? 'Precio mediano' : 'Precio promedio'}
+          value={money(data.overall.median_price ?? data.overall.avg_price)}
+          note={data.overall.median_price ? `Promedio ${money(data.overall.avg_price)}` : undefined}
+        />
+        <Kpi
+          icon={BarChart3}
+          label={data.overall.median_area ? 'Área mediana' : 'Área promedio'}
+          value={`${integer(data.overall.median_area ?? data.overall.avg_area)} m²`}
+          note={data.overall.median_area ? `Promedio ${integer(data.overall.avg_area)} m²` : undefined}
+        />
         <Kpi icon={TrendingUp} label="Antigüedad media del anuncio" value={`${integer(data.estimated_market_days)} días`} />
         <Kpi icon={BarChart3} label="Valores extremos excluidos" value={integer(data.outliers_excluded)} />
       </section>
@@ -123,6 +147,11 @@ export default function MarketStatsSections({
             <p className="font-semibold text-textPrimary">Cómo leer estos datos</p>
             <p className="mt-1">{data.methodology}</p>
             <p className="mt-2">Los valores son referenciales y no sustituyen un avalúo profesional.</p>
+            <p className="mt-2">
+              <Link href="/metodologia" className="font-semibold text-primary hover:underline">
+                Ver la metodología completa
+              </Link>
+            </p>
           </div>
         </div>
       </section>
@@ -188,7 +217,18 @@ function StatsTable({
   );
 }
 
-function Kpi({ icon: Icon, label, value }: { icon: typeof Ruler; label: string; value: string }) {
+function Kpi({
+  icon: Icon,
+  label,
+  value,
+  note,
+}: {
+  icon: typeof Ruler;
+  label: string;
+  value: string;
+  /** The figure the headline replaced, kept visible rather than dropped. */
+  note?: string;
+}) {
   return (
     <div className="min-w-0 rounded-card border border-line bg-white p-4 shadow-card sm:p-5">
       <span className="flex h-9 w-9 items-center justify-center rounded-button bg-primaryLight text-primary sm:h-10 sm:w-10">
@@ -196,6 +236,7 @@ function Kpi({ icon: Icon, label, value }: { icon: typeof Ruler; label: string; 
       </span>
       <p className="mt-3 text-[0.68rem] font-semibold uppercase leading-4 tracking-wide text-textSecondary sm:mt-4 sm:text-xs">{label}</p>
       <p className="mt-1 break-words font-geo text-lg font-black text-textPrimary sm:text-xl">{value}</p>
+      {note && <p className="mt-1 text-[0.68rem] leading-4 text-textSecondary">{note}</p>}
     </div>
   );
 }

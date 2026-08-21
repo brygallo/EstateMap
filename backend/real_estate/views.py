@@ -70,6 +70,7 @@ from .email_utils import (
 )
 from .services.map_payload import MAX_CLUSTER_ZOOM, build_map_payload, canonical_cluster_zoom
 from .models import sector_key as sector_key_for
+from .services.sectors import absorptions as sector_absorptions
 from .services.sectors import MIN_SECTOR_LISTINGS, list_sectors
 from .services.rankings import (
     CRITERIA as RANKING_CRITERIA,
@@ -2243,8 +2244,9 @@ class MarketStatsView(generics.GenericAPIView):
 
             now = timezone.now()
             active_rows = list(base.values(
-                'id', 'city', 'address', 'property_type', 'created_at', 'last_seen_at',
-                'price_per_m2',
+                'id', 'city', 'address', 'property_type', 'status', 'created_at',
+                'last_seen_at', 'price_per_m2', 'price', 'area',
+                'sector_key', 'sector_label',
             ))
             market_days = []
             city_periods = defaultdict(lambda: {'recent': [], 'previous': []})
@@ -2263,12 +2265,68 @@ class MarketStatsView(generics.GenericAPIView):
                     city_periods[city]['recent'].append(row['price_per_m2'])
                 elif age <= timedelta(days=180):
                     city_periods[city]['previous'].append(row['price_per_m2'])
-                # `address` is currently the finest available geographic level.
-                sector = (row['address'] or '').split(',')[0].strip()
-                if sector and _fold(sector) != _fold(city):
-                    entry = sector_stats[(city, _fold(sector))]
-                    entry['names'][sector] += 1
+                # The zone is read from the column, not parsed again here. This
+                # block used to re-derive it from `address` with its own folding,
+                # so the stats table and the zone pages were two sources of truth
+                # for the same question: «Casa en Venta» was rejected as a place
+                # by one and published as a neighbourhood with a price per square
+                # metre by the other.
+                if row['sector_key']:
+                    entry = sector_stats[(city, row['sector_key'])]
+                    entry['names'][row['sector_label'] or row['sector_key']] += 1
                     entry['values'].append(row['price_per_m2'])
+
+            # A median needs a sample to be a reading rather than an anecdote.
+            # Below this the field comes back null and the page shows nothing,
+            # which is the honest answer: an invented figure is worse than a gap.
+            MIN_MEDIAN_SAMPLE = 5
+
+            def _median(values):
+                ordered = sorted(values)
+                if len(ordered) < MIN_MEDIAN_SAMPLE:
+                    return None
+                middle = len(ordered) // 2
+                if len(ordered) % 2:
+                    return float(ordered[middle])
+                return (float(ordered[middle - 1]) + float(ordered[middle])) / 2
+
+            def _summary(rows, *, with_ratio=True):
+                """What a group of listings can honestly say about itself.
+
+                The average alone was misleading on every page that mixed
+                markets: Guayaquil published an average area of 4.571 m²
+                because farmland and flats were pooled. The median resists that,
+                and the minimum and maximum say where the range really starts.
+                """
+                prices = [float(row['price']) for row in rows if row['price']]
+                areas = [float(row['area']) for row in rows if row['area']]
+                ratios = [float(row['price_per_m2']) for row in rows if row['price_per_m2']]
+                return {
+                    'count': len(rows),
+                    'median_price': _median(prices),
+                    'median_area': _median(areas),
+                    'median_price_m2': _median(ratios) if with_ratio else None,
+                    'min_price': min(prices) if prices else None,
+                    'max_price': max(prices) if prices else None,
+                }
+
+            # `active_rows` is sale-only, because the headline metrics are.
+            # Renting is a different market on a different scale, so it is pulled
+            # apart and never given a price per square metre: dividing a monthly
+            # rent by an area produced the $6,89/m² that this endpoint used to
+            # publish next to sale figures of $1.200/m².
+            rent_rows = list(
+                all_base.filter(status='for_rent').values(
+                    'property_type', 'status', 'price', 'area', 'price_per_m2',
+                )
+            )
+            by_type_rows = defaultdict(list)
+            by_type_operation_rows = defaultdict(list)
+            for row in active_rows:
+                by_type_rows[row['property_type']].append(row)
+                by_type_operation_rows[(row['property_type'], 'for_sale')].append(row)
+            for row in rent_rows:
+                by_type_operation_rows[(row['property_type'], 'for_rent')].append(row)
 
             evolution = []
             for city, periods in city_periods.items():
@@ -2279,6 +2337,17 @@ class MarketStatsView(generics.GenericAPIView):
                 evolution.append({'city': city, 'current_price_m2': recent, 'previous_price_m2': previous,
                                   'change_pct': round((recent - previous) / previous * 100, 1) if previous else 0})
             evolution.sort(key=lambda row: row['change_pct'], reverse=True)
+            # The same absorption the zone pages apply, so a corner of Cumbayá
+            # is not listed here as a rival of Cumbayá with its own average.
+            _absorbed = sector_absorptions([
+                {'city': city, 'sector_key': key, 'count': len(entry['values'])}
+                for (city, key), entry in sector_stats.items()
+            ])
+            for origin, target in _absorbed.items():
+                if origin in sector_stats and target in sector_stats:
+                    sector_stats[target]['values'].extend(sector_stats[origin]['values'])
+                    sector_stats.pop(origin)
+
             by_sector = [
                 {
                     'city': city,
@@ -2293,18 +2362,47 @@ class MarketStatsView(generics.GenericAPIView):
             ]
             by_sector.sort(key=lambda row: (-row['count'], row['city'], row['sector']))
 
+            overall.update(
+                {key: value for key, value in _summary(active_rows).items() if key != 'count'}
+            )
+
+            by_property_type = grouped('property_type', limit=8)
+            for row in by_property_type:
+                row.update(
+                    {
+                        key: value
+                        for key, value in _summary(by_type_rows[row['property_type']]).items()
+                        if key != 'count'
+                    }
+                )
+
+            by_type_operation = []
+            for (property_type, status), rows in by_type_operation_rows.items():
+                if len(rows) < 3:
+                    continue
+                summary = _summary(rows, with_ratio=status == 'for_sale')
+                by_type_operation.append(
+                    {'property_type': property_type, 'status': status, **summary}
+                )
+            by_type_operation.sort(key=lambda row: (-row['count'], row['property_type']))
+
+            by_operation = []
+            for row in all_base.values('status').annotate(
+                count=Count('id'),
+                avg_price_m2=Avg('price_per_m2'),
+                avg_price=Avg('price'),
+                avg_area=Avg('area'),
+            ).order_by('-count'):
+                if row['status'] != 'for_sale':
+                    row['avg_price_m2'] = None
+                by_operation.append(row)
+
             payload = {
                 'overall': overall,
                 'by_city': grouped('city', 'province', limit=15),
-                'by_property_type': grouped('property_type', limit=8),
-                'by_operation': list(
-                    all_base.values('status').annotate(
-                        count=Count('id'),
-                        avg_price_m2=Avg('price_per_m2'),
-                        avg_price=Avg('price'),
-                        avg_area=Avg('area'),
-                    ).order_by('-count')
-                ),
+                'by_property_type': by_property_type,
+                'by_type_operation': by_type_operation,
+                'by_operation': by_operation,
                 'by_sector': by_sector[:20],
                 'evolution': evolution[:15],
                 'growth_zones': [row for row in evolution if row['change_pct'] > 0][:8],

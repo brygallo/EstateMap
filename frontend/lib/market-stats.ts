@@ -8,6 +8,15 @@
 
 import { getServerApiUrl, getServerApiHeaders } from './api-url';
 
+/** A reading that has no sample behind it is null, never zero. */
+export type Readings = {
+  median_price: number | null;
+  median_area: number | null;
+  median_price_m2: number | null;
+  min_price: number | null;
+  max_price: number | null;
+};
+
 export type StatRow = {
   city?: string;
   province?: string;
@@ -18,13 +27,16 @@ export type StatRow = {
   avg_price: number;
   avg_area: number;
   updated_at?: string | null;
-};
+} & Partial<Readings>;
 
 export type MarketStats = {
-  overall: StatRow & { min_price_m2: number; max_price_m2: number };
+  overall: StatRow & { min_price_m2: number; max_price_m2: number } & Readings;
   by_city: StatRow[];
-  by_property_type: StatRow[];
-  by_operation: StatRow[];
+  by_property_type: Array<StatRow & Readings>;
+  /** Type crossed with operation: renting and selling are different markets. */
+  by_type_operation: Array<StatRow & Readings>;
+  /** Renting carries no price per m²: a monthly rent over an area is not one. */
+  by_operation: Array<Omit<StatRow, 'avg_price_m2'> & { avg_price_m2: number | null }>;
   by_sector: Array<{
     city: string;
     sector: string;
