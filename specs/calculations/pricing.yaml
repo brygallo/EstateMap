@@ -454,7 +454,7 @@ rules:
       exclusivamente de alquiler.
     evidence:
       - file: backend/real_estate/models.py
-        lines: "243-245"
+        lines: "262-264"
         symbol: "rent_price = models.DecimalField"
         note: >
           Definición y comentario del campo: solo se puebla cuando el anuncio es

@@ -138,6 +138,9 @@ def test_a_listing_headline_is_not_a_zone():
         "Rento terreno sector Clínica Pichincha, Quito",
         "Alquilo departamento en Cumbayá, Quito",
         "La Puntilla vendo departamento moderno 3 dormitorios, Guayaquil",
+        # The seller's voice settles it even with no property word in sight.
+        "LAGUNA DEL SOL POR VIAJE VENDO US$ 390., Samborondón",
+        "Vendo Dpto 2 Dormitorios MAS Estudios Aquarela Cumbaya, Cumbayá",
     ):
         assert sector_key(headline) == "", headline
 
@@ -151,6 +154,9 @@ def test_a_place_that_merely_sounds_like_one_survives():
     assert sector_key("Quinta Guadalupe, Quito") == "quinta guadalupe"
     assert sector_key("Renta Alta, Quito") == "renta alta"
     assert sector_key("Iñaquito Alto, Quito") == "inaquito alto"
+    # Third person stays ambiguous on purpose: these are nouns as well as verbs.
+    assert sector_key("Laguna del Sol, Guayaquil") == "laguna del sol"
+    assert sector_key("El Arriendo, Loja") == "el arriendo"
 
 
 def test_a_shouted_name_is_published_in_title_case():

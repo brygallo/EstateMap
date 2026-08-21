@@ -179,11 +179,11 @@ rules:
       ampliando lo que se persiste.
     evidence:
       - file: backend/real_estate/models.py
-        lines: "487-510"
+        lines: "513-535"
         symbol: "class SystemIncident"
         note: Los campos existentes son la lista completa de lo que se guarda.
       - file: backend/real_estate/models.py
-        lines: "503-505"
+        lines: "522-524"
         symbol: fingerprint
         note: Clave única por la que se agregan las ocurrencias.
       - file: backend/estate_map/observability.py

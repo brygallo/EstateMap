@@ -117,7 +117,7 @@ rules:
       verdad es cambiar la ficha a "Medidas: referencia aproximada".
     evidence:
       - file: backend/real_estate/models.py
-        lines: "206-208"
+        lines: "225-227"
         symbol: show_measurements
         note: >
           El help_text dice "Show exact measurements on map or just reference

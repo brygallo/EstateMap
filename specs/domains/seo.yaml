@@ -343,8 +343,9 @@ rules:
       describe lo que se vende en lugar de dónde está: hace falta una palabra de
       tipo de inmueble y una de operación, ambas como palabras completas. La
       operación cuenta en tercera y en primera persona, porque medio catálogo lo
-      escribe quien vende. Sin clave no hay zona, ni página, ni entrada en el
-      sitemap, ni promedio.
+      escribe quien vende. Un verbo en primera persona basta por sí solo: «vendo»
+      es algo que dice quien vende, no algo que se llama un lugar. Sin clave no
+      hay zona, ni página, ni entrada en el sitemap, ni promedio.
     rationale: >-
       La dirección es texto libre y los importadores ponen ahí lo que tienen.
       «Casa en Venta» llegó a ser un barrio de Guayaquil con 19 anuncios y un
@@ -360,6 +361,13 @@ rules:
       - file: backend/real_estate/migrations/0037_reject_headline_sectors.py
         symbol: def clear_headline_sectors
         note: La regla corre al guardar; el catálogo es importado y necesitaba relleno.
+      - file: backend/real_estate/models.py
+        symbol: _SELLER_VOICE_WORDS
+        note: >
+          La tercera persona sigue exigiendo palabra de tipo: «venta», «renta» y
+          «arriendo» también son sustantivos, y existen La Venta y Renta Alta.
+      - file: backend/real_estate/migrations/0039_reject_seller_voice_headlines.py
+        symbol: def clear_seller_voice_headlines
       - file: backend/real_estate/migrations/0038_reject_first_person_headlines.py
         symbol: def clear_first_person_headlines
         note: >
@@ -380,6 +388,10 @@ rules:
         expected: sin zona
       - name: Dirección «Renta Alta, Quito»
         expected: zona «renta alta»
+      - name: Dirección «LAGUNA DEL SOL POR VIAJE VENDO US$ 390., Samborondón»
+        expected: sin zona
+      - name: Dirección «Laguna del Sol, Guayaquil»
+        expected: zona «laguna del sol»
 
   - id: SEC-005
     name: Una zona absorbe sus rincones

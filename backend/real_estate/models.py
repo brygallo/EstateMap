@@ -89,6 +89,18 @@ _LISTING_TYPE_WORDS = (
     "terreno", "terrenos", "lote", "lotes", "local", "locales", "oficina",
     "oficinas", "suite", "suites", "penthouse", "bodega", "bodegas", "galpon",
     "galpones", "finca", "quinta", "villa", "villas", "inmueble", "propiedad",
+    "dpto", "dptos", "dep", "deps",
+)
+
+# A verb in the first person settles it on its own. «Vendo» is something a
+# seller says, never something a place is called, so «Laguna del Sol por viaje
+# vendo US$ 390.» does not need a property word to be recognised as a headline.
+# The third person stays ambiguous — «venta», «renta» and «arriendo» are also
+# nouns, and Ecuador has places called La Venta and Renta Alta — so those still
+# need a property word beside them.
+_SELLER_VOICE_WORDS = (
+    "vendo", "vendemos", "alquilo", "alquilamos", "rento", "rentamos",
+    "remato", "rematamos",
 )
 # Third person and first person both, because half the catalogue is written by
 # the seller: «Casa en Venta» and «Vendo casa independiente Lomas de Monteserrín»
@@ -109,8 +121,15 @@ _LISTING_OPERATION_RE = re.compile(
 )
 
 
+_SELLER_VOICE_RE = re.compile(
+    r"\b(?:{words})\b".format(words="|".join(_SELLER_VOICE_WORDS))
+)
+
+
 def _looks_like_listing_title(folded: str) -> bool:
     """True when the segment describes what is for sale, not where it is."""
+    if _SELLER_VOICE_RE.search(folded):
+        return True
     return bool(_LISTING_TITLE_RE.search(folded) and _LISTING_OPERATION_RE.search(folded))
 
 

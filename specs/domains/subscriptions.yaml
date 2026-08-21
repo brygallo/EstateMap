@@ -201,7 +201,7 @@ rules:
       día que se añada cualquier cobro.
     evidence:
       - file: frontend/next.config.js
-        lines: "70-72"
+        lines: "98-100"
         symbol: Permissions-Policy
         note: >
           La cabecera incluye payment=(), de modo que ni siquiera una integración

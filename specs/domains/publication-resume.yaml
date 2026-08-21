@@ -88,7 +88,7 @@ rules:
         lines: "603-605"
         symbol: PUBLICATION_RESUME_TOKEN_EXPIRY_DAYS
       - file: backend/real_estate/models.py
-        lines: "754-756"
+        lines: "773-775"
         symbol: def is_valid
       - file: backend/real_estate/views.py
         lines: "1567-1569"
@@ -231,7 +231,7 @@ rules:
       enlace y se eliminan después de crear la propiedad definitiva.
     evidence:
       - file: backend/real_estate/models.py
-        lines: "699-707"
+        lines: "718-725"
         symbol: "class PendingPublicationImage"
         note: Archivos temporales ordenados y ligados al borrador pendiente.
       - file: backend/real_estate/serializers.py
@@ -340,7 +340,7 @@ rules:
       nadie podía comprobar.
     evidence:
       - file: backend/real_estate/models.py
-        lines: "682-684"
+        lines: "701-703"
         symbol: related_name="pending_publications"
       - file: backend/real_estate/views.py
         lines: "1529-1531"
