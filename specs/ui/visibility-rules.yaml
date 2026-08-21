@@ -41,7 +41,7 @@ rules:
         symbol: "queryset.values(*POINT_FIELDS)"
         note: Único punto donde se materializan los puntos del mapa.
       - file: backend/real_estate/serializers.py
-        lines: "274-288"
+        lines: "289-302"
         symbol: "data.pop('views_count', None)"
         note: El detalle elimina el contador salvo para propietario o staff autenticado.
       - file: backend/real_estate/views.py
@@ -117,7 +117,7 @@ rules:
       verdad es cambiar la ficha a "Medidas: referencia aproximada".
     evidence:
       - file: backend/real_estate/models.py
-        lines: "199-201"
+        lines: "206-208"
         symbol: show_measurements
         note: >
           El help_text dice "Show exact measurements on map or just reference

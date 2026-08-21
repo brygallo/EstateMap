@@ -90,9 +90,16 @@ _LISTING_TYPE_WORDS = (
     "oficinas", "suite", "suites", "penthouse", "bodega", "bodegas", "galpon",
     "galpones", "finca", "quinta", "villa", "villas", "inmueble", "propiedad",
 )
+# Third person and first person both, because half the catalogue is written by
+# the seller: «Casa en Venta» and «Vendo casa independiente Lomas de Monteserrín»
+# are the same kind of string, and the second one had become a neighbourhood of
+# Quito with a page of its own. None of these is a place name in Ecuador.
 _LISTING_OPERATION_WORDS = (
-    "venta", "vende", "venden", "alquiler", "alquila", "arriendo", "arrienda",
-    "renta", "rentan",
+    "venta", "vende", "venden", "vendo", "vendemos",
+    "alquiler", "alquila", "alquilan", "alquilo", "alquilamos",
+    "arriendo", "arrienda", "arriendan",
+    "renta", "rentan", "rento", "rentamos",
+    "remato", "rematamos",
 )
 _LISTING_TITLE_RE = re.compile(
     r"\b(?:{types})\b".format(types="|".join(_LISTING_TYPE_WORDS))

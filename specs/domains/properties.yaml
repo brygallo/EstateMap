@@ -27,7 +27,7 @@ rules:
       guarda su precio en price y deja rent_price en NULL.
     evidence:
       - file: backend/real_estate/models.py
-        lines: "226-228"
+        lines: "233-235"
         symbol: rent_price
         note: La semántica está escrita como comentario junto a la definición de ambos campos.
       - file: backend/ingesta/pipeline/upsert.py
@@ -71,11 +71,11 @@ rules:
       los duplicados marcados.
     evidence:
       - file: backend/real_estate/views.py
-        lines: "460-462"
+        lines: "463-465"
         symbol: exclude(status='inactive')
         note: Base de get_queryset en PropertyViewSet; de aquí derivan list, map_points y summary.
       - file: backend/real_estate/models.py
-        lines: "149-151"
+        lines: "156-158"
         symbol: STATUS_CHOICES
         note: Los tres estados posibles son for_sale, for_rent e inactive.
     backend:
@@ -109,7 +109,7 @@ rules:
       ver también lo que no es suyo.
     evidence:
       - file: backend/real_estate/views.py
-        lines: "1192-1194"
+        lines: "1196-1198"
         symbol: my_properties
         note: >-
           La acción declara permission_classes=[IsAuthenticated] y elige entre
@@ -150,7 +150,7 @@ rules:
         symbol: class InventoryPagination
         note: page_size 24, page_size_query_param 'page_size', máximo 100.
       - file: backend/real_estate/views.py
-        lines: "1192-1194"
+        lines: "1196-1198"
         symbol: def my_properties
         note: stats se calcula con queryset.aggregate antes de paginar.
       - file: frontend/app/my-properties/page.tsx
@@ -187,11 +187,11 @@ rules:
       price > 0 y area > 0 antes de dividir.
     evidence:
       - file: backend/real_estate/models.py
-        lines: "233-235"
+        lines: "240-242"
         symbol: price = models.DecimalField
         note: null=True con help_text que justifica el "a consultar" de los importados.
       - file: backend/real_estate/models.py
-        lines: "207-209"
+        lines: "214-216"
         symbol: area = models.FloatField
         note: null=True, "opcional en anuncios importados".
       - file: backend/ingesta/pipeline/normalize.py
@@ -233,7 +233,7 @@ rules:
           Verificado por introspección del serializer en el contenedor: la lista de
           campos con required=True está vacía.
       - file: backend/real_estate/models.py
-        lines: "180-184"
+        lines: "187-190"
         symbol: property_type = models.CharField
         note: Defaults que rellenan el hueco - property_type='land', status='for_sale', city='Macas', province='Morona Santiago'.
     backend:
@@ -514,7 +514,7 @@ rules:
         symbol: ensure_polygon_center
         note: Solo rellena los huecos, nunca pisa unas coordenadas enviadas explícitamente.
       - file: backend/real_estate/serializers.py
-        lines: "374-376"
+        lines: "377-379"
         symbol: ensure_polygon_center
         note: En update, un polígono nuevo sin coordenadas nuevas anula las anteriores y las recalcula.
     cases:
@@ -548,14 +548,14 @@ rules:
       que hace que una importada no tenga dueño al que atribuirla.
     evidence:
       - file: backend/real_estate/views.py
-        lines: "610-612"
+        lines: "614-616"
         symbol: perform_create
         note: serializer.save(owner=self.request.user), ignorando cualquier owner del payload.
       - file: backend/real_estate/serializers.py
-        lines: "195-197"
+        lines: "198-200"
         symbol: owner = serializers.PrimaryKeyRelatedField(read_only=True)
       - file: backend/real_estate/models.py
-        lines: "252-254"
+        lines: "259-261"
         symbol: owner = models.ForeignKey
         note: on_delete=SET_NULL, null=True - borrar la cuenta no borra el anuncio.
       - file: backend/ingesta/pipeline/upsert.py
@@ -591,11 +591,11 @@ rules:
         symbol: IsOwnerOrReadOnly
         note: Permite cualquier método seguro y compara obj.owner == request.user para el resto.
       - file: backend/real_estate/views.py
-        lines: "359-361"
+        lines: "362-364"
         symbol: IsOwnerOrReadOnly
         note: permission_classes = [IsAuthenticatedOrReadOnly, IsOwnerOrReadOnly] en PropertyViewSet.
       - file: backend/real_estate/views.py
-        lines: "2793-2795"
+        lines: "2835-2837"
         symbol: PATCH_ALLOWED_FIELDS
         note: El panel admin puede tocar propiedades ajenas, pero solo status, title, price, city y description.
     backend:
@@ -724,7 +724,7 @@ rules:
       se degrada a actualización.
     evidence:
       - file: backend/real_estate/models.py
-        lines: "332-334"
+        lines: "339-341"
         symbol: uniq_source_external_when_imported
         note: UniqueConstraint con condition=Q(is_imported=True).
       - file: backend/ingesta/pipeline/upsert.py
@@ -888,7 +888,7 @@ rules:
         symbol: PropertyPriceHistory.objects.create
         note: Compara con la última fila por recorded_at y solo escribe si el precio cambió.
       - file: backend/real_estate/models.py
-        lines: "418-420"
+        lines: "425-427"
         symbol: class PropertyPriceHistory
         note: FK en cascada, precio, recorded_at e índice por (property, recorded_at).
     cases:
@@ -925,11 +925,11 @@ rules:
       simultáneos.
     evidence:
       - file: backend/real_estate/views.py
-        lines: "654-656"
+        lines: "658-660"
         symbol: is_bot_request
         note: Property.objects.filter(pk=...).update(views_count=F('views_count') + 1) solo si no es bot.
       - file: backend/real_estate/models.py
-        lines: "298-300"
+        lines: "305-307"
         symbol: views_count
         note: PositiveIntegerField con default 0.
       - file: backend/real_estate/serializers.py
@@ -973,7 +973,7 @@ rules:
       pending, la API sirve la foto desde el staging local para que no se vea rota.
     evidence:
       - file: backend/real_estate/models.py
-        lines: "436-438"
+        lines: "443-445"
         symbol: FAILED = "failed"
         note: TextChoices con pending, ready y failed; el default del campo es ready.
       - file: backend/real_estate/serializers.py
@@ -1106,7 +1106,7 @@ rules:
         symbol: getPropertyPoint
         note: Mismo criterio en el cliente, que además valida el punto contra los límites de Ecuador antes de aceptarlo.
       - file: backend/real_estate/views.py
-        lines: "546-549"
+        lines: "550-552"
         symbol: bbox
         note: El filtro por bbox aún deja pasar incondicionalmente las propiedades con lat/lng nulas y polígono; tras la migración esa rama no empareja ninguna fila y queda como red de seguridad.
     cases:
@@ -1180,7 +1180,7 @@ rules:
         symbol: distance_score
         note: La expresión de distancia se aplica al queryset antes de que DRF lo pagine.
       - file: frontend/lib/properties.ts
-        lines: "322-329"
+        lines: "331-337"
         symbol: origin_lat
         note: La ficha envía el centro efectivo de la propiedad junto con su ventana bbox.
     tests:
@@ -1298,10 +1298,10 @@ rules:
         symbol: CLOSED_REASON_CHOICES
         note: Por qué no son dos valores más de STATUS_CHOICES.
       - file: backend/real_estate/models.py
-        lines: "242-248"
+        lines: "249-254"
         symbol: closed_reason = models
       - file: backend/real_estate/models.py
-        lines: "362-373"
+        lines: "369-378"
         symbol: "if self.closed_reason:"
         note: Cerrar pone inactive y sella la fecha; abrir la borra.
       - file: backend/real_estate/serializers.py
@@ -1311,7 +1311,7 @@ rules:
           Volver a poner el anuncio en venta lo reabre; si no, el cambio parece
           aceptado y se deshace solo.
       - file: backend/real_estate/views.py
-        lines: "2982-2984"
+        lines: "3102-3104"
         symbol: "changes['closed_reason'] = ''"
         note: >-
           El cambio de estado en lote escribe con .update(), que nunca llega a

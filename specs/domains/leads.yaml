@@ -101,11 +101,11 @@ rules:
       interesado.
     evidence:
       - file: backend/real_estate/models.py
-        lines: "605-607"
+        lines: "612-614"
         symbol: "STATUS_CHOICES = ["
         note: Los tres estados del ciclo de gestión de un lead.
       - file: backend/real_estate/serializers.py
-        lines: "544-546"
+        lines: "547-549"
         symbol: "class LeadStatusSerializer"
         note: "fields = ['id', 'status'], sin acceso a name, phone, email ni message."
     backend:
@@ -136,7 +136,7 @@ rules:
       lo envía.
     evidence:
       - file: backend/real_estate/models.py
-        lines: "597-599"
+        lines: "604-606"
         symbol: "SOURCE_CHOICES = ["
         note: Los cinco orígenes válidos de un lead.
     cases:
@@ -156,7 +156,7 @@ rules:
       que ve todos los leads sin filtrar.
     evidence:
       - file: backend/real_estate/views.py
-        lines: "1320-1322"
+        lines: "1324-1326"
         symbol: "def get_queryset"
         note: >
           Devuelve Lead.objects.none() si no hay usuario autenticado, el
@@ -198,7 +198,7 @@ rules:
       a su contact_email antes de responder al cliente.
     evidence:
       - file: backend/real_estate/views.py
-        lines: "1329-1331"
+        lines: "1333-1335"
         symbol: "def perform_create"
         note: "serializer.save() seguido de LeadNotificationService().notify_created(lead), dentro del mismo ciclo request/response."
       - file: backend/real_estate/services/notifications.py
@@ -264,7 +264,7 @@ rules:
       leads por canal de captación.
     evidence:
       - file: backend/real_estate/models.py
-        lines: "628-630"
+        lines: "635-637"
         symbol: lead_property_status_idx
         note: Los tres índices y las consultas que cubren.
     cases:
@@ -291,7 +291,7 @@ rules:
       consumir.
     evidence:
       - file: backend/real_estate/models.py
-        lines: "637-639"
+        lines: "644-646"
         symbol: "class PendingPublication(models.Model)"
         note: >
           Docstring: "Solicitud de publicación capturada antes de que el
@@ -311,11 +311,11 @@ rules:
       (abandonó el formulario), además de other como comodín.
     evidence:
       - file: backend/real_estate/models.py
-        lines: "597-599"
+        lines: "604-606"
         symbol: "SOURCE_CHOICES = ["
         note: Los cuatro orígenes de una solicitud pendiente.
       - file: backend/real_estate/serializers.py
-        lines: "573-575"
+        lines: "576-578"
         symbol: "def validate_source"
         note: Cualquier valor fuera del catálogo se normaliza silenciosamente a "other" en vez de rechazar la petición.
     cases:
@@ -336,11 +336,11 @@ rules:
       hay cuenta que la posea).
     evidence:
       - file: backend/real_estate/views.py
-        lines: "1304-1306"
+        lines: "1308-1310"
         symbol: "def get_permissions"
         note: "return [IsAuthenticated(), IsAdminUser()] para toda acción salvo create."
       - file: backend/real_estate/views.py
-        lines: "1320-1322"
+        lines: "1324-1326"
         symbol: "def get_queryset"
         note: "PendingPublication.objects.none() salvo que user.is_staff sea verdadero."
     backend:
@@ -374,7 +374,7 @@ rules:
       DEFAULT_THROTTLE_RATES fija ese scope en 10/min.
     evidence:
       - file: backend/real_estate/views.py
-        lines: "1352-1354"
+        lines: "1356-1358"
         symbol: "throttle_scope = 'pending_create'"
         note: Solo el POST público se limita; el resto de acciones ya exige staff y no lleva throttle.
       - file: backend/estate_map/settings.py
@@ -409,7 +409,7 @@ rules:
       pero para el equipo interno en vez del dueño de una propiedad.
     evidence:
       - file: backend/real_estate/views.py
-        lines: "1329-1331"
+        lines: "1333-1335"
         symbol: "def perform_create"
         note: PendingPublicationNotificationService().notify_created(pending) en el mismo request.
       - file: backend/real_estate/email_utils.py
@@ -440,11 +440,11 @@ rules:
       partir de la cabecera User-Agent real de la conexión.
     evidence:
       - file: backend/real_estate/serializers.py
-        lines: "733-735"
+        lines: "736-738"
         symbol: "validated_data['is_bot'] = is_bot_request(request)"
         note: Sobrescribe el valor ya validado del payload, si lo había.
       - file: backend/real_estate/serializers.py
-        lines: "709-711"
+        lines: "712-714"
         symbol: "read_only_fields = ['id', 'user', 'property', 'property_title', 'is_bot', 'created_at']"
         note: is_bot es de solo lectura en el serializer expuesto, además de recalcularse en create.
     backend:
@@ -479,11 +479,11 @@ rules:
       429 específico para bots.
     evidence:
       - file: backend/real_estate/services/admin_metrics.py
-        lines: "63-65"
+        lines: "110-112"
         symbol: "human_events = ActivityEvent.objects.filter(is_bot=False)"
         note: Base de las métricas de audiencia humana.
       - file: backend/real_estate/services/admin_metrics.py
-        lines: "96"
+        lines: "141-143"
         symbol: "month_bot_events = ActivityEvent.objects.filter(created_at__gte=month_start, is_bot=True)"
         note: El volumen de bots se reporta, no se descarta.
     tests: {}
@@ -504,7 +504,7 @@ rules:
       DEFAULT_THROTTLE_RATES fija ese scope en 30/min.
     evidence:
       - file: backend/real_estate/views.py
-        lines: "1602-1604"
+        lines: "1606-1608"
         symbol: "throttle_scope = 'activity_create'"
       - file: backend/estate_map/settings.py
         lines: "210-212"
@@ -571,11 +571,11 @@ rules:
       propiedad reales.
     evidence:
       - file: backend/real_estate/models.py
-        lines: "605-607"
+        lines: "612-614"
         symbol: "STATUS_CHOICES = ["
         note: Los cuatro estados de una solicitud pendiente.
       - file: backend/real_estate/serializers.py
-        lines: "629-631"
+        lines: "632-634"
         symbol: "class PendingPublicationStatusSerializer"
         note: "fields = ['id', 'status'], igual patrón restrictivo que LeadStatusSerializer."
     backend:
@@ -617,7 +617,7 @@ rules:
         symbol: "def create(self, validated_data)"
         note: Busca por draft_key y actualiza la solicitud no convertida.
       - file: backend/real_estate/models.py
-        lines: "664-666"
+        lines: "671-673"
         symbol: draft_key
         note: La unicidad también protege frente a duplicados en la base de datos.
     tests:

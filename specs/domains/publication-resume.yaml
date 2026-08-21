@@ -35,7 +35,7 @@ rules:
         lines: "1381-1406"
         symbol: def resume_link
       - file: backend/real_estate/views.py
-        lines: "1347-1349"
+        lines: "1351-1353"
         symbol: "return [IsAuthenticated(), IsAdminUser()]"
         note: Toda acción del viewset que no sea `create` exige staff.
       - file: backend/real_estate/email_utils.py
@@ -85,13 +85,13 @@ rules:
       remedio distinto del de pedir otro enlace.
     evidence:
       - file: backend/estate_map/settings.py
-        lines: "584-586"
+        lines: "603-605"
         symbol: PUBLICATION_RESUME_TOKEN_EXPIRY_DAYS
       - file: backend/real_estate/models.py
-        lines: "747-749"
+        lines: "754-756"
         symbol: def is_valid
       - file: backend/real_estate/views.py
-        lines: "1563-1566"
+        lines: "1567-1569"
         symbol: def invalid_resume_token_response
     backend:
       enforce: true
@@ -231,7 +231,7 @@ rules:
       enlace y se eliminan después de crear la propiedad definitiva.
     evidence:
       - file: backend/real_estate/models.py
-        lines: "692-702"
+        lines: "699-707"
         symbol: "class PendingPublicationImage"
         note: Archivos temporales ordenados y ligados al borrador pendiente.
       - file: backend/real_estate/serializers.py
@@ -340,13 +340,13 @@ rules:
       nadie podía comprobar.
     evidence:
       - file: backend/real_estate/models.py
-        lines: "675-677"
+        lines: "682-684"
         symbol: related_name="pending_publications"
       - file: backend/real_estate/views.py
-        lines: "1525-1527"
+        lines: "1529-1531"
         symbol: pending.status = 'converted'
       - file: backend/real_estate/views.py
-        lines: "1402-1404"
+        lines: "1406-1408"
         symbol: "'Esta solicitud ya se convirtió en un anuncio.'"
     tests:
       api: true
@@ -414,7 +414,7 @@ rules:
         lines: "114-152"
         symbol: def validate_image_batch
       - file: backend/real_estate/serializers.py
-        lines: "577-579"
+        lines: "580-582"
         symbol: "def validate_uploaded_images(self, value):"
         note: PendingPublicationSerializer delega en el validador compartido.
     backend:

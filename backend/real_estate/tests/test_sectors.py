@@ -132,6 +132,12 @@ def test_a_listing_headline_is_not_a_zone():
         "Oficina en Venta en Manta, Manta",
         "Venta Terreno, Quito",
         "Se Vende Casa, Guayaquil",
+        # First person, which is how the seller writes it. «Vendo casa
+        # independiente Lomas de Monteserrín» had a page of its own in Quito.
+        "Vendo casa independiente Lomas de Monteserrín, Quito",
+        "Rento terreno sector Clínica Pichincha, Quito",
+        "Alquilo departamento en Cumbayá, Quito",
+        "La Puntilla vendo departamento moderno 3 dormitorios, Guayaquil",
     ):
         assert sector_key(headline) == "", headline
 
@@ -143,6 +149,8 @@ def test_a_place_that_merely_sounds_like_one_survives():
     assert sector_key("Ventanas, Los Ríos") == "ventanas"
     assert sector_key("La Venta, Quito") == "la venta"
     assert sector_key("Quinta Guadalupe, Quito") == "quinta guadalupe"
+    assert sector_key("Renta Alta, Quito") == "renta alta"
+    assert sector_key("Iñaquito Alto, Quito") == "inaquito alto"
 
 
 def test_a_shouted_name_is_published_in_title_case():

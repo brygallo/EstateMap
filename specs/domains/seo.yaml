@@ -341,8 +341,10 @@ rules:
     summary: >-
       `sector_key` devuelve vacío cuando el primer tramo de la dirección
       describe lo que se vende en lugar de dónde está: hace falta una palabra de
-      tipo de inmueble y una de operación, ambas como palabras completas. Sin
-      clave no hay zona, ni página, ni entrada en el sitemap, ni promedio.
+      tipo de inmueble y una de operación, ambas como palabras completas. La
+      operación cuenta en tercera y en primera persona, porque medio catálogo lo
+      escribe quien vende. Sin clave no hay zona, ni página, ni entrada en el
+      sitemap, ni promedio.
     rationale: >-
       La dirección es texto libre y los importadores ponen ahí lo que tienen.
       «Casa en Venta» llegó a ser un barrio de Guayaquil con 19 anuncios y un
@@ -358,6 +360,11 @@ rules:
       - file: backend/real_estate/migrations/0037_reject_headline_sectors.py
         symbol: def clear_headline_sectors
         note: La regla corre al guardar; el catálogo es importado y necesitaba relleno.
+      - file: backend/real_estate/migrations/0038_reject_first_person_headlines.py
+        symbol: def clear_first_person_headlines
+        note: >
+          El primer pase solo reconocía la tercera persona y dejó pasar 92
+          zonas como «Vendo casa independiente Lomas de Monteserrín».
       - file: backend/real_estate/tests/test_sectors.py
         symbol: def test_a_listing_headline_is_not_a_zone
     tests:
@@ -369,6 +376,10 @@ rules:
         expected: zona «villa club»
       - name: Dirección «La Venta, Quito»
         expected: zona «la venta»
+      - name: Dirección «Vendo casa independiente Lomas de Monteserrín, Quito»
+        expected: sin zona
+      - name: Dirección «Renta Alta, Quito»
+        expected: zona «renta alta»
 
   - id: SEC-005
     name: Una zona absorbe sus rincones
