@@ -74,6 +74,9 @@ export async function getProperties({
 // catalogue is expected to reach.
 const MAX_PROPERTY_PAGES = 50;
 
+// Waited between attempts at the same page, in order.
+const RETRY_DELAYS_MS = [300, 1_200, 3_000];
+
 export class PartialCatalogError extends Error {
   constructor(message: string) {
     super(message);
@@ -101,10 +104,16 @@ export async function getAllProperties({
       include_images: includeImages ? '1' : '0',
     });
     const url = `${API_URL}/properties/?${params.toString()}`;
-    // One retry: a single refused page used to be enough to truncate the whole
-    // catalogue, and the throttle that caused it fired in bursts.
+    // Retry with a little room between attempts. A single refused page used to
+    // be enough to truncate the whole catalogue, and the two things that refuse
+    // one both come in bursts: the anti-scraper ceiling, and the backend
+    // dropping connections when a tag purge sends every page of the site to
+    // regenerate at once against three gunicorn workers.
     let res: Response | null = null;
-    for (let attempt = 0; attempt < 2; attempt++) {
+    for (let attempt = 0; attempt < RETRY_DELAYS_MS.length + 1; attempt++) {
+      if (attempt > 0) {
+        await new Promise((resolve) => setTimeout(resolve, RETRY_DELAYS_MS[attempt - 1]));
+      }
       try {
         res = await fetch(url, {
           next: { revalidate, tags: ['properties'] },
