@@ -20,7 +20,7 @@ import { jsonLd, SITE_URL, SITE_NAME } from '@/lib/properties';
 import { generatePageMetadata } from '@/lib/metadata';
 import { PostCard } from '@/components/blog/PostCard';
 import CityPriceBlock, { getCityPriceFacts } from '@/components/blog/CityPriceBlock';
-import CityRankingBlock from '@/components/blog/CityRankingBlock';
+import CheapestNowBlock from '@/components/CheapestNowBlock';
 import { getSectors, sectorSlug } from '@/lib/sectors';
 import SponsorSlotBlock from '@/components/blog/SponsorSlot';
 import { money } from '@/lib/market-stats';
@@ -429,7 +429,7 @@ export default async function BlogPostPage({ params }: PostPageProps) {
             use the number, and it sits above the fold of the answer block that
             AI crawlers tend to lift. */}
         {post.city && <CityPriceBlock city={post.city} />}
-        {post.city && <CityRankingBlock city={post.city} />}
+        {post.city && <CheapestNowBlock city={post.city} />}
 
         {post.faqs.length > 0 && (
           <section className="mt-10">

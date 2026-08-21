@@ -120,6 +120,7 @@ Inventario actual: ${properties.length} propiedades publicadas (${forSale} en ve
 - [Locales comerciales](${SITE_URL}/locales-comerciales): Locales y propiedades comerciales.
 - [Inmobiliarias](${SITE_URL}/inmobiliarias): Información para inmobiliarias y agentes.
 - [Estadísticas inmobiliarias](${SITE_URL}/estadisticas-inmobiliarias): Precio del metro cuadrado en Ecuador por ciudad, sector y tipo de propiedad.
+- [Metodología](${SITE_URL}/metodologia): Cómo se calculan estas cifras, qué anuncios entran, qué extremos se excluyen y qué no pueden decir los datos.
 - [Publicar propiedad](${SITE_URL}/publicar-propiedad): Publicación de propiedades con datos, ubicación, imágenes y contacto.
 - [Ayuda](${SITE_URL}/ayuda): Preguntas frecuentes y soporte.
 

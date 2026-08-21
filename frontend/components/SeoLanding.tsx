@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { ArrowRight, CheckCircle2, MapPin, PlusCircle, Search } from 'lucide-react';
 import SeoPropertyGrid from '@/components/SeoPropertyGrid';
 import AdSlot from '@/components/ads/AdSlot';
+import CheapestNowBlock from '@/components/CheapestNowBlock';
 import {
   Property,
   SITE_URL,
@@ -339,6 +340,16 @@ export default async function SeoLanding({
           </div>
         </aside>
       </header>
+
+      {/* The range in the quick answer above says where prices start; this says
+          which listing starts them. It renders only when the ranking service
+          has a big enough sample to call one cheapest. */}
+      <CheapestNowBlock
+        city={featuredFilters.city}
+        propertyType={featuredFilters.type}
+        status={featuredFilters.status}
+        segmentLabel={segment}
+      />
 
       <AdSlot
         placement="city_hero"

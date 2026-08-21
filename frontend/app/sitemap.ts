@@ -84,6 +84,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${SITE_URL}/publicar-asistido`, lastModified: globalLatest, changeFrequency: 'monthly', priority: 0.8 },
     { url: `${SITE_URL}/inmobiliarias`, lastModified: globalLatest, changeFrequency: 'monthly', priority: 0.8 },
     { url: `${SITE_URL}/estadisticas-inmobiliarias`, lastModified: globalLatest, changeFrequency: 'daily', priority: 0.8 },
+    // The page every published figure points at: what was counted, what was
+    // discarded and what the numbers cannot say.
+    { url: `${SITE_URL}/metodologia`, lastModified: globalLatest, changeFrequency: 'monthly', priority: 0.6 },
     ...TYPE_ROUTES.map((path) => ({
       url: `${SITE_URL}${path}`,
       lastModified: globalLatest,

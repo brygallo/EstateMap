@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { getNearbyProperties } from '@/lib/properties';
+import { PartialCatalogError, getAllProperties, getNearbyProperties } from '@/lib/properties';
 import type { Property } from '@/lib/types';
 
 /**
@@ -96,5 +96,53 @@ describe('getNearbyProperties', () => {
     respondWith([twoKm, fiveKm, neighbour]);
 
     expect(await getNearbyProperties(subject, 2)).toHaveLength(2);
+  });
+});
+
+
+describe('getAllProperties', () => {
+  const page = (results: unknown[], next: string | null) =>
+    new Response(JSON.stringify({ results, next }), { status: 200 });
+
+  it('walks every page and returns the whole catalogue', async () => {
+    const fetchSpy = vi
+      .fn()
+      .mockResolvedValueOnce(page([{ id: 1 }], 'next'))
+      .mockResolvedValueOnce(page([{ id: 2 }], null));
+    vi.stubGlobal('fetch', fetchSpy);
+
+    const all = await getAllProperties();
+
+    expect(all.map((property) => property.id)).toEqual([1, 2]);
+  });
+
+  it('retries a refused page before giving up', async () => {
+    // The throttle that emptied the catalogue in production fired in bursts,
+    // so the page after a refusal usually answered.
+    const fetchSpy = vi
+      .fn()
+      .mockResolvedValueOnce(new Response('', { status: 429 }))
+      .mockResolvedValueOnce(page([{ id: 1 }], null));
+    vi.stubGlobal('fetch', fetchSpy);
+
+    const all = await getAllProperties();
+
+    expect(all).toHaveLength(1);
+    expect(fetchSpy).toHaveBeenCalledTimes(2);
+  });
+
+  it('throws rather than returning half the catalogue', async () => {
+    /**
+     * Returning what it had collected made every caller that counts listings
+     * read a short catalogue as "this zone is empty" and answer 404 — a 404
+     * that then got cached while the sitemap kept advertising the URL.
+     */
+    const fetchSpy = vi
+      .fn()
+      .mockResolvedValueOnce(page([{ id: 1 }], 'next'))
+      .mockResolvedValue(new Response('', { status: 500 }));
+    vi.stubGlobal('fetch', fetchSpy);
+
+    await expect(getAllProperties()).rejects.toBeInstanceOf(PartialCatalogError);
   });
 });
