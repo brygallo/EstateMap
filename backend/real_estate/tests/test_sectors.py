@@ -9,7 +9,13 @@ import pytest
 from rest_framework.test import APIClient
 
 from real_estate.models import Property, sector_key
-from real_estate.services.sectors import MIN_SECTOR_LISTINGS, list_sectors, sector_display
+from real_estate.services.sectors import (
+    MIN_SECTOR_LISTINGS,
+    find_sector,
+    list_sectors,
+    sector_display,
+    titlecase_place,
+)
 
 
 pytestmark = pytest.mark.django_db
@@ -111,3 +117,78 @@ def test_the_zones_endpoint_answers_with_names_and_counts():
     assert response.status_code == 200
     assert response.data["sectors"][0]["name"] == "Kennedy Norte"
     assert response.data["sectors"][0]["sector_key"] == "kennedy norte"
+
+
+def test_a_listing_headline_is_not_a_zone():
+    """SPEC:SEC-004 — «Casa en Venta» was a neighbourhood of Guayaquil.
+
+    It reached 19 listings and published a price per square metre, because the
+    importer had put the headline where the address goes.
+    """
+    for headline in (
+        "Casa en Venta, Guayaquil",
+        "Departamento en Venta, Quito",
+        "Terreno de Venta en Tumbaco, Quito",
+        "Oficina en Venta en Manta, Manta",
+        "Venta Terreno, Quito",
+        "Se Vende Casa, Guayaquil",
+    ):
+        assert sector_key(headline) == "", headline
+
+
+def test_a_place_that_merely_sounds_like_one_survives():
+    """SPEC:SEC-004 — the test needs a type word AND an operation word."""
+    assert sector_key("Villa Club, Daule") == "villa club"
+    assert sector_key("Villa Regina, Quito") == "villa regina"
+    assert sector_key("Ventanas, Los Ríos") == "ventanas"
+    assert sector_key("La Venta, Quito") == "la venta"
+    assert sector_key("Quinta Guadalupe, Quito") == "quinta guadalupe"
+
+
+def test_a_shouted_name_is_published_in_title_case():
+    """SPEC:SEC-006 — the seller's caps lock is not part of the place name."""
+    assert titlecase_place("PUERTO AZUL") == "Puerto Azul"
+    assert titlecase_place("URBANIZACION EL CONDADO") == "Urbanizacion el Condado"
+    # A name written deliberately in mixed case is left exactly as it is.
+    assert titlecase_place("Kennedy Norte") == "Kennedy Norte"
+
+
+def test_a_corner_of_a_zone_counts_towards_the_zone():
+    """SPEC:SEC-005 — «Cumbayá Sector La Viña» is Cumbayá, not a rival."""
+    for _ in range(15):
+        listing("Cumbayá, Quito")
+    for _ in range(3):
+        listing("Cumbayá Sector La Viña, Quito")
+
+    sectors = {row["sector_key"]: row for row in list_sectors(city="Quito")}
+
+    assert "cumbaya sector la vina" not in sectors
+    assert sectors["cumbaya"]["count"] == 18
+    assert sectors["cumbaya"]["name"] == "Cumbayá"
+    assert sectors["cumbaya"]["aliases"] == ["cumbaya sector la vina"]
+
+
+def test_a_neighbour_of_similar_size_is_not_absorbed():
+    """SPEC:SEC-005 — two avenues of the same name are still two avenues."""
+    for _ in range(6):
+        listing("Av. República, Quito")
+    for _ in range(6):
+        listing("Av. República de El Salvador, Quito")
+
+    keys = {row["sector_key"] for row in list_sectors(city="Quito")}
+
+    assert "av. republica" in keys
+    assert "av. republica de el salvador" in keys
+
+
+def test_an_absorbed_url_still_resolves():
+    """SPEC:SEC-005 — the corner's URL is indexed; it must lead somewhere."""
+    for _ in range(15):
+        listing("Cumbayá, Quito")
+    for _ in range(3):
+        listing("Cumbayá Sector La Viña, Quito")
+
+    found = find_sector("Quito", "cumbaya sector la vina")
+
+    assert found is not None
+    assert found["sector_key"] == "cumbaya"

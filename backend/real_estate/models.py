@@ -1,5 +1,6 @@
 from django.contrib.auth.models import AbstractUser
 from django.core.validators import MaxValueValidator, MinValueValidator
+import re
 import unicodedata
 
 from django.db import models
@@ -75,6 +76,37 @@ class City(models.Model):
         return f"{self.name} ({self.province.name})"
 
 
+# A zone name and a headline are both free text, and importers put whichever
+# they have in the first segment of `address`. Left alone, «Casa en Venta»
+# became a neighbourhood of Guayaquil with 19 listings and a published price per
+# square metre — a market reading for a place that does not exist.
+#
+# The test is deliberately narrow: a property word AND an operation word, both
+# as whole words. Ecuador really does have places called Villa Club, Villa
+# Regina and Ventanas, and none of them carries an operation word, so they stay.
+_LISTING_TYPE_WORDS = (
+    "casa", "casas", "departamento", "departamentos", "depto", "deptos",
+    "terreno", "terrenos", "lote", "lotes", "local", "locales", "oficina",
+    "oficinas", "suite", "suites", "penthouse", "bodega", "bodegas", "galpon",
+    "galpones", "finca", "quinta", "villa", "villas", "inmueble", "propiedad",
+)
+_LISTING_OPERATION_WORDS = (
+    "venta", "vende", "venden", "alquiler", "alquila", "arriendo", "arrienda",
+    "renta", "rentan",
+)
+_LISTING_TITLE_RE = re.compile(
+    r"\b(?:{types})\b".format(types="|".join(_LISTING_TYPE_WORDS))
+)
+_LISTING_OPERATION_RE = re.compile(
+    r"\b(?:{ops})\b".format(ops="|".join(_LISTING_OPERATION_WORDS))
+)
+
+
+def _looks_like_listing_title(folded: str) -> bool:
+    """True when the segment describes what is for sale, not where it is."""
+    return bool(_LISTING_TITLE_RE.search(folded) and _LISTING_OPERATION_RE.search(folded))
+
+
 def sector_key(address: str, city: str = "") -> str:
     """Stable key for the named zone a listing sits in.
 
@@ -84,12 +116,18 @@ def sector_key(address: str, city: str = "") -> str:
     case and accents because the same zone arrives written every way, and comes
     back empty when the segment is just the city again: «el sector Macas de la
     ciudad de Macas» is not a place, it is a repetition (PRC-009).
+
+    It also comes back empty when the segment is the listing's own headline
+    rather than a place, so no page, sitemap entry or price average is ever
+    built for one.
     """
     first = (address or "").split(",")[0].strip()
     if not first:
         return ""
     folded = _fold_place(first)
-    return "" if folded == _fold_place(city) else folded
+    if folded == _fold_place(city):
+        return ""
+    return "" if _looks_like_listing_title(folded) else folded
 
 
 def _fold_place(text: str) -> str:
@@ -764,3 +802,67 @@ class ActivityEvent(models.Model):
 
     def __str__(self):
         return f"{self.event_name} ({self.user_id or self.session_id or 'anónimo'})"
+
+
+class MarketSnapshot(models.Model):
+    """One slice of the market, as it stood on one day.
+
+    Written once a night and never edited. The value is not in any single row —
+    a page can compute today's figures on demand — but in the series they form:
+    «is the square metre in Cumbayá rising» cannot be answered by a portal that
+    only knows today, and cannot be back-filled once the day has passed.
+
+    A row exists only when the slice held enough listings to support the
+    figures (`MIN_SNAPSHOT_LISTINGS`), so a gap in the series is a real gap in
+    the inventory rather than a number nobody should have published.
+    """
+
+    class Scope(models.TextChoices):
+        COUNTRY = 'country', 'País'
+        CITY = 'city', 'Ciudad'
+        SECTOR = 'sector', 'Zona'
+
+    captured_on = models.DateField(db_index=True)
+    scope = models.CharField(max_length=10, choices=Scope.choices)
+    # Empty means "every one of them": `city=''` is the whole country, and
+    # `property_type=''` is every type pooled together.
+    city = models.CharField(max_length=120, blank=True, default='')
+    sector_key = models.CharField(max_length=120, blank=True, default='')
+    property_type = models.CharField(max_length=30, blank=True, default='')
+    status = models.CharField(max_length=20)
+
+    active_count = models.PositiveIntegerField()
+    median_price = models.FloatField(null=True, blank=True)
+    avg_price = models.FloatField(null=True, blank=True)
+    # Null for rentals on purpose: a monthly rent divided by an area is not a
+    # price per square metre, and publishing it beside sale figures produced
+    # readings of $6,89/m² next to $1.200/m².
+    median_price_m2 = models.FloatField(null=True, blank=True)
+    avg_price_m2 = models.FloatField(null=True, blank=True)
+    median_area = models.FloatField(null=True, blank=True)
+
+    class Meta:
+        verbose_name = 'Corte de mercado'
+        verbose_name_plural = 'Cortes de mercado'
+        ordering = ['-captured_on', 'scope', 'city', 'sector_key']
+        constraints = [
+            models.UniqueConstraint(
+                fields=[
+                    'captured_on', 'scope', 'city', 'sector_key',
+                    'property_type', 'status',
+                ],
+                name='unique_market_snapshot_slice',
+            )
+        ]
+        indexes = [
+            # The series query: one slice, ordered in time.
+            models.Index(
+                fields=['scope', 'city', 'sector_key', 'property_type', 'status', 'captured_on'],
+                name='snapshot_series_idx',
+            ),
+        ]
+
+    def __str__(self):
+        where = self.sector_key or self.city or 'Ecuador'
+        what = self.property_type or 'todo'
+        return f'{where} · {what} · {self.status} · {self.captured_on}'
