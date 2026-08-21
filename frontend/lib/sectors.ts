@@ -19,6 +19,8 @@ export type Sector = {
   name: string;
   count: number;
   avg_price_m2: number | null;
+  /** Keys this zone absorbed. Their URLs are indexed and must still lead here. */
+  aliases: string[];
   updated_at: string | null;
 };
 
@@ -53,13 +55,20 @@ export async function getSectors(
  *
  * A name can carry hyphens of its own, so turning `puerto-santa-ana` back into
  * a key would be guesswork; comparing slugs is exact.
+ *
+ * An absorbed zone answers here too, under the URL it used to own. That URL is
+ * already indexed and already linked; letting it 404 would throw away whatever
+ * it had earned. The caller compares slugs to decide whether to redirect.
  */
 export async function findSector(citySlug: string, sectorParam: string): Promise<Sector | null> {
   const sectors = await getSectors(undefined, 1);
+  const inCity = sectors.filter((sector) => slugify(sector.city) === citySlug);
   return (
-    sectors.find(
-      (sector) => slugify(sector.city) === citySlug && sectorSlug(sector) === sectorParam
-    ) ?? null
+    inCity.find((sector) => sectorSlug(sector) === sectorParam) ??
+    inCity.find((sector) =>
+      (sector.aliases ?? []).some((alias) => slugify(alias) === sectorParam)
+    ) ??
+    null
   );
 }
 

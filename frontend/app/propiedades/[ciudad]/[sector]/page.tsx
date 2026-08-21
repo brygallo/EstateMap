@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { notFound } from 'next/navigation';
+import { notFound, redirect } from 'next/navigation';
 
 import SeoLanding, { priceRangeText } from '@/components/SeoLanding';
 import { generatePageMetadata } from '@/lib/metadata';
@@ -74,6 +74,13 @@ export default async function SectorPage({ params }: SectorPageProps) {
   const { ciudad, sector: sectorParam } = await params;
   const sector = await findSector(ciudad, sectorParam);
   if (!sector) notFound();
+
+  // The URL of a zone that has since been absorbed into a larger one: send it
+  // where the content now lives instead of serving the same page twice
+  // (SEC-005).
+  if (sectorSlug(sector) !== sectorParam) {
+    redirect(`/propiedades/${ciudad}/${sectorSlug(sector)}`);
+  }
 
   const [properties, siblings] = await Promise.all([
     getSectorProperties(sector),
