@@ -320,6 +320,35 @@ const Leg: React.FC<{limb: Limb; look: PersonLook; near: boolean}> = ({limb, loo
 };
 
 /**
+ * The three dots a chat shows while somebody is writing.
+ *
+ * Each dot lifts and brightens in turn, a third of a cycle behind the one
+ * before it, and the wave runs a little under a second — slow enough to read as
+ * thinking rather than loading. The dots only move; they never change size, so
+ * the bubble keeps its width and the line does not jump when the words arrive.
+ */
+const TypingDots: React.FC<{frame: number}> = ({frame}) => (
+  <span style={{display: 'inline-flex', gap: 8, alignItems: 'center', height: 30}}>
+    {[0, 1, 2].map((index) => {
+      const beat = Math.max(0, wave(frame, 26, -index * ((Math.PI * 2) / 3)));
+      return (
+        <span
+          key={index}
+          style={{
+            width: 12,
+            height: 12,
+            borderRadius: '50%',
+            background: '#0B0D17',
+            opacity: 0.35 + beat * 0.65,
+            transform: `translateY(${-beat * 7}px)`,
+          }}
+        />
+      );
+    })}
+  </span>
+);
+
+/**
  * One person. `frame` drives every cycle, `action` chooses the posture, and
  * `facing` flips them without redrawing anything.
  */
@@ -337,7 +366,17 @@ export const Person: React.FC<{
   headTurn?: number;
   /** Degrees the whole body leans, for interest, weight or defeat. */
   lean?: number;
-}> = ({frame, action = 'idle', look = 0, facing = 1, scale = 1, says, saysProgress = 1, saysSide = 1, headTurn = 0, lean = 0}) => {
+  /**
+   * Show the bubble with three bouncing dots instead of words: the person is
+   * there and still working out what to say.
+   *
+   * It is the beat a chat app gives you before a message lands, and it is read
+   * the same way, which is why a line that simply appears feels abrupt and this
+   * does not. Give a scene a few frames of `typing` before handing the same
+   * bubble its `says`.
+   */
+  typing?: boolean;
+}> = ({frame, action = 'idle', look = 0, facing = 1, scale = 1, says, saysProgress = 1, saysSide = 1, headTurn = 0, lean = 0, typing = false}) => {
   const skin = LOOKS[look % LOOKS.length];
   const pose = posture(action, frame);
   // A blink is two frames every hundred and twenty, never on the beat.
@@ -355,9 +394,9 @@ export const Person: React.FC<{
       {/* `saysSide` is which side of the screen the bubble sits on, so a person
           facing left does not end up talking into the back of their own head.
           The person is drawn mirrored, so the anchor flips with them. */}
-      {says ? (
+      {says || typing ? (
         <div style={{position: 'absolute', left: bubbleLeft ? 86 : undefined, right: bubbleLeft ? undefined : 86, bottom: 300, transform: `scaleX(${facing}) translateY(${(1 - smooth(saysProgress)) * 10}px)`, transformOrigin: '50% 50%', opacity: smooth(saysProgress), whiteSpace: 'nowrap'}}>
-          <div style={{padding: '12px 22px', borderRadius: 999, background: '#FFFFFF', border: '4px solid #0B0D17', fontSize: 30, fontWeight: 900, color: '#0B0D17', boxShadow: '0 10px 24px rgba(0,0,0,.28)'}}>{says}</div>
+          <div style={{padding: '12px 22px', borderRadius: 999, background: '#FFFFFF', border: '4px solid #0B0D17', fontSize: 30, fontWeight: 900, color: '#0B0D17', boxShadow: '0 10px 24px rgba(0,0,0,.28)'}}>{typing ? <TypingDots frame={frame} /> : says}</div>
             <div style={{position: 'absolute', left: bubbleLeft ? 22 : undefined, right: bubbleLeft ? undefined : 22, bottom: -14, width: 0, height: 0, borderLeft: '12px solid transparent', borderRight: '12px solid transparent', borderTop: '16px solid #0B0D17'}} />
         </div>
       ) : null}
