@@ -7,6 +7,7 @@
  */
 
 import { getServerApiUrl, getServerApiHeaders } from './api-url';
+import { serverFetch } from './server-fetch';
 import { getPropertyPoint, type LatLngPoint } from './geo';
 
 const API_URL = getServerApiUrl();
@@ -57,11 +58,10 @@ export async function getProperties({
       page_size: String(pageSize),
       include_images: includeImages ? '1' : '0',
     });
-    const res = await fetch(`${API_URL}/properties/?${params.toString()}`, {
+    const res = await serverFetch(`${API_URL}/properties/?${params.toString()}`, {
       next: { revalidate, tags: ['properties'] },
-      headers: getServerApiHeaders(),
     });
-    if (!res.ok) return [];
+    if (!res || !res.ok) return [];
     return normalizeList(await res.json());
   } catch (error) {
     console.error('Error fetching properties:', error);
@@ -386,11 +386,10 @@ export async function getFeaturedProperties({
     if (province) params.set('province', province);
     if (sector) params.set('sector', sector);
 
-    const res = await fetch(`${API_URL}/properties/?${params.toString()}`, {
+    const res = await serverFetch(`${API_URL}/properties/?${params.toString()}`, {
       next: { revalidate, tags: ['properties'] },
-      headers: getServerApiHeaders(),
     });
-    if (!res.ok) return [];
+    if (!res || !res.ok) return [];
     return normalizeList(await res.json());
   } catch (error) {
     console.error('Error fetching featured properties:', error);

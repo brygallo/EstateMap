@@ -6,7 +6,8 @@
  * client-side fetch would leave the most citable pages of the site empty.
  */
 
-import { getServerApiUrl, getServerApiHeaders } from './api-url';
+import { getServerApiUrl } from './api-url';
+import { serverFetch } from '@/lib/server-fetch';
 
 /** A reading that has no sample behind it is null, never zero. */
 export type Readings = {
@@ -55,11 +56,10 @@ export type MarketStats = {
 export async function getMarketStats(city?: string): Promise<MarketStats | null> {
   try {
     const query = city ? `?city=${encodeURIComponent(city)}` : '';
-    const res = await fetch(`${getServerApiUrl()}/market-stats/${query}`, {
+    const res = await serverFetch(`${getServerApiUrl()}/market-stats/${query}`, {
       next: { revalidate: 1800, tags: ['market-stats'] },
-      headers: getServerApiHeaders(),
     });
-    if (!res.ok) return null;
+    if (!res || !res.ok) return null;
     return (await res.json()) as MarketStats;
   } catch (error) {
     console.error('Error fetching market stats:', error);

@@ -9,7 +9,8 @@
  * whole thing stays static.
  */
 
-import { getServerApiUrl, getServerApiHeaders } from './api-url';
+import { getServerApiUrl } from './api-url';
+import { serverFetch } from '@/lib/server-fetch';
 
 export type SponsorSlot = {
   id: number;
@@ -43,11 +44,11 @@ const REVALIDATE_SECONDS = 1800;
 
 export async function getSponsors(placement: Placement): Promise<SponsorSlot[]> {
   try {
-    const res = await fetch(
+    const res = await serverFetch(
       `${getServerApiUrl()}/blog/sponsors/?placement=${encodeURIComponent(placement)}`,
-      { next: { revalidate: REVALIDATE_SECONDS, tags: ['blog', 'blog-sponsors'] }, headers: getServerApiHeaders() }
+      { next: { revalidate: REVALIDATE_SECONDS, tags: ['blog', 'blog-sponsors'] } }
     );
-    if (!res.ok) return [];
+    if (!res || !res.ok) return [];
     return await res.json();
   } catch (error) {
     console.error('Error fetching sponsors:', error);

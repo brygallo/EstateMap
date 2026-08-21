@@ -6,7 +6,8 @@
  * key and the display name are resolved by the backend so the stats table, the
  * zone page and the sitemap all name a zone the same way.
  */
-import { getServerApiUrl, getServerApiHeaders } from '@/lib/api-url';
+import { getServerApiUrl } from '@/lib/api-url';
+import { serverFetch } from '@/lib/server-fetch';
 import { slugify, type Property } from '@/lib/properties';
 
 /** A zone needs the same inventory a local landing needs to be indexed (SEO-001). */
@@ -37,11 +38,10 @@ export async function getSectors(
   try {
     const params = new URLSearchParams({ min: String(minimum) });
     if (city) params.set('city', city);
-    const response = await fetch(`${getServerApiUrl()}/properties/sectors/?${params.toString()}`, {
+    const response = await serverFetch(`${getServerApiUrl()}/properties/sectors/?${params.toString()}`, {
       next: { revalidate, tags: ['properties'] },
-      headers: getServerApiHeaders(),
     });
-    if (!response.ok) return [];
+    if (!response || !response.ok) return [];
     const payload = await response.json();
     return (payload.sectors ?? []) as Sector[];
   } catch (error) {
@@ -83,11 +83,10 @@ export async function getSectorProperties(
       page_size: '120',
       include_images: '1',
     });
-    const response = await fetch(`${getServerApiUrl()}/properties/?${params.toString()}`, {
+    const response = await serverFetch(`${getServerApiUrl()}/properties/?${params.toString()}`, {
       next: { revalidate, tags: ['properties'] },
-      headers: getServerApiHeaders(),
     });
-    if (!response.ok) return [];
+    if (!response || !response.ok) return [];
     const payload = await response.json();
     return (Array.isArray(payload) ? payload : (payload.results ?? [])) as Property[];
   } catch (error) {

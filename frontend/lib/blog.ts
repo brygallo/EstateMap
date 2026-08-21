@@ -11,7 +11,8 @@
  * within seconds instead of waiting out the hour.
  */
 
-import { getServerApiUrl, getServerApiHeaders } from './api-url';
+import { getServerApiUrl } from './api-url';
+import { serverFetch } from '@/lib/server-fetch';
 import { slugify } from './properties';
 
 export type BlogCategory = {
@@ -143,11 +144,10 @@ export async function getBlogPosts(
   const suffix = query.toString() ? `?${query}` : '';
 
   try {
-    const res = await fetch(`${getServerApiUrl()}/blog/posts/${suffix}`, {
+    const res = await serverFetch(`${getServerApiUrl()}/blog/posts/${suffix}`, {
       next: { revalidate: REVALIDATE_SECONDS, tags: ['blog'] },
-      headers: getServerApiHeaders(),
     });
-    if (!res.ok) return { count: 0, results: [] };
+    if (!res || !res.ok) return { count: 0, results: [] };
     return await res.json();
   } catch (error) {
     console.error('Error fetching blog posts:', error);
@@ -157,11 +157,11 @@ export async function getBlogPosts(
 
 export async function getBlogPost(slug: string): Promise<BlogPost | null> {
   try {
-    const res = await fetch(
+    const res = await serverFetch(
       `${getServerApiUrl()}/blog/posts/${encodeURIComponent(slug)}/`,
-      { next: { revalidate: REVALIDATE_SECONDS, tags: ['blog', `blog-${slug}`] }, headers: getServerApiHeaders() }
+      { next: { revalidate: REVALIDATE_SECONDS, tags: ['blog', `blog-${slug}`] } }
     );
-    if (!res.ok) return null;
+    if (!res || !res.ok) return null;
     return await res.json();
   } catch (error) {
     console.error(`Error fetching blog post ${slug}:`, error);
@@ -171,11 +171,10 @@ export async function getBlogPost(slug: string): Promise<BlogPost | null> {
 
 export async function getBlogCategories(): Promise<BlogCategory[]> {
   try {
-    const res = await fetch(`${getServerApiUrl()}/blog/categories/`, {
+    const res = await serverFetch(`${getServerApiUrl()}/blog/categories/`, {
       next: { revalidate: REVALIDATE_SECONDS, tags: ['blog'] },
-      headers: getServerApiHeaders(),
     });
-    if (!res.ok) return [];
+    if (!res || !res.ok) return [];
     return await res.json();
   } catch (error) {
     console.error('Error fetching blog categories:', error);

@@ -21,7 +21,8 @@
  * get the same ad. That is the price of serving cached pages.
  */
 
-import { getServerApiUrl, getServerApiHeaders } from './api-url';
+import { getServerApiUrl } from './api-url';
+import { serverFetch } from '@/lib/server-fetch';
 
 export type AdKind = 'paid' | 'partner' | 'promo';
 
@@ -89,11 +90,10 @@ export async function getAdSlots(
   if (province) query.set('province', province);
 
   try {
-    const res = await fetch(`${getServerApiUrl()}/ads/?${query.toString()}`, {
+    const res = await serverFetch(`${getServerApiUrl()}/ads/?${query.toString()}`, {
       next: { revalidate: REVALIDATE_SECONDS, tags: ['ads', `ads-${placement}`] },
-      headers: getServerApiHeaders(),
     });
-    if (!res.ok) return [];
+    if (!res || !res.ok) return [];
     return await res.json();
   } catch (error) {
     // A slot is never worth failing a page over.
