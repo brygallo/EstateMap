@@ -9,7 +9,7 @@
  * whole thing stays static.
  */
 
-import { getServerApiUrl } from './api-url';
+import { getServerApiUrl, getServerApiHeaders } from './api-url';
 
 export type SponsorSlot = {
   id: number;
@@ -45,7 +45,7 @@ export async function getSponsors(placement: Placement): Promise<SponsorSlot[]> 
   try {
     const res = await fetch(
       `${getServerApiUrl()}/blog/sponsors/?placement=${encodeURIComponent(placement)}`,
-      { next: { revalidate: REVALIDATE_SECONDS, tags: ['blog', 'blog-sponsors'] } }
+      { next: { revalidate: REVALIDATE_SECONDS, tags: ['blog', 'blog-sponsors'] }, headers: getServerApiHeaders() }
     );
     if (!res.ok) return [];
     return await res.json();

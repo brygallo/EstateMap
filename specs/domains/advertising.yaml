@@ -294,7 +294,7 @@ rules:
         lines: "121-136"
         symbol: export function pickAd
       - file: frontend/lib/ads.ts
-        lines: "112-115"
+        lines: "116-118"
         symbol: export function rotationWindow
       - file: backend/advertising/views.py
         lines: "30-36"

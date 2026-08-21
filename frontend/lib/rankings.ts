@@ -6,7 +6,7 @@
  * tag is the inventory one, so a page recalculates itself when the market it
  * describes changes, not on a timer.
  */
-import { getServerApiUrl } from '@/lib/api-url';
+import { getServerApiUrl, getServerApiHeaders } from '@/lib/api-url';
 
 export type RankingItem = {
   id: number;
@@ -61,6 +61,7 @@ export async function getRanking(
     const params = new URLSearchParams(query);
     const response = await fetch(`${getServerApiUrl()}/properties/rankings/?${params.toString()}`, {
       next: { revalidate, tags: ['properties'] },
+      headers: getServerApiHeaders(),
     });
     if (!response.ok) return null;
     return (await response.json()) as Ranking;
@@ -103,6 +104,7 @@ export async function getRankingScopes(revalidate = 3600): Promise<RankingScopes
   try {
     const response = await fetch(`${getServerApiUrl()}/properties/ranking-scopes/`, {
       next: { revalidate, tags: ['properties'] },
+      headers: getServerApiHeaders(),
     });
     if (!response.ok) return null;
     return (await response.json()) as RankingScopes;

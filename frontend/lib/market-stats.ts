@@ -6,7 +6,7 @@
  * client-side fetch would leave the most citable pages of the site empty.
  */
 
-import { getServerApiUrl } from './api-url';
+import { getServerApiUrl, getServerApiHeaders } from './api-url';
 
 export type StatRow = {
   city?: string;
@@ -45,6 +45,7 @@ export async function getMarketStats(city?: string): Promise<MarketStats | null>
     const query = city ? `?city=${encodeURIComponent(city)}` : '';
     const res = await fetch(`${getServerApiUrl()}/market-stats/${query}`, {
       next: { revalidate: 1800, tags: ['market-stats'] },
+      headers: getServerApiHeaders(),
     });
     if (!res.ok) return null;
     return (await res.json()) as MarketStats;

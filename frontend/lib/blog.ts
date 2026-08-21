@@ -11,7 +11,7 @@
  * within seconds instead of waiting out the hour.
  */
 
-import { getServerApiUrl } from './api-url';
+import { getServerApiUrl, getServerApiHeaders } from './api-url';
 import { slugify } from './properties';
 
 export type BlogCategory = {
@@ -130,6 +130,7 @@ export async function getBlogPosts(
   try {
     const res = await fetch(`${getServerApiUrl()}/blog/posts/${suffix}`, {
       next: { revalidate: REVALIDATE_SECONDS, tags: ['blog'] },
+      headers: getServerApiHeaders(),
     });
     if (!res.ok) return { count: 0, results: [] };
     return await res.json();
@@ -143,7 +144,7 @@ export async function getBlogPost(slug: string): Promise<BlogPost | null> {
   try {
     const res = await fetch(
       `${getServerApiUrl()}/blog/posts/${encodeURIComponent(slug)}/`,
-      { next: { revalidate: REVALIDATE_SECONDS, tags: ['blog', `blog-${slug}`] } }
+      { next: { revalidate: REVALIDATE_SECONDS, tags: ['blog', `blog-${slug}`] }, headers: getServerApiHeaders() }
     );
     if (!res.ok) return null;
     return await res.json();
@@ -157,6 +158,7 @@ export async function getBlogCategories(): Promise<BlogCategory[]> {
   try {
     const res = await fetch(`${getServerApiUrl()}/blog/categories/`, {
       next: { revalidate: REVALIDATE_SECONDS, tags: ['blog'] },
+      headers: getServerApiHeaders(),
     });
     if (!res.ok) return [];
     return await res.json();

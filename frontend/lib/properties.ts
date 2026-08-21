@@ -6,7 +6,7 @@
  * object, and it may be unreachable at build time.
  */
 
-import { getServerApiUrl } from './api-url';
+import { getServerApiUrl, getServerApiHeaders } from './api-url';
 import { getPropertyPoint, type LatLngPoint } from './geo';
 
 const API_URL = getServerApiUrl();
@@ -59,6 +59,7 @@ export async function getProperties({
     });
     const res = await fetch(`${API_URL}/properties/?${params.toString()}`, {
       next: { revalidate, tags: ['properties'] },
+      headers: getServerApiHeaders(),
     });
     if (!res.ok) return [];
     return normalizeList(await res.json());
@@ -95,6 +96,7 @@ export async function getAllProperties({
       });
       const res = await fetch(`${API_URL}/properties/?${params.toString()}`, {
         next: { revalidate, tags: ['properties'] },
+        headers: getServerApiHeaders(),
       });
       if (!res.ok) break;
       const data = await res.json();
@@ -152,6 +154,7 @@ export async function getPropertySummary(
     const query = new URLSearchParams(filters).toString();
     const res = await fetch(`${API_URL}/properties/summary/${query ? `?${query}` : ''}`, {
       next: { revalidate, tags: ['properties'] },
+      headers: getServerApiHeaders(),
     });
     if (!res.ok) return EMPTY_SUMMARY;
     const data = await res.json();
@@ -184,6 +187,7 @@ export async function getLocationCatalog(revalidate = 86400): Promise<LocationCa
   try {
     const res = await fetch(`${API_URL}/properties/catalog/`, {
       next: { revalidate, tags: ['catalog'] },
+      headers: getServerApiHeaders(),
     });
     if (!res.ok) return EMPTY_CATALOG;
     const data = await res.json();
@@ -292,6 +296,7 @@ export async function getNearbyProperties(
     });
     const response = await fetch(`${API_URL}/properties/?${params.toString()}`, {
       next: { revalidate: 300, tags: ['properties'] },
+      headers: getServerApiHeaders(),
     });
     if (!response.ok) return [];
 
@@ -344,6 +349,7 @@ export async function getFeaturedProperties({
 
     const res = await fetch(`${API_URL}/properties/?${params.toString()}`, {
       next: { revalidate, tags: ['properties'] },
+      headers: getServerApiHeaders(),
     });
     if (!res.ok) return [];
     return normalizeList(await res.json());
@@ -357,7 +363,7 @@ export async function getProperty(id: string): Promise<Property | null> {
   try {
     const res = await fetch(`${API_URL}/properties/${id}/`, {
       next: { revalidate: 300, tags: ['properties', `property-${id}`] },
-      headers: { 'Content-Type': 'application/json' },
+      headers: { ...getServerApiHeaders(), 'Content-Type': 'application/json' },
     });
     if (!res.ok) return null;
     return (await res.json()) as Property;
@@ -376,7 +382,7 @@ export async function getPropertyIdByCode(code: string): Promise<number | null> 
   try {
     const res = await fetch(`${API_URL}/properties/code/${encodeURIComponent(code)}/`, {
       next: { revalidate: 300, tags: ['properties'] },
-      headers: { 'Content-Type': 'application/json' },
+      headers: { ...getServerApiHeaders(), 'Content-Type': 'application/json' },
     });
     if (!res.ok) return null;
     const data = await res.json();

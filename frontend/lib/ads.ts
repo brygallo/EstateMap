@@ -21,7 +21,7 @@
  * get the same ad. That is the price of serving cached pages.
  */
 
-import { getServerApiUrl } from './api-url';
+import { getServerApiUrl, getServerApiHeaders } from './api-url';
 
 export type AdKind = 'paid' | 'partner' | 'promo';
 
@@ -91,6 +91,7 @@ export async function getAdSlots(
   try {
     const res = await fetch(`${getServerApiUrl()}/ads/?${query.toString()}`, {
       next: { revalidate: REVALIDATE_SECONDS, tags: ['ads', `ads-${placement}`] },
+      headers: getServerApiHeaders(),
     });
     if (!res.ok) return [];
     return await res.json();

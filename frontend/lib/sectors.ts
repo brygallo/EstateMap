@@ -6,7 +6,7 @@
  * key and the display name are resolved by the backend so the stats table, the
  * zone page and the sitemap all name a zone the same way.
  */
-import { getServerApiUrl } from '@/lib/api-url';
+import { getServerApiUrl, getServerApiHeaders } from '@/lib/api-url';
 import { slugify, type Property } from '@/lib/properties';
 
 /** A zone needs the same inventory a local landing needs to be indexed (SEO-001). */
@@ -37,6 +37,7 @@ export async function getSectors(
     if (city) params.set('city', city);
     const response = await fetch(`${getServerApiUrl()}/properties/sectors/?${params.toString()}`, {
       next: { revalidate, tags: ['properties'] },
+      headers: getServerApiHeaders(),
     });
     if (!response.ok) return [];
     const payload = await response.json();
@@ -75,6 +76,7 @@ export async function getSectorProperties(
     });
     const response = await fetch(`${getServerApiUrl()}/properties/?${params.toString()}`, {
       next: { revalidate, tags: ['properties'] },
+      headers: getServerApiHeaders(),
     });
     if (!response.ok) return [];
     const payload = await response.json();

@@ -146,13 +146,24 @@ services:
       # Google OAuth debe estar disponible en runtime también
       NEXT_PUBLIC_GOOGLE_CLIENT_ID: ${NEXT_PUBLIC_GOOGLE_CLIENT_ID}
       REVALIDATE_SECRET: ${REVALIDATE_SECRET}
+      # Where server-side rendering reads the API. Runtime only, never a build
+      # arg: `next build` prerenders from outside this network and has to keep
+      # using the public URL.
+      #
+      # Without it the renderer falls back to NEXT_PUBLIC_API_URL and leaves the
+      # container to come back in through nginx, which appends X-Forwarded-For.
+      # The backend then reads every server-rendered page as one anonymous
+      # visitor sharing a single throttle bucket, and answers 429 — 8704 of them
+      # in two days of logs, against /api/properties/, which is what the sitemap,
+      # the SEO landings, the market stats and llms.txt are all built from.
+      NEXT_INTERNAL_API_URL: ${NEXT_INTERNAL_API_URL:-http://backend:8000/api}
 
-    # The API hostname is proxied through Cloudflare, so resolving it normally
-    # would send every server-rendered page out to an edge and back before it
-    # could read its own database. Pinning it to the host gateway keeps the URL
-    # identical — same TLS, same certificate, same nginx vhost — while the
-    # request never leaves the machine. It also means a CDN incident degrades
-    # visitors, not rendering.
+    # A safety net, not the main path: NEXT_INTERNAL_API_URL above sends
+    # server-side rendering straight to the backend container. Should that ever
+    # be unset, this keeps the public hostname resolving to the host gateway
+    # instead of out to a Cloudflare edge and back — same TLS, same certificate,
+    # same nginx vhost, but the request never leaves the machine, so a CDN
+    # incident degrades visitors rather than rendering.
     extra_hosts:
       - "api.geopropiedadesecuador.com:host-gateway"
 
