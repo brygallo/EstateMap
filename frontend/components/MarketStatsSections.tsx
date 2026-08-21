@@ -47,7 +47,7 @@ export default function MarketStatsSections({
         <Kpi icon={Building2} label="Propiedades analizadas" value={integer(data.overall.count)} />
         <Kpi icon={TrendingUp} label="Precio promedio" value={money(data.overall.avg_price)} />
         <Kpi icon={BarChart3} label="Área promedio" value={`${integer(data.overall.avg_area)} m²`} />
-        <Kpi icon={TrendingUp} label="Tiempo estimado en mercado" value={`${integer(data.estimated_market_days)} días`} />
+        <Kpi icon={TrendingUp} label="Antigüedad media del anuncio" value={`${integer(data.estimated_market_days)} días`} />
         <Kpi icon={BarChart3} label="Valores extremos excluidos" value={integer(data.outliers_excluded)} />
       </section>
 

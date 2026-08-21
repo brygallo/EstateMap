@@ -2310,7 +2310,18 @@ class MarketStatsView(generics.GenericAPIView):
                 'growth_zones': [row for row in evolution if row['change_pct'] > 0][:8],
                 'estimated_market_days': round(sum(market_days) / len(market_days)) if market_days else 0,
                 'outliers_excluded': outliers_excluded,
-                'methodology': 'Propiedades en venta activas con precio y área válidos. Los extremos se excluyen con el método IQR; evolución compara altas de los últimos 90 días con los 90 anteriores.',
+                'methodology': (
+                    'Muestra: propiedades en venta activas con precio y área válidos, '
+                    'publicadas en Geo Propiedades Ecuador. La mayor parte del inventario '
+                    'procede de anuncios importados del portal Plusvalía, no de operaciones '
+                    'cerradas: son precios pedidos por quien vende, no precios de venta. '
+                    'Los extremos se excluyen con el método IQR. La evolución compara las '
+                    'altas de los últimos 90 días con las de los 90 anteriores, así que '
+                    'contrasta cohortes distintas de anuncios y no la variación de precio de '
+                    'un mismo inmueble. La antigüedad media del anuncio cuenta los días desde '
+                    'que el anuncio entró en esta base de datos y solo sobre los que siguen '
+                    'activos: no mide cuánto tarda en venderse una propiedad.'
+                ),
             }
             return payload
 
