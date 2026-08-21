@@ -387,3 +387,35 @@ def capture_market_snapshot(self):
         raise self.retry(exc=exc, countdown=600)
     logger.info('Market snapshot captured: %s slices', written)
     return written
+
+
+@shared_task
+def roll_up_activity():
+    """Condensa en una fila por día lo que después la poda podrá borrar."""
+    from .services.retention import ActivityRetentionService
+
+    written = ActivityRetentionService().roll_up()
+    logger.info("activity_rollup_written rows=%s", written)
+    return written
+
+
+@shared_task
+def prune_expired_data():
+    """Poda nocturna: detalle de actividad, incidencias, auditoría y papelera.
+
+    Vuelve a resumir antes de podar. Encadenarlo aquí y no confiar en que la
+    tarea de resumen corrió hace unas horas es lo que garantiza la regla del
+    servicio: no se borra el detalle de un día que no está resumido.
+    """
+    from .services.retention import ActivityRetentionService
+
+    service = ActivityRetentionService()
+    service.roll_up()
+    result = {
+        "activity": service.prune_activity(),
+        "incidents": service.prune_incidents(),
+        "audit": service.prune_audit(),
+        "trash": service.purge_trash(),
+    }
+    logger.info("retention_pruned %s", result)
+    return result

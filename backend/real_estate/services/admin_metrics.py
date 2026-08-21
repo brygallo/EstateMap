@@ -1,4 +1,4 @@
-from datetime import timedelta
+from datetime import date, timedelta
 
 from django.conf import settings
 from django.contrib.auth import get_user_model
@@ -9,9 +9,54 @@ from ingesta.models import Fuente, IngestaRun, ListingRetirada
 from real_estate.models import ActivityEvent, Lead, PendingPublication, Property, PropertyImage
 
 
+# El día en que empezó a marcarse `is_bot` en el servidor. Antes de esta fecha
+# no se guardó el User-Agent, así que los eventos anteriores están todos como
+# «humanos» y no hay forma de reclasificarlos. Una comparación que cruce esta
+# línea compara un periodo limpio contra uno con crawlers dentro: la caída sale
+# inventada. El panel tiene que poder decirlo en vez de dibujarla.
+BOT_FILTER_SINCE = "2026-08-03"
+
 DETAIL_EVENTS = ["property_card_details_opened", "property_pin_clicked"]
 DISCOVERY_EVENTS = DETAIL_EVENTS + ["map_filter_changed", "map_city_group_clicked"]
 PUBLISH_INTENT_EVENTS = ["publish_cta_clicked", "publication_form_started", "publication_form_viewed"]
+
+
+def _bot_filter_since():
+    """Fecha desde la que las métricas humanas son comparables, o None."""
+    raw = getattr(settings, "ACTIVITY_BOT_FILTER_SINCE", BOT_FILTER_SINCE)
+    if not raw:
+        return None
+    if isinstance(raw, date):
+        return raw
+    try:
+        return date.fromisoformat(str(raw))
+    except ValueError:
+        return None
+
+
+def _comparability(now, windows):
+    """Marca qué ventanas empiezan antes del corte de bots.
+
+    Devuelve la fecha del corte y, por ventana, si arrastra tráfico que nunca
+    se pudo clasificar. Quien pinte la ventana decide qué hacer con el aviso;
+    lo que no puede es no tenerlo.
+    """
+    cutoff = _bot_filter_since()
+    return {
+        "bot_filter_since": cutoff.isoformat() if cutoff else None,
+        "windows": {
+            name: {
+                "starts_on": start.date().isoformat(),
+                "crosses_bot_cutoff": bool(cutoff and start.date() < cutoff),
+            }
+            for name, start in windows.items()
+        },
+        "note": (
+            "Los eventos anteriores al {cutoff} se guardaron sin User-Agent, así que "
+            "ningún crawler pudo marcarse como tal y cuentan como personas. Una "
+            "variación que cruce esa fecha compara periodos que no son comparables."
+        ).format(cutoff=cutoff.isoformat() if cutoff else "inicio"),
+    }
 
 
 def _change(current, previous):
@@ -323,6 +368,15 @@ def _build_owner_metrics(now=None):
     storage_bytes = PropertyImage.objects.aggregate(total=Sum("file_size"))["total"] or 0
     return {
         "period": period,
+        "comparability": _comparability(
+            now,
+            {
+                "period": current_start,
+                "previous_period": previous_start,
+                "month": month_start,
+                "trends": trend_since,
+            },
+        ),
         "funnel": funnel,
         "trends": trends,
         "top_properties": top_properties,

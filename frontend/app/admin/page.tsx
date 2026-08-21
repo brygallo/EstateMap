@@ -94,8 +94,15 @@ interface OwnerPeriodMetric {
   change: number;
 }
 
+interface Comparability {
+  bot_filter_since: string | null;
+  windows: Record<string, { starts_on: string; crosses_bot_cutoff: boolean }>;
+  note: string;
+}
+
 interface OwnerMetrics {
   period: Record<'sessions' | 'new_users' | 'details' | 'contacts' | 'publications', OwnerPeriodMetric>;
+  comparability?: Comparability;
   funnel: Array<{ label: string; value: number; rate: number }>;
   trends: Array<{ date: string; events: number; users: number; properties: number; leads: number }>;
   top_properties: Array<{
@@ -128,7 +135,13 @@ interface OwnerMetrics {
   contacts_unique?: number;
   contact_rate?: number;
   top_contacted_properties?: Array<{ id: number; title: string; city: string; count: number }>;
-  audience: { active_30d: number; recurring_30d: number; high_intent_users_30d: number };
+  audience: {
+    active_30d: number;
+    recurring_30d: number;
+    high_intent_users_30d: number;
+    bot_events_30d?: number;
+    bot_sessions_30d?: number;
+  };
   alerts: Array<{ severity: 'critical' | 'warning' | 'ok'; title: string; value: number; href: string }>;
   weekly_summary: string[];
   technical: {
@@ -428,6 +441,8 @@ function OwnerExecutive({ metrics }: { metrics: OwnerMetrics }) {
         <h2 id="executive-title" className="text-xl font-bold text-textPrimary">Vista ejecutiva</h2>
         <p className="mt-1 text-sm text-textSecondary">Crecimiento, intención y decisiones de los últimos 7 días frente a los 7 anteriores.</p>
       </div>
+
+      <BotCutoffNotice comparability={metrics.comparability} />
 
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-5">
         {periodCards.map(({ key, label, icon: Icon }) => {
@@ -1075,3 +1090,39 @@ function leadSourceLabel(s: string) {
 }
 
 export default AdminDashboard;
+
+/**
+ * Aviso cuando la comparación cruza el día en que se empezó a marcar `is_bot`.
+ *
+ * Sin él, el panel dibuja una caída que no ocurrió: el periodo anterior lleva
+ * crawlers contados como personas y el actual no. Es más honesto decirlo una
+ * vez arriba que corregir a mano cada porcentaje.
+ */
+function BotCutoffNotice({ comparability }: { comparability?: Comparability }) {
+  if (!comparability?.bot_filter_since) return null;
+  const affected = Object.entries(comparability.windows).filter(([, window]) => window.crosses_bot_cutoff);
+  if (affected.length === 0) return null;
+
+  const WINDOW_LABELS: Record<string, string> = {
+    period: 'los últimos 7 días',
+    previous_period: 'el periodo anterior',
+    month: 'los últimos 30 días',
+    trends: 'la serie de 14 días',
+  };
+
+  return (
+    <div className="flex gap-3 rounded-card border border-amber-200 bg-amber-50 p-4" data-testid="bot-cutoff-notice">
+      <AlertTriangle className="h-5 w-5 shrink-0 text-amber-600" />
+      <div className="min-w-0 text-sm">
+        <p className="font-semibold text-amber-900">
+          Estas ventanas no son comparables consigo mismas todavía
+        </p>
+        <p className="mt-1 text-amber-800">
+          {affected.map(([name]) => WINDOW_LABELS[name] || name).join(', ')} empiezan antes del{' '}
+          {new Date(`${comparability.bot_filter_since}T12:00:00`).toLocaleDateString('es-EC')}.{' '}
+          {comparability.note}
+        </p>
+      </div>
+    </div>
+  );
+}

@@ -222,3 +222,48 @@ riesgo es de coste, no de fuga.
   esa fecha compara humanos con humanos-más-robots.
 - **No cuentan personas, cuentan navegadores.** Un `session_id` vive en
   `localStorage`: la misma persona en el móvil y en el portátil son dos.
+
+---
+
+## 6. Retención: qué caduca y qué sobrevive
+
+`ActivityEvent` es la tabla que más crece —una fila por clic y por crawler que
+ejecuta JavaScript— y hasta agosto de 2026 nadie la había podado, en un host de
+8 GB compartido con Aents y el correo.
+
+La poda existe desde `ActivityRetentionService`
+(`backend/real_estate/services/retention.py`), y su orden es la parte que
+importa:
+
+1. **Se condensa el día.** Una fila por `(día, evento, is_bot)` en
+   `ActivityDailyRollup`, con el número de eventos y de sesiones distintas.
+2. **Después se borra el detalle** de ese día, y solo si el resumen existe. Un
+   día caducado sin resumen se salta con un `WARNING` en el log en vez de
+   borrarse: perder la serie es peor que conservar filas de más.
+
+| Tabla                  | Retención | Qué queda después                    |
+| ---------------------- | --------- | ------------------------------------ |
+| `ActivityEvent`        | 180 días  | La fila diaria de `ActivityDailyRollup` |
+| `SystemIncident` resuelta | 90 días | Nada; una incidencia cerrada hace tres meses es ruido |
+| `AdminAuditLog`        | 730 días  | Nada; es la más barata y la más cara de no tener |
+| Propiedad en la papelera | 30 días | Nada: se borra de verdad, con sus fotos |
+
+Dos tareas de Celery lo aplican: `roll_up_activity` cada seis horas, para que el
+día en curso esté casi completo cuando alguien lo mire, y `prune_expired_data` a
+las 5:15, que vuelve a resumir antes de podar en vez de fiarse de que la otra
+tarea corrió.
+
+**`sessions` no se suma entre días.** Es el número de sesiones distintas *de ese
+día*: la misma persona que vuelve mañana cuenta una vez en cada fila. Quien lea
+varias filas debe sumar `events` y tratar `sessions` como un máximo. Las
+sesiones vacías (`session_id = ""`) no cuentan, o todas las visitas anónimas sin
+cookie serían una sola.
+
+### El corte de bots, dicho por la API
+
+El dashboard no se limita a arrastrar el problema de la sección 2: el bloque
+`comparability` de `AdminMetricsService` declara la fecha de corte y marca cada
+ventana que empieza antes de ella (`crosses_bot_cutoff`). El panel enseña el
+aviso encima de la vista ejecutiva y desaparece solo cuando la ventana entera
+queda después del corte. Ver `ADM-009` en
+[`specs/domains/admin-operations.yaml`](../../specs/domains/admin-operations.yaml).

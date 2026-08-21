@@ -17,8 +17,11 @@ import {
   ServerCog,
   Newspaper,
   Megaphone,
+  ScrollText,
+  Search,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import AdminGlobalSearch from '@/components/AdminGlobalSearch';
 
 const navItems = [
   { href: '/admin', label: 'Dashboard', icon: LayoutDashboard },
@@ -29,7 +32,9 @@ const navItems = [
   { href: '/admin/pending-publications', label: 'Pendientes', icon: Clock },
   { href: '/admin/activity', label: 'Actividad y clics', icon: MousePointerClick },
   { href: '/admin/ingesta', label: 'Importar', icon: DownloadCloud },
+  { href: '/admin/seo', label: 'Páginas y SEO', icon: Search },
   { href: '/admin/system', label: 'Estado del sistema', icon: ServerCog },
+  { href: '/admin/auditoria', label: 'Bitácora', icon: ScrollText },
 ];
 
 const AdminSidebar = () => {
@@ -52,6 +57,8 @@ const AdminSidebar = () => {
           <p className="text-xs text-textSecondary">Geo Propiedades</p>
         </div>
       </div>
+
+      <AdminGlobalSearch />
 
       <nav className="space-y-1">
         {navItems.map((item) => {

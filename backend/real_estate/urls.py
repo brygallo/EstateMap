@@ -22,7 +22,11 @@ from .views import (
     VerifyEmailChangeView,
     MeView,
     ChangePasswordView,
+    AdminAuditLogView,
     AdminDashboardView,
+    AdminExportView,
+    AdminSearchView,
+    AdminSeoHealthView,
     AdminSystemStatusView,
     AdminUserViewSet,
     AdminPropertyViewSet,
@@ -84,6 +88,15 @@ urlpatterns = [
     path('admin/properties/bulk-status/', AdminPropertyViewSet.as_view({'post': 'bulk_status'}), name='admin_properties_bulk_status'),
     path('admin/properties/<int:pk>/', AdminPropertyViewSet.as_view({'get': 'retrieve', 'patch': 'partial_update', 'delete': 'destroy'}), name='admin_properties_detail'),
     path('admin/properties/<int:pk>/transfer-owner/', AdminPropertyViewSet.as_view({'post': 'transfer_owner'}), name='admin_properties_transfer_owner'),
+    path('admin/properties/<int:pk>/restore/', AdminPropertyViewSet.as_view({'post': 'restore'}), name='admin_properties_restore'),
+    path('admin/properties/<int:pk>/purge/', AdminPropertyViewSet.as_view({'post': 'purge'}), name='admin_properties_purge'),
+    path('admin/properties/<int:pk>/diagnostics/', AdminPropertyViewSet.as_view({'get': 'diagnostics'}), name='admin_properties_diagnostics'),
+
+    # Panel: bitácora, búsqueda global, salud SEO y exportaciones
+    path('admin/audit/', AdminAuditLogView.as_view(), name='admin_audit'),
+    path('admin/search/', AdminSearchView.as_view(), name='admin_search'),
+    path('admin/seo-health/', AdminSeoHealthView.as_view(), name='admin_seo_health'),
+    path('admin/export/<str:dataset>/', AdminExportView.as_view(), name='admin_export'),
 
     # Ingesta (agregador) - panel del frontend
     path('admin/ingesta/sources/', ingesta_api.sources, name='admin_ingesta_sources'),

@@ -28,9 +28,11 @@ from .throttling import AntiScraperScopedThrottle
 from .cache_utils import cached_or_stale, versioned_key
 from .services.short_codes import normalize_code
 from .models import (
-    ActivityEvent, Property, PropertyImage, Province, City, Lead,
+    ActivityEvent, AdminAuditLog, Property, PropertyImage, Province, City, Lead,
     PendingPublication, PublicationResumeToken, SystemIncident,
 )
+from .services.audit import AdminAuditService
+from .services.trash import PropertyTrashService, TRASH_RETENTION_DAYS
 from django.contrib.auth import get_user_model
 from .serializers import (
     MapPropertySerializer,
@@ -55,6 +57,7 @@ from .serializers import (
     VerifyEmailChangeSerializer,
     UserProfileSerializer,
     ChangePasswordSerializer,
+    AdminAuditLogSerializer,
     AdminUserSerializer,
     AdminUserDetailSerializer,
     AdminPropertySerializer,
@@ -257,10 +260,14 @@ class CityViewSet(viewsets.ReadOnlyModelViewSet):
         if not _is_public_read(request):
             return super().list(request, *args, **kwargs)
         key = versioned_key('cities:list', _query_signature(request.query_params), scope='geo')
-        data = cache.get(key)
-        if data is None:
-            data = list(super().list(request, *args, **kwargs).data)
-            cache.set(key, data, CACHE_TTL_GEO)
+
+        def compute():
+            return list(super(CityViewSet, self).list(request, *args, **kwargs).data)
+
+        # La tabla de cantones es pequeña y estable, pero serializarla entera
+        # cuesta lo justo para que quince procesos haciéndolo a la vez tarden
+        # 4,4 s en vez de 0,4. El cerrojo lo deja en uno.
+        data = cached_or_stale(key, CACHE_TTL_GEO, compute)
         return _public_response(data, request, s_maxage=CACHE_TTL_GEO)
 
 class PropertyPagination(PageNumberPagination):
@@ -372,12 +379,18 @@ class PropertyViewSet(viewsets.ModelViewSet):
             _query_signature(request.query_params),
             scope='properties',
         )
-        data = cache.get(cache_key)
-        if data is None:
-            response = super().list(request, *args, **kwargs)
+
+        def compute():
+            response = super(PropertyViewSet, self).list(request, *args, **kwargs)
             # Pagination returns a dict; an unpaginated response is a ReturnList.
-            data = dict(response.data) if isinstance(response.data, dict) else list(response.data)
-            cache.set(cache_key, data, CACHE_TTL_PROPERTY_LIST)
+            return dict(response.data) if isinstance(response.data, dict) else list(response.data)
+
+        # `cached_or_stale` y no un get/set: esta es la lectura más cara del
+        # portal y la que piden todas las páginas prerenderizadas a la vez. Con
+        # el patrón simple, un despliegue que vacía la caché hacía que quince
+        # renderizadores serializaran el catálogo entero cada uno por su lado y
+        # la respuesta pasara de nueve segundos a setenta y cuatro.
+        data = cached_or_stale(cache_key, CACHE_TTL_PROPERTY_LIST, compute)
         return _public_response(data, request, s_maxage=CACHE_TTL_PROPERTY_LIST)
 
     def get_serializer_class(self):
@@ -913,28 +926,33 @@ class PropertyViewSet(viewsets.ModelViewSet):
             _filter_signature(request.query_params),
             scope='map',
         )
-        if _is_public_read(request):
-            cached = cache.get(cache_key)
-            if cached is not None:
-                return _public_response(cached, request, s_maxage=cache_ttl)
+        def compute():
+            queryset = self.filter_queryset(self.get_queryset()).only(
+                'id',
+                'property_type',
+                'status',
+                'latitude',
+                'longitude',
+                'polygon',
+                'show_measurements',
+                'price',
+                'city',
+                'province',
+            )
+            # Territorial clusters intentionally receive the full filtered
+            # queryset; point mode was already clipped by get_queryset() using
+            # the visible bbox.
+            return build_map_payload(queryset, payload_zoom, max_items)
 
-        queryset = self.filter_queryset(self.get_queryset()).only(
-            'id',
-            'property_type',
-            'status',
-            'latitude',
-            'longitude',
-            'polygon',
-            'show_measurements',
-            'price',
-            'city',
-            'province',
-        )
-        # Territorial clusters intentionally receive the full filtered queryset;
-        # point mode was already clipped by get_queryset() using the visible bbox.
-        payload = build_map_payload(queryset, payload_zoom, max_items)
-        if _is_public_read(request):
-            cache.set(cache_key, payload, cache_ttl)
+        if not _is_public_read(request):
+            return _public_response(compute(), request, s_maxage=cache_ttl)
+
+        # Con cerrojo, como el catálogo. Este es el endpoint del mapa: todo el
+        # mundo que abre la portada pide el mismo recuadro con el mismo zoom, y
+        # tras un despliegue lo piden todos con la caché vacía. Medido con
+        # quince peticiones simultáneas en frío, calcularlo cada uno por su
+        # cuenta costaba 5 s cuando calcularlo una vez cuesta 0,7.
+        payload = cached_or_stale(cache_key, cache_ttl, compute)
         return _public_response(payload, request, s_maxage=cache_ttl)
 
     @action(
@@ -2435,13 +2453,35 @@ class AdminDashboardView(generics.GenericAPIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
     serializer_class = AdminDashboardSerializer
 
+    # El dashboard dispara decenas de agregaciones sobre el catálogo entero y
+    # recorre en Python los contactos de treinta días. Cinco minutos de caché
+    # bastan para que abrirlo (o dejarlo abierto en una pestaña) deje de
+    # competir por la CPU con el portal, y la clave lleva la versión del
+    # inventario: cualquier escritura la invalida sin esperar al TTL.
+    CACHE_TTL = 300
+
     def get(self, request):
+        if request.query_params.get('refresh') in ('1', 'true'):
+            data = self._build()
+        else:
+            key = versioned_key('admin:dashboard')
+            data = cache.get(key)
+            if data is None:
+                data = self._build()
+                cache.set(key, data, self.CACHE_TTL)
+            else:
+                data['cached'] = True
+        return Response(data)
+
+    def _build(self):
         from django.utils import timezone
         from datetime import timedelta
         from ingesta.models import Fuente, IngestaRun, ListingRetirada
         from .services.admin_metrics import AdminMetricsService
 
-        properties = Property.objects.all()
+        # La papelera no es catálogo: se excluye de todos los recuentos, igual
+        # que en `stats`.
+        properties = Property.objects.filter(deleted_at__isnull=True)
         # Inmuebles sin imágenes e incompletos (sin descripción, sin título,
         # sin imágenes o sin área válida): candidatos a mejorar para captar más
         # interés comercial.
@@ -2534,8 +2574,10 @@ class AdminDashboardView(generics.GenericAPIView):
                 Lead.objects.select_related('property').order_by('-created_at')[:5],
                 many=True,
             ).data,
+            'trashed': Property.objects.filter(deleted_at__isnull=False).count(),
+            'cached': False,
         }
-        return Response(data)
+        return data
 
 
 class AdminSystemStatusView(generics.GenericAPIView):
@@ -2665,6 +2707,12 @@ class AdminSystemStatusView(generics.GenericAPIView):
             "admin_audit action=incident.resolve actor=%s incident=%s resolved=%s",
             request.user.pk, incident.pk, incident.resolved,
         )
+        AdminAuditService().record(
+            request, "incident.resolve",
+            target_type="incident", target_id=incident.pk,
+            target_label=f"{incident.status_code} {incident.method} {incident.path}",
+            changes={"resolved": incident.resolved},
+        )
         return Response({"id": incident.pk, "resolved": incident.resolved})
 
 
@@ -2757,6 +2805,11 @@ class AdminUserViewSet(viewsets.ModelViewSet):
             "admin_audit action=user.update actor=%s target_user=%s changes=%s",
             request.user.pk, user.pk, data,
         )
+        AdminAuditService().record(
+            request, "user.update",
+            target_type="user", target_id=user.pk, target_label=user.email,
+            changes=data,
+        )
 
         serializer = self.get_serializer(user)
         return Response(serializer.data)
@@ -2768,11 +2821,15 @@ class AdminUserViewSet(viewsets.ModelViewSet):
                 {'error': 'No puedes eliminar tu propia cuenta'},
                 status=status.HTTP_400_BAD_REQUEST
             )
-        target_id = user.pk
+        target_id, target_email = user.pk, user.email
         user.delete()
         logger.info(
             "admin_audit action=user.delete actor=%s target_user=%s",
             request.user.pk, target_id,
+        )
+        AdminAuditService().record(
+            request, "user.delete",
+            target_type="user", target_id=target_id, target_label=target_email,
         )
         return Response(status=status.HTTP_204_NO_CONTENT)
 
@@ -2807,6 +2864,13 @@ class AdminPropertyViewSet(viewsets.ModelViewSet):
             queryset = queryset.filter(is_imported=True)
         elif origin == 'users':
             queryset = queryset.filter(is_imported=False, owner__isnull=False)
+
+        # La papelera es una vista aparte, no un filtro más: sin `?trash=1` el
+        # listado no la enseña, y con él no enseña otra cosa.
+        if self.request.query_params.get('trash') in ('1', 'true'):
+            queryset = queryset.filter(deleted_at__isnull=False).order_by('-deleted_at')
+        elif self.action == 'list':
+            queryset = queryset.filter(deleted_at__isnull=True)
 
         quality = self.request.query_params.get('quality')
         if quality == 'without_images':
@@ -2848,6 +2912,11 @@ class AdminPropertyViewSet(viewsets.ModelViewSet):
         logger.info(
             "admin_audit action=property.update actor=%s target_property=%s changes=%s",
             request.user.pk, prop.pk, list(data.keys()),
+        )
+        AdminAuditService().record(
+            request, "property.update",
+            target_type="property", target_id=prop.pk, target_label=prop.title,
+            changes={"fields": sorted(data.keys())},
         )
 
         return Response(serializer.data)
@@ -2899,6 +2968,11 @@ class AdminPropertyViewSet(viewsets.ModelViewSet):
             "admin_audit action=property.transfer_owner actor=%s target_property=%s from=%s to=%s new_account=%s",
             request.user.pk, prop.pk, previous_owner_id, target.pk, created,
         )
+        AdminAuditService().record(
+            request, "property.transfer_owner",
+            target_type="property", target_id=prop.pk, target_label=prop.title,
+            changes={"from": previous_owner_id, "to": target.pk, "new_account": created},
+        )
 
         return Response(
             AdminPropertySerializer(prop, context=self.get_serializer_context()).data
@@ -2930,14 +3004,75 @@ class AdminPropertyViewSet(viewsets.ModelViewSet):
             ), False
 
     def destroy(self, request, *args, **kwargs):
+        """Envía el anuncio a la papelera; no lo borra.
+
+        El borrado real solo existe en `purge`, y solo se alcanza desde la
+        papelera. Un `DELETE` desde el listado ya no puede llevarse por delante
+        las fotos, el historial de precios y los leads de un anuncio ajeno.
+        """
         prop = self.get_object()
-        target_id = prop.pk
-        prop.delete()
+        if prop.deleted_at is not None:
+            return Response(
+                {'error': 'Esta propiedad ya está en la papelera.'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        PropertyTrashService().soft_delete(prop, actor=request.user)
         logger.info(
             "admin_audit action=property.delete actor=%s target_property=%s",
-            request.user.pk, target_id,
+            request.user.pk, prop.pk,
+        )
+        AdminAuditService().record(
+            request, "property.delete",
+            target_type="property", target_id=prop.pk, target_label=prop.title,
+            changes={"previous_status": prop.deleted_previous_status,
+                     "purge_in_days": TRASH_RETENTION_DAYS},
         )
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+    @action(detail=True, methods=['post'], url_path='restore')
+    def restore(self, request, pk=None):
+        """Devuelve el anuncio al estado que ofrecía antes del borrado."""
+        prop = self.get_object()
+        if prop.deleted_at is None:
+            return Response(
+                {'error': 'Esta propiedad no está en la papelera.'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        previous = prop.deleted_previous_status
+        PropertyTrashService().restore(prop)
+        AdminAuditService().record(
+            request, "property.restore",
+            target_type="property", target_id=prop.pk, target_label=prop.title,
+            changes={"restored_to": prop.status, "was": previous},
+        )
+        return Response(
+            AdminPropertySerializer(prop, context=self.get_serializer_context()).data
+        )
+
+    @action(detail=True, methods=['post'], url_path='purge')
+    def purge(self, request, pk=None):
+        """Borrado definitivo. Solo desde la papelera y sin vuelta atrás."""
+        prop = self.get_object()
+        if prop.deleted_at is None:
+            return Response(
+                {'error': 'Solo se puede borrar definitivamente lo que ya está en la papelera.'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        target_id, target_title = prop.pk, prop.title
+        PropertyTrashService().purge(prop)
+        AdminAuditService().record(
+            request, "property.purge",
+            target_type="property", target_id=target_id, target_label=target_title,
+        )
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+    @action(detail=True, methods=['get'], url_path='diagnostics')
+    def diagnostics(self, request, pk=None):
+        """Por qué se ve —o no se ve— esta propiedad, con todo lo que lo decide."""
+        from .services.diagnostics import PropertyDiagnosticsService
+
+        prop = self.get_object()
+        return Response(PropertyDiagnosticsService().build(prop))
 
     @action(detail=False, methods=['post'], url_path='bulk-status')
     def bulk_status(self, request):
@@ -2986,12 +3121,23 @@ class AdminPropertyViewSet(viewsets.ModelViewSet):
             "admin_audit action=property.bulk_status actor=%s targets=%s status=%s matched=%s updated=%s",
             request.user.pk, property_ids, new_status, matched, updated,
         )
+        AdminAuditService().record(
+            request, "property.bulk_status",
+            target_type="property", target_label=f"{updated} propiedades",
+            changes={"status": new_status, "matched": matched, "updated": updated,
+                     "ids": property_ids[:50]},
+        )
         return Response({'matched': matched, 'updated': updated, 'status': new_status})
 
     @action(detail=False, methods=['get'])
     def stats(self, request):
-        """Contadores livianos para el panel de propiedades del admin."""
-        base = Property.objects.all()
+        """Contadores livianos para el panel de propiedades del admin.
+
+        Lo que está en la papelera no cuenta en ninguno de estos números salvo
+        en el suyo propio: un inventario que suma anuncios borrados describe un
+        catálogo que no existe.
+        """
+        base = Property.objects.filter(deleted_at__isnull=True)
         with_image_counts = base.annotate(num_images=Count('images'))
         without_images = with_image_counts.filter(num_images=0).count()
         incomplete = with_image_counts.filter(
@@ -3013,4 +3159,137 @@ class AdminPropertyViewSet(viewsets.ModelViewSet):
             'incomplete': incomplete,
             'imported': base.filter(is_imported=True).count(),
             'users': base.filter(is_imported=False, owner__isnull=False).count(),
+            'trashed': Property.objects.filter(deleted_at__isnull=False).count(),
         })
+
+
+class AdminAuditLogView(generics.ListAPIView):
+    """La bitácora del panel: quién hizo qué, cuándo y sobre qué.
+
+    Existía repartida en líneas de log dentro de un contenedor que se recrea en
+    cada despliegue. Aquí se consulta, se filtra y se puede citar.
+    """
+
+    permission_classes = [IsAuthenticated, IsAdminUser]
+    serializer_class = AdminAuditLogSerializer
+    pagination_class = AdminPagination
+
+    def get_queryset(self):
+        queryset = AdminAuditLog.objects.select_related('actor').order_by('-created_at')
+        params = self.request.query_params
+
+        action_filter = params.get('action')
+        if action_filter:
+            queryset = queryset.filter(action=action_filter)
+
+        target_type = params.get('target_type')
+        if target_type:
+            queryset = queryset.filter(target_type=target_type)
+
+        target_id = params.get('target_id')
+        if target_id:
+            queryset = queryset.filter(target_id=str(target_id))
+
+        actor = params.get('actor')
+        if actor and str(actor).isdigit():
+            queryset = queryset.filter(actor_id=int(actor))
+
+        days = params.get('days')
+        if days and str(days).isdigit():
+            from datetime import timedelta
+            queryset = queryset.filter(
+                created_at__gte=timezone.now() - timedelta(days=int(days))
+            )
+
+        search = params.get('q')
+        if search:
+            queryset = queryset.filter(
+                Q(actor_label__icontains=search)
+                | Q(target_label__icontains=search)
+                | Q(action__icontains=search)
+            )
+        return queryset
+
+    def list(self, request, *args, **kwargs):
+        response = super().list(request, *args, **kwargs)
+        # Las acciones disponibles se sacan de lo que hay escrito, no del
+        # catálogo de constantes: una acción que nunca ocurrió no merece una
+        # opción en el filtro.
+        response.data['actions'] = sorted(
+            AdminAuditLog.objects.values_list('action', flat=True).distinct()
+        )
+        return response
+
+
+class AdminSearchView(generics.GenericAPIView):
+    """Un solo buscador para todo el panel."""
+
+    permission_classes = [IsAuthenticated, IsAdminUser]
+
+    def get(self, request):
+        from .services.admin_search import AdminSearchService
+
+        return Response(AdminSearchService().search(request.query_params.get('q', '')))
+
+
+class AdminSeoHealthView(generics.GenericAPIView):
+    """Qué páginas tiene el portal y cuáles se abren con dos anuncios más."""
+
+    permission_classes = [IsAuthenticated, IsAdminUser]
+
+    # Recorre el catálogo entero varias veces y su respuesta cambia con el
+    # inventario, no con el minuto. La versión en la clave la invalida en cuanto
+    # se publica algo.
+    CACHE_TTL = 900
+
+    def get(self, request):
+        from .services.seo_health import SeoHealthService
+
+        if request.query_params.get('refresh') in ('1', 'true'):
+            return Response(SeoHealthService().build())
+        key = versioned_key('admin:seo-health')
+        data = cache.get(key)
+        if data is None:
+            data = SeoHealthService().build()
+            cache.set(key, data, self.CACHE_TTL)
+        return Response(data)
+
+
+class AdminExportView(generics.GenericAPIView):
+    """Descarga de un conjunto del panel en CSV, transmitido fila a fila.
+
+    Es una vista de DRF aunque lo que devuelva sea un archivo y no una
+    representación negociada: así el permiso lo decide el mismo par
+    `IsAuthenticated, IsAdminUser` que protege el resto del panel, en vez de una
+    comprobación escrita a mano que puede divergir de él. DRF deja pasar sin
+    tocarla cualquier respuesta que no sea un `Response`, que es justo lo que
+    necesita `StreamingHttpResponse`.
+
+    Autenticar por cabecera es también deliberado. Lo cómodo para una descarga
+    sería un enlace con `?token=…`, porque una navegación no lleva cabeceras; y
+    esa URL entera acabaría escrita en el log de acceso de nginx, donde un JWT
+    válido durante horas es una credencial en claro. El cliente pide el archivo
+    con fetch y lo arma en el navegador (`frontend/lib/admin-export.ts`).
+    """
+
+    permission_classes = [IsAuthenticated, IsAdminUser]
+
+    def get(self, request, dataset):
+        from django.http import StreamingHttpResponse
+        from .services.exports import CsvExportService
+
+        if dataset not in CsvExportService.DATASETS:
+            raise Http404
+
+        filename, rows = CsvExportService().rows(dataset)
+        # Sacar datos personales del sistema es una acción, no una lectura:
+        # queda escrita como cualquier otra.
+        AdminAuditService().record(
+            request, 'export.download', target_type='export', target_label=dataset,
+        )
+        response = StreamingHttpResponse(rows, content_type='text/csv; charset=utf-8')
+        response['Content-Disposition'] = f'attachment; filename="{filename}"'
+        # Un CSV con correos y teléfonos no se guarda en ninguna caché
+        # intermedia, y menos en la del CDN.
+        response['Cache-Control'] = 'no-store, private'
+        return response

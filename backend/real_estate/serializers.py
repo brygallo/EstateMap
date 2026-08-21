@@ -14,7 +14,10 @@ from django.conf import settings
 from .bot_detection import is_bot_request
 from .email_utils import build_resume_link
 from .geo import polygon_center_lat_lng
-from .models import ActivityEvent, Property, PropertyImage, Province, City, Lead, PendingPublication, PendingPublicationImage
+from .models import (
+    ActivityEvent, AdminAuditLog, Property, PropertyImage, Province, City, Lead,
+    PendingPublication, PendingPublicationImage,
+)
 from .validators import validate_image_dimensions, validate_image_format, validate_image_size
 
 logger = logging.getLogger(__name__)
@@ -1124,3 +1127,25 @@ class AdminDashboardSerializer(serializers.Serializer):
     recent_users = AdminUserSerializer(many=True)
     recent_properties = AdminPropertyListSerializer(many=True)
     recent_leads = LeadSerializer(many=True)
+
+
+class AdminAuditLogSerializer(serializers.ModelSerializer):
+    """Una línea de la bitácora, con el actor ya resuelto a texto.
+
+    `actor_label` se lee de la fila y no de la relación: el rastro de quien ya
+    no tiene cuenta tiene que seguir diciendo su nombre.
+    """
+
+    actor_id = serializers.IntegerField(source='actor.id', read_only=True, default=None)
+    action_label = serializers.SerializerMethodField()
+
+    class Meta:
+        model = AdminAuditLog
+        fields = [
+            'id', 'action', 'action_label', 'actor_id', 'actor_label',
+            'target_type', 'target_id', 'target_label', 'changes', 'ip', 'created_at',
+        ]
+        read_only_fields = fields
+
+    def get_action_label(self, obj):
+        return dict(AdminAuditLog.ACTION_CHOICES).get(obj.action, obj.action)

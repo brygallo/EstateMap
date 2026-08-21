@@ -1,0 +1,611 @@
+version: 1
+domain: admin-operations
+title: "Operación del panel: rastro, papelera, retención y descubrimiento"
+status: implemented
+summary: >-
+  Lo que el panel hace además de listar: dejar constancia de cada escritura
+  administrativa en una tabla y no solo en el log de un contenedor, convertir el
+  borrado en una papelera reversible, podar las tablas que crecen sin techo sin
+  perder la serie histórica, sacar los datos a CSV, buscar en todo el panel a la
+  vez, explicar por qué un anuncio no se ve, y decir cuándo una métrica no es
+  comparable consigo misma.
+see_also:
+  - specs/permissions/matrix.yaml
+  - specs/domains/properties.yaml
+  - specs/domains/owner-transfer.yaml
+  - specs/domains/leads.yaml
+  - docs/technical/activity-metrics.md
+  - docs/technical/caching.md
+
+rules:
+  - id: ADM-001
+    name: Toda escritura administrativa deja una fila consultable
+    status: implemented
+    summary: >-
+      Editar o eliminar una cuenta, editar, borrar, restaurar, purgar,
+      transferir o cambiar en lote una propiedad, resolver una incidencia y
+      descargar una exportación escriben una fila en AdminAuditLog con el actor,
+      la acción, el objetivo y qué cambió.
+    rationale: >-
+      Estas acciones ya escribían una línea `admin_audit action=…` en el logger,
+      y esa línea vive en la salida de un contenedor que se recrea en cada
+      despliegue: la única pregunta que la auditoría existe para contestar
+      —«¿quién borró esto?»— solo tenía respuesta si alguien había guardado el
+      log antes. La línea del logger se conserva porque sigue siendo lo primero
+      que se mira en producción; lo que se añade es una tabla que sobrevive al
+      despliegue y se puede filtrar por objetivo. El actor se congela también
+      como texto: borrar al administrador no puede convertir su rastro en
+      «alguien».
+    evidence:
+      - file: backend/real_estate/models.py
+        lines: "891-948"
+        symbol: class AdminAuditLog
+      - file: backend/real_estate/services/audit.py
+        lines: "28-60"
+        symbol: class AdminAuditService
+      - file: backend/real_estate/views.py
+        lines: "3166-3174"
+        symbol: class AdminAuditLogView
+      - file: backend/real_estate/urls.py
+        lines: "96"
+        symbol: admin_audit
+    permissions:
+      required: [admin.audit_read]
+    backend:
+      enforce: true
+      endpoint: GET /api/admin/audit/
+      denied_http_status: 403
+    frontend:
+      routes: ["/admin/auditoria"]
+      visible_when_allowed: true
+    tests:
+      api: true
+    cases:
+      - name: staff lee la bitácora
+        role: staff
+        expected: allowed
+        expected_http_status: 200
+      - name: un usuario autenticado cualquiera no puede leerla
+        role: authenticated
+        expected: denied
+        http_status: 403
+      - name: un anónimo no puede leerla
+        role: anonymous
+        expected: denied
+        http_status: 401
+
+  - id: ADM-002
+    name: Auditar nunca puede tumbar la acción auditada
+    status: implemented
+    summary: >-
+      Si la escritura de la fila de auditoría falla, la operación que la produjo
+      se da por buena igualmente y el fallo se registra en el log.
+    rationale: >-
+      Una transferencia consumada cuya fila de auditoría se perdió es un
+      problema; una transferencia que revienta a mitad porque la auditoría falló
+      es peor, porque deja el sistema en un estado que nadie pidió. El servicio
+      envuelve su propio cuerpo y no re-lanza, igual que las notificaciones por
+      correo son de mejor esfuerzo.
+    evidence:
+      - file: backend/real_estate/services/audit.py
+        lines: "31-68"
+        symbol: def record
+        note: El except registra y devuelve None en vez de propagar.
+    tests:
+      api: true
+    cases:
+      - name: un fallo al escribir la auditoría no deshace la acción
+        expected: allowed
+
+  - id: ADM-003
+    name: El borrado administrativo es una papelera, no un DELETE
+    status: implemented
+    summary: >-
+      DELETE sobre una propiedad del panel la marca con deleted_at, guarda el
+      estado que ofrecía y la deja en `inactive`. La fila, sus fotos, su
+      historial de precios y sus contactos siguen existiendo.
+    rationale: >-
+      Antes esta ruta llamaba a `prop.delete()` y con la fila se iban las
+      imágenes del almacén de objetos y los leads recibidos, sin vuelta atrás,
+      sobre un anuncio que casi siempre publicó otra persona. La papelera no
+      inventa un estado nuevo a propósito: `inactive` es el filtro que ya
+      aplican el mapa, el sitemap, las landings y las estadísticas, así que el
+      anuncio desaparece de todas ellas sin tocar ni una consulta.
+    evidence:
+      - file: backend/real_estate/models.py
+        lines: "334-353"
+        symbol: deleted_at
+      - file: backend/real_estate/services/trash.py
+        lines: "31-46"
+        symbol: def soft_delete
+      - file: backend/real_estate/views.py
+        lines: "2991-3016"
+        symbol: def destroy
+    permissions:
+      required: [admin.properties_delete]
+    backend:
+      enforce: true
+      endpoint: DELETE /api/admin/properties/{property_id}/
+      denied_http_status: 403
+    frontend:
+      routes: ["/admin/properties"]
+      visible_when_allowed: true
+    tests:
+      api: true
+    cases:
+      - name: staff envía una propiedad a la papelera
+        role: staff
+        expected: allowed
+        expected_http_status: 204
+      - name: la propiedad borrada deja de estar en el catálogo público
+        expected: allowed
+      - name: la fila y sus imágenes siguen existiendo tras el borrado
+        expected: allowed
+      - name: borrar dos veces la misma propiedad se rechaza
+        role: staff
+        given:
+          trashed: true
+        expected: denied
+        http_status: 400
+
+  - id: ADM-004
+    name: Restaurar devuelve el anuncio al estado que ofrecía
+    status: implemented
+    summary: >-
+      Restaurar una propiedad de la papelera le devuelve el `status` que tenía
+      antes del borrado y limpia el motivo de cierre, en vez de dejarla inactiva.
+    rationale: >-
+      Restaurar una fila no es restaurar un anuncio. Si la propiedad vuelve como
+      `inactive`, quien la restauró tiene que acordarse de reactivarla, y un
+      `closed_reason` olvidado la arrastraría de nuevo a `inactive` en el
+      siguiente guardado ordinario — el mismo pie del que ya se protege el
+      cambio de estado en lote.
+    evidence:
+      - file: backend/real_estate/services/trash.py
+        lines: "48-69"
+        symbol: def restore
+      - file: backend/real_estate/views.py
+        lines: "3018-3036"
+        symbol: def restore
+      - file: backend/real_estate/urls.py
+        lines: "91"
+        symbol: admin_properties_restore
+    permissions:
+      required: [admin.properties_restore]
+    backend:
+      enforce: true
+      endpoint: POST /api/admin/properties/{property_id}/restore/
+      denied_http_status: 403
+    tests:
+      api: true
+    cases:
+      - name: staff restaura una propiedad de la papelera
+        role: staff
+        given:
+          trashed: true
+        expected: allowed
+        expected_http_status: 200
+      - name: restaurar una propiedad que no está en la papelera se rechaza
+        role: staff
+        expected: denied
+        http_status: 400
+      - name: un anónimo no puede restaurar
+        role: anonymous
+        expected: denied
+        http_status: 401
+
+  - id: ADM-005
+    name: El borrado definitivo solo se alcanza desde la papelera
+    status: implemented
+    summary: >-
+      La única ruta que borra de verdad una propiedad exige que ya esté en la
+      papelera; sobre una propiedad viva responde 400.
+    rationale: >-
+      Es lo que convierte el borrado irreversible en un acto deliberado de dos
+      pasos separados en el tiempo. Un clic mal dado en el listado envía a la
+      papelera; para destruir algo hay que ir a la papelera y volver a pedirlo.
+    evidence:
+      - file: backend/real_estate/views.py
+        lines: "3038-3053"
+        symbol: def purge
+      - file: backend/real_estate/services/trash.py
+        lines: "71-74"
+        symbol: def purge
+    permissions:
+      required: [admin.properties_purge]
+    backend:
+      enforce: true
+      endpoint: POST /api/admin/properties/{property_id}/purge/
+      denied_http_status: 403
+    tests:
+      api: true
+    cases:
+      - name: staff purga una propiedad que está en la papelera
+        role: staff
+        given:
+          trashed: true
+        expected: allowed
+        expected_http_status: 204
+      - name: purgar una propiedad viva se rechaza
+        role: staff
+        expected: denied
+        http_status: 400
+
+  - id: ADM-006
+    name: La papelera se vacía sola a los 30 días
+    status: implemented
+    summary: >-
+      Una tarea nocturna borra definitivamente lo que lleva más de 30 días en la
+      papelera, una propiedad a la vez para que se disparen las señales que
+      limpian sus imágenes del almacén de objetos.
+    rationale: >-
+      Sin caducidad, la papelera es una segunda base de datos que nadie mira y
+      que sigue ocupando disco y espacio en MinIO en un host de 8 GB compartido.
+      Un mes es lo que tarda alguien en notar que su anuncio no está y escribir
+      para preguntarlo. Se borra fila a fila y no con `.delete()` del queryset
+      porque el borrado en bloque se salta las señales y dejaría los archivos
+      huérfanos.
+    evidence:
+      - file: backend/real_estate/services/trash.py
+        lines: "22-25"
+        symbol: TRASH_RETENTION_DAYS
+      - file: backend/real_estate/services/retention.py
+        lines: "154-165"
+        symbol: def purge_trash
+      - file: backend/estate_map/settings.py
+        lines: "531-534"
+        symbol: prune-expired-data
+    tests:
+      api: true
+    cases:
+      - name: una propiedad con 31 días en la papelera se borra
+        expected: allowed
+      - name: una propiedad con 29 días en la papelera sobrevive
+        expected: allowed
+
+  - id: ADM-007
+    name: El detalle de actividad se resume antes de podarse
+    status: implemented
+    summary: >-
+      Cada día se condensa en una fila por (día, evento, bot) en
+      ActivityDailyRollup, y la poda solo borra los ActivityEvent de días que ya
+      tienen resumen y superan los 180 días.
+    rationale: >-
+      ActivityEvent es la tabla que crece sin techo —una fila por clic y por
+      crawler que ejecuta JavaScript— y nunca se había podado. Podarla sin más
+      borraría el único registro de lo que pasó hace tres meses, así que el
+      orden es innegociable: primero se condensa el día, después se borra su
+      detalle. Un día sin resumen no se poda aunque le toque por fecha, que es
+      lo que impide que una tarea a medias se lleve la serie por delante.
+      `sessions` se cuenta por día y no se puede sumar entre días sin inflarlo.
+    evidence:
+      - file: backend/real_estate/models.py
+        lines: "950-982"
+        symbol: class ActivityDailyRollup
+      - file: backend/real_estate/services/retention.py
+        lines: "62-99"
+        symbol: def roll_up
+      - file: backend/real_estate/services/retention.py
+        lines: "101-124"
+        symbol: def prune_activity
+      - file: backend/real_estate/tasks.py
+        lines: "392-421"
+        symbol: def prune_expired_data
+    tests:
+      api: true
+    cases:
+      - name: un día resumido y caducado pierde su detalle y conserva su fila de resumen
+        expected: allowed
+      - name: un día caducado sin resumen no se poda
+        expected: allowed
+      - name: un día dentro de la retención conserva su detalle
+        expected: allowed
+
+  - id: ADM-008
+    name: El dashboard se sirve de caché versionada
+    status: implemented
+    summary: >-
+      La respuesta de /api/admin/dashboard/ se guarda 5 minutos bajo una clave
+      que lleva la versión del inventario, y `?refresh=1` la recalcula.
+    rationale: >-
+      El dashboard dispara decenas de agregaciones sobre el catálogo entero y
+      recorre en Python los contactos de treinta días; medido en desarrollo,
+      pasa de un segundo por carga a tres milisegundos cacheado. En un host de
+      cuatro núcleos compartido con la ingesta y el portal, dejar el panel
+      abierto en una pestaña no puede costar eso. La clave lleva la versión del
+      catálogo, así que publicar o borrar un anuncio la invalida sin esperar al
+      TTL; lo que solo caduca por tiempo son los recuentos que no dependen de
+      una propiedad, como las altas de usuarios.
+    evidence:
+      - file: backend/real_estate/views.py
+        lines: "2461-2480"
+        symbol: CACHE_TTL = 300
+      - file: backend/real_estate/cache_utils.py
+        lines: "91-93"
+        symbol: def versioned_key
+    permissions:
+      required: [admin.metrics_read]
+    backend:
+      enforce: true
+      endpoint: GET /api/admin/dashboard/
+      denied_http_status: 403
+    tests:
+      api: true
+    cases:
+      - name: la segunda lectura seguida llega marcada como cacheada
+        role: staff
+        expected: allowed
+        expected_http_status: 200
+      - name: refresh=1 recalcula y no viene marcada como cacheada
+        role: staff
+        expected: allowed
+        expected_http_status: 200
+      - name: publicar una propiedad invalida la entrada anterior
+        expected: allowed
+
+  - id: ADM-009
+    name: Las métricas declaran cuándo no son comparables consigo mismas
+    status: implemented
+    summary: >-
+      El bloque `comparability` del dashboard indica desde qué día se marca
+      is_bot y qué ventanas empiezan antes de esa fecha, y la interfaz lo avisa
+      en vez de dibujar la variación como si fuese real.
+    rationale: >-
+      Hasta el 2026-08-03 no se guardó el User-Agent, así que ningún evento
+      anterior pudo marcarse como crawler y todos cuentan como personas, sin
+      forma de reclasificarlos. Una comparación «vs periodo anterior» que cruce
+      esa fecha enfrenta un periodo limpio contra otro con bots dentro: la caída
+      que dibuja no ocurrió. Decirlo una vez arriba es más honesto —y más
+      barato— que corregir a mano cada porcentaje, y el aviso desaparece solo
+      cuando la ventana entera queda después del corte.
+    evidence:
+      - file: backend/real_estate/services/admin_metrics.py
+        lines: "37-60"
+        symbol: def _comparability
+      - file: backend/estate_map/settings.py
+        lines: "536-542"
+        symbol: ACTIVITY_BOT_FILTER_SINCE
+    frontend:
+      routes: ["/admin"]
+      visible_when_allowed: true
+      test_id: bot-cutoff-notice
+    tests:
+      api: true
+    cases:
+      - name: una ventana que empieza antes del corte se marca como no comparable
+        expected: allowed
+      - name: una ventana enteramente posterior al corte no lleva aviso
+        expected: allowed
+
+  - id: ADM-010
+    name: El panel exporta a CSV sin cargar la tabla en memoria
+    status: implemented
+    summary: >-
+      Los conjuntos properties, users, leads y audit se descargan en CSV
+      transmitido fila a fila, con BOM UTF-8, marcados `no-store` y dejando
+      constancia en la bitácora de quién los descargó.
+    rationale: >-
+      El panel enseña los números que alguien pensó de antemano; la pregunta que
+      todavía no se le ha ocurrido a nadie se contesta en una hoja de cálculo, y
+      hasta ahora los datos entraban al navegador y se quedaban ahí. Se
+      transmite fila a fila porque un `list()` del catálogo dentro de un worker
+      de 512 MB compartido con la ingesta es la forma conocida de tumbar el
+      contenedor. El BOM es lo que evita que Excel en Windows lea «Cumbayá» como
+      latin-1. Y como un CSV de usuarios o de contactos es una copia de datos
+      personales saliendo del sistema, la descarga se audita y no se cachea.
+    evidence:
+      - file: backend/real_estate/services/exports.py
+        lines: "46-66"
+        symbol: class CsvExportService
+      - file: backend/real_estate/views.py
+        lines: "3243-3261"
+        symbol: class AdminExportView
+      - file: backend/real_estate/urls.py
+        lines: "99"
+        symbol: admin_export
+    permissions:
+      required: [admin.export]
+    backend:
+      enforce: true
+      endpoint: GET /api/admin/export/users/
+      note: >-
+        La ruta admite properties, users, leads y audit; los casos ejercen
+        users, que es el conjunto con datos personales y por tanto el que más
+        importa que exija permiso.
+      denied_http_status: 403
+    frontend:
+      routes: ["/admin/properties", "/admin/users", "/admin/auditoria"]
+      visible_when_allowed: true
+    tests:
+      api: true
+    cases:
+      - name: staff descarga el CSV de usuarios
+        role: staff
+        expected: allowed
+        expected_http_status: 200
+      - name: un usuario autenticado cualquiera recibe 403
+        role: authenticated
+        expected: denied
+        http_status: 403
+      - name: un anónimo recibe 401
+        role: anonymous
+        expected: denied
+        http_status: 401
+      - name: la descarga queda registrada en la bitácora
+        expected: allowed
+
+  - id: ADM-011
+    name: El token de una exportación no viaja por la URL
+    status: implemented
+    summary: >-
+      La descarga se autentica con las clases de DRF, que solo leen la cabecera
+      Authorization; el endpoint no acepta el token como parámetro de consulta.
+    rationale: >-
+      Lo cómodo sería un enlace con `?token=…`, porque una navegación no lleva
+      cabeceras. La URL entera acaba escrita en el log de acceso de nginx, y ahí
+      un JWT válido durante horas es una credencial en claro que sobrevive a la
+      descarga. El cliente pide el archivo con fetch y lo arma en el navegador.
+      La exportación es una vista de DRF y no una vista de Django precisamente
+      por esto: hereda el mismo par de permisos que el resto del panel en vez de
+      una comprobación escrita a mano que puede divergir de él.
+    evidence:
+      - file: backend/real_estate/views.py
+        lines: "3243-3261"
+        symbol: class AdminExportView
+      - file: frontend/lib/admin-export.ts
+        lines: "21-39"
+        symbol: downloadAdminCsv
+    tests:
+      api: true
+    cases:
+      - name: una petición con el token solo en la querystring se rechaza
+        expected: denied
+        http_status: 401
+
+  - id: ADM-012
+    name: Una sola búsqueda cubre todo el panel
+    status: implemented
+    summary: >-
+      /api/admin/search/ busca a la vez en propiedades, cuentas, contactos y
+      solicitudes pendientes, y cada resultado trae la ruta del panel a la que
+      lleva.
+    rationale: >-
+      El panel tiene diez páginas y cada una busca dentro de lo suyo. Cuando
+      alguien escribe por WhatsApp «no me aparece el anuncio GEO-4F2C» o llama
+      dando un teléfono, la respuesta está en alguna y no se sabe en cuál. Los
+      resultados se limitan por grupo y no en total, para que buscar «Macas» no
+      devuelva diez propiedades y nada más. El href lo decide el servidor, así
+      que si mañana la papelera deja de ser una pestaña de propiedades cambia en
+      un sitio.
+    evidence:
+      - file: backend/real_estate/services/admin_search.py
+        lines: "26-45"
+        symbol: class AdminSearchService
+      - file: backend/real_estate/views.py
+        lines: "3224-3231"
+        symbol: class AdminSearchView
+    permissions:
+      required: [admin.search]
+    backend:
+      enforce: true
+      endpoint: GET /api/admin/search/
+      denied_http_status: 403
+    frontend:
+      routes: ["/admin"]
+      visible_when_allowed: true
+      test_id: admin-global-search
+    tests:
+      api: true
+    cases:
+      - name: staff busca y recibe resultados agrupados
+        role: staff
+        expected: allowed
+        expected_http_status: 200
+      - name: una consulta de menos de dos caracteres devuelve vacío sin consultar
+        role: staff
+        expected: allowed
+        expected_http_status: 200
+      - name: un anónimo no puede buscar
+        role: anonymous
+        expected: denied
+        http_status: 401
+
+  - id: ADM-013
+    name: El diagnóstico dice por qué no se ve una propiedad y qué hacer
+    status: implemented
+    summary: >-
+      /api/admin/properties/{id}/diagnostics/ separa lo que oculta el anuncio
+      (`blockers`) de lo que solo lo degrada (`warnings`), y cada hallazgo lleva
+      el remedio escrito.
+    rationale: >-
+      La respuesta siempre existió, repartida entre la fila, el estado de las
+      fotos, la absorción de la zona, la versión de la caché en Redis y el
+      umbral de la landing en el frontend; juntar esas piezas costaba una sesión
+      de SSH por pregunta. Un diagnóstico que no dice el remedio solo mueve la
+      pregunta de sitio, así que cada bloqueo declara qué hay que hacer para
+      levantarlo.
+    evidence:
+      - file: backend/real_estate/services/diagnostics.py
+        lines: "27-58"
+        symbol: class PropertyDiagnosticsService
+      - file: backend/real_estate/services/diagnostics.py
+        lines: "62-94"
+        symbol: def _blockers
+      - file: backend/real_estate/views.py
+        lines: "3070-3075"
+        symbol: def diagnostics
+    permissions:
+      required: [admin.properties_diagnostics]
+    backend:
+      enforce: true
+      endpoint: GET /api/admin/properties/{property_id}/diagnostics/
+      denied_http_status: 403
+    frontend:
+      routes: ["/admin/properties"]
+      visible_when_allowed: true
+      test_id: property-diagnostics
+    tests:
+      api: true
+    cases:
+      - name: una propiedad sin coordenadas ni polígono declara el bloqueo no_coordinates
+        role: staff
+        expected: allowed
+        expected_http_status: 200
+      - name: una propiedad publicada y situada no declara ningún bloqueo
+        expected: allowed
+      - name: una propiedad en la papelera declara el bloqueo trashed
+        expected: allowed
+      - name: un anónimo no puede pedir el diagnóstico
+        role: anonymous
+        expected: denied
+        http_status: 401
+
+  - id: ADM-014
+    name: La cobertura de páginas usa los mismos umbrales que el sitio
+    status: implemented
+    summary: >-
+      /api/admin/seo-health/ dice qué landings están abiertas y a cuáles les
+      faltan uno o dos anuncios, aplicando el mismo mínimo de cinco que el
+      frontend usa para generar el combo y meterlo en el sitemap.
+    rationale: >-
+      Las páginas que posicionan no se escriben una a una: se abren solas cuando
+      una porción del catálogo alcanza el mínimo y se cierran solas cuando baja.
+      Eso convierte una decisión de SEO en una decisión de inventario y deja una
+      pregunta que el panel no sabía contestar: qué página se abre con dos
+      anuncios más en tal ciudad. Un panel que prometiera una página con cuatro
+      anuncios cuando el sitemap exige cinco sería peor que no tenerlo, así que
+      el umbral es el mismo número escrito en los dos lados y así queda dicho.
+      No hay aquí ninguna métrica de posicionamiento: solo inventario propio y
+      calidad del texto, que es lo único que este servicio puede demostrar.
+    evidence:
+      - file: backend/real_estate/services/seo_health.py
+        lines: "24-36"
+        symbol: MIN_COMBO_PROPERTIES
+      - file: backend/real_estate/services/seo_health.py
+        lines: "47-64"
+        symbol: class SeoHealthService
+      - file: frontend/lib/seo-combos.ts
+        lines: "81-83"
+        symbol: MIN_COMBO_PROPERTIES
+    permissions:
+      required: [admin.seo_health_read]
+    backend:
+      enforce: true
+      endpoint: GET /api/admin/seo-health/
+      denied_http_status: 403
+    frontend:
+      routes: ["/admin/seo"]
+      visible_when_allowed: true
+    tests:
+      api: true
+    cases:
+      - name: una ciudad con cinco anuncios del mismo tipo aparece como página abierta
+        role: staff
+        expected: allowed
+        expected_http_status: 200
+      - name: una ciudad con cuatro aparece como a un anuncio de abrirse
+        expected: allowed
+      - name: una ciudad con dos no aparece en ninguna de las dos listas
+        expected: allowed
+      - name: la papelera y los duplicados no cuentan para el umbral
+        expected: allowed

@@ -520,7 +520,26 @@ CELERY_BEAT_SCHEDULE = {
         "task": "real_estate.tasks.capture_market_snapshot",
         "schedule": crontab(hour=4, minute=30),
     },
+    # Resumir es barato y se hace a menudo para que el día en curso esté casi
+    # completo cuando alguien lo mire; podar es caro y se hace una vez, de
+    # madrugada y después del snapshot, que es el único que necesita la tabla
+    # de actividad entera.
+    "roll-up-activity": {
+        "task": "real_estate.tasks.roll_up_activity",
+        "schedule": 60 * 60 * 6,
+    },
+    "prune-expired-data": {
+        "task": "real_estate.tasks.prune_expired_data",
+        "schedule": crontab(hour=5, minute=15),
+    },
 }
+
+# Desde cuándo las métricas humanas son comparables entre sí: es el día en que
+# `is_bot` empezó a marcarse en el servidor. Antes no se guardó el User-Agent,
+# así que los eventos anteriores cuentan como personas y no hay forma de
+# reclasificarlos. El panel avisa cuando una ventana cruza esta fecha en vez de
+# dibujar una caída que no ocurrió.
+ACTIVITY_BOT_FILTER_SINCE = os.getenv("ACTIVITY_BOT_FILTER_SINCE", "2026-08-03")
 
 # ========================================
 # CACHE (shared Redis, DB 1 - see registry above)

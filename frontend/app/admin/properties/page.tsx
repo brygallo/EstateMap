@@ -36,6 +36,11 @@ import {
   MapPinOff,
   CircleDollarSign,
   GitMerge,
+  Download,
+  Loader2,
+  RotateCcw,
+  Stethoscope,
+  Trash,
 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -87,6 +92,8 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { cn } from '@/lib/utils';
 import { getPropertyTypeLabel, getStatusLabel, getStatusBadgeClass } from '@/lib/property-labels';
 import { apiGet, apiPost, apiPatch, apiDelete } from '@/lib/api';
+import { downloadAdminCsv } from '@/lib/admin-export';
+import PropertyDiagnosticsDialog from '@/components/admin/PropertyDiagnosticsDialog';
 
 const PAGE_SIZE = 20;
 const SEARCH_DEBOUNCE_MS = 350;
@@ -145,6 +152,7 @@ interface AdminStats {
   incomplete: number;
   imported: number;
   users: number;
+  trashed: number;
 }
 
 const AdminPropertiesPage = () => {
@@ -162,6 +170,12 @@ const AdminPropertiesPage = () => {
   });
   const [quality, setQuality] = useState(() => searchParams.get('quality') || 'all');
   const [confirmDelete, setConfirmDelete] = useState<PropertyItem | null>(null);
+  // La papelera es una vista, no un filtro: cuando está activa el listado no
+  // enseña otra cosa, y las acciones de cada fila cambian enteras.
+  const [trashMode, setTrashMode] = useState(() => searchParams.get('trash') === '1');
+  const [confirmPurge, setConfirmPurge] = useState<PropertyItem | null>(null);
+  const [diagnosingId, setDiagnosingId] = useState<number | null>(null);
+  const [exporting, setExporting] = useState(false);
   const [preview, setPreview] = useState<PropertyItem | null>(null);
   const [stats, setStats] = useState<AdminStats | null>(null);
   const [page, setPage] = useState(() => Math.max(1, Number(searchParams.get('page')) || 1));
@@ -201,6 +215,7 @@ const AdminPropertiesPage = () => {
       if (filter !== 'all') params.set('status', filter);
       if (origin !== 'all') params.set('origin', origin);
       if (quality !== 'all') params.set('quality', quality);
+      if (trashMode) params.set('trash', '1');
 
       const res = await apiGet(`/admin/properties/?${params}`);
       if (!res.ok) throw new Error('Error al cargar propiedades');
@@ -213,7 +228,7 @@ const AdminPropertiesPage = () => {
     } finally {
       setLoading(false);
     }
-  }, [search, filter, origin, quality, page]);
+  }, [search, filter, origin, quality, page, trashMode]);
 
   useEffect(() => {
     const params = new URLSearchParams();
@@ -222,13 +237,14 @@ const AdminPropertiesPage = () => {
     if (origin !== 'all') params.set('origin', origin);
     if (quality !== 'all') params.set('quality', quality);
     if (page > 1) params.set('page', String(page));
+    if (trashMode) params.set('trash', '1');
     const query = params.toString();
     router.replace(query ? `/admin/properties?${query}` : '/admin/properties', { scroll: false });
-  }, [filter, origin, page, quality, router, search]);
+  }, [filter, origin, page, quality, router, search, trashMode]);
 
   useEffect(() => {
     setSelectedIds(new Set());
-  }, [filter, origin, page, quality, search]);
+  }, [filter, origin, page, quality, search, trashMode]);
 
   useEffect(() => {
     if (token) fetchProperties();
@@ -276,14 +292,58 @@ const AdminPropertiesPage = () => {
   const handleDelete = async (prop: PropertyItem) => {
     try {
       const res = await apiDelete(`/admin/properties/${prop.id}/`);
-      if (!res.ok) throw new Error('Error al eliminar');
-      toast.success('Propiedad eliminada');
+      if (!res.ok) throw new Error('No se pudo enviar a la papelera');
+      toast.success('Enviada a la papelera. Se puede restaurar durante 30 días.');
       fetchProperties();
       fetchStats();
     } catch (err: any) {
       toast.error(err.message);
     }
     setConfirmDelete(null);
+  };
+
+  const handleRestore = async (prop: PropertyItem) => {
+    try {
+      const res = await apiPost(`/admin/properties/${prop.id}/restore/`);
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error(body.error || 'No se pudo restaurar');
+      }
+      const restored = await res.json();
+      toast.success(`Restaurada como «${getStatusLabel(restored.status)}»`);
+      fetchProperties();
+      fetchStats();
+    } catch (err: any) {
+      toast.error(err.message);
+    }
+  };
+
+  const handlePurge = async (prop: PropertyItem) => {
+    try {
+      const res = await apiPost(`/admin/properties/${prop.id}/purge/`);
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error(body.error || 'No se pudo borrar definitivamente');
+      }
+      toast.success('Borrada definitivamente');
+      fetchProperties();
+      fetchStats();
+    } catch (err: any) {
+      toast.error(err.message);
+    }
+    setConfirmPurge(null);
+  };
+
+  const handleExport = async () => {
+    setExporting(true);
+    try {
+      await downloadAdminCsv('properties');
+      toast.success('Catálogo exportado');
+    } catch {
+      toast.error('No se pudo exportar el catálogo');
+    } finally {
+      setExporting(false);
+    }
   };
 
   const openTransfer = useCallback((prop: PropertyItem) => {
@@ -509,28 +569,62 @@ const AdminPropertiesPage = () => {
                 <ExternalLink className="h-4 w-4" aria-hidden />
               </Link>
               <button
-                onClick={() => openTransfer(p)}
-                title="Cambiar propietario"
-                aria-label="Cambiar propietario"
-                data-testid="transfer-owner-action"
+                onClick={() => setDiagnosingId(p.id)}
+                title="Diagnóstico: por qué se ve o no se ve"
+                aria-label="Diagnóstico"
+                data-testid="property-diagnostics-action"
                 className="rounded-button p-2 text-textSecondary transition-colors hover:bg-muted hover:text-textPrimary"
               >
-                <UserRoundCog className="h-4 w-4" aria-hidden />
+                <Stethoscope className="h-4 w-4" aria-hidden />
               </button>
-              <button
-                onClick={() => setConfirmDelete(p)}
-                title="Eliminar"
-                aria-label="Eliminar"
-                className="rounded-button p-2 text-red-500 transition-colors hover:bg-red-50"
-              >
-                <Trash2 className="h-4 w-4" aria-hidden />
-              </button>
+              {trashMode ? (
+                <>
+                  <button
+                    onClick={() => handleRestore(p)}
+                    title="Restaurar"
+                    aria-label="Restaurar"
+                    data-testid="restore-property-action"
+                    className="rounded-button p-2 text-emerald-600 transition-colors hover:bg-emerald-50"
+                  >
+                    <RotateCcw className="h-4 w-4" aria-hidden />
+                  </button>
+                  <button
+                    onClick={() => setConfirmPurge(p)}
+                    title="Borrar definitivamente"
+                    aria-label="Borrar definitivamente"
+                    className="rounded-button p-2 text-red-600 transition-colors hover:bg-red-50"
+                  >
+                    <Trash className="h-4 w-4" aria-hidden />
+                  </button>
+                </>
+              ) : (
+                <>
+                  <button
+                    onClick={() => openTransfer(p)}
+                    title="Cambiar propietario"
+                    aria-label="Cambiar propietario"
+                    data-testid="transfer-owner-action"
+                    className="rounded-button p-2 text-textSecondary transition-colors hover:bg-muted hover:text-textPrimary"
+                  >
+                    <UserRoundCog className="h-4 w-4" aria-hidden />
+                  </button>
+                  <button
+                    onClick={() => setConfirmDelete(p)}
+                    title="Enviar a la papelera"
+                    aria-label="Enviar a la papelera"
+                    className="rounded-button p-2 text-red-500 transition-colors hover:bg-red-50"
+                  >
+                    <Trash2 className="h-4 w-4" aria-hidden />
+                  </button>
+                </>
+              )}
             </div>
           );
         },
       },
     ],
-    [openEdit, openTransfer, properties, selectedIds]
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [openEdit, openTransfer, properties, selectedIds, trashMode]
   );
 
   const table = useReactTable({
@@ -548,9 +642,28 @@ const AdminPropertiesPage = () => {
         <AdminSidebar />
         <main className="min-w-0 flex-1">
           <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-            <div className="mb-6">
-              <h1 className="text-2xl font-bold text-textPrimary">Gestión de Propiedades</h1>
-              <p className="mt-1 text-sm text-textSecondary">Modera y administra los listados publicados.</p>
+            <div className="mb-6 flex flex-wrap items-end justify-between gap-3">
+              <div>
+                <h1 className="text-2xl font-bold text-textPrimary">
+                  {trashMode ? 'Papelera' : 'Gestión de Propiedades'}
+                </h1>
+                <p className="mt-1 text-sm text-textSecondary">
+                  {trashMode
+                    ? 'Lo borrado en los últimos 30 días. Después se borra solo y definitivamente.'
+                    : 'Modera y administra los listados publicados.'}
+                </p>
+              </div>
+              <div className="flex gap-2">
+                {trashMode && (
+                  <Button variant="outline" size="sm" onClick={() => { setTrashMode(false); setPage(1); }}>
+                    Volver al catálogo
+                  </Button>
+                )}
+                <Button variant="outline" size="sm" onClick={handleExport} disabled={exporting}>
+                  {exporting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Download className="mr-2 h-4 w-4" />}
+                  Exportar CSV
+                </Button>
+              </div>
             </div>
 
             {/* Métricas globales */}
@@ -565,6 +678,14 @@ const AdminPropertiesPage = () => {
                   <MetricTile icon={ImageOff} label="Sin imágenes" value={stats.without_images} tone="slate" active={quality === 'without_images'} onClick={() => { setQuality(quality === 'without_images' ? 'all' : 'without_images'); setPage(1); }} />
                   <MetricTile icon={DownloadCloud} label="Importadas" value={stats.imported} tone="primary" />
                   <MetricTile icon={UserRound} label="De usuarios" value={stats.users} tone="green" />
+                  <MetricTile
+                    icon={Trash2}
+                    label="Papelera"
+                    value={stats.trashed}
+                    tone="slate"
+                    active={trashMode}
+                    onClick={() => { setTrashMode(!trashMode); setPage(1); }}
+                  />
                 </>
               ) : (
                 Array.from({ length: 6 }).map((_, i) => (
@@ -758,9 +879,11 @@ const AdminPropertiesPage = () => {
       <AlertDialog open={!!confirmDelete} onOpenChange={(o) => { if (!o) setConfirmDelete(null); }}>
         <AlertDialogContent className="rounded-modal">
           <AlertDialogHeader>
-            <AlertDialogTitle>Eliminar propiedad</AlertDialogTitle>
+            <AlertDialogTitle>Enviar a la papelera</AlertDialogTitle>
             <AlertDialogDescription>
-              ¿Estás seguro de eliminar <strong>{confirmDelete?.title || `Propiedad #${confirmDelete?.id}`}</strong>? Esta acción no se puede deshacer.
+              <strong>{confirmDelete?.title || `Propiedad #${confirmDelete?.id}`}</strong> saldrá del mapa,
+              del sitemap y de las landings ahora mismo. Se puede restaurar durante 30 días; después se
+              borra sola y con ella se van sus fotos, su historial de precios y sus contactos.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -769,11 +892,39 @@ const AdminPropertiesPage = () => {
               className="rounded-button bg-error text-white hover:bg-error/90"
               onClick={() => confirmDelete && handleDelete(confirmDelete)}
             >
-              Eliminar
+              Enviar a la papelera
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Borrado definitivo: solo desde la papelera y sin vuelta atrás */}
+      <AlertDialog open={!!confirmPurge} onOpenChange={(o) => { if (!o) setConfirmPurge(null); }}>
+        <AlertDialogContent className="rounded-modal">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Borrar definitivamente</AlertDialogTitle>
+            <AlertDialogDescription>
+              <strong>{confirmPurge?.title || `Propiedad #${confirmPurge?.id}`}</strong> y todo lo que
+              cuelga de ella —fotos en el almacén, historial de precios y contactos recibidos— se borran
+              ahora y no hay forma de recuperarlos.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="rounded-button">Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              className="rounded-button bg-error text-white hover:bg-error/90"
+              onClick={() => confirmPurge && handlePurge(confirmPurge)}
+            >
+              Borrar para siempre
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <PropertyDiagnosticsDialog
+        propertyId={diagnosingId}
+        onClose={() => setDiagnosingId(null)}
+      />
 
       {/* Vista previa rápida (sin salir del panel) */}
       <Dialog open={!!preview} onOpenChange={(o) => { if (!o) setPreview(null); }}>

@@ -323,6 +323,26 @@ class Property(models.Model):
     # --- Metrics ---
     views_count = models.PositiveIntegerField(default=0, help_text="Número de veces que se ha visto el detalle")
 
+    # --- Trash ---
+    #
+    # An administrative delete stops being a DELETE and becomes a date. The row
+    # survives 30 days so a mistake can be undone, and it leaves the catalogue
+    # the only way the whole project already understands: `status='inactive'`,
+    # which every public read excludes. Nothing that filters by status has to
+    # learn a new word for this to disappear from the map, the sitemap and the
+    # SEO landings — the same argument that kept `sold` out of `status`.
+    deleted_at = models.DateTimeField(
+        null=True, blank=True, db_index=True,
+        help_text="Momento en que se envió a la papelera; nulo si está viva",
+    )
+    deleted_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        null=True, blank=True, on_delete=models.SET_NULL, related_name="+",
+    )
+    # What it was offering before the delete, so restoring puts it back on the
+    # market instead of leaving it silently inactive.
+    deleted_previous_status = models.CharField(max_length=30, blank=True, default="")
+
     # --- Media ---
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -892,3 +912,97 @@ class MarketSnapshot(models.Model):
         where = self.sector_key or self.city or 'Ecuador'
         what = self.property_type or 'todo'
         return f'{where} · {what} · {self.status} · {self.captured_on}'
+
+
+class AdminAuditLog(models.Model):
+    """Quién hizo qué en el panel, en una tabla y no en el log del contenedor.
+
+    Las líneas ``admin_audit action=…`` ya existían, pero vivían en la salida
+    de un contenedor que se recrea en cada despliegue: la única pregunta que la
+    auditoría tiene que poder responder — «¿quién borró esto?» — se contestaba
+    solo si alguien había guardado el log antes. Aquí la respuesta sobrevive al
+    despliegue y se puede leer desde el propio panel.
+
+    El actor se guarda dos veces a propósito: la clave ajena para poder navegar
+    a la cuenta mientras exista, y ``actor_label`` como texto congelado para que
+    borrar al administrador no convierta su rastro en «alguien». Lo mismo con
+    el objetivo, que a menudo ya no existe cuando se lee la línea.
+    """
+
+    ACTION_CHOICES = [
+        ("user.update", "Usuario editado"),
+        ("user.delete", "Usuario eliminado"),
+        ("property.update", "Propiedad editada"),
+        ("property.delete", "Propiedad enviada a la papelera"),
+        ("property.restore", "Propiedad restaurada"),
+        ("property.purge", "Propiedad borrada definitivamente"),
+        ("property.bulk_status", "Cambio de estado en lote"),
+        ("property.transfer_owner", "Propiedad transferida"),
+        ("incident.resolve", "Incidencia resuelta"),
+        ("pending.resume_link_issued", "Enlace de retomar emitido"),
+        ("pending.resume_link_revoked", "Enlace de retomar revocado"),
+        ("imported.cleanup", "Limpieza de importados"),
+        ("export.download", "Exportación descargada"),
+    ]
+
+    actor = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        null=True, blank=True, on_delete=models.SET_NULL, related_name="admin_actions",
+    )
+    actor_label = models.CharField(max_length=150, blank=True, default="")
+    action = models.CharField(max_length=60, db_index=True)
+    target_type = models.CharField(max_length=40, blank=True, default="", db_index=True)
+    target_id = models.CharField(max_length=40, blank=True, default="")
+    target_label = models.CharField(max_length=250, blank=True, default="")
+    # Qué cambió, no con qué valores nuevos cuando el valor es dato personal:
+    # el registro sirve para reconstruir una decisión, no para duplicar la
+    # base de datos en una tabla que nadie purga.
+    changes = models.JSONField(default=dict, blank=True)
+    ip = models.GenericIPAddressField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True, db_index=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+        indexes = [
+            models.Index(fields=["action", "-created_at"], name="audit_action_date_idx"),
+            models.Index(fields=["target_type", "target_id"], name="audit_target_idx"),
+            models.Index(fields=["actor", "-created_at"], name="audit_actor_date_idx"),
+        ]
+
+    def __str__(self):
+        return f"{self.action} · {self.actor_label or 'sistema'} · {self.created_at:%Y-%m-%d %H:%M}"
+
+
+class ActivityDailyRollup(models.Model):
+    """El resumen diario que sobrevive al borrado de los eventos que lo produjeron.
+
+    ``ActivityEvent`` es la tabla que crece sin techo en un host de 8 GB
+    compartido, y la que hay que poder podar. Podarla sin más borraría el único
+    registro de lo que pasó el mes pasado, así que primero se condensa cada día
+    en una fila por evento: el detalle caduca, la serie no.
+
+    ``sessions`` se cuenta por día y no se puede sumar entre días sin inflarla
+    (la misma persona vuelve mañana). Quien lea varias filas debe sumar
+    ``events`` y tratar ``sessions`` como un máximo, no como un total.
+    """
+
+    day = models.DateField(db_index=True)
+    event_name = models.CharField(max_length=100)
+    is_bot = models.BooleanField(default=False)
+    events = models.PositiveIntegerField(default=0)
+    sessions = models.PositiveIntegerField(default=0)
+
+    class Meta:
+        ordering = ["-day", "event_name"]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["day", "event_name", "is_bot"],
+                name="unique_activity_rollup_slice",
+            )
+        ]
+        indexes = [
+            models.Index(fields=["day", "is_bot"], name="rollup_day_bot_idx"),
+        ]
+
+    def __str__(self):
+        return f"{self.day} · {self.event_name} · {'bot' if self.is_bot else 'humano'} · {self.events}"

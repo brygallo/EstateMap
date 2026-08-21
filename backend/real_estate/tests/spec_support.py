@@ -230,6 +230,8 @@ class SpecWorld:
                 columns[key] = value
             elif key == "utm_source":
                 self.record_kit_visits(str(value))
+            elif key == "trashed":
+                self.send_to_trash(bool(value))
             else:
                 raise AssertionError(
                     f"The case declares the precondition '{key}', which SpecWorld.apply "
@@ -248,6 +250,20 @@ class SpecWorld:
             # row the application itself would have produced.
             prop.save()
             prop.refresh_from_db()
+
+    def send_to_trash(self, trashed: bool) -> None:
+        """Given a listing an administrator already sent to the trash (ADM-003).
+
+        Through the service and not by setting the column, so the precondition
+        is the state the application itself produces: `deleted_at` set, the
+        previous operation remembered and the row moved to `inactive`.
+        """
+        if not trashed:
+            return
+        from real_estate.services.trash import PropertyTrashService
+
+        PropertyTrashService().soft_delete(self.property)
+        self.property.refresh_from_db()
 
     def record_kit_visits(self, source: str) -> None:
         """Visits that arrived from the promotion kit link of one network.
