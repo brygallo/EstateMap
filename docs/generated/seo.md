@@ -322,6 +322,7 @@ Cuando la clave de una zona empieza por la de otra seguida de un espacio y la ma
 - `backend/real_estate/services/sectors.py` (`def absorptions`)
 - `backend/real_estate/services/sectors.py` (`if sector["sector_key"] == key or key in sector["aliases"]:`)
 - `backend/real_estate/views.py` (`_absorbed = sector_absorptions(`) — Las estadísticas agrupan igual que las páginas.
+- `frontend/app/propiedades/[ciudad]/[sector]/page.tsx` (`permanentRedirect(`/propiedades/${ciudad}/${sectorSlug(sector)}`)`) — La URL absorbida redirige en vez de servir la misma página dos veces.
 - `backend/real_estate/tests/test_sectors.py` (`def test_a_corner_of_a_zone_counts_towards_the_zone`)
 - `backend/real_estate/tests/test_sectors.py` (`def test_a_neighbour_of_similar_size_is_not_absorbed`)
 

@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { notFound, redirect } from 'next/navigation';
+import { notFound, permanentRedirect } from 'next/navigation';
 
 import SeoLanding, { priceRangeText } from '@/components/SeoLanding';
 import { generatePageMetadata } from '@/lib/metadata';
@@ -77,9 +77,10 @@ export default async function SectorPage({ params }: SectorPageProps) {
 
   // The URL of a zone that has since been absorbed into a larger one: send it
   // where the content now lives instead of serving the same page twice
-  // (SEC-005).
+  // (SEC-005). Permanent, not temporary: a 307 tells a crawler to keep the old
+  // URL indexed and come back, which is the opposite of consolidating them.
   if (sectorSlug(sector) !== sectorParam) {
-    redirect(`/propiedades/${ciudad}/${sectorSlug(sector)}`);
+    permanentRedirect(`/propiedades/${ciudad}/${sectorSlug(sector)}`);
   }
 
   const [properties, siblings] = await Promise.all([

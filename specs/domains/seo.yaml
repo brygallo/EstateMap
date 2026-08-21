@@ -396,7 +396,7 @@ rules:
         symbol: _absorbed = sector_absorptions(
         note: Las estadísticas agrupan igual que las páginas.
       - file: frontend/app/propiedades/[ciudad]/[sector]/page.tsx
-        symbol: "redirect(`/propiedades/${ciudad}/${sectorSlug(sector)}`)"
+        symbol: "permanentRedirect(`/propiedades/${ciudad}/${sectorSlug(sector)}`)"
         note: La URL absorbida redirige en vez de servir la misma página dos veces.
       - file: backend/real_estate/tests/test_sectors.py
         symbol: def test_a_corner_of_a_zone_counts_towards_the_zone
