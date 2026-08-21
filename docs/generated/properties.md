@@ -94,7 +94,7 @@ Una propiedad con status='inactive' desaparece del listado, del mapa y de todos 
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/real_estate/views.py:473-475` (`exclude(status='inactive')`) — Base de get_queryset en PropertyViewSet; de aquí derivan list, map_points y summary.
+- `backend/real_estate/views.py:490-492` (`exclude(status='inactive')`) — Base de get_queryset en PropertyViewSet; de aquí derivan list, map_points y summary.
 - `backend/real_estate/models.py:175-177` (`STATUS_CHOICES`) — Los tres estados posibles son for_sale, for_rent e inactive.
 
 **Casos**
@@ -120,7 +120,7 @@ Una propiedad con status='inactive' desaparece del listado, del mapa y de todos 
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/real_estate/views.py:1211-1213` (`my_properties`) — La acción declara permission_classes=[IsAuthenticated] y elige entre Property.objects.all() y filter(owner=request.user) sin tocar status.
+- `backend/real_estate/views.py:1228-1230` (`my_properties`) — La acción declara permission_classes=[IsAuthenticated] y elige entre Property.objects.all() y filter(owner=request.user) sin tocar status.
 
 **Casos**
 
@@ -148,8 +148,8 @@ my_properties responde con el sobre paginado de DRF (count, next, previous, resu
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/real_estate/views.py:284-291` (`class InventoryPagination`) — page_size 24, page_size_query_param 'page_size', máximo 100.
-- `backend/real_estate/views.py:1211-1213` (`def my_properties`) — stats se calcula con queryset.aggregate antes de paginar.
+- `backend/real_estate/views.py:301-307` (`class InventoryPagination`) — page_size 24, page_size_query_param 'page_size', máximo 100.
+- `backend/real_estate/views.py:1228-1230` (`def my_properties`) — stats se calcula con queryset.aggregate antes de paginar.
 - `frontend/app/my-properties/page.tsx:194-219` (`const fetchInventory`) — El cliente manda search, status y ordering y acumula páginas.
 
 **Casos**
@@ -379,7 +379,7 @@ owner se toma siempre de request.user al crear desde el API, y las propiedades q
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/real_estate/views.py:624-626` (`perform_create`) — serializer.save(owner=self.request.user), ignorando cualquier owner del payload.
+- `backend/real_estate/views.py:641-643` (`perform_create`) — serializer.save(owner=self.request.user), ignorando cualquier owner del payload.
 - `backend/real_estate/serializers.py:198-200` (`owner = serializers.PrimaryKeyRelatedField(read_only=True)`)
 - `backend/real_estate/models.py:278-280` (`owner = models.ForeignKey`) — on_delete=SET_NULL, null=True - borrar la cuenta no borra el anuncio.
 - `backend/ingesta/pipeline/upsert.py:23-53` (`_apply_fields`) — Escribe todos los campos del anuncio importado y no toca owner en ningún momento.
@@ -407,8 +407,8 @@ La escritura sobre una propiedad existente exige ser su owner; cualquier otro us
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
 - `backend/real_estate/permissions.py:4-15` (`IsOwnerOrReadOnly`) — Permite cualquier método seguro y compara obj.owner == request.user para el resto.
-- `backend/real_estate/views.py:366-368` (`IsOwnerOrReadOnly`) — permission_classes = [IsAuthenticatedOrReadOnly, IsOwnerOrReadOnly] en PropertyViewSet.
-- `backend/real_estate/views.py:2850-2852` (`PATCH_ALLOWED_FIELDS`) — El panel admin puede tocar propiedades ajenas, pero solo status, title, price, city y description.
+- `backend/real_estate/views.py:383-385` (`IsOwnerOrReadOnly`) — permission_classes = [IsAuthenticatedOrReadOnly, IsOwnerOrReadOnly] en PropertyViewSet.
+- `backend/real_estate/views.py:2938-2940` (`PATCH_ALLOWED_FIELDS`) — El panel admin puede tocar propiedades ajenas, pero solo status, title, price, city y description.
 
 **Casos**
 
@@ -605,7 +605,7 @@ views_count se incrementa al consultar el detalle únicamente cuando el request 
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/real_estate/views.py:668-670` (`is_bot_request`) — Property.objects.filter(pk=...).update(views_count=F('views_count') + 1) solo si no es bot.
+- `backend/real_estate/views.py:685-687` (`is_bot_request`) — Property.objects.filter(pk=...).update(views_count=F('views_count') + 1) solo si no es bot.
 - `backend/real_estate/models.py:324-326` (`views_count`) — PositiveIntegerField con default 0.
 - `backend/real_estate/serializers.py:228-231` (`views_count`) — Está en read_only_fields, así que un cliente no puede inflarlo desde el payload.
 
@@ -681,7 +681,7 @@ La posición de una propiedad es su par latitude/longitude cuando existe y cae d
 - `backend/real_estate/models.py:365-385` (`save`) — Rellena el centro al guardar cualquier propiedad con polígono y sin coordenadas, y añade los dos campos a update_fields para que se persistan.
 - `backend/real_estate/migrations/0027_backfill_polygon_centers.py:6-29` (`backfill_centers`) — Backfill de las filas anteriores a la garantía; corre solo en el deploy.
 - `frontend/lib/geo.ts:29-61` (`getPropertyPoint`) — Mismo criterio en el cliente, que además valida el punto contra los límites de Ecuador antes de aceptarlo.
-- `backend/real_estate/views.py:560-562` (`bbox`) — El filtro por bbox aún deja pasar incondicionalmente las propiedades con lat/lng nulas y polígono; tras la migración esa rama no empareja ninguna fila y queda como red de seguridad.
+- `backend/real_estate/views.py:577-579` (`bbox`) — El filtro por bbox aún deja pasar incondicionalmente las propiedades con lat/lng nulas y polígono; tras la migración esa rama no empareja ninguna fila y queda como red de seguridad.
 
 **Casos**
 
@@ -721,7 +721,7 @@ La ficha envía su centro como origen y el backend ordena por proximidad antes d
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/real_estate/views.py:529-553` (`distance_score`) — La expresión de distancia se aplica al queryset antes de que DRF lo pagine.
+- `backend/real_estate/views.py:568-591` (`distance_score`) — La expresión de distancia se aplica al queryset antes de que DRF lo pagine.
 - `frontend/lib/properties.ts:331-337` (`origin_lat`) — La ficha envía el centro efectivo de la propiedad junto con su ventana bbox.
 
 **Casos**
@@ -749,7 +749,7 @@ El listado lateral es un feed paginado del catálogo filtrado completo, ordenado
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/real_estate/views.py:529-553` (`distance_score`) — El listado ordena el catálogo filtrado por distancia aproximada y deja coordenadas ausentes al final.
+- `backend/real_estate/views.py:568-591` (`distance_score`) — El listado ordena el catálogo filtrado por distancia aproximada y deja coordenadas ausentes al final.
 - `frontend/hooks/usePropertyFilters.ts:427-473` (`fetchCardsPage`) — Las tarjetas omiten bbox, envían el centro del mapa y anexan cada página sin duplicados.
 - `frontend/components/map/PropertySidebar.tsx:162-188` (`IntersectionObserver`) — El sentinel solicita automáticamente la página siguiente al acercarse al final del scroll.
 
@@ -806,7 +806,7 @@ La normalización vive en `save()` porque todos los caminos de escritura pasan p
 - `backend/real_estate/models.py:268-272` (`closed_reason = models`)
 - `backend/real_estate/models.py:408-415` (`if self.closed_reason:`) — Cerrar pone inactive y sella la fecha; abrir la borra.
 - `backend/real_estate/serializers.py:38-50` (`def reopen_on_reactivation`) — Volver a poner el anuncio en venta lo reabre; si no, el cambio parece aceptado y se deshace solo.
-- `backend/real_estate/views.py:3117-3119` (`changes['closed_reason'] = ''`) — El cambio de estado en lote escribe con .update(), que nunca llega a save(), así que reabre a mano.
+- `backend/real_estate/views.py:3205-3207` (`changes['closed_reason'] = ''`) — El cambio de estado en lote escribe con .update(), que nunca llega a save(), así que reabre a mano.
 
 **Casos**
 
@@ -841,8 +841,8 @@ Ese privilegio es de la ficha por id y solo de ella. La ruta por código corto n
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/real_estate/views.py:449-467` (`visible |= Q(is_duplicate=False) & ~Q(closed_reason='')`) — Las acciones de detalle resuelven la fila por id, no por el catálogo público; el dueño entra siempre.
-- `backend/real_estate/views.py:989-992` (`exclude(status='inactive', closed_reason='')`) — El código corto de un anuncio vendido sigue resolviendo.
+- `backend/real_estate/views.py:482-499` (`visible |= Q(is_duplicate=False) & ~Q(closed_reason='')`) — Las acciones de detalle resuelven la fila por id, no por el catálogo público; el dueño entra siempre.
+- `backend/real_estate/views.py:1006-1008` (`exclude(status='inactive', closed_reason='')`) — El código corto de un anuncio vendido sigue resolviendo.
 
 **Casos**
 

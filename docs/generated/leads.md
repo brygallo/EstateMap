@@ -83,7 +83,7 @@ POST /api/leads/ lleva el throttle_scope lead_create a 10/min, para que un scrip
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/real_estate/views.py:1301-1334` (`def get_throttles`)
+- `backend/real_estate/views.py:1345-1377` (`def get_throttles`)
 - `backend/estate_map/settings.py:212-230` (`'lead_create': '10/min'`)
 
 **Casos**
@@ -156,7 +156,7 @@ GET/PATCH/DELETE sobre /api/leads/ exigen autenticación; el queryset se filtra 
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/real_estate/views.py:1339-1341` (`def get_queryset`) — Devuelve Lead.objects.none() si no hay usuario autenticado, el queryset completo si is_staff, y filter(property__owner=user) en cualquier otro caso.
+- `backend/real_estate/views.py:1356-1358` (`def get_queryset`) — Devuelve Lead.objects.none() si no hay usuario autenticado, el queryset completo si is_staff, y filter(property__owner=user) en cualquier otro caso.
 
 
 **Casos**
@@ -188,7 +188,7 @@ LeadViewSet.perform_create guarda el lead y llama de forma síncrona a LeadNotif
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/real_estate/views.py:1348-1350` (`def perform_create`) — serializer.save() seguido de LeadNotificationService().notify_created(lead), dentro del mismo ciclo request/response.
+- `backend/real_estate/views.py:1365-1367` (`def perform_create`) — serializer.save() seguido de LeadNotificationService().notify_created(lead), dentro del mismo ciclo request/response.
 - `backend/real_estate/services/notifications.py:13-22` (`class LeadNotificationService`) — notify_created llama a send_lead_notification sin encolarla en Celery.
 - `backend/real_estate/email_utils.py:229-246` (`def send_lead_notification`) — Reúne owner.email y property.contact_email como destinatarios.
 
@@ -293,8 +293,8 @@ GET/PATCH sobre /api/pending-publications/ exigen IsAuthenticated e IsAdminUser 
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/real_estate/views.py:1323-1325` (`def get_permissions`) — return [IsAuthenticated(), IsAdminUser()] para toda acción salvo create.
-- `backend/real_estate/views.py:1339-1341` (`def get_queryset`) — PendingPublication.objects.none() salvo que user.is_staff sea verdadero.
+- `backend/real_estate/views.py:1340-1342` (`def get_permissions`) — return [IsAuthenticated(), IsAdminUser()] para toda acción salvo create.
+- `backend/real_estate/views.py:1356-1358` (`def get_queryset`) — PendingPublication.objects.none() salvo que user.is_staff sea verdadero.
 
 **Casos**
 
@@ -325,7 +325,7 @@ PendingPublicationViewSet.get_throttles aplica ScopedRateThrottle con throttle_s
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/real_estate/views.py:1371-1373` (`throttle_scope = 'pending_create'`) — Solo el POST público se limita; el resto de acciones ya exige staff y no lleva throttle.
+- `backend/real_estate/views.py:1388-1390` (`throttle_scope = 'pending_create'`) — Solo el POST público se limita; el resto de acciones ya exige staff y no lleva throttle.
 - `backend/estate_map/settings.py:211-213` (`'pending_create': '10/min'`)
 
 **Casos**
@@ -348,7 +348,7 @@ PendingPublicationViewSet.perform_create llama a PendingPublicationNotificationS
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/real_estate/views.py:1348-1350` (`def perform_create`) — PendingPublicationNotificationService().notify_created(pending) en el mismo request.
+- `backend/real_estate/views.py:1365-1367` (`def perform_create`) — PendingPublicationNotificationService().notify_created(pending) en el mismo request.
 - `backend/real_estate/email_utils.py:194-203` (`def send_pending_publication_notification`) — recipients sale de settings.ADMINS más PENDING_PUBLICATION_NOTIFY_EMAIL; si queda vacío, la función retorna sin enviar nada.
 - `backend/real_estate/services/notifications.py:25-37` (`class PendingPublicationNotificationService`) — Mismo patrón try/except que LeadNotificationService.
 
@@ -391,13 +391,13 @@ ActivityEventSerializer.create ignora cualquier valor de is_bot que venga en el 
 Ningún punto del flujo de creación rechaza una petición por venir de un bot: is_bot solo cambia una columna. Las métricas de negocio filtran is_bot=False para contar personas, pero el tráfico de crawlers queda almacenado y consultable aparte.
 
 
-> **Por qué:** La decisión de negocio es medible en dos direcciones: AdminMetricsService cuenta humanos con is_bot=False para sesiones y contactos, y por separado reporta el volumen de bots del mes (month_bot_events) para que el equipo vea cuánto tráfico está descartando. Nunca hay un 403 ni un 429 específico para bots.
+> **Por qué:** La decisión de negocio es medible en dos direcciones: AdminMetricsService cuenta humanos con is_bot=False para sesiones y contactos, y por separado reporta el volumen de bots de la ventana elegida (window_bot_events) para que el equipo vea cuánto tráfico está descartando. Nunca hay un 403 ni un 429 específico para bots.
 
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/real_estate/services/admin_metrics.py:110-112` (`human_events = ActivityEvent.objects.filter(is_bot=False)`) — Base de las métricas de audiencia humana.
-- `backend/real_estate/services/admin_metrics.py:141-143` (`month_bot_events = ActivityEvent.objects.filter(created_at__gte=month_start, is_bot=True)`) — El volumen de bots se reporta, no se descarta.
+- `backend/real_estate/services/admin_metrics.py:133-135` (`human_events = ActivityEvent.objects.filter(is_bot=False)`) — Base de las métricas de audiencia humana.
+- `backend/real_estate/services/admin_metrics.py:164-166` (`window_bot_events = ActivityEvent.objects.filter(created_at__gte=current_start, is_bot=True)`) — El volumen de bots se reporta, no se descarta.
 
 **Casos**
 
@@ -422,7 +422,7 @@ ActivityEventViewSet.get_throttles aplica ScopedRateThrottle con throttle_scope=
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/real_estate/views.py:1621-1623` (`throttle_scope = 'activity_create'`)
+- `backend/real_estate/views.py:1638-1640` (`throttle_scope = 'activity_create'`)
 - `backend/estate_map/settings.py:210-212` (`'activity_create': '30/min'`)
 
 **Casos**

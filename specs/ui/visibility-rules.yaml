@@ -45,7 +45,7 @@ rules:
         symbol: "data.pop('views_count', None)"
         note: El detalle elimina el contador salvo para propietario o staff autenticado.
       - file: backend/real_estate/views.py
-        lines: "727-750"
+        lines: "758-780"
         symbol: "demand = {'level': demand_level}"
         note: El informe público conserva el nivel cualitativo y añade métricas solo al dueño o staff.
     frontend:

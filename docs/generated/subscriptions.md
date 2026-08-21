@@ -183,7 +183,7 @@ No hay integración con ninguna pasarela, ningún modelo financiero y ningún ca
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `frontend/next.config.js:70-72` (`Permissions-Policy`) — La cabecera incluye payment=(), de modo que ni siquiera una integración accidental en cliente podría usar la API de pagos del navegador.
+- `frontend/next.config.js:98-100` (`Permissions-Policy`) — La cabecera incluye payment=(), de modo que ni siquiera una integración accidental en cliente podría usar la API de pagos del navegador.
 
 
 **Casos**

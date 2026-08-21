@@ -479,3 +479,135 @@ def test_adm_014_una_ciudad_con_cinco_anuncios_del_mismo_tipo_aparece_como_pagin
         case_name='una ciudad con cinco anuncios del mismo tipo aparece como página abierta',
         expected_status=200,
     )
+
+
+# --- ADM-015: El periodo de análisis lo elige quien mira, y todo lo demás lo sigue ---
+
+def test_adm_015_staff_pide_la_ventana_de_7_dias_y_la_recibe_declarada(spec_request):
+    """
+    SPEC:ADM-015 — El periodo de análisis lo elige quien mira, y todo lo demás lo sigue
+    Case: staff pide la ventana de 7 días y la recibe declarada
+    """
+    response = spec_request(
+        method='GET',
+        path='/api/admin/dashboard/',
+        role='staff',
+        given=None,
+        body=None,
+    )
+    assert_outcome(
+        response,
+        expected='allowed',
+        denied_status=403,
+        rule_id='ADM-015',
+        case_name='staff pide la ventana de 7 días y la recibe declarada',
+        expected_status=200,
+    )
+
+def test_adm_015_un_usuario_autenticado_cualquiera_recibe_403(spec_request):
+    """
+    SPEC:ADM-015 — El periodo de análisis lo elige quien mira, y todo lo demás lo sigue
+    Case: un usuario autenticado cualquiera recibe 403
+    """
+    response = spec_request(
+        method='GET',
+        path='/api/admin/dashboard/',
+        role='authenticated',
+        given=None,
+        body=None,
+    )
+    assert_outcome(
+        response,
+        expected='denied',
+        denied_status=403,
+        rule_id='ADM-015',
+        case_name='un usuario autenticado cualquiera recibe 403',
+        expected_status=None,
+    )
+
+def test_adm_015_un_anonimo_recibe_401(spec_request):
+    """
+    SPEC:ADM-015 — El periodo de análisis lo elige quien mira, y todo lo demás lo sigue
+    Case: un anónimo recibe 401
+    """
+    response = spec_request(
+        method='GET',
+        path='/api/admin/dashboard/',
+        role='anonymous',
+        given=None,
+        body=None,
+    )
+    assert_outcome(
+        response,
+        expected='denied',
+        denied_status=401,
+        rule_id='ADM-015',
+        case_name='un anónimo recibe 401',
+        expected_status=None,
+    )
+
+
+# --- ADM-016: La bitácora de actividad se acota por fechas y se resume ---
+
+def test_adm_016_staff_acota_la_bitacora_a_un_rango_de_fechas(spec_request):
+    """
+    SPEC:ADM-016 — La bitácora de actividad se acota por fechas y se resume
+    Case: staff acota la bitácora a un rango de fechas
+    """
+    response = spec_request(
+        method='GET',
+        path='/api/activity-events/summary/',
+        role='staff',
+        given=None,
+        body=None,
+    )
+    assert_outcome(
+        response,
+        expected='allowed',
+        denied_status=403,
+        rule_id='ADM-016',
+        case_name='staff acota la bitácora a un rango de fechas',
+        expected_status=200,
+    )
+
+def test_adm_016_un_usuario_autenticado_cualquiera_recibe_403(spec_request):
+    """
+    SPEC:ADM-016 — La bitácora de actividad se acota por fechas y se resume
+    Case: un usuario autenticado cualquiera recibe 403
+    """
+    response = spec_request(
+        method='GET',
+        path='/api/activity-events/summary/',
+        role='authenticated',
+        given=None,
+        body=None,
+    )
+    assert_outcome(
+        response,
+        expected='denied',
+        denied_status=403,
+        rule_id='ADM-016',
+        case_name='un usuario autenticado cualquiera recibe 403',
+        expected_status=None,
+    )
+
+def test_adm_016_un_anonimo_recibe_401(spec_request):
+    """
+    SPEC:ADM-016 — La bitácora de actividad se acota por fechas y se resume
+    Case: un anónimo recibe 401
+    """
+    response = spec_request(
+        method='GET',
+        path='/api/activity-events/summary/',
+        role='anonymous',
+        given=None,
+        body=None,
+    )
+    assert_outcome(
+        response,
+        expected='denied',
+        denied_status=401,
+        rule_id='ADM-016',
+        case_name='un anónimo recibe 401',
+        expected_status=None,
+    )

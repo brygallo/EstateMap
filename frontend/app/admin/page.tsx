@@ -4,7 +4,7 @@ import AdminRoute from '@/components/AdminRoute';
 import AdminSidebar from '@/components/AdminSidebar';
 import { apiGet } from '@/lib/api';
 import Link from 'next/link';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import {
   Users,
   Building2,
@@ -101,6 +101,8 @@ interface Comparability {
 }
 
 interface OwnerMetrics {
+  /** The stretch of time every window-bound figure below was measured over. */
+  window?: { days: number; starts_on: string; previous_starts_on: string; choices: number[] };
   period: Record<'sessions' | 'new_users' | 'details' | 'contacts' | 'publications', OwnerPeriodMetric>;
   comparability?: Comparability;
   funnel: Array<{ label: string; value: number; rate: number }>;
@@ -118,8 +120,8 @@ interface OwnerMetrics {
     name: string;
     active: number;
     retired: number;
-    details_30d: number;
-    contacts_30d: number;
+    details_window: number;
+    contacts_window: number;
     conversion: number;
     last_import_at: string | null;
   }>;
@@ -136,11 +138,11 @@ interface OwnerMetrics {
   contact_rate?: number;
   top_contacted_properties?: Array<{ id: number; title: string; city: string; count: number }>;
   audience: {
-    active_30d: number;
-    recurring_30d: number;
-    high_intent_users_30d: number;
-    bot_events_30d?: number;
-    bot_sessions_30d?: number;
+    active_window: number;
+    recurring_window: number;
+    high_intent_users_window: number;
+    bot_events_window?: number;
+    bot_sessions_window?: number;
   };
   alerts: Array<{ severity: 'critical' | 'warning' | 'ok'; title: string; value: number; href: string }>;
   weekly_summary: string[];
@@ -165,35 +167,50 @@ interface SourceHealth {
   retired: number;
 }
 
+// The windows the API is willing to compute. Anything else falls back to 30,
+// so the selector never asks for a figure the server will quietly change.
+const WINDOW_OPTIONS = [
+  { days: 7, label: '7 días' },
+  { days: 14, label: '14 días' },
+  { days: 30, label: '30 días' },
+  { days: 90, label: '90 días' },
+];
+
 const AdminDashboard = () => {
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState('');
+  const [windowDays, setWindowDays] = useState(30);
 
-  const fetchDashboard = async () => {
-    const isRefresh = data !== null;
-    if (isRefresh) setRefreshing(true);
-    try {
-      const res = await apiGet('/admin/dashboard/');
-      if (!res.ok) throw new Error('Error al cargar datos');
-      const json = await res.json();
-      setData(json);
-      setError('');
-    } catch (err: any) {
-      setError(err.message);
-    } finally {
-      if (isRefresh) {
-        setRefreshing(false);
-      } else {
-        setLoading(false);
+  const fetchDashboard = useCallback(
+    async (days: number, isRefresh: boolean) => {
+      if (isRefresh) setRefreshing(true);
+      try {
+        const res = await apiGet(`/admin/dashboard/?days=${days}`);
+        if (!res.ok) throw new Error('Error al cargar datos');
+        const json = await res.json();
+        setData(json);
+        setError('');
+      } catch (err: any) {
+        setError(err.message);
+      } finally {
+        if (isRefresh) {
+          setRefreshing(false);
+        } else {
+          setLoading(false);
+        }
       }
-    }
-  };
+    },
+    []
+  );
 
   useEffect(() => {
-    fetchDashboard();
-  }, []);
+    void fetchDashboard(windowDays, data !== null);
+    // `data` is read to decide between the first load and a refresh; adding it
+    // as a dependency would refetch on every arriving payload.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [windowDays, fetchDashboard]);
 
   return (
     <AdminRoute>
@@ -201,15 +218,41 @@ const AdminDashboard = () => {
         <AdminSidebar />
         <main className="min-w-0 flex-1">
           <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-            <div className="mb-8 flex items-center justify-between">
+            <div className="mb-8 flex flex-wrap items-center justify-between gap-3">
               <div>
                 <h1 className="text-2xl font-bold text-textPrimary">Dashboard</h1>
                 <p className="mt-1 text-sm text-textSecondary">
                   Resumen general de tu portal inmobiliario.
                 </p>
               </div>
+              <div className="flex flex-wrap items-center gap-3">
+                {/* Every comparison, funnel and channel figure below is read
+                    over this window, and the previous period it is compared
+                    against is the same length immediately before it. */}
+                <div
+                  className="inline-flex rounded-button border border-line bg-white p-0.5"
+                  role="group"
+                  aria-label="Periodo de análisis"
+                >
+                  {WINDOW_OPTIONS.map((option) => (
+                    <button
+                      key={option.days}
+                      type="button"
+                      onClick={() => setWindowDays(option.days)}
+                      aria-pressed={windowDays === option.days}
+                      className={cn(
+                        'rounded-button px-3 py-1.5 text-sm font-medium transition-colors',
+                        windowDays === option.days
+                          ? 'bg-primary text-white'
+                          : 'text-textSecondary hover:bg-muted'
+                      )}
+                    >
+                      {option.label}
+                    </button>
+                  ))}
+                </div>
               <button
-                onClick={fetchDashboard}
+                onClick={() => void fetchDashboard(windowDays, true)}
                 disabled={refreshing}
                 className={cn(
                   'inline-flex items-center gap-2 rounded-button bg-primary px-4 py-2 text-sm font-medium text-white transition-all hover:bg-primary/90',
@@ -219,6 +262,7 @@ const AdminDashboard = () => {
                 <RefreshCw className={cn('h-4 w-4', refreshing && 'animate-spin')} />
                 Actualizar
               </button>
+              </div>
             </div>
 
             {error && (
@@ -415,6 +459,10 @@ const SOURCE_STATUS = {
 } satisfies Record<SourceHealth['status'], { label: string; className: string }>;
 
 function OwnerExecutive({ metrics }: { metrics: OwnerMetrics }) {
+  // Read from the payload, not from the selector: during a refetch the two
+  // disagree, and a caption that runs ahead of its own figures is worse than
+  // one that lags.
+  const windowDays = metrics.window?.days ?? 30;
   const [selectedTrendDate, setSelectedTrendDate] = useState<string | null>(null);
   const contactMethodLabels: Record<string, string> = {
     phone_reveal: 'Vieron el número',
@@ -439,7 +487,9 @@ function OwnerExecutive({ metrics }: { metrics: OwnerMetrics }) {
     <section className="mb-8 space-y-4" aria-labelledby="executive-title">
       <div>
         <h2 id="executive-title" className="text-xl font-bold text-textPrimary">Vista ejecutiva</h2>
-        <p className="mt-1 text-sm text-textSecondary">Crecimiento, intención y decisiones de los últimos 7 días frente a los 7 anteriores.</p>
+        <p className="mt-1 text-sm text-textSecondary">
+          Crecimiento, intención y decisiones de los últimos {windowDays} días frente a los {windowDays} anteriores.
+        </p>
       </div>
 
       <BotCutoffNotice comparability={metrics.comparability} />
@@ -469,7 +519,7 @@ function OwnerExecutive({ metrics }: { metrics: OwnerMetrics }) {
       <div className="grid gap-4 xl:grid-cols-[minmax(0,1.3fr)_minmax(360px,0.7fr)]">
         <Card className="min-w-0 overflow-hidden rounded-card shadow-card">
           <CardHeader className="pb-2">
-            <CardTitle className="flex items-center gap-2 text-base"><BarChart3 className="h-4 w-4" /> Actividad de los últimos 14 días</CardTitle>
+            <CardTitle className="flex items-center gap-2 text-base"><BarChart3 className="h-4 w-4" /> Actividad de los últimos {metrics.trends.length} días</CardTitle>
             <p className="text-xs text-textSecondary">Acciones reales de visitantes, como abrir propiedades, contactar o intentar publicar. No incluye bots.</p>
           </CardHeader>
           <CardContent>
@@ -534,18 +584,18 @@ function OwnerExecutive({ metrics }: { metrics: OwnerMetrics }) {
         </Card>
 
         <Card className="rounded-card shadow-card">
-          <CardHeader className="pb-2"><CardTitle className="text-base">Audiencia útil · 30 días</CardTitle></CardHeader>
+          <CardHeader className="pb-2"><CardTitle className="text-base">Audiencia útil · {windowDays} días</CardTitle></CardHeader>
           <CardContent className="grid grid-cols-3 gap-2">
-            <AudienceMetric label="Activas" value={metrics.audience.active_30d} icon={Activity} />
-            <AudienceMetric label="Recurrentes" value={metrics.audience.recurring_30d} icon={RefreshCw} />
-            <AudienceMetric label="Alta intención" value={metrics.audience.high_intent_users_30d} icon={UserCheck} />
+            <AudienceMetric label="Activas" value={metrics.audience.active_window} icon={Activity} />
+            <AudienceMetric label="Recurrentes" value={metrics.audience.recurring_window} icon={RefreshCw} />
+            <AudienceMetric label="Alta intención" value={metrics.audience.high_intent_users_window} icon={UserCheck} />
           </CardContent>
         </Card>
       </div>
 
       <div className="grid gap-4 lg:grid-cols-2">
         <Card className="rounded-card shadow-card">
-          <CardHeader className="pb-3"><CardTitle className="text-base">Embudo de intención · 30 días</CardTitle></CardHeader>
+          <CardHeader className="pb-3"><CardTitle className="text-base">Embudo de intención · {windowDays} días</CardTitle></CardHeader>
           <CardContent className="space-y-3">
             {metrics.funnel.map((stage) => (
               <div key={stage.label}>
@@ -584,7 +634,7 @@ function OwnerExecutive({ metrics }: { metrics: OwnerMetrics }) {
       <div className="grid min-w-0 gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(280px,0.8fr)]">
         <Card className="min-w-0 overflow-hidden rounded-card shadow-card">
           <CardHeader className="pb-3">
-            <CardTitle className="flex items-center gap-2 text-base"><MousePointerClick className="h-4 w-4" /> Contactos · 30 días</CardTitle>
+            <CardTitle className="flex items-center gap-2 text-base"><MousePointerClick className="h-4 w-4" /> Contactos · {windowDays} días</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-3 gap-2">
@@ -612,7 +662,7 @@ function OwnerExecutive({ metrics }: { metrics: OwnerMetrics }) {
         </Card>
 
         <Card className="min-w-0 overflow-hidden rounded-card shadow-card">
-          <CardHeader className="pb-3"><CardTitle className="text-base">Propiedades más contactadas · 30 días</CardTitle></CardHeader>
+          <CardHeader className="pb-3"><CardTitle className="text-base">Propiedades más contactadas · {windowDays} días</CardTitle></CardHeader>
           <CardContent className="space-y-2">
             {(metrics.top_contacted_properties || []).length === 0 ? (
               <p className="text-sm text-textSecondary">Aún no hay contactos registrados este mes.</p>
@@ -636,7 +686,7 @@ function OwnerExecutive({ metrics }: { metrics: OwnerMetrics }) {
 
       <div className="grid gap-4 xl:grid-cols-2">
         <ExecutiveTable
-          title="Acciones de contacto · 30 días"
+          title={`Acciones de contacto · ${windowDays} días`}
           headers={['Acción', 'Cantidad']}
           rows={(metrics.contact_methods || []).map((item) => [
             contactMethodLabels[item.method] || item.method,
@@ -645,7 +695,7 @@ function OwnerExecutive({ metrics }: { metrics: OwnerMetrics }) {
           empty="Las acciones de contacto aparecerán cuando los usuarios interactúen con los anuncios."
         />
         <ExecutiveTable
-          title="Origen de usuarios · 30 días"
+          title={`Origen de usuarios · ${windowDays} días`}
           headers={['Origen', 'Canal', 'Sesiones', 'Contactos', 'Conversión']}
           rows={(metrics.acquisition_channels || []).map((source) => [
             source.source,
@@ -657,19 +707,19 @@ function OwnerExecutive({ metrics }: { metrics: OwnerMetrics }) {
           empty="La atribución aparecerá cuando ingresen nuevas sesiones."
         />
         <ExecutiveTable
-          title="Rendimiento por fuente · 30 días"
+          title={`Rendimiento por fuente · ${windowDays} días`}
           headers={['Fuente', 'Activas', 'Detalles', 'Contactos', 'Conversión']}
           rows={metrics.source_performance.map((source) => [
             source.name,
             source.active.toLocaleString('es-EC'),
-            source.details_30d.toLocaleString('es-EC'),
-            source.contacts_30d.toLocaleString('es-EC'),
+            source.details_window.toLocaleString('es-EC'),
+            source.contacts_window.toLocaleString('es-EC'),
             `${source.conversion}%`,
           ])}
           empty="Todavía no hay fuentes con datos."
         />
         <ExecutiveTable
-          title="Propiedades con mayor intención · 30 días"
+          title={`Propiedades con mayor intención · ${windowDays} días`}
           headers={['Propiedad', 'Ciudad', 'Detalles', 'Contactos']}
           rows={metrics.top_properties.map((property) => [
             <Link key={property.id} href={`/propiedad/${property.id}`} target="_blank" className="block max-w-full truncate font-medium text-primary hover:underline sm:max-w-[240px]">{property.title || `Propiedad #${property.id}`}</Link>,
@@ -1104,10 +1154,9 @@ function BotCutoffNotice({ comparability }: { comparability?: Comparability }) {
   if (affected.length === 0) return null;
 
   const WINDOW_LABELS: Record<string, string> = {
-    period: 'los últimos 7 días',
+    period: 'el periodo seleccionado',
     previous_period: 'el periodo anterior',
-    month: 'los últimos 30 días',
-    trends: 'la serie de 14 días',
+    trends: 'la serie diaria',
   };
 
   return (

@@ -91,9 +91,9 @@ def test_owner_metrics_count_humans_only_and_report_bot_volume():
 
     assert metrics["period"]["sessions"]["value"] == 1
     assert metrics["period"]["contacts"]["value"] == 1
-    assert metrics["audience"]["active_30d"] == 1
-    assert metrics["audience"]["bot_events_30d"] == 4
-    assert metrics["audience"]["bot_sessions_30d"] == 4
+    assert metrics["audience"]["active_window"] == 1
+    assert metrics["audience"]["bot_events_window"] == 4
+    assert metrics["audience"]["bot_sessions_window"] == 4
     assert metrics["funnel"][0]["value"] == 1
 
 

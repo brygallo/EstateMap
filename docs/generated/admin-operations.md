@@ -29,6 +29,8 @@ Lo que el panel hace además de listar: dejar constancia de cada escritura admin
 | [`ADM-012`](#adm-012--una-sola-búsqueda-cubre-todo-el-panel) | Una sola búsqueda cubre todo el panel | ✅ Implementada |
 | [`ADM-013`](#adm-013--el-diagnóstico-dice-por-qué-no-se-ve-una-propiedad-y-qué-hacer) | El diagnóstico dice por qué no se ve una propiedad y qué hacer | ✅ Implementada |
 | [`ADM-014`](#adm-014--la-cobertura-de-páginas-usa-los-mismos-umbrales-que-el-sitio) | La cobertura de páginas usa los mismos umbrales que el sitio | ✅ Implementada |
+| [`ADM-015`](#adm-015--el-periodo-de-análisis-lo-elige-quien-mira-y-todo-lo-demás-lo-sigue) | El periodo de análisis lo elige quien mira, y todo lo demás lo sigue | ✅ Implementada |
+| [`ADM-016`](#adm-016--la-bitácora-de-actividad-se-acota-por-fechas-y-se-resume) | La bitácora de actividad se acota por fechas y se resume | ✅ Implementada |
 
 ### ADM-001 — Toda escritura administrativa deja una fila consultable
 
@@ -55,7 +57,7 @@ Editar o eliminar una cuenta, editar, borrar, restaurar, purgar, transferir o ca
 
 - `backend/real_estate/models.py:891-948` (`class AdminAuditLog`)
 - `backend/real_estate/services/audit.py:28-60` (`class AdminAuditService`)
-- `backend/real_estate/views.py:3166-3174` (`class AdminAuditLogView`)
+- `backend/real_estate/views.py:3254-3261` (`class AdminAuditLogView`)
 - `backend/real_estate/urls.py:96` (`admin_audit`)
 
 **Casos**
@@ -117,7 +119,7 @@ DELETE sobre una propiedad del panel la marca con deleted_at, guarda el estado q
 
 - `backend/real_estate/models.py:334-353` (`deleted_at`)
 - `backend/real_estate/services/trash.py:31-46` (`def soft_delete`)
-- `backend/real_estate/views.py:2991-3016` (`def destroy`)
+- `backend/real_estate/views.py:2905-2929` (`def destroy`)
 
 **Casos**
 
@@ -152,7 +154,7 @@ Restaurar una propiedad de la papelera le devuelve el `status` que tenía antes 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
 - `backend/real_estate/services/trash.py:48-69` (`def restore`)
-- `backend/real_estate/views.py:3018-3036` (`def restore`)
+- `backend/real_estate/views.py:3121-3138` (`def restore`)
 - `backend/real_estate/urls.py:91` (`admin_properties_restore`)
 
 **Casos**
@@ -186,7 +188,7 @@ La única ruta que borra de verdad una propiedad exige que ya esté en la papele
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/real_estate/views.py:3038-3053` (`def purge`)
+- `backend/real_estate/views.py:3141-3155` (`def purge`)
 - `backend/real_estate/services/trash.py:71-74` (`def purge`)
 
 **Casos**
@@ -271,7 +273,7 @@ La respuesta de /api/admin/dashboard/ se guarda 5 minutos bajo una clave que lle
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/real_estate/views.py:2461-2480` (`CACHE_TTL = 300`)
+- `backend/real_estate/views.py:2540-2558` (`CACHE_TTL = 300`)
 - `backend/real_estate/cache_utils.py:91-93` (`def versioned_key`)
 
 **Casos**
@@ -344,7 +346,7 @@ Los conjuntos properties, users, leads y audit se descargan en CSV transmitido f
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
 - `backend/real_estate/services/exports.py:46-66` (`class CsvExportService`)
-- `backend/real_estate/views.py:3243-3261` (`class AdminExportView`)
+- `backend/real_estate/views.py:3346-3363` (`class AdminExportView`)
 - `backend/real_estate/urls.py:99` (`admin_export`)
 
 **Casos**
@@ -371,7 +373,7 @@ La descarga se autentica con las clases de DRF, que solo leen la cabecera Author
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/real_estate/views.py:3243-3261` (`class AdminExportView`)
+- `backend/real_estate/views.py:3346-3363` (`class AdminExportView`)
 - `frontend/lib/admin-export.ts:21-39` (`downloadAdminCsv`)
 
 **Casos**
@@ -409,7 +411,7 @@ La descarga se autentica con las clases de DRF, que solo leen la cabecera Author
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
 - `backend/real_estate/services/admin_search.py:26-45` (`class AdminSearchService`)
-- `backend/real_estate/views.py:3224-3231` (`class AdminSearchView`)
+- `backend/real_estate/views.py:3312-3318` (`class AdminSearchView`)
 
 **Casos**
 
@@ -449,7 +451,7 @@ La descarga se autentica con las clases de DRF, que solo leen la cabecera Author
 
 - `backend/real_estate/services/diagnostics.py:27-58` (`class PropertyDiagnosticsService`)
 - `backend/real_estate/services/diagnostics.py:62-94` (`def _blockers`)
-- `backend/real_estate/views.py:3070-3075` (`def diagnostics`)
+- `backend/real_estate/views.py:3158-3162` (`def diagnostics`)
 
 **Casos**
 
@@ -503,3 +505,83 @@ La descarga se autentica con las clases de DRF, que solo leen la cabecera Author
 **Cobertura exigida:** api
 
 - `backend/real_estate/tests/generated/test_spec_admin_operations.py`
+
+### ADM-015 — El periodo de análisis lo elige quien mira, y todo lo demás lo sigue
+
+**Estado:** ✅ Implementada
+
+`GET /api/admin/dashboard/?days=` acepta 7, 14, 30 o 90 y cualquier otro valor cae a 30. La ventana elegida rige a la vez la comparación con el periodo anterior, el embudo, la adquisición, la audiencia y la serie diaria, viaja en la clave de caché y se declara en el bloque `window` para que la interfaz etiquete cada cifra con el periodo que la produjo.
+
+> **Por qué:** El panel medía siempre 7 días contra los 7 anteriores y un bloque fijo de 30, así que no había forma de preguntarle si algo cambió en el trimestre ni de aislar la semana en que corrió una campaña. Una ventana libre habría permitido pedir un año de eventos y bloquear la base mientras los cuenta; cuatro opciones cubren las preguntas reales y mantienen la consulta acotada. El periodo anterior es del mismo largo e inmediatamente anterior porque es la única comparación que significa algo cuando la ventana se mueve, y los rótulos se leen del payload y no del selector: durante una recarga los dos discrepan, y un título que va por delante de sus propias cifras engaña más que uno que va por detrás.
+
+**Backend**
+
+- Endpoint: `GET /api/admin/dashboard/`
+- ¿Lo aplica el servidor?: sí
+- Al denegar: HTTP `403`
+
+**Frontend**
+
+- Ruta: `/admin`
+- Visible si se permite: sí
+
+**Evidencia en el código** (verificada por `tools/specs/validate.py`)
+
+- `backend/real_estate/services/admin_metrics.py` (`def resolve_window`)
+- `backend/real_estate/services/admin_metrics.py` (`WINDOW_CHOICES`)
+- `backend/real_estate/views.py` (`class AdminDashboardView`)
+
+**Casos**
+
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| staff pide la ventana de 7 días y la recibe declarada | staff | — | — | allowed |
+| un valor fuera de la lista cae a 30 días | — | — | — | allowed |
+| un usuario autenticado cualquiera recibe 403 | authenticated | — | — | denied (HTTP 403) |
+| un anónimo recibe 401 | anonymous | — | — | denied (HTTP 401) |
+
+**Cobertura exigida:** api
+
+- `backend/real_estate/tests/generated/test_spec_admin_operations.py`
+- `backend/real_estate/tests/test_admin_analysis_window.py`
+
+### ADM-016 — La bitácora de actividad se acota por fechas y se resume
+
+**Estado:** ✅ Implementada
+
+`GET /api/activity-events/` admite `created_after` y `created_before` en formato `YYYY-MM-DD`, interpretados como días completos en la zona horaria del portal y con el extremo superior incluido. `GET /api/activity-events/summary/` devuelve, con los mismos filtros, el total, las sesiones distintas, el desglose por evento y por día, y el reparto entre personas y rastreadores.
+
+> **Por qué:** Una página de cincuenta filas no responde si el tráfico creció, qué evento se movió ni cuánto de lo que se ve eran crawlers, que son las tres cosas que hay que saber para decidir sobre SEO. El resumen se construye con los mismos parámetros que el listado para que los totales describan exactamente lo que hay en pantalla. El reparto humanos/bots es la excepción deliberada: se calcula sin el filtro `is_bot` de quien pregunta, porque preguntar «cuánto de este rango fue rastreador» mirando solo personas respondería cero siempre. Y las fechas se convierten a instantes con zona antes de tocar la consulta: en UTC, «21 de agosto» sería ese día menos cinco horas y con cinco prestadas del siguiente.
+
+**Backend**
+
+- Endpoint: `GET /api/activity-events/summary/`
+- ¿Lo aplica el servidor?: sí
+- Al denegar: HTTP `403`
+
+**Frontend**
+
+- Ruta: `/admin/activity`
+- Visible si se permite: sí
+
+**Evidencia en el código** (verificada por `tools/specs/validate.py`)
+
+- `backend/real_estate/views.py` (`def _apply_date_range`)
+- `backend/real_estate/views.py` (`def _start_of_local_day`)
+- `backend/real_estate/views.py` (`def summary`)
+
+**Casos**
+
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| staff acota la bitácora a un rango de fechas | staff | — | — | allowed |
+| pedir un solo día devuelve ese día completo | — | — | — | allowed |
+| una fecha ilegible no filtra nada en vez de fallar | — | — | — | allowed |
+| el reparto de bots ignora el filtro de tráfico del listado | — | — | — | allowed |
+| un usuario autenticado cualquiera recibe 403 | authenticated | — | — | denied (HTTP 403) |
+| un anónimo recibe 401 | anonymous | — | — | denied (HTTP 401) |
+
+**Cobertura exigida:** api
+
+- `backend/real_estate/tests/generated/test_spec_admin_operations.py`
+- `backend/real_estate/tests/test_admin_analysis_window.py`

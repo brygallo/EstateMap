@@ -68,7 +68,7 @@ rules:
       de correo (LEAD-006) hace que el límite también proteja el servidor SMTP.
     evidence:
       - file: backend/real_estate/views.py
-        lines: "1301-1334"
+        lines: "1345-1377"
         symbol: "def get_throttles"
       - file: backend/estate_map/settings.py
         lines: "212-230"
@@ -156,7 +156,7 @@ rules:
       que ve todos los leads sin filtrar.
     evidence:
       - file: backend/real_estate/views.py
-        lines: "1339-1341"
+        lines: "1356-1358"
         symbol: "def get_queryset"
         note: >
           Devuelve Lead.objects.none() si no hay usuario autenticado, el
@@ -198,7 +198,7 @@ rules:
       a su contact_email antes de responder al cliente.
     evidence:
       - file: backend/real_estate/views.py
-        lines: "1348-1350"
+        lines: "1365-1367"
         symbol: "def perform_create"
         note: "serializer.save() seguido de LeadNotificationService().notify_created(lead), dentro del mismo ciclo request/response."
       - file: backend/real_estate/services/notifications.py
@@ -336,11 +336,11 @@ rules:
       hay cuenta que la posea).
     evidence:
       - file: backend/real_estate/views.py
-        lines: "1323-1325"
+        lines: "1340-1342"
         symbol: "def get_permissions"
         note: "return [IsAuthenticated(), IsAdminUser()] para toda acción salvo create."
       - file: backend/real_estate/views.py
-        lines: "1339-1341"
+        lines: "1356-1358"
         symbol: "def get_queryset"
         note: "PendingPublication.objects.none() salvo que user.is_staff sea verdadero."
     backend:
@@ -374,7 +374,7 @@ rules:
       DEFAULT_THROTTLE_RATES fija ese scope en 10/min.
     evidence:
       - file: backend/real_estate/views.py
-        lines: "1371-1373"
+        lines: "1388-1390"
         symbol: "throttle_scope = 'pending_create'"
         note: Solo el POST público se limita; el resto de acciones ya exige staff y no lleva throttle.
       - file: backend/estate_map/settings.py
@@ -409,7 +409,7 @@ rules:
       pero para el equipo interno en vez del dueño de una propiedad.
     evidence:
       - file: backend/real_estate/views.py
-        lines: "1348-1350"
+        lines: "1365-1367"
         symbol: "def perform_create"
         note: PendingPublicationNotificationService().notify_created(pending) en el mismo request.
       - file: backend/real_estate/email_utils.py
@@ -474,17 +474,17 @@ rules:
     rationale: >
       La decisión de negocio es medible en dos direcciones: AdminMetricsService
       cuenta humanos con is_bot=False para sesiones y contactos, y por
-      separado reporta el volumen de bots del mes (month_bot_events) para que
-      el equipo vea cuánto tráfico está descartando. Nunca hay un 403 ni un
-      429 específico para bots.
+      separado reporta el volumen de bots de la ventana elegida
+      (window_bot_events) para que el equipo vea cuánto tráfico está
+      descartando. Nunca hay un 403 ni un 429 específico para bots.
     evidence:
       - file: backend/real_estate/services/admin_metrics.py
-        lines: "110-112"
+        lines: "133-135"
         symbol: "human_events = ActivityEvent.objects.filter(is_bot=False)"
         note: Base de las métricas de audiencia humana.
       - file: backend/real_estate/services/admin_metrics.py
-        lines: "141-143"
-        symbol: "month_bot_events = ActivityEvent.objects.filter(created_at__gte=month_start, is_bot=True)"
+        lines: "164-166"
+        symbol: "window_bot_events = ActivityEvent.objects.filter(created_at__gte=current_start, is_bot=True)"
         note: El volumen de bots se reporta, no se descarta.
     tests: {}
     cases:
@@ -504,7 +504,7 @@ rules:
       DEFAULT_THROTTLE_RATES fija ese scope en 30/min.
     evidence:
       - file: backend/real_estate/views.py
-        lines: "1621-1623"
+        lines: "1638-1640"
         symbol: "throttle_scope = 'activity_create'"
       - file: backend/estate_map/settings.py
         lines: "210-212"

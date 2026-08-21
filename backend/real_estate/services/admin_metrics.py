@@ -85,24 +85,47 @@ def _daily_counts(queryset, date_field, since):
     }
 
 
+# The windows the panel offers. A free-form number would let somebody ask for
+# a year of events and hold the database while it counts them; these four cover
+# "what changed this week" through "what has the quarter looked like", and the
+# dashboard cache keys itself on the choice.
+WINDOW_CHOICES = (7, 14, 30, 90)
+DEFAULT_WINDOW_DAYS = 30
+
+
+def resolve_window(raw, default=DEFAULT_WINDOW_DAYS):
+    """Snap a requested window to one the panel is willing to compute."""
+    try:
+        requested = int(raw)
+    except (TypeError, ValueError):
+        return default
+    return requested if requested in WINDOW_CHOICES else default
+
+
 class AdminMetricsService:
     """Build decision-oriented metrics for the project owner dashboard."""
 
-    def __init__(self, now=None):
+    def __init__(self, now=None, window_days=DEFAULT_WINDOW_DAYS):
         self.now = now
+        self.window_days = resolve_window(window_days)
 
     def build(self):
-        return _build_owner_metrics(now=self.now)
+        return _build_owner_metrics(now=self.now, window_days=self.window_days)
 
 
-def _build_owner_metrics(now=None):
+def _build_owner_metrics(now=None, window_days=DEFAULT_WINDOW_DAYS):
     from django.utils import timezone
 
     now = now or timezone.now()
-    current_start = now - timedelta(days=7)
-    previous_start = now - timedelta(days=14)
-    month_start = now - timedelta(days=30)
-    trend_since = now - timedelta(days=13)
+    window_days = resolve_window(window_days)
+    # Everything reads from one window so a figure and the comparison beside it
+    # always describe the same stretch of time. The previous period is the same
+    # length immediately before it, which is the only comparison that means
+    # anything when the window itself is adjustable.
+    current_start = now - timedelta(days=window_days)
+    previous_start = now - timedelta(days=window_days * 2)
+    trend_points = min(window_days, 90)
+    trend_since = now - timedelta(days=trend_points - 1)
     trend_start = trend_since.date()
 
     # Human traffic only: crawler events are stored with is_bot=True and stay out
@@ -137,28 +160,28 @@ def _build_owner_metrics(now=None):
         "publications": {"value": current_publications, "change": _change(current_publications, previous_publications)},
     }
 
-    month_events = human_events.filter(created_at__gte=month_start)
-    month_bot_events = ActivityEvent.objects.filter(created_at__gte=month_start, is_bot=True)
-    contact_events_month = month_events.filter(event_name="property_contact_clicked")
+    window_events = human_events.filter(created_at__gte=current_start)
+    window_bot_events = ActivityEvent.objects.filter(created_at__gte=current_start, is_bot=True)
+    contact_events_window = window_events.filter(event_name="property_contact_clicked")
     contact_methods = [
         {
             "method": row["payload__method"] or "unknown",
             "count": row["count"],
         }
         for row in (
-            contact_events_month
+            contact_events_window
             .values("payload__method")
             .annotate(count=Count("id"))
             .order_by("-count", "payload__method")
         )
     ]
 
-    contacts_total = contact_events_month.count()
+    contacts_total = contact_events_window.count()
     # Dedup by (session_id or user, property): a person who reveals the phone,
     # opens WhatsApp and then calls is still a single interested contact.
     seen_contacts = set()
     property_unique_contacts = {}
-    for event in contact_events_month.values("id", "session_id", "user_id", "property_id"):
+    for event in contact_events_window.values("id", "session_id", "user_id", "property_id"):
         # Person key: session, then user, then (as a last resort) the event
         # itself. An event with neither session_id nor user still represents
         # a real contact — falling back to a per-event key keeps it counted
@@ -190,11 +213,11 @@ def _build_owner_metrics(now=None):
     # inflating the rate above 100%. Property-page views are identified by
     # payload.page_type == "property", which is what AnalyticsPageView emits
     # for /propiedad/<id> — not by path, which is brittle to route changes.
-    month_detail_or_property_view = month_events.filter(
+    window_detail_or_property_view = window_events.filter(
         Q(event_name__in=DETAIL_EVENTS)
         | Q(event_name="page_view", payload__page_type="property")
     )
-    detail_audience = _audience(month_detail_or_property_view)
+    detail_audience = _audience(window_detail_or_property_view)
     contact_rate = (
         round((contacts_unique / detail_audience) * 100, 1) if detail_audience else 0.0
     )
@@ -220,7 +243,7 @@ def _build_owner_metrics(now=None):
     # no inflar visitas cuando una misma persona genera varios eventos.
     acquisition = {}
     seen_sessions = set()
-    for event in month_events.order_by("created_at").values(
+    for event in window_events.order_by("created_at").values(
         "session_id", "event_name", "payload"
     ):
         payload = event["payload"] if isinstance(event["payload"], dict) else {}
@@ -240,12 +263,12 @@ def _build_owner_metrics(now=None):
     for row in acquisition_channels:
         row["conversion"] = round(row["contacts"] / row["sessions"] * 100, 1) if row["sessions"] else 0
     funnel_stages = [
-        ("Sesiones activas", month_events),
-        ("Exploraron propiedades", month_events.filter(event_name__in=DISCOVERY_EVENTS)),
-        ("Abrieron detalles", month_events.filter(event_name__in=DETAIL_EVENTS)),
-        ("Contactaron", month_events.filter(event_name="property_contact_clicked")),
-        ("Intentaron publicar", month_events.filter(event_name__in=PUBLISH_INTENT_EVENTS)),
-        ("Publicaron", month_events.filter(event_name="publication_created")),
+        ("Sesiones activas", window_events),
+        ("Exploraron propiedades", window_events.filter(event_name__in=DISCOVERY_EVENTS)),
+        ("Abrieron detalles", window_events.filter(event_name__in=DETAIL_EVENTS)),
+        ("Contactaron", window_events.filter(event_name="property_contact_clicked")),
+        ("Intentaron publicar", window_events.filter(event_name__in=PUBLISH_INTENT_EVENTS)),
+        ("Publicaron", window_events.filter(event_name="publication_created")),
     ]
     funnel = []
     base_count = _audience(funnel_stages[0][1])
@@ -262,7 +285,7 @@ def _build_owner_metrics(now=None):
     property_days = _daily_counts(Property.objects.all(), "created_at", trend_since)
     lead_days = _daily_counts(Lead.objects.all(), "created_at", trend_since)
     trends = []
-    for offset in range(14):
+    for offset in range(trend_points):
         day = trend_start + timedelta(days=offset)
         trends.append({
             "date": day.isoformat(),
@@ -277,7 +300,7 @@ def _build_owner_metrics(now=None):
             detail_events=Count(
                 "activity_events",
                 filter=Q(
-                    activity_events__created_at__gte=month_start,
+                    activity_events__created_at__gte=current_start,
                     activity_events__event_name__in=DETAIL_EVENTS,
                     activity_events__is_bot=False,
                 ),
@@ -285,7 +308,7 @@ def _build_owner_metrics(now=None):
             contact_events=Count(
                 "activity_events",
                 filter=Q(
-                    activity_events__created_at__gte=month_start,
+                    activity_events__created_at__gte=current_start,
                     activity_events__event_name="property_contact_clicked",
                     activity_events__is_bot=False,
                 ),
@@ -300,7 +323,7 @@ def _build_owner_metrics(now=None):
     for source in Fuente.objects.all():
         source_properties = Property.objects.filter(source=source, is_imported=True)
         source_events = human_events.filter(
-            created_at__gte=month_start, property__source=source
+            created_at__gte=current_start, property__source=source
         )
         details = source_events.filter(event_name__in=DETAIL_EVENTS).count()
         contacts = source_events.filter(event_name="property_contact_clicked").count()
@@ -309,18 +332,18 @@ def _build_owner_metrics(now=None):
             "name": source.nombre,
             "active": source_properties.exclude(status="inactive").filter(is_duplicate=False).count(),
             "retired": source.retiradas.count(),
-            "details_30d": details,
-            "contacts_30d": contacts,
+            "details_window": details,
+            "contacts_window": contacts,
             "conversion": round((contacts / details) * 100, 1) if details else 0,
             "last_import_at": source.last_import_at,
         })
-    source_performance.sort(key=lambda item: (item["contacts_30d"], item["details_30d"]), reverse=True)
+    source_performance.sort(key=lambda item: (item["contacts_window"], item["details_window"]), reverse=True)
 
-    active_users_30d = _audience(month_events)
-    bot_events_30d = month_bot_events.count()
-    bot_sessions_30d = _audience(month_bot_events)
+    active_users_window = _audience(window_events)
+    bot_events_window = window_bot_events.count()
+    bot_sessions_window = _audience(window_bot_events)
     recurring_sessions = (
-        month_events.exclude(session_id="")
+        window_events.exclude(session_id="")
         .annotate(day=TruncDate("created_at"))
         .values("session_id")
         .annotate(active_days=Count("day", distinct=True))
@@ -328,7 +351,7 @@ def _build_owner_metrics(now=None):
         .count()
     )
     high_intent_users = (
-        month_events.filter(
+        window_events.filter(
             user__isnull=False,
             event_name__in=["property_contact_clicked", "publication_created", "publication_form_started"],
         )
@@ -358,22 +381,29 @@ def _build_owner_metrics(now=None):
 
     best_source = source_performance[0]["name"] if source_performance else "Sin datos"
     weekly_summary = [
-        f"{period['sessions']['value']} sesiones con actividad en los últimos 7 días ({period['sessions']['change']:+g}%).",
+        f"{period['sessions']['value']} sesiones con actividad en los últimos {window_days} días ({period['sessions']['change']:+g}%).",
         f"{period['contacts']['value']} contactos generados ({period['contacts']['change']:+g}% frente al periodo anterior).",
-        f"{period['publications']['value']} publicaciones completadas en la semana.",
+        f"{period['publications']['value']} publicaciones completadas en el periodo.",
         f"La fuente con mayor intención registrada es {best_source}.",
         f"Hay {len([alert for alert in alerts if alert['severity'] != 'ok'])} alertas que requieren revisión.",
     ]
 
     storage_bytes = PropertyImage.objects.aggregate(total=Sum("file_size"))["total"] or 0
     return {
+        # Every window-bound figure below is measured over this many days, and
+        # the panel labels them from here instead of hardcoding "30 d".
+        "window": {
+            "days": window_days,
+            "starts_on": current_start.date().isoformat(),
+            "previous_starts_on": previous_start.date().isoformat(),
+            "choices": list(WINDOW_CHOICES),
+        },
         "period": period,
         "comparability": _comparability(
             now,
             {
                 "period": current_start,
                 "previous_period": previous_start,
-                "month": month_start,
                 "trends": trend_since,
             },
         ),
@@ -388,13 +418,13 @@ def _build_owner_metrics(now=None):
         "contact_rate": contact_rate,
         "top_contacted_properties": top_contacted_properties,
         "audience": {
-            "active_30d": active_users_30d,
-            "recurring_30d": recurring_sessions,
-            "high_intent_users_30d": high_intent_users,
+            "active_window": active_users_window,
+            "recurring_window": recurring_sessions,
+            "high_intent_users_window": high_intent_users,
             # Additive keys: how much traffic was discarded as non-human, so the
             # panel can show the bot share without polluting the human numbers.
-            "bot_events_30d": bot_events_30d,
-            "bot_sessions_30d": bot_sessions_30d,
+            "bot_events_window": bot_events_window,
+            "bot_sessions_window": bot_sessions_window,
         },
         "alerts": alerts,
         "weekly_summary": weekly_summary,

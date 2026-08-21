@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
-import { AlertCircle, Activity, ChevronDown, ExternalLink, Info, MousePointerClick, RefreshCw, UserRound } from 'lucide-react';
+import { AlertCircle, Activity, CalendarRange, ChevronDown, ExternalLink, Info, MousePointerClick, RefreshCw, UserRound } from 'lucide-react';
 import { toast } from 'sonner';
 import AdminRoute from '@/components/AdminRoute';
 import AdminSidebar from '@/components/AdminSidebar';
@@ -30,6 +30,32 @@ import { apiGet } from '@/lib/api';
 const PAGE_SIZE = 50;
 const CONTACT_EVENT = 'property_contact_clicked';
 const PUBLICATION_ERRORS = 'publication_errors';
+
+// Presets carry the ranges anybody actually asks for. The two date inputs stay
+// visible underneath, because "the week the campaign ran" is never a preset.
+const RANGE_PRESETS = [
+  { value: '7', label: 'Últimos 7 días' },
+  { value: '14', label: 'Últimos 14 días' },
+  { value: '30', label: 'Últimos 30 días' },
+  { value: '90', label: 'Últimos 90 días' },
+  { value: 'all', label: 'Todo el histórico' },
+] as const;
+
+const isoDay = (date: Date) => date.toISOString().slice(0, 10);
+
+const daysAgo = (days: number) => {
+  const date = new Date();
+  date.setDate(date.getDate() - (days - 1));
+  return isoDay(date);
+};
+
+type Summary = {
+  total: number;
+  sessions: number;
+  by_event: { event_name: string; count: number }[];
+  by_day: { date: string; count: number }[];
+  traffic_split: { human: number; bot: number };
+};
 
 type EventItem = {
   id: number;
@@ -65,6 +91,21 @@ const EVENT_LABELS: Record<string, string> = {
   publication_pending_saved: 'Borrador pendiente guardado',
   publish_cta_clicked: 'Clic en "Publicar"',
   map_filter_changed: 'Cambió filtros del mapa',
+  // Added when the range summary started grouping by event: without a label
+  // the busiest row on the panel read `page_view`, which is a column name, not
+  // an answer.
+  page_view: 'Vio una página',
+  property_detail_closed: 'Cerró el detalle',
+  property_card_map_focus_clicked: 'Centró el mapa desde la tarjeta',
+  map_backend_cluster_clicked: 'Abrió un grupo del mapa',
+  map_city_group_clicked: 'Abrió una ciudad del mapa',
+  map_reset_view_clicked: 'Reinició la vista del mapa',
+  map_locate_clicked: 'Usó "mi ubicación"',
+  map_empty_state_action_clicked: 'Actuó sobre un mapa sin resultados',
+  publication_polygon_drawn: 'Dibujó la forma del terreno',
+  publication_location_requested: 'Pidió ubicarse al publicar',
+  publication_exit_prompt_shown: 'Vio el aviso de salida',
+  publication_exit_continue_clicked: 'Volvió al formulario',
 };
 
 // Anything the owner could not finish. Grouped so the panel can be filtered
@@ -131,6 +172,9 @@ export default function AdminActivityPage() {
   const [eventName, setEventName] = useState('');
   const [traffic, setTraffic] = useState<'all' | 'human' | 'bot'>('human');
   const [page, setPage] = useState(1);
+  const [after, setAfter] = useState(() => daysAgo(30));
+  const [before, setBefore] = useState('');
+  const [summary, setSummary] = useState<Summary | null>(null);
 
   const contactsOnly = eventName === CONTACT_EVENT;
   const totalPages = Math.max(1, Math.ceil(count / PAGE_SIZE));
@@ -154,12 +198,25 @@ export default function AdminActivityPage() {
         params.set('event_name', eventName);
       }
       if (traffic !== 'all') params.set('is_bot', traffic === 'bot' ? 'true' : 'false');
+      if (after) params.set('created_after', after);
+      if (before) params.set('created_before', before);
 
-      const response = await apiGet(`/activity-events/?${params.toString()}`);
+      // The summary is built from the same parameters as the listing, so the
+      // totals always describe exactly the rows on screen. It is fetched
+      // alongside rather than after: one is not needed to read the other.
+      const summaryParams = new URLSearchParams(params);
+      summaryParams.delete('page');
+      summaryParams.delete('page_size');
+
+      const [response, summaryResponse] = await Promise.all([
+        apiGet(`/activity-events/?${params.toString()}`),
+        apiGet(`/activity-events/summary/?${summaryParams.toString()}`),
+      ]);
       if (!response.ok) throw new Error('Error al cargar la actividad');
       const data = await response.json();
       setItems(data.results || []);
       setCount(data.count ?? 0);
+      setSummary(summaryResponse.ok ? await summaryResponse.json() : null);
       setError(false);
     } catch {
       setError(true);
@@ -167,7 +224,7 @@ export default function AdminActivityPage() {
     } finally {
       setLoading(false);
     }
-  }, [token, page, eventName, traffic]);
+  }, [token, page, eventName, traffic, after, before]);
 
   useEffect(() => {
     void load();
@@ -175,7 +232,21 @@ export default function AdminActivityPage() {
 
   useEffect(() => {
     setPage(1);
-  }, [eventName, traffic]);
+  }, [eventName, traffic, after, before]);
+
+  const applyPreset = (value: string) => {
+    setBefore('');
+    setAfter(value === 'all' ? '' : daysAgo(Number(value)));
+  };
+
+  const activePreset = useMemo(() => {
+    if (before) return 'custom';
+    if (!after) return 'all';
+    const match = RANGE_PRESETS.find(
+      (preset) => preset.value !== 'all' && daysAgo(Number(preset.value)) === after
+    );
+    return match ? match.value : 'custom';
+  }, [after, before]);
 
   const toggleContactsOnly = () => setEventName((current) => (current === CONTACT_EVENT ? '' : CONTACT_EVENT));
 
@@ -194,6 +265,15 @@ export default function AdminActivityPage() {
           <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
             <PageHeader onRefresh={() => void load()} />
 
+            <RangeCard
+              preset={activePreset}
+              after={after}
+              before={before}
+              onPreset={applyPreset}
+              onAfter={setAfter}
+              onBefore={setBefore}
+            />
+
             <div className="mb-5 grid gap-3 sm:grid-cols-2">
               <Card className="p-4">
                 <MousePointerClick className="h-5 w-5 text-primary" />
@@ -210,6 +290,8 @@ export default function AdminActivityPage() {
                 onTrafficChange={setTraffic}
               />
             </div>
+
+            {summary && <SummaryCard summary={summary} traffic={traffic} />}
 
             <Card className="overflow-hidden">
               <EventsTableHeader />
@@ -290,12 +372,12 @@ function FiltersCard({
   onTrafficChange: (value: 'all' | 'human' | 'bot') => void;
 }) {
   return (
-    <Card className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between">
-      <div>
+    <Card className="flex flex-col gap-3 p-4">
+      <div className="flex items-baseline justify-between gap-2">
         <p className="font-semibold text-textPrimary">Vista actual</p>
         <p className="text-sm text-textSecondary">{contactsOnly ? 'Solo contactos' : 'Toda la actividad'}</p>
       </div>
-      <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+      <div className="flex flex-wrap items-center gap-2">
         <Select value={eventName || 'all'} onValueChange={(value) => onEventNameChange(value === 'all' ? '' : value)}>
           <SelectTrigger className="w-full sm:w-56">
             <SelectValue placeholder="Tipo de evento" />
@@ -322,6 +404,157 @@ function FiltersCard({
           {contactsOnly ? 'Ver todo' : 'Solo contactos'}
         </Button>
       </div>
+    </Card>
+  );
+}
+
+/**
+ * The range control, above everything it affects.
+ *
+ * Without a date range this page could only answer "what happened lately",
+ * which is the one question that never settles an argument about traffic. The
+ * presets cover the usual windows; the two inputs exist because a campaign, a
+ * deploy or an outage never lines up with one.
+ */
+function RangeCard({
+  preset,
+  after,
+  before,
+  onPreset,
+  onAfter,
+  onBefore,
+}: {
+  preset: string;
+  after: string;
+  before: string;
+  onPreset: (value: string) => void;
+  onAfter: (value: string) => void;
+  onBefore: (value: string) => void;
+}) {
+  const today = isoDay(new Date());
+  return (
+    <Card className="mb-3 flex flex-col gap-3 p-4 lg:flex-row lg:items-end lg:justify-between">
+      <div className="min-w-0">
+        <p className="flex items-center gap-1.5 font-semibold text-textPrimary">
+          <CalendarRange className="h-4 w-4 text-primary" aria-hidden />
+          Rango de fechas
+        </p>
+        <p className="mt-1 text-sm text-textSecondary">
+          {after || before
+            ? `Del ${after || 'inicio'} al ${before || today}`
+            : 'Todo el histórico registrado'}
+        </p>
+      </div>
+      <div className="flex flex-wrap items-end gap-2">
+        <Select value={preset === 'custom' ? 'custom' : preset} onValueChange={onPreset}>
+          <SelectTrigger className="w-full sm:w-44">
+            <SelectValue placeholder="Rango" />
+          </SelectTrigger>
+          <SelectContent>
+            {RANGE_PRESETS.map((option) => (
+              <SelectItem key={option.value} value={option.value}>
+                {option.label}
+              </SelectItem>
+            ))}
+            {preset === 'custom' && (
+              <SelectItem value="custom" disabled>
+                Rango personalizado
+              </SelectItem>
+            )}
+          </SelectContent>
+        </Select>
+        <label className="flex flex-col text-xs font-semibold text-textSecondary">
+          Desde
+          <input
+            type="date"
+            value={after}
+            max={before || today}
+            onChange={(event) => onAfter(event.target.value)}
+            className="mt-1 h-9 rounded-button border border-line bg-white px-2 text-sm text-textPrimary"
+          />
+        </label>
+        <label className="flex flex-col text-xs font-semibold text-textSecondary">
+          Hasta
+          <input
+            type="date"
+            value={before}
+            min={after || undefined}
+            max={today}
+            onChange={(event) => onBefore(event.target.value)}
+            className="mt-1 h-9 rounded-button border border-line bg-white px-2 text-sm text-textPrimary"
+          />
+        </label>
+      </div>
+    </Card>
+  );
+}
+
+/**
+ * What the range adds up to.
+ *
+ * A page of fifty rows cannot say whether traffic grew, which events moved or
+ * how much of the range was crawlers. The bot share is deliberately computed
+ * over the whole range and not over the current traffic filter, so it keeps
+ * answering while the listing shows humans only.
+ */
+function SummaryCard({ summary, traffic }: { summary: Summary; traffic: 'all' | 'human' | 'bot' }) {
+  const peak = summary.by_day.reduce((max, row) => Math.max(max, row.count), 0);
+  const botTotal = summary.traffic_split.human + summary.traffic_split.bot;
+  const botShare = botTotal ? Math.round((summary.traffic_split.bot / botTotal) * 100) : 0;
+
+  return (
+    <Card className="mb-5 p-4">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <p className="font-semibold text-textPrimary">Resumen del rango</p>
+        <div className="flex flex-wrap gap-4 text-sm">
+          <span className="text-textSecondary">
+            Eventos <strong className="font-bold text-textPrimary">{summary.total.toLocaleString('es-EC')}</strong>
+          </span>
+          <span className="text-textSecondary">
+            Sesiones <strong className="font-bold text-textPrimary">{summary.sessions.toLocaleString('es-EC')}</strong>
+          </span>
+          <span className="text-textSecondary">
+            Rastreadores <strong className="font-bold text-textPrimary">{botShare}%</strong>
+            {traffic !== 'all' && <span className="ml-1 text-xs">(del rango completo)</span>}
+          </span>
+        </div>
+      </div>
+
+      {summary.by_day.length > 1 && (
+        <div className="mt-4 flex h-16 items-end gap-[2px]" aria-hidden>
+          {summary.by_day.map((row) => (
+            <div
+              key={row.date}
+              title={`${row.date}: ${row.count}`}
+              className="min-w-[2px] flex-1 rounded-t bg-primary/70"
+              style={{ height: `${peak ? Math.max(4, (row.count / peak) * 100) : 4}%` }}
+            />
+          ))}
+        </div>
+      )}
+      {summary.by_day.length > 1 && (
+        <div className="mt-1 flex justify-between text-[0.68rem] text-textSecondary">
+          <span>{summary.by_day[0].date}</span>
+          <span>{summary.by_day[summary.by_day.length - 1].date}</span>
+        </div>
+      )}
+
+      {summary.by_event.length > 0 && (
+        <div className="mt-4 grid gap-x-6 gap-y-1 sm:grid-cols-2 lg:grid-cols-3">
+          {summary.by_event.map((row) => (
+            <div key={row.event_name} className="flex items-baseline justify-between gap-2 text-sm">
+              <span className="truncate text-textSecondary">{eventLabel(row.event_name)}</span>
+              <span className="font-geo font-bold text-textPrimary">{row.count.toLocaleString('es-EC')}</span>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {summary.total === 0 && (
+        <p className="mt-3 text-sm text-textSecondary">
+          No hay eventos registrados en este rango con los filtros actuales.
+        </p>
+      )}
     </Card>
   );
 }

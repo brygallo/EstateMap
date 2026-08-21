@@ -3,10 +3,12 @@ import logging
 import math
 import unicodedata
 import hashlib
+from datetime import date as date_type, datetime, time, timedelta
 from rest_framework import viewsets, generics, status, filters
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.throttling import ScopedRateThrottle
 from django.db.models import Q, F, Count, Sum, Avg, Min, Max, Value, FloatField, ExpressionWrapper, Prefetch
+from django.db.models.functions import TruncDate
 from rest_framework_simplejwt.views import TokenObtainPairView
 from rest_framework.permissions import IsAuthenticated, AllowAny, IsAuthenticatedOrReadOnly
 from rest_framework.decorators import action
@@ -184,6 +186,21 @@ class AdminPagination(PageNumberPagination):
     page_size_query_param = 'page_size'
     max_page_size = 200
 
+
+
+def _parse_range_date(raw):
+    """`YYYY-MM-DD` to a date, or None if it is absent or unparseable."""
+    if not raw:
+        return None
+    try:
+        return date_type.fromisoformat(str(raw)[:10])
+    except ValueError:
+        return None
+
+
+def _start_of_local_day(day):
+    """Midnight of `day` in the active timezone, as an aware datetime."""
+    return timezone.make_aware(datetime.combine(day, time.min))
 
 class ActivityEventPagination(AdminPagination):
     """Paginación admin con página más grande para el feed de actividad."""
@@ -1652,7 +1669,69 @@ class ActivityEventViewSet(viewsets.ModelViewSet):
                 queryset = queryset.filter(is_bot=True)
             elif str(is_bot).lower() in ('false', '0'):
                 queryset = queryset.filter(is_bot=False)
+        return self._apply_date_range(queryset)
+
+    def _apply_date_range(self, queryset):
+        """Narrow the log to a date range, inclusive on both ends.
+
+        Dates arrive as plain `YYYY-MM-DD` because that is what a date input
+        sends, and they mean days in the portal's own timezone — the admin
+        reading them is in Ecuador, not in UTC. Each bound is turned into an
+        aware instant before it touches the query, so "21 de agosto" is that
+        day here and not five hours of it borrowed from the next.
+
+        The upper bound becomes the start of the following day, so asking for
+        a single date returns that day instead of nothing.
+        """
+        after = _parse_range_date(self.request.query_params.get('created_after'))
+        before = _parse_range_date(self.request.query_params.get('created_before'))
+        if after:
+            queryset = queryset.filter(created_at__gte=_start_of_local_day(after))
+        if before:
+            queryset = queryset.filter(
+                created_at__lt=_start_of_local_day(before + timedelta(days=1))
+            )
         return queryset
+
+    @action(detail=False, methods=['get'])
+    def summary(self, request):
+        """What the filtered range adds up to, so the log stops being a list.
+
+        A page of fifty rows cannot answer "did traffic grow", "which events
+        moved" or "how much of this was crawlers". The same filters that build
+        the listing build these totals, so the summary always describes exactly
+        what is on screen.
+        """
+        queryset = self.filter_queryset(self.get_queryset())
+        by_event = list(
+            queryset.values('event_name')
+            .annotate(count=Count('id'))
+            .order_by('-count', 'event_name')[:15]
+        )
+        by_day = [
+            {'date': row['day'].isoformat(), 'count': row['count']}
+            for row in (
+                queryset.annotate(day=TruncDate('created_at'))
+                .values('day')
+                .annotate(count=Count('id'))
+                .order_by('day')
+            )
+            if row['day']
+        ]
+        # The bot split is computed without the caller's own `is_bot` filter:
+        # asking "how much of this range was crawlers" while looking at humans
+        # only would otherwise always answer zero.
+        unfiltered = self._apply_date_range(super().get_queryset())
+        return Response({
+            'total': queryset.count(),
+            'sessions': queryset.exclude(session_id='').values('session_id').distinct().count(),
+            'by_event': by_event,
+            'by_day': by_day,
+            'traffic_split': {
+                'human': unfiltered.filter(is_bot=False).count(),
+                'bot': unfiltered.filter(is_bot=True).count(),
+            },
+        })
 
 
 class CustomTokenObtainPairView(TokenObtainPairView):
@@ -2461,23 +2540,32 @@ class AdminDashboardView(generics.GenericAPIView):
     CACHE_TTL = 300
 
     def get(self, request):
+        from .services.admin_metrics import resolve_window
+
+        # The window the owner picked travels into the cache key: two windows
+        # are two different answers, and serving one for the other is worse
+        # than recomputing.
+        window_days = resolve_window(request.query_params.get('days'))
         if request.query_params.get('refresh') in ('1', 'true'):
-            data = self._build()
+            data = self._build(window_days=window_days)
         else:
-            key = versioned_key('admin:dashboard')
+            key = versioned_key(f'admin:dashboard:{window_days}')
             data = cache.get(key)
             if data is None:
-                data = self._build()
+                data = self._build(window_days=window_days)
                 cache.set(key, data, self.CACHE_TTL)
             else:
                 data['cached'] = True
         return Response(data)
 
-    def _build(self):
+    def _build(self, window_days=None):
         from django.utils import timezone
         from datetime import timedelta
         from ingesta.models import Fuente, IngestaRun, ListingRetirada
-        from .services.admin_metrics import AdminMetricsService
+        from .services.admin_metrics import AdminMetricsService, DEFAULT_WINDOW_DAYS
+
+        if window_days is None:
+            window_days = DEFAULT_WINDOW_DAYS
 
         # La papelera no es catálogo: se excluye de todos los recuentos, igual
         # que en `stats`.
@@ -2559,7 +2647,7 @@ class AdminDashboardView(generics.GenericAPIView):
                 'imported_total': properties.filter(is_imported=True).count(),
                 'sources': source_health,
             },
-            'owner': AdminMetricsService(now=now).build(),
+            'owner': AdminMetricsService(now=now, window_days=window_days).build(),
             'generated_at': now,
             'recent_users': AdminUserSerializer(
                 User.objects.order_by('-date_joined')[:5], many=True

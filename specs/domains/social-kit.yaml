@@ -176,7 +176,7 @@ rules:
           Solo se asigna cuando está vacío, que es lo que lo hace estable frente
           a cualquier edición posterior.
       - file: backend/real_estate/views.py
-        lines: "964-966"
+        lines: "981-983"
         symbol: by_code
         note: Resolución pública, sin distinguir mayúsculas y excluyendo inactivas.
       - file: backend/real_estate/serializers.py
@@ -553,7 +553,7 @@ rules:
           (property, is_bot, created_at). Sin él la agregación recorre toda la
           tabla de eventos.
       - file: backend/real_estate/views.py
-        lines: "774-786"
+        lines: "795-806"
         symbol: def promotion_stats
       - file: backend/real_estate/permissions.py
         lines: "25-42"

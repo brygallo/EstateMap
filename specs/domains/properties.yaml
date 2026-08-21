@@ -71,7 +71,7 @@ rules:
       los duplicados marcados.
     evidence:
       - file: backend/real_estate/views.py
-        lines: "473-475"
+        lines: "490-492"
         symbol: exclude(status='inactive')
         note: Base de get_queryset en PropertyViewSet; de aquí derivan list, map_points y summary.
       - file: backend/real_estate/models.py
@@ -109,7 +109,7 @@ rules:
       ver también lo que no es suyo.
     evidence:
       - file: backend/real_estate/views.py
-        lines: "1211-1213"
+        lines: "1228-1230"
         symbol: my_properties
         note: >-
           La acción declara permission_classes=[IsAuthenticated] y elige entre
@@ -146,11 +146,11 @@ rules:
       que ya se había descargado. Por eso ambos se resuelven en el servidor.
     evidence:
       - file: backend/real_estate/views.py
-        lines: "284-291"
+        lines: "301-307"
         symbol: class InventoryPagination
         note: page_size 24, page_size_query_param 'page_size', máximo 100.
       - file: backend/real_estate/views.py
-        lines: "1211-1213"
+        lines: "1228-1230"
         symbol: def my_properties
         note: stats se calcula con queryset.aggregate antes de paginar.
       - file: frontend/app/my-properties/page.tsx
@@ -548,7 +548,7 @@ rules:
       que hace que una importada no tenga dueño al que atribuirla.
     evidence:
       - file: backend/real_estate/views.py
-        lines: "624-626"
+        lines: "641-643"
         symbol: perform_create
         note: serializer.save(owner=self.request.user), ignorando cualquier owner del payload.
       - file: backend/real_estate/serializers.py
@@ -591,11 +591,11 @@ rules:
         symbol: IsOwnerOrReadOnly
         note: Permite cualquier método seguro y compara obj.owner == request.user para el resto.
       - file: backend/real_estate/views.py
-        lines: "366-368"
+        lines: "383-385"
         symbol: IsOwnerOrReadOnly
         note: permission_classes = [IsAuthenticatedOrReadOnly, IsOwnerOrReadOnly] en PropertyViewSet.
       - file: backend/real_estate/views.py
-        lines: "2850-2852"
+        lines: "2938-2940"
         symbol: PATCH_ALLOWED_FIELDS
         note: El panel admin puede tocar propiedades ajenas, pero solo status, title, price, city y description.
     backend:
@@ -925,7 +925,7 @@ rules:
       simultáneos.
     evidence:
       - file: backend/real_estate/views.py
-        lines: "668-670"
+        lines: "685-687"
         symbol: is_bot_request
         note: Property.objects.filter(pk=...).update(views_count=F('views_count') + 1) solo si no es bot.
       - file: backend/real_estate/models.py
@@ -1106,7 +1106,7 @@ rules:
         symbol: getPropertyPoint
         note: Mismo criterio en el cliente, que además valida el punto contra los límites de Ecuador antes de aceptarlo.
       - file: backend/real_estate/views.py
-        lines: "560-562"
+        lines: "577-579"
         symbol: bbox
         note: El filtro por bbox aún deja pasar incondicionalmente las propiedades con lat/lng nulas y polígono; tras la migración esa rama no empareja ninguna fila y queda como red de seguridad.
     cases:
@@ -1176,7 +1176,7 @@ rules:
       de 60 anuncios no descarte arbitrariamente el terreno de al lado.
     evidence:
       - file: backend/real_estate/views.py
-        lines: "529-553"
+        lines: "568-591"
         symbol: distance_score
         note: La expresión de distancia se aplica al queryset antes de que DRF lo pagine.
       - file: frontend/lib/properties.ts
@@ -1208,7 +1208,7 @@ rules:
       entero y mantiene primero los resultados geográficamente relevantes.
     evidence:
       - file: backend/real_estate/views.py
-        lines: "529-553"
+        lines: "568-591"
         symbol: distance_score
         note: El listado ordena el catálogo filtrado por distancia aproximada y deja coordenadas ausentes al final.
       - file: frontend/hooks/usePropertyFilters.ts
@@ -1311,7 +1311,7 @@ rules:
           Volver a poner el anuncio en venta lo reabre; si no, el cambio parece
           aceptado y se deshace solo.
       - file: backend/real_estate/views.py
-        lines: "3117-3119"
+        lines: "3205-3207"
         symbol: "changes['closed_reason'] = ''"
         note: >-
           El cambio de estado en lote escribe con .update(), que nunca llega a
@@ -1378,13 +1378,13 @@ rules:
       ruta se comprueba.
     evidence:
       - file: backend/real_estate/views.py
-        lines: "449-467"
+        lines: "482-499"
         symbol: "visible |= Q(is_duplicate=False) & ~Q(closed_reason='')"
         note: >-
           Las acciones de detalle resuelven la fila por id, no por el catálogo
           público; el dueño entra siempre.
       - file: backend/real_estate/views.py
-        lines: "989-992"
+        lines: "1006-1008"
         symbol: "exclude(status='inactive', closed_reason='')"
         note: El código corto de un anuncio vendido sigue resolviendo.
     backend:

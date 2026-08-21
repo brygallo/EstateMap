@@ -4,12 +4,12 @@
 
 Vista legible de `specs/`. Cada regla marcada como implementada apunta a las líneas de código que la aplican, y `tools/specs/validate.py` comprueba que ese código siga existiendo, así que esta página no puede quedarse desfasada en silencio.
 
-**Total de reglas: 398**
+**Total de reglas: 400**
 
 | Estado | Reglas |
 | --- | --- |
 | 🗑️ Obsoleta | 2 |
-| ✅ Implementada | 360 |
+| ✅ Implementada | 362 |
 | ⛔ No implementada | 15 |
 | 🟡 Parcial | 8 |
 | 📝 Propuesta (sin código) | 13 |
@@ -18,7 +18,7 @@ Vista legible de `specs/`. Cada regla marcada como implementada apunta a las lí
 | --- | --- | --- | --- |
 | market-history | `specs/calculations/market-history.yaml` | 6 | [market-history.md](./market-history.md) |
 | pricing | `specs/calculations/pricing.yaml` | 29 | [pricing.md](./pricing.md) |
-| admin-operations | `specs/domains/admin-operations.yaml` | 14 | [admin-operations.md](./admin-operations.md) |
+| admin-operations | `specs/domains/admin-operations.yaml` | 16 | [admin-operations.md](./admin-operations.md) |
 | advertising | `specs/domains/advertising.yaml` | 25 | [advertising.md](./advertising.md) |
 | blog | `specs/domains/blog.yaml` | 14 | [blog.md](./blog.md) |
 | blogs-vivos | `specs/domains/blogs-vivos.yaml` | 11 | [blogs-vivos.md](./blogs-vivos.md) |

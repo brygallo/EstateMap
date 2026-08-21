@@ -58,7 +58,7 @@ rules:
       ese punto y entrar al nivel de detalle de ciudad.
     evidence:
       - file: backend/real_estate/views.py
-        lines: "1027-1064"
+        lines: "1071-1107"
         symbol: "centers.setdefault"
         note: El catálogo calcula el centro medio de las propiedades activas de cada ciudad.
       - file: frontend/components/map/MapFilters.tsx

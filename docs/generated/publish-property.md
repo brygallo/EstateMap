@@ -57,7 +57,7 @@ El formulario intercepta el submit antes de llamar a `POST /api/properties/`: si
 
 - `frontend/app/add-property/page.tsx:1092-1100` (`if (!token && !isEditMode && !resumeToken) {`) — Guarda el borrador, envía la solicitud pendiente y abre el modal, sin llamar a /properties/.
 - `backend/real_estate/models.py:683-685` (`class PendingPublication(models.Model)`) — Docstring: no se muestra en el mapa; sirve para seguimiento comercial.
-- `backend/real_estate/views.py:366-368` (`permission_classes = [IsAuthenticatedOrReadOnly, IsOwnerOrReadOnly]`) — Respaldo del servidor si la petición llega sin pasar por el frontend.
+- `backend/real_estate/views.py:383-385` (`permission_classes = [IsAuthenticatedOrReadOnly, IsOwnerOrReadOnly]`) — Respaldo del servidor si la petición llega sin pasar por el frontend.
 
 **Casos**
 
@@ -168,9 +168,9 @@ Si `POST /api/properties/` llega con cabecera `Idempotency-Key` y ya existe un r
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/real_estate/views.py:629-631` (`idempotency_key = (request.headers.get('Idempotency-Key')`) — Sin cabecera, se comporta como un create normal.
-- `backend/real_estate/views.py:643-645` (`response['X-Idempotent-Replay'] = 'true'`)
-- `backend/real_estate/views.py:655-657` (`cache.set(result_key, response.data['id'], 60 * 60 * 24)`)
+- `backend/real_estate/views.py:646-648` (`idempotency_key = (request.headers.get('Idempotency-Key')`) — Sin cabecera, se comporta como un create normal.
+- `backend/real_estate/views.py:660-662` (`response['X-Idempotent-Replay'] = 'true'`)
+- `backend/real_estate/views.py:672-674` (`cache.set(result_key, response.data['id'], 60 * 60 * 24)`)
 - `frontend/app/add-property/page.tsx:1170-1172` (`Idempotency-Key`) — No se manda en la edición (PUT), solo en la creación.
 
 **Casos**
@@ -189,8 +189,8 @@ Antes de procesar, `create` toma un candado en caché de 60 s por el mismo diges
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/real_estate/views.py:646-648` (`lock_acquired = cache.add(lock_key, '1', 60)`)
-- `backend/real_estate/views.py:660-662` (`if lock_acquired:`) — cache.delete(lock_key) en el finally, se ejecute o no la creación.
+- `backend/real_estate/views.py:663-665` (`lock_acquired = cache.add(lock_key, '1', 60)`)
+- `backend/real_estate/views.py:677-679` (`if lock_acquired:`) — cache.delete(lock_key) en el finally, se ejecute o no la creación.
 
 **Casos**
 
@@ -208,7 +208,7 @@ Antes de procesar, `create` toma un candado en caché de 60 s por el mismo diges
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/real_estate/views.py:409-419` (`self.throttle_scope = 'property_write'`) — ScopedRateThrottle, no AntiScraperScopedThrottle, para create/update/partial_update.
+- `backend/real_estate/views.py:430-439` (`self.throttle_scope = 'property_write'`) — ScopedRateThrottle, no AntiScraperScopedThrottle, para create/update/partial_update.
 - `backend/real_estate/throttling.py:42-51` (`class AntiScraperScopedThrottle(ScopedRateThrottle)`) — Exime staff e IPs internas; solo se usa en map_points y list.
 - `backend/estate_map/settings.py:225-227` (`'property_write': '30/hour'`)
 
@@ -273,8 +273,8 @@ Cada `post_save`/`post_delete` de `Property` encadena, por señal: una fila de `
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/real_estate/views.py:473-475` (`exclude(status='inactive')`) — Único filtro que saca inactive del catálogo público; no toca la fila.
-- `backend/real_estate/views.py:1211-1213` (`def my_properties`) — including inactive: el dueño ve su propiedad inactiva, el público no.
+- `backend/real_estate/views.py:490-492` (`exclude(status='inactive')`) — Único filtro que saca inactive del catálogo público; no toca la fila.
+- `backend/real_estate/views.py:1228-1230` (`def my_properties`) — including inactive: el dueño ve su propiedad inactiva, el público no.
 - `backend/real_estate/models.py:467-469` (`on_delete=models.CASCADE`) — PropertyImage.property cae en cascada con la Property.
 - `frontend/app/my-properties/page.tsx:250-270` (`const handleDelete`) — DELETE /properties/<id>/ tras window.confirm; PropertyViewSet no sobrescribe destroy.
 
@@ -419,8 +419,8 @@ En «Actividad y clics» y en la ficha del usuario, un evento de fallo se marca 
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `frontend/app/admin/activity/page.tsx:106-115` (`errorSummary`) — Resuelve el motivo legible del evento a partir de reason, error_message o error_detail.
-- `frontend/app/admin/activity/page.tsx:438-445` (`'Mensaje mostrado al usuario'`) — El detalle del evento expone los campos del error, no solo el estado HTTP.
+- `frontend/app/admin/activity/page.tsx:152-160` (`errorSummary`) — Resuelve el motivo legible del evento a partir de reason, error_message o error_detail.
+- `frontend/app/admin/activity/page.tsx:671-677` (`'Mensaje mostrado al usuario'`) — El detalle del evento expone los campos del error, no solo el estado HTTP.
 - `frontend/app/admin/users/page.tsx:752-784` (`function ActivityRow`) — La actividad reciente del usuario muestra el motivo del fallo en la propia fila.
 
 **Casos**

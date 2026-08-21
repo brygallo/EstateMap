@@ -46,7 +46,7 @@ rules:
         symbol: "class PendingPublication(models.Model)"
         note: "Docstring: no se muestra en el mapa; sirve para seguimiento comercial."
       - file: backend/real_estate/views.py
-        lines: "366-368"
+        lines: "383-385"
         symbol: "permission_classes = [IsAuthenticatedOrReadOnly, IsOwnerOrReadOnly]"
         note: Respaldo del servidor si la petición llega sin pasar por el frontend.
     backend:
@@ -242,14 +242,14 @@ rules:
       editar.
     evidence:
       - file: backend/real_estate/views.py
-        lines: "629-631"
+        lines: "646-648"
         symbol: "idempotency_key = (request.headers.get('Idempotency-Key')"
         note: Sin cabecera, se comporta como un create normal.
       - file: backend/real_estate/views.py
-        lines: "643-645"
+        lines: "660-662"
         symbol: "response['X-Idempotent-Replay'] = 'true'"
       - file: backend/real_estate/views.py
-        lines: "655-657"
+        lines: "672-674"
         symbol: "cache.set(result_key, response.data['id'], 60 * 60 * 24)"
       - file: frontend/app/add-property/page.tsx
         lines: "1170-1172"
@@ -278,10 +278,10 @@ rules:
       la petición falla, para no dejar la clave bloqueada 60 s de más.
     evidence:
       - file: backend/real_estate/views.py
-        lines: "646-648"
+        lines: "663-665"
         symbol: "lock_acquired = cache.add(lock_key, '1', 60)"
       - file: backend/real_estate/views.py
-        lines: "660-662"
+        lines: "677-679"
         symbol: "if lock_acquired:"
         note: cache.delete(lock_key) en el finally, se ejecute o no la creación.
     cases:
@@ -310,7 +310,7 @@ rules:
       cuenta. El techo aplica igual a todos.
     evidence:
       - file: backend/real_estate/views.py
-        lines: "409-419"
+        lines: "430-439"
         symbol: "self.throttle_scope = 'property_write'"
         note: ScopedRateThrottle, no AntiScraperScopedThrottle, para create/update/partial_update.
       - file: backend/real_estate/throttling.py
@@ -437,11 +437,11 @@ rules:
       "eliminar" con `window.confirm` como acción irreversible.
     evidence:
       - file: backend/real_estate/views.py
-        lines: "473-475"
+        lines: "490-492"
         symbol: "exclude(status='inactive')"
         note: Único filtro que saca inactive del catálogo público; no toca la fila.
       - file: backend/real_estate/views.py
-        lines: "1211-1213"
+        lines: "1228-1230"
         symbol: def my_properties
         note: "including inactive: el dueño ve su propiedad inactiva, el público no."
       - file: backend/real_estate/models.py
@@ -719,11 +719,11 @@ rules:
       allí sin abrir el payload técnico.
     evidence:
       - file: frontend/app/admin/activity/page.tsx
-        lines: "106-115"
+        lines: "152-160"
         symbol: "errorSummary"
         note: Resuelve el motivo legible del evento a partir de reason, error_message o error_detail.
       - file: frontend/app/admin/activity/page.tsx
-        lines: "438-445"
+        lines: "671-677"
         symbol: "'Mensaje mostrado al usuario'"
         note: El detalle del evento expone los campos del error, no solo el estado HTTP.
       - file: frontend/app/admin/users/page.tsx

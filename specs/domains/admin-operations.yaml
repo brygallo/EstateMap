@@ -44,7 +44,7 @@ rules:
         lines: "28-60"
         symbol: class AdminAuditService
       - file: backend/real_estate/views.py
-        lines: "3166-3174"
+        lines: "3254-3261"
         symbol: class AdminAuditLogView
       - file: backend/real_estate/urls.py
         lines: "96"
@@ -119,7 +119,7 @@ rules:
         lines: "31-46"
         symbol: def soft_delete
       - file: backend/real_estate/views.py
-        lines: "2991-3016"
+        lines: "2905-2929"
         symbol: def destroy
     permissions:
       required: [admin.properties_delete]
@@ -165,7 +165,7 @@ rules:
         lines: "48-69"
         symbol: def restore
       - file: backend/real_estate/views.py
-        lines: "3018-3036"
+        lines: "3121-3138"
         symbol: def restore
       - file: backend/real_estate/urls.py
         lines: "91"
@@ -206,7 +206,7 @@ rules:
       papelera; para destruir algo hay que ir a la papelera y volver a pedirlo.
     evidence:
       - file: backend/real_estate/views.py
-        lines: "3038-3053"
+        lines: "3141-3155"
         symbol: def purge
       - file: backend/real_estate/services/trash.py
         lines: "71-74"
@@ -318,7 +318,7 @@ rules:
       una propiedad, como las altas de usuarios.
     evidence:
       - file: backend/real_estate/views.py
-        lines: "2461-2480"
+        lines: "2540-2558"
         symbol: CACHE_TTL = 300
       - file: backend/real_estate/cache_utils.py
         lines: "91-93"
@@ -398,7 +398,7 @@ rules:
         lines: "46-66"
         symbol: class CsvExportService
       - file: backend/real_estate/views.py
-        lines: "3243-3261"
+        lines: "3346-3363"
         symbol: class AdminExportView
       - file: backend/real_estate/urls.py
         lines: "99"
@@ -450,7 +450,7 @@ rules:
       una comprobación escrita a mano que puede divergir de él.
     evidence:
       - file: backend/real_estate/views.py
-        lines: "3243-3261"
+        lines: "3346-3363"
         symbol: class AdminExportView
       - file: frontend/lib/admin-export.ts
         lines: "21-39"
@@ -482,7 +482,7 @@ rules:
         lines: "26-45"
         symbol: class AdminSearchService
       - file: backend/real_estate/views.py
-        lines: "3224-3231"
+        lines: "3312-3318"
         symbol: class AdminSearchView
     permissions:
       required: [admin.search]
@@ -532,7 +532,7 @@ rules:
         lines: "62-94"
         symbol: def _blockers
       - file: backend/real_estate/views.py
-        lines: "3070-3075"
+        lines: "3158-3162"
         symbol: def diagnostics
     permissions:
       required: [admin.properties_diagnostics]
@@ -609,3 +609,112 @@ rules:
         expected: allowed
       - name: la papelera y los duplicados no cuentan para el umbral
         expected: allowed
+
+  - id: ADM-015
+    name: El periodo de análisis lo elige quien mira, y todo lo demás lo sigue
+    status: implemented
+    summary: >-
+      `GET /api/admin/dashboard/?days=` acepta 7, 14, 30 o 90 y cualquier otro
+      valor cae a 30. La ventana elegida rige a la vez la comparación con el
+      periodo anterior, el embudo, la adquisición, la audiencia y la serie
+      diaria, viaja en la clave de caché y se declara en el bloque `window`
+      para que la interfaz etiquete cada cifra con el periodo que la produjo.
+    rationale: >-
+      El panel medía siempre 7 días contra los 7 anteriores y un bloque fijo de
+      30, así que no había forma de preguntarle si algo cambió en el trimestre
+      ni de aislar la semana en que corrió una campaña. Una ventana libre habría
+      permitido pedir un año de eventos y bloquear la base mientras los cuenta;
+      cuatro opciones cubren las preguntas reales y mantienen la consulta
+      acotada. El periodo anterior es del mismo largo e inmediatamente anterior
+      porque es la única comparación que significa algo cuando la ventana se
+      mueve, y los rótulos se leen del payload y no del selector: durante una
+      recarga los dos discrepan, y un título que va por delante de sus propias
+      cifras engaña más que uno que va por detrás.
+    evidence:
+      - file: backend/real_estate/services/admin_metrics.py
+        symbol: def resolve_window
+      - file: backend/real_estate/services/admin_metrics.py
+        symbol: WINDOW_CHOICES
+      - file: backend/real_estate/views.py
+        symbol: class AdminDashboardView
+    backend:
+      enforce: true
+      endpoint: GET /api/admin/dashboard/
+      denied_http_status: 403
+    frontend:
+      routes: ["/admin"]
+      visible_when_allowed: true
+    tests:
+      api: true
+    cases:
+      - name: staff pide la ventana de 7 días y la recibe declarada
+        role: staff
+        expected: allowed
+        expected_http_status: 200
+      - name: un valor fuera de la lista cae a 30 días
+        expected: allowed
+      - name: un usuario autenticado cualquiera recibe 403
+        role: authenticated
+        expected: denied
+        http_status: 403
+      - name: un anónimo recibe 401
+        role: anonymous
+        expected: denied
+        http_status: 401
+
+  - id: ADM-016
+    name: La bitácora de actividad se acota por fechas y se resume
+    status: implemented
+    summary: >-
+      `GET /api/activity-events/` admite `created_after` y `created_before` en
+      formato `YYYY-MM-DD`, interpretados como días completos en la zona horaria
+      del portal y con el extremo superior incluido. `GET
+      /api/activity-events/summary/` devuelve, con los mismos filtros, el total,
+      las sesiones distintas, el desglose por evento y por día, y el reparto
+      entre personas y rastreadores.
+    rationale: >-
+      Una página de cincuenta filas no responde si el tráfico creció, qué evento
+      se movió ni cuánto de lo que se ve eran crawlers, que son las tres cosas
+      que hay que saber para decidir sobre SEO. El resumen se construye con los
+      mismos parámetros que el listado para que los totales describan
+      exactamente lo que hay en pantalla. El reparto humanos/bots es la
+      excepción deliberada: se calcula sin el filtro `is_bot` de quien pregunta,
+      porque preguntar «cuánto de este rango fue rastreador» mirando solo
+      personas respondería cero siempre. Y las fechas se convierten a instantes
+      con zona antes de tocar la consulta: en UTC, «21 de agosto» sería ese día
+      menos cinco horas y con cinco prestadas del siguiente.
+    evidence:
+      - file: backend/real_estate/views.py
+        symbol: def _apply_date_range
+      - file: backend/real_estate/views.py
+        symbol: def _start_of_local_day
+      - file: backend/real_estate/views.py
+        symbol: def summary
+    backend:
+      enforce: true
+      endpoint: GET /api/activity-events/summary/
+      denied_http_status: 403
+    frontend:
+      routes: ["/admin/activity"]
+      visible_when_allowed: true
+    tests:
+      api: true
+    cases:
+      - name: staff acota la bitácora a un rango de fechas
+        role: staff
+        expected: allowed
+        expected_http_status: 200
+      - name: pedir un solo día devuelve ese día completo
+        expected: allowed
+      - name: una fecha ilegible no filtra nada en vez de fallar
+        expected: allowed
+      - name: el reparto de bots ignora el filtro de tráfico del listado
+        expected: allowed
+      - name: un usuario autenticado cualquiera recibe 403
+        role: authenticated
+        expected: denied
+        http_status: 403
+      - name: un anónimo recibe 401
+        role: anonymous
+        expected: denied
+        http_status: 401
