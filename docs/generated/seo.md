@@ -27,6 +27,7 @@ Reglas que deciden qué páginas públicas merecen entrar en el índice y qué s
 | [`SEC-004`](#sec-004--el-titular-de-un-anuncio-no-es-una-zona) | El titular de un anuncio no es una zona | ✅ Implementada |
 | [`SEC-005`](#sec-005--una-zona-absorbe-sus-rincones) | Una zona absorbe sus rincones | ✅ Implementada |
 | [`SEC-006`](#sec-006--el-nombre-gritado-se-publica-en-mayúscula-inicial) | El nombre gritado se publica en mayúscula inicial | ✅ Implementada |
+| [`SEC-007`](#sec-007--una-zona-solo-existe-dentro-de-su-ciudad) | Una zona solo existe dentro de su ciudad | ✅ Implementada |
 
 ### SEO-001 — Las landings locales necesitan cinco anuncios para entrar al índice
 
@@ -285,7 +286,7 @@ El listado público acepta `sector` y resuelve contra la columna indexada, no co
 
 **Estado:** ✅ Implementada
 
-`sector_key` devuelve vacío cuando el primer tramo de la dirección describe lo que se vende en lugar de dónde está: hace falta una palabra de tipo de inmueble y una de operación, ambas como palabras completas. Sin clave no hay zona, ni página, ni entrada en el sitemap, ni promedio.
+`sector_key` devuelve vacío cuando el primer tramo de la dirección describe lo que se vende en lugar de dónde está: hace falta una palabra de tipo de inmueble y una de operación, ambas como palabras completas. La operación cuenta en tercera y en primera persona, porque medio catálogo lo escribe quien vende. Un verbo en primera persona basta por sí solo: «vendo» es algo que dice quien vende, no algo que se llama un lugar. Sin clave no hay zona, ni página, ni entrada en el sitemap, ni promedio.
 
 > **Por qué:** La dirección es texto libre y los importadores ponen ahí lo que tienen. «Casa en Venta» llegó a ser un barrio de Guayaquil con 19 anuncios y un precio por metro cuadrado publicado: una lectura de mercado para un lugar que no existe. La prueba exige las dos palabras a propósito, porque Ecuador tiene lugares llamados Villa Club, Villa Regina, La Venta y Ventanas, y ninguno lleva palabra de operación.
 
@@ -294,6 +295,11 @@ El listado público acepta `sector` y resuelve contra la columna indexada, no co
 - `backend/real_estate/models.py` (`def _looks_like_listing_title`)
 - `backend/real_estate/models.py` (`return "" if _looks_like_listing_title(folded) else folded`)
 - `backend/real_estate/migrations/0037_reject_headline_sectors.py` (`def clear_headline_sectors`) — La regla corre al guardar; el catálogo es importado y necesitaba relleno.
+- `backend/real_estate/models.py` (`_SELLER_VOICE_WORDS`) — La tercera persona sigue exigiendo palabra de tipo: «venta», «renta» y «arriendo» también son sustantivos, y existen La Venta y Renta Alta.
+
+- `backend/real_estate/migrations/0039_reject_seller_voice_headlines.py` (`def clear_seller_voice_headlines`)
+- `backend/real_estate/migrations/0038_reject_first_person_headlines.py` (`def clear_first_person_headlines`) — El primer pase solo reconocía la tercera persona y dejó pasar 92 zonas como «Vendo casa independiente Lomas de Monteserrín».
+
 - `backend/real_estate/tests/test_sectors.py` (`def test_a_listing_headline_is_not_a_zone`)
 
 **Casos**
@@ -303,6 +309,10 @@ El listado público acepta `sector` y resuelve contra la columna indexada, no co
 | Dirección «Casa en Venta, Guayaquil» | — | — | — | sin zona |
 | Dirección «Villa Club, Daule» | — | — | — | zona «villa club» |
 | Dirección «La Venta, Quito» | — | — | — | zona «la venta» |
+| Dirección «Vendo casa independiente Lomas de Monteserrín, Quito» | — | — | — | sin zona |
+| Dirección «Renta Alta, Quito» | — | — | — | zona «renta alta» |
+| Dirección «LAGUNA DEL SOL POR VIAJE VENDO US$ 390., Samborondón» | — | — | — | sin zona |
+| Dirección «Laguna del Sol, Guayaquil» | — | — | — | zona «laguna del sol» |
 
 **Cobertura exigida:** api
 
@@ -357,6 +367,30 @@ Un nombre de zona escrito entero en mayúsculas se publica en formato título, c
 | --- | --- | --- | --- | --- |
 | Zona «PUERTO AZUL» | — | — | — | se publica «Puerto Azul» |
 | Zona «Kennedy Norte» | — | — | — | se publica igual |
+
+**Cobertura exigida:** api
+
+- `backend/real_estate/tests/test_sectors.py`
+
+### SEC-007 — Una zona solo existe dentro de su ciudad
+
+**Estado:** ✅ Implementada
+
+Buscar una zona sin decir la ciudad devuelve nada, en vez de buscar esa clave en todo el país.
+
+> **Por qué:** `list_sectors` lee una ciudad vacía como «todas a la vez», que es lo correcto para el sitemap y lo contrario de lo que quiere quien pregunta por una zona concreta. Sin este límite, un anuncio sin ciudad —los hay importados— resolvía su «Punta Blanca» contra la Punta Blanca de otra provincia, y el panel afirmaba que el anuncio pertenece a una zona a seiscientos kilómetros. Un nombre de barrio no es único en Ecuador: solo significa algo junto a su cantón.
+
+**Evidencia en el código** (verificada por `tools/specs/validate.py`)
+
+- `backend/real_estate/services/sectors.py` (`def find_sector`)
+- `backend/real_estate/tests/test_sectors.py` (`def test_a_zone_without_a_city_resolves_to_nothing`)
+
+**Casos**
+
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| Clave de zona con ciudad vacía | — | — | — | no resuelve |
+| La misma clave con su ciudad | — | — | — | resuelve a su zona |
 
 **Cobertura exigida:** api
 

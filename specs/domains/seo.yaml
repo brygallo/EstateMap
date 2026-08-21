@@ -459,3 +459,30 @@ rules:
         expected: se publica «Puerto Azul»
       - name: Zona «Kennedy Norte»
         expected: se publica igual
+
+  - id: SEC-007
+    name: Una zona solo existe dentro de su ciudad
+    status: implemented
+    summary: >-
+      Buscar una zona sin decir la ciudad devuelve nada, en vez de buscar esa
+      clave en todo el país.
+    rationale: >-
+      `list_sectors` lee una ciudad vacía como «todas a la vez», que es lo
+      correcto para el sitemap y lo contrario de lo que quiere quien pregunta
+      por una zona concreta. Sin este límite, un anuncio sin ciudad —los hay
+      importados— resolvía su «Punta Blanca» contra la Punta Blanca de otra
+      provincia, y el panel afirmaba que el anuncio pertenece a una zona a
+      seiscientos kilómetros. Un nombre de barrio no es único en Ecuador: solo
+      significa algo junto a su cantón.
+    evidence:
+      - file: backend/real_estate/services/sectors.py
+        symbol: def find_sector
+      - file: backend/real_estate/tests/test_sectors.py
+        symbol: def test_a_zone_without_a_city_resolves_to_nothing
+    tests:
+      api: true
+    cases:
+      - name: Clave de zona con ciudad vacía
+        expected: no resuelve
+      - name: La misma clave con su ciudad
+        expected: resuelve a su zona

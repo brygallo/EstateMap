@@ -11,6 +11,8 @@ from rest_framework.test import APIClient
 from real_estate.models import Property, sector_key
 from real_estate.services.sectors import (
     MIN_SECTOR_LISTINGS,
+    PARENT_DOMINANCE,
+    absorptions,
     find_sector,
     list_sectors,
     sector_display,
@@ -206,3 +208,82 @@ def test_an_absorbed_url_still_resolves():
 
     assert found is not None
     assert found["sector_key"] == "cumbaya"
+
+
+def test_a_zone_without_a_city_resolves_to_nothing():
+    """SPEC:SEC-007 — una zona solo significa algo dentro de su ciudad."""
+    for _ in range(6):
+        listing("Punta Blanca, Santa Elena", city="Santa Elena")
+
+    assert find_sector("", "punta blanca") is None
+    assert find_sector("   ", "punta blanca") is None
+
+    found = find_sector("Santa Elena", "punta blanca")
+    assert found is not None
+    assert found["sector_key"] == "punta blanca"
+
+
+def _pairwise_absorptions(rows):
+    """The definition of SEC-005, written the obvious way.
+
+    Quadratic and unusable on a national catalogue — that is precisely why
+    `absorptions` searches by prefix instead. It stays here as the yardstick:
+    the fast version is only allowed to be fast if it answers the same.
+    """
+    by_city = {}
+    for row in rows:
+        by_city.setdefault(row["city"], []).append(row)
+
+    merged = {}
+    for city, city_rows in by_city.items():
+        ranked = sorted(city_rows, key=lambda row: -row["count"])
+        for parent in ranked:
+            parent_key = parent["sector_key"]
+            for child in ranked:
+                child_key = child["sector_key"]
+                if child_key == parent_key or (city, child_key) in merged:
+                    continue
+                if not child_key.startswith(parent_key + " "):
+                    continue
+                if parent["count"] < child["count"] * PARENT_DOMINANCE:
+                    continue
+                merged[(city, child_key)] = (city, parent_key)
+    return merged
+
+
+def test_absorption_matches_the_pairwise_definition():
+    """SPEC:SEC-005 — el índice por prefijos responde lo mismo que comparar todo contra todo."""
+    rows = [
+        # A zone, a corner of it, and a corner of the corner: the chain the
+        # prefix index could get wrong by picking the nearest name instead of
+        # the largest one.
+        {"city": "Quito", "sector_key": "cumbaya", "count": 214},
+        {"city": "Quito", "sector_key": "cumbaya sector la vina", "count": 7},
+        {"city": "Quito", "sector_key": "cumbaya sector la vina alta", "count": 2},
+        # Two avenues of similar size: neither swallows the other.
+        {"city": "Quito", "sector_key": "av. republica", "count": 5},
+        {"city": "Quito", "sector_key": "av. republica de el salvador", "count": 5},
+        # A middle zone that dominates its corner while the top one does not.
+        {"city": "Guayaquil", "sector_key": "via", "count": 9},
+        {"city": "Guayaquil", "sector_key": "via samborondon", "count": 40},
+        {"city": "Guayaquil", "sector_key": "via samborondon km 2", "count": 6},
+        # Same key in another city: cities never mix.
+        {"city": "Cuenca", "sector_key": "cumbaya", "count": 3},
+        {"city": "Cuenca", "sector_key": "cumbaya norte", "count": 1},
+    ]
+
+    assert absorptions(rows) == _pairwise_absorptions(rows)
+
+
+def test_a_corner_is_absorbed_by_the_largest_zone_that_dominates_it():
+    """SPEC:SEC-005 — gana la zona mayor, no la de nombre más cercano."""
+    rows = [
+        {"city": "Quito", "sector_key": "cumbaya", "count": 214},
+        {"city": "Quito", "sector_key": "cumbaya sector", "count": 30},
+        {"city": "Quito", "sector_key": "cumbaya sector la vina", "count": 7},
+    ]
+
+    merged = absorptions(rows)
+
+    assert merged[("Quito", "cumbaya sector la vina")] == ("Quito", "cumbaya")
+    assert merged[("Quito", "cumbaya sector")] == ("Quito", "cumbaya")

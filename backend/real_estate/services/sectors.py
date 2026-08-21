@@ -98,7 +98,22 @@ PARENT_DOMINANCE = 3
 
 
 def absorptions(rows: list[dict]) -> dict[tuple[str, str], tuple[str, str]]:
-    """Map every absorbed zone key to the key that absorbs it."""
+    """Map every absorbed zone key to the key that absorbs it.
+
+    Se busca por prefijos y no comparando cada zona con todas las demás. La
+    forma evidente —dos bucles anidados sobre las zonas de la ciudad— es
+    cuadrática, y el catálogo nacional tiene miles de claves: medido sobre los
+    datos reales, `/api/properties/sectors/` tardaba **50 segundos**, y los
+    tardaba reteniendo una conexión a Postgres. Con quince renderizadores
+    pidiendo a la vez durante un build, eso agota `max_connections` y el resto
+    del sitio empieza a responder 500.
+
+    Solo puede absorber a «cumbaya sector la vina» una zona cuyo nombre sea uno
+    de sus prefijos por palabras: «cumbaya» o «cumbaya sector». Son tres
+    candidatos, no dos mil, y se buscan en un índice. El resultado es idéntico
+    al del doble bucle —gana el primer candidato en orden de tamaño que además
+    domine—, y lo comprueba `test_absorption_matches_the_pairwise_definition`.
+    """
     by_city: dict[str, list[dict]] = {}
     for row in rows:
         by_city.setdefault(row["city"], []).append(row)
@@ -106,18 +121,37 @@ def absorptions(rows: list[dict]) -> dict[tuple[str, str], tuple[str, str]]:
     merged: dict[tuple[str, str], tuple[str, str]] = {}
     for city, city_rows in by_city.items():
         ranked = sorted(city_rows, key=lambda row: -row["count"])
-        for parent in ranked:
-            parent_key = parent["sector_key"]
-            for child in ranked:
-                child_key = child["sector_key"]
-                if child_key == parent_key or (city, child_key) in merged:
-                    continue
-                if not child_key.startswith(parent_key + " "):
-                    continue
-                if parent["count"] < child["count"] * PARENT_DOMINANCE:
-                    continue
-                merged[(city, child_key)] = (city, parent_key)
+        # La posición en `ranked` es el desempate: el doble bucle recorría los
+        # padres en ese orden y se quedaba con el primero que valía.
+        rank = {id(row): position for position, row in enumerate(ranked)}
+        by_key: dict[str, list[dict]] = {}
+        for row in city_rows:
+            by_key.setdefault(row["sector_key"], []).append(row)
+
+        for child in ranked:
+            child_key = child["sector_key"]
+            candidates = [
+                candidate
+                for prefix in _key_prefixes(child_key)
+                for candidate in by_key.get(prefix, ())
+                if candidate["count"] >= child["count"] * PARENT_DOMINANCE
+            ]
+            if not candidates:
+                continue
+            parent = min(candidates, key=lambda candidate: rank[id(candidate)])
+            merged[(city, child_key)] = (city, parent["sector_key"])
     return merged
+
+
+def _key_prefixes(key: str) -> list[str]:
+    """Los nombres que podrían contener a esta zona, del mayor al menor.
+
+    «cumbaya sector la vina» solo puede ser esquina de «cumbaya sector la», de
+    «cumbaya sector» o de «cumbaya». Se cortan por espacios porque esa es
+    exactamente la condición que comprobaba `startswith(parent + " ")`.
+    """
+    words = key.split(" ")
+    return [" ".join(words[:count]) for count in range(len(words) - 1, 0, -1)]
 
 
 def list_sectors(city: str | None = None, minimum: int = MIN_SECTOR_LISTINGS) -> list[dict]:
@@ -242,7 +276,15 @@ def find_sector(city: str, key: str) -> dict | None:
 
     An absorbed key still resolves, to the zone that absorbed it: the URL it
     used to own is already indexed and should lead somewhere, not 404.
+
+    A blank city is refused rather than treated as "anywhere". `list_sectors`
+    reads a falsy city as "every city at once", which is right for the sitemap
+    and wrong here: asked for a zone with no city, the search would walk the
+    whole country and answer with a «Punta Blanca» in another province. A zone
+    only means something inside its city.
     """
+    if not (city or "").strip():
+        return None
     for sector in list_sectors(city=city, minimum=1):
         if sector["sector_key"] == key or key in sector["aliases"]:
             return sector
