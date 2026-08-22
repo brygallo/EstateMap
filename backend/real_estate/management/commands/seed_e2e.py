@@ -41,6 +41,7 @@ import os
 
 from django.conf import settings
 from django.core.management.base import BaseCommand, CommandError
+from django.utils import timezone
 
 from advertising.models import Campaign
 from real_estate.services.phones import normalize_ec_phone
@@ -82,6 +83,16 @@ SEED_CLAIMABLE_COUNT = 3
 #: anywhere this account could matter.
 SEED_ADVERTISER_EMAIL = "e2e_anunciante@example.test"
 SEED_ADVERTISER_PASSWORD = "Reclamo-e2e-2026"
+
+#: A second account for the tests that change a phone number.
+#:
+#: Changing a number drops whatever verification it had — that is the rule, and
+#: it is right — so a suite where every test borrows the same account leaves the
+#: claim test signing in as somebody who can no longer claim. This one exists to
+#: be mutated; the advertiser above is left alone.
+SEED_SPARE_EMAIL = "e2e_cuenta_libre@example.test"
+SEED_SPARE_PASSWORD = "Cuenta-libre-e2e-2026"
+SEED_SPARE_PHONE = "0999000222"
 
 # Above this many properties the command did not create, the database is
 # somebody's real inventory and not a test fixture.
@@ -289,6 +300,7 @@ class Command(BaseCommand):
         self._seed_house_sign()
         claimable = self._seed_claimable_listings()
         self._seed_advertiser()
+        self._seed_spare_account()
 
         # Every public read is cached under a version key, and `summary` is what
         # `/propiedades` renders its city list from. The post_save signals bump
@@ -364,11 +376,16 @@ class Command(BaseCommand):
     def _seed_advertiser(self):
         """The account the claim suite signs in as.
 
-        Verified, because signing in requires it and the browser cannot read a
-        verification email. Its phone is the one the claimable listings carry,
-        so the flow has something to find the moment the suite opens the page.
+        Its email is verified because signing in requires it and the browser
+        cannot read a verification email. Its **phone** is verified too, because
+        that is what CLM-003 asks for before anything can be claimed, and no
+        path in the product stamps it yet (see CLM-011): without this line the
+        suite signs in as somebody who can never reach the flow it is testing.
+
+        Its number is the one the claimable listings carry, so the flow has
+        something to find the moment the suite opens the page.
         """
-        advertiser, created = User.objects.get_or_create(
+        advertiser, _ = User.objects.get_or_create(
             email=SEED_ADVERTISER_EMAIL,
             defaults={
                 "username": "e2e_anunciante",
@@ -379,9 +396,32 @@ class Command(BaseCommand):
         )
         advertiser.is_email_verified = True
         advertiser.phone = normalize_ec_phone(SEED_ADVERTISER_PHONE)
+        advertiser.phone_verified_at = timezone.now()
         advertiser.set_password(SEED_ADVERTISER_PASSWORD)
         advertiser.save()
         return advertiser
+
+    def _seed_spare_account(self):
+        """The account the phone-changing tests borrow.
+
+        Same shape as the advertiser, a number that matches no listing, and no
+        phone verification to lose. Whatever those tests do to it, the verified
+        advertiser keeps its state.
+        """
+        spare, _ = User.objects.get_or_create(
+            email=SEED_SPARE_EMAIL,
+            defaults={
+                "username": "e2e_cuenta_libre",
+                "first_name": "Cuenta",
+                "last_name": "Libre",
+                "is_email_verified": True,
+            },
+        )
+        spare.is_email_verified = True
+        spare.phone = normalize_ec_phone(SEED_SPARE_PHONE)
+        spare.set_password(SEED_SPARE_PASSWORD)
+        spare.save()
+        return spare
 
     def _seed_claimable_listings(self):
         """Imported listings an advertiser can be shown and can take over.

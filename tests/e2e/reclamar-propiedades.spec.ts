@@ -27,15 +27,40 @@ const SEEDED = {
   password: 'Reclamo-e2e-2026',
 };
 
-async function signInAsSeededAdvertiser(request: APIRequestContext) {
-  const session = await request.post(`${API_URL}/login/`, { data: SEEDED });
+/**
+ * The account the phone-changing tests borrow.
+ *
+ * Changing a number drops whatever verification it had — that is the rule, and
+ * it is the right one. But it also means a suite where every test borrows the
+ * advertiser leaves the claim test signing in as somebody who can no longer
+ * claim, and the failure looks like a broken feature instead of tests standing
+ * on each other. This account exists to be mutated.
+ */
+const SPARE = {
+  email: 'e2e_cuenta_libre@example.test',
+  password: 'Cuenta-libre-e2e-2026',
+};
+
+async function authenticate(
+  account: { email: string; password: string },
+  request: APIRequestContext
+) {
+  const session = await request.post(`${API_URL}/login/`, { data: account });
   if (!session.ok()) return null;
   return (await session.json()).access as string;
 }
 
+async function signInAsSeededAdvertiser(request: APIRequestContext) {
+  return authenticate(SEEDED, request);
+}
+
+async function signInAsSpareAccount(request: APIRequestContext) {
+  return authenticate(SPARE, request);
+}
+
 /** A phone-less account, for the paths that only exist before one is given. */
 async function accountWithoutPhone(request: APIRequestContext) {
-  const token = await signInAsSeededAdvertiser(request);
+  const token = await signInAsSpareAccount(request);
   if (!token) return null;
   const cleared = await request.patch(`${API_URL}/me/`, {
     headers: { Authorization: `Bearer ${token}` },
@@ -45,11 +70,11 @@ async function accountWithoutPhone(request: APIRequestContext) {
   return token;
 }
 
-/** Put the phone back, so the order tests run in cannot change what they see. */
+/** Put the spare account's phone back, so tests cannot change what others see. */
 async function restorePhone(request: APIRequestContext, token: string) {
   await request.patch(`${API_URL}/me/`, {
     headers: { Authorization: `Bearer ${token}` },
-    data: { phone: '0999000123' },
+    data: { phone: '0999000222' },
   });
 }
 
@@ -143,7 +168,7 @@ test.describe('Reclamar propiedades importadas', () => {
   test('a phone that matches nothing offers nothing to claim', async ({ page, request }) => {
     // SPEC:CLM-002 — the phone decides, and nothing else does. A number nobody
     // advertises with must not surface a single listing.
-    const token = await signInAsSeededAdvertiser(request);
+    const token = await signInAsSpareAccount(request);
     test.skip(!token, 'falta correr `manage.py seed_e2e` en este entorno');
     await request.patch(`${API_URL}/me/`, {
       headers: { Authorization: `Bearer ${token}` },
@@ -168,7 +193,10 @@ test.describe('Reclamar propiedades importadas', () => {
     // exercises real imported data instead of a fixture that cannot go stale.
     const token = await signInAsSeededAdvertiser(request);
     test.skip(!token, 'falta correr `manage.py seed_e2e` en este entorno');
-    await restorePhone(request, token!);
+    // Deliberately does not rewrite its own phone: writing the same number back
+    // would still be a write, and a write drops the verification CLM-003 asks
+    // for. The account arrives verified from `seed_e2e` and stays that way
+    // because the tests that change numbers borrow the spare account instead.
 
     // The cycle consumes its own fixtures: what it claims stops being
     // claimable, and what it dismisses stays dismissed. CI gets a fresh

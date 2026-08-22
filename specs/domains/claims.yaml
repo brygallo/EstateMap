@@ -273,3 +273,75 @@ rules:
         expected: allowed
       - name: el texto de metodología no nombra ninguna fuente externa
         expected: allowed
+
+  - id: CLM-008
+    name: Hoy ningún camino verifica un teléfono, así que nadie puede reclamar
+    status: implemented
+    summary: >-
+      `phone_verified_at` solo se lee y se borra. Ninguna vista, servicio,
+      comando ni pantalla del panel lo escribe nunca, así que `may_claim()`
+      devuelve False para toda cuenta real y el reclamo queda inalcanzable:
+      quien tenga anuncios a su nombre ve «Verifica tu número antes de
+      reclamar» y no hay forma de pasar de ahí.
+    rationale: >-
+      Se documenta porque es un hueco, no una decisión. La puerta de CLM-003 es
+      correcta —escribir el teléfono de otro no puede bastar para quedarse con
+      sus anuncios— pero se construyó la puerta sin la llave. El efecto es que
+      la única vía de captación que tiene el portal, enseñarle a un anunciante
+      lo que ya es suyo, no se puede completar. La regla que describe el
+      comportamiento correcto es CLM-009, y está `proposed` porque nadie la ha
+      construido todavía.
+
+      El fixture `seed_e2e` sella `phone_verified_at` a mano por esta misma
+      razón: sin eso, la suite de navegador entra como alguien que no puede
+      reclamar y el fallo parece de la funcionalidad en vez de del fixture.
+    evidence:
+      - file: backend/real_estate/services/claims.py
+        symbol: def may_claim
+        note: Exige phone_verified_at, que nada del producto rellena.
+      - file: backend/real_estate/serializers.py
+        symbol: instance.phone_verified_at = None
+        note: La única escritura que existe es la que lo borra al cambiar el número.
+      - file: backend/real_estate/management/commands/seed_e2e.py
+        symbol: advertiser.phone_verified_at = timezone.now()
+        note: El fixture lo sella a mano porque no hay otro camino.
+    backend:
+      endpoint: POST /api/properties/claim/
+    tests: {api: true}
+    cases:
+      - name: una cuenta real escribe su teléfono
+        expected: sigue sin poder reclamar
+      - name: el fixture del e2e
+        expected: puede reclamar porque el sello se pone a mano
+
+  - id: CLM-009
+    name: Un teléfono se verifica y el reclamo se completa
+    status: proposed
+    summary: >-
+      Existe al menos un camino que sella `phone_verified_at`: el anunciante
+      confirma su número, o staff lo verifica desde el panel dejando constancia
+      en la bitácora de quién lo hizo y con qué prueba.
+    rationale: >-
+      CLM-008 describe el hueco: la puerta está puesta y no hay llave. Las dos
+      formas razonables tienen costes distintos y conviene elegir a propósito.
+
+      Verificación por el propio anunciante —un código que llega a ese número—
+      es la prueba fuerte y la que escala, y necesita un proveedor de mensajería
+      con su coste por envío.
+
+      Verificación por staff es gratis y sirve desde el primer día: la persona
+      escribe por WhatsApp desde el número que aparece en sus anuncios, alguien
+      lo comprueba y lo sella. No escala, pero con la cantidad de reclamos que
+      el portal ve hoy no necesita escalar, y deja rastro en la bitácora igual
+      que cualquier transferencia hecha a mano.
+
+      Lo que no es aceptable es lo que hay ahora: una funcionalidad completa que
+      nadie puede terminar.
+    backend:
+      endpoint: POST /api/properties/claim/
+    tests: {}
+    cases:
+      - name: staff verifica el número de un anunciante
+        expected: la cuenta puede reclamar y queda anotado quién lo verificó
+      - name: el anunciante cambia su número después
+        expected: pierde la verificación y vuelve a necesitarla

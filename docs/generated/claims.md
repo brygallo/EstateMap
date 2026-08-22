@@ -20,6 +20,8 @@ El portal publica miles de anuncios cuyo anunciante no tiene cuenta aquí. Cuand
 | [`CLM-005`](#clm-005--un-anuncio-reclamado-sobrevive-a-la-importación-y-a-la-retirada) | Un anuncio reclamado sobrevive a la importación y a la retirada | ✅ Implementada |
 | [`CLM-006`](#clm-006--a-quien-ya-publica-aquí-no-se-le-importa-nada-nuevo) | A quien ya publica aquí no se le importa nada nuevo | ✅ Implementada |
 | [`CLM-007`](#clm-007--de-dónde-sale-el-inventario-no-se-cuenta-fuera) | De dónde sale el inventario no se cuenta fuera | ✅ Implementada |
+| [`CLM-008`](#clm-008--hoy-ningún-camino-verifica-un-teléfono-así-que-nadie-puede-reclamar) | Hoy ningún camino verifica un teléfono, así que nadie puede reclamar | ✅ Implementada |
+| [`CLM-009`](#clm-009--un-teléfono-se-verifica-y-el-reclamo-se-completa) | Un teléfono se verifica y el reclamo se completa | 📝 Propuesta (sin código) |
 
 ### CLM-001 — El teléfono se compara en una sola forma
 
@@ -92,6 +94,7 @@ El portal publica miles de anuncios cuyo anunciante no tiene cuenta aquí. Cuand
 **Cobertura exigida:** api
 
 - `backend/real_estate/tests/test_property_claims.py`
+- `backend/real_estate/tests/test_seed_e2e.py`
 - `tests/e2e/reclamar-propiedades.spec.ts`
 
 ### CLM-003 — Solo un teléfono verificado permite reclamar y transferir anuncios
@@ -133,6 +136,7 @@ El portal publica miles de anuncios cuyo anunciante no tiene cuenta aquí. Cuand
 
 - `backend/real_estate/tests/generated/test_spec_claims.py`
 - `backend/real_estate/tests/test_property_claims.py`
+- `backend/real_estate/tests/test_seed_e2e.py`
 - `tests/e2e/reclamar-propiedades.spec.ts`
 
 ### CLM-004 — «Esta no es mía» la quita de la lista de quien lo dice
@@ -257,3 +261,57 @@ La excepción que **no** existe: el texto de metodología sigue diciendo que son
 **Cobertura exigida:** api
 
 - `backend/real_estate/tests/test_property_claims.py`
+
+### CLM-008 — Hoy ningún camino verifica un teléfono, así que nadie puede reclamar
+
+**Estado:** ✅ Implementada
+
+`phone_verified_at` solo se lee y se borra. Ninguna vista, servicio, comando ni pantalla del panel lo escribe nunca, así que `may_claim()` devuelve False para toda cuenta real y el reclamo queda inalcanzable: quien tenga anuncios a su nombre ve «Verifica tu número antes de reclamar» y no hay forma de pasar de ahí.
+
+> **Por qué:** Se documenta porque es un hueco, no una decisión. La puerta de CLM-003 es correcta —escribir el teléfono de otro no puede bastar para quedarse con sus anuncios— pero se construyó la puerta sin la llave. El efecto es que la única vía de captación que tiene el portal, enseñarle a un anunciante lo que ya es suyo, no se puede completar. La regla que describe el comportamiento correcto es CLM-009, y está `proposed` porque nadie la ha construido todavía.
+El fixture `seed_e2e` sella `phone_verified_at` a mano por esta misma razón: sin eso, la suite de navegador entra como alguien que no puede reclamar y el fallo parece de la funcionalidad en vez de del fixture.
+
+**Backend**
+
+- Endpoint: `POST /api/properties/claim/`
+
+**Evidencia en el código** (verificada por `tools/specs/validate.py`)
+
+- `backend/real_estate/services/claims.py` (`def may_claim`) — Exige phone_verified_at, que nada del producto rellena.
+- `backend/real_estate/serializers.py` (`instance.phone_verified_at = None`) — La única escritura que existe es la que lo borra al cambiar el número.
+- `backend/real_estate/management/commands/seed_e2e.py` (`advertiser.phone_verified_at = timezone.now()`) — El fixture lo sella a mano porque no hay otro camino.
+
+**Casos**
+
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| una cuenta real escribe su teléfono | — | — | — | sigue sin poder reclamar |
+| el fixture del e2e | — | — | — | puede reclamar porque el sello se pone a mano |
+
+**Cobertura exigida:** api
+
+- `backend/real_estate/tests/test_seed_e2e.py`
+
+### CLM-009 — Un teléfono se verifica y el reclamo se completa
+
+**Estado:** 📝 Propuesta (sin código)
+
+Existe al menos un camino que sella `phone_verified_at`: el anunciante confirma su número, o staff lo verifica desde el panel dejando constancia en la bitácora de quién lo hizo y con qué prueba.
+
+> **Por qué:** CLM-008 describe el hueco: la puerta está puesta y no hay llave. Las dos formas razonables tienen costes distintos y conviene elegir a propósito.
+Verificación por el propio anunciante —un código que llega a ese número— es la prueba fuerte y la que escala, y necesita un proveedor de mensajería con su coste por envío.
+Verificación por staff es gratis y sirve desde el primer día: la persona escribe por WhatsApp desde el número que aparece en sus anuncios, alguien lo comprueba y lo sella. No escala, pero con la cantidad de reclamos que el portal ve hoy no necesita escalar, y deja rastro en la bitácora igual que cualquier transferencia hecha a mano.
+Lo que no es aceptable es lo que hay ahora: una funcionalidad completa que nadie puede terminar.
+
+**Backend**
+
+- Endpoint: `POST /api/properties/claim/`
+
+**Evidencia en el código:** ninguna, y es lo esperado: no hay código que la implemente.
+
+**Casos**
+
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| staff verifica el número de un anunciante | — | — | — | la cuenta puede reclamar y queda anotado quién lo verificó |
+| el anunciante cambia su número después | — | — | — | pierde la verificación y vuelve a necesitarla |
