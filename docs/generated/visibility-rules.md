@@ -50,7 +50,8 @@ El serializer retira views_count salvo para el propietario o staff, y el informe
 
 - `backend/real_estate/services/map_payload.py:145-147` (`queryset.values(*POINT_FIELDS)`) — Único punto donde se materializan los puntos del mapa.
 - `backend/real_estate/serializers.py:328-340` (`data.pop('views_count', None)`) — El detalle elimina el contador salvo para propietario o staff autenticado.
-- `backend/real_estate/views.py:758-780` (`demand = {'level': demand_level}`) — El informe público conserva el nivel cualitativo y añade métricas solo al dueño o staff.
+- `backend/real_estate/services/intelligence.py` (`demand = {`) — El informe público conserva el nivel cualitativo; las sesiones, los contactos y la mediana del universo solo se añaden para el dueño o staff. El cálculo se mudó aquí desde la vista con PRC-032.
+
 
 **Casos**
 

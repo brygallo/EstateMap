@@ -48,8 +48,8 @@ Cambiar de propietario se hace por un endpoint dedicado reservado a staff, y no 
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/real_estate/views.py:3170-3210` (`def transfer_owner`)
-- `backend/real_estate/views.py:3096-3098` (`PATCH_ALLOWED_FIELDS = {'status', 'title', 'price', 'city', 'description'}`) — owner no está, así que un PATCH que solo lo traiga se queda sin cuerpo y responde 400.
+- `backend/real_estate/views.py:3097-3136` (`def transfer_owner`)
+- `backend/real_estate/views.py:3023-3025` (`PATCH_ALLOWED_FIELDS = {'status', 'title', 'price', 'city', 'description'}`) — owner no está, así que un PATCH que solo lo traiga se queda sin cuerpo y responde 400.
 - `backend/real_estate/urls.py:93-95` (`admin_properties_transfer_owner`)
 
 **Casos**
@@ -82,7 +82,7 @@ La transferencia acepta el id de una cuenta activa o una dirección de correo; s
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/real_estate/views.py:3227-3239` (`def _resolve_transfer_target`)
+- `backend/real_estate/views.py:3154-3165` (`def _resolve_transfer_target`)
 - `backend/real_estate/serializers.py:708-714` (`class OwnerTransferSerializer`)
 - `backend/real_estate/services/accounts.py:22-40` (`def get_or_create_by_email`)
 
@@ -110,7 +110,7 @@ Al transferir, los leads recibidos antes del cambio quedan asociados a la propie
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/real_estate/views.py:1444-1446` (`return qs.filter(property__owner=user)`) — La bandeja se deriva del owner de la propiedad, así que la transferencia la mueve sola.
+- `backend/real_estate/views.py:1371-1373` (`return qs.filter(property__owner=user)`) — La bandeja se deriva del owner de la propiedad, así que la transferencia la mueve sola.
 
 **Casos**
 
@@ -144,7 +144,7 @@ Consumada la transferencia, el nuevo propietario edita y borra la propiedad y el
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
 - `backend/real_estate/permissions.py:22-27` (`return obj.owner == request.user`)
-- `backend/real_estate/views.py:3194-3196` (`prop.owner = target`)
+- `backend/real_estate/views.py:3121-3123` (`prop.owner = target`)
 
 **Casos**
 
@@ -168,7 +168,7 @@ Al asignar propietario a una propiedad con is_imported, la propiedad se desvincu
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/real_estate/views.py:3201-3203` (`prop.is_imported = False`)
+- `backend/real_estate/views.py:3128-3130` (`prop.is_imported = False`)
 - `backend/ingesta/pipeline/retirement.py:36` (`if not prop.is_imported:`) — La retirada se salta cualquier propiedad que ya no sea importada.
 
 **Casos**
@@ -198,7 +198,7 @@ Cada transferencia escribe una línea de auditoría con quién la hizo, la propi
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/real_estate/views.py:3214-3216` (`action=property.transfer_owner`)
+- `backend/real_estate/views.py:3141-3143` (`action=property.transfer_owner`)
 - `backend/real_estate/services/notifications.py:54-72` (`class OwnershipTransferNotificationService`)
 - `backend/real_estate/email_utils.py:448-478` (`def send_ownership_transfer_email`)
 
@@ -224,7 +224,7 @@ Cambiar de propietario invalida la caché del catálogo público y la del detall
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
 - `backend/real_estate/signals.py:64-69` (`def property_cache_saved`)
-- `backend/real_estate/views.py:3203-3205` (`prop.save(update_fields=updated_fields)`)
+- `backend/real_estate/views.py:3130-3132` (`prop.save(update_fields=updated_fields)`)
 
 **Casos**
 
@@ -248,7 +248,7 @@ Cambiar de propietario conserva el historial de precios, la fecha de alta y el c
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/real_estate/views.py:3195-3197` (`updated_fields = ['owner']`)
+- `backend/real_estate/views.py:3122-3124` (`updated_fields = ['owner']`)
 
 **Casos**
 

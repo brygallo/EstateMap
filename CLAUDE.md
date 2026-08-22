@@ -22,6 +22,7 @@ modificar comportamiento.
 | Arquitectura, caché, Celery, Redis       | `docs/technical/`                        |
 | Qué hace el panel además de listar       | `docs/technical/admin-panel.md`          |
 | De dónde salen las métricas y las visitas | `docs/technical/activity-metrics.md`    |
+| Cuánto tráfico hay y qué lo mueve        | `docs/technical/trafico-organico.md`    |
 | Qué pasa por el CDN y qué no             | `docs/technical/cdn-cloudflare.md`      |
 | Quién puede hacer qué                    | `docs/permissions/matrix.md`             |
 | Qué devuelve la API cuando falla         | `docs/errors/api-errors.md`              |

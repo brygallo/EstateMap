@@ -161,7 +161,7 @@ En la ficha, `property_sidebar` se renderiza fuera de la tarjeta de contacto, po
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `frontend/app/property/[id]/page.tsx:946-954` (`placement="property_sidebar"`) — Fuera del `div` de la tarjeta de contacto, dentro del `aside`.
+- `frontend/app/property/[id]/page.tsx:969-976` (`placement="property_sidebar"`) — Fuera del `div` de la tarjeta de contacto, dentro del `aside`.
 
 **Casos**
 

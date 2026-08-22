@@ -21,6 +21,9 @@ Reglas que deciden qué páginas públicas merecen entrar en el índice y qué s
 | [`SEO-004`](#seo-004--la-verificación-en-buscadores-se-configura-por-entorno) | La verificación en buscadores se configura por entorno | ✅ Implementada |
 | [`SEO-005`](#seo-005--el-host-de-la-api-no-se-indexa) | El host de la API no se indexa | ✅ Implementada |
 | [`SEO-006`](#seo-006--el-lastmod-del-sitemap-sale-de-fechas-reales-o-no-se-declara) | El `lastmod` del sitemap sale de fechas reales o no se declara | ✅ Implementada |
+| [`SEO-007`](#seo-007--el-análisis-de-la-ficha-viaja-en-el-html) | El análisis de la ficha viaja en el HTML | ✅ Implementada |
+| [`SEO-008`](#seo-008--el-encabezado-de-una-ficha-describe-la-búsqueda-no-el-titular-del-anunciante) | El encabezado de una ficha describe la búsqueda, no el titular del anunciante | ✅ Implementada |
+| [`SEO-009`](#seo-009--el-sitemap-solo-ofrece-fichas-que-pueden-responder-a-una-búsqueda) | El sitemap solo ofrece fichas que pueden responder a una búsqueda | ✅ Implementada |
 | [`SEC-001`](#sec-001--la-zona-de-un-anuncio-se-deriva-de-su-dirección-y-se-guarda) | La zona de un anuncio se deriva de su dirección y se guarda | ✅ Implementada |
 | [`SEC-002`](#sec-002--una-zona-necesita-inventario-para-tener-página) | Una zona necesita inventario para tener página | ✅ Implementada |
 | [`SEC-003`](#sec-003--la-página-de-una-zona-filtra-en-sql) | La página de una zona filtra en SQL | ✅ Implementada |
@@ -190,6 +193,84 @@ Cada URL del sitemap declara como `lastmod` la fecha real del contenido que repr
 **Cobertura exigida:** api
 
 - `backend/real_estate/tests/test_sitemap_freshness.py`
+
+### SEO-007 — El análisis de la ficha viaja en el HTML
+
+**Estado:** ✅ Implementada
+
+El bloque de análisis de precio y mercado se renderiza en el servidor y llega dentro del HTML de `/propiedad/<id>`. Solo el modal del mapa, que no es indexable, lo pide desde el navegador.
+
+> **Por qué:** Es el único contenido de una ficha que no es del anunciante: fotos, descripción y características se publican también en otros sitios, así que un buscador que elige entre dos copias no tiene motivo para preferir esta. El análisis se calcula aquí, contra todo el catálogo activo, y es lo que hace la página digna de posicionar. Cargándolo tras la hidratación, el HTML que lee un rastreador no contenía ni «precio por m²» ni el rango de la zona ni un solo comparable: el diferenciador existía para la persona y no para el buscador. Con quince mil fichas en un dominio joven, esperar a que Google ejecute JavaScript es esperar a lo que deja para el final.
+
+**Frontend**
+
+- Ruta: `/propiedad/[id]`
+
+**Evidencia en el código** (verificada por `tools/specs/validate.py`)
+
+- `frontend/lib/intelligence.ts` (`export async function getPropertyIntelligence`)
+- `frontend/app/property/[id]/page.tsx` (`getPropertyIntelligence(property.id)`)
+- `frontend/components/PropertyIntelligence.tsx` (`export default function PropertyIntelligence`) — Presentacional; recibe el análisis en vez de pedirlo.
+- `frontend/components/PropertyIntelligenceLive.tsx` (`export default function PropertyIntelligenceLive`) — La variante cliente, solo para el modal del mapa.
+
+**Casos**
+
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| HTML servido de una ficha activa | — | — | — | contiene el precio por m² y el rango de la zona |
+| Modal del mapa | — | — | — | pide el análisis al abrirse |
+
+### SEO-008 — El encabezado de una ficha describe la búsqueda, no el titular del anunciante
+
+**Estado:** ✅ Implementada
+
+El `h1` y el `<title>` de una ficha se construyen con lo que la propiedad es —tipo, operación, ciudad y los dos datos por los que se filtra—. El titular del anunciante se conserva justo debajo, y se calma cuando llegó escrito en mayúsculas.
+
+> **Por qué:** Un titular importado está escrito para el público de otro portal y muchas veces gritado: «ESPECTACULAR TERRENO PARA CAMPOSANTO CEMENTERIO POMASQUI». Nadie busca eso. La gente busca «terreno de venta en Quito», y la página que responde a esa búsqueda tiene que decirlo en su propio encabezado. El titular no se descarta porque es la voz de quien vende y lleva palabras que ninguna plantilla conoce; lo que cambia es cuál de los dos encabeza.
+
+**Frontend**
+
+- Ruta: `/propiedad/[id]`
+
+**Evidencia en el código** (verificada por `tools/specs/validate.py`)
+
+- `frontend/lib/property-heading.ts` (`export function buildSearchHeading`)
+- `frontend/lib/property-heading.ts` (`export function softenShouting`)
+- `frontend/app/property/[id]/page.tsx` (`const pageHeading = buildSearchHeading(property)`)
+- `frontend/lib/property-heading.test.ts` (`describe('buildSearchHeading'`)
+
+**Casos**
+
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| Casa de venta en Quito con 3 dormitorios y 180 m² | — | — | — | Casa de venta en Quito · 3 dormitorios · 180 m² |
+| Anuncio sin tipo ni operación | — | — | — | Propiedad |
+| Titular en mayúsculas | — | — | — | se muestra en minúsculas con la inicial de cada palabra |
+
+**Cobertura exigida:** unit
+
+- `frontend/lib/property-heading.test.ts`
+
+### SEO-009 — El sitemap solo ofrece fichas que pueden responder a una búsqueda
+
+**Estado:** ✅ Implementada
+
+Una ficha entra en el sitemap si declara precio y ciudad. La prioridad sale de cuándo cambió de verdad: 0.8 la última semana, 0.7 el último mes, 0.6 el resto.
+
+> **Por qué:** Es SEO-001 aplicado a un anuncio en vez de a una ubicación: el sitemap no ofrece una página que no querría ver posicionada. Un anuncio sin precio no responde a ninguna búsqueda, y pedir rastreo para él se lo quita a otro que sí. La ficha sigue existiendo y resolviendo para quien tenga el enlace; simplemente deja de anunciarse. La prioridad plana de 0.7 en las dieciséis mil URL no ordenaba nada: Google llega a unas cientos de fichas al día, y las que se movieron esta semana merecen más de ese presupuesto que las que llevan meses quietas.
+
+**Evidencia en el código** (verificada por `tools/specs/validate.py`)
+
+- `frontend/app/sitemap.ts` (`const crawlWorthy = properties.filter`)
+- `frontend/app/sitemap.ts` (`priority: ageDays <= 7 ? 0.8 : ageDays <= 30 ? 0.7 : 0.6,`)
+
+**Casos**
+
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| Anuncio sin precio | — | — | — | fuera del sitemap, la ficha sigue resolviendo |
+| Anuncio modificado ayer | — | — | — | prioridad 0.8 y changefreq diaria |
+| Anuncio quieto desde hace meses | — | — | — | prioridad 0.6 |
 
 ### SEC-001 — La zona de un anuncio se deriva de su dirección y se guarda
 

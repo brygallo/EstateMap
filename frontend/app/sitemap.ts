@@ -182,12 +182,34 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.65,
   }));
 
-  const propertyRoutes: MetadataRoute.Sitemap = properties.map((property) => ({
-    url: `${SITE_URL}/propiedad/${property.id}`,
-    lastModified: property.updated_at || property.created_at || undefined,
-    changeFrequency: 'weekly' as const,
-    priority: 0.7,
-  }));
+  // A listing with no price is not something a person can search for, and a
+  // page that cannot answer a search should not be asking for the crawl budget
+  // that another listing needs. It keeps its ficha — anyone holding the link
+  // still resolves it — it just stops being advertised.
+  //
+  // This is SEO-001 applied to a listing instead of to a location: the sitemap
+  // never offers a page it would not want ranked.
+  const crawlWorthy = properties.filter((property) => {
+    const price =
+      typeof property.price === 'string' ? Number.parseFloat(property.price) : property.price;
+    return Number.isFinite(price) && (price as number) > 0 && Boolean((property.city || '').trim());
+  });
+
+  // Priority is a ranking of what to recrawl first, not a claim about worth.
+  // Google gets a few hundred fichas a day out of fifteen thousand, so the ones
+  // that moved this week are worth more of that budget than the ones that have
+  // not changed in months. A flat 0.7 on every URL says nothing at all.
+  const now = Date.now();
+  const propertyRoutes: MetadataRoute.Sitemap = crawlWorthy.map((property) => {
+    const changed = propertyDate(property);
+    const ageDays = changed ? (now - changed.getTime()) / 86_400_000 : Infinity;
+    return {
+      url: `${SITE_URL}/propiedad/${property.id}`,
+      lastModified: property.updated_at || property.created_at || undefined,
+      changeFrequency: ageDays <= 7 ? ('daily' as const) : ('weekly' as const),
+      priority: ageDays <= 7 ? 0.8 : ageDays <= 30 ? 0.7 : 0.6,
+    };
+  });
 
   const cityRoutes: MetadataRoute.Sitemap = getCities(properties)
     .filter((city) => city.count >= MIN_LOCATION_PROPERTIES)

@@ -35,7 +35,7 @@ import { haptic } from '@/lib/haptics';
 import { useShareAction } from '@/hooks/useShareAction';
 import GalleryViewer from '@/components/ui/GalleryViewer';
 import PropertyImage from '@/components/ui/PropertyImage';
-import PropertyIntelligence from '@/components/PropertyIntelligence';
+import PropertyIntelligenceLive from '@/components/PropertyIntelligenceLive';
 import { PhoneReveal } from '@/components/PropertyContactActions';
 import RevealableDescription from '@/components/RevealableDescription';
 import { ecuadorPhoneHref, normalizeEcuadorPhone } from '@/lib/phone';
@@ -884,7 +884,7 @@ const PropertyModal = ({ property: initialProperty, isOpen, onClose, onViewOnMap
               </div>
               )}
 
-              {!isClosed && <PropertyIntelligence propertyId={property.id} compact />}
+              {!isClosed && <PropertyIntelligenceLive propertyId={property.id} compact />}
 
               {/* Datos de publicacion y fuente */}
               <div className="rounded-card border border-line bg-white p-3 shadow-card">

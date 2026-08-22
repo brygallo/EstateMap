@@ -41,6 +41,8 @@ import {
   type ClosedReason,
 } from '@/lib/property-labels';
 import { getPropertyPoint } from '@/lib/geo';
+import { buildSearchHeading, softenShouting } from '@/lib/property-heading';
+import { getPropertyIntelligence } from '@/lib/intelligence';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import AnimatedNumber from '@/components/ui/AnimatedNumber';
@@ -141,9 +143,14 @@ export async function generateMetadata({ params }: PropertyPageProps): Promise<M
   const statusLabel = getListingStatusLabel(property);
   const location = [property.city, property.province].filter(Boolean).join(', ');
   const titleSuffix = location ? ` | ${location}` : '';
+  // The title leads with the search, not with the advertiser's headline: what
+  // the listing is, the operation and where. The headline follows, calmed down
+  // when it arrived shouted, because it carries words no template knows.
+  const searchHeading = buildSearchHeading(property);
+  const advertiserHeadline = softenShouting(property.title || '');
   const title = closedReason
-    ? `${CLOSURE_TITLE_PREFIX[closedReason]}: ${property.title}${titleSuffix}`
-    : `${propertyTypeLabel} ${statusLabel} - ${property.title}${titleSuffix}`;
+    ? `${CLOSURE_TITLE_PREFIX[closedReason]}: ${advertiserHeadline}${titleSuffix}`
+    : [searchHeading, advertiserHeadline].filter(Boolean).join(' — ');
 
   // Build detailed description
   const priceFormatted = formatPrice(property.price);
@@ -286,7 +293,13 @@ export default async function PropertyPage({ params }: PropertyPageProps) {
   // The API hands back sixty candidates inside the same window whatever we ask
   // for, so a longer rail costs no extra request. The map keeps twelve: more
   // pins than that stop being a neighbourhood and start being noise.
-  const nearbyProperties = await getNearbyProperties(property, 30);
+  // The analysis travels with the page instead of arriving after hydration:
+  // it is the only content on a ficha that is not the advertiser's, so it has
+  // to be in the HTML a crawler reads. Both calls go out at once.
+  const [nearbyProperties, intelligence] = await Promise.all([
+    getNearbyProperties(property, 30),
+    getPropertyIntelligence(property.id),
+  ]);
   const mapNearbyProperties = nearbyProperties.slice(0, 12);
   // A listing published without coordinates and without a drawn shape has
   // nothing to put on a map: the camera would open over the whole country under
@@ -295,6 +308,11 @@ export default async function PropertyPage({ params }: PropertyPageProps) {
 
   const mapUrl = `/?property=${resolvedParams.id}`;
   const propertyTypeLabel = getPropertyTypeLabel(property.property_type);
+  // The `h1` describes the listing the way somebody searches for it. The
+  // advertiser's own headline keeps its place right below — it is the seller's
+  // voice — only calmed down when it arrived in capitals.
+  const pageHeading = buildSearchHeading(property);
+  const advertiserHeadline = softenShouting(property.title || '');
   // `status` alone cannot tell a sold listing from a withdrawn one: both are
   // `inactive`, and only `closed_reason` separates them.
   const closedReason = getClosedReason(property);
@@ -634,8 +652,13 @@ export default async function PropertyPage({ params }: PropertyPageProps) {
                   {isImported && <AdminRefreshProperty propertyId={property.id} />}
                 </div>
                 <PropertyTitle className="mt-2 sm:mt-3">
-                  {property.title}
+                  {pageHeading}
                 </PropertyTitle>
+                {advertiserHeadline && advertiserHeadline !== pageHeading && (
+                  <p className="mt-1 text-base font-medium text-textSecondary sm:text-lg">
+                    {advertiserHeadline}
+                  </p>
+                )}
                 {(property.city || property.address) && (
                   <div className="mt-2 flex items-start gap-2 text-sm text-textSecondary">
                     <MapPin className="mt-0.5 h-4 w-4 flex-shrink-0 text-primary" strokeWidth={1.75} aria-hidden />
@@ -725,7 +748,7 @@ export default async function PropertyPage({ params }: PropertyPageProps) {
               Mounted unconditionally, a closed ficha paints the full skeleton,
               throws the 404 into the console and then collapses it again —
               a block of the page appearing and vanishing for nothing. */}
-          {!isClosed && <PropertyIntelligence propertyId={property.id} />}
+          {!isClosed && intelligence && <PropertyIntelligence data={intelligence} />}
 
           {/* Cuerpo: contenido + tarjeta de contacto */}
           <div className="mt-4 grid grid-cols-1 gap-6 sm:mt-8 sm:gap-8 lg:grid-cols-3">

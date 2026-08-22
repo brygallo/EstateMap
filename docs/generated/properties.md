@@ -39,7 +39,7 @@ Reglas de negocio del inventario: qué es una propiedad publicable, cómo se int
 | [`PROP-021`](#prop-021--is_duplicate-solo-se-lee-nunca-se-escribe) | is_duplicate solo se lee, nunca se escribe | ⛔ No implementada |
 | [`PROP-022`](#prop-022--la-deduplicación-no-persiste-una-rejilla-geográfica-sin-lector) | La deduplicación no persiste una rejilla geográfica sin lector | ✅ Implementada |
 | [`PROP-023`](#prop-023--cada-cambio-de-precio-deja-una-fila-en-el-historial) | Cada cambio de precio deja una fila en el historial | ✅ Implementada |
-| [`PROP-024`](#prop-024--las-visitas-solo-las-cuentan-las-personas) | Las visitas solo las cuentan las personas | ✅ Implementada |
+| [`PROP-024`](#prop-024--las-visitas-las-cuenta-el-navegador-no-el-render) | Las visitas las cuenta el navegador, no el render | ✅ Implementada |
 | [`PROP-025`](#prop-025--las-fotos-se-publican-en-tres-estados-y-la-subida-nunca-cuesta-el-anuncio) | Las fotos se publican en tres estados y la subida nunca cuesta el anuncio | ✅ Implementada |
 | [`PROP-026`](#prop-026--límites-de-las-imágenes-de-una-propiedad) | Límites de las imágenes de una propiedad | ✅ Implementada |
 | [`PROP-027`](#prop-027--ubicación-efectiva-de-una-propiedad) | Ubicación efectiva de una propiedad | ✅ Implementada |
@@ -69,7 +69,7 @@ price es siempre el precio principal de la operación del anuncio, y rent_price 
 
 - `backend/real_estate/models.py:260-262` (`rent_price`) — La semántica está escrita como comentario junto a la definición de ambos campos.
 - `backend/ingesta/pipeline/upsert.py:48-50` (`prop.rent_price`) — La ingesta escribe ambos campos por separado desde el dict canónico del scraper.
-- `frontend/app/property/[id]/page.tsx:452-454` (`hasRentPrice`) — La ficha pública muestra el precio principal y, solo si hay rent_price > 0, la línea "Alquiler .../mes".
+- `frontend/app/property/[id]/page.tsx:471-473` (`hasRentPrice`) — La ficha pública muestra el precio principal y, solo si hay rent_price > 0, la línea "Alquiler .../mes".
 
 **Casos**
 
@@ -120,7 +120,7 @@ Una propiedad con status='inactive' desaparece del listado, del mapa y de todos 
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/real_estate/views.py:1247-1249` (`my_properties`) — La acción declara permission_classes=[IsAuthenticated] y elige entre Property.objects.all() y filter(owner=request.user) sin tocar status.
+- `backend/real_estate/views.py:1236-1238` (`my_properties`) — La acción declara permission_classes=[IsAuthenticated] y elige entre Property.objects.all() y filter(owner=request.user) sin tocar status.
 
 **Casos**
 
@@ -149,7 +149,7 @@ my_properties responde con el sobre paginado de DRF (count, next, previous, resu
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
 - `backend/real_estate/views.py:301-307` (`class InventoryPagination`) — page_size 24, page_size_query_param 'page_size', máximo 100.
-- `backend/real_estate/views.py:1309-1311` (`def my_properties`) — stats se calcula con queryset.aggregate antes de paginar.
+- `backend/real_estate/views.py:1236-1238` (`def my_properties`) — stats se calcula con queryset.aggregate antes de paginar.
 - `frontend/app/my-properties/page.tsx:194-219` (`const fetchInventory`) — El cliente manda search, status y ordering y acumula páginas.
 
 **Casos**
@@ -408,7 +408,7 @@ La escritura sobre una propiedad existente exige ser su owner; cualquier otro us
 
 - `backend/real_estate/permissions.py:4-15` (`IsOwnerOrReadOnly`) — Permite cualquier método seguro y compara obj.owner == request.user para el resto.
 - `backend/real_estate/views.py:383-385` (`IsOwnerOrReadOnly`) — permission_classes = [IsAuthenticatedOrReadOnly, IsOwnerOrReadOnly] en PropertyViewSet.
-- `backend/real_estate/views.py:3096-3098` (`PATCH_ALLOWED_FIELDS`) — El panel admin puede tocar propiedades ajenas, pero solo status, title, price, city y description.
+- `backend/real_estate/views.py:3102-3104` (`PATCH_ALLOWED_FIELDS`) — El panel admin puede tocar propiedades ajenas, pero solo status, title, price, city y description.
 
 **Casos**
 
@@ -590,32 +590,38 @@ Al guardar una propiedad con precio se crea una fila en PropertyPriceHistory si 
 | Guardado sin cambiar el precio | — | `price`=100000, `ultimo_registrado`=100000 | — | 1 |
 | Propiedad sin precio | — | `price`=— | — | 0 |
 
-### PROP-024 — Las visitas solo las cuentan las personas
+### PROP-024 — Las visitas las cuenta el navegador, no el render
 
 **Estado:** ✅ Implementada
 
-views_count se incrementa al consultar el detalle únicamente cuando el request no viene de un bot, y el incremento se hace en SQL.
+views_count se incrementa cuando el beacon del navegador informa de un `page_view` de tipo `property` que no viene de un bot. El endpoint de detalle ya no toca el contador.
 
-> **Por qué:** El contador alimenta la señal de demanda que se muestra al dueño, así que tiene que ser humano. Los crawlers reciben el detalle completo, simplemente no mueven el contador. El UPDATE con F() evita perder incrementos simultáneos.
+> **Por qué:** El contador se movía en el detalle: un visitante, una petición, un incremento. Dejó de ser cierto cuando `/propiedad/<id>` pasó a servirse con ISR — Next la renderiza una vez cada cinco minutos y entrega HTML cacheado al resto —, así que el backend veía renders y el contador se aplanó mientras el tráfico seguía igual. El navegador es el único sitio que sigue viendo una persona por visita, así que el contador se fue con el beacon que ya se dispara allí. La regla de siempre no cambia: un crawler también ejecuta el beacon y queda fuera por `is_bot`, y el incremento es un UPDATE en SQL para no perder visitas simultáneas.
 
 **Backend**
 
-- Endpoint: `GET /api/properties/{property_id}/`
-- Nota: No se marca tests.api porque el generador solo sabe afirmar allowed/denied y aquí lo que importa es el valor del contador.
+- Endpoint: `POST /api/activity-events/`
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/real_estate/views.py:685-687` (`is_bot_request`) — Property.objects.filter(pk=...).update(views_count=F('views_count') + 1) solo si no es bot.
-- `backend/real_estate/models.py:339-341` (`views_count`) — PositiveIntegerField con default 0.
-- `backend/real_estate/serializers.py:270-272` (`views_count`) — Está en read_only_fields, así que un cliente no puede inflarlo desde el payload.
+- `backend/real_estate/services/view_counter.py` (`class PropertyViewCounter`) — Decide qué evento es una visita y mueve el contador con F().
+- `backend/real_estate/serializers.py` (`PropertyViewCounter(event).record()`) — Único punto donde se cuenta una visita.
+- `backend/real_estate/views.py` (`def retrieve`) — El detalle ya no incrementa nada; delega en super().
+- `backend/real_estate/models.py` (`views_count`) — PositiveIntegerField con default 0.
+- `backend/real_estate/serializers.py` (`views_count`) — Está en read_only_fields, así que un cliente no puede inflarlo desde el payload.
 
 **Casos**
 
 | Caso | Rol | Estado previo | Cuerpo | Esperado |
 | --- | --- | --- | --- | --- |
-| Visita de una persona | — | `user_agent`=Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7), `views_count`=10 | — | 11 |
-| Visita de un crawler | — | `user_agent`=Googlebot/2.1 (+http://www.google.com/bot.html), `views_count`=10 | — | 10 |
-| El cliente intenta fijar el contador | authenticated | `views_count`=999999 | — | 0 |
+| Una persona abre la ficha | — | — | — | el contador sube uno |
+| Un crawler ejecuta el beacon | — | — | — | el contador no se mueve |
+| Alguien lee el endpoint de detalle | — | — | — | el contador no se mueve |
+| page_view de otra página | — | — | — | el contador no se mueve |
+
+**Cobertura exigida:** api
+
+- `backend/real_estate/tests/test_view_counter.py`
 
 ### PROP-025 — Las fotos se publican en tres estados y la subida nunca cuesta el anuncio
 
@@ -702,7 +708,7 @@ La sección "Publicaciones cercanas" de una ficha lista las propiedades ordenada
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
 - `frontend/lib/properties.ts:303-336` (`getNearbyProperties`) — Punto de referencia vía getPropertyPoint, candidatos sin ubicación descartados, orden ascendente por distanceKm y recorte a limit.
-- `frontend/app/property/[id]/page.tsx:288-290` (`getNearbyProperties`) — La ficha pide 4 y solo pinta la sección si hay al menos una.
+- `frontend/app/property/[id]/page.tsx:300-302` (`getNearbyProperties`) — La ficha pide 4 y solo pinta la sección si hay al menos una.
 
 **Casos**
 
@@ -806,7 +812,7 @@ La normalización vive en `save()` porque todos los caminos de escritura pasan p
 - `backend/real_estate/models.py:276-279` (`closed_reason = models`)
 - `backend/real_estate/models.py:428-434` (`if self.closed_reason:`) — Cerrar pone inactive y sella la fecha; abrir la borra.
 - `backend/real_estate/serializers.py:38-50` (`def reopen_on_reactivation`) — Volver a poner el anuncio en venta lo reabre; si no, el cambio parece aceptado y se deshace solo.
-- `backend/real_estate/views.py:3363-3365` (`changes['closed_reason'] = ''`) — El cambio de estado en lote escribe con .update(), que nunca llega a save(), así que reabre a mano.
+- `backend/real_estate/views.py:3290-3292` (`changes['closed_reason'] = ''`) — El cambio de estado en lote escribe con .update(), que nunca llega a save(), así que reabre a mano.
 
 **Casos**
 
@@ -842,7 +848,7 @@ Ese privilegio es de la ficha por id y solo de ella. La ruta por código corto n
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
 - `backend/real_estate/views.py:482-499` (`visible |= Q(is_duplicate=False) & ~Q(closed_reason='')`) — Las acciones de detalle resuelven la fila por id, no por el catálogo público; el dueño entra siempre.
-- `backend/real_estate/views.py:1006-1008` (`exclude(status='inactive', closed_reason='')`) — El código corto de un anuncio vendido sigue resolviendo.
+- `backend/real_estate/views.py:933-935` (`exclude(status='inactive', closed_reason='')`) — El código corto de un anuncio vendido sigue resolviendo.
 
 **Casos**
 

@@ -12,6 +12,7 @@ from django.db import transaction
 from django.urls import reverse
 from django.conf import settings
 from .bot_detection import is_bot_request
+from .services.view_counter import PropertyViewCounter
 from .email_utils import build_resume_link
 from .geo import polygon_center_lat_lng
 from .services.phones import is_plausible_ec_mobile, normalize_ec_phone
@@ -784,7 +785,11 @@ class ActivityEventSerializer(serializers.ModelSerializer):
             property_id = _property_id_from_path(validated_data.get('path') or '')
         if property_id is not None:
             validated_data['property'] = Property.objects.filter(pk=property_id).first()
-        return super().create(validated_data)
+        event = super().create(validated_data)
+        # A visit is counted here and nowhere else: the detail endpoint now sees
+        # a cached render instead of a person (PROP-024).
+        PropertyViewCounter(event).record()
+        return event
 
 
 class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):

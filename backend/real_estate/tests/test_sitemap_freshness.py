@@ -55,4 +55,6 @@ def test_a_visit_does_not_pass_for_a_change():
 
     after = Property.objects.values_list("updated_at", flat=True).get(pk=prop.pk)
     assert after == before
-    assert Property.objects.values_list("views_count", flat=True).get(pk=prop.pk) == 1
+    # Reading the detail no longer counts a visit: the ficha is served from an
+    # ISR cache, so this request is a render, not a person (PROP-024).
+    assert Property.objects.values_list("views_count", flat=True).get(pk=prop.pk) == 0

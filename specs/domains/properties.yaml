@@ -35,7 +35,7 @@ rules:
         symbol: prop.rent_price
         note: La ingesta escribe ambos campos por separado desde el dict canónico del scraper.
       - file: frontend/app/property/[id]/page.tsx
-        lines: "452-454"
+        lines: "471-473"
         symbol: hasRentPrice
         note: La ficha pública muestra el precio principal y, solo si hay rent_price > 0, la línea "Alquiler .../mes".
     cases:
@@ -109,7 +109,7 @@ rules:
       ver también lo que no es suyo.
     evidence:
       - file: backend/real_estate/views.py
-        lines: "1247-1249"
+        lines: "1236-1238"
         symbol: my_properties
         note: >-
           La acción declara permission_classes=[IsAuthenticated] y elige entre
@@ -150,7 +150,7 @@ rules:
         symbol: class InventoryPagination
         note: page_size 24, page_size_query_param 'page_size', máximo 100.
       - file: backend/real_estate/views.py
-        lines: "1309-1311"
+        lines: "1236-1238"
         symbol: def my_properties
         note: stats se calcula con queryset.aggregate antes de paginar.
       - file: frontend/app/my-properties/page.tsx
@@ -595,7 +595,7 @@ rules:
         symbol: IsOwnerOrReadOnly
         note: permission_classes = [IsAuthenticatedOrReadOnly, IsOwnerOrReadOnly] en PropertyViewSet.
       - file: backend/real_estate/views.py
-        lines: "3096-3098"
+        lines: "3102-3104"
         symbol: PATCH_ALLOWED_FIELDS
         note: El panel admin puede tocar propiedades ajenas, pero solo status, title, price, city y description.
     backend:
@@ -913,50 +913,50 @@ rules:
         expected: 0
 
   - id: PROP-024
-    name: Las visitas solo las cuentan las personas
+    name: Las visitas las cuenta el navegador, no el render
     status: implemented
     summary: >-
-      views_count se incrementa al consultar el detalle únicamente cuando el
-      request no viene de un bot, y el incremento se hace en SQL.
+      views_count se incrementa cuando el beacon del navegador informa de un
+      `page_view` de tipo `property` que no viene de un bot. El endpoint de
+      detalle ya no toca el contador.
     rationale: >-
-      El contador alimenta la señal de demanda que se muestra al dueño, así que
-      tiene que ser humano. Los crawlers reciben el detalle completo, simplemente
-      no mueven el contador. El UPDATE con F() evita perder incrementos
-      simultáneos.
+      El contador se movía en el detalle: un visitante, una petición, un
+      incremento. Dejó de ser cierto cuando `/propiedad/<id>` pasó a servirse
+      con ISR — Next la renderiza una vez cada cinco minutos y entrega HTML
+      cacheado al resto —, así que el backend veía renders y el contador se
+      aplanó mientras el tráfico seguía igual. El navegador es el único sitio
+      que sigue viendo una persona por visita, así que el contador se fue con
+      el beacon que ya se dispara allí. La regla de siempre no cambia: un
+      crawler también ejecuta el beacon y queda fuera por `is_bot`, y el
+      incremento es un UPDATE en SQL para no perder visitas simultáneas.
     evidence:
+      - file: backend/real_estate/services/view_counter.py
+        symbol: class PropertyViewCounter
+        note: Decide qué evento es una visita y mueve el contador con F().
+      - file: backend/real_estate/serializers.py
+        symbol: PropertyViewCounter(event).record()
+        note: Único punto donde se cuenta una visita.
       - file: backend/real_estate/views.py
-        lines: "685-687"
-        symbol: is_bot_request
-        note: Property.objects.filter(pk=...).update(views_count=F('views_count') + 1) solo si no es bot.
+        symbol: 'def retrieve'
+        note: El detalle ya no incrementa nada; delega en super().
       - file: backend/real_estate/models.py
-        lines: "339-341"
         symbol: views_count
         note: PositiveIntegerField con default 0.
       - file: backend/real_estate/serializers.py
-        lines: "270-272"
         symbol: 'views_count'
         note: Está en read_only_fields, así que un cliente no puede inflarlo desde el payload.
     backend:
-      endpoint: GET /api/properties/{property_id}/
-      note: >-
-        No se marca tests.api porque el generador solo sabe afirmar allowed/denied
-        y aquí lo que importa es el valor del contador.
+      endpoint: POST /api/activity-events/
+    tests: {api: true}
     cases:
-      - name: Visita de una persona
-        given:
-          user_agent: "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)"
-          views_count: 10
-        expected: 11
-      - name: Visita de un crawler
-        given:
-          user_agent: "Googlebot/2.1 (+http://www.google.com/bot.html)"
-          views_count: 10
-        expected: 10
-      - name: El cliente intenta fijar el contador
-        role: authenticated
-        given:
-          views_count: 999999
-        expected: 0
+      - name: Una persona abre la ficha
+        expected: el contador sube uno
+      - name: Un crawler ejecuta el beacon
+        expected: el contador no se mueve
+      - name: Alguien lee el endpoint de detalle
+        expected: el contador no se mueve
+      - name: page_view de otra página
+        expected: el contador no se mueve
 
   - id: PROP-025
     name: Las fotos se publican en tres estados y la subida nunca cuesta el anuncio
@@ -1149,7 +1149,7 @@ rules:
         symbol: getNearbyProperties
         note: Punto de referencia vía getPropertyPoint, candidatos sin ubicación descartados, orden ascendente por distanceKm y recorte a limit.
       - file: frontend/app/property/[id]/page.tsx
-        lines: "288-290"
+        lines: "300-302"
         symbol: getNearbyProperties
         note: La ficha pide 4 y solo pinta la sección si hay al menos una.
     cases:
@@ -1311,7 +1311,7 @@ rules:
           Volver a poner el anuncio en venta lo reabre; si no, el cambio parece
           aceptado y se deshace solo.
       - file: backend/real_estate/views.py
-        lines: "3363-3365"
+        lines: "3290-3292"
         symbol: "changes['closed_reason'] = ''"
         note: >-
           El cambio de estado en lote escribe con .update(), que nunca llega a
@@ -1384,7 +1384,7 @@ rules:
           Las acciones de detalle resuelven la fila por id, no por el catálogo
           público; el dueño entra siempre.
       - file: backend/real_estate/views.py
-        lines: "1006-1008"
+        lines: "933-935"
         symbol: "exclude(status='inactive', closed_reason='')"
         note: El código corto de un anuncio vendido sigue resolviendo.
     backend:

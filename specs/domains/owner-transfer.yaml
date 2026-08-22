@@ -33,10 +33,10 @@ rules:
       regalar la propiedad entregaría con ella la bandeja de leads.
     evidence:
       - file: backend/real_estate/views.py
-        lines: "3170-3210"
+        lines: "3097-3136"
         symbol: def transfer_owner
       - file: backend/real_estate/views.py
-        lines: "3096-3098"
+        lines: "3023-3025"
         symbol: "PATCH_ALLOWED_FIELDS = {'status', 'title', 'price', 'city', 'description'}"
         note: owner no está, así que un PATCH que solo lo traiga se queda sin cuerpo y responde 400.
       - file: backend/real_estate/urls.py
@@ -95,7 +95,7 @@ rules:
       ninguno.
     evidence:
       - file: backend/real_estate/views.py
-        lines: "3227-3239"
+        lines: "3154-3165"
         symbol: def _resolve_transfer_target
       - file: backend/real_estate/serializers.py
         lines: "708-714"
@@ -146,7 +146,7 @@ rules:
       docs/decisions/0002-los-leads-siguen-a-la-propiedad.md.
     evidence:
       - file: backend/real_estate/views.py
-        lines: "1444-1446"
+        lines: "1371-1373"
         symbol: return qs.filter(property__owner=user)
         note: La bandeja se deriva del owner de la propiedad, así que la transferencia la mueve sola.
     tests:
@@ -176,7 +176,7 @@ rules:
         lines: "22-27"
         symbol: return obj.owner == request.user
       - file: backend/real_estate/views.py
-        lines: "3194-3196"
+        lines: "3121-3123"
         symbol: prop.owner = target
     permissions:
       required: [properties.edit_own]
@@ -209,7 +209,7 @@ rules:
       leads. Desvincularlo es lo que convierte la reclamación en definitiva.
     evidence:
       - file: backend/real_estate/views.py
-        lines: "3201-3203"
+        lines: "3128-3130"
         symbol: prop.is_imported = False
       - file: backend/ingesta/pipeline/retirement.py
         lines: "36"
@@ -240,7 +240,7 @@ rules:
       por hecha.
     evidence:
       - file: backend/real_estate/views.py
-        lines: "3214-3216"
+        lines: "3141-3143"
         symbol: action=property.transfer_owner
       - file: backend/real_estate/services/notifications.py
         lines: "54-72"
@@ -279,7 +279,7 @@ rules:
         lines: 64-69
         symbol: def property_cache_saved
       - file: backend/real_estate/views.py
-        lines: "3203-3205"
+        lines: "3130-3132"
         symbol: prop.save(update_fields=updated_fields)
     tests:
       api: true
@@ -303,7 +303,7 @@ rules:
       cambia y no toca ningún otro.
     evidence:
       - file: backend/real_estate/views.py
-        lines: "3195-3197"
+        lines: "3122-3124"
         symbol: updated_fields = ['owner']
     tests:
       api: true

@@ -4,12 +4,12 @@
 
 Vista legible de `specs/`. Cada regla marcada como implementada apunta a las líneas de código que la aplican, y `tools/specs/validate.py` comprueba que ese código siga existiendo, así que esta página no puede quedarse desfasada en silencio.
 
-**Total de reglas: 407**
+**Total de reglas: 413**
 
 | Estado | Reglas |
 | --- | --- |
 | 🗑️ Obsoleta | 5 |
-| ✅ Implementada | 372 |
+| ✅ Implementada | 378 |
 | ⛔ No implementada | 15 |
 | 🟡 Parcial | 7 |
 | 📝 Propuesta (sin código) | 8 |
@@ -17,7 +17,7 @@ Vista legible de `specs/`. Cada regla marcada como implementada apunta a las lí
 | Dominio | Archivo | Reglas | Documento |
 | --- | --- | --- | --- |
 | market-history | `specs/calculations/market-history.yaml` | 6 | [market-history.md](./market-history.md) |
-| pricing | `specs/calculations/pricing.yaml` | 29 | [pricing.md](./pricing.md) |
+| pricing | `specs/calculations/pricing.yaml` | 32 | [pricing.md](./pricing.md) |
 | admin-operations | `specs/domains/admin-operations.yaml` | 16 | [admin-operations.md](./admin-operations.md) |
 | advertising | `specs/domains/advertising.yaml` | 25 | [advertising.md](./advertising.md) |
 | blog | `specs/domains/blog.yaml` | 14 | [blog.md](./blog.md) |
@@ -28,7 +28,7 @@ Vista legible de `specs/`. Cada regla marcada como implementada apunta a las lí
 | owner-transfer | `specs/domains/owner-transfer.yaml` | 8 | [owner-transfer.md](./owner-transfer.md) |
 | properties | `specs/domains/properties.yaml` | 41 | [properties.md](./properties.md) |
 | publication-resume | `specs/domains/publication-resume.yaml` | 13 | [publication-resume.md](./publication-resume.md) |
-| seo | `specs/domains/seo.yaml` | 13 | [seo.md](./seo.md) |
+| seo | `specs/domains/seo.yaml` | 16 | [seo.md](./seo.md) |
 | social-kit | `specs/domains/social-kit.yaml` | 16 | [social-kit.md](./social-kit.md) |
 | subscriptions | `specs/domains/subscriptions.yaml` | 7 | [subscriptions.md](./subscriptions.md) |
 | catalog | `specs/errors/catalog.yaml` | 9 | [catalog.md](./catalog.md) |

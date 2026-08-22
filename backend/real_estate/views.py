@@ -77,6 +77,7 @@ from .services.map_payload import MAX_CLUSTER_ZOOM, build_map_payload, canonical
 from .models import sector_key as sector_key_for
 from .services.sectors import absorptions as sector_absorptions
 from .services.sectors import MIN_SECTOR_LISTINGS, list_sectors
+from .services.intelligence import PropertyIntelligenceService
 from .services.rankings import (
     CRITERIA as RANKING_CRITERIA,
     DEFAULT_LIMIT as DEFAULT_RANKING_LIMIT,
@@ -678,24 +679,28 @@ class PropertyViewSet(viewsets.ModelViewSet):
                 cache.delete(lock_key)
 
     def retrieve(self, request, *args, **kwargs):
-        """Devuelve el detalle e incrementa el contador de vistas de forma atómica."""
-        instance = self.get_object()
-        # Crawlers get the full detail, they just do not move the view counter:
-        # it feeds the demand signal shown to owners, which must be human-only.
-        if not is_bot_request(request):
-            Property.objects.filter(pk=instance.pk).update(views_count=F('views_count') + 1)
-            instance.views_count = (instance.views_count or 0) + 1
-        serializer = self.get_serializer(instance)
-        return Response(serializer.data)
+        """Devuelve el detalle. El contador de visitas ya no se toca aquí.
+
+        This endpoint stopped being a proxy for a visit the day the ficha became
+        an ISR page: `/propiedad/<id>` is rendered once every five minutes and
+        served from cache to everybody else, so counting here counted renders,
+        not people, and the counter flattened while traffic did not. A visit is
+        now recorded from the browser beacon that fires on the page itself
+        (`PropertyViewCounter`), which is the only place that sees one person.
+        """
+        return super().retrieve(request, *args, **kwargs)
 
     @action(detail=True, methods=['get'], permission_classes=[AllowAny])
     def intelligence(self, request, pk=None):
-        """Build commercial context against genuinely comparable inventory."""
-        from django.utils import timezone
+        """Build commercial context against genuinely comparable inventory.
 
-        # The comparables scan walks every active listing in the city, so this is
-        # the most expensive detail endpoint on the site and the one crawlers hit
-        # right after the property page itself.
+        The computation lives in `PropertyIntelligenceService`: it decides which
+        universe the listing is compared against, measures interest from the
+        arrivals of the last thirty days, and says how sure it is. Here only the
+        caching is decided — the scan walks every comparable listing, so this is
+        the most expensive detail endpoint on the site and the one a crawler
+        asks for right after the ficha itself.
+        """
         cache_key = versioned_key('intelligence', pk)
         if _is_public_read(request):
             cached = cache.get(cache_key)
@@ -703,85 +708,7 @@ class PropertyViewSet(viewsets.ModelViewSet):
                 return _public_response(cached, request, s_maxage=CACHE_TTL_INTELLIGENCE)
 
         instance = self.get_object()
-        comparable = Property.objects.exclude(status='inactive').filter(
-            is_duplicate=False,
-            city__iexact=instance.city,
-            property_type=instance.property_type,
-            status=instance.status,
-            price__gt=0,
-            area__gt=0,
-        ).exclude(pk=instance.pk).annotate(
-            price_per_m2=ExpressionWrapper(F('price') / F('area'), output_field=FloatField())
-        ).filter(price_per_m2__gt=1, price_per_m2__lt=10000)
-
-        values = sorted(float(value) for value in comparable.values_list('price_per_m2', flat=True))
-        def pct(ratio):
-            if not values:
-                return None
-            pos = (len(values) - 1) * ratio
-            low, high = int(pos), min(int(pos) + 1, len(values) - 1)
-            return round(values[low] + (values[high] - values[low]) * (pos - low), 2)
-
-        q1, median, q3 = pct(.25), pct(.5), pct(.75)
-        own_price_m2 = (
-            round(float(instance.price) / float(instance.area), 2)
-            if instance.price and instance.area and instance.area > 0 else None
-        )
-        deviation = round((own_price_m2 - median) / median * 100, 1) if own_price_m2 and median else None
-        alert = None
-        if deviation is not None and len(values) >= 4:
-            if own_price_m2 < q1 - 1.5 * (q3 - q1):
-                alert = 'below_range'
-            elif own_price_m2 > q3 + 1.5 * (q3 - q1):
-                alert = 'above_range'
-
-        sector = (instance.address or '').split(',')[0].strip()
-        sector_supply = Property.objects.exclude(status='inactive').filter(
-            is_duplicate=False, city__iexact=instance.city,
-        )
-        if sector:
-            sector_supply = sector_supply.filter(address__icontains=sector)
-        city_views = list(Property.objects.exclude(status='inactive').filter(
-            is_duplicate=False, city__iexact=instance.city,
-        ).values_list('views_count', flat=True))
-        demand_median = sorted(city_views)[len(city_views) // 2] if city_views else 0
-        demand_level = 'high' if instance.views_count > demand_median * 1.5 else ('low' if instance.views_count < demand_median * .5 else 'medium')
-        contacts = instance.activity_events.filter(
-            event_name='property_contact_clicked', is_bot=False
-        ).count()
-        history = list(instance.price_history.values('price', 'recorded_at'))
-        if not history and instance.price is not None:
-            history = [{'price': instance.price, 'recorded_at': instance.created_at}]
-
-        publication_start = instance.source_published_at or instance.imported_at or instance.created_at
-        publication_basis = 'source' if instance.source_published_at else ('detected' if instance.is_imported else 'platform')
-        demand = {'level': demand_level}
-        user = request.user
-        if user.is_authenticated and (user.is_staff or instance.owner_id == user.id):
-            demand.update({
-                'views': instance.views_count,
-                'contacts': contacts,
-                'city_median_views': demand_median,
-            })
-
-        payload = {
-            'property_id': instance.pk,
-            'price_per_m2': own_price_m2,
-            'zone': sector or instance.city,
-            'zone_range': {'low': q1, 'median': median, 'high': q3},
-            'comparison': {'sample_size': len(values), 'difference_pct': deviation},
-            'price_alert': alert,
-            'price_history': history,
-            'available_supply': sector_supply.count(),
-            'published_days': max(0, (timezone.now() - publication_start).days),
-            'publication_basis': publication_basis,
-            'source_published_at': instance.source_published_at,
-            'source_updated_at': instance.source_updated_at,
-            'detected_at': instance.imported_at or instance.created_at,
-            'last_seen_at': instance.last_seen_at,
-            'demand': demand,
-            'methodology': 'Comparables activos del mismo tipo, operación y ciudad; rango habitual P25–P75 y alerta atípica mediante IQR.',
-        }
+        payload = PropertyIntelligenceService(instance, viewer=request.user).build()
         if _is_public_read(request):
             cache.set(cache_key, payload, CACHE_TTL_INTELLIGENCE)
         return _public_response(payload, request, s_maxage=CACHE_TTL_INTELLIGENCE)

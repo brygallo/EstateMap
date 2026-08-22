@@ -57,7 +57,7 @@ Editar o eliminar una cuenta, editar, borrar, restaurar, purgar, transferir o ca
 
 - `backend/real_estate/models.py:891-948` (`class AdminAuditLog`)
 - `backend/real_estate/services/audit.py:21-52` (`class AdminAuditService`)
-- `backend/real_estate/views.py:3412-3417` (`class AdminAuditLogView`)
+- `backend/real_estate/views.py:3339-3343` (`class AdminAuditLogView`)
 - `backend/real_estate/urls.py:99-101` (`admin_audit`)
 
 **Casos**
@@ -119,7 +119,7 @@ DELETE sobre una propiedad del panel la marca con deleted_at, guarda el estado q
 
 - `backend/real_estate/models.py:334-353` (`deleted_at`)
 - `backend/real_estate/services/trash.py:31-46` (`def soft_delete`)
-- `backend/real_estate/views.py:3058-3080` (`def destroy`)
+- `backend/real_estate/views.py:2985-3006` (`def destroy`)
 
 **Casos**
 
@@ -154,7 +154,7 @@ Restaurar una propiedad de la papelera le devuelve el `status` que tenía antes 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
 - `backend/real_estate/services/trash.py:48-69` (`def restore`)
-- `backend/real_estate/views.py:3279-3294` (`def restore`)
+- `backend/real_estate/views.py:3206-3220` (`def restore`)
 - `backend/real_estate/urls.py:94-96` (`admin_properties_restore`)
 
 **Casos**
@@ -188,7 +188,7 @@ La única ruta que borra de verdad una propiedad exige que ya esté en la papele
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/real_estate/views.py:3299-3311` (`def purge`)
+- `backend/real_estate/views.py:3226-3237` (`def purge`)
 - `backend/real_estate/services/trash.py:71-74` (`def purge`)
 
 **Casos**
@@ -273,7 +273,7 @@ La respuesta de /api/admin/dashboard/ se guarda 5 minutos bajo una clave que lle
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/real_estate/views.py:2655-2671` (`CACHE_TTL = 300`)
+- `backend/real_estate/views.py:2582-2597` (`CACHE_TTL = 300`)
 - `backend/real_estate/cache_utils.py:91-93` (`def versioned_key`)
 
 **Casos**
@@ -346,7 +346,7 @@ Los conjuntos properties, users, leads y audit se descargan en CSV transmitido f
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
 - `backend/real_estate/services/exports.py:30-49` (`class CsvExportService`)
-- `backend/real_estate/views.py:3504-3519` (`class AdminExportView`)
+- `backend/real_estate/views.py:3431-3445` (`class AdminExportView`)
 - `backend/real_estate/urls.py:102-104` (`admin_export`)
 
 **Casos**
@@ -374,7 +374,7 @@ La descarga se autentica con las clases de DRF, que solo leen la cabecera Author
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/real_estate/views.py:3504-3519` (`class AdminExportView`)
+- `backend/real_estate/views.py:3431-3445` (`class AdminExportView`)
 - `frontend/lib/admin-export.ts:21-39` (`downloadAdminCsv`)
 
 **Casos**
@@ -412,7 +412,7 @@ La descarga se autentica con las clases de DRF, que solo leen la cabecera Author
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
 - `backend/real_estate/services/admin_search.py:16-34` (`class AdminSearchService`)
-- `backend/real_estate/views.py:3470-3474` (`class AdminSearchView`)
+- `backend/real_estate/views.py:3397-3400` (`class AdminSearchView`)
 
 **Casos**
 
@@ -454,7 +454,7 @@ La descarga se autentica con las clases de DRF, que solo leen la cabecera Author
 
 - `backend/real_estate/services/diagnostics.py:22-52` (`class PropertyDiagnosticsService`)
 - `backend/real_estate/services/diagnostics.py:57-88` (`def _blockers`)
-- `backend/real_estate/views.py:3316-3318` (`def diagnostics`)
+- `backend/real_estate/views.py:3243-3245` (`def diagnostics`)
 
 **Casos**
 

@@ -44,7 +44,7 @@ rules:
         lines: "21-52"
         symbol: class AdminAuditService
       - file: backend/real_estate/views.py
-        lines: "3412-3417"
+        lines: "3339-3343"
         symbol: class AdminAuditLogView
       - file: backend/real_estate/urls.py
         lines: "99-101"
@@ -119,7 +119,7 @@ rules:
         lines: "31-46"
         symbol: def soft_delete
       - file: backend/real_estate/views.py
-        lines: "3058-3080"
+        lines: "2985-3006"
         symbol: def destroy
     permissions:
       required: [admin.properties_delete]
@@ -165,7 +165,7 @@ rules:
         lines: "48-69"
         symbol: def restore
       - file: backend/real_estate/views.py
-        lines: "3279-3294"
+        lines: "3206-3220"
         symbol: def restore
       - file: backend/real_estate/urls.py
         lines: "94-96"
@@ -206,7 +206,7 @@ rules:
       papelera; para destruir algo hay que ir a la papelera y volver a pedirlo.
     evidence:
       - file: backend/real_estate/views.py
-        lines: "3299-3311"
+        lines: "3226-3237"
         symbol: def purge
       - file: backend/real_estate/services/trash.py
         lines: "71-74"
@@ -318,7 +318,7 @@ rules:
       una propiedad, como las altas de usuarios.
     evidence:
       - file: backend/real_estate/views.py
-        lines: "2655-2671"
+        lines: "2582-2597"
         symbol: CACHE_TTL = 300
       - file: backend/real_estate/cache_utils.py
         lines: "91-93"
@@ -400,7 +400,7 @@ rules:
         lines: "30-49"
         symbol: class CsvExportService
       - file: backend/real_estate/views.py
-        lines: "3504-3519"
+        lines: "3431-3445"
         symbol: class AdminExportView
       - file: backend/real_estate/urls.py
         lines: "102-104"
@@ -454,7 +454,7 @@ rules:
       una comprobación escrita a mano que puede divergir de él.
     evidence:
       - file: backend/real_estate/views.py
-        lines: "3504-3519"
+        lines: "3431-3445"
         symbol: class AdminExportView
       - file: frontend/lib/admin-export.ts
         lines: "21-39"
@@ -487,7 +487,7 @@ rules:
         lines: "16-34"
         symbol: class AdminSearchService
       - file: backend/real_estate/views.py
-        lines: "3470-3474"
+        lines: "3397-3400"
         symbol: class AdminSearchView
     permissions:
       required: [admin.search]
@@ -539,7 +539,7 @@ rules:
         lines: "57-88"
         symbol: def _blockers
       - file: backend/real_estate/views.py
-        lines: "3316-3318"
+        lines: "3243-3245"
         symbol: def diagnostics
     permissions:
       required: [admin.properties_diagnostics]

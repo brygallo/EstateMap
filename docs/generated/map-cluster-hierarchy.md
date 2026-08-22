@@ -71,7 +71,7 @@ El catálogo de ubicaciones debe entregar un centro para cada ciudad con inventa
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/real_estate/views.py:1071-1107` (`centers.setdefault`) — El catálogo calcula el centro medio de las propiedades activas de cada ciudad.
+- `backend/real_estate/views.py:998-1033` (`centers.setdefault`) — El catálogo calcula el centro medio de las propiedades activas de cada ciudad.
 - `frontend/components/map/MapFilters.tsx:297-313` (`onCitySelect`) — Elegir una ciudad entrega su centro al contenedor del mapa.
 - `frontend/components/MapPageClient.tsx:160-172` (`handleCityFilterSelect`) — La cámara viaja al centro recibido con zoom de ciudad.
 

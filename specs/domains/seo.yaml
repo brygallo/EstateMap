@@ -222,6 +222,108 @@ rules:
       - name: Listado sin fechas
         expected: el sitemap omite lastmod en vez de declarar la hora actual
 
+  - id: SEO-007
+    name: El análisis de la ficha viaja en el HTML
+    status: implemented
+    summary: >-
+      El bloque de análisis de precio y mercado se renderiza en el servidor y
+      llega dentro del HTML de `/propiedad/<id>`. Solo el modal del mapa, que no
+      es indexable, lo pide desde el navegador.
+    rationale: >-
+      Es el único contenido de una ficha que no es del anunciante: fotos,
+      descripción y características se publican también en otros sitios, así
+      que un buscador que elige entre dos copias no tiene motivo para preferir
+      esta. El análisis se calcula aquí, contra todo el catálogo activo, y es lo
+      que hace la página digna de posicionar. Cargándolo tras la hidratación, el
+      HTML que lee un rastreador no contenía ni «precio por m²» ni el rango de
+      la zona ni un solo comparable: el diferenciador existía para la persona y
+      no para el buscador. Con quince mil fichas en un dominio joven, esperar a
+      que Google ejecute JavaScript es esperar a lo que deja para el final.
+    evidence:
+      - file: frontend/lib/intelligence.ts
+        symbol: export async function getPropertyIntelligence
+      - file: frontend/app/property/[id]/page.tsx
+        symbol: getPropertyIntelligence(property.id)
+      - file: frontend/components/PropertyIntelligence.tsx
+        symbol: export default function PropertyIntelligence
+        note: Presentacional; recibe el análisis en vez de pedirlo.
+      - file: frontend/components/PropertyIntelligenceLive.tsx
+        symbol: export default function PropertyIntelligenceLive
+        note: La variante cliente, solo para el modal del mapa.
+    frontend:
+      routes: ["/propiedad/[id]"]
+    tests: {}
+    cases:
+      - name: HTML servido de una ficha activa
+        expected: contiene el precio por m² y el rango de la zona
+      - name: Modal del mapa
+        expected: pide el análisis al abrirse
+
+  - id: SEO-008
+    name: El encabezado de una ficha describe la búsqueda, no el titular del anunciante
+    status: implemented
+    summary: >-
+      El `h1` y el `<title>` de una ficha se construyen con lo que la propiedad
+      es —tipo, operación, ciudad y los dos datos por los que se filtra—. El
+      titular del anunciante se conserva justo debajo, y se calma cuando llegó
+      escrito en mayúsculas.
+    rationale: >-
+      Un titular importado está escrito para el público de otro portal y muchas
+      veces gritado: «ESPECTACULAR TERRENO PARA CAMPOSANTO CEMENTERIO POMASQUI».
+      Nadie busca eso. La gente busca «terreno de venta en Quito», y la página
+      que responde a esa búsqueda tiene que decirlo en su propio encabezado. El
+      titular no se descarta porque es la voz de quien vende y lleva palabras
+      que ninguna plantilla conoce; lo que cambia es cuál de los dos encabeza.
+    evidence:
+      - file: frontend/lib/property-heading.ts
+        symbol: export function buildSearchHeading
+      - file: frontend/lib/property-heading.ts
+        symbol: export function softenShouting
+      - file: frontend/app/property/[id]/page.tsx
+        symbol: const pageHeading = buildSearchHeading(property)
+      - file: frontend/lib/property-heading.test.ts
+        symbol: describe('buildSearchHeading'
+    frontend:
+      routes: ["/propiedad/[id]"]
+    tests: {unit: true}
+    cases:
+      - name: Casa de venta en Quito con 3 dormitorios y 180 m²
+        expected: "Casa de venta en Quito · 3 dormitorios · 180 m²"
+      - name: Anuncio sin tipo ni operación
+        expected: "Propiedad"
+      - name: Titular en mayúsculas
+        expected: se muestra en minúsculas con la inicial de cada palabra
+
+  - id: SEO-009
+    name: El sitemap solo ofrece fichas que pueden responder a una búsqueda
+    status: implemented
+    summary: >-
+      Una ficha entra en el sitemap si declara precio y ciudad. La prioridad
+      sale de cuándo cambió de verdad: 0.8 la última semana, 0.7 el último mes,
+      0.6 el resto.
+    rationale: >-
+      Es SEO-001 aplicado a un anuncio en vez de a una ubicación: el sitemap no
+      ofrece una página que no querría ver posicionada. Un anuncio sin precio no
+      responde a ninguna búsqueda, y pedir rastreo para él se lo quita a otro
+      que sí. La ficha sigue existiendo y resolviendo para quien tenga el
+      enlace; simplemente deja de anunciarse. La prioridad plana de 0.7 en las
+      dieciséis mil URL no ordenaba nada: Google llega a unas cientos de fichas
+      al día, y las que se movieron esta semana merecen más de ese presupuesto
+      que las que llevan meses quietas.
+    evidence:
+      - file: frontend/app/sitemap.ts
+        symbol: const crawlWorthy = properties.filter
+      - file: frontend/app/sitemap.ts
+        symbol: "priority: ageDays <= 7 ? 0.8 : ageDays <= 30 ? 0.7 : 0.6,"
+    tests: {}
+    cases:
+      - name: Anuncio sin precio
+        expected: fuera del sitemap, la ficha sigue resolviendo
+      - name: Anuncio modificado ayer
+        expected: prioridad 0.8 y changefreq diaria
+      - name: Anuncio quieto desde hace meses
+        expected: prioridad 0.6
+
   - id: SEC-001
     name: La zona de un anuncio se deriva de su dirección y se guarda
     status: implemented

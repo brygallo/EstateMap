@@ -44,10 +44,12 @@ rules:
         lines: "328-340"
         symbol: "data.pop('views_count', None)"
         note: El detalle elimina el contador salvo para propietario o staff autenticado.
-      - file: backend/real_estate/views.py
-        lines: "758-780"
-        symbol: "demand = {'level': demand_level}"
-        note: El informe público conserva el nivel cualitativo y añade métricas solo al dueño o staff.
+      - file: backend/real_estate/services/intelligence.py
+        symbol: "demand = {"
+        note: >
+          El informe público conserva el nivel cualitativo; las sesiones, los
+          contactos y la mediana del universo solo se añaden para el dueño o
+          staff. El cálculo se mudó aquí desde la vista con PRC-032.
     frontend:
       routes: ["/"]
       visible_when_allowed: false
