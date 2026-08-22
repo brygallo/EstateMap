@@ -410,7 +410,7 @@ Informa y no edita a propósito. Reescribir un párrafo publicado sin que lo lea
 
 **Estado:** ✅ Implementada
 
-Un post con anunciante lleva un aviso visible antes del título que nombra quién lo paga y si lo paga, la tarjeta del listado lo marca como «Publicidad», y todos sus enlaces salientes salen con `rel="sponsored nofollow"`. Sin anunciante nada de eso aparece.
+Un post con anunciante lleva un aviso visible antes del título que nombra quién lo paga y si lo paga, la tarjeta del listado lo marca como «Publicidad», y todos sus enlaces salientes salen con `rel="sponsored nofollow"`. El distintivo de la tarjeta **sustituye** a la categoría y nombra al anunciante, y un artículo con anunciante nunca ocupa el hueco de «Lectura destacada». Sin anunciante nada de eso aparece.
 
 > **Por qué:** La regla de Google es que la colocación pagada se declare y sus enlaces se marquen, pero la razón que importa aquí es más estrecha: este portal publica cifras de mercado, y el día que un lector no pueda distinguir lo que el portal midió de lo que alguien compró, las cifras dejan de valer la pena citarse. Por eso el aviso no es una nota al pie ni un color: es una línea que se lee antes del texto. «Del grupo» se dice tal cual —Aents y Geo Propiedades comparten dueños y no media dinero— porque disimularlo sería el mismo fallo en tamaño pequeño.
 
@@ -426,7 +426,8 @@ Un post con anunciante lleva un aviso visible antes del título que nombra quié
 - `backend/blog/serializers.py` (`def get_sponsor`) — La etiqueta viaja con cada representación del artículo, no solo en el admin.
 - `frontend/components/blog/SponsoredNotice.tsx` (`export default function SponsoredNotice`)
 - `frontend/lib/markdown.tsx` (`sponsored ? 'sponsored noopener noreferrer nofollow'`)
-- `frontend/components/blog/PostCard.tsx` (`post.sponsor &&`) — El aviso también viaja en la tarjeta, antes de que se abra el artículo.
+- `frontend/app/blog/page.tsx` (`const editorial = posts.filter((post) => !post.sponsor)`) — «Lectura destacada» es el portal recomendando algo, así que la publicidad no puede ocuparla ni por un is_featured marcado a mano.
+- `frontend/components/blog/PostCard.tsx` (`post.sponsor ?`) — El aviso también viaja en la tarjeta, antes de que se abra el artículo.
 - `frontend/lib/markdown.test.tsx` (`describe('sponsored links'`) — Un caso comprueba que se marca y otro que un editorial se queda intacto.
 
 **Casos**

@@ -487,7 +487,9 @@ rules:
       Un post con anunciante lleva un aviso visible antes del título que nombra
       quién lo paga y si lo paga, la tarjeta del listado lo marca como
       «Publicidad», y todos sus enlaces salientes salen con
-      `rel="sponsored nofollow"`. Sin anunciante nada de eso aparece.
+      `rel="sponsored nofollow"`. El distintivo de la tarjeta **sustituye** a
+      la categoría y nombra al anunciante, y un artículo con anunciante nunca
+      ocupa el hueco de «Lectura destacada». Sin anunciante nada de eso aparece.
     rationale: >-
       La regla de Google es que la colocación pagada se declare y sus enlaces se
       marquen, pero la razón que importa aquí es más estrecha: este portal
@@ -510,8 +512,13 @@ rules:
         symbol: export default function SponsoredNotice
       - file: frontend/lib/markdown.tsx
         symbol: "sponsored ? 'sponsored noopener noreferrer nofollow'"
+      - file: frontend/app/blog/page.tsx
+        symbol: "const editorial = posts.filter((post) => !post.sponsor)"
+        note: >-
+          «Lectura destacada» es el portal recomendando algo, así que la
+          publicidad no puede ocuparla ni por un is_featured marcado a mano.
       - file: frontend/components/blog/PostCard.tsx
-        symbol: "post.sponsor &&"
+        symbol: "post.sponsor ?"
         note: El aviso también viaja en la tarjeta, antes de que se abra el artículo.
       - file: frontend/lib/markdown.test.tsx
         symbol: "describe('sponsored links'"

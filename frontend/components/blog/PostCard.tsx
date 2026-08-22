@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { ArrowUpRight, CalendarDays, Clock3 } from 'lucide-react';
+import { ArrowUpRight, CalendarDays, Clock3, Megaphone } from 'lucide-react';
 
 import { formatPostDate, type BlogPostSummary } from '@/lib/blog';
 
@@ -31,17 +31,24 @@ export function PostCard({ post }: { post: BlogPostSummary }) {
     <article className="group flex h-full flex-col overflow-hidden rounded-card border border-line bg-white shadow-card transition-[transform,box-shadow,border-color] duration-300 hover:-translate-y-1 hover:border-primary/40 hover:shadow-cardHover">
       <div className="flex flex-1 flex-col p-5 sm:p-6">
         <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-          {post.category && (
-            <p className="text-xs font-bold uppercase tracking-[0.12em] text-primary">
-              {post.category.name}
-            </p>
-          )}
           {/* The disclosure travels with the card: a reader deciding what to
-              open is entitled to know it is advertising before they open it. */}
-          {post.sponsor && (
-            <span className="inline-flex items-center rounded-full bg-surface px-2 py-0.5 text-[0.65rem] font-bold uppercase tracking-[0.1em] text-textSecondary">
-              Publicidad
+              open is entitled to know it is advertising before they open it.
+              It replaces the category rather than sitting beside it — the
+              advertising category rendered in the same green as every other
+              one, so the card read «PUBLICIDAD PUBLICIDAD» and neither half
+              looked like a warning. One chip, in a colour no topic uses, and
+              the advertiser named: a label nobody can mistake for a subject. */}
+          {post.sponsor ? (
+            <span className="inline-flex items-center gap-1 rounded-full border border-amber-300 bg-amber-50 px-2 py-0.5 text-[0.65rem] font-bold uppercase tracking-[0.1em] text-amber-800">
+              <Megaphone className="h-3 w-3" aria-hidden />
+              {post.sponsor.paid ? 'Publicidad pagada' : 'Publicidad'} · {post.sponsor.name}
             </span>
+          ) : (
+            post.category && (
+              <p className="text-xs font-bold uppercase tracking-[0.12em] text-primary">
+                {post.category.name}
+              </p>
+            )
           )}
         </div>
         <h3 className="mt-2 text-lg font-bold leading-snug text-textPrimary">

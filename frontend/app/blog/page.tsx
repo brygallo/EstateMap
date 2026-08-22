@@ -41,7 +41,12 @@ export default async function BlogPage() {
     ? [...categories, { ...LIVE_CATEGORY, post_count: livePages.length }]
     : categories;
 
-  const featured = posts.find((post) => post.is_featured) ?? posts[0] ?? null;
+  // «Lectura destacada» is the portal recommending something, so advertising
+  // cannot hold that slot — not even by accident, from an `is_featured` ticked
+  // in the admin. The block carries no disclosure of its own precisely because
+  // nothing that needs one can reach it.
+  const editorial = posts.filter((post) => !post.sponsor);
+  const featured = editorial.find((post) => post.is_featured) ?? editorial[0] ?? null;
   const rest = posts.filter((post) => post.slug !== featured?.slug);
 
   const structuredData = {
