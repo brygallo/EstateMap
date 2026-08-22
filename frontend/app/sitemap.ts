@@ -18,6 +18,7 @@ import { MIN_LISTINGS_FOR_PROMOTION } from '@/lib/market-stats';
 // MetadataRoute.Sitemap solo existe desde Next 15 y aquí usamos Next 14.
 
 export const revalidate = 3600;
+export const dynamic = 'force-dynamic';
 
 const TYPE_ROUTES = [
   '/casas-en-venta',
