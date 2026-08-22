@@ -74,6 +74,12 @@ if ! git fetch origin main; then
 fi
 git reset --hard origin/main
 
+# The release the panel reports is the commit that was just checked out, not
+# whatever `.env.prod` was last edited to say. Exported after the reset so the
+# build and the containers below both see it.
+export RELEASE_SHA="$(git rev-parse HEAD)"
+echo "   release ${RELEASE_SHA}"
+
 # Re-assert the host configuration the CDN depends on. It lives in deploy/ and
 # is applied from there on every deploy, so a hand-made edit on the box is
 # never what keeps rate limiting working.
