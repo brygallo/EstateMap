@@ -24,7 +24,10 @@ import { API_URL } from '../playwright.config';
  */
 const SEEDED = {
   email: 'e2e_anunciante@example.test',
-  password: 'Reclamo-e2e-2026',
+  // Throwaway credential for a fixture account: `seed_e2e` refuses to run
+  // against anything that looks like production, so this pair only ever exists
+  // in a database that gets dropped.
+  password: 'Reclamo-e2e-2026', // gitleaks:allow
 };
 
 /**
@@ -38,7 +41,7 @@ const SEEDED = {
  */
 const SPARE = {
   email: 'e2e_cuenta_libre@example.test',
-  password: 'Cuenta-libre-e2e-2026',
+  password: 'Cuenta-libre-e2e-2026', // gitleaks:allow — same fixture, same disposable database
 };
 
 async function authenticate(

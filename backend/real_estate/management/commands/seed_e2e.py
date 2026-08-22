@@ -82,7 +82,7 @@ SEED_CLAIMABLE_COUNT = 3
 #: at the top of this command are what make that acceptable; they refuse to run
 #: anywhere this account could matter.
 SEED_ADVERTISER_EMAIL = "e2e_anunciante@example.test"
-SEED_ADVERTISER_PASSWORD = "Reclamo-e2e-2026"
+SEED_ADVERTISER_PASSWORD = "Reclamo-e2e-2026"  # gitleaks:allow — fixture only
 
 #: A second account for the tests that change a phone number.
 #:
@@ -91,7 +91,7 @@ SEED_ADVERTISER_PASSWORD = "Reclamo-e2e-2026"
 #: claim test signing in as somebody who can no longer claim. This one exists to
 #: be mutated; the advertiser above is left alone.
 SEED_SPARE_EMAIL = "e2e_cuenta_libre@example.test"
-SEED_SPARE_PASSWORD = "Cuenta-libre-e2e-2026"
+SEED_SPARE_PASSWORD = "Cuenta-libre-e2e-2026"  # gitleaks:allow — fixture only
 SEED_SPARE_PHONE = "0999000222"
 
 # Above this many properties the command did not create, the database is
