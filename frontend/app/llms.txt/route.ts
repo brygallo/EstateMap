@@ -21,6 +21,7 @@ import {
 // Perplexity y demás citen páginas hub que existen y tienen inventario.
 
 export const revalidate = 3600;
+export const dynamic = 'force-dynamic';
 
 export async function GET() {
   const [properties, stats, blog, livePages] = await Promise.all([

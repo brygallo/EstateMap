@@ -20,6 +20,7 @@ import {
 // reales, para que los asistentes de IA puedan citar deep links con datos.
 
 export const revalidate = 3600;
+export const dynamic = 'force-dynamic';
 
 export async function GET() {
   const [properties, stats] = await Promise.all([getAllProperties(), getMarketStats()]);

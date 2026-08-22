@@ -9,7 +9,7 @@ from rest_framework.pagination import PageNumberPagination
 from rest_framework.throttling import ScopedRateThrottle
 from django.db.models import Q, F, Count, Sum, Avg, Min, Max, Value, FloatField, ExpressionWrapper, Prefetch
 from django.db.models.functions import TruncDate
-from rest_framework_simplejwt.views import TokenObtainPairView
+from rest_framework_simplejwt.views import TokenBlacklistView, TokenObtainPairView, TokenRefreshView
 from rest_framework.permissions import IsAuthenticated, AllowAny, IsAuthenticatedOrReadOnly
 from rest_framework.decorators import action
 from rest_framework.response import Response
@@ -66,7 +66,7 @@ from .serializers import (
     AdminPropertyListSerializer,
     AdminDashboardSerializer,
 )
-from .permissions import IsOwnerOrReadOnly, IsAdminUser, IsPropertyOwnerOrStaff
+from .permissions import IsOwnerOrReadOnly, IsAdminUser, IsPropertyOwnerOrStaff, IsSuperUser
 from .services.promotion_stats import promotion_stats
 from .email_utils import (
     build_resume_link,
@@ -1271,7 +1271,7 @@ class PropertyViewSet(viewsets.ModelViewSet):
         service = PropertyClaimService(request.user)
         if not service.may_claim():
             return Response(
-                {'error': 'Necesitas un teléfono en tu cuenta para reclamar propiedades.'},
+                {'error': 'Necesitas un teléfono verificado para reclamar propiedades.'},
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
@@ -1817,12 +1817,26 @@ class ActivityEventViewSet(viewsets.ModelViewSet):
 
 class CustomTokenObtainPairView(TokenObtainPairView):
     serializer_class = CustomTokenObtainPairSerializer
+    throttle_classes = [ScopedRateThrottle]
+    throttle_scope = 'auth_attempt'
+
+
+class CustomTokenRefreshView(TokenRefreshView):
+    throttle_classes = [ScopedRateThrottle]
+    throttle_scope = 'auth_attempt'
+
+
+class CustomTokenBlacklistView(TokenBlacklistView):
+    throttle_classes = [ScopedRateThrottle]
+    throttle_scope = 'auth_attempt'
 
 
 class RegisterView(generics.CreateAPIView):
     queryset = get_user_model().objects.all()
     serializer_class = RegisterSerializer
     permission_classes = [AllowAny]
+    throttle_classes = [ScopedRateThrottle]
+    throttle_scope = 'auth_attempt'
 
 
 class GoogleLoginView(generics.GenericAPIView):
@@ -1831,6 +1845,8 @@ class GoogleLoginView(generics.GenericAPIView):
     Recibe el token de Google, lo valida y retorna JWT tokens.
     """
     permission_classes = [AllowAny]
+    throttle_classes = [ScopedRateThrottle]
+    throttle_scope = 'auth_attempt'
 
     def post(self, request):
         token = request.data.get('token')
@@ -1884,6 +1900,12 @@ class ImageProxyView(View):
     This avoids CORS issues when accessing MinIO directly from the browser
     """
     def get(self, request, image_path):
+        referenced = PropertyImage.objects.filter(status=PropertyImage.Status.READY).filter(
+            Q(image=image_path) | Q(thumbnail=image_path)
+        ).exists()
+        if not referenced:
+            raise Http404("Image not found")
+
         # Get MinIO configuration from Django settings
         minio_endpoint = settings.AWS_S3_ENDPOINT_URL
         bucket_name = settings.AWS_STORAGE_BUCKET_NAME
@@ -1983,6 +2005,8 @@ class VerifyEmailView(generics.GenericAPIView):
     """Vista para verificar el correo electrónico con código"""
     serializer_class = VerifyEmailSerializer
     permission_classes = [AllowAny]
+    throttle_classes = [ScopedRateThrottle]
+    throttle_scope = 'auth_attempt'
 
     def post(self, request):
         from .models import EmailVerificationToken
@@ -2057,6 +2081,8 @@ class ResendVerificationView(generics.GenericAPIView):
     """Vista para reenviar código de verificación"""
     serializer_class = ResendVerificationSerializer
     permission_classes = [AllowAny]
+    throttle_classes = [ScopedRateThrottle]
+    throttle_scope = 'auth_email'
 
     def post(self, request):
         from .email_utils import create_verification_token, send_verification_email
@@ -2095,6 +2121,8 @@ class RequestPasswordResetView(generics.GenericAPIView):
     """Vista para solicitar reset de contraseña"""
     serializer_class = RequestPasswordResetSerializer
     permission_classes = [AllowAny]
+    throttle_classes = [ScopedRateThrottle]
+    throttle_scope = 'auth_email'
 
     def post(self, request):
         from .email_utils import create_password_reset_token, send_password_reset_email
@@ -2143,6 +2171,8 @@ class ResetPasswordView(generics.GenericAPIView):
     """Vista para resetear contraseña con token"""
     serializer_class = ResetPasswordSerializer
     permission_classes = [AllowAny]
+    throttle_classes = [ScopedRateThrottle]
+    throttle_scope = 'auth_attempt'
 
     def post(self, request):
         from .models import PasswordResetToken
@@ -2990,6 +3020,12 @@ class AdminUserViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
+        if 'is_staff' in data and not IsSuperUser().has_permission(request, self):
+            return Response(
+                {'error': IsSuperUser.message},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
         # Prevenir que un admin se desactive a sí mismo
         if user == request.user and data.get('is_staff') is False:
             return Response(
@@ -3020,6 +3056,11 @@ class AdminUserViewSet(viewsets.ModelViewSet):
         return Response(serializer.data)
 
     def destroy(self, request, *args, **kwargs):
+        if not IsSuperUser().has_permission(request, self):
+            return Response(
+                {'error': IsSuperUser.message},
+                status=status.HTTP_403_FORBIDDEN,
+            )
         user = self.get_object()
         if user == request.user:
             return Response(

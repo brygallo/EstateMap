@@ -56,8 +56,8 @@ Editar o eliminar una cuenta, editar, borrar, restaurar, purgar, transferir o ca
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
 - `backend/real_estate/models.py:891-948` (`class AdminAuditLog`)
-- `backend/real_estate/services/audit.py:28-60` (`class AdminAuditService`)
-- `backend/real_estate/views.py:3367-3373` (`class AdminAuditLogView`)
+- `backend/real_estate/services/audit.py:21-52` (`class AdminAuditService`)
+- `backend/real_estate/views.py:3412-3417` (`class AdminAuditLogView`)
 - `backend/real_estate/urls.py:99-101` (`admin_audit`)
 
 **Casos**
@@ -82,7 +82,7 @@ Si la escritura de la fila de auditoría falla, la operación que la produjo se 
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/real_estate/services/audit.py:31-68` (`def record`) — El except registra y devuelve None en vez de propagar.
+- `backend/real_estate/services/audit.py:24-60` (`def record`) — El except registra y devuelve None en vez de propagar.
 
 **Casos**
 
@@ -119,7 +119,7 @@ DELETE sobre una propiedad del panel la marca con deleted_at, guarda el estado q
 
 - `backend/real_estate/models.py:334-353` (`deleted_at`)
 - `backend/real_estate/services/trash.py:31-46` (`def soft_delete`)
-- `backend/real_estate/views.py:3018-3041` (`def destroy`)
+- `backend/real_estate/views.py:3058-3080` (`def destroy`)
 
 **Casos**
 
@@ -154,7 +154,7 @@ Restaurar una propiedad de la papelera le devuelve el `status` que tenía antes 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
 - `backend/real_estate/services/trash.py:48-69` (`def restore`)
-- `backend/real_estate/views.py:3234-3250` (`def restore`)
+- `backend/real_estate/views.py:3279-3294` (`def restore`)
 - `backend/real_estate/urls.py:94-96` (`admin_properties_restore`)
 
 **Casos**
@@ -188,7 +188,7 @@ La única ruta que borra de verdad una propiedad exige que ya esté en la papele
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/real_estate/views.py:3254-3267` (`def purge`)
+- `backend/real_estate/views.py:3299-3311` (`def purge`)
 - `backend/real_estate/services/trash.py:71-74` (`def purge`)
 
 **Casos**
@@ -273,7 +273,7 @@ La respuesta de /api/admin/dashboard/ se guarda 5 minutos bajo una clave que lle
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/real_estate/views.py:2621-2638` (`CACHE_TTL = 300`)
+- `backend/real_estate/views.py:2655-2671` (`CACHE_TTL = 300`)
 - `backend/real_estate/cache_utils.py:91-93` (`def versioned_key`)
 
 **Casos**
@@ -306,7 +306,7 @@ El bloque `comparability` del dashboard indica desde qué día se marca is_bot y
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
 - `backend/real_estate/services/admin_metrics.py:37-60` (`def _comparability`)
-- `backend/estate_map/settings.py:536-542` (`ACTIVITY_BOT_FILTER_SINCE`)
+- `backend/estate_map/settings.py:544-549` (`ACTIVITY_BOT_FILTER_SINCE`)
 
 **Casos**
 
@@ -325,7 +325,7 @@ El bloque `comparability` del dashboard indica desde qué día se marca is_bot y
 
 Los conjuntos properties, users, leads y audit se descargan en CSV transmitido fila a fila, con BOM UTF-8, marcados `no-store` y dejando constancia en la bitácora de quién los descargó.
 
-> **Por qué:** El panel enseña los números que alguien pensó de antemano; la pregunta que todavía no se le ha ocurrido a nadie se contesta en una hoja de cálculo, y hasta ahora los datos entraban al navegador y se quedaban ahí. Se transmite fila a fila porque un `list()` del catálogo dentro de un worker de 512 MB compartido con la ingesta es la forma conocida de tumbar el contenedor. El BOM es lo que evita que Excel en Windows lea «Cumbayá» como latin-1. Y como un CSV de usuarios o de contactos es una copia de datos personales saliendo del sistema, la descarga se audita y no se cachea.
+> **Por qué:** El panel enseña los números que alguien pensó de antemano; la pregunta que todavía no se le ha ocurrido a nadie se contesta en una hoja de cálculo, y hasta ahora los datos entraban al navegador y se quedaban ahí. Se transmite fila a fila porque un `list()` del catálogo dentro de un worker de 512 MB compartido con la ingesta es la forma conocida de tumbar el contenedor. El BOM es lo que evita que Excel en Windows lea «Cumbayá» como latin-1. Y como un CSV de usuarios o de contactos es una copia de datos personales saliendo del sistema, la descarga se audita y no se cachea. Los valores que una hoja interpretaría como fórmula se neutralizan al exportar para que abrir el archivo no ejecute contenido escrito por usuarios.
 
 **Permisos exigidos:** `admin.export`
 
@@ -345,8 +345,8 @@ Los conjuntos properties, users, leads y audit se descargan en CSV transmitido f
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/real_estate/services/exports.py:46-66` (`class CsvExportService`)
-- `backend/real_estate/views.py:3459-3475` (`class AdminExportView`)
+- `backend/real_estate/services/exports.py:30-49` (`class CsvExportService`)
+- `backend/real_estate/views.py:3504-3519` (`class AdminExportView`)
 - `backend/real_estate/urls.py:102-104` (`admin_export`)
 
 **Casos**
@@ -357,6 +357,7 @@ Los conjuntos properties, users, leads y audit se descargan en CSV transmitido f
 | un usuario autenticado cualquiera recibe 403 | authenticated | — | — | denied (HTTP 403) |
 | un anónimo recibe 401 | anonymous | — | — | denied (HTTP 401) |
 | la descarga queda registrada en la bitácora | — | — | — | allowed |
+| una celda con prefijo de fórmula se exporta como texto | — | — | — | allowed |
 
 **Cobertura exigida:** api
 
@@ -373,7 +374,7 @@ La descarga se autentica con las clases de DRF, que solo leen la cabecera Author
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/real_estate/views.py:3459-3475` (`class AdminExportView`)
+- `backend/real_estate/views.py:3504-3519` (`class AdminExportView`)
 - `frontend/lib/admin-export.ts:21-39` (`downloadAdminCsv`)
 
 **Casos**
@@ -392,7 +393,7 @@ La descarga se autentica con las clases de DRF, que solo leen la cabecera Author
 
 /api/admin/search/ busca a la vez en propiedades, cuentas, contactos y solicitudes pendientes, y cada resultado trae la ruta del panel a la que lleva.
 
-> **Por qué:** El panel tiene diez páginas y cada una busca dentro de lo suyo. Cuando alguien escribe por WhatsApp «no me aparece el anuncio GEO-4F2C» o llama dando un teléfono, la respuesta está en alguna y no se sabe en cuál. Los resultados se limitan por grupo y no en total, para que buscar «Macas» no devuelva diez propiedades y nada más. El href lo decide el servidor, así que si mañana la papelera deja de ser una pestaña de propiedades cambia en un sitio.
+> **Por qué:** El panel tiene diez páginas y cada una busca dentro de lo suyo. Cuando alguien escribe por WhatsApp «no me aparece el anuncio GEO-4F2C» o llama dando un teléfono, la respuesta está en alguna y no se sabe en cuál. Los resultados se limitan por grupo y no en total, para que buscar «Macas» no devuelva diez propiedades y nada más. El href lo decide el servidor, así que si mañana la papelera deja de ser una pestaña de propiedades cambia en un sitio. Los teléfonos se normalizan y se comparan también contra cuentas y propiedades, no solo contactos y solicitudes.
 
 **Permisos exigidos:** `admin.search`
 
@@ -410,20 +411,22 @@ La descarga se autentica con las clases de DRF, que solo leen la cabecera Author
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/real_estate/services/admin_search.py:26-45` (`class AdminSearchService`)
-- `backend/real_estate/views.py:3425-3430` (`class AdminSearchView`)
+- `backend/real_estate/services/admin_search.py:16-34` (`class AdminSearchService`)
+- `backend/real_estate/views.py:3470-3474` (`class AdminSearchView`)
 
 **Casos**
 
 | Caso | Rol | Estado previo | Cuerpo | Esperado |
 | --- | --- | --- | --- | --- |
 | staff busca y recibe resultados agrupados | staff | — | — | allowed |
+| un teléfono encuentra la cuenta y las propiedades asociadas | — | — | — | allowed |
 | una consulta de menos de dos caracteres devuelve vacío sin consultar | staff | — | — | allowed |
 | un anónimo no puede buscar | anonymous | — | — | denied (HTTP 401) |
 
 **Cobertura exigida:** api
 
 - `backend/real_estate/tests/generated/test_spec_admin_operations.py`
+- `backend/real_estate/tests/test_admin_operations.py`
 
 ### ADM-013 — El diagnóstico dice por qué no se ve una propiedad y qué hacer
 
@@ -449,9 +452,9 @@ La descarga se autentica con las clases de DRF, que solo leen la cabecera Author
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/real_estate/services/diagnostics.py:27-58` (`class PropertyDiagnosticsService`)
-- `backend/real_estate/services/diagnostics.py:62-94` (`def _blockers`)
-- `backend/real_estate/views.py:3275-3277` (`def diagnostics`)
+- `backend/real_estate/services/diagnostics.py:22-52` (`class PropertyDiagnosticsService`)
+- `backend/real_estate/services/diagnostics.py:57-88` (`def _blockers`)
+- `backend/real_estate/views.py:3316-3318` (`def diagnostics`)
 
 **Casos**
 

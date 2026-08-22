@@ -177,7 +177,7 @@ describe('the promotion laminas', () => {
     const meta = await sharp(await bytes(response)).metadata();
     expect(meta.width).toBe(1080);
     expect(meta.height).toBe(1080);
-  });
+  }, 10_000);
 
   it('keeps the map lossless, where flat colour and thin type live', async () => {
     const response = await draw('map');

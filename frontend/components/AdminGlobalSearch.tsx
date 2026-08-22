@@ -105,7 +105,7 @@ const AdminGlobalSearch = () => {
           placeholder="Buscar en todo el panel"
           aria-label="Buscar en todo el panel"
           data-testid="admin-global-search"
-          className="w-full rounded-button border border-line bg-background py-2 pl-9 pr-10 text-sm text-textPrimary outline-none transition-colors placeholder:text-textSecondary focus:border-primary"
+          className="w-full rounded-button border border-line bg-background py-2 pl-9 pr-10 text-sm text-textPrimary outline-none transition-colors placeholder:text-textSecondary focus:border-primary focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
         />
         <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-semibold text-textSecondary">
           {loading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : '⌘K'}
@@ -113,7 +113,12 @@ const AdminGlobalSearch = () => {
       </div>
 
       {open && query.trim().length >= MIN_LENGTH && (
-        <div className="absolute left-2 right-2 z-panel mt-1 max-h-[60dvh] overflow-y-auto rounded-card border border-line bg-surface shadow-cardHover">
+        <div
+          className="absolute left-2 right-2 z-panel mt-1 max-h-[60dvh] overflow-y-auto rounded-card border border-line bg-surface shadow-cardHover"
+          role="status"
+          aria-live="polite"
+          aria-busy={loading}
+        >
           {groups.length === 0 ? (
             <p className="px-3 py-4 text-xs text-textSecondary">
               {loading ? 'Buscando…' : 'Nada coincide con esa búsqueda.'}
@@ -128,7 +133,7 @@ const AdminGlobalSearch = () => {
                   <button
                     key={`${group.type}-${result.id}`}
                     onClick={() => go(result.href)}
-                    className="flex w-full items-start gap-2 px-3 py-2 text-left transition-colors hover:bg-muted"
+                    className="flex w-full items-start gap-2 px-3 py-2 text-left transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary"
                   >
                     <span className="min-w-0 flex-1">
                       <span className="block truncate text-sm font-medium text-textPrimary">{result.title}</span>

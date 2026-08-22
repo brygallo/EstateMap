@@ -442,7 +442,7 @@ Y caducarla al editar no es opcional: la lámina lleva el precio impreso. Si alg
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
 - `frontend/app/api/social/[id]/[format]/route.tsx:2432-2434` (`Cache-Control`) — s-maxage=60 con stale-while-revalidate: absorbe la ráfaga de scrapers que llega al publicar un enlace sin congelar un precio corregido.
-- `frontend/lib/properties.ts:316-318` (`getProperty`) — Lectura etiquetada; /api/revalidate purga property-<id> cuando Django avisa de un cambio.
+- `frontend/lib/properties.ts:321-323` (`getProperty`) — Lectura etiquetada; /api/revalidate purga property-<id> cuando Django avisa de un cambio.
 
 **Casos**
 

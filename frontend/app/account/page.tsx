@@ -35,7 +35,7 @@ interface Profile {
 }
 
 const AccountPage = () => {
-  const { token, logout } = useAuth();
+  const { token, logout, loading: authLoading } = useAuth();
   const router = useRouter();
 
   const [profile, setProfile] = useState<Profile | null>(null);
@@ -48,14 +48,15 @@ const AccountPage = () => {
 
   // Redirect unauthenticated users
   useEffect(() => {
-    if (token === null) {
+    if (!authLoading && token === null) {
       router.push('/iniciar-sesion');
     }
-  }, [token, router]);
+  }, [authLoading, token, router]);
 
   // Load current profile
   useEffect(() => {
     const loadProfile = async () => {
+      if (authLoading) return;
       if (!token) return;
       try {
         const res = await apiGet('/me/');
@@ -76,7 +77,7 @@ const AccountPage = () => {
       }
     };
     loadProfile();
-  }, [token, logout, router]);
+  }, [authLoading, token, logout, router]);
 
   const handleProfileSave = async () => {
     if (!profile) return;

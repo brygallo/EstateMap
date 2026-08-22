@@ -210,6 +210,8 @@ REST_FRAMEWORK = {
         'activity_create': '30/min',
         'pending_create': '10/min',
         'lead_create': '10/min',
+        'auth_attempt': '10/min',
+        'auth_email': '3/hour',
         # Resume links are unauthenticated by design, so the token itself is the
         # only thing standing between the endpoint and a guessing loop. Reading
         # is cheap and a person retries; redeeming creates a listing.

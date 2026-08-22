@@ -15,25 +15,12 @@ it — taking its leads with it.
 
 import logging
 
-from django.conf import settings
 from django.db import transaction
 from django.db.models import Count, Q
 
 from .phones import normalize_ec_phone
 
 logger = logging.getLogger(__name__)
-
-#: Whether an account must have proved its phone before it can claim.
-#:
-#: False for now, by an explicit decision: there is no SMS gateway and no
-#: WhatsApp API, and the priority is converting advertisers into accounts. The
-#: cost of that decision is real and worth naming — an unverified number means
-#: anyone can type somebody else's and take their listings — so every claim is
-#: recorded and reversible, and turning this on later needs no other change.
-CLAIM_REQUIRES_VERIFIED_PHONE = getattr(
-    settings, "CLAIM_REQUIRES_VERIFIED_PHONE", False
-)
-
 
 class PropertyClaimService:
     """What an account may claim, and the act of claiming it."""
@@ -48,11 +35,7 @@ class PropertyClaimService:
 
     def may_claim(self) -> bool:
         """Whether this account is allowed to claim at all right now."""
-        if not self.phone():
-            return False
-        if CLAIM_REQUIRES_VERIFIED_PHONE:
-            return self.user.phone_verified_at is not None
-        return True
+        return bool(self.phone() and self.user.phone_verified_at is not None)
 
     def claimable(self):
         """Imported listings whose advertiser phone is this account's.

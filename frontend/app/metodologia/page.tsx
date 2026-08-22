@@ -18,6 +18,7 @@ import { getMarketStats, integer, money } from '@/lib/market-stats';
 import { generatePageMetadata } from '@/lib/metadata';
 
 export const revalidate = 3600;
+export const dynamic = 'force-dynamic';
 
 export const metadata = generatePageMetadata(
   'Cómo calculamos los precios',

@@ -26,6 +26,8 @@ from real_estate.models import (
     PropertyImage,
 )
 from real_estate.services.admin_metrics import _comparability
+from real_estate.services.admin_search import AdminSearchService
+from real_estate.services.exports import CsvExportService
 from real_estate.services.retention import ActivityRetentionService
 from real_estate.services.trash import TRASH_RETENTION_DAYS, PropertyTrashService
 
@@ -262,6 +264,98 @@ def test_exporting_writes_who_downloaded_what(staff):
     entry = AdminAuditLog.objects.get(action="export.download")
     assert entry.target_label == "users"
     assert entry.actor_id == staff.pk
+
+
+@pytest.mark.parametrize("dangerous", ["=1+1", "+cmd", "-2+3", "@SUM(A1)", "\tformula", "\rformula"])
+def test_csv_exports_neutralize_spreadsheet_formulas(dangerous):
+    """SPEC:ADM-010 — exported user text cannot become a spreadsheet formula."""
+    lines = CsvExportService()._stream(["value"], iter([[dangerous]]))
+
+    body = "".join(lines)
+
+    assert f"'{dangerous}" in body
+
+
+def test_global_search_finds_properties_and_users_by_normalized_phone():
+    """SPEC:ADM-012 — a phone from a call locates its account and listings."""
+    user = get_user_model().objects.create_user(
+        username="phone-search", email="phone-search@example.com", phone="593987654321"
+    )
+    prop = make_property(contact_phone="0987654321")
+
+    payload = AdminSearchService().search("+593 98 765 4321")
+
+    results = {group["type"]: group["results"] for group in payload["groups"]}
+    assert [row["id"] for row in results["user"]] == [user.pk]
+    assert [row["id"] for row in results["property"]] == [prop.pk]
+
+
+def test_only_a_superuser_can_change_staff_status_or_delete_accounts(staff_client):
+    """SPEC:PERM-050 SPEC:PERM-052 — routine staff cannot manage privileged accounts."""
+    target = get_user_model().objects.create_user(
+        username="privilege-target", email="privilege-target@example.com"
+    )
+
+    promote = staff_client.patch(
+        reverse("admin_users_detail", args=[target.pk]), {"is_staff": True}, format="json"
+    )
+    delete = staff_client.delete(reverse("admin_users_detail", args=[target.pk]))
+
+    assert promote.status_code == 403
+    assert delete.status_code == 403
+    assert get_user_model().objects.filter(pk=target.pk).exists()
+
+
+def test_a_superuser_can_change_staff_status_and_delete_accounts():
+    """SPEC:PERM-050 SPEC:PERM-052 — superusers retain privileged account controls."""
+    superuser = get_user_model().objects.create_superuser(
+        username="root-admin", email="root-admin@example.com", password="test-password"
+    )
+    target = get_user_model().objects.create_user(
+        username="privilege-target", email="privilege-target@example.com"
+    )
+    client = APIClient()
+    client.force_authenticate(superuser)
+
+    promote = client.patch(
+        reverse("admin_users_detail", args=[target.pk]), {"is_staff": True}, format="json"
+    )
+    delete = client.delete(reverse("admin_users_detail", args=[target.pk]))
+
+    assert promote.status_code == 200
+    assert delete.status_code == 204
+    assert not get_user_model().objects.filter(pk=target.pk).exists()
+
+
+def test_media_proxy_rejects_unreferenced_keys_before_contacting_storage():
+    """SPEC:PERM-022 — arbitrary bucket keys are not reachable through the proxy."""
+    with patch("real_estate.views.requests.get") as storage_get:
+        response = Client().get("/api/media/private/unreferenced.webp")
+
+    assert response.status_code == 404
+    storage_get.assert_not_called()
+
+
+def test_media_proxy_serves_a_referenced_ready_image(settings):
+    """SPEC:PERM-022 — catalogue images remain publicly readable."""
+    prop = make_property()
+    PropertyImage.objects.create(
+        property=prop,
+        image="properties/public.webp",
+        status=PropertyImage.Status.READY,
+    )
+    settings.AWS_S3_ENDPOINT_URL = "https://storage.example"
+    settings.AWS_STORAGE_BUCKET_NAME = "media"
+
+    with patch("real_estate.views.requests.get") as storage_get:
+        storage_get.return_value.status_code = 200
+        storage_get.return_value.content = b"image"
+        storage_get.return_value.headers = {"Content-Type": "image/webp"}
+        response = Client().get("/api/media/properties/public.webp")
+
+    assert response.status_code == 200
+    assert response.content == b"image"
+    storage_get.assert_called_once()
 
 
 # --- ADM-008 -----------------------------------------------------------------

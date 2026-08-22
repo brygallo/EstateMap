@@ -50,7 +50,7 @@ def test_public_lead_creation_notifies_property_owner(api_client, create_user, c
 
 @pytest.mark.django_db
 def test_public_lead_creation_is_rate_limited(api_client, create_user):
-    """SPEC:LEAD-002 — anonymous lead creation is limited to ten requests per minute."""
+    """SPEC:LEAD-002 SPEC:PERM-025 — lead creation is limited to ten requests per minute."""
     owner = create_user(email='owner@example.com', username='rate-owner')
     property_obj = Property.objects.create(owner=owner, title='Casa', price=120000)
     payload = {

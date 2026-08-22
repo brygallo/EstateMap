@@ -91,13 +91,13 @@ rules:
         expected: allowed
 
   - id: CLM-003
-    name: Reclamar entrega el anuncio y lo desvincula de la importación
+    name: Solo un teléfono verificado permite reclamar y transferir anuncios
     status: implemented
     summary: >-
-      `POST /api/properties/claim/` traspasa los anuncios de la lista que esta
-      cuenta podía reclamar, les pone `owner` y `is_imported=False`, y lo anota
-      en la bitácora. Lo que quede fuera de esa lista se omite en silencio en
-      vez de tumbar la petición entera.
+      `POST /api/properties/claim/` exige que el teléfono coincidente esté
+      verificado. Solo entonces traspasa los anuncios de la lista, les pone
+      `owner` y `is_imported=False`, y lo anota en la bitácora. Lo que quede
+      fuera de esa lista se omite sin tumbar la petición entera.
     rationale: >-
       Desvincular es lo que hace que el reclamo dure: la retirada automática
       selecciona por `is_imported`, así que un anuncio reclamado que siguiera
@@ -105,8 +105,9 @@ rules:
       quite, con sus contactos dentro. Y la página del que reclama puede tener
       unos segundos de retraso: que otro se haya llevado uno mientras tanto es
       una carrera normal, no un motivo para tirar los otros nueve reclamos.
-      Queda en la bitácora con el teléfono usado y si estaba verificado, porque
-      confiar en un número sin verificar solo es aceptable si es reversible.
+      La reversibilidad de la bitácora no sustituye la prueba de titularidad:
+      escribir el teléfono de otra persona nunca debe bastar para apropiarse de
+      sus anuncios.
     evidence:
       - file: backend/real_estate/services/claims.py
         symbol: def claim
@@ -129,6 +130,8 @@ rules:
       - name: una selección medio caducada reclama igual el resto
         expected: allowed
       - name: una cuenta sin teléfono no puede reclamar
+        expected: allowed
+      - name: una cuenta con teléfono sin verificar no puede reclamar
         expected: allowed
       - name: un anónimo no puede reclamar nada
         role: anonymous

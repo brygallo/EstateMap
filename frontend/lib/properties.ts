@@ -39,6 +39,7 @@ interface GetPropertiesOptions {
   includeImages?: boolean;
   pageSize?: number;
   revalidate?: number;
+  filters?: Record<string, string>;
 }
 
 /**
@@ -49,6 +50,7 @@ export async function getProperties({
   includeImages = false,
   pageSize = 2000,
   revalidate = 3600,
+  filters = {},
 }: GetPropertiesOptions = {}): Promise<Property[]> {
   try {
     // The list endpoint is paginated. SEO pages need broad inventory metadata,
@@ -58,6 +60,9 @@ export async function getProperties({
       page_size: String(pageSize),
       include_images: includeImages ? '1' : '0',
     });
+    for (const [key, value] of Object.entries(filters)) {
+      if (value) params.set(key, value);
+    }
     const res = await serverFetch(`${API_URL}/properties/?${params.toString()}`, {
       next: { revalidate, tags: ['properties'] },
     });

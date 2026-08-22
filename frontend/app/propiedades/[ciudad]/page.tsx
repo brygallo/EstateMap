@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import SeoLanding, { TYPE_LINKS, priceRangeText } from '@/components/SeoLanding';
-import { getAllProperties, getCities, getLocationCatalog, slugify } from '@/lib/properties';
+import { getLocationCatalog, getProperties, slugify } from '@/lib/properties';
 import {
   generateCombosWithCounts,
   MIN_LOCATION_PROPERTIES,
@@ -19,24 +19,22 @@ interface CityPageProps {
 }
 
 async function resolveCity(slug: string) {
-  const properties = await getAllProperties();
-  const match = getCities(properties).find((c) => c.slug === slug);
-  if (match) {
-    const cityProperties = properties.filter((p) => slugify(p.city || '') === slug);
-    return { name: match.name, properties: cityProperties };
-  }
-
-  // No listings right now: fall back to the stable canton catalogue so the page
-  // keeps answering 200 with an empty state instead of 404-ing an indexed URL.
-  // A slug missing from the catalogue too is a genuine 404.
   const { cities } = await getLocationCatalog();
   const known = cities.find((c) => c.slug === slug);
-  return known ? { name: known.name, properties: [] } : null;
+  if (!known) return null;
+
+  // Fetch only this city's inventory. Downloading the complete national
+  // catalogue made the first uncached city visit exceed the navigation timeout.
+  const properties = await getProperties({ filters: { city: known.name } });
+  return {
+    name: known.name,
+    properties: properties.filter((property) => slugify(property.city || '') === slug),
+  };
 }
 
 export async function generateStaticParams() {
-  const properties = await getAllProperties();
-  return getCities(properties).map((city) => ({ ciudad: city.slug }));
+  // Cities are listed in the sitemap and become cached ISR pages on first use.
+  return [];
 }
 
 export async function generateMetadata({

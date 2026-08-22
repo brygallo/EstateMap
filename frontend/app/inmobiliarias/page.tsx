@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { Archive, Check, Eye, MapPin, Phone, Plus, Search } from 'lucide-react';
+import { Archive, ArrowRight, Check, Eye, MapPin, Phone, Plus, Search, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
@@ -82,83 +82,117 @@ const PUBLISHING_OPTIONS = [
 
 export default function InmobiliariasPage() {
   return (
-    <main className="bg-background">
-      {/* Hero */}
-      <section className="bg-primary text-white">
-        <div className="mx-auto max-w-6xl px-4 py-16 sm:px-6 lg:px-8 lg:py-24">
-          <div className="max-w-3xl">
-            <span className="inline-block rounded-full bg-secondary/20 px-3 py-1 text-xs font-semibold text-secondary">
+    <main className="overflow-hidden bg-background">
+      <section className="relative isolate bg-primary text-white">
+        <div className="absolute inset-0 -z-10 bg-[radial-gradient(circle_at_85%_20%,rgba(37,169,102,.5),transparent_30%),radial-gradient(circle_at_8%_90%,rgba(255,255,255,.12),transparent_25%)]" aria-hidden="true" />
+        <div className="mx-auto grid max-w-6xl items-center gap-12 px-4 py-16 sm:px-6 lg:grid-cols-[1.05fr_.95fr] lg:px-8 lg:py-24">
+          <div className="min-w-0">
+            <span className="inline-flex max-w-full items-center gap-2 rounded-full border border-white/20 bg-white/10 px-3 py-1.5 text-xs font-semibold text-white">
+              <Sparkles className="h-3.5 w-3.5 flex-none" aria-hidden="true" />
               Para inmobiliarias y corredores
             </span>
-            <h1 className="mt-4 text-3xl font-bold leading-tight sm:text-5xl">
-              Publica tu inventario en el mapa y da seguimiento a cada contacto
+            <h1 className="mt-6 max-w-2xl break-words text-pretty text-4xl font-bold leading-[1.08] tracking-tight sm:text-5xl lg:text-6xl">
+              Tu inventario, ordenado en el mapa y listo para recibir contactos
             </h1>
-            <p className="mt-5 text-base leading-7 text-white/80 sm:text-lg">
+            <p className="mt-6 max-w-xl text-pretty text-base leading-7 text-white/80 sm:text-lg">
               Publica en el mapa, compara el rendimiento de cada inmueble y gestiona desde un
               solo panel los contactos directos que recibe tu equipo.
             </p>
-            <div className="mt-8 flex flex-wrap gap-3">
-              <Button asChild size="lg" className="bg-secondary text-white hover:bg-secondaryHover">
-                <Link href="/registro">Publicar mis propiedades</Link>
+            <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+              <Button asChild size="lg" className="min-h-12 bg-secondary px-6 text-white shadow-lg shadow-black/15 hover:bg-secondaryHover">
+                <Link href="/publicar-propiedad">Publicar una propiedad <ArrowRight className="ml-2 h-4 w-4" aria-hidden="true" /></Link>
               </Button>
-              <Button asChild size="lg" variant="outline" className="border-white/30 bg-transparent text-white hover:bg-white/10">
+              <Button asChild size="lg" variant="outline" className="min-h-12 border-white/30 bg-white/5 px-6 text-white hover:bg-white/10 hover:text-white">
                 <a href={WHATSAPP_URL} target="_blank" rel="noopener noreferrer">
-                  Hablar por WhatsApp
+                  Consultar por WhatsApp
                 </a>
               </Button>
+            </div>
+          </div>
+
+          <div className="relative mx-auto w-full min-w-0 max-w-lg lg:mx-0 lg:ml-auto">
+            <div className="absolute -inset-5 -z-10 rotate-2 rounded-[2rem] border border-white/10 bg-white/5" aria-hidden="true" />
+            <div className="overflow-hidden rounded-[1.5rem] border border-white/20 bg-white text-textPrimary shadow-2xl shadow-black/25">
+              <div className="flex flex-wrap items-center justify-between gap-2 border-b border-line bg-slate-50 px-5 py-3">
+                <p className="text-xs font-bold uppercase tracking-[0.14em] text-primary">Panel de propiedades</p>
+                <span className="rounded-full bg-secondary/10 px-2.5 py-1 text-[11px] font-bold text-secondary">Vista del anunciante</span>
+              </div>
+              <div className="p-5 sm:p-7">
+                <div className="rounded-card border border-line p-4 shadow-sm">
+                  <div className="flex min-w-0 items-start gap-4">
+                    <div className="grid h-16 w-20 flex-none place-items-center rounded-lg bg-primaryLight text-primary"><MapPin className="h-6 w-6" aria-hidden="true" /></div>
+                    <div className="min-w-0">
+                      <p className="break-words text-sm font-bold">Casa con jardín en Cumbayá</p>
+                      <p className="mt-1 text-xs text-textSecondary">Publicada · contacto directo</p>
+                      <p className="mt-2 font-geo text-lg font-black text-primary">$185.000</p>
+                    </div>
+                  </div>
+                </div>
+                <div className="mt-4 grid grid-cols-2 gap-3">
+                  <div className="min-w-0 rounded-xl bg-background p-4"><Eye className="h-4 w-4 text-secondary" aria-hidden="true" /><p className="mt-3 break-words text-xs font-bold">Actividad del anuncio</p><p className="mt-1 text-[11px] leading-4 text-textSecondary">Sin contar rastreadores</p></div>
+                  <div className="min-w-0 rounded-xl bg-background p-4"><Phone className="h-4 w-4 text-secondary" aria-hidden="true" /><p className="mt-3 break-words text-xs font-bold">Contactos directos</p><p className="mt-1 text-[11px] leading-4 text-textSecondary">WhatsApp o llamada</p></div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Beneficios */}
-      <section className="mx-auto max-w-6xl px-4 py-16 sm:px-6 lg:px-8">
-        <h2 className="text-center text-2xl font-bold text-textPrimary sm:text-3xl">
-          Todo lo que necesitas para vender más rápido
-        </h2>
-        <div className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+      <section className="border-b border-line bg-white">
+        <div className="mx-auto grid max-w-6xl divide-y divide-line px-4 sm:grid-cols-3 sm:divide-x sm:divide-y-0 sm:px-6 lg:px-8">
+          {[
+            ['Publicación', 'Inventario profesional sin cupos artificiales'],
+            ['Contacto', 'WhatsApp y llamada sin intermediarios'],
+            ['Control', 'Cada anuncio conserva su propio informe'],
+          ].map(([label, value]) => <div key={label} className="min-w-0 py-6 sm:px-6 sm:first:pl-0 sm:last:pr-0"><p className="text-xs font-bold uppercase tracking-[0.16em] text-secondary">{label}</p><p className="mt-2 break-words text-sm font-semibold leading-6 text-textPrimary">{value}</p></div>)}
+        </div>
+      </section>
+
+      <section className="mx-auto max-w-6xl px-4 py-16 sm:px-6 lg:px-8 lg:py-24">
+        <div className="max-w-2xl">
+          <p className="text-xs font-bold uppercase tracking-[0.18em] text-secondary">Un lugar para operar</p>
+          <h2 className="mt-3 text-pretty text-3xl font-bold tracking-tight text-textPrimary sm:text-4xl">Del inventario al contacto, sin saltar entre herramientas</h2>
+          <p className="mt-4 text-base leading-7 text-textSecondary">Cada función responde una pregunta concreta: qué está publicado, dónde aparece y qué actividad produjo.</p>
+        </div>
+        <div className="mt-10 grid gap-px overflow-hidden rounded-[1.5rem] border border-line bg-line sm:grid-cols-2 lg:grid-cols-3">
           {BENEFITS.map((b) => (
-            <Card key={b.title} className="rounded-card border-line p-6 shadow-card">
-              <div className="flex h-11 w-11 items-center justify-center rounded-lg bg-primary/10 text-primary">
+            <article key={b.title} className="min-w-0 bg-white p-6 sm:p-7">
+              <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-primaryLight text-primary">
                 <b.icon className="h-6 w-6" strokeWidth={1.75} aria-hidden />
               </div>
-              <h3 className="mt-4 text-base font-bold text-textPrimary">{b.title}</h3>
-              <p className="mt-2 text-sm leading-6 text-textSecondary">{b.desc}</p>
-            </Card>
+              <h3 className="mt-5 break-words text-base font-bold text-textPrimary">{b.title}</h3>
+              <p className="mt-2 break-words text-sm leading-6 text-textSecondary">{b.desc}</p>
+            </article>
           ))}
         </div>
       </section>
 
       {/* Cómo funciona */}
       <section className="bg-white">
-        <div className="mx-auto max-w-6xl px-4 py-16 sm:px-6 lg:px-8">
-          <h2 className="text-center text-2xl font-bold text-textPrimary sm:text-3xl">
-            Publicar es simple
-          </h2>
-          <div className="mt-10 grid gap-6 sm:grid-cols-3">
+        <div className="mx-auto max-w-6xl px-4 py-16 sm:px-6 lg:px-8 lg:py-24">
+          <p className="text-xs font-bold uppercase tracking-[0.18em] text-secondary">Cómo funciona</p>
+          <h2 className="mt-3 text-3xl font-bold tracking-tight text-textPrimary sm:text-4xl">Publica y mantén el control</h2>
+          <ol className="relative mt-12 grid gap-8 lg:grid-cols-3 lg:gap-0">
+            <div className="absolute left-[16.7%] right-[16.7%] top-7 hidden border-t border-dashed border-primary/25 lg:block" aria-hidden="true" />
             {STEPS.map((s) => (
-              <div key={s.n} className="text-center">
-                <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-secondary text-lg font-bold text-white">
+              <li key={s.n} className="relative min-w-0 lg:px-8 lg:first:pl-0 lg:last:pr-0">
+                <div className="relative z-10 flex h-14 w-14 items-center justify-center rounded-full border-4 border-white bg-primary text-lg font-bold text-white shadow-card">
                   {s.n}
                 </div>
-                <h3 className="mt-4 text-base font-bold text-textPrimary">{s.title}</h3>
-                <p className="mt-2 text-sm text-textSecondary">{s.desc}</p>
-              </div>
+                <h3 className="mt-5 break-words text-lg font-bold text-textPrimary">{s.title}</h3>
+                <p className="mt-2 max-w-sm break-words text-sm leading-6 text-textSecondary">{s.desc}</p>
+              </li>
             ))}
-          </div>
-          <div className="mt-10 text-center">
-            <Button asChild size="lg">
-              <Link href="/publicar-asistido">Publicación asistida</Link>
-            </Button>
-          </div>
+          </ol>
         </div>
       </section>
 
       {/* Informe por anuncio: lo que el panel sí sabe responder */}
-      <section className="mx-auto max-w-6xl px-4 py-16 sm:px-6 lg:px-8">
-        <div className="grid items-center gap-10 lg:grid-cols-2">
-          <div>
-            <h2 className="text-2xl font-bold text-textPrimary sm:text-3xl">
+      <section className="mx-auto max-w-6xl px-4 py-16 sm:px-6 lg:px-8 lg:py-24">
+        <div className="grid items-center gap-12 lg:grid-cols-[.85fr_1.15fr] lg:gap-20">
+          <div className="min-w-0">
+            <p className="text-xs font-bold uppercase tracking-[0.18em] text-secondary">Información accionable</p>
+            <h2 className="mt-3 text-pretty text-3xl font-bold tracking-tight text-textPrimary sm:text-4xl">
               Un panel para saber qué anuncio funciona
             </h2>
             <p className="mt-4 text-base leading-7 text-textSecondary">
@@ -180,7 +214,7 @@ export default function InmobiliariasPage() {
               ))}
             </ul>
           </div>
-          <Card className="rounded-card border-line p-6 shadow-card">
+          <Card className="min-w-0 rounded-[1.5rem] border-line p-6 shadow-card sm:p-8">
             <p className="text-sm font-semibold text-textPrimary">
               Lo que responde el informe de cada anuncio
             </p>
@@ -190,8 +224,8 @@ export default function InmobiliariasPage() {
                 { q: '¿Desde qué red llegaron?', a: 'WhatsApp, Facebook, búsqueda o directo' },
                 { q: '¿Cuántas veces se compartió?', a: 'Desde el kit de promoción del anuncio' },
               ].map((row) => (
-                <div key={row.q} className="rounded-lg bg-background p-3">
-                  <p className="text-sm font-semibold text-textPrimary">{row.q}</p>
+                <div key={row.q} className="min-w-0 rounded-xl bg-background p-4">
+                  <p className="break-words text-sm font-semibold text-textPrimary">{row.q}</p>
                   <p className="mt-0.5 text-xs text-textSecondary">{row.a}</p>
                 </div>
               ))}
@@ -202,16 +236,17 @@ export default function InmobiliariasPage() {
 
       {/* Opciones de publicación */}
       <section className="bg-white">
-        <div className="mx-auto max-w-6xl px-4 py-16 sm:px-6 lg:px-8">
-          <h2 className="text-center text-2xl font-bold text-textPrimary sm:text-3xl">Elige cómo publicar</h2>
-          <p className="mt-2 text-center text-sm text-textSecondary">
+        <div className="mx-auto max-w-6xl px-4 py-16 sm:px-6 lg:px-8 lg:py-24">
+          <p className="text-center text-xs font-bold uppercase tracking-[0.18em] text-secondary">Dos caminos reales</p>
+          <h2 className="mt-3 text-center text-3xl font-bold tracking-tight text-textPrimary sm:text-4xl">Elige cómo publicar</h2>
+          <p className="mx-auto mt-3 max-w-2xl text-center text-sm leading-6 text-textSecondary">
             Usa el formulario gratis o pídenos ayuda para completar la publicación.
           </p>
           <div className="mx-auto mt-10 grid max-w-4xl gap-6 md:grid-cols-2">
             {PUBLISHING_OPTIONS.map((plan) => (
               <Card
                 key={plan.name}
-                className={`rounded-card p-6 shadow-card ${
+                className={`min-w-0 rounded-[1.25rem] p-6 shadow-card sm:p-8 ${
                   plan.highlight ? 'border-primary ring-2 ring-primary' : 'border-line'
                 }`}
               >
@@ -231,13 +266,9 @@ export default function InmobiliariasPage() {
                   variant={plan.highlight ? 'default' : 'outline'}
                   className="mt-6 w-full"
                 >
-                  <a
-                    href={plan.href}
-                    target={plan.href.startsWith('http') ? '_blank' : undefined}
-                    rel={plan.href.startsWith('http') ? 'noopener noreferrer' : undefined}
-                  >
+                  <Link href={plan.href} className="whitespace-normal text-center leading-5">
                     {plan.cta}
-                  </a>
+                  </Link>
                 </Button>
               </Card>
             ))}
@@ -245,20 +276,21 @@ export default function InmobiliariasPage() {
         </div>
       </section>
 
-      {/* CTA final */}
-      <section className="bg-primary text-white">
-        <div className="mx-auto max-w-4xl px-4 py-16 text-center sm:px-6 lg:px-8">
-          <h2 className="text-2xl font-bold sm:text-3xl">¿Listo para captar más clientes?</h2>
-          <p className="mt-3 text-white/80">
-            Publica tus propiedades hoy y empieza a recibir contactos directos.
-          </p>
-          <div className="mt-8 flex flex-wrap justify-center gap-3">
-            <Button asChild size="lg" className="bg-secondary text-white hover:bg-secondaryHover">
-              <Link href="/publicar-propiedad">Publicar una propiedad</Link>
+      <section className="px-4 pb-16 sm:px-6 lg:px-8 lg:pb-24">
+        <div className="relative mx-auto max-w-6xl overflow-hidden rounded-[1.75rem] bg-primary px-6 py-12 text-white shadow-xl sm:px-10 lg:flex lg:items-center lg:justify-between lg:gap-12 lg:px-14 lg:py-14">
+          <div className="absolute -right-20 -top-28 h-72 w-72 rounded-full border-[48px] border-white/5" aria-hidden="true" />
+          <div className="relative min-w-0 max-w-2xl">
+            <p className="text-xs font-bold uppercase tracking-[0.18em] text-secondary">Puedes empezar gratis</p>
+            <h2 className="mt-3 break-words text-pretty text-3xl font-bold tracking-tight sm:text-4xl">Publica la primera propiedad de tu inventario</h2>
+            <p className="mt-4 text-base leading-7 text-white/75">Completa la ficha por tu cuenta o pide ayuda para preparar el borrador.</p>
+          </div>
+          <div className="relative mt-8 flex min-w-0 flex-col gap-3 sm:flex-row lg:mt-0 lg:flex-col">
+            <Button asChild size="lg" className="min-h-12 bg-secondary px-6 text-white hover:bg-secondaryHover">
+              <Link href="/publicar-propiedad" className="whitespace-normal text-center leading-5">Publicar una propiedad <ArrowRight className="ml-2 h-4 w-4 flex-none" aria-hidden="true" /></Link>
             </Button>
-            <Button asChild size="lg" variant="outline" className="border-white/30 bg-transparent text-white hover:bg-white/10">
+            <Button asChild size="lg" variant="outline" className="min-h-12 border-white/30 bg-transparent px-6 text-white hover:bg-white/10 hover:text-white">
               <a href={WHATSAPP_URL} target="_blank" rel="noopener noreferrer">
-                Escríbenos por WhatsApp
+                Pedir ayuda por WhatsApp
               </a>
             </Button>
           </div>

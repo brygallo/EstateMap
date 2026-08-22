@@ -115,11 +115,11 @@ Quién puede hacer qué en la API de Geo Propiedades Ecuador. Este archivo es el
 | [`PERM-018`](#perm-018--los-indicadores-de-mercado-son-públicos) | Los indicadores de mercado son públicos | ✅ Implementada |
 | [`PERM-019`](#perm-019--las-tablas-de-provincias-y-cantones-se-leen-sin-cuenta) | Las tablas de provincias y cantones se leen sin cuenta | ✅ Implementada |
 | [`PERM-020`](#perm-020--la-geografía-no-se-puede-escribir-desde-la-api) | La geografía no se puede escribir desde la API | ✅ Implementada |
-| [`PERM-021`](#perm-021--el-proxy-de-imágenes-es-público-y-sin-restricción-de-objeto) | El proxy de imágenes es público y sin restricción de objeto | ✅ Implementada |
-| [`PERM-022`](#perm-022--el-proxy-de-imágenes-debería-servir-solo-objetos-referenciados) | El proxy de imágenes debería servir solo objetos referenciados | 📝 Propuesta (sin código) |
+| [`PERM-021`](#perm-021--el-proxy-de-imágenes-es-público-y-sin-restricción-de-objeto) | El proxy de imágenes es público y sin restricción de objeto | 🗑️ Obsoleta |
+| [`PERM-022`](#perm-022--el-proxy-de-imágenes-sirve-solo-objetos-referenciados) | El proxy de imágenes sirve solo objetos referenciados | ✅ Implementada |
 | [`PERM-023`](#perm-023--las-imágenes-en-staging-son-públicas-mientras-se-optimizan) | Las imágenes en staging son públicas mientras se optimizan | ✅ Implementada |
 | [`PERM-024`](#perm-024--el-formulario-de-contacto-es-público) | El formulario de contacto es público | ✅ Implementada |
-| [`PERM-025`](#perm-025--la-creación-de-leads-debería-estar-limitada-por-tasa) | La creación de leads debería estar limitada por tasa | 📝 Propuesta (sin código) |
+| [`PERM-025`](#perm-025--la-creación-de-leads-está-limitada-por-tasa) | La creación de leads está limitada por tasa | ✅ Implementada |
 | [`PERM-026`](#perm-026--la-bandeja-de-leads-exige-sesión) | La bandeja de leads exige sesión | ✅ Implementada |
 | [`PERM-027`](#perm-027--un-lead-concreto-solo-es-accesible-para-el-dueño-de-su-propiedad) | Un lead concreto solo es accesible para el dueño de su propiedad | ✅ Implementada |
 | [`PERM-028`](#perm-028--la-solicitud-de-publicación-asistida-es-pública-y-está-limitada) | La solicitud de publicación asistida es pública y está limitada | ✅ Implementada |
@@ -127,7 +127,7 @@ Quién puede hacer qué en la API de Geo Propiedades Ecuador. Este archivo es el
 | [`PERM-030`](#perm-030--la-captura-de-eventos-de-analítica-es-pública-y-está-limitada) | La captura de eventos de analítica es pública y está limitada | ✅ Implementada |
 | [`PERM-031`](#perm-031--el-registro-de-actividad-solo-lo-consulta-staff) | El registro de actividad solo lo consulta staff | ✅ Implementada |
 | [`PERM-032`](#perm-032--el-inicio-de-sesión-es-público) | El inicio de sesión es público | ✅ Implementada |
-| [`PERM-033`](#perm-033--los-endpoints-de-autenticación-deberían-limitar-los-intentos) | Los endpoints de autenticación deberían limitar los intentos | 📝 Propuesta (sin código) |
+| [`PERM-033`](#perm-033--los-endpoints-de-autenticación-limitan-los-intentos) | Los endpoints de autenticación limitan los intentos | ✅ Implementada |
 | [`PERM-034`](#perm-034--el-registro-es-público-y-la-cuenta-nace-inactiva) | El registro es público y la cuenta nace inactiva | ✅ Implementada |
 | [`PERM-035`](#perm-035--el-inicio-de-sesión-con-google-exige-un-correo-verificado-por-google) | El inicio de sesión con Google exige un correo verificado por Google | ✅ Implementada |
 | [`PERM-036`](#perm-036--el-refresco-de-token-es-público) | El refresco de token es público | ✅ Implementada |
@@ -143,10 +143,10 @@ Quién puede hacer qué en la API de Geo Propiedades Ecuador. Este archivo es el
 | [`PERM-046`](#perm-046--el-estado-del-sistema-es-solo-para-staff) | El estado del sistema es solo para staff | ✅ Implementada |
 | [`PERM-047`](#perm-047--resolver-una-incidencia-del-sistema-exige-staff) | Resolver una incidencia del sistema exige staff | ✅ Implementada |
 | [`PERM-048`](#perm-048--la-gestión-de-usuarios-del-panel-es-solo-para-staff) | La gestión de usuarios del panel es solo para staff | ✅ Implementada |
-| [`PERM-049`](#perm-049--cualquier-staff-puede-conceder-is_staff-a-otra-cuenta) | Cualquier staff puede conceder is_staff a otra cuenta | ✅ Implementada |
-| [`PERM-050`](#perm-050--conceder-is_staff-debería-exigir-is_superuser) | Conceder is_staff debería exigir is_superuser | 📝 Propuesta (sin código) |
-| [`PERM-051`](#perm-051--cualquier-staff-puede-eliminar-cuentas-de-usuario) | Cualquier staff puede eliminar cuentas de usuario | ✅ Implementada |
-| [`PERM-052`](#perm-052--eliminar-cuentas-debería-exigir-is_superuser) | Eliminar cuentas debería exigir is_superuser | 📝 Propuesta (sin código) |
+| [`PERM-049`](#perm-049--cualquier-staff-puede-conceder-is_staff-a-otra-cuenta) | Cualquier staff puede conceder is_staff a otra cuenta | 🗑️ Obsoleta |
+| [`PERM-050`](#perm-050--conceder-is_staff-exige-is_superuser) | Conceder is_staff exige is_superuser | ✅ Implementada |
+| [`PERM-051`](#perm-051--cualquier-staff-puede-eliminar-cuentas-de-usuario) | Cualquier staff puede eliminar cuentas de usuario | 🗑️ Obsoleta |
+| [`PERM-052`](#perm-052--eliminar-cuentas-exige-is_superuser) | Eliminar cuentas exige is_superuser | ✅ Implementada |
 | [`PERM-053`](#perm-053--el-listado-de-propiedades-del-panel-es-solo-para-staff) | El listado de propiedades del panel es solo para staff | ✅ Implementada |
 | [`PERM-054`](#perm-054--los-contadores-de-propiedades-del-panel-son-solo-para-staff) | Los contadores de propiedades del panel son solo para staff | ✅ Implementada |
 | [`PERM-055`](#perm-055--la-edición-administrativa-de-propiedades-está-acotada-a-cinco-campos) | La edición administrativa de propiedades está acotada a cinco campos | ✅ Implementada |
@@ -719,7 +719,7 @@ demand.views, demand.contacts y demand.city_median_views se sirven solo al propi
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/real_estate/views.py:2345-2347` (`class MarketStatsView`)
+- `backend/real_estate/views.py:2375-2377` (`class MarketStatsView`)
 
 **Casos**
 
@@ -796,7 +796,7 @@ La API no expone creación ni modificación de provincias y cantones: el método
 
 ### PERM-021 — El proxy de imágenes es público y sin restricción de objeto
 
-**Estado:** ✅ Implementada
+**Estado:** 🗑️ Obsoleta
 
 /api/media/<ruta> reenvía cualquier objeto del bucket de MinIO sin autenticación, sin permisos y sin límite de tasa.
 
@@ -812,7 +812,7 @@ La API no expone creación ni modificación de provincias y cantones: el método
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/real_estate/views.py:1881-1883` (`class ImageProxyView`)
+- `backend/real_estate/views.py:1897-1899` (`class ImageProxyView`)
 - `backend/real_estate/urls.py:79-81` (`name='image_proxy'`)
 
 **Casos**
@@ -825,11 +825,11 @@ La API no expone creación ni modificación de provincias y cantones: el método
 
 - `backend/real_estate/tests/generated/test_spec_matrix.py`
 
-### PERM-022 — El proxy de imágenes debería servir solo objetos referenciados
+### PERM-022 — El proxy de imágenes sirve solo objetos referenciados
 
-**Estado:** 📝 Propuesta (sin código)
+**Estado:** ✅ Implementada
 
-El proxy debe resolver únicamente rutas que correspondan a una PropertyImage existente, y rechazar cualquier otra con 404 sin consultar el bucket.
+El proxy resuelve únicamente rutas que correspondan a la imagen o miniatura de una PropertyImage lista, y rechaza cualquier otra con 404 sin consultar el bucket.
 
 > **Por qué:** Cierra el problema de PERM-021 sin romper el catálogo público: las imágenes del inventario siguen siendo públicas, pero el bucket deja de ser enumerable a través del backend.
 
@@ -841,13 +841,21 @@ El proxy debe resolver únicamente rutas que correspondan a una PropertyImage ex
 - ¿Lo aplica el servidor?: sí
 - Al denegar: HTTP `404`
 
-**Evidencia en el código:** ninguna, y es lo esperado: no hay código que la implemente.
+**Evidencia en el código** (verificada por `tools/specs/validate.py`)
+
+- `backend/real_estate/views.py` (`class ImageProxyView`)
 
 **Casos**
 
 | Caso | Rol | Estado previo | Cuerpo | Esperado |
 | --- | --- | --- | --- | --- |
-| una ruta que no corresponde a ninguna imagen no debería consultarse en MinIO | anonymous | — | — | denied |
+| una ruta que no corresponde a ninguna imagen no consulta MinIO | anonymous | — | — | denied |
+| una imagen lista y referenciada sigue siendo pública | anonymous | — | — | allowed |
+
+**Cobertura exigida:** api
+
+- `backend/real_estate/tests/generated/test_spec_matrix.py`
+- `backend/real_estate/tests/test_admin_operations.py`
 
 ### PERM-023 — Las imágenes en staging son públicas mientras se optimizan
 
@@ -867,8 +875,8 @@ El proxy debe resolver únicamente rutas que correspondan a una PropertyImage ex
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/real_estate/views.py:1950-1967` (`class PendingImageView`)
-- `backend/real_estate/views.py:1972-1974` (`path.parent != Path(settings.IMAGE_UPLOAD_TEMP_DIR)`)
+- `backend/real_estate/views.py:1972-1988` (`class PendingImageView`)
+- `backend/real_estate/views.py:1994-1996` (`path.parent != Path(settings.IMAGE_UPLOAD_TEMP_DIR)`)
 - `backend/real_estate/views.py` (`def _sniff_image_type`) — El tipo de contenido sale de los bytes, no de la extensión.
 
 **Casos**
@@ -914,13 +922,13 @@ Cualquiera puede crear un lead sin cuenta, y el estado del lead no se puede fija
 
 - `backend/real_estate/tests/generated/test_spec_matrix.py`
 
-### PERM-025 — La creación de leads debería estar limitada por tasa
+### PERM-025 — La creación de leads está limitada por tasa
 
-**Estado:** 📝 Propuesta (sin código)
+**Estado:** ✅ Implementada
 
-POST /api/leads/ debe declarar un throttle equivalente al de las otras dos creaciones públicas y responder 429 al superarlo.
+POST /api/leads/ declara el scope lead_create a 10/min y responde 429 al superarlo.
 
-> **Por qué:** DEFECTO por inconsistencia. Los tres POST públicos del sistema siguen el mismo patrón (fila nueva más correo de notificación), pero solo pending-publications (10/min) y activity-events (30/min) declaran get_throttles. Además la notificación de lead se envía de forma síncrona, así que cada petición cuesta una conexión SMTP.
+> **Por qué:** Los tres POST públicos siguen límites explícitos. En leads el envío de correo es síncrono, así que el techo protege también el servidor SMTP.
 
 **Permisos exigidos:** `leads.create_public`
 
@@ -931,13 +939,20 @@ POST /api/leads/ debe declarar un throttle equivalente al de las otras dos creac
 - Al denegar: HTTP `429`
 - Throttle: `lead_create`
 
-**Evidencia en el código:** ninguna, y es lo esperado: no hay código que la implemente.
+**Evidencia en el código** (verificada por `tools/specs/validate.py`)
+
+- `backend/real_estate/views.py` (`class LeadViewSet`)
+- `backend/estate_map/settings.py` (`'lead_create': '10/min'`)
 
 **Casos**
 
 | Caso | Rol | Estado previo | Cuerpo | Esperado |
 | --- | --- | --- | --- | --- |
-| la petición que supera el límite por minuto debería rechazarse | anonymous | — | — | denied |
+| la petición que supera el límite por minuto se rechaza | anonymous | — | — | 429 después de la ráfaga; lo ejecuta test_public_lead_creation_is_rate_limited |
+
+**Cobertura exigida:** api
+
+- `backend/real_estate/tests/test_leads.py`
 
 ### PERM-026 — La bandeja de leads exige sesión
 
@@ -1164,13 +1179,13 @@ Listar o consultar eventos de actividad exige is_staff; un usuario autenticado n
 
 - `backend/real_estate/tests/generated/test_spec_matrix.py`
 
-### PERM-033 — Los endpoints de autenticación deberían limitar los intentos
+### PERM-033 — Los endpoints de autenticación limitan los intentos
 
-**Estado:** 📝 Propuesta (sin código)
+**Estado:** ✅ Implementada
 
-Login, registro, refresco de token, recuperación de contraseña y reenvío de código deben declarar un límite de tasa y responder 429 al superarlo.
+Login, registro, OAuth, refresco y revocación de token, verificación, recuperación de contraseña y reenvío de código declaran límites de tasa y responden 429 al superarlos.
 
-> **Por qué:** DEFECTO. Ninguno de los siete endpoints públicos de autenticación declara throttle, y no existe bloqueo por intentos fallidos en ninguna parte del backend. Además resend-verification y request-password-reset envían un correo por petición, así que también son un amplificador de envíos.
+> **Por qué:** Los endpoints que envían correo usan un scope más estricto que los intentos de credenciales para impedir amplificación sin bloquear recuperaciones legítimas.
 
 **Permisos exigidos:** `auth.login`, `auth.register`, `auth.request_password_reset`, `auth.resend_verification`
 
@@ -1181,13 +1196,20 @@ Login, registro, refresco de token, recuperación de contraseña y reenvío de c
 - Al denegar: HTTP `429`
 - Throttle: `auth_attempt`
 
-**Evidencia en el código:** ninguna, y es lo esperado: no hay código que la implemente.
+**Evidencia en el código** (verificada por `tools/specs/validate.py`)
+
+- `backend/real_estate/views.py` (`class CustomTokenObtainPairView`)
+- `backend/estate_map/settings.py` (`'auth_attempt': '10/min'`)
 
 **Casos**
 
 | Caso | Rol | Estado previo | Cuerpo | Esperado |
 | --- | --- | --- | --- | --- |
-| el intento que supera el límite debería rechazarse | anonymous | — | — | denied |
+| el intento que supera el límite se rechaza | anonymous | — | — | 429 después de la ráfaga; lo ejecuta test_login_attempts_are_rate_limited |
+
+**Cobertura exigida:** api
+
+- `backend/real_estate/tests/test_authentication.py`
 
 ### PERM-034 — El registro es público y la cuenta nace inactiva
 
@@ -1207,7 +1229,7 @@ Cualquiera puede registrarse sin autenticación, y la cuenta se crea con is_acti
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/real_estate/views.py:1822-1824` (`class RegisterView`)
+- `backend/real_estate/views.py:1834-1836` (`class RegisterView`)
 - `backend/real_estate/serializers.py:857-860` (`class RegisterSerializer`) — create() pasa is_active=False y emite el token de verificación.
 
 **Casos**
@@ -1239,7 +1261,7 @@ Cualquiera puede registrarse sin autenticación, y la cuenta se crea con is_acti
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
 - `backend/real_estate/services/authentication.py:27-39` (`claims.get("email_verified") is not True`)
-- `backend/real_estate/views.py:1828-1830` (`class GoogleLoginView`)
+- `backend/real_estate/views.py:1842-1844` (`class GoogleLoginView`)
 
 **Casos**
 
@@ -1298,8 +1320,8 @@ Canjear el código de verificación no exige sesión, porque quien lo usa todav�
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/real_estate/views.py:1982-1984` (`class VerifyEmailView`)
-- `backend/real_estate/views.py:2031-2033` (`user.is_email_verified = True`)
+- `backend/real_estate/views.py:2004-2006` (`class VerifyEmailView`)
+- `backend/real_estate/views.py:2055-2057` (`user.is_email_verified = True`)
 
 **Casos**
 
@@ -1328,7 +1350,7 @@ Canjear el código de verificación no exige sesión, porque quien lo usa todav�
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/real_estate/views.py:2119-2121` (`# Por seguridad, no revelar si el email existe o no`)
+- `backend/real_estate/views.py:2147-2149` (`# Por seguridad, no revelar si el email existe o no`)
 
 **Casos**
 
@@ -1358,7 +1380,7 @@ Canjear el código de verificación no exige sesión, porque quien lo usa todav�
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/real_estate/views.py:2000-2002` (`{'error': 'Usuario no encontrado'}`)
+- `backend/real_estate/views.py:2024-2026` (`{'error': 'Usuario no encontrado'}`)
 
 **Casos**
 
@@ -1415,7 +1437,7 @@ Canjear el código de verificación no exige sesión, porque quien lo usa todav�
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/real_estate/views.py:2323-2325` (`return self.request.user`)
+- `backend/real_estate/views.py:2353-2355` (`return self.request.user`)
 
 **Casos**
 
@@ -1478,7 +1500,7 @@ La actualización del perfil propio solo admite username, nombre y apellidos; co
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/real_estate/views.py:2326-2328` (`class ChangePasswordView`)
+- `backend/real_estate/views.py:2356-2358` (`class ChangePasswordView`)
 - `backend/real_estate/serializers.py:1012-1014` (`La contraseña actual no es correcta`)
 
 **Casos**
@@ -1510,8 +1532,8 @@ Solicitar el cambio de correo requiere autenticación, invalida las solicitudes 
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/real_estate/views.py:2190-2192` (`class RequestEmailChangeView`)
-- `backend/real_estate/views.py:2208-2210` (`EmailChangeToken.objects.filter(user=user, is_used=False).update(is_used=True)`)
+- `backend/real_estate/views.py:2220-2222` (`class RequestEmailChangeView`)
+- `backend/real_estate/views.py:2238-2240` (`EmailChangeToken.objects.filter(user=user, is_used=False).update(is_used=True)`)
 
 **Casos**
 
@@ -1542,8 +1564,8 @@ Solicitar el cambio de correo requiere autenticación, invalida las solicitudes 
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/real_estate/views.py:2615-2617` (`class AdminDashboardView`)
-- `backend/real_estate/views.py:2735-2737` (`AdminMetricsService(now=now, window_days=window_days).build()`)
+- `backend/real_estate/views.py:2645-2647` (`class AdminDashboardView`)
+- `backend/real_estate/views.py:2765-2767` (`AdminMetricsService(now=now, window_days=window_days).build()`)
 - `backend/real_estate/permissions.py:46-50` (`class IsAdminUser`)
 
 **Casos**
@@ -1577,8 +1599,8 @@ Leer el estado operativo y marcar incidencias como resueltas exige is_staff.
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/real_estate/views.py:2788-2790` (`class AdminSystemStatusView`)
-- `backend/real_estate/views.py:2912-2914` (`admin_audit action=incident.resolve`)
+- `backend/real_estate/views.py:2818-2820` (`class AdminSystemStatusView`)
+- `backend/real_estate/views.py:2942-2944` (`admin_audit action=incident.resolve`)
 
 **Casos**
 
@@ -1610,8 +1632,8 @@ El POST de /admin/system-status/ marca una incidencia como resuelta y está cubi
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/real_estate/views.py:2910-2912` (`incident.save(update_fields=["resolved", "last_seen_at"])`)
-- `backend/real_estate/views.py:2617-2619` (`permission_classes = [IsAuthenticated, IsAdminUser]`)
+- `backend/real_estate/views.py:2940-2942` (`incident.save(update_fields=["resolved", "last_seen_at"])`)
+- `backend/real_estate/views.py:2647-2649` (`permission_classes = [IsAuthenticated, IsAdminUser]`)
 
 **Casos**
 
@@ -1643,7 +1665,7 @@ Listar cuentas desde el panel exige is_staff; un usuario autenticado normal reci
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/real_estate/views.py:2924-2926` (`class AdminUserViewSet`)
+- `backend/real_estate/views.py:2954-2956` (`class AdminUserViewSet`)
 
 **Casos**
 
@@ -1659,7 +1681,7 @@ Listar cuentas desde el panel exige is_staff; un usuario autenticado normal reci
 
 ### PERM-049 — Cualquier staff puede conceder is_staff a otra cuenta
 
-**Estado:** ✅ Implementada
+**Estado:** 🗑️ Obsoleta
 
 La edición de usuarios del panel admite exactamente is_active e is_staff, y basta con ser staff para otorgar el rol de staff a un tercero.
 
@@ -1675,7 +1697,7 @@ La edición de usuarios del panel admite exactamente is_active e is_staff, y bas
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/real_estate/views.py:2984-2986` (`allowed_fields = {'is_active', 'is_staff'}`)
+- `backend/real_estate/views.py:3014-3016` (`allowed_fields = {'is_active', 'is_staff'}`)
 - `backend/real_estate/permissions.py:52` (`return request.user and request.user.is_authenticated and request.user.is_staff`) — No comprueba is_superuser en ningún punto.
 
 **Casos**
@@ -1690,13 +1712,13 @@ La edición de usuarios del panel admite exactamente is_active e is_staff, y bas
 
 - `backend/real_estate/tests/generated/test_spec_matrix.py`
 
-### PERM-050 — Conceder is_staff debería exigir is_superuser
+### PERM-050 — Conceder is_staff exige is_superuser
 
-**Estado:** 📝 Propuesta (sin código)
+**Estado:** ✅ Implementada
 
-Otorgar o retirar el rol de staff debe requerir is_superuser, de modo que un staff normal reciba 403 al intentarlo.
+Otorgar o retirar el rol de staff requiere is_superuser, de modo que un staff normal recibe 403 al intentarlo.
 
-> **Por qué:** Cierra el defecto de PERM-049. Requiere una permission class nueva (por ejemplo IsSuperUser) aplicada a las operaciones de elevación de privilegio, dejando is_active en manos de staff.
+> **Por qué:** Cierra el defecto histórico de PERM-049 y deja is_active en manos de staff.
 
 **Permisos exigidos:** `admin.users_update`
 
@@ -1706,7 +1728,10 @@ Otorgar o retirar el rol de staff debe requerir is_superuser, de modo que un sta
 - ¿Lo aplica el servidor?: sí
 - Al denegar: HTTP `403`
 
-**Evidencia en el código:** ninguna, y es lo esperado: no hay código que la implemente.
+**Evidencia en el código** (verificada por `tools/specs/validate.py`)
+
+- `backend/real_estate/permissions.py` (`class IsSuperUser`)
+- `backend/real_estate/views.py` (`def partial_update`)
 
 **Casos**
 
@@ -1718,10 +1743,11 @@ Otorgar o retirar el rol de staff debe requerir is_superuser, de modo que un sta
 **Cobertura exigida:** api
 
 - `backend/real_estate/tests/generated/test_spec_matrix.py`
+- `backend/real_estate/tests/test_admin_operations.py`
 
 ### PERM-051 — Cualquier staff puede eliminar cuentas de usuario
 
-**Estado:** ✅ Implementada
+**Estado:** 🗑️ Obsoleta
 
 Borrar una cuenta desde el panel exige is_staff y nada más; la única salvaguarda es que nadie puede borrarse a sí mismo.
 
@@ -1737,7 +1763,7 @@ Borrar una cuenta desde el panel exige is_staff y nada más; la única salvaguar
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/real_estate/views.py:3032-3034` (`admin_audit action=user.delete`)
+- `backend/real_estate/views.py:3073-3075` (`admin_audit action=user.delete`)
 
 **Casos**
 
@@ -1751,13 +1777,13 @@ Borrar una cuenta desde el panel exige is_staff y nada más; la única salvaguar
 
 - `backend/real_estate/tests/generated/test_spec_matrix.py`
 
-### PERM-052 — Eliminar cuentas debería exigir is_superuser
+### PERM-052 — Eliminar cuentas exige is_superuser
 
-**Estado:** 📝 Propuesta (sin código)
+**Estado:** ✅ Implementada
 
-El borrado de cuentas de usuario debe requerir is_superuser y responder 403 a un staff normal.
+El borrado de cuentas de usuario requiere is_superuser y responde 403 a un staff normal.
 
-> **Por qué:** Cierra el defecto de PERM-051. Es la operación más destructiva del panel y hoy está al alcance de cualquier cuenta marcada como staff.
+> **Por qué:** Cierra el defecto histórico de PERM-051. Es la operación más destructiva del panel y queda reservada a la autoridad superior.
 
 **Permisos exigidos:** `admin.users_delete`
 
@@ -1767,7 +1793,10 @@ El borrado de cuentas de usuario debe requerir is_superuser y responder 403 a un
 - ¿Lo aplica el servidor?: sí
 - Al denegar: HTTP `403`
 
-**Evidencia en el código:** ninguna, y es lo esperado: no hay código que la implemente.
+**Evidencia en el código** (verificada por `tools/specs/validate.py`)
+
+- `backend/real_estate/permissions.py` (`class IsSuperUser`)
+- `backend/real_estate/views.py` (`def destroy`)
 
 **Casos**
 
@@ -1779,6 +1808,7 @@ El borrado de cuentas de usuario debe requerir is_superuser y responder 403 a un
 **Cobertura exigida:** api
 
 - `backend/real_estate/tests/generated/test_spec_matrix.py`
+- `backend/real_estate/tests/test_admin_operations.py`
 
 ### PERM-053 — El listado de propiedades del panel es solo para staff
 
@@ -1798,8 +1828,8 @@ El borrado de cuentas de usuario debe requerir is_superuser y responder 403 a un
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/real_estate/views.py:3042-3044` (`class AdminPropertyViewSet`)
-- `backend/real_estate/views.py:3059-3061` (`Property.objects.select_related('owner', 'source')`)
+- `backend/real_estate/views.py:3083-3085` (`class AdminPropertyViewSet`)
+- `backend/real_estate/views.py:3100-3102` (`Property.objects.select_related('owner', 'source')`)
 
 **Casos**
 
@@ -1832,7 +1862,7 @@ El borrado de cuentas de usuario debe requerir is_superuser y responder 403 a un
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/real_estate/views.py:3338-3340` (`def stats`)
+- `backend/real_estate/views.py:3379-3381` (`def stats`)
 - `backend/real_estate/urls.py:90-92` (`name='admin_properties_stats'`)
 
 **Casos**
@@ -1864,8 +1894,8 @@ Staff puede editar cualquier propiedad desde el panel, pero solo status, title, 
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/real_estate/views.py:3055-3057` (`PATCH_ALLOWED_FIELDS = {'status', 'title', 'price', 'city', 'description'}`)
-- `backend/real_estate/views.py:3118-3120` (`admin_audit action=property.update`)
+- `backend/real_estate/views.py:3096-3098` (`PATCH_ALLOWED_FIELDS = {'status', 'title', 'price', 'city', 'description'}`)
+- `backend/real_estate/views.py:3159-3161` (`admin_audit action=property.update`)
 
 **Casos**
 
@@ -1897,7 +1927,7 @@ Staff puede eliminar cualquier propiedad desde el panel, incluidas las creadas p
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/real_estate/views.py:3226-3228` (`admin_audit action=property.delete`)
+- `backend/real_estate/views.py:3267-3269` (`admin_audit action=property.delete`)
 
 **Casos**
 
@@ -1928,8 +1958,8 @@ Staff puede eliminar cualquier propiedad desde el panel, incluidas las creadas p
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/real_estate/views.py:3283-3285` (`def bulk_status`)
-- `backend/real_estate/views.py:3326-3328` (`admin_audit action=property.bulk_status`)
+- `backend/real_estate/views.py:3324-3326` (`def bulk_status`)
+- `backend/real_estate/views.py:3367-3369` (`admin_audit action=property.bulk_status`)
 
 **Casos**
 
@@ -2420,8 +2450,8 @@ POST /api/logout/ pone en lista negra el refresh token entregado, y restablecer 
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/real_estate/urls.py:52-54` (`path('logout/', TokenBlacklistView.as_view(), name='token_blacklist'),`)
-- `backend/real_estate/views.py:2126-2129` (`def _revoke_refresh_tokens`)
+- `backend/real_estate/urls.py:52-54` (`path('logout/', CustomTokenBlacklistView.as_view(), name='token_blacklist'),`)
+- `backend/real_estate/views.py:2154-2156` (`def _revoke_refresh_tokens`)
 - `frontend/lib/auth-tokens.ts` (`revokeRefreshToken`) — El logout del cliente entrega el token antes de vaciar el almacenamiento.
 
 **Casos**

@@ -1,15 +1,9 @@
-"""«¿Por qué no se ve esta propiedad?», contestado sin entrar al servidor.
+"""Explain why a property is or is not visible without requiring server access.
 
-La respuesta siempre ha existido, repartida: el estado está en la fila, el
-estado de las fotos en `PropertyImage`, la absorción de la zona en un servicio,
-la versión de la caché en Redis y el umbral de la landing en el frontend. Juntar
-esas piezas costaba una sesión de SSH por pregunta.
-
-Aquí se juntan, y se dicen en el orden en que importan: primero lo que impide
-que se vea (`blockers`), después lo que la degrada sin ocultarla (`warnings`),
-y al final los datos crudos por si la causa es otra. Cada bloqueo lleva escrito
-qué hay que hacer para levantarlo, porque un diagnóstico que no dice el remedio
-solo mueve la pregunta de sitio.
+The service combines listing state, image processing, location grouping, SEO,
+activity, trash and cache data. Blocking conditions come first, followed by
+non-blocking warnings and raw diagnostic context. User-facing labels and fixes
+remain in Spanish because the admin panel renders them directly.
 """
 
 from __future__ import annotations
@@ -26,7 +20,7 @@ from real_estate.services.trash import TRASH_RETENTION_DAYS
 
 
 class PropertyDiagnosticsService:
-    """Todo lo que decide si un anuncio se ve, y por qué, en una respuesta."""
+    """Build every signal that explains listing visibility in one response."""
 
     def build(self, prop):
         blockers = self._blockers(prop)
@@ -58,10 +52,10 @@ class PropertyDiagnosticsService:
             },
         }
 
-    # --- Por qué no se ve ---
+    # --- Visibility blockers ---
 
     def _blockers(self, prop):
-        """Lo que deja el anuncio fuera del mapa o del catálogo público."""
+        """Return conditions that exclude the listing from public surfaces."""
         blockers = []
         if prop.deleted_at is not None:
             blockers.append({
@@ -95,7 +89,7 @@ class PropertyDiagnosticsService:
         return blockers
 
     def _warnings(self, prop):
-        """Lo que la deja peor colocada sin llegar a ocultarla."""
+        """Return quality issues that degrade but do not hide the listing."""
         warnings = []
         image_count = prop.images.count()
         if image_count == 0:
@@ -143,7 +137,7 @@ class PropertyDiagnosticsService:
             })
         return warnings
 
-    # --- Datos crudos ---
+    # --- Raw diagnostic data ---
 
     def _images(self, prop):
         rows = list(prop.images.values("id", "status", "optimization_error", "uploaded_at"))
@@ -178,16 +172,11 @@ class PropertyDiagnosticsService:
         }
 
     def _sector(self, prop):
-        """En qué zona publicada cae el anuncio, y si esa zona fue absorbida.
+        """Resolve the published sector and whether a broader sector absorbs it.
 
-        Deliberadamente no se llama a `find_sector` ni a `absorptions`. Esas
-        resuelven la absorción de **todas** las zonas de una ciudad a la vez,
-        comparando cada clave con todas las demás: en Quito son casi dos mil
-        claves y 1,2 s por diálogo. Aquí solo interesa una clave, y para una
-        clave la pregunta se contesta en un recorrido: de los que podrían
-        absorberla —los que son prefijo suyo—, gana el primero en orden de
-        tamaño que además la domine. Es la misma regla y el mismo umbral que
-        aplica el sitemap, mirada desde el otro lado.
+        This intentionally avoids resolving every sector in the city. Only the
+        current key matters, so candidate parents are checked in count order
+        using the same dominance rule as the sitemap.
         """
         from real_estate.services.sectors import MIN_SECTOR_LISTINGS
 
@@ -209,9 +198,7 @@ class PropertyDiagnosticsService:
         parent = self._absorbing_parent(own, ranked)
         target = parent or own
 
-        # El recuento de la zona resuelta incluye las esquinas que ella absorbe.
-        # Solo pueden serlo las claves que empiezan por la suya, así que el
-        # barrido se queda en un puñado de filas y no en la ciudad entera.
+        # Include child keys absorbed by the resolved sector.
         total = target["count"] + sum(
             row["count"]
             for row in rows
@@ -224,14 +211,13 @@ class PropertyDiagnosticsService:
             "count": total,
             "threshold": MIN_SECTOR_LISTINGS,
             "has_page": total >= MIN_SECTOR_LISTINGS,
-            # Cuando la clave del anuncio no es la de la zona resuelta, esta zona
-            # fue absorbida por otra mayor y su página vive en la URL de aquella.
+            # A different resolved key means the listing's sector was absorbed.
             "absorbed_into": target["sector_key"] if parent else None,
         }
 
     @staticmethod
     def _absorbing_parent(child, ranked):
-        """La zona que se traga a `child`, o None si publica página propia."""
+        """Return the sector absorbing ``child``, or ``None`` for its own page."""
         from real_estate.services.sectors import PARENT_DOMINANCE
 
         for parent in ranked:
@@ -245,7 +231,7 @@ class PropertyDiagnosticsService:
         return None
 
     def _seo(self, prop):
-        """Si la ficha entra al sitemap y si su combo de ciudad tiene página."""
+        """Report sitemap eligibility and city-combination page availability."""
         public = (
             Property.objects.exclude(status="inactive")
             .filter(is_duplicate=False, deleted_at__isnull=True)

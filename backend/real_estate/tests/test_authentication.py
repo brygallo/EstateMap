@@ -4,6 +4,7 @@ Tests for login and authentication
 import pytest
 from django.contrib.auth import get_user_model
 from django.urls import reverse
+from django.core.cache import cache
 from rest_framework import status
 
 User = get_user_model()
@@ -165,6 +166,18 @@ class TestLogin:
 
         assert response.status_code == status.HTTP_400_BAD_REQUEST
         assert 'password' in response.data
+
+    def test_login_attempts_are_rate_limited(self, api_client):
+        """SPEC:PERM-033 — repeated credential attempts receive HTTP 429."""
+        cache.clear()
+        url = reverse('token_obtain_pair')
+        payload = {'email': 'missing@example.com', 'password': 'WrongPass123!'}
+
+        for _ in range(10):
+            api_client.post(url, payload, format='json')
+        response = api_client.post(url, payload, format='json')
+
+        assert response.status_code == status.HTTP_429_TOO_MANY_REQUESTS
 
 
 @pytest.mark.django_db

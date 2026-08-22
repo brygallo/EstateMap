@@ -13,11 +13,11 @@ from real_estate.tests.spec_support import assert_outcome  # noqa: F401
 pytestmark = [pytest.mark.django_db, pytest.mark.api]
 
 
-# --- CLM-003: Reclamar entrega el anuncio y lo desvincula de la importación ---
+# --- CLM-003: Solo un teléfono verificado permite reclamar y transferir anuncios ---
 
 def test_clm_003_un_anonimo_no_puede_reclamar_nada(spec_request):
     """
-    SPEC:CLM-003 — Reclamar entrega el anuncio y lo desvincula de la importación
+    SPEC:CLM-003 — Solo un teléfono verificado permite reclamar y transferir anuncios
     Case: un anónimo no puede reclamar nada
     """
     response = spec_request(

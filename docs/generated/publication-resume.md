@@ -383,7 +383,7 @@ Una tarea periódica elimina del almacén las imágenes temporales de borradores
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
 - `backend/real_estate/tasks.py:223-262` (`def sweep_stale_draft_images`)
-- `backend/estate_map/settings.py:502-504` (`"sweep-stale-draft-images": {`)
+- `backend/estate_map/settings.py:506-508` (`"sweep-stale-draft-images": {`)
 
 **Casos**
 

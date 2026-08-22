@@ -1,14 +1,4 @@
-"""Pegar un dato y llegar, sin adivinar en qué pestaña está.
-
-El panel tiene nueve páginas y cada una busca dentro de lo suyo. Cuando alguien
-escribe por WhatsApp «no me aparece el anuncio GEO-4F2C» o llama dando un
-teléfono, la respuesta está en alguna de ellas y no se sabe en cuál. Esto busca
-en todas a la vez y devuelve a dónde ir.
-
-Cada resultado trae su propio `href` del panel, así que la interfaz no tiene que
-saber cómo se construye la URL de cada tipo: si mañana la papelera deja de ser
-una pestaña de propiedades, cambia aquí y no en el componente.
-"""
+"""Search every administrative dataset from one query."""
 
 from __future__ import annotations
 
@@ -16,15 +6,15 @@ from django.contrib.auth import get_user_model
 from django.db.models import Q
 
 from real_estate.models import Lead, PendingPublication, Property
+from real_estate.services.phones import normalize_ec_phone
 
-# Por grupo, no en total: quien busca «Macas» quiere ver que hay propiedades y
-# también usuarios, no diez propiedades y nada más.
+# Limit each group independently so one dataset cannot hide all the others.
 RESULTS_PER_GROUP = 8
 MIN_QUERY_LENGTH = 2
 
 
 class AdminSearchService:
-    """Una consulta, todos los tipos del panel."""
+    """Resolve one query across all admin result types."""
 
     def search(self, query):
         term = (query or "").strip()
@@ -45,6 +35,7 @@ class AdminSearchService:
         }
 
     def _properties(self, term):
+        phone = normalize_ec_phone(term)
         filters = (
             Q(title__icontains=term)
             | Q(address__icontains=term)
@@ -52,7 +43,9 @@ class AdminSearchService:
             | Q(short_code__iexact=term)
             | Q(external_id__iexact=term)
         )
-        # Un número suelto casi siempre es el id que alguien copió de una URL.
+        if phone:
+            filters |= Q(contact_phone_normalized=phone)
+        # A standalone number is commonly an id copied from a URL.
         if term.isdigit():
             filters |= Q(pk=int(term))
 
@@ -76,12 +69,15 @@ class AdminSearchService:
 
     def _users(self, term):
         User = get_user_model()
+        phone = normalize_ec_phone(term)
         filters = (
             Q(email__icontains=term)
             | Q(username__icontains=term)
             | Q(first_name__icontains=term)
             | Q(last_name__icontains=term)
         )
+        if phone:
+            filters |= Q(phone=phone)
         if term.isdigit():
             filters |= Q(pk=int(term))
 

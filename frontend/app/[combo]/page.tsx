@@ -27,8 +27,9 @@ export const dynamicParams = true;
 type Params = { combo: string };
 
 export async function generateStaticParams(): Promise<Params[]> {
-  const properties = await getAllProperties();
-  return generateCombos(properties);
+  // The sitemap discovers live combinations. Rendering all of them during the
+  // build overloads the API; dynamicParams + revalidate provide on-demand ISR.
+  return [];
 }
 
 function titleFor(parsed: ReturnType<typeof parseComboSlug>, locationName: string | null): string {

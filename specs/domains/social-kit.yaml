@@ -833,7 +833,7 @@ rules:
           s-maxage=60 con stale-while-revalidate: absorbe la ráfaga de scrapers
           que llega al publicar un enlace sin congelar un precio corregido.
       - file: frontend/lib/properties.ts
-        lines: "316-318"
+        lines: "321-323"
         symbol: getProperty
         note: >-
           Lectura etiquetada; /api/revalidate purga property-<id> cuando Django

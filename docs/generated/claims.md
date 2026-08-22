@@ -15,7 +15,7 @@ El portal publica miles de anuncios cuyo anunciante no tiene cuenta aquí. Cuand
 | --- | --- | --- |
 | [`CLM-001`](#clm-001--el-teléfono-se-compara-en-una-sola-forma) | El teléfono se compara en una sola forma | ✅ Implementada |
 | [`CLM-002`](#clm-002--solo-se-ofrece-lo-que-el-número-respalda) | Solo se ofrece lo que el número respalda | ✅ Implementada |
-| [`CLM-003`](#clm-003--reclamar-entrega-el-anuncio-y-lo-desvincula-de-la-importación) | Reclamar entrega el anuncio y lo desvincula de la importación | ✅ Implementada |
+| [`CLM-003`](#clm-003--solo-un-teléfono-verificado-permite-reclamar-y-transferir-anuncios) | Solo un teléfono verificado permite reclamar y transferir anuncios | ✅ Implementada |
 | [`CLM-004`](#clm-004--esta-no-es-mía-la-quita-de-la-lista-de-quien-lo-dice) | «Esta no es mía» la quita de la lista de quien lo dice | ✅ Implementada |
 | [`CLM-005`](#clm-005--un-anuncio-reclamado-sobrevive-a-la-importación-y-a-la-retirada) | Un anuncio reclamado sobrevive a la importación y a la retirada | ✅ Implementada |
 | [`CLM-006`](#clm-006--a-quien-ya-publica-aquí-no-se-le-importa-nada-nuevo) | A quien ya publica aquí no se le importa nada nuevo | ✅ Implementada |
@@ -94,13 +94,13 @@ El portal publica miles de anuncios cuyo anunciante no tiene cuenta aquí. Cuand
 - `backend/real_estate/tests/test_property_claims.py`
 - `tests/e2e/reclamar-propiedades.spec.ts`
 
-### CLM-003 — Reclamar entrega el anuncio y lo desvincula de la importación
+### CLM-003 — Solo un teléfono verificado permite reclamar y transferir anuncios
 
 **Estado:** ✅ Implementada
 
-`POST /api/properties/claim/` traspasa los anuncios de la lista que esta cuenta podía reclamar, les pone `owner` y `is_imported=False`, y lo anota en la bitácora. Lo que quede fuera de esa lista se omite en silencio en vez de tumbar la petición entera.
+`POST /api/properties/claim/` exige que el teléfono coincidente esté verificado. Solo entonces traspasa los anuncios de la lista, les pone `owner` y `is_imported=False`, y lo anota en la bitácora. Lo que quede fuera de esa lista se omite sin tumbar la petición entera.
 
-> **Por qué:** Desvincular es lo que hace que el reclamo dure: la retirada automática selecciona por `is_imported`, así que un anuncio reclamado que siguiera marcado como importado se borraría solo el día que el portal de origen lo quite, con sus contactos dentro. Y la página del que reclama puede tener unos segundos de retraso: que otro se haya llevado uno mientras tanto es una carrera normal, no un motivo para tirar los otros nueve reclamos. Queda en la bitácora con el teléfono usado y si estaba verificado, porque confiar en un número sin verificar solo es aceptable si es reversible.
+> **Por qué:** Desvincular es lo que hace que el reclamo dure: la retirada automática selecciona por `is_imported`, así que un anuncio reclamado que siguiera marcado como importado se borraría solo el día que el portal de origen lo quite, con sus contactos dentro. Y la página del que reclama puede tener unos segundos de retraso: que otro se haya llevado uno mientras tanto es una carrera normal, no un motivo para tirar los otros nueve reclamos. La reversibilidad de la bitácora no sustituye la prueba de titularidad: escribir el teléfono de otra persona nunca debe bastar para apropiarse de sus anuncios.
 
 **Backend**
 
@@ -126,6 +126,7 @@ El portal publica miles de anuncios cuyo anunciante no tiene cuenta aquí. Cuand
 | nadie puede reclamar un anuncio con otro número | — | — | — | allowed |
 | una selección medio caducada reclama igual el resto | — | — | — | allowed |
 | una cuenta sin teléfono no puede reclamar | — | — | — | allowed |
+| una cuenta con teléfono sin verificar no puede reclamar | — | — | — | allowed |
 | un anónimo no puede reclamar nada | anonymous | — | — | denied (HTTP 401) |
 
 **Cobertura exigida:** api

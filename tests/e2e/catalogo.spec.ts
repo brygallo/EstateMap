@@ -163,6 +163,11 @@ test.describe('SEO', () => {
     expect(response.ok()).toBeTruthy();
 
     const body = await response.text();
-    expect(body).not.toMatch(/^\s*Disallow:\s*\/\s*$/m);
+    const wildcardBlock = body
+      .split(/\r?\n\r?\n/)
+      .find((block) => /^User-Agent:\s*\*\s*$/im.test(block));
+    expect(wildcardBlock).toBeTruthy();
+    expect(wildcardBlock).not.toMatch(/^\s*Disallow:\s*\/\s*$/m);
+    expect(body).toMatch(/User-Agent:\s*AhrefsBot[\s\S]*?Disallow:\s*\//i);
   });
 });

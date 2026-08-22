@@ -208,6 +208,22 @@ export default function ClaimableProperties({ onClaimed }: { onClaimed?: () => v
 
   const many = data.claimable_count === 1 ? '' : 'es';
 
+  if (!data.phone_verified) {
+    return (
+      <Card className="mb-5 border-warning/40 bg-warning/10 p-5">
+        <h2 className="flex items-center gap-2 text-lg font-bold text-textPrimary">
+          <BadgeCheck className="h-5 w-5 text-warning" aria-hidden />
+          Verifica tu número antes de reclamar
+        </h2>
+        <p className="mt-2 text-sm leading-6 text-textSecondary">
+          Encontramos {data.claimable_count} propiedad{many} asociada{many} a {data.phone},
+          pero no podemos transferirlas hasta confirmar que el número te pertenece.
+          Comunícate con soporte para completar la verificación.
+        </p>
+      </Card>
+    );
+  }
+
   return (
     <Card className="mb-5 border-primary/40 bg-primaryLight p-5">
       <div className="flex flex-wrap items-start justify-between gap-4">

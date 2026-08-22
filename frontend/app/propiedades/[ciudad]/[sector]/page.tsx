@@ -4,7 +4,6 @@ import { notFound, permanentRedirect } from 'next/navigation';
 import SeoLanding, { priceRangeText } from '@/components/SeoLanding';
 import { generatePageMetadata } from '@/lib/metadata';
 import { money } from '@/lib/market-stats';
-import { slugify } from '@/lib/properties';
 import {
   findSector,
   getSectorProperties,
@@ -30,11 +29,8 @@ interface SectorPageProps {
 }
 
 export async function generateStaticParams() {
-  const sectors = await getSectors();
-  return sectors.map((sector) => ({
-    ciudad: slugify(sector.city),
-    sector: sectorSlug(sector),
-  }));
+  // Sector URLs are discovered by the sitemap and cached on demand through ISR.
+  return [];
 }
 
 function describe(sector: Awaited<ReturnType<typeof findSector>>): string {

@@ -1,15 +1,9 @@
-"""El rastro de lo que hace un administrador, guardado donde se pueda leer.
+"""Persist administrative actions where operators can search them later.
 
-Cada escritura del panel ya dejaba una línea ``admin_audit action=…`` en el
-logger. Se conservan: el log sigue siendo lo primero que se mira cuando algo
-falla en producción. Lo que añade este servicio es que la misma línea quede
-también en una tabla, porque el log de un contenedor se pierde en cada
-despliegue y no se puede filtrar por «qué le pasó a la propiedad 412».
-
-Regla de oro: **auditar nunca puede tumbar la operación auditada**. Una
-transferencia consumada con la fila de auditoría perdida es un problema; una
-transferencia que revienta porque la auditoría falló es peor. Por eso todo el
-cuerpo va envuelto y el fallo solo se registra.
+The structured logger remains the first diagnostic surface, while this service
+also stores the same action in a database table that survives container
+replacement. Audit persistence is best effort: it must never roll back an
+administrative action that already succeeded.
 """
 
 from __future__ import annotations
@@ -20,13 +14,12 @@ from real_estate.models import AdminAuditLog
 
 logger = logging.getLogger(__name__)
 
-# Cabeceras que el borde (nginx) rellena con la IP real del cliente. El resto de
-# la aplicación no las lee, así que se resuelven aquí y no en un middleware.
+# Headers populated by the trusted nginx edge with the original client address.
 _FORWARDED_HEADERS = ("HTTP_X_FORWARDED_FOR", "HTTP_X_REAL_IP")
 
 
 class AdminAuditService:
-    """Escribe una línea de auditoría por cada acción administrativa."""
+    """Write one durable audit row for an administrative action."""
 
     def record(
         self,
@@ -38,13 +31,10 @@ class AdminAuditService:
         target_label="",
         changes=None,
     ):
-        """Persiste la acción y devuelve la fila, o ``None`` si no se pudo.
+        """Persist the action and return its row, or ``None`` on failure.
 
-        `changes` describe qué cambió. Quien llama decide cuánto detalle cabe:
-        para un cambio de estado, el valor nuevo es la información; para un
-        cambio de texto, basta la lista de campos, porque copiar aquí la
-        descripción entera convertiría la auditoría en una segunda copia del
-        catálogo que nadie purga.
+        ``changes`` contains only the detail needed to explain an operation.
+        Callers avoid copying complete user content into a second data store.
         """
         actor = getattr(request, "user", None)
         actor = actor if getattr(actor, "is_authenticated", False) else None
@@ -60,8 +50,7 @@ class AdminAuditService:
                 ip=self._client_ip(request),
             )
         except Exception:
-            # Sin `raise`: la acción ya ocurrió y deshacerla por no poder
-            # anotarla sería el peor de los dos resultados posibles.
+            # The action already happened; an audit outage must not undo it.
             logger.exception("admin_audit_persist_failed action=%s target=%s", action, target_id)
             return None
 

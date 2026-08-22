@@ -14,7 +14,6 @@ import {
 import {
   getMarketStats,
   MIN_LISTINGS_FOR_INDEX,
-  MIN_LISTINGS_FOR_PROMOTION,
   integer,
   money,
 } from '@/lib/market-stats';
@@ -39,10 +38,8 @@ async function resolveCityName(slug: string): Promise<string | null> {
 }
 
 export async function generateStaticParams() {
-  const properties = await getAllProperties();
-  return getCities(properties)
-    .filter((city) => city.count >= MIN_LISTINGS_FOR_PROMOTION)
-    .map((city) => ({ ciudad: city.slug }));
+  // Market pages are discovered by the sitemap and cached on demand through ISR.
+  return [];
 }
 
 export async function generateMetadata({ params }: CityStatsPageProps): Promise<Metadata> {
@@ -142,7 +139,7 @@ export default async function CityStatsPage({ params }: CityStatsPageProps) {
           {
             '@type': 'Dataset',
             name: `Precio del metro cuadrado en ${cityName} (${year})`,
-            description: `Precios promedio por metro cuadrado en ${cityName}, Ecuador, por sector y tipo de propiedad, calculados sobre ${integer(stats!.overall.count)} propiedades en venta activas. Son precios pedidos por quien vende, no precios de operaciones cerradas,.`,
+            description: `Precios promedio por metro cuadrado en ${cityName}, Ecuador, por sector y tipo de propiedad, calculados sobre ${integer(stats!.overall.count)} propiedades en venta activas. Son precios pedidos por quien vende, no precios de operaciones cerradas.`,
             url: `${SITE_URL}/estadisticas-inmobiliarias/${ciudad}`,
             creator: {
               '@type': 'Organization',

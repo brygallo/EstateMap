@@ -32,6 +32,7 @@ def advertiser(username="anunciante", phone=NORMALIZED):
         username=username, email=f"{username}@example.com", password="test-password"
     )
     user.phone = phone
+    user.phone_verified_at = timezone.now()
     user.save()
     return user
 
@@ -120,6 +121,25 @@ def test_an_account_without_a_phone_is_offered_nothing():
 
     assert service.may_claim() is False
     assert service.claimable().count() == 0
+
+
+def test_an_unverified_phone_cannot_claim_a_listing():
+    """SPEC:CLM-003 — typing another person's number never transfers ownership."""
+    user = advertiser()
+    user.phone_verified_at = None
+    user.save(update_fields=["phone_verified_at"])
+    prop = imported()
+    client = APIClient()
+    client.force_authenticate(user)
+
+    response = client.post(
+        reverse("property-claim"), {"property_ids": [prop.pk]}, format="json"
+    )
+
+    assert response.status_code == 400
+    assert "verificado" in response.data["error"]
+    prop.refresh_from_db()
+    assert prop.owner_id is None
 
 
 def test_the_summary_counts_the_contacts_that_justify_the_invitation():

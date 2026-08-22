@@ -1,22 +1,8 @@
-"""Sacar los datos del navegador y meterlos en una hoja de cálculo.
+"""Stream administrative datasets as spreadsheet-compatible CSV files.
 
-El panel enseña los números que alguien pensó de antemano. La pregunta que
-todavía no se le ha ocurrido a nadie se contesta en una hoja de cálculo, y hasta
-ahora no había forma de llegar hasta ella: los datos entraban al navegador y se
-quedaban ahí.
-
-Dos decisiones que no son de comodidad:
-
-- Se transmite fila a fila (`StreamingHttpResponse` sobre un generador con
-  `iterator()`). Un `list(queryset)` de catorce mil propiedades dentro de un
-  worker de 512 MB compartido con la ingesta es la forma conocida de tumbar el
-  contenedor a la hora de mayor tráfico.
-- Se escribe siempre con BOM UTF-8. Excel en Windows —que es donde acaba este
-  archivo— abre un CSV sin BOM interpretando latin-1, y «Cumbayá» llega roto.
-
-Quién exporta queda en la auditoría: un CSV de usuarios o de leads es una copia
-de datos personales saliendo del sistema, y eso es exactamente lo que un
-registro de acceso existe para contar.
+Rows are yielded incrementally to keep the full catalogue out of worker memory.
+A UTF-8 BOM preserves accented text in Excel. Cells that spreadsheet programs
+could interpret as formulas are neutralized at the export boundary.
 """
 
 from __future__ import annotations
@@ -28,28 +14,26 @@ from django.db.models import Count
 
 from real_estate.models import AdminAuditLog, Lead, Property
 
-# Cuántas filas se materializan de golpe al recorrer el queryset. Suficiente
-# para que el viaje a Postgres valga la pena, bastante por debajo de lo que
-# ocupa el catálogo entero en memoria.
+# Keep database round trips efficient without materializing the full dataset.
 CHUNK_SIZE = 500
 
 UTF8_BOM = "﻿"
 
 
 class _Echo:
-    """Un «archivo» que devuelve lo que le escriben, para el generador de csv."""
+    """File-like adapter that returns each value written by ``csv.writer``."""
 
     def write(self, value):
         return value
 
 
 class CsvExportService:
-    """Genera los CSV del panel sin cargar la tabla entera en memoria."""
+    """Generate admin CSV files without loading a complete table into memory."""
 
     DATASETS = ("properties", "users", "leads", "audit")
 
     def rows(self, dataset, queryset=None):
-        """Devuelve `(nombre_de_archivo, generador_de_líneas)`."""
+        """Return ``(filename, line_iterator)`` for the requested dataset."""
         builder = {
             "properties": self._properties,
             "users": self._users,
@@ -63,9 +47,18 @@ class CsvExportService:
         writer = csv.writer(_Echo())
         yield UTF8_BOM + writer.writerow(header)
         for row in iterator:
-            yield writer.writerow(row)
+            yield writer.writerow(self._safe_cell(value) for value in row)
 
-    # --- Conjuntos ---
+    @staticmethod
+    def _safe_cell(value):
+        """Prevent user-controlled values from becoming spreadsheet formulas."""
+        if not isinstance(value, str):
+            return value
+        if value.lstrip(" ").startswith(("=", "+", "-", "@", "\t", "\r")):
+            return "'" + value
+        return value
+
+    # --- Datasets ---
 
     def _properties(self, queryset):
         base = queryset if queryset is not None else Property.objects.all()

@@ -956,6 +956,7 @@ def test_perm_020_ni_siquiera_staff_puede_crear_provincias_por_la_api(spec_reque
 
 # --- PERM-021: El proxy de imágenes es público y sin restricción de objeto ---
 
+@pytest.mark.skip(reason="PERM-021 is 'deprecated': no code implements it yet")
 def test_perm_021_un_anonimo_alcanza_el_proxy_sin_credenciales(spec_request):
     """
     SPEC:PERM-021 — El proxy de imágenes es público y sin restricción de objeto
@@ -975,6 +976,51 @@ def test_perm_021_un_anonimo_alcanza_el_proxy_sin_credenciales(spec_request):
         rule_id='PERM-021',
         case_name='un anónimo alcanza el proxy sin credenciales',
         expected_status=404,
+    )
+
+
+# --- PERM-022: El proxy de imágenes sirve solo objetos referenciados ---
+
+def test_perm_022_una_ruta_que_no_corresponde_a_ninguna_imagen_no_consulta_minio(spec_request):
+    """
+    SPEC:PERM-022 — El proxy de imágenes sirve solo objetos referenciados
+    Case: una ruta que no corresponde a ninguna imagen no consulta MinIO
+    """
+    response = spec_request(
+        method='GET',
+        path='/api/media/spec-inexistente.webp',
+        role='anonymous',
+        given=None,
+        body=None,
+    )
+    assert_outcome(
+        response,
+        expected='denied',
+        denied_status=404,
+        rule_id='PERM-022',
+        case_name='una ruta que no corresponde a ninguna imagen no consulta MinIO',
+        expected_status=None,
+    )
+
+def test_perm_022_una_imagen_lista_y_referenciada_sigue_siendo_publica(spec_request):
+    """
+    SPEC:PERM-022 — El proxy de imágenes sirve solo objetos referenciados
+    Case: una imagen lista y referenciada sigue siendo pública
+    """
+    response = spec_request(
+        method='GET',
+        path='/api/media/spec-inexistente.webp',
+        role='anonymous',
+        given=None,
+        body=None,
+    )
+    assert_outcome(
+        response,
+        expected='allowed',
+        denied_status=404,
+        rule_id='PERM-022',
+        case_name='una imagen lista y referenciada sigue siendo pública',
+        expected_status=None,
     )
 
 
@@ -2037,6 +2083,7 @@ def test_perm_048_staff_lista_usuarios(spec_request):
 
 # --- PERM-049: Cualquier staff puede conceder is_staff a otra cuenta ---
 
+@pytest.mark.skip(reason="PERM-049 is 'deprecated': no code implements it yet")
 def test_perm_049_un_anonimo_no_puede_modificar_cuentas(spec_request):
     """
     SPEC:PERM-049 — Cualquier staff puede conceder is_staff a otra cuenta
@@ -2058,6 +2105,7 @@ def test_perm_049_un_anonimo_no_puede_modificar_cuentas(spec_request):
         expected_status=None,
     )
 
+@pytest.mark.skip(reason="PERM-049 is 'deprecated': no code implements it yet")
 def test_perm_049_un_usuario_autenticado_normal_no_puede_modificar_cuentas(spec_request):
     """
     SPEC:PERM-049 — Cualquier staff puede conceder is_staff a otra cuenta
@@ -2079,6 +2127,7 @@ def test_perm_049_un_usuario_autenticado_normal_no_puede_modificar_cuentas(spec_
         expected_status=None,
     )
 
+@pytest.mark.skip(reason="PERM-049 is 'deprecated': no code implements it yet")
 def test_perm_049_un_staff_promueve_a_otra_cuenta_a_staff_sin_ser_superusuario(spec_request):
     """
     SPEC:PERM-049 — Cualquier staff puede conceder is_staff a otra cuenta
@@ -2101,12 +2150,11 @@ def test_perm_049_un_staff_promueve_a_otra_cuenta_a_staff_sin_ser_superusuario(s
     )
 
 
-# --- PERM-050: Conceder is_staff debería exigir is_superuser ---
+# --- PERM-050: Conceder is_staff exige is_superuser ---
 
-@pytest.mark.skip(reason="PERM-050 is 'proposed': no code implements it yet")
 def test_perm_050_un_staff_normal_no_deberia_poder_conceder_is_staff(spec_request):
     """
-    SPEC:PERM-050 — Conceder is_staff debería exigir is_superuser
+    SPEC:PERM-050 — Conceder is_staff exige is_superuser
     Case: un staff normal no debería poder conceder is_staff
     """
     response = spec_request(
@@ -2125,10 +2173,9 @@ def test_perm_050_un_staff_normal_no_deberia_poder_conceder_is_staff(spec_reques
         expected_status=None,
     )
 
-@pytest.mark.skip(reason="PERM-050 is 'proposed': no code implements it yet")
 def test_perm_050_un_superusuario_si_deberia_poder(spec_request):
     """
-    SPEC:PERM-050 — Conceder is_staff debería exigir is_superuser
+    SPEC:PERM-050 — Conceder is_staff exige is_superuser
     Case: un superusuario sí debería poder
     """
     response = spec_request(
@@ -2150,6 +2197,7 @@ def test_perm_050_un_superusuario_si_deberia_poder(spec_request):
 
 # --- PERM-051: Cualquier staff puede eliminar cuentas de usuario ---
 
+@pytest.mark.skip(reason="PERM-051 is 'deprecated': no code implements it yet")
 def test_perm_051_un_anonimo_no_puede_borrar_cuentas(spec_request):
     """
     SPEC:PERM-051 — Cualquier staff puede eliminar cuentas de usuario
@@ -2171,6 +2219,7 @@ def test_perm_051_un_anonimo_no_puede_borrar_cuentas(spec_request):
         expected_status=None,
     )
 
+@pytest.mark.skip(reason="PERM-051 is 'deprecated': no code implements it yet")
 def test_perm_051_un_usuario_autenticado_normal_no_puede_borrar_cuentas(spec_request):
     """
     SPEC:PERM-051 — Cualquier staff puede eliminar cuentas de usuario
@@ -2192,6 +2241,7 @@ def test_perm_051_un_usuario_autenticado_normal_no_puede_borrar_cuentas(spec_req
         expected_status=None,
     )
 
+@pytest.mark.skip(reason="PERM-051 is 'deprecated': no code implements it yet")
 def test_perm_051_un_staff_borra_una_cuenta_ajena_sin_ser_superusuario(spec_request):
     """
     SPEC:PERM-051 — Cualquier staff puede eliminar cuentas de usuario
@@ -2214,12 +2264,11 @@ def test_perm_051_un_staff_borra_una_cuenta_ajena_sin_ser_superusuario(spec_requ
     )
 
 
-# --- PERM-052: Eliminar cuentas debería exigir is_superuser ---
+# --- PERM-052: Eliminar cuentas exige is_superuser ---
 
-@pytest.mark.skip(reason="PERM-052 is 'proposed': no code implements it yet")
 def test_perm_052_un_staff_normal_no_deberia_poder_borrar_cuentas(spec_request):
     """
-    SPEC:PERM-052 — Eliminar cuentas debería exigir is_superuser
+    SPEC:PERM-052 — Eliminar cuentas exige is_superuser
     Case: un staff normal no debería poder borrar cuentas
     """
     response = spec_request(
@@ -2238,10 +2287,9 @@ def test_perm_052_un_staff_normal_no_deberia_poder_borrar_cuentas(spec_request):
         expected_status=None,
     )
 
-@pytest.mark.skip(reason="PERM-052 is 'proposed': no code implements it yet")
 def test_perm_052_un_superusuario_si_deberia_poder(spec_request):
     """
-    SPEC:PERM-052 — Eliminar cuentas debería exigir is_superuser
+    SPEC:PERM-052 — Eliminar cuentas exige is_superuser
     Case: un superusuario sí debería poder
     """
     response = spec_request(

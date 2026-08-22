@@ -4,6 +4,7 @@ import { topCityCombos } from '@/lib/seo-combos';
 import { generatePageMetadata } from '@/lib/metadata';
 
 export const revalidate = 3600;
+export const dynamic = 'force-dynamic';
 
 const PATH = '/casas-en-venta';
 

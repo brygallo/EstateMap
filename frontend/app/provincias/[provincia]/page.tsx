@@ -38,8 +38,8 @@ async function resolveProvince(slug: string) {
 }
 
 export async function generateStaticParams() {
-  const properties = await getAllProperties();
-  return getProvinces(properties).map((province) => ({ provincia: province.slug }));
+  // Provinces are listed in the sitemap and become cached ISR pages on first use.
+  return [];
 }
 
 export async function generateMetadata({

@@ -13,6 +13,7 @@ import {
 import { getBlogPosts } from '@/lib/blog';
 
 export const revalidate = 1800;
+export const dynamic = 'force-dynamic';
 
 export async function generateMetadata(): Promise<Metadata> {
   const stats = await getMarketStats();
@@ -81,7 +82,7 @@ export default async function MarketStatsPage() {
           {
             '@type': 'Dataset',
             name: `Precio del metro cuadrado en Ecuador (${year})`,
-            description: `Precios promedio por metro cuadrado en Ecuador por ciudad, sector y tipo de propiedad, calculados sobre ${integer(stats.overall.count)} propiedades en venta activas. Son precios pedidos por quien vende, no precios de operaciones cerradas,.`,
+            description: `Precios promedio por metro cuadrado en Ecuador por ciudad, sector y tipo de propiedad, calculados sobre ${integer(stats.overall.count)} propiedades en venta activas. Son precios pedidos por quien vende, no precios de operaciones cerradas.`,
             url: `${SITE_URL}/estadisticas-inmobiliarias`,
             creator: {
               '@type': 'Organization',

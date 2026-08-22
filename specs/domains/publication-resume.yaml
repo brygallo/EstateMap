@@ -445,7 +445,7 @@ rules:
         lines: "223-262"
         symbol: def sweep_stale_draft_images
       - file: backend/estate_map/settings.py
-        lines: "502-504"
+        lines: "506-508"
         symbol: '"sweep-stale-draft-images": {'
     tests:
       api: true

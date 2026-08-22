@@ -950,7 +950,7 @@ rules:
       con el método IQR; no expone datos de ninguna cuenta.
     evidence:
       - file: backend/real_estate/views.py
-        lines: "2345-2347"
+        lines: "2375-2377"
         symbol: class MarketStatsView
     permissions:
       required: [properties.read_market_stats]
@@ -1038,7 +1038,7 @@ rules:
 
   - id: PERM-021
     name: El proxy de imágenes es público y sin restricción de objeto
-    status: implemented
+    status: deprecated
     summary: >-
       /api/media/<ruta> reenvía cualquier objeto del bucket de MinIO sin
       autenticación, sin permisos y sin límite de tasa.
@@ -1050,7 +1050,7 @@ rules:
       año. PERM-022 enuncia la corrección.
     evidence:
       - file: backend/real_estate/views.py
-        lines: "1881-1883"
+        lines: "1897-1899"
         symbol: class ImageProxyView
       - file: backend/real_estate/urls.py
         lines: "79-81"
@@ -1076,27 +1076,34 @@ rules:
           y no 401, 403 ni 500.
 
   - id: PERM-022
-    name: El proxy de imágenes debería servir solo objetos referenciados
-    status: proposed
+    name: El proxy de imágenes sirve solo objetos referenciados
+    status: implemented
     summary: >-
-      El proxy debe resolver únicamente rutas que correspondan a una PropertyImage
-      existente, y rechazar cualquier otra con 404 sin consultar el bucket.
+      El proxy resuelve únicamente rutas que correspondan a la imagen o miniatura
+      de una PropertyImage lista, y rechaza cualquier otra con 404 sin consultar
+      el bucket.
     rationale: >-
       Cierra el problema de PERM-021 sin romper el catálogo público: las imágenes
       del inventario siguen siendo públicas, pero el bucket deja de ser
       enumerable a través del backend.
     permissions:
       required: [images.read_public]
+    evidence:
+      - file: backend/real_estate/views.py
+        symbol: class ImageProxyView
     backend:
       enforce: true
       endpoint: GET /api/media/spec-inexistente.webp
       denied_http_status: 404
-    tests: {}
+    tests:
+      api: true
     cases:
-      - name: una ruta que no corresponde a ninguna imagen no debería consultarse en MinIO
+      - name: una ruta que no corresponde a ninguna imagen no consulta MinIO
         role: anonymous
         expected: denied
-        note: Requiere una PropertyImage de fixture para probar también el caso permitido.
+      - name: una imagen lista y referenciada sigue siendo pública
+        role: anonymous
+        expected: allowed
 
   - id: PERM-023
     name: Las imágenes en staging son públicas mientras se optimizan
@@ -1116,10 +1123,10 @@ rules:
       el nosniff del host de la API impediría pintarlo.
     evidence:
       - file: backend/real_estate/views.py
-        lines: "1950-1967"
+        lines: "1972-1988"
         symbol: class PendingImageView
       - file: backend/real_estate/views.py
-        lines: "1972-1974"
+        lines: "1994-1996"
         symbol: path.parent != Path(settings.IMAGE_UPLOAD_TEMP_DIR)
       - file: backend/real_estate/views.py
         symbol: def _sniff_image_type
@@ -1204,17 +1211,19 @@ rules:
           source: property_page
 
   - id: PERM-025
-    name: La creación de leads debería estar limitada por tasa
-    status: proposed
+    name: La creación de leads está limitada por tasa
+    status: implemented
     summary: >-
-      POST /api/leads/ debe declarar un throttle equivalente al de las otras dos
-      creaciones públicas y responder 429 al superarlo.
+      POST /api/leads/ declara el scope lead_create a 10/min y responde 429 al
+      superarlo.
     rationale: >-
-      DEFECTO por inconsistencia. Los tres POST públicos del sistema siguen el
-      mismo patrón (fila nueva más correo de notificación), pero solo
-      pending-publications (10/min) y activity-events (30/min) declaran
-      get_throttles. Además la notificación de lead se envía de forma síncrona,
-      así que cada petición cuesta una conexión SMTP.
+      Los tres POST públicos siguen límites explícitos. En leads el envío de
+      correo es síncrono, así que el techo protege también el servidor SMTP.
+    evidence:
+      - file: backend/real_estate/views.py
+        symbol: class LeadViewSet
+      - file: backend/estate_map/settings.py
+        symbol: "'lead_create': '10/min'"
     permissions:
       required: [leads.create_public]
     backend:
@@ -1222,11 +1231,12 @@ rules:
       endpoint: POST /api/leads/
       denied_http_status: 429
       throttle_scope: lead_create
-    tests: {}
+    tests:
+      api: true
     cases:
-      - name: la petición que supera el límite por minuto debería rechazarse
+      - name: la petición que supera el límite por minuto se rechaza
         role: anonymous
-        expected: denied
+        expected: "429 después de la ráfaga; lo ejecuta test_public_lead_creation_is_rate_limited"
         note: >-
           No ejecutable con una sola llamada: hace falta una ráfaga, que el
           generador no sabe construir.
@@ -1531,16 +1541,21 @@ rules:
           funciona de uno roto.
 
   - id: PERM-033
-    name: Los endpoints de autenticación deberían limitar los intentos
-    status: proposed
+    name: Los endpoints de autenticación limitan los intentos
+    status: implemented
     summary: >-
-      Login, registro, refresco de token, recuperación de contraseña y reenvío de
-      código deben declarar un límite de tasa y responder 429 al superarlo.
+      Login, registro, OAuth, refresco y revocación de token, verificación,
+      recuperación de contraseña y reenvío de código declaran límites de tasa y
+      responden 429 al superarlos.
     rationale: >-
-      DEFECTO. Ninguno de los siete endpoints públicos de autenticación declara
-      throttle, y no existe bloqueo por intentos fallidos en ninguna parte del
-      backend. Además resend-verification y request-password-reset envían un
-      correo por petición, así que también son un amplificador de envíos.
+      Los endpoints que envían correo usan un scope más estricto que los intentos
+      de credenciales para impedir amplificación sin bloquear recuperaciones
+      legítimas.
+    evidence:
+      - file: backend/real_estate/views.py
+        symbol: class CustomTokenObtainPairView
+      - file: backend/estate_map/settings.py
+        symbol: "'auth_attempt': '10/min'"
     permissions:
       required: [auth.login, auth.register, auth.request_password_reset, auth.resend_verification]
     backend:
@@ -1548,11 +1563,12 @@ rules:
       endpoint: POST /api/login/
       denied_http_status: 429
       throttle_scope: auth_attempt
-    tests: {}
+    tests:
+      api: true
     cases:
-      - name: el intento que supera el límite debería rechazarse
+      - name: el intento que supera el límite se rechaza
         role: anonymous
-        expected: denied
+        expected: "429 después de la ráfaga; lo ejecuta test_login_attempts_are_rate_limited"
         note: No ejecutable con una sola llamada; requiere una ráfaga.
 
   - id: PERM-034
@@ -1567,7 +1583,7 @@ rules:
       a la vez. Ver PERM-007.
     evidence:
       - file: backend/real_estate/views.py
-        lines: "1822-1824"
+        lines: "1834-1836"
         symbol: class RegisterView
       - file: backend/real_estate/serializers.py
         lines: "857-860"
@@ -1610,7 +1626,7 @@ rules:
         lines: 27-39
         symbol: claims.get("email_verified") is not True
       - file: backend/real_estate/views.py
-        lines: "1828-1830"
+        lines: "1842-1844"
         symbol: class GoogleLoginView
     permissions:
       required: [auth.google_login]
@@ -1676,10 +1692,10 @@ rules:
       caducidad. Al canjearlo se activan is_active e is_email_verified a la vez.
     evidence:
       - file: backend/real_estate/views.py
-        lines: "1982-1984"
+        lines: "2004-2006"
         symbol: class VerifyEmailView
       - file: backend/real_estate/views.py
-        lines: "2031-2033"
+        lines: "2055-2057"
         symbol: user.is_email_verified = True
     permissions:
       required: [auth.verify_email]
@@ -1709,7 +1725,7 @@ rules:
       referencia para PERM-039, donde el patrón no se siguió.
     evidence:
       - file: backend/real_estate/views.py
-        lines: "2119-2121"
+        lines: "2147-2149"
         symbol: "# Por seguridad, no revelar si el email existe o no"
     permissions:
       required: [auth.request_password_reset]
@@ -1739,7 +1755,7 @@ rules:
       regla congela la conducta actual para que un cambio la haga saltar.
     evidence:
       - file: backend/real_estate/views.py
-        lines: "2000-2002"
+        lines: "2024-2026"
         symbol: "{'error': 'Usuario no encontrado'}"
     permissions:
       required: [auth.resend_verification]
@@ -1791,7 +1807,7 @@ rules:
       endpoint no necesita comprobación de objeto.
     evidence:
       - file: backend/real_estate/views.py
-        lines: "2323-2325"
+        lines: "2353-2355"
         symbol: return self.request.user
     permissions:
       required: [account.read_own_profile]
@@ -1862,7 +1878,7 @@ rules:
       sin conocer la contraseña.
     evidence:
       - file: backend/real_estate/views.py
-        lines: "2326-2328"
+        lines: "2356-2358"
         symbol: class ChangePasswordView
       - file: backend/real_estate/serializers.py
         lines: "1012-1014"
@@ -1902,10 +1918,10 @@ rules:
       puede completar el cambio aunque haya iniciado la solicitud.
     evidence:
       - file: backend/real_estate/views.py
-        lines: "2190-2192"
+        lines: "2220-2222"
         symbol: class RequestEmailChangeView
       - file: backend/real_estate/views.py
-        lines: "2208-2210"
+        lines: "2238-2240"
         symbol: EmailChangeToken.objects.filter(user=user, is_used=False).update(is_used=True)
     permissions:
       required: [account.request_email_change, account.verify_email_change]
@@ -1942,10 +1958,10 @@ rules:
       recibe 403.
     evidence:
       - file: backend/real_estate/views.py
-        lines: "2615-2617"
+        lines: "2645-2647"
         symbol: class AdminDashboardView
       - file: backend/real_estate/views.py
-        lines: "2735-2737"
+        lines: "2765-2767"
         symbol: AdminMetricsService(now=now, window_days=window_days).build()
       - file: backend/real_estate/permissions.py
         lines: "46-50"
@@ -1987,10 +2003,10 @@ rules:
       queda registrada en el log de auditoría con el actor.
     evidence:
       - file: backend/real_estate/views.py
-        lines: "2788-2790"
+        lines: "2818-2820"
         symbol: class AdminSystemStatusView
       - file: backend/real_estate/views.py
-        lines: "2912-2914"
+        lines: "2942-2944"
         symbol: admin_audit action=incident.resolve
     permissions:
       required: [admin.system_status_read, admin.system_status_write]
@@ -2024,10 +2040,10 @@ rules:
       la misma vista y podría haberse quedado sin cubrir.
     evidence:
       - file: backend/real_estate/views.py
-        lines: "2910-2912"
+        lines: "2940-2942"
         symbol: incident.save(update_fields=["resolved", "last_seen_at"])
       - file: backend/real_estate/views.py
-        lines: "2617-2619"
+        lines: "2647-2649"
         symbol: "permission_classes = [IsAuthenticated, IsAdminUser]"
     permissions:
       required: [admin.system_status_write]
@@ -2066,7 +2082,7 @@ rules:
       actividad de cada cuenta.
     evidence:
       - file: backend/real_estate/views.py
-        lines: "2924-2926"
+        lines: "2954-2956"
         symbol: class AdminUserViewSet
     permissions:
       required: [admin.users_read]
@@ -2091,7 +2107,7 @@ rules:
 
   - id: PERM-049
     name: Cualquier staff puede conceder is_staff a otra cuenta
-    status: implemented
+    status: deprecated
     summary: >-
       La edición de usuarios del panel admite exactamente is_active e is_staff, y
       basta con ser staff para otorgar el rol de staff a un tercero.
@@ -2103,7 +2119,7 @@ rules:
       la corrección.
     evidence:
       - file: backend/real_estate/views.py
-        lines: "2984-2986"
+        lines: "3014-3016"
         symbol: "allowed_fields = {'is_active', 'is_staff'}"
       - file: backend/real_estate/permissions.py
         lines: "52"
@@ -2137,15 +2153,18 @@ rules:
           is_staff: true
 
   - id: PERM-050
-    name: Conceder is_staff debería exigir is_superuser
-    status: proposed
+    name: Conceder is_staff exige is_superuser
+    status: implemented
     summary: >-
-      Otorgar o retirar el rol de staff debe requerir is_superuser, de modo que
-      un staff normal reciba 403 al intentarlo.
+      Otorgar o retirar el rol de staff requiere is_superuser, de modo que un
+      staff normal recibe 403 al intentarlo.
     rationale: >-
-      Cierra el defecto de PERM-049. Requiere una permission class nueva (por
-      ejemplo IsSuperUser) aplicada a las operaciones de elevación de privilegio,
-      dejando is_active en manos de staff.
+      Cierra el defecto histórico de PERM-049 y deja is_active en manos de staff.
+    evidence:
+      - file: backend/real_estate/permissions.py
+        symbol: class IsSuperUser
+      - file: backend/real_estate/views.py
+        symbol: def partial_update
     permissions:
       required: [admin.users_update]
     backend:
@@ -2169,7 +2188,7 @@ rules:
 
   - id: PERM-051
     name: Cualquier staff puede eliminar cuentas de usuario
-    status: implemented
+    status: deprecated
     summary: >-
       Borrar una cuenta desde el panel exige is_staff y nada más; la única
       salvaguarda es que nadie puede borrarse a sí mismo.
@@ -2179,7 +2198,7 @@ rules:
       auditoría con el actor y el objetivo. PERM-052 enuncia la corrección.
     evidence:
       - file: backend/real_estate/views.py
-        lines: "3032-3034"
+        lines: "3073-3075"
         symbol: admin_audit action=user.delete
     permissions:
       required: [admin.users_delete]
@@ -2203,14 +2222,19 @@ rules:
         expected_http_status: 204
 
   - id: PERM-052
-    name: Eliminar cuentas debería exigir is_superuser
-    status: proposed
+    name: Eliminar cuentas exige is_superuser
+    status: implemented
     summary: >-
-      El borrado de cuentas de usuario debe requerir is_superuser y responder 403
-      a un staff normal.
+      El borrado de cuentas de usuario requiere is_superuser y responde 403 a
+      un staff normal.
     rationale: >-
-      Cierra el defecto de PERM-051. Es la operación más destructiva del panel y
-      hoy está al alcance de cualquier cuenta marcada como staff.
+      Cierra el defecto histórico de PERM-051. Es la operación más destructiva
+      del panel y queda reservada a la autoridad superior.
+    evidence:
+      - file: backend/real_estate/permissions.py
+        symbol: class IsSuperUser
+      - file: backend/real_estate/views.py
+        symbol: def destroy
     permissions:
       required: [admin.users_delete]
     backend:
@@ -2240,10 +2264,10 @@ rules:
       incluido su propietario.
     evidence:
       - file: backend/real_estate/views.py
-        lines: "3042-3044"
+        lines: "3083-3085"
         symbol: class AdminPropertyViewSet
       - file: backend/real_estate/views.py
-        lines: "3059-3061"
+        lines: "3100-3102"
         symbol: "Property.objects.select_related('owner', 'source')"
     permissions:
       required: [admin.properties_read]
@@ -2279,7 +2303,7 @@ rules:
       conviene verificar que hereda el permission_classes de la clase.
     evidence:
       - file: backend/real_estate/views.py
-        lines: "3338-3340"
+        lines: "3379-3381"
         symbol: def stats
       - file: backend/real_estate/urls.py
         lines: "90-92"
@@ -2314,10 +2338,10 @@ rules:
       serializer.
     evidence:
       - file: backend/real_estate/views.py
-        lines: "3055-3057"
+        lines: "3096-3098"
         symbol: "PATCH_ALLOWED_FIELDS = {'status', 'title', 'price', 'city', 'description'}"
       - file: backend/real_estate/views.py
-        lines: "3118-3120"
+        lines: "3159-3161"
         symbol: admin_audit action=property.update
     permissions:
       required: [admin.properties_update]
@@ -2357,7 +2381,7 @@ rules:
       única ruta por la que se puede borrar la propiedad de otra persona.
     evidence:
       - file: backend/real_estate/views.py
-        lines: "3226-3228"
+        lines: "3267-3269"
         symbol: admin_audit action=property.delete
     permissions:
       required: [admin.properties_delete]
@@ -2388,10 +2412,10 @@ rules:
       auditada con los identificadores afectados.
     evidence:
       - file: backend/real_estate/views.py
-        lines: "3283-3285"
+        lines: "3324-3326"
         symbol: def bulk_status
       - file: backend/real_estate/views.py
-        lines: "3326-3328"
+        lines: "3367-3369"
         symbol: admin_audit action=property.bulk_status
     permissions:
       required: [admin.properties_bulk_status]
@@ -2985,9 +3009,9 @@ rules:
     evidence:
       - file: backend/real_estate/urls.py
         lines: "52-54"
-        symbol: "path('logout/', TokenBlacklistView.as_view(), name='token_blacklist'),"
+        symbol: "path('logout/', CustomTokenBlacklistView.as_view(), name='token_blacklist'),"
       - file: backend/real_estate/views.py
-        lines: "2126-2129"
+        lines: "2154-2156"
         symbol: def _revoke_refresh_tokens
       - file: frontend/lib/auth-tokens.ts
         symbol: revokeRefreshToken
