@@ -116,8 +116,13 @@ test.describe('Map', () => {
     expect(detail.ok()).toBeTruthy();
     expect(intelligence.ok()).toBeTruthy();
     expect(await detail.text()).not.toContain('views_count');
+    // The public block carries the qualitative level and how it was measured;
+    // what it must never carry is a counter (VIS-001, PRC-032).
     const demand = (await intelligence.json()).demand;
-    expect(Object.keys(demand)).toEqual(['level']);
+    expect(demand.level).toBeTruthy();
+    for (const counter of ['sessions', 'contacts', 'views', 'scope_median', 'city_median_views']) {
+      expect(Object.keys(demand), `demand must not expose ${counter}`).not.toContain(counter);
+    }
   });
 
   test('closed mobile results stay outside keyboard navigation', async ({ page }) => {
