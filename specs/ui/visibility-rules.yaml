@@ -41,7 +41,7 @@ rules:
         symbol: "queryset.values(*POINT_FIELDS)"
         note: Único punto donde se materializan los puntos del mapa.
       - file: backend/real_estate/serializers.py
-        lines: "289-302"
+        lines: "328-340"
         symbol: "data.pop('views_count', None)"
         note: El detalle elimina el contador salvo para propietario o staff autenticado.
       - file: backend/real_estate/views.py

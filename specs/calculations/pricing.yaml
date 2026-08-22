@@ -245,7 +245,7 @@ rules:
           Agregado overall: count, media de $/m², media de precio, media de área,
           y mínimo y máximo de $/m², todos sobre la muestra ya recortada.
       - file: backend/real_estate/views.py
-        lines: "2594-2596"
+        lines: "2598-2600"
         symbol: "Los extremos se excluyen con el método IQR"
         note: >
           Texto de metodología que se sirve en el payload y se muestra en las

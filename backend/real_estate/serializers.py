@@ -195,7 +195,45 @@ class PropertyImageSerializer(serializers.ModelSerializer):
         return round(obj.file_size / 1024, 2) if obj.file_size > 0 else 0
 
 
-class PropertySerializer(serializers.ModelSerializer):
+class HidesListingProvenance:
+    """Keeps where a listing came from out of every public response.
+
+    Part of the catalogue is built from listings this portal did not write.
+    That is a commercial arrangement, not something a visitor is owed, and the
+    fields that carry it — which external system a row came from, its id there,
+    a link straight back to it — are enough for anyone reading the JSON to
+    reconstruct the whole thing, and enough for a competitor to see exactly
+    what was taken.
+
+    Stripped at representation rather than dropped from `fields`, because the
+    admin panel reads these same serializers and genuinely needs them. Staff
+    keep everything; nobody else sees any of it.
+    """
+
+    PRIVATE_SOURCE_FIELDS = (
+        "source",
+        "source_agency",
+        "source_url",
+        "external_id",
+        "is_imported",
+        "imported_at",
+        "source_published_at",
+        "source_updated_at",
+        "last_seen_at",
+        "image_hash",
+    )
+
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        request = self.context.get("request")
+        if request is not None and getattr(request.user, "is_staff", False):
+            return data
+        for field in self.PRIVATE_SOURCE_FIELDS:
+            data.pop(field, None)
+        return data
+
+
+class PropertySerializer(HidesListingProvenance, serializers.ModelSerializer):
     owner = serializers.PrimaryKeyRelatedField(read_only=True)
     images = PropertyImageSerializer(many=True, read_only=True)
     uploaded_images = serializers.ListField(
@@ -457,7 +495,7 @@ class MapPointPropertySerializer(serializers.ModelSerializer):
         return data
 
 
-class MapPropertySerializer(serializers.ModelSerializer):
+class MapPropertySerializer(HidesListingProvenance, serializers.ModelSerializer):
     """
     Payload liviano para el mapa/listado lateral. Evita enviar descripcion,
     imagenes completas y campos de detalle por cada item del viewport.

@@ -108,7 +108,7 @@ Se asigna en save() y no en el serializador porque todos los caminos de escritur
 - `backend/real_estate/services/short_codes.py:19` (`ALPHABET`) — Sin 0, O, 1, I ni L.
 - `backend/real_estate/models.py:450-452` (`short_code`) — Solo se asigna cuando está vacío, que es lo que lo hace estable frente a cualquier edición posterior.
 - `backend/real_estate/views.py:981-983` (`by_code`) — Resolución pública, sin distinguir mayúsculas y excluyendo inactivas.
-- `backend/real_estate/serializers.py:236-238` (`short_code`) — Read-only bajo fields='__all__'. Sin esto un cliente podría fijarse su propio código y ocupar el de otro, porque la columna es única.
+- `backend/real_estate/serializers.py:275-277` (`short_code`) — Read-only bajo fields='__all__'. Sin esto un cliente podría fijarse su propio código y ocupar el de otro, porque la columna es única.
 
 **Casos**
 
@@ -315,7 +315,7 @@ Y un visitante es un `session_id` distinto, no un evento: el navegador repite su
 - `backend/real_estate/models.py:865-867` (`activity_prop_human_idx`) — (property, is_bot, created_at). Sin él la agregación recorre toda la tabla de eventos.
 - `backend/real_estate/views.py:795-806` (`def promotion_stats`)
 - `backend/real_estate/permissions.py:25-42` (`class IsPropertyOwnerOrStaff`) — Frontera de verdad, en el servidor. A diferencia de las láminas (SOC-009), este dato es del dueño.
-- `backend/real_estate/serializers.py:681-691` (`PROPERTY_PATH_RE`) — La visita a una ficha se atribuye a su anuncio leyendo el id de la ruta; el beacon genérico de page_view no manda property_id.
+- `backend/real_estate/serializers.py:723-732` (`PROPERTY_PATH_RE`) — La visita a una ficha se atribuye a su anuncio leyendo el id de la ruta; el beacon genérico de page_view no manda property_id.
 
 **Casos**
 

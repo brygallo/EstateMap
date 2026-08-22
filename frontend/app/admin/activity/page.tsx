@@ -159,8 +159,10 @@ const errorSummary = (payload: Record<string, unknown>) => {
 const CONTACT_METHOD_LABELS: Record<string, string> = {
   whatsapp: 'Abrió WhatsApp',
   call: 'Inició una llamada',
+  // Kept because months of recorded events carry it; nothing emits it now.
   source_url: 'Abrió la fuente original',
   phone_reveal: 'Vio el número de teléfono',
+  portal_help: 'Nos consultó por la propiedad',
 };
 
 export default function AdminActivityPage() {

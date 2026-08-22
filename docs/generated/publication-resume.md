@@ -186,7 +186,7 @@ La respuesta del token contiene el JSON del borrador y los datos de contacto que
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/real_estate/serializers.py:636-647` (`class PublicationDraftSerializer`)
+- `backend/real_estate/serializers.py:678-688` (`class PublicationDraftSerializer`)
 - `backend/real_estate/views.py:1554-1567` (`class PublicationDraftView`)
 
 **Casos**
@@ -212,7 +212,7 @@ Retomar restaura título, descripción, tipo, operación, precio, dirección, ci
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
 - `backend/real_estate/models.py:758-763` (`class PendingPublicationImage`) — Archivos temporales ordenados y ligados al borrador pendiente.
-- `backend/real_estate/serializers.py:654-660` (`get_temporary_images`) — El enlace devuelve las fotos que debe reconstruir el formulario.
+- `backend/real_estate/serializers.py:696-701` (`get_temporary_images`) — El enlace devuelve las fotos que debe reconstruir el formulario.
 - `frontend/app/continuar-publicacion/[token]/page.tsx:40-51` (`PROPERTY_DRAFT_STORAGE_KEY`) — El borrador y las URLs temporales se dejan donde el formulario ya los busca.
 
 **Casos**
@@ -360,7 +360,7 @@ POST /api/pending-publications/ valida uploaded_images con el mismo lote de comp
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
 - `backend/real_estate/serializers.py:114-152` (`def validate_image_batch`)
-- `backend/real_estate/serializers.py:580-582` (`def validate_uploaded_images(self, value):`) — PendingPublicationSerializer delega en el validador compartido.
+- `backend/real_estate/serializers.py:619-621` (`def validate_uploaded_images(self, value):`) — PendingPublicationSerializer delega en el validador compartido.
 
 **Casos**
 

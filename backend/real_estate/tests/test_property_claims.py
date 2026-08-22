@@ -393,3 +393,45 @@ def test_someone_who_registered_but_never_claimed_still_gets_imported():
 
     assert result in ("created", "updated")
     assert prop is not None
+
+
+# -- Lo que no sale de aquí --------------------------------------------------
+
+def test_the_public_payload_never_says_where_a_listing_came_from():
+    """SPEC:CLM-007 — the JSON alone could reconstruct the whole arrangement."""
+    prop = imported()
+    client = APIClient()
+
+    detail = client.get(f"/api/properties/{prop.pk}/").json()
+    listing = client.get("/api/properties/", {"page_size": 1}).json()["results"]
+
+    hidden = ("source", "source_agency", "source_url", "external_id",
+              "is_imported", "imported_at", "last_seen_at", "image_hash")
+    assert [field for field in hidden if field in detail] == []
+    assert listing == [] or [f for f in hidden if f in listing[0]] == []
+
+
+def test_staff_still_see_the_whole_row():
+    """SPEC:CLM-007 — hidden from the public, not removed from the system."""
+    prop = imported()
+    staff = get_user_model().objects.create_user(
+        username="staff", email="staff@example.com", password="x", is_staff=True
+    )
+    client = APIClient()
+    client.force_authenticate(staff)
+
+    detail = client.get(f"/api/properties/{prop.pk}/").json()
+
+    assert detail["is_imported"] is True
+    assert "source_url" in detail
+
+
+def test_the_published_methodology_names_no_external_source():
+    """SPEC:CLM-007 — it keeps saying what the figures cannot claim, and no more."""
+    response = APIClient().get("/api/market-stats/")
+
+    methodology = response.json()["methodology"].lower()
+    assert "plusval" not in methodology
+    assert "importad" not in methodology
+    # What has to stay: these are asking prices, not closed sales.
+    assert "precios pedidos" in methodology

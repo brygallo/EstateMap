@@ -390,7 +390,7 @@ Hoy is_email_verified no bloquea ningún endpoint, así que una cuenta activa co
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
 - `backend/real_estate/models.py:30-32` (`is_email_verified = models.BooleanField(default=False)`)
-- `backend/real_estate/serializers.py:786-788` (`not user.is_active and not user.is_email_verified`) — Única lectura del campo en un camino de login; ninguna permission class lo mira.
+- `backend/real_estate/serializers.py:825-827` (`not user.is_active and not user.is_email_verified`) — Única lectura del campo en un camino de login; ninguna permission class lo mira.
 
 **Casos**
 
@@ -901,7 +901,7 @@ Cualquiera puede crear un lead sin cuenta, y el estado del lead no se puede fija
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
 - `backend/real_estate/views.py:1422-1424` (`if self.action == 'create':`)
-- `backend/real_estate/serializers.py:519-521` (`class LeadSerializer`) — read_only_fields incluye status.
+- `backend/real_estate/serializers.py:558-560` (`class LeadSerializer`) — read_only_fields incluye status.
 
 **Casos**
 
@@ -992,7 +992,7 @@ Consultar, cambiar el estado o eliminar un lead exige que la propiedad asociada 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
 - `backend/real_estate/views.py:1434-1436` (`LeadStatusSerializer`)
-- `backend/real_estate/serializers.py:547-549` (`class LeadStatusSerializer`)
+- `backend/real_estate/serializers.py:586-588` (`class LeadStatusSerializer`)
 
 **Casos**
 
@@ -1086,7 +1086,7 @@ Cualquier visitante puede emitir un evento de actividad, con un límite de 30 po
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
 - `backend/real_estate/views.py:1719-1721` (`self.throttle_scope = 'activity_create'`)
-- `backend/real_estate/serializers.py:737-739` (`validated_data['is_bot'] = is_bot_request(request)`)
+- `backend/real_estate/serializers.py:775-777` (`validated_data['is_bot'] = is_bot_request(request)`)
 
 **Casos**
 
@@ -1152,7 +1152,7 @@ Listar o consultar eventos de actividad exige is_staff; un usuario autenticado n
 
 - `backend/real_estate/views.py:1818-1820` (`class CustomTokenObtainPairView`)
 - `backend/estate_map/settings.py:235-253` (`SIMPLE_JWT`)
-- `backend/real_estate/serializers.py:767-769` (`token["is_staff"] = user.is_staff`)
+- `backend/real_estate/serializers.py:806-808` (`token["is_staff"] = user.is_staff`)
 
 **Casos**
 
@@ -1208,7 +1208,7 @@ Cualquiera puede registrarse sin autenticación, y la cuenta se crea con is_acti
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
 - `backend/real_estate/views.py:1822-1824` (`class RegisterView`)
-- `backend/real_estate/serializers.py:815-819` (`class RegisterSerializer`) — create() pasa is_active=False y emite el token de verificación.
+- `backend/real_estate/serializers.py:857-860` (`class RegisterSerializer`) — create() pasa is_active=False y emite el token de verificación.
 
 **Casos**
 
@@ -1447,7 +1447,7 @@ La actualización del perfil propio solo admite username, nombre y apellidos; co
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/real_estate/serializers.py:923-938` (`read_only_fields = [`)
+- `backend/real_estate/serializers.py:968-982` (`read_only_fields = [`)
 
 **Casos**
 
@@ -1479,7 +1479,7 @@ La actualización del perfil propio solo admite username, nombre y apellidos; co
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
 - `backend/real_estate/views.py:2326-2328` (`class ChangePasswordView`)
-- `backend/real_estate/serializers.py:974-976` (`La contraseña actual no es correcta`)
+- `backend/real_estate/serializers.py:1012-1014` (`La contraseña actual no es correcta`)
 
 **Casos**
 
@@ -1542,8 +1542,8 @@ Solicitar el cambio de correo requiere autenticación, invalida las solicitudes 
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/real_estate/views.py:2611-2613` (`class AdminDashboardView`)
-- `backend/real_estate/views.py:2731-2733` (`AdminMetricsService(now=now, window_days=window_days).build()`)
+- `backend/real_estate/views.py:2615-2617` (`class AdminDashboardView`)
+- `backend/real_estate/views.py:2735-2737` (`AdminMetricsService(now=now, window_days=window_days).build()`)
 - `backend/real_estate/permissions.py:46-50` (`class IsAdminUser`)
 
 **Casos**
@@ -1577,8 +1577,8 @@ Leer el estado operativo y marcar incidencias como resueltas exige is_staff.
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/real_estate/views.py:2784-2786` (`class AdminSystemStatusView`)
-- `backend/real_estate/views.py:2908-2910` (`admin_audit action=incident.resolve`)
+- `backend/real_estate/views.py:2788-2790` (`class AdminSystemStatusView`)
+- `backend/real_estate/views.py:2912-2914` (`admin_audit action=incident.resolve`)
 
 **Casos**
 
@@ -1610,8 +1610,8 @@ El POST de /admin/system-status/ marca una incidencia como resuelta y está cubi
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/real_estate/views.py:2906-2908` (`incident.save(update_fields=["resolved", "last_seen_at"])`)
-- `backend/real_estate/views.py:2613-2615` (`permission_classes = [IsAuthenticated, IsAdminUser]`)
+- `backend/real_estate/views.py:2910-2912` (`incident.save(update_fields=["resolved", "last_seen_at"])`)
+- `backend/real_estate/views.py:2617-2619` (`permission_classes = [IsAuthenticated, IsAdminUser]`)
 
 **Casos**
 
@@ -1643,7 +1643,7 @@ Listar cuentas desde el panel exige is_staff; un usuario autenticado normal reci
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/real_estate/views.py:2920-2922` (`class AdminUserViewSet`)
+- `backend/real_estate/views.py:2924-2926` (`class AdminUserViewSet`)
 
 **Casos**
 
@@ -1675,7 +1675,7 @@ La edición de usuarios del panel admite exactamente is_active e is_staff, y bas
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/real_estate/views.py:2980-2982` (`allowed_fields = {'is_active', 'is_staff'}`)
+- `backend/real_estate/views.py:2984-2986` (`allowed_fields = {'is_active', 'is_staff'}`)
 - `backend/real_estate/permissions.py:52` (`return request.user and request.user.is_authenticated and request.user.is_staff`) — No comprueba is_superuser en ningún punto.
 
 **Casos**
@@ -1737,7 +1737,7 @@ Borrar una cuenta desde el panel exige is_staff y nada más; la única salvaguar
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/real_estate/views.py:3028-3030` (`admin_audit action=user.delete`)
+- `backend/real_estate/views.py:3032-3034` (`admin_audit action=user.delete`)
 
 **Casos**
 
@@ -1798,8 +1798,8 @@ El borrado de cuentas de usuario debe requerir is_superuser y responder 403 a un
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/real_estate/views.py:3038-3040` (`class AdminPropertyViewSet`)
-- `backend/real_estate/views.py:3055-3057` (`Property.objects.select_related('owner', 'source')`)
+- `backend/real_estate/views.py:3042-3044` (`class AdminPropertyViewSet`)
+- `backend/real_estate/views.py:3059-3061` (`Property.objects.select_related('owner', 'source')`)
 
 **Casos**
 
@@ -1832,7 +1832,7 @@ El borrado de cuentas de usuario debe requerir is_superuser y responder 403 a un
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/real_estate/views.py:3334-3336` (`def stats`)
+- `backend/real_estate/views.py:3338-3340` (`def stats`)
 - `backend/real_estate/urls.py:90-92` (`name='admin_properties_stats'`)
 
 **Casos**
@@ -1864,8 +1864,8 @@ Staff puede editar cualquier propiedad desde el panel, pero solo status, title, 
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/real_estate/views.py:3051-3053` (`PATCH_ALLOWED_FIELDS = {'status', 'title', 'price', 'city', 'description'}`)
-- `backend/real_estate/views.py:3114-3116` (`admin_audit action=property.update`)
+- `backend/real_estate/views.py:3055-3057` (`PATCH_ALLOWED_FIELDS = {'status', 'title', 'price', 'city', 'description'}`)
+- `backend/real_estate/views.py:3118-3120` (`admin_audit action=property.update`)
 
 **Casos**
 
@@ -1897,7 +1897,7 @@ Staff puede eliminar cualquier propiedad desde el panel, incluidas las creadas p
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/real_estate/views.py:3222-3224` (`admin_audit action=property.delete`)
+- `backend/real_estate/views.py:3226-3228` (`admin_audit action=property.delete`)
 
 **Casos**
 
@@ -1928,8 +1928,8 @@ Staff puede eliminar cualquier propiedad desde el panel, incluidas las creadas p
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/real_estate/views.py:3279-3281` (`def bulk_status`)
-- `backend/real_estate/views.py:3322-3324` (`admin_audit action=property.bulk_status`)
+- `backend/real_estate/views.py:3283-3285` (`def bulk_status`)
+- `backend/real_estate/views.py:3326-3328` (`admin_audit action=property.bulk_status`)
 
 **Casos**
 

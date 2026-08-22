@@ -19,6 +19,7 @@ El portal publica miles de anuncios cuyo anunciante no tiene cuenta aquí. Cuand
 | [`CLM-004`](#clm-004--esta-no-es-mía-la-quita-de-la-lista-de-quien-lo-dice) | «Esta no es mía» la quita de la lista de quien lo dice | ✅ Implementada |
 | [`CLM-005`](#clm-005--un-anuncio-reclamado-sobrevive-a-la-importación-y-a-la-retirada) | Un anuncio reclamado sobrevive a la importación y a la retirada | ✅ Implementada |
 | [`CLM-006`](#clm-006--a-quien-ya-publica-aquí-no-se-le-importa-nada-nuevo) | A quien ya publica aquí no se le importa nada nuevo | ✅ Implementada |
+| [`CLM-007`](#clm-007--de-dónde-sale-el-inventario-no-se-cuenta-fuera) | De dónde sale el inventario no se cuenta fuera | ✅ Implementada |
 
 ### CLM-001 — El teléfono se compara en una sola forma
 
@@ -129,6 +130,7 @@ El portal publica miles de anuncios cuyo anunciante no tiene cuenta aquí. Cuand
 
 **Cobertura exigida:** api
 
+- `backend/real_estate/tests/generated/test_spec_claims.py`
 - `backend/real_estate/tests/test_property_claims.py`
 - `tests/e2e/reclamar-propiedades.spec.ts`
 
@@ -212,6 +214,44 @@ Si el teléfono de un anuncio nuevo pertenece a una cuenta que ya tiene propieda
 | --- | --- | --- | --- | --- |
 | a un anunciante que ya publica aquí se le deja de importar | — | — | — | allowed |
 | quien se registró pero no reclamó nada sigue importándose | — | — | — | allowed |
+
+**Cobertura exigida:** api
+
+- `backend/real_estate/tests/test_property_claims.py`
+
+### CLM-007 — De dónde sale el inventario no se cuenta fuera
+
+**Estado:** ✅ Implementada
+
+Ninguna superficie pública nombra el origen del catálogo. Los campos `source`, `source_agency`, `source_url`, `external_id`, `is_imported` y sus fechas se eliminan de toda respuesta que no sea de staff; ningún texto de la interfaz, del payload de estadísticas ni del grafo schema.org menciona de dónde procede un anuncio; y una propiedad sin teléfono ofrece contactar con el portal en vez de enlazar al anuncio en otro sitio.
+
+> **Por qué:** Es una decisión comercial, no un dato que se le deba al visitante. Los campos bastaban para reconstruir el arreglo entero leyendo el JSON, y el bloque «Ver anuncio original» hacía dos daños a la vez: lo contaba y regalaba el interesado. Se filtra al representar y no quitando los campos del serializer porque el panel usa los mismos y sí los necesita.
+La excepción que **no** existe: el texto de metodología sigue diciendo que son precios pedidos y no operaciones cerradas, qué se descarta y qué no pueden decir las cifras. Eso es lo que las hace citables y se queda entero; lo que se quitó es el nombre de los sistemas, no la honestidad sobre el método.
+
+**Backend**
+
+- Endpoint: `GET /api/properties/`
+- ¿Lo aplica el servidor?: sí
+
+**Frontend**
+
+- Ruta: `/propiedad/[id]`
+- Ruta: `/estadisticas-inmobiliarias`
+- Ruta: `/metodologia`
+- Visible si se permite: no
+
+**Evidencia en el código** (verificada por `tools/specs/validate.py`)
+
+- `backend/real_estate/serializers.py` (`class HidesListingProvenance`)
+- `backend/real_estate/serializers.py` (`PRIVATE_SOURCE_FIELDS`)
+
+**Casos**
+
+| Caso | Rol | Estado previo | Cuerpo | Esperado |
+| --- | --- | --- | --- | --- |
+| el payload público no lleva el origen del anuncio | — | — | — | allowed |
+| el staff sigue viendo el origen completo | — | — | — | allowed |
+| el texto de metodología no nombra ninguna fuente externa | — | — | — | allowed |
 
 **Cobertura exigida:** api
 

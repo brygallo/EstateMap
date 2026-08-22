@@ -1,6 +1,7 @@
 import { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
+import { buildWhatsAppUrl } from '@/lib/constants';
 import {
   Ruler,
   BedDouble,
@@ -479,6 +480,12 @@ export default async function PropertyPage({ params }: PropertyPageProps) {
   const priceChangedDate = hasPriceDrop ? formatDate(property.price_changed_at) : '';
   // Mensaje de WhatsApp con referencia al anuncio y la URL de su ficha en nuestro sitio.
   const waMessage = `Hola, vi este anuncio en Geo Propiedades: ${property.title || 'esta propiedad'}\n${propertyUrl}`;
+  // Where an enquiry goes when the listing carries no advertiser phone. It used
+  // to leave the site; now it reaches us, which is both a lead and one less
+  // place where the shape of the catalogue is visible from outside.
+  const portalHelpUrl = buildWhatsAppUrl(
+    `Hola, me interesa esta propiedad de Geo Propiedades: ${property.title || 'esta propiedad'}\n${propertyUrl}`
+  );
   const waLink = `https://wa.me/${waPhone}?text=${encodeURIComponent(waMessage)}`;
   const contactTrackingProps = {
     propertyId: property.id,
@@ -679,20 +686,24 @@ export default async function PropertyPage({ params }: PropertyPageProps) {
                       <MessageCircle className="h-4 w-4" strokeWidth={2} aria-hidden />
                       WhatsApp
                     </TrackedContactLink>
-                  ) : isImported && sourceUrl ? (
+                  ) : (
+                    /* No advertiser phone. This used to send the visitor to the
+                       listing's page elsewhere, which gave away how the
+                       catalogue is built and handed the enquiry to somebody
+                       else. Our own line keeps both. */
                     <TrackedContactLink
-                      href={sourceUrl}
-                      method="source_url"
+                      href={portalHelpUrl}
+                      method="portal_help"
                       source="property_page_price_card"
                       {...contactTrackingProps}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="inline-flex items-center justify-center gap-2 rounded-button bg-primary px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-primaryHover"
+                      className="wa-cta inline-flex items-center justify-center gap-2 rounded-button bg-secondary px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-secondaryHover"
                     >
-                      <ExternalLink className="h-4 w-4" strokeWidth={2} aria-hidden />
-                      Contactar anunciante
+                      <MessageCircle className="h-4 w-4" strokeWidth={2} aria-hidden />
+                      Consultar por esta propiedad
                     </TrackedContactLink>
-                  ) : null}
+                  )}
                   {/* A closed listing is off the map (it is `inactive`), and one
                       published without a position was never on it, so the map
                       link would land on an empty viewport. The zone is what is
@@ -863,23 +874,19 @@ export default async function PropertyPage({ params }: PropertyPageProps) {
                         <MessageCircle className="h-5 w-5" strokeWidth={2} aria-hidden />
                         Contactar por WhatsApp
                       </TrackedContactLink>
-                    ) : sourceUrl ? (
+                    ) : (
                       <TrackedContactLink
-                        href={sourceUrl}
-                        method="source_url"
+                        href={portalHelpUrl}
+                        method="portal_help"
                         source="property_page_contact_section"
                         {...contactTrackingProps}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="inline-flex w-full items-center justify-center gap-2 rounded-button bg-primary px-5 py-3 text-base font-semibold text-white shadow-card transition-colors duration-200 hover:bg-primaryHover focus:outline-none focus-visible:ring-4 focus-visible:ring-primary/25"
+                        className="wa-cta inline-flex w-full items-center justify-center gap-2 rounded-button bg-secondary px-5 py-3 text-base font-semibold text-white shadow-card transition-colors duration-200 hover:bg-secondaryHover focus:outline-none focus-visible:ring-4 focus-visible:ring-secondary/25"
                       >
-                        <ExternalLink className="h-5 w-5" strokeWidth={2} aria-hidden />
-                        Contactar en {sourceAgency || 'la página original'}
+                        <MessageCircle className="h-5 w-5" strokeWidth={2} aria-hidden />
+                        Consultar por esta propiedad
                       </TrackedContactLink>
-                    ) : (
-                      <div className="rounded-card border border-line bg-background p-3 text-sm text-textSecondary">
-                        Esta propiedad no tiene contacto disponible.
-                      </div>
                     )
                   ) : (
                     contactPhone && (

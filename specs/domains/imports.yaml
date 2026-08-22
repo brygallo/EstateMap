@@ -209,48 +209,50 @@ rules:
           rent_price: null
 
   - id: IMP-006
-    name: El contacto cae en cascada hasta el anuncio original
-    status: partial
+    name: Sin teléfono, el contacto se queda en el portal
+    status: implemented
     summary: >-
-      Una propiedad importada ofrece WhatsApp si hay teléfono y, si no, un enlace
-      al anuncio original; el email guardado nunca llega a ofrecerse como paso
-      intermedio de la cascada.
+      Una propiedad con teléfono ofrece WhatsApp al anunciante. Sin teléfono
+      ofrece escribirle al portal, con el título y el enlace de la ficha ya en
+      el mensaje. El `source_url` guardado no se ofrece nunca, y un anuncio
+      cerrado no ofrece contacto de ninguna clase.
     rationale: >-
-      El modelo documenta la cascada teléfono -> email -> `source_url`, pero la UI
-      solo implementa dos escalones. Plusvalía no publica email
-      (`contact_email` siempre vacío), así que hoy no se pierde nada; con una
-      fuente que sí lo traiga, el escalón intermedio faltaría.
+      Hasta agosto de 2026 el último escalón era un enlace al anuncio en su
+      sitio de origen, y hacía dos daños a la vez: contaba cómo se arma el
+      catálogo y regalaba el interesado a un tercero (61 de 82 contactos en
+      dieciocho días). Ahora esa consulta llega aquí, que es a la vez un
+      contacto propio y una superficie menos donde se ve el origen. El campo
+      sigue guardado porque la ingesta lo necesita para volver a leer el
+      anuncio; lo que cambió es que no sale del edificio (CLM-007).
+
+      El email guardado sigue sin ofrecerse. No se pierde nada hoy —la fuente
+      activa no lo trae y `contact_email` está siempre vacío— pero con una
+      fuente que sí lo publique faltaría un escalón útil entre el teléfono y
+      nosotros.
     evidence:
-      - file: backend/real_estate/models.py
-        lines: "317-319"
-        symbol: Enlace al anuncio original (contacto fallback)
-        note: El modelo declara `source_url` como contacto de último recurso.
       - file: frontend/app/property/[id]/page.tsx
-        lines: "463-465"
-        symbol: "typeof property.source_url === 'string' ? property.source_url.trim()"
-        note: >-
-          El escalón de último recurso de la cascada. Desde el rediseño de la
-          ficha de anuncio cerrado va además condicionado a `!isClosed`: un
-          anuncio ya vendido no ofrece contacto.
-      - file: frontend/app/property/[id]/page.tsx
-        lines: "669-693"
-        symbol: method="source_url"
-        note: "Cascada real renderizada: contactPhone -> sourceUrl. No hay rama de email."
+        symbol: const portalHelpUrl
+        note: El contacto de último recurso, que ahora apunta al portal.
+      - file: frontend/components/PropertyModal.tsx
+        symbol: const portalHelpUrl
+        note: El mismo recorrido desde el modal del mapa.
+      - file: backend/real_estate/serializers.py
+        symbol: PRIVATE_SOURCE_FIELDS
+        note: Por qué el enlace de origen ya no puede ni llegar al navegador.
     cases:
       - name: Anuncio con WhatsApp
         given:
           contact_phone: "593995806119"
-        expected: "botón de WhatsApp"
-      - name: Anuncio importado sin teléfono
+        expected: "botón de WhatsApp al anunciante"
+      - name: Anuncio sin teléfono
         given:
           contact_phone: ""
-          source_url: https://www.plusvalia.com/propiedades/clasificado/x-1.html
-        expected: "enlace 'Contactar anunciante' al anuncio original"
+        expected: "'Consultar por esta propiedad', que escribe al portal"
       - name: Anuncio con email pero sin teléfono
         given:
           contact_phone: ""
           contact_email: agente@example.com
-        expected: "el email no se ofrece; se cae directo al enlace del portal"
+        expected: "el email no se ofrece; se cae directo a la consulta al portal"
         note: Escalón no implementado.
 
   - id: IMP-007

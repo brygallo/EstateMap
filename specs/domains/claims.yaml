@@ -226,3 +226,47 @@ rules:
         expected: allowed
       - name: quien se registró pero no reclamó nada sigue importándose
         expected: allowed
+
+  - id: CLM-007
+    name: De dónde sale el inventario no se cuenta fuera
+    status: implemented
+    summary: >-
+      Ninguna superficie pública nombra el origen del catálogo. Los campos
+      `source`, `source_agency`, `source_url`, `external_id`, `is_imported` y
+      sus fechas se eliminan de toda respuesta que no sea de staff; ningún
+      texto de la interfaz, del payload de estadísticas ni del grafo
+      schema.org menciona de dónde procede un anuncio; y una propiedad sin
+      teléfono ofrece contactar con el portal en vez de enlazar al anuncio en
+      otro sitio.
+    rationale: >-
+      Es una decisión comercial, no un dato que se le deba al visitante. Los
+      campos bastaban para reconstruir el arreglo entero leyendo el JSON, y el
+      bloque «Ver anuncio original» hacía dos daños a la vez: lo contaba y
+      regalaba el interesado. Se filtra al representar y no quitando los campos
+      del serializer porque el panel usa los mismos y sí los necesita.
+
+      La excepción que **no** existe: el texto de metodología sigue diciendo
+      que son precios pedidos y no operaciones cerradas, qué se descarta y qué
+      no pueden decir las cifras. Eso es lo que las hace citables y se queda
+      entero; lo que se quitó es el nombre de los sistemas, no la honestidad
+      sobre el método.
+    evidence:
+      - file: backend/real_estate/serializers.py
+        symbol: class HidesListingProvenance
+      - file: backend/real_estate/serializers.py
+        symbol: PRIVATE_SOURCE_FIELDS
+    backend:
+      enforce: true
+      endpoint: GET /api/properties/
+    frontend:
+      routes: ["/propiedad/[id]", "/estadisticas-inmobiliarias", "/metodologia"]
+      visible_when_allowed: false
+    tests:
+      api: true
+    cases:
+      - name: el payload público no lleva el origen del anuncio
+        expected: allowed
+      - name: el staff sigue viendo el origen completo
+        expected: allowed
+      - name: el texto de metodología no nombra ninguna fuente externa
+        expected: allowed

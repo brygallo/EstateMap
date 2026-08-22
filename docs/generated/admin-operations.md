@@ -451,7 +451,7 @@ La descarga se autentica con las clases de DRF, que solo leen la cabecera Author
 
 - `backend/real_estate/services/diagnostics.py:27-58` (`class PropertyDiagnosticsService`)
 - `backend/real_estate/services/diagnostics.py:62-94` (`def _blockers`)
-- `backend/real_estate/views.py:3271-3274` (`def diagnostics`)
+- `backend/real_estate/views.py:3275-3277` (`def diagnostics`)
 
 **Casos**
 

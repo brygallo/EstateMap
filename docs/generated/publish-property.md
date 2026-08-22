@@ -100,7 +100,7 @@ Crear una propiedad sigue siempre el mismo orden: validar el payload, crear la f
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/real_estate/serializers.py:372-376` (`def create(self, validated_data):`) — Crea Property y luego llama a stage_property_image por cada archivo.
+- `backend/real_estate/serializers.py:414-417` (`def create(self, validated_data):`) — Crea Property y luego llama a stage_property_image por cada archivo.
 - `backend/real_estate/serializers.py:61-95` (`def stage_property_image`) — Escribe el original en disco (stash_upload), crea la fila PENDING y llama a enqueue_optimization.
 - `backend/real_estate/tasks.py:44-109` (`def optimize_property_image`) — Único punto que sube imagen y miniatura a MinIO y marca READY.
 
@@ -124,7 +124,7 @@ La fase de validación exige al menos 3 vértices realmente distintos, todas las
 - `backend/real_estate/geo.py:15-18` (`ECUADOR_MAINLAND_LAT_MIN`) — Límites exactos del bounding box continental.
 - `backend/real_estate/geo.py:28-29` (`MIN_POLYGON_AREA_M2`) — 10.0 y 5_000_000.0 metros cuadrados.
 - `backend/real_estate/geo.py:176-222` (`def validate_and_normalize_polygon`) — Orden interno -- vértices distintos, límites geográficos, autointersección, área.
-- `backend/real_estate/serializers.py:336-351` (`def validate_polygon`) — Punto de entrada desde el serializer, antes de que create() se ejecute.
+- `backend/real_estate/serializers.py:388-402` (`def validate_polygon`) — Punto de entrada desde el serializer, antes de que create() se ejecute.
 
 **Casos**
 
@@ -147,7 +147,7 @@ Antes de crear la propiedad, cada lote de imágenes se valida completo: máximo 
 
 - `backend/estate_map/settings.py:420-422` (`MAX_PROPERTY_UPLOAD_MB`) — MAX_IMAGES_PER_PROPERTY=10, MAX_IMAGE_SIZE_MB=10, MAX_PROPERTY_UPLOAD_MB=50.
 - `backend/estate_map/settings.py:403-405` (`ALLOWED_IMAGE_TYPES`)
-- `backend/real_estate/serializers.py:253-308` (`def validate_uploaded_images`) — Cuenta existentes menos images_to_delete, valida suma del lote y cada imagen, antes de llegar a create/update.
+- `backend/real_estate/serializers.py:345-399` (`def validate_uploaded_images`) — Cuenta existentes menos images_to_delete, valida suma del lote y cada imagen, antes de llegar a create/update.
 
 **Casos**
 

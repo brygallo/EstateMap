@@ -186,7 +186,7 @@ rules:
       dejen de publicar.
     evidence:
       - file: frontend/app/property/[id]/page.tsx
-        lines: "931-940"
+        lines: "946-954"
         symbol: placement="property_sidebar"
         note: Fuera del `div` de la tarjeta de contacto, dentro del `aside`.
     tests: {playwright: true}

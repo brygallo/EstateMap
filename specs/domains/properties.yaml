@@ -227,7 +227,7 @@ rules:
       decisión documentada en el código.
     evidence:
       - file: backend/real_estate/serializers.py
-        lines: "224-232"
+        lines: "266-273"
         symbol: fields = '__all__'
         note: >-
           Verificado por introspección del serializer en el contenedor: la lista de
@@ -469,11 +469,11 @@ rules:
         symbol: geojson_coords
         note: Cierra el anillo y voltea cada par a [lng, lat].
       - file: backend/real_estate/serializers.py
-        lines: "336-356"
+        lines: "388-407"
         symbol: validate_polygon
         note: Acepta objeto GeoJSON, anillo simple o cualquiera de los dos codificado como texto JSON.
       - file: backend/real_estate/serializers.py
-        lines: "274-281"
+        lines: "316-322"
         symbol: to_representation
         note: A la salida se reconvierte a [[lat, lng], ...] para el frontend.
     cases:
@@ -514,7 +514,7 @@ rules:
         symbol: ensure_polygon_center
         note: Solo rellena los huecos, nunca pisa unas coordenadas enviadas explícitamente.
       - file: backend/real_estate/serializers.py
-        lines: "377-379"
+        lines: "416-418"
         symbol: ensure_polygon_center
         note: En update, un polígono nuevo sin coordenadas nuevas anula las anteriores y las recalcula.
     cases:
@@ -552,7 +552,7 @@ rules:
         symbol: perform_create
         note: serializer.save(owner=self.request.user), ignorando cualquier owner del payload.
       - file: backend/real_estate/serializers.py
-        lines: "198-200"
+        lines: "237-239"
         symbol: owner = serializers.PrimaryKeyRelatedField(read_only=True)
       - file: backend/real_estate/models.py
         lines: "286-288"
@@ -595,7 +595,7 @@ rules:
         symbol: IsOwnerOrReadOnly
         note: permission_classes = [IsAuthenticatedOrReadOnly, IsOwnerOrReadOnly] en PropertyViewSet.
       - file: backend/real_estate/views.py
-        lines: "3051-3053"
+        lines: "3055-3057"
         symbol: PATCH_ALLOWED_FIELDS
         note: El panel admin puede tocar propiedades ajenas, pero solo status, title, price, city y description.
     backend:
@@ -635,11 +635,11 @@ rules:
         symbol: source_url
         note: El comentario del bloque de origen declara la cascada, y source_url la cierra como contacto de último recurso.
       - file: frontend/app/property/[id]/page.tsx
-        lines: "657-688"
+        lines: "463-493"
         symbol: sourceUrl
         note: Ficha pública - WhatsApp si hay teléfono, "Contactar en {agencia}" si hay enlace, aviso si no hay ninguno.
       - file: frontend/components/PropertyModal.tsx
-        lines: "907-978"
+        lines: "299-369"
         symbol: sourceUrl
         note: Modal del mapa - misma cascada, con "Llamar" y "WhatsApp" cuando hay teléfono.
     frontend:
@@ -933,7 +933,7 @@ rules:
         symbol: views_count
         note: PositiveIntegerField con default 0.
       - file: backend/real_estate/serializers.py
-        lines: "232-234"
+        lines: "270-272"
         symbol: 'views_count'
         note: Está en read_only_fields, así que un cliente no puede inflarlo desde el payload.
     backend:
@@ -1028,7 +1028,7 @@ rules:
         symbol: ALLOWED_IMAGE_TYPES
         note: image/jpeg, image/jpg, image/png y image/webp.
       - file: backend/real_estate/serializers.py
-        lines: "253-308"
+        lines: "345-399"
         symbol: validate_uploaded_images
         note: Aplica en orden el tope por propiedad, el tope combinado y los tres validadores por imagen.
       - file: backend/real_estate/validators.py
@@ -1311,7 +1311,7 @@ rules:
           Volver a poner el anuncio en venta lo reabre; si no, el cambio parece
           aceptado y se deshace solo.
       - file: backend/real_estate/views.py
-        lines: "3318-3320"
+        lines: "3322-3324"
         symbol: "changes['closed_reason'] = ''"
         note: >-
           El cambio de estado en lote escribe con .update(), que nunca llega a
@@ -1461,7 +1461,7 @@ rules:
       peor que no ofrecer la lámina.
     evidence:
       - file: backend/real_estate/serializers.py
-        lines: "244-273"
+        lines: "286-314"
         symbol: def _price_change
       - file: backend/real_estate/signals.py
         lines: "48-54"

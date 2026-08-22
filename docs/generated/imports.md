@@ -20,7 +20,7 @@ Reglas de negocio del agregador (app `ingesta`): cómo un anuncio de un portal e
 | [`IMP-003`](#imp-003--un-precio-absurdo-se-publica-como-a-consultar-no-como-dato) | Un precio absurdo se publica como "a consultar", no como dato | ✅ Implementada |
 | [`IMP-004`](#imp-004--las-fechas-de-origen-no-se-inventan) | Las fechas de origen no se inventan | ✅ Implementada |
 | [`IMP-005`](#imp-005--venta-gana-sobre-alquiler-y-el-resultado-es-determinista) | Venta gana sobre alquiler y el resultado es determinista | ✅ Implementada |
-| [`IMP-006`](#imp-006--el-contacto-cae-en-cascada-hasta-el-anuncio-original) | El contacto cae en cascada hasta el anuncio original | 🟡 Parcial |
+| [`IMP-006`](#imp-006--sin-teléfono-el-contacto-se-queda-en-el-portal) | Sin teléfono, el contacto se queda en el portal | ✅ Implementada |
 | [`IMP-007`](#imp-007--la-misma-foto-identifica-la-misma-propiedad-entre-portales) | La misma foto identifica la misma propiedad entre portales | ✅ Implementada |
 | [`IMP-008`](#imp-008--dedup-geográfico-entre-fuentes-por-proximidad-y-atributos) | Dedup geográfico entre fuentes por proximidad y atributos | ✅ Implementada |
 | [`IMP-009`](#imp-009--el-teléfono-nunca-es-señal-de-deduplicación) | El teléfono nunca es señal de deduplicación | ✅ Implementada |
@@ -154,27 +154,28 @@ Un anuncio publicado a la vez en venta y alquiler queda como `for_sale` con el p
 
 - `backend/ingesta/tests/test_plusvalia.py`
 
-### IMP-006 — El contacto cae en cascada hasta el anuncio original
+### IMP-006 — Sin teléfono, el contacto se queda en el portal
 
-**Estado:** 🟡 Parcial
+**Estado:** ✅ Implementada
 
-Una propiedad importada ofrece WhatsApp si hay teléfono y, si no, un enlace al anuncio original; el email guardado nunca llega a ofrecerse como paso intermedio de la cascada.
+Una propiedad con teléfono ofrece WhatsApp al anunciante. Sin teléfono ofrece escribirle al portal, con el título y el enlace de la ficha ya en el mensaje. El `source_url` guardado no se ofrece nunca, y un anuncio cerrado no ofrece contacto de ninguna clase.
 
-> **Por qué:** El modelo documenta la cascada teléfono -> email -> `source_url`, pero la UI solo implementa dos escalones. Plusvalía no publica email (`contact_email` siempre vacío), así que hoy no se pierde nada; con una fuente que sí lo traiga, el escalón intermedio faltaría.
+> **Por qué:** Hasta agosto de 2026 el último escalón era un enlace al anuncio en su sitio de origen, y hacía dos daños a la vez: contaba cómo se arma el catálogo y regalaba el interesado a un tercero (61 de 82 contactos en dieciocho días). Ahora esa consulta llega aquí, que es a la vez un contacto propio y una superficie menos donde se ve el origen. El campo sigue guardado porque la ingesta lo necesita para volver a leer el anuncio; lo que cambió es que no sale del edificio (CLM-007).
+El email guardado sigue sin ofrecerse. No se pierde nada hoy —la fuente activa no lo trae y `contact_email` está siempre vacío— pero con una fuente que sí lo publique faltaría un escalón útil entre el teléfono y nosotros.
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/real_estate/models.py:317-319` (`Enlace al anuncio original (contacto fallback)`) — El modelo declara `source_url` como contacto de último recurso.
-- `frontend/app/property/[id]/page.tsx:463-465` (`typeof property.source_url === 'string' ? property.source_url.trim()`) — El escalón de último recurso de la cascada. Desde el rediseño de la ficha de anuncio cerrado va además condicionado a `!isClosed`: un anuncio ya vendido no ofrece contacto.
-- `frontend/app/property/[id]/page.tsx:669-693` (`method="source_url"`) — Cascada real renderizada: contactPhone -> sourceUrl. No hay rama de email.
+- `frontend/app/property/[id]/page.tsx` (`const portalHelpUrl`) — El contacto de último recurso, que ahora apunta al portal.
+- `frontend/components/PropertyModal.tsx` (`const portalHelpUrl`) — El mismo recorrido desde el modal del mapa.
+- `backend/real_estate/serializers.py` (`PRIVATE_SOURCE_FIELDS`) — Por qué el enlace de origen ya no puede ni llegar al navegador.
 
 **Casos**
 
 | Caso | Rol | Estado previo | Cuerpo | Esperado |
 | --- | --- | --- | --- | --- |
-| Anuncio con WhatsApp | — | `contact_phone`=593995806119 | — | botón de WhatsApp |
-| Anuncio importado sin teléfono | — | `contact_phone`=, `source_url`=https://www.plusvalia.com/propiedades/clasificado/x-1.html | — | enlace 'Contactar anunciante' al anuncio original |
-| Anuncio con email pero sin teléfono | — | `contact_phone`=, `contact_email`=agente@example.com | — | el email no se ofrece; se cae directo al enlace del portal |
+| Anuncio con WhatsApp | — | `contact_phone`=593995806119 | — | botón de WhatsApp al anunciante |
+| Anuncio sin teléfono | — | `contact_phone`= | — | 'Consultar por esta propiedad', que escribe al portal |
+| Anuncio con email pero sin teléfono | — | `contact_phone`=, `contact_email`=agente@example.com | — | el email no se ofrece; se cae directo a la consulta al portal |
 
 ### IMP-007 — La misma foto identifica la misma propiedad entre portales
 

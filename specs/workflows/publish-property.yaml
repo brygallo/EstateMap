@@ -110,7 +110,7 @@ rules:
       rápido con un id que ya se puede mostrar.
     evidence:
       - file: backend/real_estate/serializers.py
-        lines: "372-376"
+        lines: "414-417"
         symbol: "def create(self, validated_data):"
         note: Crea Property y luego llama a stage_property_image por cada archivo.
       - file: backend/real_estate/serializers.py
@@ -160,7 +160,7 @@ rules:
         symbol: def validate_and_normalize_polygon
         note: Orden interno -- vértices distintos, límites geográficos, autointersección, área.
       - file: backend/real_estate/serializers.py
-        lines: "336-351"
+        lines: "388-402"
         symbol: def validate_polygon
         note: Punto de entrada desde el serializer, antes de que create() se ejecute.
     cases:
@@ -205,7 +205,7 @@ rules:
         lines: "403-405"
         symbol: ALLOWED_IMAGE_TYPES
       - file: backend/real_estate/serializers.py
-        lines: "253-308"
+        lines: "345-399"
         symbol: def validate_uploaded_images
         note: Cuenta existentes menos images_to_delete, valida suma del lote y cada imagen, antes de llegar a create/update.
     cases:

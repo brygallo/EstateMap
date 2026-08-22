@@ -113,7 +113,7 @@ Lead.status recorre new, contacted y closed, y PATCH /api/leads/{id}/ usa LeadSt
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
 - `backend/real_estate/models.py:671-673` (`STATUS_CHOICES = [`) — Los tres estados del ciclo de gestión de un lead.
-- `backend/real_estate/serializers.py:547-549` (`class LeadStatusSerializer`) — fields = ['id', 'status'], sin acceso a name, phone, email ni message.
+- `backend/real_estate/serializers.py:586-588` (`class LeadStatusSerializer`) — fields = ['id', 'status'], sin acceso a name, phone, email ni message.
 
 **Casos**
 
@@ -268,7 +268,7 @@ El campo source admite account_required (intento de publicar sin cuenta), whatsa
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
 - `backend/real_estate/models.py:663-665` (`SOURCE_CHOICES = [`) — Los cuatro orígenes de una solicitud pendiente.
-- `backend/real_estate/serializers.py:576-578` (`def validate_source`) — Cualquier valor fuera del catálogo se normaliza silenciosamente a "other" en vez de rechazar la petición.
+- `backend/real_estate/serializers.py:615-617` (`def validate_source`) — Cualquier valor fuera del catálogo se normaliza silenciosamente a "other" en vez de rechazar la petición.
 
 **Casos**
 
@@ -374,8 +374,8 @@ ActivityEventSerializer.create ignora cualquier valor de is_bot que venga en el 
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/real_estate/serializers.py:736-738` (`validated_data['is_bot'] = is_bot_request(request)`) — Sobrescribe el valor ya validado del payload, si lo había.
-- `backend/real_estate/serializers.py:712-714` (`read_only_fields = ['id', 'user', 'property', 'property_title', 'is_bot', 'created_at']`) — is_bot es de solo lectura en el serializer expuesto, además de recalcularse en create.
+- `backend/real_estate/serializers.py:775-777` (`validated_data['is_bot'] = is_bot_request(request)`) — Sobrescribe el valor ya validado del payload, si lo había.
+- `backend/real_estate/serializers.py:751-753` (`read_only_fields = ['id', 'user', 'property', 'property_title', 'is_bot', 'created_at']`) — is_bot es de solo lectura en el serializer expuesto, además de recalcularse en create.
 
 **Casos**
 
@@ -470,7 +470,7 @@ PendingPublication.status recorre new, contacted, converted y discarded: a difer
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
 - `backend/real_estate/models.py:671-673` (`STATUS_CHOICES = [`) — Los cuatro estados de una solicitud pendiente.
-- `backend/real_estate/serializers.py:632-634` (`class PendingPublicationStatusSerializer`) — fields = ['id', 'status'], igual patrón restrictivo que LeadStatusSerializer.
+- `backend/real_estate/serializers.py:671-673` (`class PendingPublicationStatusSerializer`) — fields = ['id', 'status'], igual patrón restrictivo que LeadStatusSerializer.
 
 **Casos**
 
@@ -490,7 +490,7 @@ El navegador conserva una clave UUID por borrador. Cada abandono, error de publi
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
 - `frontend/app/add-property/page.tsx:783-842` (`PENDING_PUBLICATION_KEY_STORAGE_KEY`) — La clave estable y las fotos se envían en cada guardado del borrador.
-- `backend/real_estate/serializers.py:584-614` (`def create(self, validated_data)`) — Busca por draft_key y actualiza la solicitud no convertida.
+- `backend/real_estate/serializers.py:636-665` (`def create(self, validated_data)`) — Busca por draft_key y actualiza la solicitud no convertida.
 - `backend/real_estate/models.py:730-732` (`draft_key`) — La unicidad también protege frente a duplicados en la base de datos.
 
 **Casos**

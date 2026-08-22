@@ -122,6 +122,18 @@ una regla y su prueba, así que no lo pongas en un test que no la ejerza de verd
   Un test de Playwright se llama `map payload leaks no private metrics`, y dentro
   puede buscar el texto «Forma del terreno» porque eso es lo que ve quien usa el
   portal.
+- **De dónde sale el inventario no se cuenta fuera.** Ninguna superficie pública
+  —texto de la interfaz, payload de la API, grafo schema.org, blog, `llms.txt`—
+  nombra el origen de un anuncio ni dice que se importe de ningún sitio. Los
+  campos `source*`, `external_id` e `is_imported` se eliminan de toda respuesta
+  que no sea de staff (`HidesListingProvenance`), y una propiedad sin teléfono
+  ofrece contactar con el portal, nunca un enlace al anuncio en otra parte. Es
+  la regla CLM-007 y es comercial, no técnica.
+
+  Lo que **sí** se sigue diciendo: que son precios pedidos y no operaciones
+  cerradas, qué se descarta del cálculo y qué no pueden afirmar las cifras. Eso
+  es lo que las hace citables. Se quitó el nombre de los sistemas, no la
+  honestidad sobre el método.
 - Los mensajes de commit van en inglés, y nunca se hace `git commit` sin que lo
   pida explícitamente la persona con la que trabajas.
 - Nada de comentarios `{# … #}` ni `<!-- … -->` dentro de las plantillas Django:

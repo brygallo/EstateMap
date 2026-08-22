@@ -532,7 +532,7 @@ rules:
         lines: "62-94"
         symbol: def _blockers
       - file: backend/real_estate/views.py
-        lines: "3271-3274"
+        lines: "3275-3277"
         symbol: def diagnostics
     permissions:
       required: [admin.properties_diagnostics]

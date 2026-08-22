@@ -2586,11 +2586,15 @@ class MarketStatsView(generics.GenericAPIView):
                 'growth_zones': [row for row in evolution if row['change_pct'] > 0][:8],
                 'estimated_market_days': round(sum(market_days) / len(market_days)) if market_days else 0,
                 'outliers_excluded': outliers_excluded,
+                # Says what was measured and what the figures cannot claim, and
+                # stops there. How the catalogue is assembled is a commercial
+                # matter and does not belong in a public payload — what a reader
+                # needs is that these are asking prices, not closed sales, and
+                # that stays said in full.
                 'methodology': (
                     'Muestra: propiedades en venta activas con precio y área válidos, '
-                    'publicadas en Geo Propiedades Ecuador. La mayor parte del inventario '
-                    'procede de anuncios importados del portal Plusvalía, no de operaciones '
-                    'cerradas: son precios pedidos por quien vende, no precios de venta. '
+                    'publicadas en Geo Propiedades Ecuador. Son precios pedidos por quien '
+                    'vende, no precios de operaciones cerradas. '
                     'Los extremos se excluyen con el método IQR. La evolución compara las '
                     'altas de los últimos 90 días con las de los 90 anteriores, así que '
                     'contrasta cohortes distintas de anuncios y no la variación de precio de '

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useMemo, useRef } from 'react';
+import { buildWhatsAppUrl } from '@/lib/constants';
 import {
   X,
   Share2,
@@ -297,6 +298,10 @@ const PropertyModal = ({ property: initialProperty, isOpen, onClose, onViewOnMap
   const whatsappPropertyUrl =
     typeof window !== 'undefined' ? `${window.location.origin}/propiedad/${property.id}` : sourceUrl;
   const whatsappMessage = `Hola, vi este anuncio en Geo Propiedades: ${property.title || 'esta propiedad'}\n${whatsappPropertyUrl}`;
+  // Where the enquiry goes when the listing carries no advertiser phone.
+  const portalHelpUrl = buildWhatsAppUrl(
+    `Hola, me interesa esta propiedad de Geo Propiedades: ${property.title || 'esta propiedad'}\n${whatsappPropertyUrl}`
+  );
   const whatsappUrl = `https://wa.me/${whatsappPhone}?text=${encodeURIComponent(whatsappMessage)}`;
   // Anuncio venta + alquiler a la vez: `price` es la venta y `rent_price` el alquiler.
   const rentPriceNum = Number.parseFloat(String(property.rent_price ?? ''));
@@ -966,35 +971,37 @@ const PropertyModal = ({ property: initialProperty, isOpen, onClose, onViewOnMap
                           </div>
                         </div>
                       </div>
-                ) : sourceUrl ? (
+                ) : isClosed ? (
+                  <div className="rounded-card border border-line bg-background p-3 text-sm text-textSecondary">
+                    Este anuncio ya se cerró y no recibe contactos.
+                  </div>
+                ) : (
+                  /* No advertiser phone. This block used to show «Anuncio
+                     original» with a link straight out of the site, which both
+                     revealed how the catalogue is put together and handed the
+                     enquiry to somebody else. Our own line keeps both. */
                   <div className="overflow-hidden rounded-card border border-line bg-white shadow-card">
                     <div className="flex items-center gap-3 border-b border-line bg-primaryLight/60 px-4 py-3">
-                      <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary text-white shadow-sm">
-                        <ExternalLink className="h-4 w-4" strokeWidth={2} aria-hidden />
+                      <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-secondary text-white shadow-sm">
+                        <MessageCircle className="h-4 w-4" strokeWidth={2} aria-hidden />
                       </span>
                       <div>
-                        <h3 className="text-sm font-bold text-textPrimary">Anuncio original</h3>
-                        <p className="text-[11px] text-textSecondary">Publicado por {sourceAgency || 'una fuente externa'}</p>
+                        <h3 className="text-sm font-bold text-textPrimary">¿Te interesa esta propiedad?</h3>
+                        <p className="text-[11px] text-textSecondary">Escríbenos y te ayudamos con la visita</p>
                       </div>
                     </div>
                     <div className="p-4">
                       <a
-                        href={sourceUrl}
+                        href={portalHelpUrl}
                         target="_blank"
                         rel="noopener noreferrer"
-                        onClick={() => trackContact('source_url', 'modal_source')}
-                        className="flex min-h-11 w-full items-center justify-center gap-2 rounded-button bg-primary px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-primaryHover"
+                        onClick={() => trackContact('portal_help', 'modal_source')}
+                        className="wa-cta flex min-h-11 w-full items-center justify-center gap-2 rounded-button bg-secondary px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-secondaryHover"
                       >
-                        <ExternalLink className="h-4 w-4" strokeWidth={2} aria-hidden />
-                        Ver anuncio original
+                        <MessageCircle className="h-4 w-4" strokeWidth={2} aria-hidden />
+                        Consultar por WhatsApp
                       </a>
                     </div>
-                  </div>
-                ) : (
-                  <div className="rounded-card border border-line bg-background p-3 text-sm text-textSecondary">
-                    {isClosed
-                      ? 'Este anuncio ya se cerró y no recibe contactos.'
-                      : 'Información del anunciante no disponible.'}
                   </div>
                 )}
               </div>
@@ -1025,16 +1032,16 @@ const PropertyModal = ({ property: initialProperty, isOpen, onClose, onViewOnMap
                   WhatsApp
                 </a>
               </div>
-            ) : sourceUrl ? (
+            ) : !isClosed ? (
               <a
-                href={sourceUrl}
+                href={portalHelpUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                onClick={() => trackContact('source_url', 'mobile_sticky')}
-                className="flex w-full items-center justify-center gap-2 rounded-button bg-primary px-3 py-3 text-sm font-semibold text-white shadow-card"
+                onClick={() => trackContact('portal_help', 'mobile_sticky')}
+                className="wa-cta flex w-full items-center justify-center gap-2 rounded-button bg-secondary px-3 py-3 text-sm font-semibold text-white shadow-card"
               >
-                <ExternalLink className="h-4 w-4" strokeWidth={2} aria-hidden />
-                Ver anuncio original
+                <MessageCircle className="h-4 w-4" strokeWidth={2} aria-hidden />
+                Consultar por WhatsApp
               </a>
             ) : (
               <a

@@ -55,10 +55,9 @@ export default async function MethodologyPage() {
       body: (
         <>
           <p>
-            Todas las cifras se calculan sobre los anuncios publicados en este portal. Hay dos
-            orígenes y no se mezclan sin decirlo: los que publica directamente quien vende o
-            alquila, y los importados del portal Plusvalía, que hoy son la mayor parte del
-            inventario.
+            Todas las cifras se calculan sobre los anuncios publicados en este portal, y
+            solo sobre los que están activos: lo cerrado, lo duplicado y lo que está en la
+            papelera no entra en ningún cálculo.
           </p>
           <p>
             Son <strong className="font-semibold text-textPrimary">precios pedidos</strong>, los

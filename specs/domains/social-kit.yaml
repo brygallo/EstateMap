@@ -180,7 +180,7 @@ rules:
         symbol: by_code
         note: Resolución pública, sin distinguir mayúsculas y excluyendo inactivas.
       - file: backend/real_estate/serializers.py
-        lines: "236-238"
+        lines: "275-277"
         symbol: short_code
         note: >-
           Read-only bajo fields='__all__'. Sin esto un cliente podría fijarse su
@@ -562,7 +562,7 @@ rules:
           Frontera de verdad, en el servidor. A diferencia de las láminas
           (SOC-009), este dato es del dueño.
       - file: backend/real_estate/serializers.py
-        lines: "681-691"
+        lines: "723-732"
         symbol: PROPERTY_PATH_RE
         note: >-
           La visita a una ficha se atribuye a su anuncio leyendo el id de la

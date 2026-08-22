@@ -197,7 +197,7 @@ PropertySerializer no declara ningún campo obligatorio, así que un POST autent
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/real_estate/serializers.py:224-232` (`fields = '__all__'`) — Verificado por introspección del serializer en el contenedor: la lista de campos con required=True está vacía.
+- `backend/real_estate/serializers.py:266-273` (`fields = '__all__'`) — Verificado por introspección del serializer en el contenedor: la lista de campos con required=True está vacía.
 - `backend/real_estate/models.py:214-216` (`property_type = models.CharField`) — Defaults que rellenan el hueco - property_type='land', status='for_sale', city='Macas', province='Morona Santiago'.
 
 **Casos**
@@ -337,8 +337,8 @@ Sea cual sea el formato de entrada, el polígono se guarda como un GeoJSON Polyg
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
 - `backend/real_estate/geo.py:224-227` (`geojson_coords`) — Cierra el anillo y voltea cada par a [lng, lat].
-- `backend/real_estate/serializers.py:336-356` (`validate_polygon`) — Acepta objeto GeoJSON, anillo simple o cualquiera de los dos codificado como texto JSON.
-- `backend/real_estate/serializers.py:274-281` (`to_representation`) — A la salida se reconvierte a [[lat, lng], ...] para el frontend.
+- `backend/real_estate/serializers.py:388-407` (`validate_polygon`) — Acepta objeto GeoJSON, anillo simple o cualquiera de los dos codificado como texto JSON.
+- `backend/real_estate/serializers.py:316-322` (`to_representation`) — A la salida se reconvierte a [[lat, lng], ...] para el frontend.
 
 **Casos**
 
@@ -360,7 +360,7 @@ Si un anuncio trae polígono pero no trae latitude/longitude, se guardan las del
 
 - `backend/real_estate/serializers.py:22-57` (`polygon_center_lat_lng`) — Acepta tanto el GeoJSON normalizado como el anillo [lat, lng] y descarta el punto de cierre.
 - `backend/real_estate/serializers.py:27-33` (`ensure_polygon_center`) — Solo rellena los huecos, nunca pisa unas coordenadas enviadas explícitamente.
-- `backend/real_estate/serializers.py:377-379` (`ensure_polygon_center`) — En update, un polígono nuevo sin coordenadas nuevas anula las anteriores y las recalcula.
+- `backend/real_estate/serializers.py:416-418` (`ensure_polygon_center`) — En update, un polígono nuevo sin coordenadas nuevas anula las anteriores y las recalcula.
 
 **Casos**
 
@@ -380,7 +380,7 @@ owner se toma siempre de request.user al crear desde el API, y las propiedades q
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
 - `backend/real_estate/views.py:641-643` (`perform_create`) — serializer.save(owner=self.request.user), ignorando cualquier owner del payload.
-- `backend/real_estate/serializers.py:198-200` (`owner = serializers.PrimaryKeyRelatedField(read_only=True)`)
+- `backend/real_estate/serializers.py:237-239` (`owner = serializers.PrimaryKeyRelatedField(read_only=True)`)
 - `backend/real_estate/models.py:286-288` (`owner = models.ForeignKey`) — on_delete=SET_NULL, null=True - borrar la cuenta no borra el anuncio.
 - `backend/ingesta/pipeline/upsert.py:23-53` (`_apply_fields`) — Escribe todos los campos del anuncio importado y no toca owner en ningún momento.
 
@@ -408,7 +408,7 @@ La escritura sobre una propiedad existente exige ser su owner; cualquier otro us
 
 - `backend/real_estate/permissions.py:4-15` (`IsOwnerOrReadOnly`) — Permite cualquier método seguro y compara obj.owner == request.user para el resto.
 - `backend/real_estate/views.py:383-385` (`IsOwnerOrReadOnly`) — permission_classes = [IsAuthenticatedOrReadOnly, IsOwnerOrReadOnly] en PropertyViewSet.
-- `backend/real_estate/views.py:3051-3053` (`PATCH_ALLOWED_FIELDS`) — El panel admin puede tocar propiedades ajenas, pero solo status, title, price, city y description.
+- `backend/real_estate/views.py:3055-3057` (`PATCH_ALLOWED_FIELDS`) — El panel admin puede tocar propiedades ajenas, pero solo status, title, price, city y description.
 
 **Casos**
 
@@ -438,8 +438,8 @@ Sin dueño al que escribir, el contacto de un anuncio importado cae en cascada: 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
 - `backend/real_estate/models.py:305-313` (`source_url`) — El comentario del bloque de origen declara la cascada, y source_url la cierra como contacto de último recurso.
-- `frontend/app/property/[id]/page.tsx:657-688` (`sourceUrl`) — Ficha pública - WhatsApp si hay teléfono, "Contactar en {agencia}" si hay enlace, aviso si no hay ninguno.
-- `frontend/components/PropertyModal.tsx:907-978` (`sourceUrl`) — Modal del mapa - misma cascada, con "Llamar" y "WhatsApp" cuando hay teléfono.
+- `frontend/app/property/[id]/page.tsx:463-493` (`sourceUrl`) — Ficha pública - WhatsApp si hay teléfono, "Contactar en {agencia}" si hay enlace, aviso si no hay ninguno.
+- `frontend/components/PropertyModal.tsx:299-369` (`sourceUrl`) — Modal del mapa - misma cascada, con "Llamar" y "WhatsApp" cuando hay teléfono.
 
 **Casos**
 
@@ -607,7 +607,7 @@ views_count se incrementa al consultar el detalle únicamente cuando el request 
 
 - `backend/real_estate/views.py:685-687` (`is_bot_request`) — Property.objects.filter(pk=...).update(views_count=F('views_count') + 1) solo si no es bot.
 - `backend/real_estate/models.py:339-341` (`views_count`) — PositiveIntegerField con default 0.
-- `backend/real_estate/serializers.py:232-234` (`views_count`) — Está en read_only_fields, así que un cliente no puede inflarlo desde el payload.
+- `backend/real_estate/serializers.py:270-272` (`views_count`) — Está en read_only_fields, así que un cliente no puede inflarlo desde el payload.
 
 **Casos**
 
@@ -653,7 +653,7 @@ Como máximo 10 imágenes por propiedad, cada una de hasta 10 MB y entre 200x200
 
 - `backend/estate_map/settings.py:420-422` (`MAX_PROPERTY_UPLOAD_MB`) — MAX_IMAGES_PER_PROPERTY = 10, MAX_IMAGE_SIZE_MB = 10, MAX_PROPERTY_UPLOAD_MB = 50.
 - `backend/estate_map/settings.py:403-405` (`ALLOWED_IMAGE_TYPES`) — image/jpeg, image/jpg, image/png y image/webp.
-- `backend/real_estate/serializers.py:253-308` (`validate_uploaded_images`) — Aplica en orden el tope por propiedad, el tope combinado y los tres validadores por imagen.
+- `backend/real_estate/serializers.py:345-399` (`validate_uploaded_images`) — Aplica en orden el tope por propiedad, el tope combinado y los tres validadores por imagen.
 - `backend/real_estate/validators.py:8-44` (`validate_image_dimensions`) — Tamaño máximo, dimensiones mínimas y máximas, y extensión permitida.
 - `backend/real_estate/exception_handlers.py:59-64` (`def api_exception_handler`) — Cuando el cuerpo supera los topes del parser de Django, el rechazo ocurre antes del serializador y Django respondería con una página HTML. Este manejador lo devuelve como error de campo sobre `uploaded_images`, que es lo que el formulario necesita para abrir el paso de fotos y lo que deja rastro del campo en el registro de actividad.
 
@@ -806,7 +806,7 @@ La normalización vive en `save()` porque todos los caminos de escritura pasan p
 - `backend/real_estate/models.py:276-279` (`closed_reason = models`)
 - `backend/real_estate/models.py:428-434` (`if self.closed_reason:`) — Cerrar pone inactive y sella la fecha; abrir la borra.
 - `backend/real_estate/serializers.py:38-50` (`def reopen_on_reactivation`) — Volver a poner el anuncio en venta lo reabre; si no, el cambio parece aceptado y se deshace solo.
-- `backend/real_estate/views.py:3318-3320` (`changes['closed_reason'] = ''`) — El cambio de estado en lote escribe con .update(), que nunca llega a save(), así que reabre a mano.
+- `backend/real_estate/views.py:3322-3324` (`changes['closed_reason'] = ''`) — El cambio de estado en lote escribe con .update(), que nunca llega a save(), así que reabre a mano.
 
 **Casos**
 
@@ -876,7 +876,7 @@ Cuando la fila más reciente del historial no coincide con el precio actual —a
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/real_estate/serializers.py:244-273` (`def _price_change`)
+- `backend/real_estate/serializers.py:286-314` (`def _price_change`)
 - `backend/real_estate/signals.py:48-54` (`PropertyPriceHistory.objects.create`) — Solo escribe cuando el precio cambia; filas consecutivas = precios consecutivos.
 
 **Casos**

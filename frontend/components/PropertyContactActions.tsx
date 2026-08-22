@@ -4,7 +4,10 @@ import { type ReactNode, useState } from 'react';
 import { trackEvent } from '@/lib/analytics';
 import { haptic } from '@/lib/haptics';
 
-type ContactMethod = 'whatsapp' | 'call' | 'source_url' | 'phone_reveal';
+// `portal_help` is the enquiry that reaches us instead of the advertiser,
+// which is what a listing with no phone now offers. `source_url` stays in the
+// union because months of recorded events carry it; nothing emits it any more.
+type ContactMethod = 'whatsapp' | 'call' | 'source_url' | 'phone_reveal' | 'portal_help';
 
 export interface ContactContext {
   propertyId: number | string;

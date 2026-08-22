@@ -196,7 +196,7 @@ rules:
       silencio lo que ve quien tiene el enlace.
     evidence:
       - file: backend/real_estate/serializers.py
-        lines: "636-647"
+        lines: "678-688"
         symbol: class PublicationDraftSerializer
       - file: backend/real_estate/views.py
         lines: "1554-1567"
@@ -235,7 +235,7 @@ rules:
         symbol: "class PendingPublicationImage"
         note: Archivos temporales ordenados y ligados al borrador pendiente.
       - file: backend/real_estate/serializers.py
-        lines: "654-660"
+        lines: "696-701"
         symbol: "get_temporary_images"
         note: El enlace devuelve las fotos que debe reconstruir el formulario.
       - file: frontend/app/continuar-publicacion/[token]/page.tsx
@@ -414,7 +414,7 @@ rules:
         lines: "114-152"
         symbol: def validate_image_batch
       - file: backend/real_estate/serializers.py
-        lines: "580-582"
+        lines: "619-621"
         symbol: "def validate_uploaded_images(self, value):"
         note: PendingPublicationSerializer delega en el validador compartido.
     backend:

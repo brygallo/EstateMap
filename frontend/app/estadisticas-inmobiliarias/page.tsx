@@ -81,17 +81,12 @@ export default async function MarketStatsPage() {
           {
             '@type': 'Dataset',
             name: `Precio del metro cuadrado en Ecuador (${year})`,
-            description: `Precios promedio por metro cuadrado en Ecuador por ciudad, sector y tipo de propiedad, calculados sobre ${integer(stats.overall.count)} propiedades en venta activas. Son precios pedidos por quien vende, no precios de operaciones cerradas, y la mayor parte del inventario procede de anuncios importados del portal Plusvalía.`,
+            description: `Precios promedio por metro cuadrado en Ecuador por ciudad, sector y tipo de propiedad, calculados sobre ${integer(stats.overall.count)} propiedades en venta activas. Son precios pedidos por quien vende, no precios de operaciones cerradas,.`,
             url: `${SITE_URL}/estadisticas-inmobiliarias`,
             creator: {
               '@type': 'Organization',
               name: 'Geo Propiedades Ecuador',
               url: SITE_URL,
-            },
-            isBasedOn: {
-              '@type': 'Dataset',
-              name: 'Anuncios inmobiliarios publicados en Plusvalía Ecuador',
-              url: 'https://www.plusvalia.com/',
             },
             measurementTechnique: stats.methodology,
             spatialCoverage: 'Ecuador',
