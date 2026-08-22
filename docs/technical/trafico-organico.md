@@ -27,7 +27,9 @@ Dos fechas condicionan cualquier comparación histórica:
 
 ## Línea base medida (22 de agosto de 2026)
 
-- **50–90 sesiones humanas al día**, de las cuales **40–60 orgánicas**.
+- **50–90 sesiones humanas al día**, de las cuales **40–60 orgánicas**. Contadas
+  por día de Ecuador (UTC-5), que es el día que vive la gente: agrupar por UTC
+  parte la tarde ecuatoriana en dos y ensucia cualquier comparación.
 - **150–300 eventos al día**, unos 3 por sesión.
 - **614 sesiones orgánicas aterrizaron directamente en una ficha en 30 días**
   (~20 al día): el **78 %** de todo el tráfico orgánico. Las fichas son el motor.
@@ -44,11 +46,20 @@ detectarlo es la razón eventos/sesión y el salto de `direct`, no el total.
 
 ## El techo real: el presupuesto de rastreo
 
-Medido sobre los logs de nginx: **Googlebot pidió 224 fichas distintas en dos
-días**. A ese ritmo tarda unos **137 días** en dar una vuelta completa a las
-15.318. Los demás bots vieron 10.288 fichas distintas en esos mismos dos días,
-así que no es el servidor: es el presupuesto que Google concede a un dominio con
-poca autoridad.
+Medido sobre catorce días de logs de nginx (9–23 de agosto de 2026): **Googlebot
+pidió 2.624 fichas distintas**, el **17 %** del catálogo. A ese ritmo una vuelta
+completa a las 15.318 lleva unos **ochenta días**.
+
+**Mídelo siempre sobre dos semanas, nunca sobre dos días.** El rastreo es a
+ráfagas —1.195 peticiones a fichas el 18 de agosto, 29 el 17, 42 el 21— así que
+una ventana corta que caiga en un valle multiplica el problema por dos. La
+primera medición de este documento salió de dos días y dio 137 días por vuelta:
+estaba mal por eso.
+
+Los demás bots vieron 17.094 fichas distintas en esas mismas dos semanas —más
+que el catálogo activo, porque incluye anuncios ya retirados—, así que el
+servidor puede entregarlo entero. Es Google quien raciona, y lo que raciona
+depende de la autoridad del dominio.
 
 Consecuencia práctica: **el crecimiento no está en rankear mejor, está en que
 trabaje una porción mayor del catálogo**. Pasar del 3 % al 10 % de fichas con
@@ -111,6 +122,17 @@ awk '/Googlebot/ && $7 ~ /^\/propiedad\// {print $7}' /var/log/nginx/access.log 
 Excluir el tráfico propio: las sesiones que tocan `/admin` son staff, pero el
 trabajo de desarrollo suele navegar sin pasar por el panel. La razón
 eventos/sesión y el salto de `direct` son mejores indicadores.
+
+Y compara sábado contra sábado. El portal cae el fin de semana —30-33 sesiones
+orgánicas los sábados de agosto de 2026, contra 42-62 entre semana—, así que un
+lunes contra un domingo inventa una caída del 40 %.
+
+## Lo que todavía no se puede medir desde aquí
+
+Cuántas de las URL del sitemap están **indexadas**. El rastreo se ve en los logs;
+la indexación solo la sabe Search Console, y este repositorio no tiene
+credenciales para consultarla. Mientras no las haya, «Google no llega a todo el
+catálogo» es una inferencia sólida a partir del rastreo, no una medición.
 
 ## Lo que no se arregla programando
 
