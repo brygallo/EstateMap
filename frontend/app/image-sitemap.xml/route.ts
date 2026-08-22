@@ -6,7 +6,6 @@ import { getAllProperties, SITE_URL } from '@/lib/properties';
 // Imágenes la indexa mejor (tráfico extra hacia las fichas de propiedad).
 
 export const revalidate = 3600;
-export const dynamic = 'force-dynamic';
 
 const MAX_IMAGES_PER_URL = 5;
 
