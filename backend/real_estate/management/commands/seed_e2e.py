@@ -43,9 +43,10 @@ from django.conf import settings
 from django.core.management.base import BaseCommand, CommandError
 
 from advertising.models import Campaign
+from real_estate.services.phones import normalize_ec_phone
 from advertising.placements import Placement
 from real_estate.cache_utils import bump_props_version
-from real_estate.models import City, Property, Province, User
+from real_estate.models import City, ClaimDismissal, Property, Province, User
 
 # Reserved prefix for everything this command creates. `0` is absent from the
 # short-code alphabet (see services/short_codes.py, which drops every confusable
@@ -67,6 +68,20 @@ SEED_OWNER_EMAIL = "e2e-seed@example.com"
 # ADS-016 opens `/` and asserts no slot is rendered there, which is only a real
 # assertion while the home page has no campaign of its own.
 SEED_PLACEMENT = Placement.PROPERTY_SIDEBAR
+
+#: Phone the claim suite owns. Reserved so a seeded listing can never
+#: collide with a real advertiser's inventory.
+SEED_ADVERTISER_PHONE = "0999000123"
+SEED_CLAIMABLE_COUNT = 3
+
+#: The advertiser the claim suite signs in as. It carries a usable password on
+#: purpose, unlike the inventory owner above: the browser tests have to reach a
+#: screen that only exists behind a session, and the alternative — reading a
+#: verification email from Playwright — does not exist. The production guards
+#: at the top of this command are what make that acceptable; they refuse to run
+#: anywhere this account could matter.
+SEED_ADVERTISER_EMAIL = "e2e_anunciante@example.test"
+SEED_ADVERTISER_PASSWORD = "Reclamo-e2e-2026"
 
 # Above this many properties the command did not create, the database is
 # somebody's real inventory and not a test fixture.
@@ -272,6 +287,8 @@ class Command(BaseCommand):
         self._seed_locations()
         created, updated = self._seed_properties(owner)
         self._seed_house_sign()
+        claimable = self._seed_claimable_listings()
+        self._seed_advertiser()
 
         # Every public read is cached under a version key, and `summary` is what
         # `/propiedades` renders its city list from. The post_save signals bump
@@ -286,7 +303,9 @@ class Command(BaseCommand):
                 f"Seeded {created + updated} properties "
                 f"({created} created, {updated} updated) "
                 f"across {len(LOCATIONS)} cities, "
-                f"plus one house sign on {SEED_PLACEMENT}."
+                f"plus one house sign on {SEED_PLACEMENT} "
+                f"and {claimable} imported listings claimable by "
+                f"{SEED_ADVERTISER_PHONE}."
             )
         )
 
@@ -341,6 +360,84 @@ class Command(BaseCommand):
             owner.set_unusable_password()
             owner.save(update_fields=["password"])
         return owner
+
+    def _seed_advertiser(self):
+        """The account the claim suite signs in as.
+
+        Verified, because signing in requires it and the browser cannot read a
+        verification email. Its phone is the one the claimable listings carry,
+        so the flow has something to find the moment the suite opens the page.
+        """
+        advertiser, created = User.objects.get_or_create(
+            email=SEED_ADVERTISER_EMAIL,
+            defaults={
+                "username": "e2e_anunciante",
+                "first_name": "Anunciante",
+                "last_name": "E2E",
+                "is_email_verified": True,
+            },
+        )
+        advertiser.is_email_verified = True
+        advertiser.phone = normalize_ec_phone(SEED_ADVERTISER_PHONE)
+        advertiser.set_password(SEED_ADVERTISER_PASSWORD)
+        advertiser.save()
+        return advertiser
+
+    def _seed_claimable_listings(self):
+        """Imported listings an advertiser can be shown and can take over.
+
+        The claim flow only has anything to say when the catalogue holds
+        listings scraped from elsewhere that carry a phone. A database seeded
+        for CI has none, so the browser tests would either skip — which reads
+        as coverage and is not — or walk a screen that renders nothing.
+
+        They are created with a phone reserved for the suite, so a real
+        advertiser can never collide with them, and left ownerless because
+        being unclaimed is the whole point.
+        """
+        from ingesta.models import Fuente
+
+        source, _ = Fuente.objects.get_or_create(
+            slug="e2e-seed",
+            defaults={
+                "nombre": "Origen de pruebas",
+                "base_url": "https://example.test",
+            },
+        )
+        # Re-running has to put the fixture back exactly as it was. The claim
+        # suite consumes what it exercises — a claimed listing stops being
+        # claimable and a dismissed one stays dismissed — so without this a
+        # second run would silently have nothing to walk and skip itself,
+        # which reads as coverage and is not.
+        ClaimDismissal.objects.filter(
+            property__source__slug="e2e-seed"
+        ).delete()
+        Property.objects.filter(
+            source__slug="e2e-seed", external_id__startswith="e2e-claim-"
+        ).update(owner=None, is_imported=True)
+
+        seeded = 0
+        for index in range(SEED_CLAIMABLE_COUNT):
+            _, created = Property.objects.get_or_create(
+                source=source,
+                external_id=f"e2e-claim-{index}",
+                defaults={
+                    "title": f"Anuncio importado de prueba {index + 1}",
+                    "description": "Inventario sembrado para la suite de reclamos.",
+                    "status": "for_sale",
+                    "property_type": "house",
+                    "price": 60000 + index * 1000,
+                    "area": 120 + index,
+                    "city": "Manta",
+                    "province": "Manabí",
+                    "latitude": -0.95 - index * 0.001,
+                    "longitude": -80.72 - index * 0.001,
+                    "contact_phone": SEED_ADVERTISER_PHONE,
+                    "is_imported": True,
+                },
+            )
+            seeded += int(created)
+        return seeded
 
     def _seed_locations(self):
         """

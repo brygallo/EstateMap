@@ -10,6 +10,7 @@ from django.utils import timezone
 from pathlib import Path
 from uuid import uuid4
 from .geo import polygon_center_lat_lng
+from .services.phones import normalize_ec_phone
 from .services.short_codes import unique_code
 from .validators import validate_image_size, validate_image_dimensions, validate_image_format
 
@@ -29,6 +30,13 @@ class User(AbstractUser):
 
     email = models.EmailField(unique=True)
     is_email_verified = models.BooleanField(default=False)
+    # The phone is what decides which imported listings an account may claim,
+    # so the number typed into a form is never enough on its own: only
+    # `phone_verified_at` — stamped when a message actually arrived from that
+    # number — unlocks the claim. Normalised on save so a lookup is an index
+    # hit and not a comparison of spellings.
+    phone = models.CharField(max_length=20, blank=True, default="", db_index=True)
+    phone_verified_at = models.DateTimeField(null=True, blank=True)
 
     # OAuth fields
     oauth_provider = models.CharField(max_length=50, blank=True, null=True)
@@ -283,6 +291,13 @@ class Property(models.Model):
         related_name="properties",
     )
     contact_phone = models.CharField(max_length=20, blank=True, default="")
+    # The same number as `contact_phone`, reduced to the one shape a claim can
+    # be decided by. Written on save rather than computed on read: «which of
+    # these fifteen thousand listings are this advertiser's» has to be an index
+    # lookup, and normalising in the query would scan every row.
+    contact_phone_normalized = models.CharField(
+        max_length=20, blank=True, default="", db_index=True,
+    )
     contact_email = models.EmailField(blank=True, default="")
 
     # --- Origen / agregador (ingesta) ---
@@ -405,6 +420,11 @@ class Property(models.Model):
         (PROP-002). Reopening therefore means clearing `closed_reason`, not
         changing `status` — otherwise the next save would send it straight back.
         """
+        # Every write path lands here, so this is the only place the claim
+        # lookup key can be kept honest — including the import pipeline, which
+        # is where all fifteen thousand advertiser numbers come from.
+        self.contact_phone_normalized = normalize_ec_phone(self.contact_phone)
+
         if self.closed_reason:
             self.status = "inactive"
             if self.closed_at is None:
@@ -1006,3 +1026,41 @@ class ActivityDailyRollup(models.Model):
 
     def __str__(self):
         return f"{self.day} · {self.event_name} · {'bot' if self.is_bot else 'humano'} · {self.events}"
+
+
+class ClaimDismissal(models.Model):
+    """«Esta no es mía»: una propiedad que este anunciante ya descartó.
+
+    Un teléfono puede aparecer en anuncios que no son de quien lo tiene hoy —
+    números reasignados, un agente que dejó la inmobiliaria, un dato mal
+    copiado en el portal de origen. Sin una forma de decir que no, esas
+    propiedades se quedan estorbando en la lista para siempre y acaban
+    escondiendo las que sí valía la pena reclamar.
+
+    Es un descarte personal, no una afirmación sobre la propiedad: se guarda
+    por cuenta, y no cambia nada de lo que ve el resto del mundo.
+    """
+
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="claim_dismissals",
+    )
+    property = models.ForeignKey(
+        "Property",
+        on_delete=models.CASCADE,
+        related_name="claim_dismissals",
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = "descarte de reclamo"
+        verbose_name_plural = "descartes de reclamo"
+        constraints = [
+            models.UniqueConstraint(
+                fields=["user", "property"], name="uniq_claim_dismissal_user_property"
+            ),
+        ]
+
+    def __str__(self):
+        return f"{self.user_id} descartó {self.property_id}"

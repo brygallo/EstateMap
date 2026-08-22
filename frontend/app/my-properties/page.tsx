@@ -29,6 +29,7 @@ import PrivateRoute from '@/components/PrivateRoute';
 import ShareModal from '@/components/ShareModal';
 import PullToRefresh from '@/components/ui/PullToRefresh';
 import PropertyCard from '@/components/PropertyCard';
+import ClaimableProperties from '@/components/ClaimableProperties';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
@@ -415,6 +416,11 @@ const MyPropertiesPage = () => {
 
         {/* Content */}
         <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
+          {/* Above the inventory on purpose: an advertiser whose listings we
+              imported arrives here to find out what is already theirs, and
+              that answer cannot be below a list that starts empty. Renders
+              nothing at all for the accounts it does not apply to. */}
+          {!isAdminScope && <ClaimableProperties onClaimed={() => void fetchInventory()} />}
           {loading ? (
             <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
               {Array.from({ length: 6 }).map((_, i) => (

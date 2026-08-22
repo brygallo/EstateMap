@@ -51,7 +51,7 @@ Toda propiedad creada por la ingesta queda con `owner` NULL e `is_imported=True`
 
 - `backend/ingesta/pipeline/upsert.py:23-53` (`_apply_fields`) — Punto único de escritura de campos; nunca toca `owner`.
 - `backend/ingesta/pipeline/upsert.py:55-57` (`prop.is_imported = True`)
-- `backend/real_estate/models.py:278-280` (`owner = models.ForeignKey`) — FK nullable; el comentario del bloque de origen documenta la regla.
+- `backend/real_estate/models.py:286-288` (`owner = models.ForeignKey`) — FK nullable; el comentario del bloque de origen documenta la regla.
 
 **Casos**
 
@@ -70,9 +70,9 @@ Reimportar el mismo anuncio actualiza la fila existente en vez de duplicarla, ga
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/ingesta/pipeline/upsert.py:113-115` (`Property.objects.filter(source=fuente, external_id=external_id)`) — Búsqueda previa; si existe, la operación se convierte en UPDATE.
-- `backend/real_estate/models.py:378-380` (`uniq_source_external_when_imported`) — UniqueConstraint condicionada a is_imported=True.
-- `backend/ingesta/pipeline/upsert.py:151-162` (`except IntegrityError:`) — Una carrera perdida se recupera y se reescribe como actualización.
+- `backend/ingesta/pipeline/upsert.py:134-136` (`Property.objects.filter(source=fuente, external_id=external_id)`) — Búsqueda previa; si existe, la operación se convierte en UPDATE.
+- `backend/real_estate/models.py:393-395` (`uniq_source_external_when_imported`) — UniqueConstraint condicionada a is_imported=True.
+- `backend/ingesta/pipeline/upsert.py:192-202` (`except IntegrityError:`) — Una carrera perdida se recupera y se reescribe como actualización.
 
 **Casos**
 
@@ -93,7 +93,7 @@ Un precio positivo de venta menor a 1.000 USD, un alquiler positivo menor a 20 U
 
 - `backend/ingesta/pipeline/normalize.py:100-122` (`sanitize_price`)
 - `backend/ingesta/pipeline/normalize.py:95-97` (`_SALE_PRICE_MIN`) — Cotas de sanidad para el mercado ecuatoriano, en USD.
-- `backend/ingesta/pipeline/upsert.py:99-102` (`clean, motivo = sanitize_price`) — Se aplica en el punto único de escritura, así cubre todos los flujos.
+- `backend/ingesta/pipeline/upsert.py:120-122` (`clean, motivo = sanitize_price`) — Se aplica en el punto único de escritura, así cubre todos los flujos.
 
 **Casos**
 
@@ -164,7 +164,7 @@ Una propiedad importada ofrece WhatsApp si hay teléfono y, si no, un enlace al 
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/real_estate/models.py:302-304` (`Enlace al anuncio original (contacto fallback)`) — El modelo declara `source_url` como contacto de último recurso.
+- `backend/real_estate/models.py:317-319` (`Enlace al anuncio original (contacto fallback)`) — El modelo declara `source_url` como contacto de último recurso.
 - `frontend/app/property/[id]/page.tsx:463-465` (`typeof property.source_url === 'string' ? property.source_url.trim()`) — El escalón de último recurso de la cascada. Desde el rediseño de la ficha de anuncio cerrado va además condicionado a `!isClosed`: un anuncio ya vendido no ofrece contacto.
 - `frontend/app/property/[id]/page.tsx:669-693` (`method="source_url"`) — Cascada real renderizada: contactPhone -> sourceUrl. No hay rama de email.
 
@@ -188,7 +188,7 @@ Si el dHash de la imagen principal coincide exactamente con el de una propiedad 
 
 - `backend/ingesta/pipeline/images.py:70-96` (`image_dhash_from_url`) — Devuelve 16 caracteres hex, o cadena vacía si falla la descarga.
 - `backend/ingesta/pipeline/dedup.py:80-83` (`canon.filter(image_hash=image_hash)`) — Igualdad exacta, no distancia de Hamming.
-- `backend/ingesta/pipeline/upsert.py:109-111` (`image_dhash_from_url(image_urls[0])`) — Solo se calcula en el flujo directo, sobre la primera imagen.
+- `backend/ingesta/pipeline/upsert.py:130-132` (`image_dhash_from_url(image_urls[0])`) — Solo se calcula en el flujo directo, sobre la primera imagen.
 
 **Casos**
 
@@ -234,7 +234,7 @@ Dos anuncios que comparten teléfono no se consideran la misma propiedad por ese
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
 - `backend/ingesta/pipeline/dedup.py:57-62` (`NO usamos el teléfono como señal`)
-- `backend/ingesta/pipeline/upsert.py:120-126` (`el teléfono NO se usa: un anunciante tiene muchas propiedades con el mismo`)
+- `backend/ingesta/pipeline/upsert.py:161-166` (`el teléfono NO se usa: un anunciante tiene muchas propiedades con el mismo`)
 
 **Casos**
 
@@ -252,8 +252,8 @@ Ante un duplicado entre fuentes, si el anuncio nuevo trae teléfono y el existen
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/ingesta/pipeline/upsert.py:134-141` (`demote = dup`)
-- `backend/ingesta/pipeline/upsert.py:195-198` (`delete_property_images(demote)`) — Borrado diferido al final del upsert, nunca antes.
+- `backend/ingesta/pipeline/upsert.py:175-181` (`demote = dup`)
+- `backend/ingesta/pipeline/upsert.py:236-238` (`delete_property_images(demote)`) — Borrado diferido al final del upsert, nunca antes.
 
 **Casos**
 
@@ -274,7 +274,7 @@ Ante un duplicado entre fuentes, si el anuncio nuevo trae teléfono y el existen
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
 - `backend/ingesta/pipeline/dedup.py:74-77` (`canon.exclude(source_id=exclude_source_id)`)
-- `backend/ingesta/pipeline/upsert.py:126-130` (`exclude_source_id=fuente.id`)
+- `backend/ingesta/pipeline/upsert.py:167-170` (`exclude_source_id=fuente.id`)
 
 **Casos**
 
@@ -443,7 +443,7 @@ Se adjuntan hasta 10 imágenes por anuncio; si no se logra adjuntar ninguna, la 
 
 - `backend/ingesta/pipeline/images.py:21` (`MAX_IMAGES = getattr(settings, "MAX_IMAGES_PER_PROPERTY", 10)`)
 - `backend/ingesta/pipeline/images.py:130-135` (`if not downloaded:`) — Reemplazo total solo tras confirmar una descarga válida.
-- `backend/ingesta/pipeline/upsert.py:182-200` (`return "skipped_no_images", None`)
+- `backend/ingesta/pipeline/upsert.py:222-239` (`return "skipped_no_images", None`)
 
 **Casos**
 
@@ -536,7 +536,7 @@ Si el payload canónico declara `0` en `price` o `rent_price`, el punto único d
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
 - `backend/ingesta/pipeline/upsert.py:22-29` (`def _is_explicit_zero`)
-- `backend/ingesta/pipeline/upsert.py:86-93` (`skipped_zero_price`)
+- `backend/ingesta/pipeline/upsert.py:101-107` (`skipped_zero_price`)
 - `backend/ingesta/runner.py:276-297` (`run.sin_precio`)
 - `backend/ingesta/models.py:87-91` (`sin_precio = models.PositiveIntegerField`)
 

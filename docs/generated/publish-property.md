@@ -56,7 +56,7 @@ El formulario intercepta el submit antes de llamar a `POST /api/properties/`: si
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
 - `frontend/app/add-property/page.tsx:1092-1100` (`if (!token && !isEditMode && !resumeToken) {`) — Guarda el borrador, envía la solicitud pendiente y abre el modal, sin llamar a /properties/.
-- `backend/real_estate/models.py:683-685` (`class PendingPublication(models.Model)`) — Docstring: no se muestra en el mapa; sirve para seguimiento comercial.
+- `backend/real_estate/models.py:703-705` (`class PendingPublication(models.Model)`) — Docstring: no se muestra en el mapa; sirve para seguimiento comercial.
 - `backend/real_estate/views.py:383-385` (`permission_classes = [IsAuthenticatedOrReadOnly, IsOwnerOrReadOnly]`) — Respaldo del servidor si la petición llega sin pasar por el frontend.
 
 **Casos**
@@ -274,8 +274,8 @@ Cada `post_save`/`post_delete` de `Property` encadena, por señal: una fila de `
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
 - `backend/real_estate/views.py:490-492` (`exclude(status='inactive')`) — Único filtro que saca inactive del catálogo público; no toca la fila.
-- `backend/real_estate/views.py:1228-1230` (`def my_properties`) — including inactive: el dueño ve su propiedad inactiva, el público no.
-- `backend/real_estate/models.py:467-469` (`on_delete=models.CASCADE`) — PropertyImage.property cae en cascada con la Property.
+- `backend/real_estate/views.py:1309-1311` (`def my_properties`) — including inactive: el dueño ve su propiedad inactiva, el público no.
+- `backend/real_estate/models.py:487-489` (`on_delete=models.CASCADE`) — PropertyImage.property cae en cascada con la Property.
 - `frontend/app/my-properties/page.tsx:250-270` (`const handleDelete`) — DELETE /properties/<id>/ tras window.confirm; PropertyViewSet no sobrescribe destroy.
 
 **Casos**

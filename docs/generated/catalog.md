@@ -123,8 +123,8 @@ Un fallo no crea una fila por ocurrencia: se calcula una huella y se incrementa 
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/real_estate/models.py:513-535` (`class SystemIncident`) — Los campos existentes son la lista completa de lo que se guarda.
-- `backend/real_estate/models.py:542-544` (`fingerprint`) — Clave única por la que se agregan las ocurrencias.
+- `backend/real_estate/models.py:553-574` (`class SystemIncident`) — Los campos existentes son la lista completa de lo que se guarda.
+- `backend/real_estate/models.py:562-564` (`fingerprint`) — Clave única por la que se agregan las ocurrencias.
 - `backend/estate_map/observability.py:17` (`record_incident`) — Único punto de escritura.
 
 **Casos**

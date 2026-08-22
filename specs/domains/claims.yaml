@@ -1,0 +1,228 @@
+version: 1
+domain: claims
+title: Reclamo de anuncios importados
+status: implemented
+summary: >-
+  El portal publica miles de anuncios cuyo anunciante no tiene cuenta aquí.
+  Cuando alguien le escribe desde el mapa, WhatsApp se abre diciendo dónde vio
+  el anuncio, así que ese anunciante descubre que este portal le está mandando
+  interesados. Estas reglas cubren la otra mitad: qué ve cuando llega, qué
+  puede tomar, y qué debe sobrevivir a la maquinaria que trajo el anuncio.
+
+rules:
+  - id: CLM-001
+    name: El teléfono se compara en una sola forma
+    status: implemented
+    summary: >-
+      `normalize_ec_phone` reduce `0987654321`, `+593 98 765 4321`,
+      `593987654321` y `(09) 8765-4321` al mismo valor, que se guarda en
+      `Property.contact_phone_normalized` en cada `save()` y en `User.phone` al
+      validar el perfil. Un número que no sea un celular ecuatoriano se rechaza
+      donde se escribe.
+    rationale: >-
+      La propiedad de un anuncio no puede depender de cómo alguien tecleó el
+      número. Y no basta con normalizar al consultar: son quince mil filas, así
+      que la columna se escribe al guardar para que «qué anuncios son de este
+      número» sea un índice y no un recorrido. El fijo se rechaza porque
+      reclamar acaba en una conversación de WhatsApp que un fijo no sostiene;
+      la comprobación es deliberadamente superficial, rechaza erratas y no
+      personas. La copia del frontend existe para los enlaces `tel:` y `wa.me`;
+      la que decide es la del servidor.
+    evidence:
+      - file: backend/real_estate/services/phones.py
+        symbol: def normalize_ec_phone
+      - file: backend/real_estate/services/phones.py
+        symbol: def is_plausible_ec_mobile
+      - file: backend/real_estate/models.py
+        symbol: contact_phone_normalized
+      - file: backend/real_estate/serializers.py
+        symbol: def validate_phone
+    frontend:
+      routes: ["/cuenta", "/mis-propiedades"]
+      visible_when_allowed: true
+    tests:
+      api: true
+    cases:
+      - name: el mismo número escrito de cuatro formas coincide una sola vez
+        expected: allowed
+      - name: la columna normalizada se escribe en cada guardado
+        expected: allowed
+      - name: un teléfono fijo no es un número reclamable
+        expected: allowed
+
+  - id: CLM-002
+    name: Solo se ofrece lo que el número respalda
+    status: implemented
+    summary: >-
+      `GET /api/properties/claimable/` devuelve los anuncios importados sin
+      dueño cuyo teléfono normalizado coincide con el de la cuenta, más cuántos
+      contactos han recibido. Sin teléfono no se ofrece nada, y un anuncio que
+      ya tiene dueño deja de estar en oferta.
+    rationale: >-
+      El recuento de contactos es el argumento que de verdad convence: no
+      «tenemos tus anuncios», sino «te escribieron N veces desde aquí». Se
+      cuentan solo personas, porque la cifra se le muestra a alguien que está
+      decidiendo y un rastreador no es un interesado. Un anuncio ya transferido
+      no vuelve a la cola: reclamado una vez es reclamado.
+    evidence:
+      - file: backend/real_estate/services/claims.py
+        symbol: def claimable
+      - file: backend/real_estate/services/claims.py
+        symbol: def summary
+      - file: backend/real_estate/views.py
+        symbol: def claimable
+    backend:
+      enforce: true
+      endpoint: GET /api/properties/claimable/
+      denied_http_status: 401
+    frontend:
+      routes: ["/mis-propiedades"]
+      visible_when_allowed: true
+    tests:
+      api: true
+    cases:
+      - name: el anunciante ve solo sus propios anuncios
+        expected: allowed
+      - name: un anuncio que ya tiene dueño no está en oferta
+        expected: allowed
+      - name: una cuenta sin teléfono no recibe nada
+        expected: allowed
+      - name: el resumen cuenta los contactos que justifican la invitación
+        expected: allowed
+
+  - id: CLM-003
+    name: Reclamar entrega el anuncio y lo desvincula de la importación
+    status: implemented
+    summary: >-
+      `POST /api/properties/claim/` traspasa los anuncios de la lista que esta
+      cuenta podía reclamar, les pone `owner` y `is_imported=False`, y lo anota
+      en la bitácora. Lo que quede fuera de esa lista se omite en silencio en
+      vez de tumbar la petición entera.
+    rationale: >-
+      Desvincular es lo que hace que el reclamo dure: la retirada automática
+      selecciona por `is_imported`, así que un anuncio reclamado que siguiera
+      marcado como importado se borraría solo el día que el portal de origen lo
+      quite, con sus contactos dentro. Y la página del que reclama puede tener
+      unos segundos de retraso: que otro se haya llevado uno mientras tanto es
+      una carrera normal, no un motivo para tirar los otros nueve reclamos.
+      Queda en la bitácora con el teléfono usado y si estaba verificado, porque
+      confiar en un número sin verificar solo es aceptable si es reversible.
+    evidence:
+      - file: backend/real_estate/services/claims.py
+        symbol: def claim
+      - file: backend/real_estate/views.py
+        symbol: def claim
+    backend:
+      enforce: true
+      endpoint: POST /api/properties/claim/
+      denied_http_status: 401
+    frontend:
+      routes: ["/mis-propiedades"]
+      visible_when_allowed: true
+    tests:
+      api: true
+    cases:
+      - name: reclamar entrega el anuncio y lo desvincula de la importación
+        expected: allowed
+      - name: nadie puede reclamar un anuncio con otro número
+        expected: allowed
+      - name: una selección medio caducada reclama igual el resto
+        expected: allowed
+      - name: una cuenta sin teléfono no puede reclamar
+        expected: allowed
+      - name: un anónimo no puede reclamar nada
+        role: anonymous
+        expected: denied
+        http_status: 401
+
+  - id: CLM-004
+    name: «Esta no es mía» la quita de la lista de quien lo dice
+    status: implemented
+    summary: >-
+      `POST /api/properties/dismiss-claim/` guarda un descarte por cuenta y
+      anuncio. El anuncio deja de aparecer entre los reclamables de esa cuenta
+      y no cambia para nadie más. Solo se puede descartar lo que esa cuenta
+      podría haber reclamado.
+    rationale: >-
+      Un teléfono puede figurar en anuncios que no son de quien lo tiene hoy:
+      líneas reasignadas, un agente que dejó la inmobiliaria, un dato mal
+      copiado en el origen. Sin forma de decir que no, esas filas estorban para
+      siempre y esconden las que sí valía la pena reclamar. Es un descarte
+      personal, no una afirmación sobre el anuncio. Se limita a lo reclamable
+      porque, si no, la tabla crecería a petición de cualquiera.
+    evidence:
+      - file: backend/real_estate/models.py
+        symbol: class ClaimDismissal
+      - file: backend/real_estate/services/claims.py
+        symbol: def dismiss
+      - file: backend/real_estate/views.py
+        symbol: def dismiss_claim
+    backend:
+      enforce: true
+      endpoint: POST /api/properties/dismiss-claim/
+      denied_http_status: 401
+    frontend:
+      routes: ["/mis-propiedades"]
+      visible_when_allowed: true
+    tests:
+      api: true
+    cases:
+      - name: un anuncio descartado sale de la lista solo para esa cuenta
+        expected: allowed
+      - name: descartar dos veces el mismo anuncio no es un error
+        expected: allowed
+      - name: nadie puede descartar un anuncio que no podría reclamar
+        expected: allowed
+
+  - id: CLM-005
+    name: Un anuncio reclamado sobrevive a la importación y a la retirada
+    status: implemented
+    summary: >-
+      El importador omite cualquier anuncio que ya tenga dueño en vez de
+      pisarlo, y la retirada automática solo borra lo que sigue marcado como
+      importado. Un anuncio reclamado no se sobrescribe ni se borra aunque
+      desaparezca del portal de origen.
+    rationale: >-
+      Es el fallo que más costaría y menos se vería. El importador empareja por
+      `(source, external_id)` y marca `is_imported=True` en todo lo que toca:
+      sin la salida temprana, la siguiente ingesta pisaría las ediciones del
+      dueño, devolvería el anuncio a la cola de borrado y el reclamo se
+      desharía solo, en silencio. La retirada ya respetaba `is_imported`, pero
+      eso hay que demostrarlo con un test, no darlo por hecho.
+    evidence:
+      - file: backend/ingesta/pipeline/upsert.py
+        symbol: "skipped_claimed"
+      - file: backend/ingesta/pipeline/retirement.py
+        symbol: def retire_property
+    tests:
+      api: true
+    cases:
+      - name: reimportar nunca recupera un anuncio reclamado
+        expected: allowed
+      - name: la retirada no borra un anuncio reclamado
+        expected: allowed
+
+  - id: CLM-006
+    name: A quien ya publica aquí no se le importa nada nuevo
+    status: implemented
+    summary: >-
+      Si el teléfono de un anuncio nuevo pertenece a una cuenta que ya tiene
+      propiedades propias en el portal, la importación lo omite. Registrarse no
+      basta: el corte es tener inventario propio.
+    rationale: >-
+      Quien administra su inventario aquí publicará él mismo lo que nosotros
+      estaríamos trayendo de fuera, y acabarían siendo dos filas de la misma
+      propiedad. Pero cortar al registrarse dejaría varado el resto de su
+      inventario: alguien que se registró y todavía no reclamó nada sigue
+      necesitando que sus anuncios existan aquí, o los pierde el portal y los
+      pierde él.
+    evidence:
+      - file: backend/ingesta/pipeline/upsert.py
+        symbol: def _advertiser_manages_own_inventory
+    tests:
+      api: true
+    cases:
+      - name: a un anunciante que ya publica aquí se le deja de importar
+        expected: allowed
+      - name: quien se registró pero no reclamó nada sigue importándose
+        expected: allowed

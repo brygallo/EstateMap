@@ -4,12 +4,12 @@
 
 Vista legible de `specs/`. Cada regla marcada como implementada apunta a las líneas de código que la aplican, y `tools/specs/validate.py` comprueba que ese código siga existiendo, así que esta página no puede quedarse desfasada en silencio.
 
-**Total de reglas: 400**
+**Total de reglas: 406**
 
 | Estado | Reglas |
 | --- | --- |
 | 🗑️ Obsoleta | 2 |
-| ✅ Implementada | 362 |
+| ✅ Implementada | 368 |
 | ⛔ No implementada | 15 |
 | 🟡 Parcial | 8 |
 | 📝 Propuesta (sin código) | 13 |
@@ -22,6 +22,7 @@ Vista legible de `specs/`. Cada regla marcada como implementada apunta a las lí
 | advertising | `specs/domains/advertising.yaml` | 25 | [advertising.md](./advertising.md) |
 | blog | `specs/domains/blog.yaml` | 14 | [blog.md](./blog.md) |
 | blogs-vivos | `specs/domains/blogs-vivos.yaml` | 11 | [blogs-vivos.md](./blogs-vivos.md) |
+| claims | `specs/domains/claims.yaml` | 6 | [claims.md](./claims.md) |
 | imports | `specs/domains/imports.yaml` | 23 | [imports.md](./imports.md) |
 | leads | `specs/domains/leads.yaml` | 19 | [leads.md](./leads.md) |
 | owner-transfer | `specs/domains/owner-transfer.yaml` | 8 | [owner-transfer.md](./owner-transfer.md) |

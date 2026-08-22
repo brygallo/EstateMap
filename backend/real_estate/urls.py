@@ -23,6 +23,7 @@ from .views import (
     MeView,
     ChangePasswordView,
     AdminAuditLogView,
+    AdminAdvertiserReachView,
     AdminDashboardView,
     AdminExportView,
     AdminSearchView,
@@ -80,6 +81,8 @@ urlpatterns = [
 
     # Admin panel
     path('admin/dashboard/', AdminDashboardView.as_view(), name='admin_dashboard'),
+    # Quién ya recibió gente desde aquí: la lista de a quién invitar primero.
+    path('admin/advertiser-reach/', AdminAdvertiserReachView.as_view(), name='admin_advertiser_reach'),
     path('admin/system-status/', AdminSystemStatusView.as_view(), name='admin_system_status'),
     path('admin/users/', AdminUserViewSet.as_view({'get': 'list'}), name='admin_users_list'),
     path('admin/users/<int:pk>/', AdminUserViewSet.as_view({'get': 'retrieve', 'patch': 'partial_update', 'delete': 'destroy'}), name='admin_users_detail'),

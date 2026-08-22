@@ -87,7 +87,7 @@ El flujo de un solo paso y el flujo por paquete difieren solo en de dónde salen
 
 - `backend/ingesta/runner.py:271-275` (`image_urls=image_urls`) — Camino directo, las imágenes llegan como URLs y van a MinIO.
 - `backend/ingesta/management/commands/ingesta_import.py:70-76` (`upsert_property(listing, fuente, reader=reader)`) — Camino paquete, las imágenes se leen del disco.
-- `backend/ingesta/pipeline/upsert.py:56-73` (`def upsert_property`)
+- `backend/ingesta/pipeline/upsert.py:86-102` (`def upsert_property`)
 
 **Casos**
 
@@ -106,9 +106,9 @@ Ubicación antes de escribir, saneamiento de precio y huella de imagen antes de 
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/ingesta/pipeline/upsert.py:76-95` (`ok, lat, lng, _motivo = validate_location`) — Ubicación, precio y dHash, en ese orden, antes de buscar duplicados.
-- `backend/ingesta/pipeline/upsert.py:97-129` (`dup = find_duplicate`)
-- `backend/ingesta/pipeline/upsert.py:172-176` (`attached = attach_images_from_urls`) — Las imágenes se adjuntan después del save().
+- `backend/ingesta/pipeline/upsert.py:106-124` (`ok, lat, lng, _motivo = validate_location`) — Ubicación, precio y dHash, en ese orden, antes de buscar duplicados.
+- `backend/ingesta/pipeline/upsert.py:162-193` (`dup = find_duplicate`)
+- `backend/ingesta/pipeline/upsert.py:213-216` (`attached = attach_images_from_urls`) — Las imágenes se adjuntan después del save().
 
 **Casos**
 

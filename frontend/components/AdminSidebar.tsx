@@ -19,6 +19,7 @@ import {
   Megaphone,
   ScrollText,
   Search,
+  PhoneCall,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import AdminGlobalSearch from '@/components/AdminGlobalSearch';
@@ -31,6 +32,7 @@ const navItems = [
   { href: '/admin/campanas', label: 'Publicidad', icon: Megaphone },
   { href: '/admin/pending-publications', label: 'Pendientes', icon: Clock },
   { href: '/admin/activity', label: 'Actividad y clics', icon: MousePointerClick },
+  { href: '/admin/anunciantes', label: 'Anunciantes', icon: PhoneCall },
   { href: '/admin/ingesta', label: 'Importar', icon: DownloadCloud },
   { href: '/admin/seo', label: 'Páginas y SEO', icon: Search },
   { href: '/admin/system', label: 'Estado del sistema', icon: ServerCog },

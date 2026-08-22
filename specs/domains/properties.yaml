@@ -27,7 +27,7 @@ rules:
       guarda su precio en price y deja rent_price en NULL.
     evidence:
       - file: backend/real_estate/models.py
-        lines: "252-254"
+        lines: "260-262"
         symbol: rent_price
         note: La semántica está escrita como comentario junto a la definición de ambos campos.
       - file: backend/ingesta/pipeline/upsert.py
@@ -75,7 +75,7 @@ rules:
         symbol: exclude(status='inactive')
         note: Base de get_queryset en PropertyViewSet; de aquí derivan list, map_points y summary.
       - file: backend/real_estate/models.py
-        lines: "175-177"
+        lines: "183-185"
         symbol: STATUS_CHOICES
         note: Los tres estados posibles son for_sale, for_rent e inactive.
     backend:
@@ -109,7 +109,7 @@ rules:
       ver también lo que no es suyo.
     evidence:
       - file: backend/real_estate/views.py
-        lines: "1228-1230"
+        lines: "1247-1249"
         symbol: my_properties
         note: >-
           La acción declara permission_classes=[IsAuthenticated] y elige entre
@@ -150,7 +150,7 @@ rules:
         symbol: class InventoryPagination
         note: page_size 24, page_size_query_param 'page_size', máximo 100.
       - file: backend/real_estate/views.py
-        lines: "1228-1230"
+        lines: "1309-1311"
         symbol: def my_properties
         note: stats se calcula con queryset.aggregate antes de paginar.
       - file: frontend/app/my-properties/page.tsx
@@ -187,11 +187,11 @@ rules:
       price > 0 y area > 0 antes de dividir.
     evidence:
       - file: backend/real_estate/models.py
-        lines: "259-261"
+        lines: "267-269"
         symbol: price = models.DecimalField
         note: null=True con help_text que justifica el "a consultar" de los importados.
       - file: backend/real_estate/models.py
-        lines: "233-235"
+        lines: "241-243"
         symbol: area = models.FloatField
         note: null=True, "opcional en anuncios importados".
       - file: backend/ingesta/pipeline/normalize.py
@@ -233,7 +233,7 @@ rules:
           Verificado por introspección del serializer en el contenedor: la lista de
           campos con required=True está vacía.
       - file: backend/real_estate/models.py
-        lines: "206-208"
+        lines: "214-216"
         symbol: property_type = models.CharField
         note: Defaults que rellenan el hueco - property_type='land', status='for_sale', city='Macas', province='Morona Santiago'.
     backend:
@@ -555,7 +555,7 @@ rules:
         lines: "198-200"
         symbol: owner = serializers.PrimaryKeyRelatedField(read_only=True)
       - file: backend/real_estate/models.py
-        lines: "278-280"
+        lines: "286-288"
         symbol: owner = models.ForeignKey
         note: on_delete=SET_NULL, null=True - borrar la cuenta no borra el anuncio.
       - file: backend/ingesta/pipeline/upsert.py
@@ -595,7 +595,7 @@ rules:
         symbol: IsOwnerOrReadOnly
         note: permission_classes = [IsAuthenticatedOrReadOnly, IsOwnerOrReadOnly] en PropertyViewSet.
       - file: backend/real_estate/views.py
-        lines: "2938-2940"
+        lines: "3051-3053"
         symbol: PATCH_ALLOWED_FIELDS
         note: El panel admin puede tocar propiedades ajenas, pero solo status, title, price, city y description.
     backend:
@@ -631,7 +631,7 @@ rules:
       que describe la misma cascada desde el lado de la ingesta.
     evidence:
       - file: backend/real_estate/models.py
-        lines: "290-299"
+        lines: "305-313"
         symbol: source_url
         note: El comentario del bloque de origen declara la cascada, y source_url la cierra como contacto de último recurso.
       - file: frontend/app/property/[id]/page.tsx
@@ -724,11 +724,11 @@ rules:
       se degrada a actualización.
     evidence:
       - file: backend/real_estate/models.py
-        lines: "378-380"
+        lines: "393-395"
         symbol: uniq_source_external_when_imported
         note: UniqueConstraint con condition=Q(is_imported=True).
       - file: backend/ingesta/pipeline/upsert.py
-        lines: "151-168"
+        lines: "192-208"
         symbol: IntegrityError
         note: Savepoint alrededor del save para que el choque de una carrera no envenene la transacción exterior.
     cases:
@@ -764,11 +764,11 @@ rules:
           con área compatible (±10%); menos de 500 m con área y precio dentro de
           ±3%. El teléfono no se usa como señal de identidad.
       - file: backend/ingesta/pipeline/upsert.py
-        lines: "114-123"
+        lines: "157-165"
         symbol: demote
         note: Si el nuevo trae teléfono y el existente no, el existente se marca para eliminarse; si no, se devuelve skipped_duplicate.
       - file: backend/ingesta/pipeline/upsert.py
-        lines: "195-198"
+        lines: "236-238"
         symbol: delete_property_images
         note: La copia anterior se borra al final, cuando el reemplazo ya tiene sus imágenes.
     cases:
@@ -807,7 +807,7 @@ rules:
       campo se retiró porque nunca podía representar el comportamiento real.
     evidence:
       - file: backend/real_estate/models.py
-        lines: "283-311"
+        lines: "324-351"
         symbol: "is_duplicate = models.BooleanField"
         note: Los campos de ingesta saltan de is_duplicate a imported_at, sin duplicate_of.
       - file: backend/real_estate/migrations/0033_remove_obsolete_dedup_fields.py
@@ -888,7 +888,7 @@ rules:
         symbol: PropertyPriceHistory.objects.create
         note: Compara con la última fila por recorded_at y solo escribe si el precio cambió.
       - file: backend/real_estate/models.py
-        lines: "464-466"
+        lines: "484-486"
         symbol: class PropertyPriceHistory
         note: FK en cascada, precio, recorded_at e índice por (property, recorded_at).
     cases:
@@ -929,11 +929,11 @@ rules:
         symbol: is_bot_request
         note: Property.objects.filter(pk=...).update(views_count=F('views_count') + 1) solo si no es bot.
       - file: backend/real_estate/models.py
-        lines: "324-326"
+        lines: "339-341"
         symbol: views_count
         note: PositiveIntegerField con default 0.
       - file: backend/real_estate/serializers.py
-        lines: "228-231"
+        lines: "232-234"
         symbol: 'views_count'
         note: Está en read_only_fields, así que un cliente no puede inflarlo desde el payload.
     backend:
@@ -973,7 +973,7 @@ rules:
       pending, la API sirve la foto desde el staging local para que no se vea rota.
     evidence:
       - file: backend/real_estate/models.py
-        lines: "482-484"
+        lines: "502-504"
         symbol: FAILED = "failed"
         note: TextChoices con pending, ready y failed; el default del campo es ready.
       - file: backend/real_estate/serializers.py
@@ -1094,7 +1094,7 @@ rules:
         symbol: polygon_center_lat_lng
         note: Centroide del anillo, aceptando GeoJSON o [[lat, lng], ...] y descartando el punto de cierre repetido.
       - file: backend/real_estate/models.py
-        lines: "365-385"
+        lines: "400-419"
         symbol: save
         note: Rellena el centro al guardar cualquier propiedad con polígono y sin coordenadas, y añade los dos campos a update_fields para que se persistan.
       - file: backend/real_estate/migrations/0027_backfill_polygon_centers.py
@@ -1298,10 +1298,10 @@ rules:
         symbol: CLOSED_REASON_CHOICES
         note: Por qué no son dos valores más de STATUS_CHOICES.
       - file: backend/real_estate/models.py
-        lines: "268-272"
+        lines: "276-279"
         symbol: closed_reason = models
       - file: backend/real_estate/models.py
-        lines: "408-415"
+        lines: "428-434"
         symbol: "if self.closed_reason:"
         note: Cerrar pone inactive y sella la fecha; abrir la borra.
       - file: backend/real_estate/serializers.py
@@ -1311,7 +1311,7 @@ rules:
           Volver a poner el anuncio en venta lo reabre; si no, el cambio parece
           aceptado y se deshace solo.
       - file: backend/real_estate/views.py
-        lines: "3205-3207"
+        lines: "3318-3320"
         symbol: "changes['closed_reason'] = ''"
         note: >-
           El cambio de estado en lote escribe con .update(), que nunca llega a

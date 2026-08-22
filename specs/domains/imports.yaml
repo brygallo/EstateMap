@@ -33,7 +33,7 @@ rules:
         lines: "55-57"
         symbol: prop.is_imported = True
       - file: backend/real_estate/models.py
-        lines: "278-280"
+        lines: "286-288"
         symbol: owner = models.ForeignKey
         note: FK nullable; el comentario del bloque de origen documenta la regla.
     cases:
@@ -62,15 +62,15 @@ rules:
       duplicaría el catálogo público.
     evidence:
       - file: backend/ingesta/pipeline/upsert.py
-        lines: "113-115"
+        lines: "134-136"
         symbol: Property.objects.filter(source=fuente, external_id=external_id)
         note: Búsqueda previa; si existe, la operación se convierte en UPDATE.
       - file: backend/real_estate/models.py
-        lines: "378-380"
+        lines: "393-395"
         symbol: uniq_source_external_when_imported
         note: UniqueConstraint condicionada a is_imported=True.
       - file: backend/ingesta/pipeline/upsert.py
-        lines: "151-162"
+        lines: "192-202"
         symbol: "except IntegrityError:"
         note: Una carrera perdida se recupera y se reescribe como actualización.
     cases:
@@ -107,7 +107,7 @@ rules:
         symbol: _SALE_PRICE_MIN
         note: Cotas de sanidad para el mercado ecuatoriano, en USD.
       - file: backend/ingesta/pipeline/upsert.py
-        lines: "99-102"
+        lines: "120-122"
         symbol: clean, motivo = sanitize_price
         note: Se aplica en el punto único de escritura, así cubre todos los flujos.
     cases:
@@ -222,7 +222,7 @@ rules:
       fuente que sí lo traiga, el escalón intermedio faltaría.
     evidence:
       - file: backend/real_estate/models.py
-        lines: "302-304"
+        lines: "317-319"
         symbol: Enlace al anuncio original (contacto fallback)
         note: El modelo declara `source_url` como contacto de último recurso.
       - file: frontend/app/property/[id]/page.tsx
@@ -274,7 +274,7 @@ rules:
         symbol: canon.filter(image_hash=image_hash)
         note: Igualdad exacta, no distancia de Hamming.
       - file: backend/ingesta/pipeline/upsert.py
-        lines: "109-111"
+        lines: "130-132"
         symbol: image_dhash_from_url(image_urls[0])
         note: Solo se calcula en el flujo directo, sobre la primera imagen.
     cases:
@@ -372,7 +372,7 @@ rules:
         lines: "57-62"
         symbol: NO usamos el teléfono como señal
       - file: backend/ingesta/pipeline/upsert.py
-        lines: "120-126"
+        lines: "161-166"
         symbol: "el teléfono NO se usa: un anunciante tiene muchas propiedades con el mismo"
     cases:
       - name: Dos lotes distintos de la misma inmobiliaria
@@ -394,10 +394,10 @@ rules:
       quede completo con sus imágenes, para no dejar un hueco si la creación falla.
     evidence:
       - file: backend/ingesta/pipeline/upsert.py
-        lines: "134-141"
+        lines: "175-181"
         symbol: demote = dup
       - file: backend/ingesta/pipeline/upsert.py
-        lines: "195-198"
+        lines: "236-238"
         symbol: delete_property_images(demote)
         note: Borrado diferido al final del upsert, nunca antes.
     cases:
@@ -433,7 +433,7 @@ rules:
         lines: "74-77"
         symbol: canon.exclude(source_id=exclude_source_id)
       - file: backend/ingesta/pipeline/upsert.py
-        lines: "126-130"
+        lines: "167-170"
         symbol: exclude_source_id=fuente.id
     cases:
       - name: Dos anuncios de Plusvalía a 5 m con la misma área
@@ -689,7 +689,7 @@ rules:
         symbol: "if not downloaded:"
         note: Reemplazo total solo tras confirmar una descarga válida.
       - file: backend/ingesta/pipeline/upsert.py
-        lines: "182-200"
+        lines: "222-239"
         symbol: return "skipped_no_images", None
     tests:
       unit: true
@@ -822,7 +822,7 @@ rules:
         lines: "22-29"
         symbol: def _is_explicit_zero
       - file: backend/ingesta/pipeline/upsert.py
-        lines: "86-93"
+        lines: "101-107"
         symbol: skipped_zero_price
       - file: backend/ingesta/runner.py
         lines: "276-297"

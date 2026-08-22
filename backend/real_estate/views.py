@@ -1219,6 +1219,87 @@ class PropertyViewSet(viewsets.ModelViewSet):
         'price_asc': (F('price').asc(nulls_last=True),),
     }
 
+    @action(detail=False, methods=['post'], url_path='dismiss-claim',
+            permission_classes=[IsAuthenticated])
+    def dismiss_claim(self, request):
+        """«Esta no es mía»: sácala de mi lista de reclamables.
+
+        A personal dismissal, not a statement about the listing: nothing about
+        it changes for anybody else. Without it a number that appears on
+        listings that were never this person's — a reassigned line, an agent
+        who left — clutters the list forever and hides the ones worth taking.
+        """
+        from .services.claims import PropertyClaimService
+
+        wanted = request.data.get('property_ids') or []
+        if not isinstance(wanted, list):
+            return Response(
+                {'error': 'property_ids debe ser una lista de identificadores.'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        dismissed = PropertyClaimService(request.user).dismiss(wanted)
+        return Response({'dismissed': dismissed})
+
+    @action(detail=False, methods=['get'], permission_classes=[IsAuthenticated])
+    def claimable(self, request):
+        """Imported listings this account can take over, and why it should.
+
+        Lives beside `my_properties` because it answers the same question from
+        the other side: that one lists what you own, this one what is already
+        yours here and you have not taken yet.
+        """
+        from .services.claims import PropertyClaimService
+
+        service = PropertyClaimService(request.user)
+        payload = service.summary()
+        rows = service.claimable()[:100] if payload["claimable_count"] else []
+        payload["results"] = PropertySerializer(
+            rows, many=True, context=self.get_serializer_context()
+        ).data
+        return Response(payload)
+
+    @action(detail=False, methods=['post'], permission_classes=[IsAuthenticated])
+    def claim(self, request):
+        """Take over the listings named in `property_ids`.
+
+        Returns what was actually handed over rather than what was asked for:
+        the caller's page can be seconds stale, and a listing somebody else
+        claimed in between is a race, not an error.
+        """
+        from .services.claims import PropertyClaimService
+
+        service = PropertyClaimService(request.user)
+        if not service.may_claim():
+            return Response(
+                {'error': 'Necesitas un teléfono en tu cuenta para reclamar propiedades.'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        wanted = request.data.get('property_ids') or []
+        if not isinstance(wanted, list):
+            return Response(
+                {'error': 'property_ids debe ser una lista de identificadores.'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        claimed = service.claim(wanted)
+        # A claim is a change of title deed made without staff review, so it
+        # goes in the same book staff transfers do — that is what makes the
+        # decision to trust an unverified number reversible instead of final.
+        for prop in claimed:
+            AdminAuditService().record(
+                request, "property.claim",
+                target_type="property", target_id=prop.pk, target_label=prop.title,
+                changes={"phone": service.phone(),
+                         "verified": request.user.phone_verified_at is not None},
+            )
+        return Response({
+            'claimed': len(claimed),
+            'results': PropertySerializer(
+                claimed, many=True, context=self.get_serializer_context()
+            ).data,
+        })
+
     @action(
         detail=False,
         methods=['get'],
@@ -2666,6 +2747,38 @@ class AdminDashboardView(generics.GenericAPIView):
             'cached': False,
         }
         return data
+
+
+class AdminAdvertiserReachView(generics.GenericAPIView):
+    """Advertisers this portal has already sent people to.
+
+    The imported catalogue is an invitation: every listing carries its
+    advertiser's phone, and when a visitor writes from here WhatsApp opens
+    saying «vi este anuncio en Geo Propiedades». That advertiser now knows the
+    portal exists and is sending them buyers — but until this view existed
+    nobody on this side could tell who they were.
+
+    Ordered by contacts received rather than by inventory size on purpose: a
+    number that got three enquiries in a fortnight has seen the portal's name
+    three times, and the invitation writes itself. Volume without proof is a
+    cold call.
+    """
+
+    permission_classes = [IsAuthenticated, IsAdminUser]
+
+    def get(self, request):
+        from .services.admin_metrics import resolve_window
+        from .services.claims import AdvertiserReachService
+
+        days = resolve_window(request.query_params.get('days'))
+        since = timezone.now() - timedelta(days=days)
+        rows = AdvertiserReachService().top(since, limit=100)
+        return Response({
+            'window_days': days,
+            'advertisers': rows,
+            'reached': len(rows),
+            'with_account': sum(1 for row in rows if row['has_account']),
+        })
 
 
 class AdminSystemStatusView(generics.GenericAPIView):

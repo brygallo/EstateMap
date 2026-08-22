@@ -62,6 +62,27 @@ def _apply_fields(prop, data, fuente, lat, lng):
     prop.last_seen_at = timezone.now()
 
 
+
+def _advertiser_manages_own_inventory(contact_phone) -> bool:
+    """True when the number behind a listing already owns properties here.
+
+    Registering is not enough on its own — an account that signed up and never
+    claimed anything still needs its listings to exist on the portal. What
+    stops the import is somebody actually running their inventory here.
+    """
+    from django.contrib.auth import get_user_model
+    from real_estate.services.phones import normalize_ec_phone
+
+    phone = normalize_ec_phone(contact_phone)
+    if not phone:
+        return False
+    return (
+        get_user_model().objects
+        .filter(phone=phone, properties__isnull=False, properties__deleted_at__isnull=True)
+        .exists()
+    )
+
+
 def upsert_property(data, fuente, reader=None, image_urls=None, log=None,
                     require_images=False, force_images=False):
     """
@@ -111,6 +132,26 @@ def upsert_property(data, fuente, reader=None, image_urls=None, log=None,
     prop = None
     if external_id:
         prop = Property.objects.filter(source=fuente, external_id=external_id).first()
+
+    # Un anuncio reclamado deja de ser importado: su dueño lo administra aquí.
+    # Sin esta salida la siguiente importación lo volvería a marcar
+    # `is_imported=True` y pisaría sus ediciones, y desde ahí la retirada
+    # automática lo borraría el día que el portal de origen lo quite. El
+    # reclamo se desharía solo, en silencio y con sus contactos dentro.
+    if prop is not None and prop.owner_id is not None:
+        if log:
+            log(f"[reclamado] {external_id or prop.pk}: omitido; lo administra su dueño")
+        return "skipped_claimed", prop
+
+    # Y a quien ya gestiona su inventario aquí no se le importa nada nuevo:
+    # publicaría él mismo lo que nosotros estaríamos trayendo de fuera, y
+    # acabarían siendo dos filas de la misma propiedad. El corte es «ya tiene
+    # propiedades suyas», no «se registró»: alguien que se registró y todavía
+    # no reclamó nada seguiría necesitando que su inventario exista aquí.
+    if prop is None and _advertiser_manages_own_inventory(data.get("contact_phone")):
+        if log:
+            log(f"[dueño activo] {external_id or '?'}: omitido; su anunciante ya publica aquí")
+        return "skipped_owner_publishes", None
 
     created = False
     demote = None

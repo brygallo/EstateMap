@@ -170,7 +170,7 @@ rules:
         symbol: ALPHABET
         note: Sin 0, O, 1, I ni L.
       - file: backend/real_estate/models.py
-        lines: "430-432"
+        lines: "450-452"
         symbol: short_code
         note: >-
           Solo se asigna cuando está vacío, que es lo que lo hace estable frente
@@ -547,7 +547,7 @@ rules:
           Los tres estados que permiten distinguir «nadie lo compartió» de «se
           compartió y no trajo a nadie».
       - file: backend/real_estate/models.py
-        lines: "845-847"
+        lines: "865-867"
         symbol: activity_prop_human_idx
         note: >-
           (property, is_bot, created_at). Sin él la agregación recorre toda la

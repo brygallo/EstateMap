@@ -107,7 +107,7 @@ rules:
         symbol: upsert_property(listing, fuente, reader=reader)
         note: Camino paquete, las imágenes se leen del disco.
       - file: backend/ingesta/pipeline/upsert.py
-        lines: "56-73"
+        lines: "86-102"
         symbol: def upsert_property
     cases:
       - name: Mismo anuncio por los dos caminos
@@ -133,14 +133,14 @@ rules:
       MinIO sin fila que los referencie.
     evidence:
       - file: backend/ingesta/pipeline/upsert.py
-        lines: "76-95"
+        lines: "106-124"
         symbol: ok, lat, lng, _motivo = validate_location
         note: Ubicación, precio y dHash, en ese orden, antes de buscar duplicados.
       - file: backend/ingesta/pipeline/upsert.py
-        lines: "97-129"
+        lines: "162-193"
         symbol: dup = find_duplicate
       - file: backend/ingesta/pipeline/upsert.py
-        lines: "172-176"
+        lines: "213-216"
         symbol: attached = attach_images_from_urls
         note: Las imágenes se adjuntan después del save().
     cases:

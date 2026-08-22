@@ -14,6 +14,7 @@ from django.conf import settings
 from .bot_detection import is_bot_request
 from .email_utils import build_resume_link
 from .geo import polygon_center_lat_lng
+from .services.phones import is_plausible_ec_mobile, normalize_ec_phone
 from .models import (
     ActivityEvent, AdminAuditLog, Property, PropertyImage, Province, City, Lead,
     PendingPublication, PendingPublicationImage,
@@ -910,6 +911,7 @@ class UserProfileSerializer(serializers.ModelSerializer):
     is_email_verified = serializers.BooleanField(read_only=True)
     avatar_url = serializers.URLField(read_only=True)
     is_staff = serializers.BooleanField(read_only=True)
+    phone_verified = serializers.SerializerMethodField()
 
     class Meta:
         model = User
@@ -922,8 +924,38 @@ class UserProfileSerializer(serializers.ModelSerializer):
             "is_email_verified",
             "avatar_url",
             "is_staff",
+            "phone",
+            "phone_verified",
         ]
-        read_only_fields = ["id", "email", "is_email_verified", "avatar_url", "is_staff"]
+        read_only_fields = [
+            "id", "email", "is_email_verified", "avatar_url", "is_staff",
+            "phone_verified",
+        ]
+
+    def get_phone_verified(self, obj) -> bool:
+        return obj.phone_verified_at is not None
+
+    def validate_phone(self, value):
+        """Store the one shape ownership is decided by, and refuse the rest.
+
+        The phone is not decoration on a profile: it is what says which of
+        fifteen thousand imported listings belong to this account. A landline
+        or a typo cannot hold a WhatsApp conversation, so it is rejected here
+        rather than silently matching nothing later.
+        """
+        if not str(value or "").strip():
+            return ""
+        if not is_plausible_ec_mobile(value):
+            raise serializers.ValidationError(
+                "Escribe un celular ecuatoriano válido, por ejemplo 0987654321."
+            )
+        return normalize_ec_phone(value)
+
+    def update(self, instance, validated_data):
+        """A changed number loses whatever verification the old one had."""
+        if "phone" in validated_data and validated_data["phone"] != instance.phone:
+            instance.phone_verified_at = None
+        return super().update(instance, validated_data)
 
 
 class ChangePasswordSerializer(serializers.Serializer):

@@ -83,7 +83,7 @@ POST /api/leads/ lleva el throttle_scope lead_create a 10/min, para que un scrip
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/real_estate/views.py:1345-1377` (`def get_throttles`)
+- `backend/real_estate/views.py:1426-1457` (`def get_throttles`)
 - `backend/estate_map/settings.py:212-230` (`'lead_create': '10/min'`)
 
 **Casos**
@@ -112,7 +112,7 @@ Lead.status recorre new, contacted y closed, y PATCH /api/leads/{id}/ usa LeadSt
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/real_estate/models.py:651-653` (`STATUS_CHOICES = [`) — Los tres estados del ciclo de gestión de un lead.
+- `backend/real_estate/models.py:671-673` (`STATUS_CHOICES = [`) — Los tres estados del ciclo de gestión de un lead.
 - `backend/real_estate/serializers.py:547-549` (`class LeadStatusSerializer`) — fields = ['id', 'status'], sin acceso a name, phone, email ni message.
 
 **Casos**
@@ -131,7 +131,7 @@ Lead.source solo admite property_modal, property_page, whatsapp, phone u other, 
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/real_estate/models.py:643-645` (`SOURCE_CHOICES = [`) — Los cinco orígenes válidos de un lead.
+- `backend/real_estate/models.py:663-665` (`SOURCE_CHOICES = [`) — Los cinco orígenes válidos de un lead.
 
 **Casos**
 
@@ -156,7 +156,7 @@ GET/PATCH/DELETE sobre /api/leads/ exigen autenticación; el queryset se filtra 
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/real_estate/views.py:1356-1358` (`def get_queryset`) — Devuelve Lead.objects.none() si no hay usuario autenticado, el queryset completo si is_staff, y filter(property__owner=user) en cualquier otro caso.
+- `backend/real_estate/views.py:1437-1439` (`def get_queryset`) — Devuelve Lead.objects.none() si no hay usuario autenticado, el queryset completo si is_staff, y filter(property__owner=user) en cualquier otro caso.
 
 
 **Casos**
@@ -188,7 +188,7 @@ LeadViewSet.perform_create guarda el lead y llama de forma síncrona a LeadNotif
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/real_estate/views.py:1365-1367` (`def perform_create`) — serializer.save() seguido de LeadNotificationService().notify_created(lead), dentro del mismo ciclo request/response.
+- `backend/real_estate/views.py:1446-1448` (`def perform_create`) — serializer.save() seguido de LeadNotificationService().notify_created(lead), dentro del mismo ciclo request/response.
 - `backend/real_estate/services/notifications.py:13-22` (`class LeadNotificationService`) — notify_created llama a send_lead_notification sin encolarla en Celery.
 - `backend/real_estate/email_utils.py:229-246` (`def send_lead_notification`) — Reúne owner.email y property.contact_email como destinatarios.
 
@@ -228,7 +228,7 @@ Lead declara tres índices compuestos: (property, status) para la bandeja de una
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/real_estate/models.py:674-676` (`lead_property_status_idx`) — Los tres índices y las consultas que cubren.
+- `backend/real_estate/models.py:694-696` (`lead_property_status_idx`) — Los tres índices y las consultas que cubren.
 
 **Casos**
 
@@ -249,7 +249,7 @@ Es la solicitud de publicar una propiedad que alguien deja sin haber creado o ve
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/real_estate/models.py:683-685` (`class PendingPublication(models.Model)`) — Docstring: "Solicitud de publicación capturada antes de que el usuario cree o verifique su cuenta. No se muestra en el mapa".
+- `backend/real_estate/models.py:703-705` (`class PendingPublication(models.Model)`) — Docstring: "Solicitud de publicación capturada antes de que el usuario cree o verifique su cuenta. No se muestra en el mapa".
 
 
 **Casos**
@@ -267,7 +267,7 @@ El campo source admite account_required (intento de publicar sin cuenta), whatsa
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/real_estate/models.py:643-645` (`SOURCE_CHOICES = [`) — Los cuatro orígenes de una solicitud pendiente.
+- `backend/real_estate/models.py:663-665` (`SOURCE_CHOICES = [`) — Los cuatro orígenes de una solicitud pendiente.
 - `backend/real_estate/serializers.py:576-578` (`def validate_source`) — Cualquier valor fuera del catálogo se normaliza silenciosamente a "other" en vez de rechazar la petición.
 
 **Casos**
@@ -293,8 +293,8 @@ GET/PATCH sobre /api/pending-publications/ exigen IsAuthenticated e IsAdminUser 
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/real_estate/views.py:1340-1342` (`def get_permissions`) — return [IsAuthenticated(), IsAdminUser()] para toda acción salvo create.
-- `backend/real_estate/views.py:1356-1358` (`def get_queryset`) — PendingPublication.objects.none() salvo que user.is_staff sea verdadero.
+- `backend/real_estate/views.py:1421-1423` (`def get_permissions`) — return [IsAuthenticated(), IsAdminUser()] para toda acción salvo create.
+- `backend/real_estate/views.py:1437-1439` (`def get_queryset`) — PendingPublication.objects.none() salvo que user.is_staff sea verdadero.
 
 **Casos**
 
@@ -325,7 +325,7 @@ PendingPublicationViewSet.get_throttles aplica ScopedRateThrottle con throttle_s
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/real_estate/views.py:1388-1390` (`throttle_scope = 'pending_create'`) — Solo el POST público se limita; el resto de acciones ya exige staff y no lleva throttle.
+- `backend/real_estate/views.py:1469-1471` (`throttle_scope = 'pending_create'`) — Solo el POST público se limita; el resto de acciones ya exige staff y no lleva throttle.
 - `backend/estate_map/settings.py:211-213` (`'pending_create': '10/min'`)
 
 **Casos**
@@ -348,7 +348,7 @@ PendingPublicationViewSet.perform_create llama a PendingPublicationNotificationS
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/real_estate/views.py:1365-1367` (`def perform_create`) — PendingPublicationNotificationService().notify_created(pending) en el mismo request.
+- `backend/real_estate/views.py:1446-1448` (`def perform_create`) — PendingPublicationNotificationService().notify_created(pending) en el mismo request.
 - `backend/real_estate/email_utils.py:194-203` (`def send_pending_publication_notification`) — recipients sale de settings.ADMINS más PENDING_PUBLICATION_NOTIFY_EMAIL; si queda vacío, la función retorna sin enviar nada.
 - `backend/real_estate/services/notifications.py:25-37` (`class PendingPublicationNotificationService`) — Mismo patrón try/except que LeadNotificationService.
 
@@ -422,7 +422,7 @@ ActivityEventViewSet.get_throttles aplica ScopedRateThrottle con throttle_scope=
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/real_estate/views.py:1638-1640` (`throttle_scope = 'activity_create'`)
+- `backend/real_estate/views.py:1719-1721` (`throttle_scope = 'activity_create'`)
 - `backend/estate_map/settings.py:210-212` (`'activity_create': '30/min'`)
 
 **Casos**
@@ -469,7 +469,7 @@ PendingPublication.status recorre new, contacted, converted y discarded: a difer
 
 **Evidencia en el código** (verificada por `tools/specs/validate.py`)
 
-- `backend/real_estate/models.py:651-653` (`STATUS_CHOICES = [`) — Los cuatro estados de una solicitud pendiente.
+- `backend/real_estate/models.py:671-673` (`STATUS_CHOICES = [`) — Los cuatro estados de una solicitud pendiente.
 - `backend/real_estate/serializers.py:632-634` (`class PendingPublicationStatusSerializer`) — fields = ['id', 'status'], igual patrón restrictivo que LeadStatusSerializer.
 
 **Casos**
@@ -491,7 +491,7 @@ El navegador conserva una clave UUID por borrador. Cada abandono, error de publi
 
 - `frontend/app/add-property/page.tsx:783-842` (`PENDING_PUBLICATION_KEY_STORAGE_KEY`) — La clave estable y las fotos se envían en cada guardado del borrador.
 - `backend/real_estate/serializers.py:584-614` (`def create(self, validated_data)`) — Busca por draft_key y actualiza la solicitud no convertida.
-- `backend/real_estate/models.py:710-712` (`draft_key`) — La unicidad también protege frente a duplicados en la base de datos.
+- `backend/real_estate/models.py:730-732` (`draft_key`) — La unicidad también protege frente a duplicados en la base de datos.
 
 **Casos**
 

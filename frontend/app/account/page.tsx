@@ -28,6 +28,10 @@ interface Profile {
   first_name: string;
   last_name: string;
   is_email_verified: boolean;
+  /** Decides which imported listings this account may claim, so it is not
+      decoration on a profile: it is the key to an inventory. */
+  phone: string;
+  phone_verified: boolean;
 }
 
 const AccountPage = () => {
@@ -82,6 +86,7 @@ const AccountPage = () => {
         username: profile.username,
         first_name: profile.first_name,
         last_name: profile.last_name,
+        phone: profile.phone ?? '',
       });
       if (res.ok) {
         const data = await res.json();
@@ -89,7 +94,8 @@ const AccountPage = () => {
         toast.success('Perfil actualizado');
       } else {
         const data = await res.json().catch(() => ({}));
-        const errorMessage = data.detail || data.username?.[0] || 'No se pudo actualizar el perfil';
+        const errorMessage =
+          data.detail || data.phone?.[0] || data.username?.[0] || 'No se pudo actualizar el perfil';
         toast.error(errorMessage);
       }
     } catch (error) {
@@ -237,6 +243,21 @@ const AccountPage = () => {
                     onChange={(e) => setProfile({ ...profile, last_name: e.target.value })}
                     placeholder="Apellido"
                   />
+                </div>
+                <div className="space-y-1.5 sm:col-span-2">
+                  <Label htmlFor="phone">Celular (WhatsApp)</Label>
+                  <Input
+                    id="phone"
+                    type="tel"
+                    inputMode="tel"
+                    value={profile.phone ?? ''}
+                    onChange={(e) => setProfile({ ...profile, phone: e.target.value })}
+                    placeholder="0987654321"
+                  />
+                  <p className="text-xs leading-5 text-textSecondary">
+                    Con este número te mostramos las propiedades asociadas a él para que
+                    las administres desde aquí.
+                  </p>
                 </div>
                 <div className="space-y-1.5">
                   <Label htmlFor="username">Usuario</Label>
